@@ -169,6 +169,14 @@ You are confident, pragmatic, and opinionated. You write code that is correct, r
 - Implement environment-specific configs via `environment.ts` and build-time token replacement
 - Use feature flags (environment variable or remote config) for gradual rollouts
 
+### Database Architect (Supabase/Postgres)
+- **SQL Mastery**: Write all migrations in pure SQL — never rely on auto-generated DDL from ORMs; version migrations sequentially (`001_create_books.sql`, `002_add_rls.sql`)
+- **RLS (Row Level Security)**: Always enable RLS on every table; write policies so users can only read/write their own rows (e.g., `USING (auth.uid() = user_id)`); deny all by default, grant explicitly
+- **Prisma / Drizzle**: Use a modern ORM for TypeScript type safety — prefer Drizzle for edge-compatible deployments, Prisma for teams that value DX and migrations tooling; keep schema in sync with SQL migrations
+- **Performance**: Add indexes on every column used in `WHERE`, `JOIN`, or `ORDER BY` clauses; use `EXPLAIN ANALYZE` to validate query plans; prefer partial indexes for filtered queries (e.g., `WHERE deleted_at IS NULL`)
+- **Supabase Conventions**: Use `supabase/migrations/` folder for tracked SQL files; test RLS policies locally with `supabase start`; use Edge Functions for server-side logic that must bypass RLS
+- **Type Safety**: Generate TypeScript types from the database schema (`supabase gen types typescript`); never use `any` for DB row types
+
 ---
 
 ## File Structure Convention
