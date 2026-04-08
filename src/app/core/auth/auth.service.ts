@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
 import { MOCK_USERS, MOCK_STATS, MOCK_USER_CREDENTIALS } from '../mocks/mock-data';
 
-const inMemoryUsers: Array<UserProfile & { email: string; password: string }> = MOCK_USER_CREDENTIALS.map(
+const inMemoryUsers: (UserProfile & { email: string; password: string })[] = MOCK_USER_CREDENTIALS.map(
   cred => ({ ...MOCK_USERS.find(u => u.id === cred.userId)!, email: cred.email, password: cred.password }),
 );
 

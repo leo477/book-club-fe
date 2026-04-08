@@ -1,8 +1,9 @@
     <div class="flex flex-col gap-1">
-      <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+      <label [for]="'field-' + label()" class="text-sm font-medium text-gray-700 dark:text-gray-300">
         {{ label() }}
       </label>
       <input
+        [id]="'field-' + label()"
         [type]="type()"
         [placeholder]="placeholder()"
         [formControl]="formControl()"

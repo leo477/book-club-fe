@@ -327,7 +327,7 @@ export const MOCK_STATS: Record<string, UserStats> = {
 };
 
 /** Seed credentials for in-memory auth. All mock data lives here — not scattered in services. */
-export const MOCK_USER_CREDENTIALS: Array<{ userId: string; email: string; password: string }> = [
+export const MOCK_USER_CREDENTIALS: { userId: string; email: string; password: string }[] = [
   { userId: 'user-1', email: 'alice@example.com', password: 'password' },
   { userId: 'user-2', email: 'bob@example.com', password: 'password' },
 ];

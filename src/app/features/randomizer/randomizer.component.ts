@@ -68,6 +68,7 @@ export class RandomizerComponent implements OnInit {
       this.randomizerService.setPurpose(v),
     );
 
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     this.randomizerService.loadHistory(this.clubId).catch(() => {});
   }
 

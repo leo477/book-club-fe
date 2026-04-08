@@ -6,7 +6,7 @@ import {
   withRouterConfig,
 } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { provideTranslateService, provideTranslateLoader, TranslateLoader, TranslateService } from '@ngx-translate/core';
+import { provideTranslateService, provideTranslateLoader, TranslateService } from '@ngx-translate/core';
 import { TranslateHttpLoader, provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { firstValueFrom } from 'rxjs';
 import { routes } from './app.routes';
