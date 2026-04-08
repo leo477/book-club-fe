@@ -5,6 +5,7 @@ import { roleGuard } from '../../core/auth/role.guard';
 export const QUIZ_ROUTES: Routes = [
   {
     path: '',
+    canActivate: [authGuard],
     loadComponent: () =>
       import('./quiz-list/quiz-list.component').then(m => m.QuizListComponent),
   },

@@ -5,6 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { FormFieldComponent } from '../../../shared/components/form-field/form-field.component';
 import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
+import { SeoService } from '../../../core/services/seo.service';
 
 interface LoginForm {
   email: FormControl<string>;
@@ -21,6 +22,7 @@ interface LoginForm {
 export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly seo = inject(SeoService);
 
   readonly errorMessage = signal<string | null>(null);
   readonly isSubmitting = signal(false);
@@ -30,6 +32,7 @@ export class LoginComponent {
   readonly formVisible = signal(false);
 
   constructor() {
+    this.seo.setPage({ title: 'Вхід | Book Club' });
     setTimeout(() => this.formVisible.set(true), 700);
   }
 

@@ -14,6 +14,7 @@ import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Club, ClubMemberDetail } from '../../../core/models/club.model';
 import { QrCodeComponent } from '../../../shared/components/qr-code/qr-code.component';
+import { SeoService } from '../../../core/services/seo.service';
 
 @Component({
   selector: 'app-club-detail',
@@ -29,6 +30,7 @@ export class ClubDetailComponent {
   private readonly clubService = inject(ClubService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly seo = inject(SeoService);
 
   readonly currentUser = this.auth.currentUser;
 
@@ -83,6 +85,11 @@ export class ClubDetailComponent {
       } else {
         this.club.set(found);
         this.members.set(this.clubService.getClubMembers(clubId));
+        this.seo.setPage({
+          title: `${found.name} | Book Club`,
+          description: found.name,
+          canonical: `https://book-club-fe.vercel.app/clubs/${clubId}`,
+        });
       }
     } catch {
       this.errorMessage.set('Failed to load club details.');

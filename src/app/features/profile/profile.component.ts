@@ -9,6 +9,7 @@ import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angula
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { UserRole, UserSocials } from '../../core/models/user.model';
+import { SeoService } from '../../core/services/seo.service';
 
 @Component({
   selector: 'app-profile',
@@ -19,6 +20,7 @@ import { UserRole, UserSocials } from '../../core/models/user.model';
 })
 export class ProfileComponent {
   protected readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
 
   /** Typed reactive form for updating the display name. */
   protected readonly nameForm = new FormGroup({
@@ -81,6 +83,7 @@ export class ProfileComponent {
   );
 
   constructor() {
+    this.seo.setPage({ title: 'Профіль | Book Club' });
     // Seed the name form with the user's current display name.
     const user = this.auth.currentUser();
     if (user) {

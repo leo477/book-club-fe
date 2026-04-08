@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Club } from '../../../core/models/club.model';
+import { SeoService } from '../../../core/services/seo.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -25,6 +26,7 @@ import { EmptyStateComponent } from '../../../shared/components/empty-state/empt
 export class ClubsListComponent implements OnInit {
   readonly clubService = inject(ClubService);
   readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
 
   readonly joiningClubId = signal<string | null>(null);
 
@@ -32,6 +34,19 @@ export class ClubsListComponent implements OnInit {
   readonly ownedClubIds = this.clubService.myOwnedClubIds;
 
   async ngOnInit(): Promise<void> {
+    this.seo.setPage({
+      title: 'Книжкові клуби | Book Club',
+      description: 'Знайдіть книжковий клуб у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.',
+      canonical: 'https://book-club-fe.vercel.app/clubs',
+    });
+    this.seo.injectJsonLd({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'Book Club',
+      url: 'https://book-club-fe.vercel.app',
+      description: 'Читацькі клуби України',
+    });
+
     await this.clubService.loadPublicClubs();
     if (this.auth.isAuthenticated()) {
       await this.clubService.loadMyClubs();

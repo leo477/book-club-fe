@@ -88,7 +88,7 @@
                 <!-- Cover / gradient with status badge -->
                 <div class="relative">
                   @if (club.coverUrl) {
-                    <img [src]="club.coverUrl" [alt]="''" class="h-32 w-full object-cover" aria-hidden="true" />
+                    <img [src]="club.coverUrl" [alt]="''" class="h-32 w-full object-cover" aria-hidden="true" loading="lazy" />
                   } @else {
                     <div class="h-32 bg-gradient-to-br from-primary-400 to-accent-500" aria-hidden="true"></div>
                   }

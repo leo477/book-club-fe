@@ -67,7 +67,11 @@
                 [class.dark:border-gray-600]="!isInvalidTouched(metaForm.controls.title)"
               />
               @if (isInvalidTouched(metaForm.controls.title)) {
-                <p class="text-red-500 text-xs">Title is required.</p>
+                <p class="text-red-500 text-xs">
+                  @if (metaForm.controls.title.errors?.['required']) { Title is required. }
+                  @else if (metaForm.controls.title.errors?.['minlength']) { Title must be at least 3 characters. }
+                  @else if (metaForm.controls.title.errors?.['maxlength']) { Title must not exceed 100 characters. }
+                </p>
               }
             </div>
 
@@ -88,7 +92,13 @@
                        text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
                        placeholder-gray-400 resize-none focus:outline-none focus:ring-2
                        focus:ring-primary-500 focus:border-transparent transition-colors"
+                [class.border-red-400]="isInvalidTouched(metaForm.controls.description)"
               ></textarea>
+              @if (isInvalidTouched(metaForm.controls.description)) {
+                <p class="text-red-500 text-xs">
+                  @if (metaForm.controls.description.errors?.['maxlength']) { Description must not exceed 500 characters. }
+                </p>
+              }
             </div>
 
             <div class="flex justify-end">

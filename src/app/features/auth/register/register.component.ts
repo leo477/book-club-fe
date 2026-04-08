@@ -15,6 +15,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { UserRole } from '../../../core/models/user.model';
 import { FormFieldComponent } from '../../../shared/components/form-field/form-field.component';
 import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
+import { SeoService } from '../../../core/services/seo.service';
 
 const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
   const password = group.get('password')?.value as string;
@@ -39,6 +40,7 @@ interface RegisterForm {
 })
 export class RegisterComponent {
   private readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
 
   readonly errorMessage = signal<string | null>(null);
   readonly isSubmitting = signal(false);
@@ -51,6 +53,7 @@ export class RegisterComponent {
   readonly formVisible = signal(false);
 
   constructor() {
+    this.seo.setPage({ title: 'Реєстрація | Book Club' });
     setTimeout(() => this.formVisible.set(true), 700);
   }
 

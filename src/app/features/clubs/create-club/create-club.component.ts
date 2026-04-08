@@ -34,9 +34,12 @@ export class CreateClubComponent {
   readonly form = new FormGroup<CreateClubForm>({
     name: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3)],
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
     }),
-    description: new FormControl('', { nonNullable: true }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
     isPublic: new FormControl(true, { nonNullable: true }),
   });
 

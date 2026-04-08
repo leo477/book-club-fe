@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+Disallow: /manage/
+Sitemap: https://book-club-fe.vercel.app/sitemap.xml

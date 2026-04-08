@@ -2,6 +2,7 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
+import { ToastService } from '../services/toast.service';
 
 /**
  * Global HTTP error interceptor.
@@ -12,10 +13,14 @@ import { catchError, throwError } from 'rxjs';
  * • 403 Forbidden → authenticated but lacks the required role; redirect to
  *   /clubs (safe landing page) instead of leaving the user on a broken page.
  *
+ * • 500 Internal Server Error → unexpected server failure; show a toast
+ *   notification and log the full error for debugging.
+ *
  * The error is always re-thrown so callers can still handle it locally if needed.
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
+  const toast = inject(ToastService);
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -23,6 +28,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         router.navigate(['/login']);
       } else if (error.status === 403) {
         router.navigate(['/clubs']);
+      } else if (error.status >= 500) {
+        // Server-side failure — surface a user-friendly message and log details
+        console.error('[HTTP] Server error', error.status, error.url, error);
+        toast.show('A server error occurred. Please try again later.', 'error');
       }
       return throwError(() => error);
     }),

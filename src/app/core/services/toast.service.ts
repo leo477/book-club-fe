@@ -9,13 +9,14 @@ export interface Toast {
 
 @Injectable({ providedIn: 'root' })
 export class ToastService {
-  readonly toasts = signal<Toast[]>([]);
+  private readonly _toasts = signal<Toast[]>([]);
+  readonly toasts = this._toasts.asReadonly();
 
   show(message: string, type: 'success' | 'error' | 'info', duration = 3000): void {
     const id = crypto.randomUUID();
     const toast: Toast = { id, message, type, duration };
 
-    this.toasts.update(list => [...list, toast]);
+    this._toasts.update(list => [...list, toast]);
 
     if (duration > 0) {
       setTimeout(() => this.remove(id), duration);
@@ -23,6 +24,6 @@ export class ToastService {
   }
 
   remove(id: string): void {
-    this.toasts.update(list => list.filter(t => t.id !== id));
+    this._toasts.update(list => list.filter(t => t.id !== id));
   }
 }

@@ -53,16 +53,37 @@ export class QuizCreateComponent implements OnInit {
   readonly optionIndices: readonly number[] = [0, 1, 2, 3];
 
   protected readonly metaForm = new FormGroup<MetaForm>({
-    title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    description: new FormControl('', { nonNullable: true }),
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
   });
 
   protected readonly questionForm = new FormGroup<QuestionForm>({
-    question: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    option0: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    option1: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    option2: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    option3: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+    question: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
+    }),
+    option0: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option1: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option2: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option3: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
     correctIndex: new FormControl<number>(0, { nonNullable: true }),
   });
 

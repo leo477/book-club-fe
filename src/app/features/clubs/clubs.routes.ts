@@ -9,6 +9,7 @@ export const CLUBS_ROUTES: Routes = [
   {
     path: '',
     component: ClubsListComponent,
+    canActivate: [authGuard],
   },
   {
     path: 'create',
@@ -22,6 +23,7 @@ export const CLUBS_ROUTES: Routes = [
       {
         path: '',
         component: ClubDetailComponent,
+        canActivate: [authGuard],
       },
       {
         path: 'randomizer',

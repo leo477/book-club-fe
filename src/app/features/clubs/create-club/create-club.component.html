@@ -34,6 +34,7 @@
                 <p id="name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
                   @if (form.controls.name.errors?.['required']) { Club name is required. }
                   @else if (form.controls.name.errors?.['minlength']) { Name must be at least 3 characters. }
+                  @else if (form.controls.name.errors?.['maxlength']) { Name must not exceed 100 characters. }
                 </p>
               }
             </div>
@@ -52,7 +53,13 @@
                        px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
                        focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
                        transition-colors duration-150"
+                [class.border-red-400]="form.controls.description.invalid && form.controls.description.touched"
               ></textarea>
+              @if (form.controls.description.invalid && form.controls.description.touched) {
+                <p class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                  @if (form.controls.description.errors?.['maxlength']) { Description must not exceed 500 characters. }
+                </p>
+              }
             </div>
 
             <!-- Visibility toggle -->
