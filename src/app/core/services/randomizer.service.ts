@@ -8,29 +8,35 @@ export class RandomizerService {
   private readonly supabase = inject(SupabaseService);
   private readonly auth = inject(AuthService);
 
-  readonly candidates = signal<BookCandidate[]>([]);
-  readonly result = signal<BookCandidate | null>(null);
-  readonly isSpinning = signal(false);
-  readonly history = signal<RandomizerSession[]>([]);
+  private readonly _candidates = signal<BookCandidate[]>([]);
+  private readonly _result = signal<BookCandidate | null>(null);
+  private readonly _isSpinning = signal(false);
+  private readonly _history = signal<RandomizerSession[]>([]);
+
+  // Public readonly projections — components cannot mutate service state
+  readonly candidates = this._candidates.asReadonly();
+  readonly result = this._result.asReadonly();
+  readonly isSpinning = this._isSpinning.asReadonly();
+  readonly history = this._history.asReadonly();
 
   addCandidate(book: BookCandidate): void {
-    this.candidates.update(prev => [...prev, book]);
+    this._candidates.update(prev => [...prev, book]);
   }
 
   removeCandidate(index: number): void {
-    this.candidates.update(prev => prev.filter((_, i) => i !== index));
+    this._candidates.update(prev => prev.filter((_, i) => i !== index));
   }
 
   async spin(): Promise<void> {
-    const candidates = this.candidates();
+    const candidates = this._candidates();
     if (candidates.length < 2) return;
 
-    this.isSpinning.set(true);
+    this._isSpinning.set(true);
     await new Promise<void>(resolve => setTimeout(resolve, 2000));
 
     const idx = Math.floor(Math.random() * candidates.length);
-    this.result.set(candidates[idx]);
-    this.isSpinning.set(false);
+    this._result.set(candidates[idx]);
+    this._isSpinning.set(false);
   }
 
   async saveSession(clubId: string): Promise<void> {
@@ -42,8 +48,8 @@ export class RandomizerService {
       .insert({
         club_id: clubId,
         created_by: user.id,
-        candidates: this.candidates(),
-        result: this.result(),
+        candidates: this._candidates(),
+        result: this._result(),
       });
 
     if (error) throw new Error(error.message);
@@ -58,7 +64,7 @@ export class RandomizerService {
 
     if (error) throw new Error(error.message);
 
-    this.history.set(
+    this._history.set(
       (data ?? []).map(row => ({
         id: row.id,
         clubId: row.club_id,
@@ -71,7 +77,7 @@ export class RandomizerService {
   }
 
   reset(): void {
-    this.candidates.set([]);
-    this.result.set(null);
+    this._candidates.set([]);
+    this._result.set(null);
   }
 }

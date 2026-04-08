@@ -83,6 +83,18 @@ interface LoginForm {
             </a>
           </p>
         </div>
+
+        <!-- Back to home -->
+        <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+          <a
+            routerLink="/"
+            class="inline-flex items-center gap-1 text-gray-500 dark:text-gray-400
+                   hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-200
+                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded"
+          >
+            ← Back to home
+          </a>
+        </p>
       </div>
     </div>
   `,

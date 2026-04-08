@@ -7,6 +7,13 @@ import type { Database } from './database.types';
 export class SupabaseService {
   readonly client: SupabaseClient<Database> = createClient<Database>(
     environment.supabaseUrl,
-    environment.supabaseAnonKey
+    environment.supabaseAnonKey,
+    {
+      auth: {
+        persistSession: true,   // Keep session across page reloads (stored in Supabase's own storage)
+        autoRefreshToken: true, // Silently refresh the JWT before it expires
+        detectSessionInUrl: true,
+      },
+    },
   );
 }

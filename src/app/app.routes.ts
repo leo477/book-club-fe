@@ -1,11 +1,10 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
 import { roleGuard } from './core/auth/role.guard';
+import { ShellComponent } from './layout/shell/shell.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: '/clubs', pathMatch: 'full' },
-
-  // Public auth routes
+  // ── Full-screen auth pages (no shell) ───────────────────────────────────
   {
     path: 'login',
     loadComponent: () =>
@@ -17,22 +16,30 @@ export const routes: Routes = [
       import('./features/auth/register/register.component').then(m => m.RegisterComponent),
   },
 
-  // Protected: any authenticated user
+  // ── App shell (header + footer) ─────────────────────────────────────────
   {
-    path: 'clubs',
-    canActivate: [authGuard],
-    loadChildren: () => import('./features/clubs/clubs.routes').then(m => m.CLUBS_ROUTES),
-  },
+    path: '',
+    component: ShellComponent,
+    children: [
+      // Protected: any authenticated user
+      {
+        path: 'clubs',
+        canActivate: [authGuard],
+        loadChildren: () => import('./features/clubs/clubs.routes').then(m => m.CLUBS_ROUTES),
+      },
 
-  // Protected: organizer-only placeholder (e.g. club management)
-  {
-    path: 'manage',
-    canActivate: [authGuard, roleGuard('organizer')],
-    loadComponent: () =>
-      import('./features/clubs/clubs-list/clubs-list.component').then(
-        m => m.ClubsListComponent,
-      ),
-  },
+      // Protected: organizer-only placeholder (e.g. club management)
+      {
+        path: 'manage',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('./features/clubs/clubs-list/clubs-list.component').then(
+            m => m.ClubsListComponent,
+          ),
+      },
 
-  { path: '**', redirectTo: '/clubs' },
+      { path: '', redirectTo: 'clubs', pathMatch: 'full' },
+      { path: '**', redirectTo: 'clubs' },
+    ],
+  },
 ];

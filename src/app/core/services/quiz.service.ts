@@ -8,23 +8,29 @@ export class QuizService {
   private readonly supabase = inject(SupabaseService);
   private readonly auth = inject(AuthService);
 
-  readonly quizzes = signal<Quiz[]>([]);
-  readonly activeQuiz = signal<Quiz | null>(null);
-  readonly questions = signal<QuizQuestion[]>([]);
-  readonly isLoading = signal(false);
+  private readonly _quizzes = signal<Quiz[]>([]);
+  private readonly _activeQuiz = signal<Quiz | null>(null);
+  private readonly _questions = signal<QuizQuestion[]>([]);
+  private readonly _isLoading = signal(false);
+
+  // Public readonly projections — components cannot mutate service state
+  readonly quizzes = this._quizzes.asReadonly();
+  readonly activeQuiz = this._activeQuiz.asReadonly();
+  readonly questions = this._questions.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
 
   async loadQuizzes(clubId: string): Promise<void> {
-    this.isLoading.set(true);
+    this._isLoading.set(true);
     const { data, error } = await this.supabase.client
       .from('quizzes')
       .select('*')
       .eq('club_id', clubId)
       .order('created_at', { ascending: false });
 
-    this.isLoading.set(false);
+    this._isLoading.set(false);
     if (error) throw new Error(error.message);
 
-    this.quizzes.set(
+    this._quizzes.set(
       (data ?? []).map(row => ({
         id: row.id,
         clubId: row.club_id,
@@ -67,7 +73,7 @@ export class QuizService {
       isActive: row.is_active,
     };
 
-    this.quizzes.update(prev => [quiz, ...prev]);
+    this._quizzes.update(prev => [quiz, ...prev]);
     return quiz;
   }
 
@@ -102,7 +108,7 @@ export class QuizService {
 
     if (error) throw new Error(error.message);
 
-    this.questions.set(
+    this._questions.set(
       (data ?? []).map(row => ({
         id: row.id,
         quizId: row.quiz_id,
@@ -118,7 +124,7 @@ export class QuizService {
     if (!user) throw new Error('Not authenticated');
 
     await this.loadQuestions(quizId);
-    const questions = this.questions();
+    const questions = this._questions();
 
     const score = answers.reduce((acc, answer, i) => {
       return questions[i] && answer === questions[i].correctIndex ? acc + 1 : acc;
@@ -151,7 +157,7 @@ export class QuizService {
 
     if (error) throw new Error(error.message);
 
-    this.quizzes.update(prev =>
+    this._quizzes.update(prev =>
       prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
     );
   }

@@ -25,6 +25,7 @@ export const CLUBS_ROUTES: Routes = [
       },
       {
         path: 'randomizer',
+        canActivate: [authGuard, roleGuard('organizer')],
         loadComponent: () =>
           import('../randomizer/randomizer.component').then(
             m => m.RandomizerComponent,

@@ -33,18 +33,30 @@ export class ClubService {
   private readonly auth = inject(AuthService);
 
   // ── State ────────────────────────────────────────────────────────────────
-  readonly clubs = signal<Club[]>([]);
-  readonly myClubs = signal<Club[]>([]);
-  readonly isLoading = signal(false);
-  readonly error = signal<string | null>(null);
+  private readonly _clubs = signal<Club[]>([]);
+  private readonly _myClubs = signal<Club[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _error = signal<string | null>(null);
+
+  // Public readonly projections — components cannot mutate service state
+  readonly clubs = this._clubs.asReadonly();
+  readonly myClubs = this._myClubs.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly error = this._error.asReadonly();
 
   // ── Search ───────────────────────────────────────────────────────────────
-  readonly searchQuery = signal('');
+  private readonly _searchQuery = signal('');
+  readonly searchQuery = this._searchQuery.asReadonly();
+
+  /** Public setter so templates can update the search term without a writable signal reference */
+  setSearchQuery(query: string): void {
+    this._searchQuery.set(query);
+  }
 
   readonly filteredClubs = computed(() => {
-    const q = this.searchQuery().toLowerCase().trim();
-    if (!q) return this.clubs();
-    return this.clubs().filter(
+    const q = this._searchQuery().toLowerCase().trim();
+    if (!q) return this._clubs();
+    return this._clubs().filter(
       c =>
         c.name.toLowerCase().includes(q) ||
         (c.description?.toLowerCase().includes(q) ?? false),
@@ -52,7 +64,7 @@ export class ClubService {
   });
 
   /** Set of club IDs the current user belongs to — O(1) membership checks */
-  readonly myClubIds = computed(() => new Set(this.myClubs().map(c => c.id)));
+  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
 
   // ── Private helpers ──────────────────────────────────────────────────────
   private mapClubWithCount(row: ClubRowWithCount): Club {
@@ -86,8 +98,8 @@ export class ClubService {
   // ── Public API ───────────────────────────────────────────────────────────
 
   async loadPublicClubs(): Promise<void> {
-    this.isLoading.set(true);
-    this.error.set(null);
+    this._isLoading.set(true);
+    this._error.set(null);
     try {
       const { data, error } = await this.supabase
         .from('clubs')
@@ -97,13 +109,13 @@ export class ClubService {
 
       if (error) throw error;
 
-      this.clubs.set(
+      this._clubs.set(
         (data as unknown as ClubRowWithCount[]).map(row => this.mapClubWithCount(row)),
       );
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'Failed to load clubs');
+      this._error.set(err instanceof Error ? err.message : 'Failed to load clubs');
     } finally {
-      this.isLoading.set(false);
+      this._isLoading.set(false);
     }
   }
 
@@ -120,7 +132,7 @@ export class ClubService {
 
       if (memberError) throw memberError;
       if (!memberRows || memberRows.length === 0) {
-        this.myClubs.set([]);
+        this._myClubs.set([]);
         return;
       }
 
@@ -135,11 +147,11 @@ export class ClubService {
 
       if (error) throw error;
 
-      this.myClubs.set(
+      this._myClubs.set(
         (data as unknown as ClubRowWithCount[]).map(row => this.mapClubWithCount(row)),
       );
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'Failed to load your clubs');
+      this._error.set(err instanceof Error ? err.message : 'Failed to load your clubs');
     }
   }
 
@@ -151,8 +163,8 @@ export class ClubService {
     const currentUser = this.auth.currentUser();
     if (!currentUser) throw new Error('Must be authenticated to create a club');
 
-    this.isLoading.set(true);
-    this.error.set(null);
+    this._isLoading.set(true);
+    this._error.set(null);
     try {
       // Insert club
       const { data: clubData, error: clubError } = await this.supabase
@@ -180,16 +192,16 @@ export class ClubService {
       if (memberError) throw memberError;
 
       // Update local state
-      this.clubs.update(existing => [newClub, ...existing]);
-      this.myClubs.update(existing => [newClub, ...existing]);
+      this._clubs.update(existing => [newClub, ...existing]);
+      this._myClubs.update(existing => [newClub, ...existing]);
 
       return newClub;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create club';
-      this.error.set(message);
+      this._error.set(message);
       throw new Error(message);
     } finally {
-      this.isLoading.set(false);
+      this._isLoading.set(false);
     }
   }
 
@@ -204,14 +216,14 @@ export class ClubService {
     if (error) throw error;
 
     // Update member count optimistically in clubs signal
-    this.clubs.update(list =>
+    this._clubs.update(list =>
       list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
     );
 
     // Add to myClubs if not already there
-    const club = this.clubs().find(c => c.id === clubId);
+    const club = this._clubs().find(c => c.id === clubId);
     if (club && !this.myClubIds().has(clubId)) {
-      this.myClubs.update(list => [club, ...list]);
+      this._myClubs.update(list => [club, ...list]);
     }
   }
 
@@ -228,14 +240,14 @@ export class ClubService {
     if (error) throw error;
 
     // Update member count optimistically
-    this.clubs.update(list =>
+    this._clubs.update(list =>
       list.map(c =>
         c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
       ),
     );
 
     // Remove from myClubs
-    this.myClubs.update(list => list.filter(c => c.id !== clubId));
+    this._myClubs.update(list => list.filter(c => c.id !== clubId));
   }
 
   async getClubById(id: string): Promise<Club | null> {

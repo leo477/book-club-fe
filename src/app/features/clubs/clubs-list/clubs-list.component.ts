@@ -10,12 +10,14 @@ import { FormsModule } from '@angular/forms';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Club } from '../../../core/models/club.model';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 
 @Component({
   selector: 'app-clubs-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule],
+  imports: [RouterLink, FormsModule, LoadingSpinnerComponent, EmptyStateComponent],
   template: `
     <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
 
@@ -34,7 +36,7 @@ import { Club } from '../../../core/models/club.model';
             id="club-search"
             type="search"
             [ngModel]="clubService.searchQuery()"
-            (ngModelChange)="clubService.searchQuery.set($event)"
+            (ngModelChange)="clubService.setSearchQuery($event)"
             placeholder="Search by name or description…"
             class="w-full rounded-full shadow-sm bg-white dark:bg-gray-800 pl-10 pr-5 py-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 border-0 focus:outline-none focus:ring-2 focus:ring-white/70"
             aria-label="Search clubs"
@@ -118,38 +120,27 @@ import { Club } from '../../../core/models/club.model';
           </div>
 
           @if (clubService.isLoading()) {
-            <!-- Skeleton grid -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" aria-busy="true" aria-label="Loading clubs">
-              @for (_ of skeletons; track $index) {
-                <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-lg overflow-hidden animate-pulse">
-                  <div class="h-40 bg-gray-200 dark:bg-gray-700"></div>
-                  <div class="p-4 space-y-2">
-                    <div class="h-5 w-40 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div class="h-3 w-full bg-gray-200 dark:bg-gray-700 rounded"></div>
-                    <div class="h-3 w-3/4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-                  </div>
-                </div>
-              }
+            <!-- Loading spinner -->
+            <div class="py-16" aria-busy="true" aria-label="Loading clubs">
+              <app-loading-spinner size="lg" />
             </div>
           } @else if (clubService.filteredClubs().length === 0) {
             <!-- Empty state -->
-            <div class="text-center py-16">
-              <p class="text-6xl mb-4" aria-hidden="true">📚</p>
-              @if (clubService.searchQuery()) {
-                <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">No clubs match your search</h3>
-                <p class="text-gray-500 dark:text-gray-400 mb-4">Try a different keyword or clear the search</p>
-                <button
-                  type="button"
-                  (click)="clubService.searchQuery.set('')"
-                  class="text-primary-600 dark:text-primary-400 hover:underline text-sm font-medium"
-                >
-                  Clear search
-                </button>
-              } @else {
-                <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">No public clubs yet</h3>
-                <p class="text-gray-500 dark:text-gray-400">Be the first to start one!</p>
-              }
-            </div>
+            @if (clubService.searchQuery()) {
+              <app-empty-state
+                icon="🔍"
+                title="No clubs match your search"
+                description="Try a different keyword or clear the search to see all clubs."
+                actionLabel="Clear search"
+                (actionClick)="clubService.setSearchQuery('')"
+              />
+            } @else {
+              <app-empty-state
+                icon="📚"
+                title="No clubs yet"
+                description="Be the first to create a book club and start reading together!"
+              />
+            }
           } @else {
             <!-- Clubs grid -->
             <ul
@@ -251,9 +242,6 @@ export class ClubsListComponent implements OnInit {
   private readonly router = inject(Router);
 
   readonly joiningClubId = signal<string | null>(null);
-
-  /** Used to render skeleton placeholders during initial load */
-  readonly skeletons = Array<null>(6).fill(null);
 
   async ngOnInit(): Promise<void> {
     await this.clubService.loadPublicClubs();
