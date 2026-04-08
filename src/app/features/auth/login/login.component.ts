@@ -1,10 +1,127 @@
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../../core/auth/auth.service';
+import { FormFieldComponent } from '../../../shared/components/form-field/form-field.component';
+
+interface LoginForm {
+  email: FormControl<string>;
+  password: FormControl<string>;
+}
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule],
-  template: `<div class="p-8"><h1 class="text-2xl font-display">Login</h1></div>`,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, FormFieldComponent],
+  template: `
+    <div class="min-h-screen bg-gradient-to-br from-primary-50 to-accent-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+      <div class="w-full max-w-md">
+
+        <!-- Logo / Brand -->
+        <div class="text-center mb-8">
+          <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 Book Club</h1>
+          <p class="text-gray-500 dark:text-gray-400 mt-2">Welcome back</p>
+        </div>
+
+        <!-- Card -->
+        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Sign in</h2>
+
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+
+            <!-- Email -->
+            <app-form-field
+              label="Email"
+              type="email"
+              placeholder="you@example.com"
+              [control]="form.controls.email"
+            />
+
+            <!-- Password -->
+            <app-form-field
+              label="Password"
+              type="password"
+              placeholder="••••••••"
+              [control]="form.controls.password"
+            />
+
+            <!-- Error alert -->
+            @if (errorMessage()) {
+              <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
+                <span class="mt-0.5 shrink-0">⚠️</span>
+                <span>{{ errorMessage() }}</span>
+              </div>
+            }
+
+            <!-- Submit button -->
+            <button
+              type="submit"
+              [disabled]="isSubmitting()"
+              class="w-full flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5
+                     text-sm font-semibold text-white shadow-sm
+                     hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+                     disabled:opacity-60 disabled:cursor-not-allowed
+                     transition-colors duration-200 mt-2"
+            >
+              @if (isSubmitting()) {
+                <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                Signing in…
+              } @else {
+                Sign in
+              }
+            </button>
+          </form>
+
+          <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            Don't have an account?
+            <a routerLink="/register" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium">
+              Register
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  `,
 })
-export class LoginComponent {}
+export class LoginComponent {
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+
+  readonly errorMessage = signal<string | null>(null);
+  readonly isSubmitting = signal(false);
+
+  readonly form = new FormGroup<LoginForm>({
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email],
+    }),
+    password: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(8)],
+    }),
+  });
+
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+
+    const { email, password } = this.form.getRawValue();
+    const { error } = await this.auth.signIn(email, password);
+
+    this.isSubmitting.set(false);
+
+    if (error) {
+      this.errorMessage.set(error);
+    } else {
+      this.router.navigate(['/clubs']);
+    }
+  }
+}
