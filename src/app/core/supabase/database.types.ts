@@ -1,5 +1,12 @@
 // Run `supabase gen types typescript --project-id YOUR_PROJECT_ID > src/app/core/supabase/database.types.ts`
 // after setting up your Supabase project to get full type safety.
+
+/** Lightweight book candidate shape stored in JSONB columns. */
+export interface BookCandidateJson {
+  title: string;
+  author: string;
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -11,8 +18,19 @@ export type Database = {
           avatar_url: string | null;
           created_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['profiles']['Row'], 'created_at'>;
-        Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
+        Insert: {
+          id: string;
+          role: 'user' | 'organizer';
+          display_name: string;
+          avatar_url?: string | null;
+        };
+        Update: {
+          id?: string;
+          role?: 'user' | 'organizer';
+          display_name?: string;
+          avatar_url?: string | null;
+        };
+        Relationships: [];
       };
       clubs: {
         Row: {
@@ -25,61 +43,136 @@ export type Database = {
           is_public: boolean;
           created_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['clubs']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['clubs']['Insert']>;
+        Insert: {
+          name: string;
+          description?: string | null;
+          organizer_id: string;
+          cover_image_url?: string | null;
+          current_book_title?: string | null;
+          is_public?: boolean;
+        };
+        Update: {
+          name?: string;
+          description?: string | null;
+          organizer_id?: string;
+          cover_image_url?: string | null;
+          current_book_title?: string | null;
+          is_public?: boolean;
+        };
+        Relationships: [];
       };
       club_members: {
         Row: { club_id: string; user_id: string; joined_at: string };
-        Insert: Omit<Database['public']['Tables']['club_members']['Row'], 'joined_at'>;
+        Insert: { club_id: string; user_id: string };
         Update: never;
+        Relationships: [];
       };
       quizzes: {
         Row: {
           id: string;
           club_id: string;
-          organizer_id: string;
+          created_by: string;
           title: string;
           description: string | null;
+          is_active: boolean;
           created_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['quizzes']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['quizzes']['Insert']>;
+        Insert: {
+          club_id: string;
+          created_by: string;
+          title: string;
+          description?: string | null;
+          is_active?: boolean;
+        };
+        Update: {
+          club_id?: string;
+          created_by?: string;
+          title?: string;
+          description?: string | null;
+          is_active?: boolean;
+        };
+        Relationships: [];
       };
       quiz_questions: {
         Row: {
           id: string;
           quiz_id: string;
-          question_text: string;
+          question: string;
           options: string[];
-          correct_option_index: number;
+          correct_index: number;
           sort_order: number;
         };
-        Insert: Omit<Database['public']['Tables']['quiz_questions']['Row'], 'id'>;
-        Update: Partial<Database['public']['Tables']['quiz_questions']['Insert']>;
+        Insert: {
+          quiz_id: string;
+          question: string;
+          options: string[];
+          correct_index: number;
+          sort_order?: number;
+        };
+        Update: {
+          quiz_id?: string;
+          question?: string;
+          options?: string[];
+          correct_index?: number;
+          sort_order?: number;
+        };
+        Relationships: [];
       };
       quiz_attempts: {
-        Row: { id: string; quiz_id: string; user_id: string; score: number; completed_at: string };
-        Insert: Omit<Database['public']['Tables']['quiz_attempts']['Row'], 'id' | 'completed_at'>;
+        Row: {
+          id: string;
+          quiz_id: string;
+          user_id: string;
+          score: number;
+          total: number;
+          answers: number[];
+          completed_at: string;
+        };
+        Insert: {
+          quiz_id: string;
+          user_id: string;
+          score: number;
+          total: number;
+          answers: number[];
+        };
         Update: never;
+        Relationships: [];
       };
       randomizer_sessions: {
         Row: {
           id: string;
           club_id: string;
-          book_candidates: BookCandidate[];
-          selected_book: BookCandidate | null;
+          created_by: string;
+          candidates: BookCandidateJson[];
+          result: BookCandidateJson | null;
           created_at: string;
         };
-        Insert: Omit<Database['public']['Tables']['randomizer_sessions']['Row'], 'id' | 'created_at'>;
-        Update: Partial<Database['public']['Tables']['randomizer_sessions']['Insert']>;
+        Insert: {
+          club_id: string;
+          created_by: string;
+          candidates: BookCandidateJson[];
+          result?: BookCandidateJson | null;
+        };
+        Update: {
+          club_id?: string;
+          created_by?: string;
+          candidates?: BookCandidateJson[];
+          result?: BookCandidateJson | null;
+        };
+        Relationships: [];
       };
+    };
+    Views: {
+      [_ in never]: never;
+    };
+    Functions: {
+      [_ in never]: never;
+    };
+    Enums: {
+      [_ in never]: never;
+    };
+    CompositeTypes: {
+      [_ in never]: never;
     };
   };
 };
-
-export interface BookCandidate {
-  title: string;
-  author: string;
-  cover_url: string | null;
-  open_library_id?: string;
-}
