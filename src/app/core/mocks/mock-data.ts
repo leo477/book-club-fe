@@ -1,6 +1,5 @@
 import { UserProfile, UserStats } from '../models/user.model';
 import { Club, ClubMeeting, ClubStatus } from '../models/club.model';
-
 import { Quiz, QuizQuestion } from '../models/quiz.model';
 import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
 
@@ -326,3 +325,9 @@ export const MOCK_STATS: Record<string, UserStats> = {
   'user-1': { clubsJoined: 3, quizzesTaken: 12, quizWins: 5, likesReceived: 24, booksRead: 18 },
   'user-2': { clubsJoined: 2, quizzesTaken: 7, quizWins: 1, likesReceived: 8, booksRead: 9 },
 };
+
+/** Seed credentials for in-memory auth. All mock data lives here — not scattered in services. */
+export const MOCK_USER_CREDENTIALS: Array<{ userId: string; email: string; password: string }> = [
+  { userId: 'user-1', email: 'alice@example.com', password: 'password' },
+  { userId: 'user-2', email: 'bob@example.com', password: 'password' },
+];

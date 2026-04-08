@@ -71,7 +71,6 @@ export class ClubService {
 
   readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
 
-  // ── City filter ──────────────────────────────────────────────────────────
   private readonly _cityFilter = signal<string | null>(null);
   readonly cityFilter = this._cityFilter.asReadonly();
 
@@ -79,13 +78,11 @@ export class ClubService {
     this._cityFilter.set(city);
   }
 
-  // ── Available cities (sorted, unique) ────────────────────────────────────
   readonly availableCities = computed<string[]>(() => {
     const cities = this._clubs().map(c => c.city).filter((c): c is string => !!c);
     return [...new Set(cities)].sort();
   });
 
-  // ── Upcoming clubs grouped by city ───────────────────────────────────────
   readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
     const filter = this._cityFilter();
     const clubs = this._clubs()
@@ -103,7 +100,6 @@ export class ClubService {
     }, {});
   });
 
-  // ── My clubs split by participation ──────────────────────────────────────
   readonly myParticipatedClubs = computed<Club[]>(() => {
     const userId = this.auth.currentUser()?.id;
     if (!userId) return [];
