@@ -4,12 +4,7 @@ import { Component, ChangeDetectionStrategy, input, computed } from '@angular/co
   selector: 'app-loading-spinner',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div [class]="containerClass()" role="status" aria-label="Loading">
-      <div [class]="spinnerClass()"></div>
-      <span class="sr-only">Loading…</span>
-    </div>
-  `,
+  templateUrl: './loading-spinner.component.html',
 })
 export class LoadingSpinnerComponent {
   readonly size = input<'sm' | 'md' | 'lg'>('md');

@@ -8,12 +8,6 @@ import { FooterComponent } from '../footer/footer.component';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterOutlet, HeaderComponent, FooterComponent],
-  template: `
-    <app-header />
-    <main class="min-h-screen">
-      <router-outlet />
-    </main>
-    <app-footer />
-  `,
+  templateUrl: './shell.component.html',
 })
 export class ShellComponent {}

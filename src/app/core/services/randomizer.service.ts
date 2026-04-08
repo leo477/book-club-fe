@@ -1,11 +1,15 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
-import { SupabaseService } from '../supabase/supabase.service';
 import { BookCandidate, RandomizerSession } from '../models/randomizer.model';
+import { MOCK_RANDOMIZER_HISTORY } from '../mocks/mock-data';
+
+let nextSessionId = MOCK_RANDOMIZER_HISTORY.length + 1;
+
+/** In-memory history store per club */
+const inMemoryHistory: RandomizerSession[] = [...MOCK_RANDOMIZER_HISTORY];
 
 @Injectable({ providedIn: 'root' })
 export class RandomizerService {
-  private readonly supabase = inject(SupabaseService);
   private readonly auth = inject(AuthService);
 
   private readonly _candidates = signal<BookCandidate[]>([]);
@@ -13,7 +17,6 @@ export class RandomizerService {
   private readonly _isSpinning = signal(false);
   private readonly _history = signal<RandomizerSession[]>([]);
 
-  // Public readonly projections — components cannot mutate service state
   readonly candidates = this._candidates.asReadonly();
   readonly result = this._result.asReadonly();
   readonly isSpinning = this._isSpinning.asReadonly();
@@ -43,37 +46,22 @@ export class RandomizerService {
     const user = this.auth.currentUser();
     if (!user) throw new Error('Not authenticated');
 
-    const { error } = await this.supabase.client
-      .from('randomizer_sessions')
-      .insert({
-        club_id: clubId,
-        created_by: user.id,
-        candidates: this._candidates(),
-        result: this._result(),
-      });
+    const session: RandomizerSession = {
+      id: `session-${++nextSessionId}`,
+      clubId,
+      createdBy: user.id,
+      candidates: this._candidates(),
+      result: this._result(),
+      createdAt: new Date().toISOString(),
+    };
 
-    if (error) throw new Error(error.message);
+    inMemoryHistory.unshift(session);
+    this._history.update(prev => [session, ...prev]);
   }
 
   async loadHistory(clubId: string): Promise<void> {
-    const { data, error } = await this.supabase.client
-      .from('randomizer_sessions')
-      .select('*')
-      .eq('club_id', clubId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw new Error(error.message);
-
-    this._history.set(
-      (data ?? []).map(row => ({
-        id: row.id,
-        clubId: row.club_id,
-        createdBy: row.created_by,
-        candidates: row.candidates,
-        result: row.result,
-        createdAt: row.created_at,
-      })),
-    );
+    await Promise.resolve();
+    this._history.set(inMemoryHistory.filter(s => s.clubId === clubId));
   }
 
   reset(): void {

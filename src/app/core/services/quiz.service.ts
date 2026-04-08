@@ -1,11 +1,19 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
-import { SupabaseService } from '../supabase/supabase.service';
 import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
+import { MOCK_QUIZZES, MOCK_QUESTIONS } from '../mocks/mock-data';
+
+let nextQuizId = MOCK_QUIZZES.length + 1;
+let nextQuestionId = MOCK_QUESTIONS.length + 1;
+let nextAttemptId = 1;
+
+/** In-memory stores (mutable copies so new items can be pushed) */
+const inMemoryQuizzes: Quiz[] = [...MOCK_QUIZZES];
+const inMemoryQuestions: QuizQuestion[] = [...MOCK_QUESTIONS];
+const inMemoryAttempts: QuizAttempt[] = [];
 
 @Injectable({ providedIn: 'root' })
 export class QuizService {
-  private readonly supabase = inject(SupabaseService);
   private readonly auth = inject(AuthService);
 
   private readonly _quizzes = signal<Quiz[]>([]);
@@ -13,7 +21,6 @@ export class QuizService {
   private readonly _questions = signal<QuizQuestion[]>([]);
   private readonly _isLoading = signal(false);
 
-  // Public readonly projections — components cannot mutate service state
   readonly quizzes = this._quizzes.asReadonly();
   readonly activeQuiz = this._activeQuiz.asReadonly();
   readonly questions = this._questions.asReadonly();
@@ -21,25 +28,9 @@ export class QuizService {
 
   async loadQuizzes(clubId: string): Promise<void> {
     this._isLoading.set(true);
-    const { data, error } = await this.supabase.client
-      .from('quizzes')
-      .select('*')
-      .eq('club_id', clubId)
-      .order('created_at', { ascending: false });
-
+    await Promise.resolve();
+    this._quizzes.set(inMemoryQuizzes.filter(q => q.clubId === clubId));
     this._isLoading.set(false);
-    if (error) throw new Error(error.message);
-
-    this._quizzes.set(
-      (data ?? []).map(row => ({
-        id: row.id,
-        clubId: row.club_id,
-        createdBy: row.created_by,
-        title: row.title,
-        description: row.description,
-        isActive: row.is_active,
-      })),
-    );
   }
 
   async createQuiz(data: {
@@ -50,29 +41,16 @@ export class QuizService {
     const user = this.auth.currentUser();
     if (!user) throw new Error('Not authenticated');
 
-    const { data: row, error } = await this.supabase.client
-      .from('quizzes')
-      .insert({
-        club_id: data.clubId,
-        created_by: user.id,
-        title: data.title,
-        description: data.description || null,
-        is_active: false,
-      })
-      .select()
-      .single();
-
-    if (error || !row) throw new Error(error?.message ?? 'Failed to create quiz');
-
     const quiz: Quiz = {
-      id: row.id,
-      clubId: row.club_id,
-      createdBy: row.created_by,
-      title: row.title,
-      description: row.description,
-      isActive: row.is_active,
+      id: `quiz-${++nextQuizId}`,
+      clubId: data.clubId,
+      createdBy: user.id,
+      title: data.title,
+      description: data.description || null,
+      isActive: false,
     };
 
+    inMemoryQuizzes.push(quiz);
     this._quizzes.update(prev => [quiz, ...prev]);
     return quiz;
   }
@@ -81,42 +59,17 @@ export class QuizService {
     quizId: string,
     q: Omit<QuizQuestion, 'id' | 'quizId'>,
   ): Promise<void> {
-    const { count } = await this.supabase.client
-      .from('quiz_questions')
-      .select('*', { count: 'exact', head: true })
-      .eq('quiz_id', quizId);
-
-    const sortOrder = count ?? 0;
-
-    const { error } = await this.supabase.client.from('quiz_questions').insert({
-      quiz_id: quizId,
-      question: q.question,
-      options: q.options,
-      correct_index: q.correctIndex,
-      sort_order: sortOrder,
-    });
-
-    if (error) throw new Error(error.message);
+    const question: QuizQuestion = {
+      id: `q-${++nextQuestionId}`,
+      quizId,
+      ...q,
+    };
+    inMemoryQuestions.push(question);
   }
 
   async loadQuestions(quizId: string): Promise<void> {
-    const { data, error } = await this.supabase.client
-      .from('quiz_questions')
-      .select('*')
-      .eq('quiz_id', quizId)
-      .order('sort_order', { ascending: true });
-
-    if (error) throw new Error(error.message);
-
-    this._questions.set(
-      (data ?? []).map(row => ({
-        id: row.id,
-        quizId: row.quiz_id,
-        question: row.question,
-        options: row.options,
-        correctIndex: row.correct_index,
-      })),
-    );
+    await Promise.resolve();
+    this._questions.set(inMemoryQuestions.filter(q => q.quizId === quizId));
   }
 
   async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
@@ -129,33 +82,23 @@ export class QuizService {
     const score = answers.reduce((acc, answer, i) => {
       return questions[i] && answer === questions[i].correctIndex ? acc + 1 : acc;
     }, 0);
-    const total = questions.length;
 
-    const { data: row, error } = await this.supabase.client
-      .from('quiz_attempts')
-      .insert({ quiz_id: quizId, user_id: user.id, score, total, answers })
-      .select()
-      .single();
-
-    if (error || !row) throw new Error(error?.message ?? 'Failed to submit attempt');
-
-    return {
-      id: row.id,
-      quizId: row.quiz_id,
-      userId: row.user_id,
-      score: row.score,
-      total: row.total,
-      answers: row.answers,
+    const attempt: QuizAttempt = {
+      id: `attempt-${++nextAttemptId}`,
+      quizId,
+      userId: user.id,
+      score,
+      total: questions.length,
+      answers,
     };
+
+    inMemoryAttempts.push(attempt);
+    return attempt;
   }
 
   async toggleActive(quizId: string, isActive: boolean): Promise<void> {
-    const { error } = await this.supabase.client
-      .from('quizzes')
-      .update({ is_active: isActive })
-      .eq('id', quizId);
-
-    if (error) throw new Error(error.message);
+    const quiz = inMemoryQuizzes.find(q => q.id === quizId);
+    if (quiz) quiz.isActive = isActive;
 
     this._quizzes.update(prev =>
       prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),

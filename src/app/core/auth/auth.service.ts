@@ -1,21 +1,23 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
-import { SupabaseService } from '../supabase/supabase.service';
-import type { Database } from '../supabase/database.types';
 import { UserProfile, UserRole } from '../models/user.model';
+import { MOCK_USERS } from '../mocks/mock-data';
 
-type ProfileRow = Database['public']['Tables']['profiles']['Row'];
+/** In-memory store of registered users (seeded from mock data). */
+const inMemoryUsers: Array<UserProfile & { email: string; password: string }> = [
+  { ...MOCK_USERS[0], email: 'alice@example.com', password: 'password' },
+  { ...MOCK_USERS[1], email: 'bob@example.com', password: 'password' },
+];
+
+let nextUserId = inMemoryUsers.length + 1;
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly supabase = inject(SupabaseService);
   private readonly router = inject(Router);
 
-  // Private writable signals
   private readonly _currentUser = signal<UserProfile | null>(null);
   private readonly _isLoading = signal<boolean>(true);
 
-  // Public readonly signals
   readonly currentUser = this._currentUser.asReadonly();
   readonly isLoading = this._isLoading.asReadonly();
   readonly isAuthenticated = computed(() => this._currentUser() !== null);
@@ -23,76 +25,46 @@ export class AuthService {
   readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
 
   constructor() {
-    this.initAuthState();
-  }
-
-  private async initAuthState(): Promise<void> {
-    const {
-      data: { session },
-    } = await this.supabase.client.auth.getSession();
-
-    if (session?.user) {
-      await this.loadProfile(session.user.id);
-    }
+    // Resolve immediately — no async session bootstrap needed with mocks
     this._isLoading.set(false);
-
-    this.supabase.client.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        await this.loadProfile(session.user.id);
-      } else if (event === 'SIGNED_OUT') {
-        this._currentUser.set(null);
-      }
-    });
-  }
-
-  private async loadProfile(userId: string): Promise<void> {
-    const result = await this.supabase.client
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
-
-    const data = result.data as ProfileRow | null;
-
-    if (data) {
-      this._currentUser.set({
-        id: data.id,
-        role: data.role as UserRole,
-        displayName: data.display_name,
-        avatarUrl: data.avatar_url,
-        createdAt: data.created_at,
-      });
-    }
   }
 
   async signUp(
     email: string,
-    password: string,
+    _password: string,
     displayName: string,
     role: UserRole,
   ): Promise<{ error: string | null }> {
-    this._isLoading.set(true);
-    const { error } = await this.supabase.client.auth.signUp({
+    if (inMemoryUsers.some(u => u.email === email)) {
+      return { error: 'Email already registered' };
+    }
+
+    const newUser: UserProfile & { email: string; password: string } = {
+      id: `user-${++nextUserId}`,
       email,
-      password,
-      options: { data: { display_name: displayName, role } },
-    });
-    this._isLoading.set(false);
-    return { error: error?.message ?? null };
+      password: _password,
+      role,
+      displayName,
+      avatarUrl: null,
+      createdAt: new Date().toISOString(),
+    };
+
+    inMemoryUsers.push(newUser);
+    this._currentUser.set({ ...newUser });
+    return { error: null };
   }
 
   async signIn(email: string, password: string): Promise<{ error: string | null }> {
-    this._isLoading.set(true);
-    const { error } = await this.supabase.client.auth.signInWithPassword({
-      email,
-      password,
-    });
-    this._isLoading.set(false);
-    return { error: error?.message ?? null };
+    const found = inMemoryUsers.find(u => u.email === email && u.password === password);
+    if (!found) {
+      return { error: 'Invalid email or password' };
+    }
+    this._currentUser.set({ ...found });
+    return { error: null };
   }
 
   async signOut(): Promise<void> {
-    await this.supabase.client.auth.signOut();
+    this._currentUser.set(null);
     this.router.navigate(['/login']);
   }
 }
