@@ -1,5 +1,5 @@
 {
-  "ignoreBuildStep": "bash ignore-build.sh",
+  "ignoreCommand": "bash ignore-build.sh",
   "buildCommand": "npm run build -- --configuration=production",
   "outputDirectory": "dist/book-club-fe/browser",
   "rewrites": [
