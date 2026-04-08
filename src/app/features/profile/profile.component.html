@@ -1,0 +1,631 @@
+<div class="max-w-2xl mx-auto space-y-6 py-8 px-4">
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- Section 1 — Hero / Avatar                                         -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <section
+    aria-labelledby="profile-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-8 text-center"
+  >
+    <!-- Avatar circle -->
+    <div
+      class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
+             flex items-center justify-center text-white text-3xl font-bold select-none shadow-md"
+      aria-hidden="true"
+    >
+      {{ userInitials() }}
+    </div>
+
+    <!-- Display name -->
+    <h1
+      id="profile-heading"
+      class="text-2xl font-bold text-gray-900 dark:text-white"
+    >
+      {{ auth.currentUser()?.displayName }}
+    </h1>
+
+    <!-- Role badge -->
+    <span
+      class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
+      [class]="auth.currentUser()?.role === 'organizer'
+        ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
+        : 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
+    >
+      {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
+      {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
+    </span>
+
+    <!-- Joined date -->
+    @if (joinedDate()) {
+      <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
+        {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
+      </p>
+    }
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- Section 2 — Edit Display Name                                     -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <section
+    aria-labelledby="edit-name-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="edit-name-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
+    >
+      <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
+    </h2>
+
+    <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
+      <div class="space-y-4">
+        <!-- Display name field -->
+        <div>
+          <label
+            for="displayName"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+          >
+            {{ 'PROFILE.display_name_label' | translate }}
+          </label>
+          <input
+            id="displayName"
+            type="text"
+            formControlName="displayName"
+            autocomplete="nickname"
+            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
+                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
+                   text-gray-900 dark:text-white placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                   transition-all duration-200"
+            [placeholder]="'PROFILE.display_name_placeholder' | translate"
+            [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
+            aria-describedby="displayName-error"
+          />
+
+          <!-- Validation error -->
+          @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
+            <p
+              id="displayName-error"
+              role="alert"
+              class="mt-1.5 text-xs text-red-600 dark:text-red-400"
+            >
+              @if (nameForm.controls.displayName.hasError('required')) {
+                {{ 'PROFILE.display_name_required' | translate }}
+              } @else if (nameForm.controls.displayName.hasError('minlength')) {
+                {{ 'PROFILE.display_name_min' | translate }}
+              }
+            </p>
+          }
+        </div>
+
+        <!-- Save row -->
+        <div class="flex items-center gap-3">
+          <button
+            type="submit"
+            [disabled]="nameForm.invalid || isSavingName()"
+            class="rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-50
+                   disabled:cursor-not-allowed text-white px-5 py-2.5 text-sm font-medium
+                   transition-all duration-200 focus:outline-none focus:ring-2
+                   focus:ring-primary-500 focus:ring-offset-2"
+          >
+            @if (isSavingName()) {
+              {{ 'PROFILE.saving' | translate }}
+            } @else {
+              {{ 'PROFILE.save_name' | translate }}
+            }
+          </button>
+
+          <!-- Success toast (inline) -->
+          @if (nameSaved()) {
+            <span
+              role="status"
+              aria-live="polite"
+              class="flex items-center gap-1.5 text-sm font-medium text-green-600 dark:text-green-400
+                     animate-fade-in"
+            >
+              ✅ {{ 'PROFILE.name_updated' | translate }}
+            </span>
+          }
+        </div>
+      </div>
+    </form>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- Section 3 — Change Role                                           -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <section
+    aria-labelledby="role-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="role-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2"
+    >
+      <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
+    </h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+      {{ 'PROFILE.role_subtitle' | translate }}
+    </p>
+
+    <div class="grid grid-cols-2 gap-4" role="group" [attr.aria-label]="'PROFILE.role_title' | translate">
+
+      <!-- Reader card -->
+      <button
+        type="button"
+        (click)="changeRole('user')"
+        [attr.aria-pressed]="auth.currentUser()?.role === 'user'"
+        class="rounded-xl border-2 p-5 text-left transition-all duration-200 focus:outline-none
+               focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+        [class]="auth.currentUser()?.role === 'user'
+          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+          : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700
+             hover:bg-gray-50 dark:hover:bg-gray-700/40'"
+      >
+        <div class="text-3xl mb-2" aria-hidden="true">📖</div>
+        <div class="font-semibold text-gray-900 dark:text-white text-sm">{{ 'PROFILE.role_reader' | translate }}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          {{ 'PROFILE.role_reader_desc' | translate }}
+        </div>
+        @if (auth.currentUser()?.role === 'user') {
+          <span
+            class="mt-3 inline-flex items-center gap-1 rounded-full bg-primary-600 px-2.5 py-0.5
+                   text-xs font-medium text-white"
+          >
+            {{ 'PROFILE.active_badge' | translate }}
+          </span>
+        }
+      </button>
+
+      <!-- Organizer card -->
+      <button
+        type="button"
+        (click)="changeRole('organizer')"
+        [attr.aria-pressed]="auth.currentUser()?.role === 'organizer'"
+        class="rounded-xl border-2 p-5 text-left transition-all duration-200 focus:outline-none
+               focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+        [class]="auth.currentUser()?.role === 'organizer'
+          ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/20'
+          : 'border-gray-200 dark:border-gray-700 hover:border-accent-300 dark:hover:border-accent-700
+             hover:bg-gray-50 dark:hover:bg-gray-700/40'"
+      >
+        <div class="text-3xl mb-2" aria-hidden="true">🎯</div>
+        <div class="font-semibold text-gray-900 dark:text-white text-sm">{{ 'PROFILE.role_organizer' | translate }}</div>
+        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+          {{ 'PROFILE.role_organizer_desc' | translate }}
+        </div>
+        @if (auth.currentUser()?.role === 'organizer') {
+          <span
+            class="mt-3 inline-flex items-center gap-1 rounded-full bg-accent-600 px-2.5 py-0.5
+                   text-xs font-medium text-white"
+          >
+            {{ 'PROFILE.active_badge' | translate }}
+          </span>
+        }
+      </button>
+    </div>
+
+    <!-- Role change success toast -->
+    @if (roleChanged()) {
+      <div
+        role="status"
+        aria-live="polite"
+        class="mt-4 flex items-center gap-2 rounded-xl bg-green-50 dark:bg-green-900/20
+               border border-green-200 dark:border-green-800 px-4 py-3 text-sm
+               font-medium text-green-700 dark:text-green-400 animate-fade-in"
+      >
+        ✅ {{ 'PROFILE.role_changed_prefix' | translate }} <strong>{{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}</strong>!
+      </div>
+    }
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- Section 4 — Statistics                                            -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <section
+    aria-labelledby="stats-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="stats-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
+    >
+      <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
+    </h2>
+
+    <dl class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+
+      <!-- Clubs Joined -->
+      <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
+        <div class="text-3xl mb-2" aria-hidden="true">📚</div>
+        <dd class="text-3xl font-bold text-gray-900 dark:text-white">
+          {{ auth.userStats()?.clubsJoined ?? 0 }}
+        </dd>
+        <dt class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'PROFILE.clubs_joined' | translate }}</dt>
+      </div>
+
+      <!-- Quizzes Taken -->
+      <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
+        <div class="text-3xl mb-2" aria-hidden="true">🧠</div>
+        <dd class="text-3xl font-bold text-gray-900 dark:text-white">
+          {{ auth.userStats()?.quizzesTaken ?? 0 }}
+        </dd>
+        <dt class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'PROFILE.quizzes_taken' | translate }}</dt>
+      </div>
+
+      <!-- Quiz Wins -->
+      <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
+        <div class="text-3xl mb-2" aria-hidden="true">🏆</div>
+        <dd class="text-3xl font-bold text-gray-900 dark:text-white">
+          {{ auth.userStats()?.quizWins ?? 0 }}
+        </dd>
+        <dt class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'PROFILE.quizzes_won' | translate }}</dt>
+      </div>
+
+      <!-- Likes Received -->
+      <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
+        <div class="text-3xl mb-2" aria-hidden="true">❤️</div>
+        <dd class="text-3xl font-bold text-gray-900 dark:text-white">
+          {{ auth.userStats()?.likesReceived ?? 0 }}
+        </dd>
+        <dt class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'PROFILE.likes_received' | translate }}</dt>
+      </div>
+
+      <!-- Books Read -->
+      <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
+        <div class="text-3xl mb-2" aria-hidden="true">📖</div>
+        <dd class="text-3xl font-bold text-gray-900 dark:text-white">
+          {{ auth.userStats()?.booksRead ?? 0 }}
+        </dd>
+        <dt class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'PROFILE.books_read' | translate }}</dt>
+      </div>
+
+    </dl>
+
+    <!-- Empty state when no stats are available for this user -->
+    @if (!auth.userStats()) {
+      <p class="text-center text-sm text-gray-400 dark:text-gray-500 mt-2">
+        {{ 'PROFILE.no_stats' | translate }}
+      </p>
+    }
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- Section 5 — Social Media Links                                    -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <section
+    aria-labelledby="socials-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="socials-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
+    >
+      <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
+    </h2>
+
+    <!-- ── Privacy toggle ─────────────────────────────────────────────── -->
+    <div class="flex items-center gap-3 mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+      <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
+        <input
+          type="checkbox"
+          [formControl]="socialsPublicControl"
+          (change)="onSocialsPublicChange(socialsPublicControl.value)"
+          class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+        />
+        {{ 'PROFILE.socials_public_label' | translate }}
+      </label>
+    </div>
+
+    <!-- ── Current social badges ───────────────────────────────────── -->
+    @if (
+      userSocials().telegram  ||
+      userSocials().instagram ||
+      userSocials().twitter   ||
+      userSocials().linkedin  ||
+      userSocials().github    ||
+      userSocials().goodreads
+    ) {
+      <div class="flex flex-wrap gap-2 mb-6" [attr.aria-label]="'PROFILE.socials_title' | translate">
+
+        @if (userSocials().telegram) {
+          <a
+            [href]="'https://t.me/' + userSocials().telegram"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 rounded-full border border-blue-200
+                   dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5
+                   text-xs font-medium text-blue-700 dark:text-blue-300
+                   hover:bg-blue-100 dark:hover:bg-blue-900/50
+                   transition-colors duration-150 focus:outline-none focus:ring-2
+                   focus:ring-blue-500 focus:ring-offset-2"
+            [attr.aria-label]="'Telegram: @' + userSocials().telegram"
+          >
+            <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/>
+            </svg>
+            &#64;{{ userSocials().telegram }}
+          </a>
+        }
+
+        @if (userSocials().instagram) {
+          <a
+            [href]="'https://instagram.com/' + userSocials().instagram"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 rounded-full border border-pink-200
+                   dark:border-pink-800 bg-pink-50 dark:bg-pink-900/30 px-3 py-1.5
+                   text-xs font-medium bg-clip-text
+                   bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500
+                   text-transparent hover:opacity-80
+                   transition-opacity duration-150 focus:outline-none focus:ring-2
+                   focus:ring-pink-500 focus:ring-offset-2"
+            [attr.aria-label]="'Instagram: @' + userSocials().instagram"
+          >
+            <svg class="h-3.5 w-3.5 shrink-0 text-pink-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>
+            </svg>
+            &#64;{{ userSocials().instagram }}
+          </a>
+        }
+
+        @if (userSocials().twitter) {
+          <a
+            [href]="'https://x.com/' + userSocials().twitter"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 rounded-full border border-gray-300
+                   dark:border-gray-600 bg-gray-900 dark:bg-gray-950 px-3 py-1.5
+                   text-xs font-medium text-white
+                   hover:bg-gray-700 dark:hover:bg-gray-800
+                   transition-colors duration-150 focus:outline-none focus:ring-2
+                   focus:ring-gray-500 focus:ring-offset-2"
+            [attr.aria-label]="'Twitter / X: @' + userSocials().twitter"
+          >
+            <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+            &#64;{{ userSocials().twitter }}
+          </a>
+        }
+
+        @if (userSocials().linkedin) {
+          <a
+            [href]="userSocials().linkedin!.startsWith('http')
+              ? userSocials().linkedin!
+              : 'https://linkedin.com/in/' + userSocials().linkedin"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 rounded-full border border-blue-300
+                   dark:border-blue-700 bg-blue-600 dark:bg-blue-700 px-3 py-1.5
+                   text-xs font-medium text-white
+                   hover:bg-blue-700 dark:hover:bg-blue-600
+                   transition-colors duration-150 focus:outline-none focus:ring-2
+                   focus:ring-blue-500 focus:ring-offset-2"
+            [attr.aria-label]="'LinkedIn: ' + userSocials().linkedin"
+          >
+            <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 23.2 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+            </svg>
+            LinkedIn
+          </a>
+        }
+
+        @if (userSocials().github) {
+          <a
+            [href]="'https://github.com/' + userSocials().github"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 rounded-full border border-gray-300
+                   dark:border-gray-600 bg-gray-800 dark:bg-gray-900 px-3 py-1.5
+                   text-xs font-medium text-gray-100
+                   hover:bg-gray-700 dark:hover:bg-gray-800
+                   transition-colors duration-150 focus:outline-none focus:ring-2
+                   focus:ring-gray-500 focus:ring-offset-2"
+            [attr.aria-label]="'GitHub: ' + userSocials().github"
+          >
+            <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+            </svg>
+            {{ userSocials().github }}
+          </a>
+        }
+
+        @if (userSocials().goodreads) {
+          <a
+            [href]="userSocials().goodreads!.startsWith('http')
+              ? userSocials().goodreads!
+              : 'https://goodreads.com/' + userSocials().goodreads"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 rounded-full border border-amber-300
+                   dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-3 py-1.5
+                   text-xs font-medium text-amber-800 dark:text-amber-300
+                   hover:bg-amber-100 dark:hover:bg-amber-900/50
+                   transition-colors duration-150 focus:outline-none focus:ring-2
+                   focus:ring-amber-500 focus:ring-offset-2"
+            [attr.aria-label]="'Goodreads: ' + userSocials().goodreads"
+          >
+            <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M19.525 15.977V.49h-2.059v2.906h-.064a5.015 5.015 0 0 0-1.949-2.406C14.548.316 13.441 0 12.192 0c-1.648 0-3.037.434-4.175 1.303-1.136.869-1.927 2.045-2.373 3.527S5.07 7.857 5.07 9.481c0 1.624.188 3.069.562 4.337.374 1.268 1.004 2.326 1.889 3.172.885.847 2.056 1.271 3.512 1.271 1.248 0 2.35-.304 3.303-.911a4.961 4.961 0 0 0 1.999-2.456h.063v2.904c0 1.547-.272 2.806-.816 3.777-.544.971-1.33 1.666-2.359 2.085-1.029.419-2.264.628-3.703.628-.802 0-1.608-.1-2.416-.302a9.11 9.11 0 0 1-2.258-.961l-.88 1.674c.737.481 1.607.852 2.613 1.114 1.006.262 2.03.393 3.073.393 2.267 0 4.092-.411 5.469-1.231 1.377-.82 2.357-1.913 2.937-3.277.581-1.364.871-2.891.871-4.582zm-7.301-.34c-1.161 0-2.124-.31-2.888-.932-.764-.621-1.323-1.479-1.677-2.574-.354-1.095-.531-2.301-.531-3.617 0-2.006.401-3.62 1.203-4.845.802-1.225 2.04-1.837 3.717-1.837 1.677 0 2.908.609 3.691 1.827.783 1.218 1.176 2.855 1.176 4.913 0 1.296-.173 2.491-.519 3.581-.346 1.09-.895 1.955-1.649 2.591-.754.637-1.71.953-2.862.953-.001 0 .002-.06.339-.06z"/>
+            </svg>
+            Goodreads
+          </a>
+        }
+
+      </div>
+    }
+
+    <!-- ── Edit form ────────────────────────────────────────────────── -->
+    <form
+      [formGroup]="socialsForm"
+      (ngSubmit)="submitSocials()"
+      novalidate
+      class="space-y-4"
+    >
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        <!-- Telegram -->
+        <div>
+          <label
+            for="social-telegram"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+          >
+            <span class="text-blue-600 dark:text-blue-400">Telegram</span>
+          </label>
+          <input
+            id="social-telegram"
+            type="text"
+            formControlName="telegram"
+            placeholder="username (без @)"
+            autocomplete="off"
+            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
+                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
+                   text-gray-900 dark:text-white placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                   transition-all duration-200"
+          />
+        </div>
+
+        <!-- Instagram -->
+        <div>
+          <label
+            for="social-instagram"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+          >
+            <span class="bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500
+                         bg-clip-text text-transparent">Instagram</span>
+          </label>
+          <input
+            id="social-instagram"
+            type="text"
+            formControlName="instagram"
+            placeholder="username (без @)"
+            autocomplete="off"
+            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
+                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
+                   text-gray-900 dark:text-white placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent
+                   transition-all duration-200"
+          />
+        </div>
+
+        <!-- Twitter / X -->
+        <div>
+          <label
+            for="social-twitter"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+          >
+            <span class="text-gray-900 dark:text-gray-100">Twitter / X</span>
+          </label>
+          <input
+            id="social-twitter"
+            type="text"
+            formControlName="twitter"
+            placeholder="username (без @)"
+            autocomplete="off"
+            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
+                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
+                   text-gray-900 dark:text-white placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-transparent
+                   transition-all duration-200"
+          />
+        </div>
+
+        <!-- LinkedIn -->
+        <div>
+          <label
+            for="social-linkedin"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+          >
+            <span class="text-blue-700 dark:text-blue-400">LinkedIn</span>
+          </label>
+          <input
+            id="social-linkedin"
+            type="text"
+            formControlName="linkedin"
+            placeholder="username або повний URL"
+            autocomplete="off"
+            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
+                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
+                   text-gray-900 dark:text-white placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent
+                   transition-all duration-200"
+          />
+        </div>
+
+        <!-- GitHub -->
+        <div>
+          <label
+            for="social-github"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+          >
+            <span class="text-gray-800 dark:text-gray-200">GitHub</span>
+          </label>
+          <input
+            id="social-github"
+            type="text"
+            formControlName="github"
+            placeholder="username"
+            autocomplete="off"
+            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
+                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
+                   text-gray-900 dark:text-white placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent
+                   transition-all duration-200"
+          />
+        </div>
+
+        <!-- Goodreads -->
+        <div>
+          <label
+            for="social-goodreads"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+          >
+            <span class="text-amber-700 dark:text-amber-400">Goodreads</span>
+          </label>
+          <input
+            id="social-goodreads"
+            type="text"
+            formControlName="goodreads"
+            placeholder="username або повний URL"
+            autocomplete="off"
+            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
+                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
+                   text-gray-900 dark:text-white placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent
+                   transition-all duration-200"
+          />
+        </div>
+
+      </div>
+
+      <!-- Submit row -->
+      <div class="flex items-center gap-3 pt-1">
+        <button
+          type="submit"
+          class="rounded-xl bg-primary-600 hover:bg-primary-700 text-white
+                 px-5 py-2.5 text-sm font-medium
+                 transition-all duration-200 focus:outline-none focus:ring-2
+                 focus:ring-primary-500 focus:ring-offset-2"
+        >
+          {{ 'PROFILE.save' | translate }}
+        </button>
+
+        <!-- Inline success toast -->
+        @if (socialsSaved()) {
+          <span
+            role="status"
+            aria-live="polite"
+            class="flex items-center gap-1.5 text-sm font-medium text-green-600 dark:text-green-400
+                   animate-fade-in"
+          >
+            ✅ {{ 'PROFILE.socials_saved' | translate }}
+          </span>
+        }
+      </div>
+    </form>
+
+  </section>
+
+</div>

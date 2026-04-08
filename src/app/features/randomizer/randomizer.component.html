@@ -1,225 +1,173 @@
-    <div
-      class="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 p-4 sm:p-8"
-    >
-      <div class="max-w-4xl mx-auto space-y-8">
-        <!-- ── Header ── -->
-        <div class="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 class="font-display text-3xl font-bold text-white">🎲 Book Randomizer</h1>
-            <p class="text-primary-300 mt-1">Can't decide? Let fate pick your next read.</p>
-          </div>
-          <a
-            [routerLink]="['/clubs', clubId]"
-            class="text-primary-300 hover:text-white transition-colors text-sm"
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 p-4 sm:p-8">
+  <div class="max-w-4xl mx-auto space-y-8">
+
+    <!-- ── Header ── -->
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-white">🎲 {{ 'RANDOMIZER.title' | translate }}</h1>
+        <p class="text-primary-300 mt-1">{{ 'RANDOMIZER.subtitle' | translate }}</p>
+      </div>
+      <nav aria-label="Breadcrumb">
+        <a [routerLink]="['/clubs', clubId]" class="text-primary-300 hover:text-white transition-colors text-sm">
+          {{ 'RANDOMIZER.back_to_club' | translate }}
+        </a>
+      </nav>
+    </header>
+
+    <!-- ── Purpose input ── -->
+    <div class="bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/10">
+      <label for="purpose" class="block text-white font-medium text-sm mb-2">{{ 'RANDOMIZER.purpose_label' | translate }}</label>
+      <input
+        id="purpose"
+        type="text"
+        [formControl]="purposeControl"
+        [placeholder]="'RANDOMIZER.purpose_placeholder' | translate"
+        class="w-full rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+      />
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-8">
+
+      <!-- ── Left: Members list ── -->
+      <section aria-labelledby="members-heading" class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 id="members-heading" class="text-white font-semibold text-lg">
+            👥 {{ 'RANDOMIZER.members_title' | translate }}
+            <span class="text-primary-300 text-sm font-normal ml-2">{{ selectedCount() }} / {{ randomizerService.candidates().length }} {{ 'RANDOMIZER.selected' | translate }}</span>
+          </h2>
+          <button
+            type="button"
+            (click)="reset()"
+            class="text-xs text-primary-300 hover:text-white transition-colors"
           >
-            ← Back to Club
-          </a>
+            {{ 'RANDOMIZER.select_all' | translate }}
+          </button>
         </div>
 
-        <div class="grid lg:grid-cols-2 gap-8">
-          <!-- ── Left column: Add + list candidates ── -->
-          <div class="space-y-4">
-            <!-- Add form -->
-            <div class="bg-white/10 backdrop-blur rounded-2xl p-6 border border-white/10">
-              <h2 class="text-white font-semibold text-lg mb-4">Add a Book</h2>
-              <form
-                [formGroup]="candidateForm"
-                (ngSubmit)="addCandidate()"
-                class="space-y-3"
-                novalidate
-              >
-                <input
-                  formControlName="title"
-                  placeholder="Book title"
-                  class="w-full rounded-lg bg-white/10 border border-white/20 text-white px-4 py-2.5
-                         placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary-400
-                         focus:border-transparent transition-all"
-                />
-                <input
-                  formControlName="author"
-                  placeholder="Author name"
-                  class="w-full rounded-lg bg-white/10 border border-white/20 text-white px-4 py-2.5
-                         placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-primary-400
-                         focus:border-transparent transition-all"
-                />
+        @if (randomizerService.candidates().length === 0) {
+          <div class="bg-white/10 rounded-2xl p-8 text-center text-white/60">
+            <p class="text-3xl mb-2">👤</p>
+            <p>{{ 'RANDOMIZER.no_members' | translate }}</p>
+          </div>
+        } @else {
+          <ul class="space-y-2" role="list">
+            @for (member of randomizerService.candidates(); track member.userId) {
+              <li>
                 <button
-                  type="submit"
-                  [disabled]="candidateForm.invalid"
-                  class="w-full bg-primary-600 hover:bg-primary-500 disabled:opacity-40
-                         disabled:cursor-not-allowed text-white rounded-lg px-4 py-2.5
-                         font-medium transition-colors"
+                  type="button"
+                  (click)="randomizerService.toggleMember(member.userId)"
+                  class="w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  [class]="randomizerService.selectedIds().has(member.userId)
+                    ? 'bg-white/20 border border-white/30'
+                    : 'bg-white/5 border border-white/10 opacity-50'"
+                  [attr.aria-pressed]="randomizerService.selectedIds().has(member.userId)"
+                  [attr.aria-label]="'Toggle ' + member.displayName"
                 >
-                  + Add Book
-                </button>
-              </form>
-            </div>
-
-            <!-- Candidates list -->
-            <div class="space-y-2">
-              @for (c of randomizerService.candidates(); track $index) {
-                <div
-                  class="bg-white/10 backdrop-blur rounded-xl px-4 py-3 border border-white/10
-                         flex items-center justify-between gap-3 group transition-all
-                         hover:bg-white/15"
-                >
-                  <div class="min-w-0">
-                    <p class="text-white font-medium truncate">{{ c.title }}</p>
-                    <p class="text-primary-300 text-sm truncate">by {{ c.author }}</p>
+                  <!-- Avatar -->
+                  <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                    {{ initials(member.displayName) }}
                   </div>
-                  <button
-                    (click)="removeCandidate($index)"
-                    class="text-white/30 hover:text-red-400 transition-colors flex-shrink-0
-                           text-lg leading-none"
-                    aria-label="Remove {{ c.title }}"
-                  >
-                    ✕
-                  </button>
-                </div>
-              } @empty {
-                <div
-                  class="bg-white/5 rounded-xl p-8 text-center text-white/30 border
-                         border-dashed border-white/20"
-                >
-                  <p class="text-3xl mb-2">📚</p>
-                  <p class="text-sm">Add at least 2 books to spin</p>
-                </div>
-              }
-            </div>
-          </div>
-
-          <!-- ── Right column: Spin + result ── -->
-          <div class="flex flex-col items-center gap-8">
-            <!-- Animated wheel -->
-            <div class="relative">
-              <div
-                class="w-36 h-36 rounded-full border-4 border-primary-400 bg-white/10
-                       flex items-center justify-center text-6xl select-none transition-all
-                       duration-300 shadow-2xl shadow-primary-900/60"
-                [class.animate-spin]="randomizerService.isSpinning()"
-                aria-hidden="true"
-              >
-                🎡
-              </div>
-              <!-- Decorative confetti dots when result shown -->
-              @if (randomizerService.result() && !randomizerService.isSpinning()) {
-                <span
-                  class="confetti-dot absolute -top-2 left-4 w-2 h-2 rounded-full
-                         bg-accent-400"
-                  style="animation-delay: 0s"
-                ></span>
-                <span
-                  class="confetti-dot absolute -top-3 right-6 w-2 h-2 rounded-full
-                         bg-primary-400"
-                  style="animation-delay: 0.3s"
-                ></span>
-                <span
-                  class="confetti-dot absolute top-2 -right-2 w-1.5 h-1.5 rounded-full
-                         bg-yellow-400"
-                  style="animation-delay: 0.6s"
-                ></span>
-                <span
-                  class="confetti-dot absolute top-6 -left-3 w-1.5 h-1.5 rounded-full
-                         bg-green-400"
-                  style="animation-delay: 0.9s"
-                ></span>
-              }
-            </div>
-
-            <!-- Spin button -->
-            <button
-              (click)="spin()"
-              [disabled]="randomizerService.candidates().length < 2 || randomizerService.isSpinning()"
-              class="relative px-12 py-5 rounded-2xl text-2xl font-bold text-white
-                     disabled:opacity-40 disabled:cursor-not-allowed transition-all duration-200
-                     transform hover:scale-105 active:scale-95 focus:outline-none
-                     focus:ring-4 focus:ring-accent-400 shadow-2xl"
-              [class.bg-accent-600]="!randomizerService.isSpinning()"
-              [class.hover:bg-accent-500]="!randomizerService.isSpinning()"
-              [class.bg-accent-700]="randomizerService.isSpinning()"
-              [class.animate-pulse]="randomizerService.isSpinning()"
-              aria-live="polite"
-            >
-              @if (randomizerService.isSpinning()) {
-                ⏳ Spinning…
-              } @else {
-                🎲 Spin!
-              }
-            </button>
-
-            <!-- Winner card -->
-            @if (randomizerService.result(); as winner) {
-              <div class="winner-pop w-full">
-                <div
-                  class="bg-gradient-to-br from-accent-500 to-primary-600 rounded-2xl p-6
-                         text-center shadow-2xl border border-white/20"
-                >
-                  <div class="text-4xl mb-2" aria-hidden="true">🏆</div>
-                  <p class="text-white/70 text-xs uppercase tracking-widest mb-1">
-                    Next Read
-                  </p>
-                  <p class="text-white text-2xl font-display font-bold leading-tight">
-                    {{ winner.title }}
-                  </p>
-                  <p class="text-white/80 mt-1 text-sm">by {{ winner.author }}</p>
-                </div>
-              </div>
-            }
-
-            <!-- Action buttons -->
-            <div class="flex gap-3 w-full">
-              @if (randomizerService.result() && authService.isOrganizer()) {
-                <button
-                  (click)="saveSession()"
-                  [disabled]="isSaving()"
-                  class="flex-1 bg-primary-700 hover:bg-primary-600 disabled:opacity-50
-                         text-white rounded-xl px-4 py-2.5 font-medium transition-colors
-                         text-sm"
-                >
-                  {{ isSaving() ? '…Saving' : '💾 Save to History' }}
+                  <span class="text-white font-medium text-sm flex-1 text-left">{{ member.displayName }}</span>
+                  @if (randomizerService.selectedIds().has(member.userId)) {
+                    <span class="text-green-400 text-lg" aria-hidden="true">✓</span>
+                  }
                 </button>
-              }
-              <button
-                (click)="reset()"
-                class="flex-1 bg-white/10 hover:bg-white/20 text-white rounded-xl px-4
-                       py-2.5 font-medium transition-colors text-sm border border-white/10"
-              >
-                🔄 Reset
-              </button>
-            </div>
-
-            <!-- Error message -->
-            @if (errorMessage()) {
-              <p class="text-red-400 text-sm text-center">{{ errorMessage() }}</p>
+              </li>
             }
-          </div>
-        </div>
+          </ul>
+        }
+      </section>
 
-        <!-- ── Session history ── -->
-        @if (randomizerService.history().length > 0) {
-          <div class="bg-white/10 backdrop-blur rounded-2xl p-6 border border-white/10">
-            <h2 class="text-white font-semibold text-lg mb-4">📜 Session History</h2>
+      <!-- ── Right: Spin + Result ── -->
+      <section aria-labelledby="spin-heading" class="space-y-6">
+        <h2 id="spin-heading" class="sr-only">{{ 'RANDOMIZER.title' | translate }}</h2>
+
+        <!-- Result display -->
+        <div class="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/10 text-center min-h-[200px] flex flex-col items-center justify-center">
+          @if (randomizerService.isSpinning()) {
+            <div class="space-y-4">
+              <div class="text-5xl animate-bounce">🎲</div>
+              <p class="text-white/70 text-sm animate-pulse">{{ 'RANDOMIZER.spinning' | translate }}</p>
+            </div>
+          } @else if (randomizerService.result()) {
             <div class="space-y-3">
-              @for (session of randomizerService.history(); track session.id) {
-                <div
-                  class="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between
-                         gap-3 flex-wrap"
-                >
-                  <div>
-                    <p class="text-white font-medium">
-                      {{ session.result?.title ?? '—' }}
-                    </p>
-                    <p class="text-primary-300 text-sm">
-                      {{ session.candidates.length }} candidates
-                    </p>
-                  </div>
-                  <p class="text-white/40 text-xs">
-                    {{ session.createdAt | date: 'mediumDate' }}
-                  </p>
-                </div>
-              }
+              <div class="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl ring-4 ring-white/30">
+                {{ initials(randomizerService.result()!.displayName) }}
+              </div>
+              <div>
+                <p class="text-white/60 text-xs uppercase tracking-wide mb-1">{{ randomizerService.purpose() }}</p>
+                <p class="text-white text-2xl font-bold">{{ randomizerService.result()!.displayName }}</p>
+              </div>
+              <span class="text-3xl">🏆</span>
             </div>
+          } @else {
+            <div class="text-white/40 space-y-2">
+              <div class="text-4xl">🎯</div>
+              <p class="text-sm">{{ 'RANDOMIZER.spin_hint' | translate }}</p>
+            </div>
+          }
+        </div>
+
+        <!-- Error -->
+        @if (errorMessage()) {
+          <div class="rounded-xl bg-red-500/20 border border-red-500/30 px-4 py-3 text-sm text-red-300" role="alert">
+            {{ errorMessage() }}
           </div>
         }
-      </div>
+
+        <!-- Action buttons -->
+        <div class="flex flex-col gap-3">
+          <button
+            type="button"
+            (click)="spin()"
+            [disabled]="randomizerService.isSpinning() || selectedCount() < 2"
+            class="w-full rounded-2xl bg-gradient-to-r from-accent-500 to-primary-500 hover:from-accent-400 hover:to-primary-400 text-white font-bold py-4 text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary-400 shadow-lg"
+          >
+            @if (randomizerService.isSpinning()) {
+              {{ 'RANDOMIZER.spinning_btn' | translate }}
+            } @else {
+              {{ 'RANDOMIZER.spin' | translate }}
+            }
+          </button>
+
+          @if (randomizerService.result() && authService.isOrganizer()) {
+            <button
+              type="button"
+              (click)="saveSession()"
+              [disabled]="isSaving()"
+              class="w-full rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium py-3 transition-all duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-400"
+            >
+              @if (isSaving()) {
+                {{ 'RANDOMIZER.saving' | translate }}
+              } @else {
+                {{ 'RANDOMIZER.save' | translate }}
+              }
+            </button>
+          }
+        </div>
+
+        <!-- History -->
+        @if (randomizerService.history().length > 0) {
+          <div class="space-y-3">
+            <h3 class="text-white/70 text-sm font-medium uppercase tracking-wide">{{ 'RANDOMIZER.history_title' | translate }}</h3>
+            <ul class="space-y-2" role="list">
+              @for (session of randomizerService.history().slice(0, 5); track session.id) {
+                <li class="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-white/60 text-xs truncate">{{ session.purpose }}</p>
+                    @if (session.result) {
+                      <p class="text-white text-sm font-medium">🏆 {{ session.result.displayName }}</p>
+                    }
+                  </div>
+                  <span class="text-white/40 text-xs shrink-0">{{ session.createdAt | date:'dd.MM HH:mm' }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+
+      </section>
     </div>
-  
+  </div>
+</div>
+

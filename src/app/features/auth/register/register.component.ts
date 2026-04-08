@@ -1,14 +1,32 @@
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { UserRole } from '../../../core/models/user.model';
 import { FormFieldComponent } from '../../../shared/components/form-field/form-field.component';
+import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
+
+const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
+  const password = group.get('password')?.value as string;
+  const confirmPassword = group.get('confirmPassword')?.value as string;
+  return password === confirmPassword ? null : { passwordMismatch: true };
+};
 
 interface RegisterForm {
   displayName: FormControl<string>;
   email: FormControl<string>;
   password: FormControl<string>;
+  confirmPassword: FormControl<string>;
   role: FormControl<UserRole>;
 }
 
@@ -16,7 +34,7 @@ interface RegisterForm {
   selector: 'app-register',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, FormFieldComponent],
+  imports: [ReactiveFormsModule, RouterLink, FormFieldComponent, TranslateModule, BookIntroComponent],
   templateUrl: './register.component.html',
 })
 export class RegisterComponent {
@@ -27,24 +45,60 @@ export class RegisterComponent {
   readonly successMessage = signal(false);
   readonly registeredEmail = signal('');
   readonly selectedRole = signal<UserRole>('user');
+  /** Triggers book opening animation on successful registration. */
+  readonly bookOpen = signal(false);
+  /** Delays form appearance until book entrance settles (~700ms). */
+  readonly formVisible = signal(false);
 
-  readonly form = new FormGroup<RegisterForm>({
-    displayName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(2)],
-    }),
-    email: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.email],
-    }),
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(8)],
-    }),
-    role: new FormControl<UserRole>('user', {
-      nonNullable: true,
-      validators: [Validators.required],
-    }),
+  constructor() {
+    setTimeout(() => this.formVisible.set(true), 700);
+  }
+
+  onBookAnimationDone(): void {
+    // Book animation done; success message is already visible
+  }
+
+  readonly form = new FormGroup<RegisterForm>(
+    {
+      displayName: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(2)],
+      }),
+      email: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.email],
+      }),
+      password: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(8)],
+      }),
+      confirmPassword: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+      role: new FormControl<UserRole>('user', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+    },
+    { validators: passwordMatchValidator },
+  );
+
+  private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
+    initialValue: '',
+  });
+
+  protected readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
+    const pw = this._passwordValue();
+    if (!pw || pw.length === 0) return null;
+    if (pw.length < 8) return 'weak';
+    const hasUpper = /[A-Z]/.test(pw);
+    const hasNumber = /[0-9]/.test(pw);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
+    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
+    if (score >= 2) return 'strong';
+    if (score === 1) return 'medium';
+    return 'weak';
   });
 
   setRole(role: UserRole): void {
@@ -71,6 +125,8 @@ export class RegisterComponent {
     } else {
       this.registeredEmail.set(email);
       this.successMessage.set(true);
+      // Trigger book opening animation on success
+      this.bookOpen.set(true);
     }
   }
 }

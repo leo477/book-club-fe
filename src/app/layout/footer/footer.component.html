@@ -1,11 +1,11 @@
-    <footer
+<footer
       class="bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800 py-6"
       role="contentinfo"
     >
       <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
         <!-- Brand -->
         <p class="text-sm text-gray-500 dark:text-gray-400 font-medium">
-          📚 BookClub &copy; {{ year }}
+          📚 BookClub &copy; {{ year }} — {{ 'FOOTER.rights' | translate }}
         </p>
 
         <!-- Links -->
@@ -16,7 +16,7 @@
                    transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
                    focus:ring-offset-2 rounded"
           >
-            Privacy
+            {{ 'FOOTER.privacy' | translate }}
           </a>
           <a
             routerLink="/terms"
@@ -24,7 +24,7 @@
                    transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
                    focus:ring-offset-2 rounded"
           >
-            Terms
+            {{ 'FOOTER.terms' | translate }}
           </a>
         </nav>
       </div>

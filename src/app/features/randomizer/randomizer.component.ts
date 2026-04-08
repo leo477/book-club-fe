@@ -4,29 +4,21 @@ import {
   OnInit,
   inject,
   signal,
+  computed,
 } from '@angular/core';
-import {
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { RandomizerService } from '../../core/services/randomizer.service';
-import { BookCandidate } from '../../core/models/randomizer.model';
-
-interface CandidateForm {
-  title: FormControl<string>;
-  author: FormControl<string>;
-}
 
 @Component({
   selector: 'app-randomizer',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, DatePipe],
+  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule],
   styleUrl: './randomizer.component.scss',
   templateUrl: './randomizer.component.html',
 })
@@ -37,31 +29,46 @@ export class RandomizerComponent implements OnInit {
 
   protected readonly isSaving = signal(false);
   protected readonly errorMessage = signal('');
+  protected clubId = '';
 
-  protected readonly candidateForm = new FormGroup<CandidateForm>({
-    title: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
-    author: new FormControl('', { nonNullable: true, validators: [Validators.required] }),
+  protected readonly purposeControl = new FormControl('Хто представляє книгу?', {
+    nonNullable: true,
+    validators: [Validators.required],
   });
 
-  protected clubId = '';
+  // toSignal keeps OnPush change detection working without manual markForCheck
+  private readonly _purposeValue = toSignal(this.purposeControl.valueChanges, {
+    initialValue: this.purposeControl.value,
+  });
+
+  protected readonly selectedCount = computed(
+    () =>
+      this.randomizerService
+        .candidates()
+        .filter(m => this.randomizerService.selectedIds().has(m.userId)).length,
+  );
+
+  protected readonly initials = (name: string): string =>
+    name
+      .split(' ')
+      .map(w => w[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
 
   ngOnInit(): void {
     this.clubId = this.route.snapshot.params['id'] as string;
-    this.randomizerService.loadHistory(this.clubId).catch(() => {
-      // non-critical: history load failure is silently ignored
-    });
-  }
+    this.randomizerService.loadClubMembers(this.clubId);
+    this.randomizerService.setPurpose(this.purposeControl.value);
 
-  protected addCandidate(): void {
-    if (this.candidateForm.invalid) return;
-    const { title, author } = this.candidateForm.getRawValue();
-    const book: BookCandidate = { title: title.trim(), author: author.trim() };
-    this.randomizerService.addCandidate(book);
-    this.candidateForm.reset();
-  }
+    // Sync purpose input → service via the signal derived from valueChanges
+    // effect() would be ideal here but we keep it simple with a subscription
+    // that is automatically cleaned up when the component destroys
+    this.purposeControl.valueChanges.subscribe(v =>
+      this.randomizerService.setPurpose(v),
+    );
 
-  protected removeCandidate(index: number): void {
-    this.randomizerService.removeCandidate(index);
+    this.randomizerService.loadHistory(this.clubId).catch(() => {});
   }
 
   protected spin(): void {
@@ -76,9 +83,7 @@ export class RandomizerComponent implements OnInit {
     this.errorMessage.set('');
     this.randomizerService
       .saveSession(this.clubId)
-      .then(() => {
-        this.isSaving.set(false);
-      })
+      .then(() => this.isSaving.set(false))
       .catch(err => {
         this.isSaving.set(false);
         this.errorMessage.set((err as Error).message);
@@ -87,7 +92,6 @@ export class RandomizerComponent implements OnInit {
 
   protected reset(): void {
     this.randomizerService.reset();
-    this.candidateForm.reset();
     this.errorMessage.set('');
   }
 }

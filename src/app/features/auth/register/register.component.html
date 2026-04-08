@@ -1,150 +1,226 @@
-    <div class="min-h-screen bg-gradient-to-br from-primary-50 to-accent-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-      <div class="w-full max-w-md">
+    <div class="auth-page-wrapper">
+      <!-- Book: visible from start, opens on submit success -->
+      <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
 
-        <!-- Logo / Brand -->
-        <div class="text-center mb-8">
-          <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 Book Club</h1>
-          <p class="text-gray-500 dark:text-gray-400 mt-2">Create your account</p>
-        </div>
+      <!-- Auth form container (always present for layout) -->
+      <main class="auth-form-container">
+        @if (formVisible()) {
+          <div class="w-full max-w-md animate-form-in">
 
-        @if (successMessage()) {
-          <!-- Success state -->
-          <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8 text-center">
-            <div class="text-5xl mb-4">📬</div>
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Check your email</h2>
-            <p class="text-gray-500 dark:text-gray-400 text-sm">
-              We sent a confirmation link to <strong>{{ registeredEmail() }}</strong>.
-              Click it to activate your account.
-            </p>
-            <a routerLink="/login"
-               class="mt-6 inline-block text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium">
-              Back to sign in
-            </a>
-          </div>
+            <!-- Logo / Brand -->
+            <div class="text-center mb-8">
+              <h1 class="font-display text-3xl font-bold text-gray-900">📚 Book Club</h1>
+              <p class="text-gray-600 mt-2">{{ 'AUTH.create_account_subtitle' | translate }}</p>
+            </div>
 
-        } @else {
-          <!-- Registration card -->
-          <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Create account</h2>
-
-            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
-
-              <!-- Display name -->
-              <app-form-field
-                label="Display name"
-                type="text"
-                placeholder="Ada Lovelace"
-                [control]="form.controls.displayName"
-              />
-
-              <!-- Email -->
-              <app-form-field
-                label="Email"
-                type="email"
-                placeholder="you@example.com"
-                [control]="form.controls.email"
-              />
-
-              <!-- Password -->
-              <app-form-field
-                label="Password"
-                type="password"
-                placeholder="At least 8 characters"
-                [control]="form.controls.password"
-              />
-
-              <!-- Role selector -->
-              <div class="flex flex-col gap-1.5">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">I want to…</span>
-                <div class="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    (click)="setRole('user')"
-                    [class.ring-2]="selectedRole() === 'user'"
-                    [class.ring-primary-500]="selectedRole() === 'user'"
-                    [class.bg-primary-50]="selectedRole() === 'user'"
-                    [class.dark:bg-primary-900]="selectedRole() === 'user'"
-                    [class.bg-gray-50]="selectedRole() !== 'user'"
-                    [class.hover:bg-gray-100]="selectedRole() !== 'user'"
-                    class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 text-left transition-all focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    <div class="text-2xl mb-1">📖</div>
-                    <div class="font-medium text-sm text-gray-900 dark:text-white">Reader</div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">Join clubs &amp; take quizzes</div>
-                  </button>
-
-                  <button
-                    type="button"
-                    (click)="setRole('organizer')"
-                    [class.ring-2]="selectedRole() === 'organizer'"
-                    [class.ring-primary-500]="selectedRole() === 'organizer'"
-                    [class.bg-primary-50]="selectedRole() === 'organizer'"
-                    [class.dark:bg-primary-900]="selectedRole() === 'organizer'"
-                    [class.bg-gray-50]="selectedRole() !== 'organizer'"
-                    [class.hover:bg-gray-100]="selectedRole() !== 'organizer'"
-                    class="p-4 rounded-xl border border-gray-200 dark:border-gray-700 text-left transition-all focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    <div class="text-2xl mb-1">🎯</div>
-                    <div class="font-medium text-sm text-gray-900 dark:text-white">Organizer</div>
-                    <div class="text-xs text-gray-500 dark:text-gray-400">Create clubs &amp; build quizzes</div>
-                  </button>
-                </div>
-
-                @if (form.controls.role.invalid && form.controls.role.touched) {
-                  <p class="text-xs text-red-500 mt-0.5">Please select a role.</p>
-                }
+            @if (successMessage()) {
+              <!-- Success state -->
+              <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 text-center border border-amber-100">
+                <div class="text-5xl mb-4">📬</div>
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ 'AUTH.check_email' | translate }}</h2>
+                <p class="text-gray-600 text-sm">
+                  {{ 'AUTH.confirmation_sent' | translate }} <strong>{{ registeredEmail() }}</strong>.
+                  {{ 'AUTH.activate_account' | translate }}
+                </p>
+                <a routerLink="/login"
+                   class="mt-6 inline-block text-sm text-amber-700 hover:text-amber-800 font-medium">
+                  {{ 'AUTH.back_to_login' | translate }}
+                </a>
               </div>
 
-              <!-- Error alert -->
-              @if (errorMessage()) {
-                <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
-                  <span class="mt-0.5 shrink-0">⚠️</span>
-                  <span>{{ errorMessage() }}</span>
-                </div>
-              }
+            } @else {
+              <!-- Registration card -->
+              <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-amber-100">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ 'AUTH.create_account_h2' | translate }}</h2>
 
-              <!-- Submit button -->
-              <button
-                type="submit"
-                [disabled]="isSubmitting()"
-                class="w-full flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5
-                       text-sm font-semibold text-white shadow-sm
-                       hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-                       disabled:opacity-60 disabled:cursor-not-allowed
-                       transition-colors duration-200 mt-2"
+                <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+
+                  <!-- Display name -->
+                  <app-form-field
+                    [label]="'AUTH.display_name' | translate"
+                    type="text"
+                    placeholder="Ada Lovelace"
+                    [control]="form.controls.displayName"
+                  />
+
+                  <!-- Email -->
+                  <app-form-field
+                    [label]="'AUTH.email' | translate"
+                    type="email"
+                    placeholder="you@example.com"
+                    [control]="form.controls.email"
+                  />
+
+                  <!-- Password -->
+                  <app-form-field
+                    [label]="'AUTH.password' | translate"
+                    type="password"
+                    [placeholder]="'AUTH.password' | translate"
+                    [control]="form.controls.password"
+                  />
+
+                  <!-- Password strength bar -->
+                  @if (passwordStrength()) {
+                    <div class="flex items-center gap-2 -mt-2">
+                      <div class="flex gap-1 flex-1">
+                        <div
+                          class="h-1 flex-1 rounded-full transition-colors"
+                          [class]="passwordStrength() !== null ? 'bg-red-400' : 'bg-gray-200'"
+                        ></div>
+                        <div
+                          class="h-1 flex-1 rounded-full transition-colors"
+                          [class]="passwordStrength() === 'medium' || passwordStrength() === 'strong' ? 'bg-yellow-400' : 'bg-gray-200'"
+                        ></div>
+                        <div
+                          class="h-1 flex-1 rounded-full transition-colors"
+                          [class]="passwordStrength() === 'strong' ? 'bg-green-500' : 'bg-gray-200'"
+                        ></div>
+                      </div>
+                      <span
+                        class="text-xs font-medium"
+                        [class]="passwordStrength() === 'strong' ? 'text-green-600' :
+                                 passwordStrength() === 'medium' ? 'text-yellow-600' :
+                                 'text-red-500'"
+                      >
+                        {{ passwordStrength() === 'strong' ? ('AUTH.password_strong' | translate) : passwordStrength() === 'medium' ? ('AUTH.password_medium' | translate) : ('AUTH.password_weak' | translate) }}
+                      </span>
+                    </div>
+                  }
+
+                  <!-- Confirm password -->
+                  <app-form-field
+                    [label]="'AUTH.confirm_password' | translate"
+                    type="password"
+                    placeholder="••••••••"
+                    [control]="form.controls.confirmPassword"
+                  />
+                  @if (form.hasError('passwordMismatch') && form.controls.confirmPassword.touched) {
+                    <p class="text-xs text-red-500 -mt-3">{{ 'AUTH.passwords_no_match' | translate }}</p>
+                  }
+
+                  <!-- Role selector -->
+                  <div class="flex flex-col gap-1.5">
+                    <span class="text-sm font-medium text-gray-700">{{ 'AUTH.want_to' | translate }}</span>
+                    <div class="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        (click)="setRole('user')"
+                        [class.ring-2]="selectedRole() === 'user'"
+                        [class.ring-amber-500]="selectedRole() === 'user'"
+                        [class.bg-amber-50]="selectedRole() === 'user'"
+                        [class.bg-gray-50]="selectedRole() !== 'user'"
+                        class="p-4 rounded-xl border border-gray-200 text-left transition-all focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      >
+                        <div class="text-2xl mb-1">📖</div>
+                        <div class="font-medium text-sm text-gray-900">{{ 'AUTH.role_reader_label' | translate }}</div>
+                        <div class="text-xs text-gray-500">{{ 'AUTH.role_reader_desc' | translate }}</div>
+                      </button>
+
+                      <button
+                        type="button"
+                        (click)="setRole('organizer')"
+                        [class.ring-2]="selectedRole() === 'organizer'"
+                        [class.ring-amber-500]="selectedRole() === 'organizer'"
+                        [class.bg-amber-50]="selectedRole() === 'organizer'"
+                        [class.bg-gray-50]="selectedRole() !== 'organizer'"
+                        class="p-4 rounded-xl border border-gray-200 text-left transition-all focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      >
+                        <div class="text-2xl mb-1">🎯</div>
+                        <div class="font-medium text-sm text-gray-900">{{ 'AUTH.role_organizer_label' | translate }}</div>
+                        <div class="text-xs text-gray-500">{{ 'AUTH.role_organizer_desc' | translate }}</div>
+                      </button>
+                    </div>
+
+                    @if (form.controls.role.invalid && form.controls.role.touched) {
+                      <p class="text-xs text-red-500 mt-0.5">{{ 'AUTH.select_role_error' | translate }}</p>
+                    }
+                  </div>
+
+                  <!-- Error alert -->
+                  @if (errorMessage()) {
+                    <div class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                      <span class="mt-0.5 shrink-0">⚠️</span>
+                      <span>{{ errorMessage() }}</span>
+                    </div>
+                  }
+
+                  <!-- Submit button -->
+                  <button
+                    type="submit"
+                    [disabled]="isSubmitting()"
+                    class="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-2.5
+                           text-sm font-semibold text-white shadow-sm
+                           hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
+                           disabled:opacity-60 disabled:cursor-not-allowed
+                           transition-colors duration-200 mt-2"
+                  >
+                    @if (isSubmitting()) {
+                      <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                      </svg>
+                      {{ 'AUTH.creating_account' | translate }}
+                    } @else {
+                      {{ 'AUTH.create_account_h2' | translate }}
+                    }
+                  </button>
+                </form>
+
+                <p class="mt-6 text-center text-sm text-gray-600">
+                  {{ 'AUTH.have_account' | translate }}
+                  <a routerLink="/login" class="text-amber-700 hover:text-amber-800 font-medium">
+                    {{ 'AUTH.sign_in_h2' | translate }}
+                  </a>
+                </p>
+              </div>
+            }
+
+            <!-- Back to home -->
+            <p class="mt-6 text-center text-sm text-gray-500">
+              <a
+                routerLink="/"
+                class="inline-flex items-center gap-1 text-gray-500
+                       hover:text-gray-700 transition-all duration-200
+                       focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 rounded"
               >
-                @if (isSubmitting()) {
-                  <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                  </svg>
-                  Creating account…
-                } @else {
-                  Create account
-                }
-              </button>
-            </form>
-
-            <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-              Already have an account?
-              <a routerLink="/login" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium">
-                Sign in
+                {{ 'NAV.back_home' | translate }}
               </a>
             </p>
           </div>
         }
-
-        <!-- Back to home -->
-        <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-          <a
-            routerLink="/"
-            class="inline-flex items-center gap-1 text-gray-500 dark:text-gray-400
-                   hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-200
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded"
-          >
-            ← Back to home
-          </a>
-        </p>
-      </div>
+        </main>
     </div>
+
+    <style>
+      .auth-page-wrapper {
+        position: relative;
+        min-height: 100vh;
+        overflow: hidden;
+      }
+
+      .auth-form-container {
+        position: relative;
+        z-index: 60;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+
+      .animate-form-in {
+        animation: form-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+
+      @keyframes form-slide-in {
+        from {
+          opacity: 0;
+          transform: translateY(24px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
   

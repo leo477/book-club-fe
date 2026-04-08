@@ -1,8 +1,10 @@
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { FormFieldComponent } from '../../../shared/components/form-field/form-field.component';
+import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
 
 interface LoginForm {
   email: FormControl<string>;
@@ -13,7 +15,7 @@ interface LoginForm {
   selector: 'app-login',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, FormFieldComponent],
+  imports: [ReactiveFormsModule, RouterLink, FormFieldComponent, TranslateModule, BookIntroComponent],
   templateUrl: './login.component.html',
 })
 export class LoginComponent {
@@ -22,6 +24,18 @@ export class LoginComponent {
 
   readonly errorMessage = signal<string | null>(null);
   readonly isSubmitting = signal(false);
+  /** Triggers book opening animation on successful login. */
+  readonly bookOpen = signal(false);
+  /** Delays form appearance until book entrance settles (~700ms). */
+  readonly formVisible = signal(false);
+
+  constructor() {
+    setTimeout(() => this.formVisible.set(true), 700);
+  }
+
+  onBookAnimationDone(): void {
+    this.router.navigate(['/clubs']);
+  }
 
   readonly form = new FormGroup<LoginForm>({
     email: new FormControl('', {
@@ -50,7 +64,8 @@ export class LoginComponent {
     if (error) {
       this.errorMessage.set(error);
     } else {
-      this.router.navigate(['/clubs']);
+      // Trigger book animation; navigate in onBookAnimationDone()
+      this.bookOpen.set(true);
     }
   }
 }

@@ -1,83 +1,124 @@
-    <div class="min-h-screen bg-gradient-to-br from-primary-50 to-accent-50 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-      <div class="w-full max-w-md">
+    <div class="auth-page-wrapper">
+      <!-- Book: visible from start, opens on submit success -->
+      <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
 
-        <!-- Logo / Brand -->
-        <div class="text-center mb-8">
-          <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 Book Club</h1>
-          <p class="text-gray-500 dark:text-gray-400 mt-2">Welcome back</p>
-        </div>
+      <!-- Auth form container (always present for layout) -->
+      <main class="auth-form-container">
+        @if (formVisible()) {
+          <div class="w-full max-w-md animate-form-in">
 
-        <!-- Card -->
-        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Sign in</h2>
+            <!-- Logo / Brand -->
+            <div class="text-center mb-8">
+              <h1 class="font-display text-3xl font-bold text-gray-900">📚 Book Club</h1>
+              <p class="text-gray-600 mt-2">{{ 'AUTH.welcome_back' | translate }}</p>
+            </div>
 
-          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+            <!-- Card -->
+            <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-amber-100">
+              <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ 'AUTH.sign_in_h2' | translate }}</h2>
 
-            <!-- Email -->
-            <app-form-field
-              label="Email"
-              type="email"
-              placeholder="you@example.com"
-              [control]="form.controls.email"
-            />
+              <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
 
-            <!-- Password -->
-            <app-form-field
-              label="Password"
-              type="password"
-              placeholder="••••••••"
-              [control]="form.controls.password"
-            />
+                <!-- Email -->
+                <app-form-field
+                  [label]="'AUTH.email' | translate"
+                  type="email"
+                  placeholder="you@example.com"
+                  [control]="form.controls.email"
+                />
 
-            <!-- Error alert -->
-            @if (errorMessage()) {
-              <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400">
-                <span class="mt-0.5 shrink-0">⚠️</span>
-                <span>{{ errorMessage() }}</span>
-              </div>
-            }
+                <!-- Password -->
+                <app-form-field
+                  [label]="'AUTH.password' | translate"
+                  type="password"
+                  placeholder="••••••••"
+                  [control]="form.controls.password"
+                />
 
-            <!-- Submit button -->
-            <button
-              type="submit"
-              [disabled]="isSubmitting()"
-              class="w-full flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5
-                     text-sm font-semibold text-white shadow-sm
-                     hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-                     disabled:opacity-60 disabled:cursor-not-allowed
-                     transition-colors duration-200 mt-2"
-            >
-              @if (isSubmitting()) {
-                <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                </svg>
-                Signing in…
-              } @else {
-                Sign in
-              }
-            </button>
-          </form>
+                <!-- Error alert -->
+                @if (errorMessage()) {
+                  <div class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                    <span class="mt-0.5 shrink-0">⚠️</span>
+                    <span>{{ errorMessage() }}</span>
+                  </div>
+                }
 
-          <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-            Don't have an account?
-            <a routerLink="/register" class="text-primary-600 hover:text-primary-700 dark:text-primary-400 font-medium">
-              Register
-            </a>
-          </p>
-        </div>
+                <!-- Submit button -->
+                <button
+                  type="submit"
+                  [disabled]="isSubmitting()"
+                  class="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-2.5
+                         text-sm font-semibold text-white shadow-sm
+                         hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
+                         disabled:opacity-60 disabled:cursor-not-allowed
+                         transition-colors duration-200 mt-2"
+                >
+                  @if (isSubmitting()) {
+                    <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    {{ 'AUTH.signing_in' | translate }}
+                  } @else {
+                    {{ 'AUTH.submit_login' | translate }}
+                  }
+                </button>
+              </form>
 
-        <!-- Back to home -->
-        <p class="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
-          <a
-            routerLink="/"
-            class="inline-flex items-center gap-1 text-gray-500 dark:text-gray-400
-                   hover:text-gray-700 dark:hover:text-gray-200 transition-all duration-200
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded"
-          >
-            ← Back to home
-          </a>
-        </p>
-      </div>
+              <p class="mt-6 text-center text-sm text-gray-600">
+                {{ 'AUTH.no_account' | translate }}
+                <a routerLink="/register" class="text-amber-700 hover:text-amber-800 font-medium">
+                  {{ 'AUTH.register_title' | translate }}
+                </a>
+              </p>
+            </div>
+
+            <!-- Back to home -->
+            <p class="mt-6 text-center text-sm text-gray-500">
+              <a
+                routerLink="/"
+                class="inline-flex items-center gap-1 text-gray-500
+                       hover:text-gray-700 transition-all duration-200
+                       focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 rounded"
+              >
+                {{ 'NAV.back_home' | translate }}
+              </a>
+            </p>
+          </div>
+        }
+        </main>
     </div>
+
+    <style>
+      .auth-page-wrapper {
+        position: relative;
+        min-height: 100vh;
+        overflow: hidden;
+      }
+
+      .auth-form-container {
+        position: relative;
+        z-index: 60;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+
+      .animate-form-in {
+        animation: form-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+
+      @keyframes form-slide-in {
+        from {
+          opacity: 0;
+          transform: translateY(24px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
   

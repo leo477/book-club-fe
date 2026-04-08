@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
-import { BookCandidate, RandomizerSession } from '../models/randomizer.model';
-import { MOCK_RANDOMIZER_HISTORY } from '../mocks/mock-data';
+import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
+import { MOCK_RANDOMIZER_HISTORY, MOCK_CLUB_MEMBERS } from '../mocks/mock-data';
 
 let nextSessionId = MOCK_RANDOMIZER_HISTORY.length + 1;
 
@@ -12,33 +12,54 @@ const inMemoryHistory: RandomizerSession[] = [...MOCK_RANDOMIZER_HISTORY];
 export class RandomizerService {
   private readonly auth = inject(AuthService);
 
-  private readonly _candidates = signal<BookCandidate[]>([]);
-  private readonly _result = signal<BookCandidate | null>(null);
+  private readonly _candidates = signal<MemberCandidate[]>([]);
+  private readonly _selectedIds = signal<Set<string>>(new Set());
+  private readonly _result = signal<MemberCandidate | null>(null);
   private readonly _isSpinning = signal(false);
   private readonly _history = signal<RandomizerSession[]>([]);
+  private readonly _purpose = signal('Хто представляє книгу?');
 
   readonly candidates = this._candidates.asReadonly();
+  readonly selectedIds = this._selectedIds.asReadonly();
   readonly result = this._result.asReadonly();
   readonly isSpinning = this._isSpinning.asReadonly();
   readonly history = this._history.asReadonly();
+  readonly purpose = this._purpose.asReadonly();
 
-  addCandidate(book: BookCandidate): void {
-    this._candidates.update(prev => [...prev, book]);
+  setPurpose(purpose: string): void {
+    this._purpose.set(purpose);
   }
 
-  removeCandidate(index: number): void {
-    this._candidates.update(prev => prev.filter((_, i) => i !== index));
+  loadClubMembers(clubId: string): void {
+    const members = MOCK_CLUB_MEMBERS[clubId] ?? [];
+    this._candidates.set(members);
+    // Select all by default
+    this._selectedIds.set(new Set(members.map(m => m.userId)));
+    this._result.set(null);
+  }
+
+  toggleMember(userId: string): void {
+    this._selectedIds.update(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
   }
 
   async spin(): Promise<void> {
-    const candidates = this._candidates();
-    if (candidates.length < 2) return;
+    const selected = this._candidates().filter(m => this._selectedIds().has(m.userId));
+    if (selected.length < 2) throw new Error('Потрібно мінімум 2 учасники');
 
     this._isSpinning.set(true);
+    this._result.set(null);
     await new Promise<void>(resolve => setTimeout(resolve, 2000));
 
-    const idx = Math.floor(Math.random() * candidates.length);
-    this._result.set(candidates[idx]);
+    const idx = Math.floor(Math.random() * selected.length);
+    this._result.set(selected[idx]);
     this._isSpinning.set(false);
   }
 
@@ -50,7 +71,8 @@ export class RandomizerService {
       id: `session-${++nextSessionId}`,
       clubId,
       createdBy: user.id,
-      candidates: this._candidates(),
+      purpose: this._purpose(),
+      candidates: this._candidates().filter(m => this._selectedIds().has(m.userId)),
       result: this._result(),
       createdAt: new Date().toISOString(),
     };
@@ -65,7 +87,8 @@ export class RandomizerService {
   }
 
   reset(): void {
-    this._candidates.set([]);
+    const ids = new Set(this._candidates().map(m => m.userId));
+    this._selectedIds.set(ids);
     this._result.set(null);
   }
 }
