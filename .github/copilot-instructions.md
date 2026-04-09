@@ -92,7 +92,7 @@ This repository includes one repo-specific Copilot agent. Universal agents (revi
 
 | Agent | Source | Purpose |
 |---|---|---|
-| `dev` | `.github/agents/` | Angular 20 architecture, implementation, and code review |
+| `dev` | MCP | Angular 20 architecture, implementation, and code review |
 | `reviewer` | MCP | Pre-commit review, Husky setup, PR readiness checks |
 | `devops` | MCP | CI/CD pipelines, GitHub Actions, deployment automation |
 | `security` | MCP | XSS, CSP, JWT security audits and input sanitization |
