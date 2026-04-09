@@ -1,0 +1,54 @@
+# Lighthouse CI
+# Builds the Angular app and audits Performance, Accessibility, Best Practices, and SEO.
+# Runs on every pull request. Fails if scores drop below the configured thresholds.
+# Thresholds can be tuned in .lighthouserc.json at the repo root.
+
+name: Lighthouse CI
+
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (production)
+        run: npm run build -- --configuration=production
+
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          configPath: .lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
