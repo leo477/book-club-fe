@@ -88,14 +88,17 @@ src/
 
 ## Custom Agents Available
 
-This repository includes one repo-specific Copilot agent. Universal agents (reviewer, security, devops, tester, ui, web-quality-enhancer) are provided via the shared **book-club-mcp** server (`.vscode/mcp.json`).
+All agents are provided via the shared **book-club-mcp** server (`.vscode/mcp.json`).
+When invoking agents via the `task` tool, **always use the model specified below** — never default to a different model.
 
-| Agent | Source | Purpose |
+| Agent | Model | Purpose |
 |---|---|---|
-| `dev` | MCP | Angular 20 architecture, implementation, and code review |
-| `reviewer` | MCP | Pre-commit review, Husky setup, PR readiness checks |
-| `devops` | MCP | CI/CD pipelines, GitHub Actions, deployment automation |
-| `security` | MCP | XSS, CSP, JWT security audits and input sanitization |
-| `tester` | MCP | Visual regression, Lighthouse, contract testing setup |
+| `dev` | `claude-sonnet-4.6` | Angular 20 architecture, implementation, and code review |
+| `reviewer` | `gpt-4.1` | Pre-commit review, Husky setup, PR readiness checks |
+| `devops` | `gpt-4.1` | CI/CD pipelines, GitHub Actions, deployment automation |
+| `security` | `claude-sonnet-4.6` | XSS, CSP, JWT security audits and input sanitization |
+| `tester` | `gpt-4.1` | Visual regression, Lighthouse, contract testing setup |
+| `ui` | `claude-haiku-4.5` | Design system, Tailwind, animations, accessibility |
+| `web-quality-enhancer` | `claude-sonnet-4.6` | SEO, microcopy, semantic HTML, API docs |
 | `ui` | MCP | Design system, Tailwind, animations, accessibility |
 | `web-quality-enhancer` | MCP | SEO, microcopy, semantic HTML, API docs |
