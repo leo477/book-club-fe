@@ -26,7 +26,11 @@
   <!-- Chat Panel -->
   @if (chat.isOpen()) {
     <div
-      class="fixed bottom-24 right-6 z-40 w-80 max-h-[480px] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-100 chat-panel"
+      class="fixed z-40 w-80 max-h-[480px] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-100 chat-panel"
+      [ngClass]="{
+        'bottom-40 right-6': auth.isOrganizer(),
+        'bottom-24 right-6': !auth.isOrganizer()
+      }"
     >
       <!-- Header -->
       <div class="flex items-center justify-between p-4 border-b border-gray-100">
