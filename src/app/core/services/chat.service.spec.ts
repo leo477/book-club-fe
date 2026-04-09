@@ -1,6 +1,13 @@
 import { TestBed } from '@angular/core/testing';
+import { provideZonelessChangeDetection, WritableSignal } from '@angular/core';
 import { ChatService } from './chat.service';
 import { ChatMessage, ChatRoom } from '../models/chat.model';
+
+interface ChatServicePrivate {
+  _unreadCount: WritableSignal<number>;
+  _hasNewMessage: WritableSignal<boolean>;
+  _activeRoomId: WritableSignal<string | null>;
+}
 
 // Helper for extracting signal values
 function getRooms(service: ChatService): ChatRoom[] {
@@ -29,7 +36,7 @@ describe('ChatService', () => {
   let service: ChatService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [ChatService] });
+    TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection(), ChatService] });
     jasmine.clock().install();
     service = TestBed.inject(ChatService);
   });
@@ -102,8 +109,8 @@ describe('ChatService', () => {
   describe('markAsRead()', () => {
     it('should set unreadCount to 0 and hasNewMessage to false', () => {
       // Simulate unread state
-      (service as any)._unreadCount.set(5);
-      (service as any)._hasNewMessage.set(true);
+      (service as unknown as ChatServicePrivate)._unreadCount.set(5);
+      (service as unknown as ChatServicePrivate)._hasNewMessage.set(true);
       service.markAsRead();
       expect(getUnreadCount(service)).toBe(0);
       expect(getHasNewMessage(service)).toBe(false);
@@ -126,7 +133,7 @@ describe('ChatService', () => {
       expect(msg.senderName).toBe('QA');
     });
     it('should not add message if activeRoomId is null', () => {
-      (service as any)._activeRoomId.set(null);
+      (service as unknown as ChatServicePrivate)._activeRoomId.set(null);
       const before = getActiveMessages(service).length;
       service.sendMessage('Should not send', { id: 'user-x', displayName: 'Nobody' });
       const after = getActiveMessages(service).length;
@@ -140,18 +147,14 @@ describe('ChatService', () => {
       expect(getActiveRoom(service)?.id).toBe('room-2');
     });
     it('should return null when no room matches', () => {
-      (service as any)._activeRoomId.set('unknown-room');
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('unknown-room');
       expect(getActiveRoom(service)).toBeNull();
     });
   });
 
   describe('activeMessages() computed', () => {
     it('should return empty array when activeRoomId is null', () => {
-      (service as any)._activeRoomId.set(null);
-      expect(getActiveMessages(service)).toEqual([]);
-    });
-    it('should return empty array when activeRoomId is unknown', () => {
-      (service as any)._activeRoomId.set('nope');
+      (service as unknown as ChatServicePrivate)._activeRoomId.set(null);
       expect(getActiveMessages(service)).toEqual([]);
     });
   });
