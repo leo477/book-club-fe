@@ -3,8 +3,8 @@
     "book-club-agents": {
       "type": "stdio",
       "command": "node",
-      "args": ["../../book-club-mcp/dist/index.js"],
-      "description": "Shared Copilot agents: reviewer, security, devops, tester, ui, web-quality-enhancer"
+      "args": ["../book-club-mcp/dist/index.js"],
+      "description": "Shared Copilot agents: dev, reviewer, security, devops, tester, ui, web-quality-enhancer"
     }
   }
 }
