@@ -63,6 +63,29 @@ src/
 - E2E tests with Playwright for auth flow and critical user journeys
 - Mock `HttpClient` with `HttpClientTestingModule` + `HttpTestingController`
 
+## Agent Delegation Policy
+
+**ALWAYS delegate tasks to the appropriate MCP agent first.** Do not implement directly unless no suitable agent exists. Use parallel agent invocations when tasks are independent.
+
+### Routing Rules (strict)
+
+| Task type | Agent to use |
+|---|---|
+| CI/CD, GitHub Actions, deployment, Docker | `devops` |
+| Security audit, XSS, CSP, JWT, secret scanning | `security` |
+| Tests, coverage, Lighthouse, Playwright, contract tests | `tester` |
+| Components, Tailwind, animations, accessibility, design system | `ui` |
+| SEO, microcopy, semantic HTML, API docs, i18n copy | `web-quality-enhancer` |
+| Pre-commit review, PR readiness, Husky | `reviewer` |
+| Angular architecture, signals, routing, forms, services | `dev` |
+
+### Delegation Rules
+
+1. **Default to agents** — if a task matches an agent's domain, invoke that agent via the `task` tool
+2. **Parallel when possible** — if multiple independent tasks exist, launch multiple agents simultaneously
+3. **Copilot only does** — file reads, planning, coordination, simple 1-line fixes, git commits after agents finish
+4. **Never implement directly** what an agent specializes in — always delegate first
+
 ## Custom Agents Available
 
 This repository includes one repo-specific Copilot agent. Universal agents (reviewer, security, devops, tester, ui, web-quality-enhancer) are provided via the shared **book-club-mcp** server (`.vscode/mcp.json`).
