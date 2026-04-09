@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, effect, computed } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -19,6 +19,13 @@ export class ChatWidgetComponent {
 
   protected readonly messageText = signal('');
   protected readonly isBouncing = signal(false);
+
+  protected readonly fabPositionClass = computed(() =>
+    this.auth.isOrganizer() ? 'bottom-24 right-6' : 'bottom-6 right-6'
+  );
+  protected readonly panelPositionClass = computed(() =>
+    this.auth.isOrganizer() ? 'bottom-40 right-6' : 'bottom-24 right-6'
+  );
 
   constructor() {
     effect(() => {

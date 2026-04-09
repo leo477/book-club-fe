@@ -1,12 +1,8 @@
 @if (auth.isAuthenticated()) {
   <!-- Chat FAB Button -->
   <button
-    class="fixed z-50 w-14 h-14 rounded-full bg-accent-500 shadow-lg hover:shadow-xl transition-shadow duration-200 flex items-center justify-center text-white"
-    [ngClass]="{
-      'bottom-24 right-6': auth.isOrganizer(),
-      'bottom-6 right-6': !auth.isOrganizer(),
-      'animate-bounce': isBouncing()
-    }"
+    [class]="'fixed z-50 w-14 h-14 rounded-full bg-accent-500 shadow-lg hover:shadow-xl transition-shadow duration-200 flex items-center justify-center text-white ' + fabPositionClass()"
+    [class.animate-bounce]="isBouncing()"
     [attr.aria-label]="(chat.isOpen() ? 'CHAT.close' : 'CHAT.open') | translate"
     (click)="chat.toggleOpen()"
   >
@@ -26,11 +22,7 @@
   <!-- Chat Panel -->
   @if (chat.isOpen()) {
     <div
-      class="fixed z-40 w-80 max-h-[480px] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-100 chat-panel"
-      [ngClass]="{
-        'bottom-40 right-6': auth.isOrganizer(),
-        'bottom-24 right-6': !auth.isOrganizer()
-      }"
+      [class]="'fixed z-40 w-80 max-h-[480px] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-100 chat-panel ' + panelPositionClass()"
     >
       <!-- Header -->
       <div class="flex items-center justify-between p-4 border-b border-gray-100">
