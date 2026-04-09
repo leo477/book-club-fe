@@ -1,0 +1,51 @@
+name: i18n Check
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [develop]
+
+permissions:
+  contents: read
+
+jobs:
+  i18n-check:
+    name: Check i18n Keys
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Check for missing translation keys
+        run: |
+          node -e "
+          const fs = require('fs');
+
+          function flatten(obj, prefix) {
+            return Object.keys(obj).reduce((acc, key) => {
+              const fullKey = prefix ? prefix + '.' + key : key;
+              if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                Object.assign(acc, flatten(obj[key], fullKey));
+              } else {
+                acc[fullKey] = obj[key];
+              }
+              return acc;
+            }, {});
+          }
+
+          const uk = JSON.parse(fs.readFileSync('public/i18n/uk.json', 'utf8'));
+          const en = JSON.parse(fs.readFileSync('public/i18n/en.json', 'utf8'));
+
+          const ukFlat = flatten(uk, '');
+          const enFlat = flatten(en, '');
+
+          const missing = Object.keys(ukFlat).filter(key => !(key in enFlat));
+
+          if (missing.length > 0) {
+            console.error('Missing keys in en.json:');
+            missing.forEach(k => console.error('  - ' + k));
+            process.exit(1);
+          }
+
+          console.log('All ' + Object.keys(ukFlat).length + ' keys present in en.json.');
+          "

@@ -1,0 +1,41 @@
+feat:
+  - changed-files:
+      - any-glob-to-any-file: src/app/features/**
+
+core:
+  - changed-files:
+      - any-glob-to-any-file: src/app/core/**
+
+shared:
+  - changed-files:
+      - any-glob-to-any-file: src/app/shared/**
+
+style:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/styles/**
+          - "**/*.scss"
+          - tailwind.config.js
+
+i18n:
+  - changed-files:
+      - any-glob-to-any-file:
+          - public/i18n/**
+          - scripts/**
+
+ci:
+  - changed-files:
+      - any-glob-to-any-file: .github/**
+
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "*.md"
+          - docs/**
+
+build:
+  - changed-files:
+      - any-glob-to-any-file:
+          - angular.json
+          - "tsconfig*.json"
+          - "package*.json"
