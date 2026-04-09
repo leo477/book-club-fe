@@ -1,0 +1,134 @@
+@if (auth.isAuthenticated()) {
+  <!-- Chat FAB Button -->
+  <button
+    class="fixed z-50 w-14 h-14 rounded-full bg-accent-500 shadow-lg hover:shadow-xl transition-shadow duration-200 flex items-center justify-center text-white"
+    [ngClass]="{
+      'bottom-24 right-6': auth.isOrganizer(),
+      'bottom-6 right-6': !auth.isOrganizer(),
+      'animate-bounce': isBouncing()
+    }"
+    [attr.aria-label]="(chat.isOpen() ? 'CHAT.close' : 'CHAT.open') | translate"
+    (click)="chat.toggleOpen()"
+  >
+    <!-- Chat bubble SVG icon -->
+    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+    </svg>
+
+    <!-- Notification badge -->
+    @if (chat.unreadCount() > 0) {
+      <div class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold">
+        {{ chat.unreadCount() > 9 ? '9+' : (chat.unreadCount() | number) }}
+      </div>
+    }
+  </button>
+
+  <!-- Chat Panel -->
+  @if (chat.isOpen()) {
+    <div
+      class="fixed bottom-24 right-6 z-40 w-80 max-h-[480px] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-100 chat-panel"
+    >
+      <!-- Header -->
+      <div class="flex items-center justify-between p-4 border-b border-gray-100">
+        <h2 class="text-lg font-semibold text-gray-900">
+          {{ 'CHAT.title' | translate }}
+        </h2>
+        <button
+          class="text-gray-500 hover:text-gray-700 transition-colors"
+          [attr.aria-label]="'close'"
+          (click)="chat.toggleOpen()"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Room Tabs (horizontally scrollable) -->
+      @if (chat.rooms().length > 0) {
+        <div class="flex overflow-x-auto px-3 py-2 border-b border-gray-100 gap-2">
+          @for (room of chat.rooms(); track room.id) {
+            <button
+              class="px-4 py-2 rounded-lg whitespace-nowrap font-medium transition-colors duration-200 flex-shrink-0"
+              [ngClass]="{
+                'bg-accent-500 text-white': chat.activeRoomId() === room.id,
+                'bg-gray-100 text-gray-700 hover:bg-gray-200': chat.activeRoomId() !== room.id
+              }"
+              role="tab"
+              [attr.aria-selected]="chat.activeRoomId() === room.id"
+              (click)="chat.openRoom(room.id)"
+            >
+              {{ room.name }}
+            </button>
+          }
+        </div>
+      }
+
+      <!-- Messages Container -->
+      <div
+        class="flex-1 overflow-y-auto p-3 space-y-2 messages-scroll"
+        role="log"
+        aria-live="polite"
+      >
+        @if (chat.activeMessages().length === 0) {
+          <div class="flex items-center justify-center h-full text-gray-400">
+            {{ 'CHAT.no_messages' | translate }}
+          </div>
+        } @else {
+          @for (message of chat.activeMessages(); track message.id) {
+            <div [ngClass]="{ 'flex justify-end': message.isOwn, 'flex justify-start': !message.isOwn }">
+              <div class="flex flex-col max-w-[75%]">
+                <!-- Sender name (for other messages) -->
+                @if (!message.isOwn) {
+                  <span class="text-xs text-gray-500 px-3 mb-1">{{ message.senderName }}</span>
+                }
+
+                <!-- Message bubble -->
+                <div
+                  class="px-4 py-2 rounded-2xl"
+                  [ngClass]="{
+                    'bg-accent-500 text-white rounded-br-sm': message.isOwn,
+                    'bg-gray-100 text-gray-800 rounded-bl-sm': !message.isOwn
+                  }"
+                >
+                  {{ message.text }}
+                </div>
+
+                <!-- Timestamp -->
+                <span class="text-xs text-gray-400 px-3 mt-1 text-right">
+                  {{ message.timestamp | date: 'HH:mm' }}
+                </span>
+              </div>
+            </div>
+          }
+        }
+
+        <!-- Anchor for auto-scrolling -->
+        <div #messagesEnd></div>
+      </div>
+
+      <!-- Input Area -->
+      <div class="border-t border-gray-100 p-3 flex gap-2">
+        <input
+          type="text"
+          [(ngModel)]="messageText"
+          (keydown)="onKeydown($event)"
+          [placeholder]="'CHAT.placeholder' | translate"
+          [attr.aria-label]="'CHAT.placeholder' | translate"
+          class="flex-1 px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+        />
+        <button
+          class="w-10 h-10 rounded-full bg-accent-500 text-white flex items-center justify-center hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="!messageText().trim()"
+          (click)="sendMessage()"
+          [attr.aria-label]="'CHAT.send' | translate"
+        >
+          <!-- Paper plane SVG icon -->
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M16.6915026,12.4744748 L3.50612381,13.2599618 C3.19218622,13.2599618 3.03521743,13.4170592 3.03521743,13.5741566 L1.15159189,20.0151496 C0.8376543,20.8006365 0.99,21.89 1.77946707,22.52 C2.41,22.99 3.50612381,23.1 4.13399899,22.8429026 L21.714504,14.0454487 C22.6563168,13.5741566 23.1272231,12.6315722 22.9702544,11.6889879 L4.13399899,1.16584166 C3.50612381,0.9087443 2.40999006,1.01484963 1.77946707,1.4861418 C0.994623095,2.11535496 0.837654326,3.20500913 1.15159189,3.9904961 L3.03521743,10.4314891 C3.03521743,10.5885864 3.19218622,10.7456838 3.50612381,10.7456838 L16.6915026,11.5311707 C16.6915026,11.5311707 17.1624089,11.5311707 17.1624089,12.0024628 C17.1624089,12.4744748 16.6915026,12.4744748 16.6915026,12.4744748 Z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  }
+}

@@ -167,5 +167,15 @@
     "take": "Start",
     "results": "Results",
     "score": "Score"
+  },
+  "CHAT": {
+    "title": "Club Chat",
+    "placeholder": "Type a message...",
+    "send": "Send",
+    "no_messages": "No messages yet",
+    "new_message": "New message",
+    "close": "Close chat",
+    "open": "Open chat",
+    "rooms": "Rooms"
   }
 }

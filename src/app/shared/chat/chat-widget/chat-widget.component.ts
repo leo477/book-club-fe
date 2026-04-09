@@ -1,0 +1,47 @@
+import { Component, ChangeDetectionStrategy, inject, signal, effect } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../core/auth/auth.service';
+import { ChatService } from '../../../core/services/chat.service';
+
+@Component({
+  selector: 'app-chat-widget',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CommonModule, TranslateModule, FormsModule, DatePipe],
+  templateUrl: './chat-widget.component.html',
+  styleUrls: ['./chat-widget.component.scss'],
+})
+export class ChatWidgetComponent {
+  protected readonly auth = inject(AuthService);
+  protected readonly chat = inject(ChatService);
+
+  protected readonly messageText = signal('');
+  protected readonly isBouncing = signal(false);
+
+  constructor() {
+    effect(() => {
+      if (this.chat.hasNewMessage()) {
+        this.isBouncing.set(true);
+        setTimeout(() => this.isBouncing.set(false), 1000);
+      }
+    });
+  }
+
+  protected sendMessage(): void {
+    const text = this.messageText().trim();
+    if (!text) return;
+    const user = this.auth.currentUser();
+    if (!user) return;
+    this.chat.sendMessage(text, { id: user.id, displayName: user.displayName });
+    this.messageText.set('');
+  }
+
+  protected onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.sendMessage();
+    }
+  }
+}
