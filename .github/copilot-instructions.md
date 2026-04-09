@@ -65,13 +65,14 @@ src/
 
 ## Custom Agents Available
 
-This repository includes specialized Copilot agents. Use `/agent` to browse them:
+This repository includes one repo-specific Copilot agent. Universal agents (reviewer, security, devops, tester, ui, web-quality-enhancer) are provided via the shared **book-club-mcp** server (`.vscode/mcp.json`).
 
-| Agent      | Purpose                                                      |
-|------------|--------------------------------------------------------------|
-| `dev`      | Angular 20 architecture, implementation, and code review     |
-| `devops`   | CI/CD pipelines, GitHub Actions, deployment automation       |
-| `reviewer` | Pre-commit review, Husky setup, PR readiness checks          |
-| `security` | XSS, CSP, JWT security audits and input sanitization         |
-| `tester`   | Visual regression, Lighthouse, contract testing setup        |
-| `ui`       | Design system, Tailwind, animations, accessibility           |
+| Agent | Source | Purpose |
+|---|---|---|
+| `dev` | `.github/agents/` | Angular 20 architecture, implementation, and code review |
+| `reviewer` | MCP | Pre-commit review, Husky setup, PR readiness checks |
+| `devops` | MCP | CI/CD pipelines, GitHub Actions, deployment automation |
+| `security` | MCP | XSS, CSP, JWT security audits and input sanitization |
+| `tester` | MCP | Visual regression, Lighthouse, contract testing setup |
+| `ui` | MCP | Design system, Tailwind, animations, accessibility |
+| `web-quality-enhancer` | MCP | SEO, microcopy, semantic HTML, API docs |
