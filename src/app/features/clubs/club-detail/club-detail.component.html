@@ -1,348 +1,469 @@
-    <div class="min-h-screen">
+@if (isLoading()) {
+  <main class="max-w-4xl mx-auto px-4 py-8" aria-busy="true" aria-label="Loading club details">
+    <div class="animate-pulse space-y-4">
+      <div class="h-56 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+    </div>
+  </main>
+} @else if (errorMessage()) {
+  <main class="max-w-4xl mx-auto px-4 py-8 text-center" role="alert">
+    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
+    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
+    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
+    <a
+      routerLink="/clubs"
+      class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors"
+    >
+      ← {{ 'CLUB_DETAIL.back' | translate }}
+    </a>
+  </main>
+} @else if (club()) {
+  <main class="min-h-screen">
+    <!-- Cover image + back navigation -->
+    <div class="relative">
+      @if (club()!.coverUrl) {
+        <img
+          [src]="club()!.coverUrl"
+          [alt]="club()!.name + ' cover'"
+          class="w-full h-56 object-cover"
+          loading="lazy"
+        />
+      } @else {
+        <div class="bg-gradient-to-br from-primary-400 to-accent-500 h-56" aria-hidden="true"></div>
+      }
 
-      @if (isLoading()) {
-        <!-- Skeleton loader -->
-        <div class="max-w-4xl mx-auto px-4 py-8" aria-busy="true" aria-label="Loading club details">
-          <div class="animate-pulse space-y-4">
-            <div class="h-56 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-            <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-            <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-            <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
+        <a
+          routerLink="/clubs"
+          class="inline-flex items-center gap-1.5 rounded-full bg-black/30 backdrop-blur-sm px-3 py-1.5 text-sm font-medium text-white hover:bg-black/50 transition-colors"
+          [attr.aria-label]="'CLUB_DETAIL.back' | translate"
+        >
+          ← {{ 'CLUB_DETAIL.back_short' | translate }}
+        </a>
+      </nav>
+    </div>
+
+    <!-- Main content area -->
+    <div class="max-w-4xl mx-auto px-4 py-8 space-y-6">
+
+      <!-- Club header -->
+      <header class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-3 flex-wrap">
+            <h1 id="club-heading" class="font-display text-3xl font-bold text-gray-900 dark:text-white">
+              {{ club()!.name }}
+            </h1>
+            @if (!club()!.isPublic) {
+              <span class="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+                🔒 {{ 'CLUB_DETAIL.private' | translate }}
+              </span>
+            }
+            @if (club()!.status === 'active') {
+              <span class="rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-semibold text-green-700 dark:text-green-400">
+                ● {{ 'CLUBS.active' | translate }}
+              </span>
+            } @else if (club()!.status === 'paused') {
+              <span class="rounded-full bg-yellow-100 dark:bg-yellow-900/30 px-2.5 py-0.5 text-xs font-semibold text-yellow-700 dark:text-yellow-400">
+                ⏸ {{ 'CLUBS.paused' | translate }}
+              </span>
+            } @else if (club()!.status === 'cancelled') {
+              <span class="rounded-full bg-red-100 dark:bg-red-900/30 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:text-red-400">
+                ✕ {{ 'CLUBS.cancelled' | translate }}
+              </span>
+            }
           </div>
-        </div>
-      } @else if (errorMessage()) {
-        <!-- Error state -->
-        <div class="max-w-4xl mx-auto px-4 py-8 text-center" role="alert">
-          <p class="text-6xl mb-4" aria-hidden="true">😕</p>
-          <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
-          <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
-          <a
-            routerLink="/clubs"
-            class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors"
-          >
-            ← {{ 'CLUB_DETAIL.back' | translate }}
-          </a>
-        </div>
-      } @else if (club()) {
-        <!-- Cover image -->
-        <div class="relative">
-          @if (club()!.coverUrl) {
-            <img
-              [src]="club()!.coverUrl"
-              [alt]="club()!.name + ' cover'"
-              class="w-full h-56 object-cover"
-              loading="lazy"
-            />
-          } @else {
-            <div class="bg-gradient-to-br from-primary-400 to-accent-500 h-56" aria-hidden="true"></div>
-          }
-
-          <!-- Back navigation overlay -->
-          <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
-            <a
-              routerLink="/clubs"
-              class="inline-flex items-center gap-1.5 rounded-full bg-black/30 backdrop-blur-sm px-3 py-1.5 text-sm font-medium text-white hover:bg-black/50 transition-colors"
-              [attr.aria-label]="'CLUB_DETAIL.back' | translate"
-            >
-              ← {{ 'CLUB_DETAIL.back_short' | translate }}
-            </a>
-          </nav>
-        </div>
-
-        <!-- Club content -->
-        <div class="max-w-4xl mx-auto px-4 py-8 space-y-6">
-
-          <!-- Club header -->
-          <header class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-            <div>
-              <div class="flex items-center gap-3 flex-wrap">
-                <h1 id="club-heading" class="font-display text-3xl font-bold text-gray-900 dark:text-white">
-                  {{ club()!.name }}
-                </h1>
-                @if (!club()!.isPublic) {
-                  <span class="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                    🔒 {{ 'CLUB_DETAIL.private' | translate }}
-                  </span>
-                }
-                <!-- Status badge -->
-                @if (club()!.status === 'active') {
-                  <span class="rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-semibold text-green-700 dark:text-green-400">
-                    ● {{ 'CLUBS.active' | translate }}
-                  </span>
-                } @else if (club()!.status === 'paused') {
-                  <span class="rounded-full bg-yellow-100 dark:bg-yellow-900/30 px-2.5 py-0.5 text-xs font-semibold text-yellow-700 dark:text-yellow-400">
-                    ⏸ {{ 'CLUBS.paused' | translate }}
-                  </span>
-                } @else if (club()!.status === 'cancelled') {
-                  <span class="rounded-full bg-red-100 dark:bg-red-900/30 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:text-red-400">
-                    ✕ {{ 'CLUBS.cancelled' | translate }}
-                  </span>
-                }
-              </div>
-              <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                <span aria-hidden="true">👥</span>
-                <span>{{ club()!.memberCount }} {{ club()!.memberCount === 1 ? ('CLUBS.member_singular' | translate) : ('CLUBS.members' | translate) }}</span>
-              </p>
-            </div>
-
-            <!-- Join / Leave button -->
-            @if (currentUser()) {
-              @if (!isClubOwner()) {
-                @if (isMember()) {
-                  <button
-                    type="button"
-                    (click)="onLeave()"
-                    [disabled]="isActionLoading()"
-                    class="inline-flex items-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                    [attr.aria-label]="'CLUB_DETAIL.leave' | translate"
-                  >
-                    @if (isActionLoading()) {
-                      <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                      </svg>
-                    }
-                    {{ 'CLUB_DETAIL.leave' | translate }}
-                  </button>
-                } @else {
-                  <button
-                    type="button"
-                    (click)="onJoin()"
-                    [disabled]="isActionLoading()"
-                    class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                    [attr.aria-label]="'CLUB_DETAIL.join' | translate"
-                  >
-                    @if (isActionLoading()) {
-                      <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                      </svg>
-                    }
-                    {{ 'CLUB_DETAIL.join' | translate }}
-                  </button>
-                }
-              } @else {
-                <span class="inline-flex items-center gap-1.5 rounded-xl bg-accent-100 dark:bg-accent-900/30 px-4 py-2.5 text-sm font-semibold text-accent-700 dark:text-accent-300">
-                  {{ 'CLUB_DETAIL.organizer_badge' | translate }}
-                </span>
-              }
-            }
-          </header>
-
-          <!-- Deletion countdown banner -->
-          @if (club()?.status === 'cancelled' && deleteCountdown()) {
-            <div role="alert" class="mx-4 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
-              ⚠️ Цей клуб скасовано — {{ deleteCountdown() }}
-            </div>
-          }
-
-          <!-- Action error -->
-          @if (actionError()) {
-            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-              <span aria-hidden="true">⚠️</span>
-              <span>{{ actionError() }}</span>
-            </div>
-          }
-
-          <!-- Description -->
-          @if (club()!.description) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
-              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
-            </div>
-          }
-
-          <!-- Members list -->
-          <section [attr.aria-label]="'MEMBERS.title' | translate" class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-            <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
-              {{ 'MEMBERS.title' | translate }} ({{ members().length }})
-            </h2>
-
-            @if (members().length === 0) {
-              <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'MEMBERS.empty' | translate }}</p>
-            } @else {
-              <ul class="divide-y divide-gray-100 dark:divide-gray-700">
-                @for (member of members(); track member.userId) {
-                  <li class="flex items-center gap-4 py-3 relative">
-                    <!-- Avatar (initials circle) -->
-                    <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0" aria-hidden="true">
-                      {{ initials(member.displayName) }}
-                    </div>
-
-                    <!-- Name + role badge -->
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                        {{ member.displayName }}
-                      </p>
-                      @if (member.role === 'organizer') {
-                        <span class="inline-block text-xs font-medium text-accent-600 dark:text-accent-400">
-                          {{ 'MEMBERS.organizer' | translate }}
-                        </span>
-                      } @else {
-                        <span class="inline-block text-xs text-gray-400 dark:text-gray-500">
-                          {{ 'MEMBERS.member' | translate }}
-                        </span>
-                      }
-                    </div>
-
-                    <!-- Socials or locked -->
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                      @if (canSeeSocials(member)) {
-                        @if (member.socials?.telegram) {
-                          <a [href]="'https://t.me/' + member.socials!.telegram" target="_blank" rel="noopener noreferrer"
-                             class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram: @' + member.socials!.telegram" title="Telegram">
-                            ✈️
-                          </a>
-                        }
-                        @if (member.socials?.instagram) {
-                          <a [href]="'https://instagram.com/' + member.socials!.instagram" target="_blank" rel="noopener noreferrer"
-                             class="text-pink-500 hover:text-pink-600 text-lg" [attr.aria-label]="'Instagram: @' + member.socials!.instagram" title="Instagram">
-                            📸
-                          </a>
-                        }
-                        @if (member.socials?.github) {
-                          <a [href]="'https://github.com/' + member.socials!.github" target="_blank" rel="noopener noreferrer"
-                             class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" [attr.aria-label]="'GitHub: ' + member.socials!.github" title="GitHub">
-                            🐙
-                          </a>
-                        }
-                        @if (member.socials?.goodreads) {
-                          <a [href]="'https://goodreads.com/' + member.socials!.goodreads" target="_blank" rel="noopener noreferrer"
-                             class="text-amber-600 hover:text-amber-700 text-lg" title="Goodreads">
-                            📚
-                          </a>
-                        }
-                        @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
-                          <!-- QR toggle button -->
-                          <button
-                            type="button"
-                            (click)="toggleQr(member.userId)"
-                            class="inline-flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 transition-colors ml-1"
-                            [attr.aria-expanded]="showQrForUser() === member.userId"
-                            [attr.aria-label]="'MEMBERS.show_qr' | translate"
-                          >
-                            <span aria-hidden="true">⊡</span> {{ 'MEMBERS.show_qr' | translate }}
-                          </button>
-
-                          <!-- QR popover (shown inline below the member row) -->
-                          @if (showQrForUser() === member.userId) {
-                            <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 p-4 flex flex-col items-center gap-2"
-                                 aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
-                              <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
-                              <app-qr-code [value]="buildQrValue(member)" [size]="160" />
-                              <button type="button" (click)="toggleQr(member.userId)"
-                                      class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mt-1">✕ Закрити</button>
-                            </dialog>
-                          }
-                        }
-                      } @else {
-                        <span class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
-                          🔒 {{ 'MEMBERS.socials_hidden' | translate }}
-                        </span>
-                      }
-                    </div>
-                  </li>
-                }
-              </ul>
-            }
-          </section>
-
-          <!-- Organizer manage panel -->
-          @if (isClubOwner()) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <a
-                  [routerLink]="['/clubs', id(), 'quizzes']"
-                  class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                >
-                  <span class="text-xl" aria-hidden="true">📝</span>
-                  <div>
-                    <p class="font-semibold">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
-                  </div>
-                </a>
-                <a
-                  [routerLink]="['/clubs', id(), 'randomizer']"
-                  class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                >
-                  <span class="text-xl" aria-hidden="true">🎲</span>
-                  <div>
-                    <p class="font-semibold">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
-                    <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
-                  </div>
-                </a>
-              </div>
-            </div>
-
-            <!-- Club status management -->
-            <section [attr.aria-label]="'CLUB_DETAIL.manage_title' | translate" class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6 space-y-5">
-              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
-
-              <!-- Action buttons -->
-              <div class="flex flex-wrap gap-3">
-                @if (club()!.status === 'active') {
-                  <button
-                    type="button"
-                    (click)="pauseClub()"
-                    class="inline-flex items-center gap-2 rounded-xl bg-yellow-400 hover:bg-yellow-500 px-4 py-2.5 text-sm font-semibold text-yellow-900 transition-colors"
-                    [attr.aria-label]="'CLUB_DETAIL.pause' | translate"
-                  >
-                    ⏸ {{ 'CLUB_DETAIL.pause' | translate }}
-                  </button>
-                }
-                @if (club()!.status !== 'cancelled') {
-                  <button
-                    type="button"
-                    (click)="cancelClub()"
-                    class="inline-flex items-center gap-2 rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-                    [attr.aria-label]="'CLUB_DETAIL.cancel' | translate"
-                  >
-                    ✕ {{ 'CLUB_DETAIL.cancel' | translate }}
-                  </button>
-                }
-              </div>
-
-              <!-- Reschedule form — only shown when paused -->
-              @if (club()!.status === 'paused') {
-                <form
-                  (ngSubmit)="rescheduleSubmit()"
-                  class="flex flex-col sm:flex-row items-start sm:items-end gap-3"
-                  [attr.aria-label]="'CLUB_DETAIL.reschedule' | translate"
-                >
-                  <div class="flex flex-col gap-1.5 flex-1">
-                    <label
-                      for="reschedule-date"
-                      class="text-xs font-medium text-gray-600 dark:text-gray-400"
-                    >
-                      {{ 'CLUB_DETAIL.new_date' | translate }}
-                    </label>
-                    <input
-                      id="reschedule-date"
-                      type="datetime-local"
-                      [formControl]="rescheduleDate"
-                      class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                      aria-required="true"
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    [disabled]="!rescheduleDate.value"
-                    class="inline-flex items-center gap-2 rounded-xl bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-                    [attr.aria-label]="'CLUB_DETAIL.reschedule_submit' | translate"
-                  >
-                    ✓ {{ 'CLUB_DETAIL.reschedule_submit' | translate }}
-                  </button>
-                </form>
-              }
-            </section>
-          }
-
-          <!-- Club meta -->
-          <p class="text-xs text-gray-400 dark:text-gray-600 text-right">
-            {{ 'CLUB_DETAIL.created' | translate }} {{ formatDate(club()!.createdAt) }}
+          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+            <span aria-hidden="true">👥</span>
+            <span>{{ club()!.memberCount }} {{ club()!.memberCount === 1 ? ('CLUBS.member_singular' | translate) : ('CLUBS.members' | translate) }}</span>
           </p>
         </div>
+
+        @if (currentUser()) {
+          @if (!isClubOwner()) {
+            @if (isMember()) {
+              <button
+                type="button"
+                (click)="onLeave()"
+                [disabled]="isActionLoading()"
+                class="inline-flex items-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                [attr.aria-label]="'CLUB_DETAIL.leave' | translate"
+              >
+                @if (isActionLoading()) {
+                  <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                }
+                {{ 'CLUB_DETAIL.leave' | translate }}
+              </button>
+            } @else {
+              <button
+                type="button"
+                (click)="onJoin()"
+                [disabled]="isActionLoading()"
+                class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                [attr.aria-label]="'CLUB_DETAIL.join' | translate"
+              >
+                @if (isActionLoading()) {
+                  <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                }
+                {{ 'CLUB_DETAIL.join' | translate }}
+              </button>
+            }
+          } @else {
+            <span class="inline-flex items-center gap-1.5 rounded-xl bg-accent-100 dark:bg-accent-900/30 px-4 py-2.5 text-sm font-semibold text-accent-700 dark:text-accent-300">
+              {{ 'CLUB_DETAIL.organizer_badge' | translate }}
+            </span>
+          }
+        }
+      </header>
+
+      <!-- Deletion countdown banner -->
+      @if (club()?.status === 'cancelled' && deleteCountdown()) {
+        <div role="alert" class="mx-4 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+          ⚠️ {{ 'CLUB_DETAIL.deletion_countdown_prefix' | translate }} {{ deleteCountdown() }}
+        </div>
       }
+
+      <!-- Action error -->
+      @if (actionError()) {
+        <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+          <span aria-hidden="true">⚠️</span>
+          <span>{{ actionError() }}</span>
+        </div>
+      }
+
+      <!-- Description section -->
+      @if (club()!.description) {
+        <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
+        </section>
+      }
+
+      <!-- Tags section -->
+      @if (club()!.tags && club()!.tags.length > 0) {
+        <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.tags_title' | translate }}</h2>
+          <ul class="flex flex-wrap gap-2" role="list">
+            @for (tag of club()!.tags; track tag) {
+              <li class="rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs font-medium text-primary-700 dark:text-primary-300">
+                {{ tag }}
+              </li>
+            }
+          </ul>
+        </section>
+      }
+
+      <!-- Organizer profile section -->
+      @if (organizerProfile()) {
+        <aside class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.organizer_title' | translate }}</h2>
+          <div class="flex items-center gap-4">
+            <div class="h-12 w-12 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0" aria-hidden="true">
+              {{ initials(organizerProfile()!.displayName) }}
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900 dark:text-white">{{ organizerProfile()!.displayName }}</p>
+              <span class="text-xs font-medium text-accent-600 dark:text-accent-400">{{ 'CLUB_DETAIL.organizer_badge' | translate }}</span>
+            </div>
+          </div>
+          @if (organizerProfile()!.socialsPublic && organizerProfile()!.socials) {
+            <div class="mt-4 flex flex-wrap gap-3">
+              @if (organizerProfile()!.socials!.telegram) {
+                <a [href]="'https://t.me/' + organizerProfile()!.socials!.telegram" target="_blank" rel="noopener noreferrer"
+                   class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram'">✈️</a>
+              }
+              @if (organizerProfile()!.socials!.instagram) {
+                <a [href]="'https://instagram.com/' + organizerProfile()!.socials!.instagram" target="_blank" rel="noopener noreferrer"
+                   class="text-pink-500 hover:text-pink-600 text-lg" aria-label="Instagram">📸</a>
+              }
+              @if (organizerProfile()!.socials!.github) {
+                <a [href]="'https://github.com/' + organizerProfile()!.socials!.github" target="_blank" rel="noopener noreferrer"
+                   class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" aria-label="GitHub">🐙</a>
+              }
+              @if (organizerProfile()!.socials!.goodreads) {
+                <a [href]="'https://goodreads.com/' + organizerProfile()!.socials!.goodreads" target="_blank" rel="noopener noreferrer"
+                   class="text-amber-600 hover:text-amber-700 text-lg" aria-label="Goodreads">📚</a>
+              }
+            </div>
+          }
+        </aside>
+      }
+
+      <!-- Meeting info section -->
+      @if (club()!.meetingDurationMinutes || club()!.address) {
+        <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.meeting_info_title' | translate }}</h2>
+          <dl class="space-y-3">
+            @if (club()!.meetingDurationMinutes) {
+              <div class="flex items-center gap-3">
+                <dt class="text-sm text-gray-500 dark:text-gray-400 w-28 flex-shrink-0">{{ 'CLUB_DETAIL.duration_label' | translate }}</dt>
+                <dd class="text-sm font-medium text-gray-900 dark:text-white">{{ club()!.meetingDurationMinutes }} {{ 'CLUB_DETAIL.minutes_abbr' | translate }}</dd>
+              </div>
+            }
+            @if (club()!.address) {
+              <div class="flex items-start gap-3">
+                <dt class="text-sm text-gray-500 dark:text-gray-400 w-28 flex-shrink-0">{{ 'CLUB_DETAIL.address_label' | translate }}</dt>
+                <dd class="text-sm text-gray-900 dark:text-white">
+                  {{ club()!.address }}
+                  <a [href]="'https://maps.google.com/search?q=' + club()!.address"
+                     target="_blank" rel="noopener noreferrer"
+                     class="ml-2 text-xs text-primary-600 dark:text-primary-400 hover:underline">
+                    {{ 'CLUB_DETAIL.view_on_map' | translate }}
+                  </a>
+                </dd>
+              </div>
+            }
+          </dl>
+        </section>
+      }
+
+      <!-- After-meeting venue section -->
+      @if (club()!.afterMeetingVenue) {
+        <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.after_meeting_title' | translate }}</h2>
+          <div class="flex items-start gap-3">
+            <span class="text-2xl" aria-hidden="true">☕</span>
+            <div>
+              <p class="font-semibold text-gray-900 dark:text-white">{{ club()!.afterMeetingVenue!.name }}</p>
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ club()!.afterMeetingVenue!.address }}</p>
+              @if (club()!.afterMeetingVenue!.description) {
+                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2 italic">{{ club()!.afterMeetingVenue!.description }}</p>
+              }
+            </div>
+          </div>
+        </section>
+      }
+
+      <!-- Members list section -->
+      <section [attr.aria-label]="'MEMBERS.title' | translate" class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
+          {{ 'MEMBERS.title' | translate }} ({{ members().length }})
+        </h2>
+
+        @if (members().length === 0) {
+          <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'MEMBERS.empty' | translate }}</p>
+        } @else {
+          <ul class="divide-y divide-gray-100 dark:divide-gray-700">
+            @for (member of members(); track member.userId) {
+              <li class="flex items-center gap-4 py-3 relative">
+                <!-- Avatar -->
+                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0" aria-hidden="true">
+                  {{ initials(member.displayName) }}
+                </div>
+
+                <!-- Name + role -->
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                    {{ member.displayName }}
+                  </p>
+                  @if (member.role === 'organizer') {
+                    <span class="inline-block text-xs font-medium text-accent-600 dark:text-accent-400">
+                      {{ 'MEMBERS.organizer' | translate }}
+                    </span>
+                  } @else {
+                    <span class="inline-block text-xs text-gray-400 dark:text-gray-500">
+                      {{ 'MEMBERS.member' | translate }}
+                    </span>
+                  }
+                </div>
+
+                <!-- Socials + QR + Kick/Ban -->
+                <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+                  @if (canSeeSocials(member)) {
+                    @if (member.socials?.telegram) {
+                      <a [href]="'https://t.me/' + member.socials!.telegram" target="_blank" rel="noopener noreferrer"
+                         class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram: @' + member.socials!.telegram" title="Telegram">
+                        ✈️
+                      </a>
+                    }
+                    @if (member.socials?.instagram) {
+                      <a [href]="'https://instagram.com/' + member.socials!.instagram" target="_blank" rel="noopener noreferrer"
+                         class="text-pink-500 hover:text-pink-600 text-lg" [attr.aria-label]="'Instagram: @' + member.socials!.instagram" title="Instagram">
+                        📸
+                      </a>
+                    }
+                    @if (member.socials?.github) {
+                      <a [href]="'https://github.com/' + member.socials!.github" target="_blank" rel="noopener noreferrer"
+                         class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" [attr.aria-label]="'GitHub: ' + member.socials!.github" title="GitHub">
+                        🐙
+                      </a>
+                    }
+                    @if (member.socials?.goodreads) {
+                      <a [href]="'https://goodreads.com/' + member.socials!.goodreads" target="_blank" rel="noopener noreferrer"
+                         class="text-amber-600 hover:text-amber-700 text-lg" title="Goodreads">
+                        📚
+                      </a>
+                    }
+                    @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
+                      <!-- QR toggle button -->
+                      <button
+                        type="button"
+                        (click)="toggleQr(member.userId)"
+                        class="inline-flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 transition-colors ml-1"
+                        [attr.aria-expanded]="showQrForUser() === member.userId"
+                        [attr.aria-label]="'MEMBERS.show_qr' | translate"
+                      >
+                        <span aria-hidden="true">⊡</span> {{ 'MEMBERS.show_qr' | translate }}
+                      </button>
+
+                      <!-- QR popover -->
+                      @if (showQrForUser() === member.userId) {
+                        <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 p-4 flex flex-col items-center gap-2"
+                             aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
+                          <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
+                          <app-qr-code [value]="buildQrValue(member)" [size]="160" />
+                          <button type="button" (click)="toggleQr(member.userId)"
+                                  class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mt-1">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
+                        </dialog>
+                      }
+                    }
+                  } @else {
+                    <span class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                      🔒 {{ 'MEMBERS.socials_hidden' | translate }}
+                    </span>
+                  }
+
+                  <!-- Kick and Ban buttons (owner only) -->
+                  @if (isClubOwner() && member.role !== 'organizer') {
+                    <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">
+                      <button type="button" (click)="kickMember(member.userId)"
+                              class="rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-red-100 dark:hover:bg-red-900/30 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                               [attr.aria-label]="'MEMBERS.kick' | translate">
+                        {{ 'MEMBERS.kick' | translate }}
+                      </button>
+                      <button type="button" (click)="toggleBanMenu(member.userId)"
+                              class="rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-orange-100 dark:hover:bg-orange-900/30 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                              [attr.aria-expanded]="showBanMenu() === member.userId">
+                        {{ 'MEMBERS.ban' | translate }}
+                      </button>
+                      @if (showBanMenu() === member.userId) {
+                        <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 py-1 min-w-36">
+                          @for (duration of banDurations; track duration) {
+                            <li>
+                              <button type="button" (click)="banMember(member.userId, duration)"
+                                      class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                @if (duration === 1) { {{ 'MEMBERS.ban_1' | translate }} }
+                                @else if (duration === 3) { {{ 'MEMBERS.ban_3' | translate }} }
+                                @else if (duration === 5) { {{ 'MEMBERS.ban_5' | translate }} }
+                                @else { {{ 'MEMBERS.ban_permanent' | translate }} }
+                              </button>
+                            </li>
+                          }
+                        </menu>
+                      }
+                    </div>
+                  }
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+
+      <!-- Organizer manage panel -->
+      @if (isClubOwner()) {
+        <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <a
+              [routerLink]="['/clubs', id(), 'quizzes']"
+              class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              <span class="text-xl" aria-hidden="true">📝</span>
+              <div>
+                <p class="font-semibold">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
+              </div>
+            </a>
+            <a
+              [routerLink]="['/clubs', id(), 'randomizer']"
+              class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+            >
+              <span class="text-xl" aria-hidden="true">🎲</span>
+              <div>
+                <p class="font-semibold">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Club status management -->
+        <section [attr.aria-label]="'CLUB_DETAIL.manage_title' | translate" class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6 space-y-5">
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
+
+          <!-- Action buttons -->
+          <div class="flex flex-wrap gap-3">
+            @if (club()!.status === 'active') {
+              <button
+                type="button"
+                (click)="pauseClub()"
+                class="inline-flex items-center gap-2 rounded-xl bg-yellow-400 hover:bg-yellow-500 px-4 py-2.5 text-sm font-semibold text-yellow-900 transition-colors"
+                [attr.aria-label]="'CLUB_DETAIL.pause' | translate"
+              >
+                ⏸ {{ 'CLUB_DETAIL.pause' | translate }}
+              </button>
+            }
+            @if (club()!.status !== 'cancelled') {
+              <button
+                type="button"
+                (click)="cancelClub()"
+                class="inline-flex items-center gap-2 rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+                [attr.aria-label]="'CLUB_DETAIL.cancel' | translate"
+              >
+                ✕ {{ 'CLUB_DETAIL.cancel' | translate }}
+              </button>
+            }
+          </div>
+
+          <!-- Reschedule form -->
+          @if (club()!.status === 'paused') {
+            <form
+              (ngSubmit)="rescheduleSubmit()"
+              class="flex flex-col sm:flex-row items-start sm:items-end gap-3"
+              [attr.aria-label]="'CLUB_DETAIL.reschedule' | translate"
+            >
+              <div class="flex flex-col gap-1.5 flex-1">
+                <label
+                  for="reschedule-date"
+                  class="text-xs font-medium text-gray-600 dark:text-gray-400"
+                >
+                  {{ 'CLUB_DETAIL.new_date' | translate }}
+                </label>
+                <input
+                  id="reschedule-date"
+                  type="datetime-local"
+                  [formControl]="rescheduleDate"
+                  class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+                  aria-required="true"
+                />
+              </div>
+              <button
+                type="submit"
+                [disabled]="!rescheduleDate.value"
+                class="inline-flex items-center gap-2 rounded-xl bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+                [attr.aria-label]="'CLUB_DETAIL.reschedule_submit' | translate"
+              >
+                ✓ {{ 'CLUB_DETAIL.reschedule_submit' | translate }}
+              </button>
+            </form>
+          }
+        </section>
+      }
+
+      <!-- Club meta footer -->
+      <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">
+        {{ 'CLUB_DETAIL.created' | translate }} {{ formatDate(club()!.createdAt) }}
+      </footer>
+
     </div>
+  </main>
+}
   
