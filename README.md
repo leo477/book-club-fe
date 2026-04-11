@@ -1,6 +1,6 @@
 # BookClubFe
 
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=YOUR_ORG_book-club-fe&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=YOUR_ORG_book-club-fe)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=leo477_book-club-fe&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=leo477_book-club-fe)
 
 This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.1.5.
 
