@@ -80,9 +80,7 @@ export class ClubDetailComponent {
       }
 
       const found = await this.clubService.getClubById(clubId);
-      if (!found) {
-        this.errorMessage.set('This club could not be found.');
-      } else {
+      if (found) {
         this.club.set(found);
         this.members.set(this.clubService.getClubMembers(clubId));
         this.seo.setPage({
@@ -90,6 +88,8 @@ export class ClubDetailComponent {
           description: found.name,
           canonical: `https://book-club-fe.vercel.app/clubs/${clubId}`,
         });
+      } else {
+        this.errorMessage.set('This club could not be found.');
       }
     } catch {
       this.errorMessage.set('Failed to load club details.');

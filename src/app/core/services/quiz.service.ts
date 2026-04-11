@@ -10,7 +10,7 @@ let nextAttemptId = 1;
 /** In-memory stores (mutable copies so new items can be pushed) */
 const inMemoryQuizzes: Quiz[] = [...MOCK_QUIZZES];
 const inMemoryQuestions: QuizQuestion[] = [...MOCK_QUESTIONS];
-const inMemoryAttempts: QuizAttempt[] = [];
+
 
 @Injectable({ providedIn: 'root' })
 export class QuizService {
@@ -92,7 +92,6 @@ export class QuizService {
       answers,
     };
 
-    inMemoryAttempts.push(attempt);
     return attempt;
   }
 

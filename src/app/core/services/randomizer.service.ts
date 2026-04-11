@@ -58,7 +58,12 @@ export class RandomizerService {
     this._result.set(null);
     await new Promise<void>(resolve => setTimeout(resolve, 2000));
 
-    const idx = crypto.getRandomValues(new Uint32Array(1))[0] % selected.length;
+    const max = Math.floor(0x100000000 / selected.length) * selected.length;
+    let rand: number;
+    do {
+      rand = crypto.getRandomValues(new Uint32Array(1))[0];
+    } while (rand >= max);
+    const idx = rand % selected.length;
     this._result.set(selected[idx]);
     this._isSpinning.set(false);
   }

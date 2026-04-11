@@ -89,7 +89,7 @@ export class QuizTakeComponent implements OnInit {
   }
 
   protected optionLabel(index: number): string {
-    return String.fromCharCode(65 + index);
+    return String.fromCodePoint(65 + index);
   }
 
   protected selectOption(index: number): void {

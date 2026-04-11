@@ -29,7 +29,7 @@
           @if (club()!.coverUrl) {
             <img
               [src]="club()!.coverUrl"
-              [alt]="'Cover image for ' + club()!.name"
+              [alt]="club()!.name + ' cover'"
               class="w-full h-56 object-cover"
               loading="lazy"
             />
@@ -161,7 +161,7 @@
             @if (members().length === 0) {
               <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'MEMBERS.empty' | translate }}</p>
             } @else {
-              <ul class="divide-y divide-gray-100 dark:divide-gray-700" role="list">
+              <ul class="divide-y divide-gray-100 dark:divide-gray-700">
                 @for (member of members(); track member.userId) {
                   <li class="flex items-center gap-4 py-3 relative">
                     <!-- Avatar (initials circle) -->
@@ -226,13 +226,13 @@
 
                           <!-- QR popover (shown inline below the member row) -->
                           @if (showQrForUser() === member.userId) {
-                            <div class="absolute right-0 top-full mt-2 z-20 rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 p-4 flex flex-col items-center gap-2"
-                                 role="dialog" aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
+                            <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 p-4 flex flex-col items-center gap-2"
+                                 aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
                               <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
                               <app-qr-code [value]="buildQrValue(member)" [size]="160" />
                               <button type="button" (click)="toggleQr(member.userId)"
                                       class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mt-1">✕ Закрити</button>
-                            </div>
+                            </dialog>
                           }
                         }
                       } @else {
