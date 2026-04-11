@@ -1,0 +1,8 @@
+# Gitleaks configuration
+# https://github.com/gitleaks/gitleaks#configuration
+
+[allowlist]
+  description = "False positive: curl -u with env var reference (not a hardcoded secret)"
+  commits = [
+    "ebb1b7068c73a27f45e576a77ad5b5b3d7a93a64"  # curl -s -u "$SONAR_TOKEN:" — env var, fixed in next commit
+  ]
