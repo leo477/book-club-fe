@@ -268,7 +268,6 @@ jobs:
     if: github.event_name == 'push'
     permissions:
       contents: read
-      pull-requests: write
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
       url: ${{ steps.deploy.outputs.url }}
@@ -294,14 +293,3 @@ jobs:
           DEPLOY_URL=$(vercel deploy --prebuilt ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
           echo "Deployed to: $DEPLOY_URL"
-      - name: Comment preview URL on PR
-        if: github.ref != 'refs/heads/main'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PR_NUMBER=$(gh pr list --state merged --base ${{ github.ref_name }} --json number --jq '.[0].number' 2>/dev/null || echo "")
-          if [ -n "$PR_NUMBER" ]; then
-            gh pr comment "$PR_NUMBER" --body "🚀 **Preview deployed:** ${{ steps.deploy.outputs.url }}"
-          else
-            echo "No associated PR found, skipping comment."
-          fi
