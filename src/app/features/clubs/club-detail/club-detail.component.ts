@@ -43,7 +43,7 @@ export class ClubDetailComponent {
 
   readonly isMember = computed(() => this.clubService.myClubIds().has(this.id()));
   readonly isClubOwner = computed(
-    () => !!this.auth.currentUser() && this.auth.currentUser()!.id === this.club()?.organizerId,
+    () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
   );
 
   readonly showQrForUser = signal<string | null>(null);

@@ -127,7 +127,9 @@ describe('ChatService', () => {
     });
     it('should set isOwn true and correct sender info', () => {
       service.sendMessage('Test msg', { id: 'user-42', displayName: 'QA' });
-      const msg = getActiveMessages(service).at(-1)!;
+      const msgs = getActiveMessages(service);
+      const msg = msgs[msgs.length - 1];
+      if (!msg) throw new Error('Expected a message');
       expect(msg.isOwn).toBe(true);
       expect(msg.senderId).toBe('user-42');
       expect(msg.senderName).toBe('QA');

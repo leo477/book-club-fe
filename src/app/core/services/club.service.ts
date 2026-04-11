@@ -88,9 +88,11 @@ export class ClubService {
     const clubs = this._clubs()
       .filter(c => c.nextMeetingDate !== null)
       .filter(c => !filter || c.city === filter)
-      .sort((a, b) =>
-        new Date(a.nextMeetingDate!).getTime() - new Date(b.nextMeetingDate!).getTime(),
-      );
+      .sort((a, b) => {
+        const aDate = a.nextMeetingDate ?? '';
+        const bDate = b.nextMeetingDate ?? '';
+        return new Date(aDate).getTime() - new Date(bDate).getTime();
+      });
 
     return clubs.reduce<Record<string, Club[]>>((acc, club) => {
       const city = club.city ?? 'Other';

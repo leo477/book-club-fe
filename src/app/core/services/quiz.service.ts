@@ -80,7 +80,7 @@ export class QuizService {
     const questions = this._questions();
 
     const score = answers.reduce((acc, answer, i) => {
-      return questions[i] && answer === questions[i].correctIndex ? acc + 1 : acc;
+      return questions[i]?.correctIndex === answer ? acc + 1 : acc;
     }, 0);
 
     const attempt: QuizAttempt = {
