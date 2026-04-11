@@ -2,6 +2,24 @@ export type ClubStatus = 'active' | 'paused' | 'cancelled';
 
 import { UserSocials } from './user.model';
 
+export interface AfterMeetingVenue {
+  name: string;
+  address: string;
+  description?: string;
+  lat?: number;
+  lng?: number;
+}
+
+export type BanDuration = 1 | 3 | 5 | 'permanent';
+
+export interface BanRecord {
+  userId: string;
+  clubId: string;
+  bannedAt: string;
+  duration: BanDuration;
+  bannedBy: string;
+}
+
 export interface ClubBook {
   title: string;
   author: string;
@@ -28,6 +46,9 @@ export interface Club {
   status: ClubStatus;
   cancelledAt?: string;
   meetingHistory?: ClubMeetingRecord[];
+  tags: string[];
+  meetingDurationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
 }
 
 export interface ClubMeetingRecord {

@@ -1,7 +1,7 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { Injectable, inject, signal, computed, DestroyRef } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
-import { Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
-import { MOCK_CLUBS, MOCK_CLUB_MEMBERS, MOCK_MY_CLUB_IDS, MOCK_PARTICIPATION, MOCK_USERS } from '../mocks/mock-data';
+import { AfterMeetingVenue, BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
+import { MOCK_BANS, MOCK_CLUBS, MOCK_CLUB_MEMBERS, MOCK_MY_CLUB_IDS, MOCK_PARTICIPATION, MOCK_USERS } from '../mocks';
 
 let nextClubId = MOCK_CLUBS.length + 1;
 
@@ -15,11 +15,13 @@ export class ClubService {
   );
   private readonly _isLoading = signal(false);
   private readonly _error = signal<string | null>(null);
+  private readonly _bans = signal<Record<string, BanRecord[]>>({ ...MOCK_BANS });
 
   readonly clubs = this._clubs.asReadonly();
   readonly myClubs = this._myClubs.asReadonly();
   readonly isLoading = this._isLoading.asReadonly();
   readonly error = this._error.asReadonly();
+  readonly bans = this._bans.asReadonly();
 
   readonly myOwnedClubs = computed<Club[]>(() => {
     const userId = this.auth.currentUser()?.id;
@@ -33,7 +35,8 @@ export class ClubService {
 
   constructor() {
     const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
-    setInterval(() => {
+    const destroyRef = inject(DestroyRef);
+    const intervalId = setInterval(() => {
       const now = Date.now();
       this._clubs.update(clubs =>
         clubs.filter(c => {
@@ -42,6 +45,7 @@ export class ClubService {
         }),
       );
     }, 60_000);
+    destroyRef.onDestroy(() => clearInterval(intervalId));
   }
 
   msUntilDeletion(club: Club): number | null {
@@ -139,6 +143,9 @@ export class ClubService {
     description: string;
     isPublic: boolean;
     city?: string;
+    tags?: string[];
+    meetingDurationMinutes?: number | null;
+    afterMeetingVenue?: AfterMeetingVenue | null;
   }): Promise<Club> {
     const currentUser = this.auth.currentUser();
     if (!currentUser) throw new Error('Must be authenticated to create a club');
@@ -164,6 +171,9 @@ export class ClubService {
       currentBook: null,
       memberPreviews: [currentUser.displayName],
       status: 'active' as ClubStatus,
+      tags: payload.tags ?? [],
+      meetingDurationMinutes: payload.meetingDurationMinutes ?? null,
+      afterMeetingVenue: payload.afterMeetingVenue ?? null,
     };
 
     this._clubs.update(existing => [newClub, ...existing]);
@@ -175,6 +185,9 @@ export class ClubService {
   async joinClub(clubId: string): Promise<void> {
     const currentUser = this.auth.currentUser();
     if (!currentUser) throw new Error('Must be authenticated to join a club');
+    if (this.isBanned(clubId, currentUser.id)) {
+      throw new Error('You are banned from this club');
+    }
 
     this._clubs.update(list =>
       list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
@@ -249,5 +262,33 @@ export class ClubService {
           : c,
       ),
     );
+  }
+
+  kickMember(_clubId: string, _userId: string): void {
+    void 0;
+  }
+
+  banMember(clubId: string, userId: string, duration: BanDuration): void {
+    const currentUser = this.auth.currentUser();
+    if (!currentUser) return;
+    const record: BanRecord = {
+      userId,
+      clubId,
+      bannedAt: new Date().toISOString(),
+      duration,
+      bannedBy: currentUser.id,
+    };
+    this._bans.update(bans => ({
+      ...bans,
+      [clubId]: [...(bans[clubId] ?? []), record],
+    }));
+  }
+
+  getBans(clubId: string): BanRecord[] {
+    return this._bans()[clubId] ?? [];
+  }
+
+  isBanned(clubId: string, userId: string): boolean {
+    return (this._bans()[clubId] ?? []).some(b => b.userId === userId);
   }
 }

@@ -15,12 +15,14 @@ import { SeoService } from '../../../core/services/seo.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 
 @Component({
   selector: 'app-clubs-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, LoadingSpinnerComponent, EmptyStateComponent, TranslateModule],
+  imports: [RouterLink, FormsModule, LoadingSpinnerComponent, EmptyStateComponent, TranslateModule, InitialsPipe, FormatDatePipe],
   templateUrl: './clubs-list.component.html',
 })
 export class ClubsListComponent implements OnInit {
@@ -70,21 +72,5 @@ export class ClubsListComponent implements OnInit {
     return Math.ceil((meeting.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   }
 
-  protected formatDate(dateStr: string): string {
-    return new Intl.DateTimeFormat('uk-UA', {
-      day: 'numeric',
-      month: 'long',
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(new Date(dateStr));
-  }
 
-  protected initials(displayName: string): string {
-    return displayName
-      .split(' ')
-      .map(w => w[0] ?? '')
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  }
 }

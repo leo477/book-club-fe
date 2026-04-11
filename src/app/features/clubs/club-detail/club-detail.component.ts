@@ -12,15 +12,20 @@ import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { Club, ClubMemberDetail } from '../../../core/models/club.model';
+import { MOCK_USERS } from '../../../core/mocks';
+import { Club, ClubMemberDetail, BanDuration } from '../../../core/models/club.model';
+import { UserProfile } from '../../../core/models/user.model';
 import { QrCodeComponent } from '../../../shared/components/qr-code/qr-code.component';
 import { SeoService } from '../../../core/services/seo.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 
 @Component({
   selector: 'app-club-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, TranslateModule, QrCodeComponent],
+  imports: [RouterLink, ReactiveFormsModule, TranslateModule, QrCodeComponent, LoadingSpinnerComponent, InitialsPipe, FormatDatePipe],
   templateUrl: './club-detail.component.html',
 })
 export class ClubDetailComponent {
@@ -48,6 +53,17 @@ export class ClubDetailComponent {
 
   readonly showQrForUser = signal<string | null>(null);
 
+  readonly organizerProfile = computed<UserProfile | null>(() => {
+    const organizerId = this.club()?.organizerId;
+    if (!organizerId) return null;
+    return MOCK_USERS.find(u => u.id === organizerId) ?? null;
+  });
+
+  readonly banDurations: BanDuration[] = [1, 3, 5, 'permanent'];
+  readonly showBanMenu = signal<string | null>(null);
+
+  readonly clubBans = computed(() => this.clubService.getBans(this.id()));
+
   readonly deleteCountdown = computed<string | null>(() => {
     const c = this.club();
     if (!c) return null;
@@ -62,7 +78,6 @@ export class ClubDetailComponent {
   readonly rescheduleDate = new FormControl<string>('', { nonNullable: true });
 
   constructor() {
-    // React to route param changes (handles navigation between detail pages)
     effect(() => {
       const clubId = this.id();
       void this.loadClub(clubId);
@@ -74,7 +89,6 @@ export class ClubDetailComponent {
     this.errorMessage.set(null);
 
     try {
-      // Ensure membership data is available for isMember computed
       if (this.auth.isAuthenticated() && this.clubService.myClubs().length === 0) {
         await this.clubService.loadMyClubs();
       }
@@ -103,7 +117,6 @@ export class ClubDetailComponent {
     this.actionError.set(null);
     try {
       await this.clubService.joinClub(this.id());
-      // Refresh club to get updated member count
       const updated = await this.clubService.getClubById(this.id());
       if (updated) this.club.set(updated);
     } catch (err) {
@@ -150,12 +163,19 @@ export class ClubDetailComponent {
     if (updated) this.club.set(updated);
   }
 
-  formatDate(dateString: string): string {
-    return new Date(dateString).toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
+  kickMember(userId: string): void {
+    this.clubService.kickMember(this.id(), userId);
+    this.members.update(list => list.filter(m => m.userId !== userId));
+  }
+
+  banMember(userId: string, duration: BanDuration): void {
+    this.clubService.banMember(this.id(), userId, duration);
+    this.showBanMenu.set(null);
+    this.members.update(list => list.filter(m => m.userId !== userId));
+  }
+
+  toggleBanMenu(userId: string): void {
+    this.showBanMenu.update(current => current === userId ? null : userId);
   }
 
   canSeeSocials(member: ClubMemberDetail): boolean {
@@ -177,9 +197,5 @@ export class ClubDetailComponent {
     if (s.github)     lines.push(`GitHub: github.com/${s.github}`);
     if (s.goodreads)  lines.push(`Goodreads: goodreads.com/${s.goodreads}`);
     return lines.join('\n');
-  }
-
-  protected initials(name: string): string {
-    return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
   }
 }

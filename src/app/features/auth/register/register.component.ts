@@ -16,6 +16,7 @@ import { UserRole } from '../../../core/models/user.model';
 import { FormFieldComponent } from '../../../shared/components/form-field/form-field.component';
 import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
 import { SeoService } from '../../../core/services/seo.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
   const password = group.get('password')?.value as string;
@@ -35,7 +36,7 @@ interface RegisterForm {
   selector: 'app-register',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, FormFieldComponent, TranslateModule, BookIntroComponent],
+  imports: [ReactiveFormsModule, RouterLink, FormFieldComponent, TranslateModule, BookIntroComponent, LoadingSpinnerComponent],
   templateUrl: './register.component.html',
 })
 export class RegisterComponent {

@@ -1,137 +1,343 @@
-    <div class="min-h-screen flex items-center justify-center p-4">
-      <div class="w-full max-w-lg">
+<main class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
 
-        <!-- Header -->
-        <header class="text-center mb-8">
-          <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 Book Club</h1>
-          <p class="text-gray-500 dark:text-gray-400 mt-2">Start a new reading community</p>
-        </header>
+    <header class="text-center mb-8">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 Book Club</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
+    </header>
 
-        <!-- Card -->
-        <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">Create a Club</h2>
+    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
 
-          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
 
-            <!-- Name -->
-            <div>
-              <label for="club-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Club Name <span class="text-red-500" aria-hidden="true">*</span>
-              </label>
-              <input
-                id="club-name"
-                type="text"
-                formControlName="name"
-                placeholder="e.g. The Midnight Readers"
-                class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                       px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                       focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                       transition-colors duration-150"
-                [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
-                aria-describedby="name-error"
-              />
-              @if (form.controls.name.invalid && form.controls.name.touched) {
-                <p id="name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                  @if (form.controls.name.errors?.['required']) { Club name is required. }
-                  @else if (form.controls.name.errors?.['minlength']) { Name must be at least 3 characters. }
-                  @else if (form.controls.name.errors?.['maxlength']) { Name must not exceed 100 characters. }
-                </p>
-              }
-            </div>
+        <!-- Basic Info Fieldset -->
+        <fieldset class="space-y-4">
+          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.basic_info_legend' | translate }}</legend>
 
-            <!-- Description -->
-            <div>
-              <label for="club-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Description
-              </label>
-              <textarea
-                id="club-description"
-                formControlName="description"
-                rows="3"
-                placeholder="What will your club read? Who's it for?"
-                class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                       px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
-                       focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                       transition-colors duration-150"
-                [class.border-red-400]="form.controls.description.invalid && form.controls.description.touched"
-              ></textarea>
-              @if (form.controls.description.invalid && form.controls.description.touched) {
-                <p class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                  @if (form.controls.description.errors?.['maxlength']) { Description must not exceed 500 characters. }
-                </p>
-              }
-            </div>
-
-            <!-- Visibility toggle -->
-            <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-              <div>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Public Club</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Anyone can discover and join</p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                [attr.aria-checked]="form.controls.isPublic.value"
-                (click)="togglePublic()"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                [class.bg-primary-600]="form.controls.isPublic.value"
-                [class.bg-gray-300]="!form.controls.isPublic.value"
-                [class.dark:bg-gray-600]="!form.controls.isPublic.value"
-              >
-                <span
-                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                  [class.translate-x-6]="form.controls.isPublic.value"
-                  [class.translate-x-1]="!form.controls.isPublic.value"
-                ></span>
-              </button>
-            </div>
-
-            <!-- Error alert -->
-            @if (errorMessage()) {
-              <div
-                class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-                role="alert"
-              >
-                <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
-                <span>{{ errorMessage() }}</span>
-              </div>
+          <!-- Name -->
+          <div>
+            <label for="club-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'CREATE_CLUB.name_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="club-name"
+              type="text"
+              formControlName="name"
+              [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+              [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
+              aria-describedby="name-error"
+            />
+            @if (form.controls.name.invalid && form.controls.name.touched) {
+              <p id="name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                @if (form.controls.name.errors?.['required']) { {{ 'CREATE_CLUB.name_required' | translate }} }
+                @else if (form.controls.name.errors?.['minlength']) { {{ 'CREATE_CLUB.name_min' | translate }} }
+                @else if (form.controls.name.errors?.['maxlength']) { {{ 'CREATE_CLUB.name_max' | translate }} }
+              </p>
             }
+          </div>
 
-            <!-- Actions -->
-            <div class="flex gap-3 pt-2">
-              <button
-                type="button"
-                (click)="cancel()"
-                class="flex-1 rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-2.5
-                       text-sm font-semibold text-gray-700 dark:text-gray-300
-                       hover:bg-gray-50 dark:hover:bg-gray-800
-                       focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2
-                       transition-colors duration-200"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                [disabled]="isSubmitting()"
-                class="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5
-                       text-sm font-semibold text-white shadow-sm
-                       hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-                       disabled:opacity-60 disabled:cursor-not-allowed
-                       transition-colors duration-200"
-              >
-                @if (isSubmitting()) {
-                  <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                  </svg>
-                  Creating…
-                } @else {
-                  Create Club
-                }
-              </button>
+          <!-- Description -->
+          <div>
+            <label for="club-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'CREATE_CLUB.description_label' | translate }}
+            </label>
+            <textarea
+              id="club-description"
+              formControlName="description"
+              rows="3"
+              [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+              [class.border-red-400]="form.controls.description.invalid && form.controls.description.touched"
+              aria-describedby="description-error"
+            ></textarea>
+            @if (form.controls.description.invalid && form.controls.description.touched) {
+              <p id="description-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                @if (form.controls.description.errors?.['maxlength']) { {{ 'CREATE_CLUB.description_max' | translate }} }
+              </p>
+            }
+          </div>
+
+          <!-- City -->
+          <div>
+            <label for="club-city" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'CREATE_CLUB.city_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="club-city"
+              type="text"
+              formControlName="city"
+              [placeholder]="'CREATE_CLUB.city_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+              [class.border-red-400]="form.controls.city.invalid && form.controls.city.touched"
+              aria-describedby="city-error"
+            />
+            @if (form.controls.city.invalid && form.controls.city.touched) {
+              <p id="city-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                @if (form.controls.city.errors?.['required']) { {{ 'CREATE_CLUB.city_required' | translate }} }
+                @else if (form.controls.city.errors?.['maxlength']) { {{ 'CREATE_CLUB.city_max' | translate }} }
+              </p>
+            }
+          </div>
+
+          <!-- Address -->
+          <div>
+            <label for="club-address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'CREATE_CLUB.address_label' | translate }}
+            </label>
+            <input
+              id="club-address"
+              type="text"
+              formControlName="address"
+              [placeholder]="'CREATE_CLUB.address_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+              [class.border-red-400]="form.controls.address.invalid && form.controls.address.touched"
+              aria-describedby="address-error"
+            />
+            @if (form.controls.address.invalid && form.controls.address.touched) {
+              <p id="address-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                @if (form.controls.address.errors?.['maxlength']) { {{ 'CREATE_CLUB.address_max' | translate }} }
+              </p>
+            }
+          </div>
+        </fieldset>
+
+        <!-- Tags & Duration Fieldset -->
+        <fieldset class="space-y-4">
+          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.tags_duration_legend' | translate }}</legend>
+
+          <!-- Tags -->
+          <div>
+            <label for="club-tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'CREATE_CLUB.tags_label' | translate }}
+            </label>
+            <input
+              id="club-tags"
+              type="text"
+              formControlName="tags"
+              [placeholder]="'CREATE_CLUB.tags_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+              [class.border-red-400]="form.controls.tags.invalid && form.controls.tags.touched"
+              aria-describedby="tags-hint tags-error"
+            />
+            <p id="tags-hint" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {{ 'CREATE_CLUB.tags_hint' | translate }}
+            </p>
+            @if (form.controls.tags.invalid && form.controls.tags.touched) {
+              <p id="tags-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                @if (form.controls.tags.errors?.['maxlength']) { {{ 'CREATE_CLUB.tags_max' | translate }} }
+              </p>
+            }
+          </div>
+
+          <!-- Meeting Duration -->
+          <div>
+            <label for="club-duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'CREATE_CLUB.duration_label' | translate }}
+            </label>
+            <input
+              id="club-duration"
+              type="number"
+              formControlName="meetingDurationMinutes"
+              [placeholder]="'CREATE_CLUB.duration_placeholder' | translate"
+              min="15"
+              max="480"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+              [class.border-red-400]="form.controls.meetingDurationMinutes.invalid && form.controls.meetingDurationMinutes.touched"
+              aria-describedby="duration-error"
+            />
+            @if (form.controls.meetingDurationMinutes.invalid && form.controls.meetingDurationMinutes.touched) {
+              <p id="duration-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                @if (form.controls.meetingDurationMinutes.errors?.['min']) { {{ 'CREATE_CLUB.duration_min' | translate }} }
+                @else if (form.controls.meetingDurationMinutes.errors?.['max']) { {{ 'CREATE_CLUB.duration_max' | translate }} }
+              </p>
+            }
+          </div>
+        </fieldset>
+
+        <!-- Visibility Fieldset -->
+        <fieldset>
+          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
+          <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
+            <div>
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'CREATE_CLUB.public_label' | translate }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'CREATE_CLUB.public_desc' | translate }}</p>
             </div>
-          </form>
+            <button
+              type="button"
+              role="switch"
+              [attr.aria-checked]="form.controls.isPublic.value"
+              (click)="togglePublic()"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              [class.bg-primary-600]="form.controls.isPublic.value"
+              [class.bg-gray-300]="!form.controls.isPublic.value"
+              [class.dark:bg-gray-600]="!form.controls.isPublic.value"
+            >
+              <span
+                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                [class.translate-x-6]="form.controls.isPublic.value"
+                [class.translate-x-1]="!form.controls.isPublic.value"
+              ></span>
+            </button>
+          </div>
+        </fieldset>
+
+        <!-- After-meeting Section -->
+        <section>
+          <button
+            type="button"
+            (click)="toggleAfterMeeting()"
+            class="w-full text-left px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700
+                   text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-150
+                   focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            @if (showAfterMeeting()) {
+              {{ 'CREATE_CLUB.after_meeting_hide' | translate }}
+            } @else {
+              {{ 'CREATE_CLUB.after_meeting_toggle' | translate }}
+            }
+          </button>
+
+          @if (showAfterMeeting()) {
+            <div class="mt-4 space-y-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 p-4">
+
+              <!-- After-meeting Venue Name -->
+              <div>
+                <label for="venue-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {{ 'CREATE_CLUB.venue_name_label' | translate }}
+                </label>
+                <input
+                  id="venue-name"
+                  type="text"
+                  formControlName="afterMeetingVenueName"
+                  [placeholder]="'CREATE_CLUB.venue_name_placeholder' | translate"
+                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                         px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                         transition-colors duration-150"
+                  [class.border-red-400]="form.controls.afterMeetingVenueName.invalid && form.controls.afterMeetingVenueName.touched"
+                  aria-describedby="venue-name-error"
+                />
+                @if (form.controls.afterMeetingVenueName.invalid && form.controls.afterMeetingVenueName.touched) {
+                  <p id="venue-name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                    @if (form.controls.afterMeetingVenueName.errors?.['maxlength']) { {{ 'CREATE_CLUB.venue_name_max' | translate }} }
+                  </p>
+                }
+              </div>
+
+              <!-- After-meeting Venue Address -->
+              <div>
+                <label for="venue-address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {{ 'CREATE_CLUB.venue_address_label' | translate }}
+                </label>
+                <input
+                  id="venue-address"
+                  type="text"
+                  formControlName="afterMeetingVenueAddress"
+                  [placeholder]="'CREATE_CLUB.venue_address_placeholder' | translate"
+                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                         px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                         transition-colors duration-150"
+                  [class.border-red-400]="form.controls.afterMeetingVenueAddress.invalid && form.controls.afterMeetingVenueAddress.touched"
+                  aria-describedby="venue-address-error"
+                />
+                @if (form.controls.afterMeetingVenueAddress.invalid && form.controls.afterMeetingVenueAddress.touched) {
+                  <p id="venue-address-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                    @if (form.controls.afterMeetingVenueAddress.errors?.['maxlength']) { {{ 'CREATE_CLUB.venue_address_max' | translate }} }
+                  </p>
+                }
+              </div>
+
+              <!-- After-meeting Notes -->
+              <div>
+                <label for="venue-notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {{ 'CREATE_CLUB.venue_notes_label' | translate }}
+                </label>
+                <textarea
+                  id="venue-notes"
+                  formControlName="afterMeetingVenueDescription"
+                  rows="2"
+                  [placeholder]="'CREATE_CLUB.venue_notes_placeholder' | translate"
+                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                         px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
+                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                         transition-colors duration-150"
+                  [class.border-red-400]="form.controls.afterMeetingVenueDescription.invalid && form.controls.afterMeetingVenueDescription.touched"
+                  aria-describedby="venue-notes-error"
+                ></textarea>
+                @if (form.controls.afterMeetingVenueDescription.invalid && form.controls.afterMeetingVenueDescription.touched) {
+                  <p id="venue-notes-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                    @if (form.controls.afterMeetingVenueDescription.errors?.['maxlength']) { {{ 'CREATE_CLUB.venue_notes_max' | translate }} }
+                  </p>
+                }
+              </div>
+            </div>
+          }
+        </section>
+
+        <!-- Error alert -->
+        @if (errorMessage()) {
+          <div
+            class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+            role="alert"
+          >
+            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <!-- Actions -->
+        <div class="flex gap-3 pt-2">
+          <button
+            type="button"
+            (click)="cancel()"
+            class="flex-1 rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-2.5
+                   text-sm font-semibold text-gray-700 dark:text-gray-300
+                   hover:bg-gray-50 dark:hover:bg-gray-800
+                   focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2
+                   transition-colors duration-200"
+          >
+            {{ 'CREATE_CLUB.cancel' | translate }}
+          </button>
+          <button
+            type="submit"
+            [disabled]="isSubmitting()"
+            class="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5
+                   text-sm font-semibold text-white shadow-sm
+                   hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+                   disabled:opacity-60 disabled:cursor-not-allowed
+                   transition-colors duration-200"
+          >
+            @if (isSubmitting()) {
+              <app-loading-spinner size="sm" />
+              {{ 'CREATE_CLUB.submitting' | translate }}
+            } @else {
+              {{ 'CREATE_CLUB.submit' | translate }}
+            }
+          </button>
         </div>
-      </div>
-    </div>
+      </form>
+    </article>
+  </div>
+</main>
   

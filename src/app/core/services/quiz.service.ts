@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
-import { MOCK_QUIZZES, MOCK_QUESTIONS } from '../mocks/mock-data';
+import { MOCK_QUIZZES, MOCK_QUESTIONS } from '../mocks';
 
 let nextQuizId = MOCK_QUIZZES.length + 1;
 let nextQuestionId = MOCK_QUESTIONS.length + 1;
