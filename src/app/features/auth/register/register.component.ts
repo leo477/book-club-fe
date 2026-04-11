@@ -96,7 +96,7 @@ export class RegisterComponent {
     if (!pw || pw.length === 0) return null;
     if (pw.length < 8) return 'weak';
     const hasUpper = /[A-Z]/.test(pw);
-    const hasNumber = /[0-9]/.test(pw);
+    const hasNumber = /\d/.test(pw);
     const hasSpecial = /[^A-Za-z0-9]/.test(pw);
     const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
     if (score >= 2) return 'strong';

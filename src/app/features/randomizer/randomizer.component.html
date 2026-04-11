@@ -50,7 +50,7 @@
             <p>{{ 'RANDOMIZER.no_members' | translate }}</p>
           </div>
         } @else {
-          <ul class="space-y-2" role="list">
+          <ul class="space-y-2">
             @for (member of randomizerService.candidates(); track member.userId) {
               <li>
                 <button
@@ -150,7 +150,7 @@
         @if (randomizerService.history().length > 0) {
           <div class="space-y-3">
             <h3 class="text-white/70 text-sm font-medium uppercase tracking-wide">{{ 'RANDOMIZER.history_title' | translate }}</h3>
-            <ul class="space-y-2" role="list">
+            <ul class="space-y-2">
               @for (session of randomizerService.history().slice(0, 5); track session.id) {
                 <li class="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
                   <div class="min-w-0">

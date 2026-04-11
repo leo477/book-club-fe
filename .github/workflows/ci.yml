@@ -184,7 +184,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       - name: Export SonarCloud issues as SARIF
-        if: always()
+        if: github.event_name == 'push'
         run: |
           curl -s -u "${{ secrets.SONAR_TOKEN }}:" \
             "https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&ps=500" \
@@ -223,7 +223,7 @@ jobs:
             console.log('SARIF generated with ' + sarif.runs[0].results.length + ' issues');
           "
       - name: Upload SARIF to GitHub Code Scanning
-        if: always()
+        if: github.event_name == 'push'
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: sonar.sarif

@@ -81,7 +81,7 @@
             </span>
           </h2>
 
-          <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5" role="list">
+          <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             @for (club of clubService.upcomingByCity()[city]; track club.id) {
               <li class="rounded-2xl bg-white dark:bg-gray-800 shadow hover:shadow-lg transition-shadow flex flex-col overflow-hidden">
 
@@ -216,7 +216,7 @@
             <h3 class="text-sm font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
               ✅ {{ 'CLUBS.participated' | translate }}
             </h3>
-            <ul class="space-y-2" role="list">
+            <ul class="space-y-2">
               @for (club of clubService.myParticipatedClubs(); track club.id) {
                 <li>
                   <a
@@ -260,7 +260,7 @@
             <h3 class="text-sm font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
               ⏭️ {{ 'CLUBS.missed' | translate }}
             </h3>
-            <ul class="space-y-2" role="list">
+            <ul class="space-y-2">
               @for (club of clubService.myMissedClubs(); track club.id) {
                 <li>
                   <a
