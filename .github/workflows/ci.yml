@@ -63,7 +63,7 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Run tests (ChromeHeadless)
-        run: npm run test:ci -- --code-coverage --coverage-reporters=lcov
+        run: npm run test:ci -- --code-coverage
       - name: Upload coverage artifact
         if: always()
         uses: actions/upload-artifact@v4
