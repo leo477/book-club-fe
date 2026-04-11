@@ -162,7 +162,6 @@
             (click)="toggleMenu()"
             [attr.aria-expanded]="isMenuOpen()"
             aria-controls="mobile-menu"
-            aria-label="Toggle navigation menu"
           >
             @if (isMenuOpen()) {
               <!-- X icon -->
@@ -175,6 +174,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
               </svg>
             }
+            <span class="sr-only">Toggle navigation menu</span>
           </button>
         </div>
 
