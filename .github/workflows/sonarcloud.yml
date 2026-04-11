@@ -32,8 +32,10 @@ jobs:
       - name: Run tests with coverage
         run: npm run test:ci -- --code-coverage --coverage-reporters=lcov
         continue-on-error: true  # Don't fail pipeline if tests fail — SonarCloud still needs coverage
+      # NOTE: Automatic Analysis must be disabled in SonarCloud project settings
+      # (Administration → Analysis Method) to avoid exit-code-3 conflict with CI scanning.
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v5.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
