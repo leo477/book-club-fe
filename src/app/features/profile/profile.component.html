@@ -147,7 +147,8 @@
       {{ 'PROFILE.role_subtitle' | translate }}
     </p>
 
-    <div class="grid grid-cols-2 gap-4" role="group" [attr.aria-label]="'PROFILE.role_title' | translate">
+    <fieldset class="grid grid-cols-2 gap-4 border-0 p-0 m-0">
+      <legend class="sr-only">{{ 'PROFILE.role_title' | translate }}</legend>
 
       <!-- Reader card -->
       <button
@@ -202,7 +203,7 @@
           </span>
         }
       </button>
-    </div>
+    </fieldset>
 
     <!-- Role change success toast -->
     @if (roleChanged()) {
