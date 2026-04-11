@@ -20,7 +20,8 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    steps:
+    permissions:
+      contents: read
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Setup Node.js
@@ -44,7 +45,8 @@ jobs:
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
-    steps:
+    permissions:
+      contents: read
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Setup Node.js
@@ -75,7 +77,8 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    steps:
+    permissions:
+      contents: read
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Setup Node.js
@@ -99,7 +102,8 @@ jobs:
   security:
     name: Security Scan
     runs-on: ubuntu-latest
-    steps:
+    permissions:
+      contents: read
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Setup Node.js
@@ -123,7 +127,8 @@ jobs:
   typecheck:
     name: Type Check
     runs-on: ubuntu-latest
-    steps:
+    permissions:
+      contents: read
       - name: Checkout code
         uses: actions/checkout@v4
       - name: Setup Node.js
@@ -236,6 +241,8 @@ jobs:
     if: >-
       github.event_name == 'push' ||
       (github.event_name == 'pull_request' && github.event.action != 'closed')
+    permissions:
+      contents: read
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
