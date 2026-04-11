@@ -1,7 +1,7 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
-import { MOCK_RANDOMIZER_HISTORY, MOCK_CLUB_MEMBERS } from '../mocks/mock-data';
+import { MOCK_RANDOMIZER_HISTORY, MOCK_CLUB_MEMBERS } from '../mocks';
 
 let nextSessionId = MOCK_RANDOMIZER_HISTORY.length + 1;
 

@@ -1,31 +1,4 @@
-import { UserProfile, UserStats } from '../models/user.model';
-import { Club, ClubMeeting, ClubStatus } from '../models/club.model';
-import { Quiz, QuizQuestion } from '../models/quiz.model';
-import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
-
-export const MOCK_USERS: UserProfile[] = [
-  {
-    id: 'user-1',
-    role: 'organizer',
-    displayName: 'Alice Organizer',
-    avatarUrl: null,
-    createdAt: '2024-01-01T00:00:00Z',
-    socialsPublic: true,
-    socials: {
-      telegram: 'bookclub_ua',
-      instagram: 'bookclub.ukraine',
-      github: 'bookclub-dev',
-      goodreads: 'bookclub-ua',
-    },
-  },
-  {
-    id: 'user-2',
-    role: 'user',
-    displayName: 'Bob Reader',
-    avatarUrl: null,
-    createdAt: '2024-01-02T00:00:00Z',
-  },
-];
+import { Club, ClubStatus } from '../models/club.model';
 
 export const MOCK_CLUBS: Club[] = [
   {
@@ -46,6 +19,9 @@ export const MOCK_CLUBS: Club[] = [
     status: 'active',
     currentBook: { title: 'Гордість і упередження', author: 'Джейн Остін', description: 'Романтична сатира на суспільство Англії XIX ст. Елізабет Беннет та містер Дарсі.' },
     memberPreviews: ['Alice Organizer', 'Bob Reader', 'Carol Smith', 'Dan Brown'],
+    tags: ['Класика', 'Романтика'],
+    meetingDurationMinutes: 90,
+    afterMeetingVenue: { name: 'Кав\'ярня «Пушкін»', address: 'бул. Шевченка, 2, Київ', description: 'Столик заброньовано на 19:30, питання до Аліси' },
   },
   {
     id: 'club-2',
@@ -65,6 +41,9 @@ export const MOCK_CLUBS: Club[] = [
     status: 'active',
     currentBook: { title: 'Дюна', author: 'Френк Герберт', description: 'Епічна сага про пустельну планету Арракіс і долю всесвіту.' },
     memberPreviews: ['Alice Organizer', 'Eve Garcia', 'Frank Lee'],
+    tags: ['Наукова фантастика', 'Антиутопія'],
+    meetingDurationMinutes: 120,
+    afterMeetingVenue: { name: 'Craft Beer Bar «Паляниця»', address: 'вул. Саксаганського, 60, Київ' },
   },
   {
     id: 'club-3',
@@ -84,6 +63,9 @@ export const MOCK_CLUBS: Club[] = [
     status: 'active',
     currentBook: { title: 'Вбивство у Східному експресі', author: 'Агата Крісті', description: 'Пуаро розслідує вбивство в зупиненому снігом поїзді.' },
     memberPreviews: ['Bob Reader', 'Grace Kim'],
+    tags: ['Детектив', 'Трилер', 'Містика'],
+    meetingDurationMinutes: 90,
+    afterMeetingVenue: null,
   },
   {
     id: 'club-4',
@@ -103,6 +85,9 @@ export const MOCK_CLUBS: Club[] = [
     status: 'active',
     currentBook: { title: 'Кобзар', author: 'Тарас Шевченко', description: 'Збірка поезій, що стала символом національного відродження України.' },
     memberPreviews: ['Alice Organizer', 'Hanna Wolf', 'Ivan Petrenko', 'Julia Roth'],
+    tags: ['Поезія', 'Українська література'],
+    meetingDurationMinutes: 60,
+    afterMeetingVenue: { name: 'Ресторан «Криївка»', address: 'пл. Ринок, 14, Львів', description: 'Дрес-код: патріотичний' },
   },
   {
     id: 'club-5',
@@ -122,6 +107,9 @@ export const MOCK_CLUBS: Club[] = [
     status: 'active',
     currentBook: { title: 'Аліса в країні чудес', author: 'Льюїс Керролл', description: 'Фантастична пригода маленької Аліси у дивовижному підземному світі.' },
     memberPreviews: ['Bob Reader', 'Kate Jones', 'Liam Chen', 'Mia Rossi'],
+    tags: ['Сучасна проза', 'Обмін книгами'],
+    meetingDurationMinutes: 75,
+    afterMeetingVenue: { name: 'Кафе «Фанконі»', address: 'Катерининська пл., 1, Одеса' },
   },
   {
     id: 'club-6',
@@ -141,6 +129,9 @@ export const MOCK_CLUBS: Club[] = [
     status: 'active',
     currentBook: { title: 'Sapiens: Коротка історія людства', author: 'Юваль Ной Харарі', description: 'Огляд еволюції людства від кам\'яного віку до сучасності.' },
     memberPreviews: ['Alice Organizer', 'Noah Schulz'],
+    tags: ['Нон-фікшн', 'Історія'],
+    meetingDurationMinutes: 90,
+    afterMeetingVenue: null,
   },
   {
     id: 'club-7',
@@ -160,6 +151,9 @@ export const MOCK_CLUBS: Club[] = [
     status: 'paused',
     currentBook: { title: 'Гобіт', author: 'Дж. Р. Р. Толкін', description: 'Пригоди хобіта Більбо Бегінса у пошуках скарбів дракона Смога.' },
     memberPreviews: ['Bob Reader', 'Olivia Brown', 'Peter Park', 'Quinn Adams'],
+    tags: ['Фентезі', 'Пригоди'],
+    meetingDurationMinutes: 120,
+    afterMeetingVenue: { name: 'Геймбар «Dungeon»', address: 'вул. Велика Васильківська, 72, Київ' },
   },
   {
     id: 'club-8',
@@ -179,6 +173,9 @@ export const MOCK_CLUBS: Club[] = [
     status: 'cancelled',
     currentBook: null,
     memberPreviews: ['Alice Organizer', 'Rachel Green'],
+    tags: ['Графічні романи', 'Комікси', 'Манга'],
+    meetingDurationMinutes: 60,
+    afterMeetingVenue: null,
   },
   {
     id: 'club-9',
@@ -197,6 +194,9 @@ export const MOCK_CLUBS: Club[] = [
     memberPreviews: ['Alice Organizer'],
     status: 'cancelled' as ClubStatus,
     cancelledAt: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString(),
+    tags: ['Демо'],
+    meetingDurationMinutes: null,
+    afterMeetingVenue: null,
   },
   {
     id: 'club-10',
@@ -215,119 +215,8 @@ export const MOCK_CLUBS: Club[] = [
     memberPreviews: ['Alice Organizer'],
     status: 'cancelled' as ClubStatus,
     cancelledAt: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
+    tags: ['Демо'],
+    meetingDurationMinutes: null,
+    afterMeetingVenue: null,
   },
-];
-
-export const MOCK_QUIZZES: Quiz[] = [
-  {
-    id: 'quiz-1',
-    clubId: 'club-1',
-    createdBy: 'user-1',
-    title: 'Pride and Prejudice Quiz',
-    description: 'Test your knowledge of Jane Austen\'s classic.',
-    isActive: true,
-  },
-  {
-    id: 'quiz-2',
-    clubId: 'club-2',
-    createdBy: 'user-1',
-    title: 'Dune Quiz',
-    description: 'How well do you know Arrakis?',
-    isActive: false,
-  },
-];
-
-export const MOCK_QUESTIONS: QuizQuestion[] = [
-  {
-    id: 'q-1',
-    quizId: 'quiz-1',
-    question: 'Who is the author of Pride and Prejudice?',
-    options: ['Charlotte Brontë', 'Jane Austen', 'George Eliot', 'Mary Shelley'],
-    correctIndex: 1,
-  },
-  {
-    id: 'q-2',
-    quizId: 'quiz-1',
-    question: 'What is the name of the Bennet family estate?',
-    options: ['Pemberley', 'Longbourn', 'Netherfield', 'Rosings'],
-    correctIndex: 1,
-  },
-  {
-    id: 'q-3',
-    quizId: 'quiz-2',
-    question: 'What is the desert planet in Dune called?',
-    options: ['Caladan', 'Giedi Prime', 'Arrakis', 'Salusa Secundus'],
-    correctIndex: 2,
-  },
-];
-
-export const MOCK_CLUB_MEMBERS: Record<string, MemberCandidate[]> = {
-  'club-1': [
-    { userId: 'user-1', displayName: 'Alice Organizer', avatarUrl: null },
-    { userId: 'user-2', displayName: 'Bob Reader', avatarUrl: null },
-    { userId: 'user-3', displayName: 'Carol Smith', avatarUrl: null },
-    { userId: 'user-4', displayName: 'Dan Brown', avatarUrl: null },
-  ],
-  'club-2': [
-    { userId: 'user-1', displayName: 'Alice Organizer', avatarUrl: null },
-    { userId: 'user-5', displayName: 'Eve Garcia', avatarUrl: null },
-    { userId: 'user-6', displayName: 'Frank Lee', avatarUrl: null },
-  ],
-  'club-3': [
-    { userId: 'user-2', displayName: 'Bob Reader', avatarUrl: null },
-    { userId: 'user-7', displayName: 'Grace Kim', avatarUrl: null },
-  ],
-  'club-4': [
-    { userId: 'user-1', displayName: 'Alice Organizer', avatarUrl: null },
-    { userId: 'user-8', displayName: 'Hanna Wolf', avatarUrl: null },
-    { userId: 'user-9', displayName: 'Ivan Petrenko', avatarUrl: null },
-    { userId: 'user-10', displayName: 'Julia Roth', avatarUrl: null },
-  ],
-};
-
-export const MOCK_RANDOMIZER_HISTORY: RandomizerSession[] = [
-  {
-    id: 'session-1',
-    clubId: 'club-1',
-    createdBy: 'user-1',
-    purpose: 'Хто представляє книгу?',
-    candidates: [
-      { userId: 'user-1', displayName: 'Alice Organizer', avatarUrl: null },
-      { userId: 'user-2', displayName: 'Bob Reader', avatarUrl: null },
-      { userId: 'user-3', displayName: 'Carol Smith', avatarUrl: null },
-    ],
-    result: { userId: 'user-2', displayName: 'Bob Reader', avatarUrl: null },
-    createdAt: '2024-03-01T00:00:00Z',
-  },
-];
-
-/** Club IDs the default mock user (user-1) belongs to */
-export const MOCK_MY_CLUB_IDS = new Set(['club-1', 'club-2', 'club-3', 'club-4']);
-
-export const MOCK_MEETINGS: ClubMeeting[] = [
-  { id: 'm-1', clubId: 'club-1', title: 'Jane Austen evening', date: '2026-03-10T18:00:00Z', attendees: ['user-1', 'user-2'] },
-  { id: 'm-2', clubId: 'club-2', title: 'Dune discussion', date: '2026-03-20T19:00:00Z', attendees: ['user-1'] },
-  { id: 'm-3', clubId: 'club-3', title: 'Agatha Christie night', date: '2026-03-25T17:00:00Z', attendees: ['user-2'] },
-  { id: 'm-4', clubId: 'club-4', title: 'Shevchenko reading', date: '2026-03-28T18:30:00Z', attendees: ['user-1'] },
-];
-
-/**
- * Clubs where each user had any activity (attended meeting or took a quiz).
- * Used to determine "participated" vs "missed" in the My Clubs section.
- */
-export const MOCK_PARTICIPATION: Record<string, Set<string>> = {
-  'user-1': new Set(['club-1', 'club-2', 'club-4']),
-  'user-2': new Set(['club-3']),
-};
-
-/** Per-user statistics keyed by user id */
-export const MOCK_STATS: Record<string, UserStats> = {
-  'user-1': { clubsJoined: 3, quizzesTaken: 12, quizWins: 5, likesReceived: 24, booksRead: 18 },
-  'user-2': { clubsJoined: 2, quizzesTaken: 7, quizWins: 1, likesReceived: 8, booksRead: 9 },
-};
-
-/** Seed credentials for in-memory auth. All mock data lives here — not scattered in services. */
-export const MOCK_USER_CREDENTIALS: { userId: string; email: string; password: string }[] = [
-  { userId: 'user-1', email: 'alice@example.com', password: 'password' },
-  { userId: 'user-2', email: 'bob@example.com', password: 'password' },
 ];

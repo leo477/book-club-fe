@@ -1,7 +1,7 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { Router } from '@angular/router';
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-import { MOCK_USERS, MOCK_STATS, MOCK_USER_CREDENTIALS } from '../mocks/mock-data';
+import { MOCK_USERS, MOCK_STATS, MOCK_USER_CREDENTIALS } from '../mocks';
 
 const inMemoryUsers: (UserProfile & { email: string; password: string })[] = MOCK_USER_CREDENTIALS.flatMap(
   cred => {

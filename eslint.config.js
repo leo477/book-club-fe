@@ -46,6 +46,10 @@ module.exports = defineConfig([
       // Angular's output<void>() pattern is idiomatic; the rule does not support
       // void in function-call type arguments (CallExpression grandparent is in invalidGrandParents)
       "@typescript-eslint/no-invalid-void-type": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { "argsIgnorePattern": "^_" },
+      ],
       "rxjs-x/no-unsafe-takeuntil": "error",
       "rxjs-x/no-floating-observables": "error",
       "rxjs-x/no-unbound-methods": "error",

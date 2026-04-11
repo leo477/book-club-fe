@@ -65,7 +65,7 @@
                 >
                   <!-- Avatar -->
                   <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                    {{ initials(member.displayName) }}
+                    {{ member.displayName | initials }}
                   </div>
                   <span class="text-white font-medium text-sm flex-1 text-left">{{ member.displayName }}</span>
                   @if (randomizerService.selectedIds().has(member.userId)) {
@@ -92,7 +92,7 @@
           } @else if (randomizerService.result()) {
             <div class="space-y-3">
               <div class="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl ring-4 ring-white/30">
-                {{ initials(randomizerService.result()!.displayName) }}
+                {{ randomizerService.result()!.displayName | initials }}
               </div>
               <div>
                 <p class="text-white/60 text-xs uppercase tracking-wide mb-1">{{ randomizerService.purpose() }}</p>

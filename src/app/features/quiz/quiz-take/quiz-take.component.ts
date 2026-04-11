@@ -9,6 +9,7 @@ import {
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { QuizService } from '../../../core/services/quiz.service';
 import { QuizAttempt } from '../../../core/models/quiz.model';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
 type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
 
@@ -16,7 +17,7 @@ type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
   selector: 'app-quiz-take',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink],
+  imports: [RouterLink, LoadingSpinnerComponent],
   templateUrl: './quiz-take.component.html',
 })
 export class QuizTakeComponent implements OnInit {

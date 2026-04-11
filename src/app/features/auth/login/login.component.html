@@ -18,26 +18,29 @@
               <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ 'AUTH.sign_in_h2' | translate }}</h2>
 
               <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+                <fieldset class="border-0 p-0 m-0">
+                  <legend class="sr-only">{{ 'AUTH.sign_in_h2' | translate }}</legend>
 
-                <!-- Email -->
-                <app-form-field
-                  [label]="'AUTH.email' | translate"
-                  type="email"
-                  placeholder="you@example.com"
-                  [control]="form.controls.email"
-                />
+                  <!-- Email -->
+                  <app-form-field
+                    [label]="'AUTH.email' | translate"
+                    type="email"
+                    placeholder="you@example.com"
+                    [control]="form.controls.email"
+                  />
 
-                <!-- Password -->
-                <app-form-field
-                  [label]="'AUTH.password' | translate"
-                  type="password"
-                  placeholder="••••••••"
-                  [control]="form.controls.password"
-                />
+                  <!-- Password -->
+                  <app-form-field
+                    [label]="'AUTH.password' | translate"
+                    type="password"
+                    placeholder="••••••••"
+                    [control]="form.controls.password"
+                  />
+                </fieldset>
 
                 <!-- Error alert -->
                 @if (errorMessage()) {
-                  <div class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">
+                  <div class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700" role="alert">
                     <span class="mt-0.5 shrink-0">⚠️</span>
                     <span>{{ errorMessage() }}</span>
                   </div>
@@ -54,10 +57,7 @@
                          transition-colors duration-200 mt-2"
                 >
                   @if (isSubmitting()) {
-                    <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                    </svg>
+                    <app-loading-spinner size="sm" />
                     {{ 'AUTH.signing_in' | translate }}
                   } @else {
                     {{ 'AUTH.submit_login' | translate }}

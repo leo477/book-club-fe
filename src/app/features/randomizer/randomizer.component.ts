@@ -13,12 +13,13 @@ import { DatePipe } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { RandomizerService } from '../../core/services/randomizer.service';
+import { InitialsPipe } from '../../shared/pipes/initials.pipe';
 
 @Component({
   selector: 'app-randomizer',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule],
+  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule, InitialsPipe],
   styleUrl: './randomizer.component.scss',
   templateUrl: './randomizer.component.html',
 })
@@ -47,14 +48,6 @@ export class RandomizerComponent implements OnInit {
         .candidates()
         .filter(m => this.randomizerService.selectedIds().has(m.userId)).length,
   );
-
-  protected readonly initials = (name: string): string =>
-    name
-      .split(' ')
-      .map(w => w[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
 
   ngOnInit(): void {
     this.clubId = this.route.snapshot.params['id'] as string;

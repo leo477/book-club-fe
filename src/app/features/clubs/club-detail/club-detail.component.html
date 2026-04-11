@@ -91,10 +91,7 @@
                 [attr.aria-label]="'CLUB_DETAIL.leave' | translate"
               >
                 @if (isActionLoading()) {
-                  <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                  </svg>
+                  <app-loading-spinner size="sm" />
                 }
                 {{ 'CLUB_DETAIL.leave' | translate }}
               </button>
@@ -107,10 +104,7 @@
                 [attr.aria-label]="'CLUB_DETAIL.join' | translate"
               >
                 @if (isActionLoading()) {
-                  <svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                  </svg>
+                  <app-loading-spinner size="sm" />
                 }
                 {{ 'CLUB_DETAIL.join' | translate }}
               </button>
@@ -166,7 +160,7 @@
           <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.organizer_title' | translate }}</h2>
           <div class="flex items-center gap-4">
             <div class="h-12 w-12 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0" aria-hidden="true">
-              {{ initials(organizerProfile()!.displayName) }}
+              {{ organizerProfile()!.displayName | initials }}
             </div>
             <div>
               <p class="font-semibold text-gray-900 dark:text-white">{{ organizerProfile()!.displayName }}</p>
@@ -255,7 +249,7 @@
               <li class="flex items-center gap-4 py-3 relative">
                 <!-- Avatar -->
                 <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0" aria-hidden="true">
-                  {{ initials(member.displayName) }}
+                  {{ member.displayName | initials }}
                 </div>
 
                 <!-- Name + role -->
@@ -460,7 +454,7 @@
 
       <!-- Club meta footer -->
       <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">
-        {{ 'CLUB_DETAIL.created' | translate }} {{ formatDate(club()!.createdAt) }}
+        {{ 'CLUB_DETAIL.created' | translate }} {{ club()!.createdAt | formatDate }}
       </footer>
 
     </div>
