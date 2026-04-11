@@ -103,8 +103,11 @@ jobs:
       - name: Check job results and post PR comment
         id: gate
         uses: actions/github-script@v7
+        env:
+          NEEDS: ${{ toJson(needs) }}
         with:
           script: |
+            const needs = JSON.parse(process.env.NEEDS);
             const failed = Object.entries(needs)
               .filter(([name, job]) => job.result === 'failure' || job.result === 'cancelled')
               .map(([name]) => name);

@@ -32,6 +32,6 @@ jobs:
         uses: preactjs/compressed-size-action@v2
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
-          build-script: npm run build -- --configuration=production
+          build-script: build -- --configuration=production
           pattern: ./dist/book-club-fe/browser/**/*.{js,css}
           strip-hash: true
