@@ -193,6 +193,28 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Wait for SonarCloud analysis to complete
+        if: github.event_name == 'push'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          TASK_ID=$(grep ceTaskId .scannerwork/report-task.txt | cut -d= -f2)
+          echo "Waiting for SonarCloud task: $TASK_ID"
+          for i in $(seq 1 60); do
+            STATUS=$(curl -s -u "$SONAR_TOKEN:" "https://sonarcloud.io/api/ce/task?id=$TASK_ID" | python3 -c "import json,sys; print(json.load(sys.stdin)['task']['status'])")
+            echo "Attempt $i: $STATUS"
+            if [ "$STATUS" = "SUCCESS" ]; then
+              echo "Analysis complete."
+              exit 0
+            fi
+            if [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "CANCELLED" ]; then
+              echo "SonarCloud analysis failed with status: $STATUS"
+              exit 1
+            fi
+            sleep 5
+          done
+          echo "Timed out waiting for SonarCloud analysis"
+          exit 1
       - name: Export SonarCloud issues as SARIF
         if: github.event_name == 'push'
         run: |
