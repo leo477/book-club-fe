@@ -80,7 +80,7 @@ export class ClubService {
 
   readonly availableCities = computed<string[]>(() => {
     const cities = this._clubs().map(c => c.city).filter((c): c is string => !!c);
-    return [...new Set(cities)].sort();
+    return [...new Set(cities)].sort((a, b) => a.localeCompare(b));
   });
 
   readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
