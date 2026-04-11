@@ -201,7 +201,7 @@ jobs:
           TASK_ID=$(grep ceTaskId .scannerwork/report-task.txt | cut -d= -f2)
           echo "Waiting for SonarCloud task: $TASK_ID"
           for i in $(seq 1 60); do
-            STATUS=$(curl -s -u "$SONAR_TOKEN:" "https://sonarcloud.io/api/ce/task?id=$TASK_ID" | python3 -c "import json,sys; print(json.load(sys.stdin)['task']['status'])")
+            STATUS=$(curl -s -H "Authorization: Bearer $SONAR_TOKEN" "https://sonarcloud.io/api/ce/task?id=$TASK_ID" | python3 -c "import json,sys; print(json.load(sys.stdin)['task']['status'])")
             echo "Attempt $i: $STATUS"
             if [ "$STATUS" = "SUCCESS" ]; then
               echo "Analysis complete."
