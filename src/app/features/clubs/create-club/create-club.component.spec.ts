@@ -5,7 +5,6 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { FormGroup } from '@angular/forms';
 
 describe('CreateClubComponent', () => {
   let component: CreateClubComponent;

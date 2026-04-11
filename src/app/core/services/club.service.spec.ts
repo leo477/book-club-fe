@@ -1,7 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection } from '@angular/core';
+import { provideZonelessChangeDetection, WritableSignal } from '@angular/core';
 import { ClubService } from './club.service';
 import { AuthService } from '../auth/auth.service';
+import { BanRecord } from '../models/club.model';
+
+interface ClubServicePrivate {
+  _bans: WritableSignal<Record<string, BanRecord[]>>;
+}
 
 describe('ClubService', () => {
   let service: ClubService;
@@ -21,12 +26,12 @@ describe('ClubService', () => {
     });
     service = TestBed.inject(ClubService);
     // Reset bans for each test to avoid cross-test pollution
-    (service as any)._bans.set({});
+    (service as unknown as ClubServicePrivate)._bans.set({});
   });
 
   afterEach(() => {
     jasmine.clock().uninstall();
-    (service as any)._bans.set({});
+    (service as unknown as ClubServicePrivate)._bans.set({});
   });
 
   it('getBans returns [] for club with no bans', () => {

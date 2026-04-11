@@ -1,5 +1,4 @@
 import { InitialsPipe } from './initials.pipe';
-import { provideZonelessChangeDetection } from '@angular/core';
 
 describe('InitialsPipe', () => {
   let pipe: InitialsPipe;

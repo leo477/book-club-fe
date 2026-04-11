@@ -6,14 +6,14 @@ import { RouterTestingModule } from '@angular/router/testing';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { SeoService } from '../../../core/services/seo.service';
-import { signal } from '@angular/core';
+import { ComponentFixture } from '@angular/core/testing';
 
 describe('ClubDetailComponent', () => {
   let component: ClubDetailComponent;
   let clubServiceSpy: jasmine.SpyObj<ClubService>;
   let authSpy: jasmine.SpyObj<AuthService>;
   let seoSpy: jasmine.SpyObj<SeoService>;
-  let fixture: any;
+  let fixture: ComponentFixture<ClubDetailComponent>;
 
   beforeEach(async () => {
     clubServiceSpy = jasmine.createSpyObj('ClubService', [

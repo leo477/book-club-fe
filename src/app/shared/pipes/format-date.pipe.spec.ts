@@ -1,5 +1,4 @@
 import { FormatDatePipe } from './format-date.pipe';
-import { provideZonelessChangeDetection } from '@angular/core';
 
 describe('FormatDatePipe', () => {
   let pipe: FormatDatePipe;
