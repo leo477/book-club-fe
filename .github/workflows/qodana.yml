@@ -26,17 +26,20 @@ jobs:
           fetch-depth: 0
 
       - name: Run Qodana
+        id: qodana
         uses: JetBrains/qodana-action@v2025.1
         env:
           QODANA_TOKEN: ${{ secrets.QODANA_TOKEN }}
         with:
           args: --fail-threshold,0
+          results-dir: ${{ runner.temp }}/qodana/results
           upload-result: true
           artifact-name: qodana-report
 
       - name: Upload SARIF to GitHub Code Scanning
-        if: always()
+        if: (success() || failure()) && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: github/codeql-action/upload-sarif@v3
+        continue-on-error: true
         with:
-          sarif_file: ${{ runner.temp }}/qodana/results/qodana.sarif.json
+          sarif_file: ${{ steps.qodana.outputs.results-dir }}/qodana.sarif.json
           category: qodana
