@@ -10,7 +10,15 @@
     "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
     "extract-i18n": "node scripts/extract-i18n.mjs",
     "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
-    "lint": "ng lint"
+    "lint": "ng lint",
+    "build-ctx": "npx repomix --no-files",
+    "prepare": "husky install"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,py,html}": [
+      "npx repomix --no-files",
+      "git add repomix-output.md"
+    ]
   },
   "prettier": {
     "overrides": [
@@ -46,6 +54,7 @@
     "autoprefixer": "^10.4.27",
     "eslint": "^9.39.1",
     "eslint-plugin-rxjs-x": "^0.9.5",
+    "husky": "^8.0.0",
     "jasmine-core": "~5.8.0",
     "karma": "~6.4.0",
     "karma-chrome-launcher": "~3.2.0",
