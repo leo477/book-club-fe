@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ClubDetailComponent } from './club-detail.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateLoader, TranslateService } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
+import { of } from 'rxjs';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { SeoService } from '../../../core/services/seo.service';
@@ -53,7 +54,23 @@ describe('ClubDetailComponent', () => {
     clubServiceSpy.msUntilDeletion.and.returnValue(null);
     authSpy.isAuthenticated.and.returnValue(true);
     await TestBed.configureTestingModule({
-      imports: [ClubDetailComponent, TranslateModule.forRoot(), RouterTestingModule],
+      imports: [
+        ClubDetailComponent,
+        TranslateModule.forRoot({
+          loader: {
+            provide: TranslateLoader,
+            useValue: {
+              getTranslation: () => of({
+                CLUB_DETAIL: {
+                  deletion_countdown_hours: 'буде видалено через {{ hours }} год. {{ minutes }} хв.',
+                  deletion_countdown_minutes: 'буде видалено через {{ minutes }} хв.',
+                },
+              }),
+            },
+          },
+        }),
+        RouterTestingModule,
+      ],
       providers: [
         provideZonelessChangeDetection(),
         { provide: ClubService, useValue: clubServiceSpy },
@@ -61,6 +78,8 @@ describe('ClubDetailComponent', () => {
         { provide: SeoService, useValue: seoSpy },
       ]
     }).compileComponents();
+    const translate = TestBed.inject(TranslateService);
+    await translate.use('uk').toPromise();
     fixture = TestBed.createComponent(ClubDetailComponent);
     fixture.componentRef.setInput('id', 'club-1');
     component = fixture.componentInstance;

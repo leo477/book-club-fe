@@ -3,6 +3,7 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { ToastService } from '../services/toast.service';
+import { environment } from '../../../environments/environment';
 
 /**
  * Global HTTP error interceptor.
@@ -30,8 +31,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
       } else if (httpError?.status === 403) {
         router.navigate(['/clubs']);
       } else if (httpError && httpError.status >= 500) {
-        // Server-side failure — surface a user-friendly message and log details
-        console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
+        if (!environment.production) {
+          console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
+        }
         toast.show('A server error occurred. Please try again later.', 'error');
       }
       return throwError(() => error);

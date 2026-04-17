@@ -75,19 +75,17 @@ export class AuthService {
   updateRole(role: UserRole): void {
     const user = this._currentUser();
     if (!user) return;
-    const updated: UserProfile = { ...user, role };
-    this._currentUser.set(updated);
-    const stored = inMemoryUsers.find(u => u.id === user.id);
-    if (stored) stored.role = role;
+    this._currentUser.set({ ...user, role });
+    const idx = inMemoryUsers.findIndex(u => u.id === user.id);
+    if (idx !== -1) inMemoryUsers[idx] = { ...inMemoryUsers[idx], role };
   }
 
   updateDisplayName(name: string): void {
     const user = this._currentUser();
     if (!user) return;
-    const updated: UserProfile = { ...user, displayName: name };
-    this._currentUser.set(updated);
-    const stored = inMemoryUsers.find(u => u.id === user.id);
-    if (stored) stored.displayName = name;
+    this._currentUser.set({ ...user, displayName: name });
+    const idx = inMemoryUsers.findIndex(u => u.id === user.id);
+    if (idx !== -1) inMemoryUsers[idx] = { ...inMemoryUsers[idx], displayName: name };
   }
 
   updateSocials(socials: UserSocials): void {

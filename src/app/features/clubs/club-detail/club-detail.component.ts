@@ -9,7 +9,9 @@ import {
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { MOCK_USERS } from '../../../core/mocks';
@@ -36,6 +38,15 @@ export class ClubDetailComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly seo = inject(SeoService);
+  private readonly translate = inject(TranslateService);
+
+  private readonly _lang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: this.translate.currentLang ?? 'uk' },
+  );
 
   readonly currentUser = this.auth.currentUser;
 
@@ -65,26 +76,30 @@ export class ClubDetailComponent {
   readonly clubBans = computed(() => this.clubService.getBans(this.id()));
 
   readonly deleteCountdown = computed<string | null>(() => {
+    this._lang();
     const c = this.club();
     if (!c) return null;
     const ms = this.clubService.msUntilDeletion(c);
     if (ms === null) return null;
     const hours = Math.floor(ms / (1000 * 60 * 60));
     const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-    if (hours > 0) return `буде видалено через ${hours} год. ${minutes} хв.`;
-    return `буде видалено через ${minutes} хв.`;
+    if (hours > 0)
+      return this.translate.instant('CLUB_DETAIL.deletion_countdown_hours', { hours, minutes });
+    return this.translate.instant('CLUB_DETAIL.deletion_countdown_minutes', { minutes });
   });
 
   readonly rescheduleDate = new FormControl<string>('', { nonNullable: true });
 
   constructor() {
-    effect(() => {
+    effect((onCleanup) => {
       const clubId = this.id();
-      void this.loadClub(clubId);
+      let cancelled = false;
+      onCleanup(() => { cancelled = true; });
+      void this.loadClub(clubId, () => cancelled);
     });
   }
 
-  private async loadClub(clubId: string): Promise<void> {
+  private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {
     this.isLoading.set(true);
     this.errorMessage.set(null);
 
@@ -92,8 +107,11 @@ export class ClubDetailComponent {
       if (this.auth.isAuthenticated() && this.clubService.myClubs().length === 0) {
         await this.clubService.loadMyClubs();
       }
+      if (isCancelled()) return;
 
       const found = await this.clubService.getClubById(clubId);
+      if (isCancelled()) return;
+
       if (found) {
         this.club.set(found);
         this.members.set(this.clubService.getClubMembers(clubId));
@@ -106,9 +124,9 @@ export class ClubDetailComponent {
         this.errorMessage.set('This club could not be found.');
       }
     } catch {
-      this.errorMessage.set('Failed to load club details.');
+      if (!isCancelled()) this.errorMessage.set('Failed to load club details.');
     } finally {
-      this.isLoading.set(false);
+      if (!isCancelled()) this.isLoading.set(false);
     }
   }
 

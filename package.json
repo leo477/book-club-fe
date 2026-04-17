@@ -14,12 +14,6 @@
     "build-ctx": "npx repomix --no-files",
     "prepare": "husky install"
   },
-  "lint-staged": {
-    "src/**/*.{ts,py,html}": [
-      "npx repomix --no-files",
-      "git add repomix-output.md"
-    ]
-  },
   "prettier": {
     "overrides": [
       {

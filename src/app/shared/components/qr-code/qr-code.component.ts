@@ -7,6 +7,7 @@ import {
   viewChild,
 } from '@angular/core';
 import * as QRCode from 'qrcode';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-qr-code',
@@ -37,7 +38,7 @@ export class QrCodeComponent {
       const canvas = this.canvasRef().nativeElement;
       if (!val || !canvas) return;
       QRCode.toCanvas(canvas, val, { width: sz, margin: 2 }, (err) => {
-        if (err) console.error('QR generation error:', err);
+        if (err && !environment.production) console.error('QR generation error:', err);
       });
     });
   }

@@ -5,6 +5,8 @@ import { MOCK_BANS, MOCK_CLUBS, MOCK_CLUB_MEMBERS, MOCK_MY_CLUB_IDS, MOCK_PARTIC
 
 let nextClubId = MOCK_CLUBS.length + 1;
 
+const CANCELLATION_TTL_MS = 24 * 60 * 60 * 1000;
+
 @Injectable({ providedIn: 'root' })
 export class ClubService {
   private readonly auth = inject(AuthService);
@@ -16,6 +18,7 @@ export class ClubService {
   private readonly _isLoading = signal(false);
   private readonly _error = signal<string | null>(null);
   private readonly _bans = signal<Record<string, BanRecord[]>>({ ...MOCK_BANS });
+  private readonly _kickedMembers = signal<Record<string, Set<string>>>({});
 
   readonly clubs = this._clubs.asReadonly();
   readonly myClubs = this._myClubs.asReadonly();
@@ -34,14 +37,13 @@ export class ClubService {
   );
 
   constructor() {
-    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
     const destroyRef = inject(DestroyRef);
     const intervalId = setInterval(() => {
       const now = Date.now();
       this._clubs.update(clubs =>
         clubs.filter(c => {
           if (c.status !== 'cancelled' || !c.cancelledAt) return true;
-          return now - new Date(c.cancelledAt).getTime() < TWENTY_FOUR_HOURS;
+          return now - new Date(c.cancelledAt).getTime() < CANCELLATION_TTL_MS;
         }),
       );
     }, 60_000);
@@ -50,9 +52,8 @@ export class ClubService {
 
   msUntilDeletion(club: Club): number | null {
     if (club.status !== 'cancelled' || !club.cancelledAt) return null;
-    const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
     const elapsed = Date.now() - new Date(club.cancelledAt).getTime();
-    const remaining = TWENTY_FOUR_HOURS - elapsed;
+    const remaining = CANCELLATION_TTL_MS - elapsed;
     return remaining > 0 ? remaining : null;
   }
 
@@ -83,8 +84,9 @@ export class ClubService {
   }
 
   readonly availableCities = computed<string[]>(() => {
-    const cities = this._clubs().map(c => c.city).filter((c): c is string => !!c);
-    return [...new Set(cities)].sort((a, b) => a.localeCompare(b));
+    const seen = new Set<string>();
+    for (const c of this._clubs()) if (c.city) seen.add(c.city);
+    return [...seen].sort((a, b) => a.localeCompare(b));
   });
 
   readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
@@ -217,7 +219,10 @@ export class ClubService {
   }
 
   getClubMembers(clubId: string): ClubMemberDetail[] {
-    const candidates = MOCK_CLUB_MEMBERS[clubId] ?? [];
+    const kicked = this._kickedMembers()[clubId] ?? new Set<string>();
+    const candidates = (MOCK_CLUB_MEMBERS[clubId] ?? []).filter(
+      c => !kicked.has(c.userId),
+    );
     const club = this._clubs().find(c => c.id === clubId);
     return candidates.map(candidate => {
       const user = MOCK_USERS.find(u => u.id === candidate.userId);
@@ -264,8 +269,11 @@ export class ClubService {
     );
   }
 
-  kickMember(_clubId: string, _userId: string): void {
-    void 0;
+  kickMember(clubId: string, userId: string): void {
+    this._kickedMembers.update(km => ({
+      ...km,
+      [clubId]: new Set([...(km[clubId] ?? []), userId]),
+    }));
   }
 
   banMember(clubId: string, userId: string, duration: BanDuration): void {

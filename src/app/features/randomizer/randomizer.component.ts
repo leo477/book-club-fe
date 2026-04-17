@@ -5,6 +5,7 @@ import {
   inject,
   signal,
   computed,
+  effect,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
@@ -42,6 +43,10 @@ export class RandomizerComponent implements OnInit {
     initialValue: this.purposeControl.value,
   });
 
+  constructor() {
+    effect(() => this.randomizerService.setPurpose(this._purposeValue()));
+  }
+
   protected readonly selectedCount = computed(
     () =>
       this.randomizerService
@@ -52,15 +57,6 @@ export class RandomizerComponent implements OnInit {
   ngOnInit(): void {
     this.clubId = this.route.snapshot.params['id'] as string;
     this.randomizerService.loadClubMembers(this.clubId);
-    this.randomizerService.setPurpose(this.purposeControl.value);
-
-    // Sync purpose input → service via the signal derived from valueChanges
-    // effect() would be ideal here but we keep it simple with a subscription
-    // that is automatically cleaned up when the component destroys
-    this.purposeControl.valueChanges.subscribe(v =>
-      this.randomizerService.setPurpose(v),
-    );
-
     // eslint-disable-next-line @typescript-eslint/no-empty-function
     this.randomizerService.loadHistory(this.clubId).catch(() => {});
   }

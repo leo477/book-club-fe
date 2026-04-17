@@ -1,4 +1,4 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, inject, signal, computed } from '@angular/core';
 import { AuthService } from '../auth/auth.service';
 import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
 import { MOCK_QUIZZES, MOCK_QUESTIONS } from '../mocks';
@@ -7,29 +7,30 @@ let nextQuizId = MOCK_QUIZZES.length + 1;
 let nextQuestionId = MOCK_QUESTIONS.length + 1;
 let nextAttemptId = 1;
 
-/** In-memory stores (mutable copies so new items can be pushed) */
-const inMemoryQuizzes: Quiz[] = [...MOCK_QUIZZES];
-const inMemoryQuestions: QuizQuestion[] = [...MOCK_QUESTIONS];
-
-
 @Injectable({ providedIn: 'root' })
 export class QuizService {
   private readonly auth = inject(AuthService);
 
-  private readonly _quizzes = signal<Quiz[]>([]);
+  private readonly _allQuizzes = signal<Quiz[]>([...MOCK_QUIZZES]);
+  private readonly _allQuestions = signal<QuizQuestion[]>([...MOCK_QUESTIONS]);
+  private readonly _currentClubId = signal<string | null>(null);
+  private readonly _currentQuizId = signal<string | null>(null);
   private readonly _activeQuiz = signal<Quiz | null>(null);
-  private readonly _questions = signal<QuizQuestion[]>([]);
   private readonly _isLoading = signal(false);
 
-  readonly quizzes = this._quizzes.asReadonly();
+  readonly quizzes = computed(() =>
+    this._allQuizzes().filter(q => q.clubId === this._currentClubId()),
+  );
   readonly activeQuiz = this._activeQuiz.asReadonly();
-  readonly questions = this._questions.asReadonly();
+  readonly questions = computed(() =>
+    this._allQuestions().filter(q => q.quizId === this._currentQuizId()),
+  );
   readonly isLoading = this._isLoading.asReadonly();
 
   async loadQuizzes(clubId: string): Promise<void> {
     this._isLoading.set(true);
     await Promise.resolve();
-    this._quizzes.set(inMemoryQuizzes.filter(q => q.clubId === clubId));
+    this._currentClubId.set(clubId);
     this._isLoading.set(false);
   }
 
@@ -50,8 +51,7 @@ export class QuizService {
       isActive: false,
     };
 
-    inMemoryQuizzes.push(quiz);
-    this._quizzes.update(prev => [quiz, ...prev]);
+    this._allQuizzes.update(prev => [quiz, ...prev]);
     return quiz;
   }
 
@@ -64,12 +64,12 @@ export class QuizService {
       quizId,
       ...q,
     };
-    inMemoryQuestions.push(question);
+    this._allQuestions.update(prev => [...prev, question]);
   }
 
   async loadQuestions(quizId: string): Promise<void> {
     await Promise.resolve();
-    this._questions.set(inMemoryQuestions.filter(q => q.quizId === quizId));
+    this._currentQuizId.set(quizId);
   }
 
   async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
@@ -77,7 +77,7 @@ export class QuizService {
     if (!user) throw new Error('Not authenticated');
 
     await this.loadQuestions(quizId);
-    const questions = this._questions();
+    const questions = this.questions();
 
     const score = answers.reduce((acc, answer, i) => {
       return questions[i]?.correctIndex === answer ? acc + 1 : acc;
@@ -96,10 +96,7 @@ export class QuizService {
   }
 
   async toggleActive(quizId: string, isActive: boolean): Promise<void> {
-    const quiz = inMemoryQuizzes.find(q => q.id === quizId);
-    if (quiz) quiz.isActive = isActive;
-
-    this._quizzes.update(prev =>
+    this._allQuizzes.update(prev =>
       prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
     );
   }
