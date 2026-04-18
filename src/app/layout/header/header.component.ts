@@ -49,7 +49,6 @@ export class HeaderComponent {
 
   switchLang(): void {
     const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-    // translate.use returns an Observable; subscribe to trigger the language switch
     this.translate.use(next).subscribe();
   }
 

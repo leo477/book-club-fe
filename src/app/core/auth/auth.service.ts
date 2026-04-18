@@ -1,21 +1,23 @@
-import { Injectable, inject, signal, computed } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, resource, signal } from '@angular/core';
 import { Router } from '@angular/router';
+import { catchError, firstValueFrom, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
+import { TokenStore } from './token.store';
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-import { MOCK_USERS, MOCK_STATS, MOCK_USER_CREDENTIALS } from '../mocks';
 
-const inMemoryUsers: (UserProfile & { email: string; password: string })[] = MOCK_USER_CREDENTIALS.flatMap(
-  cred => {
-    const user = MOCK_USERS.find(u => u.id === cred.userId);
-    if (!user) return [];
-    return [{ ...user, email: cred.email, password: cred.password }];
-  },
-);
-
-let nextUserId = inMemoryUsers.length + 1;
+interface AuthResponse {
+  access_token: string;
+  user: ApiUserProfile;
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly tokenStore = inject(TokenStore);
 
   private readonly _currentUser = signal<UserProfile | null>(null);
   private readonly _isLoading = signal<boolean>(true);
@@ -25,80 +27,119 @@ export class AuthService {
   readonly isAuthenticated = computed(() => this._currentUser() !== null);
   readonly userRole = computed(() => this._currentUser()?.role ?? null);
   readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
-  readonly userStats = computed<UserStats | null>(
-    () => MOCK_STATS[this._currentUser()?.id ?? ''] ?? null,
-  );
+
+  private readonly _statsResource = resource({
+    params: () => this._currentUser()?.id ?? null,
+    loader: ({ params: userId }) => {
+      if (!userId) return Promise.resolve(null as UserStats | null);
+      return firstValueFrom(
+        this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
+          catchError(() => of(null)),
+        ),
+      ).then(raw => (raw ? mapUserStats(raw) : null));
+    },
+  });
+  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
 
   constructor() {
-    this._isLoading.set(false);
+    const token = this.tokenStore.snapshot();
+    if (token) {
+      firstValueFrom(
+        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
+          catchError(() => {
+            this.tokenStore.clear();
+            return of(null);
+          }),
+        ),
+      ).then(raw => {
+        this._currentUser.set(raw ? mapUserProfile(raw) : null);
+        this._isLoading.set(false);
+      });
+    } else {
+      this._isLoading.set(false);
+    }
   }
 
   async signUp(
     email: string,
-    _password: string,
+    password: string,
     displayName: string,
     role: UserRole,
   ): Promise<{ error: string | null }> {
-    if (inMemoryUsers.some(u => u.email === email)) {
-      return { error: 'Email already registered' };
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
+          email,
+          password,
+          display_name: displayName,
+          role,
+        }),
+      );
+      this.tokenStore.set(resp.access_token);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
     }
-
-    const newUser: UserProfile & { email: string; password: string } = {
-      id: `user-${++nextUserId}`,
-      email,
-      password: _password,
-      role,
-      displayName,
-      avatarUrl: null,
-      createdAt: new Date().toISOString(),
-    };
-
-    inMemoryUsers.push(newUser);
-    this._currentUser.set({ ...newUser });
-    return { error: null };
   }
 
   async signIn(email: string, password: string): Promise<{ error: string | null }> {
-    const found = inMemoryUsers.find(u => u.email === email && u.password === password);
-    if (!found) {
-      return { error: 'Invalid email or password' };
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
+      );
+      this.tokenStore.set(resp.access_token);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
     }
-    this._currentUser.set({ ...found });
-    return { error: null };
   }
 
   async signOut(): Promise<void> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
+    } catch { /* ignore logout errors */ }
+    this.tokenStore.clear();
     this._currentUser.set(null);
     this.router.navigate(['/login']);
   }
 
-  updateRole(role: UserRole): void {
+  async updateRole(role: UserRole): Promise<void> {
     const user = this._currentUser();
     if (!user) return;
-    const updated: UserProfile = { ...user, role };
-    this._currentUser.set(updated);
-    const stored = inMemoryUsers.find(u => u.id === user.id);
-    if (stored) stored.role = role;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
+    );
+    this._currentUser.set({ ...user, role });
   }
 
-  updateDisplayName(name: string): void {
+  async updateDisplayName(name: string): Promise<void> {
     const user = this._currentUser();
     if (!user) return;
-    const updated: UserProfile = { ...user, displayName: name };
-    this._currentUser.set(updated);
-    const stored = inMemoryUsers.find(u => u.id === user.id);
-    if (stored) stored.displayName = name;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { display_name: name }),
+    );
+    this._currentUser.set({ ...user, displayName: name });
   }
 
-  updateSocials(socials: UserSocials): void {
+  async updateSocials(socials: UserSocials): Promise<void> {
     const user = this._currentUser();
     if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
+    );
     this._currentUser.set({ ...user, socials });
   }
 
-  setSocialsPublic(value: boolean): void {
+  async setSocialsPublic(value: boolean): Promise<void> {
     const user = this._currentUser();
     if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
+        socials_public: value,
+      }),
+    );
     this._currentUser.set({ ...user, socialsPublic: value });
   }
 }

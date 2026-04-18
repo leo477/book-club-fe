@@ -1,0 +1,19 @@
+{
+  "output": {
+    "style": "markdown",
+    "removeComments": true,
+    "removeEmptyLines": true,
+    "showLineNumbers": false
+  },
+  "ignore": {
+    "customPatterns": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/venv/**",
+      "**/*.scss",
+      "**/*.css",
+      "**/*.spec.ts",
+      "package-lock.json"
+    ]
+  }
+}

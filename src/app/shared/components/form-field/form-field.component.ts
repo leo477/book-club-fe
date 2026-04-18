@@ -1,36 +1,49 @@
-import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
-import { AbstractControl, FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Component, ChangeDetectionStrategy, inject, input, computed } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { map, startWith } from 'rxjs';
 
 @Component({
   selector: 'app-form-field',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslateModule],
   templateUrl: './form-field.component.html',
 })
 export class FormFieldComponent {
+  private readonly translate = inject(TranslateService);
+
   readonly label = input.required<string>();
-  readonly control = input.required<AbstractControl>();
+  readonly control = input.required<FormControl<string | null>>();
   readonly type = input<'text' | 'email' | 'password'>('text');
   readonly placeholder = input('');
 
-  /** Cast to FormControl for the [formControl] directive binding */
-  readonly formControl = computed(() => this.control() as FormControl<string>);
+  readonly formControl = computed(() => this.control());
 
   readonly hasError = computed(() => {
     const ctrl = this.control();
     return ctrl.invalid && ctrl.touched;
   });
 
+  private readonly _lang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: this.translate.currentLang ?? 'uk' },
+  );
+
   readonly errorMessage = computed(() => {
+    this._lang();
     const ctrl = this.control();
     if (!ctrl.errors) return '';
-    if (ctrl.errors['required']) return 'This field is required.';
-    if (ctrl.errors['email']) return 'Please enter a valid email address.';
+    if (ctrl.errors['required']) return this.translate.instant('FORM_ERRORS.required');
+    if (ctrl.errors['email']) return this.translate.instant('FORM_ERRORS.email');
     if (ctrl.errors['minlength']) {
       const req = (ctrl.errors['minlength'] as { requiredLength: number }).requiredLength;
-      return `Minimum ${req} characters required.`;
+      return this.translate.instant('FORM_ERRORS.minlength', { requiredLength: req });
     }
-    return 'Invalid value.';
+    return this.translate.instant('FORM_ERRORS.invalid');
   });
 }

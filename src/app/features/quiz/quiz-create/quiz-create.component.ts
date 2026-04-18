@@ -1,8 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  OnInit,
   inject,
+  input,
   signal,
 } from '@angular/core';
 import {
@@ -12,7 +12,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { QuizService } from '../../../core/services/quiz.service';
 import { QuizQuestion } from '../../../core/models/quiz.model';
 
@@ -39,15 +39,16 @@ type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './quiz-create.component.html',
 })
-export class QuizCreateComponent implements OnInit {
+export class QuizCreateComponent {
   private readonly quizService = inject(QuizService);
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   protected readonly currentStep = signal<1 | 2>(1);
   protected readonly localQuestions = signal<LocalQuestion[]>([]);
   protected readonly isPublishing = signal(false);
   protected readonly errorMessage = signal('');
+
+  readonly id = input<string>('');
 
   readonly optionIndices: readonly number[] = [0, 1, 2, 3];
 
@@ -85,12 +86,6 @@ export class QuizCreateComponent implements OnInit {
     }),
     correctIndex: new FormControl<number>(0, { nonNullable: true }),
   });
-
-  private clubId = '';
-
-  ngOnInit(): void {
-    this.clubId = this.route.snapshot.params['id'] as string;
-  }
 
   protected isInvalidTouched(ctrl: AbstractControl): boolean {
     return ctrl.invalid && ctrl.touched;
@@ -143,9 +138,10 @@ export class QuizCreateComponent implements OnInit {
     this.errorMessage.set('');
 
     const { title, description } = this.metaForm.getRawValue();
+    const clubId = this.id();
 
     this.quizService
-      .createQuiz({ clubId: this.clubId, title: title.trim(), description: description.trim() })
+      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
       .then(async quiz => {
         // Add questions sequentially to preserve sort_order
         for (const q of questions) {
@@ -154,7 +150,7 @@ export class QuizCreateComponent implements OnInit {
         // Activate the quiz
         await this.quizService.toggleActive(quiz.id, true);
         this.isPublishing.set(false);
-        this.router.navigate(['/clubs', this.clubId, 'quizzes']);
+        this.router.navigate(['/clubs', clubId, 'quizzes']);
       })
       .catch(err => {
         this.isPublishing.set(false);

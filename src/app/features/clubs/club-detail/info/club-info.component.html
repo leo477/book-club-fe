@@ -1,0 +1,42 @@
+@if (club().meetingDurationMinutes || club().address) {
+  <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+    <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.meeting_info_title' | translate }}</h2>
+    <dl class="space-y-3">
+      @if (club().meetingDurationMinutes) {
+        <div class="flex items-center gap-3">
+          <dt class="text-sm text-gray-500 dark:text-gray-400 w-28 flex-shrink-0">{{ 'CLUB_DETAIL.duration_label' | translate }}</dt>
+          <dd class="text-sm font-medium text-gray-900 dark:text-white">{{ club().meetingDurationMinutes }} {{ 'CLUB_DETAIL.minutes_abbr' | translate }}</dd>
+        </div>
+      }
+      @if (club().address) {
+        <div class="flex items-start gap-3">
+          <dt class="text-sm text-gray-500 dark:text-gray-400 w-28 flex-shrink-0">{{ 'CLUB_DETAIL.address_label' | translate }}</dt>
+          <dd class="text-sm text-gray-900 dark:text-white">
+            {{ club().address }}
+            <a [href]="'https://maps.google.com/search?q=' + club().address"
+               target="_blank" rel="noopener noreferrer"
+               class="ml-2 text-xs text-primary-600 dark:text-primary-400 hover:underline">
+              {{ 'CLUB_DETAIL.view_on_map' | translate }}
+            </a>
+          </dd>
+        </div>
+      }
+    </dl>
+  </section>
+}
+
+@if (club().afterMeetingVenue) {
+  <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+    <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.after_meeting_title' | translate }}</h2>
+    <div class="flex items-start gap-3">
+      <span class="text-2xl" aria-hidden="true">☕</span>
+      <div>
+        <p class="font-semibold text-gray-900 dark:text-white">{{ club().afterMeetingVenue!.name }}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ club().afterMeetingVenue!.address }}</p>
+        @if (club().afterMeetingVenue!.description) {
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-2 italic">{{ club().afterMeetingVenue!.description }}</p>
+        }
+      </div>
+    </div>
+  </section>
+}

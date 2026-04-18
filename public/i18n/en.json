@@ -132,6 +132,8 @@
     "view_on_map": "View on map →",
     "after_meeting_title": "After the meeting",
     "deletion_countdown_prefix": "This club has been cancelled —",
+    "deletion_countdown_hours": "will be deleted in {{ hours }} h. {{ minutes }} min.",
+    "deletion_countdown_minutes": "will be deleted in {{ minutes }} min.",
     "close_qr": "✕ Close"
   },
   "FOOTER": {
@@ -239,5 +241,24 @@
     "close": "Close chat",
     "open": "Open chat",
     "rooms": "Rooms"
+  },
+  "FORM_ERRORS": {
+    "required": "This field is required.",
+    "email": "Please enter a valid email address.",
+    "minlength": "Minimum {{ requiredLength }} characters required.",
+    "invalid": "Invalid value."
+  },
+  "SEO": {
+    "clubs_title": "Book Clubs | Book Club",
+    "clubs_description": "Find a book club in your city. Book discussions, reader meetups, interest communities.",
+    "clubs_og_title": "Book Clubs",
+    "login_title": "Sign In | Book Club",
+    "register_title": "Register | Book Club",
+    "profile_title": "Profile | Book Club",
+    "club_detail_title": "{{ name }} | Book Club",
+    "club_detail_og_title": "{{ name }}",
+    "site_name": "Book Club",
+    "site_url": "https://book-club-fe.vercel.app",
+    "site_description": "Book Clubs of Ukraine"
   }
 }

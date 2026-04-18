@@ -1,36 +1,102 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { AuthService } from '../auth/auth.service';
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
 import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
-import { MOCK_QUIZZES, MOCK_QUESTIONS } from '../mocks';
 
-let nextQuizId = MOCK_QUIZZES.length + 1;
-let nextQuestionId = MOCK_QUESTIONS.length + 1;
-let nextAttemptId = 1;
+// ── API shapes (snake_case) ──────────────────────────────────────────────────
 
-/** In-memory stores (mutable copies so new items can be pushed) */
-const inMemoryQuizzes: Quiz[] = [...MOCK_QUIZZES];
-const inMemoryQuestions: QuizQuestion[] = [...MOCK_QUESTIONS];
+interface ApiQuiz {
+  id: string;
+  club_id: string;
+  created_by: string;
+  title: string;
+  description: string | null;
+  is_active: boolean;
+}
 
+interface ApiQuizQuestion {
+  id: string;
+  quiz_id: string;
+  question: string;
+  options: string[];
+  correct_index: number;
+}
+
+interface ApiAttemptResponse {
+  id: string;
+  quiz_id: string;
+  user_id: string;
+  score: number;
+  total: number;
+  answers: number[];
+}
+
+// ── Mappers ──────────────────────────────────────────────────────────────────
+
+function mapQuiz(raw: ApiQuiz): Quiz {
+  return {
+    id: raw.id,
+    clubId: raw.club_id,
+    createdBy: raw.created_by,
+    title: raw.title,
+    description: raw.description,
+    isActive: raw.is_active,
+  };
+}
+
+function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
+  return {
+    id: raw.id,
+    quizId: raw.quiz_id,
+    question: raw.question,
+    options: raw.options,
+    correctIndex: raw.correct_index,
+  };
+}
+
+function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
+  return {
+    id: raw.id,
+    quizId: raw.quiz_id,
+    userId: raw.user_id,
+    score: raw.score,
+    total: raw.total,
+    answers: raw.answers,
+  };
+}
+
+// ── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
 export class QuizService {
-  private readonly auth = inject(AuthService);
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
 
   private readonly _quizzes = signal<Quiz[]>([]);
-  private readonly _activeQuiz = signal<Quiz | null>(null);
   private readonly _questions = signal<QuizQuestion[]>([]);
   private readonly _isLoading = signal(false);
 
   readonly quizzes = this._quizzes.asReadonly();
-  readonly activeQuiz = this._activeQuiz.asReadonly();
   readonly questions = this._questions.asReadonly();
   readonly isLoading = this._isLoading.asReadonly();
 
+  // activeQuiz kept for backwards-compatibility; derived from loaded quizzes
+  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
+
   async loadQuizzes(clubId: string): Promise<void> {
     this._isLoading.set(true);
-    await Promise.resolve();
-    this._quizzes.set(inMemoryQuizzes.filter(q => q.clubId === clubId));
-    this._isLoading.set(false);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
+      );
+      this._quizzes.set(raw.map(mapQuiz));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
   }
 
   async createQuiz(data: {
@@ -38,69 +104,74 @@ export class QuizService {
     title: string;
     description: string;
   }): Promise<Quiz> {
-    const user = this.auth.currentUser();
-    if (!user) throw new Error('Not authenticated');
-
-    const quiz: Quiz = {
-      id: `quiz-${++nextQuizId}`,
-      clubId: data.clubId,
-      createdBy: user.id,
-      title: data.title,
-      description: data.description || null,
-      isActive: false,
-    };
-
-    inMemoryQuizzes.push(quiz);
-    this._quizzes.update(prev => [quiz, ...prev]);
-    return quiz;
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
+          title: data.title,
+          description: data.description || null,
+        }),
+      );
+      const quiz = mapQuiz(raw);
+      this._quizzes.update(prev => [quiz, ...prev]);
+      return quiz;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
   }
 
   async addQuestion(
     quizId: string,
     q: Omit<QuizQuestion, 'id' | 'quizId'>,
   ): Promise<void> {
-    const question: QuizQuestion = {
-      id: `q-${++nextQuestionId}`,
-      quizId,
-      ...q,
-    };
-    inMemoryQuestions.push(question);
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
+          question: q.question,
+          options: q.options,
+          correct_index: q.correctIndex,
+        }),
+      );
+      this._questions.update(prev => [...prev, mapQuestion(raw)]);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
   }
 
   async loadQuestions(quizId: string): Promise<void> {
-    await Promise.resolve();
-    this._questions.set(inMemoryQuestions.filter(q => q.quizId === quizId));
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
+      );
+      this._questions.set(raw.map(mapQuestion));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
   }
 
   async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
-    const user = this.auth.currentUser();
-    if (!user) throw new Error('Not authenticated');
-
-    await this.loadQuestions(quizId);
-    const questions = this._questions();
-
-    const score = answers.reduce((acc, answer, i) => {
-      return questions[i]?.correctIndex === answer ? acc + 1 : acc;
-    }, 0);
-
-    const attempt: QuizAttempt = {
-      id: `attempt-${++nextAttemptId}`,
-      quizId,
-      userId: user.id,
-      score,
-      total: questions.length,
-      answers,
-    };
-
-    return attempt;
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
+      );
+      return mapAttempt(raw);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
   }
 
   async toggleActive(quizId: string, isActive: boolean): Promise<void> {
-    const quiz = inMemoryQuizzes.find(q => q.id === quizId);
-    if (quiz) quiz.isActive = isActive;
-
-    this._quizzes.update(prev =>
-      prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
-    );
+    try {
+      await firstValueFrom(
+        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { is_active: isActive }),
+      );
+      this._quizzes.update(prev =>
+        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
   }
 }

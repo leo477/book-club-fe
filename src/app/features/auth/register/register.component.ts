@@ -54,7 +54,7 @@ export class RegisterComponent {
   readonly formVisible = signal(false);
 
   constructor() {
-    this.seo.setPage({ title: 'Реєстрація | Book Club' });
+    this.seo.setPageI18n('SEO.register_title');
     setTimeout(() => this.formVisible.set(true), 700);
   }
 

@@ -1,0 +1,67 @@
+<header class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+  <div>
+    <div class="flex items-center gap-3 flex-wrap">
+      <h1 id="club-heading" class="font-display text-3xl font-bold text-gray-900 dark:text-white">
+        {{ club().name }}
+      </h1>
+      @if (!club().isPublic) {
+        <span class="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+          🔒 {{ 'CLUB_DETAIL.private' | translate }}
+        </span>
+      }
+      @if (club().status === 'active') {
+        <span class="rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-semibold text-green-700 dark:text-green-400">
+          ● {{ 'CLUBS.active' | translate }}
+        </span>
+      } @else if (club().status === 'paused') {
+        <span class="rounded-full bg-yellow-100 dark:bg-yellow-900/30 px-2.5 py-0.5 text-xs font-semibold text-yellow-700 dark:text-yellow-400">
+          ⏸ {{ 'CLUBS.paused' | translate }}
+        </span>
+      } @else if (club().status === 'cancelled') {
+        <span class="rounded-full bg-red-100 dark:bg-red-900/30 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:text-red-400">
+          ✕ {{ 'CLUBS.cancelled' | translate }}
+        </span>
+      }
+    </div>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+      <span aria-hidden="true">👥</span>
+      <span>{{ club().memberCount }} {{ club().memberCount === 1 ? ('CLUBS.member_singular' | translate) : ('CLUBS.members' | translate) }}</span>
+    </p>
+  </div>
+
+  @if (isAuthenticated()) {
+    @if (!isOwner()) {
+      @if (isMember()) {
+        <button
+          type="button"
+          (click)="leave.emit()"
+          [disabled]="isActionLoading()"
+          class="inline-flex items-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          [attr.aria-label]="'CLUB_DETAIL.leave' | translate"
+        >
+          @if (isActionLoading()) {
+            <app-loading-spinner size="sm" />
+          }
+          {{ 'CLUB_DETAIL.leave' | translate }}
+        </button>
+      } @else {
+        <button
+          type="button"
+          (click)="join.emit()"
+          [disabled]="isActionLoading()"
+          class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          [attr.aria-label]="'CLUB_DETAIL.join' | translate"
+        >
+          @if (isActionLoading()) {
+            <app-loading-spinner size="sm" />
+          }
+          {{ 'CLUB_DETAIL.join' | translate }}
+        </button>
+      }
+    } @else {
+      <span class="inline-flex items-center gap-1.5 rounded-xl bg-accent-100 dark:bg-accent-900/30 px-4 py-2.5 text-sm font-semibold text-accent-700 dark:text-accent-300">
+        {{ 'CLUB_DETAIL.organizer_badge' | translate }}
+      </span>
+    }
+  }
+</header>

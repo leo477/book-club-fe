@@ -1,8 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ClubDetailComponent } from './club-detail.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateLoader, TranslateService } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
+import { firstValueFrom, of } from 'rxjs';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { SeoService } from '../../../core/services/seo.service';
@@ -25,7 +26,7 @@ describe('ClubDetailComponent', () => {
     authSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated'], {
       currentUser: jasmine.createSpy().and.returnValue({ id: 'user-1', displayName: 'Organizer', role: 'organizer' }),
     });
-    seoSpy = jasmine.createSpyObj('SeoService', ['setPage', 'injectJsonLd']);
+    seoSpy = jasmine.createSpyObj('SeoService', ['setPage', 'setPageI18n', 'injectJsonLd']);
     clubServiceSpy.getClubById.and.returnValue(Promise.resolve({
       id: 'club-1',
       name: 'Test Club',
@@ -48,12 +49,31 @@ describe('ClubDetailComponent', () => {
       meetingDurationMinutes: null,
       afterMeetingVenue: null
     }));
-    clubServiceSpy.getClubMembers.and.returnValue([]);
-    clubServiceSpy.getBans.and.returnValue([]);
+    clubServiceSpy.loadMyClubs.and.returnValue(Promise.resolve());
+    clubServiceSpy.getClubMembers.and.returnValue(Promise.resolve([]));
+    clubServiceSpy.getBans.and.returnValue(Promise.resolve([]));
+    clubServiceSpy.kickMember.and.returnValue(Promise.resolve());
+    clubServiceSpy.banMember.and.returnValue(Promise.resolve());
     clubServiceSpy.msUntilDeletion.and.returnValue(null);
     authSpy.isAuthenticated.and.returnValue(true);
     await TestBed.configureTestingModule({
-      imports: [ClubDetailComponent, TranslateModule.forRoot(), RouterTestingModule],
+      imports: [
+        ClubDetailComponent,
+        TranslateModule.forRoot({
+          loader: {
+            provide: TranslateLoader,
+            useValue: {
+              getTranslation: () => of({
+                CLUB_DETAIL: {
+                  deletion_countdown_hours: 'буде видалено через {{ hours }} год. {{ minutes }} хв.',
+                  deletion_countdown_minutes: 'буде видалено через {{ minutes }} хв.',
+                },
+              }),
+            },
+          },
+        }),
+        RouterTestingModule,
+      ],
       providers: [
         provideZonelessChangeDetection(),
         { provide: ClubService, useValue: clubServiceSpy },
@@ -61,58 +81,33 @@ describe('ClubDetailComponent', () => {
         { provide: SeoService, useValue: seoSpy },
       ]
     }).compileComponents();
+    const translate = TestBed.inject(TranslateService);
+    await firstValueFrom(translate.use('uk'));
     fixture = TestBed.createComponent(ClubDetailComponent);
     fixture.componentRef.setInput('id', 'club-1');
     component = fixture.componentInstance;
     await fixture.whenStable();
   });
 
-  it('banDurations equals [1,3,5,"permanent"]', () => {
-    expect(component.banDurations).toEqual([1, 3, 5, 'permanent']);
-  });
-
-  it('showBanMenu initial is null', () => {
-    expect(component.showBanMenu()).toBeNull();
-  });
-
-  it('toggleBanMenu sets showBanMenu to user id', () => {
-    component.toggleBanMenu('user-2');
-    expect(component.showBanMenu()).toBe('user-2');
-  });
-
-  it('toggleBanMenu twice toggles back to null', () => {
-    component.toggleBanMenu('user-2');
-    component.toggleBanMenu('user-2');
-    expect(component.showBanMenu()).toBeNull();
-  });
-
-  it('toggleBanMenu switches to new user id', () => {
-    component.toggleBanMenu('user-2');
-    component.toggleBanMenu('user-3');
-    expect(component.showBanMenu()).toBe('user-3');
-  });
-
-  it('kickMember calls clubService and removes member', () => {
+  it('handleKick calls clubService.kickMember and removes member', async () => {
     component.members.set([
       { userId: 'user-2', displayName: 'User 2', avatarUrl: null, role: 'member', socialsPublic: false },
       { userId: 'user-3', displayName: 'User 3', avatarUrl: null, role: 'member', socialsPublic: false }
     ]);
-    component.kickMember('user-2');
+    await component.handleKick('user-2');
     expect(clubServiceSpy.kickMember).toHaveBeenCalledWith('club-1', 'user-2');
     expect(component.members()).toEqual([
       { userId: 'user-3', displayName: 'User 3', avatarUrl: null, role: 'member', socialsPublic: false }
     ]);
   });
 
-  it('banMember calls clubService, sets showBanMenu null, removes member', () => {
+  it('handleBan calls clubService.banMember and removes member', async () => {
     component.members.set([
       { userId: 'user-2', displayName: 'User 2', avatarUrl: null, role: 'member', socialsPublic: false },
       { userId: 'user-3', displayName: 'User 3', avatarUrl: null, role: 'member', socialsPublic: false }
     ]);
-    component.showBanMenu.set('user-2');
-    component.banMember('user-2', 3);
+    await component.handleBan({ userId: 'user-2', duration: 3 });
     expect(clubServiceSpy.banMember).toHaveBeenCalledWith('club-1', 'user-2', 3);
-    expect(component.showBanMenu()).toBeNull();
     expect(component.members()).toEqual([
       { userId: 'user-3', displayName: 'User 3', avatarUrl: null, role: 'member', socialsPublic: false }
     ]);
