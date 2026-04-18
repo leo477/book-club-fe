@@ -69,22 +69,15 @@ scripts/
 src/
   app/
     core/
+      api/
+        api-mappers.ts
       auth/
         auth.guard.ts
         auth.service.ts
         role.guard.ts
+        token.store.ts
       interceptors/
         auth.interceptor.ts
-      mocks/
-        bans.mock.ts
-        clubs.mock.ts
-        index.ts
-        meetings.mock.ts
-        members.mock.ts
-        participation.mock.ts
-        quizzes.mock.ts
-        randomizer.mock.ts
-        users.mock.ts
       models/
         chat.model.ts
         club.model.ts
@@ -231,7 +224,21 @@ vercel.json
       "Bash(npx tsc *)",
       "Bash(git commit *)",
       "Bash(npx repomix *)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git push *)",
+      "Bash(gh run *)",
+      "Bash(gh workflow *)",
+      "Bash(python3 -c \"import sys,json; runs=json.load\\(sys.stdin\\); [print\\(r['workflowName'], r['conclusion'], r['databaseId']\\) for r in runs]\")",
+      "Bash(python3 -c \"import sys,json; runs=json.load\\(sys.stdin\\); [print\\(r['createdAt'][:10], r['workflowName'], r['conclusion']\\) for r in runs]\")",
+      "Bash(gh api *)",
+      "Bash(xargs cat *)",
+      "WebFetch(domain:book-club-be.onrender.com)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); [print\\(k, list\\(v.keys\\(\\)\\)[:5] if isinstance\\(v,dict\\) else '...'\\) for k,v in d.items\\(\\)]\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:v for k,v in d.items\\(\\) if k in ['NAV','CLUBS','CLUB_DETAIL','PROFILE','AUTH']}, indent=2, ensure_ascii=False\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:v for k,v in d.items\\(\\) if k in ['CLUBS','PROFILE','AUTH']}, indent=2, ensure_ascii=False\\)\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); proj=list\\(d['projects'].keys\\(\\)\\)[0]; build=d['projects'][proj]['architect']['build']; print\\('builder:', build['builder']\\); print\\('options keys:', list\\(build.get\\('options',{}\\).keys\\(\\)\\)[:10]\\)\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); deps={**d.get\\('dependencies',{}\\),**d.get\\('devDependencies',{}\\)}; [print\\(k,':',v\\) for k in ['@angular/core','@angular/common','@ngx-translate/core','@ngx-translate/http-loader'] if k in deps]\")",
+      "Bash(python3 *)"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -241,11 +248,172 @@ vercel.json
 }
 ````
 
-## File: .lintstagedrc.cjs
-````javascript
-module.exports = {
-  'src/**/*.{ts,py,html}': () => ['npx repomix', 'git add repomix-output.md'],
-};
+## File: src/app/core/api/api-mappers.ts
+````typescript
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+import { AfterMeetingVenue, BanDuration, BanRecord, Club, ClubBook, ClubMemberDetail, ClubStatus } from '../models/club.model';
+export interface ApiUserProfile {
+  id: string;
+  email: string;
+  role: UserRole;
+  display_name: string;
+  avatar_url: string | null;
+  created_at: string;
+  socials?: ApiUserSocials | null;
+  socials_public?: boolean;
+}
+export interface ApiUserSocials {
+  telegram?: string | null;
+  instagram?: string | null;
+  twitter?: string | null;
+  linkedin?: string | null;
+  github?: string | null;
+  goodreads?: string | null;
+}
+export interface ApiUserStats {
+  clubs_joined: number;
+  clubs_organized: number;
+  meetings_attended: number;
+  quizzes_taken: number;
+}
+export interface ApiClub {
+  id: string;
+  name: string;
+  description: string | null;
+  cover_url: string | null;
+  organizer_id: string;
+  is_public: boolean;
+  member_count: number;
+  created_at: string;
+  city: string | null;
+  next_meeting_date: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  theme: string | null;
+  current_book: string | null;
+  member_previews: string[];
+  status: ClubStatus;
+  tags: string[];
+  meeting_duration_minutes: number | null;
+  after_meeting_venue: AfterMeetingVenue | null;
+  cancelled_at?: string | null;
+}
+export interface ApiClubMember {
+  user_id: string;
+  display_name: string;
+  avatar_url: string | null;
+  role: 'organizer' | 'member';
+  socials?: ApiUserSocials | null;
+  socials_public?: boolean;
+}
+export interface ApiBanRecord {
+  user_id: string;
+  club_id: string;
+  banned_at: string;
+  duration: BanDuration;
+  banned_by: string;
+}
+export function mapUserProfile(raw: ApiUserProfile): UserProfile {
+  return {
+    id: raw.id,
+    role: raw.role,
+    displayName: raw.display_name,
+    avatarUrl: raw.avatar_url,
+    createdAt: raw.created_at,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socials_public ?? false,
+  };
+}
+export function mapUserStats(raw: ApiUserStats): UserStats {
+  return {
+    clubsJoined: raw.clubs_joined,
+    quizzesTaken: raw.quizzes_taken,
+    quizWins: 0,
+    likesReceived: 0,
+    booksRead: 0,
+  };
+}
+export function mapClub(raw: ApiClub): Club {
+  let currentBook: ClubBook | null = null;
+  if (raw.current_book) {
+    currentBook = { title: raw.current_book, author: '', description: '' };
+  }
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description,
+    coverUrl: raw.cover_url,
+    organizerId: raw.organizer_id,
+    isPublic: raw.is_public,
+    memberCount: raw.member_count,
+    createdAt: raw.created_at,
+    city: raw.city ?? '',
+    nextMeetingDate: raw.next_meeting_date,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    theme: raw.theme,
+    currentBook,
+    memberPreviews: raw.member_previews,
+    status: raw.status,
+    tags: raw.tags,
+    meetingDurationMinutes: raw.meeting_duration_minutes,
+    afterMeetingVenue: raw.after_meeting_venue,
+    cancelledAt: raw.cancelled_at ?? undefined,
+  };
+}
+export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
+  return {
+    userId: raw.user_id,
+    displayName: raw.display_name,
+    avatarUrl: raw.avatar_url,
+    role: raw.role,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socials_public ?? false,
+  };
+}
+export function mapBanRecord(raw: ApiBanRecord): BanRecord {
+  return {
+    userId: raw.user_id,
+    clubId: raw.club_id,
+    bannedAt: raw.banned_at,
+    duration: raw.duration,
+    bannedBy: raw.banned_by,
+  };
+}
+function mapSocials(raw: ApiUserSocials): UserSocials {
+  return {
+    telegram: raw.telegram ?? undefined,
+    instagram: raw.instagram ?? undefined,
+    twitter: raw.twitter ?? undefined,
+    linkedin: raw.linkedin ?? undefined,
+    github: raw.github ?? undefined,
+    goodreads: raw.goodreads ?? undefined,
+  };
+}
+````
+
+## File: src/app/core/auth/token.store.ts
+````typescript
+import { Injectable, signal } from '@angular/core';
+const TOKEN_KEY = 'bc_access_token';
+@Injectable({ providedIn: 'root' })
+export class TokenStore {
+  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
+  readonly token = this._token.asReadonly();
+  set(token: string): void {
+    localStorage.setItem(TOKEN_KEY, token);
+    this._token.set(token);
+  }
+  clear(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    this._token.set(null);
+  }
+  snapshot(): string | null {
+    return this._token();
+  }
+}
 ````
 
 ## File: .github/workflows/auto-labeler.yml
@@ -624,409 +792,6 @@ for (const outputPath of OUTPUT_FILES) {
 }
 ````
 
-## File: src/app/core/mocks/bans.mock.ts
-````typescript
-import { BanRecord } from '../models/club.model';
-export const MOCK_BANS: Record<string, BanRecord[]> = {
-  'club-1': [
-    {
-      userId: 'user-3',
-      clubId: 'club-1',
-      bannedAt: '2026-03-01T00:00:00Z',
-      duration: 3,
-      bannedBy: 'user-1',
-    },
-  ],
-};
-````
-
-## File: src/app/core/mocks/clubs.mock.ts
-````typescript
-import { Club, ClubStatus } from '../models/club.model';
-export const MOCK_CLUBS: Club[] = [
-  {
-    id: 'club-1',
-    name: 'Classic Literature Society',
-    description: 'Exploring timeless works from around the world.',
-    coverUrl: null,
-    organizerId: 'user-1',
-    isPublic: true,
-    memberCount: 12,
-    createdAt: '2024-01-10T00:00:00Z',
-    city: 'Kyiv',
-    nextMeetingDate: '2026-04-15T18:00:00Z',
-    address: 'вул. Хрещатик, 1, Київ',
-    lat: 50.4501,
-    lng: 30.5234,
-    theme: 'Класична література',
-    status: 'active',
-    currentBook: { title: 'Гордість і упередження', author: 'Джейн Остін', description: 'Романтична сатира на суспільство Англії XIX ст. Елізабет Беннет та містер Дарсі.' },
-    memberPreviews: ['Alice Organizer', 'Bob Reader', 'Carol Smith', 'Dan Brown'],
-    tags: ['Класика', 'Романтика'],
-    meetingDurationMinutes: 90,
-    afterMeetingVenue: { name: 'Кав\'ярня «Пушкін»', address: 'бул. Шевченка, 2, Київ', description: 'Столик заброньовано на 19:30, питання до Аліси' },
-  },
-  {
-    id: 'club-2',
-    name: 'Sci-Fi Explorers',
-    description: 'For fans of science fiction and speculative fiction.',
-    coverUrl: null,
-    organizerId: 'user-1',
-    isPublic: true,
-    memberCount: 8,
-    createdAt: '2024-02-01T00:00:00Z',
-    city: 'Kyiv',
-    nextMeetingDate: '2026-04-22T19:00:00Z',
-    address: 'вул. Саксаганського, 57, Київ',
-    lat: 50.4456,
-    lng: 30.5052,
-    theme: 'Наукова фантастика',
-    status: 'active',
-    currentBook: { title: 'Дюна', author: 'Френк Герберт', description: 'Епічна сага про пустельну планету Арракіс і долю всесвіту.' },
-    memberPreviews: ['Alice Organizer', 'Eve Garcia', 'Frank Lee'],
-    tags: ['Наукова фантастика', 'Антиутопія'],
-    meetingDurationMinutes: 120,
-    afterMeetingVenue: { name: 'Craft Beer Bar «Паляниця»', address: 'вул. Саксаганського, 60, Київ' },
-  },
-  {
-    id: 'club-3',
-    name: 'Mystery & Thriller Club',
-    description: 'Whodunits, thrillers, and suspense novels.',
-    coverUrl: null,
-    organizerId: 'user-2',
-    isPublic: false,
-    memberCount: 5,
-    createdAt: '2024-03-15T00:00:00Z',
-    city: 'Lviv',
-    nextMeetingDate: '2026-04-18T17:00:00Z',
-    address: 'пл. Ринок, 1, Львів',
-    lat: 49.8419,
-    lng: 24.0315,
-    theme: 'Детектив і трилер',
-    status: 'active',
-    currentBook: { title: 'Вбивство у Східному експресі', author: 'Агата Крісті', description: 'Пуаро розслідує вбивство в зупиненому снігом поїзді.' },
-    memberPreviews: ['Bob Reader', 'Grace Kim'],
-    tags: ['Детектив', 'Трилер', 'Містика'],
-    meetingDurationMinutes: 90,
-    afterMeetingVenue: null,
-  },
-  {
-    id: 'club-4',
-    name: 'Lviv Poetry Circle',
-    description: 'A gathering for poetry lovers in the heart of Lviv.',
-    coverUrl: null,
-    organizerId: 'user-1',
-    isPublic: true,
-    memberCount: 9,
-    createdAt: '2024-04-01T00:00:00Z',
-    city: 'Lviv',
-    nextMeetingDate: '2026-04-25T18:30:00Z',
-    address: 'вул. Театральна, 10, Львів',
-    lat: 49.8397,
-    lng: 24.0297,
-    theme: 'Поезія',
-    status: 'active',
-    currentBook: { title: 'Кобзар', author: 'Тарас Шевченко', description: 'Збірка поезій, що стала символом національного відродження України.' },
-    memberPreviews: ['Alice Organizer', 'Hanna Wolf', 'Ivan Petrenko', 'Julia Roth'],
-    tags: ['Поезія', 'Українська література'],
-    meetingDurationMinutes: 60,
-    afterMeetingVenue: { name: 'Ресторан «Криївка»', address: 'пл. Ринок, 14, Львів', description: 'Дрес-код: патріотичний' },
-  },
-  {
-    id: 'club-5',
-    name: 'Odesa Book Exchange',
-    description: 'Share and discover books by the Black Sea.',
-    coverUrl: null,
-    organizerId: 'user-2',
-    isPublic: true,
-    memberCount: 15,
-    createdAt: '2024-05-01T00:00:00Z',
-    city: 'Odesa',
-    nextMeetingDate: '2026-04-20T16:00:00Z',
-    address: 'Дерибасівська, 5, Одеса',
-    lat: 46.4825,
-    lng: 30.7233,
-    theme: 'Сучасна проза',
-    status: 'active',
-    currentBook: { title: 'Аліса в країні чудес', author: 'Льюїс Керролл', description: 'Фантастична пригода маленької Аліси у дивовижному підземному світі.' },
-    memberPreviews: ['Bob Reader', 'Kate Jones', 'Liam Chen', 'Mia Rossi'],
-    tags: ['Сучасна проза', 'Обмін книгами'],
-    meetingDurationMinutes: 75,
-    afterMeetingVenue: { name: 'Кафе «Фанконі»', address: 'Катерининська пл., 1, Одеса' },
-  },
-  {
-    id: 'club-6',
-    name: 'Odesa History Readers',
-    description: 'Non-fiction and historical novels discussion group.',
-    coverUrl: null,
-    organizerId: 'user-1',
-    isPublic: true,
-    memberCount: 7,
-    createdAt: '2024-06-01T00:00:00Z',
-    city: 'Odesa',
-    nextMeetingDate: '2026-05-03T17:00:00Z',
-    address: 'вул. Катерининська, 18, Одеса',
-    lat: 46.4845,
-    lng: 30.726,
-    theme: 'Нон-фікшн / Історія',
-    status: 'active',
-    currentBook: { title: 'Sapiens: Коротка історія людства', author: 'Юваль Ной Харарі', description: 'Огляд еволюції людства від кам\'яного віку до сучасності.' },
-    memberPreviews: ['Alice Organizer', 'Noah Schulz'],
-    tags: ['Нон-фікшн', 'Історія'],
-    meetingDurationMinutes: 90,
-    afterMeetingVenue: null,
-  },
-  {
-    id: 'club-7',
-    name: 'Kyiv Fantasy Guild',
-    description: 'Epic fantasy and world-building enthusiasts.',
-    coverUrl: null,
-    organizerId: 'user-2',
-    isPublic: true,
-    memberCount: 11,
-    createdAt: '2024-07-01T00:00:00Z',
-    city: 'Kyiv',
-    nextMeetingDate: '2026-04-30T19:30:00Z',
-    address: 'бул. Лесі Українки, 26, Київ',
-    lat: 50.4376,
-    lng: 30.5477,
-    theme: 'Фентезі',
-    status: 'paused',
-    currentBook: { title: 'Гобіт', author: 'Дж. Р. Р. Толкін', description: 'Пригоди хобіта Більбо Бегінса у пошуках скарбів дракона Смога.' },
-    memberPreviews: ['Bob Reader', 'Olivia Brown', 'Peter Park', 'Quinn Adams'],
-    tags: ['Фентезі', 'Пригоди'],
-    meetingDurationMinutes: 120,
-    afterMeetingVenue: { name: 'Геймбар «Dungeon»', address: 'вул. Велика Васильківська, 72, Київ' },
-  },
-  {
-    id: 'club-8',
-    name: 'Lviv Graphic Novel Society',
-    description: 'Comics, manga, and illustrated stories.',
-    coverUrl: null,
-    organizerId: 'user-1',
-    isPublic: false,
-    memberCount: 6,
-    createdAt: '2024-08-01T00:00:00Z',
-    city: 'Lviv',
-    nextMeetingDate: null,
-    address: 'вул. Городоцька, 34, Львів',
-    lat: 49.8365,
-    lng: 24.018,
-    theme: 'Графічні романи',
-    status: 'cancelled',
-    currentBook: null,
-    memberPreviews: ['Alice Organizer', 'Rachel Green'],
-    tags: ['Графічні романи', 'Комікси', 'Манга'],
-    meetingDurationMinutes: 60,
-    afterMeetingVenue: null,
-  },
-  {
-    id: 'club-9',
-    name: 'Скасований клуб (демо)',
-    description: 'Цей клуб скасовано ~23 год. тому — покаже таймер видалення.',
-    coverUrl: null,
-    organizerId: 'user-1',
-    isPublic: true,
-    memberCount: 3,
-    createdAt: '2024-06-01T00:00:00Z',
-    city: 'Kyiv',
-    nextMeetingDate: null,
-    address: null, lat: null, lng: null,
-    theme: 'Демо',
-    currentBook: null,
-    memberPreviews: ['Alice Organizer'],
-    status: 'cancelled' as ClubStatus,
-    cancelledAt: new Date(Date.now() - 23 * 60 * 60 * 1000).toISOString(),
-    tags: ['Демо'],
-    meetingDurationMinutes: null,
-    afterMeetingVenue: null,
-  },
-  {
-    id: 'club-10',
-    name: 'Видалений клуб (демо)',
-    description: 'Цей клуб скасовано >24 год. тому — буде видалений при першому очищенні.',
-    coverUrl: null,
-    organizerId: 'user-1',
-    isPublic: true,
-    memberCount: 1,
-    createdAt: '2024-06-01T00:00:00Z',
-    city: 'Lviv',
-    nextMeetingDate: null,
-    address: null, lat: null, lng: null,
-    theme: 'Демо',
-    currentBook: null,
-    memberPreviews: ['Alice Organizer'],
-    status: 'cancelled' as ClubStatus,
-    cancelledAt: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
-    tags: ['Демо'],
-    meetingDurationMinutes: null,
-    afterMeetingVenue: null,
-  },
-];
-````
-
-## File: src/app/core/mocks/index.ts
-````typescript
-export * from './users.mock';
-export * from './clubs.mock';
-export * from './quizzes.mock';
-export * from './meetings.mock';
-export * from './members.mock';
-export * from './randomizer.mock';
-export * from './participation.mock';
-export * from './bans.mock';
-````
-
-## File: src/app/core/mocks/meetings.mock.ts
-````typescript
-import { ClubMeeting } from '../models/club.model';
-export const MOCK_MEETINGS: ClubMeeting[] = [
-  { id: 'm-1', clubId: 'club-1', title: 'Jane Austen evening', date: '2026-03-10T18:00:00Z', attendees: ['user-1', 'user-2'] },
-  { id: 'm-2', clubId: 'club-2', title: 'Dune discussion', date: '2026-03-20T19:00:00Z', attendees: ['user-1'] },
-  { id: 'm-3', clubId: 'club-3', title: 'Agatha Christie night', date: '2026-03-25T17:00:00Z', attendees: ['user-2'] },
-  { id: 'm-4', clubId: 'club-4', title: 'Shevchenko reading', date: '2026-03-28T18:30:00Z', attendees: ['user-1'] },
-];
-````
-
-## File: src/app/core/mocks/members.mock.ts
-````typescript
-import { MemberCandidate } from '../models/randomizer.model';
-export const MOCK_CLUB_MEMBERS: Record<string, MemberCandidate[]> = {
-  'club-1': [
-    { userId: 'user-1', displayName: 'Alice Organizer', avatarUrl: null },
-    { userId: 'user-2', displayName: 'Bob Reader', avatarUrl: null },
-    { userId: 'user-3', displayName: 'Carol Smith', avatarUrl: null },
-    { userId: 'user-4', displayName: 'Dan Brown', avatarUrl: null },
-  ],
-  'club-2': [
-    { userId: 'user-1', displayName: 'Alice Organizer', avatarUrl: null },
-    { userId: 'user-5', displayName: 'Eve Garcia', avatarUrl: null },
-    { userId: 'user-6', displayName: 'Frank Lee', avatarUrl: null },
-  ],
-  'club-3': [
-    { userId: 'user-2', displayName: 'Bob Reader', avatarUrl: null },
-    { userId: 'user-7', displayName: 'Grace Kim', avatarUrl: null },
-  ],
-  'club-4': [
-    { userId: 'user-1', displayName: 'Alice Organizer', avatarUrl: null },
-    { userId: 'user-8', displayName: 'Hanna Wolf', avatarUrl: null },
-    { userId: 'user-9', displayName: 'Ivan Petrenko', avatarUrl: null },
-    { userId: 'user-10', displayName: 'Julia Roth', avatarUrl: null },
-  ],
-};
-````
-
-## File: src/app/core/mocks/participation.mock.ts
-````typescript
-export const MOCK_MY_CLUB_IDS = new Set(['club-1', 'club-2', 'club-3', 'club-4']);
-export const MOCK_PARTICIPATION: Record<string, Set<string>> = {
-  'user-1': new Set(['club-1', 'club-2', 'club-4']),
-  'user-2': new Set(['club-3']),
-};
-````
-
-## File: src/app/core/mocks/quizzes.mock.ts
-````typescript
-import { Quiz, QuizQuestion } from '../models/quiz.model';
-export const MOCK_QUIZZES: Quiz[] = [
-  {
-    id: 'quiz-1',
-    clubId: 'club-1',
-    createdBy: 'user-1',
-    title: 'Pride and Prejudice Quiz',
-    description: 'Test your knowledge of Jane Austen\'s classic.',
-    isActive: true,
-  },
-  {
-    id: 'quiz-2',
-    clubId: 'club-2',
-    createdBy: 'user-1',
-    title: 'Dune Quiz',
-    description: 'How well do you know Arrakis?',
-    isActive: false,
-  },
-];
-export const MOCK_QUESTIONS: QuizQuestion[] = [
-  {
-    id: 'q-1',
-    quizId: 'quiz-1',
-    question: 'Who is the author of Pride and Prejudice?',
-    options: ['Charlotte Brontë', 'Jane Austen', 'George Eliot', 'Mary Shelley'],
-    correctIndex: 1,
-  },
-  {
-    id: 'q-2',
-    quizId: 'quiz-1',
-    question: 'What is the name of the Bennet family estate?',
-    options: ['Pemberley', 'Longbourn', 'Netherfield', 'Rosings'],
-    correctIndex: 1,
-  },
-  {
-    id: 'q-3',
-    quizId: 'quiz-2',
-    question: 'What is the desert planet in Dune called?',
-    options: ['Caladan', 'Giedi Prime', 'Arrakis', 'Salusa Secundus'],
-    correctIndex: 2,
-  },
-];
-````
-
-## File: src/app/core/mocks/randomizer.mock.ts
-````typescript
-import { RandomizerSession } from '../models/randomizer.model';
-export const MOCK_RANDOMIZER_HISTORY: RandomizerSession[] = [
-  {
-    id: 'session-1',
-    clubId: 'club-1',
-    createdBy: 'user-1',
-    purpose: 'Хто представляє книгу?',
-    candidates: [
-      { userId: 'user-1', displayName: 'Alice Organizer', avatarUrl: null },
-      { userId: 'user-2', displayName: 'Bob Reader', avatarUrl: null },
-      { userId: 'user-3', displayName: 'Carol Smith', avatarUrl: null },
-    ],
-    result: { userId: 'user-2', displayName: 'Bob Reader', avatarUrl: null },
-    createdAt: '2024-03-01T00:00:00Z',
-  },
-];
-````
-
-## File: src/app/core/mocks/users.mock.ts
-````typescript
-import { UserProfile, UserStats } from '../models/user.model';
-export const MOCK_USERS: UserProfile[] = [
-  {
-    id: 'user-1',
-    role: 'organizer',
-    displayName: 'Alice Organizer',
-    avatarUrl: null,
-    createdAt: '2024-01-01T00:00:00Z',
-    socialsPublic: true,
-    socials: {
-      telegram: 'bookclub_ua',
-      instagram: 'bookclub.ukraine',
-      github: 'bookclub-dev',
-      goodreads: 'bookclub-ua',
-    },
-  },
-  {
-    id: 'user-2',
-    role: 'user',
-    displayName: 'Bob Reader',
-    avatarUrl: null,
-    createdAt: '2024-01-02T00:00:00Z',
-  },
-];
-export const MOCK_USER_CREDENTIALS: { userId: string; email: string; password: string }[] = [
-  { userId: 'user-1', email: 'alice@example.com', password: 'password' },
-  { userId: 'user-2', email: 'bob@example.com', password: 'password' },
-];
-export const MOCK_STATS: Record<string, UserStats> = {
-  'user-1': { clubsJoined: 3, quizzesTaken: 12, quizWins: 5, likesReceived: 24, booksRead: 18 },
-  'user-2': { clubsJoined: 2, quizzesTaken: 7, quizWins: 1, likesReceived: 8, booksRead: 9 },
-};
-````
-
 ## File: src/app/core/models/chat.model.ts
 ````typescript
 export interface ChatMessage {
@@ -1072,91 +837,32 @@ export interface QuizAttempt {
 
 ## File: src/app/core/services/chat.service.ts
 ````typescript
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { ChatMessage, ChatRoom } from '../models/chat.model';
+import { environment } from '../../../environments/environment';
+interface ApiChatRoom {
+  id: string;
+  name: string;
+}
+interface ApiChatMessage {
+  id: string;
+  sender_id: string;
+  sender_name: string;
+  text: string;
+  created_at: string;
+}
 @Injectable({ providedIn: 'root' })
 export class ChatService {
-  private readonly _rooms = signal<ChatRoom[]>([
-    { id: 'room-1', name: 'Клуб "Майстер і Маргарита"' },
-    { id: 'room-2', name: 'Sci-Fi Lovers' },
-    { id: 'room-3', name: 'Детективний клуб' },
-  ]);
-  private readonly _messages = signal<Record<string, ChatMessage[]>>({
-    'room-1': [
-      {
-        id: 'msg-1-1',
-        senderId: 'user-1',
-        senderName: 'Alice',
-        text: 'Яка чудова книга! Булгаков — геній.',
-        timestamp: new Date(Date.now() - 3600000),
-        isOwn: false,
-      },
-      {
-        id: 'msg-1-2',
-        senderId: 'user-2',
-        senderName: 'Bob',
-        text: 'Згоден, образ Воланда просто неперевершений.',
-        timestamp: new Date(Date.now() - 1800000),
-        isOwn: true,
-      },
-      {
-        id: 'msg-1-3',
-        senderId: 'user-1',
-        senderName: 'Alice',
-        text: 'Хто буде вести наступне обговорення?',
-        timestamp: new Date(Date.now() - 600000),
-        isOwn: false,
-      },
-    ],
-    'room-2': [
-      {
-        id: 'msg-2-1',
-        senderId: 'user-3',
-        senderName: 'Carol',
-        text: 'Дюна — must read для кожного фанату sci-fi!',
-        timestamp: new Date(Date.now() - 7200000),
-        isOwn: false,
-      },
-      {
-        id: 'msg-2-2',
-        senderId: 'user-2',
-        senderName: 'Bob',
-        text: 'Читаю вже вдруге, і все одно захоплює.',
-        timestamp: new Date(Date.now() - 3000000),
-        isOwn: true,
-      },
-    ],
-    'room-3': [
-      {
-        id: 'msg-3-1',
-        senderId: 'user-4',
-        senderName: 'Dave',
-        text: 'Аґата Крісті залишається поза конкуренцією.',
-        timestamp: new Date(Date.now() - 5400000),
-        isOwn: false,
-      },
-      {
-        id: 'msg-3-2',
-        senderId: 'user-2',
-        senderName: 'Bob',
-        text: 'А мені подобається Стіґ Ларссон.',
-        timestamp: new Date(Date.now() - 2700000),
-        isOwn: true,
-      },
-      {
-        id: 'msg-3-3',
-        senderId: 'user-4',
-        senderName: 'Dave',
-        text: 'Теж хороший вибір! Може наступного разу прочитаємо?',
-        timestamp: new Date(Date.now() - 900000),
-        isOwn: false,
-      },
-    ],
-  });
-  private readonly _activeRoomId = signal<string | null>('room-1');
-  private readonly _unreadCount = signal<number>(2);
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _rooms = signal<ChatRoom[]>([]);
+  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
+  private readonly _activeRoomId = signal<string | null>(null);
+  private readonly _unreadCount = signal<number>(0);
   private readonly _isOpen = signal<boolean>(false);
   private readonly _hasNewMessage = signal<boolean>(false);
+  private currentUserId: string | null = null;
   readonly rooms = this._rooms.asReadonly();
   readonly messages = this._messages.asReadonly();
   readonly activeRoomId = this._activeRoomId.asReadonly();
@@ -1169,8 +875,46 @@ export class ChatService {
   readonly activeMessages = computed(
     () => this._messages()[this._activeRoomId() ?? ''] ?? [],
   );
-  constructor() {
-    this.simulateIncomingMessage();
+  // ── Public API ────────────────────────────────────────────────────────────
+  /** Fetch chat rooms for a given club and seed the rooms signal. */
+  loadRooms(clubId: string, userId?: string): void {
+    if (userId !== undefined) {
+      this.currentUserId = userId;
+    }
+    this.http
+      .get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`)
+      .subscribe({
+        next: raw => {
+          const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name }));
+          this._rooms.set(rooms);
+          // Auto-select the first room when none is active or active room is gone.
+          const currentId = this._activeRoomId();
+          if (!currentId || !rooms.find(r => r.id === currentId)) {
+            const first = rooms[0];
+            if (first) {
+              this._activeRoomId.set(first.id);
+              this.loadMessages(first.id);
+            }
+          }
+        },
+        error: (err: unknown) => console.error('[ChatService] loadRooms error', err),
+      });
+  }
+  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
+    const query: Record<string, string> = {};
+    if (params?.before) query['before'] = params.before;
+    if (params?.limit != null) query['limit'] = String(params.limit);
+    this.http
+      .get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
+        params: query,
+      })
+      .subscribe({
+        next: raw => {
+          const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
+          this._messages.update(map => ({ ...map, [roomId]: msgs }));
+        },
+        error: (err: unknown) => console.error('[ChatService] loadMessages error', err),
+      });
   }
   toggleOpen(): void {
     this._isOpen.update(v => !v);
@@ -1180,6 +924,7 @@ export class ChatService {
   }
   openRoom(roomId: string): void {
     this._activeRoomId.set(roomId);
+    this.loadMessages(roomId);
     this.markAsRead();
   }
   markAsRead(): void {
@@ -1189,38 +934,25 @@ export class ChatService {
   sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
     const roomId = this._activeRoomId();
     if (!roomId) return;
-    const newMessage: ChatMessage = {
-      id: `msg-${Date.now()}`,
-      senderId: currentUser.id,
-      senderName: currentUser.displayName,
-      text,
-      timestamp: new Date(),
-      isOwn: true,
-    };
-    this._messages.update(msgs => ({
-      ...msgs,
-      [roomId]: [...(msgs[roomId] ?? []), newMessage],
-    }));
+    this.currentUserId = currentUser.id;
+    this.http
+      .post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text })
+      .subscribe({
+        next: () => {
+          this.loadMessages(roomId);
+        },
+        error: (err: unknown) => console.error('[ChatService] sendMessage error', err),
+      });
   }
-  private simulateIncomingMessage(): void {
-    setTimeout(() => {
-      const firstRoomId = this._rooms()[0]?.id;
-      if (!firstRoomId) return;
-      const incoming: ChatMessage = {
-        id: `msg-sim-${Date.now()}`,
-        senderId: 'user-1',
-        senderName: 'Alice',
-        text: 'Привіт усім! Хто готовий до обговорення? 📚',
-        timestamp: new Date(),
-        isOwn: false,
-      };
-      this._messages.update(msgs => ({
-        ...msgs,
-        [firstRoomId]: [...(msgs[firstRoomId] ?? []), incoming],
-      }));
-      this._unreadCount.update(n => n + 1);
-      this._hasNewMessage.set(true);
-    }, 4000);
+  private mapMessage(m: ApiChatMessage): ChatMessage {
+    return {
+      id: m.id,
+      senderId: m.sender_id,
+      senderName: m.sender_name,
+      text: m.text,
+      timestamp: new Date(m.created_at),
+      isOwn: m.sender_id === this.currentUserId,
+    };
   }
 }
 ````
@@ -1230,6 +962,7 @@ export class ChatService {
 import { Injectable, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { DOCUMENT } from '@angular/common';
+import { TranslateService } from '@ngx-translate/core';
 export interface SeoConfig {
   title: string;
   description?: string;
@@ -1242,6 +975,7 @@ export class SeoService {
   private readonly title = inject(Title);
   private readonly meta = inject(Meta);
   private readonly document = inject(DOCUMENT);
+  private readonly translate = inject(TranslateService);
   setPage(config: SeoConfig): void {
     const { title, description, ogTitle, ogDescription, canonical } = config;
     this.title.setTitle(title);
@@ -1264,6 +998,35 @@ export class SeoService {
       this.document.head.appendChild(link);
     }
     link.setAttribute('href', url);
+  }
+  setPageI18n(
+    titleKey: string,
+    opts?: {
+      descriptionKey?: string;
+      ogTitleKey?: string;
+      canonical?: string;
+      params?: Record<string, unknown>;
+    }
+  ): void {
+    this.setPage({
+      title: this.translate.instant(titleKey, opts?.params),
+      description: opts?.descriptionKey
+        ? this.translate.instant(opts.descriptionKey, opts?.params)
+        : undefined,
+      ogTitle: opts?.ogTitleKey
+        ? this.translate.instant(opts.ogTitleKey, opts?.params)
+        : undefined,
+      canonical: opts?.canonical,
+    });
+  }
+  injectWebSiteJsonLd(): void {
+    this.injectJsonLd({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: this.translate.instant('SEO.site_name'),
+      url: this.translate.instant('SEO.site_url'),
+      description: this.translate.instant('SEO.site_description'),
+    });
   }
   injectJsonLd(schema: object): void {
     const existing = this.document.head.querySelector('script[type="application/ld+json"]');
@@ -1572,52 +1335,6 @@ export class BookIntroComponent {
         </button>
       }
     </div>
-````
-
-## File: src/app/shared/components/qr-code/qr-code.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  effect,
-  input,
-  viewChild,
-} from '@angular/core';
-import * as QRCode from 'qrcode';
-import { environment } from '../../../../environments/environment';
-@Component({
-  selector: 'app-qr-code',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <canvas
-      #canvas
-      [style.width.px]="size()"
-      [style.height.px]="size()"
-      class="rounded-lg"
-      [attr.aria-label]="'QR code'"
-      role="img"
-    ></canvas>
-  `,
-})
-export class QrCodeComponent {
-  readonly value = input.required<string>();
-  readonly size = input<number>(200);
-  private readonly canvasRef =
-    viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
-  constructor() {
-    effect(() => {
-      const val = this.value();
-      const sz = this.size();
-      const canvas = this.canvasRef().nativeElement;
-      if (!val || !canvas) return;
-      QRCode.toCanvas(canvas, val, { width: sz, margin: 2 }, (err) => {
-        if (err && !environment.production) console.error('QR generation error:', err);
-      });
-    });
-  }
-}
 ````
 
 ## File: src/app/shared/components/toast/toast.component.html
@@ -1944,6 +1661,13 @@ trim_trailing_whitespace = false
 }
 ````
 
+## File: .lintstagedrc.cjs
+````javascript
+module.exports = {
+  'src/**/*.{ts,py,html}': () => ['npx repomix', 'git add repomix-output.md'],
+};
+````
+
 ## File: .mcp.json
 ````json
 {
@@ -1958,45 +1682,6 @@ trim_trailing_whitespace = false
     }
   }
 }
-````
-
-## File: CLAUDE.md
-````markdown
-# Project Context
-This project uses **Repomix** to provide a full map of the codebase.
-
-## Stack
-- Frontend: Angular 20 (Signals—using Angular 20 features like resource() and linkedSignal(), standalone components, SCSS, Tailwind)
-- Backend: FastAPI (Async, Pydantic v2)
-
-## Folder Structure
-- `src/app/features/` — Angular feature components (auth, clubs, profile, quiz, randomizer)
-- `src/app/core/` — Core services, guards, interceptors, models
-- `src/app/shared/` — Shared UI components, pipes, directives
-- `src/app/layout/` — Shell, header, footer
-- `public/i18n/` — Translation files (en.json, uk.json)
-- `supabase/migrations/` — SQL migrations for backend
-
-## How to Run
-- **Dev server:** `npm start` (Angular at http://localhost:4200)
-- **Build:** `npm run build`
-- **Update context:** `npm run build-ctx`
-
-## Testing & Linting
-- **Unit tests:** `npm run test` (Jest)
-- **E2E tests:** Playwright (see docs)
-- **Lint:** `npm run lint`
-
-## Pre-commit Hooks & Development Workflow
-- This project does **not** use `.pre-commit-config.yaml`, `ruff`, or `black`.
-- Pre-commit hooks are managed via Husky. The only pre-commit hook is `.husky/pre-commit`, which runs `lint-staged`.
-- The pre-commit hook updates `repomix-output.md` using `lint-staged`.
-- No Python-specific formatting or linting tools are involved in the pre-commit process.
-
-## Notes
-- Always check `repomix-output.md` for the latest project map.
-- If a file is not in repomix-output.md, assume it doesn't exist yet.
-- Backend API routes: see FastAPI project (not in this repo).
 ````
 
 ## File: repomix.config.json
@@ -2550,7 +2235,7 @@ export class ProfileComponent {
     () => this.auth.currentUser()?.socials ?? {},
   );
   constructor() {
-    this.seo.setPage({ title: 'Профіль | Book Club' });
+    this.seo.setPageI18n('SEO.profile_title');
     const user = this.auth.currentUser();
     if (user) {
       this.nameForm.patchValue({ displayName: user.displayName });
@@ -2568,21 +2253,27 @@ export class ProfileComponent {
     }
   }
   /** Switch the user's role and show a transient success toast. */
-  protected changeRole(role: UserRole): void {
-    this.auth.updateRole(role);
-    this.roleChanged.set(true);
-    setTimeout(() => this.roleChanged.set(false), 3000);
+  protected async changeRole(role: UserRole): Promise<void> {
+    try {
+      await this.auth.updateRole(role);
+      this.roleChanged.set(true);
+      setTimeout(() => this.roleChanged.set(false), 3000);
+    } catch {  }
   }
-  protected saveName(): void {
+  protected async saveName(): Promise<void> {
     if (this.nameForm.invalid) return;
     this.isSavingName.set(true);
     const { displayName } = this.nameForm.getRawValue();
-    this.auth.updateDisplayName(displayName);
-    this.isSavingName.set(false);
-    this.nameSaved.set(true);
-    setTimeout(() => this.nameSaved.set(false), 3000);
+    try {
+      await this.auth.updateDisplayName(displayName);
+      this.nameSaved.set(true);
+      setTimeout(() => this.nameSaved.set(false), 3000);
+    } catch {  }
+    finally {
+      this.isSavingName.set(false);
+    }
   }
-  protected submitSocials(): void {
+  protected async submitSocials(): Promise<void> {
     const raw = this.socialsForm.getRawValue();
     const socials: UserSocials = {
       ...(raw.telegram  ? { telegram:  raw.telegram  } : {}),
@@ -2592,12 +2283,16 @@ export class ProfileComponent {
       ...(raw.github    ? { github:    raw.github    } : {}),
       ...(raw.goodreads ? { goodreads: raw.goodreads } : {}),
     };
-    this.auth.updateSocials(socials);
-    this.socialsSaved.set(true);
-    setTimeout(() => this.socialsSaved.set(false), 3000);
+    try {
+      await this.auth.updateSocials(socials);
+      this.socialsSaved.set(true);
+      setTimeout(() => this.socialsSaved.set(false), 3000);
+    } catch {  }
   }
-  protected onSocialsPublicChange(value: boolean): void {
-    this.auth.setSocialsPublic(value);
+  protected async onSocialsPublicChange(value: boolean): Promise<void> {
+    try {
+      await this.auth.setSocialsPublic(value);
+    } catch {  }
   }
 }
 ````
@@ -2911,53 +2606,6 @@ export class EmptyStateComponent {
     </div>
 ````
 
-## File: src/app/shared/components/form-field/form-field.component.ts
-````typescript
-import { Component, ChangeDetectionStrategy, inject, input, computed } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { map, startWith } from 'rxjs';
-@Component({
-  selector: 'app-form-field',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslateModule],
-  templateUrl: './form-field.component.html',
-})
-export class FormFieldComponent {
-  private readonly translate = inject(TranslateService);
-  readonly label = input.required<string>();
-  readonly control = input.required<FormControl<string | null>>();
-  readonly type = input<'text' | 'email' | 'password'>('text');
-  readonly placeholder = input('');
-  readonly formControl = computed(() => this.control());
-  readonly hasError = computed(() => {
-    const ctrl = this.control();
-    return ctrl.invalid && ctrl.touched;
-  });
-  private readonly _lang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: this.translate.currentLang ?? 'uk' },
-  );
-  readonly errorMessage = computed(() => {
-    this._lang();
-    const ctrl = this.control();
-    if (!ctrl.errors) return '';
-    if (ctrl.errors['required']) return this.translate.instant('FORM_ERRORS.required');
-    if (ctrl.errors['email']) return this.translate.instant('FORM_ERRORS.email');
-    if (ctrl.errors['minlength']) {
-      const req = (ctrl.errors['minlength'] as { requiredLength: number }).requiredLength;
-      return this.translate.instant('FORM_ERRORS.minlength', { requiredLength: req });
-    }
-    return this.translate.instant('FORM_ERRORS.invalid');
-  });
-}
-````
-
 ## File: src/app/shared/components/loading-spinner/loading-spinner.component.html
 ````html
 <output [class]="containerClass()" aria-label="Loading">
@@ -2986,6 +2634,52 @@ export class LoadingSpinnerComponent {
     };
     return `${sizeMap[this.size()]} rounded-full border-primary-200 border-t-primary-600 animate-spin`;
   });
+}
+````
+
+## File: src/app/shared/components/qr-code/qr-code.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  effect,
+  input,
+  viewChild,
+} from '@angular/core';
+import * as QRCode from 'qrcode';
+import { environment } from '../../../../environments/environment';
+@Component({
+  selector: 'app-qr-code',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <canvas
+      #canvas
+      [style.width.px]="size()"
+      [style.height.px]="size()"
+      class="rounded-lg"
+      [attr.aria-label]="'QR code'"
+      role="img"
+    ></canvas>
+  `,
+})
+export class QrCodeComponent {
+  readonly value = input.required<string>();
+  readonly size = input<number>(200);
+  private readonly canvasRef =
+    viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
+  constructor() {
+    effect(() => {
+      const val = this.value();
+      const sz = this.size();
+      const canvas = this.canvasRef().nativeElement;
+      if (!val || !canvas) return;
+      QRCode.toCanvas(canvas, val, { width: sz, margin: 2 }, (err) => {
+        if (err && !environment.production) console.error('QR generation error:', err);
+      });
+    });
+  }
 }
 ````
 
@@ -3037,6 +2731,7 @@ export class ToastComponent {
 ````typescript
 export const environment = {
   production: true,
+  apiUrl: 'https://book-club-be.onrender.com/api/v1',
 };
 ````
 
@@ -3044,587 +2739,47 @@ export const environment = {
 ````typescript
 export const environment = {
   production: false,
+  apiUrl: 'https://book-club-be.onrender.com/api/v1',
 };
 ````
 
-## File: karma.conf.js
-````javascript
-module.exports = function (config) {
-  config.set({
-    basePath: '',
-    frameworks: ['jasmine'],
-    plugins: [
-      require('karma-jasmine'),
-      require('karma-chrome-launcher'),
-      require('karma-jasmine-html-reporter'),
-      require('karma-coverage'),
-    ],
-    client: {
-      jasmine: {},
-      clearContext: false,
-    },
-    jasmineHtmlReporter: {
-      suppressAll: true,
-    },
-    coverageReporter: {
-      dir: require('path').join(__dirname, './coverage/book-club-fe'),
-      subdir: '.',
-      reporters: [{ type: 'html' }, { type: 'text-summary' }, { type: 'lcovonly' }],
-      check: {
-        global: { statements: 70, branches: 60, functions: 70, lines: 70 },
-      },
-    },
-    reporters: ['progress', 'kjhtml'],
-    browsers: ['ChromeHeadless'],
-    customLaunchers: {
-      ChromeHeadlessCI: {
-        base: 'ChromeHeadless',
-        flags: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
-      },
-    },
-    restartOnFileChange: true,
-  });
-};
-````
+## File: CLAUDE.md
+````markdown
+# Project Context
+This project uses **Repomix** to provide a full map of the codebase.
 
-## File: public/i18n/en.json
-````json
-{
-  "AUTH": {
-    "activate_account": "Click it to activate your account.",
-    "back_to_login": "Back to sign in",
-    "check_email": "Check your email",
-    "confirm_password": "Confirm password",
-    "confirmation_sent": "We sent a confirmation link to",
-    "create_account_h2": "Create account",
-    "create_account_subtitle": "Create your account",
-    "creating_account": "Creating account…",
-    "display_name": "Display name",
-    "email": "Email",
-    "have_account": "Already have an account?",
-    "no_account": "Don't have an account?",
-    "password": "Password",
-    "password_medium": "Medium",
-    "password_strong": "Strong",
-    "password_weak": "Weak",
-    "passwords_no_match": "Passwords do not match",
-    "register_title": "Register",
-    "role_organizer_desc": "Create clubs & build quizzes",
-    "role_organizer_label": "Organizer",
-    "role_reader_desc": "Join clubs & take quizzes",
-    "role_reader_label": "Reader",
-    "select_role_error": "Please select a role.",
-    "sign_in_h2": "Sign in",
-    "signing_in": "Signing in…",
-    "submit_login": "Log in",
-    "want_to": "I want to…",
-    "welcome_back": "Welcome back",
-    "login_title": "Log In",
-    "submit_register": "Register",
-    "password_strength": "Password strength"
-  },
-  "CREATE_CLUB": {
-    "subtitle": "Create a new reading community",
-    "title": "Create a Club",
-    "basic_info_legend": "Basic information",
-    "name_label": "Club name",
-    "name_placeholder": "e.g. Northern Readers",
-    "name_required": "Club name is required.",
-    "name_min": "Name must be at least 3 characters.",
-    "name_max": "Name must not exceed 100 characters.",
-    "description_label": "Description",
-    "description_placeholder": "What books will your club read? Who is it for?",
-    "description_max": "Description must not exceed 500 characters.",
-    "city_label": "City",
-    "city_placeholder": "Kyiv",
-    "city_required": "City is required.",
-    "city_max": "City must not exceed 100 characters.",
-    "address_label": "Address",
-    "address_placeholder": "1 Khreshchatyk St.",
-    "address_max": "Address must not exceed 200 characters.",
-    "tags_duration_legend": "Tags & duration",
-    "tags_label": "Tags / Genres",
-    "tags_placeholder": "Classics, Romance, Fantasy",
-    "tags_hint": "Enter genres separated by commas",
-    "tags_max": "Tags must not exceed 300 characters.",
-    "duration_label": "Meeting duration (min)",
-    "duration_placeholder": "90",
-    "duration_min": "Duration must be at least 15 minutes.",
-    "duration_max": "Duration must not exceed 480 minutes.",
-    "visibility_legend": "Visibility",
-    "public_label": "Public club",
-    "public_desc": "Anyone can discover and join",
-    "after_meeting_toggle": "▼ After-meeting venue",
-    "after_meeting_hide": "▲ Hide after-meeting venue info",
-    "venue_name_label": "Venue name",
-    "venue_name_placeholder": "Café Pushkin",
-    "venue_name_max": "Name must not exceed 150 characters.",
-    "venue_address_label": "Venue address",
-    "venue_address_placeholder": "2 Khreshchatyk St.",
-    "venue_address_max": "Address must not exceed 200 characters.",
-    "venue_notes_label": "Notes",
-    "venue_notes_placeholder": "Reservation at 8 pm",
-    "venue_notes_max": "Notes must not exceed 300 characters.",
-    "cancel": "Cancel",
-    "submit": "Create club",
-    "submitting": "Creating…"
-  },
-  "CLUBS": {
-    "active": "Active",
-    "all_cities": "All cities",
-    "cancelled": "Cancelled",
-    "create": "Create club",
-    "join": "Join",
-    "member_badge": "✓ Member",
-    "member_singular": "member",
-    "members": "members",
-    "missed": "Missed",
-    "my_clubs": "My Clubs",
-    "participated": "Attended",
-    "paused": "Paused",
-    "search_placeholder": "Search clubs...",
-    "search_placeholder_full": "Search by name or description…",
-    "subtitle": "Discover communities of readers near you",
-    "title": "Book Clubs",
-    "view": "View",
-    "upcoming": "Upcoming meetings",
-    "joined": "You're a member",
-    "no_clubs": "No clubs found",
-    "book_current": "Current book",
-    "days_until": "in {{ days }} days"
-  },
-  "CLUB_DETAIL": {
-    "about": "About",
-    "back": "Back to clubs",
-    "back_short": "Back",
-    "cancel": "Cancel",
-    "created": "Created",
-    "join": "Join Club",
-    "leave": "Leave Club",
-    "manage_title": "Club management",
-    "new_date": "New meeting date",
-    "not_found": "Club not found",
-    "organizer_badge": "✨ Organizer",
-    "pause": "Pause",
-    "private": "Private",
-    "quizzes_desc": "Create & manage reading quizzes",
-    "quizzes_title": "Quizzes",
-    "randomizer_desc": "Pick the next book to read",
-    "randomizer_title": "Randomizer",
-    "reschedule": "Reschedule",
-    "reschedule_submit": "Confirm date",
-    "members_title": "Members",
-    "tags_title": "Tags",
-    "organizer_title": "Organizer",
-    "meeting_info_title": "Meeting place & time",
-    "duration_label": "Duration",
-    "minutes_abbr": "min",
-    "address_label": "Address",
-    "view_on_map": "View on map →",
-    "after_meeting_title": "After the meeting",
-    "deletion_countdown_prefix": "This club has been cancelled —",
-    "deletion_countdown_hours": "will be deleted in {{ hours }} h. {{ minutes }} min.",
-    "deletion_countdown_minutes": "will be deleted in {{ minutes }} min.",
-    "close_qr": "✕ Close"
-  },
-  "FOOTER": {
-    "privacy": "Privacy",
-    "rights": "All rights reserved",
-    "terms": "Terms"
-  },
-  "MEMBERS": {
-    "empty": "No members yet",
-    "member": "Member",
-    "organizer": "Organizer",
-    "show_qr": "QR",
-    "socials_hidden": "Hidden",
-    "title": "Members",
-    "kick": "Kick",
-    "ban": "Ban ▾",
-    "ban_1": "1 meeting",
-    "ban_3": "3 meetings",
-    "ban_5": "5 meetings",
-    "ban_permanent": "Permanently"
-  },
-  "NAV": {
-    "back_home": "← Back to home",
-    "discover": "Discover",
-    "join_free": "Join Free",
-    "login": "Log in",
-    "logout": "Log out",
-    "profile": "Profile",
-    "signed_in_as": "Signed in as",
-    "clubs": "Clubs",
-    "my_clubs": "My Clubs",
-    "register": "Register"
-  },
-  "PROFILE": {
-    "active_badge": "✓ Active",
-    "books_read": "Books read",
-    "clubs_joined": "Clubs joined",
-    "display_name_label": "Display Name",
-    "display_name_min": "Must be at least 2 characters.",
-    "display_name_placeholder": "Your display name",
-    "display_name_required": "Display name is required.",
-    "edit_profile": "Edit Profile",
-    "likes_received": "Likes Received",
-    "member_since": "Member since",
-    "name_updated": "Name updated!",
-    "no_stats": "No statistics yet — start joining clubs and taking quizzes!",
-    "quizzes_taken": "Quizzes taken",
-    "quizzes_won": "Quizzes won",
-    "role_changed_prefix": "Role updated to",
-    "role_organizer": "Organizer",
-    "role_organizer_desc": "Create clubs, run quizzes, and manage members.",
-    "role_reader": "Reader",
-    "role_reader_desc": "Discover clubs, join discussions, take quizzes.",
-    "role_subtitle": "Choose how you participate in book clubs.",
-    "role_title": "Your Role",
-    "save": "Save",
-    "save_name": "Save Name",
-    "saving": "Saving…",
-    "socials_public_label": "Show social media to all club members",
-    "socials_saved": "Social media saved!",
-    "socials_title": "Social media",
-    "stats_title": "Statistics",
-    "title": "My Profile",
-    "saved": "Saved!",
-    "role": "Role",
-    "role_admin": "Administrator",
-    "meetings_attended": "Meetings attended",
-    "meetings_missed": "Meetings missed",
-    "randomizer_wins": "Randomizer wins"
-  },
-  "RANDOMIZER": {
-    "back_to_club": "← Back to club",
-    "history_title": "Previous results",
-    "members_title": "Members",
-    "no_members": "No members in this club yet",
-    "purpose_label": "Randomizer purpose",
-    "purpose_placeholder": "e.g. Who presents the book?",
-    "save": "💾 Save result",
-    "saving": "⏳ Saving…",
-    "select_all": "Select all",
-    "selected": "selected",
-    "spin": "🎲 Spin!",
-    "spin_hint": "Press 'Spin' to select a member",
-    "spinning": "Selecting winner…",
-    "spinning_btn": "⏳ Selecting…",
-    "subtitle": "Who's next? Let fate decide.",
-    "title": "Randomizer",
-    "no_history": "No results yet",
-    "error_min": "Select at least 2 members",
-    "winner": "Winner"
-  },
-  "QUIZ": {
-    "title": "Quizzes",
-    "create": "Create quiz",
-    "take": "Start",
-    "results": "Results",
-    "score": "Score"
-  },
-  "CHAT": {
-    "title": "Club Chat",
-    "placeholder": "Type a message...",
-    "send": "Send",
-    "no_messages": "No messages yet",
-    "new_message": "New message",
-    "close": "Close chat",
-    "open": "Open chat",
-    "rooms": "Rooms"
-  },
-  "FORM_ERRORS": {
-    "required": "This field is required.",
-    "email": "Please enter a valid email address.",
-    "minlength": "Minimum {{ requiredLength }} characters required.",
-    "invalid": "Invalid value."
-  }
-}
-````
+## Stack
+- Frontend: Angular 20 (Signals—using Angular 20 features like resource() and linkedSignal(), standalone components, SCSS, Tailwind)
+- Backend: FastAPI (Async, Pydantic v2)
 
-## File: public/i18n/uk.json
-````json
-{
-  "AUTH": {
-    "activate_account": "Натисніть, щоб активувати акаунт.",
-    "back_to_login": "Назад до входу",
-    "check_email": "Перевірте пошту",
-    "confirm_password": "Підтвердіть пароль",
-    "confirmation_sent": "Ми надіслали посилання підтвердження на",
-    "create_account_h2": "Створити акаунт",
-    "create_account_subtitle": "Створіть акаунт",
-    "creating_account": "Створюємо акаунт…",
-    "display_name": "Ім'я користувача",
-    "email": "Email",
-    "have_account": "Вже є акаунт?",
-    "no_account": "Немає акаунту?",
-    "password": "Пароль",
-    "password_medium": "Середній",
-    "password_strong": "Надійний",
-    "password_weak": "Слабкий",
-    "passwords_no_match": "Паролі не збігаються",
-    "register_title": "Реєстрація",
-    "role_organizer_desc": "Створювати клуби та проводити квізи",
-    "role_organizer_label": "Організатор",
-    "role_reader_desc": "Приєднуватись до клубів та проходити квізи",
-    "role_reader_label": "Читач",
-    "select_role_error": "Будь ласка, оберіть роль.",
-    "sign_in_h2": "Увійти",
-    "signing_in": "Входимо…",
-    "submit_login": "Увійти",
-    "want_to": "Я хочу…",
-    "welcome_back": "Ласкаво просимо назад",
-    "login_title": "Вхід",
-    "submit_register": "Зареєструватися",
-    "password_strength": "Надійність паролю"
-  },
-  "CREATE_CLUB": {
-    "subtitle": "Створіть нову спільноту читачів",
-    "title": "Створити клуб",
-    "basic_info_legend": "Основна інформація",
-    "name_label": "Назва клубу",
-    "name_placeholder": "Напр. Північ читачів",
-    "name_required": "Назва клубу є обов'язковою.",
-    "name_min": "Назва повинна містити щонайменше 3 символи.",
-    "name_max": "Назва не повинна перевищувати 100 символів.",
-    "description_label": "Опис",
-    "description_placeholder": "Які книги буде читати ваш клуб? Для кого він?",
-    "description_max": "Опис не повинен перевищувати 500 символів.",
-    "city_label": "Місто",
-    "city_placeholder": "Київ",
-    "city_required": "Місто є обов'язковим.",
-    "city_max": "Місто не повинно перевищувати 100 символів.",
-    "address_label": "Адреса",
-    "address_placeholder": "вул. Хрещатик, 1",
-    "address_max": "Адреса не повинна перевищувати 200 символів.",
-    "tags_duration_legend": "Теги та тривалість",
-    "tags_label": "Теги / Жанри",
-    "tags_placeholder": "Класика, Романтика, Фентезі",
-    "tags_hint": "Введіть жанри через кому",
-    "tags_max": "Теги не повинні перевищувати 300 символів.",
-    "duration_label": "Тривалість зустрічі (хв)",
-    "duration_placeholder": "90",
-    "duration_min": "Тривалість не може бути менше 15 хвилин.",
-    "duration_max": "Тривалість не може перевищувати 480 хвилин.",
-    "visibility_legend": "Видимість",
-    "public_label": "Публічний клуб",
-    "public_desc": "Хто завгодно може виявити та приєднатися",
-    "after_meeting_toggle": "▼ Після зустрічі",
-    "after_meeting_hide": "▲ Приховати інформацію про місце після зустрічі",
-    "venue_name_label": "Назва місця",
-    "venue_name_placeholder": "Кав'ярня «Пушкін»",
-    "venue_name_max": "Назва не повинна перевищувати 150 символів.",
-    "venue_address_label": "Адреса місця",
-    "venue_address_placeholder": "вул. Хрещатик, 2",
-    "venue_address_max": "Адреса не повинна перевищувати 200 символів.",
-    "venue_notes_label": "Примітки",
-    "venue_notes_placeholder": "Бронювання на 20:00",
-    "venue_notes_max": "Примітки не повинні перевищувати 300 символів.",
-    "cancel": "Скасувати",
-    "submit": "Створити клуб",
-    "submitting": "Створення…"
-  },
-  "CLUBS": {
-    "active": "Активний",
-    "all_cities": "Всі міста",
-    "cancelled": "Скасовано",
-    "create": "Створити клуб",
-    "join": "Приєднатися",
-    "member_badge": "✓ Учасник",
-    "member_singular": "учасник",
-    "members": "учасників",
-    "missed": "Пропущені",
-    "my_clubs": "Мої клуби",
-    "participated": "Відвідані",
-    "paused": "Призупинено",
-    "search_placeholder": "Шукати клуби...",
-    "search_placeholder_full": "Шукати за назвою або описом…",
-    "subtitle": "Знайдіть спільноти читачів поруч",
-    "title": "Книжкові клуби",
-    "view": "Переглянути",
-    "upcoming": "Найближчі зустрічі",
-    "joined": "Ви учасник",
-    "no_clubs": "Клубів не знайдено",
-    "book_current": "Поточна книга",
-    "days_until": "за {{ days }} дн."
-  },
-  "CLUB_DETAIL": {
-    "about": "Про клуб",
-    "back": "Назад до клубів",
-    "back_short": "Назад",
-    "cancel": "Скасувати",
-    "created": "Створено",
-    "join": "Приєднатись до клубу",
-    "leave": "Покинути клуб",
-    "manage_title": "Управління клубом",
-    "new_date": "Нова дата зустрічі",
-    "not_found": "Клуб не знайдено",
-    "organizer_badge": "✨ Організатор",
-    "pause": "Призупинити",
-    "private": "Приватний",
-    "quizzes_desc": "Створюйте та керуйте квізами",
-    "quizzes_title": "Квізи",
-    "randomizer_desc": "Обирайте наступну книгу",
-    "randomizer_title": "Рандомайзер",
-    "reschedule": "Перепланувати",
-    "reschedule_submit": "Перенести зустріч",
-    "members_title": "Учасники",
-    "tags_title": "Теги",
-    "organizer_title": "Організатор",
-    "meeting_info_title": "Місце та час зустрічі",
-    "duration_label": "Тривалість",
-    "minutes_abbr": "хв",
-    "address_label": "Адреса",
-    "view_on_map": "Переглянути на карті →",
-    "after_meeting_title": "Після зустрічі",
-    "deletion_countdown_prefix": "Цей клуб скасовано —",
-    "deletion_countdown_hours": "буде видалено через {{ hours }} год. {{ minutes }} хв.",
-    "deletion_countdown_minutes": "буде видалено через {{ minutes }} хв.",
-    "close_qr": "✕ Закрити"
-  },
-  "FOOTER": {
-    "privacy": "Конфіденційність",
-    "rights": "Усі права захищені",
-    "terms": "Умови"
-  },
-  "MEMBERS": {
-    "empty": "Немає учасників",
-    "member": "Учасник",
-    "organizer": "Організатор",
-    "show_qr": "QR",
-    "socials_hidden": "Приховано",
-    "title": "Учасники",
-    "kick": "Виключити",
-    "ban": "Заблокувати ▾",
-    "ban_1": "1 зустріч",
-    "ban_3": "3 зустрічі",
-    "ban_5": "5 зустрічей",
-    "ban_permanent": "Назавжди"
-  },
-  "NAV": {
-    "back_home": "← На головну",
-    "discover": "Огляд",
-    "join_free": "Приєднатись",
-    "login": "Увійти",
-    "logout": "Вийти",
-    "profile": "Профіль",
-    "signed_in_as": "Увійшли як",
-    "clubs": "Клуби",
-    "my_clubs": "Мої клуби",
-    "register": "Приєднатись"
-  },
-  "PROFILE": {
-    "active_badge": "✓ Активний",
-    "books_read": "Книг прочитано",
-    "clubs_joined": "Клубів приєднано",
-    "display_name_label": "Ім'я в додатку",
-    "display_name_min": "Мінімум 2 символи.",
-    "display_name_placeholder": "Ваше ім'я",
-    "display_name_required": "Ім'я є обов'язковим.",
-    "edit_profile": "Редагувати профіль",
-    "likes_received": "Отримано вподобань",
-    "member_since": "Учасник з",
-    "name_updated": "Ім'я оновлено!",
-    "no_stats": "Статистики ще немає — починайте приєднуватись до клубів і проходити квізи!",
-    "quizzes_taken": "Квізів пройдено",
-    "quizzes_won": "Квізів виграно",
-    "role_changed_prefix": "Роль змінено на",
-    "role_organizer": "Організатор",
-    "role_organizer_desc": "Створюйте клуби, проводьте квізи та керуйте учасниками.",
-    "role_reader": "Читач",
-    "role_reader_desc": "Відкривайте клуби, беріть участь у дискусіях і проходьте квізи.",
-    "role_subtitle": "Оберіть, як ви берете участь у книжкових клубах.",
-    "role_title": "Ваша роль",
-    "save": "Зберегти",
-    "save_name": "Зберегти ім'я",
-    "saving": "Збереження…",
-    "socials_public_label": "Показувати соціальні мережі всім учасникам клубів",
-    "socials_saved": "Соціальні мережі збережено!",
-    "socials_title": "Соціальні мережі",
-    "stats_title": "Статистика",
-    "title": "Особистий кабінет",
-    "saved": "Збережено!",
-    "role": "Роль",
-    "role_admin": "Адміністратор",
-    "meetings_attended": "Зустрічей відвідано",
-    "meetings_missed": "Зустрічей пропущено",
-    "randomizer_wins": "Перемог в рандомайзері"
-  },
-  "RANDOMIZER": {
-    "back_to_club": "← До клубу",
-    "history_title": "Попередні результати",
-    "members_title": "Учасники",
-    "no_members": "У цьому клубі поки немає учасників",
-    "purpose_label": "Питання / Мета рандомайзера",
-    "purpose_placeholder": "Наприклад: Хто представляє книгу?",
-    "save": "💾 Зберегти результат",
-    "saving": "⏳ Збереження…",
-    "select_all": "Обрати всіх",
-    "selected": "обрано",
-    "spin": "🎲 Крутити",
-    "spin_hint": "Натисніть «Крутити» щоб обрати учасника",
-    "spinning": "Вибираємо переможця…",
-    "spinning_btn": "⏳ Вибираємо…",
-    "subtitle": "Хто наступний? Нехай доля вирішує.",
-    "title": "Рандомайзер",
-    "no_history": "Немає результатів",
-    "error_min": "Оберіть щонайменше 2 учасників",
-    "winner": "Переможець"
-  },
-  "QUIZ": {
-    "title": "Квізи",
-    "create": "Створити квіз",
-    "take": "Почати",
-    "results": "Результати",
-    "score": "Рахунок"
-  },
-  "CHAT": {
-    "title": "Чат клубу",
-    "placeholder": "Написати повідомлення...",
-    "send": "Надіслати",
-    "no_messages": "Поки немає повідомлень",
-    "new_message": "Нове повідомлення",
-    "close": "Закрити чат",
-    "open": "Відкрити чат",
-    "rooms": "Кімнати"
-  },
-  "FORM_ERRORS": {
-    "required": "Це поле є обов'язковим.",
-    "email": "Введіть коректну адресу електронної пошти.",
-    "minlength": "Мінімум {{ requiredLength }} символів.",
-    "invalid": "Некоректне значення."
-  }
-}
-````
+## Folder Structure
+- `src/app/features/` — Angular feature components (auth, clubs, profile, quiz, randomizer)
+- `src/app/core/` — Core services, guards, interceptors, models
+- `src/app/shared/` — Shared UI components, pipes, directives
+- `src/app/layout/` — Shell, header, footer
+- `public/i18n/` — Translation files (en.json, uk.json)
+- `supabase/migrations/` — SQL migrations for backend
 
-## File: src/app/core/interceptors/auth.interceptor.ts
-````typescript
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
-import { ToastService } from '../services/toast.service';
-import { environment } from '../../../environments/environment';
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const router = inject(Router);
-  const toast = inject(ToastService);
-  return next(req).pipe(
-    catchError((error: unknown) => {
-      const httpError = error instanceof HttpErrorResponse ? error : null;
-      if (httpError?.status === 401) {
-        router.navigate(['/login']);
-      } else if (httpError?.status === 403) {
-        router.navigate(['/clubs']);
-      } else if (httpError && httpError.status >= 500) {
-        if (!environment.production) {
-          console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
-        }
-        toast.show('A server error occurred. Please try again later.', 'error');
-      }
-      return throwError(() => error);
-    }),
-  );
-};
+## How to Run
+- **Dev server:** `npm start` (Angular at http://localhost:4200)
+- **Build:** `npm run build`
+- **Update context:** `npm run build-ctx`
+
+## Testing & Linting
+- **Unit tests:** `npm run test` (Jest)
+- **E2E tests:** Playwright (see docs)
+- **Lint:** `npm run lint`
+
+## Pre-commit Hooks & Development Workflow
+- This project does **not** use `.pre-commit-config.yaml`, `ruff`, or `black`.
+- Pre-commit hooks are managed via Husky. The only pre-commit hook is `.husky/pre-commit`, which runs `lint-staged`.
+- The pre-commit hook updates `repomix-output.md` using `lint-staged`.
+- No Python-specific formatting or linting tools are involved in the pre-commit process.
+
+## Notes
+- Always check `repomix-output.md` for the latest project map.
+- If a file is not in repomix-output.md, assume it doesn't exist yet.
+- Backend API routes: see FastAPI project (not in this repo).
 ````
 
 ## File: src/app/core/models/club.model.ts
@@ -4695,6 +3850,53 @@ export class ShellComponent {}
 }
 ````
 
+## File: src/app/shared/components/form-field/form-field.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, inject, input, computed } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { map, startWith } from 'rxjs';
+@Component({
+  selector: 'app-form-field',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslateModule],
+  templateUrl: './form-field.component.html',
+})
+export class FormFieldComponent {
+  private readonly translate = inject(TranslateService);
+  readonly label = input.required<string>();
+  readonly control = input.required<FormControl<string | null>>();
+  readonly type = input<'text' | 'email' | 'password'>('text');
+  readonly placeholder = input('');
+  readonly formControl = computed(() => this.control());
+  readonly hasError = computed(() => {
+    const ctrl = this.control();
+    return ctrl.invalid && ctrl.touched;
+  });
+  private readonly _lang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: this.translate.currentLang ?? 'uk' },
+  );
+  readonly errorMessage = computed(() => {
+    this._lang();
+    const ctrl = this.control();
+    if (!ctrl.errors) return '';
+    if (ctrl.errors['required']) return this.translate.instant('FORM_ERRORS.required');
+    if (ctrl.errors['email']) return this.translate.instant('FORM_ERRORS.email');
+    if (ctrl.errors['minlength']) {
+      const req = (ctrl.errors['minlength'] as { requiredLength: number }).requiredLength;
+      return this.translate.instant('FORM_ERRORS.minlength', { requiredLength: req });
+    }
+    return this.translate.instant('FORM_ERRORS.invalid');
+  });
+}
+````
+
 ## File: src/index.html
 ````html
 <!doctype html>
@@ -4861,6 +4063,46 @@ export class ShellComponent {}
 }
 ````
 
+## File: karma.conf.js
+````javascript
+module.exports = function (config) {
+  config.set({
+    basePath: '',
+    frameworks: ['jasmine'],
+    plugins: [
+      require('karma-jasmine'),
+      require('karma-chrome-launcher'),
+      require('karma-jasmine-html-reporter'),
+      require('karma-coverage'),
+    ],
+    client: {
+      jasmine: {},
+      clearContext: false,
+    },
+    jasmineHtmlReporter: {
+      suppressAll: true,
+    },
+    coverageReporter: {
+      dir: require('path').join(__dirname, './coverage/book-club-fe'),
+      subdir: '.',
+      reporters: [{ type: 'html' }, { type: 'text-summary' }, { type: 'lcovonly' }],
+      check: {
+        global: { statements: 70, branches: 60, functions: 70, lines: 70 },
+      },
+    },
+    reporters: ['progress', 'kjhtml'],
+    browsers: ['ChromeHeadless'],
+    customLaunchers: {
+      ChromeHeadlessCI: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+      },
+    },
+    restartOnFileChange: true,
+  });
+};
+````
+
 ## File: README.md
 ````markdown
 # BookClubFe
@@ -4963,6 +4205,579 @@ jobs:
         with:
           category: '/language:javascript-typescript'
         continue-on-error: true
+````
+
+## File: public/i18n/en.json
+````json
+{
+  "AUTH": {
+    "activate_account": "Click it to activate your account.",
+    "back_to_login": "Back to sign in",
+    "check_email": "Check your email",
+    "confirm_password": "Confirm password",
+    "confirmation_sent": "We sent a confirmation link to",
+    "create_account_h2": "Create account",
+    "create_account_subtitle": "Create your account",
+    "creating_account": "Creating account…",
+    "display_name": "Display name",
+    "email": "Email",
+    "have_account": "Already have an account?",
+    "no_account": "Don't have an account?",
+    "password": "Password",
+    "password_medium": "Medium",
+    "password_strong": "Strong",
+    "password_weak": "Weak",
+    "passwords_no_match": "Passwords do not match",
+    "register_title": "Register",
+    "role_organizer_desc": "Create clubs & build quizzes",
+    "role_organizer_label": "Organizer",
+    "role_reader_desc": "Join clubs & take quizzes",
+    "role_reader_label": "Reader",
+    "select_role_error": "Please select a role.",
+    "sign_in_h2": "Sign in",
+    "signing_in": "Signing in…",
+    "submit_login": "Log in",
+    "want_to": "I want to…",
+    "welcome_back": "Welcome back",
+    "login_title": "Log In",
+    "submit_register": "Register",
+    "password_strength": "Password strength"
+  },
+  "CREATE_CLUB": {
+    "subtitle": "Create a new reading community",
+    "title": "Create a Club",
+    "basic_info_legend": "Basic information",
+    "name_label": "Club name",
+    "name_placeholder": "e.g. Northern Readers",
+    "name_required": "Club name is required.",
+    "name_min": "Name must be at least 3 characters.",
+    "name_max": "Name must not exceed 100 characters.",
+    "description_label": "Description",
+    "description_placeholder": "What books will your club read? Who is it for?",
+    "description_max": "Description must not exceed 500 characters.",
+    "city_label": "City",
+    "city_placeholder": "Kyiv",
+    "city_required": "City is required.",
+    "city_max": "City must not exceed 100 characters.",
+    "address_label": "Address",
+    "address_placeholder": "1 Khreshchatyk St.",
+    "address_max": "Address must not exceed 200 characters.",
+    "tags_duration_legend": "Tags & duration",
+    "tags_label": "Tags / Genres",
+    "tags_placeholder": "Classics, Romance, Fantasy",
+    "tags_hint": "Enter genres separated by commas",
+    "tags_max": "Tags must not exceed 300 characters.",
+    "duration_label": "Meeting duration (min)",
+    "duration_placeholder": "90",
+    "duration_min": "Duration must be at least 15 minutes.",
+    "duration_max": "Duration must not exceed 480 minutes.",
+    "visibility_legend": "Visibility",
+    "public_label": "Public club",
+    "public_desc": "Anyone can discover and join",
+    "after_meeting_toggle": "▼ After-meeting venue",
+    "after_meeting_hide": "▲ Hide after-meeting venue info",
+    "venue_name_label": "Venue name",
+    "venue_name_placeholder": "Café Pushkin",
+    "venue_name_max": "Name must not exceed 150 characters.",
+    "venue_address_label": "Venue address",
+    "venue_address_placeholder": "2 Khreshchatyk St.",
+    "venue_address_max": "Address must not exceed 200 characters.",
+    "venue_notes_label": "Notes",
+    "venue_notes_placeholder": "Reservation at 8 pm",
+    "venue_notes_max": "Notes must not exceed 300 characters.",
+    "cancel": "Cancel",
+    "submit": "Create club",
+    "submitting": "Creating…"
+  },
+  "CLUBS": {
+    "active": "Active",
+    "all_cities": "All cities",
+    "cancelled": "Cancelled",
+    "create": "Create club",
+    "join": "Join",
+    "member_badge": "✓ Member",
+    "member_singular": "member",
+    "members": "members",
+    "missed": "Missed",
+    "my_clubs": "My Clubs",
+    "participated": "Attended",
+    "paused": "Paused",
+    "search_placeholder": "Search clubs...",
+    "search_placeholder_full": "Search by name or description…",
+    "subtitle": "Discover communities of readers near you",
+    "title": "Book Clubs",
+    "view": "View",
+    "upcoming": "Upcoming meetings",
+    "joined": "You're a member",
+    "no_clubs": "No clubs found",
+    "book_current": "Current book",
+    "days_until": "in {{ days }} days"
+  },
+  "CLUB_DETAIL": {
+    "about": "About",
+    "back": "Back to clubs",
+    "back_short": "Back",
+    "cancel": "Cancel",
+    "created": "Created",
+    "join": "Join Club",
+    "leave": "Leave Club",
+    "manage_title": "Club management",
+    "new_date": "New meeting date",
+    "not_found": "Club not found",
+    "organizer_badge": "✨ Organizer",
+    "pause": "Pause",
+    "private": "Private",
+    "quizzes_desc": "Create & manage reading quizzes",
+    "quizzes_title": "Quizzes",
+    "randomizer_desc": "Pick the next book to read",
+    "randomizer_title": "Randomizer",
+    "reschedule": "Reschedule",
+    "reschedule_submit": "Confirm date",
+    "members_title": "Members",
+    "tags_title": "Tags",
+    "organizer_title": "Organizer",
+    "meeting_info_title": "Meeting place & time",
+    "duration_label": "Duration",
+    "minutes_abbr": "min",
+    "address_label": "Address",
+    "view_on_map": "View on map →",
+    "after_meeting_title": "After the meeting",
+    "deletion_countdown_prefix": "This club has been cancelled —",
+    "deletion_countdown_hours": "will be deleted in {{ hours }} h. {{ minutes }} min.",
+    "deletion_countdown_minutes": "will be deleted in {{ minutes }} min.",
+    "close_qr": "✕ Close"
+  },
+  "FOOTER": {
+    "privacy": "Privacy",
+    "rights": "All rights reserved",
+    "terms": "Terms"
+  },
+  "MEMBERS": {
+    "empty": "No members yet",
+    "member": "Member",
+    "organizer": "Organizer",
+    "show_qr": "QR",
+    "socials_hidden": "Hidden",
+    "title": "Members",
+    "kick": "Kick",
+    "ban": "Ban ▾",
+    "ban_1": "1 meeting",
+    "ban_3": "3 meetings",
+    "ban_5": "5 meetings",
+    "ban_permanent": "Permanently"
+  },
+  "NAV": {
+    "back_home": "← Back to home",
+    "discover": "Discover",
+    "join_free": "Join Free",
+    "login": "Log in",
+    "logout": "Log out",
+    "profile": "Profile",
+    "signed_in_as": "Signed in as",
+    "clubs": "Clubs",
+    "my_clubs": "My Clubs",
+    "register": "Register"
+  },
+  "PROFILE": {
+    "active_badge": "✓ Active",
+    "books_read": "Books read",
+    "clubs_joined": "Clubs joined",
+    "display_name_label": "Display Name",
+    "display_name_min": "Must be at least 2 characters.",
+    "display_name_placeholder": "Your display name",
+    "display_name_required": "Display name is required.",
+    "edit_profile": "Edit Profile",
+    "likes_received": "Likes Received",
+    "member_since": "Member since",
+    "name_updated": "Name updated!",
+    "no_stats": "No statistics yet — start joining clubs and taking quizzes!",
+    "quizzes_taken": "Quizzes taken",
+    "quizzes_won": "Quizzes won",
+    "role_changed_prefix": "Role updated to",
+    "role_organizer": "Organizer",
+    "role_organizer_desc": "Create clubs, run quizzes, and manage members.",
+    "role_reader": "Reader",
+    "role_reader_desc": "Discover clubs, join discussions, take quizzes.",
+    "role_subtitle": "Choose how you participate in book clubs.",
+    "role_title": "Your Role",
+    "save": "Save",
+    "save_name": "Save Name",
+    "saving": "Saving…",
+    "socials_public_label": "Show social media to all club members",
+    "socials_saved": "Social media saved!",
+    "socials_title": "Social media",
+    "stats_title": "Statistics",
+    "title": "My Profile",
+    "saved": "Saved!",
+    "role": "Role",
+    "role_admin": "Administrator",
+    "meetings_attended": "Meetings attended",
+    "meetings_missed": "Meetings missed",
+    "randomizer_wins": "Randomizer wins"
+  },
+  "RANDOMIZER": {
+    "back_to_club": "← Back to club",
+    "history_title": "Previous results",
+    "members_title": "Members",
+    "no_members": "No members in this club yet",
+    "purpose_label": "Randomizer purpose",
+    "purpose_placeholder": "e.g. Who presents the book?",
+    "save": "💾 Save result",
+    "saving": "⏳ Saving…",
+    "select_all": "Select all",
+    "selected": "selected",
+    "spin": "🎲 Spin!",
+    "spin_hint": "Press 'Spin' to select a member",
+    "spinning": "Selecting winner…",
+    "spinning_btn": "⏳ Selecting…",
+    "subtitle": "Who's next? Let fate decide.",
+    "title": "Randomizer",
+    "no_history": "No results yet",
+    "error_min": "Select at least 2 members",
+    "winner": "Winner"
+  },
+  "QUIZ": {
+    "title": "Quizzes",
+    "create": "Create quiz",
+    "take": "Start",
+    "results": "Results",
+    "score": "Score"
+  },
+  "CHAT": {
+    "title": "Club Chat",
+    "placeholder": "Type a message...",
+    "send": "Send",
+    "no_messages": "No messages yet",
+    "new_message": "New message",
+    "close": "Close chat",
+    "open": "Open chat",
+    "rooms": "Rooms"
+  },
+  "FORM_ERRORS": {
+    "required": "This field is required.",
+    "email": "Please enter a valid email address.",
+    "minlength": "Minimum {{ requiredLength }} characters required.",
+    "invalid": "Invalid value."
+  },
+  "SEO": {
+    "clubs_title": "Book Clubs | Book Club",
+    "clubs_description": "Find a book club in your city. Book discussions, reader meetups, interest communities.",
+    "clubs_og_title": "Book Clubs",
+    "login_title": "Sign In | Book Club",
+    "register_title": "Register | Book Club",
+    "profile_title": "Profile | Book Club",
+    "club_detail_title": "{{ name }} | Book Club",
+    "club_detail_og_title": "{{ name }}",
+    "site_name": "Book Club",
+    "site_url": "https://book-club-fe.vercel.app",
+    "site_description": "Book Clubs of Ukraine"
+  }
+}
+````
+
+## File: public/i18n/uk.json
+````json
+{
+  "AUTH": {
+    "activate_account": "Натисніть, щоб активувати акаунт.",
+    "back_to_login": "Назад до входу",
+    "check_email": "Перевірте пошту",
+    "confirm_password": "Підтвердіть пароль",
+    "confirmation_sent": "Ми надіслали посилання підтвердження на",
+    "create_account_h2": "Створити акаунт",
+    "create_account_subtitle": "Створіть акаунт",
+    "creating_account": "Створюємо акаунт…",
+    "display_name": "Ім'я користувача",
+    "email": "Email",
+    "have_account": "Вже є акаунт?",
+    "no_account": "Немає акаунту?",
+    "password": "Пароль",
+    "password_medium": "Середній",
+    "password_strong": "Надійний",
+    "password_weak": "Слабкий",
+    "passwords_no_match": "Паролі не збігаються",
+    "register_title": "Реєстрація",
+    "role_organizer_desc": "Створювати клуби та проводити квізи",
+    "role_organizer_label": "Організатор",
+    "role_reader_desc": "Приєднуватись до клубів та проходити квізи",
+    "role_reader_label": "Читач",
+    "select_role_error": "Будь ласка, оберіть роль.",
+    "sign_in_h2": "Увійти",
+    "signing_in": "Входимо…",
+    "submit_login": "Увійти",
+    "want_to": "Я хочу…",
+    "welcome_back": "Ласкаво просимо назад",
+    "login_title": "Вхід",
+    "submit_register": "Зареєструватися",
+    "password_strength": "Надійність паролю"
+  },
+  "CREATE_CLUB": {
+    "subtitle": "Створіть нову спільноту читачів",
+    "title": "Створити клуб",
+    "basic_info_legend": "Основна інформація",
+    "name_label": "Назва клубу",
+    "name_placeholder": "Напр. Північ читачів",
+    "name_required": "Назва клубу є обов'язковою.",
+    "name_min": "Назва повинна містити щонайменше 3 символи.",
+    "name_max": "Назва не повинна перевищувати 100 символів.",
+    "description_label": "Опис",
+    "description_placeholder": "Які книги буде читати ваш клуб? Для кого він?",
+    "description_max": "Опис не повинен перевищувати 500 символів.",
+    "city_label": "Місто",
+    "city_placeholder": "Київ",
+    "city_required": "Місто є обов'язковим.",
+    "city_max": "Місто не повинно перевищувати 100 символів.",
+    "address_label": "Адреса",
+    "address_placeholder": "вул. Хрещатик, 1",
+    "address_max": "Адреса не повинна перевищувати 200 символів.",
+    "tags_duration_legend": "Теги та тривалість",
+    "tags_label": "Теги / Жанри",
+    "tags_placeholder": "Класика, Романтика, Фентезі",
+    "tags_hint": "Введіть жанри через кому",
+    "tags_max": "Теги не повинні перевищувати 300 символів.",
+    "duration_label": "Тривалість зустрічі (хв)",
+    "duration_placeholder": "90",
+    "duration_min": "Тривалість не може бути менше 15 хвилин.",
+    "duration_max": "Тривалість не може перевищувати 480 хвилин.",
+    "visibility_legend": "Видимість",
+    "public_label": "Публічний клуб",
+    "public_desc": "Хто завгодно може виявити та приєднатися",
+    "after_meeting_toggle": "▼ Після зустрічі",
+    "after_meeting_hide": "▲ Приховати інформацію про місце після зустрічі",
+    "venue_name_label": "Назва місця",
+    "venue_name_placeholder": "Кав'ярня «Пушкін»",
+    "venue_name_max": "Назва не повинна перевищувати 150 символів.",
+    "venue_address_label": "Адреса місця",
+    "venue_address_placeholder": "вул. Хрещатик, 2",
+    "venue_address_max": "Адреса не повинна перевищувати 200 символів.",
+    "venue_notes_label": "Примітки",
+    "venue_notes_placeholder": "Бронювання на 20:00",
+    "venue_notes_max": "Примітки не повинні перевищувати 300 символів.",
+    "cancel": "Скасувати",
+    "submit": "Створити клуб",
+    "submitting": "Створення…"
+  },
+  "CLUBS": {
+    "active": "Активний",
+    "all_cities": "Всі міста",
+    "cancelled": "Скасовано",
+    "create": "Створити клуб",
+    "join": "Приєднатися",
+    "member_badge": "✓ Учасник",
+    "member_singular": "учасник",
+    "members": "учасників",
+    "missed": "Пропущені",
+    "my_clubs": "Мої клуби",
+    "participated": "Відвідані",
+    "paused": "Призупинено",
+    "search_placeholder": "Шукати клуби...",
+    "search_placeholder_full": "Шукати за назвою або описом…",
+    "subtitle": "Знайдіть спільноти читачів поруч",
+    "title": "Книжкові клуби",
+    "view": "Переглянути",
+    "upcoming": "Найближчі зустрічі",
+    "joined": "Ви учасник",
+    "no_clubs": "Клубів не знайдено",
+    "book_current": "Поточна книга",
+    "days_until": "за {{ days }} дн."
+  },
+  "CLUB_DETAIL": {
+    "about": "Про клуб",
+    "back": "Назад до клубів",
+    "back_short": "Назад",
+    "cancel": "Скасувати",
+    "created": "Створено",
+    "join": "Приєднатись до клубу",
+    "leave": "Покинути клуб",
+    "manage_title": "Управління клубом",
+    "new_date": "Нова дата зустрічі",
+    "not_found": "Клуб не знайдено",
+    "organizer_badge": "✨ Організатор",
+    "pause": "Призупинити",
+    "private": "Приватний",
+    "quizzes_desc": "Створюйте та керуйте квізами",
+    "quizzes_title": "Квізи",
+    "randomizer_desc": "Обирайте наступну книгу",
+    "randomizer_title": "Рандомайзер",
+    "reschedule": "Перепланувати",
+    "reschedule_submit": "Перенести зустріч",
+    "members_title": "Учасники",
+    "tags_title": "Теги",
+    "organizer_title": "Організатор",
+    "meeting_info_title": "Місце та час зустрічі",
+    "duration_label": "Тривалість",
+    "minutes_abbr": "хв",
+    "address_label": "Адреса",
+    "view_on_map": "Переглянути на карті →",
+    "after_meeting_title": "Після зустрічі",
+    "deletion_countdown_prefix": "Цей клуб скасовано —",
+    "deletion_countdown_hours": "буде видалено через {{ hours }} год. {{ minutes }} хв.",
+    "deletion_countdown_minutes": "буде видалено через {{ minutes }} хв.",
+    "close_qr": "✕ Закрити"
+  },
+  "FOOTER": {
+    "privacy": "Конфіденційність",
+    "rights": "Усі права захищені",
+    "terms": "Умови"
+  },
+  "MEMBERS": {
+    "empty": "Немає учасників",
+    "member": "Учасник",
+    "organizer": "Організатор",
+    "show_qr": "QR",
+    "socials_hidden": "Приховано",
+    "title": "Учасники",
+    "kick": "Виключити",
+    "ban": "Заблокувати ▾",
+    "ban_1": "1 зустріч",
+    "ban_3": "3 зустрічі",
+    "ban_5": "5 зустрічей",
+    "ban_permanent": "Назавжди"
+  },
+  "NAV": {
+    "back_home": "← На головну",
+    "discover": "Огляд",
+    "join_free": "Приєднатись",
+    "login": "Увійти",
+    "logout": "Вийти",
+    "profile": "Профіль",
+    "signed_in_as": "Увійшли як",
+    "clubs": "Клуби",
+    "my_clubs": "Мої клуби",
+    "register": "Приєднатись"
+  },
+  "PROFILE": {
+    "active_badge": "✓ Активний",
+    "books_read": "Книг прочитано",
+    "clubs_joined": "Клубів приєднано",
+    "display_name_label": "Ім'я в додатку",
+    "display_name_min": "Мінімум 2 символи.",
+    "display_name_placeholder": "Ваше ім'я",
+    "display_name_required": "Ім'я є обов'язковим.",
+    "edit_profile": "Редагувати профіль",
+    "likes_received": "Отримано вподобань",
+    "member_since": "Учасник з",
+    "name_updated": "Ім'я оновлено!",
+    "no_stats": "Статистики ще немає — починайте приєднуватись до клубів і проходити квізи!",
+    "quizzes_taken": "Квізів пройдено",
+    "quizzes_won": "Квізів виграно",
+    "role_changed_prefix": "Роль змінено на",
+    "role_organizer": "Організатор",
+    "role_organizer_desc": "Створюйте клуби, проводьте квізи та керуйте учасниками.",
+    "role_reader": "Читач",
+    "role_reader_desc": "Відкривайте клуби, беріть участь у дискусіях і проходьте квізи.",
+    "role_subtitle": "Оберіть, як ви берете участь у книжкових клубах.",
+    "role_title": "Ваша роль",
+    "save": "Зберегти",
+    "save_name": "Зберегти ім'я",
+    "saving": "Збереження…",
+    "socials_public_label": "Показувати соціальні мережі всім учасникам клубів",
+    "socials_saved": "Соціальні мережі збережено!",
+    "socials_title": "Соціальні мережі",
+    "stats_title": "Статистика",
+    "title": "Особистий кабінет",
+    "saved": "Збережено!",
+    "role": "Роль",
+    "role_admin": "Адміністратор",
+    "meetings_attended": "Зустрічей відвідано",
+    "meetings_missed": "Зустрічей пропущено",
+    "randomizer_wins": "Перемог в рандомайзері"
+  },
+  "RANDOMIZER": {
+    "back_to_club": "← До клубу",
+    "history_title": "Попередні результати",
+    "members_title": "Учасники",
+    "no_members": "У цьому клубі поки немає учасників",
+    "purpose_label": "Питання / Мета рандомайзера",
+    "purpose_placeholder": "Наприклад: Хто представляє книгу?",
+    "save": "💾 Зберегти результат",
+    "saving": "⏳ Збереження…",
+    "select_all": "Обрати всіх",
+    "selected": "обрано",
+    "spin": "🎲 Крутити",
+    "spin_hint": "Натисніть «Крутити» щоб обрати учасника",
+    "spinning": "Вибираємо переможця…",
+    "spinning_btn": "⏳ Вибираємо…",
+    "subtitle": "Хто наступний? Нехай доля вирішує.",
+    "title": "Рандомайзер",
+    "no_history": "Немає результатів",
+    "error_min": "Оберіть щонайменше 2 учасників",
+    "winner": "Переможець"
+  },
+  "QUIZ": {
+    "title": "Квізи",
+    "create": "Створити квіз",
+    "take": "Почати",
+    "results": "Результати",
+    "score": "Рахунок"
+  },
+  "CHAT": {
+    "title": "Чат клубу",
+    "placeholder": "Написати повідомлення...",
+    "send": "Надіслати",
+    "no_messages": "Поки немає повідомлень",
+    "new_message": "Нове повідомлення",
+    "close": "Закрити чат",
+    "open": "Відкрити чат",
+    "rooms": "Кімнати"
+  },
+  "FORM_ERRORS": {
+    "required": "Це поле є обов'язковим.",
+    "email": "Введіть коректну адресу електронної пошти.",
+    "minlength": "Мінімум {{ requiredLength }} символів.",
+    "invalid": "Некоректне значення."
+  },
+  "SEO": {
+    "clubs_title": "Книжкові клуби | Book Club",
+    "clubs_description": "Знайдіть книжковий клуб у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+    "clubs_og_title": "Книжкові клуби",
+    "login_title": "Вхід | Book Club",
+    "register_title": "Реєстрація | Book Club",
+    "profile_title": "Профіль | Book Club",
+    "club_detail_title": "{{ name }} | Book Club",
+    "club_detail_og_title": "{{ name }}",
+    "site_name": "Book Club",
+    "site_url": "https://book-club-fe.vercel.app",
+    "site_description": "Читацькі клуби України"
+  }
+}
+````
+
+## File: src/app/core/interceptors/auth.interceptor.ts
+````typescript
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, throwError } from 'rxjs';
+import { ToastService } from '../services/toast.service';
+import { TokenStore } from '../auth/token.store';
+import { environment } from '../../../environments/environment';
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const router = inject(Router);
+  const toast = inject(ToastService);
+  const tokenStore = inject(TokenStore);
+  const token = tokenStore.snapshot();
+  const authedReq = token
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
+  return next(authedReq).pipe(
+    catchError((error: unknown) => {
+      const httpError = error instanceof HttpErrorResponse ? error : null;
+      if (httpError?.status === 401) {
+        tokenStore.clear();
+        router.navigate(['/login']);
+      } else if (httpError?.status === 403) {
+        router.navigate(['/clubs']);
+      } else if (httpError && httpError.status >= 500) {
+        if (!environment.production) {
+          console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
+        }
+        toast.show('A server error occurred. Please try again later.', 'error');
+      }
+      return throwError(() => error);
+    }),
+  );
+};
 ````
 
 ## File: src/app/features/clubs/clubs.routes.ts
@@ -7086,137 +6901,6 @@ export class QuizCreateComponent implements OnInit {
 }
 ````
 
-## File: src/app/features/randomizer/randomizer.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-  signal,
-  computed,
-  effect,
-} from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DatePipe } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../core/auth/auth.service';
-import { RandomizerService } from '../../core/services/randomizer.service';
-import { InitialsPipe } from '../../shared/pipes/initials.pipe';
-@Component({
-  selector: 'app-randomizer',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule, InitialsPipe],
-  styleUrl: './randomizer.component.scss',
-  templateUrl: './randomizer.component.html',
-})
-export class RandomizerComponent implements OnInit {
-  protected readonly randomizerService = inject(RandomizerService);
-  protected readonly authService = inject(AuthService);
-  private readonly route = inject(ActivatedRoute);
-  protected readonly isSaving = signal(false);
-  protected readonly errorMessage = signal('');
-  protected clubId = '';
-  protected readonly purposeControl = new FormControl('Хто представляє книгу?', {
-    nonNullable: true,
-    validators: [Validators.required],
-  });
-  // toSignal keeps OnPush change detection working without manual markForCheck
-  private readonly _purposeValue = toSignal(this.purposeControl.valueChanges, {
-    initialValue: this.purposeControl.value,
-  });
-  constructor() {
-    effect(() => this.randomizerService.setPurpose(this._purposeValue()));
-  }
-  protected readonly selectedCount = computed(
-    () =>
-      this.randomizerService
-        .candidates()
-        .filter(m => this.randomizerService.selectedIds().has(m.userId)).length,
-  );
-  ngOnInit(): void {
-    this.clubId = this.route.snapshot.params['id'] as string;
-    this.randomizerService.loadClubMembers(this.clubId);
-    this.randomizerService.loadHistory(this.clubId).catch(() => {});
-  }
-  protected spin(): void {
-    this.errorMessage.set('');
-    this.randomizerService.spin().catch(err => {
-      this.errorMessage.set((err as Error).message);
-    });
-  }
-  protected saveSession(): void {
-    this.isSaving.set(true);
-    this.errorMessage.set('');
-    this.randomizerService
-      .saveSession(this.clubId)
-      .then(() => this.isSaving.set(false))
-      .catch(err => {
-        this.isSaving.set(false);
-        this.errorMessage.set((err as Error).message);
-      });
-  }
-  protected reset(): void {
-    this.randomizerService.reset();
-    this.errorMessage.set('');
-  }
-}
-````
-
-## File: src/app/app.config.ts
-````typescript
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, APP_INITIALIZER, inject } from '@angular/core';
-import {
-  provideRouter,
-  withComponentInputBinding,
-  withViewTransitions,
-  withRouterConfig,
-} from '@angular/router';
-import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { provideTranslateService, provideTranslateLoader, TranslateService } from '@ngx-translate/core';
-import { TranslateHttpLoader, provideTranslateHttpLoader } from '@ngx-translate/http-loader';
-import { catchError, firstValueFrom, of } from 'rxjs';
-import { routes } from './app.routes';
-import { authInterceptor } from './core/interceptors/auth.interceptor';
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideZonelessChangeDetection(),
-    provideRouter(
-      routes,
-      withComponentInputBinding(),
-      withViewTransitions(),
-      withRouterConfig({ paramsInheritanceStrategy: 'always' }),
-    ),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([authInterceptor]),
-    ),
-    provideTranslateService({
-      defaultLanguage: 'uk',
-      loader: provideTranslateLoader(TranslateHttpLoader),
-    }),
-    ...provideTranslateHttpLoader({ prefix: '/i18n/', suffix: '.json' }),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: () => {
-        const translate = inject(TranslateService);
-        return () =>
-          firstValueFrom(
-            translate.use('uk').pipe(
-              catchError(() => translate.use('en').pipe(catchError(() => of(null)))),
-            ),
-          );
-      },
-      multi: true,
-    },
-  ],
-};
-````
-
 ## File: .gitignore
 ````
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
@@ -7396,97 +7080,6 @@ When invoking agents via the `task` tool, **always use the model specified below
 | `ui` | `claude-haiku-4.5` | Design system, Tailwind, animations, accessibility |
 | `web-quality-enhancer` | `claude-sonnet-4.6` | SEO, microcopy, semantic HTML, API docs |
 | `java-backend-dev` | `claude-sonnet-4.6` | Java 21 microservices, Spring Boot, JPA, Kafka, JWT |
-````
-
-## File: src/app/core/services/quiz.service.ts
-````typescript
-import { Injectable, inject, signal, computed } from '@angular/core';
-import { AuthService } from '../auth/auth.service';
-import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
-import { MOCK_QUIZZES, MOCK_QUESTIONS } from '../mocks';
-let nextQuizId = MOCK_QUIZZES.length + 1;
-let nextQuestionId = MOCK_QUESTIONS.length + 1;
-let nextAttemptId = 1;
-@Injectable({ providedIn: 'root' })
-export class QuizService {
-  private readonly auth = inject(AuthService);
-  private readonly _allQuizzes = signal<Quiz[]>([...MOCK_QUIZZES]);
-  private readonly _allQuestions = signal<QuizQuestion[]>([...MOCK_QUESTIONS]);
-  private readonly _currentClubId = signal<string | null>(null);
-  private readonly _currentQuizId = signal<string | null>(null);
-  private readonly _activeQuiz = signal<Quiz | null>(null);
-  private readonly _isLoading = signal(false);
-  readonly quizzes = computed(() =>
-    this._allQuizzes().filter(q => q.clubId === this._currentClubId()),
-  );
-  readonly activeQuiz = this._activeQuiz.asReadonly();
-  readonly questions = computed(() =>
-    this._allQuestions().filter(q => q.quizId === this._currentQuizId()),
-  );
-  readonly isLoading = this._isLoading.asReadonly();
-  async loadQuizzes(clubId: string): Promise<void> {
-    this._isLoading.set(true);
-    await Promise.resolve();
-    this._currentClubId.set(clubId);
-    this._isLoading.set(false);
-  }
-  async createQuiz(data: {
-    clubId: string;
-    title: string;
-    description: string;
-  }): Promise<Quiz> {
-    const user = this.auth.currentUser();
-    if (!user) throw new Error('Not authenticated');
-    const quiz: Quiz = {
-      id: `quiz-${++nextQuizId}`,
-      clubId: data.clubId,
-      createdBy: user.id,
-      title: data.title,
-      description: data.description || null,
-      isActive: false,
-    };
-    this._allQuizzes.update(prev => [quiz, ...prev]);
-    return quiz;
-  }
-  async addQuestion(
-    quizId: string,
-    q: Omit<QuizQuestion, 'id' | 'quizId'>,
-  ): Promise<void> {
-    const question: QuizQuestion = {
-      id: `q-${++nextQuestionId}`,
-      quizId,
-      ...q,
-    };
-    this._allQuestions.update(prev => [...prev, question]);
-  }
-  async loadQuestions(quizId: string): Promise<void> {
-    await Promise.resolve();
-    this._currentQuizId.set(quizId);
-  }
-  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
-    const user = this.auth.currentUser();
-    if (!user) throw new Error('Not authenticated');
-    await this.loadQuestions(quizId);
-    const questions = this.questions();
-    const score = answers.reduce((acc, answer, i) => {
-      return questions[i]?.correctIndex === answer ? acc + 1 : acc;
-    }, 0);
-    const attempt: QuizAttempt = {
-      id: `attempt-${++nextAttemptId}`,
-      quizId,
-      userId: user.id,
-      score,
-      total: questions.length,
-      answers,
-    };
-    return attempt;
-  }
-  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
-    this._allQuizzes.update(prev =>
-      prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
-    );
-  }
-}
 ````
 
 ## File: src/app/features/clubs/club-detail/club-detail.component.html
@@ -8049,93 +7642,297 @@ export class CreateClubComponent {
 }
 ````
 
-## File: src/app/core/auth/auth.service.ts
+## File: src/app/features/randomizer/randomizer.component.ts
 ````typescript
-import { Injectable, inject, signal, computed } from '@angular/core';
-import { Router } from '@angular/router';
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-import { MOCK_USERS, MOCK_STATS, MOCK_USER_CREDENTIALS } from '../mocks';
-const inMemoryUsers: (UserProfile & { email: string; password: string })[] = MOCK_USER_CREDENTIALS.flatMap(
-  cred => {
-    const user = MOCK_USERS.find(u => u.id === cred.userId);
-    if (!user) return [];
-    return [{ ...user, email: cred.email, password: cred.password }];
-  },
-);
-let nextUserId = inMemoryUsers.length + 1;
-@Injectable({ providedIn: 'root' })
-export class AuthService {
-  private readonly router = inject(Router);
-  private readonly _currentUser = signal<UserProfile | null>(null);
-  private readonly _isLoading = signal<boolean>(true);
-  readonly currentUser = this._currentUser.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly isAuthenticated = computed(() => this._currentUser() !== null);
-  readonly userRole = computed(() => this._currentUser()?.role ?? null);
-  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
-  readonly userStats = computed<UserStats | null>(
-    () => MOCK_STATS[this._currentUser()?.id ?? ''] ?? null,
-  );
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  effect,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { DatePipe } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../core/auth/auth.service';
+import { RandomizerService } from '../../core/services/randomizer.service';
+import { InitialsPipe } from '../../shared/pipes/initials.pipe';
+@Component({
+  selector: 'app-randomizer',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule, InitialsPipe],
+  styleUrl: './randomizer.component.scss',
+  templateUrl: './randomizer.component.html',
+})
+export class RandomizerComponent implements OnInit {
+  protected readonly randomizerService = inject(RandomizerService);
+  protected readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  protected readonly isSaving = signal(false);
+  protected readonly errorMessage = signal('');
+  protected clubId = '';
+  protected readonly purposeControl = new FormControl('Хто представляє книгу?', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
+  // toSignal keeps OnPush change detection working without manual markForCheck
+  private readonly _purposeValue = toSignal(this.purposeControl.valueChanges, {
+    initialValue: this.purposeControl.value,
+  });
   constructor() {
-    this._isLoading.set(false);
+    effect(() => this.randomizerService.setPurpose(this._purposeValue()));
   }
-  async signUp(
-    email: string,
-    _password: string,
-    displayName: string,
-    role: UserRole,
-  ): Promise<{ error: string | null }> {
-    if (inMemoryUsers.some(u => u.email === email)) {
-      return { error: 'Email already registered' };
+  protected readonly selectedCount = computed(
+    () =>
+      this.randomizerService
+        .candidates()
+        .filter(m => this.randomizerService.selectedIds().has(m.userId)).length,
+  );
+  ngOnInit(): void {
+    this.clubId = this.route.snapshot.params['id'] as string;
+    this.randomizerService.loadClubMembers(this.clubId);
+    this.randomizerService.loadHistory(this.clubId).catch(() => {});
+  }
+  protected spin(): void {
+    this.errorMessage.set('');
+    this.randomizerService.spin().catch(err => {
+      this.errorMessage.set((err as Error).message);
+    });
+  }
+  protected saveSession(): void {
+    this.isSaving.set(true);
+    this.errorMessage.set('');
+    this.randomizerService
+      .saveSession(this.clubId)
+      .then(() => this.isSaving.set(false))
+      .catch(err => {
+        this.isSaving.set(false);
+        this.errorMessage.set((err as Error).message);
+      });
+  }
+  protected reset(): void {
+    this.randomizerService.reset();
+    this.errorMessage.set('');
+  }
+}
+````
+
+## File: src/app/app.config.ts
+````typescript
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, APP_INITIALIZER, inject } from '@angular/core';
+import {
+  provideRouter,
+  withComponentInputBinding,
+  withViewTransitions,
+  withRouterConfig,
+} from '@angular/router';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { provideTranslateService, provideTranslateLoader, TranslateService } from '@ngx-translate/core';
+import { TranslateHttpLoader, provideTranslateHttpLoader } from '@ngx-translate/http-loader';
+import { catchError, firstValueFrom, of } from 'rxjs';
+import { routes } from './app.routes';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideZonelessChangeDetection(),
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      withViewTransitions(),
+      withRouterConfig({ paramsInheritanceStrategy: 'always' }),
+    ),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([authInterceptor]),
+    ),
+    provideTranslateService({
+      defaultLanguage: 'uk',
+      loader: provideTranslateLoader(TranslateHttpLoader),
+    }),
+    ...provideTranslateHttpLoader({ prefix: '/i18n/', suffix: '.json' }),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: () => {
+        const translate = inject(TranslateService);
+        return () =>
+          firstValueFrom(
+            translate.use('uk').pipe(
+              catchError(() => translate.use('en').pipe(catchError(() => of(null)))),
+            ),
+          );
+      },
+      multi: true,
+    },
+  ],
+};
+````
+
+## File: src/app/core/services/quiz.service.ts
+````typescript
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
+interface ApiQuiz {
+  id: string;
+  club_id: string;
+  created_by: string;
+  title: string;
+  description: string | null;
+  is_active: boolean;
+}
+interface ApiQuizQuestion {
+  id: string;
+  quiz_id: string;
+  question: string;
+  options: string[];
+  correct_index: number;
+}
+interface ApiAttemptResponse {
+  id: string;
+  quiz_id: string;
+  user_id: string;
+  score: number;
+  total: number;
+  answers: number[];
+}
+function mapQuiz(raw: ApiQuiz): Quiz {
+  return {
+    id: raw.id,
+    clubId: raw.club_id,
+    createdBy: raw.created_by,
+    title: raw.title,
+    description: raw.description,
+    isActive: raw.is_active,
+  };
+}
+function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
+  return {
+    id: raw.id,
+    quizId: raw.quiz_id,
+    question: raw.question,
+    options: raw.options,
+    correctIndex: raw.correct_index,
+  };
+}
+function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
+  return {
+    id: raw.id,
+    quizId: raw.quiz_id,
+    userId: raw.user_id,
+    score: raw.score,
+    total: raw.total,
+    answers: raw.answers,
+  };
+}
+function extractApiError(err: unknown): string {
+  if (err instanceof HttpErrorResponse) {
+    const detail = (err.error as { detail?: string })?.detail;
+    return detail ?? err.message ?? 'Unknown error';
+  }
+  return 'Unknown error';
+}
+@Injectable({ providedIn: 'root' })
+export class QuizService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _quizzes = signal<Quiz[]>([]);
+  private readonly _questions = signal<QuizQuestion[]>([]);
+  private readonly _isLoading = signal(false);
+  readonly quizzes = this._quizzes.asReadonly();
+  readonly questions = this._questions.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
+  async loadQuizzes(clubId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
+      );
+      this._quizzes.set(raw.map(mapQuiz));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
     }
-    const newUser: UserProfile & { email: string; password: string } = {
-      id: `user-${++nextUserId}`,
-      email,
-      password: _password,
-      role,
-      displayName,
-      avatarUrl: null,
-      createdAt: new Date().toISOString(),
-    };
-    inMemoryUsers.push(newUser);
-    this._currentUser.set({ ...newUser });
-    return { error: null };
   }
-  async signIn(email: string, password: string): Promise<{ error: string | null }> {
-    const found = inMemoryUsers.find(u => u.email === email && u.password === password);
-    if (!found) {
-      return { error: 'Invalid email or password' };
+  async createQuiz(data: {
+    clubId: string;
+    title: string;
+    description: string;
+  }): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
+          title: data.title,
+          description: data.description || null,
+        }),
+      );
+      const quiz = mapQuiz(raw);
+      this._quizzes.update(prev => [quiz, ...prev]);
+      return quiz;
+    } catch (err) {
+      throw new Error(extractApiError(err));
     }
-    this._currentUser.set({ ...found });
-    return { error: null };
   }
-  async signOut(): Promise<void> {
-    this._currentUser.set(null);
-    this.router.navigate(['/login']);
+  async addQuestion(
+    quizId: string,
+    q: Omit<QuizQuestion, 'id' | 'quizId'>,
+  ): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
+          question: q.question,
+          options: q.options,
+          correct_index: q.correctIndex,
+        }),
+      );
+      this._questions.update(prev => [...prev, mapQuestion(raw)]);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
   }
-  updateRole(role: UserRole): void {
-    const user = this._currentUser();
-    if (!user) return;
-    this._currentUser.set({ ...user, role });
-    const idx = inMemoryUsers.findIndex(u => u.id === user.id);
-    if (idx !== -1) inMemoryUsers[idx] = { ...inMemoryUsers[idx], role };
+  async loadQuestions(quizId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
+      );
+      this._questions.set(raw.map(mapQuestion));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
   }
-  updateDisplayName(name: string): void {
-    const user = this._currentUser();
-    if (!user) return;
-    this._currentUser.set({ ...user, displayName: name });
-    const idx = inMemoryUsers.findIndex(u => u.id === user.id);
-    if (idx !== -1) inMemoryUsers[idx] = { ...inMemoryUsers[idx], displayName: name };
+  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
+      );
+      return mapAttempt(raw);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
   }
-  updateSocials(socials: UserSocials): void {
-    const user = this._currentUser();
-    if (!user) return;
-    this._currentUser.set({ ...user, socials });
-  }
-  setSocialsPublic(value: boolean): void {
-    const user = this._currentUser();
-    if (!user) return;
-    this._currentUser.set({ ...user, socialsPublic: value });
+  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { is_active: isActive }),
+      );
+      this._quizzes.update(prev =>
+        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
   }
 }
 ````
@@ -8143,14 +7940,49 @@ export class AuthService {
 ## File: src/app/core/services/randomizer.service.ts
 ````typescript
 import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
-import { MOCK_RANDOMIZER_HISTORY, MOCK_CLUB_MEMBERS } from '../mocks';
-let nextSessionId = MOCK_RANDOMIZER_HISTORY.length + 1;
-const inMemoryHistory: RandomizerSession[] = [...MOCK_RANDOMIZER_HISTORY];
+import { ApiClubMember, mapClubMember } from '../api/api-mappers';
+import { environment } from '../../../environments/environment';
+interface ApiMemberCandidate {
+  user_id: string;
+  display_name: string;
+  avatar_url: string | null;
+}
+interface ApiRandomizerSession {
+  id: string;
+  club_id: string;
+  created_by: string;
+  purpose: string;
+  candidates: ApiMemberCandidate[];
+  result: ApiMemberCandidate | null;
+  created_at: string;
+}
+function mapMemberCandidate(raw: ApiMemberCandidate): MemberCandidate {
+  return {
+    userId: raw.user_id,
+    displayName: raw.display_name,
+    avatarUrl: raw.avatar_url,
+  };
+}
+function mapRandomizerSession(raw: ApiRandomizerSession): RandomizerSession {
+  return {
+    id: raw.id,
+    clubId: raw.club_id,
+    createdBy: raw.created_by,
+    purpose: raw.purpose,
+    candidates: raw.candidates.map(mapMemberCandidate),
+    result: raw.result ? mapMemberCandidate(raw.result) : null,
+    createdAt: raw.created_at,
+  };
+}
 @Injectable({ providedIn: 'root' })
 export class RandomizerService {
+  private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly apiUrl = environment.apiUrl;
   private readonly _candidates = signal<MemberCandidate[]>([]);
   private readonly _selectedIds = signal<Set<string>>(new Set());
   private readonly _result = signal<MemberCandidate | null>(null);
@@ -8166,8 +7998,14 @@ export class RandomizerService {
   setPurpose(purpose: string): void {
     this._purpose.set(purpose);
   }
-  loadClubMembers(clubId: string): void {
-    const members = MOCK_CLUB_MEMBERS[clubId] ?? [];
+  async loadClubMembers(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${this.apiUrl}/clubs/${clubId}/members`),
+    );
+    const members: MemberCandidate[] = raw.map(m => {
+      const detail = mapClubMember(m);
+      return { userId: detail.userId, displayName: detail.displayName, avatarUrl: detail.avatarUrl };
+    });
     this._candidates.set(members);
     this._selectedIds.set(new Set(members.map(m => m.userId)));
     this._result.set(null);
@@ -8201,21 +8039,29 @@ export class RandomizerService {
   async saveSession(clubId: string): Promise<void> {
     const user = this.auth.currentUser();
     if (!user) throw new Error('Not authenticated');
-    const session: RandomizerSession = {
-      id: `session-${++nextSessionId}`,
-      clubId,
-      createdBy: user.id,
+    const result = this._result();
+    if (!result) throw new Error('No result to save');
+    const body = {
       purpose: this._purpose(),
-      candidates: this._candidates().filter(m => this._selectedIds().has(m.userId)),
-      result: this._result(),
-      createdAt: new Date().toISOString(),
+      candidates: this._candidates()
+        .filter(m => this._selectedIds().has(m.userId))
+        .map(m => m.userId),
+      result: result.userId,
     };
-    inMemoryHistory.unshift(session);
+    const raw = await firstValueFrom(
+      this.http.post<ApiRandomizerSession>(
+        `${this.apiUrl}/clubs/${clubId}/randomizer/sessions`,
+        body,
+      ),
+    );
+    const session = mapRandomizerSession(raw);
     this._history.update(prev => [session, ...prev]);
   }
   async loadHistory(clubId: string): Promise<void> {
-    await Promise.resolve();
-    this._history.set(inMemoryHistory.filter(s => s.clubId === clubId));
+    const raw = await firstValueFrom(
+      this.http.get<ApiRandomizerSession[]>(`${this.apiUrl}/clubs/${clubId}/randomizer/history`),
+    );
+    this._history.set(raw.map(mapRandomizerSession));
   }
   reset(): void {
     const ids = new Set(this._candidates().map(m => m.userId));
@@ -8256,7 +8102,7 @@ export class LoginComponent {
   readonly bookOpen = signal(false);
   readonly formVisible = signal(false);
   constructor() {
-    this.seo.setPage({ title: 'Вхід | Book Club' });
+    this.seo.setPageI18n('SEO.login_title');
     setTimeout(() => this.formVisible.set(true), 700);
   }
   onBookAnimationDone(): void {
@@ -8287,199 +8133,6 @@ export class LoginComponent {
     } else {
       this.bookOpen.set(true);
     }
-  }
-}
-````
-
-## File: src/app/features/clubs/club-detail/club-detail.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  effect,
-  input,
-} from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { MOCK_USERS } from '../../../core/mocks';
-import { Club, ClubMemberDetail, BanDuration } from '../../../core/models/club.model';
-import { UserProfile } from '../../../core/models/user.model';
-import { QrCodeComponent } from '../../../shared/components/qr-code/qr-code.component';
-import { SeoService } from '../../../core/services/seo.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
-import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-@Component({
-  selector: 'app-club-detail',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, TranslateModule, QrCodeComponent, LoadingSpinnerComponent, InitialsPipe, FormatDatePipe],
-  templateUrl: './club-detail.component.html',
-})
-export class ClubDetailComponent {
-  readonly id = input.required<string>();
-  private readonly clubService = inject(ClubService);
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly seo = inject(SeoService);
-  private readonly translate = inject(TranslateService);
-  private readonly _lang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: this.translate.currentLang ?? 'uk' },
-  );
-  readonly currentUser = this.auth.currentUser;
-  readonly club = signal<Club | null>(null);
-  readonly members = signal<ClubMemberDetail[]>([]);
-  readonly isLoading = signal(true);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isActionLoading = signal(false);
-  readonly actionError = signal<string | null>(null);
-  readonly isMember = computed(() => this.clubService.myClubIds().has(this.id()));
-  readonly isClubOwner = computed(
-    () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
-  );
-  readonly showQrForUser = signal<string | null>(null);
-  readonly organizerProfile = computed<UserProfile | null>(() => {
-    const organizerId = this.club()?.organizerId;
-    if (!organizerId) return null;
-    return MOCK_USERS.find(u => u.id === organizerId) ?? null;
-  });
-  readonly banDurations: BanDuration[] = [1, 3, 5, 'permanent'];
-  readonly showBanMenu = signal<string | null>(null);
-  readonly clubBans = computed(() => this.clubService.getBans(this.id()));
-  readonly deleteCountdown = computed<string | null>(() => {
-    this._lang();
-    const c = this.club();
-    if (!c) return null;
-    const ms = this.clubService.msUntilDeletion(c);
-    if (ms === null) return null;
-    const hours = Math.floor(ms / (1000 * 60 * 60));
-    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-    if (hours > 0)
-      return this.translate.instant('CLUB_DETAIL.deletion_countdown_hours', { hours, minutes });
-    return this.translate.instant('CLUB_DETAIL.deletion_countdown_minutes', { minutes });
-  });
-  readonly rescheduleDate = new FormControl<string>('', { nonNullable: true });
-  constructor() {
-    effect((onCleanup) => {
-      const clubId = this.id();
-      let cancelled = false;
-      onCleanup(() => { cancelled = true; });
-      void this.loadClub(clubId, () => cancelled);
-    });
-  }
-  private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-    try {
-      if (this.auth.isAuthenticated() && this.clubService.myClubs().length === 0) {
-        await this.clubService.loadMyClubs();
-      }
-      if (isCancelled()) return;
-      const found = await this.clubService.getClubById(clubId);
-      if (isCancelled()) return;
-      if (found) {
-        this.club.set(found);
-        this.members.set(this.clubService.getClubMembers(clubId));
-        this.seo.setPage({
-          title: `${found.name} | Book Club`,
-          description: found.name,
-          canonical: `https://book-club-fe.vercel.app/clubs/${clubId}`,
-        });
-      } else {
-        this.errorMessage.set('This club could not be found.');
-      }
-    } catch {
-      if (!isCancelled()) this.errorMessage.set('Failed to load club details.');
-    } finally {
-      if (!isCancelled()) this.isLoading.set(false);
-    }
-  }
-  async onJoin(): Promise<void> {
-    this.isActionLoading.set(true);
-    this.actionError.set(null);
-    try {
-      await this.clubService.joinClub(this.id());
-      const updated = await this.clubService.getClubById(this.id());
-      if (updated) this.club.set(updated);
-    } catch (err) {
-      this.actionError.set(err instanceof Error ? err.message : 'Failed to join club');
-    } finally {
-      this.isActionLoading.set(false);
-    }
-  }
-  async onLeave(): Promise<void> {
-    this.isActionLoading.set(true);
-    this.actionError.set(null);
-    try {
-      await this.clubService.leaveClub(this.id());
-      const updated = await this.clubService.getClubById(this.id());
-      if (updated) this.club.set(updated);
-    } catch (err) {
-      this.actionError.set(err instanceof Error ? err.message : 'Failed to leave club');
-    } finally {
-      this.isActionLoading.set(false);
-    }
-  }
-  pauseClub(): void {
-    this.clubService.pauseClub(this.id());
-    void this.refreshClub();
-  }
-  cancelClub(): void {
-    this.clubService.cancelClub(this.id());
-    void this.refreshClub();
-  }
-  rescheduleSubmit(): void {
-    const date = this.rescheduleDate.value;
-    if (!date) return;
-    this.clubService.rescheduleMeeting(this.id(), date);
-    this.rescheduleDate.reset();
-    void this.refreshClub();
-  }
-  private async refreshClub(): Promise<void> {
-    const updated = await this.clubService.getClubById(this.id());
-    if (updated) this.club.set(updated);
-  }
-  kickMember(userId: string): void {
-    this.clubService.kickMember(this.id(), userId);
-    this.members.update(list => list.filter(m => m.userId !== userId));
-  }
-  banMember(userId: string, duration: BanDuration): void {
-    this.clubService.banMember(this.id(), userId, duration);
-    this.showBanMenu.set(null);
-    this.members.update(list => list.filter(m => m.userId !== userId));
-  }
-  toggleBanMenu(userId: string): void {
-    this.showBanMenu.update(current => current === userId ? null : userId);
-  }
-  canSeeSocials(member: ClubMemberDetail): boolean {
-    return member.socialsPublic || this.isClubOwner();
-  }
-  toggleQr(userId: string): void {
-    this.showQrForUser.update(current => current === userId ? null : userId);
-  }
-  buildQrValue(member: ClubMemberDetail): string {
-    if (!member.socials) return member.displayName;
-    const lines: string[] = [`📚 ${member.displayName}`];
-    const s = member.socials;
-    if (s.telegram)   lines.push(`Telegram: t.me/${s.telegram}`);
-    if (s.instagram)  lines.push(`Instagram: instagram.com/${s.instagram}`);
-    if (s.twitter)    lines.push(`Twitter: x.com/${s.twitter}`);
-    if (s.linkedin)   lines.push(`LinkedIn: linkedin.com/in/${s.linkedin}`);
-    if (s.github)     lines.push(`GitHub: github.com/${s.github}`);
-    if (s.goodreads)  lines.push(`Goodreads: goodreads.com/${s.goodreads}`);
-    return lines.join('\n');
   }
 }
 ````
@@ -8520,18 +8173,11 @@ export class ClubsListComponent implements OnInit {
   readonly cityKeys = computed(() => Object.keys(this.clubService.upcomingByCity()));
   readonly ownedClubIds = this.clubService.myOwnedClubIds;
   async ngOnInit(): Promise<void> {
-    this.seo.setPage({
-      title: 'Книжкові клуби | Book Club',
-      description: 'Знайдіть книжковий клуб у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.',
-      canonical: 'https://book-club-fe.vercel.app/clubs',
+    this.seo.setPageI18n('SEO.clubs_title', {
+      descriptionKey: 'SEO.clubs_description',
+      ogTitleKey: 'SEO.clubs_og_title',
     });
-    this.seo.injectJsonLd({
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: 'Book Club',
-      url: 'https://book-club-fe.vercel.app',
-      description: 'Читацькі клуби України',
-    });
+    this.seo.injectWebSiteJsonLd();
     await this.clubService.loadPublicClubs();
     if (this.auth.isAuthenticated()) {
       await this.clubService.loadMyClubs();
@@ -8554,269 +8200,145 @@ export class ClubsListComponent implements OnInit {
 }
 ````
 
-## File: src/app/core/services/club.service.ts
+## File: src/app/core/auth/auth.service.ts
 ````typescript
-import { Injectable, inject, signal, computed, DestroyRef } from '@angular/core';
-import { AuthService } from '../auth/auth.service';
-import { AfterMeetingVenue, BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
-import { MOCK_BANS, MOCK_CLUBS, MOCK_CLUB_MEMBERS, MOCK_MY_CLUB_IDS, MOCK_PARTICIPATION, MOCK_USERS } from '../mocks';
-let nextClubId = MOCK_CLUBS.length + 1;
-const CANCELLATION_TTL_MS = 24 * 60 * 60 * 1000;
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { Injectable, computed, inject, resource, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, firstValueFrom, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
+import { TokenStore } from './token.store';
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+interface AuthResponse {
+  access_token: string;
+  user: ApiUserProfile;
+}
 @Injectable({ providedIn: 'root' })
-export class ClubService {
-  private readonly auth = inject(AuthService);
-  private readonly _clubs = signal<Club[]>([...MOCK_CLUBS]);
-  private readonly _myClubs = signal<Club[]>(
-    MOCK_CLUBS.filter(c => MOCK_MY_CLUB_IDS.has(c.id)),
-  );
-  private readonly _isLoading = signal(false);
-  private readonly _error = signal<string | null>(null);
-  private readonly _bans = signal<Record<string, BanRecord[]>>({ ...MOCK_BANS });
-  private readonly _kickedMembers = signal<Record<string, Set<string>>>({});
-  readonly clubs = this._clubs.asReadonly();
-  readonly myClubs = this._myClubs.asReadonly();
+export class AuthService {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly tokenStore = inject(TokenStore);
+  private readonly _currentUser = signal<UserProfile | null>(null);
+  private readonly _isLoading = signal<boolean>(true);
+  readonly currentUser = this._currentUser.asReadonly();
   readonly isLoading = this._isLoading.asReadonly();
-  readonly error = this._error.asReadonly();
-  readonly bans = this._bans.asReadonly();
-  readonly myOwnedClubs = computed<Club[]>(() => {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) return [];
-    return this._clubs().filter(c => c.organizerId === userId);
+  readonly isAuthenticated = computed(() => this._currentUser() !== null);
+  readonly userRole = computed(() => this._currentUser()?.role ?? null);
+  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
+  private readonly _statsResource = resource({
+    params: () => this._currentUser()?.id ?? null,
+    loader: ({ params: userId }) => {
+      if (!userId) return Promise.resolve(null as UserStats | null);
+      return firstValueFrom(
+        this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
+          catchError(() => of(null)),
+        ),
+      ).then(raw => (raw ? mapUserStats(raw) : null));
+    },
   });
-  readonly myOwnedClubIds = computed<Set<string>>(() =>
-    new Set(this.myOwnedClubs().map(c => c.id)),
-  );
+  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
   constructor() {
-    const destroyRef = inject(DestroyRef);
-    const intervalId = setInterval(() => {
-      const now = Date.now();
-      this._clubs.update(clubs =>
-        clubs.filter(c => {
-          if (c.status !== 'cancelled' || !c.cancelledAt) return true;
-          return now - new Date(c.cancelledAt).getTime() < CANCELLATION_TTL_MS;
+    const token = this.tokenStore.snapshot();
+    if (token) {
+      firstValueFrom(
+        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
+          catchError(() => {
+            this.tokenStore.clear();
+            return of(null);
+          }),
+        ),
+      ).then(raw => {
+        this._currentUser.set(raw ? mapUserProfile(raw) : null);
+        this._isLoading.set(false);
+      });
+    } else {
+      this._isLoading.set(false);
+    }
+  }
+  async signUp(
+    email: string,
+    password: string,
+    displayName: string,
+    role: UserRole,
+  ): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
+          email,
+          password,
+          display_name: displayName,
+          role,
         }),
       );
-    }, 60_000);
-    destroyRef.onDestroy(() => clearInterval(intervalId));
-  }
-  msUntilDeletion(club: Club): number | null {
-    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
-    const elapsed = Date.now() - new Date(club.cancelledAt).getTime();
-    const remaining = CANCELLATION_TTL_MS - elapsed;
-    return remaining > 0 ? remaining : null;
-  }
-  private readonly _searchQuery = signal('');
-  readonly searchQuery = this._searchQuery.asReadonly();
-  setSearchQuery(query: string): void {
-    this._searchQuery.set(query);
-  }
-  readonly filteredClubs = computed(() => {
-    const q = this._searchQuery().toLowerCase().trim();
-    if (!q) return this._clubs();
-    return this._clubs().filter(
-      c =>
-        c.name.toLowerCase().includes(q) ||
-        (c.description?.toLowerCase().includes(q) ?? false),
-    );
-  });
-  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
-  private readonly _cityFilter = signal<string | null>(null);
-  readonly cityFilter = this._cityFilter.asReadonly();
-  setCityFilter(city: string | null): void {
-    this._cityFilter.set(city);
-  }
-  readonly availableCities = computed<string[]>(() => {
-    const seen = new Set<string>();
-    for (const c of this._clubs()) if (c.city) seen.add(c.city);
-    return [...seen].sort((a, b) => a.localeCompare(b));
-  });
-  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
-    const filter = this._cityFilter();
-    const clubs = this._clubs()
-      .filter(c => c.nextMeetingDate !== null)
-      .filter(c => !filter || c.city === filter)
-      .sort((a, b) => {
-        const aDate = a.nextMeetingDate ?? '';
-        const bDate = b.nextMeetingDate ?? '';
-        return new Date(aDate).getTime() - new Date(bDate).getTime();
-      });
-    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
-      const city = club.city ?? 'Other';
-      if (!acc[city]) acc[city] = [];
-      acc[city].push(club);
-      return acc;
-    }, {});
-  });
-  readonly myParticipatedClubs = computed<Club[]>(() => {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) return [];
-    const participated = MOCK_PARTICIPATION[userId] ?? new Set<string>();
-    return this._myClubs().filter(c => participated.has(c.id));
-  });
-  readonly myMissedClubs = computed<Club[]>(() => {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) return [];
-    const participated = MOCK_PARTICIPATION[userId] ?? new Set<string>();
-    return this._myClubs().filter(c => !participated.has(c.id));
-  });
-  async loadPublicClubs(): Promise<void> {
-    this._isLoading.set(true);
-    await Promise.resolve();
-    this._clubs.set([...MOCK_CLUBS]);
-    this._isLoading.set(false);
-  }
-  async loadMyClubs(): Promise<void> {
-    const currentUser = this.auth.currentUser();
-    if (!currentUser) return;
-    await Promise.resolve();
-    this._myClubs.set(
-      this._clubs().filter(
-        c => c.organizerId === currentUser.id || MOCK_MY_CLUB_IDS.has(c.id),
-      ),
-    );
-  }
-  async createClub(payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    city?: string;
-    tags?: string[];
-    meetingDurationMinutes?: number | null;
-    afterMeetingVenue?: AfterMeetingVenue | null;
-  }): Promise<Club> {
-    const currentUser = this.auth.currentUser();
-    if (!currentUser) throw new Error('Must be authenticated to create a club');
-    this._isLoading.set(true);
-    await Promise.resolve();
-    const newClub: Club = {
-      id: `club-${++nextClubId}`,
-      name: payload.name,
-      description: payload.description || null,
-      coverUrl: null,
-      organizerId: currentUser.id,
-      isPublic: payload.isPublic,
-      memberCount: 1,
-      createdAt: new Date().toISOString(),
-      city: payload.city ?? 'Kyiv',
-      nextMeetingDate: null,
-      address: null,
-      lat: null,
-      lng: null,
-      theme: null,
-      currentBook: null,
-      memberPreviews: [currentUser.displayName],
-      status: 'active' as ClubStatus,
-      tags: payload.tags ?? [],
-      meetingDurationMinutes: payload.meetingDurationMinutes ?? null,
-      afterMeetingVenue: payload.afterMeetingVenue ?? null,
-    };
-    this._clubs.update(existing => [newClub, ...existing]);
-    this._myClubs.update(existing => [newClub, ...existing]);
-    this._isLoading.set(false);
-    return newClub;
-  }
-  async joinClub(clubId: string): Promise<void> {
-    const currentUser = this.auth.currentUser();
-    if (!currentUser) throw new Error('Must be authenticated to join a club');
-    if (this.isBanned(clubId, currentUser.id)) {
-      throw new Error('You are banned from this club');
-    }
-    this._clubs.update(list =>
-      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
-    );
-    const club = this._clubs().find(c => c.id === clubId);
-    if (club && !this.myClubIds().has(clubId)) {
-      this._myClubs.update(list => [club, ...list]);
+      this.tokenStore.set(resp.access_token);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
     }
   }
-  async leaveClub(clubId: string): Promise<void> {
-    const currentUser = this.auth.currentUser();
-    if (!currentUser) throw new Error('Must be authenticated to leave a club');
-    this._clubs.update(list =>
-      list.map(c =>
-        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
-      ),
+  async signIn(email: string, password: string): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
+      );
+      this.tokenStore.set(resp.access_token);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signOut(): Promise<void> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
+    } catch {  }
+    this.tokenStore.clear();
+    this._currentUser.set(null);
+    this.router.navigate(['/login']);
+  }
+  async updateRole(role: UserRole): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
     );
-    this._myClubs.update(list => list.filter(c => c.id !== clubId));
+    this._currentUser.set({ ...user, role });
   }
-  async getClubById(id: string): Promise<Club | null> {
-    await Promise.resolve();
-    return this._clubs().find(c => c.id === id) ?? null;
-  }
-  getClubMembers(clubId: string): ClubMemberDetail[] {
-    const kicked = this._kickedMembers()[clubId] ?? new Set<string>();
-    const candidates = (MOCK_CLUB_MEMBERS[clubId] ?? []).filter(
-      c => !kicked.has(c.userId),
+  async updateDisplayName(name: string): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { display_name: name }),
     );
-    const club = this._clubs().find(c => c.id === clubId);
-    return candidates.map(candidate => {
-      const user = MOCK_USERS.find(u => u.id === candidate.userId);
-      return {
-        userId: candidate.userId,
-        displayName: candidate.displayName,
-        avatarUrl: candidate.avatarUrl,
-        role: club?.organizerId === candidate.userId ? 'organizer' : 'member',
-        socials: user?.socials,
-        socialsPublic: user?.socialsPublic ?? false,
-      };
-    });
+    this._currentUser.set({ ...user, displayName: name });
   }
-  pauseClub(clubId: string): void {
-    this._clubs.update(clubs =>
-      clubs.map(c =>
-        c.id === clubId ? { ...c, status: 'paused' as ClubStatus } : c,
-      ),
+  async updateSocials(socials: UserSocials): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
     );
+    this._currentUser.set({ ...user, socials });
   }
-  cancelClub(clubId: string): void {
-    this._clubs.update(clubs =>
-      clubs.map(c =>
-        c.id === clubId
-          ? { ...c, status: 'cancelled' as ClubStatus, nextMeetingDate: null, cancelledAt: new Date().toISOString() }
-          : c,
-      ),
+  async setSocialsPublic(value: boolean): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
+        socials_public: value,
+      }),
     );
+    this._currentUser.set({ ...user, socialsPublic: value });
   }
-  rescheduleMeeting(clubId: string, newDate: string): void {
-    this._clubs.update(clubs =>
-      clubs.map(c =>
-        c.id === clubId
-          ? {
-              ...c,
-              nextMeetingDate: newDate,
-              status: c.status === 'paused' ? ('active' as ClubStatus) : c.status,
-            }
-          : c,
-      ),
-    );
+}
+function extractApiError(err: unknown): string {
+  if (err instanceof HttpErrorResponse) {
+    const detail = (err.error as { detail?: string })?.detail;
+    return detail ?? err.message ?? 'Unknown error';
   }
-  kickMember(clubId: string, userId: string): void {
-    this._kickedMembers.update(km => ({
-      ...km,
-      [clubId]: new Set([...(km[clubId] ?? []), userId]),
-    }));
-  }
-  banMember(clubId: string, userId: string, duration: BanDuration): void {
-    const currentUser = this.auth.currentUser();
-    if (!currentUser) return;
-    const record: BanRecord = {
-      userId,
-      clubId,
-      bannedAt: new Date().toISOString(),
-      duration,
-      bannedBy: currentUser.id,
-    };
-    this._bans.update(bans => ({
-      ...bans,
-      [clubId]: [...(bans[clubId] ?? []), record],
-    }));
-  }
-  getBans(clubId: string): BanRecord[] {
-    return this._bans()[clubId] ?? [];
-  }
-  isBanned(clubId: string, userId: string): boolean {
-    return (this._bans()[clubId] ?? []).some(b => b.userId === userId);
-  }
+  return 'Unknown error';
 }
 ````
 
@@ -8871,7 +8393,7 @@ export class RegisterComponent {
   readonly bookOpen = signal(false);
   readonly formVisible = signal(false);
   constructor() {
-    this.seo.setPage({ title: 'Реєстрація | Book Club' });
+    this.seo.setPageI18n('SEO.register_title');
     setTimeout(() => this.formVisible.set(true), 700);
   }
   onBookAnimationDone(): void {
@@ -8942,6 +8464,452 @@ export class RegisterComponent {
 }
 ````
 
+## File: src/app/features/clubs/club-detail/club-detail.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  effect,
+  input,
+} from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
+import { UserProfile } from '../../../core/models/user.model';
+import { QrCodeComponent } from '../../../shared/components/qr-code/qr-code.component';
+import { SeoService } from '../../../core/services/seo.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+@Component({
+  selector: 'app-club-detail',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, ReactiveFormsModule, TranslateModule, QrCodeComponent, LoadingSpinnerComponent, InitialsPipe, FormatDatePipe],
+  templateUrl: './club-detail.component.html',
+})
+export class ClubDetailComponent {
+  readonly id = input.required<string>();
+  private readonly clubService = inject(ClubService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly seo = inject(SeoService);
+  private readonly translate = inject(TranslateService);
+  private readonly _lang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: this.translate.currentLang ?? 'uk' },
+  );
+  readonly currentUser = this.auth.currentUser;
+  readonly club = signal<Club | null>(null);
+  readonly members = signal<ClubMemberDetail[]>([]);
+  readonly clubBans = signal<BanRecord[]>([]);
+  readonly isLoading = signal(true);
+  readonly errorMessage = signal<string | null>(null);
+  readonly isActionLoading = signal(false);
+  readonly actionError = signal<string | null>(null);
+  readonly isMember = computed(() => this.clubService.myClubIds().has(this.id()));
+  readonly isClubOwner = computed(
+    () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
+  );
+  readonly showQrForUser = signal<string | null>(null);
+  readonly organizerProfile = computed<UserProfile | null>(() => {
+    const organizerId = this.club()?.organizerId;
+    if (!organizerId) return null;
+    const organizer = this.members().find(m => m.role === 'organizer');
+    if (!organizer) return null;
+    return {
+      id: organizerId,
+      displayName: organizer.displayName,
+      avatarUrl: organizer.avatarUrl,
+      role: 'user',
+      createdAt: '',
+      socials: organizer.socials,
+      socialsPublic: organizer.socialsPublic,
+    } satisfies UserProfile;
+  });
+  readonly banDurations: BanDuration[] = [1, 3, 5, 'permanent'];
+  readonly showBanMenu = signal<string | null>(null);
+  readonly deleteCountdown = computed<string | null>(() => {
+    this._lang();
+    const c = this.club();
+    if (!c) return null;
+    const ms = this.clubService.msUntilDeletion(c);
+    if (ms === null) return null;
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    if (hours > 0)
+      return this.translate.instant('CLUB_DETAIL.deletion_countdown_hours', { hours, minutes });
+    return this.translate.instant('CLUB_DETAIL.deletion_countdown_minutes', { minutes });
+  });
+  readonly rescheduleDate = new FormControl<string>('', { nonNullable: true });
+  constructor() {
+    effect((onCleanup) => {
+      const clubId = this.id();
+      let cancelled = false;
+      onCleanup(() => { cancelled = true; });
+      void this.loadClub(clubId, () => cancelled);
+    });
+  }
+  private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    try {
+      if (this.auth.isAuthenticated() && this.clubService.myClubs().length === 0) {
+        await this.clubService.loadMyClubs();
+      }
+      if (isCancelled()) return;
+      const found = await this.clubService.getClubById(clubId);
+      if (isCancelled()) return;
+      if (found) {
+        this.club.set(found);
+        this.members.set(await this.clubService.getClubMembers(clubId));
+        if (isCancelled()) return;
+        this.clubBans.set(await this.clubService.getBans(clubId));
+        this.seo.setPageI18n('SEO.club_detail_title', {
+          ogTitleKey: 'SEO.club_detail_og_title',
+          params: { name: found.name },
+        });
+      } else {
+        this.errorMessage.set('This club could not be found.');
+      }
+    } catch {
+      if (!isCancelled()) this.errorMessage.set('Failed to load club details.');
+    } finally {
+      if (!isCancelled()) this.isLoading.set(false);
+    }
+  }
+  async onJoin(): Promise<void> {
+    this.isActionLoading.set(true);
+    this.actionError.set(null);
+    try {
+      await this.clubService.joinClub(this.id());
+      const updated = await this.clubService.getClubById(this.id());
+      if (updated) this.club.set(updated);
+    } catch (err) {
+      this.actionError.set(err instanceof Error ? err.message : 'Failed to join club');
+    } finally {
+      this.isActionLoading.set(false);
+    }
+  }
+  async onLeave(): Promise<void> {
+    this.isActionLoading.set(true);
+    this.actionError.set(null);
+    try {
+      await this.clubService.leaveClub(this.id());
+      const updated = await this.clubService.getClubById(this.id());
+      if (updated) this.club.set(updated);
+    } catch (err) {
+      this.actionError.set(err instanceof Error ? err.message : 'Failed to leave club');
+    } finally {
+      this.isActionLoading.set(false);
+    }
+  }
+  async pauseClub(): Promise<void> {
+    await this.clubService.pauseClub(this.id());
+    await this.refreshClub();
+  }
+  async cancelClub(): Promise<void> {
+    await this.clubService.cancelClub(this.id());
+    await this.refreshClub();
+  }
+  async rescheduleSubmit(): Promise<void> {
+    const date = this.rescheduleDate.value;
+    if (!date) return;
+    await this.clubService.rescheduleMeeting(this.id(), date);
+    this.rescheduleDate.reset();
+    await this.refreshClub();
+  }
+  private async refreshClub(): Promise<void> {
+    const updated = await this.clubService.getClubById(this.id());
+    if (updated) this.club.set(updated);
+  }
+  async kickMember(userId: string): Promise<void> {
+    await this.clubService.kickMember(this.id(), userId);
+    this.members.update(list => list.filter(m => m.userId !== userId));
+  }
+  async banMember(userId: string, duration: BanDuration): Promise<void> {
+    await this.clubService.banMember(this.id(), userId, duration);
+    this.showBanMenu.set(null);
+    this.members.update(list => list.filter(m => m.userId !== userId));
+  }
+  toggleBanMenu(userId: string): void {
+    this.showBanMenu.update(current => current === userId ? null : userId);
+  }
+  canSeeSocials(member: ClubMemberDetail): boolean {
+    return member.socialsPublic || this.isClubOwner();
+  }
+  toggleQr(userId: string): void {
+    this.showQrForUser.update(current => current === userId ? null : userId);
+  }
+  buildQrValue(member: ClubMemberDetail): string {
+    if (!member.socials) return member.displayName;
+    const lines: string[] = [`📚 ${member.displayName}`];
+    const s = member.socials;
+    if (s.telegram)   lines.push(`Telegram: t.me/${s.telegram}`);
+    if (s.instagram)  lines.push(`Instagram: instagram.com/${s.instagram}`);
+    if (s.twitter)    lines.push(`Twitter: x.com/${s.twitter}`);
+    if (s.linkedin)   lines.push(`LinkedIn: linkedin.com/in/${s.linkedin}`);
+    if (s.github)     lines.push(`GitHub: github.com/${s.github}`);
+    if (s.goodreads)  lines.push(`Goodreads: goodreads.com/${s.goodreads}`);
+    return lines.join('\n');
+  }
+}
+````
+
+## File: vercel.json
+````json
+{
+
+  "buildCommand": "npm run build -- --configuration=production",
+  "outputDirectory": "dist/book-club-fe/browser",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none';" }
+      ]
+    }
+  ]
+}
+````
+
+## File: src/app/core/services/club.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiClub, ApiClubMember, ApiBanRecord, mapClub, mapClubMember, mapBanRecord } from '../api/api-mappers';
+import { AuthService } from '../auth/auth.service';
+import { AfterMeetingVenue, BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
+@Injectable({ providedIn: 'root' })
+export class ClubService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly _clubs = signal<Club[]>([]);
+  private readonly _myClubs = signal<Club[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _error = signal<string | null>(null);
+  private readonly _searchQuery = signal('');
+  private readonly _cityFilter = signal<string | null>(null);
+  readonly clubs = this._clubs.asReadonly();
+  readonly myClubs = this._myClubs.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly searchQuery = this._searchQuery.asReadonly();
+  readonly cityFilter = this._cityFilter.asReadonly();
+  readonly myOwnedClubs = computed<Club[]>(() => {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return [];
+    return this._clubs().filter(c => c.organizerId === userId);
+  });
+  readonly myOwnedClubIds = computed<Set<string>>(() =>
+    new Set(this.myOwnedClubs().map(c => c.id)),
+  );
+  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
+  readonly filteredClubs = computed(() => {
+    const q = this._searchQuery().toLowerCase().trim();
+    const city = this._cityFilter();
+    let clubs = this._clubs();
+    if (q) {
+      clubs = clubs.filter(
+        c =>
+          c.name.toLowerCase().includes(q) ||
+          (c.description?.toLowerCase().includes(q) ?? false),
+      );
+    }
+    if (city) {
+      clubs = clubs.filter(c => c.city === city);
+    }
+    return clubs;
+  });
+  readonly availableCities = computed<string[]>(() => {
+    const seen = new Set<string>();
+    for (const c of this._clubs()) if (c.city) seen.add(c.city);
+    return [...seen].sort((a, b) => a.localeCompare(b));
+  });
+  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
+    const filter = this._cityFilter();
+    const clubs = this._clubs()
+      .filter(c => c.nextMeetingDate !== null)
+      .filter(c => !filter || c.city === filter)
+      .sort((a, b) => {
+        const aDate = a.nextMeetingDate ?? '';
+        const bDate = b.nextMeetingDate ?? '';
+        return new Date(aDate).getTime() - new Date(bDate).getTime();
+      });
+    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
+      const city = club.city ?? 'Other';
+      if (!acc[city]) acc[city] = [];
+      acc[city].push(club);
+      return acc;
+    }, {});
+  });
+  readonly myParticipatedClubs = computed<Club[]>(() => []);
+  readonly myMissedClubs = computed<Club[]>(() => []);
+  setSearchQuery(query: string): void {
+    this._searchQuery.set(query);
+  }
+  setCityFilter(city: string | null): void {
+    this._cityFilter.set(city);
+  }
+  async loadPublicClubs(): Promise<void> {
+    this._isLoading.set(true);
+    this._error.set(null);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
+      );
+      this._clubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load clubs');
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async loadMyClubs(): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
+      );
+      this._myClubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load my clubs');
+    }
+  }
+  async getClubById(id: string): Promise<Club | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
+      );
+      return mapClub(raw);
+    } catch {
+      return null;
+    }
+  }
+  async createClub(payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    city?: string;
+    tags?: string[];
+    meetingDurationMinutes?: number | null;
+    afterMeetingVenue?: AfterMeetingVenue | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
+        name: payload.name,
+        description: payload.description,
+        is_public: payload.isPublic,
+        city: payload.city,
+        tags: payload.tags ?? [],
+        meeting_duration_minutes: payload.meetingDurationMinutes ?? null,
+        after_meeting_venue: payload.afterMeetingVenue ?? null,
+      }),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(existing => [club, ...existing]);
+    this._myClubs.update(existing => [club, ...existing]);
+    return club;
+  }
+  async joinClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post<{ member_count: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
+    );
+    this._clubs.update(list =>
+      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
+    );
+    const club = this._clubs().find(c => c.id === clubId);
+    if (club && !this.myClubIds().has(clubId)) {
+      this._myClubs.update(list => [club, ...list]);
+    }
+  }
+  async leaveClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
+    );
+    this._clubs.update(list =>
+      list.map(c =>
+        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
+      ),
+    );
+    this._myClubs.update(list => list.filter(c => c.id !== clubId));
+  }
+  async pauseClub(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/pause`, {}),
+    );
+    this._updateClub(mapClub(raw));
+  }
+  async cancelClub(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/cancel`, {}),
+    );
+    this._updateClub(mapClub(raw));
+  }
+  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/reschedule`, {
+        new_date: newDate,
+      }),
+    );
+    this._updateClub(mapClub(raw));
+  }
+  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
+    );
+    return raw.map(mapClubMember);
+  }
+  async kickMember(clubId: string, userId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
+    );
+  }
+  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
+    );
+  }
+  async getBans(clubId: string): Promise<BanRecord[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
+    );
+    return raw.map(mapBanRecord);
+  }
+  msUntilDeletion(club: Club): number | null {
+    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
+    const elapsed = Date.now() - new Date(club.cancelledAt).getTime();
+    const remaining = 24 * 60 * 60 * 1000 - elapsed;
+    return remaining > 0 ? remaining : null;
+  }
+  private _updateClub(updated: Club): void {
+    this._clubs.update(list => list.map(c => (c.id === updated.id ? updated : c)));
+    this._myClubs.update(list => list.map(c => (c.id === updated.id ? updated : c)));
+  }
+}
+````
+
 ## File: package.json
 ````json
 {
@@ -9006,32 +8974,6 @@ export class RegisterComponent {
     "typescript": "~5.8.2",
     "typescript-eslint": "8.46.4"
   }
-}
-````
-
-## File: vercel.json
-````json
-{
-
-  "buildCommand": "npm run build -- --configuration=production",
-  "outputDirectory": "dist/book-club-fe/browser",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none';" }
-      ]
-    }
-  ]
 }
 ````
 

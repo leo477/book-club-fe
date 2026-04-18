@@ -1,16 +1,53 @@
 import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
-import { MOCK_RANDOMIZER_HISTORY, MOCK_CLUB_MEMBERS } from '../mocks';
+import { ApiClubMember, mapClubMember } from '../api/api-mappers';
+import { environment } from '../../../environments/environment';
 
-let nextSessionId = MOCK_RANDOMIZER_HISTORY.length + 1;
+// Raw API shapes (snake_case from FastAPI)
+interface ApiMemberCandidate {
+  user_id: string;
+  display_name: string;
+  avatar_url: string | null;
+}
 
-/** In-memory history store per club */
-const inMemoryHistory: RandomizerSession[] = [...MOCK_RANDOMIZER_HISTORY];
+interface ApiRandomizerSession {
+  id: string;
+  club_id: string;
+  created_by: string;
+  purpose: string;
+  candidates: ApiMemberCandidate[];
+  result: ApiMemberCandidate | null;
+  created_at: string;
+}
+
+function mapMemberCandidate(raw: ApiMemberCandidate): MemberCandidate {
+  return {
+    userId: raw.user_id,
+    displayName: raw.display_name,
+    avatarUrl: raw.avatar_url,
+  };
+}
+
+function mapRandomizerSession(raw: ApiRandomizerSession): RandomizerSession {
+  return {
+    id: raw.id,
+    clubId: raw.club_id,
+    createdBy: raw.created_by,
+    purpose: raw.purpose,
+    candidates: raw.candidates.map(mapMemberCandidate),
+    result: raw.result ? mapMemberCandidate(raw.result) : null,
+    createdAt: raw.created_at,
+  };
+}
 
 @Injectable({ providedIn: 'root' })
 export class RandomizerService {
+  private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly apiUrl = environment.apiUrl;
 
   private readonly _candidates = signal<MemberCandidate[]>([]);
   private readonly _selectedIds = signal<Set<string>>(new Set());
@@ -30,10 +67,15 @@ export class RandomizerService {
     this._purpose.set(purpose);
   }
 
-  loadClubMembers(clubId: string): void {
-    const members = MOCK_CLUB_MEMBERS[clubId] ?? [];
+  async loadClubMembers(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${this.apiUrl}/clubs/${clubId}/members`),
+    );
+    const members: MemberCandidate[] = raw.map(m => {
+      const detail = mapClubMember(m);
+      return { userId: detail.userId, displayName: detail.displayName, avatarUrl: detail.avatarUrl };
+    });
     this._candidates.set(members);
-    // Select all by default
     this._selectedIds.set(new Set(members.map(m => m.userId)));
     this._result.set(null);
   }
@@ -72,23 +114,33 @@ export class RandomizerService {
     const user = this.auth.currentUser();
     if (!user) throw new Error('Not authenticated');
 
-    const session: RandomizerSession = {
-      id: `session-${++nextSessionId}`,
-      clubId,
-      createdBy: user.id,
+    const result = this._result();
+    if (!result) throw new Error('No result to save');
+
+    const body = {
       purpose: this._purpose(),
-      candidates: this._candidates().filter(m => this._selectedIds().has(m.userId)),
-      result: this._result(),
-      createdAt: new Date().toISOString(),
+      candidates: this._candidates()
+        .filter(m => this._selectedIds().has(m.userId))
+        .map(m => m.userId),
+      result: result.userId,
     };
 
-    inMemoryHistory.unshift(session);
+    const raw = await firstValueFrom(
+      this.http.post<ApiRandomizerSession>(
+        `${this.apiUrl}/clubs/${clubId}/randomizer/sessions`,
+        body,
+      ),
+    );
+
+    const session = mapRandomizerSession(raw);
     this._history.update(prev => [session, ...prev]);
   }
 
   async loadHistory(clubId: string): Promise<void> {
-    await Promise.resolve();
-    this._history.set(inMemoryHistory.filter(s => s.clubId === clubId));
+    const raw = await firstValueFrom(
+      this.http.get<ApiRandomizerSession[]>(`${this.apiUrl}/clubs/${clubId}/randomizer/history`),
+    );
+    this._history.set(raw.map(mapRandomizerSession));
   }
 
   reset(): void {

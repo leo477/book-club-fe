@@ -14,8 +14,7 @@ import { map, startWith } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { MOCK_USERS } from '../../../core/mocks';
-import { Club, ClubMemberDetail, BanDuration } from '../../../core/models/club.model';
+import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
 import { UserProfile } from '../../../core/models/user.model';
 import { QrCodeComponent } from '../../../shared/components/qr-code/qr-code.component';
 import { SeoService } from '../../../core/services/seo.service';
@@ -52,6 +51,7 @@ export class ClubDetailComponent {
 
   readonly club = signal<Club | null>(null);
   readonly members = signal<ClubMemberDetail[]>([]);
+  readonly clubBans = signal<BanRecord[]>([]);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   readonly isActionLoading = signal(false);
@@ -67,13 +67,21 @@ export class ClubDetailComponent {
   readonly organizerProfile = computed<UserProfile | null>(() => {
     const organizerId = this.club()?.organizerId;
     if (!organizerId) return null;
-    return MOCK_USERS.find(u => u.id === organizerId) ?? null;
+    const organizer = this.members().find(m => m.role === 'organizer');
+    if (!organizer) return null;
+    return {
+      id: organizerId,
+      displayName: organizer.displayName,
+      avatarUrl: organizer.avatarUrl,
+      role: 'user',
+      createdAt: '',
+      socials: organizer.socials,
+      socialsPublic: organizer.socialsPublic,
+    } satisfies UserProfile;
   });
 
   readonly banDurations: BanDuration[] = [1, 3, 5, 'permanent'];
   readonly showBanMenu = signal<string | null>(null);
-
-  readonly clubBans = computed(() => this.clubService.getBans(this.id()));
 
   readonly deleteCountdown = computed<string | null>(() => {
     this._lang();
@@ -114,11 +122,12 @@ export class ClubDetailComponent {
 
       if (found) {
         this.club.set(found);
-        this.members.set(this.clubService.getClubMembers(clubId));
-        this.seo.setPage({
-          title: `${found.name} | Book Club`,
-          description: found.name,
-          canonical: `https://book-club-fe.vercel.app/clubs/${clubId}`,
+        this.members.set(await this.clubService.getClubMembers(clubId));
+        if (isCancelled()) return;
+        this.clubBans.set(await this.clubService.getBans(clubId));
+        this.seo.setPageI18n('SEO.club_detail_title', {
+          ogTitleKey: 'SEO.club_detail_og_title',
+          params: { name: found.name },
         });
       } else {
         this.errorMessage.set('This club could not be found.');
@@ -158,22 +167,22 @@ export class ClubDetailComponent {
     }
   }
 
-  pauseClub(): void {
-    this.clubService.pauseClub(this.id());
-    void this.refreshClub();
+  async pauseClub(): Promise<void> {
+    await this.clubService.pauseClub(this.id());
+    await this.refreshClub();
   }
 
-  cancelClub(): void {
-    this.clubService.cancelClub(this.id());
-    void this.refreshClub();
+  async cancelClub(): Promise<void> {
+    await this.clubService.cancelClub(this.id());
+    await this.refreshClub();
   }
 
-  rescheduleSubmit(): void {
+  async rescheduleSubmit(): Promise<void> {
     const date = this.rescheduleDate.value;
     if (!date) return;
-    this.clubService.rescheduleMeeting(this.id(), date);
+    await this.clubService.rescheduleMeeting(this.id(), date);
     this.rescheduleDate.reset();
-    void this.refreshClub();
+    await this.refreshClub();
   }
 
   private async refreshClub(): Promise<void> {
@@ -181,13 +190,13 @@ export class ClubDetailComponent {
     if (updated) this.club.set(updated);
   }
 
-  kickMember(userId: string): void {
-    this.clubService.kickMember(this.id(), userId);
+  async kickMember(userId: string): Promise<void> {
+    await this.clubService.kickMember(this.id(), userId);
     this.members.update(list => list.filter(m => m.userId !== userId));
   }
 
-  banMember(userId: string, duration: BanDuration): void {
-    this.clubService.banMember(this.id(), userId, duration);
+  async banMember(userId: string, duration: BanDuration): Promise<void> {
+    await this.clubService.banMember(this.id(), userId, duration);
     this.showBanMenu.set(null);
     this.members.update(list => list.filter(m => m.userId !== userId));
   }

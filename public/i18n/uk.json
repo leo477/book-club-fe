@@ -247,5 +247,18 @@
     "email": "Введіть коректну адресу електронної пошти.",
     "minlength": "Мінімум {{ requiredLength }} символів.",
     "invalid": "Некоректне значення."
+  },
+  "SEO": {
+    "clubs_title": "Книжкові клуби | Book Club",
+    "clubs_description": "Знайдіть книжковий клуб у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+    "clubs_og_title": "Книжкові клуби",
+    "login_title": "Вхід | Book Club",
+    "register_title": "Реєстрація | Book Club",
+    "profile_title": "Профіль | Book Club",
+    "club_detail_title": "{{ name }} | Book Club",
+    "club_detail_og_title": "{{ name }}",
+    "site_name": "Book Club",
+    "site_url": "https://book-club-fe.vercel.app",
+    "site_description": "Читацькі клуби України"
   }
 }

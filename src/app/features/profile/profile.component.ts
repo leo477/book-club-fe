@@ -83,7 +83,7 @@ export class ProfileComponent {
   );
 
   constructor() {
-    this.seo.setPage({ title: 'Профіль | Book Club' });
+    this.seo.setPageI18n('SEO.profile_title');
     // Seed the name form with the user's current display name.
     const user = this.auth.currentUser();
     if (user) {
@@ -107,25 +107,31 @@ export class ProfileComponent {
   }
 
   /** Switch the user's role and show a transient success toast. */
-  protected changeRole(role: UserRole): void {
-    this.auth.updateRole(role);
-    this.roleChanged.set(true);
-    setTimeout(() => this.roleChanged.set(false), 3000);
+  protected async changeRole(role: UserRole): Promise<void> {
+    try {
+      await this.auth.updateRole(role);
+      this.roleChanged.set(true);
+      setTimeout(() => this.roleChanged.set(false), 3000);
+    } catch { /* error already handled by interceptor */ }
   }
 
   /** Persist the new display name and show a transient success toast. */
-  protected saveName(): void {
+  protected async saveName(): Promise<void> {
     if (this.nameForm.invalid) return;
     this.isSavingName.set(true);
     const { displayName } = this.nameForm.getRawValue();
-    this.auth.updateDisplayName(displayName);
-    this.isSavingName.set(false);
-    this.nameSaved.set(true);
-    setTimeout(() => this.nameSaved.set(false), 3000);
+    try {
+      await this.auth.updateDisplayName(displayName);
+      this.nameSaved.set(true);
+      setTimeout(() => this.nameSaved.set(false), 3000);
+    } catch { /* error already handled by interceptor */ }
+    finally {
+      this.isSavingName.set(false);
+    }
   }
 
   /** Persist the social media links and show a transient success toast. */
-  protected submitSocials(): void {
+  protected async submitSocials(): Promise<void> {
     const raw = this.socialsForm.getRawValue();
 
     // Convert empty strings to undefined so the model stays clean.
@@ -138,13 +144,17 @@ export class ProfileComponent {
       ...(raw.goodreads ? { goodreads: raw.goodreads } : {}),
     };
 
-    this.auth.updateSocials(socials);
-    this.socialsSaved.set(true);
-    setTimeout(() => this.socialsSaved.set(false), 3000);
+    try {
+      await this.auth.updateSocials(socials);
+      this.socialsSaved.set(true);
+      setTimeout(() => this.socialsSaved.set(false), 3000);
+    } catch { /* error already handled by interceptor */ }
   }
 
   /** Toggle socials visibility for all club members. */
-  protected onSocialsPublicChange(value: boolean): void {
-    this.auth.setSocialsPublic(value);
+  protected async onSocialsPublicChange(value: boolean): Promise<void> {
+    try {
+      await this.auth.setSocialsPublic(value);
+    } catch { /* error already handled by interceptor */ }
   }
 }

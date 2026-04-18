@@ -33,7 +33,7 @@ export class LoginComponent {
   readonly formVisible = signal(false);
 
   constructor() {
-    this.seo.setPage({ title: 'Вхід | Book Club' });
+    this.seo.setPageI18n('SEO.login_title');
     setTimeout(() => this.formVisible.set(true), 700);
   }
 

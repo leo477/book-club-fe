@@ -3,6 +3,7 @@ import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 import { ToastService } from '../services/toast.service';
+import { TokenStore } from '../auth/token.store';
 import { environment } from '../../../environments/environment';
 
 /**
@@ -22,11 +23,18 @@ import { environment } from '../../../environments/environment';
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   const toast = inject(ToastService);
+  const tokenStore = inject(TokenStore);
 
-  return next(req).pipe(
+  const token = tokenStore.snapshot();
+  const authedReq = token
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
+
+  return next(authedReq).pipe(
     catchError((error: unknown) => {
       const httpError = error instanceof HttpErrorResponse ? error : null;
       if (httpError?.status === 401) {
+        tokenStore.clear();
         router.navigate(['/login']);
       } else if (httpError?.status === 403) {
         router.navigate(['/clubs']);

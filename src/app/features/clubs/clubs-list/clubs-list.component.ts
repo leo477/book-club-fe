@@ -36,18 +36,11 @@ export class ClubsListComponent implements OnInit {
   readonly ownedClubIds = this.clubService.myOwnedClubIds;
 
   async ngOnInit(): Promise<void> {
-    this.seo.setPage({
-      title: 'Книжкові клуби | Book Club',
-      description: 'Знайдіть книжковий клуб у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.',
-      canonical: 'https://book-club-fe.vercel.app/clubs',
+    this.seo.setPageI18n('SEO.clubs_title', {
+      descriptionKey: 'SEO.clubs_description',
+      ogTitleKey: 'SEO.clubs_og_title',
     });
-    this.seo.injectJsonLd({
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: 'Book Club',
-      url: 'https://book-club-fe.vercel.app',
-      description: 'Читацькі клуби України',
-    });
+    this.seo.injectWebSiteJsonLd();
 
     await this.clubService.loadPublicClubs();
     if (this.auth.isAuthenticated()) {
