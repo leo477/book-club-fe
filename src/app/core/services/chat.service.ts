@@ -68,7 +68,7 @@ export class ChatService {
         this._rooms.set(rooms);
         // Auto-select the first room when none is active or active room is gone.
         const currentId = this._activeRoomId();
-        if (!currentId || !rooms.find(r => r.id === currentId)) {
+        if (!currentId || !rooms.some(r => r.id === currentId)) {
           const first = rooms[0];
           if (first) {
             this._activeRoomId.set(first.id);

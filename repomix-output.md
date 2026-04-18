@@ -287,7 +287,9 @@ vercel.json
       "Bash(git *)",
       "Bash(grep -v \"^$\")",
       "Bash(curl -s \"https://sonarcloud.io/api/qualitygates/project_status?projectKey=leo477_book-club-fe\")",
-      "Bash(curl -s \"https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&types=BUG,VULNERABILITY,CODE_SMELL&severities=BLOCKER,CRITICAL,MAJOR&ps=20\")"
+      "Bash(curl -s \"https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&types=BUG,VULNERABILITY,CODE_SMELL&severities=BLOCKER,CRITICAL,MAJOR&ps=20\")",
+      "Bash(curl -s \"https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&ps=50\")",
+      "Bash(curl -s \"https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&sinceLeakPeriod=true&ps=50\")"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -1385,7 +1387,7 @@ export class ClubScheduleComponent {
 
 ## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
 ````html
-<li class="rounded-2xl bg-white dark:bg-gray-800 shadow hover:shadow-lg transition-shadow flex flex-col overflow-hidden">
+<div class="rounded-2xl bg-white dark:bg-gray-800 shadow hover:shadow-lg transition-shadow flex flex-col overflow-hidden">
   <div class="relative">
     @if (club().coverUrl) {
       <img [src]="club().coverUrl" [alt]="''" class="h-32 w-full object-cover" aria-hidden="true" loading="lazy" />
@@ -1482,7 +1484,7 @@ export class ClubScheduleComponent {
       }
     </div>
   </div>
-</li>
+</div>
 ````
 
 ## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
@@ -3458,7 +3460,7 @@ export class ChatService {
         this._rooms.set(rooms);
         // Auto-select the first room when none is active or active room is gone.
         const currentId = this._activeRoomId();
-        if (!currentId || !rooms.find(r => r.id === currentId)) {
+        if (!currentId || !rooms.some(r => r.id === currentId)) {
           const first = rooms[0];
           if (first) {
             this._activeRoomId.set(first.id);
@@ -7106,7 +7108,7 @@ import {
 } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { firstValueFrom, map, startWith } from 'rxjs';
+import { map, startWith } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 @Component({
@@ -7142,7 +7144,7 @@ export class HeaderComponent {
   });
   switchLang(): void {
     const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-    void firstValueFrom(this.translate.use(next));
+    this.translate.use(next).subscribe();
   }
   toggleMenu(): void {
     this.isMenuOpen.update(v => !v);
@@ -7420,14 +7422,16 @@ When invoking agents via the `task` tool, **always use the model specified below
           </h2>
           <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             @for (club of clubService.upcomingByCity()[city]; track club.id) {
-              <app-club-card
-                [club]="club"
-                [isMember]="clubService.myClubIds().has(club.id)"
-                [isOwned]="ownedClubIds().has(club.id)"
-                [isAuthenticated]="auth.isAuthenticated()"
-                [joining]="joiningClubId() === club.id"
-                (join)="onJoin(club)"
-              />
+              <li>
+                <app-club-card
+                  [club]="club"
+                  [isMember]="clubService.myClubIds().has(club.id)"
+                  [isOwned]="ownedClubIds().has(club.id)"
+                  [isAuthenticated]="auth.isAuthenticated()"
+                  [joining]="joiningClubId() === club.id"
+                  (join)="onJoin(club)"
+                />
+              </li>
             }
           </ul>
         </section>
@@ -7955,152 +7959,6 @@ export const appConfig: ApplicationConfig = {
 };
 ````
 
-## File: src/app/features/clubs/club-detail/club-detail.component.html
-````html
-@if (isLoading()) {
-  <main class="max-w-4xl mx-auto px-4 py-8" aria-busy="true" aria-label="Loading club details">
-    <div class="animate-pulse space-y-4">
-      <div class="h-56 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-      <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-    </div>
-  </main>
-} @else if (errorMessage()) {
-  <main class="max-w-4xl mx-auto px-4 py-8 text-center" role="alert">
-    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
-    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
-    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
-    <a
-      routerLink="/clubs"
-      class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors"
-    >
-      ← {{ 'CLUB_DETAIL.back' | translate }}
-    </a>
-  </main>
-} @else if (club()) {
-  <main class="min-h-screen">
-    <div class="relative">
-      @if (club()!.coverUrl) {
-        <img
-          [src]="club()!.coverUrl"
-          [alt]="club()!.name + ' cover'"
-          class="w-full h-56 object-cover"
-          loading="lazy"
-        />
-      } @else {
-        <div class="bg-gradient-to-br from-primary-400 to-accent-500 h-56" aria-hidden="true"></div>
-      }
-      <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
-        <a
-          routerLink="/clubs"
-          class="inline-flex items-center gap-1.5 rounded-full bg-black/30 backdrop-blur-sm px-3 py-1.5 text-sm font-medium text-white hover:bg-black/50 transition-colors"
-          [attr.aria-label]="'CLUB_DETAIL.back' | translate"
-        >
-          ← {{ 'CLUB_DETAIL.back_short' | translate }}
-        </a>
-      </nav>
-    </div>
-    <div class="max-w-4xl mx-auto px-4 py-8 space-y-6">
-      <app-club-header
-        [club]="club()!"
-        [isMember]="isMember()"
-        [isOwner]="isClubOwner()"
-        [isAuthenticated]="!!currentUser()"
-        [isActionLoading]="isActionLoading()"
-        [currentUser]="currentUser()"
-        (join)="onJoin()"
-        (leave)="onLeave()" />
-      @if (club()?.status === 'cancelled' && deleteCountdown()) {
-        <div role="alert" class="mx-4 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
-          ⚠️ {{ 'CLUB_DETAIL.deletion_countdown_prefix' | translate }} {{ deleteCountdown() }}
-        </div>
-      }
-      @if (actionError()) {
-        <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-          <span aria-hidden="true">⚠️</span>
-          <span>{{ actionError() }}</span>
-        </div>
-      }
-      @if (club()!.description) {
-        <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
-          <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
-        </section>
-      }
-      @if (club()!.tags && club()!.tags.length > 0) {
-        <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.tags_title' | translate }}</h2>
-          <ul class="flex flex-wrap gap-2">
-            @for (tag of club()!.tags; track tag) {
-              <li class="rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs font-medium text-primary-700 dark:text-primary-300">
-                {{ tag }}
-              </li>
-            }
-          </ul>
-        </section>
-      }
-      @if (organizerProfile()) {
-        <aside class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.organizer_title' | translate }}</h2>
-          <div class="flex items-center gap-4">
-            <div class="h-12 w-12 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0" aria-hidden="true">
-              {{ organizerProfile()!.displayName | initials }}
-            </div>
-            <div>
-              <p class="font-semibold text-gray-900 dark:text-white">{{ organizerProfile()!.displayName }}</p>
-              <span class="text-xs font-medium text-accent-600 dark:text-accent-400">{{ 'CLUB_DETAIL.organizer_badge' | translate }}</span>
-            </div>
-          </div>
-          @if (organizerProfile()!.socialsPublic && organizerProfile()!.socials) {
-            <div class="mt-4 flex flex-wrap gap-3">
-              @if (organizerProfile()!.socials!.telegram) {
-                <a [href]="'https://t.me/' + organizerProfile()!.socials!.telegram" target="_blank" rel="noopener noreferrer"
-                   class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram'">✈️</a>
-              }
-              @if (organizerProfile()!.socials!.instagram) {
-                <a [href]="'https://instagram.com/' + organizerProfile()!.socials!.instagram" target="_blank" rel="noopener noreferrer"
-                   class="text-pink-500 hover:text-pink-600 text-lg" aria-label="Instagram">📸</a>
-              }
-              @if (organizerProfile()!.socials!.github) {
-                <a [href]="'https://github.com/' + organizerProfile()!.socials!.github" target="_blank" rel="noopener noreferrer"
-                   class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" aria-label="GitHub">🐙</a>
-              }
-              @if (organizerProfile()!.socials!.goodreads) {
-                <a [href]="'https://goodreads.com/' + organizerProfile()!.socials!.goodreads" target="_blank" rel="noopener noreferrer"
-                   class="text-amber-600 hover:text-amber-700 text-lg" aria-label="Goodreads">📚</a>
-              }
-            </div>
-          }
-        </aside>
-      }
-      <app-club-info [club]="club()!" />
-      <app-club-members-list
-        [members]="members()"
-        [clubBans]="clubBans()"
-        [isOwner]="isClubOwner()"
-        [currentUserId]="currentUserId()"
-        (kick)="handleKick($event)"
-        (ban)="handleBan($event)" />
-      @if (isClubOwner()) {
-        <app-club-manage-panel [clubId]="id()" />
-      }
-      @if (isClubOwner()) {
-        <app-club-schedule
-          [club]="club()!"
-          [isOwner]="isClubOwner()"
-          (pauseRequested)="pauseClub()"
-          (cancelRequested)="cancelClub()"
-          (reschedule)="rescheduleSubmit($event)" />
-      }
-      <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">
-        {{ 'CLUB_DETAIL.created' | translate }} {{ club()!.createdAt | formatDate }}
-      </footer>
-    </div>
-  </main>
-}
-````
-
 ## File: src/app/core/services/randomizer.service.ts
 ````typescript
 import { Injectable, inject, signal } from '@angular/core';
@@ -8298,6 +8156,152 @@ export class LoginComponent {
       this.bookOpen.set(true);
     }
   }
+}
+````
+
+## File: src/app/features/clubs/club-detail/club-detail.component.html
+````html
+@if (isLoading()) {
+  <main class="max-w-4xl mx-auto px-4 py-8" aria-busy="true" aria-label="Loading club details">
+    <div class="animate-pulse space-y-4">
+      <div class="h-56 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+    </div>
+  </main>
+} @else if (errorMessage()) {
+  <main class="max-w-4xl mx-auto px-4 py-8 text-center" role="alert">
+    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
+    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
+    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
+    <a
+      routerLink="/clubs"
+      class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors"
+    >
+      ← {{ 'CLUB_DETAIL.back' | translate }}
+    </a>
+  </main>
+} @else if (club()) {
+  <main class="min-h-screen">
+    <div class="relative">
+      @if (club()!.coverUrl) {
+        <img
+          [src]="club()!.coverUrl"
+          [alt]="club()!.name + ' cover'"
+          class="w-full h-56 object-cover"
+          loading="lazy"
+        />
+      } @else {
+        <div class="bg-gradient-to-br from-primary-400 to-accent-500 h-56" aria-hidden="true"></div>
+      }
+      <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
+        <a
+          routerLink="/clubs"
+          class="inline-flex items-center gap-1.5 rounded-full bg-black/30 backdrop-blur-sm px-3 py-1.5 text-sm font-medium text-white hover:bg-black/50 transition-colors"
+          [attr.aria-label]="'CLUB_DETAIL.back' | translate"
+        >
+          ← {{ 'CLUB_DETAIL.back_short' | translate }}
+        </a>
+      </nav>
+    </div>
+    <div class="max-w-4xl mx-auto px-4 py-8 space-y-6">
+      <app-club-header
+        [club]="club()!"
+        [isMember]="isMember()"
+        [isOwner]="isClubOwner()"
+        [isAuthenticated]="!!currentUser()"
+        [isActionLoading]="isActionLoading()"
+        [currentUser]="currentUser()"
+        (join)="onJoin()"
+        (leave)="onLeave()" />
+      @if (club()?.status === 'cancelled' && deleteCountdown()) {
+        <div role="alert" class="mx-4 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
+          ⚠️ {{ 'CLUB_DETAIL.deletion_countdown_prefix' | translate }} {{ deleteCountdown() }}
+        </div>
+      }
+      @if (actionError()) {
+        <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+          <span aria-hidden="true">⚠️</span>
+          <span>{{ actionError() }}</span>
+        </div>
+      }
+      @if (club()!.description) {
+        <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
+          <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
+        </section>
+      }
+      @if (club()!.tags && club()!.tags.length > 0) {
+        <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.tags_title' | translate }}</h2>
+          <ul class="flex flex-wrap gap-2">
+            @for (tag of club()!.tags; track tag) {
+              <li class="rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs font-medium text-primary-700 dark:text-primary-300">
+                {{ tag }}
+              </li>
+            }
+          </ul>
+        </section>
+      }
+      @if (organizerProfile()) {
+        <aside class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.organizer_title' | translate }}</h2>
+          <div class="flex items-center gap-4">
+            <div class="h-12 w-12 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0" aria-hidden="true">
+              {{ organizerProfile()!.displayName | initials }}
+            </div>
+            <div>
+              <p class="font-semibold text-gray-900 dark:text-white">{{ organizerProfile()!.displayName }}</p>
+              <span class="text-xs font-medium text-accent-600 dark:text-accent-400">{{ 'CLUB_DETAIL.organizer_badge' | translate }}</span>
+            </div>
+          </div>
+          @if (organizerProfile()!.socialsPublic && organizerProfile()!.socials) {
+            <div class="mt-4 flex flex-wrap gap-3">
+              @if (organizerProfile()!.socials!.telegram) {
+                <a [href]="'https://t.me/' + organizerProfile()!.socials!.telegram" target="_blank" rel="noopener noreferrer"
+                   class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram'">✈️</a>
+              }
+              @if (organizerProfile()!.socials!.instagram) {
+                <a [href]="'https://instagram.com/' + organizerProfile()!.socials!.instagram" target="_blank" rel="noopener noreferrer"
+                   class="text-pink-500 hover:text-pink-600 text-lg" aria-label="Instagram">📸</a>
+              }
+              @if (organizerProfile()!.socials!.github) {
+                <a [href]="'https://github.com/' + organizerProfile()!.socials!.github" target="_blank" rel="noopener noreferrer"
+                   class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" aria-label="GitHub">🐙</a>
+              }
+              @if (organizerProfile()!.socials!.goodreads) {
+                <a [href]="'https://goodreads.com/' + organizerProfile()!.socials!.goodreads" target="_blank" rel="noopener noreferrer"
+                   class="text-amber-600 hover:text-amber-700 text-lg" aria-label="Goodreads">📚</a>
+              }
+            </div>
+          }
+        </aside>
+      }
+      <app-club-info [club]="club()!" />
+      <app-club-members-list
+        [members]="members()"
+        [clubBans]="clubBans()"
+        [isOwner]="isClubOwner()"
+        [currentUserId]="currentUserId()"
+        (kick)="handleKick($event)"
+        (ban)="handleBan($event)" />
+      @if (isClubOwner()) {
+        <app-club-manage-panel [clubId]="id()" />
+      }
+      @if (isClubOwner()) {
+        <app-club-schedule
+          [club]="club()!"
+          [isOwner]="isClubOwner()"
+          (pauseRequested)="pauseClub()"
+          (cancelRequested)="cancelClub()"
+          (reschedule)="rescheduleSubmit($event)" />
+      }
+      <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">
+        {{ 'CLUB_DETAIL.created' | translate }} {{ club()!.createdAt | formatDate }}
+      </footer>
+    </div>
+  </main>
 }
 ````
 
@@ -9188,7 +9192,7 @@ export class ClubDetailComponent {
       const clubId = this.id();
       let cancelled = false;
       onCleanup(() => { cancelled = true; });
-      void this.loadClub(clubId, () => cancelled);
+      this.loadClub(clubId, () => cancelled).catch(() => {});
     });
   }
   private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {

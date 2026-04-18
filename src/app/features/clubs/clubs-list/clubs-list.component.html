@@ -83,14 +83,16 @@
 
           <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             @for (club of clubService.upcomingByCity()[city]; track club.id) {
-              <app-club-card
-                [club]="club"
-                [isMember]="clubService.myClubIds().has(club.id)"
-                [isOwned]="ownedClubIds().has(club.id)"
-                [isAuthenticated]="auth.isAuthenticated()"
-                [joining]="joiningClubId() === club.id"
-                (join)="onJoin(club)"
-              />
+              <li>
+                <app-club-card
+                  [club]="club"
+                  [isMember]="clubService.myClubIds().has(club.id)"
+                  [isOwned]="ownedClubIds().has(club.id)"
+                  [isAuthenticated]="auth.isAuthenticated()"
+                  [joining]="joiningClubId() === club.id"
+                  (join)="onJoin(club)"
+                />
+              </li>
             }
           </ul>
         </section>
