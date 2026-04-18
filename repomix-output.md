@@ -1385,108 +1385,6 @@ export class ClubScheduleComponent {
 }
 ````
 
-## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
-````html
-<div class="rounded-2xl bg-white dark:bg-gray-800 shadow hover:shadow-lg transition-shadow flex flex-col overflow-hidden">
-  <div class="relative">
-    @if (club().coverUrl) {
-      <img [src]="club().coverUrl" [alt]="''" class="h-32 w-full object-cover" aria-hidden="true" loading="lazy" />
-    } @else {
-      <div class="h-32 bg-gradient-to-br from-primary-400 to-accent-500" aria-hidden="true"></div>
-    }
-    @if (club().theme) {
-      <span class="absolute top-3 left-3 rounded-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm px-2.5 py-0.5 text-xs font-semibold text-primary-700 dark:text-primary-300 shadow">
-        {{ club().theme }}
-      </span>
-    }
-    @if (club().status !== 'active') {
-      <span class="absolute top-3 right-3 rounded-full px-2.5 py-0.5 text-xs font-semibold shadow"
-            [class]="club().status === 'paused'
-              ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300'
-              : 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300'">
-        {{ club().status === 'paused' ? ('CLUBS.paused' | translate) : ('CLUBS.cancelled' | translate) }}
-      </span>
-    }
-  </div>
-  <div class="flex flex-col flex-1 p-4 gap-3">
-    <div>
-      <h3 class="font-semibold text-gray-900 dark:text-white leading-snug line-clamp-1 flex items-center gap-1.5">
-        {{ club().name }}
-        @if (isOwned()) {
-          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400" title="Ваш клуб">👑</span>
-        }
-      </h3>
-      @if (club().nextMeetingDate) {
-        <div class="flex items-center gap-2 mt-1">
-          <span class="text-xs text-accent-600 dark:text-accent-400 font-medium">
-            📅 {{ club().nextMeetingDate | formatDate }}
-          </span>
-          @if (daysUntil(club().nextMeetingDate!) <= 7 && daysUntil(club().nextMeetingDate!) >= 0) {
-            <span class="text-xs font-semibold text-orange-600 dark:text-orange-400">
-              · за {{ daysUntil(club().nextMeetingDate!) }} дн.
-            </span>
-          }
-        </div>
-      }
-    </div>
-    @if (club().currentBook) {
-      <div class="rounded-xl bg-gray-50 dark:bg-gray-700/50 p-3 flex gap-3 items-start">
-        <span class="text-2xl shrink-0" aria-hidden="true">📖</span>
-        <div class="min-w-0">
-          <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ club().currentBook!.title }}</p>
-          <p class="text-xs text-gray-500 dark:text-gray-400 italic">{{ club().currentBook!.author }}</p>
-          <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">{{ club().currentBook!.description }}</p>
-        </div>
-      </div>
-    }
-    @if (club().address) {
-      <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-        <span aria-hidden="true">📍</span>
-        <span class="truncate">{{ club().address }}</span>
-      </p>
-    }
-    @if (club().memberPreviews.length > 0) {
-      <div class="flex items-center gap-1.5">
-        @for (name of club().memberPreviews.slice(0, 4); track name) {
-          <div
-            class="h-7 w-7 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-            [attr.title]="name"
-            aria-hidden="true"
-          >
-            {{ name | initials }}
-          </div>
-        }
-        @if (club().memberCount > 4) {
-          <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">+{{ club().memberCount - 4 }}</span>
-        }
-      </div>
-    }
-    <div class="flex items-center gap-2 mt-auto pt-1">
-      <a
-        [routerLink]="['/clubs', club().id]"
-        class="flex-1 text-center rounded-xl border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
-      >
-        {{ 'CLUBS.view' | translate }}
-      </a>
-      @if (isAuthenticated() && !isMember() && club().status === 'active') {
-        <button
-          type="button"
-          (click)="join.emit()"
-          [disabled]="joining()"
-          class="flex-1 rounded-xl bg-primary-600 hover:bg-primary-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-          [attr.aria-label]="('CLUBS.join' | translate) + ' ' + club().name"
-        >
-          @if (joining()) { ⏳ } @else { {{ 'CLUBS.join' | translate }} }
-        </button>
-      } @else if (isAuthenticated() && isMember()) {
-        <span class="flex-1 text-center rounded-xl bg-green-50 dark:bg-green-900/20 px-3 py-1.5 text-xs font-medium text-green-700 dark:text-green-400">{{ 'CLUBS.member_badge' | translate }}</span>
-      }
-    </div>
-  </div>
-</div>
-````
-
 ## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
 ````typescript
 import {
@@ -3065,6 +2963,108 @@ export class ToastService {
 }
 ````
 
+## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
+````html
+<div class="rounded-2xl bg-white dark:bg-gray-800 shadow hover:shadow-lg transition-shadow flex flex-col overflow-hidden">
+  <div class="relative">
+    @if (club().coverUrl) {
+      <img [src]="club().coverUrl" [alt]="''" class="h-32 w-full object-cover" aria-hidden="true" loading="lazy" />
+    } @else {
+      <div class="h-32 bg-gradient-to-br from-primary-400 to-accent-500" aria-hidden="true"></div>
+    }
+    @if (club().theme) {
+      <span class="absolute top-3 left-3 rounded-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm px-2.5 py-0.5 text-xs font-semibold text-primary-700 dark:text-primary-300 shadow">
+        {{ club().theme }}
+      </span>
+    }
+    @if (club().status !== 'active') {
+      <span class="absolute top-3 right-3 rounded-full px-2.5 py-0.5 text-xs font-semibold shadow"
+            [class]="club().status === 'paused'
+              ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300'
+              : 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300'">
+        {{ club().status === 'paused' ? ('CLUBS.paused' | translate) : ('CLUBS.cancelled' | translate) }}
+      </span>
+    }
+  </div>
+  <div class="flex flex-col flex-1 p-4 gap-3">
+    <div>
+      <h3 class="font-semibold text-gray-900 dark:text-white leading-snug line-clamp-1 flex items-center gap-1.5">
+        {{ club().name }}
+        @if (isOwned()) {
+          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400" title="Ваш клуб">👑</span>
+        }
+      </h3>
+      @if (club().nextMeetingDate) {
+        <div class="flex items-center gap-2 mt-1">
+          <span class="text-xs text-accent-600 dark:text-accent-400 font-medium">
+            📅 {{ club().nextMeetingDate | formatDate }}
+          </span>
+          @if (daysUntil(club().nextMeetingDate!) <= 7 && daysUntil(club().nextMeetingDate!) >= 0) {
+            <span class="text-xs font-semibold text-orange-600 dark:text-orange-400">
+              · за {{ daysUntil(club().nextMeetingDate!) }} дн.
+            </span>
+          }
+        </div>
+      }
+    </div>
+    @if (club().currentBook) {
+      <div class="rounded-xl bg-gray-50 dark:bg-gray-700/50 p-3 flex gap-3 items-start">
+        <span class="text-2xl shrink-0" aria-hidden="true">📖</span>
+        <div class="min-w-0">
+          <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ club().currentBook!.title }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 italic">{{ club().currentBook!.author }}</p>
+          <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">{{ club().currentBook!.description }}</p>
+        </div>
+      </div>
+    }
+    @if (club().address) {
+      <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+        <span aria-hidden="true">📍</span>
+        <span class="truncate">{{ club().address }}</span>
+      </p>
+    }
+    @if (club().memberPreviews.length > 0) {
+      <div class="flex items-center gap-1.5">
+        @for (name of club().memberPreviews.slice(0, 4); track name) {
+          <div
+            class="h-7 w-7 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+            [attr.title]="name"
+            aria-hidden="true"
+          >
+            {{ name | initials }}
+          </div>
+        }
+        @if (club().memberCount > 4) {
+          <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">+{{ club().memberCount - 4 }}</span>
+        }
+      </div>
+    }
+    <div class="flex items-center gap-2 mt-auto pt-1">
+      <a
+        [routerLink]="['/clubs', club().id]"
+        class="flex-1 text-center rounded-xl border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
+      >
+        {{ 'CLUBS.view' | translate }}
+      </a>
+      @if (isAuthenticated() && !isMember() && club().status === 'active') {
+        <button
+          type="button"
+          (click)="join.emit()"
+          [disabled]="joining()"
+          class="flex-1 rounded-xl bg-primary-600 hover:bg-primary-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          [attr.aria-label]="('CLUBS.join' | translate) + ' ' + club().name"
+        >
+          @if (joining()) { ⏳ } @else { {{ 'CLUBS.join' | translate }} }
+        </button>
+      } @else if (isAuthenticated() && isMember()) {
+        <span class="flex-1 text-center rounded-xl bg-green-50 dark:bg-green-900/20 px-3 py-1.5 text-xs font-medium text-green-700 dark:text-green-400">{{ 'CLUBS.member_badge' | translate }}</span>
+      }
+    </div>
+  </div>
+</div>
+````
+
 ## File: src/app/layout/shell/shell.component.html
 ````html
 <app-header />
@@ -3404,124 +3404,6 @@ export interface ClubMeeting {
   title: string;
   date: string;
   attendees: string[];
-}
-````
-
-## File: src/app/core/services/chat.service.ts
-````typescript
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { ChatMessage, ChatRoom } from '../models/chat.model';
-import { environment } from '../../../environments/environment';
-interface ApiChatRoom {
-  id: string;
-  name: string;
-}
-interface ApiChatMessage {
-  id: string;
-  sender_id: string;
-  sender_name: string;
-  text: string;
-  created_at: string;
-}
-@Injectable({ providedIn: 'root' })
-export class ChatService {
-  private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _rooms = signal<ChatRoom[]>([]);
-  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
-  private readonly _activeRoomId = signal<string | null>(null);
-  private readonly _unreadCount = signal<number>(0);
-  private readonly _isOpen = signal<boolean>(false);
-  private readonly _hasNewMessage = signal<boolean>(false);
-  private currentUserId: string | null = null;
-  readonly rooms = this._rooms.asReadonly();
-  readonly messages = this._messages.asReadonly();
-  readonly activeRoomId = this._activeRoomId.asReadonly();
-  readonly unreadCount = this._unreadCount.asReadonly();
-  readonly isOpen = this._isOpen.asReadonly();
-  readonly hasNewMessage = this._hasNewMessage.asReadonly();
-  readonly activeRoom = computed(() =>
-    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
-  );
-  readonly activeMessages = computed(
-    () => this._messages()[this._activeRoomId() ?? ''] ?? [],
-  );
-  // ── Public API ────────────────────────────────────────────────────────────
-  /** Fetch chat rooms for a given club and seed the rooms signal. */
-  loadRooms(clubId: string, userId?: string): void {
-    if (userId !== undefined) {
-      this.currentUserId = userId;
-    }
-    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
-      .then(raw => {
-        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name }));
-        this._rooms.set(rooms);
-        // Auto-select the first room when none is active or active room is gone.
-        const currentId = this._activeRoomId();
-        if (!currentId || !rooms.some(r => r.id === currentId)) {
-          const first = rooms[0];
-          if (first) {
-            this._activeRoomId.set(first.id);
-            this.loadMessages(first.id);
-          }
-        }
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
-  }
-  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
-    const query: Record<string, string> = {};
-    if (params?.before) query['before'] = params.before;
-    if (params?.limit != null) query['limit'] = String(params.limit);
-    firstValueFrom(
-      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
-        params: query,
-      }),
-    )
-      .then(raw => {
-        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
-        this._messages.update(map => ({ ...map, [roomId]: msgs }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
-  }
-  toggleOpen(): void {
-    this._isOpen.update(v => !v);
-    if (this._isOpen()) {
-      this.markAsRead();
-    }
-  }
-  openRoom(roomId: string): void {
-    this._activeRoomId.set(roomId);
-    this.loadMessages(roomId);
-    this.markAsRead();
-  }
-  markAsRead(): void {
-    this._unreadCount.set(0);
-    this._hasNewMessage.set(false);
-  }
-  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    this.currentUserId = currentUser.id;
-    firstValueFrom(
-      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
-    )
-      .then(() => {
-        this.loadMessages(roomId);
-      })
-      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
-  }
-  private mapMessage(m: ApiChatMessage): ChatMessage {
-    return {
-      id: m.id,
-      senderId: m.sender_id,
-      senderName: m.sender_name,
-      text: m.text,
-      timestamp: new Date(m.created_at),
-      isOwn: m.sender_id === this.currentUserId,
-    };
-  }
 }
 ````
 
@@ -5094,6 +4976,124 @@ jobs:
         with:
           category: '/language:javascript-typescript'
         continue-on-error: true
+````
+
+## File: src/app/core/services/chat.service.ts
+````typescript
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { ChatMessage, ChatRoom } from '../models/chat.model';
+import { environment } from '../../../environments/environment';
+interface ApiChatRoom {
+  id: string;
+  name: string;
+}
+interface ApiChatMessage {
+  id: string;
+  sender_id: string;
+  sender_name: string;
+  text: string;
+  created_at: string;
+}
+@Injectable({ providedIn: 'root' })
+export class ChatService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _rooms = signal<ChatRoom[]>([]);
+  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
+  private readonly _activeRoomId = signal<string | null>(null);
+  private readonly _unreadCount = signal<number>(0);
+  private readonly _isOpen = signal<boolean>(false);
+  private readonly _hasNewMessage = signal<boolean>(false);
+  private currentUserId: string | null = null;
+  readonly rooms = this._rooms.asReadonly();
+  readonly messages = this._messages.asReadonly();
+  readonly activeRoomId = this._activeRoomId.asReadonly();
+  readonly unreadCount = this._unreadCount.asReadonly();
+  readonly isOpen = this._isOpen.asReadonly();
+  readonly hasNewMessage = this._hasNewMessage.asReadonly();
+  readonly activeRoom = computed(() =>
+    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
+  );
+  readonly activeMessages = computed(
+    () => this._messages()[this._activeRoomId() ?? ''] ?? [],
+  );
+  // ── Public API ────────────────────────────────────────────────────────────
+  /** Fetch chat rooms for a given club and seed the rooms signal. */
+  loadRooms(clubId: string, userId?: string): void {
+    if (userId !== undefined) {
+      this.currentUserId = userId;
+    }
+    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
+      .then(raw => {
+        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name }));
+        this._rooms.set(rooms);
+        // Auto-select the first room when none is active or active room is gone.
+        const currentId = this._activeRoomId();
+        if (!currentId || !rooms.some(r => r.id === currentId)) {
+          const first = rooms[0];
+          if (first) {
+            this._activeRoomId.set(first.id);
+            this.loadMessages(first.id);
+          }
+        }
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
+  }
+  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
+    const query: Record<string, string> = {};
+    if (params?.before) query['before'] = params.before;
+    if (params?.limit != null) query['limit'] = String(params.limit);
+    firstValueFrom(
+      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
+        params: query,
+      }),
+    )
+      .then(raw => {
+        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
+        this._messages.update(map => ({ ...map, [roomId]: msgs }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
+  }
+  toggleOpen(): void {
+    this._isOpen.update(v => !v);
+    if (this._isOpen()) {
+      this.markAsRead();
+    }
+  }
+  openRoom(roomId: string): void {
+    this._activeRoomId.set(roomId);
+    this.loadMessages(roomId);
+    this.markAsRead();
+  }
+  markAsRead(): void {
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+  }
+  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    this.currentUserId = currentUser.id;
+    firstValueFrom(
+      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
+    )
+      .then(() => {
+        this.loadMessages(roomId);
+      })
+      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
+  }
+  private mapMessage(m: ApiChatMessage): ChatMessage {
+    return {
+      id: m.id,
+      senderId: m.sender_id,
+      senderName: m.sender_name,
+      text: m.text,
+      timestamp: new Date(m.created_at),
+      isOwn: m.sender_id === this.currentUserId,
+    };
+  }
+}
 ````
 
 ## File: src/app/features/clubs/clubs.routes.ts
@@ -7097,73 +7097,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 </div>
 ````
 
-## File: src/app/layout/header/header.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-} from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { AuthService } from '../../core/auth/auth.service';
-@Component({
-  selector: 'app-header',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, TranslateModule],
-  templateUrl: './header.component.html',
-})
-export class HeaderComponent {
-  private readonly auth = inject(AuthService);
-  private readonly translate = inject(TranslateService);
-  readonly isMenuOpen = signal(false);
-  readonly isDropdownOpen = signal(false);
-  readonly isAuthenticated = this.auth.isAuthenticated;
-  readonly currentUser = this.auth.currentUser;
-  readonly currentLang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: 'uk' },
-  );
-  readonly userInitials = computed(() => {
-    const name = this.currentUser()?.displayName ?? '';
-    return (
-      name
-        .split(' ')
-        .slice(0, 2)
-        .map(w => w[0]?.toUpperCase() ?? '')
-        .join('') || '?'
-    );
-  });
-  switchLang(): void {
-    const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-    this.translate.use(next).subscribe();
-  }
-  toggleMenu(): void {
-    this.isMenuOpen.update(v => !v);
-    if (this.isMenuOpen()) this.isDropdownOpen.set(false);
-  }
-  toggleDropdown(): void {
-    this.isDropdownOpen.update(v => !v);
-  }
-  closeDropdown(): void {
-    this.isDropdownOpen.set(false);
-  }
-  async signOut(): Promise<void> {
-    this.closeDropdown();
-    this.isMenuOpen.set(false);
-    await this.auth.signOut();
-  }
-}
-````
-
 ## File: .gitignore
 ````
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
@@ -7343,207 +7276,6 @@ When invoking agents via the `task` tool, **always use the model specified below
 | `ui` | `claude-haiku-4.5` | Design system, Tailwind, animations, accessibility |
 | `web-quality-enhancer` | `claude-sonnet-4.6` | SEO, microcopy, semantic HTML, API docs |
 | `java-backend-dev` | `claude-sonnet-4.6` | Java 21 microservices, Spring Boot, JPA, Kafka, JWT |
-````
-
-## File: src/app/features/clubs/clubs-list/clubs-list.component.html
-````html
-<div class="min-h-screen">
-  <section aria-label="Search clubs" class="bg-gradient-to-br from-primary-600 to-accent-600 px-4 py-12 text-center">
-    <h1 class="font-display text-4xl font-bold text-white mb-2">{{ 'CLUBS.title' | translate }}</h1>
-    <p class="text-primary-100 mb-8">{{ 'CLUBS.subtitle' | translate }}</p>
-    <div class="mx-auto max-w-xl relative">
-      <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true">🔍</span>
-      <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
-      <input
-        id="club-search"
-        type="search"
-        [ngModel]="clubService.searchQuery()"
-        (ngModelChange)="clubService.setSearchQuery($event)"
-        [placeholder]="'CLUBS.search_placeholder_full' | translate"
-        class="w-full rounded-full shadow-sm bg-white dark:bg-gray-800 pl-10 pr-5 py-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 border-0 focus:outline-none focus:ring-2 focus:ring-white/70"
-        [attr.aria-label]="'CLUBS.search_placeholder' | translate"
-      />
-    </div>
-  </section>
-  <div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
-    @if (clubService.error()) {
-      <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-        <span aria-hidden="true">⚠️</span>
-        <span>{{ clubService.error() }}</span>
-      </div>
-    }
-    @if (clubService.availableCities().length > 0) {
-      <nav aria-label="Filter by city" class="flex flex-wrap gap-2">
-        <button
-          type="button"
-          (click)="clubService.setCityFilter(null)"
-          class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
-          [class]="clubService.cityFilter() === null
-            ? 'bg-primary-600 text-white'
-            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
-        >
-          🌍 {{ 'CLUBS.all_cities' | translate }}
-        </button>
-        @for (city of clubService.availableCities(); track city) {
-          <button
-            type="button"
-            (click)="clubService.setCityFilter(city)"
-            class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
-            [class]="clubService.cityFilter() === city
-              ? 'bg-primary-600 text-white'
-              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
-          >
-            📍 {{ city }}
-          </button>
-        }
-      </nav>
-    }
-    @if (clubService.isLoading()) {
-      <div class="py-16" aria-busy="true" aria-label="Loading clubs">
-        <app-loading-spinner size="lg" />
-      </div>
-    } @else if (cityKeys().length === 0) {
-      <app-empty-state
-        icon="📚"
-        title="No upcoming meetings"
-        description="No clubs have scheduled meetings yet. Check back soon!"
-      />
-    } @else {
-      @for (city of cityKeys(); track city) {
-        <section [attr.aria-labelledby]="'city-' + city">
-          <h2
-            [id]="'city-' + city"
-            class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2"
-          >
-            <span aria-hidden="true">📍</span> {{ city }}
-            <span class="text-sm font-normal text-gray-500 dark:text-gray-400">
-              — {{ clubService.upcomingByCity()[city].length }} club{{ clubService.upcomingByCity()[city].length === 1 ? '' : 's' }}
-            </span>
-          </h2>
-          <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            @for (club of clubService.upcomingByCity()[city]; track club.id) {
-              <li>
-                <app-club-card
-                  [club]="club"
-                  [isMember]="clubService.myClubIds().has(club.id)"
-                  [isOwned]="ownedClubIds().has(club.id)"
-                  [isAuthenticated]="auth.isAuthenticated()"
-                  [joining]="joiningClubId() === club.id"
-                  (join)="onJoin(club)"
-                />
-              </li>
-            }
-          </ul>
-        </section>
-      }
-    }
-    @if (auth.isAuthenticated() && (clubService.myParticipatedClubs().length > 0 || clubService.myMissedClubs().length > 0)) {
-      <section aria-labelledby="my-clubs-heading" class="border-t border-gray-200 dark:border-gray-700 pt-8 space-y-6">
-        <h2 id="my-clubs-heading" class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <span aria-hidden="true">📖</span> {{ 'CLUBS.my_clubs' | translate }}
-        </h2>
-        @if (clubService.myParticipatedClubs().length > 0) {
-          <div>
-            <h3 class="text-sm font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-              ✅ {{ 'CLUBS.participated' | translate }}
-            </h3>
-            <ul class="space-y-2">
-              @for (club of clubService.myParticipatedClubs(); track club.id) {
-                <li>
-                  <a
-                    [routerLink]="['/clubs', club.id]"
-                    class="flex items-center gap-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm px-4 py-3 hover:shadow-md transition-shadow group"
-                    [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club.name"
-                  >
-                    <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 shrink-0 flex items-center justify-center text-white text-lg" aria-hidden="true">✓</div>
-                    <div class="min-w-0 flex-1">
-                      <p class="font-semibold text-gray-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors flex items-center gap-1.5">
-                        {{ club.name }}
-                        @if (ownedClubIds().has(club.id)) {
-                          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400" title="Ваш клуб">👑</span>
-                        }
-                      </p>
-                      <div class="flex items-center gap-2 mt-0.5 flex-wrap">
-                        @if (club.theme) {
-                          <span class="text-xs font-medium text-primary-600 dark:text-primary-400">{{ club.theme }}</span>
-                        }
-                        @if (club.currentBook) {
-                          <span class="text-xs text-gray-400 dark:text-gray-500 truncate">📖 {{ club.currentBook.title }}</span>
-                        }
-                        @if (!club.theme && !club.currentBook) {
-                          <p class="text-xs text-gray-500 dark:text-gray-400 truncate">📍 {{ club.city }}</p>
-                        }
-                      </div>
-                    </div>
-                    @if (club.nextMeetingDate) {
-                      <span class="shrink-0 text-xs text-gray-400 dark:text-gray-500">{{ club.nextMeetingDate | formatDate }}</span>
-                    }
-                  </a>
-                </li>
-              }
-            </ul>
-          </div>
-        }
-        @if (clubService.myMissedClubs().length > 0) {
-          <div>
-            <h3 class="text-sm font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-              ⏭️ {{ 'CLUBS.missed' | translate }}
-            </h3>
-            <ul class="space-y-2">
-              @for (club of clubService.myMissedClubs(); track club.id) {
-                <li>
-                  <a
-                    [routerLink]="['/clubs', club.id]"
-                    class="flex items-center gap-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm px-4 py-3 hover:shadow-md transition-shadow group border-l-4 border-orange-300 dark:border-orange-600"
-                    [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club.name"
-                  >
-                    <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-300 to-red-400 shrink-0 flex items-center justify-center text-white text-lg" aria-hidden="true">⏭</div>
-                    <div class="min-w-0 flex-1">
-                      <p class="font-semibold text-gray-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors flex items-center gap-1.5">
-                        {{ club.name }}
-                        @if (ownedClubIds().has(club.id)) {
-                          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400" title="Ваш клуб">👑</span>
-                        }
-                      </p>
-                      <div class="flex items-center gap-2 mt-0.5 flex-wrap">
-                        @if (club.theme) {
-                          <span class="text-xs font-medium text-primary-600 dark:text-primary-400">{{ club.theme }}</span>
-                        }
-                        @if (club.currentBook) {
-                          <span class="text-xs text-gray-400 dark:text-gray-500 truncate">📖 {{ club.currentBook.title }}</span>
-                        }
-                        @if (!club.theme && !club.currentBook) {
-                          <p class="text-xs text-gray-500 dark:text-gray-400 truncate">📍 {{ club.city }}</p>
-                        }
-                      </div>
-                    </div>
-                    @if (club.nextMeetingDate) {
-                      <span class="shrink-0 rounded-full bg-orange-50 dark:bg-orange-900/30 px-2.5 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300">
-                        {{ club.nextMeetingDate | formatDate }}
-                      </span>
-                    }
-                  </a>
-                </li>
-              }
-            </ul>
-          </div>
-        }
-      </section>
-    }
-  </div>
-  @if (auth.isOrganizer()) {
-    <a
-      routerLink="/clubs/create"
-      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-accent-500 hover:bg-accent-600 text-white shadow-xl focus:outline-none focus:ring-2 focus:ring-accent-400 focus:ring-offset-2 transition-colors"
-      [attr.aria-label]="'CLUBS.create' | translate"
-      [title]="'CLUBS.create' | translate"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-      </svg>
-    </a>
-  }
-</div>
 ````
 
 ## File: src/app/features/clubs/create-club/create-club.component.ts
@@ -7908,6 +7640,73 @@ export class RandomizerComponent implements OnInit {
 }
 ````
 
+## File: src/app/layout/header/header.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+} from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { AuthService } from '../../core/auth/auth.service';
+@Component({
+  selector: 'app-header',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, RouterLinkActive, TranslateModule],
+  templateUrl: './header.component.html',
+})
+export class HeaderComponent {
+  private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
+  readonly isMenuOpen = signal(false);
+  readonly isDropdownOpen = signal(false);
+  readonly isAuthenticated = this.auth.isAuthenticated;
+  readonly currentUser = this.auth.currentUser;
+  readonly currentLang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: 'uk' },
+  );
+  readonly userInitials = computed(() => {
+    const name = this.currentUser()?.displayName ?? '';
+    return (
+      name
+        .split(' ')
+        .slice(0, 2)
+        .map(w => w[0]?.toUpperCase() ?? '')
+        .join('') || '?'
+    );
+  });
+  switchLang(): void {
+    const next = this.currentLang() === 'uk' ? 'en' : 'uk';
+    this.translate.use(next).subscribe();
+  }
+  toggleMenu(): void {
+    this.isMenuOpen.update(v => !v);
+    if (this.isMenuOpen()) this.isDropdownOpen.set(false);
+  }
+  toggleDropdown(): void {
+    this.isDropdownOpen.update(v => !v);
+  }
+  closeDropdown(): void {
+    this.isDropdownOpen.set(false);
+  }
+  async signOut(): Promise<void> {
+    this.closeDropdown();
+    this.isMenuOpen.set(false);
+    await this.auth.signOut();
+  }
+}
+````
+
 ## File: src/app/app.config.ts
 ````typescript
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, APP_INITIALIZER, inject } from '@angular/core';
@@ -7957,6 +7756,207 @@ export const appConfig: ApplicationConfig = {
     },
   ],
 };
+````
+
+## File: src/app/features/clubs/clubs-list/clubs-list.component.html
+````html
+<div class="min-h-screen">
+  <section aria-label="Search clubs" class="bg-gradient-to-br from-primary-600 to-accent-600 px-4 py-12 text-center">
+    <h1 class="font-display text-4xl font-bold text-white mb-2">{{ 'CLUBS.title' | translate }}</h1>
+    <p class="text-primary-100 mb-8">{{ 'CLUBS.subtitle' | translate }}</p>
+    <div class="mx-auto max-w-xl relative">
+      <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true">🔍</span>
+      <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
+      <input
+        id="club-search"
+        type="search"
+        [ngModel]="clubService.searchQuery()"
+        (ngModelChange)="clubService.setSearchQuery($event)"
+        [placeholder]="'CLUBS.search_placeholder_full' | translate"
+        class="w-full rounded-full shadow-sm bg-white dark:bg-gray-800 pl-10 pr-5 py-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 border-0 focus:outline-none focus:ring-2 focus:ring-white/70"
+        [attr.aria-label]="'CLUBS.search_placeholder' | translate"
+      />
+    </div>
+  </section>
+  <div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
+    @if (clubService.error()) {
+      <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+        <span aria-hidden="true">⚠️</span>
+        <span>{{ clubService.error() }}</span>
+      </div>
+    }
+    @if (clubService.availableCities().length > 0) {
+      <nav aria-label="Filter by city" class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          (click)="clubService.setCityFilter(null)"
+          class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+          [class]="clubService.cityFilter() === null
+            ? 'bg-primary-600 text-white'
+            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
+        >
+          🌍 {{ 'CLUBS.all_cities' | translate }}
+        </button>
+        @for (city of clubService.availableCities(); track city) {
+          <button
+            type="button"
+            (click)="clubService.setCityFilter(city)"
+            class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+            [class]="clubService.cityFilter() === city
+              ? 'bg-primary-600 text-white'
+              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
+          >
+            📍 {{ city }}
+          </button>
+        }
+      </nav>
+    }
+    @if (clubService.isLoading()) {
+      <div class="py-16" aria-busy="true" aria-label="Loading clubs">
+        <app-loading-spinner size="lg" />
+      </div>
+    } @else if (cityKeys().length === 0) {
+      <app-empty-state
+        icon="📚"
+        title="No upcoming meetings"
+        description="No clubs have scheduled meetings yet. Check back soon!"
+      />
+    } @else {
+      @for (city of cityKeys(); track city) {
+        <section [attr.aria-labelledby]="'city-' + city">
+          <h2
+            [id]="'city-' + city"
+            class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2"
+          >
+            <span aria-hidden="true">📍</span> {{ city }}
+            <span class="text-sm font-normal text-gray-500 dark:text-gray-400">
+              — {{ clubService.upcomingByCity()[city].length }} club{{ clubService.upcomingByCity()[city].length === 1 ? '' : 's' }}
+            </span>
+          </h2>
+          <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            @for (club of clubService.upcomingByCity()[city]; track club.id) {
+              <li>
+                <app-club-card
+                  [club]="club"
+                  [isMember]="clubService.myClubIds().has(club.id)"
+                  [isOwned]="ownedClubIds().has(club.id)"
+                  [isAuthenticated]="auth.isAuthenticated()"
+                  [joining]="joiningClubId() === club.id"
+                  (join)="onJoin(club)"
+                />
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    }
+    @if (auth.isAuthenticated() && (clubService.myParticipatedClubs().length > 0 || clubService.myMissedClubs().length > 0)) {
+      <section aria-labelledby="my-clubs-heading" class="border-t border-gray-200 dark:border-gray-700 pt-8 space-y-6">
+        <h2 id="my-clubs-heading" class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <span aria-hidden="true">📖</span> {{ 'CLUBS.my_clubs' | translate }}
+        </h2>
+        @if (clubService.myParticipatedClubs().length > 0) {
+          <div>
+            <h3 class="text-sm font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+              ✅ {{ 'CLUBS.participated' | translate }}
+            </h3>
+            <ul class="space-y-2">
+              @for (club of clubService.myParticipatedClubs(); track club.id) {
+                <li>
+                  <a
+                    [routerLink]="['/clubs', club.id]"
+                    class="flex items-center gap-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm px-4 py-3 hover:shadow-md transition-shadow group"
+                    [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club.name"
+                  >
+                    <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 shrink-0 flex items-center justify-center text-white text-lg" aria-hidden="true">✓</div>
+                    <div class="min-w-0 flex-1">
+                      <p class="font-semibold text-gray-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors flex items-center gap-1.5">
+                        {{ club.name }}
+                        @if (ownedClubIds().has(club.id)) {
+                          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400" title="Ваш клуб">👑</span>
+                        }
+                      </p>
+                      <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                        @if (club.theme) {
+                          <span class="text-xs font-medium text-primary-600 dark:text-primary-400">{{ club.theme }}</span>
+                        }
+                        @if (club.currentBook) {
+                          <span class="text-xs text-gray-400 dark:text-gray-500 truncate">📖 {{ club.currentBook.title }}</span>
+                        }
+                        @if (!club.theme && !club.currentBook) {
+                          <p class="text-xs text-gray-500 dark:text-gray-400 truncate">📍 {{ club.city }}</p>
+                        }
+                      </div>
+                    </div>
+                    @if (club.nextMeetingDate) {
+                      <span class="shrink-0 text-xs text-gray-400 dark:text-gray-500">{{ club.nextMeetingDate | formatDate }}</span>
+                    }
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+        @if (clubService.myMissedClubs().length > 0) {
+          <div>
+            <h3 class="text-sm font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+              ⏭️ {{ 'CLUBS.missed' | translate }}
+            </h3>
+            <ul class="space-y-2">
+              @for (club of clubService.myMissedClubs(); track club.id) {
+                <li>
+                  <a
+                    [routerLink]="['/clubs', club.id]"
+                    class="flex items-center gap-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm px-4 py-3 hover:shadow-md transition-shadow group border-l-4 border-orange-300 dark:border-orange-600"
+                    [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club.name"
+                  >
+                    <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-300 to-red-400 shrink-0 flex items-center justify-center text-white text-lg" aria-hidden="true">⏭</div>
+                    <div class="min-w-0 flex-1">
+                      <p class="font-semibold text-gray-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors flex items-center gap-1.5">
+                        {{ club.name }}
+                        @if (ownedClubIds().has(club.id)) {
+                          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400" title="Ваш клуб">👑</span>
+                        }
+                      </p>
+                      <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                        @if (club.theme) {
+                          <span class="text-xs font-medium text-primary-600 dark:text-primary-400">{{ club.theme }}</span>
+                        }
+                        @if (club.currentBook) {
+                          <span class="text-xs text-gray-400 dark:text-gray-500 truncate">📖 {{ club.currentBook.title }}</span>
+                        }
+                        @if (!club.theme && !club.currentBook) {
+                          <p class="text-xs text-gray-500 dark:text-gray-400 truncate">📍 {{ club.city }}</p>
+                        }
+                      </div>
+                    </div>
+                    @if (club.nextMeetingDate) {
+                      <span class="shrink-0 rounded-full bg-orange-50 dark:bg-orange-900/30 px-2.5 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300">
+                        {{ club.nextMeetingDate | formatDate }}
+                      </span>
+                    }
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </section>
+    }
+  </div>
+  @if (auth.isOrganizer()) {
+    <a
+      routerLink="/clubs/create"
+      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-accent-500 hover:bg-accent-600 text-white shadow-xl focus:outline-none focus:ring-2 focus:ring-accent-400 focus:ring-offset-2 transition-colors"
+      [attr.aria-label]="'CLUBS.create' | translate"
+      [title]="'CLUBS.create' | translate"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+      </svg>
+    </a>
+  }
+</div>
 ````
 
 ## File: src/app/core/services/randomizer.service.ts
@@ -9192,7 +9192,7 @@ export class ClubDetailComponent {
       const clubId = this.id();
       let cancelled = false;
       onCleanup(() => { cancelled = true; });
-      this.loadClub(clubId, () => cancelled).catch(() => {});
+      this.loadClub(clubId, () => cancelled).catch((_err: unknown) => {  });
     });
   }
   private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {

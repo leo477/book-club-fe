@@ -110,7 +110,7 @@ export class ClubDetailComponent {
       const clubId = this.id();
       let cancelled = false;
       onCleanup(() => { cancelled = true; });
-      this.loadClub(clubId, () => cancelled).catch(() => {});
+      this.loadClub(clubId, () => cancelled).catch((_err: unknown) => { /* swallow navigation errors */ });
     });
   }
 
