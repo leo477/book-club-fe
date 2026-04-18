@@ -285,7 +285,9 @@ vercel.json
       "Bash(npm test *)",
       "Bash(git pull *)",
       "Bash(git *)",
-      "Bash(grep -v \"^$\")"
+      "Bash(grep -v \"^$\")",
+      "Bash(curl -s \"https://sonarcloud.io/api/qualitygates/project_status?projectKey=leo477_book-club-fe\")",
+      "Bash(curl -s \"https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&types=BUG,VULNERABILITY,CODE_SMELL&severities=BLOCKER,CRITICAL,MAJOR&ps=20\")"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -8029,7 +8031,7 @@ export const appConfig: ApplicationConfig = {
       @if (club()!.tags && club()!.tags.length > 0) {
         <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
           <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.tags_title' | translate }}</h2>
-          <ul class="flex flex-wrap gap-2" role="list">
+          <ul class="flex flex-wrap gap-2">
             @for (tag of club()!.tags; track tag) {
               <li class="rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs font-medium text-primary-700 dark:text-primary-300">
                 {{ tag }}
