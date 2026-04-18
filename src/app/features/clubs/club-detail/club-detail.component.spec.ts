@@ -89,52 +89,25 @@ describe('ClubDetailComponent', () => {
     await fixture.whenStable();
   });
 
-  it('banDurations equals [1,3,5,"permanent"]', () => {
-    expect(component.banDurations).toEqual([1, 3, 5, 'permanent']);
-  });
-
-  it('showBanMenu initial is null', () => {
-    expect(component.showBanMenu()).toBeNull();
-  });
-
-  it('toggleBanMenu sets showBanMenu to user id', () => {
-    component.toggleBanMenu('user-2');
-    expect(component.showBanMenu()).toBe('user-2');
-  });
-
-  it('toggleBanMenu twice toggles back to null', () => {
-    component.toggleBanMenu('user-2');
-    component.toggleBanMenu('user-2');
-    expect(component.showBanMenu()).toBeNull();
-  });
-
-  it('toggleBanMenu switches to new user id', () => {
-    component.toggleBanMenu('user-2');
-    component.toggleBanMenu('user-3');
-    expect(component.showBanMenu()).toBe('user-3');
-  });
-
-  it('kickMember calls clubService and removes member', async () => {
+  it('handleKick calls clubService.kickMember and removes member', async () => {
     component.members.set([
       { userId: 'user-2', displayName: 'User 2', avatarUrl: null, role: 'member', socialsPublic: false },
       { userId: 'user-3', displayName: 'User 3', avatarUrl: null, role: 'member', socialsPublic: false }
     ]);
-    await component.kickMember('user-2');
+    await component.handleKick('user-2');
     expect(clubServiceSpy.kickMember).toHaveBeenCalledWith('club-1', 'user-2');
     expect(component.members()).toEqual([
       { userId: 'user-3', displayName: 'User 3', avatarUrl: null, role: 'member', socialsPublic: false }
     ]);
   });
 
-  it('banMember calls clubService, sets showBanMenu null, removes member', async () => {
+  it('handleBan calls clubService.banMember and removes member', async () => {
     component.members.set([
       { userId: 'user-2', displayName: 'User 2', avatarUrl: null, role: 'member', socialsPublic: false },
       { userId: 'user-3', displayName: 'User 3', avatarUrl: null, role: 'member', socialsPublic: false }
     ]);
-    component.showBanMenu.set('user-2');
-    await component.banMember('user-2', 3);
+    await component.handleBan({ userId: 'user-2', duration: 3 });
     expect(clubServiceSpy.banMember).toHaveBeenCalledWith('club-1', 'user-2', 3);
-    expect(component.showBanMenu()).toBeNull();
     expect(component.members()).toEqual([
       { userId: 'user-3', displayName: 'User 3', avatarUrl: null, role: 'member', socialsPublic: false }
     ]);

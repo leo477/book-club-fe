@@ -1,8 +1,9 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, resource, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
 import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
 import { TokenStore } from './token.store';
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
@@ -141,12 +142,4 @@ export class AuthService {
     );
     this._currentUser.set({ ...user, socialsPublic: value });
   }
-}
-
-function extractApiError(err: unknown): string {
-  if (err instanceof HttpErrorResponse) {
-    const detail = (err.error as { detail?: string })?.detail;
-    return detail ?? err.message ?? 'Unknown error';
-  }
-  return 'Unknown error';
 }

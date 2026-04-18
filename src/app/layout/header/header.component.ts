@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith } from 'rxjs';
+import { firstValueFrom, map, startWith } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 
@@ -49,8 +49,7 @@ export class HeaderComponent {
 
   switchLang(): void {
     const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-    // translate.use returns an Observable; subscribe to trigger the language switch
-    this.translate.use(next).subscribe();
+    void firstValueFrom(this.translate.use(next));
   }
 
   toggleMenu(): void {

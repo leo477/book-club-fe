@@ -7,7 +7,6 @@ import {
   effect,
   input,
 } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, startWith } from 'rxjs';
@@ -16,17 +15,30 @@ import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
 import { UserProfile } from '../../../core/models/user.model';
-import { QrCodeComponent } from '../../../shared/components/qr-code/qr-code.component';
 import { SeoService } from '../../../core/services/seo.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { ClubMembersListComponent } from './members/club-members-list.component';
+import { ClubScheduleComponent } from './schedule/club-schedule.component';
+import { ClubHeaderComponent } from './header/club-header.component';
+import { ClubInfoComponent } from './info/club-info.component';
+import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
 
 @Component({
   selector: 'app-club-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, TranslateModule, QrCodeComponent, LoadingSpinnerComponent, InitialsPipe, FormatDatePipe],
+  imports: [
+    RouterLink,
+    TranslateModule,
+    InitialsPipe,
+    FormatDatePipe,
+    ClubMembersListComponent,
+    ClubScheduleComponent,
+    ClubHeaderComponent,
+    ClubInfoComponent,
+    ClubManagePanelComponent,
+  ],
   templateUrl: './club-detail.component.html',
 })
 export class ClubDetailComponent {
@@ -62,7 +74,7 @@ export class ClubDetailComponent {
     () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
   );
 
-  readonly showQrForUser = signal<string | null>(null);
+  readonly currentUserId = computed(() => this.auth.currentUser()?.id ?? null);
 
   readonly organizerProfile = computed<UserProfile | null>(() => {
     const organizerId = this.club()?.organizerId;
@@ -80,9 +92,6 @@ export class ClubDetailComponent {
     } satisfies UserProfile;
   });
 
-  readonly banDurations: BanDuration[] = [1, 3, 5, 'permanent'];
-  readonly showBanMenu = signal<string | null>(null);
-
   readonly deleteCountdown = computed<string | null>(() => {
     this._lang();
     const c = this.club();
@@ -95,8 +104,6 @@ export class ClubDetailComponent {
       return this.translate.instant('CLUB_DETAIL.deletion_countdown_hours', { hours, minutes });
     return this.translate.instant('CLUB_DETAIL.deletion_countdown_minutes', { minutes });
   });
-
-  readonly rescheduleDate = new FormControl<string>('', { nonNullable: true });
 
   constructor() {
     effect((onCleanup) => {
@@ -167,6 +174,16 @@ export class ClubDetailComponent {
     }
   }
 
+  async handleKick(userId: string): Promise<void> {
+    await this.clubService.kickMember(this.id(), userId);
+    this.members.update(list => list.filter(m => m.userId !== userId));
+  }
+
+  async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
+    await this.clubService.banMember(this.id(), event.userId, event.duration);
+    this.members.update(list => list.filter(m => m.userId !== event.userId));
+  }
+
   async pauseClub(): Promise<void> {
     await this.clubService.pauseClub(this.id());
     await this.refreshClub();
@@ -177,52 +194,14 @@ export class ClubDetailComponent {
     await this.refreshClub();
   }
 
-  async rescheduleSubmit(): Promise<void> {
-    const date = this.rescheduleDate.value;
+  async rescheduleSubmit(date: string): Promise<void> {
     if (!date) return;
     await this.clubService.rescheduleMeeting(this.id(), date);
-    this.rescheduleDate.reset();
     await this.refreshClub();
   }
 
   private async refreshClub(): Promise<void> {
     const updated = await this.clubService.getClubById(this.id());
     if (updated) this.club.set(updated);
-  }
-
-  async kickMember(userId: string): Promise<void> {
-    await this.clubService.kickMember(this.id(), userId);
-    this.members.update(list => list.filter(m => m.userId !== userId));
-  }
-
-  async banMember(userId: string, duration: BanDuration): Promise<void> {
-    await this.clubService.banMember(this.id(), userId, duration);
-    this.showBanMenu.set(null);
-    this.members.update(list => list.filter(m => m.userId !== userId));
-  }
-
-  toggleBanMenu(userId: string): void {
-    this.showBanMenu.update(current => current === userId ? null : userId);
-  }
-
-  canSeeSocials(member: ClubMemberDetail): boolean {
-    return member.socialsPublic || this.isClubOwner();
-  }
-
-  toggleQr(userId: string): void {
-    this.showQrForUser.update(current => current === userId ? null : userId);
-  }
-
-  buildQrValue(member: ClubMemberDetail): string {
-    if (!member.socials) return member.displayName;
-    const lines: string[] = [`📚 ${member.displayName}`];
-    const s = member.socials;
-    if (s.telegram)   lines.push(`Telegram: t.me/${s.telegram}`);
-    if (s.instagram)  lines.push(`Instagram: instagram.com/${s.instagram}`);
-    if (s.twitter)    lines.push(`Twitter: x.com/${s.twitter}`);
-    if (s.linkedin)   lines.push(`LinkedIn: linkedin.com/in/${s.linkedin}`);
-    if (s.github)     lines.push(`GitHub: github.com/${s.github}`);
-    if (s.goodreads)  lines.push(`Goodreads: goodreads.com/${s.goodreads}`);
-    return lines.join('\n');
   }
 }

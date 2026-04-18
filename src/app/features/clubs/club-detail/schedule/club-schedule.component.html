@@ -1,0 +1,63 @@
+@if (isOwner()) {
+  <!-- Club status management -->
+  <section [attr.aria-label]="'CLUB_DETAIL.manage_title' | translate" class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6 space-y-5">
+    <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
+
+    <!-- Action buttons -->
+    <div class="flex flex-wrap gap-3">
+      @if (club()!.status === 'active') {
+        <button
+          type="button"
+          (click)="pauseRequested.emit()"
+          class="inline-flex items-center gap-2 rounded-xl bg-yellow-400 hover:bg-yellow-500 px-4 py-2.5 text-sm font-semibold text-yellow-900 transition-colors"
+          [attr.aria-label]="'CLUB_DETAIL.pause' | translate"
+        >
+          ⏸ {{ 'CLUB_DETAIL.pause' | translate }}
+        </button>
+      }
+      @if (club()!.status !== 'cancelled') {
+        <button
+          type="button"
+          (click)="cancelRequested.emit()"
+          class="inline-flex items-center gap-2 rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+          [attr.aria-label]="'CLUB_DETAIL.cancel' | translate"
+        >
+          ✕ {{ 'CLUB_DETAIL.cancel' | translate }}
+        </button>
+      }
+    </div>
+
+    <!-- Reschedule form -->
+    @if (club()!.status === 'paused') {
+      <form
+        (ngSubmit)="submitReschedule()"
+        class="flex flex-col sm:flex-row items-start sm:items-end gap-3"
+        [attr.aria-label]="'CLUB_DETAIL.reschedule' | translate"
+      >
+        <div class="flex flex-col gap-1.5 flex-1">
+          <label
+            for="reschedule-date"
+            class="text-xs font-medium text-gray-600 dark:text-gray-400"
+          >
+            {{ 'CLUB_DETAIL.new_date' | translate }}
+          </label>
+          <input
+            id="reschedule-date"
+            type="datetime-local"
+            [formControl]="rescheduleDate"
+            class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+            aria-required="true"
+          />
+        </div>
+        <button
+          type="submit"
+          [disabled]="!rescheduleDate.value"
+          class="inline-flex items-center gap-2 rounded-xl bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+          [attr.aria-label]="'CLUB_DETAIL.reschedule_submit' | translate"
+        >
+          ✓ {{ 'CLUB_DETAIL.reschedule_submit' | translate }}
+        </button>
+      </form>
+    }
+  </section>
+}

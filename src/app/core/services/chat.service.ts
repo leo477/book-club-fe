@@ -1,5 +1,6 @@
 import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { ChatMessage, ChatRoom } from '../models/chat.model';
 import { environment } from '../../../environments/environment';
 
@@ -61,24 +62,21 @@ export class ChatService {
     if (userId !== undefined) {
       this.currentUserId = userId;
     }
-    this.http
-      .get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`)
-      .subscribe({
-        next: raw => {
-          const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name }));
-          this._rooms.set(rooms);
-          // Auto-select the first room when none is active or active room is gone.
-          const currentId = this._activeRoomId();
-          if (!currentId || !rooms.find(r => r.id === currentId)) {
-            const first = rooms[0];
-            if (first) {
-              this._activeRoomId.set(first.id);
-              this.loadMessages(first.id);
-            }
+    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
+      .then(raw => {
+        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name }));
+        this._rooms.set(rooms);
+        // Auto-select the first room when none is active or active room is gone.
+        const currentId = this._activeRoomId();
+        if (!currentId || !rooms.find(r => r.id === currentId)) {
+          const first = rooms[0];
+          if (first) {
+            this._activeRoomId.set(first.id);
+            this.loadMessages(first.id);
           }
-        },
-        error: (err: unknown) => console.error('[ChatService] loadRooms error', err),
-      });
+        }
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
   }
 
   /** Fetch messages for a room and update the messages map. */
@@ -87,17 +85,16 @@ export class ChatService {
     if (params?.before) query['before'] = params.before;
     if (params?.limit != null) query['limit'] = String(params.limit);
 
-    this.http
-      .get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
+    firstValueFrom(
+      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
         params: query,
+      }),
+    )
+      .then(raw => {
+        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
+        this._messages.update(map => ({ ...map, [roomId]: msgs }));
       })
-      .subscribe({
-        next: raw => {
-          const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
-          this._messages.update(map => ({ ...map, [roomId]: msgs }));
-        },
-        error: (err: unknown) => console.error('[ChatService] loadMessages error', err),
-      });
+      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
   }
 
   toggleOpen(): void {
@@ -125,15 +122,14 @@ export class ChatService {
 
     this.currentUserId = currentUser.id;
 
-    this.http
-      .post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text })
-      .subscribe({
-        next: () => {
-          // Reload messages to stay in sync with server state.
-          this.loadMessages(roomId);
-        },
-        error: (err: unknown) => console.error('[ChatService] sendMessage error', err),
-      });
+    firstValueFrom(
+      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
+    )
+      .then(() => {
+        // Reload messages to stay in sync with server state.
+        this.loadMessages(roomId);
+      })
+      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────

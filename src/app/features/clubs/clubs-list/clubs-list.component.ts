@@ -15,14 +15,14 @@ import { SeoService } from '../../../core/services/seo.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { ClubCardComponent } from './club-card/club-card.component';
 
 @Component({
   selector: 'app-clubs-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, LoadingSpinnerComponent, EmptyStateComponent, TranslateModule, InitialsPipe, FormatDatePipe],
+  imports: [RouterLink, FormsModule, LoadingSpinnerComponent, EmptyStateComponent, TranslateModule, FormatDatePipe, ClubCardComponent],
   templateUrl: './clubs-list.component.html',
 })
 export class ClubsListComponent implements OnInit {
@@ -59,11 +59,5 @@ export class ClubsListComponent implements OnInit {
     }
   }
 
-  protected daysUntil(dateStr: string): number {
-    const now = new Date();
-    const meeting = new Date(dateStr);
-    return Math.ceil((meeting.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  }
-
-
 }
+

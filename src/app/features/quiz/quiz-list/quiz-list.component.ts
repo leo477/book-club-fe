@@ -1,11 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  OnInit,
+  effect,
   inject,
+  input,
   signal,
 } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { QuizService } from '../../../core/services/quiz.service';
 
@@ -16,22 +17,24 @@ import { QuizService } from '../../../core/services/quiz.service';
   imports: [RouterLink],
   templateUrl: './quiz-list.component.html',
 })
-export class QuizListComponent implements OnInit {
+export class QuizListComponent {
   protected readonly quizService = inject(QuizService);
   protected readonly authService = inject(AuthService);
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
 
   protected readonly togglingId = signal<string | null>(null);
   protected readonly errorMessage = signal('');
 
-  protected clubId = '';
+  readonly id = input<string>('');
 
-  ngOnInit(): void {
-    // With paramsInheritanceStrategy:'always', :id is inherited from the parent :id route
-    this.clubId = this.route.snapshot.params['id'] as string;
-    this.quizService.loadQuizzes(this.clubId).catch(err => {
-      this.errorMessage.set((err as Error).message);
+  constructor() {
+    effect(() => {
+      const clubId = this.id();
+      if (clubId) {
+        this.quizService.loadQuizzes(clubId).catch(err => {
+          this.errorMessage.set((err as Error).message);
+        });
+      }
     });
   }
 
@@ -48,6 +51,6 @@ export class QuizListComponent implements OnInit {
   }
 
   protected takeQuiz(quizId: string): void {
-    this.router.navigate(['/clubs', this.clubId, 'quizzes', quizId]);
+    this.router.navigate(['/clubs', this.id(), 'quizzes', quizId]);
   }
 }

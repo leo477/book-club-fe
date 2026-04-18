@@ -70,6 +70,7 @@ src/
   app/
     core/
       api/
+        api-error.util.ts
         api-mappers.ts
       auth/
         auth.guard.ts
@@ -101,9 +102,27 @@ src/
           register.component.ts
       clubs/
         club-detail/
+          header/
+            club-header.component.html
+            club-header.component.ts
+          info/
+            club-info.component.html
+            club-info.component.ts
+          manage-panel/
+            club-manage-panel.component.html
+            club-manage-panel.component.ts
+          members/
+            club-members-list.component.html
+            club-members-list.component.ts
+          schedule/
+            club-schedule.component.html
+            club-schedule.component.ts
           club-detail.component.html
           club-detail.component.ts
         clubs-list/
+          club-card/
+            club-card.component.html
+            club-card.component.ts
           clubs-list.component.html
           clubs-list.component.ts
         create-club/
@@ -111,6 +130,12 @@ src/
           create-club.component.ts
         clubs.routes.ts
       profile/
+        role-selector/
+          profile-role-selector.component.html
+          profile-role-selector.component.ts
+        stats/
+          profile-stats.component.html
+          profile-stats.component.ts
         profile.component.html
         profile.component.ts
       quiz/
@@ -159,6 +184,12 @@ src/
           loading-spinner.component.ts
         qr-code/
           qr-code.component.ts
+        social-badges/
+          social-badges.component.html
+          social-badges.component.ts
+        social-link-field/
+          social-link-field.component.html
+          social-link-field.component.ts
         toast/
           toast.component.html
           toast.component.ts
@@ -196,6 +227,7 @@ CLAUDE.md
 eslint.config.js
 karma.conf.js
 package.json
+plan.md
 README.md
 repomix.config.json
 SECURITY.md
@@ -248,172 +280,1180 @@ vercel.json
 }
 ````
 
-## File: src/app/core/api/api-mappers.ts
+## File: src/app/core/api/api-error.util.ts
 ````typescript
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-import { AfterMeetingVenue, BanDuration, BanRecord, Club, ClubBook, ClubMemberDetail, ClubStatus } from '../models/club.model';
-export interface ApiUserProfile {
-  id: string;
-  email: string;
-  role: UserRole;
-  display_name: string;
-  avatar_url: string | null;
-  created_at: string;
-  socials?: ApiUserSocials | null;
-  socials_public?: boolean;
-}
-export interface ApiUserSocials {
-  telegram?: string | null;
-  instagram?: string | null;
-  twitter?: string | null;
-  linkedin?: string | null;
-  github?: string | null;
-  goodreads?: string | null;
-}
-export interface ApiUserStats {
-  clubs_joined: number;
-  clubs_organized: number;
-  meetings_attended: number;
-  quizzes_taken: number;
-}
-export interface ApiClub {
-  id: string;
-  name: string;
-  description: string | null;
-  cover_url: string | null;
-  organizer_id: string;
-  is_public: boolean;
-  member_count: number;
-  created_at: string;
-  city: string | null;
-  next_meeting_date: string | null;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  theme: string | null;
-  current_book: string | null;
-  member_previews: string[];
-  status: ClubStatus;
-  tags: string[];
-  meeting_duration_minutes: number | null;
-  after_meeting_venue: AfterMeetingVenue | null;
-  cancelled_at?: string | null;
-}
-export interface ApiClubMember {
-  user_id: string;
-  display_name: string;
-  avatar_url: string | null;
-  role: 'organizer' | 'member';
-  socials?: ApiUserSocials | null;
-  socials_public?: boolean;
-}
-export interface ApiBanRecord {
-  user_id: string;
-  club_id: string;
-  banned_at: string;
-  duration: BanDuration;
-  banned_by: string;
-}
-export function mapUserProfile(raw: ApiUserProfile): UserProfile {
-  return {
-    id: raw.id,
-    role: raw.role,
-    displayName: raw.display_name,
-    avatarUrl: raw.avatar_url,
-    createdAt: raw.created_at,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socials_public ?? false,
-  };
-}
-export function mapUserStats(raw: ApiUserStats): UserStats {
-  return {
-    clubsJoined: raw.clubs_joined,
-    quizzesTaken: raw.quizzes_taken,
-    quizWins: 0,
-    likesReceived: 0,
-    booksRead: 0,
-  };
-}
-export function mapClub(raw: ApiClub): Club {
-  let currentBook: ClubBook | null = null;
-  if (raw.current_book) {
-    currentBook = { title: raw.current_book, author: '', description: '' };
+import { HttpErrorResponse } from '@angular/common/http';
+export function extractApiError(err: unknown): string {
+  if (err instanceof HttpErrorResponse) {
+    return (err.error as { detail?: string })?.detail ?? err.message ?? 'Unknown error';
   }
-  return {
-    id: raw.id,
-    name: raw.name,
-    description: raw.description,
-    coverUrl: raw.cover_url,
-    organizerId: raw.organizer_id,
-    isPublic: raw.is_public,
-    memberCount: raw.member_count,
-    createdAt: raw.created_at,
-    city: raw.city ?? '',
-    nextMeetingDate: raw.next_meeting_date,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    theme: raw.theme,
-    currentBook,
-    memberPreviews: raw.member_previews,
-    status: raw.status,
-    tags: raw.tags,
-    meetingDurationMinutes: raw.meeting_duration_minutes,
-    afterMeetingVenue: raw.after_meeting_venue,
-    cancelledAt: raw.cancelled_at ?? undefined,
-  };
-}
-export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
-  return {
-    userId: raw.user_id,
-    displayName: raw.display_name,
-    avatarUrl: raw.avatar_url,
-    role: raw.role,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socials_public ?? false,
-  };
-}
-export function mapBanRecord(raw: ApiBanRecord): BanRecord {
-  return {
-    userId: raw.user_id,
-    clubId: raw.club_id,
-    bannedAt: raw.banned_at,
-    duration: raw.duration,
-    bannedBy: raw.banned_by,
-  };
-}
-function mapSocials(raw: ApiUserSocials): UserSocials {
-  return {
-    telegram: raw.telegram ?? undefined,
-    instagram: raw.instagram ?? undefined,
-    twitter: raw.twitter ?? undefined,
-    linkedin: raw.linkedin ?? undefined,
-    github: raw.github ?? undefined,
-    goodreads: raw.goodreads ?? undefined,
-  };
+  return 'Unknown error';
 }
 ````
 
-## File: src/app/core/auth/token.store.ts
+## File: src/app/features/clubs/club-detail/header/club-header.component.html
+````html
+<header class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+  <div>
+    <div class="flex items-center gap-3 flex-wrap">
+      <h1 id="club-heading" class="font-display text-3xl font-bold text-gray-900 dark:text-white">
+        {{ club().name }}
+      </h1>
+      @if (!club().isPublic) {
+        <span class="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+          🔒 {{ 'CLUB_DETAIL.private' | translate }}
+        </span>
+      }
+      @if (club().status === 'active') {
+        <span class="rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-semibold text-green-700 dark:text-green-400">
+          ● {{ 'CLUBS.active' | translate }}
+        </span>
+      } @else if (club().status === 'paused') {
+        <span class="rounded-full bg-yellow-100 dark:bg-yellow-900/30 px-2.5 py-0.5 text-xs font-semibold text-yellow-700 dark:text-yellow-400">
+          ⏸ {{ 'CLUBS.paused' | translate }}
+        </span>
+      } @else if (club().status === 'cancelled') {
+        <span class="rounded-full bg-red-100 dark:bg-red-900/30 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:text-red-400">
+          ✕ {{ 'CLUBS.cancelled' | translate }}
+        </span>
+      }
+    </div>
+    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+      <span aria-hidden="true">👥</span>
+      <span>{{ club().memberCount }} {{ club().memberCount === 1 ? ('CLUBS.member_singular' | translate) : ('CLUBS.members' | translate) }}</span>
+    </p>
+  </div>
+  @if (isAuthenticated()) {
+    @if (!isOwner()) {
+      @if (isMember()) {
+        <button
+          type="button"
+          (click)="leave.emit()"
+          [disabled]="isActionLoading()"
+          class="inline-flex items-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          [attr.aria-label]="'CLUB_DETAIL.leave' | translate"
+        >
+          @if (isActionLoading()) {
+            <app-loading-spinner size="sm" />
+          }
+          {{ 'CLUB_DETAIL.leave' | translate }}
+        </button>
+      } @else {
+        <button
+          type="button"
+          (click)="join.emit()"
+          [disabled]="isActionLoading()"
+          class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          [attr.aria-label]="'CLUB_DETAIL.join' | translate"
+        >
+          @if (isActionLoading()) {
+            <app-loading-spinner size="sm" />
+          }
+          {{ 'CLUB_DETAIL.join' | translate }}
+        </button>
+      }
+    } @else {
+      <span class="inline-flex items-center gap-1.5 rounded-xl bg-accent-100 dark:bg-accent-900/30 px-4 py-2.5 text-sm font-semibold text-accent-700 dark:text-accent-300">
+        {{ 'CLUB_DETAIL.organizer_badge' | translate }}
+      </span>
+    }
+  }
+</header>
+````
+
+## File: src/app/features/clubs/club-detail/header/club-header.component.ts
 ````typescript
-import { Injectable, signal } from '@angular/core';
-const TOKEN_KEY = 'bc_access_token';
-@Injectable({ providedIn: 'root' })
-export class TokenStore {
-  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
-  readonly token = this._token.asReadonly();
-  set(token: string): void {
-    localStorage.setItem(TOKEN_KEY, token);
-    this._token.set(token);
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+} from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { Club } from '../../../../core/models/club.model';
+import { UserProfile } from '../../../../core/models/user.model';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+@Component({
+  selector: 'app-club-header',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslateModule, LoadingSpinnerComponent],
+  templateUrl: './club-header.component.html',
+})
+export class ClubHeaderComponent {
+  readonly club = input.required<Club>();
+  readonly isMember = input.required<boolean>();
+  readonly isOwner = input.required<boolean>();
+  readonly isAuthenticated = input.required<boolean>();
+  readonly isActionLoading = input.required<boolean>();
+  readonly currentUser = input<UserProfile | null>(null);
+  readonly join = output<void>();
+  readonly leave = output<void>();
+}
+````
+
+## File: src/app/features/clubs/club-detail/info/club-info.component.html
+````html
+@if (club().meetingDurationMinutes || club().address) {
+  <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+    <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.meeting_info_title' | translate }}</h2>
+    <dl class="space-y-3">
+      @if (club().meetingDurationMinutes) {
+        <div class="flex items-center gap-3">
+          <dt class="text-sm text-gray-500 dark:text-gray-400 w-28 flex-shrink-0">{{ 'CLUB_DETAIL.duration_label' | translate }}</dt>
+          <dd class="text-sm font-medium text-gray-900 dark:text-white">{{ club().meetingDurationMinutes }} {{ 'CLUB_DETAIL.minutes_abbr' | translate }}</dd>
+        </div>
+      }
+      @if (club().address) {
+        <div class="flex items-start gap-3">
+          <dt class="text-sm text-gray-500 dark:text-gray-400 w-28 flex-shrink-0">{{ 'CLUB_DETAIL.address_label' | translate }}</dt>
+          <dd class="text-sm text-gray-900 dark:text-white">
+            {{ club().address }}
+            <a [href]="'https://maps.google.com/search?q=' + club().address"
+               target="_blank" rel="noopener noreferrer"
+               class="ml-2 text-xs text-primary-600 dark:text-primary-400 hover:underline">
+              {{ 'CLUB_DETAIL.view_on_map' | translate }}
+            </a>
+          </dd>
+        </div>
+      }
+    </dl>
+  </section>
+}
+@if (club().afterMeetingVenue) {
+  <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+    <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.after_meeting_title' | translate }}</h2>
+    <div class="flex items-start gap-3">
+      <span class="text-2xl" aria-hidden="true">☕</span>
+      <div>
+        <p class="font-semibold text-gray-900 dark:text-white">{{ club().afterMeetingVenue!.name }}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ club().afterMeetingVenue!.address }}</p>
+        @if (club().afterMeetingVenue!.description) {
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-2 italic">{{ club().afterMeetingVenue!.description }}</p>
+        }
+      </div>
+    </div>
+  </section>
+}
+````
+
+## File: src/app/features/clubs/club-detail/info/club-info.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+} from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { Club } from '../../../../core/models/club.model';
+@Component({
+  selector: 'app-club-info',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslateModule],
+  templateUrl: './club-info.component.html',
+})
+export class ClubInfoComponent {
+  readonly club = input.required<Club>();
+}
+````
+
+## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.html
+````html
+<div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <a
+      [routerLink]="['/clubs', clubId(), 'quizzes']"
+      class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">📝</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
+      </div>
+    </a>
+    <a
+      [routerLink]="['/clubs', clubId(), 'randomizer']"
+      class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">🎲</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
+      </div>
+    </a>
+  </div>
+</div>
+````
+
+## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+@Component({
+  selector: 'app-club-manage-panel',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule],
+  templateUrl: './club-manage-panel.component.html',
+})
+export class ClubManagePanelComponent {
+  readonly clubId = input.required<string>();
+}
+````
+
+## File: src/app/features/clubs/club-detail/members/club-members-list.component.html
+````html
+<section [attr.aria-label]="'MEMBERS.title' | translate" class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
+    {{ 'MEMBERS.title' | translate }} ({{ members().length }})
+  </h2>
+  @if (members().length === 0) {
+    <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'MEMBERS.empty' | translate }}</p>
+  } @else {
+    <ul class="divide-y divide-gray-100 dark:divide-gray-700">
+      @for (member of members(); track member.userId) {
+        <li class="flex items-center gap-4 py-3 relative">
+          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0" aria-hidden="true">
+            {{ member.displayName | initials }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+              {{ member.displayName }}
+            </p>
+            @if (member.role === 'organizer') {
+              <span class="inline-block text-xs font-medium text-accent-600 dark:text-accent-400">
+                {{ 'MEMBERS.organizer' | translate }}
+              </span>
+            } @else {
+              <span class="inline-block text-xs text-gray-400 dark:text-gray-500">
+                {{ 'MEMBERS.member' | translate }}
+              </span>
+            }
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+            @if (canSeeSocials(member)) {
+              @if (member.socials?.telegram) {
+                <a [href]="'https://t.me/' + member.socials!.telegram" target="_blank" rel="noopener noreferrer"
+                   class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram: @' + member.socials!.telegram" title="Telegram">
+                  ✈️
+                </a>
+              }
+              @if (member.socials?.instagram) {
+                <a [href]="'https://instagram.com/' + member.socials!.instagram" target="_blank" rel="noopener noreferrer"
+                   class="text-pink-500 hover:text-pink-600 text-lg" [attr.aria-label]="'Instagram: @' + member.socials!.instagram" title="Instagram">
+                  📸
+                </a>
+              }
+              @if (member.socials?.github) {
+                <a [href]="'https://github.com/' + member.socials!.github" target="_blank" rel="noopener noreferrer"
+                   class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" [attr.aria-label]="'GitHub: ' + member.socials!.github" title="GitHub">
+                  🐙
+                </a>
+              }
+              @if (member.socials?.goodreads) {
+                <a [href]="'https://goodreads.com/' + member.socials!.goodreads" target="_blank" rel="noopener noreferrer"
+                   class="text-amber-600 hover:text-amber-700 text-lg" title="Goodreads">
+                  📚
+                </a>
+              }
+              @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
+                <button
+                  type="button"
+                  (click)="toggleQr(member.userId)"
+                  class="inline-flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 transition-colors ml-1"
+                  [attr.aria-expanded]="showQrForUser() === member.userId"
+                  [attr.aria-label]="'MEMBERS.show_qr' | translate"
+                >
+                  <span aria-hidden="true">⊡</span> {{ 'MEMBERS.show_qr' | translate }}
+                </button>
+                @if (showQrForUser() === member.userId) {
+                  <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 p-4 flex flex-col items-center gap-2"
+                       aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
+                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
+                    <app-qr-code [value]="buildQrValue(member)" [size]="160" />
+                    <button type="button" (click)="toggleQr(member.userId)"
+                            class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mt-1">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
+                  </dialog>
+                }
+              }
+            } @else {
+              <span class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                🔒 {{ 'MEMBERS.socials_hidden' | translate }}
+              </span>
+            }
+            @if (isOwner() && member.role !== 'organizer') {
+              <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">
+                <button type="button" (click)="kick.emit(member.userId)"
+                        class="rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-red-100 dark:hover:bg-red-900/30 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                         [attr.aria-label]="'MEMBERS.kick' | translate">
+                  {{ 'MEMBERS.kick' | translate }}
+                </button>
+                <button type="button" (click)="toggleBanMenu(member.userId)"
+                        class="rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-orange-100 dark:hover:bg-orange-900/30 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                        [attr.aria-expanded]="showBanMenu() === member.userId">
+                  {{ 'MEMBERS.ban' | translate }}
+                </button>
+                @if (showBanMenu() === member.userId) {
+                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 py-1 min-w-36">
+                    @for (duration of banDurations; track duration) {
+                      <li>
+                        <button type="button" (click)="emitBan(member.userId, duration)"
+                                class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                          @if (duration === 1) { {{ 'MEMBERS.ban_1' | translate }} }
+                          @else if (duration === 3) { {{ 'MEMBERS.ban_3' | translate }} }
+                          @else if (duration === 5) { {{ 'MEMBERS.ban_5' | translate }} }
+                          @else { {{ 'MEMBERS.ban_permanent' | translate }} }
+                        </button>
+                      </li>
+                    }
+                  </menu>
+                }
+              </div>
+            }
+          </div>
+        </li>
+      }
+    </ul>
   }
-  clear(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    this._token.set(null);
+</section>
+````
+
+## File: src/app/features/clubs/club-detail/members/club-members-list.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+  signal,
+} from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { ClubMemberDetail, BanRecord, BanDuration } from '../../../../core/models/club.model';
+import { QrCodeComponent } from '../../../../shared/components/qr-code/qr-code.component';
+import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
+@Component({
+  selector: 'app-club-members-list',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslateModule, QrCodeComponent, InitialsPipe],
+  templateUrl: './club-members-list.component.html',
+})
+export class ClubMembersListComponent {
+  readonly members = input.required<ClubMemberDetail[]>();
+  readonly clubBans = input.required<BanRecord[]>();
+  readonly isOwner = input.required<boolean>();
+  readonly currentUserId = input<string | null>(null);
+  readonly kick = output<string>();
+  readonly ban = output<{ userId: string; duration: BanDuration }>();
+  readonly showQrForUser = signal<string | null>(null);
+  readonly showBanMenu = signal<string | null>(null);
+  readonly banDurations: BanDuration[] = [1, 3, 5, 'permanent'];
+  canSeeSocials(member: ClubMemberDetail): boolean {
+    return member.socialsPublic || this.isOwner();
   }
-  snapshot(): string | null {
-    return this._token();
+  toggleQr(userId: string): void {
+    this.showQrForUser.update(current => current === userId ? null : userId);
+  }
+  toggleBanMenu(userId: string): void {
+    this.showBanMenu.update(current => current === userId ? null : userId);
+  }
+  emitBan(userId: string, duration: BanDuration): void {
+    this.ban.emit({ userId, duration });
+    this.showBanMenu.set(null);
+  }
+  buildQrValue(member: ClubMemberDetail): string {
+    if (!member.socials) return member.displayName;
+    const lines: string[] = [`📚 ${member.displayName}`];
+    const s = member.socials;
+    if (s.telegram)   lines.push(`Telegram: t.me/${s.telegram}`);
+    if (s.instagram)  lines.push(`Instagram: instagram.com/${s.instagram}`);
+    if (s.twitter)    lines.push(`Twitter: x.com/${s.twitter}`);
+    if (s.linkedin)   lines.push(`LinkedIn: linkedin.com/in/${s.linkedin}`);
+    if (s.github)     lines.push(`GitHub: github.com/${s.github}`);
+    if (s.goodreads)  lines.push(`Goodreads: goodreads.com/${s.goodreads}`);
+    return lines.join('\n');
   }
 }
+````
+
+## File: src/app/features/clubs/club-detail/schedule/club-schedule.component.html
+````html
+@if (isOwner()) {
+  <section [attr.aria-label]="'CLUB_DETAIL.manage_title' | translate" class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6 space-y-5">
+    <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
+    <div class="flex flex-wrap gap-3">
+      @if (club()!.status === 'active') {
+        <button
+          type="button"
+          (click)="pauseRequested.emit()"
+          class="inline-flex items-center gap-2 rounded-xl bg-yellow-400 hover:bg-yellow-500 px-4 py-2.5 text-sm font-semibold text-yellow-900 transition-colors"
+          [attr.aria-label]="'CLUB_DETAIL.pause' | translate"
+        >
+          ⏸ {{ 'CLUB_DETAIL.pause' | translate }}
+        </button>
+      }
+      @if (club()!.status !== 'cancelled') {
+        <button
+          type="button"
+          (click)="cancelRequested.emit()"
+          class="inline-flex items-center gap-2 rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+          [attr.aria-label]="'CLUB_DETAIL.cancel' | translate"
+        >
+          ✕ {{ 'CLUB_DETAIL.cancel' | translate }}
+        </button>
+      }
+    </div>
+    @if (club()!.status === 'paused') {
+      <form
+        (ngSubmit)="submitReschedule()"
+        class="flex flex-col sm:flex-row items-start sm:items-end gap-3"
+        [attr.aria-label]="'CLUB_DETAIL.reschedule' | translate"
+      >
+        <div class="flex flex-col gap-1.5 flex-1">
+          <label
+            for="reschedule-date"
+            class="text-xs font-medium text-gray-600 dark:text-gray-400"
+          >
+            {{ 'CLUB_DETAIL.new_date' | translate }}
+          </label>
+          <input
+            id="reschedule-date"
+            type="datetime-local"
+            [formControl]="rescheduleDate"
+            class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
+            aria-required="true"
+          />
+        </div>
+        <button
+          type="submit"
+          [disabled]="!rescheduleDate.value"
+          class="inline-flex items-center gap-2 rounded-xl bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-semibold text-white transition-colors"
+          [attr.aria-label]="'CLUB_DETAIL.reschedule_submit' | translate"
+        >
+          ✓ {{ 'CLUB_DETAIL.reschedule_submit' | translate }}
+        </button>
+      </form>
+    }
+  </section>
+}
+````
+
+## File: src/app/features/clubs/club-detail/schedule/club-schedule.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+} from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
+import { Club } from '../../../../core/models/club.model';
+@Component({
+  selector: 'app-club-schedule',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslateModule],
+  templateUrl: './club-schedule.component.html',
+})
+export class ClubScheduleComponent {
+  readonly club = input.required<Club>();
+  readonly isOwner = input.required<boolean>();
+  readonly pauseRequested = output<void>();
+  readonly cancelRequested = output<void>();
+  readonly reschedule = output<string>();
+  readonly rescheduleDate = new FormControl<string>('', { nonNullable: true });
+  submitReschedule(): void {
+    const date = this.rescheduleDate.value;
+    if (!date) return;
+    this.reschedule.emit(date);
+    this.rescheduleDate.reset();
+  }
+}
+````
+
+## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
+````html
+<li class="rounded-2xl bg-white dark:bg-gray-800 shadow hover:shadow-lg transition-shadow flex flex-col overflow-hidden">
+  <div class="relative">
+    @if (club().coverUrl) {
+      <img [src]="club().coverUrl" [alt]="''" class="h-32 w-full object-cover" aria-hidden="true" loading="lazy" />
+    } @else {
+      <div class="h-32 bg-gradient-to-br from-primary-400 to-accent-500" aria-hidden="true"></div>
+    }
+    @if (club().theme) {
+      <span class="absolute top-3 left-3 rounded-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm px-2.5 py-0.5 text-xs font-semibold text-primary-700 dark:text-primary-300 shadow">
+        {{ club().theme }}
+      </span>
+    }
+    @if (club().status !== 'active') {
+      <span class="absolute top-3 right-3 rounded-full px-2.5 py-0.5 text-xs font-semibold shadow"
+            [class]="club().status === 'paused'
+              ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300'
+              : 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300'">
+        {{ club().status === 'paused' ? ('CLUBS.paused' | translate) : ('CLUBS.cancelled' | translate) }}
+      </span>
+    }
+  </div>
+  <div class="flex flex-col flex-1 p-4 gap-3">
+    <div>
+      <h3 class="font-semibold text-gray-900 dark:text-white leading-snug line-clamp-1 flex items-center gap-1.5">
+        {{ club().name }}
+        @if (isOwned()) {
+          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400" title="Ваш клуб">👑</span>
+        }
+      </h3>
+      @if (club().nextMeetingDate) {
+        <div class="flex items-center gap-2 mt-1">
+          <span class="text-xs text-accent-600 dark:text-accent-400 font-medium">
+            📅 {{ club().nextMeetingDate | formatDate }}
+          </span>
+          @if (daysUntil(club().nextMeetingDate!) <= 7 && daysUntil(club().nextMeetingDate!) >= 0) {
+            <span class="text-xs font-semibold text-orange-600 dark:text-orange-400">
+              · за {{ daysUntil(club().nextMeetingDate!) }} дн.
+            </span>
+          }
+        </div>
+      }
+    </div>
+    @if (club().currentBook) {
+      <div class="rounded-xl bg-gray-50 dark:bg-gray-700/50 p-3 flex gap-3 items-start">
+        <span class="text-2xl shrink-0" aria-hidden="true">📖</span>
+        <div class="min-w-0">
+          <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ club().currentBook!.title }}</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 italic">{{ club().currentBook!.author }}</p>
+          <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">{{ club().currentBook!.description }}</p>
+        </div>
+      </div>
+    }
+    @if (club().address) {
+      <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
+        <span aria-hidden="true">📍</span>
+        <span class="truncate">{{ club().address }}</span>
+      </p>
+    }
+    @if (club().memberPreviews.length > 0) {
+      <div class="flex items-center gap-1.5">
+        @for (name of club().memberPreviews.slice(0, 4); track name) {
+          <div
+            class="h-7 w-7 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0"
+            [attr.title]="name"
+            aria-hidden="true"
+          >
+            {{ name | initials }}
+          </div>
+        }
+        @if (club().memberCount > 4) {
+          <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">+{{ club().memberCount - 4 }}</span>
+        }
+      </div>
+    }
+    <div class="flex items-center gap-2 mt-auto pt-1">
+      <a
+        [routerLink]="['/clubs', club().id]"
+        class="flex-1 text-center rounded-xl border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
+      >
+        {{ 'CLUBS.view' | translate }}
+      </a>
+      @if (isAuthenticated() && !isMember() && club().status === 'active') {
+        <button
+          type="button"
+          (click)="join.emit()"
+          [disabled]="joining()"
+          class="flex-1 rounded-xl bg-primary-600 hover:bg-primary-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          [attr.aria-label]="('CLUBS.join' | translate) + ' ' + club().name"
+        >
+          @if (joining()) { ⏳ } @else { {{ 'CLUBS.join' | translate }} }
+        </button>
+      } @else if (isAuthenticated() && isMember()) {
+        <span class="flex-1 text-center rounded-xl bg-green-50 dark:bg-green-900/20 px-3 py-1.5 text-xs font-medium text-green-700 dark:text-green-400">{{ 'CLUBS.member_badge' | translate }}</span>
+      }
+    </div>
+  </div>
+</li>
+````
+
+## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { Club } from '../../../../core/models/club.model';
+import { TranslateModule } from '@ngx-translate/core';
+import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
+import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
+@Component({
+  selector: 'app-club-card',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, InitialsPipe, FormatDatePipe],
+  templateUrl: './club-card.component.html',
+})
+export class ClubCardComponent {
+  readonly club = input.required<Club>();
+  readonly isMember = input.required<boolean>();
+  readonly isOwned = input<boolean>(false);
+  readonly isAuthenticated = input<boolean>(false);
+  readonly joining = input<boolean>(false);
+  readonly join = output<void>();
+  protected daysUntil(dateStr: string): number {
+    const now = new Date();
+    const meeting = new Date(dateStr);
+    return Math.ceil((meeting.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  }
+}
+````
+
+## File: src/app/features/profile/role-selector/profile-role-selector.component.html
+````html
+<fieldset class="grid grid-cols-2 gap-4 border-0 p-0 m-0">
+  <legend class="sr-only">{{ 'PROFILE.role_title' | translate }}</legend>
+  <button
+    type="button"
+    (click)="roleChange.emit('user')"
+    [attr.aria-pressed]="currentRole() === 'user'"
+    class="rounded-xl border-2 p-5 text-left transition-all duration-200 focus:outline-none
+           focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+    [class]="currentRole() === 'user'
+      ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+      : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700
+         hover:bg-gray-50 dark:hover:bg-gray-700/40'"
+  >
+    <div class="text-3xl mb-2" aria-hidden="true">📖</div>
+    <div class="font-semibold text-gray-900 dark:text-white text-sm">{{ 'PROFILE.role_reader' | translate }}</div>
+    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+      {{ 'PROFILE.role_reader_desc' | translate }}
+    </div>
+    @if (currentRole() === 'user') {
+      <span
+        class="mt-3 inline-flex items-center gap-1 rounded-full bg-primary-600 px-2.5 py-0.5
+               text-xs font-medium text-white"
+      >
+        {{ 'PROFILE.active_badge' | translate }}
+      </span>
+    }
+  </button>
+  <button
+    type="button"
+    (click)="roleChange.emit('organizer')"
+    [attr.aria-pressed]="currentRole() === 'organizer'"
+    class="rounded-xl border-2 p-5 text-left transition-all duration-200 focus:outline-none
+           focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
+    [class]="currentRole() === 'organizer'
+      ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/20'
+      : 'border-gray-200 dark:border-gray-700 hover:border-accent-300 dark:hover:border-accent-700
+         hover:bg-gray-50 dark:hover:bg-gray-700/40'"
+  >
+    <div class="text-3xl mb-2" aria-hidden="true">🎯</div>
+    <div class="font-semibold text-gray-900 dark:text-white text-sm">{{ 'PROFILE.role_organizer' | translate }}</div>
+    <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+      {{ 'PROFILE.role_organizer_desc' | translate }}
+    </div>
+    @if (currentRole() === 'organizer') {
+      <span
+        class="mt-3 inline-flex items-center gap-1 rounded-full bg-accent-600 px-2.5 py-0.5
+               text-xs font-medium text-white"
+      >
+        {{ 'PROFILE.active_badge' | translate }}
+      </span>
+    }
+  </button>
+</fieldset>
+````
+
+## File: src/app/features/profile/role-selector/profile-role-selector.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
+@Component({
+  selector: 'app-profile-role-selector',
+  standalone: true,
+  imports: [TranslateModule],
+  templateUrl: './profile-role-selector.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ProfileRoleSelectorComponent {
+  readonly currentRole = input.required<string>();
+  readonly roleChange = output<'user' | 'organizer'>();
+}
+````
+
+## File: src/app/features/profile/stats/profile-stats.component.html
+````html
+<dl class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+  <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
+    <div class="text-3xl mb-2" aria-hidden="true">📚</div>
+    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.clubs_joined' | translate }}</dt>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">
+      {{ stats()?.clubsJoined ?? 0 }}
+    </dd>
+  </div>
+  <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
+    <div class="text-3xl mb-2" aria-hidden="true">🧠</div>
+    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_taken' | translate }}</dt>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">
+      {{ stats()?.quizzesTaken ?? 0 }}
+    </dd>
+  </div>
+  <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
+    <div class="text-3xl mb-2" aria-hidden="true">🏆</div>
+    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_won' | translate }}</dt>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">
+      {{ stats()?.quizWins ?? 0 }}
+    </dd>
+  </div>
+  <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
+    <div class="text-3xl mb-2" aria-hidden="true">❤️</div>
+    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.likes_received' | translate }}</dt>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">
+      {{ stats()?.likesReceived ?? 0 }}
+    </dd>
+  </div>
+  <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
+    <div class="text-3xl mb-2" aria-hidden="true">📖</div>
+    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.books_read' | translate }}</dt>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">
+      {{ stats()?.booksRead ?? 0 }}
+    </dd>
+  </div>
+</dl>
+@if (!stats()) {
+  <p class="text-center text-sm text-gray-400 dark:text-gray-500 mt-2">
+    {{ 'PROFILE.no_stats' | translate }}
+  </p>
+}
+````
+
+## File: src/app/features/profile/stats/profile-stats.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { UserStats } from '../../../core/models/user.model';
+@Component({
+  selector: 'app-profile-stats',
+  standalone: true,
+  imports: [TranslateModule],
+  templateUrl: './profile-stats.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ProfileStatsComponent {
+  readonly stats = input<UserStats | null | undefined>(null);
+}
+````
+
+## File: src/app/shared/components/social-badges/social-badges.component.html
+````html
+<ul class="flex flex-wrap gap-2 list-none p-0 m-0" [attr.aria-label]="'PROFILE.socials_title' | translate">
+  @if (socials().telegram) {
+    <li>
+      <a
+        [href]="'https://t.me/' + socials().telegram"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-full border border-blue-200
+               dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5
+               text-xs font-medium text-blue-700 dark:text-blue-300
+               hover:bg-blue-100 dark:hover:bg-blue-900/50
+               transition-colors duration-150 focus:outline-none focus:ring-2
+               focus:ring-blue-500 focus:ring-offset-2"
+        [attr.aria-label]="'Telegram: @' + socials().telegram"
+      >
+        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/>
+        </svg>
+        &#64;{{ socials().telegram }}
+      </a>
+    </li>
+  }
+  @if (socials().instagram) {
+    <li>
+      <a
+        [href]="'https://instagram.com/' + socials().instagram"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-full border border-pink-200
+               dark:border-pink-800 bg-pink-50 dark:bg-pink-900/30 px-3 py-1.5
+               text-xs font-medium bg-clip-text
+               bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500
+               text-transparent hover:opacity-80
+               transition-opacity duration-150 focus:outline-none focus:ring-2
+               focus:ring-pink-500 focus:ring-offset-2"
+        [attr.aria-label]="'Instagram: @' + socials().instagram"
+      >
+        <svg class="h-3.5 w-3.5 shrink-0 text-pink-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>
+        </svg>
+        &#64;{{ socials().instagram }}
+      </a>
+    </li>
+  }
+  @if (socials().twitter) {
+    <li>
+      <a
+        [href]="'https://x.com/' + socials().twitter"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-full border border-gray-300
+               dark:border-gray-600 bg-gray-900 dark:bg-gray-950 px-3 py-1.5
+               text-xs font-medium text-white
+               hover:bg-gray-700 dark:hover:bg-gray-800
+               transition-colors duration-150 focus:outline-none focus:ring-2
+               focus:ring-gray-500 focus:ring-offset-2"
+        [attr.aria-label]="'Twitter / X: @' + socials().twitter"
+      >
+        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+        &#64;{{ socials().twitter }}
+      </a>
+    </li>
+  }
+  @if (socials().linkedin) {
+    <li>
+      <a
+        [href]="socials().linkedin!.startsWith('http')
+          ? socials().linkedin!
+          : 'https://linkedin.com/in/' + socials().linkedin"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-full border border-blue-300
+               dark:border-blue-700 bg-blue-600 dark:bg-blue-700 px-3 py-1.5
+               text-xs font-medium text-white
+               hover:bg-blue-700 dark:hover:bg-blue-600
+               transition-colors duration-150 focus:outline-none focus:ring-2
+               focus:ring-blue-500 focus:ring-offset-2"
+        [attr.aria-label]="'LinkedIn: ' + socials().linkedin"
+      >
+        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 23.2 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+        </svg>
+        LinkedIn
+      </a>
+    </li>
+  }
+  @if (socials().github) {
+    <li>
+      <a
+        [href]="'https://github.com/' + socials().github"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-full border border-gray-300
+               dark:border-gray-600 bg-gray-800 dark:bg-gray-900 px-3 py-1.5
+               text-xs font-medium text-gray-100
+               hover:bg-gray-700 dark:hover:bg-gray-800
+               transition-colors duration-150 focus:outline-none focus:ring-2
+               focus:ring-gray-500 focus:ring-offset-2"
+        [attr.aria-label]="'GitHub: ' + socials().github"
+      >
+        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+        </svg>
+        {{ socials().github }}
+      </a>
+    </li>
+  }
+  @if (socials().goodreads) {
+    <li>
+      <a
+        [href]="socials().goodreads!.startsWith('http')
+          ? socials().goodreads!
+          : 'https://goodreads.com/' + socials().goodreads"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-full border border-amber-300
+               dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-3 py-1.5
+               text-xs font-medium text-amber-800 dark:text-amber-300
+               hover:bg-amber-100 dark:hover:bg-amber-900/50
+               transition-colors duration-150 focus:outline-none focus:ring-2
+               focus:ring-amber-500 focus:ring-offset-2"
+        [attr.aria-label]="'Goodreads: ' + socials().goodreads"
+      >
+        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19.525 15.977V.49h-2.059v2.906h-.064a5.015 5.015 0 0 0-1.949-2.406C14.548.316 13.441 0 12.192 0c-1.648 0-3.037.434-4.175 1.303-1.136.869-1.927 2.045-2.373 3.527S5.07 7.857 5.07 9.481c0 1.624.188 3.069.562 4.337.374 1.268 1.004 2.326 1.889 3.172.885.847 2.056 1.271 3.512 1.271 1.248 0 2.35-.304 3.303-.911a4.961 4.961 0 0 0 1.999-2.456h.063v2.904c0 1.547-.272 2.806-.816 3.777-.544.971-1.33 1.666-2.359 2.085-1.029.419-2.264.628-3.703.628-.802 0-1.608-.1-2.416-.302a9.11 9.11 0 0 1-2.258-.961l-.88 1.674c.737.481 1.607.852 2.613 1.114 1.006.262 2.03.393 3.073.393 2.267 0 4.092-.411 5.469-1.231 1.377-.82 2.357-1.913 2.937-3.277.581-1.364.871-2.891.871-4.582zm-7.301-.34c-1.161 0-2.124-.31-2.888-.932-.764-.621-1.323-1.479-1.677-2.574-.354-1.095-.531-2.301-.531-3.617 0-2.006.401-3.62 1.203-4.845.802-1.225 2.04-1.837 3.717-1.837 1.677 0 2.908.609 3.691 1.827.783 1.218 1.176 2.855 1.176 4.913 0 1.296-.173 2.491-.519 3.581-.346 1.09-.895 1.955-1.649 2.591-.754.637-1.71.953-2.862.953-.001 0 .002-.06.339-.06z"/>
+        </svg>
+        Goodreads
+      </a>
+    </li>
+  }
+</ul>
+````
+
+## File: src/app/shared/components/social-badges/social-badges.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { UserSocials } from '../../../core/models/user.model';
+@Component({
+  selector: 'app-social-badges',
+  standalone: true,
+  imports: [TranslateModule],
+  templateUrl: './social-badges.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class SocialBadgesComponent {
+  readonly socials = input.required<UserSocials>();
+}
+````
+
+## File: src/app/shared/components/social-link-field/social-link-field.component.html
+````html
+<div>
+  <label
+    [for]="'social-' + config().key"
+    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+  >
+    <span [class]="config().labelClass">{{ config().label }}</span>
+  </label>
+  <input
+    [id]="'social-' + config().key"
+    type="text"
+    [formControl]="$any(form().controls)[config().key]"
+    [placeholder]="config().placeholder"
+    autocomplete="off"
+    class="w-full rounded-xl border border-gray-200 dark:border-gray-700
+           bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
+           text-gray-900 dark:text-white placeholder-gray-400
+           focus:outline-none focus:ring-2 focus:border-transparent
+           transition-all duration-200"
+    [class]="config().focusRingClass"
+  />
+</div>
+````
+
+## File: src/app/shared/components/social-link-field/social-link-field.component.ts
+````typescript
+import { Component, input } from '@angular/core';
+import { ReactiveFormsModule, FormGroup } from '@angular/forms';
+export interface SocialField {
+  key: string;
+  label: string;
+  labelClass: string;
+  placeholder: string;
+  focusRingClass: string;
+}
+@Component({
+  selector: 'app-social-link-field',
+  standalone: true,
+  imports: [ReactiveFormsModule],
+  templateUrl: './social-link-field.component.html',
+})
+export class SocialLinkFieldComponent {
+  readonly config = input.required<SocialField>();
+  readonly form = input.required<FormGroup>();
+}
+````
+
+## File: plan.md
+````markdown
+Plan: Anti-pattern Fixes & Component Decomposition                                                                                                                                                                                                                     
+                                                                                                                                                                                                                                                                        
+ Context                                                                                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                        
+ Аудит кодобази виявив 4 класи проблем, що впливають на підтримуваність і коректність:
+ 1. Баги — 3 unmanaged .subscribe() у ChatService (memory leaks)
+ 2. Монолітні компоненти — club-detail (228 TS + 463 HTML), profile.html (643 рядки)
+ 3. Дублювання — extractApiError() у двох сервісах, 6× повтор соцмереж у profile.html
+ 4. Антипатерни Angular 20 — ngOnInit замість effect() у quiz компонентах, .subscribe() у header
+
+ ---
+ Wave 1 — Бугфікси (КРИТИЧНО, паралельно)
+
+ Агент A: dev — ChatService subscribe → firstValueFrom
+
+ Файл: src/app/core/services/chat.service.ts
+
+ Замінити всі .subscribe() виклики на firstValueFrom():
+ // Замість:
+ this.http.get<ApiChatRoom[]>(...).subscribe({ next: raw => {...}, error: ... });
+
+ // Стати:
+ firstValueFrom(this.http.get<ApiChatRoom[]>(...))
+   .then(raw => { this._rooms.set(raw.map(mapRoom)); ... })
+   .catch((err: unknown) => console.error('[ChatService]', err));
+ Те саме для loadMessages() та sendMessage().
+
+ Агент B: dev — Shared util + header fix
+
+ 1. Новий файл src/app/core/api/api-error.util.ts:
+ import { HttpErrorResponse } from '@angular/common/http';
+
+ export function extractApiError(err: unknown): string {
+   if (err instanceof HttpErrorResponse) {
+     return (err.error as { detail?: string })?.detail ?? err.message ?? 'Unknown error';
+   }
+   return 'Unknown error';
+ }
+
+ 2. Оновити src/app/core/auth/auth.service.ts — видалити локальний extractApiError, імпортувати з api-error.util.ts
+
+ 3. Оновити src/app/core/services/quiz.service.ts — те саме
+
+ 4. Оновити src/app/layout/header/header.component.ts:
+ // Замість:
+ this.translate.use(next).subscribe();
+ // Стати:
+ firstValueFrom(this.translate.use(next));
+
+ ---
+ Wave 2 — Decomposition (паралельно після Wave 1)
+
+ Агент C: ui + dev — Club Detail розбиття
+
+ Проблема: club-detail.component.ts (228 рядків) + club-detail.component.html (463 рядки) — 6 відповідальностей.
+
+ Що виокремити:
+
+ src/app/features/clubs/club-detail/members/club-members-list.component.ts (новий)
+
+ Inputs: members, clubBans, isOwner, currentUserId
+ Outputs: kick EventEmitter, ban EventEmitter
+ Переносить: секцію HTML рядки ~238-362 (список учасників + QR + kick/ban меню), showBanMenu signal, showQrForUser signal, buildQrValue(), banDurations
+
+ src/app/features/clubs/club-detail/schedule/club-schedule.component.ts (новий)
+
+ Inputs: club, isOwner
+ Outputs: pause EventEmitter, cancel EventEmitter, reschedule EventEmitter
+ Переносить: rescheduleDate FormControl, rescheduleSubmit(), pauseClub(), cancelClub(), deleteCountdown computed
+
+ Що лишається в club-detail.component.ts:
+ - loadClub(), club, members, clubBans signals
+ - onJoin(), onLeave()
+ - isMember, isClubOwner, organizerProfile computeds
+ - isLoading, errorMessage, isActionLoading
+
+ Агент D: ui — Profile соцмережі дедуплікація
+
+ Проблема: profile.component.html (643 рядки) — соцмережі повторені 6× по ~40 рядків кожна.
+
+ 1. Новий src/app/shared/components/social-link-field/social-link-field.component.ts:
+ @Component({
+   selector: 'app-social-link-field',
+   // Input: icon, label, placeholder, formControlName
+   // Рендерить один рядок форми соцмережі
+ })
+
+ 2. Оновити profile.component.html — замінити 6 блоків соцмереж на @for:
+ @for (social of socialFields; track social.key) {
+   <app-social-link-field [config]="social" [form]="socialsForm" />
+ }
+
+ 3. Додати socialFields масив у profile.component.ts:
+ protected readonly socialFields = [
+   { key: 'telegram', icon: '...', label: 'PROFILE.telegram', placeholder: '@username' },
+   { key: 'instagram', icon: '...', label: 'PROFILE.instagram', placeholder: '@handle' },
+   // ...6 соцмереж
+ ];
+
+ Також: замінити 3× setTimeout(() => signal.set(false), 3000) на this.toast.show(...) через існуючий ToastService.
+
+ ---
+ Wave 3 — Angular 20 патерни (після Wave 2)
+
+ Агент E: dev — ngOnInit → effect() у quiz компонентах
+
+ Файли: src/app/features/quiz/quiz-list/quiz-list.component.ts, src/app/features/quiz/quiz-create/quiz-create.component.ts
+
+ // Замість ngOnInit:
+ ngOnInit(): void {
+   this.clubId = this.route.snapshot.params['id'];
+   this.quizService.loadQuizzes(this.clubId);
+ }
+
+ // Стати (Angular 20 з withComponentInputBinding):
+ readonly clubId = input<string>('');
+ constructor() {
+   effect(() => {
+     const id = this.clubId();
+     if (id) this.quizService.loadQuizzes(id).catch(...);
+   });
+ }
+
+ Перевірити що withComponentInputBinding() є в app.config.ts → якщо ні, додати.
+
+ Агент F: ui — Clubs List card extraction
+
+ Проблема: clubs-list.component.html (320 рядків) — клуб-картка (рядки 84-202) вбудована в петлю.
+
+ Новий src/app/features/clubs/clubs-list/club-card/club-card.component.ts:
+ - Input: club: Club, isMember: boolean
+ - Output: join EventEmitter, navigate EventEmitter
+ - Переносить: HTML рядки 84-202 (обкладинка, теги, учасники, статус, кнопки)
+ - Спрощує clubs-list.component.html до ~120 рядків
+
+ ---
+ Wave 4 — Верифікація (Агент reviewer)
+
+ 1. grep -r "\.subscribe()" src/app --include="*.ts" — перевірити 0 unmanaged підписок
+ 2. grep -r "extractApiError" src/app --include="*.ts" — тільки один імпорт з api-error.util.ts
+ 3. wc -l src/app/features/clubs/club-detail/club-detail.component.{ts,html} — TS < 150, HTML < 200
+ 4. wc -l src/app/features/profile/profile.component.html — < 300
+ 5. npm run build && npm run lint && npm run test -- --watchAll=false
+
+ ---
+ Схема агентів
+
+ Wave 1: [dev] ChatService subscribe fix  ║  [dev] extractApiError util + header fix
+         (паралельно)
+              ↓
+ Wave 2: [ui/dev] club-detail split  ║  [ui] profile socials dedup
+         (паралельно)
+              ↓
+ Wave 3: [dev] quiz ngOnInit→effect  ║  [ui] clubs-list club-card
+         (паралельно)
+              ↓
+ Wave 4: [reviewer] grep перевірки + build/lint/test
+
+ ---
+ Файли що змінюються
+
+ ┌────────────────────────────────────────────────────────────────────────────┬────────────────────────────┐
+ │                                    Файл                                    │            Дія             │
+ ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
+ │ src/app/core/api/api-error.util.ts                                         │ Створити                   │
+ ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
+ │ src/app/core/auth/auth.service.ts                                          │ Оновити імпорт             │
+ ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
+ │ src/app/core/services/quiz.service.ts                                      │ Оновити імпорт             │
+ ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
+ │ src/app/core/services/chat.service.ts                                      │ subscribe → firstValueFrom │
+ ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
+ │ src/app/layout/header/header.component.ts                                  │ subscribe → firstValueFrom │
+ ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
+ │ src/app/features/clubs/club-detail/club-detail.component.{ts,html}         │ Видалити секції            │
+ ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
+ │ src/app/features/clubs/club-detail/members/club-members-list.component.ts  │ Створити                   │
+ ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
+ │ src/app/features/clubs/club-detail/schedule/club-schedule.component.ts     │ Створити                   │
+ ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
+ │ src/app/features/clubs/clubs-list/club-card/club-card.component.ts         │ Створити                   │
+ ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
+ │ src/app/features/profile/profile.component.{ts,html}                       │ Дедуплікація               │
+ ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
+ │ src/app/shared/components/social-link-field/social-link-field.component.ts │ Створити                   │
+ ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
+ │ src/app/features/quiz/quiz-list/quiz-list.component.ts                     │ ngOnInit → effect          │
+ ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
+ │ src/app/features/quiz/quiz-create/quiz-create.component.ts                 │ ngOnInit → effect          │
+ └────────────────────────────────────────────────────────────────────────────┴────────────────────────────┘
+
+ Що НЕ входить у план (low priority)
+
+ - Loading state signal factory (8 компонентів дублюють — але відносно простий шаблон)
+ - Form builder utility (кожна форма унікальна за структурою)
+ - SEO setup guard (вже нормально з setPageI18n)
+ - api-mappers.ts hardcoded 0s (чекаємо бекенд підтримки)
 ````
 
 ## File: .github/workflows/auto-labeler.yml
@@ -792,6 +1832,174 @@ for (const outputPath of OUTPUT_FILES) {
 }
 ````
 
+## File: src/app/core/api/api-mappers.ts
+````typescript
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+import { AfterMeetingVenue, BanDuration, BanRecord, Club, ClubBook, ClubMemberDetail, ClubStatus } from '../models/club.model';
+export interface ApiUserProfile {
+  id: string;
+  email: string;
+  role: UserRole;
+  display_name: string;
+  avatar_url: string | null;
+  created_at: string;
+  socials?: ApiUserSocials | null;
+  socials_public?: boolean;
+}
+export interface ApiUserSocials {
+  telegram?: string | null;
+  instagram?: string | null;
+  twitter?: string | null;
+  linkedin?: string | null;
+  github?: string | null;
+  goodreads?: string | null;
+}
+export interface ApiUserStats {
+  clubs_joined: number;
+  clubs_organized: number;
+  meetings_attended: number;
+  quizzes_taken: number;
+}
+export interface ApiClub {
+  id: string;
+  name: string;
+  description: string | null;
+  cover_url: string | null;
+  organizer_id: string;
+  is_public: boolean;
+  member_count: number;
+  created_at: string;
+  city: string | null;
+  next_meeting_date: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  theme: string | null;
+  current_book: string | null;
+  member_previews: string[];
+  status: ClubStatus;
+  tags: string[];
+  meeting_duration_minutes: number | null;
+  after_meeting_venue: AfterMeetingVenue | null;
+  cancelled_at?: string | null;
+}
+export interface ApiClubMember {
+  user_id: string;
+  display_name: string;
+  avatar_url: string | null;
+  role: 'organizer' | 'member';
+  socials?: ApiUserSocials | null;
+  socials_public?: boolean;
+}
+export interface ApiBanRecord {
+  user_id: string;
+  club_id: string;
+  banned_at: string;
+  duration: BanDuration;
+  banned_by: string;
+}
+export function mapUserProfile(raw: ApiUserProfile): UserProfile {
+  return {
+    id: raw.id,
+    role: raw.role,
+    displayName: raw.display_name,
+    avatarUrl: raw.avatar_url,
+    createdAt: raw.created_at,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socials_public ?? false,
+  };
+}
+export function mapUserStats(raw: ApiUserStats): UserStats {
+  return {
+    clubsJoined: raw.clubs_joined,
+    quizzesTaken: raw.quizzes_taken,
+    quizWins: 0,
+    likesReceived: 0,
+    booksRead: 0,
+  };
+}
+export function mapClub(raw: ApiClub): Club {
+  let currentBook: ClubBook | null = null;
+  if (raw.current_book) {
+    currentBook = { title: raw.current_book, author: '', description: '' };
+  }
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description,
+    coverUrl: raw.cover_url,
+    organizerId: raw.organizer_id,
+    isPublic: raw.is_public,
+    memberCount: raw.member_count,
+    createdAt: raw.created_at,
+    city: raw.city ?? '',
+    nextMeetingDate: raw.next_meeting_date,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    theme: raw.theme,
+    currentBook,
+    memberPreviews: raw.member_previews,
+    status: raw.status,
+    tags: raw.tags,
+    meetingDurationMinutes: raw.meeting_duration_minutes,
+    afterMeetingVenue: raw.after_meeting_venue,
+    cancelledAt: raw.cancelled_at ?? undefined,
+  };
+}
+export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
+  return {
+    userId: raw.user_id,
+    displayName: raw.display_name,
+    avatarUrl: raw.avatar_url,
+    role: raw.role,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socials_public ?? false,
+  };
+}
+export function mapBanRecord(raw: ApiBanRecord): BanRecord {
+  return {
+    userId: raw.user_id,
+    clubId: raw.club_id,
+    bannedAt: raw.banned_at,
+    duration: raw.duration,
+    bannedBy: raw.banned_by,
+  };
+}
+function mapSocials(raw: ApiUserSocials): UserSocials {
+  return {
+    telegram: raw.telegram ?? undefined,
+    instagram: raw.instagram ?? undefined,
+    twitter: raw.twitter ?? undefined,
+    linkedin: raw.linkedin ?? undefined,
+    github: raw.github ?? undefined,
+    goodreads: raw.goodreads ?? undefined,
+  };
+}
+````
+
+## File: src/app/core/auth/token.store.ts
+````typescript
+import { Injectable, signal } from '@angular/core';
+const TOKEN_KEY = 'bc_access_token';
+@Injectable({ providedIn: 'root' })
+export class TokenStore {
+  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
+  readonly token = this._token.asReadonly();
+  set(token: string): void {
+    localStorage.setItem(TOKEN_KEY, token);
+    this._token.set(token);
+  }
+  clear(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    this._token.set(null);
+  }
+  snapshot(): string | null {
+    return this._token();
+  }
+}
+````
+
 ## File: src/app/core/models/chat.model.ts
 ````typescript
 export interface ChatMessage {
@@ -832,212 +2040,6 @@ export interface QuizAttempt {
   score: number;
   total: number;
   answers: number[];
-}
-````
-
-## File: src/app/core/services/chat.service.ts
-````typescript
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { ChatMessage, ChatRoom } from '../models/chat.model';
-import { environment } from '../../../environments/environment';
-interface ApiChatRoom {
-  id: string;
-  name: string;
-}
-interface ApiChatMessage {
-  id: string;
-  sender_id: string;
-  sender_name: string;
-  text: string;
-  created_at: string;
-}
-@Injectable({ providedIn: 'root' })
-export class ChatService {
-  private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _rooms = signal<ChatRoom[]>([]);
-  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
-  private readonly _activeRoomId = signal<string | null>(null);
-  private readonly _unreadCount = signal<number>(0);
-  private readonly _isOpen = signal<boolean>(false);
-  private readonly _hasNewMessage = signal<boolean>(false);
-  private currentUserId: string | null = null;
-  readonly rooms = this._rooms.asReadonly();
-  readonly messages = this._messages.asReadonly();
-  readonly activeRoomId = this._activeRoomId.asReadonly();
-  readonly unreadCount = this._unreadCount.asReadonly();
-  readonly isOpen = this._isOpen.asReadonly();
-  readonly hasNewMessage = this._hasNewMessage.asReadonly();
-  readonly activeRoom = computed(() =>
-    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
-  );
-  readonly activeMessages = computed(
-    () => this._messages()[this._activeRoomId() ?? ''] ?? [],
-  );
-  // ── Public API ────────────────────────────────────────────────────────────
-  /** Fetch chat rooms for a given club and seed the rooms signal. */
-  loadRooms(clubId: string, userId?: string): void {
-    if (userId !== undefined) {
-      this.currentUserId = userId;
-    }
-    this.http
-      .get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`)
-      .subscribe({
-        next: raw => {
-          const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name }));
-          this._rooms.set(rooms);
-          // Auto-select the first room when none is active or active room is gone.
-          const currentId = this._activeRoomId();
-          if (!currentId || !rooms.find(r => r.id === currentId)) {
-            const first = rooms[0];
-            if (first) {
-              this._activeRoomId.set(first.id);
-              this.loadMessages(first.id);
-            }
-          }
-        },
-        error: (err: unknown) => console.error('[ChatService] loadRooms error', err),
-      });
-  }
-  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
-    const query: Record<string, string> = {};
-    if (params?.before) query['before'] = params.before;
-    if (params?.limit != null) query['limit'] = String(params.limit);
-    this.http
-      .get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
-        params: query,
-      })
-      .subscribe({
-        next: raw => {
-          const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
-          this._messages.update(map => ({ ...map, [roomId]: msgs }));
-        },
-        error: (err: unknown) => console.error('[ChatService] loadMessages error', err),
-      });
-  }
-  toggleOpen(): void {
-    this._isOpen.update(v => !v);
-    if (this._isOpen()) {
-      this.markAsRead();
-    }
-  }
-  openRoom(roomId: string): void {
-    this._activeRoomId.set(roomId);
-    this.loadMessages(roomId);
-    this.markAsRead();
-  }
-  markAsRead(): void {
-    this._unreadCount.set(0);
-    this._hasNewMessage.set(false);
-  }
-  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    this.currentUserId = currentUser.id;
-    this.http
-      .post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text })
-      .subscribe({
-        next: () => {
-          this.loadMessages(roomId);
-        },
-        error: (err: unknown) => console.error('[ChatService] sendMessage error', err),
-      });
-  }
-  private mapMessage(m: ApiChatMessage): ChatMessage {
-    return {
-      id: m.id,
-      senderId: m.sender_id,
-      senderName: m.sender_name,
-      text: m.text,
-      timestamp: new Date(m.created_at),
-      isOwn: m.sender_id === this.currentUserId,
-    };
-  }
-}
-````
-
-## File: src/app/core/services/seo.service.ts
-````typescript
-import { Injectable, inject } from '@angular/core';
-import { Meta, Title } from '@angular/platform-browser';
-import { DOCUMENT } from '@angular/common';
-import { TranslateService } from '@ngx-translate/core';
-export interface SeoConfig {
-  title: string;
-  description?: string;
-  ogTitle?: string;
-  ogDescription?: string;
-  canonical?: string;
-}
-@Injectable({ providedIn: 'root' })
-export class SeoService {
-  private readonly title = inject(Title);
-  private readonly meta = inject(Meta);
-  private readonly document = inject(DOCUMENT);
-  private readonly translate = inject(TranslateService);
-  setPage(config: SeoConfig): void {
-    const { title, description, ogTitle, ogDescription, canonical } = config;
-    this.title.setTitle(title);
-    this.meta.updateTag({ name: 'twitter:title', content: ogTitle ?? title });
-    this.meta.updateTag({ property: 'og:title', content: ogTitle ?? title });
-    if (description) {
-      this.meta.updateTag({ name: 'description', content: description });
-      this.meta.updateTag({ property: 'og:description', content: ogDescription ?? description });
-    }
-    if (canonical) {
-      this.meta.updateTag({ property: 'og:url', content: canonical });
-      this.setCanonical(canonical);
-    }
-  }
-  private setCanonical(url: string): void {
-    let link: HTMLLinkElement | null = this.document.querySelector('link[rel="canonical"]');
-    if (!link) {
-      link = this.document.createElement('link');
-      link.setAttribute('rel', 'canonical');
-      this.document.head.appendChild(link);
-    }
-    link.setAttribute('href', url);
-  }
-  setPageI18n(
-    titleKey: string,
-    opts?: {
-      descriptionKey?: string;
-      ogTitleKey?: string;
-      canonical?: string;
-      params?: Record<string, unknown>;
-    }
-  ): void {
-    this.setPage({
-      title: this.translate.instant(titleKey, opts?.params),
-      description: opts?.descriptionKey
-        ? this.translate.instant(opts.descriptionKey, opts?.params)
-        : undefined,
-      ogTitle: opts?.ogTitleKey
-        ? this.translate.instant(opts.ogTitleKey, opts?.params)
-        : undefined,
-      canonical: opts?.canonical,
-    });
-  }
-  injectWebSiteJsonLd(): void {
-    this.injectJsonLd({
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: this.translate.instant('SEO.site_name'),
-      url: this.translate.instant('SEO.site_url'),
-      description: this.translate.instant('SEO.site_description'),
-    });
-  }
-  injectJsonLd(schema: object): void {
-    const existing = this.document.head.querySelector('script[type="application/ld+json"]');
-    if (existing) {
-      existing.remove();
-    }
-    const script = this.document.createElement('script');
-    script.type = 'application/ld+json';
-    script.textContent = JSON.stringify(schema);
-    this.document.head.appendChild(script);
-  }
 }
 ````
 
@@ -2134,6 +3136,208 @@ export interface UserProfile {
 }
 ````
 
+## File: src/app/core/services/chat.service.ts
+````typescript
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { ChatMessage, ChatRoom } from '../models/chat.model';
+import { environment } from '../../../environments/environment';
+interface ApiChatRoom {
+  id: string;
+  name: string;
+}
+interface ApiChatMessage {
+  id: string;
+  sender_id: string;
+  sender_name: string;
+  text: string;
+  created_at: string;
+}
+@Injectable({ providedIn: 'root' })
+export class ChatService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _rooms = signal<ChatRoom[]>([]);
+  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
+  private readonly _activeRoomId = signal<string | null>(null);
+  private readonly _unreadCount = signal<number>(0);
+  private readonly _isOpen = signal<boolean>(false);
+  private readonly _hasNewMessage = signal<boolean>(false);
+  private currentUserId: string | null = null;
+  readonly rooms = this._rooms.asReadonly();
+  readonly messages = this._messages.asReadonly();
+  readonly activeRoomId = this._activeRoomId.asReadonly();
+  readonly unreadCount = this._unreadCount.asReadonly();
+  readonly isOpen = this._isOpen.asReadonly();
+  readonly hasNewMessage = this._hasNewMessage.asReadonly();
+  readonly activeRoom = computed(() =>
+    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
+  );
+  readonly activeMessages = computed(
+    () => this._messages()[this._activeRoomId() ?? ''] ?? [],
+  );
+  // ── Public API ────────────────────────────────────────────────────────────
+  /** Fetch chat rooms for a given club and seed the rooms signal. */
+  loadRooms(clubId: string, userId?: string): void {
+    if (userId !== undefined) {
+      this.currentUserId = userId;
+    }
+    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
+      .then(raw => {
+        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name }));
+        this._rooms.set(rooms);
+        // Auto-select the first room when none is active or active room is gone.
+        const currentId = this._activeRoomId();
+        if (!currentId || !rooms.find(r => r.id === currentId)) {
+          const first = rooms[0];
+          if (first) {
+            this._activeRoomId.set(first.id);
+            this.loadMessages(first.id);
+          }
+        }
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
+  }
+  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
+    const query: Record<string, string> = {};
+    if (params?.before) query['before'] = params.before;
+    if (params?.limit != null) query['limit'] = String(params.limit);
+    firstValueFrom(
+      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
+        params: query,
+      }),
+    )
+      .then(raw => {
+        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
+        this._messages.update(map => ({ ...map, [roomId]: msgs }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
+  }
+  toggleOpen(): void {
+    this._isOpen.update(v => !v);
+    if (this._isOpen()) {
+      this.markAsRead();
+    }
+  }
+  openRoom(roomId: string): void {
+    this._activeRoomId.set(roomId);
+    this.loadMessages(roomId);
+    this.markAsRead();
+  }
+  markAsRead(): void {
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+  }
+  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    this.currentUserId = currentUser.id;
+    firstValueFrom(
+      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
+    )
+      .then(() => {
+        this.loadMessages(roomId);
+      })
+      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
+  }
+  private mapMessage(m: ApiChatMessage): ChatMessage {
+    return {
+      id: m.id,
+      senderId: m.sender_id,
+      senderName: m.sender_name,
+      text: m.text,
+      timestamp: new Date(m.created_at),
+      isOwn: m.sender_id === this.currentUserId,
+    };
+  }
+}
+````
+
+## File: src/app/core/services/seo.service.ts
+````typescript
+import { Injectable, inject } from '@angular/core';
+import { Meta, Title } from '@angular/platform-browser';
+import { DOCUMENT } from '@angular/common';
+import { TranslateService } from '@ngx-translate/core';
+export interface SeoConfig {
+  title: string;
+  description?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  canonical?: string;
+}
+@Injectable({ providedIn: 'root' })
+export class SeoService {
+  private readonly title = inject(Title);
+  private readonly meta = inject(Meta);
+  private readonly document = inject(DOCUMENT);
+  private readonly translate = inject(TranslateService);
+  setPage(config: SeoConfig): void {
+    const { title, description, ogTitle, ogDescription, canonical } = config;
+    this.title.setTitle(title);
+    this.meta.updateTag({ name: 'twitter:title', content: ogTitle ?? title });
+    this.meta.updateTag({ property: 'og:title', content: ogTitle ?? title });
+    if (description) {
+      this.meta.updateTag({ name: 'description', content: description });
+      this.meta.updateTag({ property: 'og:description', content: ogDescription ?? description });
+    }
+    if (canonical) {
+      this.meta.updateTag({ property: 'og:url', content: canonical });
+      this.setCanonical(canonical);
+    }
+  }
+  private setCanonical(url: string): void {
+    let link: HTMLLinkElement | null = this.document.querySelector('link[rel="canonical"]');
+    if (!link) {
+      link = this.document.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      this.document.head.appendChild(link);
+    }
+    link.setAttribute('href', url);
+  }
+  setPageI18n(
+    titleKey: string,
+    opts?: {
+      descriptionKey?: string;
+      ogTitleKey?: string;
+      canonical?: string;
+      params?: Record<string, unknown>;
+    }
+  ): void {
+    this.setPage({
+      title: this.translate.instant(titleKey, opts?.params),
+      description: opts?.descriptionKey
+        ? this.translate.instant(opts.descriptionKey, opts?.params)
+        : undefined,
+      ogTitle: opts?.ogTitleKey
+        ? this.translate.instant(opts.ogTitleKey, opts?.params)
+        : undefined,
+      canonical: opts?.canonical,
+    });
+  }
+  injectWebSiteJsonLd(): void {
+    this.injectJsonLd({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: this.translate.instant('SEO.site_name'),
+      url: this.translate.instant('SEO.site_url'),
+      description: this.translate.instant('SEO.site_description'),
+    });
+  }
+  injectJsonLd(schema: object): void {
+    const existing = this.document.head.querySelector('script[type="application/ld+json"]');
+    if (existing) {
+      existing.remove();
+    }
+    const script = this.document.createElement('script');
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(schema);
+    this.document.head.appendChild(script);
+  }
+}
+````
+
 ## File: src/app/core/services/toast.service.ts
 ````typescript
 import { Injectable, signal } from '@angular/core';
@@ -2161,142 +3365,6 @@ export class ToastService {
 }
 ````
 
-## File: src/app/features/profile/profile.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-} from '@angular/core';
-import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../core/auth/auth.service';
-import { UserRole, UserSocials } from '../../core/models/user.model';
-import { SeoService } from '../../core/services/seo.service';
-@Component({
-  selector: 'app-profile',
-  standalone: true,
-  imports: [ReactiveFormsModule, TranslateModule],
-  templateUrl: './profile.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class ProfileComponent {
-  protected readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  protected readonly nameForm = new FormGroup({
-    displayName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(2)],
-    }),
-  });
-  /** Typed reactive form for updating social media links. */
-  protected readonly socialsForm = new FormGroup({
-    telegram:  new FormControl('', { nonNullable: true }),
-    instagram: new FormControl('', { nonNullable: true }),
-    twitter:   new FormControl('', { nonNullable: true }),
-    linkedin:  new FormControl('', { nonNullable: true }),
-    github:    new FormControl('', { nonNullable: true }),
-    goodreads: new FormControl('', { nonNullable: true }),
-  });
-  /** Controls whether socials are visible to all club members. */
-  protected readonly socialsPublicControl = new FormControl<boolean>(false, { nonNullable: true });
-  /** Tracks the in-flight save state (synchronous here, but keeps the pattern extensible). */
-  protected readonly isSavingName = signal(false);
-  /** Drives the "Saved!" success toast for the name form. */
-  protected readonly nameSaved = signal(false);
-  /** Drives the "Role updated!" success toast for the role switcher. */
-  protected readonly roleChanged = signal(false);
-  /** Drives the "Socials saved!" success toast for the socials form. */
-  protected readonly socialsSaved = signal(false);
-  /** Two-letter initials derived from the current user's display name. */
-  protected readonly userInitials = computed<string>(() => {
-    const name = this.auth.currentUser()?.displayName ?? '';
-    return name
-      .split(' ')
-      .map(w => w[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  });
-  /** Human-readable role label shown in the hero badge. */
-  protected readonly roleLabel = computed<string>(() =>
-    this.auth.currentUser()?.role === 'organizer' ? 'Organizer' : 'Reader',
-  );
-  protected readonly joinedDate = computed<string>(() => {
-    const raw = this.auth.currentUser()?.createdAt;
-    if (!raw) return '';
-    return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' }).format(
-      new Date(raw),
-    );
-  });
-  protected readonly userSocials = computed<UserSocials>(
-    () => this.auth.currentUser()?.socials ?? {},
-  );
-  constructor() {
-    this.seo.setPageI18n('SEO.profile_title');
-    const user = this.auth.currentUser();
-    if (user) {
-      this.nameForm.patchValue({ displayName: user.displayName });
-      this.socialsPublicControl.setValue(user.socialsPublic ?? false);
-      if (user.socials) {
-        this.socialsForm.patchValue({
-          telegram:  user.socials.telegram  ?? '',
-          instagram: user.socials.instagram ?? '',
-          twitter:   user.socials.twitter   ?? '',
-          linkedin:  user.socials.linkedin  ?? '',
-          github:    user.socials.github    ?? '',
-          goodreads: user.socials.goodreads ?? '',
-        });
-      }
-    }
-  }
-  /** Switch the user's role and show a transient success toast. */
-  protected async changeRole(role: UserRole): Promise<void> {
-    try {
-      await this.auth.updateRole(role);
-      this.roleChanged.set(true);
-      setTimeout(() => this.roleChanged.set(false), 3000);
-    } catch {  }
-  }
-  protected async saveName(): Promise<void> {
-    if (this.nameForm.invalid) return;
-    this.isSavingName.set(true);
-    const { displayName } = this.nameForm.getRawValue();
-    try {
-      await this.auth.updateDisplayName(displayName);
-      this.nameSaved.set(true);
-      setTimeout(() => this.nameSaved.set(false), 3000);
-    } catch {  }
-    finally {
-      this.isSavingName.set(false);
-    }
-  }
-  protected async submitSocials(): Promise<void> {
-    const raw = this.socialsForm.getRawValue();
-    const socials: UserSocials = {
-      ...(raw.telegram  ? { telegram:  raw.telegram  } : {}),
-      ...(raw.instagram ? { instagram: raw.instagram } : {}),
-      ...(raw.twitter   ? { twitter:   raw.twitter   } : {}),
-      ...(raw.linkedin  ? { linkedin:  raw.linkedin  } : {}),
-      ...(raw.github    ? { github:    raw.github    } : {}),
-      ...(raw.goodreads ? { goodreads: raw.goodreads } : {}),
-    };
-    try {
-      await this.auth.updateSocials(socials);
-      this.socialsSaved.set(true);
-      setTimeout(() => this.socialsSaved.set(false), 3000);
-    } catch {  }
-  }
-  protected async onSocialsPublicChange(value: boolean): Promise<void> {
-    try {
-      await this.auth.setSocialsPublic(value);
-    } catch {  }
-  }
-}
-````
-
 ## File: src/app/features/quiz/quiz-list/quiz-list.component.html
 ````html
 <div class="min-h-screen p-4 sm:p-8">
@@ -2313,7 +3381,7 @@ export class ProfileComponent {
           <div class="flex items-center gap-3">
             @if (authService.isOrganizer()) {
               <a
-                [routerLink]="['/clubs', clubId, 'quizzes', 'create']"
+                [routerLink]="['/clubs', id(), 'quizzes', 'create']"
                 class="inline-flex items-center gap-2 bg-accent-600 hover:bg-accent-500
                        text-white rounded-xl px-4 py-2.5 font-medium transition-colors text-sm"
               >
@@ -2322,7 +3390,7 @@ export class ProfileComponent {
             }
             <nav aria-label="Breadcrumb">
               <a
-                [routerLink]="['/clubs', clubId]"
+                [routerLink]="['/clubs', id()]"
                 class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm
                        transition-colors"
               >
@@ -2455,11 +3523,12 @@ export class ProfileComponent {
 import {
   ChangeDetectionStrategy,
   Component,
-  OnInit,
+  effect,
   inject,
+  input,
   signal,
 } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { QuizService } from '../../../core/services/quiz.service';
 @Component({
@@ -2469,19 +3538,21 @@ import { QuizService } from '../../../core/services/quiz.service';
   imports: [RouterLink],
   templateUrl: './quiz-list.component.html',
 })
-export class QuizListComponent implements OnInit {
+export class QuizListComponent {
   protected readonly quizService = inject(QuizService);
   protected readonly authService = inject(AuthService);
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   protected readonly togglingId = signal<string | null>(null);
   protected readonly errorMessage = signal('');
-  protected clubId = '';
-  ngOnInit(): void {
-    // With paramsInheritanceStrategy:'always', :id is inherited from the parent :id route
-    this.clubId = this.route.snapshot.params['id'] as string;
-    this.quizService.loadQuizzes(this.clubId).catch(err => {
-      this.errorMessage.set((err as Error).message);
+  readonly id = input<string>('');
+  constructor() {
+    effect(() => {
+      const clubId = this.id();
+      if (clubId) {
+        this.quizService.loadQuizzes(clubId).catch(err => {
+          this.errorMessage.set((err as Error).message);
+        });
+      }
     });
   }
   protected toggleActive(quizId: string, isActive: boolean): void {
@@ -2496,7 +3567,7 @@ export class QuizListComponent implements OnInit {
       });
   }
   protected takeQuiz(quizId: string): void {
-    this.router.navigate(['/clubs', this.clubId, 'quizzes', quizId]);
+    this.router.navigate(['/clubs', this.id(), 'quizzes', quizId]);
   }
 }
 ````
@@ -2725,22 +3796,6 @@ export class ToastComponent {
 ````html
 <router-outlet />
     <app-toast />
-````
-
-## File: src/environments/environment.prod.ts
-````typescript
-export const environment = {
-  production: true,
-  apiUrl: 'https://book-club-be.onrender.com/api/v1',
-};
-````
-
-## File: src/environments/environment.ts
-````typescript
-export const environment = {
-  production: false,
-  apiUrl: 'https://book-club-be.onrender.com/api/v1',
-};
 ````
 
 ## File: CLAUDE.md
@@ -3155,6 +4210,183 @@ export interface ClubMeeting {
         }
       }
     </style>
+````
+
+## File: src/app/features/profile/profile.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+} from '@angular/core';
+import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../core/auth/auth.service';
+import { UserRole, UserSocials } from '../../core/models/user.model';
+import { SeoService } from '../../core/services/seo.service';
+import { ToastService } from '../../core/services/toast.service';
+import { SocialLinkFieldComponent, SocialField } from '../../shared/components/social-link-field/social-link-field.component';
+import { SocialBadgesComponent } from '../../shared/components/social-badges/social-badges.component';
+import { ProfileStatsComponent } from './stats/profile-stats.component';
+import { ProfileRoleSelectorComponent } from './role-selector/profile-role-selector.component';
+@Component({
+  selector: 'app-profile',
+  standalone: true,
+  imports: [ReactiveFormsModule, TranslateModule, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent],
+  templateUrl: './profile.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ProfileComponent {
+  protected readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  private readonly toast = inject(ToastService);
+  protected readonly socialFields: SocialField[] = [
+    {
+      key: 'telegram',
+      label: 'Telegram',
+      labelClass: 'text-blue-600 dark:text-blue-400',
+      placeholder: 'username (без @)',
+      focusRingClass: 'focus:ring-blue-500',
+    },
+    {
+      key: 'instagram',
+      label: 'Instagram',
+      labelClass: 'bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500 bg-clip-text text-transparent',
+      placeholder: 'username (без @)',
+      focusRingClass: 'focus:ring-pink-500',
+    },
+    {
+      key: 'twitter',
+      label: 'Twitter / X',
+      labelClass: 'text-gray-900 dark:text-gray-100',
+      placeholder: 'username (без @)',
+      focusRingClass: 'focus:ring-gray-800',
+    },
+    {
+      key: 'linkedin',
+      label: 'LinkedIn',
+      labelClass: 'text-blue-700 dark:text-blue-400',
+      placeholder: 'username або повний URL',
+      focusRingClass: 'focus:ring-blue-600',
+    },
+    {
+      key: 'github',
+      label: 'GitHub',
+      labelClass: 'text-gray-800 dark:text-gray-200',
+      placeholder: 'username',
+      focusRingClass: 'focus:ring-gray-700',
+    },
+    {
+      key: 'goodreads',
+      label: 'Goodreads',
+      labelClass: 'text-amber-700 dark:text-amber-400',
+      placeholder: 'username або повний URL',
+      focusRingClass: 'focus:ring-amber-500',
+    },
+  ];
+  protected readonly nameForm = new FormGroup({
+    displayName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(2)],
+    }),
+  });
+  /** Typed reactive form for updating social media links. */
+  protected readonly socialsForm = new FormGroup({
+    telegram:  new FormControl('', { nonNullable: true }),
+    instagram: new FormControl('', { nonNullable: true }),
+    twitter:   new FormControl('', { nonNullable: true }),
+    linkedin:  new FormControl('', { nonNullable: true }),
+    github:    new FormControl('', { nonNullable: true }),
+    goodreads: new FormControl('', { nonNullable: true }),
+  });
+  /** Controls whether socials are visible to all club members. */
+  protected readonly socialsPublicControl = new FormControl<boolean>(false, { nonNullable: true });
+  /** Tracks the in-flight save state (synchronous here, but keeps the pattern extensible). */
+  protected readonly isSavingName = signal(false);
+  /** Two-letter initials derived from the current user's display name. */
+  protected readonly userInitials = computed<string>(() => {
+    const name = this.auth.currentUser()?.displayName ?? '';
+    return name
+      .split(' ')
+      .map(w => w[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  });
+  /** Human-readable role label shown in the hero badge. */
+  protected readonly roleLabel = computed<string>(() =>
+    this.auth.currentUser()?.role === 'organizer' ? 'Organizer' : 'Reader',
+  );
+  protected readonly joinedDate = computed<string>(() => {
+    const raw = this.auth.currentUser()?.createdAt;
+    if (!raw) return '';
+    return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' }).format(
+      new Date(raw),
+    );
+  });
+  protected readonly userSocials = computed<UserSocials>(
+    () => this.auth.currentUser()?.socials ?? {},
+  );
+  constructor() {
+    this.seo.setPageI18n('SEO.profile_title');
+    const user = this.auth.currentUser();
+    if (user) {
+      this.nameForm.patchValue({ displayName: user.displayName });
+      this.socialsPublicControl.setValue(user.socialsPublic ?? false);
+      if (user.socials) {
+        this.socialsForm.patchValue({
+          telegram:  user.socials.telegram  ?? '',
+          instagram: user.socials.instagram ?? '',
+          twitter:   user.socials.twitter   ?? '',
+          linkedin:  user.socials.linkedin  ?? '',
+          github:    user.socials.github    ?? '',
+          goodreads: user.socials.goodreads ?? '',
+        });
+      }
+    }
+  }
+  /** Switch the user's role and show a transient success toast. */
+  protected async changeRole(role: UserRole): Promise<void> {
+    try {
+      await this.auth.updateRole(role);
+      this.toast.show('PROFILE.role_changed', 'success');
+    } catch {  }
+  }
+  protected async saveName(): Promise<void> {
+    if (this.nameForm.invalid) return;
+    this.isSavingName.set(true);
+    const { displayName } = this.nameForm.getRawValue();
+    try {
+      await this.auth.updateDisplayName(displayName);
+      this.toast.show('PROFILE.name_updated', 'success');
+    } catch {  }
+    finally {
+      this.isSavingName.set(false);
+    }
+  }
+  protected async submitSocials(): Promise<void> {
+    const raw = this.socialsForm.getRawValue();
+    const socials: UserSocials = {
+      ...(raw.telegram  ? { telegram:  raw.telegram  } : {}),
+      ...(raw.instagram ? { instagram: raw.instagram } : {}),
+      ...(raw.twitter   ? { twitter:   raw.twitter   } : {}),
+      ...(raw.linkedin  ? { linkedin:  raw.linkedin  } : {}),
+      ...(raw.github    ? { github:    raw.github    } : {}),
+      ...(raw.goodreads ? { goodreads: raw.goodreads } : {}),
+    };
+    try {
+      await this.auth.updateSocials(socials);
+      this.toast.show('PROFILE.socials_saved', 'success');
+    } catch {  }
+  }
+  protected async onSocialsPublicChange(value: boolean): Promise<void> {
+    try {
+      await this.auth.setSocialsPublic(value);
+    } catch {  }
+  }
+}
 ````
 
 ## File: src/app/features/quiz/quiz-create/quiz-create.component.html
@@ -3897,6 +5129,22 @@ export class FormFieldComponent {
 }
 ````
 
+## File: src/environments/environment.prod.ts
+````typescript
+export const environment = {
+  production: true,
+  apiUrl: 'https://book-club-be.onrender.com/api/v1',
+};
+````
+
+## File: src/environments/environment.ts
+````typescript
+export const environment = {
+  production: false,
+  apiUrl: 'https://book-club-be.onrender.com/api/v1',
+};
+````
+
 ## File: src/index.html
 ````html
 <!doctype html>
@@ -4205,6 +5453,1012 @@ jobs:
         with:
           category: '/language:javascript-typescript'
         continue-on-error: true
+````
+
+## File: src/app/features/clubs/clubs.routes.ts
+````typescript
+import { Routes } from '@angular/router';
+import { authGuard } from '../../core/auth/auth.guard';
+import { roleGuard } from '../../core/auth/role.guard';
+import { ClubsListComponent } from './clubs-list/clubs-list.component';
+import { ClubDetailComponent } from './club-detail/club-detail.component';
+import { CreateClubComponent } from './create-club/create-club.component';
+export const CLUBS_ROUTES: Routes = [
+  {
+    path: '',
+    component: ClubsListComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'create',
+    component: CreateClubComponent,
+    canActivate: [authGuard, roleGuard('organizer')],
+  },
+  {
+    path: ':id',
+    children: [
+      {
+        path: '',
+        component: ClubDetailComponent,
+        canActivate: [authGuard],
+      },
+      {
+        path: 'randomizer',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('../randomizer/randomizer.component').then(
+            m => m.RandomizerComponent,
+          ),
+      },
+      {
+        path: 'quizzes',
+        loadChildren: () =>
+          import('../quiz/quiz.routes').then(m => m.QUIZ_ROUTES),
+      },
+    ],
+  },
+];
+````
+
+## File: src/app/features/profile/profile.component.html
+````html
+<div class="max-w-2xl mx-auto space-y-6 py-8 px-4">
+  <section
+    aria-labelledby="profile-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-8 text-center"
+  >
+    <div
+      class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
+             flex items-center justify-center text-white text-3xl font-bold select-none shadow-md"
+      aria-hidden="true"
+    >
+      {{ userInitials() }}
+    </div>
+    <h1
+      id="profile-heading"
+      class="text-2xl font-bold text-gray-900 dark:text-white"
+    >
+      {{ auth.currentUser()?.displayName }}
+    </h1>
+    <span
+      class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
+      [class]="auth.currentUser()?.role === 'organizer'
+        ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
+        : 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
+    >
+      {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
+      {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
+    </span>
+    @if (joinedDate()) {
+      <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
+        {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
+      </p>
+    }
+  </section>
+  <section
+    aria-labelledby="edit-name-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="edit-name-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
+    >
+      <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
+    </h2>
+    <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
+      <div class="space-y-4">
+        <div>
+          <label
+            for="displayName"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+          >
+            {{ 'PROFILE.display_name_label' | translate }}
+          </label>
+          <input
+            id="displayName"
+            type="text"
+            formControlName="displayName"
+            autocomplete="nickname"
+            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
+                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
+                   text-gray-900 dark:text-white placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                   transition-all duration-200"
+            [placeholder]="'PROFILE.display_name_placeholder' | translate"
+            [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
+            aria-describedby="displayName-error"
+          />
+          @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
+            <p
+              id="displayName-error"
+              role="alert"
+              class="mt-1.5 text-xs text-red-600 dark:text-red-400"
+            >
+              @if (nameForm.controls.displayName.hasError('required')) {
+                {{ 'PROFILE.display_name_required' | translate }}
+              } @else if (nameForm.controls.displayName.hasError('minlength')) {
+                {{ 'PROFILE.display_name_min' | translate }}
+              }
+            </p>
+          }
+        </div>
+        <div class="flex items-center gap-3">
+          <button
+            type="submit"
+            [disabled]="nameForm.invalid || isSavingName()"
+            class="rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-50
+                   disabled:cursor-not-allowed text-white px-5 py-2.5 text-sm font-medium
+                   transition-all duration-200 focus:outline-none focus:ring-2
+                   focus:ring-primary-500 focus:ring-offset-2"
+          >
+            @if (isSavingName()) {
+              {{ 'PROFILE.saving' | translate }}
+            } @else {
+              {{ 'PROFILE.save_name' | translate }}
+            }
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+  <section
+    aria-labelledby="role-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="role-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2"
+    >
+      <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
+    </h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+      {{ 'PROFILE.role_subtitle' | translate }}
+    </p>
+    <app-profile-role-selector
+      [currentRole]="auth.currentUser()?.role ?? 'user'"
+      (roleChange)="changeRole($event)"
+    />
+  </section>
+  <section
+    aria-labelledby="stats-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="stats-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
+    >
+      <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
+    </h2>
+    <app-profile-stats [stats]="auth.userStats()" />
+  </section>
+  <section
+    aria-labelledby="socials-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="socials-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
+    >
+      <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
+    </h2>
+    <div class="flex items-center gap-3 mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+      <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
+        <input
+          type="checkbox"
+          [formControl]="socialsPublicControl"
+          (change)="onSocialsPublicChange(socialsPublicControl.value)"
+          class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+        />
+        {{ 'PROFILE.socials_public_label' | translate }}
+      </label>
+    </div>
+    @if (
+      userSocials().telegram  ||
+      userSocials().instagram ||
+      userSocials().twitter   ||
+      userSocials().linkedin  ||
+      userSocials().github    ||
+      userSocials().goodreads
+    ) {
+      <div class="flex flex-wrap gap-2 mb-6">
+        <app-social-badges [socials]="userSocials()" />
+      </div>
+    }
+    <form
+      [formGroup]="socialsForm"
+      (ngSubmit)="submitSocials()"
+      novalidate
+      class="space-y-4"
+    >
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        @for (social of socialFields; track social.key) {
+          <app-social-link-field [config]="social" [form]="socialsForm" />
+        }
+      </div>
+      <div class="flex items-center gap-3 pt-1">
+        <button
+          type="submit"
+          class="rounded-xl bg-primary-600 hover:bg-primary-700 text-white
+                 px-5 py-2.5 text-sm font-medium
+                 transition-all duration-200 focus:outline-none focus:ring-2
+                 focus:ring-primary-500 focus:ring-offset-2"
+        >
+          {{ 'PROFILE.save' | translate }}
+        </button>
+      </div>
+    </form>
+  </section>
+</div>
+````
+
+## File: src/app/features/quiz/quiz-take/quiz-take.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizAttempt } from '../../../core/models/quiz.model';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
+@Component({
+  selector: 'app-quiz-take',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, LoadingSpinnerComponent],
+  templateUrl: './quiz-take.component.html',
+})
+export class QuizTakeComponent implements OnInit {
+  protected readonly quizService = inject(QuizService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  protected readonly state = signal<QuizState>('loading');
+  protected readonly errorMessage = signal('');
+  protected readonly currentIndex = signal(0);
+  protected readonly selectedAnswers = signal<number[]>([]);
+  protected readonly selectedOption = computed(
+    () => this.selectedAnswers()[this.currentIndex()] ?? -1,
+  );
+  protected readonly attempt = signal<QuizAttempt | null>(null);
+  protected clubId = '';
+  protected readonly currentQuestion = computed(
+    () => this.quizService.questions()[this.currentIndex()] ?? null,
+  );
+  protected readonly isLastQuestion = computed(
+    () => this.currentIndex() === this.quizService.questions().length - 1,
+  );
+  protected readonly progressPercent = computed(() => {
+    const total = this.quizService.questions().length;
+    return total === 0 ? 0 : Math.round(((this.currentIndex() + 1) / total) * 100);
+  });
+  protected readonly scorePercent = computed(() => {
+    const a = this.attempt();
+    if (!a || a.total === 0) return 0;
+    return Math.round((a.score / a.total) * 100);
+  });
+  protected readonly scoreMessage = computed(() => {
+    const pct = this.scorePercent();
+    if (pct === 100) return '🎉 Perfect score!';
+    if (pct >= 80) return '🌟 Great job!';
+    if (pct >= 60) return '👍 Good effort!';
+    if (pct >= 40) return '📖 Keep reading!';
+    return '💪 Better luck next time!';
+  });
+  ngOnInit(): void {
+    // Both :id (club) and :quizId are inherited via paramsInheritanceStrategy:'always'
+    this.clubId = this.route.snapshot.params['id'] as string;
+    const quizId = this.route.snapshot.params['quizId'] as string;
+    if (!quizId) {
+      this.errorMessage.set('Quiz not found.');
+      this.state.set('error');
+      return;
+    }
+    this.quizService
+      .loadQuestions(quizId)
+      .then(() => {
+        const count = this.quizService.questions().length;
+        if (count === 0) {
+          this.errorMessage.set('This quiz has no questions yet.');
+          this.state.set('error');
+          return;
+        }
+        this.selectedAnswers.set(new Array<number>(count).fill(-1));
+        this.state.set('taking');
+      })
+      .catch(err => {
+        this.errorMessage.set((err as Error).message);
+        this.state.set('error');
+      });
+  }
+  protected optionLabel(index: number): string {
+    return String.fromCodePoint(65 + index);
+  }
+  protected selectOption(index: number): void {
+    const current = this.currentIndex();
+    this.selectedAnswers.update(answers => {
+      const copy = [...answers];
+      copy[current] = index;
+      return copy;
+    });
+  }
+  protected next(): void {
+    if (this.selectedOption() === -1) return;
+    this.currentIndex.update(i => i + 1);
+  }
+  protected previous(): void {
+    if (this.currentIndex() === 0) return;
+    this.currentIndex.update(i => i - 1);
+  }
+  protected submit(): void {
+    if (this.selectedOption() === -1) return;
+    this.state.set('submitting');
+    const quizId = this.route.snapshot.params['quizId'] as string;
+    this.quizService
+      .submitAttempt(quizId, this.selectedAnswers())
+      .then(result => {
+        this.attempt.set(result);
+        this.state.set('results');
+      })
+      .catch(err => {
+        this.errorMessage.set((err as Error).message);
+        this.state.set('error');
+      });
+  }
+}
+````
+
+## File: src/app/features/randomizer/randomizer.component.html
+````html
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 p-4 sm:p-8">
+  <div class="max-w-4xl mx-auto space-y-8">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-white">🎲 {{ 'RANDOMIZER.title' | translate }}</h1>
+        <p class="text-primary-300 mt-1">{{ 'RANDOMIZER.subtitle' | translate }}</p>
+      </div>
+      <nav aria-label="Breadcrumb">
+        <a [routerLink]="['/clubs', clubId]" class="text-primary-300 hover:text-white transition-colors text-sm">
+          {{ 'RANDOMIZER.back_to_club' | translate }}
+        </a>
+      </nav>
+    </header>
+    <div class="bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/10">
+      <label for="purpose" class="block text-white font-medium text-sm mb-2">{{ 'RANDOMIZER.purpose_label' | translate }}</label>
+      <input
+        id="purpose"
+        type="text"
+        [formControl]="purposeControl"
+        [placeholder]="'RANDOMIZER.purpose_placeholder' | translate"
+        class="w-full rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
+      />
+    </div>
+    <div class="grid lg:grid-cols-2 gap-8">
+      <section aria-labelledby="members-heading" class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 id="members-heading" class="text-white font-semibold text-lg">
+            👥 {{ 'RANDOMIZER.members_title' | translate }}
+            <span class="text-primary-300 text-sm font-normal ml-2">{{ selectedCount() }} / {{ randomizerService.candidates().length }} {{ 'RANDOMIZER.selected' | translate }}</span>
+          </h2>
+          <button
+            type="button"
+            (click)="reset()"
+            class="text-xs text-primary-300 hover:text-white transition-colors"
+          >
+            {{ 'RANDOMIZER.select_all' | translate }}
+          </button>
+        </div>
+        @if (randomizerService.candidates().length === 0) {
+          <div class="bg-white/10 rounded-2xl p-8 text-center text-white/60">
+            <p class="text-3xl mb-2">👤</p>
+            <p>{{ 'RANDOMIZER.no_members' | translate }}</p>
+          </div>
+        } @else {
+          <ul class="space-y-2">
+            @for (member of randomizerService.candidates(); track member.userId) {
+              <li>
+                <button
+                  type="button"
+                  (click)="randomizerService.toggleMember(member.userId)"
+                  class="w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  [class]="randomizerService.selectedIds().has(member.userId)
+                    ? 'bg-white/20 border border-white/30'
+                    : 'bg-white/5 border border-white/10 opacity-50'"
+                  [attr.aria-pressed]="randomizerService.selectedIds().has(member.userId)"
+                  [attr.aria-label]="'Toggle ' + member.displayName"
+                >
+                  <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                    {{ member.displayName | initials }}
+                  </div>
+                  <span class="text-white font-medium text-sm flex-1 text-left">{{ member.displayName }}</span>
+                  @if (randomizerService.selectedIds().has(member.userId)) {
+                    <span class="text-green-400 text-lg" aria-hidden="true">✓</span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+      <section aria-labelledby="spin-heading" class="space-y-6">
+        <h2 id="spin-heading" class="sr-only">{{ 'RANDOMIZER.title' | translate }}</h2>
+        <div class="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/10 text-center min-h-[200px] flex flex-col items-center justify-center">
+          @if (randomizerService.isSpinning()) {
+            <div class="space-y-4">
+              <div class="text-5xl animate-bounce">🎲</div>
+              <p class="text-white/70 text-sm animate-pulse">{{ 'RANDOMIZER.spinning' | translate }}</p>
+            </div>
+          } @else if (randomizerService.result()) {
+            <div class="space-y-3">
+              <div class="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl ring-4 ring-white/30">
+                {{ randomizerService.result()!.displayName | initials }}
+              </div>
+              <div>
+                <p class="text-white/60 text-xs uppercase tracking-wide mb-1">{{ randomizerService.purpose() }}</p>
+                <p class="text-white text-2xl font-bold">{{ randomizerService.result()!.displayName }}</p>
+              </div>
+              <span class="text-3xl">🏆</span>
+            </div>
+          } @else {
+            <div class="text-white/40 space-y-2">
+              <div class="text-4xl">🎯</div>
+              <p class="text-sm">{{ 'RANDOMIZER.spin_hint' | translate }}</p>
+            </div>
+          }
+        </div>
+        @if (errorMessage()) {
+          <div class="rounded-xl bg-red-500/20 border border-red-500/30 px-4 py-3 text-sm text-red-300" role="alert">
+            {{ errorMessage() }}
+          </div>
+        }
+        <div class="flex flex-col gap-3">
+          <button
+            type="button"
+            (click)="spin()"
+            [disabled]="randomizerService.isSpinning() || selectedCount() < 2"
+            class="w-full rounded-2xl bg-gradient-to-r from-accent-500 to-primary-500 hover:from-accent-400 hover:to-primary-400 text-white font-bold py-4 text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary-400 shadow-lg"
+          >
+            @if (randomizerService.isSpinning()) {
+              {{ 'RANDOMIZER.spinning_btn' | translate }}
+            } @else {
+              {{ 'RANDOMIZER.spin' | translate }}
+            }
+          </button>
+          @if (randomizerService.result() && authService.isOrganizer()) {
+            <button
+              type="button"
+              (click)="saveSession()"
+              [disabled]="isSaving()"
+              class="w-full rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium py-3 transition-all duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-400"
+            >
+              @if (isSaving()) {
+                {{ 'RANDOMIZER.saving' | translate }}
+              } @else {
+                {{ 'RANDOMIZER.save' | translate }}
+              }
+            </button>
+          }
+        </div>
+        @if (randomizerService.history().length > 0) {
+          <div class="space-y-3">
+            <h3 class="text-white/70 text-sm font-medium uppercase tracking-wide">{{ 'RANDOMIZER.history_title' | translate }}</h3>
+            <ul class="space-y-2">
+              @for (session of randomizerService.history().slice(0, 5); track session.id) {
+                <li class="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-white/60 text-xs truncate">{{ session.purpose }}</p>
+                    @if (session.result) {
+                      <p class="text-white text-sm font-medium">🏆 {{ session.result.displayName }}</p>
+                    }
+                  </div>
+                  <span class="text-white/40 text-xs shrink-0">{{ session.createdAt | date:'dd.MM HH:mm' }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </section>
+    </div>
+  </div>
+</div>
+````
+
+## File: src/app/layout/header/header.component.html
+````html
+<header
+      class="sticky top-0 z-50 bg-[#f5ede0]/80 dark:bg-gray-900/80 backdrop-blur-md
+             border-b border-amber-200/60 dark:border-gray-800"
+      role="banner"
+    >
+      <div class="max-w-6xl mx-auto px-4">
+        <div class="flex items-center justify-between h-16">
+          <a
+            routerLink="/"
+            class="font-display text-xl font-bold text-gray-900 dark:text-white
+                   hover:text-primary-600 dark:hover:text-primary-400
+                   transition-all duration-200 focus:outline-none focus:ring-2
+                   focus:ring-primary-500 focus:ring-offset-2 rounded"
+          >
+            📚 BookClub
+          </a>
+          <nav
+            class="hidden md:flex items-center gap-1"
+            aria-label="Main navigation"
+          >
+            <a
+              routerLink="/clubs"
+              routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
+              class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
+                     hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
+                     transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
+                     focus:ring-offset-2"
+            >
+              {{ 'NAV.discover' | translate }}
+            </a>
+            @if (isAuthenticated()) {
+              <a
+                routerLink="/clubs"
+                [queryParams]="{ tab: 'mine' }"
+                routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
+                class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
+                       hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
+                       transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
+                       focus:ring-offset-2"
+              >
+                {{ 'CLUBS.my_clubs' | translate }}
+              </a>
+            }
+          </nav>
+          <div class="hidden md:flex items-center gap-2">
+            <button
+              type="button"
+              (click)="switchLang()"
+              class="text-sm font-semibold px-2 py-1 rounded border border-current
+                     text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
+                     transition-all duration-200 focus:outline-none focus:ring-2
+                     focus:ring-primary-500 focus:ring-offset-2"
+              [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+            >
+              {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
+            </button>
+            @if (isAuthenticated()) {
+              <div class="relative">
+                <button
+                  type="button"
+                  (click)="toggleDropdown()"
+                  class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
+                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                  [attr.aria-expanded]="isDropdownOpen()"
+                  aria-haspopup="menu"
+                  [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
+                >
+                  <div
+                    class="h-9 w-9 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
+                           flex items-center justify-center text-white text-sm font-semibold
+                           select-none"
+                    aria-hidden="true"
+                  >
+                    {{ userInitials() }}
+                  </div>
+                </button>
+                @if (isDropdownOpen()) {
+                  <div
+                    role="menu"
+                    aria-label="User menu"
+                    class="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-gray-800 shadow-lg
+                           border border-gray-100 dark:border-gray-700 py-1 z-50
+                           animate-fade-in"
+                  >
+                    <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                      <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                        {{ currentUser()?.displayName }}
+                      </p>
+                    </div>
+                    <a
+                      routerLink="/profile"
+                      role="menuitem"
+                      (click)="closeDropdown()"
+                      class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200
+                             hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200
+                             focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-700"
+                    >
+                      👤 {{ 'NAV.profile' | translate }}
+                    </a>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      (click)="signOut()"
+                      class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400
+                             hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200
+                             focus:outline-none focus:bg-red-50 dark:focus:bg-red-900/20"
+                    >
+                      🚪 {{ 'NAV.logout' | translate }}
+                    </button>
+                  </div>
+                  <div
+                    class="fixed inset-0 z-40"
+                    aria-hidden="true"
+                    tabindex="-1"
+                    (click)="closeDropdown()"
+                    (keydown.escape)="closeDropdown()"
+                  ></div>
+                }
+              </div>
+            } @else {
+              <a
+                routerLink="/login"
+                class="border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800
+                       text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-medium text-sm
+                       transition-all duration-200 focus:outline-none focus:ring-2
+                       focus:ring-primary-500 focus:ring-offset-2"
+              >
+                {{ 'NAV.login' | translate }}
+              </a>
+              <a
+                routerLink="/register"
+                class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg
+                       font-medium text-sm transition-all duration-200 focus:outline-none
+                       focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              >
+                {{ 'NAV.join_free' | translate }}
+              </a>
+            }
+          </div>
+          <button
+            type="button"
+            class="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300
+                   hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200
+                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            (click)="toggleMenu()"
+            [attr.aria-expanded]="isMenuOpen()"
+            aria-controls="mobile-menu"
+          >
+            @if (isMenuOpen()) {
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            } @else {
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            }
+            <span class="sr-only">Toggle navigation menu</span>
+          </button>
+        </div>
+        @if (isMenuOpen()) {
+          <nav
+            id="mobile-menu"
+            class="md:hidden border-t border-gray-100 dark:border-gray-800 py-3 space-y-1"
+            aria-label="Mobile navigation"
+          >
+            <a
+              routerLink="/clubs"
+              routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
+              (click)="isMenuOpen.set(false)"
+              class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                     text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                     transition-all duration-200 focus:outline-none focus:ring-2
+                     focus:ring-primary-500 focus:ring-offset-2"
+            >
+              🔍 {{ 'NAV.discover' | translate }}
+            </a>
+            @if (isAuthenticated()) {
+              <a
+                routerLink="/clubs"
+                [queryParams]="{ tab: 'mine' }"
+                (click)="isMenuOpen.set(false)"
+                class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                       text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                       transition-all duration-200 focus:outline-none focus:ring-2
+                       focus:ring-primary-500 focus:ring-offset-2"
+              >
+                📖 {{ 'CLUBS.my_clubs' | translate }}
+              </a>
+            }
+            <button
+              type="button"
+              (click)="switchLang()"
+              class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                     text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                     transition-all duration-200 focus:outline-none focus:ring-2
+                     focus:ring-primary-500 focus:ring-offset-2 w-full text-left"
+              [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+            >
+              {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
+            </button>
+            <div class="pt-2 mt-2 border-t border-gray-100 dark:border-gray-800 space-y-1">
+              @if (isAuthenticated()) {
+                <div class="px-4 py-2">
+                  <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                    {{ 'NAV.signed_in_as' | translate }}
+                  </p>
+                  <p class="text-sm font-medium text-gray-900 dark:text-white mt-0.5">
+                    {{ currentUser()?.displayName }}
+                  </p>
+                </div>
+                <a
+                  routerLink="/profile"
+                  (click)="isMenuOpen.set(false)"
+                  class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                         text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                         transition-all duration-200 focus:outline-none focus:ring-2
+                         focus:ring-primary-500 focus:ring-offset-2"
+                >
+                  👤 {{ 'NAV.profile' | translate }}
+                </a>
+                <button
+                  type="button"
+                  (click)="signOut()"
+                  class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                         text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
+                         transition-all duration-200 focus:outline-none focus:ring-2
+                         focus:ring-red-500 focus:ring-offset-2"
+                >
+                  🚪 {{ 'NAV.logout' | translate }}
+                </button>
+              } @else {
+                <a
+                  routerLink="/login"
+                  (click)="isMenuOpen.set(false)"
+                  class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                         text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                         transition-all duration-200 focus:outline-none focus:ring-2
+                         focus:ring-primary-500 focus:ring-offset-2"
+                >
+                  {{ 'NAV.login' | translate }}
+                </a>
+                <a
+                  routerLink="/register"
+                  (click)="isMenuOpen.set(false)"
+                  class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                         bg-primary-600 text-white hover:bg-primary-700
+                         transition-all duration-200 focus:outline-none focus:ring-2
+                         focus:ring-primary-500 focus:ring-offset-2"
+                >
+                  {{ 'NAV.join_free' | translate }}
+                </a>
+              }
+            </div>
+          </nav>
+        }
+      </div>
+    </header>
+````
+
+## File: src/app/layout/header/header.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+} from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { firstValueFrom, map, startWith } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { AuthService } from '../../core/auth/auth.service';
+@Component({
+  selector: 'app-header',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, RouterLinkActive, TranslateModule],
+  templateUrl: './header.component.html',
+})
+export class HeaderComponent {
+  private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
+  readonly isMenuOpen = signal(false);
+  readonly isDropdownOpen = signal(false);
+  readonly isAuthenticated = this.auth.isAuthenticated;
+  readonly currentUser = this.auth.currentUser;
+  readonly currentLang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: 'uk' },
+  );
+  readonly userInitials = computed(() => {
+    const name = this.currentUser()?.displayName ?? '';
+    return (
+      name
+        .split(' ')
+        .slice(0, 2)
+        .map(w => w[0]?.toUpperCase() ?? '')
+        .join('') || '?'
+    );
+  });
+  switchLang(): void {
+    const next = this.currentLang() === 'uk' ? 'en' : 'uk';
+    void firstValueFrom(this.translate.use(next));
+  }
+  toggleMenu(): void {
+    this.isMenuOpen.update(v => !v);
+    if (this.isMenuOpen()) this.isDropdownOpen.set(false);
+  }
+  toggleDropdown(): void {
+    this.isDropdownOpen.update(v => !v);
+  }
+  closeDropdown(): void {
+    this.isDropdownOpen.set(false);
+  }
+  async signOut(): Promise<void> {
+    this.closeDropdown();
+    this.isMenuOpen.set(false);
+    await this.auth.signOut();
+  }
+}
+````
+
+## File: src/app/app.routes.ts
+````typescript
+import { Routes } from '@angular/router';
+import { authGuard } from './core/auth/auth.guard';
+import { roleGuard } from './core/auth/role.guard';
+import { ShellComponent } from './layout/shell/shell.component';
+export const routes: Routes = [
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/login/login.component').then(m => m.LoginComponent),
+  },
+  {
+    path: 'register',
+    loadComponent: () =>
+      import('./features/auth/register/register.component').then(m => m.RegisterComponent),
+  },
+  {
+    path: '',
+    component: ShellComponent,
+    children: [
+      // Protected: any authenticated user
+      {
+        path: 'clubs',
+        canActivate: [authGuard],
+        loadChildren: () => import('./features/clubs/clubs.routes').then(m => m.CLUBS_ROUTES),
+      },
+      {
+        path: 'manage',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('./features/clubs/clubs-list/clubs-list.component').then(
+            m => m.ClubsListComponent,
+          ),
+      },
+      { path: '', redirectTo: 'clubs', pathMatch: 'full' },
+      {
+        path: 'profile',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/profile/profile.component').then(m => m.ProfileComponent),
+      },
+      { path: '**', redirectTo: 'clubs' },
+    ],
+  },
+];
+````
+
+## File: src/app/app.ts
+````typescript
+import { Component, ChangeDetectionStrategy } from '@angular/core';
+import { RouterOutlet } from '@angular/router';
+import { ToastComponent } from './shared/components/toast/toast.component';
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterOutlet, ToastComponent],
+  templateUrl: './app.html',
+})
+export class App {}
+````
+
+## File: eslint.config.js
+````javascript
+const eslint = require("@eslint/js");
+const { defineConfig } = require("eslint/config");
+const tseslint = require("typescript-eslint");
+const angular = require("angular-eslint");
+const rxjsX = require("eslint-plugin-rxjs-x");
+module.exports = defineConfig([
+  {
+    files: ["**/*.ts"],
+    extends: [
+      eslint.configs.recommended,
+      tseslint.configs.strict,
+      tseslint.configs.stylisticTypeChecked,
+      angular.configs.tsRecommended,
+      rxjsX.configs.recommended,
+    ],
+    processor: angular.processInlineTemplates,
+    languageOptions: {
+      parserOptions: {
+        project: ["./tsconfig.app.json", "./tsconfig.spec.json"],
+        tsconfigRootDir: __dirname,
+      },
+    },
+    rules: {
+      "@angular-eslint/directive-selector": [
+        "error",
+        {
+          type: "attribute",
+          prefix: "app",
+          style: "camelCase",
+        },
+      ],
+      "@angular-eslint/component-selector": [
+        "error",
+        {
+          type: "element",
+          prefix: "app",
+          style: "kebab-case",
+        },
+      ],
+      "@typescript-eslint/no-extraneous-class": [
+        "error",
+        { allowWithDecorator: true },
+      ],
+      "@typescript-eslint/no-invalid-void-type": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { "argsIgnorePattern": "^_" },
+      ],
+      "rxjs-x/no-unsafe-takeuntil": "error",
+      "rxjs-x/no-floating-observables": "error",
+      "rxjs-x/no-unbound-methods": "error",
+      "rxjs-x/no-subject-value": "error",
+      "rxjs-x/finnish": "warn",
+    },
+  },
+  {
+    files: ["**/*.html"],
+    extends: [
+      angular.configs.templateRecommended,
+      angular.configs.templateAccessibility,
+    ],
+    rules: {},
+  }
+]);
+````
+
+## File: sonar-project.properties
+````
+# Replace YOUR_ORG with your actual SonarCloud organization slug
+sonar.projectKey=leo477_book-club-fe
+sonar.organization=leo477
+sonar.projectName=Book Club Frontend
+sonar.projectVersion=1.0
+
+sonar.sources=src
+sonar.tests=src
+sonar.test.inclusions=**/*.spec.ts
+sonar.exclusions=**/node_modules/**,**/*.spec.ts,src/assets/**,src/environments/**
+
+sonar.typescript.lcov.reportPaths=coverage/book-club-fe/lcov.info
+
+# Exclude non-testable and currently untested files from coverage requirements
+sonar.coverage.exclusions=\
+  **/*.html,\
+  **/*.spec.ts,\
+  **/mocks/**,\
+  **/*.model.ts,\
+  **/*.interface.ts,\
+  **/*.config.ts,\
+  **/environments/**,\
+  src/app/features/**,\
+  src/app/layout/**,\
+  src/app/core/services/randomizer.service.ts,\
+  src/app/core/services/quiz.service.ts,\
+  src/app/core/services/club.service.ts,\
+  src/app/core/supabase/**
+
+sonar.sourceEncoding=UTF-8
 ````
 
 ## File: public/i18n/en.json
@@ -4780,1380 +7034,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 };
 ````
 
-## File: src/app/features/clubs/clubs.routes.ts
-````typescript
-import { Routes } from '@angular/router';
-import { authGuard } from '../../core/auth/auth.guard';
-import { roleGuard } from '../../core/auth/role.guard';
-import { ClubsListComponent } from './clubs-list/clubs-list.component';
-import { ClubDetailComponent } from './club-detail/club-detail.component';
-import { CreateClubComponent } from './create-club/create-club.component';
-export const CLUBS_ROUTES: Routes = [
-  {
-    path: '',
-    component: ClubsListComponent,
-    canActivate: [authGuard],
-  },
-  {
-    path: 'create',
-    component: CreateClubComponent,
-    canActivate: [authGuard, roleGuard('organizer')],
-  },
-  {
-    path: ':id',
-    children: [
-      {
-        path: '',
-        component: ClubDetailComponent,
-        canActivate: [authGuard],
-      },
-      {
-        path: 'randomizer',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('../randomizer/randomizer.component').then(
-            m => m.RandomizerComponent,
-          ),
-      },
-      {
-        path: 'quizzes',
-        loadChildren: () =>
-          import('../quiz/quiz.routes').then(m => m.QUIZ_ROUTES),
-      },
-    ],
-  },
-];
-````
-
-## File: src/app/features/profile/profile.component.html
-````html
-<div class="max-w-2xl mx-auto space-y-6 py-8 px-4">
-  <section
-    aria-labelledby="profile-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-8 text-center"
-  >
-    <div
-      class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
-             flex items-center justify-center text-white text-3xl font-bold select-none shadow-md"
-      aria-hidden="true"
-    >
-      {{ userInitials() }}
-    </div>
-    <h1
-      id="profile-heading"
-      class="text-2xl font-bold text-gray-900 dark:text-white"
-    >
-      {{ auth.currentUser()?.displayName }}
-    </h1>
-    <span
-      class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
-      [class]="auth.currentUser()?.role === 'organizer'
-        ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
-        : 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
-    >
-      {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
-      {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
-    </span>
-    @if (joinedDate()) {
-      <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
-        {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
-      </p>
-    }
-  </section>
-  <section
-    aria-labelledby="edit-name-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="edit-name-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
-    >
-      <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
-    </h2>
-    <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
-      <div class="space-y-4">
-        <div>
-          <label
-            for="displayName"
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-          >
-            {{ 'PROFILE.display_name_label' | translate }}
-          </label>
-          <input
-            id="displayName"
-            type="text"
-            formControlName="displayName"
-            autocomplete="nickname"
-            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
-                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
-                   text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                   transition-all duration-200"
-            [placeholder]="'PROFILE.display_name_placeholder' | translate"
-            [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
-            aria-describedby="displayName-error"
-          />
-          @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
-            <p
-              id="displayName-error"
-              role="alert"
-              class="mt-1.5 text-xs text-red-600 dark:text-red-400"
-            >
-              @if (nameForm.controls.displayName.hasError('required')) {
-                {{ 'PROFILE.display_name_required' | translate }}
-              } @else if (nameForm.controls.displayName.hasError('minlength')) {
-                {{ 'PROFILE.display_name_min' | translate }}
-              }
-            </p>
-          }
-        </div>
-        <div class="flex items-center gap-3">
-          <button
-            type="submit"
-            [disabled]="nameForm.invalid || isSavingName()"
-            class="rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-50
-                   disabled:cursor-not-allowed text-white px-5 py-2.5 text-sm font-medium
-                   transition-all duration-200 focus:outline-none focus:ring-2
-                   focus:ring-primary-500 focus:ring-offset-2"
-          >
-            @if (isSavingName()) {
-              {{ 'PROFILE.saving' | translate }}
-            } @else {
-              {{ 'PROFILE.save_name' | translate }}
-            }
-          </button>
-          @if (nameSaved()) {
-            <output
-              aria-live="polite"
-              class="flex items-center gap-1.5 text-sm font-medium text-green-600 dark:text-green-400
-                     animate-fade-in"
-            >
-              ✅ {{ 'PROFILE.name_updated' | translate }}
-            </output>
-          }
-        </div>
-      </div>
-    </form>
-  </section>
-  <section
-    aria-labelledby="role-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="role-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2"
-    >
-      <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
-    </h2>
-    <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-      {{ 'PROFILE.role_subtitle' | translate }}
-    </p>
-    <fieldset class="grid grid-cols-2 gap-4 border-0 p-0 m-0">
-      <legend class="sr-only">{{ 'PROFILE.role_title' | translate }}</legend>
-      <button
-        type="button"
-        (click)="changeRole('user')"
-        [attr.aria-pressed]="auth.currentUser()?.role === 'user'"
-        class="rounded-xl border-2 p-5 text-left transition-all duration-200 focus:outline-none
-               focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-        [class]="auth.currentUser()?.role === 'user'
-          ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
-          : 'border-gray-200 dark:border-gray-700 hover:border-primary-300 dark:hover:border-primary-700
-             hover:bg-gray-50 dark:hover:bg-gray-700/40'"
-      >
-        <div class="text-3xl mb-2" aria-hidden="true">📖</div>
-        <div class="font-semibold text-gray-900 dark:text-white text-sm">{{ 'PROFILE.role_reader' | translate }}</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          {{ 'PROFILE.role_reader_desc' | translate }}
-        </div>
-        @if (auth.currentUser()?.role === 'user') {
-          <span
-            class="mt-3 inline-flex items-center gap-1 rounded-full bg-primary-600 px-2.5 py-0.5
-                   text-xs font-medium text-white"
-          >
-            {{ 'PROFILE.active_badge' | translate }}
-          </span>
-        }
-      </button>
-      <button
-        type="button"
-        (click)="changeRole('organizer')"
-        [attr.aria-pressed]="auth.currentUser()?.role === 'organizer'"
-        class="rounded-xl border-2 p-5 text-left transition-all duration-200 focus:outline-none
-               focus:ring-2 focus:ring-accent-500 focus:ring-offset-2"
-        [class]="auth.currentUser()?.role === 'organizer'
-          ? 'border-accent-500 bg-accent-50 dark:bg-accent-900/20'
-          : 'border-gray-200 dark:border-gray-700 hover:border-accent-300 dark:hover:border-accent-700
-             hover:bg-gray-50 dark:hover:bg-gray-700/40'"
-      >
-        <div class="text-3xl mb-2" aria-hidden="true">🎯</div>
-        <div class="font-semibold text-gray-900 dark:text-white text-sm">{{ 'PROFILE.role_organizer' | translate }}</div>
-        <div class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          {{ 'PROFILE.role_organizer_desc' | translate }}
-        </div>
-        @if (auth.currentUser()?.role === 'organizer') {
-          <span
-            class="mt-3 inline-flex items-center gap-1 rounded-full bg-accent-600 px-2.5 py-0.5
-                   text-xs font-medium text-white"
-          >
-            {{ 'PROFILE.active_badge' | translate }}
-          </span>
-        }
-      </button>
-    </fieldset>
-    @if (roleChanged()) {
-      <output
-        aria-live="polite"
-        class="mt-4 flex items-center gap-2 rounded-xl bg-green-50 dark:bg-green-900/20
-               border border-green-200 dark:border-green-800 px-4 py-3 text-sm
-               font-medium text-green-700 dark:text-green-400 animate-fade-in"
-      >
-        ✅ {{ 'PROFILE.role_changed_prefix' | translate }} <strong>{{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}</strong>!
-      </output>
-    }
-  </section>
-  <section
-    aria-labelledby="stats-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="stats-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
-    >
-      <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
-    </h2>
-    <dl class="grid grid-cols-2 sm:grid-cols-3 gap-4">
-      <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
-        <div class="text-3xl mb-2" aria-hidden="true">📚</div>
-        <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.clubs_joined' | translate }}</dt>
-        <dd class="text-3xl font-bold text-gray-900 dark:text-white">
-          {{ auth.userStats()?.clubsJoined ?? 0 }}
-        </dd>
-      </div>
-      <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
-        <div class="text-3xl mb-2" aria-hidden="true">🧠</div>
-        <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_taken' | translate }}</dt>
-        <dd class="text-3xl font-bold text-gray-900 dark:text-white">
-          {{ auth.userStats()?.quizzesTaken ?? 0 }}
-        </dd>
-      </div>
-      <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
-        <div class="text-3xl mb-2" aria-hidden="true">🏆</div>
-        <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_won' | translate }}</dt>
-        <dd class="text-3xl font-bold text-gray-900 dark:text-white">
-          {{ auth.userStats()?.quizWins ?? 0 }}
-        </dd>
-      </div>
-      <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
-        <div class="text-3xl mb-2" aria-hidden="true">❤️</div>
-        <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.likes_received' | translate }}</dt>
-        <dd class="text-3xl font-bold text-gray-900 dark:text-white">
-          {{ auth.userStats()?.likesReceived ?? 0 }}
-        </dd>
-      </div>
-      <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
-        <div class="text-3xl mb-2" aria-hidden="true">📖</div>
-        <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.books_read' | translate }}</dt>
-        <dd class="text-3xl font-bold text-gray-900 dark:text-white">
-          {{ auth.userStats()?.booksRead ?? 0 }}
-        </dd>
-      </div>
-    </dl>
-    @if (!auth.userStats()) {
-      <p class="text-center text-sm text-gray-400 dark:text-gray-500 mt-2">
-        {{ 'PROFILE.no_stats' | translate }}
-      </p>
-    }
-  </section>
-  <section
-    aria-labelledby="socials-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="socials-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
-    >
-      <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
-    </h2>
-    <div class="flex items-center gap-3 mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
-      <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
-        <input
-          type="checkbox"
-          [formControl]="socialsPublicControl"
-          (change)="onSocialsPublicChange(socialsPublicControl.value)"
-          class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-        />
-        {{ 'PROFILE.socials_public_label' | translate }}
-      </label>
-    </div>
-    @if (
-      userSocials().telegram  ||
-      userSocials().instagram ||
-      userSocials().twitter   ||
-      userSocials().linkedin  ||
-      userSocials().github    ||
-      userSocials().goodreads
-    ) {
-      <div class="flex flex-wrap gap-2 mb-6">
-        <ul class="flex flex-wrap gap-2 list-none p-0 m-0" [attr.aria-label]="'PROFILE.socials_title' | translate">
-        @if (userSocials().telegram) {
-          <li>
-            <a
-              [href]="'https://t.me/' + userSocials().telegram"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-1.5 rounded-full border border-blue-200
-                     dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5
-                     text-xs font-medium text-blue-700 dark:text-blue-300
-                     hover:bg-blue-100 dark:hover:bg-blue-900/50
-                     transition-colors duration-150 focus:outline-none focus:ring-2
-                     focus:ring-blue-500 focus:ring-offset-2"
-              [attr.aria-label]="'Telegram: @' + userSocials().telegram"
-            >
-              <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/>
-              </svg>
-              &#64;{{ userSocials().telegram }}
-            </a>
-          </li>
-        }
-        @if (userSocials().instagram) {
-          <li>
-            <a
-              [href]="'https://instagram.com/' + userSocials().instagram"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-1.5 rounded-full border border-pink-200
-                     dark:border-pink-800 bg-pink-50 dark:bg-pink-900/30 px-3 py-1.5
-                     text-xs font-medium bg-clip-text
-                     bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500
-                     text-transparent hover:opacity-80
-                     transition-opacity duration-150 focus:outline-none focus:ring-2
-                     focus:ring-pink-500 focus:ring-offset-2"
-              [attr.aria-label]="'Instagram: @' + userSocials().instagram"
-            >
-              <svg class="h-3.5 w-3.5 shrink-0 text-pink-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>
-              </svg>
-              &#64;{{ userSocials().instagram }}
-            </a>
-          </li>
-        }
-        @if (userSocials().twitter) {
-          <li>
-            <a
-              [href]="'https://x.com/' + userSocials().twitter"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-1.5 rounded-full border border-gray-300
-                     dark:border-gray-600 bg-gray-900 dark:bg-gray-950 px-3 py-1.5
-                     text-xs font-medium text-white
-                     hover:bg-gray-700 dark:hover:bg-gray-800
-                     transition-colors duration-150 focus:outline-none focus:ring-2
-                     focus:ring-gray-500 focus:ring-offset-2"
-              [attr.aria-label]="'Twitter / X: @' + userSocials().twitter"
-            >
-              <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-              </svg>
-              &#64;{{ userSocials().twitter }}
-            </a>
-          </li>
-        }
-        @if (userSocials().linkedin) {
-          <li>
-            <a
-              [href]="userSocials().linkedin!.startsWith('http')
-                ? userSocials().linkedin!
-                : 'https://linkedin.com/in/' + userSocials().linkedin"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-1.5 rounded-full border border-blue-300
-                     dark:border-blue-700 bg-blue-600 dark:bg-blue-700 px-3 py-1.5
-                     text-xs font-medium text-white
-                     hover:bg-blue-700 dark:hover:bg-blue-600
-                     transition-colors duration-150 focus:outline-none focus:ring-2
-                     focus:ring-blue-500 focus:ring-offset-2"
-              [attr.aria-label]="'LinkedIn: ' + userSocials().linkedin"
-            >
-              <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 23.2 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-              </svg>
-              LinkedIn
-            </a>
-          </li>
-        }
-        @if (userSocials().github) {
-          <li>
-            <a
-              [href]="'https://github.com/' + userSocials().github"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-1.5 rounded-full border border-gray-300
-                     dark:border-gray-600 bg-gray-800 dark:bg-gray-900 px-3 py-1.5
-                     text-xs font-medium text-gray-100
-                     hover:bg-gray-700 dark:hover:bg-gray-800
-                     transition-colors duration-150 focus:outline-none focus:ring-2
-                     focus:ring-gray-500 focus:ring-offset-2"
-              [attr.aria-label]="'GitHub: ' + userSocials().github"
-            >
-              <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
-              </svg>
-              {{ userSocials().github }}
-            </a>
-          </li>
-        }
-        @if (userSocials().goodreads) {
-          <li>
-            <a
-              [href]="userSocials().goodreads!.startsWith('http')
-                ? userSocials().goodreads!
-                : 'https://goodreads.com/' + userSocials().goodreads"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-1.5 rounded-full border border-amber-300
-                     dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-3 py-1.5
-                     text-xs font-medium text-amber-800 dark:text-amber-300
-                     hover:bg-amber-100 dark:hover:bg-amber-900/50
-                     transition-colors duration-150 focus:outline-none focus:ring-2
-                     focus:ring-amber-500 focus:ring-offset-2"
-              [attr.aria-label]="'Goodreads: ' + userSocials().goodreads"
-            >
-              <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M19.525 15.977V.49h-2.059v2.906h-.064a5.015 5.015 0 0 0-1.949-2.406C14.548.316 13.441 0 12.192 0c-1.648 0-3.037.434-4.175 1.303-1.136.869-1.927 2.045-2.373 3.527S5.07 7.857 5.07 9.481c0 1.624.188 3.069.562 4.337.374 1.268 1.004 2.326 1.889 3.172.885.847 2.056 1.271 3.512 1.271 1.248 0 2.35-.304 3.303-.911a4.961 4.961 0 0 0 1.999-2.456h.063v2.904c0 1.547-.272 2.806-.816 3.777-.544.971-1.33 1.666-2.359 2.085-1.029.419-2.264.628-3.703.628-.802 0-1.608-.1-2.416-.302a9.11 9.11 0 0 1-2.258-.961l-.88 1.674c.737.481 1.607.852 2.613 1.114 1.006.262 2.03.393 3.073.393 2.267 0 4.092-.411 5.469-1.231 1.377-.82 2.357-1.913 2.937-3.277.581-1.364.871-2.891.871-4.582zm-7.301-.34c-1.161 0-2.124-.31-2.888-.932-.764-.621-1.323-1.479-1.677-2.574-.354-1.095-.531-2.301-.531-3.617 0-2.006.401-3.62 1.203-4.845.802-1.225 2.04-1.837 3.717-1.837 1.677 0 2.908.609 3.691 1.827.783 1.218 1.176 2.855 1.176 4.913 0 1.296-.173 2.491-.519 3.581-.346 1.09-.895 1.955-1.649 2.591-.754.637-1.71.953-2.862.953-.001 0 .002-.06.339-.06z"/>
-              </svg>
-              Goodreads
-            </a>
-          </li>
-        }
-      </ul>
-      </div>
-    }
-    <form
-      [formGroup]="socialsForm"
-      (ngSubmit)="submitSocials()"
-      novalidate
-      class="space-y-4"
-    >
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label
-            for="social-telegram"
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-          >
-            <span class="text-blue-600 dark:text-blue-400">Telegram</span>
-          </label>
-          <input
-            id="social-telegram"
-            type="text"
-            formControlName="telegram"
-            placeholder="username (без @)"
-            autocomplete="off"
-            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
-                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
-                   text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
-                   transition-all duration-200"
-          />
-        </div>
-        <div>
-          <label
-            for="social-instagram"
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-          >
-            <span class="bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500
-                         bg-clip-text text-transparent">Instagram</span>
-          </label>
-          <input
-            id="social-instagram"
-            type="text"
-            formControlName="instagram"
-            placeholder="username (без @)"
-            autocomplete="off"
-            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
-                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
-                   text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-transparent
-                   transition-all duration-200"
-          />
-        </div>
-        <div>
-          <label
-            for="social-twitter"
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-          >
-            <span class="text-gray-900 dark:text-gray-100">Twitter / X</span>
-          </label>
-          <input
-            id="social-twitter"
-            type="text"
-            formControlName="twitter"
-            placeholder="username (без @)"
-            autocomplete="off"
-            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
-                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
-                   text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-transparent
-                   transition-all duration-200"
-          />
-        </div>
-        <div>
-          <label
-            for="social-linkedin"
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-          >
-            <span class="text-blue-700 dark:text-blue-400">LinkedIn</span>
-          </label>
-          <input
-            id="social-linkedin"
-            type="text"
-            formControlName="linkedin"
-            placeholder="username або повний URL"
-            autocomplete="off"
-            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
-                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
-                   text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent
-                   transition-all duration-200"
-          />
-        </div>
-        <div>
-          <label
-            for="social-github"
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-          >
-            <span class="text-gray-800 dark:text-gray-200">GitHub</span>
-          </label>
-          <input
-            id="social-github"
-            type="text"
-            formControlName="github"
-            placeholder="username"
-            autocomplete="off"
-            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
-                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
-                   text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-gray-700 focus:border-transparent
-                   transition-all duration-200"
-          />
-        </div>
-        <div>
-          <label
-            for="social-goodreads"
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-          >
-            <span class="text-amber-700 dark:text-amber-400">Goodreads</span>
-          </label>
-          <input
-            id="social-goodreads"
-            type="text"
-            formControlName="goodreads"
-            placeholder="username або повний URL"
-            autocomplete="off"
-            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
-                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
-                   text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent
-                   transition-all duration-200"
-          />
-        </div>
-      </div>
-      <div class="flex items-center gap-3 pt-1">
-        <button
-          type="submit"
-          class="rounded-xl bg-primary-600 hover:bg-primary-700 text-white
-                 px-5 py-2.5 text-sm font-medium
-                 transition-all duration-200 focus:outline-none focus:ring-2
-                 focus:ring-primary-500 focus:ring-offset-2"
-        >
-          {{ 'PROFILE.save' | translate }}
-        </button>
-        @if (socialsSaved()) {
-          <output
-            aria-live="polite"
-            class="flex items-center gap-1.5 text-sm font-medium text-green-600 dark:text-green-400
-                   animate-fade-in"
-          >
-            ✅ {{ 'PROFILE.socials_saved' | translate }}
-          </output>
-        }
-      </div>
-    </form>
-  </section>
-</div>
-````
-
-## File: src/app/features/quiz/quiz-take/quiz-take.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizAttempt } from '../../../core/models/quiz.model';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
-@Component({
-  selector: 'app-quiz-take',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LoadingSpinnerComponent],
-  templateUrl: './quiz-take.component.html',
-})
-export class QuizTakeComponent implements OnInit {
-  protected readonly quizService = inject(QuizService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  protected readonly state = signal<QuizState>('loading');
-  protected readonly errorMessage = signal('');
-  protected readonly currentIndex = signal(0);
-  protected readonly selectedAnswers = signal<number[]>([]);
-  protected readonly selectedOption = computed(
-    () => this.selectedAnswers()[this.currentIndex()] ?? -1,
-  );
-  protected readonly attempt = signal<QuizAttempt | null>(null);
-  protected clubId = '';
-  protected readonly currentQuestion = computed(
-    () => this.quizService.questions()[this.currentIndex()] ?? null,
-  );
-  protected readonly isLastQuestion = computed(
-    () => this.currentIndex() === this.quizService.questions().length - 1,
-  );
-  protected readonly progressPercent = computed(() => {
-    const total = this.quizService.questions().length;
-    return total === 0 ? 0 : Math.round(((this.currentIndex() + 1) / total) * 100);
-  });
-  protected readonly scorePercent = computed(() => {
-    const a = this.attempt();
-    if (!a || a.total === 0) return 0;
-    return Math.round((a.score / a.total) * 100);
-  });
-  protected readonly scoreMessage = computed(() => {
-    const pct = this.scorePercent();
-    if (pct === 100) return '🎉 Perfect score!';
-    if (pct >= 80) return '🌟 Great job!';
-    if (pct >= 60) return '👍 Good effort!';
-    if (pct >= 40) return '📖 Keep reading!';
-    return '💪 Better luck next time!';
-  });
-  ngOnInit(): void {
-    // Both :id (club) and :quizId are inherited via paramsInheritanceStrategy:'always'
-    this.clubId = this.route.snapshot.params['id'] as string;
-    const quizId = this.route.snapshot.params['quizId'] as string;
-    if (!quizId) {
-      this.errorMessage.set('Quiz not found.');
-      this.state.set('error');
-      return;
-    }
-    this.quizService
-      .loadQuestions(quizId)
-      .then(() => {
-        const count = this.quizService.questions().length;
-        if (count === 0) {
-          this.errorMessage.set('This quiz has no questions yet.');
-          this.state.set('error');
-          return;
-        }
-        this.selectedAnswers.set(new Array<number>(count).fill(-1));
-        this.state.set('taking');
-      })
-      .catch(err => {
-        this.errorMessage.set((err as Error).message);
-        this.state.set('error');
-      });
-  }
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
-  protected selectOption(index: number): void {
-    const current = this.currentIndex();
-    this.selectedAnswers.update(answers => {
-      const copy = [...answers];
-      copy[current] = index;
-      return copy;
-    });
-  }
-  protected next(): void {
-    if (this.selectedOption() === -1) return;
-    this.currentIndex.update(i => i + 1);
-  }
-  protected previous(): void {
-    if (this.currentIndex() === 0) return;
-    this.currentIndex.update(i => i - 1);
-  }
-  protected submit(): void {
-    if (this.selectedOption() === -1) return;
-    this.state.set('submitting');
-    const quizId = this.route.snapshot.params['quizId'] as string;
-    this.quizService
-      .submitAttempt(quizId, this.selectedAnswers())
-      .then(result => {
-        this.attempt.set(result);
-        this.state.set('results');
-      })
-      .catch(err => {
-        this.errorMessage.set((err as Error).message);
-        this.state.set('error');
-      });
-  }
-}
-````
-
-## File: src/app/features/randomizer/randomizer.component.html
-````html
-<div class="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 p-4 sm:p-8">
-  <div class="max-w-4xl mx-auto space-y-8">
-    <header class="flex items-center justify-between flex-wrap gap-4">
-      <div>
-        <h1 class="font-display text-3xl font-bold text-white">🎲 {{ 'RANDOMIZER.title' | translate }}</h1>
-        <p class="text-primary-300 mt-1">{{ 'RANDOMIZER.subtitle' | translate }}</p>
-      </div>
-      <nav aria-label="Breadcrumb">
-        <a [routerLink]="['/clubs', clubId]" class="text-primary-300 hover:text-white transition-colors text-sm">
-          {{ 'RANDOMIZER.back_to_club' | translate }}
-        </a>
-      </nav>
-    </header>
-    <div class="bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/10">
-      <label for="purpose" class="block text-white font-medium text-sm mb-2">{{ 'RANDOMIZER.purpose_label' | translate }}</label>
-      <input
-        id="purpose"
-        type="text"
-        [formControl]="purposeControl"
-        [placeholder]="'RANDOMIZER.purpose_placeholder' | translate"
-        class="w-full rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
-      />
-    </div>
-    <div class="grid lg:grid-cols-2 gap-8">
-      <section aria-labelledby="members-heading" class="space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 id="members-heading" class="text-white font-semibold text-lg">
-            👥 {{ 'RANDOMIZER.members_title' | translate }}
-            <span class="text-primary-300 text-sm font-normal ml-2">{{ selectedCount() }} / {{ randomizerService.candidates().length }} {{ 'RANDOMIZER.selected' | translate }}</span>
-          </h2>
-          <button
-            type="button"
-            (click)="reset()"
-            class="text-xs text-primary-300 hover:text-white transition-colors"
-          >
-            {{ 'RANDOMIZER.select_all' | translate }}
-          </button>
-        </div>
-        @if (randomizerService.candidates().length === 0) {
-          <div class="bg-white/10 rounded-2xl p-8 text-center text-white/60">
-            <p class="text-3xl mb-2">👤</p>
-            <p>{{ 'RANDOMIZER.no_members' | translate }}</p>
-          </div>
-        } @else {
-          <ul class="space-y-2">
-            @for (member of randomizerService.candidates(); track member.userId) {
-              <li>
-                <button
-                  type="button"
-                  (click)="randomizerService.toggleMember(member.userId)"
-                  class="w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                  [class]="randomizerService.selectedIds().has(member.userId)
-                    ? 'bg-white/20 border border-white/30'
-                    : 'bg-white/5 border border-white/10 opacity-50'"
-                  [attr.aria-pressed]="randomizerService.selectedIds().has(member.userId)"
-                  [attr.aria-label]="'Toggle ' + member.displayName"
-                >
-                  <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                    {{ member.displayName | initials }}
-                  </div>
-                  <span class="text-white font-medium text-sm flex-1 text-left">{{ member.displayName }}</span>
-                  @if (randomizerService.selectedIds().has(member.userId)) {
-                    <span class="text-green-400 text-lg" aria-hidden="true">✓</span>
-                  }
-                </button>
-              </li>
-            }
-          </ul>
-        }
-      </section>
-      <section aria-labelledby="spin-heading" class="space-y-6">
-        <h2 id="spin-heading" class="sr-only">{{ 'RANDOMIZER.title' | translate }}</h2>
-        <div class="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/10 text-center min-h-[200px] flex flex-col items-center justify-center">
-          @if (randomizerService.isSpinning()) {
-            <div class="space-y-4">
-              <div class="text-5xl animate-bounce">🎲</div>
-              <p class="text-white/70 text-sm animate-pulse">{{ 'RANDOMIZER.spinning' | translate }}</p>
-            </div>
-          } @else if (randomizerService.result()) {
-            <div class="space-y-3">
-              <div class="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl ring-4 ring-white/30">
-                {{ randomizerService.result()!.displayName | initials }}
-              </div>
-              <div>
-                <p class="text-white/60 text-xs uppercase tracking-wide mb-1">{{ randomizerService.purpose() }}</p>
-                <p class="text-white text-2xl font-bold">{{ randomizerService.result()!.displayName }}</p>
-              </div>
-              <span class="text-3xl">🏆</span>
-            </div>
-          } @else {
-            <div class="text-white/40 space-y-2">
-              <div class="text-4xl">🎯</div>
-              <p class="text-sm">{{ 'RANDOMIZER.spin_hint' | translate }}</p>
-            </div>
-          }
-        </div>
-        @if (errorMessage()) {
-          <div class="rounded-xl bg-red-500/20 border border-red-500/30 px-4 py-3 text-sm text-red-300" role="alert">
-            {{ errorMessage() }}
-          </div>
-        }
-        <div class="flex flex-col gap-3">
-          <button
-            type="button"
-            (click)="spin()"
-            [disabled]="randomizerService.isSpinning() || selectedCount() < 2"
-            class="w-full rounded-2xl bg-gradient-to-r from-accent-500 to-primary-500 hover:from-accent-400 hover:to-primary-400 text-white font-bold py-4 text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary-400 shadow-lg"
-          >
-            @if (randomizerService.isSpinning()) {
-              {{ 'RANDOMIZER.spinning_btn' | translate }}
-            } @else {
-              {{ 'RANDOMIZER.spin' | translate }}
-            }
-          </button>
-          @if (randomizerService.result() && authService.isOrganizer()) {
-            <button
-              type="button"
-              (click)="saveSession()"
-              [disabled]="isSaving()"
-              class="w-full rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium py-3 transition-all duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-400"
-            >
-              @if (isSaving()) {
-                {{ 'RANDOMIZER.saving' | translate }}
-              } @else {
-                {{ 'RANDOMIZER.save' | translate }}
-              }
-            </button>
-          }
-        </div>
-        @if (randomizerService.history().length > 0) {
-          <div class="space-y-3">
-            <h3 class="text-white/70 text-sm font-medium uppercase tracking-wide">{{ 'RANDOMIZER.history_title' | translate }}</h3>
-            <ul class="space-y-2">
-              @for (session of randomizerService.history().slice(0, 5); track session.id) {
-                <li class="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="text-white/60 text-xs truncate">{{ session.purpose }}</p>
-                    @if (session.result) {
-                      <p class="text-white text-sm font-medium">🏆 {{ session.result.displayName }}</p>
-                    }
-                  </div>
-                  <span class="text-white/40 text-xs shrink-0">{{ session.createdAt | date:'dd.MM HH:mm' }}</span>
-                </li>
-              }
-            </ul>
-          </div>
-        }
-      </section>
-    </div>
-  </div>
-</div>
-````
-
-## File: src/app/layout/header/header.component.html
-````html
-<header
-      class="sticky top-0 z-50 bg-[#f5ede0]/80 dark:bg-gray-900/80 backdrop-blur-md
-             border-b border-amber-200/60 dark:border-gray-800"
-      role="banner"
-    >
-      <div class="max-w-6xl mx-auto px-4">
-        <div class="flex items-center justify-between h-16">
-          <a
-            routerLink="/"
-            class="font-display text-xl font-bold text-gray-900 dark:text-white
-                   hover:text-primary-600 dark:hover:text-primary-400
-                   transition-all duration-200 focus:outline-none focus:ring-2
-                   focus:ring-primary-500 focus:ring-offset-2 rounded"
-          >
-            📚 BookClub
-          </a>
-          <nav
-            class="hidden md:flex items-center gap-1"
-            aria-label="Main navigation"
-          >
-            <a
-              routerLink="/clubs"
-              routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
-              class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
-                     hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
-                     focus:ring-offset-2"
-            >
-              {{ 'NAV.discover' | translate }}
-            </a>
-            @if (isAuthenticated()) {
-              <a
-                routerLink="/clubs"
-                [queryParams]="{ tab: 'mine' }"
-                routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
-                class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
-                       hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
-                       transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
-                       focus:ring-offset-2"
-              >
-                {{ 'CLUBS.my_clubs' | translate }}
-              </a>
-            }
-          </nav>
-          <div class="hidden md:flex items-center gap-2">
-            <button
-              type="button"
-              (click)="switchLang()"
-              class="text-sm font-semibold px-2 py-1 rounded border border-current
-                     text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2
-                     focus:ring-primary-500 focus:ring-offset-2"
-              [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-            >
-              {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
-            </button>
-            @if (isAuthenticated()) {
-              <div class="relative">
-                <button
-                  type="button"
-                  (click)="toggleDropdown()"
-                  class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
-                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                  [attr.aria-expanded]="isDropdownOpen()"
-                  aria-haspopup="menu"
-                  [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
-                >
-                  <div
-                    class="h-9 w-9 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
-                           flex items-center justify-center text-white text-sm font-semibold
-                           select-none"
-                    aria-hidden="true"
-                  >
-                    {{ userInitials() }}
-                  </div>
-                </button>
-                @if (isDropdownOpen()) {
-                  <div
-                    role="menu"
-                    aria-label="User menu"
-                    class="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-gray-800 shadow-lg
-                           border border-gray-100 dark:border-gray-700 py-1 z-50
-                           animate-fade-in"
-                  >
-                    <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                      <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                        {{ currentUser()?.displayName }}
-                      </p>
-                    </div>
-                    <a
-                      routerLink="/profile"
-                      role="menuitem"
-                      (click)="closeDropdown()"
-                      class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200
-                             hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200
-                             focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-700"
-                    >
-                      👤 {{ 'NAV.profile' | translate }}
-                    </a>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      (click)="signOut()"
-                      class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400
-                             hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200
-                             focus:outline-none focus:bg-red-50 dark:focus:bg-red-900/20"
-                    >
-                      🚪 {{ 'NAV.logout' | translate }}
-                    </button>
-                  </div>
-                  <div
-                    class="fixed inset-0 z-40"
-                    aria-hidden="true"
-                    tabindex="-1"
-                    (click)="closeDropdown()"
-                    (keydown.escape)="closeDropdown()"
-                  ></div>
-                }
-              </div>
-            } @else {
-              <a
-                routerLink="/login"
-                class="border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800
-                       text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-medium text-sm
-                       transition-all duration-200 focus:outline-none focus:ring-2
-                       focus:ring-primary-500 focus:ring-offset-2"
-              >
-                {{ 'NAV.login' | translate }}
-              </a>
-              <a
-                routerLink="/register"
-                class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg
-                       font-medium text-sm transition-all duration-200 focus:outline-none
-                       focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              >
-                {{ 'NAV.join_free' | translate }}
-              </a>
-            }
-          </div>
-          <button
-            type="button"
-            class="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300
-                   hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-            (click)="toggleMenu()"
-            [attr.aria-expanded]="isMenuOpen()"
-            aria-controls="mobile-menu"
-          >
-            @if (isMenuOpen()) {
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            } @else {
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            }
-            <span class="sr-only">Toggle navigation menu</span>
-          </button>
-        </div>
-        @if (isMenuOpen()) {
-          <nav
-            id="mobile-menu"
-            class="md:hidden border-t border-gray-100 dark:border-gray-800 py-3 space-y-1"
-            aria-label="Mobile navigation"
-          >
-            <a
-              routerLink="/clubs"
-              routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
-              (click)="isMenuOpen.set(false)"
-              class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                     text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2
-                     focus:ring-primary-500 focus:ring-offset-2"
-            >
-              🔍 {{ 'NAV.discover' | translate }}
-            </a>
-            @if (isAuthenticated()) {
-              <a
-                routerLink="/clubs"
-                [queryParams]="{ tab: 'mine' }"
-                (click)="isMenuOpen.set(false)"
-                class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                       text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                       transition-all duration-200 focus:outline-none focus:ring-2
-                       focus:ring-primary-500 focus:ring-offset-2"
-              >
-                📖 {{ 'CLUBS.my_clubs' | translate }}
-              </a>
-            }
-            <button
-              type="button"
-              (click)="switchLang()"
-              class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                     text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2
-                     focus:ring-primary-500 focus:ring-offset-2 w-full text-left"
-              [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-            >
-              {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
-            </button>
-            <div class="pt-2 mt-2 border-t border-gray-100 dark:border-gray-800 space-y-1">
-              @if (isAuthenticated()) {
-                <div class="px-4 py-2">
-                  <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-                    {{ 'NAV.signed_in_as' | translate }}
-                  </p>
-                  <p class="text-sm font-medium text-gray-900 dark:text-white mt-0.5">
-                    {{ currentUser()?.displayName }}
-                  </p>
-                </div>
-                <a
-                  routerLink="/profile"
-                  (click)="isMenuOpen.set(false)"
-                  class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                         text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-primary-500 focus:ring-offset-2"
-                >
-                  👤 {{ 'NAV.profile' | translate }}
-                </a>
-                <button
-                  type="button"
-                  (click)="signOut()"
-                  class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                         text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-red-500 focus:ring-offset-2"
-                >
-                  🚪 {{ 'NAV.logout' | translate }}
-                </button>
-              } @else {
-                <a
-                  routerLink="/login"
-                  (click)="isMenuOpen.set(false)"
-                  class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                         text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-primary-500 focus:ring-offset-2"
-                >
-                  {{ 'NAV.login' | translate }}
-                </a>
-                <a
-                  routerLink="/register"
-                  (click)="isMenuOpen.set(false)"
-                  class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                         bg-primary-600 text-white hover:bg-primary-700
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-primary-500 focus:ring-offset-2"
-                >
-                  {{ 'NAV.join_free' | translate }}
-                </a>
-              }
-            </div>
-          </nav>
-        }
-      </div>
-    </header>
-````
-
-## File: src/app/layout/header/header.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-} from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { AuthService } from '../../core/auth/auth.service';
-@Component({
-  selector: 'app-header',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, TranslateModule],
-  templateUrl: './header.component.html',
-})
-export class HeaderComponent {
-  private readonly auth = inject(AuthService);
-  private readonly translate = inject(TranslateService);
-  readonly isMenuOpen = signal(false);
-  readonly isDropdownOpen = signal(false);
-  readonly isAuthenticated = this.auth.isAuthenticated;
-  readonly currentUser = this.auth.currentUser;
-  readonly currentLang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: 'uk' },
-  );
-  readonly userInitials = computed(() => {
-    const name = this.currentUser()?.displayName ?? '';
-    return (
-      name
-        .split(' ')
-        .slice(0, 2)
-        .map(w => w[0]?.toUpperCase() ?? '')
-        .join('') || '?'
-    );
-  });
-  switchLang(): void {
-    const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-    this.translate.use(next).subscribe();
-  }
-  toggleMenu(): void {
-    this.isMenuOpen.update(v => !v);
-    if (this.isMenuOpen()) this.isDropdownOpen.set(false);
-  }
-  toggleDropdown(): void {
-    this.isDropdownOpen.update(v => !v);
-  }
-  closeDropdown(): void {
-    this.isDropdownOpen.set(false);
-  }
-  async signOut(): Promise<void> {
-    this.closeDropdown();
-    this.isMenuOpen.set(false);
-    await this.auth.signOut();
-  }
-}
-````
-
-## File: src/app/app.routes.ts
-````typescript
-import { Routes } from '@angular/router';
-import { authGuard } from './core/auth/auth.guard';
-import { roleGuard } from './core/auth/role.guard';
-import { ShellComponent } from './layout/shell/shell.component';
-export const routes: Routes = [
-  {
-    path: 'login',
-    loadComponent: () =>
-      import('./features/auth/login/login.component').then(m => m.LoginComponent),
-  },
-  {
-    path: 'register',
-    loadComponent: () =>
-      import('./features/auth/register/register.component').then(m => m.RegisterComponent),
-  },
-  {
-    path: '',
-    component: ShellComponent,
-    children: [
-      // Protected: any authenticated user
-      {
-        path: 'clubs',
-        canActivate: [authGuard],
-        loadChildren: () => import('./features/clubs/clubs.routes').then(m => m.CLUBS_ROUTES),
-      },
-      {
-        path: 'manage',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('./features/clubs/clubs-list/clubs-list.component').then(
-            m => m.ClubsListComponent,
-          ),
-      },
-      { path: '', redirectTo: 'clubs', pathMatch: 'full' },
-      {
-        path: 'profile',
-        canActivate: [authGuard],
-        loadComponent: () =>
-          import('./features/profile/profile.component').then(m => m.ProfileComponent),
-      },
-      { path: '**', redirectTo: 'clubs' },
-    ],
-  },
-];
-````
-
-## File: src/app/app.ts
-````typescript
-import { Component, ChangeDetectionStrategy } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
-import { ToastComponent } from './shared/components/toast/toast.component';
-@Component({
-  selector: 'app-root',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, ToastComponent],
-  templateUrl: './app.html',
-})
-export class App {}
-````
-
-## File: eslint.config.js
-````javascript
-const eslint = require("@eslint/js");
-const { defineConfig } = require("eslint/config");
-const tseslint = require("typescript-eslint");
-const angular = require("angular-eslint");
-const rxjsX = require("eslint-plugin-rxjs-x");
-module.exports = defineConfig([
-  {
-    files: ["**/*.ts"],
-    extends: [
-      eslint.configs.recommended,
-      tseslint.configs.strict,
-      tseslint.configs.stylisticTypeChecked,
-      angular.configs.tsRecommended,
-      rxjsX.configs.recommended,
-    ],
-    processor: angular.processInlineTemplates,
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.app.json", "./tsconfig.spec.json"],
-        tsconfigRootDir: __dirname,
-      },
-    },
-    rules: {
-      "@angular-eslint/directive-selector": [
-        "error",
-        {
-          type: "attribute",
-          prefix: "app",
-          style: "camelCase",
-        },
-      ],
-      "@angular-eslint/component-selector": [
-        "error",
-        {
-          type: "element",
-          prefix: "app",
-          style: "kebab-case",
-        },
-      ],
-      "@typescript-eslint/no-extraneous-class": [
-        "error",
-        { allowWithDecorator: true },
-      ],
-      "@typescript-eslint/no-invalid-void-type": "off",
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        { "argsIgnorePattern": "^_" },
-      ],
-      "rxjs-x/no-unsafe-takeuntil": "error",
-      "rxjs-x/no-floating-observables": "error",
-      "rxjs-x/no-unbound-methods": "error",
-      "rxjs-x/no-subject-value": "error",
-      "rxjs-x/finnish": "warn",
-    },
-  },
-  {
-    files: ["**/*.html"],
-    extends: [
-      angular.configs.templateRecommended,
-      angular.configs.templateAccessibility,
-    ],
-    rules: {},
-  }
-]);
-````
-
-## File: sonar-project.properties
-````
-# Replace YOUR_ORG with your actual SonarCloud organization slug
-sonar.projectKey=leo477_book-club-fe
-sonar.organization=leo477
-sonar.projectName=Book Club Frontend
-sonar.projectVersion=1.0
-
-sonar.sources=src
-sonar.tests=src
-sonar.test.inclusions=**/*.spec.ts
-sonar.exclusions=**/node_modules/**,**/*.spec.ts,src/assets/**,src/environments/**
-
-sonar.typescript.lcov.reportPaths=coverage/book-club-fe/lcov.info
-
-# Exclude non-testable and currently untested files from coverage requirements
-sonar.coverage.exclusions=\
-  **/*.html,\
-  **/*.spec.ts,\
-  **/mocks/**,\
-  **/*.model.ts,\
-  **/*.interface.ts,\
-  **/*.config.ts,\
-  **/environments/**,\
-  src/app/features/**,\
-  src/app/layout/**,\
-  src/app/core/services/randomizer.service.ts,\
-  src/app/core/services/quiz.service.ts,\
-  src/app/core/services/club.service.ts,\
-  src/app/core/supabase/**
-
-sonar.sourceEncoding=UTF-8
-````
-
 ## File: src/app/features/clubs/clubs-list/clubs-list.component.html
 ````html
 <div class="min-h-screen">
@@ -6231,104 +7111,14 @@ sonar.sourceEncoding=UTF-8
           </h2>
           <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             @for (club of clubService.upcomingByCity()[city]; track club.id) {
-              <li class="rounded-2xl bg-white dark:bg-gray-800 shadow hover:shadow-lg transition-shadow flex flex-col overflow-hidden">
-                <div class="relative">
-                  @if (club.coverUrl) {
-                    <img [src]="club.coverUrl" [alt]="''" class="h-32 w-full object-cover" aria-hidden="true" loading="lazy" />
-                  } @else {
-                    <div class="h-32 bg-gradient-to-br from-primary-400 to-accent-500" aria-hidden="true"></div>
-                  }
-                  @if (club.theme) {
-                    <span class="absolute top-3 left-3 rounded-full bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm px-2.5 py-0.5 text-xs font-semibold text-primary-700 dark:text-primary-300 shadow">
-                      {{ club.theme }}
-                    </span>
-                  }
-                  @if (club.status !== 'active') {
-                    <span class="absolute top-3 right-3 rounded-full px-2.5 py-0.5 text-xs font-semibold shadow"
-                          [class]="club.status === 'paused'
-                            ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/50 dark:text-yellow-300'
-                            : 'bg-red-100 text-red-700 dark:bg-red-900/50 dark:text-red-300'">
-                      {{ club.status === 'paused' ? ('CLUBS.paused' | translate) : ('CLUBS.cancelled' | translate) }}
-                    </span>
-                  }
-                </div>
-                <div class="flex flex-col flex-1 p-4 gap-3">
-                  <div>
-                    <h3 class="font-semibold text-gray-900 dark:text-white leading-snug line-clamp-1 flex items-center gap-1.5">
-                      {{ club.name }}
-                      @if (ownedClubIds().has(club.id)) {
-                        <span class="text-xs font-semibold text-amber-600 dark:text-amber-400" title="Ваш клуб">👑</span>
-                      }
-                    </h3>
-                    @if (club.nextMeetingDate) {
-                      <div class="flex items-center gap-2 mt-1">
-                        <span class="text-xs text-accent-600 dark:text-accent-400 font-medium">
-                          📅 {{ club.nextMeetingDate | formatDate }}
-                        </span>
-                        @if (daysUntil(club.nextMeetingDate) <= 7 && daysUntil(club.nextMeetingDate) >= 0) {
-                          <span class="text-xs font-semibold text-orange-600 dark:text-orange-400">
-                            · за {{ daysUntil(club.nextMeetingDate) }} дн.
-                          </span>
-                        }
-                      </div>
-                    }
-                  </div>
-                  @if (club.currentBook) {
-                    <div class="rounded-xl bg-gray-50 dark:bg-gray-700/50 p-3 flex gap-3 items-start">
-                      <span class="text-2xl shrink-0" aria-hidden="true">📖</span>
-                      <div class="min-w-0">
-                        <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">{{ club.currentBook.title }}</p>
-                        <p class="text-xs text-gray-500 dark:text-gray-400 italic">{{ club.currentBook.author }}</p>
-                        <p class="text-xs text-gray-600 dark:text-gray-300 mt-1 line-clamp-2">{{ club.currentBook.description }}</p>
-                      </div>
-                    </div>
-                  }
-                  @if (club.address) {
-                    <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-                      <span aria-hidden="true">📍</span>
-                      <span class="truncate">{{ club.address }}</span>
-                    </p>
-                  }
-                  @if (club.memberPreviews.length > 0) {
-                    <div class="flex items-center gap-1.5">
-                      @for (name of club.memberPreviews.slice(0, 4); track name) {
-                        <div
-                          class="h-7 w-7 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0"
-                          [attr.title]="name"
-                          aria-hidden="true"
-                        >
-                          {{ name | initials }}
-                        </div>
-                      }
-                      @if (club.memberCount > 4) {
-                        <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">+{{ club.memberCount - 4 }}</span>
-                      }
-                    </div>
-                  }
-                  <div class="flex items-center gap-2 mt-auto pt-1">
-                    <a
-                      [routerLink]="['/clubs', club.id]"
-                      class="flex-1 text-center rounded-xl border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                      [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club.name"
-                    >
-                      {{ 'CLUBS.view' | translate }}
-                    </a>
-                    @if (auth.isAuthenticated() && !clubService.myClubIds().has(club.id) && club.status === 'active') {
-                      <button
-                        type="button"
-                        (click)="onJoin(club)"
-                        [disabled]="joiningClubId() === club.id"
-                        class="flex-1 rounded-xl bg-primary-600 hover:bg-primary-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                        [attr.aria-label]="('CLUBS.join' | translate) + ' ' + club.name"
-                      >
-                        @if (joiningClubId() === club.id) { ⏳ } @else { {{ 'CLUBS.join' | translate }} }
-                      </button>
-                    } @else if (auth.isAuthenticated() && clubService.myClubIds().has(club.id)) {
-                      <span class="flex-1 text-center rounded-xl bg-green-50 dark:bg-green-900/20 px-3 py-1.5 text-xs font-medium text-green-700 dark:text-green-400">{{ 'CLUBS.member_badge' | translate }}</span>
-                    }
-                  </div>
-                </div>
-              </li>
+              <app-club-card
+                [club]="club"
+                [isMember]="clubService.myClubIds().has(club.id)"
+                [isOwned]="ownedClubIds().has(club.id)"
+                [isAuthenticated]="auth.isAuthenticated()"
+                [joining]="joiningClubId() === club.id"
+                (join)="onJoin(club)"
+              />
             }
           </ul>
         </section>
@@ -6760,8 +7550,8 @@ sonar.sourceEncoding=UTF-8
 import {
   ChangeDetectionStrategy,
   Component,
-  OnInit,
   inject,
+  input,
   signal,
 } from '@angular/core';
 import {
@@ -6771,7 +7561,7 @@ import {
   ReactiveFormsModule,
   Validators,
 } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { QuizService } from '../../../core/services/quiz.service';
 import { QuizQuestion } from '../../../core/models/quiz.model';
 interface MetaForm {
@@ -6794,14 +7584,14 @@ type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './quiz-create.component.html',
 })
-export class QuizCreateComponent implements OnInit {
+export class QuizCreateComponent {
   private readonly quizService = inject(QuizService);
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   protected readonly currentStep = signal<1 | 2>(1);
   protected readonly localQuestions = signal<LocalQuestion[]>([]);
   protected readonly isPublishing = signal(false);
   protected readonly errorMessage = signal('');
+  readonly id = input<string>('');
   readonly optionIndices: readonly number[] = [0, 1, 2, 3];
   protected readonly metaForm = new FormGroup<MetaForm>({
     title: new FormControl('', {
@@ -6836,10 +7626,6 @@ export class QuizCreateComponent implements OnInit {
     }),
     correctIndex: new FormControl<number>(0, { nonNullable: true }),
   });
-  private clubId = '';
-  ngOnInit(): void {
-    this.clubId = this.route.snapshot.params['id'] as string;
-  }
   protected isInvalidTouched(ctrl: AbstractControl): boolean {
     return ctrl.invalid && ctrl.touched;
   }
@@ -6881,8 +7667,9 @@ export class QuizCreateComponent implements OnInit {
     this.isPublishing.set(true);
     this.errorMessage.set('');
     const { title, description } = this.metaForm.getRawValue();
+    const clubId = this.id();
     this.quizService
-      .createQuiz({ clubId: this.clubId, title: title.trim(), description: description.trim() })
+      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
       .then(async quiz => {
         // Add questions sequentially to preserve sort_order
         for (const q of questions) {
@@ -6891,7 +7678,7 @@ export class QuizCreateComponent implements OnInit {
         // Activate the quiz
         await this.quizService.toggleActive(quiz.id, true);
         this.isPublishing.set(false);
-        this.router.navigate(['/clubs', this.clubId, 'quizzes']);
+        this.router.navigate(['/clubs', clubId, 'quizzes']);
       })
       .catch(err => {
         this.isPublishing.set(false);
@@ -7129,72 +7916,15 @@ When invoking agents via the `task` tool, **always use the model specified below
       </nav>
     </div>
     <div class="max-w-4xl mx-auto px-4 py-8 space-y-6">
-      <header class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-        <div>
-          <div class="flex items-center gap-3 flex-wrap">
-            <h1 id="club-heading" class="font-display text-3xl font-bold text-gray-900 dark:text-white">
-              {{ club()!.name }}
-            </h1>
-            @if (!club()!.isPublic) {
-              <span class="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-                🔒 {{ 'CLUB_DETAIL.private' | translate }}
-              </span>
-            }
-            @if (club()!.status === 'active') {
-              <span class="rounded-full bg-green-100 dark:bg-green-900/30 px-2.5 py-0.5 text-xs font-semibold text-green-700 dark:text-green-400">
-                ● {{ 'CLUBS.active' | translate }}
-              </span>
-            } @else if (club()!.status === 'paused') {
-              <span class="rounded-full bg-yellow-100 dark:bg-yellow-900/30 px-2.5 py-0.5 text-xs font-semibold text-yellow-700 dark:text-yellow-400">
-                ⏸ {{ 'CLUBS.paused' | translate }}
-              </span>
-            } @else if (club()!.status === 'cancelled') {
-              <span class="rounded-full bg-red-100 dark:bg-red-900/30 px-2.5 py-0.5 text-xs font-semibold text-red-700 dark:text-red-400">
-                ✕ {{ 'CLUBS.cancelled' | translate }}
-              </span>
-            }
-          </div>
-          <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1.5">
-            <span aria-hidden="true">👥</span>
-            <span>{{ club()!.memberCount }} {{ club()!.memberCount === 1 ? ('CLUBS.member_singular' | translate) : ('CLUBS.members' | translate) }}</span>
-          </p>
-        </div>
-        @if (currentUser()) {
-          @if (!isClubOwner()) {
-            @if (isMember()) {
-              <button
-                type="button"
-                (click)="onLeave()"
-                [disabled]="isActionLoading()"
-                class="inline-flex items-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                [attr.aria-label]="'CLUB_DETAIL.leave' | translate"
-              >
-                @if (isActionLoading()) {
-                  <app-loading-spinner size="sm" />
-                }
-                {{ 'CLUB_DETAIL.leave' | translate }}
-              </button>
-            } @else {
-              <button
-                type="button"
-                (click)="onJoin()"
-                [disabled]="isActionLoading()"
-                class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-                [attr.aria-label]="'CLUB_DETAIL.join' | translate"
-              >
-                @if (isActionLoading()) {
-                  <app-loading-spinner size="sm" />
-                }
-                {{ 'CLUB_DETAIL.join' | translate }}
-              </button>
-            }
-          } @else {
-            <span class="inline-flex items-center gap-1.5 rounded-xl bg-accent-100 dark:bg-accent-900/30 px-4 py-2.5 text-sm font-semibold text-accent-700 dark:text-accent-300">
-              {{ 'CLUB_DETAIL.organizer_badge' | translate }}
-            </span>
-          }
-        }
-      </header>
+      <app-club-header
+        [club]="club()!"
+        [isMember]="isMember()"
+        [isOwner]="isClubOwner()"
+        [isAuthenticated]="!!currentUser()"
+        [isActionLoading]="isActionLoading()"
+        [currentUser]="currentUser()"
+        (join)="onJoin()"
+        (leave)="onLeave()" />
       @if (club()?.status === 'cancelled' && deleteCountdown()) {
         <div role="alert" class="mx-4 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
           ⚠️ {{ 'CLUB_DETAIL.deletion_countdown_prefix' | translate }} {{ deleteCountdown() }}
@@ -7258,242 +7988,24 @@ When invoking agents via the `task` tool, **always use the model specified below
           }
         </aside>
       }
-      @if (club()!.meetingDurationMinutes || club()!.address) {
-        <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.meeting_info_title' | translate }}</h2>
-          <dl class="space-y-3">
-            @if (club()!.meetingDurationMinutes) {
-              <div class="flex items-center gap-3">
-                <dt class="text-sm text-gray-500 dark:text-gray-400 w-28 flex-shrink-0">{{ 'CLUB_DETAIL.duration_label' | translate }}</dt>
-                <dd class="text-sm font-medium text-gray-900 dark:text-white">{{ club()!.meetingDurationMinutes }} {{ 'CLUB_DETAIL.minutes_abbr' | translate }}</dd>
-              </div>
-            }
-            @if (club()!.address) {
-              <div class="flex items-start gap-3">
-                <dt class="text-sm text-gray-500 dark:text-gray-400 w-28 flex-shrink-0">{{ 'CLUB_DETAIL.address_label' | translate }}</dt>
-                <dd class="text-sm text-gray-900 dark:text-white">
-                  {{ club()!.address }}
-                  <a [href]="'https://maps.google.com/search?q=' + club()!.address"
-                     target="_blank" rel="noopener noreferrer"
-                     class="ml-2 text-xs text-primary-600 dark:text-primary-400 hover:underline">
-                    {{ 'CLUB_DETAIL.view_on_map' | translate }}
-                  </a>
-                </dd>
-              </div>
-            }
-          </dl>
-        </section>
-      }
-      @if (club()!.afterMeetingVenue) {
-        <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.after_meeting_title' | translate }}</h2>
-          <div class="flex items-start gap-3">
-            <span class="text-2xl" aria-hidden="true">☕</span>
-            <div>
-              <p class="font-semibold text-gray-900 dark:text-white">{{ club()!.afterMeetingVenue!.name }}</p>
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{{ club()!.afterMeetingVenue!.address }}</p>
-              @if (club()!.afterMeetingVenue!.description) {
-                <p class="text-sm text-gray-600 dark:text-gray-400 mt-2 italic">{{ club()!.afterMeetingVenue!.description }}</p>
-              }
-            </div>
-          </div>
-        </section>
-      }
-      <section [attr.aria-label]="'MEMBERS.title' | translate" class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
-          {{ 'MEMBERS.title' | translate }} ({{ members().length }})
-        </h2>
-        @if (members().length === 0) {
-          <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'MEMBERS.empty' | translate }}</p>
-        } @else {
-          <ul class="divide-y divide-gray-100 dark:divide-gray-700">
-            @for (member of members(); track member.userId) {
-              <li class="flex items-center gap-4 py-3 relative">
-                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0" aria-hidden="true">
-                  {{ member.displayName | initials }}
-                </div>
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                    {{ member.displayName }}
-                  </p>
-                  @if (member.role === 'organizer') {
-                    <span class="inline-block text-xs font-medium text-accent-600 dark:text-accent-400">
-                      {{ 'MEMBERS.organizer' | translate }}
-                    </span>
-                  } @else {
-                    <span class="inline-block text-xs text-gray-400 dark:text-gray-500">
-                      {{ 'MEMBERS.member' | translate }}
-                    </span>
-                  }
-                </div>
-                <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-                  @if (canSeeSocials(member)) {
-                    @if (member.socials?.telegram) {
-                      <a [href]="'https://t.me/' + member.socials!.telegram" target="_blank" rel="noopener noreferrer"
-                         class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram: @' + member.socials!.telegram" title="Telegram">
-                        ✈️
-                      </a>
-                    }
-                    @if (member.socials?.instagram) {
-                      <a [href]="'https://instagram.com/' + member.socials!.instagram" target="_blank" rel="noopener noreferrer"
-                         class="text-pink-500 hover:text-pink-600 text-lg" [attr.aria-label]="'Instagram: @' + member.socials!.instagram" title="Instagram">
-                        📸
-                      </a>
-                    }
-                    @if (member.socials?.github) {
-                      <a [href]="'https://github.com/' + member.socials!.github" target="_blank" rel="noopener noreferrer"
-                         class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" [attr.aria-label]="'GitHub: ' + member.socials!.github" title="GitHub">
-                        🐙
-                      </a>
-                    }
-                    @if (member.socials?.goodreads) {
-                      <a [href]="'https://goodreads.com/' + member.socials!.goodreads" target="_blank" rel="noopener noreferrer"
-                         class="text-amber-600 hover:text-amber-700 text-lg" title="Goodreads">
-                        📚
-                      </a>
-                    }
-                    @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
-                      <button
-                        type="button"
-                        (click)="toggleQr(member.userId)"
-                        class="inline-flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 transition-colors ml-1"
-                        [attr.aria-expanded]="showQrForUser() === member.userId"
-                        [attr.aria-label]="'MEMBERS.show_qr' | translate"
-                      >
-                        <span aria-hidden="true">⊡</span> {{ 'MEMBERS.show_qr' | translate }}
-                      </button>
-                      @if (showQrForUser() === member.userId) {
-                        <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 p-4 flex flex-col items-center gap-2"
-                             aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
-                          <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
-                          <app-qr-code [value]="buildQrValue(member)" [size]="160" />
-                          <button type="button" (click)="toggleQr(member.userId)"
-                                  class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mt-1">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
-                        </dialog>
-                      }
-                    }
-                  } @else {
-                    <span class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
-                      🔒 {{ 'MEMBERS.socials_hidden' | translate }}
-                    </span>
-                  }
-                  @if (isClubOwner() && member.role !== 'organizer') {
-                    <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">
-                      <button type="button" (click)="kickMember(member.userId)"
-                              class="rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-red-100 dark:hover:bg-red-900/30 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                               [attr.aria-label]="'MEMBERS.kick' | translate">
-                        {{ 'MEMBERS.kick' | translate }}
-                      </button>
-                      <button type="button" (click)="toggleBanMenu(member.userId)"
-                              class="rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-orange-100 dark:hover:bg-orange-900/30 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
-                              [attr.aria-expanded]="showBanMenu() === member.userId">
-                        {{ 'MEMBERS.ban' | translate }}
-                      </button>
-                      @if (showBanMenu() === member.userId) {
-                        <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 py-1 min-w-36">
-                          @for (duration of banDurations; track duration) {
-                            <li>
-                              <button type="button" (click)="banMember(member.userId, duration)"
-                                      class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-                                @if (duration === 1) { {{ 'MEMBERS.ban_1' | translate }} }
-                                @else if (duration === 3) { {{ 'MEMBERS.ban_3' | translate }} }
-                                @else if (duration === 5) { {{ 'MEMBERS.ban_5' | translate }} }
-                                @else { {{ 'MEMBERS.ban_permanent' | translate }} }
-                              </button>
-                            </li>
-                          }
-                        </menu>
-                      }
-                    </div>
-                  }
-                </div>
-              </li>
-            }
-          </ul>
-        }
-      </section>
+      <app-club-info [club]="club()!" />
+      <app-club-members-list
+        [members]="members()"
+        [clubBans]="clubBans()"
+        [isOwner]="isClubOwner()"
+        [currentUserId]="currentUserId()"
+        (kick)="handleKick($event)"
+        (ban)="handleBan($event)" />
       @if (isClubOwner()) {
-        <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <a
-              [routerLink]="['/clubs', id(), 'quizzes']"
-              class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-            >
-              <span class="text-xl" aria-hidden="true">📝</span>
-              <div>
-                <p class="font-semibold">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
-              </div>
-            </a>
-            <a
-              [routerLink]="['/clubs', id(), 'randomizer']"
-              class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-            >
-              <span class="text-xl" aria-hidden="true">🎲</span>
-              <div>
-                <p class="font-semibold">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
-              </div>
-            </a>
-          </div>
-        </div>
-        <section [attr.aria-label]="'CLUB_DETAIL.manage_title' | translate" class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6 space-y-5">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
-          <div class="flex flex-wrap gap-3">
-            @if (club()!.status === 'active') {
-              <button
-                type="button"
-                (click)="pauseClub()"
-                class="inline-flex items-center gap-2 rounded-xl bg-yellow-400 hover:bg-yellow-500 px-4 py-2.5 text-sm font-semibold text-yellow-900 transition-colors"
-                [attr.aria-label]="'CLUB_DETAIL.pause' | translate"
-              >
-                ⏸ {{ 'CLUB_DETAIL.pause' | translate }}
-              </button>
-            }
-            @if (club()!.status !== 'cancelled') {
-              <button
-                type="button"
-                (click)="cancelClub()"
-                class="inline-flex items-center gap-2 rounded-xl bg-red-500 hover:bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-                [attr.aria-label]="'CLUB_DETAIL.cancel' | translate"
-              >
-                ✕ {{ 'CLUB_DETAIL.cancel' | translate }}
-              </button>
-            }
-          </div>
-          @if (club()!.status === 'paused') {
-            <form
-              (ngSubmit)="rescheduleSubmit()"
-              class="flex flex-col sm:flex-row items-start sm:items-end gap-3"
-              [attr.aria-label]="'CLUB_DETAIL.reschedule' | translate"
-            >
-              <div class="flex flex-col gap-1.5 flex-1">
-                <label
-                  for="reschedule-date"
-                  class="text-xs font-medium text-gray-600 dark:text-gray-400"
-                >
-                  {{ 'CLUB_DETAIL.new_date' | translate }}
-                </label>
-                <input
-                  id="reschedule-date"
-                  type="datetime-local"
-                  [formControl]="rescheduleDate"
-                  class="rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500"
-                  aria-required="true"
-                />
-              </div>
-              <button
-                type="submit"
-                [disabled]="!rescheduleDate.value"
-                class="inline-flex items-center gap-2 rounded-xl bg-green-500 hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2.5 text-sm font-semibold text-white transition-colors"
-                [attr.aria-label]="'CLUB_DETAIL.reschedule_submit' | translate"
-              >
-                ✓ {{ 'CLUB_DETAIL.reschedule_submit' | translate }}
-              </button>
-            </form>
-          }
-        </section>
+        <app-club-manage-panel [clubId]="id()" />
+      }
+      @if (isClubOwner()) {
+        <app-club-schedule
+          [club]="club()!"
+          [isOwner]="isClubOwner()"
+          (pauseRequested)="pauseClub()"
+          (cancelRequested)="cancelClub()"
+          (reschedule)="rescheduleSubmit($event)" />
       }
       <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">
         {{ 'CLUB_DETAIL.created' | translate }} {{ club()!.createdAt | formatDate }}
@@ -7775,10 +8287,11 @@ export const appConfig: ApplicationConfig = {
 
 ## File: src/app/core/services/quiz.service.ts
 ````typescript
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
 import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
 interface ApiQuiz {
   id: string;
@@ -7831,13 +8344,6 @@ function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
     total: raw.total,
     answers: raw.answers,
   };
-}
-function extractApiError(err: unknown): string {
-  if (err instanceof HttpErrorResponse) {
-    const detail = (err.error as { detail?: string })?.detail;
-    return detail ?? err.message ?? 'Unknown error';
-  }
-  return 'Unknown error';
 }
 @Injectable({ providedIn: 'root' })
 export class QuizService {
@@ -8156,13 +8662,13 @@ import { SeoService } from '../../../core/services/seo.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { ClubCardComponent } from './club-card/club-card.component';
 @Component({
   selector: 'app-clubs-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, LoadingSpinnerComponent, EmptyStateComponent, TranslateModule, InitialsPipe, FormatDatePipe],
+  imports: [RouterLink, FormsModule, LoadingSpinnerComponent, EmptyStateComponent, TranslateModule, FormatDatePipe, ClubCardComponent],
   templateUrl: './clubs-list.component.html',
 })
 export class ClubsListComponent implements OnInit {
@@ -8192,21 +8698,43 @@ export class ClubsListComponent implements OnInit {
       this.joiningClubId.set(null);
     }
   }
-  protected daysUntil(dateStr: string): number {
-    const now = new Date();
-    const meeting = new Date(dateStr);
-    return Math.ceil((meeting.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  }
+}
+````
+
+## File: vercel.json
+````json
+{
+
+  "buildCommand": "npm run build -- --configuration=production",
+  "outputDirectory": "dist/book-club-fe/browser",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none';" }
+      ]
+    }
+  ]
 }
 ````
 
 ## File: src/app/core/auth/auth.service.ts
 ````typescript
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, resource, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
 import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
 import { TokenStore } from './token.store';
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
@@ -8332,13 +8860,6 @@ export class AuthService {
     );
     this._currentUser.set({ ...user, socialsPublic: value });
   }
-}
-function extractApiError(err: unknown): string {
-  if (err instanceof HttpErrorResponse) {
-    const detail = (err.error as { detail?: string })?.detail;
-    return detail ?? err.message ?? 'Unknown error';
-  }
-  return 'Unknown error';
 }
 ````
 
@@ -8475,7 +8996,6 @@ import {
   effect,
   input,
 } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, startWith } from 'rxjs';
@@ -8484,16 +9004,29 @@ import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
 import { UserProfile } from '../../../core/models/user.model';
-import { QrCodeComponent } from '../../../shared/components/qr-code/qr-code.component';
 import { SeoService } from '../../../core/services/seo.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { ClubMembersListComponent } from './members/club-members-list.component';
+import { ClubScheduleComponent } from './schedule/club-schedule.component';
+import { ClubHeaderComponent } from './header/club-header.component';
+import { ClubInfoComponent } from './info/club-info.component';
+import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
 @Component({
   selector: 'app-club-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, TranslateModule, QrCodeComponent, LoadingSpinnerComponent, InitialsPipe, FormatDatePipe],
+  imports: [
+    RouterLink,
+    TranslateModule,
+    InitialsPipe,
+    FormatDatePipe,
+    ClubMembersListComponent,
+    ClubScheduleComponent,
+    ClubHeaderComponent,
+    ClubInfoComponent,
+    ClubManagePanelComponent,
+  ],
   templateUrl: './club-detail.component.html',
 })
 export class ClubDetailComponent {
@@ -8522,7 +9055,7 @@ export class ClubDetailComponent {
   readonly isClubOwner = computed(
     () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
   );
-  readonly showQrForUser = signal<string | null>(null);
+  readonly currentUserId = computed(() => this.auth.currentUser()?.id ?? null);
   readonly organizerProfile = computed<UserProfile | null>(() => {
     const organizerId = this.club()?.organizerId;
     if (!organizerId) return null;
@@ -8538,8 +9071,6 @@ export class ClubDetailComponent {
       socialsPublic: organizer.socialsPublic,
     } satisfies UserProfile;
   });
-  readonly banDurations: BanDuration[] = [1, 3, 5, 'permanent'];
-  readonly showBanMenu = signal<string | null>(null);
   readonly deleteCountdown = computed<string | null>(() => {
     this._lang();
     const c = this.club();
@@ -8552,7 +9083,6 @@ export class ClubDetailComponent {
       return this.translate.instant('CLUB_DETAIL.deletion_countdown_hours', { hours, minutes });
     return this.translate.instant('CLUB_DETAIL.deletion_countdown_minutes', { minutes });
   });
-  readonly rescheduleDate = new FormControl<string>('', { nonNullable: true });
   constructor() {
     effect((onCleanup) => {
       const clubId = this.id();
@@ -8615,6 +9145,14 @@ export class ClubDetailComponent {
       this.isActionLoading.set(false);
     }
   }
+  async handleKick(userId: string): Promise<void> {
+    await this.clubService.kickMember(this.id(), userId);
+    this.members.update(list => list.filter(m => m.userId !== userId));
+  }
+  async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
+    await this.clubService.banMember(this.id(), event.userId, event.duration);
+    this.members.update(list => list.filter(m => m.userId !== event.userId));
+  }
   async pauseClub(): Promise<void> {
     await this.clubService.pauseClub(this.id());
     await this.refreshClub();
@@ -8623,73 +9161,82 @@ export class ClubDetailComponent {
     await this.clubService.cancelClub(this.id());
     await this.refreshClub();
   }
-  async rescheduleSubmit(): Promise<void> {
-    const date = this.rescheduleDate.value;
+  async rescheduleSubmit(date: string): Promise<void> {
     if (!date) return;
     await this.clubService.rescheduleMeeting(this.id(), date);
-    this.rescheduleDate.reset();
     await this.refreshClub();
   }
   private async refreshClub(): Promise<void> {
     const updated = await this.clubService.getClubById(this.id());
     if (updated) this.club.set(updated);
   }
-  async kickMember(userId: string): Promise<void> {
-    await this.clubService.kickMember(this.id(), userId);
-    this.members.update(list => list.filter(m => m.userId !== userId));
-  }
-  async banMember(userId: string, duration: BanDuration): Promise<void> {
-    await this.clubService.banMember(this.id(), userId, duration);
-    this.showBanMenu.set(null);
-    this.members.update(list => list.filter(m => m.userId !== userId));
-  }
-  toggleBanMenu(userId: string): void {
-    this.showBanMenu.update(current => current === userId ? null : userId);
-  }
-  canSeeSocials(member: ClubMemberDetail): boolean {
-    return member.socialsPublic || this.isClubOwner();
-  }
-  toggleQr(userId: string): void {
-    this.showQrForUser.update(current => current === userId ? null : userId);
-  }
-  buildQrValue(member: ClubMemberDetail): string {
-    if (!member.socials) return member.displayName;
-    const lines: string[] = [`📚 ${member.displayName}`];
-    const s = member.socials;
-    if (s.telegram)   lines.push(`Telegram: t.me/${s.telegram}`);
-    if (s.instagram)  lines.push(`Instagram: instagram.com/${s.instagram}`);
-    if (s.twitter)    lines.push(`Twitter: x.com/${s.twitter}`);
-    if (s.linkedin)   lines.push(`LinkedIn: linkedin.com/in/${s.linkedin}`);
-    if (s.github)     lines.push(`GitHub: github.com/${s.github}`);
-    if (s.goodreads)  lines.push(`Goodreads: goodreads.com/${s.goodreads}`);
-    return lines.join('\n');
-  }
 }
 ````
 
-## File: vercel.json
+## File: package.json
 ````json
 {
-
-  "buildCommand": "npm run build -- --configuration=production",
-  "outputDirectory": "dist/book-club-fe/browser",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none';" }
-      ]
-    }
-  ]
+  "name": "book-club-fe",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
+    "extract-i18n": "node scripts/extract-i18n.mjs",
+    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
+    "lint": "ng lint",
+    "build-ctx": "npx repomix --no-files",
+    "prepare": "husky install"
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/common": "^20.1.0",
+    "@angular/compiler": "^20.1.0",
+    "@angular/core": "^20.1.0",
+    "@angular/forms": "^20.1.0",
+    "@angular/platform-browser": "^20.1.0",
+    "@angular/router": "^20.1.0",
+    "@ngx-translate/core": "^17.0.0",
+    "@ngx-translate/http-loader": "^17.0.0",
+    "qrcode": "^1.5.4",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^20.1.5",
+    "@angular/cli": "^20.1.5",
+    "@angular/compiler-cli": "^20.1.0",
+    "@types/jasmine": "~5.1.0",
+    "@types/qrcode": "^1.5.6",
+    "angular-eslint": "21.0.1",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^9.39.1",
+    "eslint-plugin-rxjs-x": "^0.9.5",
+    "husky": "^8.0.0",
+    "jasmine-core": "~5.8.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "postcss": "^8.5.9",
+    "tailwindcss": "^3.4.19",
+    "typescript": "~5.8.2",
+    "typescript-eslint": "8.46.4"
+  }
 }
 ````
 
@@ -8906,73 +9453,6 @@ export class ClubService {
   private _updateClub(updated: Club): void {
     this._clubs.update(list => list.map(c => (c.id === updated.id ? updated : c)));
     this._myClubs.update(list => list.map(c => (c.id === updated.id ? updated : c)));
-  }
-}
-````
-
-## File: package.json
-````json
-{
-  "name": "book-club-fe",
-  "version": "0.0.0",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
-    "extract-i18n": "node scripts/extract-i18n.mjs",
-    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
-    "lint": "ng lint",
-    "build-ctx": "npx repomix --no-files",
-    "prepare": "husky install"
-  },
-  "prettier": {
-    "overrides": [
-      {
-        "files": "*.html",
-        "options": {
-          "parser": "angular"
-        }
-      }
-    ]
-  },
-  "private": true,
-  "dependencies": {
-    "@angular/common": "^20.1.0",
-    "@angular/compiler": "^20.1.0",
-    "@angular/core": "^20.1.0",
-    "@angular/forms": "^20.1.0",
-    "@angular/platform-browser": "^20.1.0",
-    "@angular/router": "^20.1.0",
-    "@ngx-translate/core": "^17.0.0",
-    "@ngx-translate/http-loader": "^17.0.0",
-    "qrcode": "^1.5.4",
-    "rxjs": "~7.8.0",
-    "tslib": "^2.3.0"
-  },
-  "devDependencies": {
-    "@angular/build": "^20.1.5",
-    "@angular/cli": "^20.1.5",
-    "@angular/compiler-cli": "^20.1.0",
-    "@types/jasmine": "~5.1.0",
-    "@types/qrcode": "^1.5.6",
-    "angular-eslint": "21.0.1",
-    "autoprefixer": "^10.4.27",
-    "eslint": "^9.39.1",
-    "eslint-plugin-rxjs-x": "^0.9.5",
-    "husky": "^8.0.0",
-    "jasmine-core": "~5.8.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
-    "postcss": "^8.5.9",
-    "tailwindcss": "^3.4.19",
-    "typescript": "~5.8.2",
-    "typescript-eslint": "8.46.4"
   }
 }
 ````

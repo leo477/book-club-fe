@@ -1,7 +1,8 @@
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
 import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
 
 // ── API shapes (snake_case) ──────────────────────────────────────────────────
@@ -64,14 +65,6 @@ function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
     total: raw.total,
     answers: raw.answers,
   };
-}
-
-function extractApiError(err: unknown): string {
-  if (err instanceof HttpErrorResponse) {
-    const detail = (err.error as { detail?: string })?.detail;
-    return detail ?? err.message ?? 'Unknown error';
-  }
-  return 'Unknown error';
 }
 
 // ── Service ──────────────────────────────────────────────────────────────────

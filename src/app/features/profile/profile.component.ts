@@ -10,17 +10,68 @@ import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { UserRole, UserSocials } from '../../core/models/user.model';
 import { SeoService } from '../../core/services/seo.service';
+import { ToastService } from '../../core/services/toast.service';
+import { SocialLinkFieldComponent, SocialField } from '../../shared/components/social-link-field/social-link-field.component';
+import { SocialBadgesComponent } from '../../shared/components/social-badges/social-badges.component';
+import { ProfileStatsComponent } from './stats/profile-stats.component';
+import { ProfileRoleSelectorComponent } from './role-selector/profile-role-selector.component';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslateModule],
+  imports: [ReactiveFormsModule, TranslateModule, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent],
   templateUrl: './profile.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileComponent {
   protected readonly auth = inject(AuthService);
   private readonly seo = inject(SeoService);
+  private readonly toast = inject(ToastService);
+
+  protected readonly socialFields: SocialField[] = [
+    {
+      key: 'telegram',
+      label: 'Telegram',
+      labelClass: 'text-blue-600 dark:text-blue-400',
+      placeholder: 'username (без @)',
+      focusRingClass: 'focus:ring-blue-500',
+    },
+    {
+      key: 'instagram',
+      label: 'Instagram',
+      labelClass: 'bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500 bg-clip-text text-transparent',
+      placeholder: 'username (без @)',
+      focusRingClass: 'focus:ring-pink-500',
+    },
+    {
+      key: 'twitter',
+      label: 'Twitter / X',
+      labelClass: 'text-gray-900 dark:text-gray-100',
+      placeholder: 'username (без @)',
+      focusRingClass: 'focus:ring-gray-800',
+    },
+    {
+      key: 'linkedin',
+      label: 'LinkedIn',
+      labelClass: 'text-blue-700 dark:text-blue-400',
+      placeholder: 'username або повний URL',
+      focusRingClass: 'focus:ring-blue-600',
+    },
+    {
+      key: 'github',
+      label: 'GitHub',
+      labelClass: 'text-gray-800 dark:text-gray-200',
+      placeholder: 'username',
+      focusRingClass: 'focus:ring-gray-700',
+    },
+    {
+      key: 'goodreads',
+      label: 'Goodreads',
+      labelClass: 'text-amber-700 dark:text-amber-400',
+      placeholder: 'username або повний URL',
+      focusRingClass: 'focus:ring-amber-500',
+    },
+  ];
 
   /** Typed reactive form for updating the display name. */
   protected readonly nameForm = new FormGroup({
@@ -45,12 +96,6 @@ export class ProfileComponent {
 
   /** Tracks the in-flight save state (synchronous here, but keeps the pattern extensible). */
   protected readonly isSavingName = signal(false);
-  /** Drives the "Saved!" success toast for the name form. */
-  protected readonly nameSaved = signal(false);
-  /** Drives the "Role updated!" success toast for the role switcher. */
-  protected readonly roleChanged = signal(false);
-  /** Drives the "Socials saved!" success toast for the socials form. */
-  protected readonly socialsSaved = signal(false);
 
   /** Two-letter initials derived from the current user's display name. */
   protected readonly userInitials = computed<string>(() => {
@@ -110,8 +155,7 @@ export class ProfileComponent {
   protected async changeRole(role: UserRole): Promise<void> {
     try {
       await this.auth.updateRole(role);
-      this.roleChanged.set(true);
-      setTimeout(() => this.roleChanged.set(false), 3000);
+      this.toast.show('PROFILE.role_changed', 'success');
     } catch { /* error already handled by interceptor */ }
   }
 
@@ -122,8 +166,7 @@ export class ProfileComponent {
     const { displayName } = this.nameForm.getRawValue();
     try {
       await this.auth.updateDisplayName(displayName);
-      this.nameSaved.set(true);
-      setTimeout(() => this.nameSaved.set(false), 3000);
+      this.toast.show('PROFILE.name_updated', 'success');
     } catch { /* error already handled by interceptor */ }
     finally {
       this.isSavingName.set(false);
@@ -146,8 +189,7 @@ export class ProfileComponent {
 
     try {
       await this.auth.updateSocials(socials);
-      this.socialsSaved.set(true);
-      setTimeout(() => this.socialsSaved.set(false), 3000);
+      this.toast.show('PROFILE.socials_saved', 'success');
     } catch { /* error already handled by interceptor */ }
   }
 

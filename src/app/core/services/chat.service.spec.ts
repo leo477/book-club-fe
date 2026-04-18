@@ -78,7 +78,7 @@ describe('ChatService', () => {
   });
 
   describe('loadRooms()', () => {
-    it('should populate rooms signal from HTTP GET', () => {
+    it('should populate rooms signal from HTTP GET', async () => {
       service.loadRooms('club-1');
 
       const roomsReq = httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`);
@@ -88,6 +88,9 @@ describe('ChatService', () => {
         { id: 'room-2', name: 'Off-topic' },
       ]);
 
+      // Wait for the .then() microtask to run before expecting the messages request
+      await Promise.resolve();
+
       // After rooms load, the first room is auto-selected and messages are fetched
       const msgsReq = httpMock.expectOne(`${API}/chat/rooms/room-1/messages`);
       msgsReq.flush([]);
@@ -96,11 +99,13 @@ describe('ChatService', () => {
       expect(getRooms(service)[0].id).toBe('room-1');
     });
 
-    it('should auto-select first room and set activeRoomId', () => {
+    it('should auto-select first room and set activeRoomId', async () => {
       service.loadRooms('club-1');
 
       const roomsReq = httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`);
       roomsReq.flush([{ id: 'room-1', name: 'General' }]);
+
+      await Promise.resolve();
 
       const msgsReq = httpMock.expectOne(`${API}/chat/rooms/room-1/messages`);
       msgsReq.flush([]);
@@ -108,11 +113,13 @@ describe('ChatService', () => {
       expect(getActiveRoomId(service)).toBe('room-1');
     });
 
-    it('should set currentUserId when userId is passed', () => {
+    it('should set currentUserId when userId is passed', async () => {
       service.loadRooms('club-1', 'user-42');
 
       const roomsReq = httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`);
       roomsReq.flush([{ id: 'room-1', name: 'General' }]);
+
+      await Promise.resolve();
 
       const msgsReq = httpMock.expectOne(`${API}/chat/rooms/room-1/messages`);
       // Flush a message sent by the same user — it should be marked isOwn
@@ -123,6 +130,8 @@ describe('ChatService', () => {
         text: 'Hi',
         created_at: '2024-01-01T00:00:00Z',
       }]);
+
+      await Promise.resolve();
 
       const msgs = getActiveMessages(service);
       expect(msgs.length).toBe(1);
@@ -169,7 +178,7 @@ describe('ChatService', () => {
       expect(getHasNewMessage(service)).toBe(false);
     });
 
-    it('activeMessages() returns messages for the new room', () => {
+    it('activeMessages() returns messages for the new room', async () => {
       service.openRoom('room-3');
 
       const req = httpMock.expectOne(`${API}/chat/rooms/room-3/messages`);
@@ -177,6 +186,9 @@ describe('ChatService', () => {
         { id: 'msg-3-1', sender_id: 'u1', sender_name: 'Alice', text: 'Hi', created_at: '2024-01-01T00:00:00Z' },
         { id: 'msg-3-2', sender_id: 'u2', sender_name: 'Bob', text: 'Hey', created_at: '2024-01-01T00:01:00Z' },
       ]);
+
+      // Wait for the firstValueFrom .then() to update the signal
+      await Promise.resolve();
 
       const msgs = getActiveMessages(service);
       expect(msgs.length).toBe(2);
@@ -195,7 +207,7 @@ describe('ChatService', () => {
   });
 
   describe('sendMessage()', () => {
-    it('should POST to server and then reload messages', () => {
+    it('should POST to server and then reload messages', async () => {
       // Set up an active room first
       (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
 
@@ -205,14 +217,19 @@ describe('ChatService', () => {
       expect(postReq.request.method).toBe('POST');
       expect(postReq.request.body).toEqual({ text: 'Hello world' });
 
-      // Flush the POST response, which triggers a reload
+      // Flush the POST response, which triggers a reload via .then()
       postReq.flush({ id: 'new-msg', sender_id: 'user-99', sender_name: 'TestUser', text: 'Hello world', created_at: '2024-01-01T00:00:00Z' });
+
+      // Wait for the .then() microtask to run before expecting the GET
+      await Promise.resolve();
 
       // Now the reload GET should be expected
       const getReq = httpMock.expectOne(`${API}/chat/rooms/room-1/messages`);
       getReq.flush([
         { id: 'new-msg', sender_id: 'user-99', sender_name: 'TestUser', text: 'Hello world', created_at: '2024-01-01T00:00:00Z' }
       ]);
+
+      await Promise.resolve();
 
       const msgs = getActiveMessages(service);
       expect(msgs.length).toBe(1);
@@ -228,13 +245,16 @@ describe('ChatService', () => {
   });
 
   describe('activeRoom() computed', () => {
-    it('should return correct room when activeRoomId matches', () => {
+    it('should return correct room when activeRoomId matches', async () => {
       service.loadRooms('club-1');
       const roomsReq = httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`);
       roomsReq.flush([
         { id: 'room-1', name: 'General' },
         { id: 'room-2', name: 'Off-topic' },
       ]);
+
+      await Promise.resolve();
+
       const msgsReq = httpMock.expectOne(`${API}/chat/rooms/room-1/messages`);
       msgsReq.flush([]);
 
