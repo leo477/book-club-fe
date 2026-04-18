@@ -227,7 +227,6 @@ CLAUDE.md
 eslint.config.js
 karma.conf.js
 package.json
-plan.md
 README.md
 repomix.config.json
 SECURITY.md
@@ -270,13 +269,404 @@ vercel.json
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({k:v for k,v in d.items\\(\\) if k in ['CLUBS','PROFILE','AUTH']}, indent=2, ensure_ascii=False\\)\\)\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); proj=list\\(d['projects'].keys\\(\\)\\)[0]; build=d['projects'][proj]['architect']['build']; print\\('builder:', build['builder']\\); print\\('options keys:', list\\(build.get\\('options',{}\\).keys\\(\\)\\)[:10]\\)\")",
       "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); deps={**d.get\\('dependencies',{}\\),**d.get\\('devDependencies',{}\\)}; [print\\(k,':',v\\) for k in ['@angular/core','@angular/common','@ngx-translate/core','@ngx-translate/http-loader'] if k in deps]\")",
-      "Bash(python3 *)"
+      "Bash(python3 *)",
+      "Bash(gh pr *)",
+      "Bash(npm install *)",
+      "Bash(node *)",
+      "Bash(npm info *)",
+      "Bash(npm --version)",
+      "Bash(git stash *)",
+      "Bash(git checkout *)",
+      "Bash(git -C /home/test/Documents/angular/book-club-fe status)",
+      "Bash(git -C /home/test/Documents/angular/book-club-fe branch)",
+      "Bash(git -C /home/test/Documents/angular/book-club-fe ls-files)",
+      "Bash(git -C /home/test/Documents/angular/book-club-fe log --oneline -5)",
+      "Bash(git -C /home/test/Documents/angular/book-club-fe checkout chore/remove-qodana)",
+      "Bash(npm test *)",
+      "Bash(git pull *)",
+      "Bash(git *)"
     ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "book-club-agents"
   ]
+}
+````
+
+## File: .github/workflows/auto-labeler.yml
+````yaml
+name: Auto Labeler
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  label:
+    name: Label PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply labels
+        uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
+````
+
+## File: .github/workflows/dependency-review.yml
+````yaml
+name: Dependency Review
+on:
+  pull_request:
+    branches: [main, develop]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: always
+````
+
+## File: .github/workflows/i18n-check.yml
+````yaml
+name: i18n Check
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [develop]
+permissions:
+  contents: read
+jobs:
+  i18n-check:
+    name: Check i18n Keys
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Check for missing translation keys
+        run: |
+          node -e "
+          const fs = require('fs');
+          function flatten(obj, prefix) {
+            return Object.keys(obj).reduce((acc, key) => {
+              const fullKey = prefix ? prefix + '.' + key : key;
+              if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                Object.assign(acc, flatten(obj[key], fullKey));
+              } else {
+                acc[fullKey] = obj[key];
+              }
+              return acc;
+            }, {});
+          }
+          const uk = JSON.parse(fs.readFileSync('public/i18n/uk.json', 'utf8'));
+          const en = JSON.parse(fs.readFileSync('public/i18n/en.json', 'utf8'));
+          const ukFlat = flatten(uk, '');
+          const enFlat = flatten(en, '');
+          const missing = Object.keys(ukFlat).filter(key => !(key in enFlat));
+          if (missing.length > 0) {
+            console.error('Missing keys in en.json:');
+            missing.forEach(k => console.error('  - ' + k));
+            process.exit(1);
+          }
+          console.log('All ' + Object.keys(ukFlat).length + ' keys present in en.json.');
+          "
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+name: Lighthouse CI
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Install dependencies
+        run: npm ci
+      - name: Build (production)
+        run: npm run build -- --configuration=production
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          configPath: .lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+````
+
+## File: .github/workflows/scorecard.yml
+````yaml
+name: OpenSSF Scorecard
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * 0'
+permissions:
+  security-events: write
+  id-token: write
+  contents: read
+  actions: read
+jobs:
+  scorecard:
+    name: Scorecard Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run Scorecard analysis
+        uses: ossf/scorecard-action@v2.4.0
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SARIF file
+          path: results.sarif
+          retention-days: 5
+      - name: Upload to code-scanning dashboard
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+````
+
+## File: .github/workflows/secret-scan.yml
+````yaml
+name: Secret Scan
+on:
+  push:
+    branches: ['**']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  gitleaks:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+````
+
+## File: .github/labeler.yml
+````yaml
+feat:
+  - changed-files:
+      - any-glob-to-any-file: src/app/features/**
+core:
+  - changed-files:
+      - any-glob-to-any-file: src/app/core/**
+shared:
+  - changed-files:
+      - any-glob-to-any-file: src/app/shared/**
+style:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/styles/**
+          - "**/*.scss"
+          - tailwind.config.js
+i18n:
+  - changed-files:
+      - any-glob-to-any-file:
+          - public/i18n/**
+          - scripts/**
+ci:
+  - changed-files:
+      - any-glob-to-any-file: .github/**
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "*.md"
+          - docs/**
+build:
+  - changed-files:
+      - any-glob-to-any-file:
+          - angular.json
+          - "tsconfig*.json"
+          - "package*.json"
+````
+
+## File: .husky/pre-commit
+````
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+npx lint-staged
+````
+
+## File: public/robots.txt
+````
+User-agent: *
+Allow: /
+Disallow: /manage/
+Sitemap: https://book-club-fe.vercel.app/sitemap.xml
+````
+
+## File: scripts/extract-i18n.mjs
+````javascript
+/**
+ * Extracts translation keys from Angular templates and TypeScript files.
+ * Scans for:
+ *   - '{{ "KEY" | translate }}' and '[attr]="\'KEY\' | translate"' in HTML
+ *   - translate.instant('KEY') and translate.get('KEY') in TS
+ *
+ * Merges keys into existing JSON files, preserving existing values.
+ * New keys get an empty string value (to be filled in manually).
+ * Use --clean flag to remove keys no longer found in source.
+ *
+ * Usage: node scripts/extract-i18n.mjs [--clean]
+ */
+
+import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
+import { join, extname } from 'path';
+
+const CLEAN = process.argv.includes('--clean');
+const SRC_DIR = './src';
+const OUTPUT_FILES = ['./public/i18n/uk.json', './public/i18n/en.json'];
+
+// Patterns to extract keys from templates and TS files
+const PATTERNS = [
+  /'([\w]+\.[\w.]+)'\s*\|\s*translate/g,
+  /"([\w]+\.[\w.]+)"\s*\|\s*translate/g,
+  /translate\.instant\(['"`]([\w]+\.[\w.]+)['"`]\)/g,
+  /translate\.get\(['"`]([\w]+\.[\w.]+)['"`]\)/g,
+];
+
+function collectFiles(dir, extensions = ['.html', '.ts']) {
+  const results = [];
+  for (const entry of readdirSync(dir)) {
+    if (entry === 'node_modules' || entry.startsWith('.')) continue;
+    const full = join(dir, entry);
+    const stat = statSync(full);
+    if (stat.isDirectory()) {
+      results.push(...collectFiles(full, extensions));
+    } else if (extensions.includes(extname(full)) && !entry.endsWith('.spec.ts')) {
+      results.push(full);
+    }
+  }
+  return results;
+}
+
+function extractKeys(content) {
+  const keys = new Set();
+  for (const pattern of PATTERNS) {
+    pattern.lastIndex = 0;
+    let match;
+    while ((match = pattern.exec(content)) !== null) {
+      keys.add(match[1]);
+    }
+  }
+  return keys;
+}
+
+function toNested(keys) {
+  const result = {};
+  for (const key of [...keys].sort()) {
+    const parts = key.split('.');
+    let current = result;
+    for (let i = 0; i < parts.length - 1; i++) {
+      if (!current[parts[i]] || typeof current[parts[i]] !== 'object') {
+        current[parts[i]] = {};
+      }
+      current = current[parts[i]];
+    }
+    const leaf = parts[parts.length - 1];
+    if (current[leaf] === undefined) {
+      current[leaf] = '';
+    }
+  }
+  return result;
+}
+
+function mergeDeep(existing, extracted) {
+  const result = {};
+  for (const [key, val] of Object.entries(extracted)) {
+    if (typeof val === 'object') {
+      result[key] = mergeDeep(existing[key] ?? {}, val);
+    } else {
+      result[key] = existing[key] !== undefined ? existing[key] : '';
+    }
+  }
+  if (!CLEAN) {
+    for (const [key, val] of Object.entries(existing)) {
+      if (result[key] === undefined) {
+        result[key] = val;
+      }
+    }
+  }
+  return result;
+}
+
+const files = collectFiles(SRC_DIR);
+const allKeys = new Set();
+
+for (const file of files) {
+  const content = readFileSync(file, 'utf8');
+  for (const key of extractKeys(content)) {
+    allKeys.add(key);
+  }
+}
+
+console.log(`Found ${allKeys.size} translation keys in ${files.length} files.`);
+
+const extractedNested = toNested(allKeys);
+
+for (const outputPath of OUTPUT_FILES) {
+  let existing = {};
+  try {
+    existing = JSON.parse(readFileSync(outputPath, 'utf8'));
+  } catch {
+    console.warn(`  Could not read ${outputPath}, creating fresh.`);
+  }
+
+  const merged = mergeDeep(existing, extractedNested);
+  writeFileSync(outputPath, JSON.stringify(merged, null, 2) + '\n', 'utf8');
+  console.log(`  ✅ Updated ${outputPath}${CLEAN ? ' (cleaned)' : ''}`);
 }
 ````
 
@@ -288,6 +678,217 @@ export function extractApiError(err: unknown): string {
     return (err.error as { detail?: string })?.detail ?? err.message ?? 'Unknown error';
   }
   return 'Unknown error';
+}
+````
+
+## File: src/app/core/api/api-mappers.ts
+````typescript
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+import { AfterMeetingVenue, BanDuration, BanRecord, Club, ClubBook, ClubMemberDetail, ClubStatus } from '../models/club.model';
+export interface ApiUserProfile {
+  id: string;
+  email: string;
+  role: UserRole;
+  display_name: string;
+  avatar_url: string | null;
+  created_at: string;
+  socials?: ApiUserSocials | null;
+  socials_public?: boolean;
+}
+export interface ApiUserSocials {
+  telegram?: string | null;
+  instagram?: string | null;
+  twitter?: string | null;
+  linkedin?: string | null;
+  github?: string | null;
+  goodreads?: string | null;
+}
+export interface ApiUserStats {
+  clubs_joined: number;
+  clubs_organized: number;
+  meetings_attended: number;
+  quizzes_taken: number;
+}
+export interface ApiClub {
+  id: string;
+  name: string;
+  description: string | null;
+  cover_url: string | null;
+  organizer_id: string;
+  is_public: boolean;
+  member_count: number;
+  created_at: string;
+  city: string | null;
+  next_meeting_date: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  theme: string | null;
+  current_book: string | null;
+  member_previews: string[];
+  status: ClubStatus;
+  tags: string[];
+  meeting_duration_minutes: number | null;
+  after_meeting_venue: AfterMeetingVenue | null;
+  cancelled_at?: string | null;
+}
+export interface ApiClubMember {
+  user_id: string;
+  display_name: string;
+  avatar_url: string | null;
+  role: 'organizer' | 'member';
+  socials?: ApiUserSocials | null;
+  socials_public?: boolean;
+}
+export interface ApiBanRecord {
+  user_id: string;
+  club_id: string;
+  banned_at: string;
+  duration: BanDuration;
+  banned_by: string;
+}
+export function mapUserProfile(raw: ApiUserProfile): UserProfile {
+  return {
+    id: raw.id,
+    role: raw.role,
+    displayName: raw.display_name,
+    avatarUrl: raw.avatar_url,
+    createdAt: raw.created_at,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socials_public ?? false,
+  };
+}
+export function mapUserStats(raw: ApiUserStats): UserStats {
+  return {
+    clubsJoined: raw.clubs_joined,
+    quizzesTaken: raw.quizzes_taken,
+    quizWins: 0,
+    likesReceived: 0,
+    booksRead: 0,
+  };
+}
+export function mapClub(raw: ApiClub): Club {
+  let currentBook: ClubBook | null = null;
+  if (raw.current_book) {
+    currentBook = { title: raw.current_book, author: '', description: '' };
+  }
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description,
+    coverUrl: raw.cover_url,
+    organizerId: raw.organizer_id,
+    isPublic: raw.is_public,
+    memberCount: raw.member_count,
+    createdAt: raw.created_at,
+    city: raw.city ?? '',
+    nextMeetingDate: raw.next_meeting_date,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    theme: raw.theme,
+    currentBook,
+    memberPreviews: raw.member_previews,
+    status: raw.status,
+    tags: raw.tags,
+    meetingDurationMinutes: raw.meeting_duration_minutes,
+    afterMeetingVenue: raw.after_meeting_venue,
+    cancelledAt: raw.cancelled_at ?? undefined,
+  };
+}
+export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
+  return {
+    userId: raw.user_id,
+    displayName: raw.display_name,
+    avatarUrl: raw.avatar_url,
+    role: raw.role,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socials_public ?? false,
+  };
+}
+export function mapBanRecord(raw: ApiBanRecord): BanRecord {
+  return {
+    userId: raw.user_id,
+    clubId: raw.club_id,
+    bannedAt: raw.banned_at,
+    duration: raw.duration,
+    bannedBy: raw.banned_by,
+  };
+}
+function mapSocials(raw: ApiUserSocials): UserSocials {
+  return {
+    telegram: raw.telegram ?? undefined,
+    instagram: raw.instagram ?? undefined,
+    twitter: raw.twitter ?? undefined,
+    linkedin: raw.linkedin ?? undefined,
+    github: raw.github ?? undefined,
+    goodreads: raw.goodreads ?? undefined,
+  };
+}
+````
+
+## File: src/app/core/auth/token.store.ts
+````typescript
+import { Injectable, signal } from '@angular/core';
+const TOKEN_KEY = 'bc_access_token';
+@Injectable({ providedIn: 'root' })
+export class TokenStore {
+  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
+  readonly token = this._token.asReadonly();
+  set(token: string): void {
+    localStorage.setItem(TOKEN_KEY, token);
+    this._token.set(token);
+  }
+  clear(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    this._token.set(null);
+  }
+  snapshot(): string | null {
+    return this._token();
+  }
+}
+````
+
+## File: src/app/core/models/chat.model.ts
+````typescript
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: Date;
+  isOwn: boolean;
+}
+export interface ChatRoom {
+  id: string;
+  name: string;
+}
+````
+
+## File: src/app/core/models/quiz.model.ts
+````typescript
+export interface Quiz {
+  id: string;
+  clubId: string;
+  createdBy: string;
+  title: string;
+  description: string | null;
+  isActive: boolean;
+}
+export interface QuizQuestion {
+  id: string;
+  quizId: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+}
+export interface QuizAttempt {
+  id: string;
+  quizId: string;
+  userId: string;
+  score: number;
+  total: number;
+  answers: number[];
 }
 ````
 
@@ -1053,996 +1654,6 @@ export class ProfileStatsComponent {
 }
 ````
 
-## File: src/app/shared/components/social-badges/social-badges.component.html
-````html
-<ul class="flex flex-wrap gap-2 list-none p-0 m-0" [attr.aria-label]="'PROFILE.socials_title' | translate">
-  @if (socials().telegram) {
-    <li>
-      <a
-        [href]="'https://t.me/' + socials().telegram"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="inline-flex items-center gap-1.5 rounded-full border border-blue-200
-               dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5
-               text-xs font-medium text-blue-700 dark:text-blue-300
-               hover:bg-blue-100 dark:hover:bg-blue-900/50
-               transition-colors duration-150 focus:outline-none focus:ring-2
-               focus:ring-blue-500 focus:ring-offset-2"
-        [attr.aria-label]="'Telegram: @' + socials().telegram"
-      >
-        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/>
-        </svg>
-        &#64;{{ socials().telegram }}
-      </a>
-    </li>
-  }
-  @if (socials().instagram) {
-    <li>
-      <a
-        [href]="'https://instagram.com/' + socials().instagram"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="inline-flex items-center gap-1.5 rounded-full border border-pink-200
-               dark:border-pink-800 bg-pink-50 dark:bg-pink-900/30 px-3 py-1.5
-               text-xs font-medium bg-clip-text
-               bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500
-               text-transparent hover:opacity-80
-               transition-opacity duration-150 focus:outline-none focus:ring-2
-               focus:ring-pink-500 focus:ring-offset-2"
-        [attr.aria-label]="'Instagram: @' + socials().instagram"
-      >
-        <svg class="h-3.5 w-3.5 shrink-0 text-pink-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>
-        </svg>
-        &#64;{{ socials().instagram }}
-      </a>
-    </li>
-  }
-  @if (socials().twitter) {
-    <li>
-      <a
-        [href]="'https://x.com/' + socials().twitter"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="inline-flex items-center gap-1.5 rounded-full border border-gray-300
-               dark:border-gray-600 bg-gray-900 dark:bg-gray-950 px-3 py-1.5
-               text-xs font-medium text-white
-               hover:bg-gray-700 dark:hover:bg-gray-800
-               transition-colors duration-150 focus:outline-none focus:ring-2
-               focus:ring-gray-500 focus:ring-offset-2"
-        [attr.aria-label]="'Twitter / X: @' + socials().twitter"
-      >
-        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-        </svg>
-        &#64;{{ socials().twitter }}
-      </a>
-    </li>
-  }
-  @if (socials().linkedin) {
-    <li>
-      <a
-        [href]="socials().linkedin!.startsWith('http')
-          ? socials().linkedin!
-          : 'https://linkedin.com/in/' + socials().linkedin"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="inline-flex items-center gap-1.5 rounded-full border border-blue-300
-               dark:border-blue-700 bg-blue-600 dark:bg-blue-700 px-3 py-1.5
-               text-xs font-medium text-white
-               hover:bg-blue-700 dark:hover:bg-blue-600
-               transition-colors duration-150 focus:outline-none focus:ring-2
-               focus:ring-blue-500 focus:ring-offset-2"
-        [attr.aria-label]="'LinkedIn: ' + socials().linkedin"
-      >
-        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 23.2 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
-        </svg>
-        LinkedIn
-      </a>
-    </li>
-  }
-  @if (socials().github) {
-    <li>
-      <a
-        [href]="'https://github.com/' + socials().github"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="inline-flex items-center gap-1.5 rounded-full border border-gray-300
-               dark:border-gray-600 bg-gray-800 dark:bg-gray-900 px-3 py-1.5
-               text-xs font-medium text-gray-100
-               hover:bg-gray-700 dark:hover:bg-gray-800
-               transition-colors duration-150 focus:outline-none focus:ring-2
-               focus:ring-gray-500 focus:ring-offset-2"
-        [attr.aria-label]="'GitHub: ' + socials().github"
-      >
-        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
-        </svg>
-        {{ socials().github }}
-      </a>
-    </li>
-  }
-  @if (socials().goodreads) {
-    <li>
-      <a
-        [href]="socials().goodreads!.startsWith('http')
-          ? socials().goodreads!
-          : 'https://goodreads.com/' + socials().goodreads"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="inline-flex items-center gap-1.5 rounded-full border border-amber-300
-               dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-3 py-1.5
-               text-xs font-medium text-amber-800 dark:text-amber-300
-               hover:bg-amber-100 dark:hover:bg-amber-900/50
-               transition-colors duration-150 focus:outline-none focus:ring-2
-               focus:ring-amber-500 focus:ring-offset-2"
-        [attr.aria-label]="'Goodreads: ' + socials().goodreads"
-      >
-        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M19.525 15.977V.49h-2.059v2.906h-.064a5.015 5.015 0 0 0-1.949-2.406C14.548.316 13.441 0 12.192 0c-1.648 0-3.037.434-4.175 1.303-1.136.869-1.927 2.045-2.373 3.527S5.07 7.857 5.07 9.481c0 1.624.188 3.069.562 4.337.374 1.268 1.004 2.326 1.889 3.172.885.847 2.056 1.271 3.512 1.271 1.248 0 2.35-.304 3.303-.911a4.961 4.961 0 0 0 1.999-2.456h.063v2.904c0 1.547-.272 2.806-.816 3.777-.544.971-1.33 1.666-2.359 2.085-1.029.419-2.264.628-3.703.628-.802 0-1.608-.1-2.416-.302a9.11 9.11 0 0 1-2.258-.961l-.88 1.674c.737.481 1.607.852 2.613 1.114 1.006.262 2.03.393 3.073.393 2.267 0 4.092-.411 5.469-1.231 1.377-.82 2.357-1.913 2.937-3.277.581-1.364.871-2.891.871-4.582zm-7.301-.34c-1.161 0-2.124-.31-2.888-.932-.764-.621-1.323-1.479-1.677-2.574-.354-1.095-.531-2.301-.531-3.617 0-2.006.401-3.62 1.203-4.845.802-1.225 2.04-1.837 3.717-1.837 1.677 0 2.908.609 3.691 1.827.783 1.218 1.176 2.855 1.176 4.913 0 1.296-.173 2.491-.519 3.581-.346 1.09-.895 1.955-1.649 2.591-.754.637-1.71.953-2.862.953-.001 0 .002-.06.339-.06z"/>
-        </svg>
-        Goodreads
-      </a>
-    </li>
-  }
-</ul>
-````
-
-## File: src/app/shared/components/social-badges/social-badges.component.ts
-````typescript
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-import { UserSocials } from '../../../core/models/user.model';
-@Component({
-  selector: 'app-social-badges',
-  standalone: true,
-  imports: [TranslateModule],
-  templateUrl: './social-badges.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class SocialBadgesComponent {
-  readonly socials = input.required<UserSocials>();
-}
-````
-
-## File: src/app/shared/components/social-link-field/social-link-field.component.html
-````html
-<div>
-  <label
-    [for]="'social-' + config().key"
-    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-  >
-    <span [class]="config().labelClass">{{ config().label }}</span>
-  </label>
-  <input
-    [id]="'social-' + config().key"
-    type="text"
-    [formControl]="$any(form().controls)[config().key]"
-    [placeholder]="config().placeholder"
-    autocomplete="off"
-    class="w-full rounded-xl border border-gray-200 dark:border-gray-700
-           bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
-           text-gray-900 dark:text-white placeholder-gray-400
-           focus:outline-none focus:ring-2 focus:border-transparent
-           transition-all duration-200"
-    [class]="config().focusRingClass"
-  />
-</div>
-````
-
-## File: src/app/shared/components/social-link-field/social-link-field.component.ts
-````typescript
-import { Component, input } from '@angular/core';
-import { ReactiveFormsModule, FormGroup } from '@angular/forms';
-export interface SocialField {
-  key: string;
-  label: string;
-  labelClass: string;
-  placeholder: string;
-  focusRingClass: string;
-}
-@Component({
-  selector: 'app-social-link-field',
-  standalone: true,
-  imports: [ReactiveFormsModule],
-  templateUrl: './social-link-field.component.html',
-})
-export class SocialLinkFieldComponent {
-  readonly config = input.required<SocialField>();
-  readonly form = input.required<FormGroup>();
-}
-````
-
-## File: plan.md
-````markdown
-Plan: Anti-pattern Fixes & Component Decomposition                                                                                                                                                                                                                     
-                                                                                                                                                                                                                                                                        
- Context                                                                                                                                                                                                                                                                
-                                                                                                                                                                                                                                                                        
- Аудит кодобази виявив 4 класи проблем, що впливають на підтримуваність і коректність:
- 1. Баги — 3 unmanaged .subscribe() у ChatService (memory leaks)
- 2. Монолітні компоненти — club-detail (228 TS + 463 HTML), profile.html (643 рядки)
- 3. Дублювання — extractApiError() у двох сервісах, 6× повтор соцмереж у profile.html
- 4. Антипатерни Angular 20 — ngOnInit замість effect() у quiz компонентах, .subscribe() у header
-
- ---
- Wave 1 — Бугфікси (КРИТИЧНО, паралельно)
-
- Агент A: dev — ChatService subscribe → firstValueFrom
-
- Файл: src/app/core/services/chat.service.ts
-
- Замінити всі .subscribe() виклики на firstValueFrom():
- // Замість:
- this.http.get<ApiChatRoom[]>(...).subscribe({ next: raw => {...}, error: ... });
-
- // Стати:
- firstValueFrom(this.http.get<ApiChatRoom[]>(...))
-   .then(raw => { this._rooms.set(raw.map(mapRoom)); ... })
-   .catch((err: unknown) => console.error('[ChatService]', err));
- Те саме для loadMessages() та sendMessage().
-
- Агент B: dev — Shared util + header fix
-
- 1. Новий файл src/app/core/api/api-error.util.ts:
- import { HttpErrorResponse } from '@angular/common/http';
-
- export function extractApiError(err: unknown): string {
-   if (err instanceof HttpErrorResponse) {
-     return (err.error as { detail?: string })?.detail ?? err.message ?? 'Unknown error';
-   }
-   return 'Unknown error';
- }
-
- 2. Оновити src/app/core/auth/auth.service.ts — видалити локальний extractApiError, імпортувати з api-error.util.ts
-
- 3. Оновити src/app/core/services/quiz.service.ts — те саме
-
- 4. Оновити src/app/layout/header/header.component.ts:
- // Замість:
- this.translate.use(next).subscribe();
- // Стати:
- firstValueFrom(this.translate.use(next));
-
- ---
- Wave 2 — Decomposition (паралельно після Wave 1)
-
- Агент C: ui + dev — Club Detail розбиття
-
- Проблема: club-detail.component.ts (228 рядків) + club-detail.component.html (463 рядки) — 6 відповідальностей.
-
- Що виокремити:
-
- src/app/features/clubs/club-detail/members/club-members-list.component.ts (новий)
-
- Inputs: members, clubBans, isOwner, currentUserId
- Outputs: kick EventEmitter, ban EventEmitter
- Переносить: секцію HTML рядки ~238-362 (список учасників + QR + kick/ban меню), showBanMenu signal, showQrForUser signal, buildQrValue(), banDurations
-
- src/app/features/clubs/club-detail/schedule/club-schedule.component.ts (новий)
-
- Inputs: club, isOwner
- Outputs: pause EventEmitter, cancel EventEmitter, reschedule EventEmitter
- Переносить: rescheduleDate FormControl, rescheduleSubmit(), pauseClub(), cancelClub(), deleteCountdown computed
-
- Що лишається в club-detail.component.ts:
- - loadClub(), club, members, clubBans signals
- - onJoin(), onLeave()
- - isMember, isClubOwner, organizerProfile computeds
- - isLoading, errorMessage, isActionLoading
-
- Агент D: ui — Profile соцмережі дедуплікація
-
- Проблема: profile.component.html (643 рядки) — соцмережі повторені 6× по ~40 рядків кожна.
-
- 1. Новий src/app/shared/components/social-link-field/social-link-field.component.ts:
- @Component({
-   selector: 'app-social-link-field',
-   // Input: icon, label, placeholder, formControlName
-   // Рендерить один рядок форми соцмережі
- })
-
- 2. Оновити profile.component.html — замінити 6 блоків соцмереж на @for:
- @for (social of socialFields; track social.key) {
-   <app-social-link-field [config]="social" [form]="socialsForm" />
- }
-
- 3. Додати socialFields масив у profile.component.ts:
- protected readonly socialFields = [
-   { key: 'telegram', icon: '...', label: 'PROFILE.telegram', placeholder: '@username' },
-   { key: 'instagram', icon: '...', label: 'PROFILE.instagram', placeholder: '@handle' },
-   // ...6 соцмереж
- ];
-
- Також: замінити 3× setTimeout(() => signal.set(false), 3000) на this.toast.show(...) через існуючий ToastService.
-
- ---
- Wave 3 — Angular 20 патерни (після Wave 2)
-
- Агент E: dev — ngOnInit → effect() у quiz компонентах
-
- Файли: src/app/features/quiz/quiz-list/quiz-list.component.ts, src/app/features/quiz/quiz-create/quiz-create.component.ts
-
- // Замість ngOnInit:
- ngOnInit(): void {
-   this.clubId = this.route.snapshot.params['id'];
-   this.quizService.loadQuizzes(this.clubId);
- }
-
- // Стати (Angular 20 з withComponentInputBinding):
- readonly clubId = input<string>('');
- constructor() {
-   effect(() => {
-     const id = this.clubId();
-     if (id) this.quizService.loadQuizzes(id).catch(...);
-   });
- }
-
- Перевірити що withComponentInputBinding() є в app.config.ts → якщо ні, додати.
-
- Агент F: ui — Clubs List card extraction
-
- Проблема: clubs-list.component.html (320 рядків) — клуб-картка (рядки 84-202) вбудована в петлю.
-
- Новий src/app/features/clubs/clubs-list/club-card/club-card.component.ts:
- - Input: club: Club, isMember: boolean
- - Output: join EventEmitter, navigate EventEmitter
- - Переносить: HTML рядки 84-202 (обкладинка, теги, учасники, статус, кнопки)
- - Спрощує clubs-list.component.html до ~120 рядків
-
- ---
- Wave 4 — Верифікація (Агент reviewer)
-
- 1. grep -r "\.subscribe()" src/app --include="*.ts" — перевірити 0 unmanaged підписок
- 2. grep -r "extractApiError" src/app --include="*.ts" — тільки один імпорт з api-error.util.ts
- 3. wc -l src/app/features/clubs/club-detail/club-detail.component.{ts,html} — TS < 150, HTML < 200
- 4. wc -l src/app/features/profile/profile.component.html — < 300
- 5. npm run build && npm run lint && npm run test -- --watchAll=false
-
- ---
- Схема агентів
-
- Wave 1: [dev] ChatService subscribe fix  ║  [dev] extractApiError util + header fix
-         (паралельно)
-              ↓
- Wave 2: [ui/dev] club-detail split  ║  [ui] profile socials dedup
-         (паралельно)
-              ↓
- Wave 3: [dev] quiz ngOnInit→effect  ║  [ui] clubs-list club-card
-         (паралельно)
-              ↓
- Wave 4: [reviewer] grep перевірки + build/lint/test
-
- ---
- Файли що змінюються
-
- ┌────────────────────────────────────────────────────────────────────────────┬────────────────────────────┐
- │                                    Файл                                    │            Дія             │
- ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
- │ src/app/core/api/api-error.util.ts                                         │ Створити                   │
- ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
- │ src/app/core/auth/auth.service.ts                                          │ Оновити імпорт             │
- ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
- │ src/app/core/services/quiz.service.ts                                      │ Оновити імпорт             │
- ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
- │ src/app/core/services/chat.service.ts                                      │ subscribe → firstValueFrom │
- ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
- │ src/app/layout/header/header.component.ts                                  │ subscribe → firstValueFrom │
- ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
- │ src/app/features/clubs/club-detail/club-detail.component.{ts,html}         │ Видалити секції            │
- ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
- │ src/app/features/clubs/club-detail/members/club-members-list.component.ts  │ Створити                   │
- ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
- │ src/app/features/clubs/club-detail/schedule/club-schedule.component.ts     │ Створити                   │
- ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
- │ src/app/features/clubs/clubs-list/club-card/club-card.component.ts         │ Створити                   │
- ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
- │ src/app/features/profile/profile.component.{ts,html}                       │ Дедуплікація               │
- ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
- │ src/app/shared/components/social-link-field/social-link-field.component.ts │ Створити                   │
- ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
- │ src/app/features/quiz/quiz-list/quiz-list.component.ts                     │ ngOnInit → effect          │
- ├────────────────────────────────────────────────────────────────────────────┼────────────────────────────┤
- │ src/app/features/quiz/quiz-create/quiz-create.component.ts                 │ ngOnInit → effect          │
- └────────────────────────────────────────────────────────────────────────────┴────────────────────────────┘
-
- Що НЕ входить у план (low priority)
-
- - Loading state signal factory (8 компонентів дублюють — але відносно простий шаблон)
- - Form builder utility (кожна форма унікальна за структурою)
- - SEO setup guard (вже нормально з setPageI18n)
- - api-mappers.ts hardcoded 0s (чекаємо бекенд підтримки)
-````
-
-## File: .github/workflows/auto-labeler.yml
-````yaml
-name: Auto Labeler
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-permissions:
-  contents: read
-  pull-requests: write
-jobs:
-  label:
-    name: Label PR
-    runs-on: ubuntu-latest
-    steps:
-      - name: Apply labels
-        uses: actions/labeler@v5
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          configuration-path: .github/labeler.yml
-````
-
-## File: .github/workflows/dependency-review.yml
-````yaml
-name: Dependency Review
-on:
-  pull_request:
-    branches: [main, develop]
-permissions:
-  contents: read
-  pull-requests: write
-jobs:
-  dependency-review:
-    name: Dependency Review
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Dependency Review
-        uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: high
-          comment-summary-in-pr: always
-````
-
-## File: .github/workflows/i18n-check.yml
-````yaml
-name: i18n Check
-on:
-  pull_request:
-    branches: [main, develop]
-  push:
-    branches: [develop]
-permissions:
-  contents: read
-jobs:
-  i18n-check:
-    name: Check i18n Keys
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Check for missing translation keys
-        run: |
-          node -e "
-          const fs = require('fs');
-          function flatten(obj, prefix) {
-            return Object.keys(obj).reduce((acc, key) => {
-              const fullKey = prefix ? prefix + '.' + key : key;
-              if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-                Object.assign(acc, flatten(obj[key], fullKey));
-              } else {
-                acc[fullKey] = obj[key];
-              }
-              return acc;
-            }, {});
-          }
-          const uk = JSON.parse(fs.readFileSync('public/i18n/uk.json', 'utf8'));
-          const en = JSON.parse(fs.readFileSync('public/i18n/en.json', 'utf8'));
-          const ukFlat = flatten(uk, '');
-          const enFlat = flatten(en, '');
-          const missing = Object.keys(ukFlat).filter(key => !(key in enFlat));
-          if (missing.length > 0) {
-            console.error('Missing keys in en.json:');
-            missing.forEach(k => console.error('  - ' + k));
-            process.exit(1);
-          }
-          console.log('All ' + Object.keys(ukFlat).length + ' keys present in en.json.');
-          "
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
-name: Lighthouse CI
-on:
-  pull_request:
-    branches: [main, develop]
-  workflow_dispatch:
-permissions:
-  contents: read
-concurrency:
-  group: lighthouse-${{ github.ref }}
-  cancel-in-progress: true
-jobs:
-  lighthouse:
-    name: Lighthouse CI
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Install dependencies
-        run: npm ci
-      - name: Build (production)
-        run: npm run build -- --configuration=production
-      - name: Run Lighthouse CI
-        uses: treosh/lighthouse-ci-action@v11
-        with:
-          configPath: .lighthouserc.json
-          uploadArtifacts: true
-          temporaryPublicStorage: true
-````
-
-## File: .github/workflows/scorecard.yml
-````yaml
-name: OpenSSF Scorecard
-on:
-  push:
-    branches: [main]
-  schedule:
-    - cron: '0 0 * * 0'
-permissions:
-  security-events: write
-  id-token: write
-  contents: read
-  actions: read
-jobs:
-  scorecard:
-    name: Scorecard Analysis
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Run Scorecard analysis
-        uses: ossf/scorecard-action@v2.4.0
-        with:
-          results_file: results.sarif
-          results_format: sarif
-          publish_results: true
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: SARIF file
-          path: results.sarif
-          retention-days: 5
-      - name: Upload to code-scanning dashboard
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: results.sarif
-````
-
-## File: .github/workflows/secret-scan.yml
-````yaml
-name: Secret Scan
-on:
-  push:
-    branches: ['**']
-  pull_request:
-permissions:
-  contents: read
-jobs:
-  gitleaks:
-    name: Gitleaks
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-````
-
-## File: .github/labeler.yml
-````yaml
-feat:
-  - changed-files:
-      - any-glob-to-any-file: src/app/features/**
-core:
-  - changed-files:
-      - any-glob-to-any-file: src/app/core/**
-shared:
-  - changed-files:
-      - any-glob-to-any-file: src/app/shared/**
-style:
-  - changed-files:
-      - any-glob-to-any-file:
-          - src/styles/**
-          - "**/*.scss"
-          - tailwind.config.js
-i18n:
-  - changed-files:
-      - any-glob-to-any-file:
-          - public/i18n/**
-          - scripts/**
-ci:
-  - changed-files:
-      - any-glob-to-any-file: .github/**
-docs:
-  - changed-files:
-      - any-glob-to-any-file:
-          - "*.md"
-          - docs/**
-build:
-  - changed-files:
-      - any-glob-to-any-file:
-          - angular.json
-          - "tsconfig*.json"
-          - "package*.json"
-````
-
-## File: .husky/pre-commit
-````
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-npx lint-staged
-````
-
-## File: public/robots.txt
-````
-User-agent: *
-Allow: /
-Disallow: /manage/
-Sitemap: https://book-club-fe.vercel.app/sitemap.xml
-````
-
-## File: scripts/extract-i18n.mjs
-````javascript
-/**
- * Extracts translation keys from Angular templates and TypeScript files.
- * Scans for:
- *   - '{{ "KEY" | translate }}' and '[attr]="\'KEY\' | translate"' in HTML
- *   - translate.instant('KEY') and translate.get('KEY') in TS
- *
- * Merges keys into existing JSON files, preserving existing values.
- * New keys get an empty string value (to be filled in manually).
- * Use --clean flag to remove keys no longer found in source.
- *
- * Usage: node scripts/extract-i18n.mjs [--clean]
- */
-
-import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
-import { join, extname } from 'path';
-
-const CLEAN = process.argv.includes('--clean');
-const SRC_DIR = './src';
-const OUTPUT_FILES = ['./public/i18n/uk.json', './public/i18n/en.json'];
-
-// Patterns to extract keys from templates and TS files
-const PATTERNS = [
-  /'([\w]+\.[\w.]+)'\s*\|\s*translate/g,
-  /"([\w]+\.[\w.]+)"\s*\|\s*translate/g,
-  /translate\.instant\(['"`]([\w]+\.[\w.]+)['"`]\)/g,
-  /translate\.get\(['"`]([\w]+\.[\w.]+)['"`]\)/g,
-];
-
-function collectFiles(dir, extensions = ['.html', '.ts']) {
-  const results = [];
-  for (const entry of readdirSync(dir)) {
-    if (entry === 'node_modules' || entry.startsWith('.')) continue;
-    const full = join(dir, entry);
-    const stat = statSync(full);
-    if (stat.isDirectory()) {
-      results.push(...collectFiles(full, extensions));
-    } else if (extensions.includes(extname(full)) && !entry.endsWith('.spec.ts')) {
-      results.push(full);
-    }
-  }
-  return results;
-}
-
-function extractKeys(content) {
-  const keys = new Set();
-  for (const pattern of PATTERNS) {
-    pattern.lastIndex = 0;
-    let match;
-    while ((match = pattern.exec(content)) !== null) {
-      keys.add(match[1]);
-    }
-  }
-  return keys;
-}
-
-function toNested(keys) {
-  const result = {};
-  for (const key of [...keys].sort()) {
-    const parts = key.split('.');
-    let current = result;
-    for (let i = 0; i < parts.length - 1; i++) {
-      if (!current[parts[i]] || typeof current[parts[i]] !== 'object') {
-        current[parts[i]] = {};
-      }
-      current = current[parts[i]];
-    }
-    const leaf = parts[parts.length - 1];
-    if (current[leaf] === undefined) {
-      current[leaf] = '';
-    }
-  }
-  return result;
-}
-
-function mergeDeep(existing, extracted) {
-  const result = {};
-  for (const [key, val] of Object.entries(extracted)) {
-    if (typeof val === 'object') {
-      result[key] = mergeDeep(existing[key] ?? {}, val);
-    } else {
-      result[key] = existing[key] !== undefined ? existing[key] : '';
-    }
-  }
-  if (!CLEAN) {
-    for (const [key, val] of Object.entries(existing)) {
-      if (result[key] === undefined) {
-        result[key] = val;
-      }
-    }
-  }
-  return result;
-}
-
-const files = collectFiles(SRC_DIR);
-const allKeys = new Set();
-
-for (const file of files) {
-  const content = readFileSync(file, 'utf8');
-  for (const key of extractKeys(content)) {
-    allKeys.add(key);
-  }
-}
-
-console.log(`Found ${allKeys.size} translation keys in ${files.length} files.`);
-
-const extractedNested = toNested(allKeys);
-
-for (const outputPath of OUTPUT_FILES) {
-  let existing = {};
-  try {
-    existing = JSON.parse(readFileSync(outputPath, 'utf8'));
-  } catch {
-    console.warn(`  Could not read ${outputPath}, creating fresh.`);
-  }
-
-  const merged = mergeDeep(existing, extractedNested);
-  writeFileSync(outputPath, JSON.stringify(merged, null, 2) + '\n', 'utf8');
-  console.log(`  ✅ Updated ${outputPath}${CLEAN ? ' (cleaned)' : ''}`);
-}
-````
-
-## File: src/app/core/api/api-mappers.ts
-````typescript
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-import { AfterMeetingVenue, BanDuration, BanRecord, Club, ClubBook, ClubMemberDetail, ClubStatus } from '../models/club.model';
-export interface ApiUserProfile {
-  id: string;
-  email: string;
-  role: UserRole;
-  display_name: string;
-  avatar_url: string | null;
-  created_at: string;
-  socials?: ApiUserSocials | null;
-  socials_public?: boolean;
-}
-export interface ApiUserSocials {
-  telegram?: string | null;
-  instagram?: string | null;
-  twitter?: string | null;
-  linkedin?: string | null;
-  github?: string | null;
-  goodreads?: string | null;
-}
-export interface ApiUserStats {
-  clubs_joined: number;
-  clubs_organized: number;
-  meetings_attended: number;
-  quizzes_taken: number;
-}
-export interface ApiClub {
-  id: string;
-  name: string;
-  description: string | null;
-  cover_url: string | null;
-  organizer_id: string;
-  is_public: boolean;
-  member_count: number;
-  created_at: string;
-  city: string | null;
-  next_meeting_date: string | null;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  theme: string | null;
-  current_book: string | null;
-  member_previews: string[];
-  status: ClubStatus;
-  tags: string[];
-  meeting_duration_minutes: number | null;
-  after_meeting_venue: AfterMeetingVenue | null;
-  cancelled_at?: string | null;
-}
-export interface ApiClubMember {
-  user_id: string;
-  display_name: string;
-  avatar_url: string | null;
-  role: 'organizer' | 'member';
-  socials?: ApiUserSocials | null;
-  socials_public?: boolean;
-}
-export interface ApiBanRecord {
-  user_id: string;
-  club_id: string;
-  banned_at: string;
-  duration: BanDuration;
-  banned_by: string;
-}
-export function mapUserProfile(raw: ApiUserProfile): UserProfile {
-  return {
-    id: raw.id,
-    role: raw.role,
-    displayName: raw.display_name,
-    avatarUrl: raw.avatar_url,
-    createdAt: raw.created_at,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socials_public ?? false,
-  };
-}
-export function mapUserStats(raw: ApiUserStats): UserStats {
-  return {
-    clubsJoined: raw.clubs_joined,
-    quizzesTaken: raw.quizzes_taken,
-    quizWins: 0,
-    likesReceived: 0,
-    booksRead: 0,
-  };
-}
-export function mapClub(raw: ApiClub): Club {
-  let currentBook: ClubBook | null = null;
-  if (raw.current_book) {
-    currentBook = { title: raw.current_book, author: '', description: '' };
-  }
-  return {
-    id: raw.id,
-    name: raw.name,
-    description: raw.description,
-    coverUrl: raw.cover_url,
-    organizerId: raw.organizer_id,
-    isPublic: raw.is_public,
-    memberCount: raw.member_count,
-    createdAt: raw.created_at,
-    city: raw.city ?? '',
-    nextMeetingDate: raw.next_meeting_date,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    theme: raw.theme,
-    currentBook,
-    memberPreviews: raw.member_previews,
-    status: raw.status,
-    tags: raw.tags,
-    meetingDurationMinutes: raw.meeting_duration_minutes,
-    afterMeetingVenue: raw.after_meeting_venue,
-    cancelledAt: raw.cancelled_at ?? undefined,
-  };
-}
-export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
-  return {
-    userId: raw.user_id,
-    displayName: raw.display_name,
-    avatarUrl: raw.avatar_url,
-    role: raw.role,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socials_public ?? false,
-  };
-}
-export function mapBanRecord(raw: ApiBanRecord): BanRecord {
-  return {
-    userId: raw.user_id,
-    clubId: raw.club_id,
-    bannedAt: raw.banned_at,
-    duration: raw.duration,
-    bannedBy: raw.banned_by,
-  };
-}
-function mapSocials(raw: ApiUserSocials): UserSocials {
-  return {
-    telegram: raw.telegram ?? undefined,
-    instagram: raw.instagram ?? undefined,
-    twitter: raw.twitter ?? undefined,
-    linkedin: raw.linkedin ?? undefined,
-    github: raw.github ?? undefined,
-    goodreads: raw.goodreads ?? undefined,
-  };
-}
-````
-
-## File: src/app/core/auth/token.store.ts
-````typescript
-import { Injectable, signal } from '@angular/core';
-const TOKEN_KEY = 'bc_access_token';
-@Injectable({ providedIn: 'root' })
-export class TokenStore {
-  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
-  readonly token = this._token.asReadonly();
-  set(token: string): void {
-    localStorage.setItem(TOKEN_KEY, token);
-    this._token.set(token);
-  }
-  clear(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    this._token.set(null);
-  }
-  snapshot(): string | null {
-    return this._token();
-  }
-}
-````
-
-## File: src/app/core/models/chat.model.ts
-````typescript
-export interface ChatMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  text: string;
-  timestamp: Date;
-  isOwn: boolean;
-}
-export interface ChatRoom {
-  id: string;
-  name: string;
-}
-````
-
-## File: src/app/core/models/quiz.model.ts
-````typescript
-export interface Quiz {
-  id: string;
-  clubId: string;
-  createdBy: string;
-  title: string;
-  description: string | null;
-  isActive: boolean;
-}
-export interface QuizQuestion {
-  id: string;
-  quizId: string;
-  question: string;
-  options: string[];
-  correctIndex: number;
-}
-export interface QuizAttempt {
-  id: string;
-  quizId: string;
-  userId: string;
-  score: number;
-  total: number;
-  answers: number[];
-}
-````
-
 ## File: src/app/features/quiz/.gitkeep
 ````
 
@@ -2337,6 +1948,208 @@ export class BookIntroComponent {
         </button>
       }
     </div>
+````
+
+## File: src/app/shared/components/social-badges/social-badges.component.html
+````html
+<ul class="flex flex-wrap gap-2 list-none p-0 m-0" [attr.aria-label]="'PROFILE.socials_title' | translate">
+  @if (socials().telegram) {
+    <li>
+      <a
+        [href]="'https://t.me/' + socials().telegram"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-full border border-blue-200
+               dark:border-blue-800 bg-blue-50 dark:bg-blue-900/30 px-3 py-1.5
+               text-xs font-medium text-blue-700 dark:text-blue-300
+               hover:bg-blue-100 dark:hover:bg-blue-900/50
+               transition-colors duration-150 focus:outline-none focus:ring-2
+               focus:ring-blue-500 focus:ring-offset-2"
+        [attr.aria-label]="'Telegram: @' + socials().telegram"
+      >
+        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12l-6.871 4.326-2.962-.924c-.643-.204-.657-.643.136-.953l11.57-4.461c.537-.194 1.006.131.833.941z"/>
+        </svg>
+        &#64;{{ socials().telegram }}
+      </a>
+    </li>
+  }
+  @if (socials().instagram) {
+    <li>
+      <a
+        [href]="'https://instagram.com/' + socials().instagram"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-full border border-pink-200
+               dark:border-pink-800 bg-pink-50 dark:bg-pink-900/30 px-3 py-1.5
+               text-xs font-medium bg-clip-text
+               bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500
+               text-transparent hover:opacity-80
+               transition-opacity duration-150 focus:outline-none focus:ring-2
+               focus:ring-pink-500 focus:ring-offset-2"
+        [attr.aria-label]="'Instagram: @' + socials().instagram"
+      >
+        <svg class="h-3.5 w-3.5 shrink-0 text-pink-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/>
+        </svg>
+        &#64;{{ socials().instagram }}
+      </a>
+    </li>
+  }
+  @if (socials().twitter) {
+    <li>
+      <a
+        [href]="'https://x.com/' + socials().twitter"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-full border border-gray-300
+               dark:border-gray-600 bg-gray-900 dark:bg-gray-950 px-3 py-1.5
+               text-xs font-medium text-white
+               hover:bg-gray-700 dark:hover:bg-gray-800
+               transition-colors duration-150 focus:outline-none focus:ring-2
+               focus:ring-gray-500 focus:ring-offset-2"
+        [attr.aria-label]="'Twitter / X: @' + socials().twitter"
+      >
+        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+        &#64;{{ socials().twitter }}
+      </a>
+    </li>
+  }
+  @if (socials().linkedin) {
+    <li>
+      <a
+        [href]="socials().linkedin!.startsWith('http')
+          ? socials().linkedin!
+          : 'https://linkedin.com/in/' + socials().linkedin"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-full border border-blue-300
+               dark:border-blue-700 bg-blue-600 dark:bg-blue-700 px-3 py-1.5
+               text-xs font-medium text-white
+               hover:bg-blue-700 dark:hover:bg-blue-600
+               transition-colors duration-150 focus:outline-none focus:ring-2
+               focus:ring-blue-500 focus:ring-offset-2"
+        [attr.aria-label]="'LinkedIn: ' + socials().linkedin"
+      >
+        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 23.2 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+        </svg>
+        LinkedIn
+      </a>
+    </li>
+  }
+  @if (socials().github) {
+    <li>
+      <a
+        [href]="'https://github.com/' + socials().github"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-full border border-gray-300
+               dark:border-gray-600 bg-gray-800 dark:bg-gray-900 px-3 py-1.5
+               text-xs font-medium text-gray-100
+               hover:bg-gray-700 dark:hover:bg-gray-800
+               transition-colors duration-150 focus:outline-none focus:ring-2
+               focus:ring-gray-500 focus:ring-offset-2"
+        [attr.aria-label]="'GitHub: ' + socials().github"
+      >
+        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0 1 12 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>
+        </svg>
+        {{ socials().github }}
+      </a>
+    </li>
+  }
+  @if (socials().goodreads) {
+    <li>
+      <a
+        [href]="socials().goodreads!.startsWith('http')
+          ? socials().goodreads!
+          : 'https://goodreads.com/' + socials().goodreads"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-full border border-amber-300
+               dark:border-amber-700 bg-amber-50 dark:bg-amber-900/30 px-3 py-1.5
+               text-xs font-medium text-amber-800 dark:text-amber-300
+               hover:bg-amber-100 dark:hover:bg-amber-900/50
+               transition-colors duration-150 focus:outline-none focus:ring-2
+               focus:ring-amber-500 focus:ring-offset-2"
+        [attr.aria-label]="'Goodreads: ' + socials().goodreads"
+      >
+        <svg class="h-3.5 w-3.5 shrink-0" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M19.525 15.977V.49h-2.059v2.906h-.064a5.015 5.015 0 0 0-1.949-2.406C14.548.316 13.441 0 12.192 0c-1.648 0-3.037.434-4.175 1.303-1.136.869-1.927 2.045-2.373 3.527S5.07 7.857 5.07 9.481c0 1.624.188 3.069.562 4.337.374 1.268 1.004 2.326 1.889 3.172.885.847 2.056 1.271 3.512 1.271 1.248 0 2.35-.304 3.303-.911a4.961 4.961 0 0 0 1.999-2.456h.063v2.904c0 1.547-.272 2.806-.816 3.777-.544.971-1.33 1.666-2.359 2.085-1.029.419-2.264.628-3.703.628-.802 0-1.608-.1-2.416-.302a9.11 9.11 0 0 1-2.258-.961l-.88 1.674c.737.481 1.607.852 2.613 1.114 1.006.262 2.03.393 3.073.393 2.267 0 4.092-.411 5.469-1.231 1.377-.82 2.357-1.913 2.937-3.277.581-1.364.871-2.891.871-4.582zm-7.301-.34c-1.161 0-2.124-.31-2.888-.932-.764-.621-1.323-1.479-1.677-2.574-.354-1.095-.531-2.301-.531-3.617 0-2.006.401-3.62 1.203-4.845.802-1.225 2.04-1.837 3.717-1.837 1.677 0 2.908.609 3.691 1.827.783 1.218 1.176 2.855 1.176 4.913 0 1.296-.173 2.491-.519 3.581-.346 1.09-.895 1.955-1.649 2.591-.754.637-1.71.953-2.862.953-.001 0 .002-.06.339-.06z"/>
+        </svg>
+        Goodreads
+      </a>
+    </li>
+  }
+</ul>
+````
+
+## File: src/app/shared/components/social-badges/social-badges.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { UserSocials } from '../../../core/models/user.model';
+@Component({
+  selector: 'app-social-badges',
+  standalone: true,
+  imports: [TranslateModule],
+  templateUrl: './social-badges.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class SocialBadgesComponent {
+  readonly socials = input.required<UserSocials>();
+}
+````
+
+## File: src/app/shared/components/social-link-field/social-link-field.component.html
+````html
+<div>
+  <label
+    [for]="'social-' + config().key"
+    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+  >
+    <span [class]="config().labelClass">{{ config().label }}</span>
+  </label>
+  <input
+    [id]="'social-' + config().key"
+    type="text"
+    [formControl]="$any(form().controls)[config().key]"
+    [placeholder]="config().placeholder"
+    autocomplete="off"
+    class="w-full rounded-xl border border-gray-200 dark:border-gray-700
+           bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
+           text-gray-900 dark:text-white placeholder-gray-400
+           focus:outline-none focus:ring-2 focus:border-transparent
+           transition-all duration-200"
+    [class]="config().focusRingClass"
+  />
+</div>
+````
+
+## File: src/app/shared/components/social-link-field/social-link-field.component.ts
+````typescript
+import { Component, input } from '@angular/core';
+import { ReactiveFormsModule, FormGroup } from '@angular/forms';
+export interface SocialField {
+  key: string;
+  label: string;
+  labelClass: string;
+  placeholder: string;
+  focusRingClass: string;
+}
+@Component({
+  selector: 'app-social-link-field',
+  standalone: true,
+  imports: [ReactiveFormsModule],
+  templateUrl: './social-link-field.component.html',
+})
+export class SocialLinkFieldComponent {
+  readonly config = input.required<SocialField>();
+  readonly form = input.required<FormGroup>();
+}
 ````
 
 ## File: src/app/shared/components/toast/toast.component.html
@@ -3136,124 +2949,6 @@ export interface UserProfile {
 }
 ````
 
-## File: src/app/core/services/chat.service.ts
-````typescript
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { ChatMessage, ChatRoom } from '../models/chat.model';
-import { environment } from '../../../environments/environment';
-interface ApiChatRoom {
-  id: string;
-  name: string;
-}
-interface ApiChatMessage {
-  id: string;
-  sender_id: string;
-  sender_name: string;
-  text: string;
-  created_at: string;
-}
-@Injectable({ providedIn: 'root' })
-export class ChatService {
-  private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _rooms = signal<ChatRoom[]>([]);
-  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
-  private readonly _activeRoomId = signal<string | null>(null);
-  private readonly _unreadCount = signal<number>(0);
-  private readonly _isOpen = signal<boolean>(false);
-  private readonly _hasNewMessage = signal<boolean>(false);
-  private currentUserId: string | null = null;
-  readonly rooms = this._rooms.asReadonly();
-  readonly messages = this._messages.asReadonly();
-  readonly activeRoomId = this._activeRoomId.asReadonly();
-  readonly unreadCount = this._unreadCount.asReadonly();
-  readonly isOpen = this._isOpen.asReadonly();
-  readonly hasNewMessage = this._hasNewMessage.asReadonly();
-  readonly activeRoom = computed(() =>
-    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
-  );
-  readonly activeMessages = computed(
-    () => this._messages()[this._activeRoomId() ?? ''] ?? [],
-  );
-  // ── Public API ────────────────────────────────────────────────────────────
-  /** Fetch chat rooms for a given club and seed the rooms signal. */
-  loadRooms(clubId: string, userId?: string): void {
-    if (userId !== undefined) {
-      this.currentUserId = userId;
-    }
-    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
-      .then(raw => {
-        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name }));
-        this._rooms.set(rooms);
-        // Auto-select the first room when none is active or active room is gone.
-        const currentId = this._activeRoomId();
-        if (!currentId || !rooms.find(r => r.id === currentId)) {
-          const first = rooms[0];
-          if (first) {
-            this._activeRoomId.set(first.id);
-            this.loadMessages(first.id);
-          }
-        }
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
-  }
-  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
-    const query: Record<string, string> = {};
-    if (params?.before) query['before'] = params.before;
-    if (params?.limit != null) query['limit'] = String(params.limit);
-    firstValueFrom(
-      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
-        params: query,
-      }),
-    )
-      .then(raw => {
-        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
-        this._messages.update(map => ({ ...map, [roomId]: msgs }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
-  }
-  toggleOpen(): void {
-    this._isOpen.update(v => !v);
-    if (this._isOpen()) {
-      this.markAsRead();
-    }
-  }
-  openRoom(roomId: string): void {
-    this._activeRoomId.set(roomId);
-    this.loadMessages(roomId);
-    this.markAsRead();
-  }
-  markAsRead(): void {
-    this._unreadCount.set(0);
-    this._hasNewMessage.set(false);
-  }
-  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    this.currentUserId = currentUser.id;
-    firstValueFrom(
-      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
-    )
-      .then(() => {
-        this.loadMessages(roomId);
-      })
-      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
-  }
-  private mapMessage(m: ApiChatMessage): ChatMessage {
-    return {
-      id: m.id,
-      senderId: m.sender_id,
-      senderName: m.sender_name,
-      text: m.text,
-      timestamp: new Date(m.created_at),
-      isOwn: m.sender_id === this.currentUserId,
-    };
-  }
-}
-````
-
 ## File: src/app/core/services/seo.service.ts
 ````typescript
 import { Injectable, inject } from '@angular/core';
@@ -3361,213 +3056,6 @@ export class ToastService {
   }
   remove(id: string): void {
     this._toasts.update(list => list.filter(t => t.id !== id));
-  }
-}
-````
-
-## File: src/app/features/quiz/quiz-list/quiz-list.component.html
-````html
-<div class="min-h-screen p-4 sm:p-8">
-      <div class="max-w-3xl mx-auto space-y-6">
-        <header class="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">
-              🧠 Quizzes
-            </h1>
-            <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-              Test your knowledge of the books you've read.
-            </p>
-          </div>
-          <div class="flex items-center gap-3">
-            @if (authService.isOrganizer()) {
-              <a
-                [routerLink]="['/clubs', id(), 'quizzes', 'create']"
-                class="inline-flex items-center gap-2 bg-accent-600 hover:bg-accent-500
-                       text-white rounded-xl px-4 py-2.5 font-medium transition-colors text-sm"
-              >
-                + Create Quiz
-              </a>
-            }
-            <nav aria-label="Breadcrumb">
-              <a
-                [routerLink]="['/clubs', id()]"
-                class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm
-                       transition-colors"
-              >
-                ← Club
-              </a>
-            </nav>
-          </div>
-        </header>
-        @if (quizService.isLoading()) {
-          <div class="space-y-4">
-            @for (_ of [1, 2, 3]; track $index) {
-              <div
-                class="h-24 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse"
-              ></div>
-            }
-          </div>
-        } @else {
-          @if (quizService.quizzes().length === 0) {
-            <div
-              class="bg-white dark:bg-gray-900 rounded-2xl p-12 text-center border
-                     border-gray-200 dark:border-gray-800"
-            >
-              <p class="text-4xl mb-3">📝</p>
-              <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">
-                No quizzes yet
-              </h2>
-              @if (authService.isOrganizer()) {
-                <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-                  Create your first quiz to engage the club.
-                </p>
-              } @else {
-                <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-                  The organizer hasn't created any quizzes yet.
-                </p>
-              }
-            </div>
-          } @else {
-            <div class="space-y-4">
-              @for (quiz of quizService.quizzes(); track quiz.id) {
-                <div
-                  class="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200
-                         dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <div class="flex items-start justify-between gap-4">
-                    <div class="min-w-0 flex-1">
-                      <div class="flex items-center gap-2 flex-wrap">
-                        <h2
-                          class="text-gray-900 dark:text-white font-semibold text-lg
-                                 truncate"
-                        >
-                          {{ quiz.title }}
-                        </h2>
-                        @if (quiz.isActive) {
-                          <span
-                            class="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30
-                                   text-green-700 dark:text-green-400 rounded-full px-2 py-0.5
-                                   text-xs font-medium"
-                          >
-                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
-                            Active
-                          </span>
-                        } @else {
-                          <span
-                            class="inline-flex items-center bg-gray-100 dark:bg-gray-800
-                                   text-gray-500 dark:text-gray-400 rounded-full px-2 py-0.5
-                                   text-xs font-medium"
-                          >
-                            Draft
-                          </span>
-                        }
-                      </div>
-                      @if (quiz.description) {
-                        <p
-                          class="text-gray-500 dark:text-gray-400 text-sm mt-1 line-clamp-2"
-                        >
-                          {{ quiz.description }}
-                        </p>
-                      }
-                    </div>
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                      @if (authService.isOrganizer()) {
-                        <button
-                          (click)="toggleActive(quiz.id, !quiz.isActive)"
-                          [disabled]="togglingId() === quiz.id"
-                          class="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors
-                                 disabled:opacity-50"
-                          [class.bg-green-100]="!quiz.isActive"
-                          [class.text-green-700]="!quiz.isActive"
-                          [class.hover:bg-green-200]="!quiz.isActive"
-                          [class.dark:bg-green-900\/30]="!quiz.isActive"
-                          [class.dark:text-green-400]="!quiz.isActive"
-                          [class.bg-gray-100]="quiz.isActive"
-                          [class.text-gray-600]="quiz.isActive"
-                          [class.hover:bg-gray-200]="quiz.isActive"
-                          [class.dark:bg-gray-800]="quiz.isActive"
-                          [class.dark:text-gray-400]="quiz.isActive"
-                        >
-                          {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
-                        </button>
-                      } @else if (quiz.isActive) {
-                        <button
-                          (click)="takeQuiz(quiz.id)"
-                          class="bg-accent-600 hover:bg-accent-500 text-white rounded-lg
-                                 px-4 py-1.5 text-sm font-medium transition-colors"
-                        >
-                          Take Quiz →
-                        </button>
-                      }
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
-          }
-        }
-        @if (errorMessage()) {
-          <div
-            class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800
-                   rounded-xl p-4 text-red-700 dark:text-red-400 text-sm"
-          >
-            ⚠️ {{ errorMessage() }}
-          </div>
-        }
-      </div>
-    </div>
-````
-
-## File: src/app/features/quiz/quiz-list/quiz-list.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  effect,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../../core/auth/auth.service';
-import { QuizService } from '../../../core/services/quiz.service';
-@Component({
-  selector: 'app-quiz-list',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink],
-  templateUrl: './quiz-list.component.html',
-})
-export class QuizListComponent {
-  protected readonly quizService = inject(QuizService);
-  protected readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
-  protected readonly togglingId = signal<string | null>(null);
-  protected readonly errorMessage = signal('');
-  readonly id = input<string>('');
-  constructor() {
-    effect(() => {
-      const clubId = this.id();
-      if (clubId) {
-        this.quizService.loadQuizzes(clubId).catch(err => {
-          this.errorMessage.set((err as Error).message);
-        });
-      }
-    });
-  }
-  protected toggleActive(quizId: string, isActive: boolean): void {
-    this.togglingId.set(quizId);
-    this.errorMessage.set('');
-    this.quizService
-      .toggleActive(quizId, isActive)
-      .then(() => this.togglingId.set(null))
-      .catch(err => {
-        this.togglingId.set(null);
-        this.errorMessage.set((err as Error).message);
-      });
-  }
-  protected takeQuiz(quizId: string): void {
-    this.router.navigate(['/clubs', this.id(), 'quizzes', quizId]);
   }
 }
 ````
@@ -3914,6 +3402,124 @@ export interface ClubMeeting {
 }
 ````
 
+## File: src/app/core/services/chat.service.ts
+````typescript
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { ChatMessage, ChatRoom } from '../models/chat.model';
+import { environment } from '../../../environments/environment';
+interface ApiChatRoom {
+  id: string;
+  name: string;
+}
+interface ApiChatMessage {
+  id: string;
+  sender_id: string;
+  sender_name: string;
+  text: string;
+  created_at: string;
+}
+@Injectable({ providedIn: 'root' })
+export class ChatService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _rooms = signal<ChatRoom[]>([]);
+  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
+  private readonly _activeRoomId = signal<string | null>(null);
+  private readonly _unreadCount = signal<number>(0);
+  private readonly _isOpen = signal<boolean>(false);
+  private readonly _hasNewMessage = signal<boolean>(false);
+  private currentUserId: string | null = null;
+  readonly rooms = this._rooms.asReadonly();
+  readonly messages = this._messages.asReadonly();
+  readonly activeRoomId = this._activeRoomId.asReadonly();
+  readonly unreadCount = this._unreadCount.asReadonly();
+  readonly isOpen = this._isOpen.asReadonly();
+  readonly hasNewMessage = this._hasNewMessage.asReadonly();
+  readonly activeRoom = computed(() =>
+    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
+  );
+  readonly activeMessages = computed(
+    () => this._messages()[this._activeRoomId() ?? ''] ?? [],
+  );
+  // ── Public API ────────────────────────────────────────────────────────────
+  /** Fetch chat rooms for a given club and seed the rooms signal. */
+  loadRooms(clubId: string, userId?: string): void {
+    if (userId !== undefined) {
+      this.currentUserId = userId;
+    }
+    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
+      .then(raw => {
+        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name }));
+        this._rooms.set(rooms);
+        // Auto-select the first room when none is active or active room is gone.
+        const currentId = this._activeRoomId();
+        if (!currentId || !rooms.find(r => r.id === currentId)) {
+          const first = rooms[0];
+          if (first) {
+            this._activeRoomId.set(first.id);
+            this.loadMessages(first.id);
+          }
+        }
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
+  }
+  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
+    const query: Record<string, string> = {};
+    if (params?.before) query['before'] = params.before;
+    if (params?.limit != null) query['limit'] = String(params.limit);
+    firstValueFrom(
+      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
+        params: query,
+      }),
+    )
+      .then(raw => {
+        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
+        this._messages.update(map => ({ ...map, [roomId]: msgs }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
+  }
+  toggleOpen(): void {
+    this._isOpen.update(v => !v);
+    if (this._isOpen()) {
+      this.markAsRead();
+    }
+  }
+  openRoom(roomId: string): void {
+    this._activeRoomId.set(roomId);
+    this.loadMessages(roomId);
+    this.markAsRead();
+  }
+  markAsRead(): void {
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+  }
+  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    this.currentUserId = currentUser.id;
+    firstValueFrom(
+      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
+    )
+      .then(() => {
+        this.loadMessages(roomId);
+      })
+      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
+  }
+  private mapMessage(m: ApiChatMessage): ChatMessage {
+    return {
+      id: m.id,
+      senderId: m.sender_id,
+      senderName: m.sender_name,
+      text: m.text,
+      timestamp: new Date(m.created_at),
+      isOwn: m.sender_id === this.currentUserId,
+    };
+  }
+}
+````
+
 ## File: src/app/features/auth/login/login.component.html
 ````html
 <div class="auth-page-wrapper">
@@ -4212,183 +3818,6 @@ export interface ClubMeeting {
     </style>
 ````
 
-## File: src/app/features/profile/profile.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-} from '@angular/core';
-import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../core/auth/auth.service';
-import { UserRole, UserSocials } from '../../core/models/user.model';
-import { SeoService } from '../../core/services/seo.service';
-import { ToastService } from '../../core/services/toast.service';
-import { SocialLinkFieldComponent, SocialField } from '../../shared/components/social-link-field/social-link-field.component';
-import { SocialBadgesComponent } from '../../shared/components/social-badges/social-badges.component';
-import { ProfileStatsComponent } from './stats/profile-stats.component';
-import { ProfileRoleSelectorComponent } from './role-selector/profile-role-selector.component';
-@Component({
-  selector: 'app-profile',
-  standalone: true,
-  imports: [ReactiveFormsModule, TranslateModule, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent],
-  templateUrl: './profile.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class ProfileComponent {
-  protected readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  private readonly toast = inject(ToastService);
-  protected readonly socialFields: SocialField[] = [
-    {
-      key: 'telegram',
-      label: 'Telegram',
-      labelClass: 'text-blue-600 dark:text-blue-400',
-      placeholder: 'username (без @)',
-      focusRingClass: 'focus:ring-blue-500',
-    },
-    {
-      key: 'instagram',
-      label: 'Instagram',
-      labelClass: 'bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500 bg-clip-text text-transparent',
-      placeholder: 'username (без @)',
-      focusRingClass: 'focus:ring-pink-500',
-    },
-    {
-      key: 'twitter',
-      label: 'Twitter / X',
-      labelClass: 'text-gray-900 dark:text-gray-100',
-      placeholder: 'username (без @)',
-      focusRingClass: 'focus:ring-gray-800',
-    },
-    {
-      key: 'linkedin',
-      label: 'LinkedIn',
-      labelClass: 'text-blue-700 dark:text-blue-400',
-      placeholder: 'username або повний URL',
-      focusRingClass: 'focus:ring-blue-600',
-    },
-    {
-      key: 'github',
-      label: 'GitHub',
-      labelClass: 'text-gray-800 dark:text-gray-200',
-      placeholder: 'username',
-      focusRingClass: 'focus:ring-gray-700',
-    },
-    {
-      key: 'goodreads',
-      label: 'Goodreads',
-      labelClass: 'text-amber-700 dark:text-amber-400',
-      placeholder: 'username або повний URL',
-      focusRingClass: 'focus:ring-amber-500',
-    },
-  ];
-  protected readonly nameForm = new FormGroup({
-    displayName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(2)],
-    }),
-  });
-  /** Typed reactive form for updating social media links. */
-  protected readonly socialsForm = new FormGroup({
-    telegram:  new FormControl('', { nonNullable: true }),
-    instagram: new FormControl('', { nonNullable: true }),
-    twitter:   new FormControl('', { nonNullable: true }),
-    linkedin:  new FormControl('', { nonNullable: true }),
-    github:    new FormControl('', { nonNullable: true }),
-    goodreads: new FormControl('', { nonNullable: true }),
-  });
-  /** Controls whether socials are visible to all club members. */
-  protected readonly socialsPublicControl = new FormControl<boolean>(false, { nonNullable: true });
-  /** Tracks the in-flight save state (synchronous here, but keeps the pattern extensible). */
-  protected readonly isSavingName = signal(false);
-  /** Two-letter initials derived from the current user's display name. */
-  protected readonly userInitials = computed<string>(() => {
-    const name = this.auth.currentUser()?.displayName ?? '';
-    return name
-      .split(' ')
-      .map(w => w[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  });
-  /** Human-readable role label shown in the hero badge. */
-  protected readonly roleLabel = computed<string>(() =>
-    this.auth.currentUser()?.role === 'organizer' ? 'Organizer' : 'Reader',
-  );
-  protected readonly joinedDate = computed<string>(() => {
-    const raw = this.auth.currentUser()?.createdAt;
-    if (!raw) return '';
-    return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' }).format(
-      new Date(raw),
-    );
-  });
-  protected readonly userSocials = computed<UserSocials>(
-    () => this.auth.currentUser()?.socials ?? {},
-  );
-  constructor() {
-    this.seo.setPageI18n('SEO.profile_title');
-    const user = this.auth.currentUser();
-    if (user) {
-      this.nameForm.patchValue({ displayName: user.displayName });
-      this.socialsPublicControl.setValue(user.socialsPublic ?? false);
-      if (user.socials) {
-        this.socialsForm.patchValue({
-          telegram:  user.socials.telegram  ?? '',
-          instagram: user.socials.instagram ?? '',
-          twitter:   user.socials.twitter   ?? '',
-          linkedin:  user.socials.linkedin  ?? '',
-          github:    user.socials.github    ?? '',
-          goodreads: user.socials.goodreads ?? '',
-        });
-      }
-    }
-  }
-  /** Switch the user's role and show a transient success toast. */
-  protected async changeRole(role: UserRole): Promise<void> {
-    try {
-      await this.auth.updateRole(role);
-      this.toast.show('PROFILE.role_changed', 'success');
-    } catch {  }
-  }
-  protected async saveName(): Promise<void> {
-    if (this.nameForm.invalid) return;
-    this.isSavingName.set(true);
-    const { displayName } = this.nameForm.getRawValue();
-    try {
-      await this.auth.updateDisplayName(displayName);
-      this.toast.show('PROFILE.name_updated', 'success');
-    } catch {  }
-    finally {
-      this.isSavingName.set(false);
-    }
-  }
-  protected async submitSocials(): Promise<void> {
-    const raw = this.socialsForm.getRawValue();
-    const socials: UserSocials = {
-      ...(raw.telegram  ? { telegram:  raw.telegram  } : {}),
-      ...(raw.instagram ? { instagram: raw.instagram } : {}),
-      ...(raw.twitter   ? { twitter:   raw.twitter   } : {}),
-      ...(raw.linkedin  ? { linkedin:  raw.linkedin  } : {}),
-      ...(raw.github    ? { github:    raw.github    } : {}),
-      ...(raw.goodreads ? { goodreads: raw.goodreads } : {}),
-    };
-    try {
-      await this.auth.updateSocials(socials);
-      this.toast.show('PROFILE.socials_saved', 'success');
-    } catch {  }
-  }
-  protected async onSocialsPublicChange(value: boolean): Promise<void> {
-    try {
-      await this.auth.setSocialsPublic(value);
-    } catch {  }
-  }
-}
-````
-
 ## File: src/app/features/quiz/quiz-create/quiz-create.component.html
 ````html
 <div class="min-h-screen p-4 sm:p-8">
@@ -4654,6 +4083,213 @@ export class ProfileComponent {
         }
       </div>
     </div>
+````
+
+## File: src/app/features/quiz/quiz-list/quiz-list.component.html
+````html
+<div class="min-h-screen p-4 sm:p-8">
+      <div class="max-w-3xl mx-auto space-y-6">
+        <header class="flex items-center justify-between flex-wrap gap-4">
+          <div>
+            <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">
+              🧠 Quizzes
+            </h1>
+            <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+              Test your knowledge of the books you've read.
+            </p>
+          </div>
+          <div class="flex items-center gap-3">
+            @if (authService.isOrganizer()) {
+              <a
+                [routerLink]="['/clubs', id(), 'quizzes', 'create']"
+                class="inline-flex items-center gap-2 bg-accent-600 hover:bg-accent-500
+                       text-white rounded-xl px-4 py-2.5 font-medium transition-colors text-sm"
+              >
+                + Create Quiz
+              </a>
+            }
+            <nav aria-label="Breadcrumb">
+              <a
+                [routerLink]="['/clubs', id()]"
+                class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm
+                       transition-colors"
+              >
+                ← Club
+              </a>
+            </nav>
+          </div>
+        </header>
+        @if (quizService.isLoading()) {
+          <div class="space-y-4">
+            @for (_ of [1, 2, 3]; track $index) {
+              <div
+                class="h-24 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse"
+              ></div>
+            }
+          </div>
+        } @else {
+          @if (quizService.quizzes().length === 0) {
+            <div
+              class="bg-white dark:bg-gray-900 rounded-2xl p-12 text-center border
+                     border-gray-200 dark:border-gray-800"
+            >
+              <p class="text-4xl mb-3">📝</p>
+              <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">
+                No quizzes yet
+              </h2>
+              @if (authService.isOrganizer()) {
+                <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
+                  Create your first quiz to engage the club.
+                </p>
+              } @else {
+                <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
+                  The organizer hasn't created any quizzes yet.
+                </p>
+              }
+            </div>
+          } @else {
+            <div class="space-y-4">
+              @for (quiz of quizService.quizzes(); track quiz.id) {
+                <div
+                  class="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200
+                         dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow"
+                >
+                  <div class="flex items-start justify-between gap-4">
+                    <div class="min-w-0 flex-1">
+                      <div class="flex items-center gap-2 flex-wrap">
+                        <h2
+                          class="text-gray-900 dark:text-white font-semibold text-lg
+                                 truncate"
+                        >
+                          {{ quiz.title }}
+                        </h2>
+                        @if (quiz.isActive) {
+                          <span
+                            class="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30
+                                   text-green-700 dark:text-green-400 rounded-full px-2 py-0.5
+                                   text-xs font-medium"
+                          >
+                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
+                            Active
+                          </span>
+                        } @else {
+                          <span
+                            class="inline-flex items-center bg-gray-100 dark:bg-gray-800
+                                   text-gray-500 dark:text-gray-400 rounded-full px-2 py-0.5
+                                   text-xs font-medium"
+                          >
+                            Draft
+                          </span>
+                        }
+                      </div>
+                      @if (quiz.description) {
+                        <p
+                          class="text-gray-500 dark:text-gray-400 text-sm mt-1 line-clamp-2"
+                        >
+                          {{ quiz.description }}
+                        </p>
+                      }
+                    </div>
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                      @if (authService.isOrganizer()) {
+                        <button
+                          (click)="toggleActive(quiz.id, !quiz.isActive)"
+                          [disabled]="togglingId() === quiz.id"
+                          class="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors
+                                 disabled:opacity-50"
+                          [class.bg-green-100]="!quiz.isActive"
+                          [class.text-green-700]="!quiz.isActive"
+                          [class.hover:bg-green-200]="!quiz.isActive"
+                          [class.dark:bg-green-900\/30]="!quiz.isActive"
+                          [class.dark:text-green-400]="!quiz.isActive"
+                          [class.bg-gray-100]="quiz.isActive"
+                          [class.text-gray-600]="quiz.isActive"
+                          [class.hover:bg-gray-200]="quiz.isActive"
+                          [class.dark:bg-gray-800]="quiz.isActive"
+                          [class.dark:text-gray-400]="quiz.isActive"
+                        >
+                          {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
+                        </button>
+                      } @else if (quiz.isActive) {
+                        <button
+                          (click)="takeQuiz(quiz.id)"
+                          class="bg-accent-600 hover:bg-accent-500 text-white rounded-lg
+                                 px-4 py-1.5 text-sm font-medium transition-colors"
+                        >
+                          Take Quiz →
+                        </button>
+                      }
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        }
+        @if (errorMessage()) {
+          <div
+            class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800
+                   rounded-xl p-4 text-red-700 dark:text-red-400 text-sm"
+          >
+            ⚠️ {{ errorMessage() }}
+          </div>
+        }
+      </div>
+    </div>
+````
+
+## File: src/app/features/quiz/quiz-list/quiz-list.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../../core/auth/auth.service';
+import { QuizService } from '../../../core/services/quiz.service';
+@Component({
+  selector: 'app-quiz-list',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink],
+  templateUrl: './quiz-list.component.html',
+})
+export class QuizListComponent {
+  protected readonly quizService = inject(QuizService);
+  protected readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  protected readonly togglingId = signal<string | null>(null);
+  protected readonly errorMessage = signal('');
+  readonly id = input<string>('');
+  constructor() {
+    effect(() => {
+      const clubId = this.id();
+      if (clubId) {
+        this.quizService.loadQuizzes(clubId).catch(err => {
+          this.errorMessage.set((err as Error).message);
+        });
+      }
+    });
+  }
+  protected toggleActive(quizId: string, isActive: boolean): void {
+    this.togglingId.set(quizId);
+    this.errorMessage.set('');
+    this.quizService
+      .toggleActive(quizId, isActive)
+      .then(() => this.togglingId.set(null))
+      .catch(err => {
+        this.togglingId.set(null);
+        this.errorMessage.set((err as Error).message);
+      });
+  }
+  protected takeQuiz(quizId: string): void {
+    this.router.navigate(['/clubs', this.id(), 'quizzes', quizId]);
+  }
+}
 ````
 
 ## File: src/app/features/quiz/quiz-take/quiz-take.component.html
@@ -5500,195 +5136,181 @@ export const CLUBS_ROUTES: Routes = [
 ];
 ````
 
-## File: src/app/features/profile/profile.component.html
-````html
-<div class="max-w-2xl mx-auto space-y-6 py-8 px-4">
-  <section
-    aria-labelledby="profile-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-8 text-center"
-  >
-    <div
-      class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
-             flex items-center justify-center text-white text-3xl font-bold select-none shadow-md"
-      aria-hidden="true"
-    >
-      {{ userInitials() }}
-    </div>
-    <h1
-      id="profile-heading"
-      class="text-2xl font-bold text-gray-900 dark:text-white"
-    >
-      {{ auth.currentUser()?.displayName }}
-    </h1>
-    <span
-      class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
-      [class]="auth.currentUser()?.role === 'organizer'
-        ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
-        : 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
-    >
-      {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
-      {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
-    </span>
-    @if (joinedDate()) {
-      <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
-        {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
-      </p>
+## File: src/app/features/profile/profile.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+} from '@angular/core';
+import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../core/auth/auth.service';
+import { UserRole, UserSocials } from '../../core/models/user.model';
+import { SeoService } from '../../core/services/seo.service';
+import { ToastService } from '../../core/services/toast.service';
+import { SocialLinkFieldComponent, SocialField } from '../../shared/components/social-link-field/social-link-field.component';
+import { SocialBadgesComponent } from '../../shared/components/social-badges/social-badges.component';
+import { ProfileStatsComponent } from './stats/profile-stats.component';
+import { ProfileRoleSelectorComponent } from './role-selector/profile-role-selector.component';
+@Component({
+  selector: 'app-profile',
+  standalone: true,
+  imports: [ReactiveFormsModule, TranslateModule, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent],
+  templateUrl: './profile.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ProfileComponent {
+  protected readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  private readonly toast = inject(ToastService);
+  protected readonly socialFields: SocialField[] = [
+    {
+      key: 'telegram',
+      label: 'Telegram',
+      labelClass: 'text-blue-600 dark:text-blue-400',
+      placeholder: 'username (без @)',
+      focusRingClass: 'focus:ring-blue-500',
+    },
+    {
+      key: 'instagram',
+      label: 'Instagram',
+      labelClass: 'bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500 bg-clip-text text-transparent',
+      placeholder: 'username (без @)',
+      focusRingClass: 'focus:ring-pink-500',
+    },
+    {
+      key: 'twitter',
+      label: 'Twitter / X',
+      labelClass: 'text-gray-900 dark:text-gray-100',
+      placeholder: 'username (без @)',
+      focusRingClass: 'focus:ring-gray-800',
+    },
+    {
+      key: 'linkedin',
+      label: 'LinkedIn',
+      labelClass: 'text-blue-700 dark:text-blue-400',
+      placeholder: 'username або повний URL',
+      focusRingClass: 'focus:ring-blue-600',
+    },
+    {
+      key: 'github',
+      label: 'GitHub',
+      labelClass: 'text-gray-800 dark:text-gray-200',
+      placeholder: 'username',
+      focusRingClass: 'focus:ring-gray-700',
+    },
+    {
+      key: 'goodreads',
+      label: 'Goodreads',
+      labelClass: 'text-amber-700 dark:text-amber-400',
+      placeholder: 'username або повний URL',
+      focusRingClass: 'focus:ring-amber-500',
+    },
+  ];
+  protected readonly nameForm = new FormGroup({
+    displayName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(2)],
+    }),
+  });
+  /** Typed reactive form for updating social media links. */
+  protected readonly socialsForm = new FormGroup({
+    telegram:  new FormControl('', { nonNullable: true }),
+    instagram: new FormControl('', { nonNullable: true }),
+    twitter:   new FormControl('', { nonNullable: true }),
+    linkedin:  new FormControl('', { nonNullable: true }),
+    github:    new FormControl('', { nonNullable: true }),
+    goodreads: new FormControl('', { nonNullable: true }),
+  });
+  /** Controls whether socials are visible to all club members. */
+  protected readonly socialsPublicControl = new FormControl<boolean>(false, { nonNullable: true });
+  /** Tracks the in-flight save state (synchronous here, but keeps the pattern extensible). */
+  protected readonly isSavingName = signal(false);
+  /** Two-letter initials derived from the current user's display name. */
+  protected readonly userInitials = computed<string>(() => {
+    const name = this.auth.currentUser()?.displayName ?? '';
+    return name
+      .split(' ')
+      .map(w => w[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  });
+  /** Human-readable role label shown in the hero badge. */
+  protected readonly roleLabel = computed<string>(() =>
+    this.auth.currentUser()?.role === 'organizer' ? 'Organizer' : 'Reader',
+  );
+  protected readonly joinedDate = computed<string>(() => {
+    const raw = this.auth.currentUser()?.createdAt;
+    if (!raw) return '';
+    return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' }).format(
+      new Date(raw),
+    );
+  });
+  protected readonly userSocials = computed<UserSocials>(
+    () => this.auth.currentUser()?.socials ?? {},
+  );
+  constructor() {
+    this.seo.setPageI18n('SEO.profile_title');
+    const user = this.auth.currentUser();
+    if (user) {
+      this.nameForm.patchValue({ displayName: user.displayName });
+      this.socialsPublicControl.setValue(user.socialsPublic ?? false);
+      if (user.socials) {
+        this.socialsForm.patchValue({
+          telegram:  user.socials.telegram  ?? '',
+          instagram: user.socials.instagram ?? '',
+          twitter:   user.socials.twitter   ?? '',
+          linkedin:  user.socials.linkedin  ?? '',
+          github:    user.socials.github    ?? '',
+          goodreads: user.socials.goodreads ?? '',
+        });
+      }
     }
-  </section>
-  <section
-    aria-labelledby="edit-name-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="edit-name-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
-    >
-      <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
-    </h2>
-    <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
-      <div class="space-y-4">
-        <div>
-          <label
-            for="displayName"
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-          >
-            {{ 'PROFILE.display_name_label' | translate }}
-          </label>
-          <input
-            id="displayName"
-            type="text"
-            formControlName="displayName"
-            autocomplete="nickname"
-            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
-                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
-                   text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                   transition-all duration-200"
-            [placeholder]="'PROFILE.display_name_placeholder' | translate"
-            [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
-            aria-describedby="displayName-error"
-          />
-          @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
-            <p
-              id="displayName-error"
-              role="alert"
-              class="mt-1.5 text-xs text-red-600 dark:text-red-400"
-            >
-              @if (nameForm.controls.displayName.hasError('required')) {
-                {{ 'PROFILE.display_name_required' | translate }}
-              } @else if (nameForm.controls.displayName.hasError('minlength')) {
-                {{ 'PROFILE.display_name_min' | translate }}
-              }
-            </p>
-          }
-        </div>
-        <div class="flex items-center gap-3">
-          <button
-            type="submit"
-            [disabled]="nameForm.invalid || isSavingName()"
-            class="rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-50
-                   disabled:cursor-not-allowed text-white px-5 py-2.5 text-sm font-medium
-                   transition-all duration-200 focus:outline-none focus:ring-2
-                   focus:ring-primary-500 focus:ring-offset-2"
-          >
-            @if (isSavingName()) {
-              {{ 'PROFILE.saving' | translate }}
-            } @else {
-              {{ 'PROFILE.save_name' | translate }}
-            }
-          </button>
-        </div>
-      </div>
-    </form>
-  </section>
-  <section
-    aria-labelledby="role-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="role-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2"
-    >
-      <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
-    </h2>
-    <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-      {{ 'PROFILE.role_subtitle' | translate }}
-    </p>
-    <app-profile-role-selector
-      [currentRole]="auth.currentUser()?.role ?? 'user'"
-      (roleChange)="changeRole($event)"
-    />
-  </section>
-  <section
-    aria-labelledby="stats-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="stats-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
-    >
-      <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
-    </h2>
-    <app-profile-stats [stats]="auth.userStats()" />
-  </section>
-  <section
-    aria-labelledby="socials-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="socials-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
-    >
-      <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
-    </h2>
-    <div class="flex items-center gap-3 mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
-      <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
-        <input
-          type="checkbox"
-          [formControl]="socialsPublicControl"
-          (change)="onSocialsPublicChange(socialsPublicControl.value)"
-          class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-        />
-        {{ 'PROFILE.socials_public_label' | translate }}
-      </label>
-    </div>
-    @if (
-      userSocials().telegram  ||
-      userSocials().instagram ||
-      userSocials().twitter   ||
-      userSocials().linkedin  ||
-      userSocials().github    ||
-      userSocials().goodreads
-    ) {
-      <div class="flex flex-wrap gap-2 mb-6">
-        <app-social-badges [socials]="userSocials()" />
-      </div>
+  }
+  /** Switch the user's role and show a transient success toast. */
+  protected async changeRole(role: UserRole): Promise<void> {
+    try {
+      await this.auth.updateRole(role);
+      this.toast.show('PROFILE.role_changed', 'success');
+    } catch {  }
+  }
+  protected async saveName(): Promise<void> {
+    if (this.nameForm.invalid) return;
+    this.isSavingName.set(true);
+    const { displayName } = this.nameForm.getRawValue();
+    try {
+      await this.auth.updateDisplayName(displayName);
+      this.toast.show('PROFILE.name_updated', 'success');
+    } catch {  }
+    finally {
+      this.isSavingName.set(false);
     }
-    <form
-      [formGroup]="socialsForm"
-      (ngSubmit)="submitSocials()"
-      novalidate
-      class="space-y-4"
-    >
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        @for (social of socialFields; track social.key) {
-          <app-social-link-field [config]="social" [form]="socialsForm" />
-        }
-      </div>
-      <div class="flex items-center gap-3 pt-1">
-        <button
-          type="submit"
-          class="rounded-xl bg-primary-600 hover:bg-primary-700 text-white
-                 px-5 py-2.5 text-sm font-medium
-                 transition-all duration-200 focus:outline-none focus:ring-2
-                 focus:ring-primary-500 focus:ring-offset-2"
-        >
-          {{ 'PROFILE.save' | translate }}
-        </button>
-      </div>
-    </form>
-  </section>
-</div>
+  }
+  protected async submitSocials(): Promise<void> {
+    const raw = this.socialsForm.getRawValue();
+    const socials: UserSocials = {
+      ...(raw.telegram  ? { telegram:  raw.telegram  } : {}),
+      ...(raw.instagram ? { instagram: raw.instagram } : {}),
+      ...(raw.twitter   ? { twitter:   raw.twitter   } : {}),
+      ...(raw.linkedin  ? { linkedin:  raw.linkedin  } : {}),
+      ...(raw.github    ? { github:    raw.github    } : {}),
+      ...(raw.goodreads ? { goodreads: raw.goodreads } : {}),
+    };
+    try {
+      await this.auth.updateSocials(socials);
+      this.toast.show('PROFILE.socials_saved', 'success');
+    } catch {  }
+  }
+  protected async onSocialsPublicChange(value: boolean): Promise<void> {
+    try {
+      await this.auth.setSocialsPublic(value);
+    } catch {  }
+  }
+}
 ````
 
 ## File: src/app/features/quiz/quiz-take/quiz-take.component.ts
@@ -6227,73 +5849,6 @@ export class QuizTakeComponent implements OnInit {
         }
       </div>
     </header>
-````
-
-## File: src/app/layout/header/header.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-} from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { firstValueFrom, map, startWith } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { AuthService } from '../../core/auth/auth.service';
-@Component({
-  selector: 'app-header',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, TranslateModule],
-  templateUrl: './header.component.html',
-})
-export class HeaderComponent {
-  private readonly auth = inject(AuthService);
-  private readonly translate = inject(TranslateService);
-  readonly isMenuOpen = signal(false);
-  readonly isDropdownOpen = signal(false);
-  readonly isAuthenticated = this.auth.isAuthenticated;
-  readonly currentUser = this.auth.currentUser;
-  readonly currentLang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: 'uk' },
-  );
-  readonly userInitials = computed(() => {
-    const name = this.currentUser()?.displayName ?? '';
-    return (
-      name
-        .split(' ')
-        .slice(0, 2)
-        .map(w => w[0]?.toUpperCase() ?? '')
-        .join('') || '?'
-    );
-  });
-  switchLang(): void {
-    const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-    void firstValueFrom(this.translate.use(next));
-  }
-  toggleMenu(): void {
-    this.isMenuOpen.update(v => !v);
-    if (this.isMenuOpen()) this.isDropdownOpen.set(false);
-  }
-  toggleDropdown(): void {
-    this.isDropdownOpen.update(v => !v);
-  }
-  closeDropdown(): void {
-    this.isDropdownOpen.set(false);
-  }
-  async signOut(): Promise<void> {
-    this.closeDropdown();
-    this.isMenuOpen.set(false);
-    await this.auth.signOut();
-  }
-}
 ````
 
 ## File: src/app/app.routes.ts
@@ -7034,205 +6589,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 };
 ````
 
-## File: src/app/features/clubs/clubs-list/clubs-list.component.html
-````html
-<div class="min-h-screen">
-  <section aria-label="Search clubs" class="bg-gradient-to-br from-primary-600 to-accent-600 px-4 py-12 text-center">
-    <h1 class="font-display text-4xl font-bold text-white mb-2">{{ 'CLUBS.title' | translate }}</h1>
-    <p class="text-primary-100 mb-8">{{ 'CLUBS.subtitle' | translate }}</p>
-    <div class="mx-auto max-w-xl relative">
-      <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true">🔍</span>
-      <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
-      <input
-        id="club-search"
-        type="search"
-        [ngModel]="clubService.searchQuery()"
-        (ngModelChange)="clubService.setSearchQuery($event)"
-        [placeholder]="'CLUBS.search_placeholder_full' | translate"
-        class="w-full rounded-full shadow-sm bg-white dark:bg-gray-800 pl-10 pr-5 py-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 border-0 focus:outline-none focus:ring-2 focus:ring-white/70"
-        [attr.aria-label]="'CLUBS.search_placeholder' | translate"
-      />
-    </div>
-  </section>
-  <div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
-    @if (clubService.error()) {
-      <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-        <span aria-hidden="true">⚠️</span>
-        <span>{{ clubService.error() }}</span>
-      </div>
-    }
-    @if (clubService.availableCities().length > 0) {
-      <nav aria-label="Filter by city" class="flex flex-wrap gap-2">
-        <button
-          type="button"
-          (click)="clubService.setCityFilter(null)"
-          class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
-          [class]="clubService.cityFilter() === null
-            ? 'bg-primary-600 text-white'
-            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
-        >
-          🌍 {{ 'CLUBS.all_cities' | translate }}
-        </button>
-        @for (city of clubService.availableCities(); track city) {
-          <button
-            type="button"
-            (click)="clubService.setCityFilter(city)"
-            class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
-            [class]="clubService.cityFilter() === city
-              ? 'bg-primary-600 text-white'
-              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
-          >
-            📍 {{ city }}
-          </button>
-        }
-      </nav>
-    }
-    @if (clubService.isLoading()) {
-      <div class="py-16" aria-busy="true" aria-label="Loading clubs">
-        <app-loading-spinner size="lg" />
-      </div>
-    } @else if (cityKeys().length === 0) {
-      <app-empty-state
-        icon="📚"
-        title="No upcoming meetings"
-        description="No clubs have scheduled meetings yet. Check back soon!"
-      />
-    } @else {
-      @for (city of cityKeys(); track city) {
-        <section [attr.aria-labelledby]="'city-' + city">
-          <h2
-            [id]="'city-' + city"
-            class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2"
-          >
-            <span aria-hidden="true">📍</span> {{ city }}
-            <span class="text-sm font-normal text-gray-500 dark:text-gray-400">
-              — {{ clubService.upcomingByCity()[city].length }} club{{ clubService.upcomingByCity()[city].length === 1 ? '' : 's' }}
-            </span>
-          </h2>
-          <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            @for (club of clubService.upcomingByCity()[city]; track club.id) {
-              <app-club-card
-                [club]="club"
-                [isMember]="clubService.myClubIds().has(club.id)"
-                [isOwned]="ownedClubIds().has(club.id)"
-                [isAuthenticated]="auth.isAuthenticated()"
-                [joining]="joiningClubId() === club.id"
-                (join)="onJoin(club)"
-              />
-            }
-          </ul>
-        </section>
-      }
-    }
-    @if (auth.isAuthenticated() && (clubService.myParticipatedClubs().length > 0 || clubService.myMissedClubs().length > 0)) {
-      <section aria-labelledby="my-clubs-heading" class="border-t border-gray-200 dark:border-gray-700 pt-8 space-y-6">
-        <h2 id="my-clubs-heading" class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <span aria-hidden="true">📖</span> {{ 'CLUBS.my_clubs' | translate }}
-        </h2>
-        @if (clubService.myParticipatedClubs().length > 0) {
-          <div>
-            <h3 class="text-sm font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-              ✅ {{ 'CLUBS.participated' | translate }}
-            </h3>
-            <ul class="space-y-2">
-              @for (club of clubService.myParticipatedClubs(); track club.id) {
-                <li>
-                  <a
-                    [routerLink]="['/clubs', club.id]"
-                    class="flex items-center gap-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm px-4 py-3 hover:shadow-md transition-shadow group"
-                    [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club.name"
-                  >
-                    <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 shrink-0 flex items-center justify-center text-white text-lg" aria-hidden="true">✓</div>
-                    <div class="min-w-0 flex-1">
-                      <p class="font-semibold text-gray-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors flex items-center gap-1.5">
-                        {{ club.name }}
-                        @if (ownedClubIds().has(club.id)) {
-                          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400" title="Ваш клуб">👑</span>
-                        }
-                      </p>
-                      <div class="flex items-center gap-2 mt-0.5 flex-wrap">
-                        @if (club.theme) {
-                          <span class="text-xs font-medium text-primary-600 dark:text-primary-400">{{ club.theme }}</span>
-                        }
-                        @if (club.currentBook) {
-                          <span class="text-xs text-gray-400 dark:text-gray-500 truncate">📖 {{ club.currentBook.title }}</span>
-                        }
-                        @if (!club.theme && !club.currentBook) {
-                          <p class="text-xs text-gray-500 dark:text-gray-400 truncate">📍 {{ club.city }}</p>
-                        }
-                      </div>
-                    </div>
-                    @if (club.nextMeetingDate) {
-                      <span class="shrink-0 text-xs text-gray-400 dark:text-gray-500">{{ club.nextMeetingDate | formatDate }}</span>
-                    }
-                  </a>
-                </li>
-              }
-            </ul>
-          </div>
-        }
-        @if (clubService.myMissedClubs().length > 0) {
-          <div>
-            <h3 class="text-sm font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
-              ⏭️ {{ 'CLUBS.missed' | translate }}
-            </h3>
-            <ul class="space-y-2">
-              @for (club of clubService.myMissedClubs(); track club.id) {
-                <li>
-                  <a
-                    [routerLink]="['/clubs', club.id]"
-                    class="flex items-center gap-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm px-4 py-3 hover:shadow-md transition-shadow group border-l-4 border-orange-300 dark:border-orange-600"
-                    [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club.name"
-                  >
-                    <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-300 to-red-400 shrink-0 flex items-center justify-center text-white text-lg" aria-hidden="true">⏭</div>
-                    <div class="min-w-0 flex-1">
-                      <p class="font-semibold text-gray-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors flex items-center gap-1.5">
-                        {{ club.name }}
-                        @if (ownedClubIds().has(club.id)) {
-                          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400" title="Ваш клуб">👑</span>
-                        }
-                      </p>
-                      <div class="flex items-center gap-2 mt-0.5 flex-wrap">
-                        @if (club.theme) {
-                          <span class="text-xs font-medium text-primary-600 dark:text-primary-400">{{ club.theme }}</span>
-                        }
-                        @if (club.currentBook) {
-                          <span class="text-xs text-gray-400 dark:text-gray-500 truncate">📖 {{ club.currentBook.title }}</span>
-                        }
-                        @if (!club.theme && !club.currentBook) {
-                          <p class="text-xs text-gray-500 dark:text-gray-400 truncate">📍 {{ club.city }}</p>
-                        }
-                      </div>
-                    </div>
-                    @if (club.nextMeetingDate) {
-                      <span class="shrink-0 rounded-full bg-orange-50 dark:bg-orange-900/30 px-2.5 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300">
-                        {{ club.nextMeetingDate | formatDate }}
-                      </span>
-                    }
-                  </a>
-                </li>
-              }
-            </ul>
-          </div>
-        }
-      </section>
-    }
-  </div>
-  @if (auth.isOrganizer()) {
-    <a
-      routerLink="/clubs/create"
-      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-accent-500 hover:bg-accent-600 text-white shadow-xl focus:outline-none focus:ring-2 focus:ring-accent-400 focus:ring-offset-2 transition-colors"
-      [attr.aria-label]="'CLUBS.create' | translate"
-      [title]="'CLUBS.create' | translate"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-      </svg>
-    </a>
-  }
-</div>
-````
-
 ## File: src/app/features/clubs/create-club/create-club.component.html
 ````html
 <main class="min-h-screen flex items-center justify-center p-4">
@@ -7545,145 +6901,260 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 </main>
 ````
 
-## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
+## File: src/app/features/profile/profile.component.html
+````html
+<div class="max-w-2xl mx-auto space-y-6 py-8 px-4">
+  <section
+    aria-labelledby="profile-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-8 text-center"
+  >
+    <div
+      class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
+             flex items-center justify-center text-white text-3xl font-bold select-none shadow-md"
+      aria-hidden="true"
+    >
+      {{ userInitials() }}
+    </div>
+    <h1
+      id="profile-heading"
+      class="text-2xl font-bold text-gray-900 dark:text-white"
+    >
+      {{ auth.currentUser()?.displayName }}
+    </h1>
+    <span
+      class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
+      [class]="auth.currentUser()?.role === 'organizer'
+        ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
+        : 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
+    >
+      {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
+      {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
+    </span>
+    @if (joinedDate()) {
+      <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
+        {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
+      </p>
+    }
+  </section>
+  <section
+    aria-labelledby="edit-name-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="edit-name-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
+    >
+      <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
+    </h2>
+    <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
+      <div class="space-y-4">
+        <div>
+          <label
+            for="displayName"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+          >
+            {{ 'PROFILE.display_name_label' | translate }}
+          </label>
+          <input
+            id="displayName"
+            type="text"
+            formControlName="displayName"
+            autocomplete="nickname"
+            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
+                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
+                   text-gray-900 dark:text-white placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                   transition-all duration-200"
+            [placeholder]="'PROFILE.display_name_placeholder' | translate"
+            [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
+            aria-describedby="displayName-error"
+          />
+          @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
+            <p
+              id="displayName-error"
+              role="alert"
+              class="mt-1.5 text-xs text-red-600 dark:text-red-400"
+            >
+              @if (nameForm.controls.displayName.hasError('required')) {
+                {{ 'PROFILE.display_name_required' | translate }}
+              } @else if (nameForm.controls.displayName.hasError('minlength')) {
+                {{ 'PROFILE.display_name_min' | translate }}
+              }
+            </p>
+          }
+        </div>
+        <div class="flex items-center gap-3">
+          <button
+            type="submit"
+            [disabled]="nameForm.invalid || isSavingName()"
+            class="rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-50
+                   disabled:cursor-not-allowed text-white px-5 py-2.5 text-sm font-medium
+                   transition-all duration-200 focus:outline-none focus:ring-2
+                   focus:ring-primary-500 focus:ring-offset-2"
+          >
+            @if (isSavingName()) {
+              {{ 'PROFILE.saving' | translate }}
+            } @else {
+              {{ 'PROFILE.save_name' | translate }}
+            }
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+  <section
+    aria-labelledby="role-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="role-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2"
+    >
+      <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
+    </h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+      {{ 'PROFILE.role_subtitle' | translate }}
+    </p>
+    <app-profile-role-selector
+      [currentRole]="auth.currentUser()?.role ?? 'user'"
+      (roleChange)="changeRole($event)"
+    />
+  </section>
+  <section
+    aria-labelledby="stats-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="stats-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
+    >
+      <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
+    </h2>
+    <app-profile-stats [stats]="auth.userStats()" />
+  </section>
+  <section
+    aria-labelledby="socials-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="socials-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
+    >
+      <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
+    </h2>
+    <div class="flex items-center gap-3 mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+      <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
+        <input
+          type="checkbox"
+          [formControl]="socialsPublicControl"
+          (change)="onSocialsPublicChange(socialsPublicControl.value)"
+          class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+        />
+        {{ 'PROFILE.socials_public_label' | translate }}
+      </label>
+    </div>
+    @if (
+      userSocials().telegram  ||
+      userSocials().instagram ||
+      userSocials().twitter   ||
+      userSocials().linkedin  ||
+      userSocials().github    ||
+      userSocials().goodreads
+    ) {
+      <div class="flex flex-wrap gap-2 mb-6">
+        <app-social-badges [socials]="userSocials()" />
+      </div>
+    }
+    <form
+      [formGroup]="socialsForm"
+      (ngSubmit)="submitSocials()"
+      novalidate
+      class="space-y-4"
+    >
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        @for (social of socialFields; track social.key) {
+          <app-social-link-field [config]="social" [form]="socialsForm" />
+        }
+      </div>
+      <div class="flex items-center gap-3 pt-1">
+        <button
+          type="submit"
+          class="rounded-xl bg-primary-600 hover:bg-primary-700 text-white
+                 px-5 py-2.5 text-sm font-medium
+                 transition-all duration-200 focus:outline-none focus:ring-2
+                 focus:ring-primary-500 focus:ring-offset-2"
+        >
+          {{ 'PROFILE.save' | translate }}
+        </button>
+      </div>
+    </form>
+  </section>
+</div>
+````
+
+## File: src/app/layout/header/header.component.ts
 ````typescript
 import {
-  ChangeDetectionStrategy,
   Component,
+  ChangeDetectionStrategy,
   inject,
-  input,
   signal,
+  computed,
 } from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizQuestion } from '../../../core/models/quiz.model';
-interface MetaForm {
-  title: FormControl<string>;
-  description: FormControl<string>;
-}
-interface QuestionForm {
-  question: FormControl<string>;
-  option0: FormControl<string>;
-  option1: FormControl<string>;
-  option2: FormControl<string>;
-  option3: FormControl<string>;
-  correctIndex: FormControl<number>;
-}
-type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { firstValueFrom, map, startWith } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { AuthService } from '../../core/auth/auth.service';
 @Component({
-  selector: 'app-quiz-create',
+  selector: 'app-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink],
-  templateUrl: './quiz-create.component.html',
+  imports: [RouterLink, RouterLinkActive, TranslateModule],
+  templateUrl: './header.component.html',
 })
-export class QuizCreateComponent {
-  private readonly quizService = inject(QuizService);
-  private readonly router = inject(Router);
-  protected readonly currentStep = signal<1 | 2>(1);
-  protected readonly localQuestions = signal<LocalQuestion[]>([]);
-  protected readonly isPublishing = signal(false);
-  protected readonly errorMessage = signal('');
-  readonly id = input<string>('');
-  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
-  protected readonly metaForm = new FormGroup<MetaForm>({
-    title: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
+export class HeaderComponent {
+  private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
+  readonly isMenuOpen = signal(false);
+  readonly isDropdownOpen = signal(false);
+  readonly isAuthenticated = this.auth.isAuthenticated;
+  readonly currentUser = this.auth.currentUser;
+  readonly currentLang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: 'uk' },
+  );
+  readonly userInitials = computed(() => {
+    const name = this.currentUser()?.displayName ?? '';
+    return (
+      name
+        .split(' ')
+        .slice(0, 2)
+        .map(w => w[0]?.toUpperCase() ?? '')
+        .join('') || '?'
+    );
   });
-  protected readonly questionForm = new FormGroup<QuestionForm>({
-    question: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
-    }),
-    option0: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option1: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option2: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option3: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    correctIndex: new FormControl<number>(0, { nonNullable: true }),
-  });
-  protected isInvalidTouched(ctrl: AbstractControl): boolean {
-    return ctrl.invalid && ctrl.touched;
+  switchLang(): void {
+    const next = this.currentLang() === 'uk' ? 'en' : 'uk';
+    void firstValueFrom(this.translate.use(next));
   }
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
+  toggleMenu(): void {
+    this.isMenuOpen.update(v => !v);
+    if (this.isMenuOpen()) this.isDropdownOpen.set(false);
   }
-  protected nextStep(): void {
-    if (this.metaForm.invalid) {
-      this.metaForm.markAllAsTouched();
-      return;
-    }
-    this.currentStep.set(2);
+  toggleDropdown(): void {
+    this.isDropdownOpen.update(v => !v);
   }
-  protected previousStep(): void {
-    this.currentStep.set(1);
-    this.errorMessage.set('');
+  closeDropdown(): void {
+    this.isDropdownOpen.set(false);
   }
-  protected addQuestion(): void {
-    if (this.questionForm.invalid) {
-      this.questionForm.markAllAsTouched();
-      return;
-    }
-    const { question, option0, option1, option2, option3, correctIndex } =
-      this.questionForm.getRawValue();
-    const newQuestion: LocalQuestion = {
-      question: question.trim(),
-      options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
-      correctIndex,
-    };
-    this.localQuestions.update(prev => [...prev, newQuestion]);
-    this.questionForm.reset({ correctIndex: 0 });
-  }
-  protected removeQuestion(index: number): void {
-    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
-  }
-  protected publishQuiz(): void {
-    const questions = this.localQuestions();
-    if (questions.length === 0) return;
-    this.isPublishing.set(true);
-    this.errorMessage.set('');
-    const { title, description } = this.metaForm.getRawValue();
-    const clubId = this.id();
-    this.quizService
-      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
-      .then(async quiz => {
-        // Add questions sequentially to preserve sort_order
-        for (const q of questions) {
-          await this.quizService.addQuestion(quiz.id, q);
-        }
-        // Activate the quiz
-        await this.quizService.toggleActive(quiz.id, true);
-        this.isPublishing.set(false);
-        this.router.navigate(['/clubs', clubId, 'quizzes']);
-      })
-      .catch(err => {
-        this.isPublishing.set(false);
-        this.errorMessage.set((err as Error).message);
-      });
+  async signOut(): Promise<void> {
+    this.closeDropdown();
+    this.isMenuOpen.set(false);
+    await this.auth.signOut();
   }
 }
 ````
@@ -7869,6 +7340,618 @@ When invoking agents via the `task` tool, **always use the model specified below
 | `java-backend-dev` | `claude-sonnet-4.6` | Java 21 microservices, Spring Boot, JPA, Kafka, JWT |
 ````
 
+## File: src/app/features/clubs/clubs-list/clubs-list.component.html
+````html
+<div class="min-h-screen">
+  <section aria-label="Search clubs" class="bg-gradient-to-br from-primary-600 to-accent-600 px-4 py-12 text-center">
+    <h1 class="font-display text-4xl font-bold text-white mb-2">{{ 'CLUBS.title' | translate }}</h1>
+    <p class="text-primary-100 mb-8">{{ 'CLUBS.subtitle' | translate }}</p>
+    <div class="mx-auto max-w-xl relative">
+      <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true">🔍</span>
+      <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
+      <input
+        id="club-search"
+        type="search"
+        [ngModel]="clubService.searchQuery()"
+        (ngModelChange)="clubService.setSearchQuery($event)"
+        [placeholder]="'CLUBS.search_placeholder_full' | translate"
+        class="w-full rounded-full shadow-sm bg-white dark:bg-gray-800 pl-10 pr-5 py-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 border-0 focus:outline-none focus:ring-2 focus:ring-white/70"
+        [attr.aria-label]="'CLUBS.search_placeholder' | translate"
+      />
+    </div>
+  </section>
+  <div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
+    @if (clubService.error()) {
+      <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+        <span aria-hidden="true">⚠️</span>
+        <span>{{ clubService.error() }}</span>
+      </div>
+    }
+    @if (clubService.availableCities().length > 0) {
+      <nav aria-label="Filter by city" class="flex flex-wrap gap-2">
+        <button
+          type="button"
+          (click)="clubService.setCityFilter(null)"
+          class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+          [class]="clubService.cityFilter() === null
+            ? 'bg-primary-600 text-white'
+            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
+        >
+          🌍 {{ 'CLUBS.all_cities' | translate }}
+        </button>
+        @for (city of clubService.availableCities(); track city) {
+          <button
+            type="button"
+            (click)="clubService.setCityFilter(city)"
+            class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
+            [class]="clubService.cityFilter() === city
+              ? 'bg-primary-600 text-white'
+              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
+          >
+            📍 {{ city }}
+          </button>
+        }
+      </nav>
+    }
+    @if (clubService.isLoading()) {
+      <div class="py-16" aria-busy="true" aria-label="Loading clubs">
+        <app-loading-spinner size="lg" />
+      </div>
+    } @else if (cityKeys().length === 0) {
+      <app-empty-state
+        icon="📚"
+        title="No upcoming meetings"
+        description="No clubs have scheduled meetings yet. Check back soon!"
+      />
+    } @else {
+      @for (city of cityKeys(); track city) {
+        <section [attr.aria-labelledby]="'city-' + city">
+          <h2
+            [id]="'city-' + city"
+            class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2"
+          >
+            <span aria-hidden="true">📍</span> {{ city }}
+            <span class="text-sm font-normal text-gray-500 dark:text-gray-400">
+              — {{ clubService.upcomingByCity()[city].length }} club{{ clubService.upcomingByCity()[city].length === 1 ? '' : 's' }}
+            </span>
+          </h2>
+          <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            @for (club of clubService.upcomingByCity()[city]; track club.id) {
+              <app-club-card
+                [club]="club"
+                [isMember]="clubService.myClubIds().has(club.id)"
+                [isOwned]="ownedClubIds().has(club.id)"
+                [isAuthenticated]="auth.isAuthenticated()"
+                [joining]="joiningClubId() === club.id"
+                (join)="onJoin(club)"
+              />
+            }
+          </ul>
+        </section>
+      }
+    }
+    @if (auth.isAuthenticated() && (clubService.myParticipatedClubs().length > 0 || clubService.myMissedClubs().length > 0)) {
+      <section aria-labelledby="my-clubs-heading" class="border-t border-gray-200 dark:border-gray-700 pt-8 space-y-6">
+        <h2 id="my-clubs-heading" class="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          <span aria-hidden="true">📖</span> {{ 'CLUBS.my_clubs' | translate }}
+        </h2>
+        @if (clubService.myParticipatedClubs().length > 0) {
+          <div>
+            <h3 class="text-sm font-semibold text-green-700 dark:text-green-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+              ✅ {{ 'CLUBS.participated' | translate }}
+            </h3>
+            <ul class="space-y-2">
+              @for (club of clubService.myParticipatedClubs(); track club.id) {
+                <li>
+                  <a
+                    [routerLink]="['/clubs', club.id]"
+                    class="flex items-center gap-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm px-4 py-3 hover:shadow-md transition-shadow group"
+                    [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club.name"
+                  >
+                    <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-green-400 to-emerald-500 shrink-0 flex items-center justify-center text-white text-lg" aria-hidden="true">✓</div>
+                    <div class="min-w-0 flex-1">
+                      <p class="font-semibold text-gray-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors flex items-center gap-1.5">
+                        {{ club.name }}
+                        @if (ownedClubIds().has(club.id)) {
+                          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400" title="Ваш клуб">👑</span>
+                        }
+                      </p>
+                      <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                        @if (club.theme) {
+                          <span class="text-xs font-medium text-primary-600 dark:text-primary-400">{{ club.theme }}</span>
+                        }
+                        @if (club.currentBook) {
+                          <span class="text-xs text-gray-400 dark:text-gray-500 truncate">📖 {{ club.currentBook.title }}</span>
+                        }
+                        @if (!club.theme && !club.currentBook) {
+                          <p class="text-xs text-gray-500 dark:text-gray-400 truncate">📍 {{ club.city }}</p>
+                        }
+                      </div>
+                    </div>
+                    @if (club.nextMeetingDate) {
+                      <span class="shrink-0 text-xs text-gray-400 dark:text-gray-500">{{ club.nextMeetingDate | formatDate }}</span>
+                    }
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+        @if (clubService.myMissedClubs().length > 0) {
+          <div>
+            <h3 class="text-sm font-semibold text-orange-600 dark:text-orange-400 uppercase tracking-wide mb-3 flex items-center gap-1.5">
+              ⏭️ {{ 'CLUBS.missed' | translate }}
+            </h3>
+            <ul class="space-y-2">
+              @for (club of clubService.myMissedClubs(); track club.id) {
+                <li>
+                  <a
+                    [routerLink]="['/clubs', club.id]"
+                    class="flex items-center gap-4 rounded-xl bg-white dark:bg-gray-800 shadow-sm px-4 py-3 hover:shadow-md transition-shadow group border-l-4 border-orange-300 dark:border-orange-600"
+                    [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club.name"
+                  >
+                    <div class="h-10 w-10 rounded-xl bg-gradient-to-br from-orange-300 to-red-400 shrink-0 flex items-center justify-center text-white text-lg" aria-hidden="true">⏭</div>
+                    <div class="min-w-0 flex-1">
+                      <p class="font-semibold text-gray-900 dark:text-white truncate group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors flex items-center gap-1.5">
+                        {{ club.name }}
+                        @if (ownedClubIds().has(club.id)) {
+                          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400" title="Ваш клуб">👑</span>
+                        }
+                      </p>
+                      <div class="flex items-center gap-2 mt-0.5 flex-wrap">
+                        @if (club.theme) {
+                          <span class="text-xs font-medium text-primary-600 dark:text-primary-400">{{ club.theme }}</span>
+                        }
+                        @if (club.currentBook) {
+                          <span class="text-xs text-gray-400 dark:text-gray-500 truncate">📖 {{ club.currentBook.title }}</span>
+                        }
+                        @if (!club.theme && !club.currentBook) {
+                          <p class="text-xs text-gray-500 dark:text-gray-400 truncate">📍 {{ club.city }}</p>
+                        }
+                      </div>
+                    </div>
+                    @if (club.nextMeetingDate) {
+                      <span class="shrink-0 rounded-full bg-orange-50 dark:bg-orange-900/30 px-2.5 py-0.5 text-xs font-medium text-orange-700 dark:text-orange-300">
+                        {{ club.nextMeetingDate | formatDate }}
+                      </span>
+                    }
+                  </a>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </section>
+    }
+  </div>
+  @if (auth.isOrganizer()) {
+    <a
+      routerLink="/clubs/create"
+      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-accent-500 hover:bg-accent-600 text-white shadow-xl focus:outline-none focus:ring-2 focus:ring-accent-400 focus:ring-offset-2 transition-colors"
+      [attr.aria-label]="'CLUBS.create' | translate"
+      [title]="'CLUBS.create' | translate"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+      </svg>
+    </a>
+  }
+</div>
+````
+
+## File: src/app/features/clubs/create-club/create-club.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+} from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+interface CreateClubForm {
+  name: FormControl<string>;
+  description: FormControl<string>;
+  isPublic: FormControl<boolean>;
+  city: FormControl<string>;
+  address: FormControl<string>;
+  tags: FormControl<string>;
+  meetingDurationMinutes: FormControl<number | null>;
+  afterMeetingVenueName: FormControl<string>;
+  afterMeetingVenueAddress: FormControl<string>;
+  afterMeetingVenueDescription: FormControl<string>;
+}
+@Component({
+  selector: 'app-create-club',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent],
+  templateUrl: './create-club.component.html',
+})
+export class CreateClubComponent {
+  private readonly clubService = inject(ClubService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly _errorMessage = signal<string | null>(null);
+  readonly errorMessage = this._errorMessage.asReadonly();
+  private readonly _isSubmitting = signal(false);
+  readonly isSubmitting = this._isSubmitting.asReadonly();
+  readonly showAfterMeeting = signal(false);
+  readonly form = new FormGroup<CreateClubForm>({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+    isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(100)],
+    }),
+    address: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(200)],
+    }),
+    tags: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(300)],
+    }),
+    meetingDurationMinutes: new FormControl<number | null>(null, {
+      validators: [Validators.min(15), Validators.max(480)],
+    }),
+    afterMeetingVenueName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(150)],
+    }),
+    afterMeetingVenueAddress: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(200)],
+    }),
+    afterMeetingVenueDescription: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(300)],
+    }),
+  });
+  togglePublic(): void {
+    const current = this.form.controls.isPublic.value;
+    this.form.controls.isPublic.setValue(!current);
+  }
+  toggleAfterMeeting(): void {
+    this.showAfterMeeting.update(v => !v);
+  }
+  cancel(): void {
+    this.router.navigate(['/clubs']);
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this._isSubmitting.set(true);
+    this._errorMessage.set(null);
+    const {
+      name,
+      description,
+      isPublic,
+      city,
+      tags,
+      meetingDurationMinutes,
+      afterMeetingVenueName,
+      afterMeetingVenueAddress,
+      afterMeetingVenueDescription,
+    } = this.form.getRawValue();
+    const parsedTags = tags
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0);
+    const afterMeetingVenue = afterMeetingVenueName
+      ? {
+          name: afterMeetingVenueName,
+          address: afterMeetingVenueAddress,
+          description: afterMeetingVenueDescription || undefined,
+        }
+      : null;
+    try {
+      const club = await this.clubService.createClub({
+        name,
+        description,
+        isPublic,
+        city,
+        tags: parsedTags,
+        meetingDurationMinutes: meetingDurationMinutes ?? undefined,
+        afterMeetingVenue,
+      });
+      this.router.navigate(['/clubs', club.id]);
+    } catch (err) {
+      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
+    } finally {
+      this._isSubmitting.set(false);
+    }
+  }
+}
+````
+
+## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizQuestion } from '../../../core/models/quiz.model';
+interface MetaForm {
+  title: FormControl<string>;
+  description: FormControl<string>;
+}
+interface QuestionForm {
+  question: FormControl<string>;
+  option0: FormControl<string>;
+  option1: FormControl<string>;
+  option2: FormControl<string>;
+  option3: FormControl<string>;
+  correctIndex: FormControl<number>;
+}
+type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
+@Component({
+  selector: 'app-quiz-create',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink],
+  templateUrl: './quiz-create.component.html',
+})
+export class QuizCreateComponent {
+  private readonly quizService = inject(QuizService);
+  private readonly router = inject(Router);
+  protected readonly currentStep = signal<1 | 2>(1);
+  protected readonly localQuestions = signal<LocalQuestion[]>([]);
+  protected readonly isPublishing = signal(false);
+  protected readonly errorMessage = signal('');
+  readonly id = input<string>('');
+  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
+  protected readonly metaForm = new FormGroup<MetaForm>({
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+  });
+  protected readonly questionForm = new FormGroup<QuestionForm>({
+    question: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
+    }),
+    option0: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option1: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option2: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option3: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    correctIndex: new FormControl<number>(0, { nonNullable: true }),
+  });
+  protected isInvalidTouched(ctrl: AbstractControl): boolean {
+    return ctrl.invalid && ctrl.touched;
+  }
+  protected optionLabel(index: number): string {
+    return String.fromCodePoint(65 + index);
+  }
+  protected nextStep(): void {
+    if (this.metaForm.invalid) {
+      this.metaForm.markAllAsTouched();
+      return;
+    }
+    this.currentStep.set(2);
+  }
+  protected previousStep(): void {
+    this.currentStep.set(1);
+    this.errorMessage.set('');
+  }
+  protected addQuestion(): void {
+    if (this.questionForm.invalid) {
+      this.questionForm.markAllAsTouched();
+      return;
+    }
+    const { question, option0, option1, option2, option3, correctIndex } =
+      this.questionForm.getRawValue();
+    const newQuestion: LocalQuestion = {
+      question: question.trim(),
+      options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
+      correctIndex,
+    };
+    this.localQuestions.update(prev => [...prev, newQuestion]);
+    this.questionForm.reset({ correctIndex: 0 });
+  }
+  protected removeQuestion(index: number): void {
+    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
+  }
+  protected publishQuiz(): void {
+    const questions = this.localQuestions();
+    if (questions.length === 0) return;
+    this.isPublishing.set(true);
+    this.errorMessage.set('');
+    const { title, description } = this.metaForm.getRawValue();
+    const clubId = this.id();
+    this.quizService
+      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
+      .then(async quiz => {
+        // Add questions sequentially to preserve sort_order
+        for (const q of questions) {
+          await this.quizService.addQuestion(quiz.id, q);
+        }
+        // Activate the quiz
+        await this.quizService.toggleActive(quiz.id, true);
+        this.isPublishing.set(false);
+        this.router.navigate(['/clubs', clubId, 'quizzes']);
+      })
+      .catch(err => {
+        this.isPublishing.set(false);
+        this.errorMessage.set((err as Error).message);
+      });
+  }
+}
+````
+
+## File: src/app/features/randomizer/randomizer.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  effect,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { DatePipe } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../core/auth/auth.service';
+import { RandomizerService } from '../../core/services/randomizer.service';
+import { InitialsPipe } from '../../shared/pipes/initials.pipe';
+@Component({
+  selector: 'app-randomizer',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule, InitialsPipe],
+  styleUrl: './randomizer.component.scss',
+  templateUrl: './randomizer.component.html',
+})
+export class RandomizerComponent implements OnInit {
+  protected readonly randomizerService = inject(RandomizerService);
+  protected readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  protected readonly isSaving = signal(false);
+  protected readonly errorMessage = signal('');
+  protected clubId = '';
+  protected readonly purposeControl = new FormControl('Хто представляє книгу?', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
+  // toSignal keeps OnPush change detection working without manual markForCheck
+  private readonly _purposeValue = toSignal(this.purposeControl.valueChanges, {
+    initialValue: this.purposeControl.value,
+  });
+  constructor() {
+    effect(() => this.randomizerService.setPurpose(this._purposeValue()));
+  }
+  protected readonly selectedCount = computed(
+    () =>
+      this.randomizerService
+        .candidates()
+        .filter(m => this.randomizerService.selectedIds().has(m.userId)).length,
+  );
+  ngOnInit(): void {
+    this.clubId = this.route.snapshot.params['id'] as string;
+    this.randomizerService.loadClubMembers(this.clubId);
+    this.randomizerService.loadHistory(this.clubId).catch(() => {});
+  }
+  protected spin(): void {
+    this.errorMessage.set('');
+    this.randomizerService.spin().catch(err => {
+      this.errorMessage.set((err as Error).message);
+    });
+  }
+  protected saveSession(): void {
+    this.isSaving.set(true);
+    this.errorMessage.set('');
+    this.randomizerService
+      .saveSession(this.clubId)
+      .then(() => this.isSaving.set(false))
+      .catch(err => {
+        this.isSaving.set(false);
+        this.errorMessage.set((err as Error).message);
+      });
+  }
+  protected reset(): void {
+    this.randomizerService.reset();
+    this.errorMessage.set('');
+  }
+}
+````
+
+## File: src/app/app.config.ts
+````typescript
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, APP_INITIALIZER, inject } from '@angular/core';
+import {
+  provideRouter,
+  withComponentInputBinding,
+  withViewTransitions,
+  withRouterConfig,
+} from '@angular/router';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { provideTranslateService, provideTranslateLoader, TranslateService } from '@ngx-translate/core';
+import { TranslateHttpLoader, provideTranslateHttpLoader } from '@ngx-translate/http-loader';
+import { catchError, firstValueFrom, of } from 'rxjs';
+import { routes } from './app.routes';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideZonelessChangeDetection(),
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      withViewTransitions(),
+      withRouterConfig({ paramsInheritanceStrategy: 'always' }),
+    ),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([authInterceptor]),
+    ),
+    provideTranslateService({
+      defaultLanguage: 'uk',
+      loader: provideTranslateLoader(TranslateHttpLoader),
+    }),
+    ...provideTranslateHttpLoader({ prefix: '/i18n/', suffix: '.json' }),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: () => {
+        const translate = inject(TranslateService);
+        return () =>
+          firstValueFrom(
+            translate.use('uk').pipe(
+              catchError(() => translate.use('en').pipe(catchError(() => of(null)))),
+            ),
+          );
+      },
+      multi: true,
+    },
+  ],
+};
+````
+
 ## File: src/app/features/clubs/club-detail/club-detail.component.html
 ````html
 @if (isLoading()) {
@@ -8012,434 +8095,6 @@ When invoking agents via the `task` tool, **always use the model specified below
       </footer>
     </div>
   </main>
-}
-````
-
-## File: src/app/features/clubs/create-club/create-club.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-} from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-interface CreateClubForm {
-  name: FormControl<string>;
-  description: FormControl<string>;
-  isPublic: FormControl<boolean>;
-  city: FormControl<string>;
-  address: FormControl<string>;
-  tags: FormControl<string>;
-  meetingDurationMinutes: FormControl<number | null>;
-  afterMeetingVenueName: FormControl<string>;
-  afterMeetingVenueAddress: FormControl<string>;
-  afterMeetingVenueDescription: FormControl<string>;
-}
-@Component({
-  selector: 'app-create-club',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent],
-  templateUrl: './create-club.component.html',
-})
-export class CreateClubComponent {
-  private readonly clubService = inject(ClubService);
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly _errorMessage = signal<string | null>(null);
-  readonly errorMessage = this._errorMessage.asReadonly();
-  private readonly _isSubmitting = signal(false);
-  readonly isSubmitting = this._isSubmitting.asReadonly();
-  readonly showAfterMeeting = signal(false);
-  readonly form = new FormGroup<CreateClubForm>({
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-    isPublic: new FormControl(true, { nonNullable: true }),
-    city: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(100)],
-    }),
-    address: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(200)],
-    }),
-    tags: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(300)],
-    }),
-    meetingDurationMinutes: new FormControl<number | null>(null, {
-      validators: [Validators.min(15), Validators.max(480)],
-    }),
-    afterMeetingVenueName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(150)],
-    }),
-    afterMeetingVenueAddress: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(200)],
-    }),
-    afterMeetingVenueDescription: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(300)],
-    }),
-  });
-  togglePublic(): void {
-    const current = this.form.controls.isPublic.value;
-    this.form.controls.isPublic.setValue(!current);
-  }
-  toggleAfterMeeting(): void {
-    this.showAfterMeeting.update(v => !v);
-  }
-  cancel(): void {
-    this.router.navigate(['/clubs']);
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this._isSubmitting.set(true);
-    this._errorMessage.set(null);
-    const {
-      name,
-      description,
-      isPublic,
-      city,
-      tags,
-      meetingDurationMinutes,
-      afterMeetingVenueName,
-      afterMeetingVenueAddress,
-      afterMeetingVenueDescription,
-    } = this.form.getRawValue();
-    const parsedTags = tags
-      .split(',')
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
-    const afterMeetingVenue = afterMeetingVenueName
-      ? {
-          name: afterMeetingVenueName,
-          address: afterMeetingVenueAddress,
-          description: afterMeetingVenueDescription || undefined,
-        }
-      : null;
-    try {
-      const club = await this.clubService.createClub({
-        name,
-        description,
-        isPublic,
-        city,
-        tags: parsedTags,
-        meetingDurationMinutes: meetingDurationMinutes ?? undefined,
-        afterMeetingVenue,
-      });
-      this.router.navigate(['/clubs', club.id]);
-    } catch (err) {
-      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
-    } finally {
-      this._isSubmitting.set(false);
-    }
-  }
-}
-````
-
-## File: src/app/features/randomizer/randomizer.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-  signal,
-  computed,
-  effect,
-} from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DatePipe } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../core/auth/auth.service';
-import { RandomizerService } from '../../core/services/randomizer.service';
-import { InitialsPipe } from '../../shared/pipes/initials.pipe';
-@Component({
-  selector: 'app-randomizer',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule, InitialsPipe],
-  styleUrl: './randomizer.component.scss',
-  templateUrl: './randomizer.component.html',
-})
-export class RandomizerComponent implements OnInit {
-  protected readonly randomizerService = inject(RandomizerService);
-  protected readonly authService = inject(AuthService);
-  private readonly route = inject(ActivatedRoute);
-  protected readonly isSaving = signal(false);
-  protected readonly errorMessage = signal('');
-  protected clubId = '';
-  protected readonly purposeControl = new FormControl('Хто представляє книгу?', {
-    nonNullable: true,
-    validators: [Validators.required],
-  });
-  // toSignal keeps OnPush change detection working without manual markForCheck
-  private readonly _purposeValue = toSignal(this.purposeControl.valueChanges, {
-    initialValue: this.purposeControl.value,
-  });
-  constructor() {
-    effect(() => this.randomizerService.setPurpose(this._purposeValue()));
-  }
-  protected readonly selectedCount = computed(
-    () =>
-      this.randomizerService
-        .candidates()
-        .filter(m => this.randomizerService.selectedIds().has(m.userId)).length,
-  );
-  ngOnInit(): void {
-    this.clubId = this.route.snapshot.params['id'] as string;
-    this.randomizerService.loadClubMembers(this.clubId);
-    this.randomizerService.loadHistory(this.clubId).catch(() => {});
-  }
-  protected spin(): void {
-    this.errorMessage.set('');
-    this.randomizerService.spin().catch(err => {
-      this.errorMessage.set((err as Error).message);
-    });
-  }
-  protected saveSession(): void {
-    this.isSaving.set(true);
-    this.errorMessage.set('');
-    this.randomizerService
-      .saveSession(this.clubId)
-      .then(() => this.isSaving.set(false))
-      .catch(err => {
-        this.isSaving.set(false);
-        this.errorMessage.set((err as Error).message);
-      });
-  }
-  protected reset(): void {
-    this.randomizerService.reset();
-    this.errorMessage.set('');
-  }
-}
-````
-
-## File: src/app/app.config.ts
-````typescript
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, APP_INITIALIZER, inject } from '@angular/core';
-import {
-  provideRouter,
-  withComponentInputBinding,
-  withViewTransitions,
-  withRouterConfig,
-} from '@angular/router';
-import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { provideTranslateService, provideTranslateLoader, TranslateService } from '@ngx-translate/core';
-import { TranslateHttpLoader, provideTranslateHttpLoader } from '@ngx-translate/http-loader';
-import { catchError, firstValueFrom, of } from 'rxjs';
-import { routes } from './app.routes';
-import { authInterceptor } from './core/interceptors/auth.interceptor';
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideZonelessChangeDetection(),
-    provideRouter(
-      routes,
-      withComponentInputBinding(),
-      withViewTransitions(),
-      withRouterConfig({ paramsInheritanceStrategy: 'always' }),
-    ),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([authInterceptor]),
-    ),
-    provideTranslateService({
-      defaultLanguage: 'uk',
-      loader: provideTranslateLoader(TranslateHttpLoader),
-    }),
-    ...provideTranslateHttpLoader({ prefix: '/i18n/', suffix: '.json' }),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: () => {
-        const translate = inject(TranslateService);
-        return () =>
-          firstValueFrom(
-            translate.use('uk').pipe(
-              catchError(() => translate.use('en').pipe(catchError(() => of(null)))),
-            ),
-          );
-      },
-      multi: true,
-    },
-  ],
-};
-````
-
-## File: src/app/core/services/quiz.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal, computed } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
-interface ApiQuiz {
-  id: string;
-  club_id: string;
-  created_by: string;
-  title: string;
-  description: string | null;
-  is_active: boolean;
-}
-interface ApiQuizQuestion {
-  id: string;
-  quiz_id: string;
-  question: string;
-  options: string[];
-  correct_index: number;
-}
-interface ApiAttemptResponse {
-  id: string;
-  quiz_id: string;
-  user_id: string;
-  score: number;
-  total: number;
-  answers: number[];
-}
-function mapQuiz(raw: ApiQuiz): Quiz {
-  return {
-    id: raw.id,
-    clubId: raw.club_id,
-    createdBy: raw.created_by,
-    title: raw.title,
-    description: raw.description,
-    isActive: raw.is_active,
-  };
-}
-function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
-  return {
-    id: raw.id,
-    quizId: raw.quiz_id,
-    question: raw.question,
-    options: raw.options,
-    correctIndex: raw.correct_index,
-  };
-}
-function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
-  return {
-    id: raw.id,
-    quizId: raw.quiz_id,
-    userId: raw.user_id,
-    score: raw.score,
-    total: raw.total,
-    answers: raw.answers,
-  };
-}
-@Injectable({ providedIn: 'root' })
-export class QuizService {
-  private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _quizzes = signal<Quiz[]>([]);
-  private readonly _questions = signal<QuizQuestion[]>([]);
-  private readonly _isLoading = signal(false);
-  readonly quizzes = this._quizzes.asReadonly();
-  readonly questions = this._questions.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
-  async loadQuizzes(clubId: string): Promise<void> {
-    this._isLoading.set(true);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
-      );
-      this._quizzes.set(raw.map(mapQuiz));
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async createQuiz(data: {
-    clubId: string;
-    title: string;
-    description: string;
-  }): Promise<Quiz> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
-          title: data.title,
-          description: data.description || null,
-        }),
-      );
-      const quiz = mapQuiz(raw);
-      this._quizzes.update(prev => [quiz, ...prev]);
-      return quiz;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async addQuestion(
-    quizId: string,
-    q: Omit<QuizQuestion, 'id' | 'quizId'>,
-  ): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
-          question: q.question,
-          options: q.options,
-          correct_index: q.correctIndex,
-        }),
-      );
-      this._questions.update(prev => [...prev, mapQuestion(raw)]);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async loadQuestions(quizId: string): Promise<void> {
-    this._isLoading.set(true);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
-      );
-      this._questions.set(raw.map(mapQuestion));
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
-      );
-      return mapAttempt(raw);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { is_active: isActive }),
-      );
-      this._quizzes.update(prev =>
-        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
 }
 ````
 
@@ -8643,6 +8298,312 @@ export class LoginComponent {
 }
 ````
 
+## File: vercel.json
+````json
+{
+
+  "buildCommand": "npm run build -- --configuration=production",
+  "outputDirectory": "dist/book-club-fe/browser",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none';" }
+      ]
+    }
+  ]
+}
+````
+
+## File: src/app/core/services/quiz.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
+interface ApiQuiz {
+  id: string;
+  club_id: string;
+  created_by: string;
+  title: string;
+  description: string | null;
+  is_active: boolean;
+}
+interface ApiQuizQuestion {
+  id: string;
+  quiz_id: string;
+  question: string;
+  options: string[];
+  correct_index: number;
+}
+interface ApiAttemptResponse {
+  id: string;
+  quiz_id: string;
+  user_id: string;
+  score: number;
+  total: number;
+  answers: number[];
+}
+function mapQuiz(raw: ApiQuiz): Quiz {
+  return {
+    id: raw.id,
+    clubId: raw.club_id,
+    createdBy: raw.created_by,
+    title: raw.title,
+    description: raw.description,
+    isActive: raw.is_active,
+  };
+}
+function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
+  return {
+    id: raw.id,
+    quizId: raw.quiz_id,
+    question: raw.question,
+    options: raw.options,
+    correctIndex: raw.correct_index,
+  };
+}
+function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
+  return {
+    id: raw.id,
+    quizId: raw.quiz_id,
+    userId: raw.user_id,
+    score: raw.score,
+    total: raw.total,
+    answers: raw.answers,
+  };
+}
+@Injectable({ providedIn: 'root' })
+export class QuizService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _quizzes = signal<Quiz[]>([]);
+  private readonly _questions = signal<QuizQuestion[]>([]);
+  private readonly _isLoading = signal(false);
+  readonly quizzes = this._quizzes.asReadonly();
+  readonly questions = this._questions.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
+  async loadQuizzes(clubId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
+      );
+      this._quizzes.set(raw.map(mapQuiz));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async createQuiz(data: {
+    clubId: string;
+    title: string;
+    description: string;
+  }): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
+          title: data.title,
+          description: data.description || null,
+        }),
+      );
+      const quiz = mapQuiz(raw);
+      this._quizzes.update(prev => [quiz, ...prev]);
+      return quiz;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async addQuestion(
+    quizId: string,
+    q: Omit<QuizQuestion, 'id' | 'quizId'>,
+  ): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
+          question: q.question,
+          options: q.options,
+          correct_index: q.correctIndex,
+        }),
+      );
+      this._questions.update(prev => [...prev, mapQuestion(raw)]);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async loadQuestions(quizId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
+      );
+      this._questions.set(raw.map(mapQuestion));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
+      );
+      return mapAttempt(raw);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { is_active: isActive }),
+      );
+      this._quizzes.update(prev =>
+        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+}
+````
+
+## File: src/app/features/auth/register/register.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../core/auth/auth.service';
+import { UserRole } from '../../../core/models/user.model';
+import { FormFieldComponent } from '../../../shared/components/form-field/form-field.component';
+import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
+import { SeoService } from '../../../core/services/seo.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
+  const password = group.get('password')?.value as string;
+  const confirmPassword = group.get('confirmPassword')?.value as string;
+  return password === confirmPassword ? null : { passwordMismatch: true };
+};
+interface RegisterForm {
+  displayName: FormControl<string>;
+  email: FormControl<string>;
+  password: FormControl<string>;
+  confirmPassword: FormControl<string>;
+  role: FormControl<UserRole>;
+}
+@Component({
+  selector: 'app-register',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, FormFieldComponent, TranslateModule, BookIntroComponent, LoadingSpinnerComponent],
+  templateUrl: './register.component.html',
+})
+export class RegisterComponent {
+  private readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  readonly errorMessage = signal<string | null>(null);
+  readonly isSubmitting = signal(false);
+  readonly successMessage = signal(false);
+  readonly registeredEmail = signal('');
+  readonly selectedRole = signal<UserRole>('user');
+  readonly bookOpen = signal(false);
+  readonly formVisible = signal(false);
+  constructor() {
+    this.seo.setPageI18n('SEO.register_title');
+    setTimeout(() => this.formVisible.set(true), 700);
+  }
+  onBookAnimationDone(): void {
+  }
+  readonly form = new FormGroup<RegisterForm>(
+    {
+      displayName: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(2)],
+      }),
+      email: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.email],
+      }),
+      password: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(8)],
+      }),
+      confirmPassword: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+      role: new FormControl<UserRole>('user', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+    },
+    { validators: passwordMatchValidator },
+  );
+  private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
+    initialValue: '',
+  });
+  protected readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
+    const pw = this._passwordValue();
+    if (!pw || pw.length === 0) return null;
+    if (pw.length < 8) return 'weak';
+    const hasUpper = /[A-Z]/.test(pw);
+    const hasNumber = /\d/.test(pw);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
+    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
+    if (score >= 2) return 'strong';
+    if (score === 1) return 'medium';
+    return 'weak';
+  });
+  setRole(role: UserRole): void {
+    this.selectedRole.set(role);
+    this.form.controls.role.setValue(role);
+    this.form.controls.role.markAsTouched();
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+    const { displayName, email, password, role } = this.form.getRawValue();
+    const { error } = await this.auth.signUp(email, password, displayName, role);
+    this.isSubmitting.set(false);
+    if (error) {
+      this.errorMessage.set(error);
+    } else {
+      this.registeredEmail.set(email);
+      this.successMessage.set(true);
+      this.bookOpen.set(true);
+    }
+  }
+}
+````
+
 ## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
 ````typescript
 import {
@@ -8701,29 +8662,70 @@ export class ClubsListComponent implements OnInit {
 }
 ````
 
-## File: vercel.json
+## File: package.json
 ````json
 {
-
-  "buildCommand": "npm run build -- --configuration=production",
-  "outputDirectory": "dist/book-club-fe/browser",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none';" }
-      ]
-    }
-  ]
+  "name": "book-club-fe",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
+    "extract-i18n": "node scripts/extract-i18n.mjs",
+    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
+    "lint": "ng lint",
+    "build-ctx": "npx repomix --no-files",
+    "prepare": "husky install"
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/common": "^20.1.0",
+    "@angular/compiler": "^20.1.0",
+    "@angular/core": "^20.1.0",
+    "@angular/forms": "^20.1.0",
+    "@angular/platform-browser": "^20.1.0",
+    "@angular/router": "^20.1.0",
+    "@ngx-translate/core": "^17.0.0",
+    "@ngx-translate/http-loader": "^17.0.0",
+    "qrcode": "^1.5.4",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^20.1.5",
+    "@angular/cli": "^20.1.5",
+    "@angular/compiler-cli": "^20.1.0",
+    "@types/jasmine": "~5.1.0",
+    "@types/qrcode": "^1.5.6",
+    "angular-eslint": "21.0.1",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^9.39.1",
+    "eslint-plugin-rxjs-x": "^0.9.5",
+    "husky": "^8.0.0",
+    "jasmine-core": "~5.8.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "postcss": "^8.5.9",
+    "tailwindcss": "^3.4.19",
+    "typescript": "~5.8.2",
+    "typescript-eslint": "8.46.4"
+  }
 }
 ````
 
@@ -8859,383 +8861,6 @@ export class AuthService {
       }),
     );
     this._currentUser.set({ ...user, socialsPublic: value });
-  }
-}
-````
-
-## File: src/app/features/auth/register/register.component.ts
-````typescript
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators,
-} from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../../core/auth/auth.service';
-import { UserRole } from '../../../core/models/user.model';
-import { FormFieldComponent } from '../../../shared/components/form-field/form-field.component';
-import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
-import { SeoService } from '../../../core/services/seo.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
-  const password = group.get('password')?.value as string;
-  const confirmPassword = group.get('confirmPassword')?.value as string;
-  return password === confirmPassword ? null : { passwordMismatch: true };
-};
-interface RegisterForm {
-  displayName: FormControl<string>;
-  email: FormControl<string>;
-  password: FormControl<string>;
-  confirmPassword: FormControl<string>;
-  role: FormControl<UserRole>;
-}
-@Component({
-  selector: 'app-register',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, FormFieldComponent, TranslateModule, BookIntroComponent, LoadingSpinnerComponent],
-  templateUrl: './register.component.html',
-})
-export class RegisterComponent {
-  private readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isSubmitting = signal(false);
-  readonly successMessage = signal(false);
-  readonly registeredEmail = signal('');
-  readonly selectedRole = signal<UserRole>('user');
-  readonly bookOpen = signal(false);
-  readonly formVisible = signal(false);
-  constructor() {
-    this.seo.setPageI18n('SEO.register_title');
-    setTimeout(() => this.formVisible.set(true), 700);
-  }
-  onBookAnimationDone(): void {
-  }
-  readonly form = new FormGroup<RegisterForm>(
-    {
-      displayName: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.minLength(2)],
-      }),
-      email: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.email],
-      }),
-      password: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.minLength(8)],
-      }),
-      confirmPassword: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-      role: new FormControl<UserRole>('user', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-    },
-    { validators: passwordMatchValidator },
-  );
-  private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
-    initialValue: '',
-  });
-  protected readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
-    const pw = this._passwordValue();
-    if (!pw || pw.length === 0) return null;
-    if (pw.length < 8) return 'weak';
-    const hasUpper = /[A-Z]/.test(pw);
-    const hasNumber = /\d/.test(pw);
-    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
-    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
-    if (score >= 2) return 'strong';
-    if (score === 1) return 'medium';
-    return 'weak';
-  });
-  setRole(role: UserRole): void {
-    this.selectedRole.set(role);
-    this.form.controls.role.setValue(role);
-    this.form.controls.role.markAsTouched();
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.isSubmitting.set(true);
-    this.errorMessage.set(null);
-    const { displayName, email, password, role } = this.form.getRawValue();
-    const { error } = await this.auth.signUp(email, password, displayName, role);
-    this.isSubmitting.set(false);
-    if (error) {
-      this.errorMessage.set(error);
-    } else {
-      this.registeredEmail.set(email);
-      this.successMessage.set(true);
-      this.bookOpen.set(true);
-    }
-  }
-}
-````
-
-## File: src/app/features/clubs/club-detail/club-detail.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  effect,
-  input,
-} from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
-import { UserProfile } from '../../../core/models/user.model';
-import { SeoService } from '../../../core/services/seo.service';
-import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
-import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-import { ClubMembersListComponent } from './members/club-members-list.component';
-import { ClubScheduleComponent } from './schedule/club-schedule.component';
-import { ClubHeaderComponent } from './header/club-header.component';
-import { ClubInfoComponent } from './info/club-info.component';
-import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
-@Component({
-  selector: 'app-club-detail',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    RouterLink,
-    TranslateModule,
-    InitialsPipe,
-    FormatDatePipe,
-    ClubMembersListComponent,
-    ClubScheduleComponent,
-    ClubHeaderComponent,
-    ClubInfoComponent,
-    ClubManagePanelComponent,
-  ],
-  templateUrl: './club-detail.component.html',
-})
-export class ClubDetailComponent {
-  readonly id = input.required<string>();
-  private readonly clubService = inject(ClubService);
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly seo = inject(SeoService);
-  private readonly translate = inject(TranslateService);
-  private readonly _lang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: this.translate.currentLang ?? 'uk' },
-  );
-  readonly currentUser = this.auth.currentUser;
-  readonly club = signal<Club | null>(null);
-  readonly members = signal<ClubMemberDetail[]>([]);
-  readonly clubBans = signal<BanRecord[]>([]);
-  readonly isLoading = signal(true);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isActionLoading = signal(false);
-  readonly actionError = signal<string | null>(null);
-  readonly isMember = computed(() => this.clubService.myClubIds().has(this.id()));
-  readonly isClubOwner = computed(
-    () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
-  );
-  readonly currentUserId = computed(() => this.auth.currentUser()?.id ?? null);
-  readonly organizerProfile = computed<UserProfile | null>(() => {
-    const organizerId = this.club()?.organizerId;
-    if (!organizerId) return null;
-    const organizer = this.members().find(m => m.role === 'organizer');
-    if (!organizer) return null;
-    return {
-      id: organizerId,
-      displayName: organizer.displayName,
-      avatarUrl: organizer.avatarUrl,
-      role: 'user',
-      createdAt: '',
-      socials: organizer.socials,
-      socialsPublic: organizer.socialsPublic,
-    } satisfies UserProfile;
-  });
-  readonly deleteCountdown = computed<string | null>(() => {
-    this._lang();
-    const c = this.club();
-    if (!c) return null;
-    const ms = this.clubService.msUntilDeletion(c);
-    if (ms === null) return null;
-    const hours = Math.floor(ms / (1000 * 60 * 60));
-    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-    if (hours > 0)
-      return this.translate.instant('CLUB_DETAIL.deletion_countdown_hours', { hours, minutes });
-    return this.translate.instant('CLUB_DETAIL.deletion_countdown_minutes', { minutes });
-  });
-  constructor() {
-    effect((onCleanup) => {
-      const clubId = this.id();
-      let cancelled = false;
-      onCleanup(() => { cancelled = true; });
-      void this.loadClub(clubId, () => cancelled);
-    });
-  }
-  private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-    try {
-      if (this.auth.isAuthenticated() && this.clubService.myClubs().length === 0) {
-        await this.clubService.loadMyClubs();
-      }
-      if (isCancelled()) return;
-      const found = await this.clubService.getClubById(clubId);
-      if (isCancelled()) return;
-      if (found) {
-        this.club.set(found);
-        this.members.set(await this.clubService.getClubMembers(clubId));
-        if (isCancelled()) return;
-        this.clubBans.set(await this.clubService.getBans(clubId));
-        this.seo.setPageI18n('SEO.club_detail_title', {
-          ogTitleKey: 'SEO.club_detail_og_title',
-          params: { name: found.name },
-        });
-      } else {
-        this.errorMessage.set('This club could not be found.');
-      }
-    } catch {
-      if (!isCancelled()) this.errorMessage.set('Failed to load club details.');
-    } finally {
-      if (!isCancelled()) this.isLoading.set(false);
-    }
-  }
-  async onJoin(): Promise<void> {
-    this.isActionLoading.set(true);
-    this.actionError.set(null);
-    try {
-      await this.clubService.joinClub(this.id());
-      const updated = await this.clubService.getClubById(this.id());
-      if (updated) this.club.set(updated);
-    } catch (err) {
-      this.actionError.set(err instanceof Error ? err.message : 'Failed to join club');
-    } finally {
-      this.isActionLoading.set(false);
-    }
-  }
-  async onLeave(): Promise<void> {
-    this.isActionLoading.set(true);
-    this.actionError.set(null);
-    try {
-      await this.clubService.leaveClub(this.id());
-      const updated = await this.clubService.getClubById(this.id());
-      if (updated) this.club.set(updated);
-    } catch (err) {
-      this.actionError.set(err instanceof Error ? err.message : 'Failed to leave club');
-    } finally {
-      this.isActionLoading.set(false);
-    }
-  }
-  async handleKick(userId: string): Promise<void> {
-    await this.clubService.kickMember(this.id(), userId);
-    this.members.update(list => list.filter(m => m.userId !== userId));
-  }
-  async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
-    await this.clubService.banMember(this.id(), event.userId, event.duration);
-    this.members.update(list => list.filter(m => m.userId !== event.userId));
-  }
-  async pauseClub(): Promise<void> {
-    await this.clubService.pauseClub(this.id());
-    await this.refreshClub();
-  }
-  async cancelClub(): Promise<void> {
-    await this.clubService.cancelClub(this.id());
-    await this.refreshClub();
-  }
-  async rescheduleSubmit(date: string): Promise<void> {
-    if (!date) return;
-    await this.clubService.rescheduleMeeting(this.id(), date);
-    await this.refreshClub();
-  }
-  private async refreshClub(): Promise<void> {
-    const updated = await this.clubService.getClubById(this.id());
-    if (updated) this.club.set(updated);
-  }
-}
-````
-
-## File: package.json
-````json
-{
-  "name": "book-club-fe",
-  "version": "0.0.0",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
-    "extract-i18n": "node scripts/extract-i18n.mjs",
-    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
-    "lint": "ng lint",
-    "build-ctx": "npx repomix --no-files",
-    "prepare": "husky install"
-  },
-  "prettier": {
-    "overrides": [
-      {
-        "files": "*.html",
-        "options": {
-          "parser": "angular"
-        }
-      }
-    ]
-  },
-  "private": true,
-  "dependencies": {
-    "@angular/common": "^20.1.0",
-    "@angular/compiler": "^20.1.0",
-    "@angular/core": "^20.1.0",
-    "@angular/forms": "^20.1.0",
-    "@angular/platform-browser": "^20.1.0",
-    "@angular/router": "^20.1.0",
-    "@ngx-translate/core": "^17.0.0",
-    "@ngx-translate/http-loader": "^17.0.0",
-    "qrcode": "^1.5.4",
-    "rxjs": "~7.8.0",
-    "tslib": "^2.3.0"
-  },
-  "devDependencies": {
-    "@angular/build": "^20.1.5",
-    "@angular/cli": "^20.1.5",
-    "@angular/compiler-cli": "^20.1.0",
-    "@types/jasmine": "~5.1.0",
-    "@types/qrcode": "^1.5.6",
-    "angular-eslint": "21.0.1",
-    "autoprefixer": "^10.4.27",
-    "eslint": "^9.39.1",
-    "eslint-plugin-rxjs-x": "^0.9.5",
-    "husky": "^8.0.0",
-    "jasmine-core": "~5.8.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
-    "postcss": "^8.5.9",
-    "tailwindcss": "^3.4.19",
-    "typescript": "~5.8.2",
-    "typescript-eslint": "8.46.4"
   }
 }
 ````
@@ -9453,6 +9078,194 @@ export class ClubService {
   private _updateClub(updated: Club): void {
     this._clubs.update(list => list.map(c => (c.id === updated.id ? updated : c)));
     this._myClubs.update(list => list.map(c => (c.id === updated.id ? updated : c)));
+  }
+}
+````
+
+## File: src/app/features/clubs/club-detail/club-detail.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  effect,
+  input,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
+import { UserProfile } from '../../../core/models/user.model';
+import { SeoService } from '../../../core/services/seo.service';
+import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { ClubMembersListComponent } from './members/club-members-list.component';
+import { ClubScheduleComponent } from './schedule/club-schedule.component';
+import { ClubHeaderComponent } from './header/club-header.component';
+import { ClubInfoComponent } from './info/club-info.component';
+import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
+@Component({
+  selector: 'app-club-detail',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    RouterLink,
+    TranslateModule,
+    InitialsPipe,
+    FormatDatePipe,
+    ClubMembersListComponent,
+    ClubScheduleComponent,
+    ClubHeaderComponent,
+    ClubInfoComponent,
+    ClubManagePanelComponent,
+  ],
+  templateUrl: './club-detail.component.html',
+})
+export class ClubDetailComponent {
+  readonly id = input.required<string>();
+  private readonly clubService = inject(ClubService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly seo = inject(SeoService);
+  private readonly translate = inject(TranslateService);
+  private readonly _lang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: this.translate.currentLang ?? 'uk' },
+  );
+  readonly currentUser = this.auth.currentUser;
+  readonly club = signal<Club | null>(null);
+  readonly members = signal<ClubMemberDetail[]>([]);
+  readonly clubBans = signal<BanRecord[]>([]);
+  readonly isLoading = signal(true);
+  readonly errorMessage = signal<string | null>(null);
+  readonly isActionLoading = signal(false);
+  readonly actionError = signal<string | null>(null);
+  readonly isMember = computed(() => this.clubService.myClubIds().has(this.id()));
+  readonly isClubOwner = computed(
+    () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
+  );
+  readonly currentUserId = computed(() => this.auth.currentUser()?.id ?? null);
+  readonly organizerProfile = computed<UserProfile | null>(() => {
+    const organizerId = this.club()?.organizerId;
+    if (!organizerId) return null;
+    const organizer = this.members().find(m => m.role === 'organizer');
+    if (!organizer) return null;
+    return {
+      id: organizerId,
+      displayName: organizer.displayName,
+      avatarUrl: organizer.avatarUrl,
+      role: 'user',
+      createdAt: '',
+      socials: organizer.socials,
+      socialsPublic: organizer.socialsPublic,
+    } satisfies UserProfile;
+  });
+  readonly deleteCountdown = computed<string | null>(() => {
+    this._lang();
+    const c = this.club();
+    if (!c) return null;
+    const ms = this.clubService.msUntilDeletion(c);
+    if (ms === null) return null;
+    const hours = Math.floor(ms / (1000 * 60 * 60));
+    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
+    if (hours > 0)
+      return this.translate.instant('CLUB_DETAIL.deletion_countdown_hours', { hours, minutes });
+    return this.translate.instant('CLUB_DETAIL.deletion_countdown_minutes', { minutes });
+  });
+  constructor() {
+    effect((onCleanup) => {
+      const clubId = this.id();
+      let cancelled = false;
+      onCleanup(() => { cancelled = true; });
+      void this.loadClub(clubId, () => cancelled);
+    });
+  }
+  private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    try {
+      if (this.auth.isAuthenticated() && this.clubService.myClubs().length === 0) {
+        await this.clubService.loadMyClubs();
+      }
+      if (isCancelled()) return;
+      const found = await this.clubService.getClubById(clubId);
+      if (isCancelled()) return;
+      if (found) {
+        this.club.set(found);
+        this.members.set(await this.clubService.getClubMembers(clubId));
+        if (isCancelled()) return;
+        this.clubBans.set(await this.clubService.getBans(clubId));
+        this.seo.setPageI18n('SEO.club_detail_title', {
+          ogTitleKey: 'SEO.club_detail_og_title',
+          params: { name: found.name },
+        });
+      } else {
+        this.errorMessage.set('This club could not be found.');
+      }
+    } catch {
+      if (!isCancelled()) this.errorMessage.set('Failed to load club details.');
+    } finally {
+      if (!isCancelled()) this.isLoading.set(false);
+    }
+  }
+  async onJoin(): Promise<void> {
+    this.isActionLoading.set(true);
+    this.actionError.set(null);
+    try {
+      await this.clubService.joinClub(this.id());
+      const updated = await this.clubService.getClubById(this.id());
+      if (updated) this.club.set(updated);
+    } catch (err) {
+      this.actionError.set(err instanceof Error ? err.message : 'Failed to join club');
+    } finally {
+      this.isActionLoading.set(false);
+    }
+  }
+  async onLeave(): Promise<void> {
+    this.isActionLoading.set(true);
+    this.actionError.set(null);
+    try {
+      await this.clubService.leaveClub(this.id());
+      const updated = await this.clubService.getClubById(this.id());
+      if (updated) this.club.set(updated);
+    } catch (err) {
+      this.actionError.set(err instanceof Error ? err.message : 'Failed to leave club');
+    } finally {
+      this.isActionLoading.set(false);
+    }
+  }
+  async handleKick(userId: string): Promise<void> {
+    await this.clubService.kickMember(this.id(), userId);
+    this.members.update(list => list.filter(m => m.userId !== userId));
+  }
+  async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
+    await this.clubService.banMember(this.id(), event.userId, event.duration);
+    this.members.update(list => list.filter(m => m.userId !== event.userId));
+  }
+  async pauseClub(): Promise<void> {
+    await this.clubService.pauseClub(this.id());
+    await this.refreshClub();
+  }
+  async cancelClub(): Promise<void> {
+    await this.clubService.cancelClub(this.id());
+    await this.refreshClub();
+  }
+  async rescheduleSubmit(date: string): Promise<void> {
+    if (!date) return;
+    await this.clubService.rescheduleMeeting(this.id(), date);
+    await this.refreshClub();
+  }
+  private async refreshClub(): Promise<void> {
+    const updated = await this.clubService.getClubById(this.id());
+    if (updated) this.club.set(updated);
   }
 }
 ````
