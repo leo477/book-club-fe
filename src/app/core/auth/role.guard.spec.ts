@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
-import { Router, UrlTree, provideRouter } from '@angular/router';
+import { UrlTree, provideRouter } from '@angular/router';
+import { Observable } from 'rxjs';
 import { roleGuard } from './role.guard';
 import { AuthService } from './auth.service';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
@@ -81,8 +82,7 @@ describe('roleGuard', () => {
     });
 
     it('resolves to true after loading when role matches', (done) => {
-      const result = runGuard('organizer') as { subscribe: Function };
-      result.subscribe((val: boolean | UrlTree) => {
+      (runGuard('organizer') as Observable<boolean | UrlTree>).subscribe((val) => {
         expect(val).toBeTrue();
         done();
       });
@@ -91,8 +91,7 @@ describe('roleGuard', () => {
 
     it('resolves to UrlTree after loading when role does not match', (done) => {
       roleSignal.set('user');
-      const result = runGuard('organizer') as { subscribe: Function };
-      result.subscribe((val: boolean | UrlTree) => {
+      (runGuard('organizer') as Observable<boolean | UrlTree>).subscribe((val) => {
         expect(val instanceof UrlTree).toBeTrue();
         done();
       });

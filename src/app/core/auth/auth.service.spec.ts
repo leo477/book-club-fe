@@ -1,4 +1,4 @@
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
@@ -294,7 +294,7 @@ describe('AuthService', () => {
     it('does nothing when user is not logged in', async () => {
       const { service } = buildService();
       // Manually clear user (simulate signed out state)
-      service['_currentUser'].set(null);
+      (service as unknown as { _currentUser: { set: (v: null) => void } })._currentUser.set(null);
       await service.updateRole('organizer');
       httpMock.expectNone(`${API}/users/me/role`);
     });

@@ -58,7 +58,7 @@ describe('SeoService', () => {
   it('setPage() does not set description tags when description is absent', () => {
     service.setPage({ title: 'My Page' });
     const calls = metaSpy.updateTag.calls.all().map(c => c.args[0]);
-    expect(calls.some(c => 'name' in c && c['name'] === 'description')).toBeFalse();
+    expect(calls.some(c => 'name' in c && (c as { name: string }).name === 'description')).toBeFalse();
   });
 
   it('setPage() sets canonical og:url and link element when canonical provided', () => {

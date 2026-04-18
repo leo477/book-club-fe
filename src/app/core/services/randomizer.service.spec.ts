@@ -119,7 +119,9 @@ describe('RandomizerService', () => {
       await spinPromise;
       expect(service.isSpinning()).toBeFalse();
       expect(service.result()).not.toBeNull();
-      expect(['u1', 'u2']).toContain(service.result()!.userId);
+      const result = service.result();
+      expect(result).not.toBeNull();
+      expect(['u1', 'u2']).toContain(result?.userId ?? '');
     });
 
     it('only picks from selected members', async () => {

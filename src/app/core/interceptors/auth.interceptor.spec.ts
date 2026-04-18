@@ -3,7 +3,6 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
-import { provideRouter } from '@angular/router';
 import { authInterceptor } from './auth.interceptor';
 import { ToastService } from '../services/toast.service';
 import { TokenStore } from '../auth/token.store';
@@ -59,7 +58,7 @@ describe('authInterceptor', () => {
 
   it('navigates to /login and clears token on 401', () => {
     setup('my-token');
-    http.get('/api/test').subscribe({ error: () => {} });
+    http.get('/api/test').subscribe({ error: jasmine.createSpy('errorHandler') });
     const req = httpMock.expectOne('/api/test');
     req.flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
     expect(tokenStoreSpy.clear).toHaveBeenCalled();
@@ -68,7 +67,7 @@ describe('authInterceptor', () => {
 
   it('navigates to /clubs on 403', () => {
     setup('my-token');
-    http.get('/api/test').subscribe({ error: () => {} });
+    http.get('/api/test').subscribe({ error: jasmine.createSpy('errorHandler') });
     const req = httpMock.expectOne('/api/test');
     req.flush({ detail: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/clubs']);
@@ -76,7 +75,7 @@ describe('authInterceptor', () => {
 
   it('shows toast on 500', () => {
     setup('my-token');
-    http.get('/api/test').subscribe({ error: () => {} });
+    http.get('/api/test').subscribe({ error: jasmine.createSpy('errorHandler') });
     const req = httpMock.expectOne('/api/test');
     req.flush({ detail: 'Server Error' }, { status: 500, statusText: 'Internal Server Error' });
     expect(toastSpy.show).toHaveBeenCalledWith(
@@ -88,7 +87,7 @@ describe('authInterceptor', () => {
   it('re-throws the error after handling', (done) => {
     setup('my-token');
     http.get('/api/test').subscribe({
-      error: (err) => {
+      error: (err: unknown) => {
         expect(err).toBeTruthy();
         done();
       },
@@ -99,7 +98,7 @@ describe('authInterceptor', () => {
 
   it('does not show toast on non-5xx errors', () => {
     setup('my-token');
-    http.get('/api/test').subscribe({ error: () => {} });
+    http.get('/api/test').subscribe({ error: jasmine.createSpy('errorHandler') });
     const req = httpMock.expectOne('/api/test');
     req.flush({}, { status: 400, statusText: 'Bad Request' });
     expect(toastSpy.show).not.toHaveBeenCalled();

@@ -3,6 +3,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { ClubService } from './club.service';
 import { AuthService } from '../auth/auth.service';
+import { Club } from '../models/club.model';
 import { environment } from '../../../environments/environment';
 
 const API = environment.apiUrl;
@@ -252,32 +253,39 @@ describe('ClubService – computed signals and additional methods', () => {
   });
 
   describe('msUntilDeletion', () => {
+    const base: Partial<Club> = {
+      id: 'c1', name: 'T', description: null, coverUrl: null, organizerId: 'u1',
+      isPublic: true, memberCount: 0, createdAt: '', city: '', nextMeetingDate: null,
+      address: null, lat: null, lng: null, theme: null, currentBook: null,
+      memberPreviews: [], tags: [], meetingDurationMinutes: null, afterMeetingVenue: null,
+    };
+
     it('returns null for active club', () => {
-      const club = { status: 'active', cancelledAt: undefined } as any;
-      expect(service.msUntilDeletion(club)).toBeNull();
+      const club = { ...base, status: 'active' as const };
+      expect(service.msUntilDeletion(club as Club)).toBeNull();
     });
 
     it('returns null when cancelled but no cancelledAt', () => {
-      const club = { status: 'cancelled', cancelledAt: undefined } as any;
-      expect(service.msUntilDeletion(club)).toBeNull();
+      const club = { ...base, status: 'cancelled' as const };
+      expect(service.msUntilDeletion(club as Club)).toBeNull();
     });
 
     it('returns positive ms when cancelled recently', () => {
       const club = {
-        status: 'cancelled',
+        ...base, status: 'cancelled' as const,
         cancelledAt: new Date(Date.now() - 1000).toISOString(),
-      } as any;
-      const ms = service.msUntilDeletion(club);
+      };
+      const ms = service.msUntilDeletion(club as Club);
       expect(ms).not.toBeNull();
-      expect(ms!).toBeGreaterThan(0);
+      if (ms !== null) expect(ms).toBeGreaterThan(0);
     });
 
     it('returns null when cancelledAt is too old (>24h)', () => {
       const club = {
-        status: 'cancelled',
+        ...base, status: 'cancelled' as const,
         cancelledAt: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
-      } as any;
-      expect(service.msUntilDeletion(club)).toBeNull();
+      };
+      expect(service.msUntilDeletion(club as Club)).toBeNull();
     });
   });
 

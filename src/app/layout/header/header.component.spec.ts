@@ -22,7 +22,7 @@ describe('HeaderComponent', () => {
       onLangChange: of({ lang: 'uk' }),
       currentLang: 'uk',
     });
-    translateSpy.use.and.returnValue(of('en') as any);
+    translateSpy.use.and.returnValue(of('en') as unknown as ReturnType<typeof translateSpy.use>);
     translateSpy.instant.and.callFake((key: string) => key);
 
     TestBed.configureTestingModule({

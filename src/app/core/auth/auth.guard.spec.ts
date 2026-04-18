@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
-import { Router, UrlTree, provideRouter } from '@angular/router';
+import { UrlTree, provideRouter } from '@angular/router';
+import { Observable } from 'rxjs';
 import { authGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
@@ -12,8 +13,6 @@ function runGuard() {
 }
 
 describe('authGuard', () => {
-  let router: Router;
-
   describe('when not loading', () => {
     beforeEach(() => {
       TestBed.configureTestingModule({
@@ -29,7 +28,6 @@ describe('authGuard', () => {
           },
         ],
       });
-      router = TestBed.inject(Router);
     });
 
     it('returns true when authenticated', () => {
@@ -52,7 +50,6 @@ describe('authGuard', () => {
           },
         ],
       });
-      router = TestBed.inject(Router);
     });
 
     it('returns UrlTree to /login when not authenticated', () => {
@@ -85,8 +82,7 @@ describe('authGuard', () => {
     });
 
     it('returns an observable that resolves to true after loading', (done) => {
-      const result = runGuard() as { subscribe: Function };
-      result.subscribe((val: boolean | UrlTree) => {
+      (runGuard() as Observable<boolean | UrlTree>).subscribe((val) => {
         expect(val).toBeTrue();
         done();
       });
@@ -95,8 +91,7 @@ describe('authGuard', () => {
 
     it('returns UrlTree after loading when not authenticated', (done) => {
       authSignal.set(false);
-      const result = runGuard() as { subscribe: Function };
-      result.subscribe((val: boolean | UrlTree) => {
+      (runGuard() as Observable<boolean | UrlTree>).subscribe((val) => {
         expect(val instanceof UrlTree).toBeTrue();
         done();
       });

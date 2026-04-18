@@ -284,7 +284,8 @@ vercel.json
       "Bash(git -C /home/test/Documents/angular/book-club-fe checkout chore/remove-qodana)",
       "Bash(npm test *)",
       "Bash(git pull *)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(grep -v \"^$\")"
     ]
   },
   "enableAllProjectMcpServers": true,

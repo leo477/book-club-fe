@@ -45,20 +45,20 @@ describe('ClubCardComponent', () => {
   describe('daysUntil', () => {
     it('returns positive days for a future date', () => {
       const future = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
-      const days = (component as any).daysUntil(future);
+      const days = (component as unknown as { daysUntil: (d: string) => number }).daysUntil(future);
       expect(days).toBeGreaterThan(0);
       expect(days).toBeLessThanOrEqual(6);
     });
 
     it('returns 1 for tomorrow', () => {
       const tomorrow = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-      const days = (component as any).daysUntil(tomorrow);
+      const days = (component as unknown as { daysUntil: (d: string) => number }).daysUntil(tomorrow);
       expect(days).toBe(1);
     });
 
     it('returns negative days for a past date', () => {
       const past = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
-      const days = (component as any).daysUntil(past);
+      const days = (component as unknown as { daysUntil: (d: string) => number }).daysUntil(past);
       expect(days).toBeLessThan(0);
     });
   });
