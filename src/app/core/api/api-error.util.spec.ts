@@ -31,4 +31,38 @@ describe('extractApiError', () => {
     });
     expect(extractApiError(err)).toBe('Custom detail');
   });
+
+  it('returns first msg when detail is a validation error array', () => {
+    const err = new HttpErrorResponse({
+      error: { detail: [{ msg: 'field required' }, { msg: 'invalid value' }] },
+      status: 422,
+    });
+    expect(extractApiError(err)).toBe('field required');
+  });
+
+  it('returns message when detail is an array with no msg', () => {
+    const err = new HttpErrorResponse({
+      error: { detail: [{}] },
+      status: 422,
+      statusText: 'Unprocessable Entity',
+    });
+    expect(extractApiError(err)).toContain('422');
+  });
+
+  it('returns error field when detail is an object with error property', () => {
+    const err = new HttpErrorResponse({
+      error: { detail: { error: 'account_disabled', code: 'AUTH_003' } },
+      status: 403,
+    });
+    expect(extractApiError(err)).toBe('account_disabled');
+  });
+
+  it('returns message when detail is an object without error property', () => {
+    const err = new HttpErrorResponse({
+      error: { detail: { code: 'UNKNOWN' } },
+      status: 403,
+      statusText: 'Forbidden',
+    });
+    expect(extractApiError(err)).toContain('403');
+  });
 });
