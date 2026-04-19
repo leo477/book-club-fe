@@ -684,20 +684,32 @@ for (const outputPath of OUTPUT_FILES) {
 ````typescript
 import { Injectable, signal } from '@angular/core';
 const TOKEN_KEY = 'bc_access_token';
+const REFRESH_TOKEN_KEY = 'bc_refresh_token';
 @Injectable({ providedIn: 'root' })
 export class TokenStore {
   private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
+  private readonly _refreshToken = signal<string | null>(localStorage.getItem(REFRESH_TOKEN_KEY));
   readonly token = this._token.asReadonly();
+  readonly refreshToken = this._refreshToken.asReadonly();
   set(token: string): void {
     localStorage.setItem(TOKEN_KEY, token);
     this._token.set(token);
   }
+  setRefresh(token: string): void {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+    this._refreshToken.set(token);
+  }
   clear(): void {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
     this._token.set(null);
+    this._refreshToken.set(null);
   }
   snapshot(): string | null {
     return this._token();
+  }
+  snapshotRefresh(): string | null {
+    return this._refreshToken();
   }
 }
 ````
@@ -2612,7 +2624,9 @@ jobs:
 import { HttpErrorResponse } from '@angular/common/http';
 export function extractApiError(err: unknown): string {
   if (err instanceof HttpErrorResponse) {
-    const detail = (err.error as { detail?: unknown })?.detail;
+    const body = err.error as { error?: unknown; detail?: unknown } | null;
+    if (typeof body?.error === 'string') return body.error;
+    const detail = body?.detail;
     if (typeof detail === 'string') return detail;
     if (Array.isArray(detail)) return (detail[0] as { msg?: string })?.msg ?? err.message ?? 'Unknown error';
     if (detail && typeof detail === 'object') return (detail as { error?: string }).error ?? err.message ?? 'Unknown error';
@@ -3547,11 +3561,10 @@ export interface ClubMeeting {
             </div>
             @if (successMessage()) {
               <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 text-center border border-amber-100">
-                <div class="text-5xl mb-4">📬</div>
-                <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ 'AUTH.check_email' | translate }}</h2>
+                <div class="text-5xl mb-4">🎉</div>
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ 'AUTH.account_created' | translate }}</h2>
                 <p class="text-gray-600 text-sm">
-                  {{ 'AUTH.confirmation_sent' | translate }} <strong>{{ registeredEmail() }}</strong>.
-                  {{ 'AUTH.activate_account' | translate }}
+                  {{ 'AUTH.welcome_message' | translate }} <strong>{{ registeredEmail() }}</strong>.
                 </p>
                 <a routerLink="/login"
                    class="mt-6 inline-block text-sm text-amber-700 hover:text-amber-800 font-medium">
@@ -3623,6 +3636,7 @@ export interface ClubMeeting {
                         <button
                           type="button"
                           (click)="setRole('user')"
+                          [attr.aria-pressed]="selectedRole() === 'user'"
                           [class.ring-2]="selectedRole() === 'user'"
                           [class.ring-amber-500]="selectedRole() === 'user'"
                           [class.bg-amber-50]="selectedRole() === 'user'"
@@ -3636,6 +3650,7 @@ export interface ClubMeeting {
                         <button
                           type="button"
                           (click)="setRole('organizer')"
+                          [attr.aria-pressed]="selectedRole() === 'organizer'"
                           [class.ring-2]="selectedRole() === 'organizer'"
                           [class.ring-amber-500]="selectedRole() === 'organizer'"
                           [class.bg-amber-50]="selectedRole() === 'organizer'"
@@ -4687,7 +4702,7 @@ export const environment = {
 ````typescript
 export const environment = {
   production: false,
-  apiUrl: 'https://book-club-be.onrender.com/api/v1',
+  apiUrl: 'http://localhost:8000/api/v1',
 };
 ````
 
@@ -5960,7 +5975,9 @@ sonar.sourceEncoding=UTF-8
     "welcome_back": "Welcome back",
     "login_title": "Log In",
     "submit_register": "Register",
-    "password_strength": "Password strength"
+    "password_strength": "Password strength",
+    "account_created": "Account created successfully!",
+    "welcome_message": "Welcome,"
   },
   "CREATE_CLUB": {
     "subtitle": "Create a new reading community",
@@ -6228,7 +6245,9 @@ sonar.sourceEncoding=UTF-8
     "welcome_back": "Ласкаво просимо назад",
     "login_title": "Вхід",
     "submit_register": "Зареєструватися",
-    "password_strength": "Надійність паролю"
+    "password_strength": "Надійність паролю",
+    "account_created": "Акаунт успішно створено!",
+    "welcome_message": "Ласкаво просимо,"
   },
   "CREATE_CLUB": {
     "subtitle": "Створіть нову спільноту читачів",
@@ -8772,6 +8791,7 @@ import { TokenStore } from './token.store';
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
 interface AuthResponse {
   accessToken: string;
+  refreshToken: string;
   user: ApiUserProfile;
 }
 @Injectable({ providedIn: 'root' })
@@ -8832,6 +8852,7 @@ export class AuthService {
         }),
       );
       this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -8844,6 +8865,7 @@ export class AuthService {
         this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
       );
       this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {

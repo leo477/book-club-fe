@@ -30,7 +30,9 @@
     "welcome_back": "Welcome back",
     "login_title": "Log In",
     "submit_register": "Register",
-    "password_strength": "Password strength"
+    "password_strength": "Password strength",
+    "account_created": "Account created successfully!",
+    "welcome_message": "Welcome,"
   },
   "CREATE_CLUB": {
     "subtitle": "Create a new reading community",

@@ -36,7 +36,7 @@ describe('AuthService', () => {
   describe('constructor — no token', () => {
     beforeEach(() => {
       routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'clear'], {
+      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
         token: jasmine.createSpy().and.returnValue(null),
       });
       tokenStoreSpy.snapshot.and.returnValue(null);
@@ -75,7 +75,7 @@ describe('AuthService', () => {
   describe('constructor — with valid token', () => {
     beforeEach(() => {
       routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'clear'], {
+      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
         token: jasmine.createSpy().and.returnValue('valid-token'),
       });
       tokenStoreSpy.snapshot.and.returnValue('valid-token');
@@ -125,7 +125,7 @@ describe('AuthService', () => {
   describe('signIn', () => {
     beforeEach(() => {
       routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'clear'], {
+      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
         token: jasmine.createSpy().and.returnValue(null),
       });
       tokenStoreSpy.snapshot.and.returnValue(null);
@@ -147,18 +147,30 @@ describe('AuthService', () => {
       const { service } = buildService();
       const p = service.signIn('test@test.com', 'password');
       const req = httpMock.expectOne(`${API}/auth/login`);
-      req.flush({ accessToken: 'new-token', user: rawProfile });
+      req.flush({ accessToken: 'new-token', refreshToken: 'refresh-token', user: rawProfile });
       const result = await p;
       expect(result.error).toBeNull();
       expect(tokenStoreSpy.set).toHaveBeenCalledWith('new-token');
+      expect(tokenStoreSpy.setRefresh).toHaveBeenCalledWith('refresh-token');
       expect(service.currentUser()?.id).toBe('u1');
     });
 
-    it('returns error on failure', async () => {
+    it('returns error on failure with detail format', async () => {
       const { service } = buildService();
       const p = service.signIn('bad@test.com', 'wrong');
       httpMock.expectOne(`${API}/auth/login`).flush(
         { detail: 'Invalid credentials' },
+        { status: 401, statusText: 'Unauthorized' },
+      );
+      const result = await p;
+      expect(result.error).toBe('Invalid credentials');
+    });
+
+    it('returns error on failure with Book Club error format', async () => {
+      const { service } = buildService();
+      const p = service.signIn('bad@test.com', 'wrong');
+      httpMock.expectOne(`${API}/auth/login`).flush(
+        { error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' },
         { status: 401, statusText: 'Unauthorized' },
       );
       const result = await p;
@@ -169,7 +181,7 @@ describe('AuthService', () => {
   describe('signUp', () => {
     beforeEach(() => {
       routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'clear'], {
+      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
         token: jasmine.createSpy().and.returnValue(null),
       });
       tokenStoreSpy.snapshot.and.returnValue(null);
@@ -197,10 +209,11 @@ describe('AuthService', () => {
         displayName: 'Test User',
         role: 'user',
       });
-      req.flush({ accessToken: 'new-token', user: rawProfile });
+      req.flush({ accessToken: 'new-token', refreshToken: 'refresh-token', user: rawProfile });
       const result = await p;
       expect(result.error).toBeNull();
       expect(tokenStoreSpy.set).toHaveBeenCalledWith('new-token');
+      expect(tokenStoreSpy.setRefresh).toHaveBeenCalledWith('refresh-token');
     });
 
     it('returns error on failure', async () => {
@@ -218,7 +231,7 @@ describe('AuthService', () => {
   describe('signOut', () => {
     beforeEach(() => {
       routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'clear'], {
+      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
         token: jasmine.createSpy().and.returnValue(null),
       });
       tokenStoreSpy.snapshot.and.returnValue(null);
@@ -259,7 +272,7 @@ describe('AuthService', () => {
   describe('updateRole', () => {
     beforeEach(async () => {
       routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'clear'], {
+      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
         token: jasmine.createSpy().and.returnValue(null),
       });
       tokenStoreSpy.snapshot.and.returnValue(null);
@@ -279,7 +292,7 @@ describe('AuthService', () => {
       // Sign in first to set currentUser
       const { service } = buildService();
       const p = service.signIn('test@test.com', 'password');
-      httpMock.expectOne(`${API}/auth/login`).flush({ accessToken: 'token', user: rawProfile });
+      httpMock.expectOne(`${API}/auth/login`).flush({ accessToken: 'token', refreshToken: 'refresh', user: rawProfile });
       await p;
     });
 
@@ -303,7 +316,7 @@ describe('AuthService', () => {
   describe('updateDisplayName', () => {
     beforeEach(async () => {
       routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'clear'], {
+      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
         token: jasmine.createSpy().and.returnValue(null),
       });
       tokenStoreSpy.snapshot.and.returnValue(null);
@@ -324,7 +337,7 @@ describe('AuthService', () => {
     it('updates displayName in currentUser', async () => {
       const { service } = buildService();
       const loginP = service.signIn('test@test.com', 'password');
-      httpMock.expectOne(`${API}/auth/login`).flush({ accessToken: 'token', user: rawProfile });
+      httpMock.expectOne(`${API}/auth/login`).flush({ accessToken: 'token', refreshToken: 'refresh', user: rawProfile });
       await loginP;
 
       const p = service.updateDisplayName('New Name');
@@ -343,7 +356,7 @@ describe('AuthService', () => {
   describe('updateSocials', () => {
     beforeEach(() => {
       routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'clear'], {
+      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
         token: jasmine.createSpy().and.returnValue(null),
       });
       tokenStoreSpy.snapshot.and.returnValue(null);
@@ -364,7 +377,7 @@ describe('AuthService', () => {
     it('updates socials in currentUser', async () => {
       const { service } = buildService();
       const loginP = service.signIn('test@test.com', 'password');
-      httpMock.expectOne(`${API}/auth/login`).flush({ accessToken: 'token', user: rawProfile });
+      httpMock.expectOne(`${API}/auth/login`).flush({ accessToken: 'token', refreshToken: 'refresh', user: rawProfile });
       await loginP;
 
       const p = service.updateSocials({ github: 'myuser' });
@@ -383,7 +396,7 @@ describe('AuthService', () => {
   describe('setSocialsPublic', () => {
     beforeEach(() => {
       routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'clear'], {
+      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
         token: jasmine.createSpy().and.returnValue(null),
       });
       tokenStoreSpy.snapshot.and.returnValue(null);
@@ -404,7 +417,7 @@ describe('AuthService', () => {
     it('updates socialsPublic in currentUser', async () => {
       const { service } = buildService();
       const loginP = service.signIn('test@test.com', 'password');
-      httpMock.expectOne(`${API}/auth/login`).flush({ accessToken: 'token', user: rawProfile });
+      httpMock.expectOne(`${API}/auth/login`).flush({ accessToken: 'token', refreshToken: 'refresh', user: rawProfile });
       await loginP;
 
       const p = service.setSocialsPublic(true);

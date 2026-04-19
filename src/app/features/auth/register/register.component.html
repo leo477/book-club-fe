@@ -16,11 +16,10 @@
             @if (successMessage()) {
               <!-- Success state -->
               <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 text-center border border-amber-100">
-                <div class="text-5xl mb-4">📬</div>
-                <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ 'AUTH.check_email' | translate }}</h2>
+                <div class="text-5xl mb-4">🎉</div>
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ 'AUTH.account_created' | translate }}</h2>
                 <p class="text-gray-600 text-sm">
-                  {{ 'AUTH.confirmation_sent' | translate }} <strong>{{ registeredEmail() }}</strong>.
-                  {{ 'AUTH.activate_account' | translate }}
+                  {{ 'AUTH.welcome_message' | translate }} <strong>{{ registeredEmail() }}</strong>.
                 </p>
                 <a routerLink="/login"
                    class="mt-6 inline-block text-sm text-amber-700 hover:text-amber-800 font-medium">
@@ -107,6 +106,7 @@
                         <button
                           type="button"
                           (click)="setRole('user')"
+                          [attr.aria-pressed]="selectedRole() === 'user'"
                           [class.ring-2]="selectedRole() === 'user'"
                           [class.ring-amber-500]="selectedRole() === 'user'"
                           [class.bg-amber-50]="selectedRole() === 'user'"
@@ -121,6 +121,7 @@
                         <button
                           type="button"
                           (click)="setRole('organizer')"
+                          [attr.aria-pressed]="selectedRole() === 'organizer'"
                           [class.ring-2]="selectedRole() === 'organizer'"
                           [class.ring-amber-500]="selectedRole() === 'organizer'"
                           [class.bg-amber-50]="selectedRole() === 'organizer'"
