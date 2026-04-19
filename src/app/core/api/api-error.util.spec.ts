@@ -65,4 +65,22 @@ describe('extractApiError', () => {
     });
     expect(extractApiError(err)).toContain('403');
   });
+
+  it('returns error string from Book Club {error, code} shape (409)', () => {
+    const err = new HttpErrorResponse({
+      error: { error: 'Email already exists', code: 'EMAIL_EXISTS' },
+      status: 409,
+      statusText: 'Conflict',
+    });
+    expect(extractApiError(err)).toBe('Email already exists');
+  });
+
+  it('returns error string from Book Club {error, code} shape (401)', () => {
+    const err = new HttpErrorResponse({
+      error: { error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' },
+      status: 401,
+      statusText: 'Unauthorized',
+    });
+    expect(extractApiError(err)).toBe('Invalid credentials');
+  });
 });

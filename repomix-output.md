@@ -680,28 +680,6 @@ for (const outputPath of OUTPUT_FILES) {
 }
 ````
 
-## File: src/app/core/auth/token.store.ts
-````typescript
-import { Injectable, signal } from '@angular/core';
-const TOKEN_KEY = 'bc_access_token';
-@Injectable({ providedIn: 'root' })
-export class TokenStore {
-  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
-  readonly token = this._token.asReadonly();
-  set(token: string): void {
-    localStorage.setItem(TOKEN_KEY, token);
-    this._token.set(token);
-  }
-  clear(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    this._token.set(null);
-  }
-  snapshot(): string | null {
-    return this._token();
-  }
-}
-````
-
 ## File: src/app/core/models/chat.model.ts
 ````typescript
 export interface ChatMessage {
@@ -2607,21 +2585,6 @@ jobs:
 </urlset>
 ````
 
-## File: src/app/core/api/api-error.util.ts
-````typescript
-import { HttpErrorResponse } from '@angular/common/http';
-export function extractApiError(err: unknown): string {
-  if (err instanceof HttpErrorResponse) {
-    const detail = (err.error as { detail?: unknown })?.detail;
-    if (typeof detail === 'string') return detail;
-    if (Array.isArray(detail)) return (detail[0] as { msg?: string })?.msg ?? err.message ?? 'Unknown error';
-    if (detail && typeof detail === 'object') return (detail as { error?: string }).error ?? err.message ?? 'Unknown error';
-    return err.message ?? 'Unknown error';
-  }
-  return 'Unknown error';
-}
-````
-
 ## File: src/app/core/api/api-mappers.ts
 ````typescript
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
@@ -2825,6 +2788,40 @@ export const roleGuard =
       map(() => evaluate()),
     );
   };
+````
+
+## File: src/app/core/auth/token.store.ts
+````typescript
+import { Injectable, signal } from '@angular/core';
+const TOKEN_KEY = 'bc_access_token';
+const REFRESH_TOKEN_KEY = 'bc_refresh_token';
+@Injectable({ providedIn: 'root' })
+export class TokenStore {
+  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
+  private readonly _refreshToken = signal<string | null>(localStorage.getItem(REFRESH_TOKEN_KEY));
+  readonly token = this._token.asReadonly();
+  readonly refreshToken = this._refreshToken.asReadonly();
+  set(token: string): void {
+    localStorage.setItem(TOKEN_KEY, token);
+    this._token.set(token);
+  }
+  setRefresh(token: string): void {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+    this._refreshToken.set(token);
+  }
+  clear(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    this._token.set(null);
+    this._refreshToken.set(null);
+  }
+  snapshot(): string | null {
+    return this._token();
+  }
+  snapshotRefresh(): string | null {
+    return this._refreshToken();
+  }
+}
 ````
 
 ## File: src/app/core/models/randomizer.model.ts
@@ -3353,6 +3350,23 @@ This project uses **Repomix** to provide a full map of the codebase.
 - Backend API routes: see FastAPI project (not in this repo).
 ````
 
+## File: src/app/core/api/api-error.util.ts
+````typescript
+import { HttpErrorResponse } from '@angular/common/http';
+export function extractApiError(err: unknown): string {
+  if (err instanceof HttpErrorResponse) {
+    const body = err.error as { error?: unknown; detail?: unknown } | null;
+    if (typeof body?.error === 'string') return body.error;
+    const detail = body?.detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) return (detail[0] as { msg?: string })?.msg ?? err.message ?? 'Unknown error';
+    if (detail && typeof detail === 'object') return (detail as { error?: string }).error ?? err.message ?? 'Unknown error';
+    return err.message ?? 'Unknown error';
+  }
+  return 'Unknown error';
+}
+````
+
 ## File: src/app/core/models/club.model.ts
 ````typescript
 export type ClubStatus = 'active' | 'paused' | 'cancelled';
@@ -3489,200 +3503,6 @@ export interface ClubMeeting {
                 </a>
               </p>
             </div>
-            <p class="mt-6 text-center text-sm text-gray-500">
-              <a
-                routerLink="/"
-                class="inline-flex items-center gap-1 text-gray-500
-                       hover:text-gray-700 transition-all duration-200
-                       focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 rounded"
-              >
-                {{ 'NAV.back_home' | translate }}
-              </a>
-            </p>
-          </div>
-        }
-        </main>
-    </div>
-    <style>
-      .auth-page-wrapper {
-        position: relative;
-        min-height: 100vh;
-        overflow: hidden;
-      }
-      .auth-form-container {
-        position: relative;
-        z-index: 60;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 1rem;
-      }
-      .animate-form-in {
-        animation: form-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-      }
-      @keyframes form-slide-in {
-        from {
-          opacity: 0;
-          transform: translateY(24px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-    </style>
-````
-
-## File: src/app/features/auth/register/register.component.html
-````html
-<div class="auth-page-wrapper">
-      <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
-      <main class="auth-form-container">
-        @if (formVisible()) {
-          <div class="w-full max-w-md animate-form-in">
-            <div class="text-center mb-8">
-              <h1 class="font-display text-3xl font-bold text-gray-900">📚 Book Club</h1>
-              <p class="text-gray-600 mt-2">{{ 'AUTH.create_account_subtitle' | translate }}</p>
-            </div>
-            @if (successMessage()) {
-              <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 text-center border border-amber-100">
-                <div class="text-5xl mb-4">📬</div>
-                <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ 'AUTH.check_email' | translate }}</h2>
-                <p class="text-gray-600 text-sm">
-                  {{ 'AUTH.confirmation_sent' | translate }} <strong>{{ registeredEmail() }}</strong>.
-                  {{ 'AUTH.activate_account' | translate }}
-                </p>
-                <a routerLink="/login"
-                   class="mt-6 inline-block text-sm text-amber-700 hover:text-amber-800 font-medium">
-                  {{ 'AUTH.back_to_login' | translate }}
-                </a>
-              </div>
-            } @else {
-              <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-amber-100">
-                <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ 'AUTH.create_account_h2' | translate }}</h2>
-                <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
-                  <fieldset class="border-0 p-0 m-0">
-                    <legend class="sr-only">{{ 'AUTH.create_account_h2' | translate }}</legend>
-                    <app-form-field
-                      [label]="'AUTH.display_name' | translate"
-                      type="text"
-                      placeholder="Ada Lovelace"
-                      [control]="form.controls.displayName"
-                    />
-                    <app-form-field
-                      [label]="'AUTH.email' | translate"
-                      type="email"
-                      placeholder="you@example.com"
-                      [control]="form.controls.email"
-                    />
-                    <app-form-field
-                      [label]="'AUTH.password' | translate"
-                      type="password"
-                      [placeholder]="'AUTH.password' | translate"
-                      [control]="form.controls.password"
-                    />
-                    @if (passwordStrength()) {
-                      <div class="flex items-center gap-2 -mt-2">
-                        <div class="flex gap-1 flex-1">
-                          <div
-                            class="h-1 flex-1 rounded-full transition-colors"
-                            [class]="passwordStrength() !== null ? 'bg-red-400' : 'bg-gray-200'"
-                          ></div>
-                          <div
-                            class="h-1 flex-1 rounded-full transition-colors"
-                            [class]="passwordStrength() === 'medium' || passwordStrength() === 'strong' ? 'bg-yellow-400' : 'bg-gray-200'"
-                          ></div>
-                          <div
-                            class="h-1 flex-1 rounded-full transition-colors"
-                            [class]="passwordStrength() === 'strong' ? 'bg-green-500' : 'bg-gray-200'"
-                          ></div>
-                        </div>
-                        <span
-                          class="text-xs font-medium"
-                          [class]="passwordStrength() === 'strong' ? 'text-green-600' :
-                                   passwordStrength() === 'medium' ? 'text-yellow-600' :
-                                   'text-red-500'"
-                        >
-                          {{ passwordStrength() === 'strong' ? ('AUTH.password_strong' | translate) : passwordStrength() === 'medium' ? ('AUTH.password_medium' | translate) : ('AUTH.password_weak' | translate) }}
-                        </span>
-                      </div>
-                    }
-                    <app-form-field
-                      [label]="'AUTH.confirm_password' | translate"
-                      type="password"
-                      placeholder="••••••••"
-                      [control]="form.controls.confirmPassword"
-                    />
-                    @if (form.hasError('passwordMismatch') && form.controls.confirmPassword.touched) {
-                      <p class="text-xs text-red-500 -mt-3">{{ 'AUTH.passwords_no_match' | translate }}</p>
-                    }
-                    <fieldset class="border-0 p-0 m-0">
-                      <legend class="text-sm font-medium text-gray-700 block mb-1.5">{{ 'AUTH.want_to' | translate }}</legend>
-                      <div class="grid grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          (click)="setRole('user')"
-                          [class.ring-2]="selectedRole() === 'user'"
-                          [class.ring-amber-500]="selectedRole() === 'user'"
-                          [class.bg-amber-50]="selectedRole() === 'user'"
-                          [class.bg-gray-50]="selectedRole() !== 'user'"
-                          class="p-4 rounded-xl border border-gray-200 text-left transition-all focus:outline-none focus:ring-2 focus:ring-amber-500"
-                        >
-                          <div class="text-2xl mb-1">📖</div>
-                          <div class="font-medium text-sm text-gray-900">{{ 'AUTH.role_reader_label' | translate }}</div>
-                          <div class="text-xs text-gray-500">{{ 'AUTH.role_reader_desc' | translate }}</div>
-                        </button>
-                        <button
-                          type="button"
-                          (click)="setRole('organizer')"
-                          [class.ring-2]="selectedRole() === 'organizer'"
-                          [class.ring-amber-500]="selectedRole() === 'organizer'"
-                          [class.bg-amber-50]="selectedRole() === 'organizer'"
-                          [class.bg-gray-50]="selectedRole() !== 'organizer'"
-                          class="p-4 rounded-xl border border-gray-200 text-left transition-all focus:outline-none focus:ring-2 focus:ring-amber-500"
-                        >
-                          <div class="text-2xl mb-1">🎯</div>
-                          <div class="font-medium text-sm text-gray-900">{{ 'AUTH.role_organizer_label' | translate }}</div>
-                          <div class="text-xs text-gray-500">{{ 'AUTH.role_organizer_desc' | translate }}</div>
-                        </button>
-                      </div>
-                      @if (form.controls.role.invalid && form.controls.role.touched) {
-                        <p class="text-xs text-red-500 mt-0.5">{{ 'AUTH.select_role_error' | translate }}</p>
-                      }
-                    </fieldset>
-                    @if (errorMessage()) {
-                      <div class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700" role="alert">
-                        <span class="mt-0.5 shrink-0">⚠️</span>
-                        <span>{{ errorMessage() }}</span>
-                      </div>
-                    }
-                    <button
-                      type="submit"
-                      [disabled]="isSubmitting()"
-                      class="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-2.5
-                             text-sm font-semibold text-white shadow-sm
-                             hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
-                             disabled:opacity-60 disabled:cursor-not-allowed
-                             transition-colors duration-200 mt-2"
-                    >
-                      @if (isSubmitting()) {
-                        <app-loading-spinner size="sm" />
-                        {{ 'AUTH.creating_account' | translate }}
-                      } @else {
-                        {{ 'AUTH.create_account_h2' | translate }}
-                      }
-                    </button>
-                  </fieldset>
-                </form>
-                <p class="mt-6 text-center text-sm text-gray-600">
-                  {{ 'AUTH.have_account' | translate }}
-                  <a routerLink="/login" class="text-amber-700 hover:text-amber-800 font-medium">
-                    {{ 'AUTH.sign_in_h2' | translate }}
-                  </a>
-                </p>
-              </div>
-            }
             <p class="mt-6 text-center text-sm text-gray-500">
               <a
                 routerLink="/"
@@ -4683,14 +4503,6 @@ export const environment = {
 };
 ````
 
-## File: src/environments/environment.ts
-````typescript
-export const environment = {
-  production: false,
-  apiUrl: 'https://book-club-be.onrender.com/api/v1',
-};
-````
-
 ## File: src/index.html
 ````html
 <!doctype html>
@@ -4999,6 +4811,201 @@ jobs:
         with:
           category: '/language:javascript-typescript'
         continue-on-error: true
+````
+
+## File: src/app/features/auth/register/register.component.html
+````html
+<div class="auth-page-wrapper">
+      <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
+      <main class="auth-form-container">
+        @if (formVisible()) {
+          <div class="w-full max-w-md animate-form-in">
+            <div class="text-center mb-8">
+              <h1 class="font-display text-3xl font-bold text-gray-900">📚 Book Club</h1>
+              <p class="text-gray-600 mt-2">{{ 'AUTH.create_account_subtitle' | translate }}</p>
+            </div>
+            @if (successMessage()) {
+              <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 text-center border border-amber-100">
+                <div class="text-5xl mb-4">🎉</div>
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ 'AUTH.account_created' | translate }}</h2>
+                <p class="text-gray-600 text-sm">
+                  {{ 'AUTH.welcome_message' | translate }} <strong>{{ registeredEmail() }}</strong>.
+                </p>
+                <a routerLink="/login"
+                   class="mt-6 inline-block text-sm text-amber-700 hover:text-amber-800 font-medium">
+                  {{ 'AUTH.back_to_login' | translate }}
+                </a>
+              </div>
+            } @else {
+              <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-amber-100">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ 'AUTH.create_account_h2' | translate }}</h2>
+                <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+                  <fieldset class="border-0 p-0 m-0">
+                    <legend class="sr-only">{{ 'AUTH.create_account_h2' | translate }}</legend>
+                    <app-form-field
+                      [label]="'AUTH.display_name' | translate"
+                      type="text"
+                      placeholder="Ada Lovelace"
+                      [control]="form.controls.displayName"
+                    />
+                    <app-form-field
+                      [label]="'AUTH.email' | translate"
+                      type="email"
+                      placeholder="you@example.com"
+                      [control]="form.controls.email"
+                    />
+                    <app-form-field
+                      [label]="'AUTH.password' | translate"
+                      type="password"
+                      [placeholder]="'AUTH.password' | translate"
+                      [control]="form.controls.password"
+                    />
+                    @if (passwordStrength()) {
+                      <div class="flex items-center gap-2 -mt-2">
+                        <div class="flex gap-1 flex-1">
+                          <div
+                            class="h-1 flex-1 rounded-full transition-colors"
+                            [class]="passwordStrength() !== null ? 'bg-red-400' : 'bg-gray-200'"
+                          ></div>
+                          <div
+                            class="h-1 flex-1 rounded-full transition-colors"
+                            [class]="passwordStrength() === 'medium' || passwordStrength() === 'strong' ? 'bg-yellow-400' : 'bg-gray-200'"
+                          ></div>
+                          <div
+                            class="h-1 flex-1 rounded-full transition-colors"
+                            [class]="passwordStrength() === 'strong' ? 'bg-green-500' : 'bg-gray-200'"
+                          ></div>
+                        </div>
+                        <span
+                          class="text-xs font-medium"
+                          [class]="passwordStrength() === 'strong' ? 'text-green-600' :
+                                   passwordStrength() === 'medium' ? 'text-yellow-600' :
+                                   'text-red-500'"
+                        >
+                          {{ passwordStrength() === 'strong' ? ('AUTH.password_strong' | translate) : passwordStrength() === 'medium' ? ('AUTH.password_medium' | translate) : ('AUTH.password_weak' | translate) }}
+                        </span>
+                      </div>
+                    }
+                    <app-form-field
+                      [label]="'AUTH.confirm_password' | translate"
+                      type="password"
+                      placeholder="••••••••"
+                      [control]="form.controls.confirmPassword"
+                    />
+                    @if (form.hasError('passwordMismatch') && form.controls.confirmPassword.touched) {
+                      <p class="text-xs text-red-500 -mt-3">{{ 'AUTH.passwords_no_match' | translate }}</p>
+                    }
+                    <fieldset class="border-0 p-0 m-0">
+                      <legend class="text-sm font-medium text-gray-700 block mb-1.5">{{ 'AUTH.want_to' | translate }}</legend>
+                      <div class="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          (click)="setRole('user')"
+                          [attr.aria-pressed]="selectedRole() === 'user'"
+                          [class.ring-2]="selectedRole() === 'user'"
+                          [class.ring-amber-500]="selectedRole() === 'user'"
+                          [class.bg-amber-50]="selectedRole() === 'user'"
+                          [class.bg-gray-50]="selectedRole() !== 'user'"
+                          class="p-4 rounded-xl border border-gray-200 text-left transition-all focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        >
+                          <div class="text-2xl mb-1">📖</div>
+                          <div class="font-medium text-sm text-gray-900">{{ 'AUTH.role_reader_label' | translate }}</div>
+                          <div class="text-xs text-gray-500">{{ 'AUTH.role_reader_desc' | translate }}</div>
+                        </button>
+                        <button
+                          type="button"
+                          (click)="setRole('organizer')"
+                          [attr.aria-pressed]="selectedRole() === 'organizer'"
+                          [class.ring-2]="selectedRole() === 'organizer'"
+                          [class.ring-amber-500]="selectedRole() === 'organizer'"
+                          [class.bg-amber-50]="selectedRole() === 'organizer'"
+                          [class.bg-gray-50]="selectedRole() !== 'organizer'"
+                          class="p-4 rounded-xl border border-gray-200 text-left transition-all focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        >
+                          <div class="text-2xl mb-1">🎯</div>
+                          <div class="font-medium text-sm text-gray-900">{{ 'AUTH.role_organizer_label' | translate }}</div>
+                          <div class="text-xs text-gray-500">{{ 'AUTH.role_organizer_desc' | translate }}</div>
+                        </button>
+                      </div>
+                      @if (form.controls.role.invalid && form.controls.role.touched) {
+                        <p class="text-xs text-red-500 mt-0.5">{{ 'AUTH.select_role_error' | translate }}</p>
+                      }
+                    </fieldset>
+                    @if (errorMessage()) {
+                      <div class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700" role="alert">
+                        <span class="mt-0.5 shrink-0">⚠️</span>
+                        <span>{{ errorMessage() }}</span>
+                      </div>
+                    }
+                    <button
+                      type="submit"
+                      [disabled]="isSubmitting()"
+                      class="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-2.5
+                             text-sm font-semibold text-white shadow-sm
+                             hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
+                             disabled:opacity-60 disabled:cursor-not-allowed
+                             transition-colors duration-200 mt-2"
+                    >
+                      @if (isSubmitting()) {
+                        <app-loading-spinner size="sm" />
+                        {{ 'AUTH.creating_account' | translate }}
+                      } @else {
+                        {{ 'AUTH.create_account_h2' | translate }}
+                      }
+                    </button>
+                  </fieldset>
+                </form>
+                <p class="mt-6 text-center text-sm text-gray-600">
+                  {{ 'AUTH.have_account' | translate }}
+                  <a routerLink="/login" class="text-amber-700 hover:text-amber-800 font-medium">
+                    {{ 'AUTH.sign_in_h2' | translate }}
+                  </a>
+                </p>
+              </div>
+            }
+            <p class="mt-6 text-center text-sm text-gray-500">
+              <a
+                routerLink="/"
+                class="inline-flex items-center gap-1 text-gray-500
+                       hover:text-gray-700 transition-all duration-200
+                       focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 rounded"
+              >
+                {{ 'NAV.back_home' | translate }}
+              </a>
+            </p>
+          </div>
+        }
+        </main>
+    </div>
+    <style>
+      .auth-page-wrapper {
+        position: relative;
+        min-height: 100vh;
+        overflow: hidden;
+      }
+      .auth-form-container {
+        position: relative;
+        z-index: 60;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+      .animate-form-in {
+        animation: form-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      @keyframes form-slide-in {
+        from {
+          opacity: 0;
+          transform: translateY(24px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
 ````
 
 ## File: src/app/features/clubs/clubs.routes.ts
@@ -5824,6 +5831,14 @@ import { ToastComponent } from './shared/components/toast/toast.component';
 export class App {}
 ````
 
+## File: src/environments/environment.ts
+````typescript
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:8000/api/v1',
+};
+````
+
 ## File: eslint.config.js
 ````javascript
 const eslint = require("@eslint/js");
@@ -5924,542 +5939,6 @@ sonar.coverage.exclusions=\
   src/app/core/supabase/**
 
 sonar.sourceEncoding=UTF-8
-````
-
-## File: public/i18n/en.json
-````json
-{
-  "AUTH": {
-    "activate_account": "Click it to activate your account.",
-    "back_to_login": "Back to sign in",
-    "check_email": "Check your email",
-    "confirm_password": "Confirm password",
-    "confirmation_sent": "We sent a confirmation link to",
-    "create_account_h2": "Create account",
-    "create_account_subtitle": "Create your account",
-    "creating_account": "Creating account…",
-    "display_name": "Display name",
-    "email": "Email",
-    "have_account": "Already have an account?",
-    "no_account": "Don't have an account?",
-    "password": "Password",
-    "password_medium": "Medium",
-    "password_strong": "Strong",
-    "password_weak": "Weak",
-    "passwords_no_match": "Passwords do not match",
-    "register_title": "Register",
-    "role_organizer_desc": "Create clubs & build quizzes",
-    "role_organizer_label": "Organizer",
-    "role_reader_desc": "Join clubs & take quizzes",
-    "role_reader_label": "Reader",
-    "select_role_error": "Please select a role.",
-    "sign_in_h2": "Sign in",
-    "signing_in": "Signing in…",
-    "submit_login": "Log in",
-    "want_to": "I want to…",
-    "welcome_back": "Welcome back",
-    "login_title": "Log In",
-    "submit_register": "Register",
-    "password_strength": "Password strength"
-  },
-  "CREATE_CLUB": {
-    "subtitle": "Create a new reading community",
-    "title": "Create a Club",
-    "basic_info_legend": "Basic information",
-    "name_label": "Club name",
-    "name_placeholder": "e.g. Northern Readers",
-    "name_required": "Club name is required.",
-    "name_min": "Name must be at least 3 characters.",
-    "name_max": "Name must not exceed 100 characters.",
-    "description_label": "Description",
-    "description_placeholder": "What books will your club read? Who is it for?",
-    "description_max": "Description must not exceed 500 characters.",
-    "city_label": "City",
-    "city_placeholder": "Kyiv",
-    "city_required": "City is required.",
-    "city_max": "City must not exceed 100 characters.",
-    "address_label": "Address",
-    "address_placeholder": "1 Khreshchatyk St.",
-    "address_max": "Address must not exceed 200 characters.",
-    "tags_duration_legend": "Tags & duration",
-    "tags_label": "Tags / Genres",
-    "tags_placeholder": "Classics, Romance, Fantasy",
-    "tags_hint": "Enter genres separated by commas",
-    "tags_max": "Tags must not exceed 300 characters.",
-    "duration_label": "Meeting duration (min)",
-    "duration_placeholder": "90",
-    "duration_min": "Duration must be at least 15 minutes.",
-    "duration_max": "Duration must not exceed 480 minutes.",
-    "visibility_legend": "Visibility",
-    "public_label": "Public club",
-    "public_desc": "Anyone can discover and join",
-    "after_meeting_toggle": "▼ After-meeting venue",
-    "after_meeting_hide": "▲ Hide after-meeting venue info",
-    "venue_name_label": "Venue name",
-    "venue_name_placeholder": "Café Pushkin",
-    "venue_name_max": "Name must not exceed 150 characters.",
-    "venue_address_label": "Venue address",
-    "venue_address_placeholder": "2 Khreshchatyk St.",
-    "venue_address_max": "Address must not exceed 200 characters.",
-    "venue_notes_label": "Notes",
-    "venue_notes_placeholder": "Reservation at 8 pm",
-    "venue_notes_max": "Notes must not exceed 300 characters.",
-    "cancel": "Cancel",
-    "submit": "Create club",
-    "submitting": "Creating…"
-  },
-  "CLUBS": {
-    "active": "Active",
-    "all_cities": "All cities",
-    "cancelled": "Cancelled",
-    "create": "Create club",
-    "join": "Join",
-    "member_badge": "✓ Member",
-    "member_singular": "member",
-    "members": "members",
-    "missed": "Missed",
-    "my_clubs": "My Clubs",
-    "participated": "Attended",
-    "paused": "Paused",
-    "search_placeholder": "Search clubs...",
-    "search_placeholder_full": "Search by name or description…",
-    "subtitle": "Discover communities of readers near you",
-    "title": "Book Clubs",
-    "view": "View",
-    "upcoming": "Upcoming meetings",
-    "joined": "You're a member",
-    "no_clubs": "No clubs found",
-    "book_current": "Current book",
-    "days_until": "in {{ days }} days"
-  },
-  "CLUB_DETAIL": {
-    "about": "About",
-    "back": "Back to clubs",
-    "back_short": "Back",
-    "cancel": "Cancel",
-    "created": "Created",
-    "join": "Join Club",
-    "leave": "Leave Club",
-    "manage_title": "Club management",
-    "new_date": "New meeting date",
-    "not_found": "Club not found",
-    "organizer_badge": "✨ Organizer",
-    "pause": "Pause",
-    "private": "Private",
-    "quizzes_desc": "Create & manage reading quizzes",
-    "quizzes_title": "Quizzes",
-    "randomizer_desc": "Pick the next book to read",
-    "randomizer_title": "Randomizer",
-    "reschedule": "Reschedule",
-    "reschedule_submit": "Confirm date",
-    "members_title": "Members",
-    "tags_title": "Tags",
-    "organizer_title": "Organizer",
-    "meeting_info_title": "Meeting place & time",
-    "duration_label": "Duration",
-    "minutes_abbr": "min",
-    "address_label": "Address",
-    "view_on_map": "View on map →",
-    "after_meeting_title": "After the meeting",
-    "deletion_countdown_prefix": "This club has been cancelled —",
-    "deletion_countdown_hours": "will be deleted in {{ hours }} h. {{ minutes }} min.",
-    "deletion_countdown_minutes": "will be deleted in {{ minutes }} min.",
-    "close_qr": "✕ Close"
-  },
-  "FOOTER": {
-    "privacy": "Privacy",
-    "rights": "All rights reserved",
-    "terms": "Terms"
-  },
-  "MEMBERS": {
-    "empty": "No members yet",
-    "member": "Member",
-    "organizer": "Organizer",
-    "show_qr": "QR",
-    "socials_hidden": "Hidden",
-    "title": "Members",
-    "kick": "Kick",
-    "ban": "Ban ▾",
-    "ban_1": "1 meeting",
-    "ban_3": "3 meetings",
-    "ban_5": "5 meetings",
-    "ban_permanent": "Permanently"
-  },
-  "NAV": {
-    "back_home": "← Back to home",
-    "discover": "Discover",
-    "join_free": "Join Free",
-    "login": "Log in",
-    "logout": "Log out",
-    "profile": "Profile",
-    "signed_in_as": "Signed in as",
-    "clubs": "Clubs",
-    "my_clubs": "My Clubs",
-    "register": "Register"
-  },
-  "PROFILE": {
-    "active_badge": "✓ Active",
-    "books_read": "Books read",
-    "clubs_joined": "Clubs joined",
-    "display_name_label": "Display Name",
-    "display_name_min": "Must be at least 2 characters.",
-    "display_name_placeholder": "Your display name",
-    "display_name_required": "Display name is required.",
-    "edit_profile": "Edit Profile",
-    "likes_received": "Likes Received",
-    "member_since": "Member since",
-    "name_updated": "Name updated!",
-    "no_stats": "No statistics yet — start joining clubs and taking quizzes!",
-    "quizzes_taken": "Quizzes taken",
-    "quizzes_won": "Quizzes won",
-    "role_changed_prefix": "Role updated to",
-    "role_organizer": "Organizer",
-    "role_organizer_desc": "Create clubs, run quizzes, and manage members.",
-    "role_reader": "Reader",
-    "role_reader_desc": "Discover clubs, join discussions, take quizzes.",
-    "role_subtitle": "Choose how you participate in book clubs.",
-    "role_title": "Your Role",
-    "save": "Save",
-    "save_name": "Save Name",
-    "saving": "Saving…",
-    "socials_public_label": "Show social media to all club members",
-    "socials_saved": "Social media saved!",
-    "socials_title": "Social media",
-    "stats_title": "Statistics",
-    "title": "My Profile",
-    "saved": "Saved!",
-    "role": "Role",
-    "role_admin": "Administrator",
-    "meetings_attended": "Meetings attended",
-    "meetings_missed": "Meetings missed",
-    "randomizer_wins": "Randomizer wins"
-  },
-  "RANDOMIZER": {
-    "back_to_club": "← Back to club",
-    "history_title": "Previous results",
-    "members_title": "Members",
-    "no_members": "No members in this club yet",
-    "purpose_label": "Randomizer purpose",
-    "purpose_placeholder": "e.g. Who presents the book?",
-    "save": "💾 Save result",
-    "saving": "⏳ Saving…",
-    "select_all": "Select all",
-    "selected": "selected",
-    "spin": "🎲 Spin!",
-    "spin_hint": "Press 'Spin' to select a member",
-    "spinning": "Selecting winner…",
-    "spinning_btn": "⏳ Selecting…",
-    "subtitle": "Who's next? Let fate decide.",
-    "title": "Randomizer",
-    "no_history": "No results yet",
-    "error_min": "Select at least 2 members",
-    "winner": "Winner"
-  },
-  "QUIZ": {
-    "title": "Quizzes",
-    "create": "Create quiz",
-    "take": "Start",
-    "results": "Results",
-    "score": "Score"
-  },
-  "CHAT": {
-    "title": "Club Chat",
-    "placeholder": "Type a message...",
-    "send": "Send",
-    "no_messages": "No messages yet",
-    "new_message": "New message",
-    "close": "Close chat",
-    "open": "Open chat",
-    "rooms": "Rooms"
-  },
-  "FORM_ERRORS": {
-    "required": "This field is required.",
-    "email": "Please enter a valid email address.",
-    "minlength": "Minimum {{ requiredLength }} characters required.",
-    "invalid": "Invalid value."
-  },
-  "SEO": {
-    "clubs_title": "Book Clubs | Book Club",
-    "clubs_description": "Find a book club in your city. Book discussions, reader meetups, interest communities.",
-    "clubs_og_title": "Book Clubs",
-    "login_title": "Sign In | Book Club",
-    "register_title": "Register | Book Club",
-    "profile_title": "Profile | Book Club",
-    "club_detail_title": "{{ name }} | Book Club",
-    "club_detail_og_title": "{{ name }}",
-    "site_name": "Book Club",
-    "site_url": "https://book-club-fe.vercel.app",
-    "site_description": "Book Clubs of Ukraine"
-  }
-}
-````
-
-## File: public/i18n/uk.json
-````json
-{
-  "AUTH": {
-    "activate_account": "Натисніть, щоб активувати акаунт.",
-    "back_to_login": "Назад до входу",
-    "check_email": "Перевірте пошту",
-    "confirm_password": "Підтвердіть пароль",
-    "confirmation_sent": "Ми надіслали посилання підтвердження на",
-    "create_account_h2": "Створити акаунт",
-    "create_account_subtitle": "Створіть акаунт",
-    "creating_account": "Створюємо акаунт…",
-    "display_name": "Ім'я користувача",
-    "email": "Email",
-    "have_account": "Вже є акаунт?",
-    "no_account": "Немає акаунту?",
-    "password": "Пароль",
-    "password_medium": "Середній",
-    "password_strong": "Надійний",
-    "password_weak": "Слабкий",
-    "passwords_no_match": "Паролі не збігаються",
-    "register_title": "Реєстрація",
-    "role_organizer_desc": "Створювати клуби та проводити квізи",
-    "role_organizer_label": "Організатор",
-    "role_reader_desc": "Приєднуватись до клубів та проходити квізи",
-    "role_reader_label": "Читач",
-    "select_role_error": "Будь ласка, оберіть роль.",
-    "sign_in_h2": "Увійти",
-    "signing_in": "Входимо…",
-    "submit_login": "Увійти",
-    "want_to": "Я хочу…",
-    "welcome_back": "Ласкаво просимо назад",
-    "login_title": "Вхід",
-    "submit_register": "Зареєструватися",
-    "password_strength": "Надійність паролю"
-  },
-  "CREATE_CLUB": {
-    "subtitle": "Створіть нову спільноту читачів",
-    "title": "Створити клуб",
-    "basic_info_legend": "Основна інформація",
-    "name_label": "Назва клубу",
-    "name_placeholder": "Напр. Північ читачів",
-    "name_required": "Назва клубу є обов'язковою.",
-    "name_min": "Назва повинна містити щонайменше 3 символи.",
-    "name_max": "Назва не повинна перевищувати 100 символів.",
-    "description_label": "Опис",
-    "description_placeholder": "Які книги буде читати ваш клуб? Для кого він?",
-    "description_max": "Опис не повинен перевищувати 500 символів.",
-    "city_label": "Місто",
-    "city_placeholder": "Київ",
-    "city_required": "Місто є обов'язковим.",
-    "city_max": "Місто не повинно перевищувати 100 символів.",
-    "address_label": "Адреса",
-    "address_placeholder": "вул. Хрещатик, 1",
-    "address_max": "Адреса не повинна перевищувати 200 символів.",
-    "tags_duration_legend": "Теги та тривалість",
-    "tags_label": "Теги / Жанри",
-    "tags_placeholder": "Класика, Романтика, Фентезі",
-    "tags_hint": "Введіть жанри через кому",
-    "tags_max": "Теги не повинні перевищувати 300 символів.",
-    "duration_label": "Тривалість зустрічі (хв)",
-    "duration_placeholder": "90",
-    "duration_min": "Тривалість не може бути менше 15 хвилин.",
-    "duration_max": "Тривалість не може перевищувати 480 хвилин.",
-    "visibility_legend": "Видимість",
-    "public_label": "Публічний клуб",
-    "public_desc": "Хто завгодно може виявити та приєднатися",
-    "after_meeting_toggle": "▼ Після зустрічі",
-    "after_meeting_hide": "▲ Приховати інформацію про місце після зустрічі",
-    "venue_name_label": "Назва місця",
-    "venue_name_placeholder": "Кав'ярня «Пушкін»",
-    "venue_name_max": "Назва не повинна перевищувати 150 символів.",
-    "venue_address_label": "Адреса місця",
-    "venue_address_placeholder": "вул. Хрещатик, 2",
-    "venue_address_max": "Адреса не повинна перевищувати 200 символів.",
-    "venue_notes_label": "Примітки",
-    "venue_notes_placeholder": "Бронювання на 20:00",
-    "venue_notes_max": "Примітки не повинні перевищувати 300 символів.",
-    "cancel": "Скасувати",
-    "submit": "Створити клуб",
-    "submitting": "Створення…"
-  },
-  "CLUBS": {
-    "active": "Активний",
-    "all_cities": "Всі міста",
-    "cancelled": "Скасовано",
-    "create": "Створити клуб",
-    "join": "Приєднатися",
-    "member_badge": "✓ Учасник",
-    "member_singular": "учасник",
-    "members": "учасників",
-    "missed": "Пропущені",
-    "my_clubs": "Мої клуби",
-    "participated": "Відвідані",
-    "paused": "Призупинено",
-    "search_placeholder": "Шукати клуби...",
-    "search_placeholder_full": "Шукати за назвою або описом…",
-    "subtitle": "Знайдіть спільноти читачів поруч",
-    "title": "Книжкові клуби",
-    "view": "Переглянути",
-    "upcoming": "Найближчі зустрічі",
-    "joined": "Ви учасник",
-    "no_clubs": "Клубів не знайдено",
-    "book_current": "Поточна книга",
-    "days_until": "за {{ days }} дн."
-  },
-  "CLUB_DETAIL": {
-    "about": "Про клуб",
-    "back": "Назад до клубів",
-    "back_short": "Назад",
-    "cancel": "Скасувати",
-    "created": "Створено",
-    "join": "Приєднатись до клубу",
-    "leave": "Покинути клуб",
-    "manage_title": "Управління клубом",
-    "new_date": "Нова дата зустрічі",
-    "not_found": "Клуб не знайдено",
-    "organizer_badge": "✨ Організатор",
-    "pause": "Призупинити",
-    "private": "Приватний",
-    "quizzes_desc": "Створюйте та керуйте квізами",
-    "quizzes_title": "Квізи",
-    "randomizer_desc": "Обирайте наступну книгу",
-    "randomizer_title": "Рандомайзер",
-    "reschedule": "Перепланувати",
-    "reschedule_submit": "Перенести зустріч",
-    "members_title": "Учасники",
-    "tags_title": "Теги",
-    "organizer_title": "Організатор",
-    "meeting_info_title": "Місце та час зустрічі",
-    "duration_label": "Тривалість",
-    "minutes_abbr": "хв",
-    "address_label": "Адреса",
-    "view_on_map": "Переглянути на карті →",
-    "after_meeting_title": "Після зустрічі",
-    "deletion_countdown_prefix": "Цей клуб скасовано —",
-    "deletion_countdown_hours": "буде видалено через {{ hours }} год. {{ minutes }} хв.",
-    "deletion_countdown_minutes": "буде видалено через {{ minutes }} хв.",
-    "close_qr": "✕ Закрити"
-  },
-  "FOOTER": {
-    "privacy": "Конфіденційність",
-    "rights": "Усі права захищені",
-    "terms": "Умови"
-  },
-  "MEMBERS": {
-    "empty": "Немає учасників",
-    "member": "Учасник",
-    "organizer": "Організатор",
-    "show_qr": "QR",
-    "socials_hidden": "Приховано",
-    "title": "Учасники",
-    "kick": "Виключити",
-    "ban": "Заблокувати ▾",
-    "ban_1": "1 зустріч",
-    "ban_3": "3 зустрічі",
-    "ban_5": "5 зустрічей",
-    "ban_permanent": "Назавжди"
-  },
-  "NAV": {
-    "back_home": "← На головну",
-    "discover": "Огляд",
-    "join_free": "Приєднатись",
-    "login": "Увійти",
-    "logout": "Вийти",
-    "profile": "Профіль",
-    "signed_in_as": "Увійшли як",
-    "clubs": "Клуби",
-    "my_clubs": "Мої клуби",
-    "register": "Приєднатись"
-  },
-  "PROFILE": {
-    "active_badge": "✓ Активний",
-    "books_read": "Книг прочитано",
-    "clubs_joined": "Клубів приєднано",
-    "display_name_label": "Ім'я в додатку",
-    "display_name_min": "Мінімум 2 символи.",
-    "display_name_placeholder": "Ваше ім'я",
-    "display_name_required": "Ім'я є обов'язковим.",
-    "edit_profile": "Редагувати профіль",
-    "likes_received": "Отримано вподобань",
-    "member_since": "Учасник з",
-    "name_updated": "Ім'я оновлено!",
-    "no_stats": "Статистики ще немає — починайте приєднуватись до клубів і проходити квізи!",
-    "quizzes_taken": "Квізів пройдено",
-    "quizzes_won": "Квізів виграно",
-    "role_changed_prefix": "Роль змінено на",
-    "role_organizer": "Організатор",
-    "role_organizer_desc": "Створюйте клуби, проводьте квізи та керуйте учасниками.",
-    "role_reader": "Читач",
-    "role_reader_desc": "Відкривайте клуби, беріть участь у дискусіях і проходьте квізи.",
-    "role_subtitle": "Оберіть, як ви берете участь у книжкових клубах.",
-    "role_title": "Ваша роль",
-    "save": "Зберегти",
-    "save_name": "Зберегти ім'я",
-    "saving": "Збереження…",
-    "socials_public_label": "Показувати соціальні мережі всім учасникам клубів",
-    "socials_saved": "Соціальні мережі збережено!",
-    "socials_title": "Соціальні мережі",
-    "stats_title": "Статистика",
-    "title": "Особистий кабінет",
-    "saved": "Збережено!",
-    "role": "Роль",
-    "role_admin": "Адміністратор",
-    "meetings_attended": "Зустрічей відвідано",
-    "meetings_missed": "Зустрічей пропущено",
-    "randomizer_wins": "Перемог в рандомайзері"
-  },
-  "RANDOMIZER": {
-    "back_to_club": "← До клубу",
-    "history_title": "Попередні результати",
-    "members_title": "Учасники",
-    "no_members": "У цьому клубі поки немає учасників",
-    "purpose_label": "Питання / Мета рандомайзера",
-    "purpose_placeholder": "Наприклад: Хто представляє книгу?",
-    "save": "💾 Зберегти результат",
-    "saving": "⏳ Збереження…",
-    "select_all": "Обрати всіх",
-    "selected": "обрано",
-    "spin": "🎲 Крутити",
-    "spin_hint": "Натисніть «Крутити» щоб обрати учасника",
-    "spinning": "Вибираємо переможця…",
-    "spinning_btn": "⏳ Вибираємо…",
-    "subtitle": "Хто наступний? Нехай доля вирішує.",
-    "title": "Рандомайзер",
-    "no_history": "Немає результатів",
-    "error_min": "Оберіть щонайменше 2 учасників",
-    "winner": "Переможець"
-  },
-  "QUIZ": {
-    "title": "Квізи",
-    "create": "Створити квіз",
-    "take": "Почати",
-    "results": "Результати",
-    "score": "Рахунок"
-  },
-  "CHAT": {
-    "title": "Чат клубу",
-    "placeholder": "Написати повідомлення...",
-    "send": "Надіслати",
-    "no_messages": "Поки немає повідомлень",
-    "new_message": "Нове повідомлення",
-    "close": "Закрити чат",
-    "open": "Відкрити чат",
-    "rooms": "Кімнати"
-  },
-  "FORM_ERRORS": {
-    "required": "Це поле є обов'язковим.",
-    "email": "Введіть коректну адресу електронної пошти.",
-    "minlength": "Мінімум {{ requiredLength }} символів.",
-    "invalid": "Некоректне значення."
-  },
-  "SEO": {
-    "clubs_title": "Книжкові клуби | Book Club",
-    "clubs_description": "Знайдіть книжковий клуб у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
-    "clubs_og_title": "Книжкові клуби",
-    "login_title": "Вхід | Book Club",
-    "register_title": "Реєстрація | Book Club",
-    "profile_title": "Профіль | Book Club",
-    "club_detail_title": "{{ name }} | Book Club",
-    "club_detail_og_title": "{{ name }}",
-    "site_name": "Book Club",
-    "site_url": "https://book-club-fe.vercel.app",
-    "site_description": "Читацькі клуби України"
-  }
-}
 ````
 
 ## File: src/app/core/interceptors/auth.interceptor.ts
@@ -7299,6 +6778,546 @@ When invoking agents via the `task` tool, **always use the model specified below
 | `ui` | `claude-haiku-4.5` | Design system, Tailwind, animations, accessibility |
 | `web-quality-enhancer` | `claude-sonnet-4.6` | SEO, microcopy, semantic HTML, API docs |
 | `java-backend-dev` | `claude-sonnet-4.6` | Java 21 microservices, Spring Boot, JPA, Kafka, JWT |
+````
+
+## File: public/i18n/en.json
+````json
+{
+  "AUTH": {
+    "activate_account": "Click it to activate your account.",
+    "back_to_login": "Back to sign in",
+    "check_email": "Check your email",
+    "confirm_password": "Confirm password",
+    "confirmation_sent": "We sent a confirmation link to",
+    "create_account_h2": "Create account",
+    "create_account_subtitle": "Create your account",
+    "creating_account": "Creating account…",
+    "display_name": "Display name",
+    "email": "Email",
+    "have_account": "Already have an account?",
+    "no_account": "Don't have an account?",
+    "password": "Password",
+    "password_medium": "Medium",
+    "password_strong": "Strong",
+    "password_weak": "Weak",
+    "passwords_no_match": "Passwords do not match",
+    "register_title": "Register",
+    "role_organizer_desc": "Create clubs & build quizzes",
+    "role_organizer_label": "Organizer",
+    "role_reader_desc": "Join clubs & take quizzes",
+    "role_reader_label": "Reader",
+    "select_role_error": "Please select a role.",
+    "sign_in_h2": "Sign in",
+    "signing_in": "Signing in…",
+    "submit_login": "Log in",
+    "want_to": "I want to…",
+    "welcome_back": "Welcome back",
+    "login_title": "Log In",
+    "submit_register": "Register",
+    "password_strength": "Password strength",
+    "account_created": "Account created successfully!",
+    "welcome_message": "Welcome,"
+  },
+  "CREATE_CLUB": {
+    "subtitle": "Create a new reading community",
+    "title": "Create a Club",
+    "basic_info_legend": "Basic information",
+    "name_label": "Club name",
+    "name_placeholder": "e.g. Northern Readers",
+    "name_required": "Club name is required.",
+    "name_min": "Name must be at least 3 characters.",
+    "name_max": "Name must not exceed 100 characters.",
+    "description_label": "Description",
+    "description_placeholder": "What books will your club read? Who is it for?",
+    "description_max": "Description must not exceed 500 characters.",
+    "city_label": "City",
+    "city_placeholder": "Kyiv",
+    "city_required": "City is required.",
+    "city_max": "City must not exceed 100 characters.",
+    "address_label": "Address",
+    "address_placeholder": "1 Khreshchatyk St.",
+    "address_max": "Address must not exceed 200 characters.",
+    "tags_duration_legend": "Tags & duration",
+    "tags_label": "Tags / Genres",
+    "tags_placeholder": "Classics, Romance, Fantasy",
+    "tags_hint": "Enter genres separated by commas",
+    "tags_max": "Tags must not exceed 300 characters.",
+    "duration_label": "Meeting duration (min)",
+    "duration_placeholder": "90",
+    "duration_min": "Duration must be at least 15 minutes.",
+    "duration_max": "Duration must not exceed 480 minutes.",
+    "visibility_legend": "Visibility",
+    "public_label": "Public club",
+    "public_desc": "Anyone can discover and join",
+    "after_meeting_toggle": "▼ After-meeting venue",
+    "after_meeting_hide": "▲ Hide after-meeting venue info",
+    "venue_name_label": "Venue name",
+    "venue_name_placeholder": "Café Pushkin",
+    "venue_name_max": "Name must not exceed 150 characters.",
+    "venue_address_label": "Venue address",
+    "venue_address_placeholder": "2 Khreshchatyk St.",
+    "venue_address_max": "Address must not exceed 200 characters.",
+    "venue_notes_label": "Notes",
+    "venue_notes_placeholder": "Reservation at 8 pm",
+    "venue_notes_max": "Notes must not exceed 300 characters.",
+    "cancel": "Cancel",
+    "submit": "Create club",
+    "submitting": "Creating…"
+  },
+  "CLUBS": {
+    "active": "Active",
+    "all_cities": "All cities",
+    "cancelled": "Cancelled",
+    "create": "Create club",
+    "join": "Join",
+    "member_badge": "✓ Member",
+    "member_singular": "member",
+    "members": "members",
+    "missed": "Missed",
+    "my_clubs": "My Clubs",
+    "participated": "Attended",
+    "paused": "Paused",
+    "search_placeholder": "Search clubs...",
+    "search_placeholder_full": "Search by name or description…",
+    "subtitle": "Discover communities of readers near you",
+    "title": "Book Clubs",
+    "view": "View",
+    "upcoming": "Upcoming meetings",
+    "joined": "You're a member",
+    "no_clubs": "No clubs found",
+    "book_current": "Current book",
+    "days_until": "in {{ days }} days"
+  },
+  "CLUB_DETAIL": {
+    "about": "About",
+    "back": "Back to clubs",
+    "back_short": "Back",
+    "cancel": "Cancel",
+    "created": "Created",
+    "join": "Join Club",
+    "leave": "Leave Club",
+    "manage_title": "Club management",
+    "new_date": "New meeting date",
+    "not_found": "Club not found",
+    "organizer_badge": "✨ Organizer",
+    "pause": "Pause",
+    "private": "Private",
+    "quizzes_desc": "Create & manage reading quizzes",
+    "quizzes_title": "Quizzes",
+    "randomizer_desc": "Pick the next book to read",
+    "randomizer_title": "Randomizer",
+    "reschedule": "Reschedule",
+    "reschedule_submit": "Confirm date",
+    "members_title": "Members",
+    "tags_title": "Tags",
+    "organizer_title": "Organizer",
+    "meeting_info_title": "Meeting place & time",
+    "duration_label": "Duration",
+    "minutes_abbr": "min",
+    "address_label": "Address",
+    "view_on_map": "View on map →",
+    "after_meeting_title": "After the meeting",
+    "deletion_countdown_prefix": "This club has been cancelled —",
+    "deletion_countdown_hours": "will be deleted in {{ hours }} h. {{ minutes }} min.",
+    "deletion_countdown_minutes": "will be deleted in {{ minutes }} min.",
+    "close_qr": "✕ Close"
+  },
+  "FOOTER": {
+    "privacy": "Privacy",
+    "rights": "All rights reserved",
+    "terms": "Terms"
+  },
+  "MEMBERS": {
+    "empty": "No members yet",
+    "member": "Member",
+    "organizer": "Organizer",
+    "show_qr": "QR",
+    "socials_hidden": "Hidden",
+    "title": "Members",
+    "kick": "Kick",
+    "ban": "Ban ▾",
+    "ban_1": "1 meeting",
+    "ban_3": "3 meetings",
+    "ban_5": "5 meetings",
+    "ban_permanent": "Permanently"
+  },
+  "NAV": {
+    "back_home": "← Back to home",
+    "discover": "Discover",
+    "join_free": "Join Free",
+    "login": "Log in",
+    "logout": "Log out",
+    "profile": "Profile",
+    "signed_in_as": "Signed in as",
+    "clubs": "Clubs",
+    "my_clubs": "My Clubs",
+    "register": "Register"
+  },
+  "PROFILE": {
+    "active_badge": "✓ Active",
+    "books_read": "Books read",
+    "clubs_joined": "Clubs joined",
+    "display_name_label": "Display Name",
+    "display_name_min": "Must be at least 2 characters.",
+    "display_name_placeholder": "Your display name",
+    "display_name_required": "Display name is required.",
+    "edit_profile": "Edit Profile",
+    "likes_received": "Likes Received",
+    "member_since": "Member since",
+    "name_updated": "Name updated!",
+    "no_stats": "No statistics yet — start joining clubs and taking quizzes!",
+    "quizzes_taken": "Quizzes taken",
+    "quizzes_won": "Quizzes won",
+    "role_changed_prefix": "Role updated to",
+    "role_organizer": "Organizer",
+    "role_organizer_desc": "Create clubs, run quizzes, and manage members.",
+    "role_reader": "Reader",
+    "role_reader_desc": "Discover clubs, join discussions, take quizzes.",
+    "role_subtitle": "Choose how you participate in book clubs.",
+    "role_title": "Your Role",
+    "save": "Save",
+    "save_name": "Save Name",
+    "saving": "Saving…",
+    "socials_public_label": "Show social media to all club members",
+    "socials_saved": "Social media saved!",
+    "socials_title": "Social media",
+    "stats_title": "Statistics",
+    "title": "My Profile",
+    "saved": "Saved!",
+    "role": "Role",
+    "role_admin": "Administrator",
+    "meetings_attended": "Meetings attended",
+    "meetings_missed": "Meetings missed",
+    "randomizer_wins": "Randomizer wins"
+  },
+  "RANDOMIZER": {
+    "back_to_club": "← Back to club",
+    "history_title": "Previous results",
+    "members_title": "Members",
+    "no_members": "No members in this club yet",
+    "purpose_label": "Randomizer purpose",
+    "purpose_placeholder": "e.g. Who presents the book?",
+    "save": "💾 Save result",
+    "saving": "⏳ Saving…",
+    "select_all": "Select all",
+    "selected": "selected",
+    "spin": "🎲 Spin!",
+    "spin_hint": "Press 'Spin' to select a member",
+    "spinning": "Selecting winner…",
+    "spinning_btn": "⏳ Selecting…",
+    "subtitle": "Who's next? Let fate decide.",
+    "title": "Randomizer",
+    "no_history": "No results yet",
+    "error_min": "Select at least 2 members",
+    "winner": "Winner"
+  },
+  "QUIZ": {
+    "title": "Quizzes",
+    "create": "Create quiz",
+    "take": "Start",
+    "results": "Results",
+    "score": "Score"
+  },
+  "CHAT": {
+    "title": "Club Chat",
+    "placeholder": "Type a message...",
+    "send": "Send",
+    "no_messages": "No messages yet",
+    "new_message": "New message",
+    "close": "Close chat",
+    "open": "Open chat",
+    "rooms": "Rooms"
+  },
+  "FORM_ERRORS": {
+    "required": "This field is required.",
+    "email": "Please enter a valid email address.",
+    "minlength": "Minimum {{ requiredLength }} characters required.",
+    "invalid": "Invalid value."
+  },
+  "SEO": {
+    "clubs_title": "Book Clubs | Book Club",
+    "clubs_description": "Find a book club in your city. Book discussions, reader meetups, interest communities.",
+    "clubs_og_title": "Book Clubs",
+    "login_title": "Sign In | Book Club",
+    "register_title": "Register | Book Club",
+    "profile_title": "Profile | Book Club",
+    "club_detail_title": "{{ name }} | Book Club",
+    "club_detail_og_title": "{{ name }}",
+    "site_name": "Book Club",
+    "site_url": "https://book-club-fe.vercel.app",
+    "site_description": "Book Clubs of Ukraine"
+  }
+}
+````
+
+## File: public/i18n/uk.json
+````json
+{
+  "AUTH": {
+    "activate_account": "Натисніть, щоб активувати акаунт.",
+    "back_to_login": "Назад до входу",
+    "check_email": "Перевірте пошту",
+    "confirm_password": "Підтвердіть пароль",
+    "confirmation_sent": "Ми надіслали посилання підтвердження на",
+    "create_account_h2": "Створити акаунт",
+    "create_account_subtitle": "Створіть акаунт",
+    "creating_account": "Створюємо акаунт…",
+    "display_name": "Ім'я користувача",
+    "email": "Email",
+    "have_account": "Вже є акаунт?",
+    "no_account": "Немає акаунту?",
+    "password": "Пароль",
+    "password_medium": "Середній",
+    "password_strong": "Надійний",
+    "password_weak": "Слабкий",
+    "passwords_no_match": "Паролі не збігаються",
+    "register_title": "Реєстрація",
+    "role_organizer_desc": "Створювати клуби та проводити квізи",
+    "role_organizer_label": "Організатор",
+    "role_reader_desc": "Приєднуватись до клубів та проходити квізи",
+    "role_reader_label": "Читач",
+    "select_role_error": "Будь ласка, оберіть роль.",
+    "sign_in_h2": "Увійти",
+    "signing_in": "Входимо…",
+    "submit_login": "Увійти",
+    "want_to": "Я хочу…",
+    "welcome_back": "Ласкаво просимо назад",
+    "login_title": "Вхід",
+    "submit_register": "Зареєструватися",
+    "password_strength": "Надійність паролю",
+    "account_created": "Акаунт успішно створено!",
+    "welcome_message": "Ласкаво просимо,"
+  },
+  "CREATE_CLUB": {
+    "subtitle": "Створіть нову спільноту читачів",
+    "title": "Створити клуб",
+    "basic_info_legend": "Основна інформація",
+    "name_label": "Назва клубу",
+    "name_placeholder": "Напр. Північ читачів",
+    "name_required": "Назва клубу є обов'язковою.",
+    "name_min": "Назва повинна містити щонайменше 3 символи.",
+    "name_max": "Назва не повинна перевищувати 100 символів.",
+    "description_label": "Опис",
+    "description_placeholder": "Які книги буде читати ваш клуб? Для кого він?",
+    "description_max": "Опис не повинен перевищувати 500 символів.",
+    "city_label": "Місто",
+    "city_placeholder": "Київ",
+    "city_required": "Місто є обов'язковим.",
+    "city_max": "Місто не повинно перевищувати 100 символів.",
+    "address_label": "Адреса",
+    "address_placeholder": "вул. Хрещатик, 1",
+    "address_max": "Адреса не повинна перевищувати 200 символів.",
+    "tags_duration_legend": "Теги та тривалість",
+    "tags_label": "Теги / Жанри",
+    "tags_placeholder": "Класика, Романтика, Фентезі",
+    "tags_hint": "Введіть жанри через кому",
+    "tags_max": "Теги не повинні перевищувати 300 символів.",
+    "duration_label": "Тривалість зустрічі (хв)",
+    "duration_placeholder": "90",
+    "duration_min": "Тривалість не може бути менше 15 хвилин.",
+    "duration_max": "Тривалість не може перевищувати 480 хвилин.",
+    "visibility_legend": "Видимість",
+    "public_label": "Публічний клуб",
+    "public_desc": "Хто завгодно може виявити та приєднатися",
+    "after_meeting_toggle": "▼ Після зустрічі",
+    "after_meeting_hide": "▲ Приховати інформацію про місце після зустрічі",
+    "venue_name_label": "Назва місця",
+    "venue_name_placeholder": "Кав'ярня «Пушкін»",
+    "venue_name_max": "Назва не повинна перевищувати 150 символів.",
+    "venue_address_label": "Адреса місця",
+    "venue_address_placeholder": "вул. Хрещатик, 2",
+    "venue_address_max": "Адреса не повинна перевищувати 200 символів.",
+    "venue_notes_label": "Примітки",
+    "venue_notes_placeholder": "Бронювання на 20:00",
+    "venue_notes_max": "Примітки не повинні перевищувати 300 символів.",
+    "cancel": "Скасувати",
+    "submit": "Створити клуб",
+    "submitting": "Створення…"
+  },
+  "CLUBS": {
+    "active": "Активний",
+    "all_cities": "Всі міста",
+    "cancelled": "Скасовано",
+    "create": "Створити клуб",
+    "join": "Приєднатися",
+    "member_badge": "✓ Учасник",
+    "member_singular": "учасник",
+    "members": "учасників",
+    "missed": "Пропущені",
+    "my_clubs": "Мої клуби",
+    "participated": "Відвідані",
+    "paused": "Призупинено",
+    "search_placeholder": "Шукати клуби...",
+    "search_placeholder_full": "Шукати за назвою або описом…",
+    "subtitle": "Знайдіть спільноти читачів поруч",
+    "title": "Книжкові клуби",
+    "view": "Переглянути",
+    "upcoming": "Найближчі зустрічі",
+    "joined": "Ви учасник",
+    "no_clubs": "Клубів не знайдено",
+    "book_current": "Поточна книга",
+    "days_until": "за {{ days }} дн."
+  },
+  "CLUB_DETAIL": {
+    "about": "Про клуб",
+    "back": "Назад до клубів",
+    "back_short": "Назад",
+    "cancel": "Скасувати",
+    "created": "Створено",
+    "join": "Приєднатись до клубу",
+    "leave": "Покинути клуб",
+    "manage_title": "Управління клубом",
+    "new_date": "Нова дата зустрічі",
+    "not_found": "Клуб не знайдено",
+    "organizer_badge": "✨ Організатор",
+    "pause": "Призупинити",
+    "private": "Приватний",
+    "quizzes_desc": "Створюйте та керуйте квізами",
+    "quizzes_title": "Квізи",
+    "randomizer_desc": "Обирайте наступну книгу",
+    "randomizer_title": "Рандомайзер",
+    "reschedule": "Перепланувати",
+    "reschedule_submit": "Перенести зустріч",
+    "members_title": "Учасники",
+    "tags_title": "Теги",
+    "organizer_title": "Організатор",
+    "meeting_info_title": "Місце та час зустрічі",
+    "duration_label": "Тривалість",
+    "minutes_abbr": "хв",
+    "address_label": "Адреса",
+    "view_on_map": "Переглянути на карті →",
+    "after_meeting_title": "Після зустрічі",
+    "deletion_countdown_prefix": "Цей клуб скасовано —",
+    "deletion_countdown_hours": "буде видалено через {{ hours }} год. {{ minutes }} хв.",
+    "deletion_countdown_minutes": "буде видалено через {{ minutes }} хв.",
+    "close_qr": "✕ Закрити"
+  },
+  "FOOTER": {
+    "privacy": "Конфіденційність",
+    "rights": "Усі права захищені",
+    "terms": "Умови"
+  },
+  "MEMBERS": {
+    "empty": "Немає учасників",
+    "member": "Учасник",
+    "organizer": "Організатор",
+    "show_qr": "QR",
+    "socials_hidden": "Приховано",
+    "title": "Учасники",
+    "kick": "Виключити",
+    "ban": "Заблокувати ▾",
+    "ban_1": "1 зустріч",
+    "ban_3": "3 зустрічі",
+    "ban_5": "5 зустрічей",
+    "ban_permanent": "Назавжди"
+  },
+  "NAV": {
+    "back_home": "← На головну",
+    "discover": "Огляд",
+    "join_free": "Приєднатись",
+    "login": "Увійти",
+    "logout": "Вийти",
+    "profile": "Профіль",
+    "signed_in_as": "Увійшли як",
+    "clubs": "Клуби",
+    "my_clubs": "Мої клуби",
+    "register": "Приєднатись"
+  },
+  "PROFILE": {
+    "active_badge": "✓ Активний",
+    "books_read": "Книг прочитано",
+    "clubs_joined": "Клубів приєднано",
+    "display_name_label": "Ім'я в додатку",
+    "display_name_min": "Мінімум 2 символи.",
+    "display_name_placeholder": "Ваше ім'я",
+    "display_name_required": "Ім'я є обов'язковим.",
+    "edit_profile": "Редагувати профіль",
+    "likes_received": "Отримано вподобань",
+    "member_since": "Учасник з",
+    "name_updated": "Ім'я оновлено!",
+    "no_stats": "Статистики ще немає — починайте приєднуватись до клубів і проходити квізи!",
+    "quizzes_taken": "Квізів пройдено",
+    "quizzes_won": "Квізів виграно",
+    "role_changed_prefix": "Роль змінено на",
+    "role_organizer": "Організатор",
+    "role_organizer_desc": "Створюйте клуби, проводьте квізи та керуйте учасниками.",
+    "role_reader": "Читач",
+    "role_reader_desc": "Відкривайте клуби, беріть участь у дискусіях і проходьте квізи.",
+    "role_subtitle": "Оберіть, як ви берете участь у книжкових клубах.",
+    "role_title": "Ваша роль",
+    "save": "Зберегти",
+    "save_name": "Зберегти ім'я",
+    "saving": "Збереження…",
+    "socials_public_label": "Показувати соціальні мережі всім учасникам клубів",
+    "socials_saved": "Соціальні мережі збережено!",
+    "socials_title": "Соціальні мережі",
+    "stats_title": "Статистика",
+    "title": "Особистий кабінет",
+    "saved": "Збережено!",
+    "role": "Роль",
+    "role_admin": "Адміністратор",
+    "meetings_attended": "Зустрічей відвідано",
+    "meetings_missed": "Зустрічей пропущено",
+    "randomizer_wins": "Перемог в рандомайзері"
+  },
+  "RANDOMIZER": {
+    "back_to_club": "← До клубу",
+    "history_title": "Попередні результати",
+    "members_title": "Учасники",
+    "no_members": "У цьому клубі поки немає учасників",
+    "purpose_label": "Питання / Мета рандомайзера",
+    "purpose_placeholder": "Наприклад: Хто представляє книгу?",
+    "save": "💾 Зберегти результат",
+    "saving": "⏳ Збереження…",
+    "select_all": "Обрати всіх",
+    "selected": "обрано",
+    "spin": "🎲 Крутити",
+    "spin_hint": "Натисніть «Крутити» щоб обрати учасника",
+    "spinning": "Вибираємо переможця…",
+    "spinning_btn": "⏳ Вибираємо…",
+    "subtitle": "Хто наступний? Нехай доля вирішує.",
+    "title": "Рандомайзер",
+    "no_history": "Немає результатів",
+    "error_min": "Оберіть щонайменше 2 учасників",
+    "winner": "Переможець"
+  },
+  "QUIZ": {
+    "title": "Квізи",
+    "create": "Створити квіз",
+    "take": "Почати",
+    "results": "Результати",
+    "score": "Рахунок"
+  },
+  "CHAT": {
+    "title": "Чат клубу",
+    "placeholder": "Написати повідомлення...",
+    "send": "Надіслати",
+    "no_messages": "Поки немає повідомлень",
+    "new_message": "Нове повідомлення",
+    "close": "Закрити чат",
+    "open": "Відкрити чат",
+    "rooms": "Кімнати"
+  },
+  "FORM_ERRORS": {
+    "required": "Це поле є обов'язковим.",
+    "email": "Введіть коректну адресу електронної пошти.",
+    "minlength": "Мінімум {{ requiredLength }} символів.",
+    "invalid": "Некоректне значення."
+  },
+  "SEO": {
+    "clubs_title": "Книжкові клуби | Book Club",
+    "clubs_description": "Знайдіть книжковий клуб у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+    "clubs_og_title": "Книжкові клуби",
+    "login_title": "Вхід | Book Club",
+    "register_title": "Реєстрація | Book Club",
+    "profile_title": "Профіль | Book Club",
+    "club_detail_title": "{{ name }} | Book Club",
+    "club_detail_og_title": "{{ name }}",
+    "site_name": "Book Club",
+    "site_url": "https://book-club-fe.vercel.app",
+    "site_description": "Читацькі клуби України"
+  }
+}
 ````
 
 ## File: src/app/features/clubs/create-club/create-club.component.ts
@@ -8412,7 +8431,7 @@ export class RegisterComponent {
   private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
     initialValue: '',
   });
-  protected readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
+  readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
     const pw = this._passwordValue();
     if (!pw || pw.length === 0) return null;
     if (pw.length < 8) return 'weak';
@@ -8759,142 +8778,6 @@ export class QuizService {
 }
 ````
 
-## File: src/app/core/auth/auth.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, resource, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { catchError, firstValueFrom, of } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
-import { TokenStore } from './token.store';
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-interface AuthResponse {
-  accessToken: string;
-  user: ApiUserProfile;
-}
-@Injectable({ providedIn: 'root' })
-export class AuthService {
-  private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
-  private readonly tokenStore = inject(TokenStore);
-  private readonly _currentUser = signal<UserProfile | null>(null);
-  private readonly _isLoading = signal<boolean>(true);
-  readonly currentUser = this._currentUser.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly isAuthenticated = computed(() => this._currentUser() !== null);
-  readonly userRole = computed(() => this._currentUser()?.role ?? null);
-  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
-  private readonly _statsResource = resource({
-    params: () => this._currentUser()?.id ?? null,
-    loader: ({ params: userId }) => {
-      if (!userId) return Promise.resolve(null as UserStats | null);
-      return firstValueFrom(
-        this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
-          catchError(() => of(null)),
-        ),
-      ).then(raw => (raw ? mapUserStats(raw) : null));
-    },
-  });
-  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
-  constructor() {
-    const token = this.tokenStore.snapshot();
-    if (token) {
-      firstValueFrom(
-        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
-          catchError(() => {
-            this.tokenStore.clear();
-            return of(null);
-          }),
-        ),
-      ).then(raw => {
-        this._currentUser.set(raw ? mapUserProfile(raw) : null);
-        this._isLoading.set(false);
-      });
-    } else {
-      this._isLoading.set(false);
-    }
-  }
-  async signUp(
-    email: string,
-    password: string,
-    displayName: string,
-    role: UserRole,
-  ): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
-          email,
-          password,
-          displayName,
-          role,
-        }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signIn(email: string, password: string): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signOut(): Promise<void> {
-    try {
-      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
-    } catch {  }
-    this.tokenStore.clear();
-    this._currentUser.set(null);
-    this.router.navigate(['/login']);
-  }
-  async updateRole(role: UserRole): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
-    );
-    this._currentUser.set({ ...user, role });
-  }
-  async updateDisplayName(name: string): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
-    );
-    this._currentUser.set({ ...user, displayName: name });
-  }
-  async updateSocials(socials: UserSocials): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
-    );
-    this._currentUser.set({ ...user, socials });
-  }
-  async setSocialsPublic(value: boolean): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
-        socialsPublic: value,
-      }),
-    );
-    this._currentUser.set({ ...user, socialsPublic: value });
-  }
-}
-````
-
 ## File: src/app/core/services/club.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -9108,6 +8991,145 @@ export class ClubService {
   private _updateClub(updated: Club): void {
     this._clubs.update(list => list.map(c => (c.id === updated.id ? updated : c)));
     this._myClubs.update(list => list.map(c => (c.id === updated.id ? updated : c)));
+  }
+}
+````
+
+## File: src/app/core/auth/auth.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, resource, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, firstValueFrom, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
+import { TokenStore } from './token.store';
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: ApiUserProfile;
+}
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly tokenStore = inject(TokenStore);
+  private readonly _currentUser = signal<UserProfile | null>(null);
+  private readonly _isLoading = signal<boolean>(true);
+  readonly currentUser = this._currentUser.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly isAuthenticated = computed(() => this._currentUser() !== null);
+  readonly userRole = computed(() => this._currentUser()?.role ?? null);
+  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
+  private readonly _statsResource = resource({
+    params: () => this._currentUser()?.id ?? null,
+    loader: ({ params: userId }) => {
+      if (!userId) return Promise.resolve(null as UserStats | null);
+      return firstValueFrom(
+        this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
+          catchError(() => of(null)),
+        ),
+      ).then(raw => (raw ? mapUserStats(raw) : null));
+    },
+  });
+  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
+  constructor() {
+    const token = this.tokenStore.snapshot();
+    if (token) {
+      firstValueFrom(
+        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
+          catchError(() => {
+            this.tokenStore.clear();
+            return of(null);
+          }),
+        ),
+      ).then(raw => {
+        this._currentUser.set(raw ? mapUserProfile(raw) : null);
+        this._isLoading.set(false);
+      });
+    } else {
+      this._isLoading.set(false);
+    }
+  }
+  async signUp(
+    email: string,
+    password: string,
+    displayName: string,
+    role: UserRole,
+  ): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
+          email,
+          password,
+          displayName,
+          role,
+        }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signIn(email: string, password: string): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signOut(): Promise<void> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
+    } catch {  }
+    this.tokenStore.clear();
+    this._currentUser.set(null);
+    this.router.navigate(['/login']);
+  }
+  async updateRole(role: UserRole): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
+    );
+    this._currentUser.set({ ...user, role });
+  }
+  async updateDisplayName(name: string): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
+    );
+    this._currentUser.set({ ...user, displayName: name });
+  }
+  async updateSocials(socials: UserSocials): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
+    );
+    this._currentUser.set({ ...user, socials });
+  }
+  async setSocialsPublic(value: boolean): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
+        socialsPublic: value,
+      }),
+    );
+    this._currentUser.set({ ...user, socialsPublic: value });
   }
 }
 ````
