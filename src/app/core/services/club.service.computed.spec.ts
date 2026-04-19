@@ -10,13 +10,13 @@ const API = environment.apiUrl;
 
 function makeApiClub(overrides: Record<string, unknown> = {}) {
   return {
-    id: 'c1', name: 'Alpha', description: 'Desc', cover_url: null,
-    organizer_id: 'user-1', is_public: true, member_count: 5,
-    created_at: '2024-01-01', city: 'Kyiv',
-    next_meeting_date: '2025-06-01', address: null, lat: null, lng: null,
-    theme: null, current_book: null, member_previews: [],
-    status: 'active', tags: [], meeting_duration_minutes: null,
-    after_meeting_venue: null, ...overrides,
+    id: 'c1', name: 'Alpha', description: 'Desc', coverUrl: null,
+    organizerId: 'user-1', isPublic: true, memberCount: 5,
+    createdAt: '2024-01-01', city: 'Kyiv',
+    nextMeetingDate: '2025-06-01', address: null, lat: null, lng: null,
+    theme: null, currentBook: null, memberPreviews: [],
+    status: 'active', tags: [], meetingDurationMinutes: null,
+    afterMeetingVenue: null, ...overrides,
   };
 }
 
@@ -63,7 +63,7 @@ describe('ClubService – computed signals and additional methods', () => {
   describe('loadMyClubs', () => {
     it('populates myClubs signal', async () => {
       const p = service.loadMyClubs();
-      httpMock.expectOne(`${API}/clubs/my`).flush([makeApiClub({ id: 'c2', organizer_id: 'user-1' })]);
+      httpMock.expectOne(`${API}/clubs/my`).flush([makeApiClub({ id: 'c2', organizerId: 'user-1' })]);
       await p;
       expect(service.myClubs().length).toBe(1);
     });
@@ -125,9 +125,9 @@ describe('ClubService – computed signals and additional methods', () => {
     beforeEach(async () => {
       const p = service.loadPublicClubs();
       httpMock.expectOne(`${API}/clubs`).flush([
-        makeApiClub({ id: 'c1', city: 'Kyiv', next_meeting_date: '2025-06-01' }),
-        makeApiClub({ id: 'c2', city: 'Lviv', next_meeting_date: '2025-07-01' }),
-        makeApiClub({ id: 'c3', city: 'Kyiv', next_meeting_date: null }),
+        makeApiClub({ id: 'c1', city: 'Kyiv', nextMeetingDate: '2025-06-01' }),
+        makeApiClub({ id: 'c2', city: 'Lviv', nextMeetingDate: '2025-07-01' }),
+        makeApiClub({ id: 'c3', city: 'Kyiv', nextMeetingDate: null }),
       ]);
       await p;
     });
@@ -153,7 +153,7 @@ describe('ClubService – computed signals and additional methods', () => {
     it('upcomingByCity groups clubs with meetings by city', () => {
       const byCity = service.upcomingByCity();
       expect(byCity['Kyiv']).toBeDefined();
-      expect(byCity['Kyiv'].length).toBe(1); // c3 has null next_meeting_date
+      expect(byCity['Kyiv'].length).toBe(1); // c3 has null nextMeetingDate
       expect(byCity['Lviv']).toBeDefined();
     });
 
@@ -169,8 +169,8 @@ describe('ClubService – computed signals and additional methods', () => {
     beforeEach(async () => {
       const p = service.loadPublicClubs();
       httpMock.expectOne(`${API}/clubs`).flush([
-        makeApiClub({ id: 'c1', organizer_id: 'user-1' }),
-        makeApiClub({ id: 'c2', organizer_id: 'user-2' }),
+        makeApiClub({ id: 'c1', organizerId: 'user-1' }),
+        makeApiClub({ id: 'c2', organizerId: 'user-2' }),
       ]);
       await p;
     });
@@ -196,7 +196,7 @@ describe('ClubService – computed signals and additional methods', () => {
   describe('leaveClub', () => {
     beforeEach(async () => {
       const p = service.loadPublicClubs();
-      httpMock.expectOne(`${API}/clubs`).flush([makeApiClub({ id: 'c1', member_count: 5 })]);
+      httpMock.expectOne(`${API}/clubs`).flush([makeApiClub({ id: 'c1', memberCount: 5 })]);
       await p;
     });
 
@@ -236,8 +236,8 @@ describe('ClubService – computed signals and additional methods', () => {
     it('rescheduleMeeting sends PATCH with new_date', async () => {
       const p = service.rescheduleMeeting('c1', '2025-08-01');
       const req = httpMock.expectOne(`${API}/clubs/c1/reschedule`);
-      expect(req.request.body).toEqual({ new_date: '2025-08-01' });
-      req.flush(makeApiClub({ id: 'c1', next_meeting_date: '2025-08-01' }));
+      expect(req.request.body).toEqual({ newDate: '2025-08-01' });
+      req.flush(makeApiClub({ id: 'c1', nextMeetingDate: '2025-08-01' }));
       await p;
     });
   });

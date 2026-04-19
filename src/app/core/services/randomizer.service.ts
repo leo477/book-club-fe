@@ -8,38 +8,38 @@ import { environment } from '../../../environments/environment';
 
 // Raw API shapes (snake_case from FastAPI)
 interface ApiMemberCandidate {
-  user_id: string;
-  display_name: string;
-  avatar_url: string | null;
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
 }
 
 interface ApiRandomizerSession {
   id: string;
-  club_id: string;
-  created_by: string;
+  clubId: string;
+  createdBy: string;
   purpose: string;
   candidates: ApiMemberCandidate[];
   result: ApiMemberCandidate | null;
-  created_at: string;
+  createdAt: string;
 }
 
 function mapMemberCandidate(raw: ApiMemberCandidate): MemberCandidate {
   return {
-    userId: raw.user_id,
-    displayName: raw.display_name,
-    avatarUrl: raw.avatar_url,
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
   };
 }
 
 function mapRandomizerSession(raw: ApiRandomizerSession): RandomizerSession {
   return {
     id: raw.id,
-    clubId: raw.club_id,
-    createdBy: raw.created_by,
+    clubId: raw.clubId,
+    createdBy: raw.createdBy,
     purpose: raw.purpose,
     candidates: raw.candidates.map(mapMemberCandidate),
     result: raw.result ? mapMemberCandidate(raw.result) : null,
-    createdAt: raw.created_at,
+    createdAt: raw.createdAt,
   };
 }
 

@@ -12,9 +12,9 @@ const rawProfile = {
   id: 'u1',
   email: 'test@test.com',
   role: 'user' as const,
-  display_name: 'Test User',
-  avatar_url: null,
-  created_at: '2024-01-01',
+  displayName: 'Test User',
+  avatarUrl: null,
+  createdAt: '2024-01-01',
 };
 
 function buildService() {
@@ -147,7 +147,7 @@ describe('AuthService', () => {
       const { service } = buildService();
       const p = service.signIn('test@test.com', 'password');
       const req = httpMock.expectOne(`${API}/auth/login`);
-      req.flush({ access_token: 'new-token', user: rawProfile });
+      req.flush({ accessToken: 'new-token', user: rawProfile });
       const result = await p;
       expect(result.error).toBeNull();
       expect(tokenStoreSpy.set).toHaveBeenCalledWith('new-token');
@@ -194,10 +194,10 @@ describe('AuthService', () => {
       expect(req.request.body).toEqual({
         email: 'test@test.com',
         password: 'password',
-        display_name: 'Test User',
+        displayName: 'Test User',
         role: 'user',
       });
-      req.flush({ access_token: 'new-token', user: rawProfile });
+      req.flush({ accessToken: 'new-token', user: rawProfile });
       const result = await p;
       expect(result.error).toBeNull();
       expect(tokenStoreSpy.set).toHaveBeenCalledWith('new-token');
@@ -279,7 +279,7 @@ describe('AuthService', () => {
       // Sign in first to set currentUser
       const { service } = buildService();
       const p = service.signIn('test@test.com', 'password');
-      httpMock.expectOne(`${API}/auth/login`).flush({ access_token: 'token', user: rawProfile });
+      httpMock.expectOne(`${API}/auth/login`).flush({ accessToken: 'token', user: rawProfile });
       await p;
     });
 
@@ -324,7 +324,7 @@ describe('AuthService', () => {
     it('updates displayName in currentUser', async () => {
       const { service } = buildService();
       const loginP = service.signIn('test@test.com', 'password');
-      httpMock.expectOne(`${API}/auth/login`).flush({ access_token: 'token', user: rawProfile });
+      httpMock.expectOne(`${API}/auth/login`).flush({ accessToken: 'token', user: rawProfile });
       await loginP;
 
       const p = service.updateDisplayName('New Name');
@@ -364,7 +364,7 @@ describe('AuthService', () => {
     it('updates socials in currentUser', async () => {
       const { service } = buildService();
       const loginP = service.signIn('test@test.com', 'password');
-      httpMock.expectOne(`${API}/auth/login`).flush({ access_token: 'token', user: rawProfile });
+      httpMock.expectOne(`${API}/auth/login`).flush({ accessToken: 'token', user: rawProfile });
       await loginP;
 
       const p = service.updateSocials({ github: 'myuser' });
@@ -404,7 +404,7 @@ describe('AuthService', () => {
     it('updates socialsPublic in currentUser', async () => {
       const { service } = buildService();
       const loginP = service.signIn('test@test.com', 'password');
-      httpMock.expectOne(`${API}/auth/login`).flush({ access_token: 'token', user: rawProfile });
+      httpMock.expectOne(`${API}/auth/login`).flush({ accessToken: 'token', user: rawProfile });
       await loginP;
 
       const p = service.setSocialsPublic(true);

@@ -140,11 +140,11 @@ export class ClubService {
       this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
         name: payload.name,
         description: payload.description,
-        is_public: payload.isPublic,
+        isPublic: payload.isPublic,
         city: payload.city,
         tags: payload.tags ?? [],
-        meeting_duration_minutes: payload.meetingDurationMinutes ?? null,
-        after_meeting_venue: payload.afterMeetingVenue ?? null,
+        meetingDurationMinutes: payload.meetingDurationMinutes ?? null,
+        afterMeetingVenue: payload.afterMeetingVenue ?? null,
       }),
     );
     const club = mapClub(raw);
@@ -155,7 +155,7 @@ export class ClubService {
 
   async joinClub(clubId: string): Promise<void> {
     await firstValueFrom(
-      this.http.post<{ member_count: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
+      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
     );
     this._clubs.update(list =>
       list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
@@ -195,7 +195,7 @@ export class ClubService {
   async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
     const raw = await firstValueFrom(
       this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/reschedule`, {
-        new_date: newDate,
+        newDate,
       }),
     );
     this._updateClub(mapClub(raw));

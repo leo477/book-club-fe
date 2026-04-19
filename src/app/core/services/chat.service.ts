@@ -13,10 +13,10 @@ interface ApiChatRoom {
 
 interface ApiChatMessage {
   id: string;
-  sender_id: string;
-  sender_name: string;
+  senderId: string;
+  senderName: string;
   text: string;
-  created_at: string; // ISO-8601
+  timestamp: string; // ISO-8601
 }
 
 // ── Service ──────────────────────────────────────────────────────────────────
@@ -137,11 +137,11 @@ export class ChatService {
   private mapMessage(m: ApiChatMessage): ChatMessage {
     return {
       id: m.id,
-      senderId: m.sender_id,
-      senderName: m.sender_name,
+      senderId: m.senderId,
+      senderName: m.senderName,
       text: m.text,
-      timestamp: new Date(m.created_at),
-      isOwn: m.sender_id === this.currentUserId,
+      timestamp: new Date(m.timestamp),
+      isOwn: m.senderId === this.currentUserId,
     };
   }
 }

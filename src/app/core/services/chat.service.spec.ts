@@ -125,10 +125,10 @@ describe('ChatService', () => {
       // Flush a message sent by the same user — it should be marked isOwn
       msgsReq.flush([{
         id: 'msg-1',
-        sender_id: 'user-42',
-        sender_name: 'Alice',
+        senderId: 'user-42',
+        senderName: 'Alice',
         text: 'Hi',
-        created_at: '2024-01-01T00:00:00Z',
+        timestamp: '2024-01-01T00:00:00Z',
       }]);
 
       await Promise.resolve();
@@ -183,8 +183,8 @@ describe('ChatService', () => {
 
       const req = httpMock.expectOne(`${API}/chat/rooms/room-3/messages`);
       req.flush([
-        { id: 'msg-3-1', sender_id: 'u1', sender_name: 'Alice', text: 'Hi', created_at: '2024-01-01T00:00:00Z' },
-        { id: 'msg-3-2', sender_id: 'u2', sender_name: 'Bob', text: 'Hey', created_at: '2024-01-01T00:01:00Z' },
+        { id: 'msg-3-1', senderId: 'u1', senderName: 'Alice', text: 'Hi', timestamp: '2024-01-01T00:00:00Z' },
+        { id: 'msg-3-2', senderId: 'u2', senderName: 'Bob', text: 'Hey', timestamp: '2024-01-01T00:01:00Z' },
       ]);
 
       // Wait for the firstValueFrom .then() to update the signal
@@ -218,7 +218,7 @@ describe('ChatService', () => {
       expect(postReq.request.body).toEqual({ text: 'Hello world' });
 
       // Flush the POST response, which triggers a reload via .then()
-      postReq.flush({ id: 'new-msg', sender_id: 'user-99', sender_name: 'TestUser', text: 'Hello world', created_at: '2024-01-01T00:00:00Z' });
+      postReq.flush({ id: 'new-msg', senderId: 'user-99', senderName: 'TestUser', text: 'Hello world', timestamp: '2024-01-01T00:00:00Z' });
 
       // Wait for the .then() microtask to run before expecting the GET
       await Promise.resolve();
@@ -226,7 +226,7 @@ describe('ChatService', () => {
       // Now the reload GET should be expected
       const getReq = httpMock.expectOne(`${API}/chat/rooms/room-1/messages`);
       getReq.flush([
-        { id: 'new-msg', sender_id: 'user-99', sender_name: 'TestUser', text: 'Hello world', created_at: '2024-01-01T00:00:00Z' }
+        { id: 'new-msg', senderId: 'user-99', senderName: 'TestUser', text: 'Hello world', timestamp: '2024-01-01T00:00:00Z' }
       ]);
 
       await Promise.resolve();

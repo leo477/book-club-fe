@@ -289,7 +289,12 @@ vercel.json
       "Bash(curl -s \"https://sonarcloud.io/api/qualitygates/project_status?projectKey=leo477_book-club-fe\")",
       "Bash(curl -s \"https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&types=BUG,VULNERABILITY,CODE_SMELL&severities=BLOCKER,CRITICAL,MAJOR&ps=20\")",
       "Bash(curl -s \"https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&ps=50\")",
-      "Bash(curl -s \"https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&sinceLeakPeriod=true&ps=50\")"
+      "Bash(curl -s \"https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&sinceLeakPeriod=true&ps=50\")",
+      "Bash(grep -E \"\\\\.\\(ts|html\\)$\")",
+      "Bash(curl -s -I -X OPTIONS https://book-club-be.onrender.com/api/v1/auth/login -H 'Origin: http://localhost:4200' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type,authorization')",
+      "Bash(curl *)",
+      "Bash(grep -A2 \"FAILED$\")",
+      "Bash(npx jest *)"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -672,163 +677,6 @@ for (const outputPath of OUTPUT_FILES) {
   const merged = mergeDeep(existing, extractedNested);
   writeFileSync(outputPath, JSON.stringify(merged, null, 2) + '\n', 'utf8');
   console.log(`  ✅ Updated ${outputPath}${CLEAN ? ' (cleaned)' : ''}`);
-}
-````
-
-## File: src/app/core/api/api-error.util.ts
-````typescript
-import { HttpErrorResponse } from '@angular/common/http';
-export function extractApiError(err: unknown): string {
-  if (err instanceof HttpErrorResponse) {
-    return (err.error as { detail?: string })?.detail ?? err.message ?? 'Unknown error';
-  }
-  return 'Unknown error';
-}
-````
-
-## File: src/app/core/api/api-mappers.ts
-````typescript
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-import { AfterMeetingVenue, BanDuration, BanRecord, Club, ClubBook, ClubMemberDetail, ClubStatus } from '../models/club.model';
-export interface ApiUserProfile {
-  id: string;
-  email: string;
-  role: UserRole;
-  display_name: string;
-  avatar_url: string | null;
-  created_at: string;
-  socials?: ApiUserSocials | null;
-  socials_public?: boolean;
-}
-export interface ApiUserSocials {
-  telegram?: string | null;
-  instagram?: string | null;
-  twitter?: string | null;
-  linkedin?: string | null;
-  github?: string | null;
-  goodreads?: string | null;
-}
-export interface ApiUserStats {
-  clubs_joined: number;
-  clubs_organized: number;
-  meetings_attended: number;
-  quizzes_taken: number;
-}
-export interface ApiClub {
-  id: string;
-  name: string;
-  description: string | null;
-  cover_url: string | null;
-  organizer_id: string;
-  is_public: boolean;
-  member_count: number;
-  created_at: string;
-  city: string | null;
-  next_meeting_date: string | null;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  theme: string | null;
-  current_book: string | null;
-  member_previews: string[];
-  status: ClubStatus;
-  tags: string[];
-  meeting_duration_minutes: number | null;
-  after_meeting_venue: AfterMeetingVenue | null;
-  cancelled_at?: string | null;
-}
-export interface ApiClubMember {
-  user_id: string;
-  display_name: string;
-  avatar_url: string | null;
-  role: 'organizer' | 'member';
-  socials?: ApiUserSocials | null;
-  socials_public?: boolean;
-}
-export interface ApiBanRecord {
-  user_id: string;
-  club_id: string;
-  banned_at: string;
-  duration: BanDuration;
-  banned_by: string;
-}
-export function mapUserProfile(raw: ApiUserProfile): UserProfile {
-  return {
-    id: raw.id,
-    role: raw.role,
-    displayName: raw.display_name,
-    avatarUrl: raw.avatar_url,
-    createdAt: raw.created_at,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socials_public ?? false,
-  };
-}
-export function mapUserStats(raw: ApiUserStats): UserStats {
-  return {
-    clubsJoined: raw.clubs_joined,
-    quizzesTaken: raw.quizzes_taken,
-    quizWins: 0,
-    likesReceived: 0,
-    booksRead: 0,
-  };
-}
-export function mapClub(raw: ApiClub): Club {
-  let currentBook: ClubBook | null = null;
-  if (raw.current_book) {
-    currentBook = { title: raw.current_book, author: '', description: '' };
-  }
-  return {
-    id: raw.id,
-    name: raw.name,
-    description: raw.description,
-    coverUrl: raw.cover_url,
-    organizerId: raw.organizer_id,
-    isPublic: raw.is_public,
-    memberCount: raw.member_count,
-    createdAt: raw.created_at,
-    city: raw.city ?? '',
-    nextMeetingDate: raw.next_meeting_date,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    theme: raw.theme,
-    currentBook,
-    memberPreviews: raw.member_previews,
-    status: raw.status,
-    tags: raw.tags,
-    meetingDurationMinutes: raw.meeting_duration_minutes,
-    afterMeetingVenue: raw.after_meeting_venue,
-    cancelledAt: raw.cancelled_at ?? undefined,
-  };
-}
-export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
-  return {
-    userId: raw.user_id,
-    displayName: raw.display_name,
-    avatarUrl: raw.avatar_url,
-    role: raw.role,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socials_public ?? false,
-  };
-}
-export function mapBanRecord(raw: ApiBanRecord): BanRecord {
-  return {
-    userId: raw.user_id,
-    clubId: raw.club_id,
-    bannedAt: raw.banned_at,
-    duration: raw.duration,
-    bannedBy: raw.banned_by,
-  };
-}
-function mapSocials(raw: ApiUserSocials): UserSocials {
-  return {
-    telegram: raw.telegram ?? undefined,
-    instagram: raw.instagram ?? undefined,
-    twitter: raw.twitter ?? undefined,
-    linkedin: raw.linkedin ?? undefined,
-    github: raw.github ?? undefined,
-    goodreads: raw.goodreads ?? undefined,
-  };
 }
 ````
 
@@ -2757,6 +2605,181 @@ jobs:
   <url><loc>https://book-club-fe.vercel.app/login</loc><lastmod>2025-01-01</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>
   <url><loc>https://book-club-fe.vercel.app/register</loc><lastmod>2025-01-01</lastmod><changefreq>monthly</changefreq><priority>0.3</priority></url>
 </urlset>
+````
+
+## File: src/app/core/api/api-error.util.ts
+````typescript
+import { HttpErrorResponse } from '@angular/common/http';
+export function extractApiError(err: unknown): string {
+  if (err instanceof HttpErrorResponse) {
+    const detail = (err.error as { detail?: unknown })?.detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) return (detail[0] as { msg?: string })?.msg ?? err.message ?? 'Unknown error';
+    if (detail && typeof detail === 'object') return (detail as { error?: string }).error ?? err.message ?? 'Unknown error';
+    return err.message ?? 'Unknown error';
+  }
+  return 'Unknown error';
+}
+````
+
+## File: src/app/core/api/api-mappers.ts
+````typescript
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+import { AfterMeetingVenue, BanDuration, BanRecord, Club, ClubBook, ClubMemberDetail, ClubStatus } from '../models/club.model';
+export interface ApiUserProfile {
+  id: string;
+  email: string;
+  role: UserRole;
+  displayName: string;
+  avatarUrl: string | null;
+  createdAt: string;
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export interface ApiUserSocials {
+  telegram?: string | null;
+  instagram?: string | null;
+  twitter?: string | null;
+  linkedin?: string | null;
+  github?: string | null;
+  goodreads?: string | null;
+}
+export interface ApiUserStats {
+  clubsJoined: number;
+  quizzesTaken: number;
+  quizWins: number;
+  likesReceived: number;
+  booksRead: number;
+}
+interface ApiMeetingHistoryItem {
+  id: string;
+  date: string;
+  status: 'held' | 'cancelled' | 'rescheduled';
+  notes?: string;
+}
+export interface ApiClub {
+  id: string;
+  name: string;
+  description: string | null;
+  coverUrl: string | null;
+  organizerId: string;
+  isPublic: boolean;
+  memberCount: number;
+  createdAt: string;
+  city: string | null;
+  nextMeetingDate: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  theme: string | null;
+  currentBook: string | null;
+  memberPreviews: string[];
+  status: ClubStatus;
+  tags: string[];
+  meetingDurationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  cancelledAt?: string | null;
+  meetingHistory?: ApiMeetingHistoryItem[] | null;
+}
+export interface ApiClubMember {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: 'organizer' | 'member';
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export interface ApiBanRecord {
+  userId: string;
+  clubId: string;
+  bannedAt: string;
+  duration: BanDuration;
+  bannedBy: string;
+}
+export function mapUserProfile(raw: ApiUserProfile): UserProfile {
+  return {
+    id: raw.id,
+    role: raw.role,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    createdAt: raw.createdAt,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
+}
+export function mapUserStats(raw: ApiUserStats): UserStats {
+  return {
+    clubsJoined: raw.clubsJoined,
+    quizzesTaken: raw.quizzesTaken,
+    quizWins: raw.quizWins,
+    likesReceived: raw.likesReceived,
+    booksRead: raw.booksRead,
+  };
+}
+export function mapClub(raw: ApiClub): Club {
+  let currentBook: ClubBook | null = null;
+  if (raw.currentBook) {
+    currentBook = { title: raw.currentBook, author: '', description: '' };
+  }
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description,
+    coverUrl: raw.coverUrl,
+    organizerId: raw.organizerId,
+    isPublic: raw.isPublic,
+    memberCount: raw.memberCount,
+    createdAt: raw.createdAt,
+    city: raw.city ?? '',
+    nextMeetingDate: raw.nextMeetingDate,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    theme: raw.theme,
+    currentBook,
+    memberPreviews: raw.memberPreviews,
+    status: raw.status,
+    tags: raw.tags,
+    meetingDurationMinutes: raw.meetingDurationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    cancelledAt: raw.cancelledAt ?? undefined,
+    meetingHistory: raw.meetingHistory?.map(h => ({
+      id: h.id,
+      date: h.date,
+      status: h.status,
+      notes: h.notes,
+    })),
+  };
+}
+export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
+  return {
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    role: raw.role,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
+}
+export function mapBanRecord(raw: ApiBanRecord): BanRecord {
+  return {
+    userId: raw.userId,
+    clubId: raw.clubId,
+    bannedAt: raw.bannedAt,
+    duration: raw.duration,
+    bannedBy: raw.bannedBy,
+  };
+}
+function mapSocials(raw: ApiUserSocials): UserSocials {
+  return {
+    telegram: raw.telegram ?? undefined,
+    instagram: raw.instagram ?? undefined,
+    twitter: raw.twitter ?? undefined,
+    linkedin: raw.linkedin ?? undefined,
+    github: raw.github ?? undefined,
+    goodreads: raw.goodreads ?? undefined,
+  };
+}
 ````
 
 ## File: src/app/core/auth/auth.guard.ts
@@ -4978,124 +5001,6 @@ jobs:
         continue-on-error: true
 ````
 
-## File: src/app/core/services/chat.service.ts
-````typescript
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { ChatMessage, ChatRoom } from '../models/chat.model';
-import { environment } from '../../../environments/environment';
-interface ApiChatRoom {
-  id: string;
-  name: string;
-}
-interface ApiChatMessage {
-  id: string;
-  sender_id: string;
-  sender_name: string;
-  text: string;
-  created_at: string;
-}
-@Injectable({ providedIn: 'root' })
-export class ChatService {
-  private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _rooms = signal<ChatRoom[]>([]);
-  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
-  private readonly _activeRoomId = signal<string | null>(null);
-  private readonly _unreadCount = signal<number>(0);
-  private readonly _isOpen = signal<boolean>(false);
-  private readonly _hasNewMessage = signal<boolean>(false);
-  private currentUserId: string | null = null;
-  readonly rooms = this._rooms.asReadonly();
-  readonly messages = this._messages.asReadonly();
-  readonly activeRoomId = this._activeRoomId.asReadonly();
-  readonly unreadCount = this._unreadCount.asReadonly();
-  readonly isOpen = this._isOpen.asReadonly();
-  readonly hasNewMessage = this._hasNewMessage.asReadonly();
-  readonly activeRoom = computed(() =>
-    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
-  );
-  readonly activeMessages = computed(
-    () => this._messages()[this._activeRoomId() ?? ''] ?? [],
-  );
-  // ── Public API ────────────────────────────────────────────────────────────
-  /** Fetch chat rooms for a given club and seed the rooms signal. */
-  loadRooms(clubId: string, userId?: string): void {
-    if (userId !== undefined) {
-      this.currentUserId = userId;
-    }
-    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
-      .then(raw => {
-        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name }));
-        this._rooms.set(rooms);
-        // Auto-select the first room when none is active or active room is gone.
-        const currentId = this._activeRoomId();
-        if (!currentId || !rooms.some(r => r.id === currentId)) {
-          const first = rooms[0];
-          if (first) {
-            this._activeRoomId.set(first.id);
-            this.loadMessages(first.id);
-          }
-        }
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
-  }
-  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
-    const query: Record<string, string> = {};
-    if (params?.before) query['before'] = params.before;
-    if (params?.limit != null) query['limit'] = String(params.limit);
-    firstValueFrom(
-      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
-        params: query,
-      }),
-    )
-      .then(raw => {
-        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
-        this._messages.update(map => ({ ...map, [roomId]: msgs }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
-  }
-  toggleOpen(): void {
-    this._isOpen.update(v => !v);
-    if (this._isOpen()) {
-      this.markAsRead();
-    }
-  }
-  openRoom(roomId: string): void {
-    this._activeRoomId.set(roomId);
-    this.loadMessages(roomId);
-    this.markAsRead();
-  }
-  markAsRead(): void {
-    this._unreadCount.set(0);
-    this._hasNewMessage.set(false);
-  }
-  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    this.currentUserId = currentUser.id;
-    firstValueFrom(
-      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
-    )
-      .then(() => {
-        this.loadMessages(roomId);
-      })
-      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
-  }
-  private mapMessage(m: ApiChatMessage): ChatMessage {
-    return {
-      id: m.id,
-      senderId: m.sender_id,
-      senderName: m.sender_name,
-      text: m.text,
-      timestamp: new Date(m.created_at),
-      isOwn: m.sender_id === this.currentUserId,
-    };
-  }
-}
-````
-
 ## File: src/app/features/clubs/clubs.routes.ts
 ````typescript
 import { Routes } from '@angular/router';
@@ -6594,6 +6499,124 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 };
 ````
 
+## File: src/app/core/services/chat.service.ts
+````typescript
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { ChatMessage, ChatRoom } from '../models/chat.model';
+import { environment } from '../../../environments/environment';
+interface ApiChatRoom {
+  id: string;
+  name: string;
+}
+interface ApiChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: string;
+}
+@Injectable({ providedIn: 'root' })
+export class ChatService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _rooms = signal<ChatRoom[]>([]);
+  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
+  private readonly _activeRoomId = signal<string | null>(null);
+  private readonly _unreadCount = signal<number>(0);
+  private readonly _isOpen = signal<boolean>(false);
+  private readonly _hasNewMessage = signal<boolean>(false);
+  private currentUserId: string | null = null;
+  readonly rooms = this._rooms.asReadonly();
+  readonly messages = this._messages.asReadonly();
+  readonly activeRoomId = this._activeRoomId.asReadonly();
+  readonly unreadCount = this._unreadCount.asReadonly();
+  readonly isOpen = this._isOpen.asReadonly();
+  readonly hasNewMessage = this._hasNewMessage.asReadonly();
+  readonly activeRoom = computed(() =>
+    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
+  );
+  readonly activeMessages = computed(
+    () => this._messages()[this._activeRoomId() ?? ''] ?? [],
+  );
+  // ── Public API ────────────────────────────────────────────────────────────
+  /** Fetch chat rooms for a given club and seed the rooms signal. */
+  loadRooms(clubId: string, userId?: string): void {
+    if (userId !== undefined) {
+      this.currentUserId = userId;
+    }
+    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
+      .then(raw => {
+        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name }));
+        this._rooms.set(rooms);
+        // Auto-select the first room when none is active or active room is gone.
+        const currentId = this._activeRoomId();
+        if (!currentId || !rooms.some(r => r.id === currentId)) {
+          const first = rooms[0];
+          if (first) {
+            this._activeRoomId.set(first.id);
+            this.loadMessages(first.id);
+          }
+        }
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
+  }
+  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
+    const query: Record<string, string> = {};
+    if (params?.before) query['before'] = params.before;
+    if (params?.limit != null) query['limit'] = String(params.limit);
+    firstValueFrom(
+      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
+        params: query,
+      }),
+    )
+      .then(raw => {
+        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
+        this._messages.update(map => ({ ...map, [roomId]: msgs }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
+  }
+  toggleOpen(): void {
+    this._isOpen.update(v => !v);
+    if (this._isOpen()) {
+      this.markAsRead();
+    }
+  }
+  openRoom(roomId: string): void {
+    this._activeRoomId.set(roomId);
+    this.loadMessages(roomId);
+    this.markAsRead();
+  }
+  markAsRead(): void {
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+  }
+  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    this.currentUserId = currentUser.id;
+    firstValueFrom(
+      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
+    )
+      .then(() => {
+        this.loadMessages(roomId);
+      })
+      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
+  }
+  private mapMessage(m: ApiChatMessage): ChatMessage {
+    return {
+      id: m.id,
+      senderId: m.senderId,
+      senderName: m.senderName,
+      text: m.text,
+      timestamp: new Date(m.timestamp),
+      isOwn: m.senderId === this.currentUserId,
+    };
+  }
+}
+````
+
 ## File: src/app/features/clubs/create-club/create-club.component.html
 ````html
 <main class="min-h-screen flex items-center justify-center p-4">
@@ -7959,140 +7982,6 @@ export const appConfig: ApplicationConfig = {
 </div>
 ````
 
-## File: src/app/core/services/randomizer.service.ts
-````typescript
-import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { AuthService } from '../auth/auth.service';
-import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
-import { ApiClubMember, mapClubMember } from '../api/api-mappers';
-import { environment } from '../../../environments/environment';
-interface ApiMemberCandidate {
-  user_id: string;
-  display_name: string;
-  avatar_url: string | null;
-}
-interface ApiRandomizerSession {
-  id: string;
-  club_id: string;
-  created_by: string;
-  purpose: string;
-  candidates: ApiMemberCandidate[];
-  result: ApiMemberCandidate | null;
-  created_at: string;
-}
-function mapMemberCandidate(raw: ApiMemberCandidate): MemberCandidate {
-  return {
-    userId: raw.user_id,
-    displayName: raw.display_name,
-    avatarUrl: raw.avatar_url,
-  };
-}
-function mapRandomizerSession(raw: ApiRandomizerSession): RandomizerSession {
-  return {
-    id: raw.id,
-    clubId: raw.club_id,
-    createdBy: raw.created_by,
-    purpose: raw.purpose,
-    candidates: raw.candidates.map(mapMemberCandidate),
-    result: raw.result ? mapMemberCandidate(raw.result) : null,
-    createdAt: raw.created_at,
-  };
-}
-@Injectable({ providedIn: 'root' })
-export class RandomizerService {
-  private readonly http = inject(HttpClient);
-  private readonly auth = inject(AuthService);
-  private readonly apiUrl = environment.apiUrl;
-  private readonly _candidates = signal<MemberCandidate[]>([]);
-  private readonly _selectedIds = signal<Set<string>>(new Set());
-  private readonly _result = signal<MemberCandidate | null>(null);
-  private readonly _isSpinning = signal(false);
-  private readonly _history = signal<RandomizerSession[]>([]);
-  private readonly _purpose = signal('Хто представляє книгу?');
-  readonly candidates = this._candidates.asReadonly();
-  readonly selectedIds = this._selectedIds.asReadonly();
-  readonly result = this._result.asReadonly();
-  readonly isSpinning = this._isSpinning.asReadonly();
-  readonly history = this._history.asReadonly();
-  readonly purpose = this._purpose.asReadonly();
-  setPurpose(purpose: string): void {
-    this._purpose.set(purpose);
-  }
-  async loadClubMembers(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiClubMember[]>(`${this.apiUrl}/clubs/${clubId}/members`),
-    );
-    const members: MemberCandidate[] = raw.map(m => {
-      const detail = mapClubMember(m);
-      return { userId: detail.userId, displayName: detail.displayName, avatarUrl: detail.avatarUrl };
-    });
-    this._candidates.set(members);
-    this._selectedIds.set(new Set(members.map(m => m.userId)));
-    this._result.set(null);
-  }
-  toggleMember(userId: string): void {
-    this._selectedIds.update(prev => {
-      const next = new Set(prev);
-      if (next.has(userId)) {
-        next.delete(userId);
-      } else {
-        next.add(userId);
-      }
-      return next;
-    });
-  }
-  async spin(): Promise<void> {
-    const selected = this._candidates().filter(m => this._selectedIds().has(m.userId));
-    if (selected.length < 2) throw new Error('Потрібно мінімум 2 учасники');
-    this._isSpinning.set(true);
-    this._result.set(null);
-    await new Promise<void>(resolve => setTimeout(resolve, 2000));
-    const max = Math.floor(0x100000000 / selected.length) * selected.length;
-    let rand: number;
-    do {
-      rand = crypto.getRandomValues(new Uint32Array(1))[0];
-    } while (rand >= max);
-    const idx = rand % selected.length;
-    this._result.set(selected[idx]);
-    this._isSpinning.set(false);
-  }
-  async saveSession(clubId: string): Promise<void> {
-    const user = this.auth.currentUser();
-    if (!user) throw new Error('Not authenticated');
-    const result = this._result();
-    if (!result) throw new Error('No result to save');
-    const body = {
-      purpose: this._purpose(),
-      candidates: this._candidates()
-        .filter(m => this._selectedIds().has(m.userId))
-        .map(m => m.userId),
-      result: result.userId,
-    };
-    const raw = await firstValueFrom(
-      this.http.post<ApiRandomizerSession>(
-        `${this.apiUrl}/clubs/${clubId}/randomizer/sessions`,
-        body,
-      ),
-    );
-    const session = mapRandomizerSession(raw);
-    this._history.update(prev => [session, ...prev]);
-  }
-  async loadHistory(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiRandomizerSession[]>(`${this.apiUrl}/clubs/${clubId}/randomizer/history`),
-    );
-    this._history.set(raw.map(mapRandomizerSession));
-  }
-  reset(): void {
-    const ids = new Set(this._candidates().map(m => m.userId));
-    this._selectedIds.set(ids);
-    this._result.set(null);
-  }
-}
-````
-
 ## File: src/app/features/auth/login/login.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
@@ -8305,186 +8194,136 @@ export class LoginComponent {
 }
 ````
 
-## File: vercel.json
-````json
-{
-
-  "buildCommand": "npm run build -- --configuration=production",
-  "outputDirectory": "dist/book-club-fe/browser",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none';" }
-      ]
-    }
-  ]
-}
-````
-
-## File: src/app/core/services/quiz.service.ts
+## File: src/app/core/services/randomizer.service.ts
 ````typescript
+import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal, computed } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../auth/auth.service';
+import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
+import { ApiClubMember, mapClubMember } from '../api/api-mappers';
 import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
-interface ApiQuiz {
-  id: string;
-  club_id: string;
-  created_by: string;
-  title: string;
-  description: string | null;
-  is_active: boolean;
+interface ApiMemberCandidate {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
 }
-interface ApiQuizQuestion {
+interface ApiRandomizerSession {
   id: string;
-  quiz_id: string;
-  question: string;
-  options: string[];
-  correct_index: number;
+  clubId: string;
+  createdBy: string;
+  purpose: string;
+  candidates: ApiMemberCandidate[];
+  result: ApiMemberCandidate | null;
+  createdAt: string;
 }
-interface ApiAttemptResponse {
-  id: string;
-  quiz_id: string;
-  user_id: string;
-  score: number;
-  total: number;
-  answers: number[];
-}
-function mapQuiz(raw: ApiQuiz): Quiz {
+function mapMemberCandidate(raw: ApiMemberCandidate): MemberCandidate {
   return {
-    id: raw.id,
-    clubId: raw.club_id,
-    createdBy: raw.created_by,
-    title: raw.title,
-    description: raw.description,
-    isActive: raw.is_active,
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
   };
 }
-function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
+function mapRandomizerSession(raw: ApiRandomizerSession): RandomizerSession {
   return {
     id: raw.id,
-    quizId: raw.quiz_id,
-    question: raw.question,
-    options: raw.options,
-    correctIndex: raw.correct_index,
-  };
-}
-function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
-  return {
-    id: raw.id,
-    quizId: raw.quiz_id,
-    userId: raw.user_id,
-    score: raw.score,
-    total: raw.total,
-    answers: raw.answers,
+    clubId: raw.clubId,
+    createdBy: raw.createdBy,
+    purpose: raw.purpose,
+    candidates: raw.candidates.map(mapMemberCandidate),
+    result: raw.result ? mapMemberCandidate(raw.result) : null,
+    createdAt: raw.createdAt,
   };
 }
 @Injectable({ providedIn: 'root' })
-export class QuizService {
+export class RandomizerService {
   private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _quizzes = signal<Quiz[]>([]);
-  private readonly _questions = signal<QuizQuestion[]>([]);
-  private readonly _isLoading = signal(false);
-  readonly quizzes = this._quizzes.asReadonly();
-  readonly questions = this._questions.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
-  async loadQuizzes(clubId: string): Promise<void> {
-    this._isLoading.set(true);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
-      );
-      this._quizzes.set(raw.map(mapQuiz));
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    } finally {
-      this._isLoading.set(false);
-    }
+  private readonly auth = inject(AuthService);
+  private readonly apiUrl = environment.apiUrl;
+  private readonly _candidates = signal<MemberCandidate[]>([]);
+  private readonly _selectedIds = signal<Set<string>>(new Set());
+  private readonly _result = signal<MemberCandidate | null>(null);
+  private readonly _isSpinning = signal(false);
+  private readonly _history = signal<RandomizerSession[]>([]);
+  private readonly _purpose = signal('Хто представляє книгу?');
+  readonly candidates = this._candidates.asReadonly();
+  readonly selectedIds = this._selectedIds.asReadonly();
+  readonly result = this._result.asReadonly();
+  readonly isSpinning = this._isSpinning.asReadonly();
+  readonly history = this._history.asReadonly();
+  readonly purpose = this._purpose.asReadonly();
+  setPurpose(purpose: string): void {
+    this._purpose.set(purpose);
   }
-  async createQuiz(data: {
-    clubId: string;
-    title: string;
-    description: string;
-  }): Promise<Quiz> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
-          title: data.title,
-          description: data.description || null,
-        }),
-      );
-      const quiz = mapQuiz(raw);
-      this._quizzes.update(prev => [quiz, ...prev]);
-      return quiz;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
+  async loadClubMembers(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${this.apiUrl}/clubs/${clubId}/members`),
+    );
+    const members: MemberCandidate[] = raw.map(m => {
+      const detail = mapClubMember(m);
+      return { userId: detail.userId, displayName: detail.displayName, avatarUrl: detail.avatarUrl };
+    });
+    this._candidates.set(members);
+    this._selectedIds.set(new Set(members.map(m => m.userId)));
+    this._result.set(null);
   }
-  async addQuestion(
-    quizId: string,
-    q: Omit<QuizQuestion, 'id' | 'quizId'>,
-  ): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
-          question: q.question,
-          options: q.options,
-          correct_index: q.correctIndex,
-        }),
-      );
-      this._questions.update(prev => [...prev, mapQuestion(raw)]);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
+  toggleMember(userId: string): void {
+    this._selectedIds.update(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
   }
-  async loadQuestions(quizId: string): Promise<void> {
-    this._isLoading.set(true);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
-      );
-      this._questions.set(raw.map(mapQuestion));
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    } finally {
-      this._isLoading.set(false);
-    }
+  async spin(): Promise<void> {
+    const selected = this._candidates().filter(m => this._selectedIds().has(m.userId));
+    if (selected.length < 2) throw new Error('Потрібно мінімум 2 учасники');
+    this._isSpinning.set(true);
+    this._result.set(null);
+    await new Promise<void>(resolve => setTimeout(resolve, 2000));
+    const max = Math.floor(0x100000000 / selected.length) * selected.length;
+    let rand: number;
+    do {
+      rand = crypto.getRandomValues(new Uint32Array(1))[0];
+    } while (rand >= max);
+    const idx = rand % selected.length;
+    this._result.set(selected[idx]);
+    this._isSpinning.set(false);
   }
-  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
-      );
-      return mapAttempt(raw);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
+  async saveSession(clubId: string): Promise<void> {
+    const user = this.auth.currentUser();
+    if (!user) throw new Error('Not authenticated');
+    const result = this._result();
+    if (!result) throw new Error('No result to save');
+    const body = {
+      purpose: this._purpose(),
+      candidates: this._candidates()
+        .filter(m => this._selectedIds().has(m.userId))
+        .map(m => m.userId),
+      result: result.userId,
+    };
+    const raw = await firstValueFrom(
+      this.http.post<ApiRandomizerSession>(
+        `${this.apiUrl}/clubs/${clubId}/randomizer/sessions`,
+        body,
+      ),
+    );
+    const session = mapRandomizerSession(raw);
+    this._history.update(prev => [session, ...prev]);
   }
-  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { is_active: isActive }),
-      );
-      this._quizzes.update(prev =>
-        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
+  async loadHistory(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiRandomizerSession[]>(`${this.apiUrl}/clubs/${clubId}/randomizer/history`),
+    );
+    this._history.set(raw.map(mapRandomizerSession));
+  }
+  reset(): void {
+    const ids = new Set(this._candidates().map(m => m.userId));
+    this._selectedIds.set(ids);
+    this._result.set(null);
   }
 }
 ````
@@ -8736,6 +8575,190 @@ export class ClubsListComponent implements OnInit {
 }
 ````
 
+## File: vercel.json
+````json
+{
+
+  "buildCommand": "npm run build -- --configuration=production",
+  "outputDirectory": "dist/book-club-fe/browser",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://vercel.live; frame-src https://vercel.live; frame-ancestors 'none';" }
+      ]
+    }
+  ]
+}
+````
+
+## File: src/app/core/services/quiz.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
+interface ApiQuiz {
+  id: string;
+  clubId: string;
+  createdBy: string;
+  title: string;
+  description: string | null;
+  isActive: boolean;
+}
+interface ApiQuizQuestion {
+  id: string;
+  quizId: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+}
+interface ApiAttemptResponse {
+  id: string;
+  quizId: string;
+  userId: string;
+  score: number;
+  total: number;
+  answers: number[];
+}
+function mapQuiz(raw: ApiQuiz): Quiz {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    createdBy: raw.createdBy,
+    title: raw.title,
+    description: raw.description,
+    isActive: raw.isActive,
+  };
+}
+function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
+  return {
+    id: raw.id,
+    quizId: raw.quizId,
+    question: raw.question,
+    options: raw.options,
+    correctIndex: raw.correctIndex,
+  };
+}
+function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
+  return {
+    id: raw.id,
+    quizId: raw.quizId,
+    userId: raw.userId,
+    score: raw.score,
+    total: raw.total,
+    answers: raw.answers,
+  };
+}
+@Injectable({ providedIn: 'root' })
+export class QuizService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _quizzes = signal<Quiz[]>([]);
+  private readonly _questions = signal<QuizQuestion[]>([]);
+  private readonly _isLoading = signal(false);
+  readonly quizzes = this._quizzes.asReadonly();
+  readonly questions = this._questions.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
+  async loadQuizzes(clubId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
+      );
+      this._quizzes.set(raw.map(mapQuiz));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async createQuiz(data: {
+    clubId: string;
+    title: string;
+    description: string;
+  }): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
+          title: data.title,
+          description: data.description || null,
+        }),
+      );
+      const quiz = mapQuiz(raw);
+      this._quizzes.update(prev => [quiz, ...prev]);
+      return quiz;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async addQuestion(
+    quizId: string,
+    q: Omit<QuizQuestion, 'id' | 'quizId'>,
+  ): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
+          question: q.question,
+          options: q.options,
+          correctIndex: q.correctIndex,
+        }),
+      );
+      this._questions.update(prev => [...prev, mapQuestion(raw)]);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async loadQuestions(quizId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
+      );
+      this._questions.set(raw.map(mapQuestion));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
+      );
+      return mapAttempt(raw);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { isActive }),
+      );
+      this._quizzes.update(prev =>
+        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+}
+````
+
 ## File: src/app/core/auth/auth.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -8748,7 +8771,7 @@ import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../a
 import { TokenStore } from './token.store';
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
 interface AuthResponse {
-  access_token: string;
+  accessToken: string;
   user: ApiUserProfile;
 }
 @Injectable({ providedIn: 'root' })
@@ -8804,11 +8827,11 @@ export class AuthService {
         this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
           email,
           password,
-          display_name: displayName,
+          displayName,
           role,
         }),
       );
-      this.tokenStore.set(resp.access_token);
+      this.tokenStore.set(resp.accessToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -8820,7 +8843,7 @@ export class AuthService {
       const resp = await firstValueFrom(
         this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
       );
-      this.tokenStore.set(resp.access_token);
+      this.tokenStore.set(resp.accessToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -8847,7 +8870,7 @@ export class AuthService {
     const user = this._currentUser();
     if (!user) return;
     await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { display_name: name }),
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
     );
     this._currentUser.set({ ...user, displayName: name });
   }
@@ -8864,7 +8887,7 @@ export class AuthService {
     if (!user) return;
     await firstValueFrom(
       this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
-        socials_public: value,
+        socialsPublic: value,
       }),
     );
     this._currentUser.set({ ...user, socialsPublic: value });
@@ -8999,11 +9022,11 @@ export class ClubService {
       this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
         name: payload.name,
         description: payload.description,
-        is_public: payload.isPublic,
+        isPublic: payload.isPublic,
         city: payload.city,
         tags: payload.tags ?? [],
-        meeting_duration_minutes: payload.meetingDurationMinutes ?? null,
-        after_meeting_venue: payload.afterMeetingVenue ?? null,
+        meetingDurationMinutes: payload.meetingDurationMinutes ?? null,
+        afterMeetingVenue: payload.afterMeetingVenue ?? null,
       }),
     );
     const club = mapClub(raw);
@@ -9013,7 +9036,7 @@ export class ClubService {
   }
   async joinClub(clubId: string): Promise<void> {
     await firstValueFrom(
-      this.http.post<{ member_count: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
+      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
     );
     this._clubs.update(list =>
       list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
@@ -9049,7 +9072,7 @@ export class ClubService {
   async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
     const raw = await firstValueFrom(
       this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/reschedule`, {
-        new_date: newDate,
+        newDate,
       }),
     );
     this._updateClub(mapClub(raw));
