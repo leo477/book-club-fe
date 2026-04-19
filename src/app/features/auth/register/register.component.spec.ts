@@ -63,27 +63,27 @@ describe('RegisterComponent', () => {
   describe('passwordStrength', () => {
     it('returns null for empty password', () => {
       component.form.controls.password.setValue('');
-      expect(component['passwordStrength']()).toBeNull();
+      expect(component.passwordStrength()).toBeNull();
     });
 
     it('returns weak for short password', () => {
       component.form.controls.password.setValue('abc');
-      expect(component['passwordStrength']()).toBe('weak');
+      expect(component.passwordStrength()).toBe('weak');
     });
 
     it('returns weak for 8+ chars with no special criteria', () => {
       component.form.controls.password.setValue('abcdefgh');
-      expect(component['passwordStrength']()).toBe('weak');
+      expect(component.passwordStrength()).toBe('weak');
     });
 
     it('returns medium for 8+ chars with one criterion', () => {
       component.form.controls.password.setValue('abcdefg1');
-      expect(component['passwordStrength']()).toBe('medium');
+      expect(component.passwordStrength()).toBe('medium');
     });
 
     it('returns strong for 8+ chars with two or more criteria', () => {
       component.form.controls.password.setValue('Abcdefg1!');
-      expect(component['passwordStrength']()).toBe('strong');
+      expect(component.passwordStrength()).toBe('strong');
     });
   });
 
