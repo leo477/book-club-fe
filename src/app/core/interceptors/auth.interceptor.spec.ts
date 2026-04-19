@@ -56,13 +56,21 @@ describe('authInterceptor', () => {
     req.flush({});
   });
 
-  it('navigates to /login and clears token on 401', () => {
+  it('navigates to /login and clears token on 401 for authenticated requests', () => {
     setup('my-token');
     http.get('/api/test').subscribe({ error: jasmine.createSpy('errorHandler') });
     const req = httpMock.expectOne('/api/test');
     req.flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
     expect(tokenStoreSpy.clear).toHaveBeenCalled();
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
+  });
+
+  it('does not redirect on 401 for unauthenticated requests (e.g. wrong login credentials)', () => {
+    setup(null);
+    http.post('/api/auth/login', {}).subscribe({ error: jasmine.createSpy('errorHandler') });
+    const req = httpMock.expectOne('/api/auth/login');
+    req.flush({ detail: 'Invalid credentials' }, { status: 401, statusText: 'Unauthorized' });
+    expect(routerSpy.navigate).not.toHaveBeenCalled();
   });
 
   it('navigates to /clubs on 403', () => {
