@@ -1,16 +1,16 @@
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
 import { AfterMeetingVenue, BanDuration, BanRecord, Club, ClubBook, ClubMemberDetail, ClubStatus } from '../models/club.model';
 
-// Raw API response shapes (snake_case from FastAPI)
+// Raw API response shapes (camelCase from FastAPI)
 export interface ApiUserProfile {
   id: string;
   email: string;
   role: UserRole;
-  display_name: string;
-  avatar_url: string | null;
-  created_at: string;
+  displayName: string;
+  avatarUrl: string | null;
+  createdAt: string;
   socials?: ApiUserSocials | null;
-  socials_public?: boolean;
+  socialsPublic?: boolean;
 }
 
 export interface ApiUserSocials {
@@ -23,124 +23,139 @@ export interface ApiUserSocials {
 }
 
 export interface ApiUserStats {
-  clubs_joined: number;
-  clubs_organized: number;
-  meetings_attended: number;
-  quizzes_taken: number;
+  clubsJoined: number;
+  quizzesTaken: number;
+  quizWins: number;
+  likesReceived: number;
+  booksRead: number;
+}
+
+interface ApiMeetingHistoryItem {
+  id: string;
+  date: string;
+  status: 'held' | 'cancelled' | 'rescheduled';
+  notes?: string;
 }
 
 export interface ApiClub {
   id: string;
   name: string;
   description: string | null;
-  cover_url: string | null;
-  organizer_id: string;
-  is_public: boolean;
-  member_count: number;
-  created_at: string;
+  coverUrl: string | null;
+  organizerId: string;
+  isPublic: boolean;
+  memberCount: number;
+  createdAt: string;
   city: string | null;
-  next_meeting_date: string | null;
+  nextMeetingDate: string | null;
   address: string | null;
   lat: number | null;
   lng: number | null;
   theme: string | null;
-  current_book: string | null;
-  member_previews: string[];
+  currentBook: string | null;
+  memberPreviews: string[];
   status: ClubStatus;
   tags: string[];
-  meeting_duration_minutes: number | null;
-  after_meeting_venue: AfterMeetingVenue | null;
-  cancelled_at?: string | null;
+  meetingDurationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  cancelledAt?: string | null;
+  meetingHistory?: ApiMeetingHistoryItem[] | null;
 }
 
 export interface ApiClubMember {
-  user_id: string;
-  display_name: string;
-  avatar_url: string | null;
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
   role: 'organizer' | 'member';
   socials?: ApiUserSocials | null;
-  socials_public?: boolean;
+  socialsPublic?: boolean;
 }
 
 export interface ApiBanRecord {
-  user_id: string;
-  club_id: string;
-  banned_at: string;
+  userId: string;
+  clubId: string;
+  bannedAt: string;
   duration: BanDuration;
-  banned_by: string;
+  bannedBy: string;
 }
 
 export function mapUserProfile(raw: ApiUserProfile): UserProfile {
   return {
     id: raw.id,
     role: raw.role,
-    displayName: raw.display_name,
-    avatarUrl: raw.avatar_url,
-    createdAt: raw.created_at,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    createdAt: raw.createdAt,
     socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socials_public ?? false,
+    socialsPublic: raw.socialsPublic ?? false,
   };
 }
 
 export function mapUserStats(raw: ApiUserStats): UserStats {
   return {
-    clubsJoined: raw.clubs_joined,
-    quizzesTaken: raw.quizzes_taken,
-    quizWins: 0,
-    likesReceived: 0,
-    booksRead: 0,
+    clubsJoined: raw.clubsJoined,
+    quizzesTaken: raw.quizzesTaken,
+    quizWins: raw.quizWins,
+    likesReceived: raw.likesReceived,
+    booksRead: raw.booksRead,
   };
 }
 
 export function mapClub(raw: ApiClub): Club {
   let currentBook: ClubBook | null = null;
-  if (raw.current_book) {
-    currentBook = { title: raw.current_book, author: '', description: '' };
+  if (raw.currentBook) {
+    currentBook = { title: raw.currentBook, author: '', description: '' };
   }
 
   return {
     id: raw.id,
     name: raw.name,
     description: raw.description,
-    coverUrl: raw.cover_url,
-    organizerId: raw.organizer_id,
-    isPublic: raw.is_public,
-    memberCount: raw.member_count,
-    createdAt: raw.created_at,
+    coverUrl: raw.coverUrl,
+    organizerId: raw.organizerId,
+    isPublic: raw.isPublic,
+    memberCount: raw.memberCount,
+    createdAt: raw.createdAt,
     city: raw.city ?? '',
-    nextMeetingDate: raw.next_meeting_date,
+    nextMeetingDate: raw.nextMeetingDate,
     address: raw.address,
     lat: raw.lat,
     lng: raw.lng,
     theme: raw.theme,
     currentBook,
-    memberPreviews: raw.member_previews,
+    memberPreviews: raw.memberPreviews,
     status: raw.status,
     tags: raw.tags,
-    meetingDurationMinutes: raw.meeting_duration_minutes,
-    afterMeetingVenue: raw.after_meeting_venue,
-    cancelledAt: raw.cancelled_at ?? undefined,
+    meetingDurationMinutes: raw.meetingDurationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    cancelledAt: raw.cancelledAt ?? undefined,
+    meetingHistory: raw.meetingHistory?.map(h => ({
+      id: h.id,
+      date: h.date,
+      status: h.status,
+      notes: h.notes,
+    })),
   };
 }
 
 export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
   return {
-    userId: raw.user_id,
-    displayName: raw.display_name,
-    avatarUrl: raw.avatar_url,
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
     role: raw.role,
     socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socials_public ?? false,
+    socialsPublic: raw.socialsPublic ?? false,
   };
 }
 
 export function mapBanRecord(raw: ApiBanRecord): BanRecord {
   return {
-    userId: raw.user_id,
-    clubId: raw.club_id,
-    bannedAt: raw.banned_at,
+    userId: raw.userId,
+    clubId: raw.clubId,
+    bannedAt: raw.bannedAt,
     duration: raw.duration,
-    bannedBy: raw.banned_by,
+    bannedBy: raw.bannedBy,
   };
 }
 

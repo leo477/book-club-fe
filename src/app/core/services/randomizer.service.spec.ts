@@ -8,20 +8,20 @@ import { environment } from '../../../environments/environment';
 const API = environment.apiUrl;
 
 const rawMember = (id: string, name: string) => ({
-  user_id: id,
-  display_name: name,
-  avatar_url: null,
+  userId: id,
+  displayName: name,
+  avatarUrl: null,
   role: 'member' as const,
 });
 
 const rawSession = {
   id: 's1',
-  club_id: 'c1',
-  created_by: 'u1',
+  clubId: 'c1',
+  createdBy: 'u1',
   purpose: 'Who presents?',
   candidates: [rawMember('u1', 'Alice'), rawMember('u2', 'Bob')],
   result: rawMember('u1', 'Alice'),
-  created_at: '2024-01-01',
+  createdAt: '2024-01-01',
 };
 
 describe('RandomizerService', () => {

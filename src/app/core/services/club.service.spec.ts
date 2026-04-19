@@ -57,11 +57,11 @@ describe('ClubService', () => {
 
   it('getBans returns ban records from API', async () => {
     const apiBan = {
-      user_id: 'user-2',
-      club_id: 'club-1',
-      banned_at: '2024-01-01T00:00:00Z',
+      userId: 'user-2',
+      clubId: 'club-1',
+      bannedAt: '2024-01-01T00:00:00Z',
       duration: 1,
-      banned_by: 'user-1',
+      bannedBy: 'user-1',
     };
     const promise = service.getBans('club-1');
     const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/bans`);
@@ -76,12 +76,12 @@ describe('ClubService', () => {
 
   it('getClubMembers returns mapped members from API', async () => {
     const apiMember = {
-      user_id: 'user-2',
-      display_name: 'Alice',
-      avatar_url: null,
+      userId: 'user-2',
+      displayName: 'Alice',
+      avatarUrl: null,
       role: 'member',
       socials: null,
-      socials_public: false,
+      socialsPublic: false,
     };
     const promise = service.getClubMembers('club-1');
     const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/members`);
@@ -104,7 +104,7 @@ describe('ClubService', () => {
     const promise = service.joinClub('club-1');
     const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/join`);
     expect(req.request.method).toBe('POST');
-    req.flush({ member_count: 1 });
+    req.flush({ memberCount: 1 });
     await promise;
   });
 
@@ -113,23 +113,23 @@ describe('ClubService', () => {
       id: 'new-club',
       name: 'Test',
       description: 'Desc',
-      cover_url: null,
-      organizer_id: 'user-1',
-      is_public: true,
-      member_count: 1,
-      created_at: '2024-01-01',
+      coverUrl: null,
+      organizerId: 'user-1',
+      isPublic: true,
+      memberCount: 1,
+      createdAt: '2024-01-01',
       city: 'Kyiv',
-      next_meeting_date: null,
+      nextMeetingDate: null,
       address: null,
       lat: null,
       lng: null,
       theme: null,
-      current_book: null,
-      member_previews: [],
+      currentBook: null,
+      memberPreviews: [],
       status: 'active',
       tags: ['tag1', 'tag2'],
-      meeting_duration_minutes: 60,
-      after_meeting_venue: { name: 'Cafe', address: 'Main St', description: 'desc' },
+      meetingDurationMinutes: 60,
+      afterMeetingVenue: { name: 'Cafe', address: 'Main St', description: 'desc' },
     };
     const promise = service.createClub({
       name: 'Test',

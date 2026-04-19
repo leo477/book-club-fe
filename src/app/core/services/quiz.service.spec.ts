@@ -8,25 +8,25 @@ const API = environment.apiUrl;
 
 const rawQuiz = {
   id: 'q1',
-  club_id: 'c1',
-  created_by: 'u1',
+  clubId: 'c1',
+  createdBy: 'u1',
   title: 'Test Quiz',
   description: 'Desc',
-  is_active: true,
+  isActive: true,
 };
 
 const rawQuestion = {
   id: 'qq1',
-  quiz_id: 'q1',
+  quizId: 'q1',
   question: 'What is 2+2?',
   options: ['3', '4', '5'],
-  correct_index: 1,
+  correctIndex: 1,
 };
 
 const rawAttempt = {
   id: 'a1',
-  quiz_id: 'q1',
-  user_id: 'u1',
+  quizId: 'q1',
+  userId: 'u1',
   score: 1,
   total: 1,
   answers: [1],
@@ -95,7 +95,7 @@ describe('QuizService', () => {
 
     it('returns null when no active quiz', async () => {
       const p = service.loadQuizzes('c1');
-      httpMock.expectOne(`${API}/clubs/c1/quizzes`).flush([{ ...rawQuiz, is_active: false }]);
+      httpMock.expectOne(`${API}/clubs/c1/quizzes`).flush([{ ...rawQuiz, isActive: false }]);
       await p;
       expect(service.activeQuiz()).toBeNull();
     });
@@ -159,7 +159,7 @@ describe('QuizService', () => {
       });
       const req = httpMock.expectOne(`${API}/quizzes/q1/questions`);
       expect(req.request.method).toBe('POST');
-      expect(req.request.body).toEqual({ question: 'Q?', options: ['A', 'B'], correct_index: 0 });
+      expect(req.request.body).toEqual({ question: 'Q?', options: ['A', 'B'], correctIndex: 0 });
       req.flush(rawQuestion);
       await p;
       expect(service.questions().length).toBe(1);
@@ -200,13 +200,13 @@ describe('QuizService', () => {
     it('sends PATCH and updates quiz in list', async () => {
       // First load a quiz
       const loadP = service.loadQuizzes('c1');
-      httpMock.expectOne(`${API}/clubs/c1/quizzes`).flush([{ ...rawQuiz, is_active: false }]);
+      httpMock.expectOne(`${API}/clubs/c1/quizzes`).flush([{ ...rawQuiz, isActive: false }]);
       await loadP;
 
       const p = service.toggleActive('q1', true);
       const req = httpMock.expectOne(`${API}/quizzes/q1/active`);
       expect(req.request.method).toBe('PATCH');
-      expect(req.request.body).toEqual({ is_active: true });
+      expect(req.request.body).toEqual({ isActive: true });
       req.flush({});
       await p;
       expect(service.quizzes()[0].isActive).toBeTrue();

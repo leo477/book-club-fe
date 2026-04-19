@@ -289,7 +289,11 @@ vercel.json
       "Bash(curl -s \"https://sonarcloud.io/api/qualitygates/project_status?projectKey=leo477_book-club-fe\")",
       "Bash(curl -s \"https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&types=BUG,VULNERABILITY,CODE_SMELL&severities=BLOCKER,CRITICAL,MAJOR&ps=20\")",
       "Bash(curl -s \"https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&ps=50\")",
-      "Bash(curl -s \"https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&sinceLeakPeriod=true&ps=50\")"
+      "Bash(curl -s \"https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&sinceLeakPeriod=true&ps=50\")",
+      "Bash(grep -E \"\\\\.\\(ts|html\\)$\")",
+      "Bash(curl -s -I -X OPTIONS https://book-club-be.onrender.com/api/v1/auth/login -H 'Origin: http://localhost:4200' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type,authorization')",
+      "Bash(curl *)",
+      "Bash(grep -A2 \"FAILED$\")"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -680,7 +684,11 @@ for (const outputPath of OUTPUT_FILES) {
 import { HttpErrorResponse } from '@angular/common/http';
 export function extractApiError(err: unknown): string {
   if (err instanceof HttpErrorResponse) {
-    return (err.error as { detail?: string })?.detail ?? err.message ?? 'Unknown error';
+    const detail = (err.error as { detail?: unknown })?.detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) return (detail[0] as { msg?: string })?.msg ?? err.message ?? 'Unknown error';
+    if (detail && typeof detail === 'object') return (detail as { error?: string }).error ?? err.message ?? 'Unknown error';
+    return err.message ?? 'Unknown error';
   }
   return 'Unknown error';
 }
@@ -694,11 +702,11 @@ export interface ApiUserProfile {
   id: string;
   email: string;
   role: UserRole;
-  display_name: string;
-  avatar_url: string | null;
-  created_at: string;
+  displayName: string;
+  avatarUrl: string | null;
+  createdAt: string;
   socials?: ApiUserSocials | null;
-  socials_public?: boolean;
+  socialsPublic?: boolean;
 }
 export interface ApiUserSocials {
   telegram?: string | null;
@@ -709,115 +717,129 @@ export interface ApiUserSocials {
   goodreads?: string | null;
 }
 export interface ApiUserStats {
-  clubs_joined: number;
-  clubs_organized: number;
-  meetings_attended: number;
-  quizzes_taken: number;
+  clubsJoined: number;
+  quizzesTaken: number;
+  quizWins: number;
+  likesReceived: number;
+  booksRead: number;
+}
+interface ApiMeetingHistoryItem {
+  id: string;
+  date: string;
+  status: 'held' | 'cancelled' | 'rescheduled';
+  notes?: string;
 }
 export interface ApiClub {
   id: string;
   name: string;
   description: string | null;
-  cover_url: string | null;
-  organizer_id: string;
-  is_public: boolean;
-  member_count: number;
-  created_at: string;
+  coverUrl: string | null;
+  organizerId: string;
+  isPublic: boolean;
+  memberCount: number;
+  createdAt: string;
   city: string | null;
-  next_meeting_date: string | null;
+  nextMeetingDate: string | null;
   address: string | null;
   lat: number | null;
   lng: number | null;
   theme: string | null;
-  current_book: string | null;
-  member_previews: string[];
+  currentBook: string | null;
+  memberPreviews: string[];
   status: ClubStatus;
   tags: string[];
-  meeting_duration_minutes: number | null;
-  after_meeting_venue: AfterMeetingVenue | null;
-  cancelled_at?: string | null;
+  meetingDurationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  cancelledAt?: string | null;
+  meetingHistory?: ApiMeetingHistoryItem[] | null;
 }
 export interface ApiClubMember {
-  user_id: string;
-  display_name: string;
-  avatar_url: string | null;
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
   role: 'organizer' | 'member';
   socials?: ApiUserSocials | null;
-  socials_public?: boolean;
+  socialsPublic?: boolean;
 }
 export interface ApiBanRecord {
-  user_id: string;
-  club_id: string;
-  banned_at: string;
+  userId: string;
+  clubId: string;
+  bannedAt: string;
   duration: BanDuration;
-  banned_by: string;
+  bannedBy: string;
 }
 export function mapUserProfile(raw: ApiUserProfile): UserProfile {
   return {
     id: raw.id,
     role: raw.role,
-    displayName: raw.display_name,
-    avatarUrl: raw.avatar_url,
-    createdAt: raw.created_at,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    createdAt: raw.createdAt,
     socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socials_public ?? false,
+    socialsPublic: raw.socialsPublic ?? false,
   };
 }
 export function mapUserStats(raw: ApiUserStats): UserStats {
   return {
-    clubsJoined: raw.clubs_joined,
-    quizzesTaken: raw.quizzes_taken,
-    quizWins: 0,
-    likesReceived: 0,
-    booksRead: 0,
+    clubsJoined: raw.clubsJoined,
+    quizzesTaken: raw.quizzesTaken,
+    quizWins: raw.quizWins,
+    likesReceived: raw.likesReceived,
+    booksRead: raw.booksRead,
   };
 }
 export function mapClub(raw: ApiClub): Club {
   let currentBook: ClubBook | null = null;
-  if (raw.current_book) {
-    currentBook = { title: raw.current_book, author: '', description: '' };
+  if (raw.currentBook) {
+    currentBook = { title: raw.currentBook, author: '', description: '' };
   }
   return {
     id: raw.id,
     name: raw.name,
     description: raw.description,
-    coverUrl: raw.cover_url,
-    organizerId: raw.organizer_id,
-    isPublic: raw.is_public,
-    memberCount: raw.member_count,
-    createdAt: raw.created_at,
+    coverUrl: raw.coverUrl,
+    organizerId: raw.organizerId,
+    isPublic: raw.isPublic,
+    memberCount: raw.memberCount,
+    createdAt: raw.createdAt,
     city: raw.city ?? '',
-    nextMeetingDate: raw.next_meeting_date,
+    nextMeetingDate: raw.nextMeetingDate,
     address: raw.address,
     lat: raw.lat,
     lng: raw.lng,
     theme: raw.theme,
     currentBook,
-    memberPreviews: raw.member_previews,
+    memberPreviews: raw.memberPreviews,
     status: raw.status,
     tags: raw.tags,
-    meetingDurationMinutes: raw.meeting_duration_minutes,
-    afterMeetingVenue: raw.after_meeting_venue,
-    cancelledAt: raw.cancelled_at ?? undefined,
+    meetingDurationMinutes: raw.meetingDurationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    cancelledAt: raw.cancelledAt ?? undefined,
+    meetingHistory: raw.meetingHistory?.map(h => ({
+      id: h.id,
+      date: h.date,
+      status: h.status,
+      notes: h.notes,
+    })),
   };
 }
 export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
   return {
-    userId: raw.user_id,
-    displayName: raw.display_name,
-    avatarUrl: raw.avatar_url,
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
     role: raw.role,
     socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socials_public ?? false,
+    socialsPublic: raw.socialsPublic ?? false,
   };
 }
 export function mapBanRecord(raw: ApiBanRecord): BanRecord {
   return {
-    userId: raw.user_id,
-    clubId: raw.club_id,
-    bannedAt: raw.banned_at,
+    userId: raw.userId,
+    clubId: raw.clubId,
+    bannedAt: raw.bannedAt,
     duration: raw.duration,
-    bannedBy: raw.banned_by,
+    bannedBy: raw.bannedBy,
   };
 }
 function mapSocials(raw: ApiUserSocials): UserSocials {
@@ -4991,10 +5013,10 @@ interface ApiChatRoom {
 }
 interface ApiChatMessage {
   id: string;
-  sender_id: string;
-  sender_name: string;
+  senderId: string;
+  senderName: string;
   text: string;
-  created_at: string;
+  timestamp: string;
 }
 @Injectable({ providedIn: 'root' })
 export class ChatService {
@@ -5086,11 +5108,11 @@ export class ChatService {
   private mapMessage(m: ApiChatMessage): ChatMessage {
     return {
       id: m.id,
-      senderId: m.sender_id,
-      senderName: m.sender_name,
+      senderId: m.senderId,
+      senderName: m.senderName,
       text: m.text,
-      timestamp: new Date(m.created_at),
-      isOwn: m.sender_id === this.currentUserId,
+      timestamp: new Date(m.timestamp),
+      isOwn: m.senderId === this.currentUserId,
     };
   }
 }
@@ -7969,35 +7991,35 @@ import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
 import { ApiClubMember, mapClubMember } from '../api/api-mappers';
 import { environment } from '../../../environments/environment';
 interface ApiMemberCandidate {
-  user_id: string;
-  display_name: string;
-  avatar_url: string | null;
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
 }
 interface ApiRandomizerSession {
   id: string;
-  club_id: string;
-  created_by: string;
+  clubId: string;
+  createdBy: string;
   purpose: string;
   candidates: ApiMemberCandidate[];
   result: ApiMemberCandidate | null;
-  created_at: string;
+  createdAt: string;
 }
 function mapMemberCandidate(raw: ApiMemberCandidate): MemberCandidate {
   return {
-    userId: raw.user_id,
-    displayName: raw.display_name,
-    avatarUrl: raw.avatar_url,
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
   };
 }
 function mapRandomizerSession(raw: ApiRandomizerSession): RandomizerSession {
   return {
     id: raw.id,
-    clubId: raw.club_id,
-    createdBy: raw.created_by,
+    clubId: raw.clubId,
+    createdBy: raw.createdBy,
     purpose: raw.purpose,
     candidates: raw.candidates.map(mapMemberCandidate),
     result: raw.result ? mapMemberCandidate(raw.result) : null,
-    createdAt: raw.created_at,
+    createdAt: raw.createdAt,
   };
 }
 @Injectable({ providedIn: 'root' })
@@ -8305,32 +8327,6 @@ export class LoginComponent {
 }
 ````
 
-## File: vercel.json
-````json
-{
-
-  "buildCommand": "npm run build -- --configuration=production",
-  "outputDirectory": "dist/book-club-fe/browser",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co; frame-ancestors 'none';" }
-      ]
-    }
-  ]
-}
-````
-
 ## File: src/app/core/services/quiz.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -8341,23 +8337,23 @@ import { extractApiError } from '../api/api-error.util';
 import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
 interface ApiQuiz {
   id: string;
-  club_id: string;
-  created_by: string;
+  clubId: string;
+  createdBy: string;
   title: string;
   description: string | null;
-  is_active: boolean;
+  isActive: boolean;
 }
 interface ApiQuizQuestion {
   id: string;
-  quiz_id: string;
+  quizId: string;
   question: string;
   options: string[];
-  correct_index: number;
+  correctIndex: number;
 }
 interface ApiAttemptResponse {
   id: string;
-  quiz_id: string;
-  user_id: string;
+  quizId: string;
+  userId: string;
   score: number;
   total: number;
   answers: number[];
@@ -8365,27 +8361,27 @@ interface ApiAttemptResponse {
 function mapQuiz(raw: ApiQuiz): Quiz {
   return {
     id: raw.id,
-    clubId: raw.club_id,
-    createdBy: raw.created_by,
+    clubId: raw.clubId,
+    createdBy: raw.createdBy,
     title: raw.title,
     description: raw.description,
-    isActive: raw.is_active,
+    isActive: raw.isActive,
   };
 }
 function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
   return {
     id: raw.id,
-    quizId: raw.quiz_id,
+    quizId: raw.quizId,
     question: raw.question,
     options: raw.options,
-    correctIndex: raw.correct_index,
+    correctIndex: raw.correctIndex,
   };
 }
 function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
   return {
     id: raw.id,
-    quizId: raw.quiz_id,
-    userId: raw.user_id,
+    quizId: raw.quizId,
+    userId: raw.userId,
     score: raw.score,
     total: raw.total,
     answers: raw.answers,
@@ -8443,7 +8439,7 @@ export class QuizService {
         this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
           question: q.question,
           options: q.options,
-          correct_index: q.correctIndex,
+          correctIndex: q.correctIndex,
         }),
       );
       this._questions.update(prev => [...prev, mapQuestion(raw)]);
@@ -8477,7 +8473,7 @@ export class QuizService {
   async toggleActive(quizId: string, isActive: boolean): Promise<void> {
     try {
       await firstValueFrom(
-        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { is_active: isActive }),
+        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { isActive }),
       );
       this._quizzes.update(prev =>
         prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
@@ -8736,6 +8732,32 @@ export class ClubsListComponent implements OnInit {
 }
 ````
 
+## File: vercel.json
+````json
+{
+
+  "buildCommand": "npm run build -- --configuration=production",
+  "outputDirectory": "dist/book-club-fe/browser",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://vercel.live; frame-src https://vercel.live; frame-ancestors 'none';" }
+      ]
+    }
+  ]
+}
+````
+
 ## File: src/app/core/auth/auth.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -8748,7 +8770,7 @@ import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../a
 import { TokenStore } from './token.store';
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
 interface AuthResponse {
-  access_token: string;
+  accessToken: string;
   user: ApiUserProfile;
 }
 @Injectable({ providedIn: 'root' })
@@ -8804,11 +8826,11 @@ export class AuthService {
         this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
           email,
           password,
-          display_name: displayName,
+          displayName,
           role,
         }),
       );
-      this.tokenStore.set(resp.access_token);
+      this.tokenStore.set(resp.accessToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -8820,7 +8842,7 @@ export class AuthService {
       const resp = await firstValueFrom(
         this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
       );
-      this.tokenStore.set(resp.access_token);
+      this.tokenStore.set(resp.accessToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -8847,7 +8869,7 @@ export class AuthService {
     const user = this._currentUser();
     if (!user) return;
     await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { display_name: name }),
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
     );
     this._currentUser.set({ ...user, displayName: name });
   }
@@ -8864,7 +8886,7 @@ export class AuthService {
     if (!user) return;
     await firstValueFrom(
       this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
-        socials_public: value,
+        socialsPublic: value,
       }),
     );
     this._currentUser.set({ ...user, socialsPublic: value });
@@ -8999,11 +9021,11 @@ export class ClubService {
       this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
         name: payload.name,
         description: payload.description,
-        is_public: payload.isPublic,
+        isPublic: payload.isPublic,
         city: payload.city,
         tags: payload.tags ?? [],
-        meeting_duration_minutes: payload.meetingDurationMinutes ?? null,
-        after_meeting_venue: payload.afterMeetingVenue ?? null,
+        meetingDurationMinutes: payload.meetingDurationMinutes ?? null,
+        afterMeetingVenue: payload.afterMeetingVenue ?? null,
       }),
     );
     const club = mapClub(raw);
@@ -9013,7 +9035,7 @@ export class ClubService {
   }
   async joinClub(clubId: string): Promise<void> {
     await firstValueFrom(
-      this.http.post<{ member_count: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
+      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
     );
     this._clubs.update(list =>
       list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
@@ -9049,7 +9071,7 @@ export class ClubService {
   async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
     const raw = await firstValueFrom(
       this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/reschedule`, {
-        new_date: newDate,
+        newDate,
       }),
     );
     this._updateClub(mapClub(raw));

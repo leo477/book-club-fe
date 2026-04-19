@@ -15,23 +15,23 @@ const baseApiClub: ApiClub = {
   id: 'c1',
   name: 'Test Club',
   description: 'A club',
-  cover_url: null,
-  organizer_id: 'u1',
-  is_public: true,
-  member_count: 5,
-  created_at: '2024-01-01',
+  coverUrl: null,
+  organizerId: 'u1',
+  isPublic: true,
+  memberCount: 5,
+  createdAt: '2024-01-01',
   city: 'Kyiv',
-  next_meeting_date: '2024-06-01',
+  nextMeetingDate: '2024-06-01',
   address: '123 Main St',
   lat: 50.4,
   lng: 30.5,
   theme: 'Fiction',
-  current_book: null,
-  member_previews: ['Alice', 'Bob'],
+  currentBook: null,
+  memberPreviews: ['Alice', 'Bob'],
   status: 'active',
   tags: ['fiction'],
-  meeting_duration_minutes: 90,
-  after_meeting_venue: null,
+  meetingDurationMinutes: 90,
+  afterMeetingVenue: null,
 };
 
 describe('mapUserProfile', () => {
@@ -39,9 +39,9 @@ describe('mapUserProfile', () => {
     id: 'u1',
     email: 'test@test.com',
     role: 'user',
-    display_name: 'Test User',
-    avatar_url: 'http://avatar.url',
-    created_at: '2024-01-01',
+    displayName: 'Test User',
+    avatarUrl: 'http://avatar.url',
+    createdAt: '2024-01-01',
   };
 
   it('maps basic fields', () => {
@@ -62,7 +62,7 @@ describe('mapUserProfile', () => {
     const result = mapUserProfile({
       ...raw,
       socials: { telegram: 'myuser', github: 'gh' },
-      socials_public: true,
+      socialsPublic: true,
     });
     expect(result.socials?.telegram).toBe('myuser');
     expect(result.socials?.github).toBe('gh');
@@ -76,19 +76,20 @@ describe('mapUserProfile', () => {
 });
 
 describe('mapUserStats', () => {
-  it('maps clubs_joined and quizzes_taken', () => {
+  it('maps all stats fields', () => {
     const raw: ApiUserStats = {
-      clubs_joined: 3,
-      clubs_organized: 1,
-      meetings_attended: 10,
-      quizzes_taken: 5,
+      clubsJoined: 3,
+      quizzesTaken: 5,
+      quizWins: 2,
+      likesReceived: 10,
+      booksRead: 7,
     };
     const result = mapUserStats(raw);
     expect(result.clubsJoined).toBe(3);
     expect(result.quizzesTaken).toBe(5);
-    expect(result.quizWins).toBe(0);
-    expect(result.likesReceived).toBe(0);
-    expect(result.booksRead).toBe(0);
+    expect(result.quizWins).toBe(2);
+    expect(result.likesReceived).toBe(10);
+    expect(result.booksRead).toBe(7);
   });
 });
 
@@ -104,13 +105,13 @@ describe('mapClub', () => {
     expect(result.meetingDurationMinutes).toBe(90);
   });
 
-  it('sets currentBook to null when current_book is null', () => {
+  it('sets currentBook to null when currentBook is null', () => {
     const result = mapClub(baseApiClub);
     expect(result.currentBook).toBeNull();
   });
 
-  it('maps current_book when present', () => {
-    const result = mapClub({ ...baseApiClub, current_book: 'Kobzar' });
+  it('maps currentBook when present', () => {
+    const result = mapClub({ ...baseApiClub, currentBook: 'Kobzar' });
     expect(result.currentBook).toEqual({ title: 'Kobzar', author: '', description: '' });
   });
 
@@ -119,22 +120,22 @@ describe('mapClub', () => {
     expect(result.city).toBe('');
   });
 
-  it('maps cancelledAt from cancelled_at', () => {
-    const result = mapClub({ ...baseApiClub, cancelled_at: '2024-05-01' });
+  it('maps cancelledAt from cancelledAt', () => {
+    const result = mapClub({ ...baseApiClub, cancelledAt: '2024-05-01' });
     expect(result.cancelledAt).toBe('2024-05-01');
   });
 
-  it('sets cancelledAt to undefined when cancelled_at is null', () => {
-    const result = mapClub({ ...baseApiClub, cancelled_at: null });
+  it('sets cancelledAt to undefined when cancelledAt is null', () => {
+    const result = mapClub({ ...baseApiClub, cancelledAt: null });
     expect(result.cancelledAt).toBeUndefined();
   });
 });
 
 describe('mapClubMember', () => {
   const raw: ApiClubMember = {
-    user_id: 'u2',
-    display_name: 'Alice',
-    avatar_url: 'http://img',
+    userId: 'u2',
+    displayName: 'Alice',
+    avatarUrl: 'http://img',
     role: 'member',
   };
 
@@ -151,7 +152,7 @@ describe('mapClubMember', () => {
     const result = mapClubMember({
       ...raw,
       socials: { instagram: 'alice_ig' },
-      socials_public: true,
+      socialsPublic: true,
     });
     expect(result.socials?.instagram).toBe('alice_ig');
     expect(result.socialsPublic).toBeTrue();
@@ -166,11 +167,11 @@ describe('mapClubMember', () => {
 describe('mapBanRecord', () => {
   it('maps all ban fields', () => {
     const raw: ApiBanRecord = {
-      user_id: 'u3',
-      club_id: 'c1',
-      banned_at: '2024-03-01',
+      userId: 'u3',
+      clubId: 'c1',
+      bannedAt: '2024-03-01',
       duration: 'permanent',
-      banned_by: 'u1',
+      bannedBy: 'u1',
     };
     const result = mapBanRecord(raw);
     expect(result.userId).toBe('u3');

@@ -9,7 +9,7 @@ import { TokenStore } from './token.store';
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
 
 interface AuthResponse {
-  access_token: string;
+  accessToken: string;
   user: ApiUserProfile;
 }
 
@@ -71,11 +71,11 @@ export class AuthService {
         this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
           email,
           password,
-          display_name: displayName,
+          displayName,
           role,
         }),
       );
-      this.tokenStore.set(resp.access_token);
+      this.tokenStore.set(resp.accessToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -88,7 +88,7 @@ export class AuthService {
       const resp = await firstValueFrom(
         this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
       );
-      this.tokenStore.set(resp.access_token);
+      this.tokenStore.set(resp.accessToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -118,7 +118,7 @@ export class AuthService {
     const user = this._currentUser();
     if (!user) return;
     await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { display_name: name }),
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
     );
     this._currentUser.set({ ...user, displayName: name });
   }
@@ -137,7 +137,7 @@ export class AuthService {
     if (!user) return;
     await firstValueFrom(
       this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
-        socials_public: value,
+        socialsPublic: value,
       }),
     );
     this._currentUser.set({ ...user, socialsPublic: value });

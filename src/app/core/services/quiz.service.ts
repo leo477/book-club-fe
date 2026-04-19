@@ -9,25 +9,25 @@ import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
 
 interface ApiQuiz {
   id: string;
-  club_id: string;
-  created_by: string;
+  clubId: string;
+  createdBy: string;
   title: string;
   description: string | null;
-  is_active: boolean;
+  isActive: boolean;
 }
 
 interface ApiQuizQuestion {
   id: string;
-  quiz_id: string;
+  quizId: string;
   question: string;
   options: string[];
-  correct_index: number;
+  correctIndex: number;
 }
 
 interface ApiAttemptResponse {
   id: string;
-  quiz_id: string;
-  user_id: string;
+  quizId: string;
+  userId: string;
   score: number;
   total: number;
   answers: number[];
@@ -38,29 +38,29 @@ interface ApiAttemptResponse {
 function mapQuiz(raw: ApiQuiz): Quiz {
   return {
     id: raw.id,
-    clubId: raw.club_id,
-    createdBy: raw.created_by,
+    clubId: raw.clubId,
+    createdBy: raw.createdBy,
     title: raw.title,
     description: raw.description,
-    isActive: raw.is_active,
+    isActive: raw.isActive,
   };
 }
 
 function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
   return {
     id: raw.id,
-    quizId: raw.quiz_id,
+    quizId: raw.quizId,
     question: raw.question,
     options: raw.options,
-    correctIndex: raw.correct_index,
+    correctIndex: raw.correctIndex,
   };
 }
 
 function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
   return {
     id: raw.id,
-    quizId: raw.quiz_id,
-    userId: raw.user_id,
+    quizId: raw.quizId,
+    userId: raw.userId,
     score: raw.score,
     total: raw.total,
     answers: raw.answers,
@@ -128,7 +128,7 @@ export class QuizService {
         this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
           question: q.question,
           options: q.options,
-          correct_index: q.correctIndex,
+          correctIndex: q.correctIndex,
         }),
       );
       this._questions.update(prev => [...prev, mapQuestion(raw)]);
@@ -165,7 +165,7 @@ export class QuizService {
   async toggleActive(quizId: string, isActive: boolean): Promise<void> {
     try {
       await firstValueFrom(
-        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { is_active: isActive }),
+        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { isActive }),
       );
       this._quizzes.update(prev =>
         prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
