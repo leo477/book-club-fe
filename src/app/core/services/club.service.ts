@@ -63,14 +63,13 @@ export class ClubService {
   readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
     const filter = this._cityFilter();
     const clubs = this._clubs()
-      .filter(c => c.nextMeetingDate !== null)
       .filter(c => !filter || c.city === filter)
       .sort((a, b) => {
-        const aDate = a.nextMeetingDate ?? '';
-        const bDate = b.nextMeetingDate ?? '';
-        return new Date(aDate).getTime() - new Date(bDate).getTime();
+        if (!a.nextMeetingDate && !b.nextMeetingDate) return 0;
+        if (!a.nextMeetingDate) return 1;
+        if (!b.nextMeetingDate) return -1;
+        return new Date(a.nextMeetingDate).getTime() - new Date(b.nextMeetingDate).getTime();
       });
-
     return clubs.reduce<Record<string, Club[]>>((acc, club) => {
       const city = club.city ?? 'Other';
       if (!acc[city]) acc[city] = [];
@@ -134,6 +133,7 @@ export class ClubService {
     city?: string;
     tags?: string[];
     meetingDurationMinutes?: number | null;
+    nextMeetingDate?: string | null;
     afterMeetingVenue?: AfterMeetingVenue | null;
   }): Promise<Club> {
     const raw = await firstValueFrom(
@@ -144,6 +144,7 @@ export class ClubService {
         city: payload.city,
         tags: payload.tags ?? [],
         meetingDurationMinutes: payload.meetingDurationMinutes ?? null,
+        nextMeetingDate: payload.nextMeetingDate ?? null,
         afterMeetingVenue: payload.afterMeetingVenue ?? null,
       }),
     );
