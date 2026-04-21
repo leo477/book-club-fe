@@ -141,7 +141,7 @@ export class CreateClubComponent {
         city,
         tags: parsedTags,
         meetingDurationMinutes: meetingDurationMinutes ?? undefined,
-        nextMeetingDate: nextMeetingDate || null,
+        nextMeetingDate: nextMeetingDate ?? null,
         afterMeetingVenue,
       });
       this.router.navigate(['/clubs', club.id]);

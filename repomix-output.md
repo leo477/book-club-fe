@@ -6241,332 +6241,6 @@ export class ChatService {
 }
 ````
 
-## File: src/app/features/clubs/create-club/create-club.component.html
-````html
-<main class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-lg">
-    <header class="text-center mb-8">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 Book Club</h1>
-      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
-    </header>
-    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
-      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-        <fieldset class="space-y-4">
-          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.basic_info_legend' | translate }}</legend>
-          <div>
-            <label for="club-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'CREATE_CLUB.name_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
-            </label>
-            <input
-              id="club-name"
-              type="text"
-              formControlName="name"
-              [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-              [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
-              aria-describedby="name-error"
-            />
-            @if (form.controls.name.invalid && form.controls.name.touched) {
-              <p id="name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                @if (form.controls.name.errors?.['required']) { {{ 'CREATE_CLUB.name_required' | translate }} }
-                @else if (form.controls.name.errors?.['minlength']) { {{ 'CREATE_CLUB.name_min' | translate }} }
-                @else if (form.controls.name.errors?.['maxlength']) { {{ 'CREATE_CLUB.name_max' | translate }} }
-              </p>
-            }
-          </div>
-          <div>
-            <label for="club-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'CREATE_CLUB.description_label' | translate }}
-            </label>
-            <textarea
-              id="club-description"
-              formControlName="description"
-              rows="3"
-              [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-              [class.border-red-400]="form.controls.description.invalid && form.controls.description.touched"
-              aria-describedby="description-error"
-            ></textarea>
-            @if (form.controls.description.invalid && form.controls.description.touched) {
-              <p id="description-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                @if (form.controls.description.errors?.['maxlength']) { {{ 'CREATE_CLUB.description_max' | translate }} }
-              </p>
-            }
-          </div>
-          <div>
-            <label for="club-city" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'CREATE_CLUB.city_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
-            </label>
-            <input
-              id="club-city"
-              type="text"
-              formControlName="city"
-              [placeholder]="'CREATE_CLUB.city_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-              [class.border-red-400]="form.controls.city.invalid && form.controls.city.touched"
-              aria-describedby="city-error"
-            />
-            @if (form.controls.city.invalid && form.controls.city.touched) {
-              <p id="city-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                @if (form.controls.city.errors?.['required']) { {{ 'CREATE_CLUB.city_required' | translate }} }
-                @else if (form.controls.city.errors?.['maxlength']) { {{ 'CREATE_CLUB.city_max' | translate }} }
-              </p>
-            }
-          </div>
-          <div>
-            <label for="club-address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'CREATE_CLUB.address_label' | translate }}
-            </label>
-            <input
-              id="club-address"
-              type="text"
-              formControlName="address"
-              [placeholder]="'CREATE_CLUB.address_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-              [class.border-red-400]="form.controls.address.invalid && form.controls.address.touched"
-              aria-describedby="address-error"
-            />
-            @if (form.controls.address.invalid && form.controls.address.touched) {
-              <p id="address-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                @if (form.controls.address.errors?.['maxlength']) { {{ 'CREATE_CLUB.address_max' | translate }} }
-              </p>
-            }
-          </div>
-        </fieldset>
-        <fieldset class="space-y-4">
-          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.tags_duration_legend' | translate }}</legend>
-          <div>
-            <label for="club-tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'CREATE_CLUB.tags_label' | translate }}
-            </label>
-            <input
-              id="club-tags"
-              type="text"
-              formControlName="tags"
-              [placeholder]="'CREATE_CLUB.tags_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-              [class.border-red-400]="form.controls.tags.invalid && form.controls.tags.touched"
-              aria-describedby="tags-hint tags-error"
-            />
-            <p id="tags-hint" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {{ 'CREATE_CLUB.tags_hint' | translate }}
-            </p>
-            @if (form.controls.tags.invalid && form.controls.tags.touched) {
-              <p id="tags-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                @if (form.controls.tags.errors?.['maxlength']) { {{ 'CREATE_CLUB.tags_max' | translate }} }
-              </p>
-            }
-          </div>
-          <div>
-            <label for="club-duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'CREATE_CLUB.duration_label' | translate }}
-            </label>
-            <input
-              id="club-duration"
-              type="number"
-              formControlName="meetingDurationMinutes"
-              [placeholder]="'CREATE_CLUB.duration_placeholder' | translate"
-              min="15"
-              max="480"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-              [class.border-red-400]="form.controls.meetingDurationMinutes.invalid && form.controls.meetingDurationMinutes.touched"
-              aria-describedby="duration-error"
-            />
-            @if (form.controls.meetingDurationMinutes.invalid && form.controls.meetingDurationMinutes.touched) {
-              <p id="duration-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                @if (form.controls.meetingDurationMinutes.errors?.['min']) { {{ 'CREATE_CLUB.duration_min' | translate }} }
-                @else if (form.controls.meetingDurationMinutes.errors?.['max']) { {{ 'CREATE_CLUB.duration_max' | translate }} }
-              </p>
-            }
-          </div>
-          <div>
-            <label for="club-next-meeting-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'CREATE_CLUB.next_meeting_date_label' | translate }}
-            </label>
-            <input
-              id="club-next-meeting-date"
-              type="datetime-local"
-              formControlName="nextMeetingDate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-            />
-          </div>
-        </fieldset>
-        <fieldset>
-          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
-          <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-            <div>
-              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'CREATE_CLUB.public_label' | translate }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'CREATE_CLUB.public_desc' | translate }}</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              [attr.aria-checked]="form.controls.isPublic.value"
-              (click)="togglePublic()"
-              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              [class.bg-primary-600]="form.controls.isPublic.value"
-              [class.bg-gray-300]="!form.controls.isPublic.value"
-              [class.dark:bg-gray-600]="!form.controls.isPublic.value"
-            >
-              <span
-                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                [class.translate-x-6]="form.controls.isPublic.value"
-                [class.translate-x-1]="!form.controls.isPublic.value"
-              ></span>
-            </button>
-          </div>
-        </fieldset>
-        <section>
-          <button
-            type="button"
-            (click)="toggleAfterMeeting()"
-            class="w-full text-left px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700
-                   text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-150
-                   focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            @if (showAfterMeeting()) {
-              {{ 'CREATE_CLUB.after_meeting_hide' | translate }}
-            } @else {
-              {{ 'CREATE_CLUB.after_meeting_toggle' | translate }}
-            }
-          </button>
-          @if (showAfterMeeting()) {
-            <div class="mt-4 space-y-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 p-4">
-              <div>
-                <label for="venue-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {{ 'CREATE_CLUB.venue_name_label' | translate }}
-                </label>
-                <input
-                  id="venue-name"
-                  type="text"
-                  formControlName="afterMeetingVenueName"
-                  [placeholder]="'CREATE_CLUB.venue_name_placeholder' | translate"
-                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                         px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                         transition-colors duration-150"
-                  [class.border-red-400]="form.controls.afterMeetingVenueName.invalid && form.controls.afterMeetingVenueName.touched"
-                  aria-describedby="venue-name-error"
-                />
-                @if (form.controls.afterMeetingVenueName.invalid && form.controls.afterMeetingVenueName.touched) {
-                  <p id="venue-name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                    @if (form.controls.afterMeetingVenueName.errors?.['maxlength']) { {{ 'CREATE_CLUB.venue_name_max' | translate }} }
-                  </p>
-                }
-              </div>
-              <div>
-                <label for="venue-address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {{ 'CREATE_CLUB.venue_address_label' | translate }}
-                </label>
-                <input
-                  id="venue-address"
-                  type="text"
-                  formControlName="afterMeetingVenueAddress"
-                  [placeholder]="'CREATE_CLUB.venue_address_placeholder' | translate"
-                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                         px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                         transition-colors duration-150"
-                  [class.border-red-400]="form.controls.afterMeetingVenueAddress.invalid && form.controls.afterMeetingVenueAddress.touched"
-                  aria-describedby="venue-address-error"
-                />
-                @if (form.controls.afterMeetingVenueAddress.invalid && form.controls.afterMeetingVenueAddress.touched) {
-                  <p id="venue-address-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                    @if (form.controls.afterMeetingVenueAddress.errors?.['maxlength']) { {{ 'CREATE_CLUB.venue_address_max' | translate }} }
-                  </p>
-                }
-              </div>
-              <div>
-                <label for="venue-notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {{ 'CREATE_CLUB.venue_notes_label' | translate }}
-                </label>
-                <textarea
-                  id="venue-notes"
-                  formControlName="afterMeetingVenueDescription"
-                  rows="2"
-                  [placeholder]="'CREATE_CLUB.venue_notes_placeholder' | translate"
-                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                         px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
-                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                         transition-colors duration-150"
-                  [class.border-red-400]="form.controls.afterMeetingVenueDescription.invalid && form.controls.afterMeetingVenueDescription.touched"
-                  aria-describedby="venue-notes-error"
-                ></textarea>
-                @if (form.controls.afterMeetingVenueDescription.invalid && form.controls.afterMeetingVenueDescription.touched) {
-                  <p id="venue-notes-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                    @if (form.controls.afterMeetingVenueDescription.errors?.['maxlength']) { {{ 'CREATE_CLUB.venue_notes_max' | translate }} }
-                  </p>
-                }
-              </div>
-            </div>
-          }
-        </section>
-        @if (errorMessage()) {
-          <div
-            class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-            role="alert"
-          >
-            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
-            <span>{{ errorMessage() }}</span>
-          </div>
-        }
-        <div class="flex gap-3 pt-2">
-          <button
-            type="button"
-            (click)="cancel()"
-            class="flex-1 rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-2.5
-                   text-sm font-semibold text-gray-700 dark:text-gray-300
-                   hover:bg-gray-50 dark:hover:bg-gray-800
-                   focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2
-                   transition-colors duration-200"
-          >
-            {{ 'CREATE_CLUB.cancel' | translate }}
-          </button>
-          <button
-            type="submit"
-            [disabled]="isSubmitting()"
-            class="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5
-                   text-sm font-semibold text-white shadow-sm
-                   hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-                   disabled:opacity-60 disabled:cursor-not-allowed
-                   transition-colors duration-200"
-          >
-            @if (isSubmitting()) {
-              <app-loading-spinner size="sm" />
-              {{ 'CREATE_CLUB.submitting' | translate }}
-            } @else {
-              {{ 'CREATE_CLUB.submit' | translate }}
-            }
-          </button>
-        </div>
-      </form>
-    </article>
-  </div>
-</main>
-````
-
 ## File: src/app/features/profile/profile.component.html
 ````html
 <div class="max-w-2xl mx-auto space-y-6 py-8 px-4">
@@ -7335,147 +7009,330 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 };
 ````
 
-## File: src/app/features/clubs/create-club/create-club.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-} from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-interface CreateClubForm {
-  name: FormControl<string>;
-  description: FormControl<string>;
-  isPublic: FormControl<boolean>;
-  city: FormControl<string>;
-  address: FormControl<string>;
-  tags: FormControl<string>;
-  meetingDurationMinutes: FormControl<number | null>;
-  nextMeetingDate: FormControl<string | null>;
-  afterMeetingVenueName: FormControl<string>;
-  afterMeetingVenueAddress: FormControl<string>;
-  afterMeetingVenueDescription: FormControl<string>;
-}
-@Component({
-  selector: 'app-create-club',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent],
-  templateUrl: './create-club.component.html',
-})
-export class CreateClubComponent {
-  private readonly clubService = inject(ClubService);
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly _errorMessage = signal<string | null>(null);
-  readonly errorMessage = this._errorMessage.asReadonly();
-  private readonly _isSubmitting = signal(false);
-  readonly isSubmitting = this._isSubmitting.asReadonly();
-  readonly showAfterMeeting = signal(false);
-  readonly form = new FormGroup<CreateClubForm>({
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-    isPublic: new FormControl(true, { nonNullable: true }),
-    city: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(100)],
-    }),
-    address: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(200)],
-    }),
-    tags: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(300)],
-    }),
-    meetingDurationMinutes: new FormControl<number | null>(null, {
-      validators: [Validators.min(15), Validators.max(480)],
-    }),
-    nextMeetingDate: new FormControl<string | null>(null),
-    afterMeetingVenueName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(150)],
-    }),
-    afterMeetingVenueAddress: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(200)],
-    }),
-    afterMeetingVenueDescription: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(300)],
-    }),
-  });
-  togglePublic(): void {
-    const current = this.form.controls.isPublic.value;
-    this.form.controls.isPublic.setValue(!current);
-  }
-  toggleAfterMeeting(): void {
-    this.showAfterMeeting.update(v => !v);
-  }
-  cancel(): void {
-    this.router.navigate(['/clubs']);
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this._isSubmitting.set(true);
-    this._errorMessage.set(null);
-    const {
-      name,
-      description,
-      isPublic,
-      city,
-      tags,
-      meetingDurationMinutes,
-      nextMeetingDate,
-      afterMeetingVenueName,
-      afterMeetingVenueAddress,
-      afterMeetingVenueDescription,
-    } = this.form.getRawValue();
-    const parsedTags = tags
-      .split(',')
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
-    const afterMeetingVenue = afterMeetingVenueName
-      ? {
-          name: afterMeetingVenueName,
-          address: afterMeetingVenueAddress,
-          description: afterMeetingVenueDescription || undefined,
+## File: src/app/features/clubs/create-club/create-club.component.html
+````html
+<main class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+    <header class="text-center mb-8">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 Book Club</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
+    </header>
+    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+        <fieldset class="space-y-4">
+          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.basic_info_legend' | translate }}</legend>
+          <div>
+            <label for="club-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'CREATE_CLUB.name_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="club-name"
+              type="text"
+              formControlName="name"
+              [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+              [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
+              aria-describedby="name-error"
+            />
+            @if (form.controls.name.invalid && form.controls.name.touched) {
+              <p id="name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                @if (form.controls.name.errors?.['required']) { {{ 'CREATE_CLUB.name_required' | translate }} }
+                @else if (form.controls.name.errors?.['minlength']) { {{ 'CREATE_CLUB.name_min' | translate }} }
+                @else if (form.controls.name.errors?.['maxlength']) { {{ 'CREATE_CLUB.name_max' | translate }} }
+              </p>
+            }
+          </div>
+          <div>
+            <label for="club-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'CREATE_CLUB.description_label' | translate }}
+            </label>
+            <textarea
+              id="club-description"
+              formControlName="description"
+              rows="3"
+              [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+              [class.border-red-400]="form.controls.description.invalid && form.controls.description.touched"
+              aria-describedby="description-error"
+            ></textarea>
+            @if (form.controls.description.invalid && form.controls.description.touched) {
+              <p id="description-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                @if (form.controls.description.errors?.['maxlength']) { {{ 'CREATE_CLUB.description_max' | translate }} }
+              </p>
+            }
+          </div>
+          <div>
+            <label for="club-city" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'CREATE_CLUB.city_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="club-city"
+              type="text"
+              formControlName="city"
+              [placeholder]="'CREATE_CLUB.city_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+              [class.border-red-400]="form.controls.city.invalid && form.controls.city.touched"
+              aria-describedby="city-error"
+            />
+            @if (form.controls.city.invalid && form.controls.city.touched) {
+              <p id="city-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                @if (form.controls.city.errors?.['required']) { {{ 'CREATE_CLUB.city_required' | translate }} }
+                @else if (form.controls.city.errors?.['maxlength']) { {{ 'CREATE_CLUB.city_max' | translate }} }
+              </p>
+            }
+          </div>
+          <div>
+            <label for="club-address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'CREATE_CLUB.address_label' | translate }}
+            </label>
+            <input
+              id="club-address"
+              type="text"
+              formControlName="address"
+              [placeholder]="'CREATE_CLUB.address_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+              [class.border-red-400]="form.controls.address.invalid && form.controls.address.touched"
+              aria-describedby="address-error"
+            />
+            @if (form.controls.address.invalid && form.controls.address.touched) {
+              <p id="address-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                @if (form.controls.address.errors?.['maxlength']) { {{ 'CREATE_CLUB.address_max' | translate }} }
+              </p>
+            }
+          </div>
+        </fieldset>
+        <fieldset class="space-y-4">
+          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.tags_duration_legend' | translate }}</legend>
+          <div>
+            <label for="club-tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'CREATE_CLUB.tags_label' | translate }}
+            </label>
+            <input
+              id="club-tags"
+              type="text"
+              formControlName="tags"
+              [placeholder]="'CREATE_CLUB.tags_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+              [class.border-red-400]="form.controls.tags.invalid && form.controls.tags.touched"
+              aria-describedby="tags-hint tags-error"
+            />
+            <p id="tags-hint" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+              {{ 'CREATE_CLUB.tags_hint' | translate }}
+            </p>
+            @if (form.controls.tags.invalid && form.controls.tags.touched) {
+              <p id="tags-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                @if (form.controls.tags.errors?.['maxlength']) { {{ 'CREATE_CLUB.tags_max' | translate }} }
+              </p>
+            }
+          </div>
+          <div>
+            <label for="club-duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'CREATE_CLUB.duration_label' | translate }}
+            </label>
+            <input
+              id="club-duration"
+              type="number"
+              formControlName="meetingDurationMinutes"
+              [placeholder]="'CREATE_CLUB.duration_placeholder' | translate"
+              min="15"
+              max="480"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+              [class.border-red-400]="form.controls.meetingDurationMinutes.invalid && form.controls.meetingDurationMinutes.touched"
+              aria-describedby="duration-error"
+            />
+            @if (form.controls.meetingDurationMinutes.invalid && form.controls.meetingDurationMinutes.touched) {
+              <p id="duration-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                @if (form.controls.meetingDurationMinutes.errors?.['min']) { {{ 'CREATE_CLUB.duration_min' | translate }} }
+                @else if (form.controls.meetingDurationMinutes.errors?.['max']) { {{ 'CREATE_CLUB.duration_max' | translate }} }
+              </p>
+            }
+          </div>
+          <div>
+            <label for="club-next-meeting-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'CREATE_CLUB.next_meeting_date_label' | translate }}
+            </label>
+            <input
+              id="club-next-meeting-date"
+              type="datetime-local"
+              formControlName="nextMeetingDate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+            />
+          </div>
+        </fieldset>
+        <fieldset>
+          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
+          <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
+            <div>
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'CREATE_CLUB.public_label' | translate }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'CREATE_CLUB.public_desc' | translate }}</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              [attr.aria-checked]="form.controls.isPublic.value"
+              (click)="togglePublic()"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              [class.bg-primary-600]="form.controls.isPublic.value"
+              [class.bg-gray-300]="!form.controls.isPublic.value"
+              [class.dark:bg-gray-600]="!form.controls.isPublic.value"
+            >
+              <span
+                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                [class.translate-x-6]="form.controls.isPublic.value"
+                [class.translate-x-1]="!form.controls.isPublic.value"
+              ></span>
+            </button>
+          </div>
+        </fieldset>
+        <section>
+          <button
+            type="button"
+            (click)="toggleAfterMeeting()"
+            class="w-full text-left px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700
+                   text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-150
+                   focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            @if (showAfterMeeting()) {
+              {{ 'CREATE_CLUB.after_meeting_hide' | translate }}
+            } @else {
+              {{ 'CREATE_CLUB.after_meeting_toggle' | translate }}
+            }
+          </button>
+          @if (showAfterMeeting()) {
+            <div class="mt-4 space-y-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 p-4">
+              <div>
+                <label for="venue-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {{ 'CREATE_CLUB.venue_name_label' | translate }}
+                </label>
+                <input
+                  id="venue-name"
+                  type="text"
+                  formControlName="afterMeetingVenueName"
+                  [placeholder]="'CREATE_CLUB.venue_name_placeholder' | translate"
+                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                         px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                         transition-colors duration-150"
+                  [class.border-red-400]="form.controls.afterMeetingVenueName.invalid && form.controls.afterMeetingVenueName.touched"
+                  aria-describedby="venue-name-error"
+                />
+                @if (form.controls.afterMeetingVenueName.invalid && form.controls.afterMeetingVenueName.touched) {
+                  <p id="venue-name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                    @if (form.controls.afterMeetingVenueName.errors?.['maxlength']) { {{ 'CREATE_CLUB.venue_name_max' | translate }} }
+                  </p>
+                }
+              </div>
+              <div>
+                <label for="venue-address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {{ 'CREATE_CLUB.venue_address_label' | translate }}
+                </label>
+                <input
+                  id="venue-address"
+                  type="text"
+                  formControlName="afterMeetingVenueAddress"
+                  [placeholder]="'CREATE_CLUB.venue_address_placeholder' | translate"
+                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                         px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                         transition-colors duration-150"
+                  [class.border-red-400]="form.controls.afterMeetingVenueAddress.invalid && form.controls.afterMeetingVenueAddress.touched"
+                  aria-describedby="venue-address-error"
+                />
+                @if (form.controls.afterMeetingVenueAddress.invalid && form.controls.afterMeetingVenueAddress.touched) {
+                  <p id="venue-address-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                    @if (form.controls.afterMeetingVenueAddress.errors?.['maxlength']) { {{ 'CREATE_CLUB.venue_address_max' | translate }} }
+                  </p>
+                }
+              </div>
+              <div>
+                <label for="venue-notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  {{ 'CREATE_CLUB.venue_notes_label' | translate }}
+                </label>
+                <textarea
+                  id="venue-notes"
+                  formControlName="afterMeetingVenueDescription"
+                  rows="2"
+                  [placeholder]="'CREATE_CLUB.venue_notes_placeholder' | translate"
+                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                         px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
+                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                         transition-colors duration-150"
+                  [class.border-red-400]="form.controls.afterMeetingVenueDescription.invalid && form.controls.afterMeetingVenueDescription.touched"
+                  aria-describedby="venue-notes-error"
+                ></textarea>
+                @if (form.controls.afterMeetingVenueDescription.invalid && form.controls.afterMeetingVenueDescription.touched) {
+                  <p id="venue-notes-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                    @if (form.controls.afterMeetingVenueDescription.errors?.['maxlength']) { {{ 'CREATE_CLUB.venue_notes_max' | translate }} }
+                  </p>
+                }
+              </div>
+            </div>
+          }
+        </section>
+        @if (errorMessage()) {
+          <div
+            class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+            role="alert"
+          >
+            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
+            <span>{{ errorMessage() }}</span>
+          </div>
         }
-      : null;
-    try {
-      const club = await this.clubService.createClub({
-        name,
-        description,
-        isPublic,
-        city,
-        tags: parsedTags,
-        meetingDurationMinutes: meetingDurationMinutes ?? undefined,
-        nextMeetingDate: nextMeetingDate || null,
-        afterMeetingVenue,
-      });
-      this.router.navigate(['/clubs', club.id]);
-    } catch (err) {
-      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
-    } finally {
-      this._isSubmitting.set(false);
-    }
-  }
-}
+        <div class="flex gap-3 pt-2">
+          <button
+            type="button"
+            (click)="cancel()"
+            class="flex-1 rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-2.5
+                   text-sm font-semibold text-gray-700 dark:text-gray-300
+                   hover:bg-gray-50 dark:hover:bg-gray-800
+                   focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2
+                   transition-colors duration-200"
+          >
+            {{ 'CREATE_CLUB.cancel' | translate }}
+          </button>
+          <button
+            type="submit"
+            [disabled]="isSubmitting()"
+            class="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5
+                   text-sm font-semibold text-white shadow-sm
+                   hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+                   disabled:opacity-60 disabled:cursor-not-allowed
+                   transition-colors duration-200"
+          >
+            @if (isSubmitting()) {
+              <app-loading-spinner size="sm" />
+              {{ 'CREATE_CLUB.submitting' | translate }}
+            } @else {
+              {{ 'CREATE_CLUB.submit' | translate }}
+            }
+          </button>
+        </div>
+      </form>
+    </article>
+  </div>
+</main>
 ````
 
 ## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
@@ -8020,6 +7877,149 @@ export const appConfig: ApplicationConfig = {
 </div>
 ````
 
+## File: src/app/features/clubs/create-club/create-club.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+} from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+interface CreateClubForm {
+  name: FormControl<string>;
+  description: FormControl<string>;
+  isPublic: FormControl<boolean>;
+  city: FormControl<string>;
+  address: FormControl<string>;
+  tags: FormControl<string>;
+  meetingDurationMinutes: FormControl<number | null>;
+  nextMeetingDate: FormControl<string | null>;
+  afterMeetingVenueName: FormControl<string>;
+  afterMeetingVenueAddress: FormControl<string>;
+  afterMeetingVenueDescription: FormControl<string>;
+}
+@Component({
+  selector: 'app-create-club',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent],
+  templateUrl: './create-club.component.html',
+})
+export class CreateClubComponent {
+  private readonly clubService = inject(ClubService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly _errorMessage = signal<string | null>(null);
+  readonly errorMessage = this._errorMessage.asReadonly();
+  private readonly _isSubmitting = signal(false);
+  readonly isSubmitting = this._isSubmitting.asReadonly();
+  readonly showAfterMeeting = signal(false);
+  readonly form = new FormGroup<CreateClubForm>({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+    isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(100)],
+    }),
+    address: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(200)],
+    }),
+    tags: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(300)],
+    }),
+    meetingDurationMinutes: new FormControl<number | null>(null, {
+      validators: [Validators.min(15), Validators.max(480)],
+    }),
+    nextMeetingDate: new FormControl<string | null>(null),
+    afterMeetingVenueName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(150)],
+    }),
+    afterMeetingVenueAddress: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(200)],
+    }),
+    afterMeetingVenueDescription: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(300)],
+    }),
+  });
+  togglePublic(): void {
+    const current = this.form.controls.isPublic.value;
+    this.form.controls.isPublic.setValue(!current);
+  }
+  toggleAfterMeeting(): void {
+    this.showAfterMeeting.update(v => !v);
+  }
+  cancel(): void {
+    this.router.navigate(['/clubs']);
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this._isSubmitting.set(true);
+    this._errorMessage.set(null);
+    const {
+      name,
+      description,
+      isPublic,
+      city,
+      tags,
+      meetingDurationMinutes,
+      nextMeetingDate,
+      afterMeetingVenueName,
+      afterMeetingVenueAddress,
+      afterMeetingVenueDescription,
+    } = this.form.getRawValue();
+    const parsedTags = tags
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0);
+    const afterMeetingVenue = afterMeetingVenueName
+      ? {
+          name: afterMeetingVenueName,
+          address: afterMeetingVenueAddress,
+          description: afterMeetingVenueDescription || undefined,
+        }
+      : null;
+    try {
+      const club = await this.clubService.createClub({
+        name,
+        description,
+        isPublic,
+        city,
+        tags: parsedTags,
+        meetingDurationMinutes: meetingDurationMinutes ?? undefined,
+        nextMeetingDate: nextMeetingDate ?? null,
+        afterMeetingVenue,
+      });
+      this.router.navigate(['/clubs', club.id]);
+    } catch (err) {
+      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
+    } finally {
+      this._isSubmitting.set(false);
+    }
+  }
+}
+````
+
 ## File: src/app/features/auth/login/login.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
@@ -8491,6 +8491,32 @@ export class ClubsListComponent implements OnInit {
 }
 ````
 
+## File: vercel.json
+````json
+{
+
+  "buildCommand": "npm run build -- --configuration=production",
+  "outputDirectory": "dist/book-club-fe/browser",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://vercel.live https://book-club-be.onrender.com wss://*.pusher.com https://*.pusher.com https://*.pusherapp.com; frame-src https://vercel.live; frame-ancestors 'none';" }
+      ]
+    }
+  ]
+}
+````
+
 ## File: src/app/core/services/quiz.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -8771,29 +8797,142 @@ export class RegisterComponent {
 }
 ````
 
-## File: vercel.json
-````json
-{
-
-  "buildCommand": "npm run build -- --configuration=production",
-  "outputDirectory": "dist/book-club-fe/browser",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://vercel.live https://book-club-be.onrender.com wss://*.pusher.com https://*.pusher.com https://*.pusherapp.com; frame-src https://vercel.live; frame-ancestors 'none';" }
-      ]
+## File: src/app/core/auth/auth.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, resource, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, firstValueFrom, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
+import { TokenStore } from './token.store';
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: ApiUserProfile;
+}
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly tokenStore = inject(TokenStore);
+  private readonly _currentUser = signal<UserProfile | null>(null);
+  private readonly _isLoading = signal<boolean>(true);
+  readonly currentUser = this._currentUser.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly isAuthenticated = computed(() => this._currentUser() !== null);
+  readonly userRole = computed(() => this._currentUser()?.role ?? null);
+  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
+  private readonly _statsResource = resource({
+    params: () => this._currentUser()?.id ?? null,
+    loader: ({ params: userId }) => {
+      if (!userId) return Promise.resolve(null as UserStats | null);
+      return firstValueFrom(
+        this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
+          catchError(() => of(null)),
+        ),
+      ).then(raw => (raw ? mapUserStats(raw) : null));
+    },
+  });
+  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
+  constructor() {
+    const token = this.tokenStore.snapshot();
+    if (token) {
+      firstValueFrom(
+        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
+          catchError(() => {
+            this.tokenStore.clear();
+            return of(null);
+          }),
+        ),
+      ).then(raw => {
+        this._currentUser.set(raw ? mapUserProfile(raw) : null);
+        this._isLoading.set(false);
+      });
+    } else {
+      this._isLoading.set(false);
     }
-  ]
+  }
+  async signUp(
+    email: string,
+    password: string,
+    displayName: string,
+    role: UserRole,
+  ): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
+          email,
+          password,
+          displayName,
+          role,
+        }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signIn(email: string, password: string): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signOut(): Promise<void> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
+    } catch {  }
+    this.tokenStore.clear();
+    this._currentUser.set(null);
+    this.router.navigate(['/login']);
+  }
+  async updateRole(role: UserRole): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
+    );
+    this._currentUser.set({ ...user, role });
+  }
+  async updateDisplayName(name: string): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
+    );
+    this._currentUser.set({ ...user, displayName: name });
+  }
+  async updateSocials(socials: UserSocials): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
+    );
+    this._currentUser.set({ ...user, socials });
+  }
+  async setSocialsPublic(value: boolean): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
+        socialsPublic: value,
+      }),
+    );
+    this._currentUser.set({ ...user, socialsPublic: value });
+  }
 }
 ````
 
@@ -9012,145 +9151,6 @@ export class ClubService {
   private _updateClub(updated: Club): void {
     this._clubs.update(list => list.map(c => (c.id === updated.id ? updated : c)));
     this._myClubs.update(list => list.map(c => (c.id === updated.id ? updated : c)));
-  }
-}
-````
-
-## File: src/app/core/auth/auth.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, resource, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { catchError, firstValueFrom, of } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
-import { TokenStore } from './token.store';
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: ApiUserProfile;
-}
-@Injectable({ providedIn: 'root' })
-export class AuthService {
-  private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
-  private readonly tokenStore = inject(TokenStore);
-  private readonly _currentUser = signal<UserProfile | null>(null);
-  private readonly _isLoading = signal<boolean>(true);
-  readonly currentUser = this._currentUser.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly isAuthenticated = computed(() => this._currentUser() !== null);
-  readonly userRole = computed(() => this._currentUser()?.role ?? null);
-  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
-  private readonly _statsResource = resource({
-    params: () => this._currentUser()?.id ?? null,
-    loader: ({ params: userId }) => {
-      if (!userId) return Promise.resolve(null as UserStats | null);
-      return firstValueFrom(
-        this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
-          catchError(() => of(null)),
-        ),
-      ).then(raw => (raw ? mapUserStats(raw) : null));
-    },
-  });
-  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
-  constructor() {
-    const token = this.tokenStore.snapshot();
-    if (token) {
-      firstValueFrom(
-        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
-          catchError(() => {
-            this.tokenStore.clear();
-            return of(null);
-          }),
-        ),
-      ).then(raw => {
-        this._currentUser.set(raw ? mapUserProfile(raw) : null);
-        this._isLoading.set(false);
-      });
-    } else {
-      this._isLoading.set(false);
-    }
-  }
-  async signUp(
-    email: string,
-    password: string,
-    displayName: string,
-    role: UserRole,
-  ): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
-          email,
-          password,
-          displayName,
-          role,
-        }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signIn(email: string, password: string): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signOut(): Promise<void> {
-    try {
-      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
-    } catch {  }
-    this.tokenStore.clear();
-    this._currentUser.set(null);
-    this.router.navigate(['/login']);
-  }
-  async updateRole(role: UserRole): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
-    );
-    this._currentUser.set({ ...user, role });
-  }
-  async updateDisplayName(name: string): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
-    );
-    this._currentUser.set({ ...user, displayName: name });
-  }
-  async updateSocials(socials: UserSocials): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
-    );
-    this._currentUser.set({ ...user, socials });
-  }
-  async setSocialsPublic(value: boolean): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
-        socialsPublic: value,
-      }),
-    );
-    this._currentUser.set({ ...user, socialsPublic: value });
   }
 }
 ````
