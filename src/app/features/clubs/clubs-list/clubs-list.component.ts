@@ -37,6 +37,15 @@ export class ClubsListComponent implements OnInit {
   readonly myCityKeys = computed(() => Object.keys(this.clubService.myClubsByCity()));
   readonly ownedClubIds = this.clubService.myOwnedClubIds;
 
+  readonly currentCityKeys = computed(() =>
+    this.activeTab() === 'all' ? this.cityKeys() : this.myCityKeys()
+  );
+  readonly currentClubsByCity = computed(() =>
+    this.activeTab() === 'all'
+      ? this.clubService.upcomingByCity()
+      : this.clubService.myClubsByCity()
+  );
+
   async ngOnInit(): Promise<void> {
     this.seo.setPageI18n('SEO.clubs_title', {
       descriptionKey: 'SEO.clubs_description',
