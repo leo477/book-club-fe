@@ -16,6 +16,7 @@ import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geoc
 export class AddressAutocompleteComponent implements OnInit, OnDestroy {
   @Input({ required: true }) control!: FormControl<string>;
   @Input() placeholder = '';
+  @Input() inputId = '';
   @Output() selected = new EventEmitter<GeocodeSuggestion>();
 
   private readonly geocoding = inject(GeocodingService);

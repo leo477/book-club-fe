@@ -67,10 +67,11 @@
 
           <!-- City -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="city-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ 'CREATE_CLUB.city_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
             </label>
             <app-address-autocomplete
+              inputId="city-input"
               [control]="form.controls.city"
               [placeholder]="'CREATE_CLUB.city_placeholder' | translate"
               (selected)="onLocationSelected($event, 'city')"
@@ -86,10 +87,11 @@
 
           <!-- Address -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="address-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ 'CREATE_CLUB.address_label' | translate }}
             </label>
             <app-address-autocomplete
+              inputId="address-input"
               [control]="form.controls.address"
               [placeholder]="'CREATE_CLUB.address_placeholder' | translate"
               (selected)="onLocationSelected($event, 'address')"
