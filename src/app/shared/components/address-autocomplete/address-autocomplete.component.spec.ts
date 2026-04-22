@@ -124,7 +124,7 @@ describe('AddressAutocompleteComponent', () => {
     });
 
     it('does not re-trigger the autocomplete pipeline (emitEvent: false)', (done) => {
-      const { component, control, geocodingSpy } = setup();
+      const { component, geocodingSpy } = setup();
       component.suggestions.set(mockSuggestions);
       component.isOpen.set(true);
       component.select(mockSuggestions[0]);
