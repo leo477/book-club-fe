@@ -21,6 +21,7 @@ interface CreateClubForm {
   address: FormControl<string>;
   tags: FormControl<string>;
   meetingDurationMinutes: FormControl<number | null>;
+  nextMeetingDate: FormControl<string | null>;
   afterMeetingVenueName: FormControl<string>;
   afterMeetingVenueAddress: FormControl<string>;
   afterMeetingVenueDescription: FormControl<string>;
@@ -73,6 +74,7 @@ export class CreateClubComponent {
     meetingDurationMinutes: new FormControl<number | null>(null, {
       validators: [Validators.min(15), Validators.max(480)],
     }),
+    nextMeetingDate: new FormControl<string | null>(null),
     afterMeetingVenueName: new FormControl('', {
       nonNullable: true,
       validators: [Validators.maxLength(150)],
@@ -123,6 +125,7 @@ export class CreateClubComponent {
       city,
       tags,
       meetingDurationMinutes,
+      nextMeetingDate,
       afterMeetingVenueName,
       afterMeetingVenueAddress,
       afterMeetingVenueDescription,
@@ -149,6 +152,7 @@ export class CreateClubComponent {
         city,
         tags: parsedTags,
         meetingDurationMinutes: meetingDurationMinutes ?? undefined,
+        nextMeetingDate: nextMeetingDate ?? null,
         afterMeetingVenue,
       });
       this.router.navigate(['/clubs', club.id]);

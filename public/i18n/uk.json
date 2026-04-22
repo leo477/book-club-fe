@@ -30,7 +30,9 @@
     "welcome_back": "Ласкаво просимо назад",
     "login_title": "Вхід",
     "submit_register": "Зареєструватися",
-    "password_strength": "Надійність паролю"
+    "password_strength": "Надійність паролю",
+    "account_created": "Акаунт успішно створено!",
+    "welcome_message": "Ласкаво просимо,"
   },
   "CREATE_CLUB": {
     "subtitle": "Створіть нову спільноту читачів",

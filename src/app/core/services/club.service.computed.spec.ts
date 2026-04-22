@@ -153,7 +153,7 @@ describe('ClubService – computed signals and additional methods', () => {
     it('upcomingByCity groups clubs with meetings by city', () => {
       const byCity = service.upcomingByCity();
       expect(byCity['Kyiv']).toBeDefined();
-      expect(byCity['Kyiv'].length).toBe(1); // c3 has null nextMeetingDate
+      expect(byCity['Kyiv'].length).toBe(2); // c1 has date, c3 has null — both included, sorted by date
       expect(byCity['Lviv']).toBeDefined();
     });
 

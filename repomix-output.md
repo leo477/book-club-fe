@@ -832,28 +832,6 @@ for (const outputPath of OUTPUT_FILES) {
 }
 ````
 
-## File: src/app/core/auth/token.store.ts
-````typescript
-import { Injectable, signal } from '@angular/core';
-const TOKEN_KEY = 'bc_access_token';
-@Injectable({ providedIn: 'root' })
-export class TokenStore {
-  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
-  readonly token = this._token.asReadonly();
-  set(token: string): void {
-    localStorage.setItem(TOKEN_KEY, token);
-    this._token.set(token);
-  }
-  clear(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    this._token.set(null);
-  }
-  snapshot(): string | null {
-    return this._token();
-  }
-}
-````
-
 ## File: src/app/core/models/chat.model.ts
 ````typescript
 export interface ChatMessage {
@@ -2759,21 +2737,6 @@ jobs:
 </urlset>
 ````
 
-## File: src/app/core/api/api-error.util.ts
-````typescript
-import { HttpErrorResponse } from '@angular/common/http';
-export function extractApiError(err: unknown): string {
-  if (err instanceof HttpErrorResponse) {
-    const detail = (err.error as { detail?: unknown })?.detail;
-    if (typeof detail === 'string') return detail;
-    if (Array.isArray(detail)) return (detail[0] as { msg?: string })?.msg ?? err.message ?? 'Unknown error';
-    if (detail && typeof detail === 'object') return (detail as { error?: string }).error ?? err.message ?? 'Unknown error';
-    return err.message ?? 'Unknown error';
-  }
-  return 'Unknown error';
-}
-````
-
 ## File: src/app/core/api/api-mappers.ts
 ````typescript
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
@@ -2977,6 +2940,40 @@ export const roleGuard =
       map(() => evaluate()),
     );
   };
+````
+
+## File: src/app/core/auth/token.store.ts
+````typescript
+import { Injectable, signal } from '@angular/core';
+const TOKEN_KEY = 'bc_access_token';
+const REFRESH_TOKEN_KEY = 'bc_refresh_token';
+@Injectable({ providedIn: 'root' })
+export class TokenStore {
+  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
+  private readonly _refreshToken = signal<string | null>(localStorage.getItem(REFRESH_TOKEN_KEY));
+  readonly token = this._token.asReadonly();
+  readonly refreshToken = this._refreshToken.asReadonly();
+  set(token: string): void {
+    localStorage.setItem(TOKEN_KEY, token);
+    this._token.set(token);
+  }
+  setRefresh(token: string): void {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+    this._refreshToken.set(token);
+  }
+  clear(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    this._token.set(null);
+    this._refreshToken.set(null);
+  }
+  snapshot(): string | null {
+    return this._token();
+  }
+  snapshotRefresh(): string | null {
+    return this._refreshToken();
+  }
+}
 ````
 
 ## File: src/app/core/models/randomizer.model.ts
@@ -3505,6 +3502,23 @@ This project uses **Repomix** to provide a full map of the codebase.
 - Backend API routes: see FastAPI project (not in this repo).
 ````
 
+## File: src/app/core/api/api-error.util.ts
+````typescript
+import { HttpErrorResponse } from '@angular/common/http';
+export function extractApiError(err: unknown): string {
+  if (err instanceof HttpErrorResponse) {
+    const body = err.error as { error?: unknown; detail?: unknown } | null;
+    if (typeof body?.error === 'string') return body.error;
+    const detail = body?.detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) return (detail[0] as { msg?: string })?.msg ?? err.message ?? 'Unknown error';
+    if (detail && typeof detail === 'object') return (detail as { error?: string }).error ?? err.message ?? 'Unknown error';
+    return err.message ?? 'Unknown error';
+  }
+  return 'Unknown error';
+}
+````
+
 ## File: src/app/core/models/club.model.ts
 ````typescript
 export type ClubStatus = 'active' | 'paused' | 'cancelled';
@@ -3641,200 +3655,6 @@ export interface ClubMeeting {
                 </a>
               </p>
             </div>
-            <p class="mt-6 text-center text-sm text-gray-500">
-              <a
-                routerLink="/"
-                class="inline-flex items-center gap-1 text-gray-500
-                       hover:text-gray-700 transition-all duration-200
-                       focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 rounded"
-              >
-                {{ 'NAV.back_home' | translate }}
-              </a>
-            </p>
-          </div>
-        }
-        </main>
-    </div>
-    <style>
-      .auth-page-wrapper {
-        position: relative;
-        min-height: 100vh;
-        overflow: hidden;
-      }
-      .auth-form-container {
-        position: relative;
-        z-index: 60;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 1rem;
-      }
-      .animate-form-in {
-        animation: form-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-      }
-      @keyframes form-slide-in {
-        from {
-          opacity: 0;
-          transform: translateY(24px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-    </style>
-````
-
-## File: src/app/features/auth/register/register.component.html
-````html
-<div class="auth-page-wrapper">
-      <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
-      <main class="auth-form-container">
-        @if (formVisible()) {
-          <div class="w-full max-w-md animate-form-in">
-            <div class="text-center mb-8">
-              <h1 class="font-display text-3xl font-bold text-gray-900">📚 Book Club</h1>
-              <p class="text-gray-600 mt-2">{{ 'AUTH.create_account_subtitle' | translate }}</p>
-            </div>
-            @if (successMessage()) {
-              <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 text-center border border-amber-100">
-                <div class="text-5xl mb-4">📬</div>
-                <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ 'AUTH.check_email' | translate }}</h2>
-                <p class="text-gray-600 text-sm">
-                  {{ 'AUTH.confirmation_sent' | translate }} <strong>{{ registeredEmail() }}</strong>.
-                  {{ 'AUTH.activate_account' | translate }}
-                </p>
-                <a routerLink="/login"
-                   class="mt-6 inline-block text-sm text-amber-700 hover:text-amber-800 font-medium">
-                  {{ 'AUTH.back_to_login' | translate }}
-                </a>
-              </div>
-            } @else {
-              <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-amber-100">
-                <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ 'AUTH.create_account_h2' | translate }}</h2>
-                <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
-                  <fieldset class="border-0 p-0 m-0">
-                    <legend class="sr-only">{{ 'AUTH.create_account_h2' | translate }}</legend>
-                    <app-form-field
-                      [label]="'AUTH.display_name' | translate"
-                      type="text"
-                      placeholder="Ada Lovelace"
-                      [control]="form.controls.displayName"
-                    />
-                    <app-form-field
-                      [label]="'AUTH.email' | translate"
-                      type="email"
-                      placeholder="you@example.com"
-                      [control]="form.controls.email"
-                    />
-                    <app-form-field
-                      [label]="'AUTH.password' | translate"
-                      type="password"
-                      [placeholder]="'AUTH.password' | translate"
-                      [control]="form.controls.password"
-                    />
-                    @if (passwordStrength()) {
-                      <div class="flex items-center gap-2 -mt-2">
-                        <div class="flex gap-1 flex-1">
-                          <div
-                            class="h-1 flex-1 rounded-full transition-colors"
-                            [class]="passwordStrength() !== null ? 'bg-red-400' : 'bg-gray-200'"
-                          ></div>
-                          <div
-                            class="h-1 flex-1 rounded-full transition-colors"
-                            [class]="passwordStrength() === 'medium' || passwordStrength() === 'strong' ? 'bg-yellow-400' : 'bg-gray-200'"
-                          ></div>
-                          <div
-                            class="h-1 flex-1 rounded-full transition-colors"
-                            [class]="passwordStrength() === 'strong' ? 'bg-green-500' : 'bg-gray-200'"
-                          ></div>
-                        </div>
-                        <span
-                          class="text-xs font-medium"
-                          [class]="passwordStrength() === 'strong' ? 'text-green-600' :
-                                   passwordStrength() === 'medium' ? 'text-yellow-600' :
-                                   'text-red-500'"
-                        >
-                          {{ passwordStrength() === 'strong' ? ('AUTH.password_strong' | translate) : passwordStrength() === 'medium' ? ('AUTH.password_medium' | translate) : ('AUTH.password_weak' | translate) }}
-                        </span>
-                      </div>
-                    }
-                    <app-form-field
-                      [label]="'AUTH.confirm_password' | translate"
-                      type="password"
-                      placeholder="••••••••"
-                      [control]="form.controls.confirmPassword"
-                    />
-                    @if (form.hasError('passwordMismatch') && form.controls.confirmPassword.touched) {
-                      <p class="text-xs text-red-500 -mt-3">{{ 'AUTH.passwords_no_match' | translate }}</p>
-                    }
-                    <fieldset class="border-0 p-0 m-0">
-                      <legend class="text-sm font-medium text-gray-700 block mb-1.5">{{ 'AUTH.want_to' | translate }}</legend>
-                      <div class="grid grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          (click)="setRole('user')"
-                          [class.ring-2]="selectedRole() === 'user'"
-                          [class.ring-amber-500]="selectedRole() === 'user'"
-                          [class.bg-amber-50]="selectedRole() === 'user'"
-                          [class.bg-gray-50]="selectedRole() !== 'user'"
-                          class="p-4 rounded-xl border border-gray-200 text-left transition-all focus:outline-none focus:ring-2 focus:ring-amber-500"
-                        >
-                          <div class="text-2xl mb-1">📖</div>
-                          <div class="font-medium text-sm text-gray-900">{{ 'AUTH.role_reader_label' | translate }}</div>
-                          <div class="text-xs text-gray-500">{{ 'AUTH.role_reader_desc' | translate }}</div>
-                        </button>
-                        <button
-                          type="button"
-                          (click)="setRole('organizer')"
-                          [class.ring-2]="selectedRole() === 'organizer'"
-                          [class.ring-amber-500]="selectedRole() === 'organizer'"
-                          [class.bg-amber-50]="selectedRole() === 'organizer'"
-                          [class.bg-gray-50]="selectedRole() !== 'organizer'"
-                          class="p-4 rounded-xl border border-gray-200 text-left transition-all focus:outline-none focus:ring-2 focus:ring-amber-500"
-                        >
-                          <div class="text-2xl mb-1">🎯</div>
-                          <div class="font-medium text-sm text-gray-900">{{ 'AUTH.role_organizer_label' | translate }}</div>
-                          <div class="text-xs text-gray-500">{{ 'AUTH.role_organizer_desc' | translate }}</div>
-                        </button>
-                      </div>
-                      @if (form.controls.role.invalid && form.controls.role.touched) {
-                        <p class="text-xs text-red-500 mt-0.5">{{ 'AUTH.select_role_error' | translate }}</p>
-                      }
-                    </fieldset>
-                    @if (errorMessage()) {
-                      <div class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700" role="alert">
-                        <span class="mt-0.5 shrink-0">⚠️</span>
-                        <span>{{ errorMessage() }}</span>
-                      </div>
-                    }
-                    <button
-                      type="submit"
-                      [disabled]="isSubmitting()"
-                      class="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-2.5
-                             text-sm font-semibold text-white shadow-sm
-                             hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
-                             disabled:opacity-60 disabled:cursor-not-allowed
-                             transition-colors duration-200 mt-2"
-                    >
-                      @if (isSubmitting()) {
-                        <app-loading-spinner size="sm" />
-                        {{ 'AUTH.creating_account' | translate }}
-                      } @else {
-                        {{ 'AUTH.create_account_h2' | translate }}
-                      }
-                    </button>
-                  </fieldset>
-                </form>
-                <p class="mt-6 text-center text-sm text-gray-600">
-                  {{ 'AUTH.have_account' | translate }}
-                  <a routerLink="/login" class="text-amber-700 hover:text-amber-800 font-medium">
-                    {{ 'AUTH.sign_in_h2' | translate }}
-                  </a>
-                </p>
-              </div>
-            }
             <p class="mt-6 text-center text-sm text-gray-500">
               <a
                 routerLink="/"
@@ -4835,14 +4655,6 @@ export const environment = {
 };
 ````
 
-## File: src/environments/environment.ts
-````typescript
-export const environment = {
-  production: false,
-  apiUrl: 'https://book-club-be.onrender.com/api/v1',
-};
-````
-
 ## File: src/index.html
 ````html
 <!doctype html>
@@ -5151,6 +4963,201 @@ jobs:
         with:
           category: '/language:javascript-typescript'
         continue-on-error: true
+````
+
+## File: src/app/features/auth/register/register.component.html
+````html
+<div class="auth-page-wrapper">
+      <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
+      <main class="auth-form-container">
+        @if (formVisible()) {
+          <div class="w-full max-w-md animate-form-in">
+            <div class="text-center mb-8">
+              <h1 class="font-display text-3xl font-bold text-gray-900">📚 Book Club</h1>
+              <p class="text-gray-600 mt-2">{{ 'AUTH.create_account_subtitle' | translate }}</p>
+            </div>
+            @if (successMessage()) {
+              <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 text-center border border-amber-100">
+                <div class="text-5xl mb-4">🎉</div>
+                <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ 'AUTH.account_created' | translate }}</h2>
+                <p class="text-gray-600 text-sm">
+                  {{ 'AUTH.welcome_message' | translate }} <strong>{{ registeredEmail() }}</strong>.
+                </p>
+                <a routerLink="/login"
+                   class="mt-6 inline-block text-sm text-amber-700 hover:text-amber-800 font-medium">
+                  {{ 'AUTH.back_to_login' | translate }}
+                </a>
+              </div>
+            } @else {
+              <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-amber-100">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ 'AUTH.create_account_h2' | translate }}</h2>
+                <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+                  <fieldset class="border-0 p-0 m-0">
+                    <legend class="sr-only">{{ 'AUTH.create_account_h2' | translate }}</legend>
+                    <app-form-field
+                      [label]="'AUTH.display_name' | translate"
+                      type="text"
+                      placeholder="Ada Lovelace"
+                      [control]="form.controls.displayName"
+                    />
+                    <app-form-field
+                      [label]="'AUTH.email' | translate"
+                      type="email"
+                      placeholder="you@example.com"
+                      [control]="form.controls.email"
+                    />
+                    <app-form-field
+                      [label]="'AUTH.password' | translate"
+                      type="password"
+                      [placeholder]="'AUTH.password' | translate"
+                      [control]="form.controls.password"
+                    />
+                    @if (passwordStrength()) {
+                      <div class="flex items-center gap-2 -mt-2">
+                        <div class="flex gap-1 flex-1">
+                          <div
+                            class="h-1 flex-1 rounded-full transition-colors"
+                            [class]="passwordStrength() !== null ? 'bg-red-400' : 'bg-gray-200'"
+                          ></div>
+                          <div
+                            class="h-1 flex-1 rounded-full transition-colors"
+                            [class]="passwordStrength() === 'medium' || passwordStrength() === 'strong' ? 'bg-yellow-400' : 'bg-gray-200'"
+                          ></div>
+                          <div
+                            class="h-1 flex-1 rounded-full transition-colors"
+                            [class]="passwordStrength() === 'strong' ? 'bg-green-500' : 'bg-gray-200'"
+                          ></div>
+                        </div>
+                        <span
+                          class="text-xs font-medium"
+                          [class]="passwordStrength() === 'strong' ? 'text-green-600' :
+                                   passwordStrength() === 'medium' ? 'text-yellow-600' :
+                                   'text-red-500'"
+                        >
+                          {{ passwordStrength() === 'strong' ? ('AUTH.password_strong' | translate) : passwordStrength() === 'medium' ? ('AUTH.password_medium' | translate) : ('AUTH.password_weak' | translate) }}
+                        </span>
+                      </div>
+                    }
+                    <app-form-field
+                      [label]="'AUTH.confirm_password' | translate"
+                      type="password"
+                      placeholder="••••••••"
+                      [control]="form.controls.confirmPassword"
+                    />
+                    @if (form.hasError('passwordMismatch') && form.controls.confirmPassword.touched) {
+                      <p class="text-xs text-red-500 -mt-3">{{ 'AUTH.passwords_no_match' | translate }}</p>
+                    }
+                    <fieldset class="border-0 p-0 m-0">
+                      <legend class="text-sm font-medium text-gray-700 block mb-1.5">{{ 'AUTH.want_to' | translate }}</legend>
+                      <div class="grid grid-cols-2 gap-3">
+                        <button
+                          type="button"
+                          (click)="setRole('user')"
+                          [attr.aria-pressed]="selectedRole() === 'user'"
+                          [class.ring-2]="selectedRole() === 'user'"
+                          [class.ring-amber-500]="selectedRole() === 'user'"
+                          [class.bg-amber-50]="selectedRole() === 'user'"
+                          [class.bg-gray-50]="selectedRole() !== 'user'"
+                          class="p-4 rounded-xl border border-gray-200 text-left transition-all focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        >
+                          <div class="text-2xl mb-1">📖</div>
+                          <div class="font-medium text-sm text-gray-900">{{ 'AUTH.role_reader_label' | translate }}</div>
+                          <div class="text-xs text-gray-500">{{ 'AUTH.role_reader_desc' | translate }}</div>
+                        </button>
+                        <button
+                          type="button"
+                          (click)="setRole('organizer')"
+                          [attr.aria-pressed]="selectedRole() === 'organizer'"
+                          [class.ring-2]="selectedRole() === 'organizer'"
+                          [class.ring-amber-500]="selectedRole() === 'organizer'"
+                          [class.bg-amber-50]="selectedRole() === 'organizer'"
+                          [class.bg-gray-50]="selectedRole() !== 'organizer'"
+                          class="p-4 rounded-xl border border-gray-200 text-left transition-all focus:outline-none focus:ring-2 focus:ring-amber-500"
+                        >
+                          <div class="text-2xl mb-1">🎯</div>
+                          <div class="font-medium text-sm text-gray-900">{{ 'AUTH.role_organizer_label' | translate }}</div>
+                          <div class="text-xs text-gray-500">{{ 'AUTH.role_organizer_desc' | translate }}</div>
+                        </button>
+                      </div>
+                      @if (form.controls.role.invalid && form.controls.role.touched) {
+                        <p class="text-xs text-red-500 mt-0.5">{{ 'AUTH.select_role_error' | translate }}</p>
+                      }
+                    </fieldset>
+                    @if (errorMessage()) {
+                      <div class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700" role="alert">
+                        <span class="mt-0.5 shrink-0">⚠️</span>
+                        <span>{{ errorMessage() }}</span>
+                      </div>
+                    }
+                    <button
+                      type="submit"
+                      [disabled]="isSubmitting()"
+                      class="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-2.5
+                             text-sm font-semibold text-white shadow-sm
+                             hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
+                             disabled:opacity-60 disabled:cursor-not-allowed
+                             transition-colors duration-200 mt-2"
+                    >
+                      @if (isSubmitting()) {
+                        <app-loading-spinner size="sm" />
+                        {{ 'AUTH.creating_account' | translate }}
+                      } @else {
+                        {{ 'AUTH.create_account_h2' | translate }}
+                      }
+                    </button>
+                  </fieldset>
+                </form>
+                <p class="mt-6 text-center text-sm text-gray-600">
+                  {{ 'AUTH.have_account' | translate }}
+                  <a routerLink="/login" class="text-amber-700 hover:text-amber-800 font-medium">
+                    {{ 'AUTH.sign_in_h2' | translate }}
+                  </a>
+                </p>
+              </div>
+            }
+            <p class="mt-6 text-center text-sm text-gray-500">
+              <a
+                routerLink="/"
+                class="inline-flex items-center gap-1 text-gray-500
+                       hover:text-gray-700 transition-all duration-200
+                       focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 rounded"
+              >
+                {{ 'NAV.back_home' | translate }}
+              </a>
+            </p>
+          </div>
+        }
+        </main>
+    </div>
+    <style>
+      .auth-page-wrapper {
+        position: relative;
+        min-height: 100vh;
+        overflow: hidden;
+      }
+      .auth-form-container {
+        position: relative;
+        z-index: 60;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+      .animate-form-in {
+        animation: form-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      @keyframes form-slide-in {
+        from {
+          opacity: 0;
+          transform: translateY(24px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
 ````
 
 ## File: src/app/features/clubs/clubs.routes.ts
@@ -5976,6 +5983,87 @@ import { ToastComponent } from './shared/components/toast/toast.component';
 export class App {}
 ````
 
+## File: src/environments/environment.ts
+````typescript
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:8000/api/v1',
+};
+````
+
+## File: .gitignore
+````
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
+# Angular specific
+/dist/
+/out-tsc/
+/tmp/
+/coverage/
+/e2e/test-output/
+/.angular/
+.angular/
+
+# Node modules and dependency files
+/node_modules/
+/yarn.lock
+
+# Environment files
+/.env
+
+# Angular CLI and build artefacts
+/.angular-cli.json
+/.ng/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+````
+
 ## File: eslint.config.js
 ````javascript
 const eslint = require("@eslint/js");
@@ -6078,6 +6166,423 @@ sonar.coverage.exclusions=\
 sonar.sourceEncoding=UTF-8
 ````
 
+## File: .github/copilot-instructions.md
+````markdown
+# GitHub Copilot Instructions — Book Club Frontend
+
+## Project Overview
+
+This is a modern **Angular 20** frontend application for a book club platform. It is built with standalone components, signals-based state management, zoneless change detection, and Tailwind CSS for styling.
+
+## Tech Stack
+
+- **Framework**: Angular 20 (standalone, no NgModules)
+- **Language**: TypeScript (strict mode, no `any`)
+- **State Management**: Angular Signals (`signal()`, `computed()`, `effect()`)
+- **Change Detection**: Zoneless (`provideExperimentalZonelessChangeDetection`)
+- **Styling**: Tailwind CSS + SCSS design tokens
+- **Testing**: Jest + @testing-library/angular + Playwright (e2e)
+- **HTTP**: Typed repository services with `HttpClient`
+- **Auth**: JWT with `httpOnly` cookies, functional route guards
+- **i18n**: `@ngx-translate/core` with lazy-loaded translation files
+- **Linting**: ESLint with `@angular-eslint` + Prettier
+- **CI/CD**: GitHub Actions
+
+## Architecture Conventions
+
+- All components must be `standalone: true` with `ChangeDetectionStrategy.OnPush`
+- State lives in signal-based services — never in component properties
+- Use `computed()` for derived state, `effect()` only for side effects
+- HTTP calls go through typed repository services (`BookRepository`, `UserRepository`, etc.)
+- DTOs map API responses → domain models inside repository layer
+- Functional guards (`CanActivateFn`, `CanMatchFn`) for route protection
+- Reactive forms only (`ReactiveFormsModule`), always typed `FormGroup<{}>`
+
+## Folder Structure
+
+```
+src/
+├── app/
+│   ├── core/           # Singleton services, interceptors, guards, error handler
+│   ├── shared/         # Reusable components, directives, pipes
+│   ├── layout/         # Shell, header, footer
+│   ├── features/       # Lazy-loaded feature modules (books, profile, auth)
+│   └── app.config.ts   # Bootstrap providers
+├── assets/
+│   └── i18n/           # Translation files per locale
+└── styles/
+    ├── tokens/         # CSS custom properties (colors, spacing, typography)
+    ├── base/           # Reset, typography
+    └── utilities/      # Helper classes
+```
+
+## Code Quality Rules
+
+- **No `any`** — all types must be explicit
+- **No `::ng-deep`** — use CSS custom properties for theming
+- **No `localStorage` for tokens** — use `httpOnly` cookies or `sessionStorage`
+- **No `bypassSecurityTrustHtml`** without explicit security review
+- **No NgModules** — everything is standalone
+- Always handle 401 (token refresh), 403 (redirect), 500 (toast + log) in HTTP interceptor chain
+- All user-visible strings must be wrapped with `@ngx-translate` or `$localize`
+
+## Testing Expectations
+
+- Unit tests for all services and utilities (80%+ coverage)
+- Component tests using `@testing-library/angular` (behavior-driven)
+- E2E tests with Playwright for auth flow and critical user journeys
+- Mock `HttpClient` with `HttpClientTestingModule` + `HttpTestingController`
+
+## Agent Delegation Policy
+
+**ALWAYS delegate tasks to the appropriate MCP agent first.** Do not implement directly unless no suitable agent exists. Use parallel agent invocations when tasks are independent.
+
+### Routing Rules (strict)
+
+| Task type | Agent to use |
+|---|---|
+| CI/CD, GitHub Actions, deployment, Docker | `devops` |
+| Security audit, XSS, CSP, JWT, secret scanning | `security` |
+| Tests, coverage, Lighthouse, Playwright, contract tests | `tester` |
+| Components, Tailwind, animations, accessibility, design system | `ui` |
+| SEO, microcopy, semantic HTML, API docs, i18n copy | `web-quality-enhancer` |
+| Pre-commit review, PR readiness, Husky | `reviewer` |
+| Angular architecture, signals, routing, forms, services | `dev` |
+| Java Spring Boot backend, REST API, JPA, Kafka, Testcontainers | `java-backend-dev` |
+
+### Delegation Rules
+
+1. **Default to agents** — if a task matches an agent's domain, invoke that agent via the `task` tool
+2. **Parallel when possible** — if multiple independent tasks exist, launch multiple agents simultaneously
+3. **Copilot only does** — file reads, planning, coordination, simple 1-line fixes, git commits after agents finish
+4. **Never implement directly** what an agent specializes in — always delegate first
+
+## Custom Agents Available
+
+All agents are provided via the shared **book-club-mcp** server (`.vscode/mcp.json`).
+When invoking agents via the `task` tool, **always use the model specified below** — never default to a different model.
+
+| Agent | Model | Purpose |
+|---|---|---|
+| `dev` | `claude-sonnet-4.6` | Angular 20 architecture, implementation, and code review |
+| `reviewer` | `gpt-4.1` | Pre-commit review, Husky setup, PR readiness checks |
+| `devops` | `gpt-4.1` | CI/CD pipelines, GitHub Actions, deployment automation |
+| `security` | `claude-sonnet-4.6` | XSS, CSP, JWT security audits and input sanitization |
+| `tester` | `gpt-4.1` | Visual regression, Lighthouse, contract testing setup |
+| `ui` | `claude-haiku-4.5` | Design system, Tailwind, animations, accessibility |
+| `web-quality-enhancer` | `claude-sonnet-4.6` | SEO, microcopy, semantic HTML, API docs |
+| `java-backend-dev` | `claude-sonnet-4.6` | Java 21 microservices, Spring Boot, JPA, Kafka, JWT |
+````
+
+## File: src/app/core/services/chat.service.ts
+````typescript
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { ChatMessage, ChatRoom } from '../models/chat.model';
+import { environment } from '../../../environments/environment';
+interface ApiChatRoom {
+  id: string;
+  name: string;
+}
+interface ApiChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: string;
+}
+@Injectable({ providedIn: 'root' })
+export class ChatService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _rooms = signal<ChatRoom[]>([]);
+  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
+  private readonly _activeRoomId = signal<string | null>(null);
+  private readonly _unreadCount = signal<number>(0);
+  private readonly _isOpen = signal<boolean>(false);
+  private readonly _hasNewMessage = signal<boolean>(false);
+  private currentUserId: string | null = null;
+  readonly rooms = this._rooms.asReadonly();
+  readonly messages = this._messages.asReadonly();
+  readonly activeRoomId = this._activeRoomId.asReadonly();
+  readonly unreadCount = this._unreadCount.asReadonly();
+  readonly isOpen = this._isOpen.asReadonly();
+  readonly hasNewMessage = this._hasNewMessage.asReadonly();
+  readonly activeRoom = computed(() =>
+    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
+  );
+  readonly activeMessages = computed(
+    () => this._messages()[this._activeRoomId() ?? ''] ?? [],
+  );
+  // ── Public API ────────────────────────────────────────────────────────────
+  /** Fetch chat rooms for a given club and seed the rooms signal. */
+  loadRooms(clubId: string, userId?: string): void {
+    if (userId !== undefined) {
+      this.currentUserId = userId;
+    }
+    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
+      .then(raw => {
+        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name }));
+        this._rooms.set(rooms);
+        // Auto-select the first room when none is active or active room is gone.
+        const currentId = this._activeRoomId();
+        if (!currentId || !rooms.some(r => r.id === currentId)) {
+          const first = rooms[0];
+          if (first) {
+            this._activeRoomId.set(first.id);
+            this.loadMessages(first.id);
+          }
+        }
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
+  }
+  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
+    const query: Record<string, string> = {};
+    if (params?.before) query['before'] = params.before;
+    if (params?.limit != null) query['limit'] = String(params.limit);
+    firstValueFrom(
+      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
+        params: query,
+      }),
+    )
+      .then(raw => {
+        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
+        this._messages.update(map => ({ ...map, [roomId]: msgs }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
+  }
+  toggleOpen(): void {
+    this._isOpen.update(v => !v);
+    if (this._isOpen()) {
+      this.markAsRead();
+    }
+  }
+  openRoom(roomId: string): void {
+    this._activeRoomId.set(roomId);
+    this.loadMessages(roomId);
+    this.markAsRead();
+  }
+  markAsRead(): void {
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+  }
+  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    this.currentUserId = currentUser.id;
+    firstValueFrom(
+      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
+    )
+      .then(() => {
+        this.loadMessages(roomId);
+      })
+      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
+  }
+  private mapMessage(m: ApiChatMessage): ChatMessage {
+    return {
+      id: m.id,
+      senderId: m.senderId,
+      senderName: m.senderName,
+      text: m.text,
+      timestamp: new Date(m.timestamp),
+      isOwn: m.senderId === this.currentUserId,
+    };
+  }
+}
+````
+
+## File: src/app/features/profile/profile.component.html
+````html
+<div class="max-w-2xl mx-auto space-y-6 py-8 px-4">
+  <section
+    aria-labelledby="profile-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-8 text-center"
+  >
+    <div
+      class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
+             flex items-center justify-center text-white text-3xl font-bold select-none shadow-md"
+      aria-hidden="true"
+    >
+      {{ userInitials() }}
+    </div>
+    <h1
+      id="profile-heading"
+      class="text-2xl font-bold text-gray-900 dark:text-white"
+    >
+      {{ auth.currentUser()?.displayName }}
+    </h1>
+    <span
+      class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
+      [class]="auth.currentUser()?.role === 'organizer'
+        ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
+        : 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
+    >
+      {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
+      {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
+    </span>
+    @if (joinedDate()) {
+      <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
+        {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
+      </p>
+    }
+  </section>
+  <section
+    aria-labelledby="edit-name-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="edit-name-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
+    >
+      <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
+    </h2>
+    <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
+      <div class="space-y-4">
+        <div>
+          <label
+            for="displayName"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
+          >
+            {{ 'PROFILE.display_name_label' | translate }}
+          </label>
+          <input
+            id="displayName"
+            type="text"
+            formControlName="displayName"
+            autocomplete="nickname"
+            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
+                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
+                   text-gray-900 dark:text-white placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                   transition-all duration-200"
+            [placeholder]="'PROFILE.display_name_placeholder' | translate"
+            [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
+            aria-describedby="displayName-error"
+          />
+          @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
+            <p
+              id="displayName-error"
+              role="alert"
+              class="mt-1.5 text-xs text-red-600 dark:text-red-400"
+            >
+              @if (nameForm.controls.displayName.hasError('required')) {
+                {{ 'PROFILE.display_name_required' | translate }}
+              } @else if (nameForm.controls.displayName.hasError('minlength')) {
+                {{ 'PROFILE.display_name_min' | translate }}
+              }
+            </p>
+          }
+        </div>
+        <div class="flex items-center gap-3">
+          <button
+            type="submit"
+            [disabled]="nameForm.invalid || isSavingName()"
+            class="rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-50
+                   disabled:cursor-not-allowed text-white px-5 py-2.5 text-sm font-medium
+                   transition-all duration-200 focus:outline-none focus:ring-2
+                   focus:ring-primary-500 focus:ring-offset-2"
+          >
+            @if (isSavingName()) {
+              {{ 'PROFILE.saving' | translate }}
+            } @else {
+              {{ 'PROFILE.save_name' | translate }}
+            }
+          </button>
+        </div>
+      </div>
+    </form>
+  </section>
+  <section
+    aria-labelledby="role-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="role-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2"
+    >
+      <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
+    </h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+      {{ 'PROFILE.role_subtitle' | translate }}
+    </p>
+    <app-profile-role-selector
+      [currentRole]="auth.currentUser()?.role ?? 'user'"
+      (roleChange)="changeRole($event)"
+    />
+  </section>
+  <section
+    aria-labelledby="stats-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="stats-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
+    >
+      <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
+    </h2>
+    <app-profile-stats [stats]="auth.userStats()" />
+  </section>
+  <section
+    aria-labelledby="socials-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="socials-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
+    >
+      <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
+    </h2>
+    <div class="flex items-center gap-3 mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+      <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
+        <input
+          type="checkbox"
+          [formControl]="socialsPublicControl"
+          (change)="onSocialsPublicChange(socialsPublicControl.value)"
+          class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+        />
+        {{ 'PROFILE.socials_public_label' | translate }}
+      </label>
+    </div>
+    @if (
+      userSocials().telegram  ||
+      userSocials().instagram ||
+      userSocials().twitter   ||
+      userSocials().linkedin  ||
+      userSocials().github    ||
+      userSocials().goodreads
+    ) {
+      <div class="flex flex-wrap gap-2 mb-6">
+        <app-social-badges [socials]="userSocials()" />
+      </div>
+    }
+    <form
+      [formGroup]="socialsForm"
+      (ngSubmit)="submitSocials()"
+      novalidate
+      class="space-y-4"
+    >
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        @for (social of socialFields; track social.key) {
+          <app-social-link-field [config]="social" [form]="socialsForm" />
+        }
+      </div>
+      <div class="flex items-center gap-3 pt-1">
+        <button
+          type="submit"
+          class="rounded-xl bg-primary-600 hover:bg-primary-700 text-white
+                 px-5 py-2.5 text-sm font-medium
+                 transition-all duration-200 focus:outline-none focus:ring-2
+                 focus:ring-primary-500 focus:ring-offset-2"
+        >
+          {{ 'PROFILE.save' | translate }}
+        </button>
+      </div>
+    </form>
+  </section>
+</div>
+````
+
 ## File: public/i18n/en.json
 ````json
 {
@@ -6112,7 +6617,9 @@ sonar.sourceEncoding=UTF-8
     "welcome_back": "Welcome back",
     "login_title": "Log In",
     "submit_register": "Register",
-    "password_strength": "Password strength"
+    "password_strength": "Password strength",
+    "account_created": "Account created successfully!",
+    "welcome_message": "Welcome,"
   },
   "CREATE_CLUB": {
     "subtitle": "Create a new reading community",
@@ -6380,7 +6887,9 @@ sonar.sourceEncoding=UTF-8
     "welcome_back": "Ласкаво просимо назад",
     "login_title": "Вхід",
     "submit_register": "Зареєструватися",
-    "password_strength": "Надійність паролю"
+    "password_strength": "Надійність паролю",
+    "account_created": "Акаунт успішно створено!",
+    "welcome_message": "Ласкаво просимо,"
   },
   "CREATE_CLUB": {
     "subtitle": "Створіть нову спільноту читачів",
@@ -6634,7 +7143,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(authedReq).pipe(
     catchError((error: unknown) => {
       const httpError = error instanceof HttpErrorResponse ? error : null;
-      if (httpError?.status === 401) {
+      if (httpError?.status === 401 && token) {
         tokenStore.clear();
         router.navigate(['/login']);
       } else if (httpError?.status === 403) {
@@ -6649,124 +7158,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     }),
   );
 };
-````
-
-## File: src/app/core/services/chat.service.ts
-````typescript
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { ChatMessage, ChatRoom } from '../models/chat.model';
-import { environment } from '../../../environments/environment';
-interface ApiChatRoom {
-  id: string;
-  name: string;
-}
-interface ApiChatMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  text: string;
-  timestamp: string;
-}
-@Injectable({ providedIn: 'root' })
-export class ChatService {
-  private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _rooms = signal<ChatRoom[]>([]);
-  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
-  private readonly _activeRoomId = signal<string | null>(null);
-  private readonly _unreadCount = signal<number>(0);
-  private readonly _isOpen = signal<boolean>(false);
-  private readonly _hasNewMessage = signal<boolean>(false);
-  private currentUserId: string | null = null;
-  readonly rooms = this._rooms.asReadonly();
-  readonly messages = this._messages.asReadonly();
-  readonly activeRoomId = this._activeRoomId.asReadonly();
-  readonly unreadCount = this._unreadCount.asReadonly();
-  readonly isOpen = this._isOpen.asReadonly();
-  readonly hasNewMessage = this._hasNewMessage.asReadonly();
-  readonly activeRoom = computed(() =>
-    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
-  );
-  readonly activeMessages = computed(
-    () => this._messages()[this._activeRoomId() ?? ''] ?? [],
-  );
-  // ── Public API ────────────────────────────────────────────────────────────
-  /** Fetch chat rooms for a given club and seed the rooms signal. */
-  loadRooms(clubId: string, userId?: string): void {
-    if (userId !== undefined) {
-      this.currentUserId = userId;
-    }
-    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
-      .then(raw => {
-        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name }));
-        this._rooms.set(rooms);
-        // Auto-select the first room when none is active or active room is gone.
-        const currentId = this._activeRoomId();
-        if (!currentId || !rooms.some(r => r.id === currentId)) {
-          const first = rooms[0];
-          if (first) {
-            this._activeRoomId.set(first.id);
-            this.loadMessages(first.id);
-          }
-        }
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
-  }
-  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
-    const query: Record<string, string> = {};
-    if (params?.before) query['before'] = params.before;
-    if (params?.limit != null) query['limit'] = String(params.limit);
-    firstValueFrom(
-      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
-        params: query,
-      }),
-    )
-      .then(raw => {
-        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
-        this._messages.update(map => ({ ...map, [roomId]: msgs }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
-  }
-  toggleOpen(): void {
-    this._isOpen.update(v => !v);
-    if (this._isOpen()) {
-      this.markAsRead();
-    }
-  }
-  openRoom(roomId: string): void {
-    this._activeRoomId.set(roomId);
-    this.loadMessages(roomId);
-    this.markAsRead();
-  }
-  markAsRead(): void {
-    this._unreadCount.set(0);
-    this._hasNewMessage.set(false);
-  }
-  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    this.currentUserId = currentUser.id;
-    firstValueFrom(
-      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
-    )
-      .then(() => {
-        this.loadMessages(roomId);
-      })
-      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
-  }
-  private mapMessage(m: ApiChatMessage): ChatMessage {
-    return {
-      id: m.id,
-      senderId: m.senderId,
-      senderName: m.senderName,
-      text: m.text,
-      timestamp: new Date(m.timestamp),
-      isOwn: m.senderId === this.currentUserId,
-    };
-  }
-}
 ````
 
 ## File: src/app/features/clubs/create-club/create-club.component.html
@@ -6829,14 +7220,20 @@ export class ChatService {
             }
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="club-city" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ 'CREATE_CLUB.city_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
             </label>
-            <app-address-autocomplete
-              [control]="form.controls.city"
+            <input
+              id="club-city"
+              type="text"
+              formControlName="city"
               [placeholder]="'CREATE_CLUB.city_placeholder' | translate"
-              (selected)="onLocationSelected($event, 'city')"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
               [class.border-red-400]="form.controls.city.invalid && form.controls.city.touched"
+              aria-describedby="city-error"
             />
             @if (form.controls.city.invalid && form.controls.city.touched) {
               <p id="city-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
@@ -6846,13 +7243,20 @@ export class ChatService {
             }
           </div>
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="club-address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ 'CREATE_CLUB.address_label' | translate }}
             </label>
-            <app-address-autocomplete
-              [control]="form.controls.address"
+            <input
+              id="club-address"
+              type="text"
+              formControlName="address"
               [placeholder]="'CREATE_CLUB.address_placeholder' | translate"
-              (selected)="onLocationSelected($event, 'address')"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+              [class.border-red-400]="form.controls.address.invalid && form.controls.address.touched"
+              aria-describedby="address-error"
             />
             @if (form.controls.address.invalid && form.controls.address.touched) {
               <p id="address-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
@@ -6912,6 +7316,20 @@ export class ChatService {
                 @else if (form.controls.meetingDurationMinutes.errors?.['max']) { {{ 'CREATE_CLUB.duration_max' | translate }} }
               </p>
             }
+          </div>
+          <div>
+            <label for="club-next-meeting-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'CREATE_CLUB.next_meeting_date_label' | translate }}
+            </label>
+            <input
+              id="club-next-meeting-date"
+              type="datetime-local"
+              formControlName="nextMeetingDate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+            />
           </div>
         </fieldset>
         <fieldset>
@@ -7066,527 +7484,6 @@ export class ChatService {
     </article>
   </div>
 </main>
-````
-
-## File: src/app/features/profile/profile.component.html
-````html
-<div class="max-w-2xl mx-auto space-y-6 py-8 px-4">
-  <section
-    aria-labelledby="profile-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-8 text-center"
-  >
-    <div
-      class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
-             flex items-center justify-center text-white text-3xl font-bold select-none shadow-md"
-      aria-hidden="true"
-    >
-      {{ userInitials() }}
-    </div>
-    <h1
-      id="profile-heading"
-      class="text-2xl font-bold text-gray-900 dark:text-white"
-    >
-      {{ auth.currentUser()?.displayName }}
-    </h1>
-    <span
-      class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
-      [class]="auth.currentUser()?.role === 'organizer'
-        ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
-        : 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
-    >
-      {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
-      {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
-    </span>
-    @if (joinedDate()) {
-      <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
-        {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
-      </p>
-    }
-  </section>
-  <section
-    aria-labelledby="edit-name-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="edit-name-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
-    >
-      <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
-    </h2>
-    <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
-      <div class="space-y-4">
-        <div>
-          <label
-            for="displayName"
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-          >
-            {{ 'PROFILE.display_name_label' | translate }}
-          </label>
-          <input
-            id="displayName"
-            type="text"
-            formControlName="displayName"
-            autocomplete="nickname"
-            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
-                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
-                   text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                   transition-all duration-200"
-            [placeholder]="'PROFILE.display_name_placeholder' | translate"
-            [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
-            aria-describedby="displayName-error"
-          />
-          @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
-            <p
-              id="displayName-error"
-              role="alert"
-              class="mt-1.5 text-xs text-red-600 dark:text-red-400"
-            >
-              @if (nameForm.controls.displayName.hasError('required')) {
-                {{ 'PROFILE.display_name_required' | translate }}
-              } @else if (nameForm.controls.displayName.hasError('minlength')) {
-                {{ 'PROFILE.display_name_min' | translate }}
-              }
-            </p>
-          }
-        </div>
-        <div class="flex items-center gap-3">
-          <button
-            type="submit"
-            [disabled]="nameForm.invalid || isSavingName()"
-            class="rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-50
-                   disabled:cursor-not-allowed text-white px-5 py-2.5 text-sm font-medium
-                   transition-all duration-200 focus:outline-none focus:ring-2
-                   focus:ring-primary-500 focus:ring-offset-2"
-          >
-            @if (isSavingName()) {
-              {{ 'PROFILE.saving' | translate }}
-            } @else {
-              {{ 'PROFILE.save_name' | translate }}
-            }
-          </button>
-        </div>
-      </div>
-    </form>
-  </section>
-  <section
-    aria-labelledby="role-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="role-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2"
-    >
-      <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
-    </h2>
-    <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-      {{ 'PROFILE.role_subtitle' | translate }}
-    </p>
-    <app-profile-role-selector
-      [currentRole]="auth.currentUser()?.role ?? 'user'"
-      (roleChange)="changeRole($event)"
-    />
-  </section>
-  <section
-    aria-labelledby="stats-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="stats-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
-    >
-      <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
-    </h2>
-    <app-profile-stats [stats]="auth.userStats()" />
-  </section>
-  <section
-    aria-labelledby="socials-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="socials-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
-    >
-      <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
-    </h2>
-    <div class="flex items-center gap-3 mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
-      <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
-        <input
-          type="checkbox"
-          [formControl]="socialsPublicControl"
-          (change)="onSocialsPublicChange(socialsPublicControl.value)"
-          class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-        />
-        {{ 'PROFILE.socials_public_label' | translate }}
-      </label>
-    </div>
-    @if (
-      userSocials().telegram  ||
-      userSocials().instagram ||
-      userSocials().twitter   ||
-      userSocials().linkedin  ||
-      userSocials().github    ||
-      userSocials().goodreads
-    ) {
-      <div class="flex flex-wrap gap-2 mb-6">
-        <app-social-badges [socials]="userSocials()" />
-      </div>
-    }
-    <form
-      [formGroup]="socialsForm"
-      (ngSubmit)="submitSocials()"
-      novalidate
-      class="space-y-4"
-    >
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        @for (social of socialFields; track social.key) {
-          <app-social-link-field [config]="social" [form]="socialsForm" />
-        }
-      </div>
-      <div class="flex items-center gap-3 pt-1">
-        <button
-          type="submit"
-          class="rounded-xl bg-primary-600 hover:bg-primary-700 text-white
-                 px-5 py-2.5 text-sm font-medium
-                 transition-all duration-200 focus:outline-none focus:ring-2
-                 focus:ring-primary-500 focus:ring-offset-2"
-        >
-          {{ 'PROFILE.save' | translate }}
-        </button>
-      </div>
-    </form>
-  </section>
-</div>
-````
-
-## File: .gitignore
-````
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
-
-# Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
-
-# Node
-/node_modules
-npm-debug.log
-yarn-error.log
-
-# IDEs and editors
-.idea/
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
-
-# Visual Studio Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.history/*
-
-# Miscellaneous
-/.angular/cache
-.sass-cache/
-/connect.lock
-/coverage
-/libpeerconnection.log
-testem.log
-/typings
-
-# System files
-.DS_Store
-Thumbs.db
-# Angular specific
-/dist/
-/out-tsc/
-/tmp/
-/coverage/
-/e2e/test-output/
-/.angular/
-.angular/
-
-# Node modules and dependency files
-/node_modules/
-/yarn.lock
-
-# Environment files
-/.env
-
-# Angular CLI and build artefacts
-/.angular-cli.json
-/.ng/
-
-# TypeScript cache
-*.tsbuildinfo
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-````
-
-## File: .github/copilot-instructions.md
-````markdown
-# GitHub Copilot Instructions — Book Club Frontend
-
-## Project Overview
-
-This is a modern **Angular 20** frontend application for a book club platform. It is built with standalone components, signals-based state management, zoneless change detection, and Tailwind CSS for styling.
-
-## Tech Stack
-
-- **Framework**: Angular 20 (standalone, no NgModules)
-- **Language**: TypeScript (strict mode, no `any`)
-- **State Management**: Angular Signals (`signal()`, `computed()`, `effect()`)
-- **Change Detection**: Zoneless (`provideExperimentalZonelessChangeDetection`)
-- **Styling**: Tailwind CSS + SCSS design tokens
-- **Testing**: Jest + @testing-library/angular + Playwright (e2e)
-- **HTTP**: Typed repository services with `HttpClient`
-- **Auth**: JWT with `httpOnly` cookies, functional route guards
-- **i18n**: `@ngx-translate/core` with lazy-loaded translation files
-- **Linting**: ESLint with `@angular-eslint` + Prettier
-- **CI/CD**: GitHub Actions
-
-## Architecture Conventions
-
-- All components must be `standalone: true` with `ChangeDetectionStrategy.OnPush`
-- State lives in signal-based services — never in component properties
-- Use `computed()` for derived state, `effect()` only for side effects
-- HTTP calls go through typed repository services (`BookRepository`, `UserRepository`, etc.)
-- DTOs map API responses → domain models inside repository layer
-- Functional guards (`CanActivateFn`, `CanMatchFn`) for route protection
-- Reactive forms only (`ReactiveFormsModule`), always typed `FormGroup<{}>`
-
-## Folder Structure
-
-```
-src/
-├── app/
-│   ├── core/           # Singleton services, interceptors, guards, error handler
-│   ├── shared/         # Reusable components, directives, pipes
-│   ├── layout/         # Shell, header, footer
-│   ├── features/       # Lazy-loaded feature modules (books, profile, auth)
-│   └── app.config.ts   # Bootstrap providers
-├── assets/
-│   └── i18n/           # Translation files per locale
-└── styles/
-    ├── tokens/         # CSS custom properties (colors, spacing, typography)
-    ├── base/           # Reset, typography
-    └── utilities/      # Helper classes
-```
-
-## Code Quality Rules
-
-- **No `any`** — all types must be explicit
-- **No `::ng-deep`** — use CSS custom properties for theming
-- **No `localStorage` for tokens** — use `httpOnly` cookies or `sessionStorage`
-- **No `bypassSecurityTrustHtml`** without explicit security review
-- **No NgModules** — everything is standalone
-- Always handle 401 (token refresh), 403 (redirect), 500 (toast + log) in HTTP interceptor chain
-- All user-visible strings must be wrapped with `@ngx-translate` or `$localize`
-
-## Testing Expectations
-
-- Unit tests for all services and utilities (80%+ coverage)
-- Component tests using `@testing-library/angular` (behavior-driven)
-- E2E tests with Playwright for auth flow and critical user journeys
-- Mock `HttpClient` with `HttpClientTestingModule` + `HttpTestingController`
-
-## Agent Delegation Policy
-
-**ALWAYS delegate tasks to the appropriate MCP agent first.** Do not implement directly unless no suitable agent exists. Use parallel agent invocations when tasks are independent.
-
-### Routing Rules (strict)
-
-| Task type | Agent to use |
-|---|---|
-| CI/CD, GitHub Actions, deployment, Docker | `devops` |
-| Security audit, XSS, CSP, JWT, secret scanning | `security` |
-| Tests, coverage, Lighthouse, Playwright, contract tests | `tester` |
-| Components, Tailwind, animations, accessibility, design system | `ui` |
-| SEO, microcopy, semantic HTML, API docs, i18n copy | `web-quality-enhancer` |
-| Pre-commit review, PR readiness, Husky | `reviewer` |
-| Angular architecture, signals, routing, forms, services | `dev` |
-| Java Spring Boot backend, REST API, JPA, Kafka, Testcontainers | `java-backend-dev` |
-
-### Delegation Rules
-
-1. **Default to agents** — if a task matches an agent's domain, invoke that agent via the `task` tool
-2. **Parallel when possible** — if multiple independent tasks exist, launch multiple agents simultaneously
-3. **Copilot only does** — file reads, planning, coordination, simple 1-line fixes, git commits after agents finish
-4. **Never implement directly** what an agent specializes in — always delegate first
-
-## Custom Agents Available
-
-All agents are provided via the shared **book-club-mcp** server (`.vscode/mcp.json`).
-When invoking agents via the `task` tool, **always use the model specified below** — never default to a different model.
-
-| Agent | Model | Purpose |
-|---|---|---|
-| `dev` | `claude-sonnet-4.6` | Angular 20 architecture, implementation, and code review |
-| `reviewer` | `gpt-4.1` | Pre-commit review, Husky setup, PR readiness checks |
-| `devops` | `gpt-4.1` | CI/CD pipelines, GitHub Actions, deployment automation |
-| `security` | `claude-sonnet-4.6` | XSS, CSP, JWT security audits and input sanitization |
-| `tester` | `gpt-4.1` | Visual regression, Lighthouse, contract testing setup |
-| `ui` | `claude-haiku-4.5` | Design system, Tailwind, animations, accessibility |
-| `web-quality-enhancer` | `claude-sonnet-4.6` | SEO, microcopy, semantic HTML, API docs |
-| `java-backend-dev` | `claude-sonnet-4.6` | Java 21 microservices, Spring Boot, JPA, Kafka, JWT |
-````
-
-## File: src/app/features/clubs/create-club/create-club.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-} from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
-import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
-interface CreateClubForm {
-  name: FormControl<string>;
-  description: FormControl<string>;
-  isPublic: FormControl<boolean>;
-  city: FormControl<string>;
-  address: FormControl<string>;
-  tags: FormControl<string>;
-  meetingDurationMinutes: FormControl<number | null>;
-  afterMeetingVenueName: FormControl<string>;
-  afterMeetingVenueAddress: FormControl<string>;
-  afterMeetingVenueDescription: FormControl<string>;
-}
-@Component({
-  selector: 'app-create-club',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent, AddressAutocompleteComponent],
-  templateUrl: './create-club.component.html',
-})
-export class CreateClubComponent {
-  private readonly clubService = inject(ClubService);
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly _errorMessage = signal<string | null>(null);
-  readonly errorMessage = this._errorMessage.asReadonly();
-  private readonly _isSubmitting = signal(false);
-  readonly isSubmitting = this._isSubmitting.asReadonly();
-  readonly showAfterMeeting = signal(false);
-  readonly lat = signal<number | null>(null);
-  readonly lng = signal<number | null>(null);
-  readonly form = new FormGroup<CreateClubForm>({
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-    isPublic: new FormControl(true, { nonNullable: true }),
-    city: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(100)],
-    }),
-    address: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(200)],
-    }),
-    tags: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(300)],
-    }),
-    meetingDurationMinutes: new FormControl<number | null>(null, {
-      validators: [Validators.min(15), Validators.max(480)],
-    }),
-    afterMeetingVenueName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(150)],
-    }),
-    afterMeetingVenueAddress: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(200)],
-    }),
-    afterMeetingVenueDescription: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(300)],
-    }),
-  });
-  onLocationSelected(suggestion: GeocodeSuggestion, field: 'city' | 'address'): void {
-    const value = field === 'city' ? (suggestion.city ?? suggestion.label) : suggestion.label;
-    this.form.controls[field].setValue(value);
-    this.lat.set(suggestion.lat);
-    this.lng.set(suggestion.lng);
-  }
-  togglePublic(): void {
-    const current = this.form.controls.isPublic.value;
-    this.form.controls.isPublic.setValue(!current);
-  }
-  toggleAfterMeeting(): void {
-    this.showAfterMeeting.update(v => !v);
-  }
-  cancel(): void {
-    this.router.navigate(['/clubs']);
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this._isSubmitting.set(true);
-    this._errorMessage.set(null);
-    const {
-      name,
-      description,
-      isPublic,
-      city,
-      tags,
-      meetingDurationMinutes,
-      afterMeetingVenueName,
-      afterMeetingVenueAddress,
-      afterMeetingVenueDescription,
-    } = this.form.getRawValue();
-    const parsedTags = tags
-      .split(',')
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
-    const afterMeetingVenue = afterMeetingVenueName
-      ? {
-          name: afterMeetingVenueName,
-          address: afterMeetingVenueAddress,
-          description: afterMeetingVenueDescription || undefined,
-        }
-      : null;
-    try {
-      const club = await this.clubService.createClub({
-        name,
-        description,
-        isPublic,
-        city,
-        tags: parsedTags,
-        meetingDurationMinutes: meetingDurationMinutes ?? undefined,
-        afterMeetingVenue,
-      });
-      this.router.navigate(['/clubs', club.id]);
-    } catch (err) {
-      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
-    } finally {
-      this._isSubmitting.set(false);
-    }
-  }
-}
 ````
 
 ## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
@@ -8131,6 +8028,149 @@ export const appConfig: ApplicationConfig = {
 </div>
 ````
 
+## File: src/app/features/clubs/create-club/create-club.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+} from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+interface CreateClubForm {
+  name: FormControl<string>;
+  description: FormControl<string>;
+  isPublic: FormControl<boolean>;
+  city: FormControl<string>;
+  address: FormControl<string>;
+  tags: FormControl<string>;
+  meetingDurationMinutes: FormControl<number | null>;
+  nextMeetingDate: FormControl<string | null>;
+  afterMeetingVenueName: FormControl<string>;
+  afterMeetingVenueAddress: FormControl<string>;
+  afterMeetingVenueDescription: FormControl<string>;
+}
+@Component({
+  selector: 'app-create-club',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent],
+  templateUrl: './create-club.component.html',
+})
+export class CreateClubComponent {
+  private readonly clubService = inject(ClubService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly _errorMessage = signal<string | null>(null);
+  readonly errorMessage = this._errorMessage.asReadonly();
+  private readonly _isSubmitting = signal(false);
+  readonly isSubmitting = this._isSubmitting.asReadonly();
+  readonly showAfterMeeting = signal(false);
+  readonly form = new FormGroup<CreateClubForm>({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+    isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(100)],
+    }),
+    address: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(200)],
+    }),
+    tags: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(300)],
+    }),
+    meetingDurationMinutes: new FormControl<number | null>(null, {
+      validators: [Validators.min(15), Validators.max(480)],
+    }),
+    nextMeetingDate: new FormControl<string | null>(null),
+    afterMeetingVenueName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(150)],
+    }),
+    afterMeetingVenueAddress: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(200)],
+    }),
+    afterMeetingVenueDescription: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(300)],
+    }),
+  });
+  togglePublic(): void {
+    const current = this.form.controls.isPublic.value;
+    this.form.controls.isPublic.setValue(!current);
+  }
+  toggleAfterMeeting(): void {
+    this.showAfterMeeting.update(v => !v);
+  }
+  cancel(): void {
+    this.router.navigate(['/clubs']);
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this._isSubmitting.set(true);
+    this._errorMessage.set(null);
+    const {
+      name,
+      description,
+      isPublic,
+      city,
+      tags,
+      meetingDurationMinutes,
+      nextMeetingDate,
+      afterMeetingVenueName,
+      afterMeetingVenueAddress,
+      afterMeetingVenueDescription,
+    } = this.form.getRawValue();
+    const parsedTags = tags
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t.length > 0);
+    const afterMeetingVenue = afterMeetingVenueName
+      ? {
+          name: afterMeetingVenueName,
+          address: afterMeetingVenueAddress,
+          description: afterMeetingVenueDescription || undefined,
+        }
+      : null;
+    try {
+      const club = await this.clubService.createClub({
+        name,
+        description,
+        isPublic,
+        city,
+        tags: parsedTags,
+        meetingDurationMinutes: meetingDurationMinutes ?? undefined,
+        nextMeetingDate: nextMeetingDate ?? null,
+        afterMeetingVenue,
+      });
+      this.router.navigate(['/clubs', club.id]);
+    } catch (err) {
+      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
+    } finally {
+      this._isSubmitting.set(false);
+    }
+  }
+}
+````
+
 ## File: src/app/features/auth/login/login.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
@@ -8477,128 +8517,6 @@ export class RandomizerService {
 }
 ````
 
-## File: src/app/features/auth/register/register.component.ts
-````typescript
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators,
-} from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../../core/auth/auth.service';
-import { UserRole } from '../../../core/models/user.model';
-import { FormFieldComponent } from '../../../shared/components/form-field/form-field.component';
-import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
-import { SeoService } from '../../../core/services/seo.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
-  const password = group.get('password')?.value as string;
-  const confirmPassword = group.get('confirmPassword')?.value as string;
-  return password === confirmPassword ? null : { passwordMismatch: true };
-};
-interface RegisterForm {
-  displayName: FormControl<string>;
-  email: FormControl<string>;
-  password: FormControl<string>;
-  confirmPassword: FormControl<string>;
-  role: FormControl<UserRole>;
-}
-@Component({
-  selector: 'app-register',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, FormFieldComponent, TranslateModule, BookIntroComponent, LoadingSpinnerComponent],
-  templateUrl: './register.component.html',
-})
-export class RegisterComponent {
-  private readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isSubmitting = signal(false);
-  readonly successMessage = signal(false);
-  readonly registeredEmail = signal('');
-  readonly selectedRole = signal<UserRole>('user');
-  readonly bookOpen = signal(false);
-  readonly formVisible = signal(false);
-  constructor() {
-    this.seo.setPageI18n('SEO.register_title');
-    setTimeout(() => this.formVisible.set(true), 700);
-  }
-  onBookAnimationDone(): void {
-  }
-  readonly form = new FormGroup<RegisterForm>(
-    {
-      displayName: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.minLength(2)],
-      }),
-      email: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.email],
-      }),
-      password: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.minLength(8)],
-      }),
-      confirmPassword: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-      role: new FormControl<UserRole>('user', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-    },
-    { validators: passwordMatchValidator },
-  );
-  private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
-    initialValue: '',
-  });
-  protected readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
-    const pw = this._passwordValue();
-    if (!pw || pw.length === 0) return null;
-    if (pw.length < 8) return 'weak';
-    const hasUpper = /[A-Z]/.test(pw);
-    const hasNumber = /\d/.test(pw);
-    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
-    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
-    if (score >= 2) return 'strong';
-    if (score === 1) return 'medium';
-    return 'weak';
-  });
-  setRole(role: UserRole): void {
-    this.selectedRole.set(role);
-    this.form.controls.role.setValue(role);
-    this.form.controls.role.markAsTouched();
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.isSubmitting.set(true);
-    this.errorMessage.set(null);
-    const { displayName, email, password, role } = this.form.getRawValue();
-    const { error } = await this.auth.signUp(email, password, displayName, role);
-    this.isSubmitting.set(false);
-    if (error) {
-      this.errorMessage.set(error);
-    } else {
-      this.registeredEmail.set(email);
-      this.successMessage.set(true);
-      this.bookOpen.set(true);
-    }
-  }
-}
-````
-
 ## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
 ````typescript
 import {
@@ -8743,7 +8661,7 @@ export class ClubsListComponent implements OnInit {
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
         { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://vercel.live; frame-src https://vercel.live; frame-ancestors 'none';" }
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://vercel.live https://book-club-be.onrender.com wss://*.pusher.com https://*.pusher.com https://*.pusherapp.com; frame-src https://vercel.live; frame-ancestors 'none';" }
       ]
     }
   ]
@@ -8908,6 +8826,128 @@ export class QuizService {
 }
 ````
 
+## File: src/app/features/auth/register/register.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../core/auth/auth.service';
+import { UserRole } from '../../../core/models/user.model';
+import { FormFieldComponent } from '../../../shared/components/form-field/form-field.component';
+import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
+import { SeoService } from '../../../core/services/seo.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
+  const password = group.get('password')?.value as string;
+  const confirmPassword = group.get('confirmPassword')?.value as string;
+  return password === confirmPassword ? null : { passwordMismatch: true };
+};
+interface RegisterForm {
+  displayName: FormControl<string>;
+  email: FormControl<string>;
+  password: FormControl<string>;
+  confirmPassword: FormControl<string>;
+  role: FormControl<UserRole>;
+}
+@Component({
+  selector: 'app-register',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, FormFieldComponent, TranslateModule, BookIntroComponent, LoadingSpinnerComponent],
+  templateUrl: './register.component.html',
+})
+export class RegisterComponent {
+  private readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  readonly errorMessage = signal<string | null>(null);
+  readonly isSubmitting = signal(false);
+  readonly successMessage = signal(false);
+  readonly registeredEmail = signal('');
+  readonly selectedRole = signal<UserRole>('user');
+  readonly bookOpen = signal(false);
+  readonly formVisible = signal(false);
+  constructor() {
+    this.seo.setPageI18n('SEO.register_title');
+    setTimeout(() => this.formVisible.set(true), 700);
+  }
+  onBookAnimationDone(): void {
+  }
+  readonly form = new FormGroup<RegisterForm>(
+    {
+      displayName: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(2)],
+      }),
+      email: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.email],
+      }),
+      password: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(8)],
+      }),
+      confirmPassword: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+      role: new FormControl<UserRole>('user', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+    },
+    { validators: passwordMatchValidator },
+  );
+  private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
+    initialValue: '',
+  });
+  readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
+    const pw = this._passwordValue();
+    if (!pw || pw.length === 0) return null;
+    if (pw.length < 8) return 'weak';
+    const hasUpper = /[A-Z]/.test(pw);
+    const hasNumber = /\d/.test(pw);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
+    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
+    if (score >= 2) return 'strong';
+    if (score === 1) return 'medium';
+    return 'weak';
+  });
+  setRole(role: UserRole): void {
+    this.selectedRole.set(role);
+    this.form.controls.role.setValue(role);
+    this.form.controls.role.markAsTouched();
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+    const { displayName, email, password, role } = this.form.getRawValue();
+    const { error } = await this.auth.signUp(email, password, displayName, role);
+    this.isSubmitting.set(false);
+    if (error) {
+      this.errorMessage.set(error);
+    } else {
+      this.registeredEmail.set(email);
+      this.successMessage.set(true);
+      this.bookOpen.set(true);
+    }
+  }
+}
+````
+
 ## File: src/app/core/auth/auth.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -8921,6 +8961,7 @@ import { TokenStore } from './token.store';
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
 interface AuthResponse {
   accessToken: string;
+  refreshToken: string;
   user: ApiUserProfile;
 }
 @Injectable({ providedIn: 'root' })
@@ -8981,6 +9022,7 @@ export class AuthService {
         }),
       );
       this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -8993,6 +9035,7 @@ export class AuthService {
         this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
       );
       this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -9102,12 +9145,12 @@ export class ClubService {
   readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
     const filter = this._cityFilter();
     const clubs = this._clubs()
-      .filter(c => c.nextMeetingDate !== null)
       .filter(c => !filter || c.city === filter)
       .sort((a, b) => {
-        const aDate = a.nextMeetingDate ?? '';
-        const bDate = b.nextMeetingDate ?? '';
-        return new Date(aDate).getTime() - new Date(bDate).getTime();
+        if (!a.nextMeetingDate && !b.nextMeetingDate) return 0;
+        if (!a.nextMeetingDate) return 1;
+        if (!b.nextMeetingDate) return -1;
+        return new Date(a.nextMeetingDate).getTime() - new Date(b.nextMeetingDate).getTime();
       });
     return clubs.reduce<Record<string, Club[]>>((acc, club) => {
       const city = club.city ?? 'Other';
@@ -9165,6 +9208,7 @@ export class ClubService {
     city?: string;
     tags?: string[];
     meetingDurationMinutes?: number | null;
+    nextMeetingDate?: string | null;
     afterMeetingVenue?: AfterMeetingVenue | null;
   }): Promise<Club> {
     const raw = await firstValueFrom(
@@ -9175,6 +9219,7 @@ export class ClubService {
         city: payload.city,
         tags: payload.tags ?? [],
         meetingDurationMinutes: payload.meetingDurationMinutes ?? null,
+        nextMeetingDate: payload.nextMeetingDate ?? null,
         afterMeetingVenue: payload.afterMeetingVenue ?? null,
       }),
     );

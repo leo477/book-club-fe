@@ -92,7 +92,7 @@ export class RegisterComponent {
     initialValue: '',
   });
 
-  protected readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
+  readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
     const pw = this._passwordValue();
     if (!pw || pw.length === 0) return null;
     if (pw.length < 8) return 'weak';

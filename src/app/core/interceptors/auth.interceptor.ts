@@ -33,7 +33,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   return next(authedReq).pipe(
     catchError((error: unknown) => {
       const httpError = error instanceof HttpErrorResponse ? error : null;
-      if (httpError?.status === 401) {
+      if (httpError?.status === 401 && token) {
         tokenStore.clear();
         router.navigate(['/login']);
       } else if (httpError?.status === 403) {
