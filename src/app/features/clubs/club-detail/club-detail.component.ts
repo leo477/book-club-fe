@@ -131,7 +131,9 @@ export class ClubDetailComponent {
         this.club.set(found);
         this.members.set(await this.clubService.getClubMembers(clubId));
         if (isCancelled()) return;
-        this.clubBans.set(await this.clubService.getBans(clubId));
+        if (this.auth.currentUser()?.id === found.organizerId) {
+          this.clubBans.set(await this.clubService.getBans(clubId));
+        }
         this.seo.setPageI18n('SEO.club_detail_title', {
           ogTitleKey: 'SEO.club_detail_og_title',
           params: { name: found.name },

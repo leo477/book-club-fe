@@ -78,6 +78,24 @@ export class ClubService {
     }, {});
   });
 
+  readonly myClubsByCity = computed<Record<string, Club[]>>(() => {
+    const filter = this._cityFilter();
+    const clubs = this._myClubs()
+      .filter(c => !filter || c.city === filter)
+      .sort((a, b) => {
+        if (!a.nextMeetingDate && !b.nextMeetingDate) return 0;
+        if (!a.nextMeetingDate) return 1;
+        if (!b.nextMeetingDate) return -1;
+        return new Date(a.nextMeetingDate).getTime() - new Date(b.nextMeetingDate).getTime();
+      });
+    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
+      const city = club.city ?? 'Other';
+      if (!acc[city]) acc[city] = [];
+      acc[city].push(club);
+      return acc;
+    }, {});
+  });
+
   readonly myParticipatedClubs = computed<Club[]>(() => []);
   readonly myMissedClubs = computed<Club[]>(() => []);
 
