@@ -67,20 +67,15 @@
 
           <!-- City -->
           <div>
-            <label for="club-city" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="city-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ 'CREATE_CLUB.city_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
             </label>
-            <input
-              id="club-city"
-              type="text"
-              formControlName="city"
+            <app-address-autocomplete
+              inputId="city-input"
+              [control]="form.controls.city"
               [placeholder]="'CREATE_CLUB.city_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
+              (selected)="onLocationSelected($event, 'city')"
               [class.border-red-400]="form.controls.city.invalid && form.controls.city.touched"
-              aria-describedby="city-error"
             />
             @if (form.controls.city.invalid && form.controls.city.touched) {
               <p id="city-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
@@ -92,20 +87,14 @@
 
           <!-- Address -->
           <div>
-            <label for="club-address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="address-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ 'CREATE_CLUB.address_label' | translate }}
             </label>
-            <input
-              id="club-address"
-              type="text"
-              formControlName="address"
+            <app-address-autocomplete
+              inputId="address-input"
+              [control]="form.controls.address"
               [placeholder]="'CREATE_CLUB.address_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-              [class.border-red-400]="form.controls.address.invalid && form.controls.address.touched"
-              aria-describedby="address-error"
+              (selected)="onLocationSelected($event, 'address')"
             />
             @if (form.controls.address.invalid && form.controls.address.touched) {
               <p id="address-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">

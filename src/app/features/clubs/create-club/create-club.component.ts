@@ -10,6 +10,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
+import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
 
 interface CreateClubForm {
   name: FormControl<string>;
@@ -29,7 +31,7 @@ interface CreateClubForm {
   selector: 'app-create-club',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent],
+  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent, AddressAutocompleteComponent],
   templateUrl: './create-club.component.html',
 })
 export class CreateClubComponent {
@@ -44,6 +46,8 @@ export class CreateClubComponent {
   readonly isSubmitting = this._isSubmitting.asReadonly();
 
   readonly showAfterMeeting = signal(false);
+  readonly lat = signal<number | null>(null);
+  readonly lng = signal<number | null>(null);
 
   readonly form = new FormGroup<CreateClubForm>({
     name: new FormControl('', {
@@ -84,6 +88,13 @@ export class CreateClubComponent {
       validators: [Validators.maxLength(300)],
     }),
   });
+
+  onLocationSelected(suggestion: GeocodeSuggestion, field: 'city' | 'address'): void {
+    const value = field === 'city' ? (suggestion.city ?? suggestion.label) : suggestion.label;
+    this.form.controls[field].setValue(value);
+    this.lat.set(suggestion.lat);
+    this.lng.set(suggestion.lng);
+  }
 
   togglePublic(): void {
     const current = this.form.controls.isPublic.value;
