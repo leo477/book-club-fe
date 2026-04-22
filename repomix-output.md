@@ -88,6 +88,7 @@ src/
       services/
         chat.service.ts
         club.service.ts
+        geocoding.service.ts
         quiz.service.ts
         randomizer.service.ts
         seo.service.ts
@@ -171,6 +172,9 @@ src/
           chat-widget.component.html
           chat-widget.component.ts
       components/
+        address-autocomplete/
+          address-autocomplete.component.html
+          address-autocomplete.component.ts
         book-intro/
           book-intro.component.ts
         empty-state/
@@ -294,13 +298,161 @@ vercel.json
       "Bash(curl -s -I -X OPTIONS https://book-club-be.onrender.com/api/v1/auth/login -H 'Origin: http://localhost:4200' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type,authorization')",
       "Bash(curl *)",
       "Bash(grep -A2 \"FAILED$\")",
-      "Bash(npx jest *)"
+      "Bash(npx jest *)",
+      "Bash(node_modules/.bin/ng test *)"
     ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "book-club-agents"
   ]
+}
+````
+
+## File: src/app/core/services/geocoding.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+export interface GeocodeSuggestion {
+  label: string;
+  city: string | null;
+  country: string | null;
+  lat: number;
+  lng: number;
+}
+@Injectable({ providedIn: 'root' })
+export class GeocodingService {
+  private readonly http = inject(HttpClient);
+  autocomplete(q: string, lang = 'uk', limit = 5): Observable<GeocodeSuggestion[]> {
+    return this.http.get<GeocodeSuggestion[]>(`${environment.apiUrl}/geocode/autocomplete`, {
+      params: { q, lang, limit: String(limit) },
+    });
+  }
+}
+````
+
+## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.html
+````html
+<div class="relative">
+  <input
+    [formControl]="control"
+    [placeholder]="placeholder"
+    autocomplete="off"
+    (keydown)="onKeydown($event)"
+    class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors duration-150"
+    [class.border-red-400]="control.invalid && control.touched"
+  />
+  @if (isLoading()) {
+    <div class="absolute right-3 top-3 flex items-center justify-center">
+      <svg class="h-4 w-4 animate-spin text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+    </div>
+  }
+  @if (isOpen() && suggestions().length > 0) {
+    <ul class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-48 overflow-y-auto">
+      @for (s of suggestions(); track s.label; let i = $index) {
+        <li
+          (click)="select(s)"
+          [class.bg-primary-50]="activeIndex() === i"
+          [class.dark:bg-primary-900/20]="activeIndex() === i"
+          class="cursor-pointer px-4 py-2.5 text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >{{ s.label }}</li>
+      }
+    </ul>
+  }
+</div>
+````
+
+## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
+````typescript
+import {
+  Component, ChangeDetectionStrategy, Input, Output, EventEmitter,
+  OnInit, OnDestroy, signal, inject, ElementRef, HostListener
+} from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Subject, switchMap, debounceTime, distinctUntilChanged, of, takeUntil } from 'rxjs';
+import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
+@Component({
+  selector: 'app-address-autocomplete',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule],
+  templateUrl: './address-autocomplete.component.html',
+})
+export class AddressAutocompleteComponent implements OnInit, OnDestroy {
+  @Input({ required: true }) control!: FormControl<string>;
+  @Input() placeholder = '';
+  @Output() selected = new EventEmitter<GeocodeSuggestion>();
+  private readonly geocoding = inject(GeocodingService);
+  private readonly elRef = inject(ElementRef);
+  private readonly destroy$ = new Subject<void>();
+  readonly suggestions = signal<GeocodeSuggestion[]>([]);
+  readonly isLoading = signal(false);
+  readonly isOpen = signal(false);
+  readonly activeIndex = signal(-1);
+  ngOnInit(): void {
+    this.control.valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(q => {
+        if (!q || q.length < 2) {
+          this.suggestions.set([]);
+          this.isOpen.set(false);
+          return of([]);
+        }
+        this.isLoading.set(true);
+        return this.geocoding.autocomplete(q);
+      }),
+      takeUntil(this.destroy$),
+    ).subscribe({
+      next: (results) => {
+        this.isLoading.set(false);
+        this.suggestions.set(results);
+        this.activeIndex.set(-1);
+        this.isOpen.set(results.length > 0);
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.suggestions.set([]);
+      },
+    });
+  }
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+  select(s: GeocodeSuggestion): void {
+    this.control.setValue(s.label, { emitEvent: false });
+    this.suggestions.set([]);
+    this.isOpen.set(false);
+    this.selected.emit(s);
+  }
+  onKeydown(event: KeyboardEvent): void {
+    if (!this.isOpen()) return;
+    const len = this.suggestions().length;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i + 1) % len);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i - 1 + len) % len);
+    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
+      event.preventDefault();
+      this.select(this.suggestions()[this.activeIndex()]);
+    } else if (event.key === 'Escape') {
+      this.isOpen.set(false);
+    }
+  }
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.elRef.nativeElement.contains(event.target)) {
+      this.isOpen.set(false);
+    }
+  }
 }
 ````
 
@@ -6677,20 +6829,14 @@ export class ChatService {
             }
           </div>
           <div>
-            <label for="club-city" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ 'CREATE_CLUB.city_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
             </label>
-            <input
-              id="club-city"
-              type="text"
-              formControlName="city"
+            <app-address-autocomplete
+              [control]="form.controls.city"
               [placeholder]="'CREATE_CLUB.city_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
+              (selected)="onLocationSelected($event, 'city')"
               [class.border-red-400]="form.controls.city.invalid && form.controls.city.touched"
-              aria-describedby="city-error"
             />
             @if (form.controls.city.invalid && form.controls.city.touched) {
               <p id="city-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
@@ -6700,20 +6846,13 @@ export class ChatService {
             }
           </div>
           <div>
-            <label for="club-address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
               {{ 'CREATE_CLUB.address_label' | translate }}
             </label>
-            <input
-              id="club-address"
-              type="text"
-              formControlName="address"
+            <app-address-autocomplete
+              [control]="form.controls.address"
               [placeholder]="'CREATE_CLUB.address_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-              [class.border-red-400]="form.controls.address.invalid && form.controls.address.touched"
-              aria-describedby="address-error"
+              (selected)="onLocationSelected($event, 'address')"
             />
             @if (form.controls.address.invalid && form.controls.address.touched) {
               <p id="address-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
@@ -7315,6 +7454,8 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
+import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
 interface CreateClubForm {
   name: FormControl<string>;
   description: FormControl<string>;
@@ -7331,7 +7472,7 @@ interface CreateClubForm {
   selector: 'app-create-club',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent],
+  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent, AddressAutocompleteComponent],
   templateUrl: './create-club.component.html',
 })
 export class CreateClubComponent {
@@ -7343,6 +7484,8 @@ export class CreateClubComponent {
   private readonly _isSubmitting = signal(false);
   readonly isSubmitting = this._isSubmitting.asReadonly();
   readonly showAfterMeeting = signal(false);
+  readonly lat = signal<number | null>(null);
+  readonly lng = signal<number | null>(null);
   readonly form = new FormGroup<CreateClubForm>({
     name: new FormControl('', {
       nonNullable: true,
@@ -7381,6 +7524,12 @@ export class CreateClubComponent {
       validators: [Validators.maxLength(300)],
     }),
   });
+  onLocationSelected(suggestion: GeocodeSuggestion, field: 'city' | 'address'): void {
+    const value = field === 'city' ? (suggestion.city ?? suggestion.label) : suggestion.label;
+    this.form.controls[field].setValue(value);
+    this.lat.set(suggestion.lat);
+    this.lng.set(suggestion.lng);
+  }
   togglePublic(): void {
     const current = this.form.controls.isPublic.value;
     this.form.controls.isPublic.setValue(!current);
