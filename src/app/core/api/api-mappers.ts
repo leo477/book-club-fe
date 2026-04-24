@@ -1,5 +1,5 @@
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
+import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
 import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
 
 // Raw API response shapes (camelCase from FastAPI)

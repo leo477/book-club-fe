@@ -1,6 +1,14 @@
 import { UserSocials } from './user.model';
+import { AfterMeetingVenue } from './event.model';
 
 export type BanDuration = 1 | 3 | 5 | 'permanent';
+export type ClubStatus = 'active' | 'paused' | 'cancelled';
+
+export interface CurrentBook {
+  title: string;
+  author: string;
+  description: string;
+}
 
 export interface BanRecord {
   userId: string;
@@ -20,6 +28,18 @@ export interface Club {
   memberCount: number;
   memberPreviews: string[];
   createdAt: string;
+  city: string;
+  nextMeetingDate: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  theme: string | null;
+  currentBook: CurrentBook | null;
+  status: ClubStatus;
+  tags: string[];
+  meetingDurationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  cancelledAt?: string;
 }
 
 export interface ClubMember {
