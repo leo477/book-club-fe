@@ -1838,6 +1838,45 @@ jobs:
           configuration-path: .github/labeler.yml
 ````
 
+## File: .github/workflows/codeql.yml
+````yaml
+name: CodeQL
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 0 * * 0'
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  analyze:
+    name: Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript-typescript'
+        continue-on-error: true
+````
+
 ## File: .github/workflows/dependency-review.yml
 ````yaml
 name: Dependency Review
@@ -4565,45 +4604,6 @@ jobs:
           strip-hash: true
 ````
 
-## File: .github/workflows/codeql.yml
-````yaml
-name: CodeQL
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
-  schedule:
-    - cron: '0 0 * * 0'
-permissions:
-  contents: read
-  security-events: write
-  actions: read
-concurrency:
-  group: codeql-${{ github.ref }}
-  cancel-in-progress: true
-jobs:
-  analyze:
-    name: Analyze (javascript-typescript)
-    runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript-typescript
-          queries: security-extended
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: '/language:javascript-typescript'
-        continue-on-error: true
-````
-
 ## File: .github/workflows/pr-review.yml
 ````yaml
 name: pr-review
@@ -6711,17 +6711,6 @@ export class ClubCardComponent {
             </a>
             @if (isAuthenticated()) {
               <a
-                routerLink="/clubs"
-                [queryParams]="{ tab: 'mine' }"
-                routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
-                class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
-                       hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
-                       transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
-                       focus:ring-offset-2"
-              >
-                {{ 'CLUBS.my_clubs' | translate }}
-              </a>
-              <a
                 routerLink="/events"
                 routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
                 class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
@@ -6867,17 +6856,6 @@ export class ClubCardComponent {
               🔍 {{ 'NAV.discover' | translate }}
             </a>
             @if (isAuthenticated()) {
-              <a
-                routerLink="/clubs"
-                [queryParams]="{ tab: 'mine' }"
-                (click)="isMenuOpen.set(false)"
-                class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                       text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                       transition-all duration-200 focus:outline-none focus:ring-2
-                       focus:ring-primary-500 focus:ring-offset-2"
-              >
-                📖 {{ 'CLUBS.my_clubs' | translate }}
-              </a>
               <a
                 routerLink="/events"
                 (click)="isMenuOpen.set(false)"
