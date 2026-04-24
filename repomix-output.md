@@ -4655,6 +4655,45 @@ jobs:
           strip-hash: true
 ````
 
+## File: .github/workflows/codeql.yml
+````yaml
+name: CodeQL
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 0 * * 0'
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  analyze:
+    name: Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript-typescript'
+        continue-on-error: true
+````
+
 ## File: .github/workflows/pr-review.yml
 ````yaml
 name: pr-review
@@ -5166,39 +5205,6 @@ export class LoginComponent {
 ## File: src/app/features/clubs/club-detail/info/club-info.component.html
 ````html
 
-````
-
-## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { Club } from '../../../../core/models/club.model';
-import { TranslateModule } from '@ngx-translate/core';
-@Component({
-  selector: 'app-club-card',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule],
-  templateUrl: './club-card.component.html',
-})
-export class ClubCardComponent {
-  readonly club = input.required<Club>();
-  readonly isMember = input.required<boolean>();
-  readonly isOwned = input<boolean>(false);
-  readonly isAuthenticated = input<boolean>(false);
-  readonly joining = input<boolean>(false);
-  readonly join = output<void>();
-  protected daysUntil(dateStr: string): number {
-    const target = new Date(dateStr).getTime();
-    const now = Date.now();
-    return Math.round((target - now) / 86400000);
-  }
-}
 ````
 
 ## File: src/app/features/events/create-event/create-event.component.html
@@ -6278,6 +6284,79 @@ export const environment = {
 };
 ````
 
+## File: .gitignore
+````
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
+# Angular specific
+/dist/
+/out-tsc/
+/tmp/
+/coverage/
+/e2e/test-output/
+/.angular/
+.angular/
+
+# Node modules and dependency files
+/node_modules/
+/yarn.lock
+
+# Environment files
+/.env
+
+# Angular CLI and build artefacts
+/.angular-cli.json
+/.ng/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+````
+
 ## File: CLAUDE.md
 ````markdown
 # Project Context
@@ -6422,45 +6501,6 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
 ````
 
-## File: .github/workflows/codeql.yml
-````yaml
-name: CodeQL
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
-  schedule:
-    - cron: '0 0 * * 0'
-permissions:
-  contents: read
-  security-events: write
-  actions: read
-concurrency:
-  group: codeql-${{ github.ref }}
-  cancel-in-progress: true
-jobs:
-  analyze:
-    name: Analyze (javascript-typescript)
-    runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript-typescript
-          queries: security-extended
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: '/language:javascript-typescript'
-        continue-on-error: true
-````
-
 ## File: src/app/core/api/api-error.util.ts
 ````typescript
 import { HttpErrorResponse } from '@angular/common/http';
@@ -6601,6 +6641,39 @@ export interface ClubMemberDetail {
     </div>
   </div>
 </div>
+````
+
+## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { Club } from '../../../../core/models/club.model';
+import { TranslateModule } from '@ngx-translate/core';
+@Component({
+  selector: 'app-club-card',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule],
+  templateUrl: './club-card.component.html',
+})
+export class ClubCardComponent {
+  readonly club = input.required<Club>();
+  readonly isMember = input.required<boolean>();
+  readonly isOwned = input<boolean>(false);
+  readonly isAuthenticated = input<boolean>(false);
+  readonly joining = input<boolean>(false);
+  readonly join = output<void>();
+  protected daysUntil(dateStr: string): number {
+    const target = new Date(dateStr).getTime();
+    const now = Date.now();
+    return Math.round((target - now) / 86400000);
+  }
+}
 ````
 
 ## File: src/app/layout/header/header.component.html
@@ -7063,79 +7136,6 @@ export class HeaderComponent {
     </div>
   }
 }
-````
-
-## File: .gitignore
-````
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
-
-# Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
-
-# Node
-/node_modules
-npm-debug.log
-yarn-error.log
-
-# IDEs and editors
-.idea/
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
-
-# Visual Studio Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.history/*
-
-# Miscellaneous
-/.angular/cache
-.sass-cache/
-/connect.lock
-/coverage
-/libpeerconnection.log
-testem.log
-/typings
-
-# System files
-.DS_Store
-Thumbs.db
-# Angular specific
-/dist/
-/out-tsc/
-/tmp/
-/coverage/
-/e2e/test-output/
-/.angular/
-.angular/
-
-# Node modules and dependency files
-/node_modules/
-/yarn.lock
-
-# Environment files
-/.env
-
-# Angular CLI and build artefacts
-/.angular-cli.json
-/.ng/
-
-# TypeScript cache
-*.tsbuildinfo
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 ````
 
 ## File: eslint.config.js
