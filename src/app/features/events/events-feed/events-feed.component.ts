@@ -30,7 +30,7 @@ export class EventsFeedComponent implements OnInit {
   readonly attendingEventId = signal<string | null>(null);
 
   readonly sortedDates = computed(() =>
-    Object.keys(this.eventService.groupedByDate()).sort(),
+    Object.keys(this.eventService.groupedByDate()).sort((a, b) => a.localeCompare(b)),
   );
 
   async ngOnInit(): Promise<void> {

@@ -2169,7 +2169,8 @@ export class EventService {
   readonly groupedByDate = computed<Record<string, ClubEvent[]>>(() => {
     return this.filteredAllEvents().reduce<Record<string, ClubEvent[]>>((acc, e) => {
       const day = e.date.slice(0, 10);
-      (acc[day] ??= []).push(e);
+      if (!acc[day]) acc[day] = [];
+      acc[day].push(e);
       return acc;
     }, {});
   });
@@ -3280,7 +3281,7 @@ export class EventsFeedComponent implements OnInit {
   readonly activeTab = signal<'upcoming' | 'my'>('upcoming');
   readonly attendingEventId = signal<string | null>(null);
   readonly sortedDates = computed(() =>
-    Object.keys(this.eventService.groupedByDate()).sort(),
+    Object.keys(this.eventService.groupedByDate()).sort((a, b) => a.localeCompare(b)),
   );
   async ngOnInit(): Promise<void> {
     await this.eventService.loadAllEvents();
@@ -4592,6 +4593,46 @@ module.exports = {
     }
   }
 }
+````
+
+## File: karma.conf.js
+````javascript
+module.exports = function (config) {
+  config.set({
+    basePath: '',
+    frameworks: ['jasmine'],
+    plugins: [
+      require('karma-jasmine'),
+      require('karma-chrome-launcher'),
+      require('karma-jasmine-html-reporter'),
+      require('karma-coverage'),
+    ],
+    client: {
+      jasmine: {},
+      clearContext: false,
+    },
+    jasmineHtmlReporter: {
+      suppressAll: true,
+    },
+    coverageReporter: {
+      dir: require('path').join(__dirname, './coverage/book-club-fe'),
+      subdir: '.',
+      reporters: [{ type: 'html' }, { type: 'text-summary' }, { type: 'lcovonly' }],
+      check: {
+        global: { statements: 70, branches: 60, functions: 70, lines: 70 },
+      },
+    },
+    reporters: ['progress', 'kjhtml'],
+    browsers: ['ChromeHeadless'],
+    customLaunchers: {
+      ChromeHeadlessCI: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+      },
+    },
+    restartOnFileChange: true,
+  });
+};
 ````
 
 ## File: repomix.config.json
@@ -6394,46 +6435,6 @@ This project uses **Repomix** to provide a full map of the codebase.
 - Always check `repomix-output.md` for the latest project map.
 - If a file is not in repomix-output.md, assume it doesn't exist yet.
 - Backend API routes: see FastAPI project (not in this repo).
-````
-
-## File: karma.conf.js
-````javascript
-module.exports = function (config) {
-  config.set({
-    basePath: '',
-    frameworks: ['jasmine'],
-    plugins: [
-      require('karma-jasmine'),
-      require('karma-chrome-launcher'),
-      require('karma-jasmine-html-reporter'),
-      require('karma-coverage'),
-    ],
-    client: {
-      jasmine: {},
-      clearContext: false,
-    },
-    jasmineHtmlReporter: {
-      suppressAll: true,
-    },
-    coverageReporter: {
-      dir: require('path').join(__dirname, './coverage/book-club-fe'),
-      subdir: '.',
-      reporters: [{ type: 'html' }, { type: 'text-summary' }, { type: 'lcovonly' }],
-      check: {
-        global: { statements: 70, branches: 60, functions: 70, lines: 70 },
-      },
-    },
-    reporters: ['progress', 'kjhtml'],
-    browsers: ['ChromeHeadless'],
-    customLaunchers: {
-      ChromeHeadlessCI: {
-        base: 'ChromeHeadless',
-        flags: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
-      },
-    },
-    restartOnFileChange: true,
-  });
-};
 ````
 
 ## File: README.md
@@ -9641,7 +9642,7 @@ export class ClubService {
   readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
   readonly availableCities = computed<string[]>(() => {
     const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
-    return cities.sort();
+    return cities.sort((a, b) => a.localeCompare(b));
   });
   readonly filteredClubs = computed(() => {
     const q = this._searchQuery().toLowerCase().trim();

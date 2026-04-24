@@ -50,7 +50,8 @@ export class EventService {
   readonly groupedByDate = computed<Record<string, ClubEvent[]>>(() => {
     return this.filteredAllEvents().reduce<Record<string, ClubEvent[]>>((acc, e) => {
       const day = e.date.slice(0, 10);
-      (acc[day] ??= []).push(e);
+      if (!acc[day]) acc[day] = [];
+      acc[day].push(e);
       return acc;
     }, {});
   });

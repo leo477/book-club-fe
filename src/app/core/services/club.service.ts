@@ -39,7 +39,7 @@ export class ClubService {
 
   readonly availableCities = computed<string[]>(() => {
     const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
-    return cities.sort();
+    return cities.sort((a, b) => a.localeCompare(b));
   });
 
   readonly filteredClubs = computed(() => {
