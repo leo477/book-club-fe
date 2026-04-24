@@ -23,4 +23,10 @@ export class ClubCardComponent {
   readonly joining = input<boolean>(false);
 
   readonly join = output<void>();
+
+  protected daysUntil(dateStr: string): number {
+    const target = new Date(dateStr).getTime();
+    const now = Date.now();
+    return Math.round((target - now) / 86400000);
+  }
 }
