@@ -2122,150 +2122,6 @@ export interface ClubEvent {
 }
 ````
 
-## File: src/app/core/services/event.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { ApiEvent, mapEvent } from '../api/api-mappers';
-import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
-export interface CreateEventPayload {
-  title: string;
-  description?: string | null;
-  date: string;
-  city: string;
-  address?: string | null;
-  lat?: number | null;
-  lng?: number | null;
-  theme?: string | null;
-  tags?: string[];
-  durationMinutes?: number | null;
-  afterMeetingVenue?: AfterMeetingVenue | null;
-}
-@Injectable({ providedIn: 'root' })
-export class EventService {
-  private readonly http = inject(HttpClient);
-  private readonly _allEvents = signal<ClubEvent[]>([]);
-  private readonly _myEvents = signal<ClubEvent[]>([]);
-  private readonly _isLoading = signal(false);
-  private readonly _error = signal<string | null>(null);
-  private readonly _cityFilter = signal<string | null>(null);
-  readonly allEvents = this._allEvents.asReadonly();
-  readonly myEvents = this._myEvents.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly error = this._error.asReadonly();
-  readonly cityFilter = this._cityFilter.asReadonly();
-  readonly filteredAllEvents = computed(() => {
-    const city = this._cityFilter();
-    const events = this._allEvents();
-    return city ? events.filter(e => e.city === city) : events;
-  });
-  readonly availableCities = computed<string[]>(() => {
-    const seen = new Set<string>();
-    for (const e of this._allEvents()) seen.add(e.city);
-    return [...seen].sort((a, b) => a.localeCompare(b));
-  });
-  readonly groupedByDate = computed<Record<string, ClubEvent[]>>(() => {
-    return this.filteredAllEvents().reduce<Record<string, ClubEvent[]>>((acc, e) => {
-      const day = e.date.slice(0, 10);
-      if (!acc[day]) acc[day] = [];
-      acc[day].push(e);
-      return acc;
-    }, {});
-  });
-  setCityFilter(city: string | null): void {
-    this._cityFilter.set(city);
-  }
-  async loadAllEvents(skip = 0, limit = 50): Promise<void> {
-    this._isLoading.set(true);
-    this._error.set(null);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events`, {
-          params: { skip: String(skip), limit: String(limit) },
-        }),
-      );
-      this._allEvents.set(raw.map(mapEvent));
-    } catch {
-      this._error.set('Failed to load events');
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async loadMyEvents(): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events/my`),
-      );
-      this._myEvents.set(raw.map(mapEvent));
-    } catch {
-      this._error.set('Failed to load my events');
-    }
-  }
-  async getEventById(id: string): Promise<ClubEvent | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`),
-      );
-      return mapEvent(raw);
-    } catch {
-      return null;
-    }
-  }
-  async attendEvent(eventId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/events/${eventId}/attend`, {}),
-    );
-    this._patchEventAttending(eventId, true);
-  }
-  async cancelAttendance(eventId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/events/${eventId}/attend`),
-    );
-    this._patchEventAttending(eventId, false);
-  }
-  async createEvent(clubId: string, payload: CreateEventPayload): Promise<ClubEvent> {
-    const raw = await firstValueFrom(
-      this.http.post<ApiEvent>(`${environment.apiUrl}/clubs/${clubId}/events`, payload),
-    );
-    return mapEvent(raw);
-  }
-  async rescheduleEvent(eventId: string, newDate: string, newCity?: string, newAddress?: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/reschedule`, {
-        newDate,
-        newCity: newCity ?? null,
-        newAddress: newAddress ?? null,
-      }),
-    );
-    const updated = mapEvent(raw);
-    this._updateEvent(updated);
-  }
-  async cancelEvent(eventId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/cancel`, {}),
-    );
-    const updated = mapEvent(raw);
-    this._updateEvent(updated);
-  }
-  private _patchEventAttending(eventId: string, attending: boolean): void {
-    const patch = (list: ClubEvent[]) =>
-      list.map(e =>
-        e.id === eventId
-          ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
-          : e,
-      );
-    this._allEvents.update(patch);
-    this._myEvents.update(patch);
-  }
-  private _updateEvent(updated: ClubEvent): void {
-    this._allEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
-    this._myEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
-  }
-}
-````
-
 ## File: src/app/core/services/geocoding.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -3248,66 +3104,6 @@ export class EventDetailComponent {
     }
   </div>
 </div>
-````
-
-## File: src/app/features/events/events-feed/events-feed.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  OnInit,
-} from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
-import { EventService } from '../../../core/services/event.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { ClubEvent } from '../../../core/models/event.model';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { EventCardComponent } from '../event-card/event-card.component';
-@Component({
-  selector: 'app-events-feed',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, TranslateModule, LoadingSpinnerComponent, EmptyStateComponent, EventCardComponent],
-  templateUrl: './events-feed.component.html',
-})
-export class EventsFeedComponent implements OnInit {
-  readonly eventService = inject(EventService);
-  readonly auth = inject(AuthService);
-  readonly activeTab = signal<'upcoming' | 'my'>('upcoming');
-  readonly attendingEventId = signal<string | null>(null);
-  readonly sortedDates = computed(() =>
-    Object.keys(this.eventService.groupedByDate()).sort((a, b) => a.localeCompare(b)),
-  );
-  async ngOnInit(): Promise<void> {
-    await this.eventService.loadAllEvents();
-    if (this.auth.isAuthenticated()) {
-      await this.eventService.loadMyEvents();
-    }
-  }
-  async onAttend(event: ClubEvent): Promise<void> {
-    this.attendingEventId.set(event.id);
-    try {
-      await this.eventService.attendEvent(event.id);
-    } catch {
-    } finally {
-      this.attendingEventId.set(null);
-    }
-  }
-  async onCancelAttend(event: ClubEvent): Promise<void> {
-    this.attendingEventId.set(event.id);
-    try {
-      await this.eventService.cancelAttendance(event.id);
-    } catch {
-    } finally {
-      this.attendingEventId.set(null);
-    }
-  }
-}
 ````
 
 ## File: src/app/features/events/events.routes.ts
@@ -4540,6 +4336,79 @@ public/i18n/**
 coverage/
 ````
 
+## File: .gitignore
+````
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
+# Angular specific
+/dist/
+/out-tsc/
+/tmp/
+/coverage/
+/e2e/test-output/
+/.angular/
+.angular/
+
+# Node modules and dependency files
+/node_modules/
+/yarn.lock
+
+# Environment files
+/.env
+
+# Angular CLI and build artefacts
+/.angular-cli.json
+/.ng/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+````
+
 ## File: .gitleaks.toml
 ````toml
 # Gitleaks configuration
@@ -4921,6 +4790,150 @@ export class TokenStore {
   }
   snapshotRefresh(): string | null {
     return this._refreshToken();
+  }
+}
+````
+
+## File: src/app/core/services/event.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiEvent, mapEvent } from '../api/api-mappers';
+import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
+export interface CreateEventPayload {
+  title: string;
+  description?: string | null;
+  date: string;
+  city: string;
+  address?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  theme?: string | null;
+  tags?: string[];
+  durationMinutes?: number | null;
+  afterMeetingVenue?: AfterMeetingVenue | null;
+}
+@Injectable({ providedIn: 'root' })
+export class EventService {
+  private readonly http = inject(HttpClient);
+  private readonly _allEvents = signal<ClubEvent[]>([]);
+  private readonly _myEvents = signal<ClubEvent[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _error = signal<string | null>(null);
+  private readonly _cityFilter = signal<string | null>(null);
+  readonly allEvents = this._allEvents.asReadonly();
+  readonly myEvents = this._myEvents.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly cityFilter = this._cityFilter.asReadonly();
+  readonly filteredAllEvents = computed(() => {
+    const city = this._cityFilter();
+    const events = this._allEvents();
+    return city ? events.filter(e => e.city === city) : events;
+  });
+  readonly availableCities = computed<string[]>(() => {
+    const seen = new Set<string>();
+    for (const e of this._allEvents()) seen.add(e.city);
+    return [...seen].sort((a, b) => a.localeCompare(b));
+  });
+  readonly groupedByDate = computed<Record<string, ClubEvent[]>>(() => {
+    return this.filteredAllEvents().reduce<Record<string, ClubEvent[]>>((acc, e) => {
+      const day = e.date.slice(0, 10);
+      if (!acc[day]) acc[day] = [];
+      acc[day].push(e);
+      return acc;
+    }, {});
+  });
+  setCityFilter(city: string | null): void {
+    this._cityFilter.set(city);
+  }
+  async loadAllEvents(skip = 0, limit = 50): Promise<void> {
+    this._isLoading.set(true);
+    this._error.set(null);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events`, {
+          params: { skip: String(skip), limit: String(limit) },
+        }),
+      );
+      this._allEvents.set(raw.map(mapEvent));
+    } catch {
+      this._error.set('Failed to load events');
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async loadMyEvents(): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events/my`),
+      );
+      this._myEvents.set(raw.map(mapEvent));
+    } catch {
+      this._error.set('Failed to load my events');
+    }
+  }
+  async getEventById(id: string): Promise<ClubEvent | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`),
+      );
+      return mapEvent(raw);
+    } catch {
+      return null;
+    }
+  }
+  async attendEvent(eventId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/events/${eventId}/attend`, {}),
+    );
+    this._patchEventAttending(eventId, true);
+  }
+  async cancelAttendance(eventId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/events/${eventId}/attend`),
+    );
+    this._patchEventAttending(eventId, false);
+  }
+  async createEvent(clubId: string, payload: CreateEventPayload): Promise<ClubEvent> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiEvent>(`${environment.apiUrl}/clubs/${clubId}/events`, payload),
+    );
+    return mapEvent(raw);
+  }
+  async rescheduleEvent(eventId: string, newDate: string, newCity?: string, newAddress?: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/reschedule`, {
+        newDate,
+        newCity: newCity ?? null,
+        newAddress: newAddress ?? null,
+      }),
+    );
+    const updated = mapEvent(raw);
+    this._updateEvent(updated);
+  }
+  async cancelEvent(eventId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/cancel`, {}),
+    );
+    const updated = mapEvent(raw);
+    this._updateEvent(updated);
+  }
+  private _patchEventAttending(eventId: string, attending: boolean): void {
+    const patch = (list: ClubEvent[]) =>
+      list.map(e =>
+        e.id === eventId
+          ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
+          : e,
+      );
+    this._allEvents.update(patch);
+    this._myEvents.update(patch);
+  }
+  private _updateEvent(updated: ClubEvent): void {
+    this._allEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
+    this._myEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
   }
 }
 ````
@@ -5454,6 +5467,66 @@ export class CreateEventComponent {
       this.errorMessage.set('Failed to create event. Please try again.');
     } finally {
       this.isSubmitting.set(false);
+    }
+  }
+}
+````
+
+## File: src/app/features/events/events-feed/events-feed.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  OnInit,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
+import { EventService } from '../../../core/services/event.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { ClubEvent } from '../../../core/models/event.model';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { EventCardComponent } from '../event-card/event-card.component';
+@Component({
+  selector: 'app-events-feed',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule, TranslateModule, LoadingSpinnerComponent, EmptyStateComponent, EventCardComponent],
+  templateUrl: './events-feed.component.html',
+})
+export class EventsFeedComponent implements OnInit {
+  readonly eventService = inject(EventService);
+  readonly auth = inject(AuthService);
+  readonly activeTab = signal<'upcoming' | 'my'>('upcoming');
+  readonly attendingEventId = signal<string | null>(null);
+  readonly sortedDates = computed(() =>
+    Object.keys(this.eventService.groupedByDate()).sort((a, b) => a.localeCompare(b)),
+  );
+  async ngOnInit(): Promise<void> {
+    await this.eventService.loadAllEvents();
+    if (this.auth.isAuthenticated()) {
+      await this.eventService.loadMyEvents();
+    }
+  }
+  async onAttend(event: ClubEvent): Promise<void> {
+    this.attendingEventId.set(event.id);
+    try {
+      await this.eventService.attendEvent(event.id);
+    } catch {
+    } finally {
+      this.attendingEventId.set(null);
+    }
+  }
+  async onCancelAttend(event: ClubEvent): Promise<void> {
+    this.attendingEventId.set(event.id);
+    try {
+      await this.eventService.cancelAttendance(event.id);
+    } catch {
+    } finally {
+      this.attendingEventId.set(null);
     }
   }
 }
@@ -6325,79 +6398,6 @@ export const environment = {
 };
 ````
 
-## File: .gitignore
-````
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
-
-# Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
-
-# Node
-/node_modules
-npm-debug.log
-yarn-error.log
-
-# IDEs and editors
-.idea/
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
-
-# Visual Studio Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.history/*
-
-# Miscellaneous
-/.angular/cache
-.sass-cache/
-/connect.lock
-/coverage
-/libpeerconnection.log
-testem.log
-/typings
-
-# System files
-.DS_Store
-Thumbs.db
-# Angular specific
-/dist/
-/out-tsc/
-/tmp/
-/coverage/
-/e2e/test-output/
-/.angular/
-.angular/
-
-# Node modules and dependency files
-/node_modules/
-/yarn.lock
-
-# Environment files
-/.env
-
-# Angular CLI and build artefacts
-/.angular-cli.json
-/.ng/
-
-# TypeScript cache
-*.tsbuildinfo
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-````
-
 ## File: CLAUDE.md
 ````markdown
 # Project Context
@@ -7233,6 +7233,114 @@ module.exports = defineConfig([
 }
 ````
 
+## File: .github/copilot-instructions.md
+````markdown
+# GitHub Copilot Instructions — Book Club Frontend
+
+## Project Overview
+
+This is a modern **Angular 20** frontend application for a book club platform. It is built with standalone components, signals-based state management, zoneless change detection, and Tailwind CSS for styling.
+
+## Tech Stack
+
+- **Framework**: Angular 20 (standalone, no NgModules)
+- **Language**: TypeScript (strict mode, no `any`)
+- **State Management**: Angular Signals (`signal()`, `computed()`, `effect()`)
+- **Change Detection**: Zoneless (`provideExperimentalZonelessChangeDetection`)
+- **Styling**: Tailwind CSS + SCSS design tokens
+- **Testing**: Jest + @testing-library/angular + Playwright (e2e)
+- **HTTP**: Typed repository services with `HttpClient`
+- **Auth**: JWT with `httpOnly` cookies, functional route guards
+- **i18n**: `@ngx-translate/core` with lazy-loaded translation files
+- **Linting**: ESLint with `@angular-eslint` + Prettier
+- **CI/CD**: GitHub Actions
+
+## Architecture Conventions
+
+- All components must be `standalone: true` with `ChangeDetectionStrategy.OnPush`
+- State lives in signal-based services — never in component properties
+- Use `computed()` for derived state, `effect()` only for side effects
+- HTTP calls go through typed repository services (`BookRepository`, `UserRepository`, etc.)
+- DTOs map API responses → domain models inside repository layer
+- Functional guards (`CanActivateFn`, `CanMatchFn`) for route protection
+- Reactive forms only (`ReactiveFormsModule`), always typed `FormGroup<{}>`
+
+## Folder Structure
+
+```
+src/
+├── app/
+│   ├── core/           # Singleton services, interceptors, guards, error handler
+│   ├── shared/         # Reusable components, directives, pipes
+│   ├── layout/         # Shell, header, footer
+│   ├── features/       # Lazy-loaded feature modules (books, profile, auth)
+│   └── app.config.ts   # Bootstrap providers
+├── assets/
+│   └── i18n/           # Translation files per locale
+└── styles/
+    ├── tokens/         # CSS custom properties (colors, spacing, typography)
+    ├── base/           # Reset, typography
+    └── utilities/      # Helper classes
+```
+
+## Code Quality Rules
+
+- **No `any`** — all types must be explicit
+- **No `::ng-deep`** — use CSS custom properties for theming
+- **No `localStorage` for tokens** — use `httpOnly` cookies or `sessionStorage`
+- **No `bypassSecurityTrustHtml`** without explicit security review
+- **No NgModules** — everything is standalone
+- Always handle 401 (token refresh), 403 (redirect), 500 (toast + log) in HTTP interceptor chain
+- All user-visible strings must be wrapped with `@ngx-translate` or `$localize`
+
+## Testing Expectations
+
+- Unit tests for all services and utilities (80%+ coverage)
+- Component tests using `@testing-library/angular` (behavior-driven)
+- E2E tests with Playwright for auth flow and critical user journeys
+- Mock `HttpClient` with `HttpClientTestingModule` + `HttpTestingController`
+
+## Agent Delegation Policy
+
+**ALWAYS delegate tasks to the appropriate MCP agent first.** Do not implement directly unless no suitable agent exists. Use parallel agent invocations when tasks are independent.
+
+### Routing Rules (strict)
+
+| Task type | Agent to use |
+|---|---|
+| CI/CD, GitHub Actions, deployment, Docker | `devops` |
+| Security audit, XSS, CSP, JWT, secret scanning | `security` |
+| Tests, coverage, Lighthouse, Playwright, contract tests | `tester` |
+| Components, Tailwind, animations, accessibility, design system | `ui` |
+| SEO, microcopy, semantic HTML, API docs, i18n copy | `web-quality-enhancer` |
+| Pre-commit review, PR readiness, Husky | `reviewer` |
+| Angular architecture, signals, routing, forms, services | `dev` |
+| Java Spring Boot backend, REST API, JPA, Kafka, Testcontainers | `java-backend-dev` |
+
+### Delegation Rules
+
+1. **Default to agents** — if a task matches an agent's domain, invoke that agent via the `task` tool
+2. **Parallel when possible** — if multiple independent tasks exist, launch multiple agents simultaneously
+3. **Copilot only does** — file reads, planning, coordination, simple 1-line fixes, git commits after agents finish
+4. **Never implement directly** what an agent specializes in — always delegate first
+
+## Custom Agents Available
+
+All agents are provided via the shared **book-club-mcp** server (`.vscode/mcp.json`).
+When invoking agents via the `task` tool, **always use the model specified below** — never default to a different model.
+
+| Agent | Model | Purpose |
+|---|---|---|
+| `dev` | `claude-sonnet-4.6` | Angular 20 architecture, implementation, and code review |
+| `reviewer` | `gpt-4.1` | Pre-commit review, Husky setup, PR readiness checks |
+| `devops` | `gpt-4.1` | CI/CD pipelines, GitHub Actions, deployment automation |
+| `security` | `claude-sonnet-4.6` | XSS, CSP, JWT security audits and input sanitization |
+| `tester` | `gpt-4.1` | Visual regression, Lighthouse, contract testing setup |
+| `ui` | `claude-haiku-4.5` | Design system, Tailwind, animations, accessibility |
+| `web-quality-enhancer` | `claude-sonnet-4.6` | SEO, microcopy, semantic HTML, API docs |
+| `java-backend-dev` | `claude-sonnet-4.6` | Java 21 microservices, Spring Boot, JPA, Kafka, JWT |
+````
+
 ## File: src/app/core/interceptors/auth.interceptor.ts
 ````typescript
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
@@ -7682,114 +7790,6 @@ sonar.coverage.exclusions=\
   src/app/core/supabase/**
 
 sonar.sourceEncoding=UTF-8
-````
-
-## File: .github/copilot-instructions.md
-````markdown
-# GitHub Copilot Instructions — Book Club Frontend
-
-## Project Overview
-
-This is a modern **Angular 20** frontend application for a book club platform. It is built with standalone components, signals-based state management, zoneless change detection, and Tailwind CSS for styling.
-
-## Tech Stack
-
-- **Framework**: Angular 20 (standalone, no NgModules)
-- **Language**: TypeScript (strict mode, no `any`)
-- **State Management**: Angular Signals (`signal()`, `computed()`, `effect()`)
-- **Change Detection**: Zoneless (`provideExperimentalZonelessChangeDetection`)
-- **Styling**: Tailwind CSS + SCSS design tokens
-- **Testing**: Jest + @testing-library/angular + Playwright (e2e)
-- **HTTP**: Typed repository services with `HttpClient`
-- **Auth**: JWT with `httpOnly` cookies, functional route guards
-- **i18n**: `@ngx-translate/core` with lazy-loaded translation files
-- **Linting**: ESLint with `@angular-eslint` + Prettier
-- **CI/CD**: GitHub Actions
-
-## Architecture Conventions
-
-- All components must be `standalone: true` with `ChangeDetectionStrategy.OnPush`
-- State lives in signal-based services — never in component properties
-- Use `computed()` for derived state, `effect()` only for side effects
-- HTTP calls go through typed repository services (`BookRepository`, `UserRepository`, etc.)
-- DTOs map API responses → domain models inside repository layer
-- Functional guards (`CanActivateFn`, `CanMatchFn`) for route protection
-- Reactive forms only (`ReactiveFormsModule`), always typed `FormGroup<{}>`
-
-## Folder Structure
-
-```
-src/
-├── app/
-│   ├── core/           # Singleton services, interceptors, guards, error handler
-│   ├── shared/         # Reusable components, directives, pipes
-│   ├── layout/         # Shell, header, footer
-│   ├── features/       # Lazy-loaded feature modules (books, profile, auth)
-│   └── app.config.ts   # Bootstrap providers
-├── assets/
-│   └── i18n/           # Translation files per locale
-└── styles/
-    ├── tokens/         # CSS custom properties (colors, spacing, typography)
-    ├── base/           # Reset, typography
-    └── utilities/      # Helper classes
-```
-
-## Code Quality Rules
-
-- **No `any`** — all types must be explicit
-- **No `::ng-deep`** — use CSS custom properties for theming
-- **No `localStorage` for tokens** — use `httpOnly` cookies or `sessionStorage`
-- **No `bypassSecurityTrustHtml`** without explicit security review
-- **No NgModules** — everything is standalone
-- Always handle 401 (token refresh), 403 (redirect), 500 (toast + log) in HTTP interceptor chain
-- All user-visible strings must be wrapped with `@ngx-translate` or `$localize`
-
-## Testing Expectations
-
-- Unit tests for all services and utilities (80%+ coverage)
-- Component tests using `@testing-library/angular` (behavior-driven)
-- E2E tests with Playwright for auth flow and critical user journeys
-- Mock `HttpClient` with `HttpClientTestingModule` + `HttpTestingController`
-
-## Agent Delegation Policy
-
-**ALWAYS delegate tasks to the appropriate MCP agent first.** Do not implement directly unless no suitable agent exists. Use parallel agent invocations when tasks are independent.
-
-### Routing Rules (strict)
-
-| Task type | Agent to use |
-|---|---|
-| CI/CD, GitHub Actions, deployment, Docker | `devops` |
-| Security audit, XSS, CSP, JWT, secret scanning | `security` |
-| Tests, coverage, Lighthouse, Playwright, contract tests | `tester` |
-| Components, Tailwind, animations, accessibility, design system | `ui` |
-| SEO, microcopy, semantic HTML, API docs, i18n copy | `web-quality-enhancer` |
-| Pre-commit review, PR readiness, Husky | `reviewer` |
-| Angular architecture, signals, routing, forms, services | `dev` |
-| Java Spring Boot backend, REST API, JPA, Kafka, Testcontainers | `java-backend-dev` |
-
-### Delegation Rules
-
-1. **Default to agents** — if a task matches an agent's domain, invoke that agent via the `task` tool
-2. **Parallel when possible** — if multiple independent tasks exist, launch multiple agents simultaneously
-3. **Copilot only does** — file reads, planning, coordination, simple 1-line fixes, git commits after agents finish
-4. **Never implement directly** what an agent specializes in — always delegate first
-
-## Custom Agents Available
-
-All agents are provided via the shared **book-club-mcp** server (`.vscode/mcp.json`).
-When invoking agents via the `task` tool, **always use the model specified below** — never default to a different model.
-
-| Agent | Model | Purpose |
-|---|---|---|
-| `dev` | `claude-sonnet-4.6` | Angular 20 architecture, implementation, and code review |
-| `reviewer` | `gpt-4.1` | Pre-commit review, Husky setup, PR readiness checks |
-| `devops` | `gpt-4.1` | CI/CD pipelines, GitHub Actions, deployment automation |
-| `security` | `claude-sonnet-4.6` | XSS, CSP, JWT security audits and input sanitization |
-| `tester` | `gpt-4.1` | Visual regression, Lighthouse, contract testing setup |
-| `ui` | `claude-haiku-4.5` | Design system, Tailwind, animations, accessibility |
-| `web-quality-enhancer` | `claude-sonnet-4.6` | SEO, microcopy, semantic HTML, API docs |
-| `java-backend-dev` | `claude-sonnet-4.6` | Java 21 microservices, Spring Boot, JPA, Kafka, JWT |
 ````
 
 ## File: src/app/core/api/api-mappers.ts
@@ -9606,6 +9606,187 @@ export class CreateClubComponent {
 }
 ````
 
+## File: src/app/features/clubs/club-detail/club-detail.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  effect,
+  input,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
+import { ClubEvent } from '../../../core/models/event.model';
+import { UserProfile } from '../../../core/models/user.model';
+import { EventService } from '../../../core/services/event.service';
+import { SeoService } from '../../../core/services/seo.service';
+import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { ClubMembersListComponent } from './members/club-members-list.component';
+import { ClubHeaderComponent } from './header/club-header.component';
+import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
+@Component({
+  selector: 'app-club-detail',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    RouterLink,
+    TranslateModule,
+    InitialsPipe,
+    FormatDatePipe,
+    ClubMembersListComponent,
+    ClubHeaderComponent,
+    ClubManagePanelComponent,
+  ],
+  templateUrl: './club-detail.component.html',
+})
+export class ClubDetailComponent {
+  readonly id = input.required<string>();
+  private readonly clubService = inject(ClubService);
+  private readonly eventService = inject(EventService);
+  private readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  private readonly translate = inject(TranslateService);
+  private readonly _lang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: this.translate.currentLang ?? 'uk' },
+  );
+  readonly currentUser = this.auth.currentUser;
+  readonly club = signal<Club | null>(null);
+  readonly members = signal<ClubMemberDetail[]>([]);
+  readonly clubBans = signal<BanRecord[]>([]);
+  readonly events = signal<ClubEvent[]>([]);
+  readonly isLoading = signal(true);
+  readonly errorMessage = signal<string | null>(null);
+  readonly isActionLoading = signal(false);
+  readonly actionError = signal<string | null>(null);
+  readonly isMember = computed(() => this.clubService.myClubIds().has(this.id()));
+  readonly isClubOwner = computed(
+    () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
+  );
+  readonly currentUserId = computed(() => this.auth.currentUser()?.id ?? null);
+  readonly organizerProfile = computed<UserProfile | null>(() => {
+    const organizerId = this.club()?.organizerId;
+    if (!organizerId) return null;
+    const organizer = this.members().find(m => m.role === 'organizer');
+    if (!organizer) return null;
+    return {
+      id: organizerId,
+      displayName: organizer.displayName,
+      avatarUrl: organizer.avatarUrl,
+      role: 'user',
+      createdAt: '',
+      socials: organizer.socials,
+      socialsPublic: organizer.socialsPublic,
+    } satisfies UserProfile;
+  });
+  readonly upcomingEvents = computed(() =>
+    this.events().filter(e => e.status === 'scheduled' || e.status === 'active'),
+  );
+  readonly deleteCountdown = computed<string | null>(() => {
+    const club = this.club();
+    if (!club) return null;
+    const ms = this.clubService.msUntilDeletion(club);
+    if (ms === null) return null;
+    const totalMinutes = Math.floor(ms / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) {
+      return minutes > 0 ? `${hours} год ${minutes} хв` : `${hours} год`;
+    }
+    return `${totalMinutes} хв`;
+  });
+  constructor() {
+    effect((onCleanup) => {
+      const clubId = this.id();
+      let cancelled = false;
+      onCleanup(() => { cancelled = true; });
+      this.loadClub(clubId, () => cancelled).catch((_err: unknown) => {  });
+    });
+  }
+  private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    try {
+      if (this.auth.isAuthenticated() && this.clubService.myClubs().length === 0) {
+        await this.clubService.loadMyClubs();
+      }
+      if (isCancelled()) return;
+      const found = await this.clubService.getClubById(clubId);
+      if (isCancelled()) return;
+      if (found) {
+        this.club.set(found);
+        const [members, events] = await Promise.all([
+          this.clubService.getClubMembers(clubId),
+          this.clubService.loadClubEvents(clubId),
+        ]);
+        if (isCancelled()) return;
+        this.members.set(members);
+        this.events.set(events);
+        if (this.auth.currentUser()?.id === found.organizerId) {
+          this.clubBans.set(await this.clubService.getBans(clubId));
+        }
+        this.seo.setPageI18n('SEO.club_detail_title', {
+          ogTitleKey: 'SEO.club_detail_og_title',
+          params: { name: found.name },
+        });
+      } else {
+        this.errorMessage.set('This club could not be found.');
+      }
+    } catch {
+      if (!isCancelled()) this.errorMessage.set('Failed to load club details.');
+    } finally {
+      if (!isCancelled()) this.isLoading.set(false);
+    }
+  }
+  async onJoin(): Promise<void> {
+    this.isActionLoading.set(true);
+    this.actionError.set(null);
+    try {
+      await this.clubService.joinClub(this.id());
+      const updated = await this.clubService.getClubById(this.id());
+      if (updated) this.club.set(updated);
+    } catch (err) {
+      this.actionError.set(err instanceof Error ? err.message : 'Failed to join club');
+    } finally {
+      this.isActionLoading.set(false);
+    }
+  }
+  async onLeave(): Promise<void> {
+    this.isActionLoading.set(true);
+    this.actionError.set(null);
+    try {
+      await this.clubService.leaveClub(this.id());
+      const updated = await this.clubService.getClubById(this.id());
+      if (updated) this.club.set(updated);
+    } catch (err) {
+      this.actionError.set(err instanceof Error ? err.message : 'Failed to leave club');
+    } finally {
+      this.isActionLoading.set(false);
+    }
+  }
+  async handleKick(userId: string): Promise<void> {
+    await this.clubService.kickMember(this.id(), userId);
+    this.members.update(list => list.filter(m => m.userId !== userId));
+  }
+  async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
+    await this.clubService.banMember(this.id(), event.userId, event.duration);
+    this.members.update(list => list.filter(m => m.userId !== event.userId));
+  }
+}
+````
+
 ## File: src/app/core/services/club.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -9815,187 +9996,6 @@ export class ClubService {
     const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
     const remaining = deletionTime - Date.now();
     return remaining > 0 ? remaining : null;
-  }
-}
-````
-
-## File: src/app/features/clubs/club-detail/club-detail.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  effect,
-  input,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
-import { ClubEvent } from '../../../core/models/event.model';
-import { UserProfile } from '../../../core/models/user.model';
-import { EventService } from '../../../core/services/event.service';
-import { SeoService } from '../../../core/services/seo.service';
-import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
-import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-import { ClubMembersListComponent } from './members/club-members-list.component';
-import { ClubHeaderComponent } from './header/club-header.component';
-import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
-@Component({
-  selector: 'app-club-detail',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    RouterLink,
-    TranslateModule,
-    InitialsPipe,
-    FormatDatePipe,
-    ClubMembersListComponent,
-    ClubHeaderComponent,
-    ClubManagePanelComponent,
-  ],
-  templateUrl: './club-detail.component.html',
-})
-export class ClubDetailComponent {
-  readonly id = input.required<string>();
-  private readonly clubService = inject(ClubService);
-  private readonly eventService = inject(EventService);
-  private readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  private readonly translate = inject(TranslateService);
-  private readonly _lang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: this.translate.currentLang ?? 'uk' },
-  );
-  readonly currentUser = this.auth.currentUser;
-  readonly club = signal<Club | null>(null);
-  readonly members = signal<ClubMemberDetail[]>([]);
-  readonly clubBans = signal<BanRecord[]>([]);
-  readonly events = signal<ClubEvent[]>([]);
-  readonly isLoading = signal(true);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isActionLoading = signal(false);
-  readonly actionError = signal<string | null>(null);
-  readonly isMember = computed(() => this.clubService.myClubIds().has(this.id()));
-  readonly isClubOwner = computed(
-    () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
-  );
-  readonly currentUserId = computed(() => this.auth.currentUser()?.id ?? null);
-  readonly organizerProfile = computed<UserProfile | null>(() => {
-    const organizerId = this.club()?.organizerId;
-    if (!organizerId) return null;
-    const organizer = this.members().find(m => m.role === 'organizer');
-    if (!organizer) return null;
-    return {
-      id: organizerId,
-      displayName: organizer.displayName,
-      avatarUrl: organizer.avatarUrl,
-      role: 'user',
-      createdAt: '',
-      socials: organizer.socials,
-      socialsPublic: organizer.socialsPublic,
-    } satisfies UserProfile;
-  });
-  readonly upcomingEvents = computed(() =>
-    this.events().filter(e => e.status === 'scheduled' || e.status === 'active'),
-  );
-  readonly deleteCountdown = computed<string | null>(() => {
-    const club = this.club();
-    if (!club) return null;
-    const ms = this.clubService.msUntilDeletion(club);
-    if (ms === null) return null;
-    const totalMinutes = Math.floor(ms / 60000);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    if (hours > 0) {
-      return minutes > 0 ? `${hours} год ${minutes} хв` : `${hours} год`;
-    }
-    return `${totalMinutes} хв`;
-  });
-  constructor() {
-    effect((onCleanup) => {
-      const clubId = this.id();
-      let cancelled = false;
-      onCleanup(() => { cancelled = true; });
-      this.loadClub(clubId, () => cancelled).catch((_err: unknown) => {  });
-    });
-  }
-  private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-    try {
-      if (this.auth.isAuthenticated() && this.clubService.myClubs().length === 0) {
-        await this.clubService.loadMyClubs();
-      }
-      if (isCancelled()) return;
-      const found = await this.clubService.getClubById(clubId);
-      if (isCancelled()) return;
-      if (found) {
-        this.club.set(found);
-        const [members, events] = await Promise.all([
-          this.clubService.getClubMembers(clubId),
-          this.clubService.loadClubEvents(clubId),
-        ]);
-        if (isCancelled()) return;
-        this.members.set(members);
-        this.events.set(events);
-        if (this.auth.currentUser()?.id === found.organizerId) {
-          this.clubBans.set(await this.clubService.getBans(clubId));
-        }
-        this.seo.setPageI18n('SEO.club_detail_title', {
-          ogTitleKey: 'SEO.club_detail_og_title',
-          params: { name: found.name },
-        });
-      } else {
-        this.errorMessage.set('This club could not be found.');
-      }
-    } catch {
-      if (!isCancelled()) this.errorMessage.set('Failed to load club details.');
-    } finally {
-      if (!isCancelled()) this.isLoading.set(false);
-    }
-  }
-  async onJoin(): Promise<void> {
-    this.isActionLoading.set(true);
-    this.actionError.set(null);
-    try {
-      await this.clubService.joinClub(this.id());
-      const updated = await this.clubService.getClubById(this.id());
-      if (updated) this.club.set(updated);
-    } catch (err) {
-      this.actionError.set(err instanceof Error ? err.message : 'Failed to join club');
-    } finally {
-      this.isActionLoading.set(false);
-    }
-  }
-  async onLeave(): Promise<void> {
-    this.isActionLoading.set(true);
-    this.actionError.set(null);
-    try {
-      await this.clubService.leaveClub(this.id());
-      const updated = await this.clubService.getClubById(this.id());
-      if (updated) this.club.set(updated);
-    } catch (err) {
-      this.actionError.set(err instanceof Error ? err.message : 'Failed to leave club');
-    } finally {
-      this.isActionLoading.set(false);
-    }
-  }
-  async handleKick(userId: string): Promise<void> {
-    await this.clubService.kickMember(this.id(), userId);
-    this.members.update(list => list.filter(m => m.userId !== userId));
-  }
-  async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
-    await this.clubService.banMember(this.id(), event.userId, event.duration);
-    this.members.update(list => list.filter(m => m.userId !== event.userId));
   }
 }
 ````

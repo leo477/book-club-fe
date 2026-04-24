@@ -4,11 +4,13 @@ import {
   mapClub,
   mapClubMember,
   mapBanRecord,
+  mapEvent,
   ApiUserProfile,
   ApiUserStats,
   ApiClub,
   ApiClubMember,
   ApiBanRecord,
+  ApiEvent,
 } from './api-mappers';
 
 const baseApiClub: ApiClub = {
@@ -179,5 +181,61 @@ describe('mapBanRecord', () => {
     expect(result.bannedAt).toBe('2024-03-01');
     expect(result.duration).toBe('permanent');
     expect(result.bannedBy).toBe('u1');
+  });
+});
+
+describe('mapEvent', () => {
+  const baseApiEvent: ApiEvent = {
+    id: 'e1',
+    clubId: 'c1',
+    clubName: 'Test Club',
+    organizerId: 'u1',
+    title: 'Test Event',
+    description: 'A description',
+    date: '2025-06-01T10:00:00',
+    city: 'Kyiv',
+    address: '123 Main St',
+    lat: 50.4,
+    lng: 30.5,
+    status: 'scheduled',
+    cancelledAt: null,
+    theme: 'Fiction',
+    tags: ['tag1', 'tag2'],
+    durationMinutes: 90,
+    afterMeetingVenue: null,
+    attendeeCount: 5,
+    isAttending: false,
+  };
+
+  it('maps all fields from a full ApiEvent object', () => {
+    const result = mapEvent(baseApiEvent);
+    expect(result.id).toBe('e1');
+    expect(result.clubId).toBe('c1');
+    expect(result.clubName).toBe('Test Club');
+    expect(result.organizerId).toBe('u1');
+    expect(result.title).toBe('Test Event');
+    expect(result.description).toBe('A description');
+    expect(result.date).toBe('2025-06-01T10:00:00');
+    expect(result.city).toBe('Kyiv');
+    expect(result.address).toBe('123 Main St');
+    expect(result.lat).toBe(50.4);
+    expect(result.lng).toBe(30.5);
+    expect(result.status).toBe('scheduled');
+    expect(result.theme).toBe('Fiction');
+    expect(result.tags).toEqual(['tag1', 'tag2']);
+    expect(result.durationMinutes).toBe(90);
+    expect(result.afterMeetingVenue).toBeNull();
+    expect(result.attendeeCount).toBe(5);
+    expect(result.isAttending).toBeFalse();
+  });
+
+  it('sets cancelledAt to undefined when the raw value is null', () => {
+    const result = mapEvent({ ...baseApiEvent, cancelledAt: null });
+    expect(result.cancelledAt).toBeUndefined();
+  });
+
+  it('preserves cancelledAt string value when set', () => {
+    const result = mapEvent({ ...baseApiEvent, cancelledAt: '2025-07-01T00:00:00' });
+    expect(result.cancelledAt).toBe('2025-07-01T00:00:00');
   });
 });
