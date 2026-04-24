@@ -38,6 +38,14 @@ export const CLUBS_ROUTES: Routes = [
         loadChildren: () =>
           import('../quiz/quiz.routes').then(m => m.QUIZ_ROUTES),
       },
+      {
+        path: 'events/create',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('../events/create-event/create-event.component').then(
+            m => m.CreateEventComponent,
+          ),
+      },
     ],
   },
 ];

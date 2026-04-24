@@ -7,14 +7,12 @@ import {
 import { RouterLink } from '@angular/router';
 import { Club } from '../../../../core/models/club.model';
 import { TranslateModule } from '@ngx-translate/core';
-import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
-import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
 
 @Component({
   selector: 'app-club-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, InitialsPipe, FormatDatePipe],
+  imports: [RouterLink, TranslateModule],
   templateUrl: './club-card.component.html',
 })
 export class ClubCardComponent {
@@ -25,10 +23,4 @@ export class ClubCardComponent {
   readonly joining = input<boolean>(false);
 
   readonly join = output<void>();
-
-  protected daysUntil(dateStr: string): number {
-    const now = new Date();
-    const meeting = new Date(dateStr);
-    return Math.ceil((meeting.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
-  }
 }

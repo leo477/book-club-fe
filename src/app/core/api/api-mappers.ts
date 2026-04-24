@@ -1,5 +1,6 @@
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-import { AfterMeetingVenue, BanDuration, BanRecord, Club, ClubBook, ClubMemberDetail, ClubStatus } from '../models/club.model';
+import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
+import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
 
 // Raw API response shapes (camelCase from FastAPI)
 export interface ApiUserProfile {
@@ -30,13 +31,6 @@ export interface ApiUserStats {
   booksRead: number;
 }
 
-interface ApiMeetingHistoryItem {
-  id: string;
-  date: string;
-  status: 'held' | 'cancelled' | 'rescheduled';
-  notes?: string;
-}
-
 export interface ApiClub {
   id: string;
   name: string;
@@ -45,21 +39,8 @@ export interface ApiClub {
   organizerId: string;
   isPublic: boolean;
   memberCount: number;
-  createdAt: string;
-  city: string | null;
-  nextMeetingDate: string | null;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  theme: string | null;
-  currentBook: string | null;
   memberPreviews: string[];
-  status: ClubStatus;
-  tags: string[];
-  meetingDurationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  cancelledAt?: string | null;
-  meetingHistory?: ApiMeetingHistoryItem[] | null;
+  createdAt: string;
 }
 
 export interface ApiClubMember {
@@ -77,6 +58,28 @@ export interface ApiBanRecord {
   bannedAt: string;
   duration: BanDuration;
   bannedBy: string;
+}
+
+export interface ApiEvent {
+  id: string;
+  clubId: string;
+  clubName: string;
+  organizerId: string;
+  title: string;
+  description: string | null;
+  date: string;
+  city: string;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  status: EventStatus;
+  cancelledAt?: string | null;
+  theme: string | null;
+  tags: string[];
+  durationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  attendeeCount: number;
+  isAttending: boolean;
 }
 
 export function mapUserProfile(raw: ApiUserProfile): UserProfile {
@@ -102,11 +105,6 @@ export function mapUserStats(raw: ApiUserStats): UserStats {
 }
 
 export function mapClub(raw: ApiClub): Club {
-  let currentBook: ClubBook | null = null;
-  if (raw.currentBook) {
-    currentBook = { title: raw.currentBook, author: '', description: '' };
-  }
-
   return {
     id: raw.id,
     name: raw.name,
@@ -115,26 +113,32 @@ export function mapClub(raw: ApiClub): Club {
     organizerId: raw.organizerId,
     isPublic: raw.isPublic,
     memberCount: raw.memberCount,
+    memberPreviews: raw.memberPreviews,
     createdAt: raw.createdAt,
-    city: raw.city ?? '',
-    nextMeetingDate: raw.nextMeetingDate,
+  };
+}
+
+export function mapEvent(raw: ApiEvent): ClubEvent {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    clubName: raw.clubName,
+    organizerId: raw.organizerId,
+    title: raw.title,
+    description: raw.description,
+    date: raw.date,
+    city: raw.city,
     address: raw.address,
     lat: raw.lat,
     lng: raw.lng,
-    theme: raw.theme,
-    currentBook,
-    memberPreviews: raw.memberPreviews,
     status: raw.status,
-    tags: raw.tags,
-    meetingDurationMinutes: raw.meetingDurationMinutes,
-    afterMeetingVenue: raw.afterMeetingVenue,
     cancelledAt: raw.cancelledAt ?? undefined,
-    meetingHistory: raw.meetingHistory?.map(h => ({
-      id: h.id,
-      date: h.date,
-      status: h.status,
-      notes: h.notes,
-    })),
+    theme: raw.theme,
+    tags: raw.tags,
+    durationMinutes: raw.durationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    attendeeCount: raw.attendeeCount,
+    isAttending: raw.isAttending,
   };
 }
 

@@ -10,28 +10,18 @@ import { TranslatePipe } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
-import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
 
 interface CreateClubForm {
   name: FormControl<string>;
   description: FormControl<string>;
   isPublic: FormControl<boolean>;
-  city: FormControl<string>;
-  address: FormControl<string>;
-  tags: FormControl<string>;
-  meetingDurationMinutes: FormControl<number | null>;
-  nextMeetingDate: FormControl<string | null>;
-  afterMeetingVenueName: FormControl<string>;
-  afterMeetingVenueAddress: FormControl<string>;
-  afterMeetingVenueDescription: FormControl<string>;
 }
 
 @Component({
   selector: 'app-create-club',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent, AddressAutocompleteComponent],
+  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent],
   templateUrl: './create-club.component.html',
 })
 export class CreateClubComponent {
@@ -45,10 +35,6 @@ export class CreateClubComponent {
   private readonly _isSubmitting = signal(false);
   readonly isSubmitting = this._isSubmitting.asReadonly();
 
-  readonly showAfterMeeting = signal(false);
-  readonly lat = signal<number | null>(null);
-  readonly lng = signal<number | null>(null);
-
   readonly form = new FormGroup<CreateClubForm>({
     name: new FormControl('', {
       nonNullable: true,
@@ -59,50 +45,11 @@ export class CreateClubComponent {
       validators: [Validators.maxLength(500)],
     }),
     isPublic: new FormControl(true, { nonNullable: true }),
-    city: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(100)],
-    }),
-    address: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(200)],
-    }),
-    tags: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(300)],
-    }),
-    meetingDurationMinutes: new FormControl<number | null>(null, {
-      validators: [Validators.min(15), Validators.max(480)],
-    }),
-    nextMeetingDate: new FormControl<string | null>(null),
-    afterMeetingVenueName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(150)],
-    }),
-    afterMeetingVenueAddress: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(200)],
-    }),
-    afterMeetingVenueDescription: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(300)],
-    }),
   });
-
-  onLocationSelected(suggestion: GeocodeSuggestion, field: 'city' | 'address'): void {
-    const value = field === 'city' ? (suggestion.city ?? suggestion.label) : suggestion.label;
-    this.form.controls[field].setValue(value);
-    this.lat.set(suggestion.lat);
-    this.lng.set(suggestion.lng);
-  }
 
   togglePublic(): void {
     const current = this.form.controls.isPublic.value;
     this.form.controls.isPublic.setValue(!current);
-  }
-
-  toggleAfterMeeting(): void {
-    this.showAfterMeeting.update(v => !v);
   }
 
   cancel(): void {
@@ -118,43 +65,10 @@ export class CreateClubComponent {
     this._isSubmitting.set(true);
     this._errorMessage.set(null);
 
-    const {
-      name,
-      description,
-      isPublic,
-      city,
-      tags,
-      meetingDurationMinutes,
-      nextMeetingDate,
-      afterMeetingVenueName,
-      afterMeetingVenueAddress,
-      afterMeetingVenueDescription,
-    } = this.form.getRawValue();
-
-    const parsedTags = tags
-      .split(',')
-      .map(t => t.trim())
-      .filter(t => t.length > 0);
-
-    const afterMeetingVenue = afterMeetingVenueName
-      ? {
-          name: afterMeetingVenueName,
-          address: afterMeetingVenueAddress,
-          description: afterMeetingVenueDescription || undefined,
-        }
-      : null;
+    const { name, description, isPublic } = this.form.getRawValue();
 
     try {
-      const club = await this.clubService.createClub({
-        name,
-        description,
-        isPublic,
-        city,
-        tags: parsedTags,
-        meetingDurationMinutes: meetingDurationMinutes ?? undefined,
-        nextMeetingDate: nextMeetingDate ?? null,
-        afterMeetingVenue,
-      });
+      const club = await this.clubService.createClub({ name, description, isPublic });
       this.router.navigate(['/clubs', club.id]);
     } catch (err) {
       this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');

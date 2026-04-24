@@ -27,6 +27,11 @@ export const routes: Routes = [
         canActivate: [authGuard],
         loadChildren: () => import('./features/clubs/clubs.routes').then(m => m.CLUBS_ROUTES),
       },
+      {
+        path: 'events',
+        canActivate: [authGuard],
+        loadChildren: () => import('./features/events/events.routes').then(m => m.EVENTS_ROUTES),
+      },
 
       // Protected: organizer-only placeholder (e.g. club management)
       {

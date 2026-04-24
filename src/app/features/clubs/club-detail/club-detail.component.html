@@ -59,13 +59,6 @@
         (join)="onJoin()"
         (leave)="onLeave()" />
 
-      <!-- Deletion countdown banner -->
-      @if (club()?.status === 'cancelled' && deleteCountdown()) {
-        <div role="alert" class="mx-4 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300">
-          ⚠️ {{ 'CLUB_DETAIL.deletion_countdown_prefix' | translate }} {{ deleteCountdown() }}
-        </div>
-      }
-
       <!-- Action error -->
       @if (actionError()) {
         <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
@@ -82,19 +75,54 @@
         </section>
       }
 
-      <!-- Tags section -->
-      @if (club()!.tags && club()!.tags.length > 0) {
-        <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.tags_title' | translate }}</h2>
-          <ul class="flex flex-wrap gap-2">
-            @for (tag of club()!.tags; track tag) {
-              <li class="rounded-full bg-primary-100 dark:bg-primary-900/30 px-3 py-1 text-xs font-medium text-primary-700 dark:text-primary-300">
-                {{ tag }}
+      <!-- Upcoming Events section -->
+      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+            📅 Upcoming Events
+          </h2>
+          @if (isClubOwner()) {
+            <a
+              [routerLink]="['/clubs', id(), 'events', 'create']"
+              class="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors"
+            >
+              + Create Event
+            </a>
+          }
+        </div>
+
+        @if (upcomingEvents().length === 0) {
+          <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No upcoming events scheduled.</p>
+        } @else {
+          <ul class="space-y-3">
+            @for (event of upcomingEvents(); track event.id) {
+              <li>
+                <a
+                  [routerLink]="['/events', event.id]"
+                  class="flex items-start gap-4 rounded-xl border border-gray-100 dark:border-gray-700 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                >
+                  <div class="flex-shrink-0 text-center min-w-[3rem]">
+                    <div class="text-xs text-gray-400">{{ event.date | formatDate }}</div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="font-medium text-gray-900 dark:text-white truncate">{{ event.title }}</p>
+                    @if (event.city) {
+                      <p class="text-xs text-gray-500 dark:text-gray-400">📍 {{ event.city }}</p>
+                    }
+                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ event.attendeeCount }} attending</p>
+                  </div>
+                  <span class="text-xs rounded-full px-2 py-0.5"
+                        [class]="event.isAttending
+                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
+                          : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'">
+                    {{ event.isAttending ? 'Going' : 'View' }}
+                  </span>
+                </a>
               </li>
             }
           </ul>
-        </section>
-      }
+        }
+      </section>
 
       <!-- Organizer profile section -->
       @if (organizerProfile()) {
@@ -132,9 +160,6 @@
         </aside>
       }
 
-      <!-- Meeting info + after-meeting venue -->
-      <app-club-info [club]="club()!" />
-
       <!-- Members list -->
       <app-club-members-list
         [members]="members()"
@@ -147,16 +172,6 @@
       <!-- Organizer manage panel -->
       @if (isClubOwner()) {
         <app-club-manage-panel [clubId]="id()" />
-      }
-
-      <!-- Club schedule / status management -->
-      @if (isClubOwner()) {
-        <app-club-schedule
-          [club]="club()!"
-          [isOwner]="isClubOwner()"
-          (pauseRequested)="pauseClub()"
-          (cancelRequested)="cancelClub()"
-          (reschedule)="rescheduleSubmit($event)" />
       }
 
       <!-- Club meta footer -->

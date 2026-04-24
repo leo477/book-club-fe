@@ -29,34 +29,6 @@
       </div>
     }
 
-    <!-- ── City filter pills ─────────────────────────────────────────── -->
-    @if (clubService.availableCities().length > 0) {
-      <nav aria-label="Filter by city" class="flex flex-wrap gap-2">
-        <button
-          type="button"
-          (click)="clubService.setCityFilter(null)"
-          class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
-          [class]="clubService.cityFilter() === null
-            ? 'bg-primary-600 text-white'
-            : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
-        >
-          🌍 {{ 'CLUBS.all_cities' | translate }}
-        </button>
-        @for (city of clubService.availableCities(); track city) {
-          <button
-            type="button"
-            (click)="clubService.setCityFilter(city)"
-            class="px-4 py-1.5 rounded-full text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500"
-            [class]="clubService.cityFilter() === city
-              ? 'bg-primary-600 text-white'
-              : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700'"
-          >
-            📍 {{ city }}
-          </button>
-        }
-      </nav>
-    }
-
     <!-- ── Tabs: All / My Clubs (authenticated only) ────────────────── -->
     @if (auth.isAuthenticated()) {
       <div class="flex gap-0 border-b border-gray-200 dark:border-gray-700" role="tablist">
@@ -87,53 +59,43 @@
       </div>
     }
 
-    <!-- ── Club list (shared for All / My tabs) ─────────────────────── -->
+    <!-- ── Club list ──────────────────────────────────────────────────── -->
     @if (clubService.isLoading()) {
       <div class="py-16" aria-busy="true" aria-label="Loading clubs">
         <app-loading-spinner size="lg" />
       </div>
-    } @else if (currentCityKeys().length === 0) {
-      @if (activeTab() === 'all') {
-        <app-empty-state
-          icon="📚"
-          title="No upcoming meetings"
-          description="No clubs have scheduled meetings yet. Check back soon!"
-        />
-      } @else {
-        <app-empty-state
-          icon="📚"
-          [title]="'CLUBS.no_clubs' | translate"
-          description="Join a club to see it here."
-        />
-      }
     } @else {
-      @for (city of currentCityKeys(); track city) {
-        <section [attr.aria-labelledby]="'city-' + city">
-          <h2
-            [id]="'city-' + city"
-            class="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2"
-          >
-            <span aria-hidden="true">📍</span> {{ city }}
-            <span class="text-sm font-normal text-gray-500 dark:text-gray-400">
-              — {{ currentClubsByCity()[city].length }} club{{ currentClubsByCity()[city].length === 1 ? '' : 's' }}
-            </span>
-          </h2>
+      @let displayClubs = activeTab() === 'all' ? clubService.filteredClubs() : clubService.myClubs();
 
-          <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            @for (club of currentClubsByCity()[city]; track club.id) {
-              <li>
-                <app-club-card
-                  [club]="club"
-                  [isMember]="clubService.myClubIds().has(club.id)"
-                  [isOwned]="ownedClubIds().has(club.id)"
-                  [isAuthenticated]="auth.isAuthenticated()"
-                  [joining]="joiningClubId() === club.id"
-                  (join)="onJoin(club)"
-                />
-              </li>
-            }
-          </ul>
-        </section>
+      @if (displayClubs.length === 0) {
+        @if (activeTab() === 'all') {
+          <app-empty-state
+            icon="📚"
+            title="No clubs yet"
+            description="No clubs have been created yet. Check back soon!"
+          />
+        } @else {
+          <app-empty-state
+            icon="📚"
+            [title]="'CLUBS.no_clubs' | translate"
+            description="Join a club to see it here."
+          />
+        }
+      } @else {
+        <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          @for (club of displayClubs; track club.id) {
+            <li>
+              <app-club-card
+                [club]="club"
+                [isMember]="clubService.myClubIds().has(club.id)"
+                [isOwned]="ownedClubIds().has(club.id)"
+                [isAuthenticated]="auth.isAuthenticated()"
+                [joining]="joiningClubId() === club.id"
+                (join)="onJoin(club)"
+              />
+            </li>
+          }
+        </ul>
       }
     }
 

@@ -7,21 +7,21 @@ import {
   effect,
   input,
 } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, startWith } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
+import { ClubEvent } from '../../../core/models/event.model';
 import { UserProfile } from '../../../core/models/user.model';
+import { EventService } from '../../../core/services/event.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 import { ClubMembersListComponent } from './members/club-members-list.component';
-import { ClubScheduleComponent } from './schedule/club-schedule.component';
 import { ClubHeaderComponent } from './header/club-header.component';
-import { ClubInfoComponent } from './info/club-info.component';
 import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
 
 @Component({
@@ -34,20 +34,17 @@ import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.compo
     InitialsPipe,
     FormatDatePipe,
     ClubMembersListComponent,
-    ClubScheduleComponent,
     ClubHeaderComponent,
-    ClubInfoComponent,
     ClubManagePanelComponent,
   ],
   templateUrl: './club-detail.component.html',
 })
 export class ClubDetailComponent {
-  /** Route parameter bound via withComponentInputBinding() */
   readonly id = input.required<string>();
 
   private readonly clubService = inject(ClubService);
+  private readonly eventService = inject(EventService);
   private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
   private readonly seo = inject(SeoService);
   private readonly translate = inject(TranslateService);
 
@@ -64,6 +61,7 @@ export class ClubDetailComponent {
   readonly club = signal<Club | null>(null);
   readonly members = signal<ClubMemberDetail[]>([]);
   readonly clubBans = signal<BanRecord[]>([]);
+  readonly events = signal<ClubEvent[]>([]);
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   readonly isActionLoading = signal(false);
@@ -92,25 +90,16 @@ export class ClubDetailComponent {
     } satisfies UserProfile;
   });
 
-  readonly deleteCountdown = computed<string | null>(() => {
-    this._lang();
-    const c = this.club();
-    if (!c) return null;
-    const ms = this.clubService.msUntilDeletion(c);
-    if (ms === null) return null;
-    const hours = Math.floor(ms / (1000 * 60 * 60));
-    const minutes = Math.floor((ms % (1000 * 60 * 60)) / (1000 * 60));
-    if (hours > 0)
-      return this.translate.instant('CLUB_DETAIL.deletion_countdown_hours', { hours, minutes });
-    return this.translate.instant('CLUB_DETAIL.deletion_countdown_minutes', { minutes });
-  });
+  readonly upcomingEvents = computed(() =>
+    this.events().filter(e => e.status === 'scheduled' || e.status === 'active'),
+  );
 
   constructor() {
     effect((onCleanup) => {
       const clubId = this.id();
       let cancelled = false;
       onCleanup(() => { cancelled = true; });
-      this.loadClub(clubId, () => cancelled).catch((_err: unknown) => { /* swallow navigation errors */ });
+      this.loadClub(clubId, () => cancelled).catch((_err: unknown) => { /* swallow */ });
     });
   }
 
@@ -129,8 +118,13 @@ export class ClubDetailComponent {
 
       if (found) {
         this.club.set(found);
-        this.members.set(await this.clubService.getClubMembers(clubId));
+        const [members, events] = await Promise.all([
+          this.clubService.getClubMembers(clubId),
+          this.clubService.loadClubEvents(clubId),
+        ]);
         if (isCancelled()) return;
+        this.members.set(members);
+        this.events.set(events);
         if (this.auth.currentUser()?.id === found.organizerId) {
           this.clubBans.set(await this.clubService.getBans(clubId));
         }
@@ -184,26 +178,5 @@ export class ClubDetailComponent {
   async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
     await this.clubService.banMember(this.id(), event.userId, event.duration);
     this.members.update(list => list.filter(m => m.userId !== event.userId));
-  }
-
-  async pauseClub(): Promise<void> {
-    await this.clubService.pauseClub(this.id());
-    await this.refreshClub();
-  }
-
-  async cancelClub(): Promise<void> {
-    await this.clubService.cancelClub(this.id());
-    await this.refreshClub();
-  }
-
-  async rescheduleSubmit(date: string): Promise<void> {
-    if (!date) return;
-    await this.clubService.rescheduleMeeting(this.id(), date);
-    await this.refreshClub();
-  }
-
-  private async refreshClub(): Promise<void> {
-    const updated = await this.clubService.getClubById(this.id());
-    if (updated) this.club.set(updated);
   }
 }
