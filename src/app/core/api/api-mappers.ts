@@ -41,6 +41,18 @@ export interface ApiClub {
   memberCount: number;
   memberPreviews: string[];
   createdAt: string;
+  city: string | null;
+  nextMeetingDate: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  theme: string | null;
+  currentBook: string | null;
+  status: ClubStatus;
+  tags: string[];
+  meetingDurationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  cancelledAt?: string | null;
 }
 
 export interface ApiClubMember {
@@ -115,6 +127,18 @@ export function mapClub(raw: ApiClub): Club {
     memberCount: raw.memberCount,
     memberPreviews: raw.memberPreviews,
     createdAt: raw.createdAt,
+    city: raw.city ?? '',
+    nextMeetingDate: raw.nextMeetingDate,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    theme: raw.theme,
+    currentBook: raw.currentBook ? { title: raw.currentBook, author: '', description: '' } : null,
+    status: raw.status,
+    tags: raw.tags,
+    meetingDurationMinutes: raw.meetingDurationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    cancelledAt: raw.cancelledAt ?? undefined,
   };
 }
 

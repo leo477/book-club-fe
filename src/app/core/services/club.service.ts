@@ -17,6 +17,7 @@ export class ClubService {
   private readonly _isLoading = signal(false);
   private readonly _error = signal<string | null>(null);
   private readonly _searchQuery = signal('');
+  private readonly _cityFilter = signal<string | null>(null);
 
   readonly clubs = this._clubs.asReadonly();
   readonly myClubs = this._myClubs.asReadonly();
@@ -36,8 +37,14 @@ export class ClubService {
 
   readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
 
+  readonly availableCities = computed<string[]>(() => {
+    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
+    return cities.sort();
+  });
+
   readonly filteredClubs = computed(() => {
     const q = this._searchQuery().toLowerCase().trim();
+    const city = this._cityFilter();
     let clubs = this._clubs();
     if (q) {
       clubs = clubs.filter(
@@ -46,11 +53,31 @@ export class ClubService {
           (c.description?.toLowerCase().includes(q) ?? false),
       );
     }
+    if (city) {
+      clubs = clubs.filter(c => c.city === city);
+    }
     return clubs;
   });
 
+  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
+    const clubs = this.filteredClubs();
+    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
+      const city = club.city || '';
+      if (!acc[city]) acc[city] = [];
+      acc[city].push(club);
+      return acc;
+    }, {});
+  });
+
+  readonly myParticipatedClubs = computed<Club[]>(() => []);
+  readonly myMissedClubs = computed<Club[]>(() => []);
+
   setSearchQuery(query: string): void {
     this._searchQuery.set(query);
+  }
+
+  setCityFilter(city: string | null): void {
+    this._cityFilter.set(city);
   }
 
   async loadPublicClubs(): Promise<void> {
@@ -166,5 +193,36 @@ export class ClubService {
       this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
     );
     return raw.map(mapEvent);
+  }
+
+  async pauseClub(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/pause`, {}),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+
+  async cancelClub(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/cancel`, {}),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+
+  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/reschedule`, { newDate }),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+
+  msUntilDeletion(club: Club): number | null {
+    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
+    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
+    const remaining = deletionTime - Date.now();
+    return remaining > 0 ? remaining : null;
   }
 }

@@ -2708,9 +2708,9 @@ export const CLUBS_ROUTES: Routes = [
         }
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Location <span class="text-red-500">*</span>
-        </label>
+        </p>
         <app-address-autocomplete
           [control]="form.controls.address"
           placeholder="Start typing an address…"
@@ -2793,7 +2793,7 @@ import {
   input,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, Validators, FormControl } from '@angular/forms';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { EventService } from '../../../core/services/event.service';
 import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
 import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
@@ -5005,63 +5005,6 @@ export class TokenStore {
 }
 ````
 
-## File: src/app/core/models/club.model.ts
-````typescript
-import { UserSocials } from './user.model';
-import { AfterMeetingVenue } from './event.model';
-export type BanDuration = 1 | 3 | 5 | 'permanent';
-export type ClubStatus = 'active' | 'paused' | 'cancelled';
-export interface CurrentBook {
-  title: string;
-  author: string;
-  description: string;
-}
-export interface BanRecord {
-  userId: string;
-  clubId: string;
-  bannedAt: string;
-  duration: BanDuration;
-  bannedBy: string;
-}
-export interface Club {
-  id: string;
-  name: string;
-  description: string | null;
-  coverUrl: string | null;
-  organizerId: string;
-  isPublic: boolean;
-  memberCount: number;
-  memberPreviews: string[];
-  createdAt: string;
-  city: string;
-  nextMeetingDate: string | null;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  theme: string | null;
-  currentBook: CurrentBook | null;
-  status: ClubStatus;
-  tags: string[];
-  meetingDurationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  cancelledAt?: string;
-}
-export interface ClubMember {
-  clubId: string;
-  userId: string;
-  role: 'member' | 'organizer';
-  joinedAt: string;
-}
-export interface ClubMemberDetail {
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  role: 'member' | 'organizer';
-  socials?: UserSocials;
-  socialsPublic: boolean;
-}
-````
-
 ## File: src/app/features/auth/login/login.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
@@ -6267,37 +6210,25 @@ export function extractApiError(err: unknown): string {
 }
 ````
 
-## File: src/app/core/api/api-mappers.ts
+## File: src/app/core/models/club.model.ts
 ````typescript
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
-import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
-export interface ApiUserProfile {
-  id: string;
-  email: string;
-  role: UserRole;
-  displayName: string;
-  avatarUrl: string | null;
-  createdAt: string;
-  socials?: ApiUserSocials | null;
-  socialsPublic?: boolean;
+import { UserSocials } from './user.model';
+import { AfterMeetingVenue } from './event.model';
+export type BanDuration = 1 | 3 | 5 | 'permanent';
+export type ClubStatus = 'active' | 'paused' | 'cancelled';
+export interface CurrentBook {
+  title: string;
+  author: string;
+  description: string;
 }
-export interface ApiUserSocials {
-  telegram?: string | null;
-  instagram?: string | null;
-  twitter?: string | null;
-  linkedin?: string | null;
-  github?: string | null;
-  goodreads?: string | null;
+export interface BanRecord {
+  userId: string;
+  clubId: string;
+  bannedAt: string;
+  duration: BanDuration;
+  bannedBy: string;
 }
-export interface ApiUserStats {
-  clubsJoined: number;
-  quizzesTaken: number;
-  quizWins: number;
-  likesReceived: number;
-  booksRead: number;
-}
-export interface ApiClub {
+export interface Club {
   id: string;
   name: string;
   description: string | null;
@@ -6307,127 +6238,32 @@ export interface ApiClub {
   memberCount: number;
   memberPreviews: string[];
   createdAt: string;
-}
-export interface ApiClubMember {
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  role: 'organizer' | 'member';
-  socials?: ApiUserSocials | null;
-  socialsPublic?: boolean;
-}
-export interface ApiBanRecord {
-  userId: string;
-  clubId: string;
-  bannedAt: string;
-  duration: BanDuration;
-  bannedBy: string;
-}
-export interface ApiEvent {
-  id: string;
-  clubId: string;
-  clubName: string;
-  organizerId: string;
-  title: string;
-  description: string | null;
-  date: string;
   city: string;
+  nextMeetingDate: string | null;
   address: string | null;
   lat: number | null;
   lng: number | null;
-  status: EventStatus;
-  cancelledAt?: string | null;
   theme: string | null;
+  currentBook: CurrentBook | null;
+  status: ClubStatus;
   tags: string[];
-  durationMinutes: number | null;
+  meetingDurationMinutes: number | null;
   afterMeetingVenue: AfterMeetingVenue | null;
-  attendeeCount: number;
-  isAttending: boolean;
+  cancelledAt?: string;
 }
-export function mapUserProfile(raw: ApiUserProfile): UserProfile {
-  return {
-    id: raw.id,
-    role: raw.role,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-    createdAt: raw.createdAt,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socialsPublic ?? false,
-  };
+export interface ClubMember {
+  clubId: string;
+  userId: string;
+  role: 'member' | 'organizer';
+  joinedAt: string;
 }
-export function mapUserStats(raw: ApiUserStats): UserStats {
-  return {
-    clubsJoined: raw.clubsJoined,
-    quizzesTaken: raw.quizzesTaken,
-    quizWins: raw.quizWins,
-    likesReceived: raw.likesReceived,
-    booksRead: raw.booksRead,
-  };
-}
-export function mapClub(raw: ApiClub): Club {
-  return {
-    id: raw.id,
-    name: raw.name,
-    description: raw.description,
-    coverUrl: raw.coverUrl,
-    organizerId: raw.organizerId,
-    isPublic: raw.isPublic,
-    memberCount: raw.memberCount,
-    memberPreviews: raw.memberPreviews,
-    createdAt: raw.createdAt,
-  };
-}
-export function mapEvent(raw: ApiEvent): ClubEvent {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    clubName: raw.clubName,
-    organizerId: raw.organizerId,
-    title: raw.title,
-    description: raw.description,
-    date: raw.date,
-    city: raw.city,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    status: raw.status,
-    cancelledAt: raw.cancelledAt ?? undefined,
-    theme: raw.theme,
-    tags: raw.tags,
-    durationMinutes: raw.durationMinutes,
-    afterMeetingVenue: raw.afterMeetingVenue,
-    attendeeCount: raw.attendeeCount,
-    isAttending: raw.isAttending,
-  };
-}
-export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
-  return {
-    userId: raw.userId,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-    role: raw.role,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socialsPublic ?? false,
-  };
-}
-export function mapBanRecord(raw: ApiBanRecord): BanRecord {
-  return {
-    userId: raw.userId,
-    clubId: raw.clubId,
-    bannedAt: raw.bannedAt,
-    duration: raw.duration,
-    bannedBy: raw.bannedBy,
-  };
-}
-function mapSocials(raw: ApiUserSocials): UserSocials {
-  return {
-    telegram: raw.telegram ?? undefined,
-    instagram: raw.instagram ?? undefined,
-    twitter: raw.twitter ?? undefined,
-    linkedin: raw.linkedin ?? undefined,
-    github: raw.github ?? undefined,
-    goodreads: raw.goodreads ?? undefined,
-  };
+export interface ClubMemberDetail {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: 'member' | 'organizer';
+  socials?: UserSocials;
+  socialsPublic: boolean;
 }
 ````
 
@@ -7295,6 +7131,194 @@ module.exports = function (config) {
     restartOnFileChange: true,
   });
 };
+````
+
+## File: src/app/core/api/api-mappers.ts
+````typescript
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
+import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
+export interface ApiUserProfile {
+  id: string;
+  email: string;
+  role: UserRole;
+  displayName: string;
+  avatarUrl: string | null;
+  createdAt: string;
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export interface ApiUserSocials {
+  telegram?: string | null;
+  instagram?: string | null;
+  twitter?: string | null;
+  linkedin?: string | null;
+  github?: string | null;
+  goodreads?: string | null;
+}
+export interface ApiUserStats {
+  clubsJoined: number;
+  quizzesTaken: number;
+  quizWins: number;
+  likesReceived: number;
+  booksRead: number;
+}
+export interface ApiClub {
+  id: string;
+  name: string;
+  description: string | null;
+  coverUrl: string | null;
+  organizerId: string;
+  isPublic: boolean;
+  memberCount: number;
+  memberPreviews: string[];
+  createdAt: string;
+  city: string | null;
+  nextMeetingDate: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  theme: string | null;
+  currentBook: string | null;
+  status: ClubStatus;
+  tags: string[];
+  meetingDurationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  cancelledAt?: string | null;
+}
+export interface ApiClubMember {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: 'organizer' | 'member';
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export interface ApiBanRecord {
+  userId: string;
+  clubId: string;
+  bannedAt: string;
+  duration: BanDuration;
+  bannedBy: string;
+}
+export interface ApiEvent {
+  id: string;
+  clubId: string;
+  clubName: string;
+  organizerId: string;
+  title: string;
+  description: string | null;
+  date: string;
+  city: string;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  status: EventStatus;
+  cancelledAt?: string | null;
+  theme: string | null;
+  tags: string[];
+  durationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  attendeeCount: number;
+  isAttending: boolean;
+}
+export function mapUserProfile(raw: ApiUserProfile): UserProfile {
+  return {
+    id: raw.id,
+    role: raw.role,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    createdAt: raw.createdAt,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
+}
+export function mapUserStats(raw: ApiUserStats): UserStats {
+  return {
+    clubsJoined: raw.clubsJoined,
+    quizzesTaken: raw.quizzesTaken,
+    quizWins: raw.quizWins,
+    likesReceived: raw.likesReceived,
+    booksRead: raw.booksRead,
+  };
+}
+export function mapClub(raw: ApiClub): Club {
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description,
+    coverUrl: raw.coverUrl,
+    organizerId: raw.organizerId,
+    isPublic: raw.isPublic,
+    memberCount: raw.memberCount,
+    memberPreviews: raw.memberPreviews,
+    createdAt: raw.createdAt,
+    city: raw.city ?? '',
+    nextMeetingDate: raw.nextMeetingDate,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    theme: raw.theme,
+    currentBook: raw.currentBook ? { title: raw.currentBook, author: '', description: '' } : null,
+    status: raw.status,
+    tags: raw.tags,
+    meetingDurationMinutes: raw.meetingDurationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    cancelledAt: raw.cancelledAt ?? undefined,
+  };
+}
+export function mapEvent(raw: ApiEvent): ClubEvent {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    clubName: raw.clubName,
+    organizerId: raw.organizerId,
+    title: raw.title,
+    description: raw.description,
+    date: raw.date,
+    city: raw.city,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    status: raw.status,
+    cancelledAt: raw.cancelledAt ?? undefined,
+    theme: raw.theme,
+    tags: raw.tags,
+    durationMinutes: raw.durationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    attendeeCount: raw.attendeeCount,
+    isAttending: raw.isAttending,
+  };
+}
+export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
+  return {
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    role: raw.role,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
+}
+export function mapBanRecord(raw: ApiBanRecord): BanRecord {
+  return {
+    userId: raw.userId,
+    clubId: raw.clubId,
+    bannedAt: raw.bannedAt,
+    duration: raw.duration,
+    bannedBy: raw.bannedBy,
+  };
+}
+function mapSocials(raw: ApiUserSocials): UserSocials {
+  return {
+    telegram: raw.telegram ?? undefined,
+    instagram: raw.instagram ?? undefined,
+    twitter: raw.twitter ?? undefined,
+    linkedin: raw.linkedin ?? undefined,
+    github: raw.github ?? undefined,
+    goodreads: raw.goodreads ?? undefined,
+  };
+}
 ````
 
 ## File: src/app/core/interceptors/auth.interceptor.ts
@@ -8173,6 +8197,32 @@ export class RandomizerService {
     "typescript": "~5.8.2",
     "typescript-eslint": "8.46.4"
   }
+}
+````
+
+## File: vercel.json
+````json
+{
+
+  "buildCommand": "npm run build -- --configuration=production",
+  "outputDirectory": "dist/book-club-fe/browser",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://vercel.live https://book-club-be.onrender.com wss://*.pusher.com https://*.pusher.com https://*.pusherapp.com; frame-src https://vercel.live; frame-ancestors 'none';" }
+      ]
+    }
+  ]
 }
 ````
 
@@ -9066,32 +9116,6 @@ export class ClubsListComponent implements OnInit {
 </main>
 ````
 
-## File: vercel.json
-````json
-{
-
-  "buildCommand": "npm run build -- --configuration=production",
-  "outputDirectory": "dist/book-club-fe/browser",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://vercel.live https://book-club-be.onrender.com wss://*.pusher.com https://*.pusher.com https://*.pusherapp.com; frame-src https://vercel.live; frame-ancestors 'none';" }
-      ]
-    }
-  ]
-}
-````
-
 ## File: src/app/core/services/quiz.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -9588,6 +9612,7 @@ export class ClubService {
   private readonly _isLoading = signal(false);
   private readonly _error = signal<string | null>(null);
   private readonly _searchQuery = signal('');
+  private readonly _cityFilter = signal<string | null>(null);
   readonly clubs = this._clubs.asReadonly();
   readonly myClubs = this._myClubs.asReadonly();
   readonly isLoading = this._isLoading.asReadonly();
@@ -9602,8 +9627,13 @@ export class ClubService {
     new Set(this.myOwnedClubs().map(c => c.id)),
   );
   readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
+  readonly availableCities = computed<string[]>(() => {
+    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
+    return cities.sort();
+  });
   readonly filteredClubs = computed(() => {
     const q = this._searchQuery().toLowerCase().trim();
+    const city = this._cityFilter();
     let clubs = this._clubs();
     if (q) {
       clubs = clubs.filter(
@@ -9612,10 +9642,27 @@ export class ClubService {
           (c.description?.toLowerCase().includes(q) ?? false),
       );
     }
+    if (city) {
+      clubs = clubs.filter(c => c.city === city);
+    }
     return clubs;
   });
+  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
+    const clubs = this.filteredClubs();
+    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
+      const city = club.city || '';
+      if (!acc[city]) acc[city] = [];
+      acc[city].push(club);
+      return acc;
+    }, {});
+  });
+  readonly myParticipatedClubs = computed<Club[]>(() => []);
+  readonly myMissedClubs = computed<Club[]>(() => []);
   setSearchQuery(query: string): void {
     this._searchQuery.set(query);
+  }
+  setCityFilter(city: string | null): void {
+    this._cityFilter.set(city);
   }
   async loadPublicClubs(): Promise<void> {
     this._isLoading.set(true);
@@ -9720,6 +9767,33 @@ export class ClubService {
       this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
     );
     return raw.map(mapEvent);
+  }
+  async pauseClub(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/pause`, {}),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+  async cancelClub(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/cancel`, {}),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/reschedule`, { newDate }),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+  msUntilDeletion(club: Club): number | null {
+    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
+    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
+    const remaining = deletionTime - Date.now();
+    return remaining > 0 ? remaining : null;
   }
 }
 ````
