@@ -15,6 +15,7 @@ interface CreateClubForm {
   name: FormControl<string>;
   description: FormControl<string>;
   isPublic: FormControl<boolean>;
+  city: FormControl<string>;
 }
 
 @Component({
@@ -35,6 +36,9 @@ export class CreateClubComponent {
   private readonly _isSubmitting = signal(false);
   readonly isSubmitting = this._isSubmitting.asReadonly();
 
+  private readonly _showAfterMeeting = signal(false);
+  readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
+
   readonly form = new FormGroup<CreateClubForm>({
     name: new FormControl('', {
       nonNullable: true,
@@ -45,11 +49,16 @@ export class CreateClubComponent {
       validators: [Validators.maxLength(500)],
     }),
     isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', { nonNullable: true }),
   });
 
   togglePublic(): void {
     const current = this.form.controls.isPublic.value;
     this.form.controls.isPublic.setValue(!current);
+  }
+
+  toggleAfterMeeting(): void {
+    this._showAfterMeeting.update(v => !v);
   }
 
   cancel(): void {
@@ -65,10 +74,10 @@ export class CreateClubComponent {
     this._isSubmitting.set(true);
     this._errorMessage.set(null);
 
-    const { name, description, isPublic } = this.form.getRawValue();
+    const { name, description, isPublic, city } = this.form.getRawValue();
 
     try {
-      const club = await this.clubService.createClub({ name, description, isPublic });
+      const club = await this.clubService.createClub({ name, description, isPublic, city });
       this.router.navigate(['/clubs', club.id]);
     } catch (err) {
       this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');

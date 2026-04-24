@@ -122,6 +122,10 @@ export class ClubService {
     description: string;
     isPublic: boolean;
     coverUrl?: string | null;
+    city?: string;
+    tags?: string[];
+    meetingDurationMinutes?: number | null;
+    afterMeetingVenue?: { name: string; address: string; description: string } | null;
   }): Promise<Club> {
     const raw = await firstValueFrom(
       this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
@@ -129,6 +133,10 @@ export class ClubService {
         description: payload.description,
         isPublic: payload.isPublic,
         coverUrl: payload.coverUrl ?? null,
+        city: payload.city,
+        tags: payload.tags,
+        meetingDurationMinutes: payload.meetingDurationMinutes,
+        afterMeetingVenue: payload.afterMeetingVenue,
       }),
     );
     const club = mapClub(raw);

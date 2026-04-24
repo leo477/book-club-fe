@@ -94,6 +94,20 @@ export class ClubDetailComponent {
     this.events().filter(e => e.status === 'scheduled' || e.status === 'active'),
   );
 
+  readonly deleteCountdown = computed<string | null>(() => {
+    const club = this.club();
+    if (!club) return null;
+    const ms = this.clubService.msUntilDeletion(club);
+    if (ms === null) return null;
+    const totalMinutes = Math.floor(ms / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) {
+      return minutes > 0 ? `${hours} год ${minutes} хв` : `${hours} год`;
+    }
+    return `${totalMinutes} хв`;
+  });
+
   constructor() {
     effect((onCleanup) => {
       const clubId = this.id();

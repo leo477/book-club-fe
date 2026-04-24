@@ -1229,6 +1229,31 @@ export class EmptyStateComponent {
 }
 ````
 
+## File: src/app/shared/components/form-field/form-field.component.html
+````html
+<div class="flex flex-col gap-1">
+      <label [for]="'field-' + label()" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+        {{ label() }}
+      </label>
+      <input
+        [id]="'field-' + label()"
+        [type]="type()"
+        [placeholder]="placeholder()"
+        [formControl]="formControl()"
+        class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 dark:text-white
+               bg-white dark:bg-gray-800 placeholder-gray-400
+               focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+               transition-colors duration-200"
+        [class.border-red-500]="hasError()"
+        [class.border-gray-300]="!hasError()"
+        [class.dark:border-gray-600]="!hasError()"
+      />
+      @if (hasError()) {
+        <p class="text-xs text-red-500 mt-0.5">{{ errorMessage() }}</p>
+      }
+    </div>
+````
+
 ## File: src/app/shared/components/loading-spinner/loading-spinner.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, input, computed } from '@angular/core';
@@ -1542,6 +1567,125 @@ ij_typescript_use_double_quotes = false
 [*.md]
 max_line_length = off
 trim_trailing_whitespace = false
+````
+
+## File: angular.json
+````json
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "book-club-fe": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "src/main.ts",
+            "tsConfig": "tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": [
+              "qrcode"
+            ],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
+            ],
+            "styles": [
+              "src/styles.scss"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ]
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "book-club-fe:build:production"
+            },
+            "development": {
+              "buildTarget": "book-club-fe:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "extract-i18n": {
+          "builder": "@angular/build:extract-i18n"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "karmaConfig": "karma.conf.js",
+            "tsConfig": "tsconfig.spec.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
+            ],
+            "styles": [
+              "src/styles.scss"
+            ]
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "cli": {
+    "schematicCollections": [
+      "angular-eslint"
+    ]
+  }
+}
 ````
 
 ## File: SECURITY.md
@@ -2661,217 +2805,6 @@ export const CLUBS_ROUTES: Routes = [
     ],
   },
 ];
-````
-
-## File: src/app/features/events/create-event/create-event.component.html
-````html
-<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
-  <nav>
-    <a [routerLink]="['/clubs', clubId()]"
-       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-      ← Back to Club
-    </a>
-  </nav>
-  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create Event</h1>
-    @if (errorMessage()) {
-      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-        {{ errorMessage() }}
-      </div>
-    }
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-      <div>
-        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Title <span class="text-red-500">*</span>
-        </label>
-        <input id="title" type="text" formControlName="title"
-               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-               placeholder="April Discussion" />
-        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Title is required.</p>
-        }
-      </div>
-      <div>
-        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-        <textarea id="description" formControlName="description" rows="3"
-                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
-                  placeholder="What will you be reading or discussing?"></textarea>
-      </div>
-      <div>
-        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Date & Time <span class="text-red-500">*</span>
-        </label>
-        <input id="date" type="datetime-local" formControlName="date"
-               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500" />
-        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Date is required.</p>
-        }
-      </div>
-      <div>
-        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Location <span class="text-red-500">*</span>
-        </p>
-        <app-address-autocomplete
-          [control]="form.controls.address"
-          placeholder="Start typing an address…"
-          (selected)="onAddressSelect($event)"
-        />
-        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Location is required.</p>
-        }
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
-          <input id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
-                 class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                 placeholder="120" />
-        </div>
-        <div>
-          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
-          <input id="theme" type="text" formControlName="theme"
-                 class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                 placeholder="sci-fi" />
-        </div>
-      </div>
-      <div>
-        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
-        <input id="tags" type="text" formControlName="tagsRaw"
-               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-               placeholder="fiction, dystopia, classic (comma-separated)" />
-      </div>
-      <div>
-        <button type="button" (click)="toggleAfterVenue()"
-                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
-          {{ showAfterVenue() ? '− Remove after-meeting venue' : '+ Add after-meeting venue' }}
-        </button>
-        @if (showAfterVenue()) {
-          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
-            <div>
-              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Venue name <span class="text-red-500">*</span></label>
-              <input id="afterVenueName" type="text" formControlName="afterVenueName"
-                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="Cozy Cafe" />
-            </div>
-            <div>
-              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
-              <input id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
-                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="123 Main St" />
-            </div>
-            <div>
-              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-              <input id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
-                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="Optional notes" />
-            </div>
-          </div>
-        }
-      </div>
-      <div class="flex justify-end gap-3 pt-2">
-        <a [routerLink]="['/clubs', clubId()]"
-           class="rounded-xl border border-gray-300 dark:border-gray-600 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-          Cancel
-        </a>
-        <button type="submit" [disabled]="form.invalid || isSubmitting()"
-                class="rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
-          @if (isSubmitting()) { Creating… } @else { Create Event }
-        </button>
-      </div>
-    </form>
-  </div>
-</main>
-````
-
-## File: src/app/features/events/create-event/create-event.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  input,
-} from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { EventService } from '../../../core/services/event.service';
-import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
-import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
-@Component({
-  selector: 'app-create-event',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent],
-  templateUrl: './create-event.component.html',
-})
-export class CreateEventComponent {
-  readonly clubId = input.required<string>();
-  private readonly fb = inject(FormBuilder);
-  private readonly eventService = inject(EventService);
-  private readonly router = inject(Router);
-  readonly isSubmitting = signal(false);
-  readonly errorMessage = signal<string | null>(null);
-  readonly showAfterVenue = signal(false);
-  readonly form = this.fb.nonNullable.group({
-    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
-    description: [''],
-    date: ['', Validators.required],
-    city: ['', Validators.required],
-    address: [''],
-    lat: [null as number | null],
-    lng: [null as number | null],
-    theme: [''],
-    tagsRaw: [''],
-    durationMinutes: [null as number | null, [Validators.min(15), Validators.max(480)]],
-    afterVenueName: [''],
-    afterVenueAddress: [''],
-    afterVenueDescription: [''],
-  });
-  onAddressSelect(suggestion: GeocodeSuggestion): void {
-    this.form.patchValue({
-      city: suggestion.city ?? suggestion.label,
-      address: suggestion.label,
-      lat: suggestion.lat,
-      lng: suggestion.lng,
-    });
-  }
-  toggleAfterVenue(): void {
-    this.showAfterVenue.update(v => !v);
-    if (!this.showAfterVenue()) {
-      this.form.patchValue({ afterVenueName: '', afterVenueAddress: '', afterVenueDescription: '' });
-    }
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid || this.isSubmitting()) return;
-    this.isSubmitting.set(true);
-    this.errorMessage.set(null);
-    const v = this.form.getRawValue();
-    const tags = v.tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
-    const afterMeetingVenue = this.showAfterVenue() && v.afterVenueName
-      ? { name: v.afterVenueName, address: v.afterVenueAddress, description: v.afterVenueDescription || undefined }
-      : undefined;
-    try {
-      const created = await this.eventService.createEvent(this.clubId(), {
-        title: v.title,
-        description: v.description || undefined,
-        date: new Date(v.date).toISOString(),
-        city: v.city,
-        address: v.address || undefined,
-        lat: v.lat ?? undefined,
-        lng: v.lng ?? undefined,
-        theme: v.theme || undefined,
-        tags,
-        durationMinutes: v.durationMinutes ?? undefined,
-        afterMeetingVenue,
-      });
-      await this.router.navigate(['/events', created.id]);
-    } catch {
-      this.errorMessage.set('Failed to create event. Please try again.');
-    } finally {
-      this.isSubmitting.set(false);
-    }
-  }
-}
 ````
 
 ## File: src/app/features/events/event-card/event-card.component.html
@@ -4019,31 +3952,6 @@ import { ChatWidgetComponent } from '../../shared/chat/chat-widget/chat-widget.c
 export class ShellComponent {}
 ````
 
-## File: src/app/shared/components/form-field/form-field.component.html
-````html
-<div class="flex flex-col gap-1">
-      <label [for]="'field-' + label()" class="text-sm font-medium text-gray-700 dark:text-gray-300">
-        {{ label() }}
-      </label>
-      <input
-        [id]="'field-' + label()"
-        [type]="type()"
-        [placeholder]="placeholder()"
-        [formControl]="formControl()"
-        class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 dark:text-white
-               bg-white dark:bg-gray-800 placeholder-gray-400
-               focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-               transition-colors duration-200"
-        [class.border-red-500]="hasError()"
-        [class.border-gray-300]="!hasError()"
-        [class.dark:border-gray-600]="!hasError()"
-      />
-      @if (hasError()) {
-        <p class="text-xs text-red-500 mt-0.5">{{ errorMessage() }}</p>
-      }
-    </div>
-````
-
 ## File: src/app/shared/components/form-field/form-field.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, inject, input, computed } from '@angular/core';
@@ -4379,6 +4287,57 @@ export class InitialsPipe implements PipeTransform {
 }
 ````
 
+## File: src/app/app.config.ts
+````typescript
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, APP_INITIALIZER, inject } from '@angular/core';
+import {
+  provideRouter,
+  withComponentInputBinding,
+  withViewTransitions,
+  withRouterConfig,
+} from '@angular/router';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { provideTranslateService, provideTranslateLoader, TranslateService } from '@ngx-translate/core';
+import { TranslateHttpLoader, provideTranslateHttpLoader } from '@ngx-translate/http-loader';
+import { catchError, firstValueFrom, of } from 'rxjs';
+import { routes } from './app.routes';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideZonelessChangeDetection(),
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      withViewTransitions(),
+      withRouterConfig({ paramsInheritanceStrategy: 'always' }),
+    ),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([authInterceptor]),
+    ),
+    provideTranslateService({
+      defaultLanguage: 'uk',
+      loader: provideTranslateLoader(TranslateHttpLoader),
+    }),
+    ...provideTranslateHttpLoader({ prefix: '/i18n/', suffix: '.json' }),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: () => {
+        const translate = inject(TranslateService);
+        return () =>
+          firstValueFrom(
+            translate.use('uk').pipe(
+              catchError(() => translate.use('en').pipe(catchError(() => of(null)))),
+            ),
+          );
+      },
+      multi: true,
+    },
+  ],
+};
+````
+
 ## File: src/app/app.routes.ts
 ````typescript
 import { Routes } from '@angular/router';
@@ -4631,125 +4590,6 @@ module.exports = {
       ],
       "description": "Shared Copilot agents: dev, reviewer, security, devops, tester, ui, web-quality-enhancer"
     }
-  }
-}
-````
-
-## File: angular.json
-````json
-{
-  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
-  "version": 1,
-  "newProjectRoot": "projects",
-  "projects": {
-    "book-club-fe": {
-      "projectType": "application",
-      "schematics": {
-        "@schematics/angular:component": {
-          "style": "scss"
-        }
-      },
-      "root": "",
-      "sourceRoot": "src",
-      "prefix": "app",
-      "architect": {
-        "build": {
-          "builder": "@angular/build:application",
-          "options": {
-            "browser": "src/main.ts",
-            "tsConfig": "tsconfig.app.json",
-            "inlineStyleLanguage": "scss",
-            "allowedCommonJsDependencies": [
-              "qrcode"
-            ],
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": [
-              "src/styles.scss"
-            ]
-          },
-          "configurations": {
-            "production": {
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
-                }
-              ],
-              "outputHashing": "all",
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
-                }
-              ]
-            },
-            "development": {
-              "optimization": false,
-              "extractLicenses": false,
-              "sourceMap": true
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "serve": {
-          "builder": "@angular/build:dev-server",
-          "configurations": {
-            "production": {
-              "buildTarget": "book-club-fe:build:production"
-            },
-            "development": {
-              "buildTarget": "book-club-fe:build:development"
-            }
-          },
-          "defaultConfiguration": "development"
-        },
-        "extract-i18n": {
-          "builder": "@angular/build:extract-i18n"
-        },
-        "test": {
-          "builder": "@angular/build:karma",
-          "options": {
-            "karmaConfig": "karma.conf.js",
-            "tsConfig": "tsconfig.spec.json",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": [
-              "src/styles.scss"
-            ]
-          }
-        },
-        "lint": {
-          "builder": "@angular-eslint/builder:lint",
-          "options": {
-            "lintFilePatterns": [
-              "src/**/*.ts",
-              "src/**/*.html"
-            ]
-          }
-        }
-      }
-    }
-  },
-  "cli": {
-    "schematicCollections": [
-      "angular-eslint"
-    ]
   }
 }
 ````
@@ -5356,6 +5196,217 @@ export class ClubCardComponent {
 }
 ````
 
+## File: src/app/features/events/create-event/create-event.component.html
+````html
+<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
+  <nav>
+    <a [routerLink]="['/clubs', clubId()]"
+       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+      ← Back to Club
+    </a>
+  </nav>
+  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create Event</h1>
+    @if (errorMessage()) {
+      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+      <div>
+        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Title <span class="text-red-500">*</span>
+        </label>
+        <input id="title" type="text" formControlName="title"
+               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+               placeholder="April Discussion" />
+        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Title is required.</p>
+        }
+      </div>
+      <div>
+        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+        <textarea id="description" formControlName="description" rows="3"
+                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                  placeholder="What will you be reading or discussing?"></textarea>
+      </div>
+      <div>
+        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Date & Time <span class="text-red-500">*</span>
+        </label>
+        <input id="date" type="datetime-local" formControlName="date"
+               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500" />
+        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Date is required.</p>
+        }
+      </div>
+      <div>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Location <span class="text-red-500">*</span>
+        </p>
+        <app-address-autocomplete
+          [control]="form.controls.address"
+          placeholder="Start typing an address…"
+          (selected)="onAddressSelect($event)"
+        />
+        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Location is required.</p>
+        }
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
+          <input id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
+                 class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                 placeholder="120" />
+        </div>
+        <div>
+          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
+          <input id="theme" type="text" formControlName="theme"
+                 class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                 placeholder="sci-fi" />
+        </div>
+      </div>
+      <div>
+        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
+        <input id="tags" type="text" formControlName="tagsRaw"
+               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+               placeholder="fiction, dystopia, classic (comma-separated)" />
+      </div>
+      <div>
+        <button type="button" (click)="toggleAfterVenue()"
+                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
+          {{ showAfterVenue() ? '− Remove after-meeting venue' : '+ Add after-meeting venue' }}
+        </button>
+        @if (showAfterVenue()) {
+          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
+            <div>
+              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Venue name <span class="text-red-500">*</span></label>
+              <input id="afterVenueName" type="text" formControlName="afterVenueName"
+                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                     placeholder="Cozy Cafe" />
+            </div>
+            <div>
+              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
+              <input id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
+                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                     placeholder="123 Main St" />
+            </div>
+            <div>
+              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+              <input id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
+                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                     placeholder="Optional notes" />
+            </div>
+          </div>
+        }
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <a [routerLink]="['/clubs', clubId()]"
+           class="rounded-xl border border-gray-300 dark:border-gray-600 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+          Cancel
+        </a>
+        <button type="submit" [disabled]="form.invalid || isSubmitting()"
+                class="rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
+          @if (isSubmitting()) { Creating… } @else { Create Event }
+        </button>
+      </div>
+    </form>
+  </div>
+</main>
+````
+
+## File: src/app/features/events/create-event/create-event.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  input,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { EventService } from '../../../core/services/event.service';
+import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
+import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
+@Component({
+  selector: 'app-create-event',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent],
+  templateUrl: './create-event.component.html',
+})
+export class CreateEventComponent {
+  readonly clubId = input.required<string>();
+  private readonly fb = inject(FormBuilder);
+  private readonly eventService = inject(EventService);
+  private readonly router = inject(Router);
+  readonly isSubmitting = signal(false);
+  readonly errorMessage = signal<string | null>(null);
+  readonly showAfterVenue = signal(false);
+  readonly form = this.fb.nonNullable.group({
+    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
+    description: [''],
+    date: ['', Validators.required],
+    city: ['', Validators.required],
+    address: [''],
+    lat: [null as number | null],
+    lng: [null as number | null],
+    theme: [''],
+    tagsRaw: [''],
+    durationMinutes: [null as number | null, [Validators.min(15), Validators.max(480)]],
+    afterVenueName: [''],
+    afterVenueAddress: [''],
+    afterVenueDescription: [''],
+  });
+  onAddressSelect(suggestion: GeocodeSuggestion): void {
+    this.form.patchValue({
+      city: suggestion.city ?? suggestion.label,
+      address: suggestion.label,
+      lat: suggestion.lat,
+      lng: suggestion.lng,
+    });
+  }
+  toggleAfterVenue(): void {
+    this.showAfterVenue.update(v => !v);
+    if (!this.showAfterVenue()) {
+      this.form.patchValue({ afterVenueName: '', afterVenueAddress: '', afterVenueDescription: '' });
+    }
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid || this.isSubmitting()) return;
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+    const v = this.form.getRawValue();
+    const tags = v.tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+    const afterMeetingVenue = this.showAfterVenue() && v.afterVenueName
+      ? { name: v.afterVenueName, address: v.afterVenueAddress, description: v.afterVenueDescription || undefined }
+      : undefined;
+    try {
+      const created = await this.eventService.createEvent(this.clubId(), {
+        title: v.title,
+        description: v.description || undefined,
+        date: new Date(v.date).toISOString(),
+        city: v.city,
+        address: v.address || undefined,
+        lat: v.lat ?? undefined,
+        lng: v.lng ?? undefined,
+        theme: v.theme || undefined,
+        tags,
+        durationMinutes: v.durationMinutes ?? undefined,
+        afterMeetingVenue,
+      });
+      await this.router.navigate(['/events', created.id]);
+    } catch {
+      this.errorMessage.set('Failed to create event. Please try again.');
+    } finally {
+      this.isSubmitting.set(false);
+    }
+  }
+}
+````
+
 ## File: src/app/features/profile/profile.component.ts
 ````typescript
 import {
@@ -5529,6 +5580,149 @@ export class ProfileComponent {
     try {
       await this.auth.setSocialsPublic(value);
     } catch {  }
+  }
+}
+````
+
+## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizQuestion } from '../../../core/models/quiz.model';
+interface MetaForm {
+  title: FormControl<string>;
+  description: FormControl<string>;
+}
+interface QuestionForm {
+  question: FormControl<string>;
+  option0: FormControl<string>;
+  option1: FormControl<string>;
+  option2: FormControl<string>;
+  option3: FormControl<string>;
+  correctIndex: FormControl<number>;
+}
+type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
+@Component({
+  selector: 'app-quiz-create',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink],
+  templateUrl: './quiz-create.component.html',
+})
+export class QuizCreateComponent {
+  private readonly quizService = inject(QuizService);
+  private readonly router = inject(Router);
+  protected readonly currentStep = signal<1 | 2>(1);
+  protected readonly localQuestions = signal<LocalQuestion[]>([]);
+  protected readonly isPublishing = signal(false);
+  protected readonly errorMessage = signal('');
+  readonly id = input<string>('');
+  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
+  protected readonly metaForm = new FormGroup<MetaForm>({
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+  });
+  protected readonly questionForm = new FormGroup<QuestionForm>({
+    question: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
+    }),
+    option0: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option1: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option2: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option3: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    correctIndex: new FormControl<number>(0, { nonNullable: true }),
+  });
+  protected isInvalidTouched(ctrl: AbstractControl): boolean {
+    return ctrl.invalid && ctrl.touched;
+  }
+  protected optionLabel(index: number): string {
+    return String.fromCodePoint(65 + index);
+  }
+  protected nextStep(): void {
+    if (this.metaForm.invalid) {
+      this.metaForm.markAllAsTouched();
+      return;
+    }
+    this.currentStep.set(2);
+  }
+  protected previousStep(): void {
+    this.currentStep.set(1);
+    this.errorMessage.set('');
+  }
+  protected addQuestion(): void {
+    if (this.questionForm.invalid) {
+      this.questionForm.markAllAsTouched();
+      return;
+    }
+    const { question, option0, option1, option2, option3, correctIndex } =
+      this.questionForm.getRawValue();
+    const newQuestion: LocalQuestion = {
+      question: question.trim(),
+      options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
+      correctIndex,
+    };
+    this.localQuestions.update(prev => [...prev, newQuestion]);
+    this.questionForm.reset({ correctIndex: 0 });
+  }
+  protected removeQuestion(index: number): void {
+    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
+  }
+  protected publishQuiz(): void {
+    const questions = this.localQuestions();
+    if (questions.length === 0) return;
+    this.isPublishing.set(true);
+    this.errorMessage.set('');
+    const { title, description } = this.metaForm.getRawValue();
+    const clubId = this.id();
+    this.quizService
+      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
+      .then(async quiz => {
+        // Add questions sequentially to preserve sort_order
+        for (const q of questions) {
+          await this.quizService.addQuestion(quiz.id, q);
+        }
+        // Activate the quiz
+        await this.quizService.toggleActive(quiz.id, true);
+        this.isPublishing.set(false);
+        this.router.navigate(['/clubs', clubId, 'quizzes']);
+      })
+      .catch(err => {
+        this.isPublishing.set(false);
+        this.errorMessage.set((err as Error).message);
+      });
   }
 }
 ````
@@ -5809,6 +6003,86 @@ export class QuizTakeComponent implements OnInit {
 </div>
 ````
 
+## File: src/app/features/randomizer/randomizer.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  effect,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { DatePipe } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../core/auth/auth.service';
+import { RandomizerService } from '../../core/services/randomizer.service';
+import { InitialsPipe } from '../../shared/pipes/initials.pipe';
+@Component({
+  selector: 'app-randomizer',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule, InitialsPipe],
+  styleUrl: './randomizer.component.scss',
+  templateUrl: './randomizer.component.html',
+})
+export class RandomizerComponent implements OnInit {
+  protected readonly randomizerService = inject(RandomizerService);
+  protected readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  protected readonly isSaving = signal(false);
+  protected readonly errorMessage = signal('');
+  protected clubId = '';
+  protected readonly purposeControl = new FormControl('Хто представляє книгу?', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
+  // toSignal keeps OnPush change detection working without manual markForCheck
+  private readonly _purposeValue = toSignal(this.purposeControl.valueChanges, {
+    initialValue: this.purposeControl.value,
+  });
+  constructor() {
+    effect(() => this.randomizerService.setPurpose(this._purposeValue()));
+  }
+  protected readonly selectedCount = computed(
+    () =>
+      this.randomizerService
+        .candidates()
+        .filter(m => this.randomizerService.selectedIds().has(m.userId)).length,
+  );
+  ngOnInit(): void {
+    this.clubId = this.route.snapshot.params['id'] as string;
+    this.randomizerService.loadClubMembers(this.clubId);
+    this.randomizerService.loadHistory(this.clubId).catch(() => {});
+  }
+  protected spin(): void {
+    this.errorMessage.set('');
+    this.randomizerService.spin().catch(err => {
+      this.errorMessage.set((err as Error).message);
+    });
+  }
+  protected saveSession(): void {
+    this.isSaving.set(true);
+    this.errorMessage.set('');
+    this.randomizerService
+      .saveSession(this.clubId)
+      .then(() => this.isSaving.set(false))
+      .catch(err => {
+        this.isSaving.set(false);
+        this.errorMessage.set((err as Error).message);
+      });
+  }
+  protected reset(): void {
+    this.randomizerService.reset();
+    this.errorMessage.set('');
+  }
+}
+````
+
 ## File: src/app/shared/chat/chat-widget/chat-widget.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, inject, signal, effect, computed } from '@angular/core';
@@ -5991,57 +6265,6 @@ export class AddressAutocompleteComponent implements OnInit, OnDestroy {
 }
 ````
 
-## File: src/app/app.config.ts
-````typescript
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, APP_INITIALIZER, inject } from '@angular/core';
-import {
-  provideRouter,
-  withComponentInputBinding,
-  withViewTransitions,
-  withRouterConfig,
-} from '@angular/router';
-import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { provideTranslateService, provideTranslateLoader, TranslateService } from '@ngx-translate/core';
-import { TranslateHttpLoader, provideTranslateHttpLoader } from '@ngx-translate/http-loader';
-import { catchError, firstValueFrom, of } from 'rxjs';
-import { routes } from './app.routes';
-import { authInterceptor } from './core/interceptors/auth.interceptor';
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideZonelessChangeDetection(),
-    provideRouter(
-      routes,
-      withComponentInputBinding(),
-      withViewTransitions(),
-      withRouterConfig({ paramsInheritanceStrategy: 'always' }),
-    ),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([authInterceptor]),
-    ),
-    provideTranslateService({
-      defaultLanguage: 'uk',
-      loader: provideTranslateLoader(TranslateHttpLoader),
-    }),
-    ...provideTranslateHttpLoader({ prefix: '/i18n/', suffix: '.json' }),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: () => {
-        const translate = inject(TranslateService);
-        return () =>
-          firstValueFrom(
-            translate.use('uk').pipe(
-              catchError(() => translate.use('en').pipe(catchError(() => of(null)))),
-            ),
-          );
-      },
-      multi: true,
-    },
-  ],
-};
-````
-
 ## File: src/environments/environment.ts
 ````typescript
 export const environment = {
@@ -6087,6 +6310,46 @@ This project uses **Repomix** to provide a full map of the codebase.
 - Always check `repomix-output.md` for the latest project map.
 - If a file is not in repomix-output.md, assume it doesn't exist yet.
 - Backend API routes: see FastAPI project (not in this repo).
+````
+
+## File: karma.conf.js
+````javascript
+module.exports = function (config) {
+  config.set({
+    basePath: '',
+    frameworks: ['jasmine'],
+    plugins: [
+      require('karma-jasmine'),
+      require('karma-chrome-launcher'),
+      require('karma-jasmine-html-reporter'),
+      require('karma-coverage'),
+    ],
+    client: {
+      jasmine: {},
+      clearContext: false,
+    },
+    jasmineHtmlReporter: {
+      suppressAll: true,
+    },
+    coverageReporter: {
+      dir: require('path').join(__dirname, './coverage/book-club-fe'),
+      subdir: '.',
+      reporters: [{ type: 'html' }, { type: 'text-summary' }, { type: 'lcovonly' }],
+      check: {
+        global: { statements: 70, branches: 60, functions: 70, lines: 70 },
+      },
+    },
+    reporters: ['progress', 'kjhtml'],
+    browsers: ['ChromeHeadless'],
+    customLaunchers: {
+      ChromeHeadlessCI: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+      },
+    },
+    restartOnFileChange: true,
+  });
+};
 ````
 
 ## File: README.md
@@ -6333,229 +6596,6 @@ export interface ClubMemberDetail {
     </div>
   </div>
 </div>
-````
-
-## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizQuestion } from '../../../core/models/quiz.model';
-interface MetaForm {
-  title: FormControl<string>;
-  description: FormControl<string>;
-}
-interface QuestionForm {
-  question: FormControl<string>;
-  option0: FormControl<string>;
-  option1: FormControl<string>;
-  option2: FormControl<string>;
-  option3: FormControl<string>;
-  correctIndex: FormControl<number>;
-}
-type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
-@Component({
-  selector: 'app-quiz-create',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink],
-  templateUrl: './quiz-create.component.html',
-})
-export class QuizCreateComponent {
-  private readonly quizService = inject(QuizService);
-  private readonly router = inject(Router);
-  protected readonly currentStep = signal<1 | 2>(1);
-  protected readonly localQuestions = signal<LocalQuestion[]>([]);
-  protected readonly isPublishing = signal(false);
-  protected readonly errorMessage = signal('');
-  readonly id = input<string>('');
-  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
-  protected readonly metaForm = new FormGroup<MetaForm>({
-    title: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-  });
-  protected readonly questionForm = new FormGroup<QuestionForm>({
-    question: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
-    }),
-    option0: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option1: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option2: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option3: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    correctIndex: new FormControl<number>(0, { nonNullable: true }),
-  });
-  protected isInvalidTouched(ctrl: AbstractControl): boolean {
-    return ctrl.invalid && ctrl.touched;
-  }
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
-  protected nextStep(): void {
-    if (this.metaForm.invalid) {
-      this.metaForm.markAllAsTouched();
-      return;
-    }
-    this.currentStep.set(2);
-  }
-  protected previousStep(): void {
-    this.currentStep.set(1);
-    this.errorMessage.set('');
-  }
-  protected addQuestion(): void {
-    if (this.questionForm.invalid) {
-      this.questionForm.markAllAsTouched();
-      return;
-    }
-    const { question, option0, option1, option2, option3, correctIndex } =
-      this.questionForm.getRawValue();
-    const newQuestion: LocalQuestion = {
-      question: question.trim(),
-      options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
-      correctIndex,
-    };
-    this.localQuestions.update(prev => [...prev, newQuestion]);
-    this.questionForm.reset({ correctIndex: 0 });
-  }
-  protected removeQuestion(index: number): void {
-    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
-  }
-  protected publishQuiz(): void {
-    const questions = this.localQuestions();
-    if (questions.length === 0) return;
-    this.isPublishing.set(true);
-    this.errorMessage.set('');
-    const { title, description } = this.metaForm.getRawValue();
-    const clubId = this.id();
-    this.quizService
-      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
-      .then(async quiz => {
-        // Add questions sequentially to preserve sort_order
-        for (const q of questions) {
-          await this.quizService.addQuestion(quiz.id, q);
-        }
-        // Activate the quiz
-        await this.quizService.toggleActive(quiz.id, true);
-        this.isPublishing.set(false);
-        this.router.navigate(['/clubs', clubId, 'quizzes']);
-      })
-      .catch(err => {
-        this.isPublishing.set(false);
-        this.errorMessage.set((err as Error).message);
-      });
-  }
-}
-````
-
-## File: src/app/features/randomizer/randomizer.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-  signal,
-  computed,
-  effect,
-} from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DatePipe } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../core/auth/auth.service';
-import { RandomizerService } from '../../core/services/randomizer.service';
-import { InitialsPipe } from '../../shared/pipes/initials.pipe';
-@Component({
-  selector: 'app-randomizer',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule, InitialsPipe],
-  styleUrl: './randomizer.component.scss',
-  templateUrl: './randomizer.component.html',
-})
-export class RandomizerComponent implements OnInit {
-  protected readonly randomizerService = inject(RandomizerService);
-  protected readonly authService = inject(AuthService);
-  private readonly route = inject(ActivatedRoute);
-  protected readonly isSaving = signal(false);
-  protected readonly errorMessage = signal('');
-  protected clubId = '';
-  protected readonly purposeControl = new FormControl('Хто представляє книгу?', {
-    nonNullable: true,
-    validators: [Validators.required],
-  });
-  // toSignal keeps OnPush change detection working without manual markForCheck
-  private readonly _purposeValue = toSignal(this.purposeControl.valueChanges, {
-    initialValue: this.purposeControl.value,
-  });
-  constructor() {
-    effect(() => this.randomizerService.setPurpose(this._purposeValue()));
-  }
-  protected readonly selectedCount = computed(
-    () =>
-      this.randomizerService
-        .candidates()
-        .filter(m => this.randomizerService.selectedIds().has(m.userId)).length,
-  );
-  ngOnInit(): void {
-    this.clubId = this.route.snapshot.params['id'] as string;
-    this.randomizerService.loadClubMembers(this.clubId);
-    this.randomizerService.loadHistory(this.clubId).catch(() => {});
-  }
-  protected spin(): void {
-    this.errorMessage.set('');
-    this.randomizerService.spin().catch(err => {
-      this.errorMessage.set((err as Error).message);
-    });
-  }
-  protected saveSession(): void {
-    this.isSaving.set(true);
-    this.errorMessage.set('');
-    this.randomizerService
-      .saveSession(this.clubId)
-      .then(() => this.isSaving.set(false))
-      .catch(err => {
-        this.isSaving.set(false);
-        this.errorMessage.set((err as Error).message);
-      });
-  }
-  protected reset(): void {
-    this.randomizerService.reset();
-    this.errorMessage.set('');
-  }
-}
 ````
 
 ## File: src/app/layout/header/header.component.html
@@ -7093,232 +7133,72 @@ yarn-debug.log*
 yarn-error.log*
 ````
 
-## File: karma.conf.js
+## File: eslint.config.js
 ````javascript
-module.exports = function (config) {
-  config.set({
-    basePath: '',
-    frameworks: ['jasmine'],
-    plugins: [
-      require('karma-jasmine'),
-      require('karma-chrome-launcher'),
-      require('karma-jasmine-html-reporter'),
-      require('karma-coverage'),
+const eslint = require("@eslint/js");
+const { defineConfig } = require("eslint/config");
+const tseslint = require("typescript-eslint");
+const angular = require("angular-eslint");
+const rxjsX = require("eslint-plugin-rxjs-x");
+module.exports = defineConfig([
+  {
+    files: ["**/*.ts"],
+    extends: [
+      eslint.configs.recommended,
+      tseslint.configs.strict,
+      tseslint.configs.stylisticTypeChecked,
+      angular.configs.tsRecommended,
+      rxjsX.configs.recommended,
     ],
-    client: {
-      jasmine: {},
-      clearContext: false,
-    },
-    jasmineHtmlReporter: {
-      suppressAll: true,
-    },
-    coverageReporter: {
-      dir: require('path').join(__dirname, './coverage/book-club-fe'),
-      subdir: '.',
-      reporters: [{ type: 'html' }, { type: 'text-summary' }, { type: 'lcovonly' }],
-      check: {
-        global: { statements: 70, branches: 60, functions: 70, lines: 70 },
+    processor: angular.processInlineTemplates,
+    languageOptions: {
+      parserOptions: {
+        project: ["./tsconfig.app.json", "./tsconfig.spec.json"],
+        tsconfigRootDir: __dirname,
       },
     },
-    reporters: ['progress', 'kjhtml'],
-    browsers: ['ChromeHeadless'],
-    customLaunchers: {
-      ChromeHeadlessCI: {
-        base: 'ChromeHeadless',
-        flags: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
-      },
+    rules: {
+      "@angular-eslint/directive-selector": [
+        "error",
+        {
+          type: "attribute",
+          prefix: "app",
+          style: "camelCase",
+        },
+      ],
+      "@angular-eslint/component-selector": [
+        "error",
+        {
+          type: "element",
+          prefix: "app",
+          style: "kebab-case",
+        },
+      ],
+      "@typescript-eslint/no-extraneous-class": [
+        "error",
+        { allowWithDecorator: true },
+      ],
+      "@typescript-eslint/no-invalid-void-type": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { "argsIgnorePattern": "^_" },
+      ],
+      "rxjs-x/no-unsafe-takeuntil": "error",
+      "rxjs-x/no-floating-observables": "error",
+      "rxjs-x/no-unbound-methods": "error",
+      "rxjs-x/no-subject-value": "error",
+      "rxjs-x/finnish": "warn",
     },
-    restartOnFileChange: true,
-  });
-};
-````
-
-## File: src/app/core/api/api-mappers.ts
-````typescript
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
-import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
-export interface ApiUserProfile {
-  id: string;
-  email: string;
-  role: UserRole;
-  displayName: string;
-  avatarUrl: string | null;
-  createdAt: string;
-  socials?: ApiUserSocials | null;
-  socialsPublic?: boolean;
-}
-export interface ApiUserSocials {
-  telegram?: string | null;
-  instagram?: string | null;
-  twitter?: string | null;
-  linkedin?: string | null;
-  github?: string | null;
-  goodreads?: string | null;
-}
-export interface ApiUserStats {
-  clubsJoined: number;
-  quizzesTaken: number;
-  quizWins: number;
-  likesReceived: number;
-  booksRead: number;
-}
-export interface ApiClub {
-  id: string;
-  name: string;
-  description: string | null;
-  coverUrl: string | null;
-  organizerId: string;
-  isPublic: boolean;
-  memberCount: number;
-  memberPreviews: string[];
-  createdAt: string;
-  city: string | null;
-  nextMeetingDate: string | null;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  theme: string | null;
-  currentBook: string | null;
-  status: ClubStatus;
-  tags: string[];
-  meetingDurationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  cancelledAt?: string | null;
-}
-export interface ApiClubMember {
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  role: 'organizer' | 'member';
-  socials?: ApiUserSocials | null;
-  socialsPublic?: boolean;
-}
-export interface ApiBanRecord {
-  userId: string;
-  clubId: string;
-  bannedAt: string;
-  duration: BanDuration;
-  bannedBy: string;
-}
-export interface ApiEvent {
-  id: string;
-  clubId: string;
-  clubName: string;
-  organizerId: string;
-  title: string;
-  description: string | null;
-  date: string;
-  city: string;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  status: EventStatus;
-  cancelledAt?: string | null;
-  theme: string | null;
-  tags: string[];
-  durationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  attendeeCount: number;
-  isAttending: boolean;
-}
-export function mapUserProfile(raw: ApiUserProfile): UserProfile {
-  return {
-    id: raw.id,
-    role: raw.role,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-    createdAt: raw.createdAt,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socialsPublic ?? false,
-  };
-}
-export function mapUserStats(raw: ApiUserStats): UserStats {
-  return {
-    clubsJoined: raw.clubsJoined,
-    quizzesTaken: raw.quizzesTaken,
-    quizWins: raw.quizWins,
-    likesReceived: raw.likesReceived,
-    booksRead: raw.booksRead,
-  };
-}
-export function mapClub(raw: ApiClub): Club {
-  return {
-    id: raw.id,
-    name: raw.name,
-    description: raw.description,
-    coverUrl: raw.coverUrl,
-    organizerId: raw.organizerId,
-    isPublic: raw.isPublic,
-    memberCount: raw.memberCount,
-    memberPreviews: raw.memberPreviews,
-    createdAt: raw.createdAt,
-    city: raw.city ?? '',
-    nextMeetingDate: raw.nextMeetingDate,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    theme: raw.theme,
-    currentBook: raw.currentBook ? { title: raw.currentBook, author: '', description: '' } : null,
-    status: raw.status,
-    tags: raw.tags,
-    meetingDurationMinutes: raw.meetingDurationMinutes,
-    afterMeetingVenue: raw.afterMeetingVenue,
-    cancelledAt: raw.cancelledAt ?? undefined,
-  };
-}
-export function mapEvent(raw: ApiEvent): ClubEvent {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    clubName: raw.clubName,
-    organizerId: raw.organizerId,
-    title: raw.title,
-    description: raw.description,
-    date: raw.date,
-    city: raw.city,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    status: raw.status,
-    cancelledAt: raw.cancelledAt ?? undefined,
-    theme: raw.theme,
-    tags: raw.tags,
-    durationMinutes: raw.durationMinutes,
-    afterMeetingVenue: raw.afterMeetingVenue,
-    attendeeCount: raw.attendeeCount,
-    isAttending: raw.isAttending,
-  };
-}
-export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
-  return {
-    userId: raw.userId,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-    role: raw.role,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socialsPublic ?? false,
-  };
-}
-export function mapBanRecord(raw: ApiBanRecord): BanRecord {
-  return {
-    userId: raw.userId,
-    clubId: raw.clubId,
-    bannedAt: raw.bannedAt,
-    duration: raw.duration,
-    bannedBy: raw.bannedBy,
-  };
-}
-function mapSocials(raw: ApiUserSocials): UserSocials {
-  return {
-    telegram: raw.telegram ?? undefined,
-    instagram: raw.instagram ?? undefined,
-    twitter: raw.twitter ?? undefined,
-    linkedin: raw.linkedin ?? undefined,
-    github: raw.github ?? undefined,
-    goodreads: raw.goodreads ?? undefined,
-  };
-}
+  },
+  {
+    files: ["**/*.html"],
+    extends: [
+      angular.configs.templateRecommended,
+      angular.configs.templateAccessibility,
+    ],
+    rules: {},
+  }
+]);
 ````
 
 ## File: src/app/core/interceptors/auth.interceptor.ts
@@ -7671,72 +7551,71 @@ export class RegisterComponent {
 </div>
 ````
 
-## File: eslint.config.js
-````javascript
-const eslint = require("@eslint/js");
-const { defineConfig } = require("eslint/config");
-const tseslint = require("typescript-eslint");
-const angular = require("angular-eslint");
-const rxjsX = require("eslint-plugin-rxjs-x");
-module.exports = defineConfig([
-  {
-    files: ["**/*.ts"],
-    extends: [
-      eslint.configs.recommended,
-      tseslint.configs.strict,
-      tseslint.configs.stylisticTypeChecked,
-      angular.configs.tsRecommended,
-      rxjsX.configs.recommended,
-    ],
-    processor: angular.processInlineTemplates,
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.app.json", "./tsconfig.spec.json"],
-        tsconfigRootDir: __dirname,
-      },
-    },
-    rules: {
-      "@angular-eslint/directive-selector": [
-        "error",
-        {
-          type: "attribute",
-          prefix: "app",
-          style: "camelCase",
-        },
-      ],
-      "@angular-eslint/component-selector": [
-        "error",
-        {
-          type: "element",
-          prefix: "app",
-          style: "kebab-case",
-        },
-      ],
-      "@typescript-eslint/no-extraneous-class": [
-        "error",
-        { allowWithDecorator: true },
-      ],
-      "@typescript-eslint/no-invalid-void-type": "off",
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        { "argsIgnorePattern": "^_" },
-      ],
-      "rxjs-x/no-unsafe-takeuntil": "error",
-      "rxjs-x/no-floating-observables": "error",
-      "rxjs-x/no-unbound-methods": "error",
-      "rxjs-x/no-subject-value": "error",
-      "rxjs-x/finnish": "warn",
-    },
+## File: package.json
+````json
+{
+  "name": "book-club-fe",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
+    "extract-i18n": "node scripts/extract-i18n.mjs",
+    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
+    "lint": "ng lint",
+    "build-ctx": "npx repomix --no-files",
+    "prepare": "husky install"
   },
-  {
-    files: ["**/*.html"],
-    extends: [
-      angular.configs.templateRecommended,
-      angular.configs.templateAccessibility,
-    ],
-    rules: {},
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/common": "^20.1.0",
+    "@angular/compiler": "^20.1.0",
+    "@angular/core": "^20.1.0",
+    "@angular/forms": "^20.1.0",
+    "@angular/platform-browser": "^20.1.0",
+    "@angular/router": "^20.1.0",
+    "@ngx-translate/core": "^17.0.0",
+    "@ngx-translate/http-loader": "^17.0.0",
+    "qrcode": "^1.5.4",
+    "rxjs": "~7.8.0",
+    "tslib": "^2.3.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^20.1.5",
+    "@angular/cli": "^20.1.5",
+    "@angular/compiler-cli": "^20.1.0",
+    "@types/jasmine": "~5.1.0",
+    "@types/qrcode": "^1.5.6",
+    "angular-eslint": "21.0.1",
+    "autoprefixer": "^10.4.27",
+    "eslint": "^9.39.1",
+    "eslint-plugin-rxjs-x": "^0.9.5",
+    "husky": "^8.0.0",
+    "jasmine-core": "~5.8.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "postcss": "^8.5.9",
+    "tailwindcss": "^3.4.19",
+    "typescript": "~5.8.2",
+    "typescript-eslint": "8.46.4"
   }
-]);
+}
 ````
 
 ## File: sonar-project.properties
@@ -7771,6 +7650,32 @@ sonar.coverage.exclusions=\
   src/app/core/supabase/**
 
 sonar.sourceEncoding=UTF-8
+````
+
+## File: vercel.json
+````json
+{
+
+  "buildCommand": "npm run build -- --configuration=production",
+  "outputDirectory": "dist/book-club-fe/browser",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://vercel.live https://book-club-be.onrender.com wss://*.pusher.com https://*.pusher.com https://*.pusherapp.com; frame-src https://vercel.live; frame-ancestors 'none';" }
+      ]
+    }
+  ]
+}
 ````
 
 ## File: .github/copilot-instructions.md
@@ -7879,6 +7784,194 @@ When invoking agents via the `task` tool, **always use the model specified below
 | `ui` | `claude-haiku-4.5` | Design system, Tailwind, animations, accessibility |
 | `web-quality-enhancer` | `claude-sonnet-4.6` | SEO, microcopy, semantic HTML, API docs |
 | `java-backend-dev` | `claude-sonnet-4.6` | Java 21 microservices, Spring Boot, JPA, Kafka, JWT |
+````
+
+## File: src/app/core/api/api-mappers.ts
+````typescript
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
+import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
+export interface ApiUserProfile {
+  id: string;
+  email: string;
+  role: UserRole;
+  displayName: string;
+  avatarUrl: string | null;
+  createdAt: string;
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export interface ApiUserSocials {
+  telegram?: string | null;
+  instagram?: string | null;
+  twitter?: string | null;
+  linkedin?: string | null;
+  github?: string | null;
+  goodreads?: string | null;
+}
+export interface ApiUserStats {
+  clubsJoined: number;
+  quizzesTaken: number;
+  quizWins: number;
+  likesReceived: number;
+  booksRead: number;
+}
+export interface ApiClub {
+  id: string;
+  name: string;
+  description: string | null;
+  coverUrl: string | null;
+  organizerId: string;
+  isPublic: boolean;
+  memberCount: number;
+  memberPreviews: string[];
+  createdAt: string;
+  city: string | null;
+  nextMeetingDate: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  theme: string | null;
+  currentBook: string | null;
+  status: ClubStatus;
+  tags: string[];
+  meetingDurationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  cancelledAt?: string | null;
+}
+export interface ApiClubMember {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: 'organizer' | 'member';
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export interface ApiBanRecord {
+  userId: string;
+  clubId: string;
+  bannedAt: string;
+  duration: BanDuration;
+  bannedBy: string;
+}
+export interface ApiEvent {
+  id: string;
+  clubId: string;
+  clubName: string;
+  organizerId: string;
+  title: string;
+  description: string | null;
+  date: string;
+  city: string;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  status: EventStatus;
+  cancelledAt?: string | null;
+  theme: string | null;
+  tags: string[];
+  durationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  attendeeCount: number;
+  isAttending: boolean;
+}
+export function mapUserProfile(raw: ApiUserProfile): UserProfile {
+  return {
+    id: raw.id,
+    role: raw.role,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    createdAt: raw.createdAt,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
+}
+export function mapUserStats(raw: ApiUserStats): UserStats {
+  return {
+    clubsJoined: raw.clubsJoined,
+    quizzesTaken: raw.quizzesTaken,
+    quizWins: raw.quizWins,
+    likesReceived: raw.likesReceived,
+    booksRead: raw.booksRead,
+  };
+}
+export function mapClub(raw: ApiClub): Club {
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description,
+    coverUrl: raw.coverUrl,
+    organizerId: raw.organizerId,
+    isPublic: raw.isPublic,
+    memberCount: raw.memberCount,
+    memberPreviews: raw.memberPreviews,
+    createdAt: raw.createdAt,
+    city: raw.city ?? '',
+    nextMeetingDate: raw.nextMeetingDate,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    theme: raw.theme,
+    currentBook: raw.currentBook ? { title: raw.currentBook, author: '', description: '' } : null,
+    status: raw.status,
+    tags: raw.tags,
+    meetingDurationMinutes: raw.meetingDurationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    cancelledAt: raw.cancelledAt ?? undefined,
+  };
+}
+export function mapEvent(raw: ApiEvent): ClubEvent {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    clubName: raw.clubName,
+    organizerId: raw.organizerId,
+    title: raw.title,
+    description: raw.description,
+    date: raw.date,
+    city: raw.city,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    status: raw.status,
+    cancelledAt: raw.cancelledAt ?? undefined,
+    theme: raw.theme,
+    tags: raw.tags,
+    durationMinutes: raw.durationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    attendeeCount: raw.attendeeCount,
+    isAttending: raw.isAttending,
+  };
+}
+export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
+  return {
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    role: raw.role,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
+}
+export function mapBanRecord(raw: ApiBanRecord): BanRecord {
+  return {
+    userId: raw.userId,
+    clubId: raw.clubId,
+    bannedAt: raw.bannedAt,
+    duration: raw.duration,
+    bannedBy: raw.bannedBy,
+  };
+}
+function mapSocials(raw: ApiUserSocials): UserSocials {
+  return {
+    telegram: raw.telegram ?? undefined,
+    instagram: raw.instagram ?? undefined,
+    twitter: raw.twitter ?? undefined,
+    linkedin: raw.linkedin ?? undefined,
+    github: raw.github ?? undefined,
+    goodreads: raw.goodreads ?? undefined,
+  };
+}
 ````
 
 ## File: src/app/core/services/chat.service.ts
@@ -8130,99 +8223,6 @@ export class RandomizerService {
     this._selectedIds.set(ids);
     this._result.set(null);
   }
-}
-````
-
-## File: package.json
-````json
-{
-  "name": "book-club-fe",
-  "version": "0.0.0",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
-    "extract-i18n": "node scripts/extract-i18n.mjs",
-    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
-    "lint": "ng lint",
-    "build-ctx": "npx repomix --no-files",
-    "prepare": "husky install"
-  },
-  "prettier": {
-    "overrides": [
-      {
-        "files": "*.html",
-        "options": {
-          "parser": "angular"
-        }
-      }
-    ]
-  },
-  "private": true,
-  "dependencies": {
-    "@angular/common": "^20.1.0",
-    "@angular/compiler": "^20.1.0",
-    "@angular/core": "^20.1.0",
-    "@angular/forms": "^20.1.0",
-    "@angular/platform-browser": "^20.1.0",
-    "@angular/router": "^20.1.0",
-    "@ngx-translate/core": "^17.0.0",
-    "@ngx-translate/http-loader": "^17.0.0",
-    "qrcode": "^1.5.4",
-    "rxjs": "~7.8.0",
-    "tslib": "^2.3.0"
-  },
-  "devDependencies": {
-    "@angular/build": "^20.1.5",
-    "@angular/cli": "^20.1.5",
-    "@angular/compiler-cli": "^20.1.0",
-    "@types/jasmine": "~5.1.0",
-    "@types/qrcode": "^1.5.6",
-    "angular-eslint": "21.0.1",
-    "autoprefixer": "^10.4.27",
-    "eslint": "^9.39.1",
-    "eslint-plugin-rxjs-x": "^0.9.5",
-    "husky": "^8.0.0",
-    "jasmine-core": "~5.8.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
-    "postcss": "^8.5.9",
-    "tailwindcss": "^3.4.19",
-    "typescript": "~5.8.2",
-    "typescript-eslint": "8.46.4"
-  }
-}
-````
-
-## File: vercel.json
-````json
-{
-
-  "buildCommand": "npm run build -- --configuration=production",
-  "outputDirectory": "dist/book-club-fe/browser",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://vercel.live https://book-club-be.onrender.com wss://*.pusher.com https://*.pusher.com https://*.pusherapp.com; frame-src https://vercel.live; frame-ancestors 'none';" }
-      ]
-    }
-  ]
 }
 ````
 
@@ -9116,6 +9116,224 @@ export class ClubsListComponent implements OnInit {
 </main>
 ````
 
+## File: src/app/features/clubs/create-club/create-club.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+} from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+interface CreateClubForm {
+  name: FormControl<string>;
+  description: FormControl<string>;
+  isPublic: FormControl<boolean>;
+  city: FormControl<string>;
+}
+@Component({
+  selector: 'app-create-club',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent],
+  templateUrl: './create-club.component.html',
+})
+export class CreateClubComponent {
+  private readonly clubService = inject(ClubService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly _errorMessage = signal<string | null>(null);
+  readonly errorMessage = this._errorMessage.asReadonly();
+  private readonly _isSubmitting = signal(false);
+  readonly isSubmitting = this._isSubmitting.asReadonly();
+  private readonly _showAfterMeeting = signal(false);
+  readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
+  readonly form = new FormGroup<CreateClubForm>({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+    isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', { nonNullable: true }),
+  });
+  togglePublic(): void {
+    const current = this.form.controls.isPublic.value;
+    this.form.controls.isPublic.setValue(!current);
+  }
+  toggleAfterMeeting(): void {
+    this._showAfterMeeting.update(v => !v);
+  }
+  cancel(): void {
+    this.router.navigate(['/clubs']);
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this._isSubmitting.set(true);
+    this._errorMessage.set(null);
+    const { name, description, isPublic, city } = this.form.getRawValue();
+    try {
+      const club = await this.clubService.createClub({ name, description, isPublic, city });
+      this.router.navigate(['/clubs', club.id]);
+    } catch (err) {
+      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
+    } finally {
+      this._isSubmitting.set(false);
+    }
+  }
+}
+````
+
+## File: src/app/core/auth/auth.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, resource, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, firstValueFrom, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
+import { TokenStore } from './token.store';
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: ApiUserProfile;
+}
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly tokenStore = inject(TokenStore);
+  private readonly _currentUser = signal<UserProfile | null>(null);
+  private readonly _isLoading = signal<boolean>(true);
+  readonly currentUser = this._currentUser.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly isAuthenticated = computed(() => this._currentUser() !== null);
+  readonly userRole = computed(() => this._currentUser()?.role ?? null);
+  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
+  private readonly _statsResource = resource({
+    params: () => this._currentUser()?.id ?? null,
+    loader: ({ params: userId }) => {
+      if (!userId) return Promise.resolve(null as UserStats | null);
+      return firstValueFrom(
+        this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
+          catchError(() => of(null)),
+        ),
+      ).then(raw => (raw ? mapUserStats(raw) : null));
+    },
+  });
+  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
+  constructor() {
+    const token = this.tokenStore.snapshot();
+    if (token) {
+      firstValueFrom(
+        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
+          catchError(() => {
+            this.tokenStore.clear();
+            return of(null);
+          }),
+        ),
+      ).then(raw => {
+        this._currentUser.set(raw ? mapUserProfile(raw) : null);
+        this._isLoading.set(false);
+      });
+    } else {
+      this._isLoading.set(false);
+    }
+  }
+  async signUp(
+    email: string,
+    password: string,
+    displayName: string,
+    role: UserRole,
+  ): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
+          email,
+          password,
+          displayName,
+          role,
+        }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signIn(email: string, password: string): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signOut(): Promise<void> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
+    } catch {  }
+    this.tokenStore.clear();
+    this._currentUser.set(null);
+    this.router.navigate(['/login']);
+  }
+  async updateRole(role: UserRole): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
+    );
+    this._currentUser.set({ ...user, role });
+  }
+  async updateDisplayName(name: string): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
+    );
+    this._currentUser.set({ ...user, displayName: name });
+  }
+  async updateSocials(socials: UserSocials): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
+    );
+    this._currentUser.set({ ...user, socials });
+  }
+  async setSocialsPublic(value: boolean): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
+        socialsPublic: value,
+      }),
+    );
+    this._currentUser.set({ ...user, socialsPublic: value });
+  }
+}
+````
+
 ## File: src/app/core/services/quiz.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -9382,217 +9600,6 @@ export class QuizService {
 </div>
 ````
 
-## File: src/app/features/clubs/create-club/create-club.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-} from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-interface CreateClubForm {
-  name: FormControl<string>;
-  description: FormControl<string>;
-  isPublic: FormControl<boolean>;
-}
-@Component({
-  selector: 'app-create-club',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent],
-  templateUrl: './create-club.component.html',
-})
-export class CreateClubComponent {
-  private readonly clubService = inject(ClubService);
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly _errorMessage = signal<string | null>(null);
-  readonly errorMessage = this._errorMessage.asReadonly();
-  private readonly _isSubmitting = signal(false);
-  readonly isSubmitting = this._isSubmitting.asReadonly();
-  readonly form = new FormGroup<CreateClubForm>({
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-    isPublic: new FormControl(true, { nonNullable: true }),
-  });
-  togglePublic(): void {
-    const current = this.form.controls.isPublic.value;
-    this.form.controls.isPublic.setValue(!current);
-  }
-  cancel(): void {
-    this.router.navigate(['/clubs']);
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this._isSubmitting.set(true);
-    this._errorMessage.set(null);
-    const { name, description, isPublic } = this.form.getRawValue();
-    try {
-      const club = await this.clubService.createClub({ name, description, isPublic });
-      this.router.navigate(['/clubs', club.id]);
-    } catch (err) {
-      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
-    } finally {
-      this._isSubmitting.set(false);
-    }
-  }
-}
-````
-
-## File: src/app/core/auth/auth.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, resource, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { catchError, firstValueFrom, of } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
-import { TokenStore } from './token.store';
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: ApiUserProfile;
-}
-@Injectable({ providedIn: 'root' })
-export class AuthService {
-  private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
-  private readonly tokenStore = inject(TokenStore);
-  private readonly _currentUser = signal<UserProfile | null>(null);
-  private readonly _isLoading = signal<boolean>(true);
-  readonly currentUser = this._currentUser.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly isAuthenticated = computed(() => this._currentUser() !== null);
-  readonly userRole = computed(() => this._currentUser()?.role ?? null);
-  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
-  private readonly _statsResource = resource({
-    params: () => this._currentUser()?.id ?? null,
-    loader: ({ params: userId }) => {
-      if (!userId) return Promise.resolve(null as UserStats | null);
-      return firstValueFrom(
-        this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
-          catchError(() => of(null)),
-        ),
-      ).then(raw => (raw ? mapUserStats(raw) : null));
-    },
-  });
-  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
-  constructor() {
-    const token = this.tokenStore.snapshot();
-    if (token) {
-      firstValueFrom(
-        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
-          catchError(() => {
-            this.tokenStore.clear();
-            return of(null);
-          }),
-        ),
-      ).then(raw => {
-        this._currentUser.set(raw ? mapUserProfile(raw) : null);
-        this._isLoading.set(false);
-      });
-    } else {
-      this._isLoading.set(false);
-    }
-  }
-  async signUp(
-    email: string,
-    password: string,
-    displayName: string,
-    role: UserRole,
-  ): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
-          email,
-          password,
-          displayName,
-          role,
-        }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signIn(email: string, password: string): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signOut(): Promise<void> {
-    try {
-      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
-    } catch {  }
-    this.tokenStore.clear();
-    this._currentUser.set(null);
-    this.router.navigate(['/login']);
-  }
-  async updateRole(role: UserRole): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
-    );
-    this._currentUser.set({ ...user, role });
-  }
-  async updateDisplayName(name: string): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
-    );
-    this._currentUser.set({ ...user, displayName: name });
-  }
-  async updateSocials(socials: UserSocials): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
-    );
-    this._currentUser.set({ ...user, socials });
-  }
-  async setSocialsPublic(value: boolean): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
-        socialsPublic: value,
-      }),
-    );
-    this._currentUser.set({ ...user, socialsPublic: value });
-  }
-}
-````
-
 ## File: src/app/core/services/club.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -9703,6 +9710,10 @@ export class ClubService {
     description: string;
     isPublic: boolean;
     coverUrl?: string | null;
+    city?: string;
+    tags?: string[];
+    meetingDurationMinutes?: number | null;
+    afterMeetingVenue?: { name: string; address: string; description: string } | null;
   }): Promise<Club> {
     const raw = await firstValueFrom(
       this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
@@ -9710,6 +9721,10 @@ export class ClubService {
         description: payload.description,
         isPublic: payload.isPublic,
         coverUrl: payload.coverUrl ?? null,
+        city: payload.city,
+        tags: payload.tags,
+        meetingDurationMinutes: payload.meetingDurationMinutes,
+        afterMeetingVenue: payload.afterMeetingVenue,
       }),
     );
     const club = mapClub(raw);
@@ -9886,6 +9901,19 @@ export class ClubDetailComponent {
   readonly upcomingEvents = computed(() =>
     this.events().filter(e => e.status === 'scheduled' || e.status === 'active'),
   );
+  readonly deleteCountdown = computed<string | null>(() => {
+    const club = this.club();
+    if (!club) return null;
+    const ms = this.clubService.msUntilDeletion(club);
+    if (ms === null) return null;
+    const totalMinutes = Math.floor(ms / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) {
+      return minutes > 0 ? `${hours} год ${minutes} хв` : `${hours} год`;
+    }
+    return `${totalMinutes} хв`;
+  });
   constructor() {
     effect((onCleanup) => {
       const clubId = this.id();

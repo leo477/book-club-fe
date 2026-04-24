@@ -152,16 +152,20 @@ describe('ClubService – computed signals and additional methods', () => {
 
     it('upcomingByCity groups clubs with meetings by city', () => {
       const byCity = service.upcomingByCity();
-      expect(byCity.Kyiv).toBeDefined();
-      expect(byCity.Kyiv.length).toBe(2); // c1 has date, c3 has null — both included, sorted by date
-      expect(byCity.Lviv).toBeDefined();
+      const kyiv = 'Kyiv';
+      const lviv = 'Lviv';
+      expect(byCity[kyiv]).toBeDefined();
+      expect(byCity[kyiv].length).toBe(2); // c1 has date, c3 has null — both included, sorted by date
+      expect(byCity[lviv]).toBeDefined();
     });
 
     it('upcomingByCity filters by city when cityFilter set', () => {
       service.setCityFilter('Lviv');
       const byCity = service.upcomingByCity();
-      expect(byCity.Kyiv).toBeUndefined();
-      expect(byCity.Lviv).toBeDefined();
+      const kyiv = 'Kyiv';
+      const lviv = 'Lviv';
+      expect(byCity[kyiv]).toBeUndefined();
+      expect(byCity[lviv]).toBeDefined();
     });
   });
 
