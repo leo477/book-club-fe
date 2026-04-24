@@ -1,16 +1,14 @@
-export type ClubStatus = 'active' | 'paused' | 'cancelled';
-
 import { UserSocials } from './user.model';
-
-export interface AfterMeetingVenue {
-  name: string;
-  address: string;
-  description?: string;
-  lat?: number;
-  lng?: number;
-}
+import { AfterMeetingVenue } from './event.model';
 
 export type BanDuration = 1 | 3 | 5 | 'permanent';
+export type ClubStatus = 'active' | 'paused' | 'cancelled';
+
+export interface CurrentBook {
+  title: string;
+  author: string;
+  description: string;
+}
 
 export interface BanRecord {
   userId: string;
@@ -18,12 +16,6 @@ export interface BanRecord {
   bannedAt: string;
   duration: BanDuration;
   bannedBy: string;
-}
-
-export interface ClubBook {
-  title: string;
-  author: string;
-  description: string; // 1–2 sentences in Ukrainian
 }
 
 export interface Club {
@@ -34,28 +26,20 @@ export interface Club {
   organizerId: string;
   isPublic: boolean;
   memberCount: number;
+  memberPreviews: string[];
   createdAt: string;
   city: string;
-  nextMeetingDate: string | null; // ISO date string, null if no upcoming meeting
+  nextMeetingDate: string | null;
   address: string | null;
   lat: number | null;
   lng: number | null;
-  theme: string | null;              // e.g. 'Класична література'
-  currentBook: ClubBook | null;
-  memberPreviews: string[];          // display names of first 4 members
+  theme: string | null;
+  currentBook: CurrentBook | null;
   status: ClubStatus;
-  cancelledAt?: string;
-  meetingHistory?: ClubMeetingRecord[];
   tags: string[];
   meetingDurationMinutes: number | null;
   afterMeetingVenue: AfterMeetingVenue | null;
-}
-
-export interface ClubMeetingRecord {
-  id: string;
-  date: string;
-  status: 'held' | 'cancelled' | 'rescheduled';
-  notes?: string;
+  cancelledAt?: string;
 }
 
 export interface ClubMember {
@@ -72,12 +56,4 @@ export interface ClubMemberDetail {
   role: 'member' | 'organizer';
   socials?: UserSocials;
   socialsPublic: boolean;
-}
-
-export interface ClubMeeting {
-  id: string;
-  clubId: string;
-  title: string;
-  date: string;        // ISO date
-  attendees: string[]; // userIds who attended
 }

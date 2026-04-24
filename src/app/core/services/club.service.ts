@@ -2,9 +2,10 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApiClub, ApiClubMember, ApiBanRecord, mapClub, mapClubMember, mapBanRecord } from '../api/api-mappers';
+import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
 import { AuthService } from '../auth/auth.service';
-import { AfterMeetingVenue, BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
+import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
+import { ClubEvent } from '../models/event.model';
 
 @Injectable({ providedIn: 'root' })
 export class ClubService {
@@ -23,7 +24,6 @@ export class ClubService {
   readonly isLoading = this._isLoading.asReadonly();
   readonly error = this._error.asReadonly();
   readonly searchQuery = this._searchQuery.asReadonly();
-  readonly cityFilter = this._cityFilter.asReadonly();
 
   readonly myOwnedClubs = computed<Club[]>(() => {
     const userId = this.auth.currentUser()?.id;
@@ -36,6 +36,11 @@ export class ClubService {
   );
 
   readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
+
+  readonly availableCities = computed<string[]>(() => {
+    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
+    return cities.sort((a, b) => a.localeCompare(b));
+  });
 
   readonly filteredClubs = computed(() => {
     const q = this._searchQuery().toLowerCase().trim();
@@ -54,24 +59,10 @@ export class ClubService {
     return clubs;
   });
 
-  readonly availableCities = computed<string[]>(() => {
-    const seen = new Set<string>();
-    for (const c of this._clubs()) if (c.city) seen.add(c.city);
-    return [...seen].sort((a, b) => a.localeCompare(b));
-  });
-
   readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
-    const filter = this._cityFilter();
-    const clubs = this._clubs()
-      .filter(c => !filter || c.city === filter)
-      .sort((a, b) => {
-        if (!a.nextMeetingDate && !b.nextMeetingDate) return 0;
-        if (!a.nextMeetingDate) return 1;
-        if (!b.nextMeetingDate) return -1;
-        return new Date(a.nextMeetingDate).getTime() - new Date(b.nextMeetingDate).getTime();
-      });
+    const clubs = this.filteredClubs();
     return clubs.reduce<Record<string, Club[]>>((acc, club) => {
-      const city = club.city ?? 'Other';
+      const city = club.city || '';
       if (!acc[city]) acc[city] = [];
       acc[city].push(club);
       return acc;
@@ -130,22 +121,22 @@ export class ClubService {
     name: string;
     description: string;
     isPublic: boolean;
+    coverUrl?: string | null;
     city?: string;
     tags?: string[];
     meetingDurationMinutes?: number | null;
-    nextMeetingDate?: string | null;
-    afterMeetingVenue?: AfterMeetingVenue | null;
+    afterMeetingVenue?: { name: string; address: string; description: string } | null;
   }): Promise<Club> {
     const raw = await firstValueFrom(
       this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
         name: payload.name,
         description: payload.description,
         isPublic: payload.isPublic,
+        coverUrl: payload.coverUrl ?? null,
         city: payload.city,
-        tags: payload.tags ?? [],
-        meetingDurationMinutes: payload.meetingDurationMinutes ?? null,
-        nextMeetingDate: payload.nextMeetingDate ?? null,
-        afterMeetingVenue: payload.afterMeetingVenue ?? null,
+        tags: payload.tags,
+        meetingDurationMinutes: payload.meetingDurationMinutes,
+        afterMeetingVenue: payload.afterMeetingVenue,
       }),
     );
     const club = mapClub(raw);
@@ -179,29 +170,6 @@ export class ClubService {
     this._myClubs.update(list => list.filter(c => c.id !== clubId));
   }
 
-  async pauseClub(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/pause`, {}),
-    );
-    this._updateClub(mapClub(raw));
-  }
-
-  async cancelClub(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/cancel`, {}),
-    );
-    this._updateClub(mapClub(raw));
-  }
-
-  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/reschedule`, {
-        newDate,
-      }),
-    );
-    this._updateClub(mapClub(raw));
-  }
-
   async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
     const raw = await firstValueFrom(
       this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
@@ -228,15 +196,41 @@ export class ClubService {
     return raw.map(mapBanRecord);
   }
 
-  msUntilDeletion(club: Club): number | null {
-    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
-    const elapsed = Date.now() - new Date(club.cancelledAt).getTime();
-    const remaining = 24 * 60 * 60 * 1000 - elapsed;
-    return remaining > 0 ? remaining : null;
+  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
+    );
+    return raw.map(mapEvent);
   }
 
-  private _updateClub(updated: Club): void {
-    this._clubs.update(list => list.map(c => (c.id === updated.id ? updated : c)));
-    this._myClubs.update(list => list.map(c => (c.id === updated.id ? updated : c)));
+  async pauseClub(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/pause`, {}),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+
+  async cancelClub(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/cancel`, {}),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+
+  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/reschedule`, { newDate }),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+
+  msUntilDeletion(club: Club): number | null {
+    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
+    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
+    const remaining = deletionTime - Date.now();
+    return remaining > 0 ? remaining : null;
   }
 }

@@ -7,6 +7,7 @@ import { firstValueFrom, of } from 'rxjs';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { SeoService } from '../../../core/services/seo.service';
+import { EventService } from '../../../core/services/event.service';
 import { ComponentFixture } from '@angular/core/testing';
 
 describe('ClubDetailComponent', () => {
@@ -18,7 +19,7 @@ describe('ClubDetailComponent', () => {
 
   beforeEach(async () => {
     clubServiceSpy = jasmine.createSpyObj('ClubService', [
-      'getClubById', 'getClubMembers', 'loadMyClubs', 'getBans', 'kickMember', 'banMember', 'msUntilDeletion'
+      'getClubById', 'getClubMembers', 'loadMyClubs', 'getBans', 'kickMember', 'banMember', 'msUntilDeletion', 'loadClubEvents'
     ], {
       myClubs: jasmine.createSpy().and.returnValue([]),
       myClubIds: jasmine.createSpy().and.returnValue(new Set()),
@@ -55,7 +56,9 @@ describe('ClubDetailComponent', () => {
     clubServiceSpy.kickMember.and.returnValue(Promise.resolve());
     clubServiceSpy.banMember.and.returnValue(Promise.resolve());
     clubServiceSpy.msUntilDeletion.and.returnValue(null);
+    clubServiceSpy.loadClubEvents.and.returnValue(Promise.resolve([]));
     authSpy.isAuthenticated.and.returnValue(true);
+    const eventServiceSpy = jasmine.createSpyObj('EventService', ['loadClubEvents']);
     await TestBed.configureTestingModule({
       imports: [
         ClubDetailComponent,
@@ -79,6 +82,7 @@ describe('ClubDetailComponent', () => {
         { provide: ClubService, useValue: clubServiceSpy },
         { provide: AuthService, useValue: authSpy },
         { provide: SeoService, useValue: seoSpy },
+        { provide: EventService, useValue: eventServiceSpy },
       ]
     }).compileComponents();
     const translate = TestBed.inject(TranslateService);

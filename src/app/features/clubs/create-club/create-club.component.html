@@ -2,7 +2,7 @@
   <div class="w-full max-w-lg">
 
     <header class="text-center mb-8">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 Book Club</h1>
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
       <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
     </header>
 
@@ -11,175 +11,57 @@
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
 
-        <!-- Basic Info Fieldset -->
-        <fieldset class="space-y-4">
-          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.basic_info_legend' | translate }}</legend>
-
-          <!-- Name -->
-          <div>
-            <label for="club-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'CREATE_CLUB.name_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
-            </label>
-            <input
-              id="club-name"
-              type="text"
-              formControlName="name"
-              [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-              [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
-              aria-describedby="name-error"
-            />
-            @if (form.controls.name.invalid && form.controls.name.touched) {
-              <p id="name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                @if (form.controls.name.errors?.['required']) { {{ 'CREATE_CLUB.name_required' | translate }} }
-                @else if (form.controls.name.errors?.['minlength']) { {{ 'CREATE_CLUB.name_min' | translate }} }
-                @else if (form.controls.name.errors?.['maxlength']) { {{ 'CREATE_CLUB.name_max' | translate }} }
-              </p>
-            }
-          </div>
-
-          <!-- Description -->
-          <div>
-            <label for="club-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'CREATE_CLUB.description_label' | translate }}
-            </label>
-            <textarea
-              id="club-description"
-              formControlName="description"
-              rows="3"
-              [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-              [class.border-red-400]="form.controls.description.invalid && form.controls.description.touched"
-              aria-describedby="description-error"
-            ></textarea>
-            @if (form.controls.description.invalid && form.controls.description.touched) {
-              <p id="description-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                @if (form.controls.description.errors?.['maxlength']) { {{ 'CREATE_CLUB.description_max' | translate }} }
-              </p>
-            }
-          </div>
-
-          <!-- City -->
-          <div>
-            <label for="city-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'CREATE_CLUB.city_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
-            </label>
-            <app-address-autocomplete
-              inputId="city-input"
-              [control]="form.controls.city"
-              [placeholder]="'CREATE_CLUB.city_placeholder' | translate"
-              (selected)="onLocationSelected($event, 'city')"
-              [class.border-red-400]="form.controls.city.invalid && form.controls.city.touched"
-            />
-            @if (form.controls.city.invalid && form.controls.city.touched) {
-              <p id="city-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                @if (form.controls.city.errors?.['required']) { {{ 'CREATE_CLUB.city_required' | translate }} }
-                @else if (form.controls.city.errors?.['maxlength']) { {{ 'CREATE_CLUB.city_max' | translate }} }
-              </p>
-            }
-          </div>
-
-          <!-- Address -->
-          <div>
-            <label for="address-input" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'CREATE_CLUB.address_label' | translate }}
-            </label>
-            <app-address-autocomplete
-              inputId="address-input"
-              [control]="form.controls.address"
-              [placeholder]="'CREATE_CLUB.address_placeholder' | translate"
-              (selected)="onLocationSelected($event, 'address')"
-            />
-            @if (form.controls.address.invalid && form.controls.address.touched) {
-              <p id="address-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                @if (form.controls.address.errors?.['maxlength']) { {{ 'CREATE_CLUB.address_max' | translate }} }
-              </p>
-            }
-          </div>
-        </fieldset>
-
-        <!-- Tags & Duration Fieldset -->
-        <fieldset class="space-y-4">
-          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.tags_duration_legend' | translate }}</legend>
-
-          <!-- Tags -->
-          <div>
-            <label for="club-tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'CREATE_CLUB.tags_label' | translate }}
-            </label>
-            <input
-              id="club-tags"
-              type="text"
-              formControlName="tags"
-              [placeholder]="'CREATE_CLUB.tags_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-              [class.border-red-400]="form.controls.tags.invalid && form.controls.tags.touched"
-              aria-describedby="tags-hint tags-error"
-            />
-            <p id="tags-hint" class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              {{ 'CREATE_CLUB.tags_hint' | translate }}
+        <!-- Name -->
+        <div>
+          <label for="club-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'CREATE_CLUB.name_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="club-name"
+            type="text"
+            formControlName="name"
+            [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
+            class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                   px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                   transition-colors duration-150"
+            [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
+            aria-describedby="name-error"
+          />
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+            <p id="name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+              @if (form.controls.name.errors?.['required']) { {{ 'CREATE_CLUB.name_required' | translate }} }
+              @else if (form.controls.name.errors?.['minlength']) { {{ 'CREATE_CLUB.name_min' | translate }} }
+              @else if (form.controls.name.errors?.['maxlength']) { {{ 'CREATE_CLUB.name_max' | translate }} }
             </p>
-            @if (form.controls.tags.invalid && form.controls.tags.touched) {
-              <p id="tags-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                @if (form.controls.tags.errors?.['maxlength']) { {{ 'CREATE_CLUB.tags_max' | translate }} }
-              </p>
-            }
-          </div>
+          }
+        </div>
 
-          <!-- Meeting Duration -->
-          <div>
-            <label for="club-duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'CREATE_CLUB.duration_label' | translate }}
-            </label>
-            <input
-              id="club-duration"
-              type="number"
-              formControlName="meetingDurationMinutes"
-              [placeholder]="'CREATE_CLUB.duration_placeholder' | translate"
-              min="15"
-              max="480"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-              [class.border-red-400]="form.controls.meetingDurationMinutes.invalid && form.controls.meetingDurationMinutes.touched"
-              aria-describedby="duration-error"
-            />
-            @if (form.controls.meetingDurationMinutes.invalid && form.controls.meetingDurationMinutes.touched) {
-              <p id="duration-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                @if (form.controls.meetingDurationMinutes.errors?.['min']) { {{ 'CREATE_CLUB.duration_min' | translate }} }
-                @else if (form.controls.meetingDurationMinutes.errors?.['max']) { {{ 'CREATE_CLUB.duration_max' | translate }} }
-              </p>
-            }
-          </div>
+        <!-- Description -->
+        <div>
+          <label for="club-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'CREATE_CLUB.description_label' | translate }}
+          </label>
+          <textarea
+            id="club-description"
+            formControlName="description"
+            rows="3"
+            [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
+            class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                   px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
+                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                   transition-colors duration-150"
+            [class.border-red-400]="form.controls.description.invalid && form.controls.description.touched"
+            aria-describedby="description-error"
+          ></textarea>
+          @if (form.controls.description.invalid && form.controls.description.touched) {
+            <p id="description-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+              @if (form.controls.description.errors?.['maxlength']) { {{ 'CREATE_CLUB.description_max' | translate }} }
+            </p>
+          }
+        </div>
 
-          <!-- Next Meeting Date -->
-          <div>
-            <label for="club-next-meeting-date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'CREATE_CLUB.next_meeting_date_label' | translate }}
-            </label>
-            <input
-              id="club-next-meeting-date"
-              type="datetime-local"
-              formControlName="nextMeetingDate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-            />
-          </div>
-        </fieldset>
-
-        <!-- Visibility Fieldset -->
+        <!-- Visibility -->
         <fieldset>
           <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
           <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
@@ -205,100 +87,6 @@
             </button>
           </div>
         </fieldset>
-
-        <!-- After-meeting Section -->
-        <section>
-          <button
-            type="button"
-            (click)="toggleAfterMeeting()"
-            class="w-full text-left px-4 py-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700
-                   text-sm font-medium text-gray-700 dark:text-gray-300 transition-colors duration-150
-                   focus:outline-none focus:ring-2 focus:ring-primary-500"
-          >
-            @if (showAfterMeeting()) {
-              {{ 'CREATE_CLUB.after_meeting_hide' | translate }}
-            } @else {
-              {{ 'CREATE_CLUB.after_meeting_toggle' | translate }}
-            }
-          </button>
-
-          @if (showAfterMeeting()) {
-            <div class="mt-4 space-y-4 rounded-xl border border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-800/50 p-4">
-
-              <!-- After-meeting Venue Name -->
-              <div>
-                <label for="venue-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {{ 'CREATE_CLUB.venue_name_label' | translate }}
-                </label>
-                <input
-                  id="venue-name"
-                  type="text"
-                  formControlName="afterMeetingVenueName"
-                  [placeholder]="'CREATE_CLUB.venue_name_placeholder' | translate"
-                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                         px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                         transition-colors duration-150"
-                  [class.border-red-400]="form.controls.afterMeetingVenueName.invalid && form.controls.afterMeetingVenueName.touched"
-                  aria-describedby="venue-name-error"
-                />
-                @if (form.controls.afterMeetingVenueName.invalid && form.controls.afterMeetingVenueName.touched) {
-                  <p id="venue-name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                    @if (form.controls.afterMeetingVenueName.errors?.['maxlength']) { {{ 'CREATE_CLUB.venue_name_max' | translate }} }
-                  </p>
-                }
-              </div>
-
-              <!-- After-meeting Venue Address -->
-              <div>
-                <label for="venue-address" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {{ 'CREATE_CLUB.venue_address_label' | translate }}
-                </label>
-                <input
-                  id="venue-address"
-                  type="text"
-                  formControlName="afterMeetingVenueAddress"
-                  [placeholder]="'CREATE_CLUB.venue_address_placeholder' | translate"
-                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                         px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                         transition-colors duration-150"
-                  [class.border-red-400]="form.controls.afterMeetingVenueAddress.invalid && form.controls.afterMeetingVenueAddress.touched"
-                  aria-describedby="venue-address-error"
-                />
-                @if (form.controls.afterMeetingVenueAddress.invalid && form.controls.afterMeetingVenueAddress.touched) {
-                  <p id="venue-address-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                    @if (form.controls.afterMeetingVenueAddress.errors?.['maxlength']) { {{ 'CREATE_CLUB.venue_address_max' | translate }} }
-                  </p>
-                }
-              </div>
-
-              <!-- After-meeting Notes -->
-              <div>
-                <label for="venue-notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  {{ 'CREATE_CLUB.venue_notes_label' | translate }}
-                </label>
-                <textarea
-                  id="venue-notes"
-                  formControlName="afterMeetingVenueDescription"
-                  rows="2"
-                  [placeholder]="'CREATE_CLUB.venue_notes_placeholder' | translate"
-                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                         px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
-                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                         transition-colors duration-150"
-                  [class.border-red-400]="form.controls.afterMeetingVenueDescription.invalid && form.controls.afterMeetingVenueDescription.touched"
-                  aria-describedby="venue-notes-error"
-                ></textarea>
-                @if (form.controls.afterMeetingVenueDescription.invalid && form.controls.afterMeetingVenueDescription.touched) {
-                  <p id="venue-notes-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                    @if (form.controls.afterMeetingVenueDescription.errors?.['maxlength']) { {{ 'CREATE_CLUB.venue_notes_max' | translate }} }
-                  </p>
-                }
-              </div>
-            </div>
-          }
-        </section>
 
         <!-- Error alert -->
         @if (errorMessage()) {
@@ -345,4 +133,3 @@
     </article>
   </div>
 </main>
-  

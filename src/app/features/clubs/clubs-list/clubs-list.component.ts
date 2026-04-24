@@ -3,7 +3,6 @@ import {
   ChangeDetectionStrategy,
   inject,
   signal,
-  computed,
   OnInit,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -15,14 +14,13 @@ import { SeoService } from '../../../core/services/seo.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 import { ClubCardComponent } from './club-card/club-card.component';
 
 @Component({
   selector: 'app-clubs-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, LoadingSpinnerComponent, EmptyStateComponent, TranslateModule, FormatDatePipe, ClubCardComponent],
+  imports: [RouterLink, FormsModule, LoadingSpinnerComponent, EmptyStateComponent, TranslateModule, ClubCardComponent],
   templateUrl: './clubs-list.component.html',
 })
 export class ClubsListComponent implements OnInit {
@@ -31,8 +29,7 @@ export class ClubsListComponent implements OnInit {
   private readonly seo = inject(SeoService);
 
   readonly joiningClubId = signal<string | null>(null);
-
-  readonly cityKeys = computed(() => Object.keys(this.clubService.upcomingByCity()));
+  readonly activeTab = signal<'all' | 'my'>('all');
   readonly ownedClubIds = this.clubService.myOwnedClubIds;
 
   async ngOnInit(): Promise<void> {
@@ -58,6 +55,4 @@ export class ClubsListComponent implements OnInit {
       this.joiningClubId.set(null);
     }
   }
-
 }
-

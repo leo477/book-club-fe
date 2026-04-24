@@ -82,6 +82,7 @@
   },
   "CLUBS": {
     "active": "Active",
+    "all": "All Clubs",
     "all_cities": "All cities",
     "cancelled": "Cancelled",
     "create": "Create club",
