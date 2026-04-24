@@ -86,6 +86,7 @@ export interface ApiEvent {
   lng: number | null;
   status: EventStatus;
   cancelledAt?: string | null;
+  coverUrl?: string | null;
   theme: string | null;
   tags: string[];
   durationMinutes: number | null;
@@ -157,6 +158,7 @@ export function mapEvent(raw: ApiEvent): ClubEvent {
     lng: raw.lng,
     status: raw.status,
     cancelledAt: raw.cancelledAt ?? undefined,
+    coverUrl: raw.coverUrl ?? null,
     theme: raw.theme,
     tags: raw.tags,
     durationMinutes: raw.durationMinutes,

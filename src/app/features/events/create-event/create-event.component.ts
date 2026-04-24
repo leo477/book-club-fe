@@ -43,6 +43,7 @@ export class CreateEventComponent {
     afterVenueName: [''],
     afterVenueAddress: [''],
     afterVenueDescription: [''],
+    coverUrl: [''],
   });
 
   onAddressSelect(suggestion: GeocodeSuggestion): void {
@@ -85,6 +86,7 @@ export class CreateEventComponent {
         tags,
         durationMinutes: v.durationMinutes ?? undefined,
         afterMeetingVenue,
+        coverUrl: v.coverUrl || null,
       });
       await this.router.navigate(['/events', created.id]);
     } catch {

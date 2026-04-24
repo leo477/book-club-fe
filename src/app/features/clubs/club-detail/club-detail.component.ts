@@ -23,6 +23,7 @@ import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 import { ClubMembersListComponent } from './members/club-members-list.component';
 import { ClubHeaderComponent } from './header/club-header.component';
 import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
+import { ClubEventCardComponent } from './club-event-card/club-event-card.component';
 
 @Component({
   selector: 'app-club-detail',
@@ -36,6 +37,7 @@ import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.compo
     ClubMembersListComponent,
     ClubHeaderComponent,
     ClubManagePanelComponent,
+    ClubEventCardComponent,
   ],
   templateUrl: './club-detail.component.html',
 })
@@ -66,6 +68,15 @@ export class ClubDetailComponent {
   readonly errorMessage = signal<string | null>(null);
   readonly isActionLoading = signal(false);
   readonly actionError = signal<string | null>(null);
+  readonly attendingEventId = signal<string | null>(null);
+
+  readonly sortKey = signal<'date' | 'popular' | 'status'>('date');
+
+  readonly sortOptions = [
+    { key: 'date' as const,    labelKey: 'CLUB_DETAIL.sort_nearest' },
+    { key: 'popular' as const, labelKey: 'CLUB_DETAIL.sort_popular' },
+    { key: 'status' as const,  labelKey: 'CLUB_DETAIL.sort_status'  },
+  ];
 
   readonly isMember = computed(() => this.clubService.myClubIds().has(this.id()));
   readonly isClubOwner = computed(
@@ -93,6 +104,19 @@ export class ClubDetailComponent {
   readonly upcomingEvents = computed(() =>
     this.events().filter(e => e.status === 'scheduled' || e.status === 'active'),
   );
+
+  readonly sortedUpcomingEvents = computed(() => {
+    const events = this.upcomingEvents();
+    const key = this.sortKey();
+    if (key === 'popular') {
+      return [...events].sort((a, b) => b.attendeeCount - a.attendeeCount);
+    }
+    if (key === 'status') {
+      const order: Record<string, number> = { active: 0, scheduled: 1, rescheduled: 2 };
+      return [...events].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
+    }
+    return [...events].sort((a, b) => a.date.localeCompare(b.date));
+  });
 
   readonly deleteCountdown = computed<string | null>(() => {
     const club = this.club();
@@ -192,5 +216,29 @@ export class ClubDetailComponent {
   async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
     await this.clubService.banMember(this.id(), event.userId, event.duration);
     this.members.update(list => list.filter(m => m.userId !== event.userId));
+  }
+
+  async onAttend(eventId: string): Promise<void> {
+    this.attendingEventId.set(eventId);
+    try {
+      await this.eventService.attendEvent(eventId);
+      this.events.update(list =>
+        list.map(e => e.id === eventId ? { ...e, isAttending: true, attendeeCount: e.attendeeCount + 1 } : e),
+      );
+    } finally {
+      this.attendingEventId.set(null);
+    }
+  }
+
+  async onCancelAttend(eventId: string): Promise<void> {
+    this.attendingEventId.set(eventId);
+    try {
+      await this.eventService.cancelAttendance(eventId);
+      this.events.update(list =>
+        list.map(e => e.id === eventId ? { ...e, isAttending: false, attendeeCount: e.attendeeCount - 1 } : e),
+      );
+    } finally {
+      this.attendingEventId.set(null);
+    }
   }
 }
