@@ -17,6 +17,7 @@ export interface CreateEventPayload {
   tags?: string[];
   durationMinutes?: number | null;
   afterMeetingVenue?: AfterMeetingVenue | null;
+  coverUrl?: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

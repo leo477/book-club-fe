@@ -16,6 +16,7 @@ interface CreateClubForm {
   description: FormControl<string>;
   isPublic: FormControl<boolean>;
   city: FormControl<string>;
+  coverUrl: FormControl<string>;
 }
 
 @Component({
@@ -50,6 +51,7 @@ export class CreateClubComponent {
     }),
     isPublic: new FormControl(true, { nonNullable: true }),
     city: new FormControl('', { nonNullable: true }),
+    coverUrl: new FormControl('', { nonNullable: true }),
   });
 
   togglePublic(): void {
@@ -74,10 +76,10 @@ export class CreateClubComponent {
     this._isSubmitting.set(true);
     this._errorMessage.set(null);
 
-    const { name, description, isPublic, city } = this.form.getRawValue();
+    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
 
     try {
-      const club = await this.clubService.createClub({ name, description, isPublic, city });
+      const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
       this.router.navigate(['/clubs', club.id]);
     } catch (err) {
       this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');

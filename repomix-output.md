@@ -105,6 +105,9 @@ src/
           register.component.ts
       clubs/
         club-detail/
+          club-event-card/
+            club-event-card.component.html
+            club-event-card.component.ts
           header/
             club-header.component.html
             club-header.component.ts
@@ -233,6 +236,7 @@ supabase/
     004_quizzes.sql
     005_randomizer.sql
     006_events.sql
+    007_events_cover_image.sql
 .claudignore
 .editorconfig
 .gitignore
@@ -316,7 +320,11 @@ vercel.json
       "Bash(node_modules/.bin/ng test *)",
       "Bash(GIT_EDITOR=true git rebase *)",
       "Bash(grep -v '^$')",
-      "Bash(npx ng *)"
+      "Bash(npx ng *)",
+      "Bash(xargs -I {} basename {} .ts)",
+      "Bash(xargs ls *)",
+      "Bash(python -c \"from app.models.event import Event; from app.schemas.events import EventResponse, CreateEventRequest; print\\('imports OK'\\)\")",
+      "Bash(uv run *)"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -324,6 +332,45 @@ vercel.json
     "book-club-agents"
   ]
 }
+````
+
+## File: .github/workflows/codeql.yml
+````yaml
+name: CodeQL
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 0 * * 0'
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  analyze:
+    name: Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript-typescript'
+        continue-on-error: true
 ````
 
 ## File: public/robots.txt
@@ -601,6 +648,136 @@ export class ToastService {
   remove(id: string): void {
     this._toasts.update(list => list.filter(t => t.id !== id));
   }
+}
+````
+
+## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html
+````html
+<article
+  class="parchment-card relative rounded-2xl overflow-hidden flex flex-col"
+  [style.animation-delay]="index() * 80 + 'ms'"
+  [class]="'bg-gradient-to-br from-[#f9f1e3] to-[#ede0cc] dark:from-[#2a1f0f] dark:to-[#1e1508] shadow-md border border-[#d4a96a]/40 dark:border-[#7a5c2e]/40'"
+>
+  @if (event().coverUrl) {
+    <div class="h-32 overflow-hidden">
+      <img [src]="event().coverUrl" [alt]="event().title" class="w-full h-full object-cover" loading="lazy" />
+    </div>
+  } @else {
+    <div class="h-1 w-full bg-gradient-to-r from-amber-400 via-primary-500 to-accent-500"></div>
+  }
+  @if (event().status !== 'scheduled') {
+    <div
+      class="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center text-base shadow-md border-2 z-10"
+      [class]="event().status === 'active'
+        ? 'bg-green-100 border-green-400 dark:bg-green-900/50 dark:border-green-600'
+        : event().status === 'cancelled'
+          ? 'bg-red-100 border-red-400 dark:bg-red-900/50 dark:border-red-600'
+          : 'bg-yellow-100 border-yellow-400 dark:bg-yellow-900/50 dark:border-yellow-600'"
+      [attr.title]="event().status"
+    >
+      {{ event().status === 'active' ? '🟢' : event().status === 'cancelled' ? '🔴' : '🟡' }}
+    </div>
+  }
+  <div class="flex flex-col flex-1 p-5 gap-3">
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center gap-1.5 rounded-full bg-primary-100 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
+        📅 {{ event().date | formatDate }}
+      </span>
+    </div>
+    <a
+      [routerLink]="['/events', event().id]"
+      class="block font-serif text-lg font-semibold italic leading-snug text-gray-900 dark:text-amber-100 hover:text-primary-700 dark:hover:text-primary-400 transition-colors line-clamp-2"
+      style="font-family: 'Playfair Display', Georgia, serif;"
+    >
+      {{ event().title }}
+    </a>
+    @if (event().city) {
+      <p class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-amber-200/70">
+        <span>📍</span>
+        <span>{{ event().address || event().city }}</span>
+      </p>
+    }
+    @if (event().theme || event().tags.length > 0) {
+      <div class="flex flex-wrap gap-1.5">
+        @if (event().theme) {
+          <span class="rune-pill rounded-full bg-accent-100 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
+            ✨ {{ event().theme }}
+          </span>
+        }
+        @for (tag of event().tags.slice(0, 2); track tag) {
+          <span class="rune-pill rounded-full bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 px-2.5 py-0.5 text-xs text-amber-800 dark:text-amber-300">
+            🏷 {{ tag }}
+          </span>
+        }
+      </div>
+    }
+    <div class="flex items-center justify-between mt-auto pt-2 border-t border-[#d4a96a]/30 dark:border-[#7a5c2e]/30">
+      <span class="text-xs text-gray-500 dark:text-amber-200/50 flex items-center gap-1">
+        🕯️ {{ event().attendeeCount }} {{ 'CLUB_DETAIL.rsvp_attending' | translate }}
+      </span>
+      <div class="flex items-center gap-2">
+        @if (isAuthenticated() && event().status !== 'cancelled') {
+          @if (event().isAttending) {
+            <button
+              type="button"
+              [disabled]="attending()"
+              (click)="cancelAttend.emit()"
+              class="rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed px-3 py-1.5 text-xs font-semibold text-white transition-colors shadow-sm"
+            >
+              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_going' | translate }} }
+            </button>
+          } @else {
+            <button
+              type="button"
+              [disabled]="attending()"
+              (click)="attend.emit()"
+              class="rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed px-3 py-1.5 text-xs font-semibold text-white transition-colors shadow-sm"
+            >
+              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_join' | translate }} }
+            </button>
+          }
+        } @else {
+          <a
+            [routerLink]="['/events', event().id]"
+            class="rounded-lg border border-[#d4a96a]/60 dark:border-[#7a5c2e]/60 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+          >
+            {{ 'CLUB_DETAIL.rsvp_view' | translate }} →
+          </a>
+        }
+      </div>
+    </div>
+  </div>
+  <div class="h-px w-full bg-gradient-to-r from-transparent via-amber-400/40 to-transparent"></div>
+</article>
+````
+
+## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
+import { ClubEvent } from '../../../../core/models/event.model';
+@Component({
+  selector: 'app-club-event-card',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, FormatDatePipe],
+  templateUrl: './club-event-card.component.html',
+  styleUrl: './club-event-card.component.scss',
+})
+export class ClubEventCardComponent {
+  readonly event = input.required<ClubEvent>();
+  readonly isAuthenticated = input<boolean>(false);
+  readonly attending = input<boolean>(false);
+  readonly index = input<number>(0);
+  readonly attend = output<void>();
+  readonly cancelAttend = output<void>();
 }
 ````
 
@@ -1548,6 +1725,12 @@ CREATE POLICY "Organizers can manage randomizer sessions"
   );
 ````
 
+## File: supabase/migrations/007_events_cover_image.sql
+````sql
+ALTER TABLE events
+  ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
+````
+
 ## File: .editorconfig
 ````
 # Editor configuration, see https://editorconfig.org
@@ -1838,45 +2021,6 @@ jobs:
           configuration-path: .github/labeler.yml
 ````
 
-## File: .github/workflows/codeql.yml
-````yaml
-name: CodeQL
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
-  schedule:
-    - cron: '0 0 * * 0'
-permissions:
-  contents: read
-  security-events: write
-  actions: read
-concurrency:
-  group: codeql-${{ github.ref }}
-  cancel-in-progress: true
-jobs:
-  analyze:
-    name: Analyze (javascript-typescript)
-    runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript-typescript
-          queries: security-extended
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: '/language:javascript-typescript'
-        continue-on-error: true
-````
-
 ## File: .github/workflows/dependency-review.yml
 ````yaml
 name: Dependency Review
@@ -2152,6 +2296,7 @@ export interface ClubEvent {
   lng: number | null;
   status: EventStatus;
   cancelledAt?: string;
+  coverUrl: string | null;
   theme: string | null;
   tags: string[];
   durationMinutes: number | null;
@@ -4814,6 +4959,7 @@ export interface CreateEventPayload {
   tags?: string[];
   durationMinutes?: number | null;
   afterMeetingVenue?: AfterMeetingVenue | null;
+  coverUrl?: string | null;
 }
 @Injectable({ providedIn: 'root' })
 export class EventService {
@@ -5339,6 +5485,18 @@ export class LoginComponent {
                placeholder="fiction, dystopia, classic (comma-separated)" />
       </div>
       <div>
+        <label for="cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cover image URL</label>
+        @if (form.controls.coverUrl.value) {
+          <div class="mb-2 rounded-xl overflow-hidden h-24 bg-gray-100 dark:bg-gray-700">
+            <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover" />
+          </div>
+        }
+        <input id="cover-url" type="url" formControlName="coverUrl"
+               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+               placeholder="https://example.com/cover.jpg" />
+        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Paste a public image link (JPG, PNG, WebP)</p>
+      </div>
+      <div>
         <button type="button" (click)="toggleAfterVenue()"
                 class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
           {{ showAfterVenue() ? '− Remove after-meeting venue' : '+ Add after-meeting venue' }}
@@ -5424,6 +5582,7 @@ export class CreateEventComponent {
     afterVenueName: [''],
     afterVenueAddress: [''],
     afterVenueDescription: [''],
+    coverUrl: [''],
   });
   onAddressSelect(suggestion: GeocodeSuggestion): void {
     this.form.patchValue({
@@ -5461,6 +5620,7 @@ export class CreateEventComponent {
         tags,
         durationMinutes: v.durationMinutes ?? undefined,
         afterMeetingVenue,
+        coverUrl: v.coverUrl || null,
       });
       await this.router.navigate(['/events', created.id]);
     } catch {
@@ -6677,266 +6837,6 @@ export class ClubCardComponent {
 }
 ````
 
-## File: src/app/layout/header/header.component.html
-````html
-<header
-      class="sticky top-0 z-50 bg-[#f5ede0]/80 dark:bg-gray-900/80 backdrop-blur-md
-             border-b border-amber-200/60 dark:border-gray-800"
-      role="banner"
-    >
-      <div class="max-w-6xl mx-auto px-4">
-        <div class="flex items-center justify-between h-16">
-          <a
-            routerLink="/"
-            class="font-display text-xl font-bold text-gray-900 dark:text-white
-                   hover:text-primary-600 dark:hover:text-primary-400
-                   transition-all duration-200 focus:outline-none focus:ring-2
-                   focus:ring-primary-500 focus:ring-offset-2 rounded"
-          >
-            📚 BookClub
-          </a>
-          <nav
-            class="hidden md:flex items-center gap-1"
-            aria-label="Main navigation"
-          >
-            <a
-              routerLink="/clubs"
-              routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
-              class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
-                     hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
-                     focus:ring-offset-2"
-            >
-              {{ 'NAV.discover' | translate }}
-            </a>
-            @if (isAuthenticated()) {
-              <a
-                routerLink="/events"
-                routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
-                class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
-                       hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
-                       transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
-                       focus:ring-offset-2"
-              >
-                📅 Events
-              </a>
-            }
-          </nav>
-          <div class="hidden md:flex items-center gap-2">
-            <button
-              type="button"
-              (click)="switchLang()"
-              class="text-sm font-semibold px-2 py-1 rounded border border-current
-                     text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2
-                     focus:ring-primary-500 focus:ring-offset-2"
-              [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-            >
-              {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
-            </button>
-            @if (isAuthenticated()) {
-              <div class="relative">
-                <button
-                  type="button"
-                  (click)="toggleDropdown()"
-                  class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
-                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                  [attr.aria-expanded]="isDropdownOpen()"
-                  aria-haspopup="menu"
-                  [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
-                >
-                  <div
-                    class="h-9 w-9 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
-                           flex items-center justify-center text-white text-sm font-semibold
-                           select-none"
-                    aria-hidden="true"
-                  >
-                    {{ userInitials() }}
-                  </div>
-                </button>
-                @if (isDropdownOpen()) {
-                  <div
-                    role="menu"
-                    aria-label="User menu"
-                    class="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-gray-800 shadow-lg
-                           border border-gray-100 dark:border-gray-700 py-1 z-50
-                           animate-fade-in"
-                  >
-                    <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                      <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                        {{ currentUser()?.displayName }}
-                      </p>
-                    </div>
-                    <a
-                      routerLink="/profile"
-                      role="menuitem"
-                      (click)="closeDropdown()"
-                      class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200
-                             hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200
-                             focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-700"
-                    >
-                      👤 {{ 'NAV.profile' | translate }}
-                    </a>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      (click)="signOut()"
-                      class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400
-                             hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200
-                             focus:outline-none focus:bg-red-50 dark:focus:bg-red-900/20"
-                    >
-                      🚪 {{ 'NAV.logout' | translate }}
-                    </button>
-                  </div>
-                  <div
-                    class="fixed inset-0 z-40"
-                    aria-hidden="true"
-                    tabindex="-1"
-                    (click)="closeDropdown()"
-                    (keydown.escape)="closeDropdown()"
-                  ></div>
-                }
-              </div>
-            } @else {
-              <a
-                routerLink="/login"
-                class="border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800
-                       text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-medium text-sm
-                       transition-all duration-200 focus:outline-none focus:ring-2
-                       focus:ring-primary-500 focus:ring-offset-2"
-              >
-                {{ 'NAV.login' | translate }}
-              </a>
-              <a
-                routerLink="/register"
-                class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg
-                       font-medium text-sm transition-all duration-200 focus:outline-none
-                       focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              >
-                {{ 'NAV.join_free' | translate }}
-              </a>
-            }
-          </div>
-          <button
-            type="button"
-            class="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300
-                   hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-            (click)="toggleMenu()"
-            [attr.aria-expanded]="isMenuOpen()"
-            aria-controls="mobile-menu"
-          >
-            @if (isMenuOpen()) {
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            } @else {
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            }
-            <span class="sr-only">Toggle navigation menu</span>
-          </button>
-        </div>
-        @if (isMenuOpen()) {
-          <nav
-            id="mobile-menu"
-            class="md:hidden border-t border-gray-100 dark:border-gray-800 py-3 space-y-1"
-            aria-label="Mobile navigation"
-          >
-            <a
-              routerLink="/clubs"
-              routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
-              (click)="isMenuOpen.set(false)"
-              class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                     text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2
-                     focus:ring-primary-500 focus:ring-offset-2"
-            >
-              🔍 {{ 'NAV.discover' | translate }}
-            </a>
-            @if (isAuthenticated()) {
-              <a
-                routerLink="/events"
-                (click)="isMenuOpen.set(false)"
-                class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                       text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                       transition-all duration-200 focus:outline-none focus:ring-2
-                       focus:ring-primary-500 focus:ring-offset-2"
-              >
-                📅 Events
-              </a>
-            }
-            <button
-              type="button"
-              (click)="switchLang()"
-              class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                     text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2
-                     focus:ring-primary-500 focus:ring-offset-2 w-full text-left"
-              [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-            >
-              {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
-            </button>
-            <div class="pt-2 mt-2 border-t border-gray-100 dark:border-gray-800 space-y-1">
-              @if (isAuthenticated()) {
-                <div class="px-4 py-2">
-                  <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-                    {{ 'NAV.signed_in_as' | translate }}
-                  </p>
-                  <p class="text-sm font-medium text-gray-900 dark:text-white mt-0.5">
-                    {{ currentUser()?.displayName }}
-                  </p>
-                </div>
-                <a
-                  routerLink="/profile"
-                  (click)="isMenuOpen.set(false)"
-                  class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                         text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-primary-500 focus:ring-offset-2"
-                >
-                  👤 {{ 'NAV.profile' | translate }}
-                </a>
-                <button
-                  type="button"
-                  (click)="signOut()"
-                  class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                         text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-red-500 focus:ring-offset-2"
-                >
-                  🚪 {{ 'NAV.logout' | translate }}
-                </button>
-              } @else {
-                <a
-                  routerLink="/login"
-                  (click)="isMenuOpen.set(false)"
-                  class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                         text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-primary-500 focus:ring-offset-2"
-                >
-                  {{ 'NAV.login' | translate }}
-                </a>
-                <a
-                  routerLink="/register"
-                  (click)="isMenuOpen.set(false)"
-                  class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                         bg-primary-600 text-white hover:bg-primary-700
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-primary-500 focus:ring-offset-2"
-                >
-                  {{ 'NAV.join_free' | translate }}
-                </a>
-              }
-            </div>
-          </nav>
-        }
-      </div>
-    </header>
-````
-
 ## File: src/app/layout/header/header.component.ts
 ````typescript
 import {
@@ -7669,6 +7569,266 @@ export class RegisterComponent {
 </div>
 ````
 
+## File: src/app/layout/header/header.component.html
+````html
+<header
+      class="sticky top-0 z-50 bg-[#f5ede0]/80 dark:bg-gray-900/80 backdrop-blur-md
+             border-b border-amber-200/60 dark:border-gray-800"
+      role="banner"
+    >
+      <div class="max-w-6xl mx-auto px-4">
+        <div class="flex items-center justify-between h-16">
+          <a
+            routerLink="/"
+            class="font-display text-xl font-bold text-gray-900 dark:text-white
+                   hover:text-primary-600 dark:hover:text-primary-400
+                   transition-all duration-200 focus:outline-none focus:ring-2
+                   focus:ring-primary-500 focus:ring-offset-2 rounded"
+          >
+            📚 BookClub
+          </a>
+          <nav
+            class="hidden md:flex items-center gap-1"
+            aria-label="Main navigation"
+          >
+            <a
+              routerLink="/clubs"
+              routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
+              class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
+                     hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
+                     transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
+                     focus:ring-offset-2"
+            >
+              {{ 'NAV.discover' | translate }}
+            </a>
+            @if (isAuthenticated()) {
+              <a
+                routerLink="/events"
+                routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
+                class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
+                       hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
+                       transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
+                       focus:ring-offset-2"
+              >
+                📅 Events
+              </a>
+            }
+          </nav>
+          <div class="hidden md:flex items-center gap-2">
+            <button
+              type="button"
+              (click)="switchLang()"
+              class="text-sm font-semibold px-2 py-1 rounded border border-current
+                     text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
+                     transition-all duration-200 focus:outline-none focus:ring-2
+                     focus:ring-primary-500 focus:ring-offset-2"
+              [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+            >
+              {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
+            </button>
+            @if (isAuthenticated()) {
+              <div class="relative">
+                <button
+                  type="button"
+                  (click)="toggleDropdown()"
+                  class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
+                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                  [attr.aria-expanded]="isDropdownOpen()"
+                  aria-haspopup="menu"
+                  [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
+                >
+                  <div
+                    class="h-9 w-9 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
+                           flex items-center justify-center text-white text-sm font-semibold
+                           select-none"
+                    aria-hidden="true"
+                  >
+                    {{ userInitials() }}
+                  </div>
+                </button>
+                @if (isDropdownOpen()) {
+                  <div
+                    role="menu"
+                    aria-label="User menu"
+                    class="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-gray-800 shadow-lg
+                           border border-gray-100 dark:border-gray-700 py-1 z-50
+                           animate-fade-in"
+                  >
+                    <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
+                      <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                        {{ currentUser()?.displayName }}
+                      </p>
+                    </div>
+                    <a
+                      routerLink="/profile"
+                      role="menuitem"
+                      (click)="closeDropdown()"
+                      class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200
+                             hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200
+                             focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-700"
+                    >
+                      👤 {{ 'NAV.profile' | translate }}
+                    </a>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      (click)="signOut()"
+                      class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400
+                             hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200
+                             focus:outline-none focus:bg-red-50 dark:focus:bg-red-900/20"
+                    >
+                      🚪 {{ 'NAV.logout' | translate }}
+                    </button>
+                  </div>
+                  <div
+                    class="fixed inset-0 z-40"
+                    aria-hidden="true"
+                    tabindex="-1"
+                    (click)="closeDropdown()"
+                    (keydown.escape)="closeDropdown()"
+                  ></div>
+                }
+              </div>
+            } @else {
+              <a
+                routerLink="/login"
+                class="border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800
+                       text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-medium text-sm
+                       transition-all duration-200 focus:outline-none focus:ring-2
+                       focus:ring-primary-500 focus:ring-offset-2"
+              >
+                {{ 'NAV.login' | translate }}
+              </a>
+              <a
+                routerLink="/register"
+                class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg
+                       font-medium text-sm transition-all duration-200 focus:outline-none
+                       focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              >
+                {{ 'NAV.join_free' | translate }}
+              </a>
+            }
+          </div>
+          <button
+            type="button"
+            class="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300
+                   hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200
+                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            (click)="toggleMenu()"
+            [attr.aria-expanded]="isMenuOpen()"
+            aria-controls="mobile-menu"
+          >
+            @if (isMenuOpen()) {
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            } @else {
+              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            }
+            <span class="sr-only">Toggle navigation menu</span>
+          </button>
+        </div>
+        @if (isMenuOpen()) {
+          <nav
+            id="mobile-menu"
+            class="md:hidden border-t border-gray-100 dark:border-gray-800 py-3 space-y-1"
+            aria-label="Mobile navigation"
+          >
+            <a
+              routerLink="/clubs"
+              routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
+              (click)="isMenuOpen.set(false)"
+              class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                     text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                     transition-all duration-200 focus:outline-none focus:ring-2
+                     focus:ring-primary-500 focus:ring-offset-2"
+            >
+              🔍 {{ 'NAV.discover' | translate }}
+            </a>
+            @if (isAuthenticated()) {
+              <a
+                routerLink="/events"
+                (click)="isMenuOpen.set(false)"
+                class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                       text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                       transition-all duration-200 focus:outline-none focus:ring-2
+                       focus:ring-primary-500 focus:ring-offset-2"
+              >
+                📅 Events
+              </a>
+            }
+            <button
+              type="button"
+              (click)="switchLang()"
+              class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                     text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                     transition-all duration-200 focus:outline-none focus:ring-2
+                     focus:ring-primary-500 focus:ring-offset-2 w-full text-left"
+              [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+            >
+              {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
+            </button>
+            <div class="pt-2 mt-2 border-t border-gray-100 dark:border-gray-800 space-y-1">
+              @if (isAuthenticated()) {
+                <div class="px-4 py-2">
+                  <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                    {{ 'NAV.signed_in_as' | translate }}
+                  </p>
+                  <p class="text-sm font-medium text-gray-900 dark:text-white mt-0.5">
+                    {{ currentUser()?.displayName }}
+                  </p>
+                </div>
+                <a
+                  routerLink="/profile"
+                  (click)="isMenuOpen.set(false)"
+                  class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                         text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                         transition-all duration-200 focus:outline-none focus:ring-2
+                         focus:ring-primary-500 focus:ring-offset-2"
+                >
+                  👤 {{ 'NAV.profile' | translate }}
+                </a>
+                <button
+                  type="button"
+                  (click)="signOut()"
+                  class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                         text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
+                         transition-all duration-200 focus:outline-none focus:ring-2
+                         focus:ring-red-500 focus:ring-offset-2"
+                >
+                  🚪 {{ 'NAV.logout' | translate }}
+                </button>
+              } @else {
+                <a
+                  routerLink="/login"
+                  (click)="isMenuOpen.set(false)"
+                  class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                         text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                         transition-all duration-200 focus:outline-none focus:ring-2
+                         focus:ring-primary-500 focus:ring-offset-2"
+                >
+                  {{ 'NAV.login' | translate }}
+                </a>
+                <a
+                  routerLink="/register"
+                  (click)="isMenuOpen.set(false)"
+                  class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                         bg-primary-600 text-white hover:bg-primary-700
+                         transition-all duration-200 focus:outline-none focus:ring-2
+                         focus:ring-primary-500 focus:ring-offset-2"
+                >
+                  {{ 'NAV.join_free' | translate }}
+                </a>
+              }
+            </div>
+          </nav>
+        }
+      </div>
+    </header>
+````
+
 ## File: package.json
 ````json
 {
@@ -7852,6 +8012,7 @@ export interface ApiEvent {
   lng: number | null;
   status: EventStatus;
   cancelledAt?: string | null;
+  coverUrl?: string | null;
   theme: string | null;
   tags: string[];
   durationMinutes: number | null;
@@ -7919,6 +8080,7 @@ export function mapEvent(raw: ApiEvent): ClubEvent {
     lng: raw.lng,
     status: raw.status,
     cancelledAt: raw.cancelledAt ?? undefined,
+    coverUrl: raw.coverUrl ?? null,
     theme: raw.theme,
     tags: raw.tags,
     durationMinutes: raw.durationMinutes,
@@ -8279,6 +8441,9 @@ export class RandomizerService {
     "visibility_legend": "Visibility",
     "public_label": "Public club",
     "public_desc": "Anyone can discover and join",
+    "cover_url_label": "Cover image URL",
+    "cover_url_placeholder": "https://example.com/cover.jpg",
+    "cover_url_hint": "Paste a public image link (JPG, PNG, WebP)",
     "after_meeting_toggle": "▼ After-meeting venue",
     "after_meeting_hide": "▲ Hide after-meeting venue info",
     "venue_name_label": "Venue name",
@@ -8351,7 +8516,19 @@ export class RandomizerService {
     "deletion_countdown_prefix": "This club has been cancelled —",
     "deletion_countdown_hours": "will be deleted in {{ hours }} h. {{ minutes }} min.",
     "deletion_countdown_minutes": "will be deleted in {{ minutes }} min.",
-    "close_qr": "✕ Close"
+    "close_qr": "✕ Close",
+    "events_title": "Upcoming Events",
+    "events_empty": "No upcoming events scheduled.",
+    "create_event": "＋ Create Event",
+    "sort_nearest": "Nearest",
+    "sort_popular": "Most popular",
+    "sort_status": "By status",
+    "join_cta_title": "Want to join this club?",
+    "join_cta_desc": "Join to attend events and meet fellow readers.",
+    "rsvp_going": "✓ Going",
+    "rsvp_join": "RSVP",
+    "rsvp_view": "View",
+    "rsvp_attending": "attending"
   },
   "FOOTER": {
     "privacy": "Privacy",
@@ -8550,6 +8727,9 @@ export class RandomizerService {
     "visibility_legend": "Видимість",
     "public_label": "Публічний клуб",
     "public_desc": "Хто завгодно може виявити та приєднатися",
+    "cover_url_label": "URL обкладинки",
+    "cover_url_placeholder": "https://example.com/cover.jpg",
+    "cover_url_hint": "Вставте публічне посилання на зображення (JPG, PNG, WebP)",
     "after_meeting_toggle": "▼ Після зустрічі",
     "after_meeting_hide": "▲ Приховати інформацію про місце після зустрічі",
     "venue_name_label": "Назва місця",
@@ -8622,7 +8802,19 @@ export class RandomizerService {
     "deletion_countdown_prefix": "Цей клуб скасовано —",
     "deletion_countdown_hours": "буде видалено через {{ hours }} год. {{ minutes }} хв.",
     "deletion_countdown_minutes": "буде видалено через {{ minutes }} хв.",
-    "close_qr": "✕ Закрити"
+    "close_qr": "✕ Закрити",
+    "events_title": "Найближчі події",
+    "events_empty": "Немає запланованих подій.",
+    "create_event": "＋ Створити подію",
+    "sort_nearest": "Найближчі",
+    "sort_popular": "Популярні",
+    "sort_status": "За статусом",
+    "join_cta_title": "Хочеш приєднатись до клубу?",
+    "join_cta_desc": "Вступи, щоб відвідувати зустрічі та знайомитись з читачами.",
+    "rsvp_going": "✓ Йду",
+    "rsvp_join": "Зареєструватись",
+    "rsvp_view": "Детальніше",
+    "rsvp_attending": "учасників"
   },
   "FOOTER": {
     "privacy": "Конфіденційність",
@@ -8798,121 +8990,238 @@ export class RandomizerService {
         </a>
       </nav>
     </div>
-    <div class="max-w-4xl mx-auto px-4 py-8 space-y-6">
-      <app-club-header
-        [club]="club()!"
-        [isMember]="isMember()"
-        [isOwner]="isClubOwner()"
-        [isAuthenticated]="!!currentUser()"
-        [isActionLoading]="isActionLoading()"
-        [currentUser]="currentUser()"
-        (join)="onJoin()"
-        (leave)="onLeave()" />
-      @if (actionError()) {
-        <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-          <span aria-hidden="true">⚠️</span>
-          <span>{{ actionError() }}</span>
-        </div>
-      }
-      @if (club()!.description) {
-        <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
-          <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
-        </section>
-      }
-      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-            📅 Upcoming Events
-          </h2>
-          @if (isClubOwner()) {
-            <a
-              [routerLink]="['/clubs', id(), 'events', 'create']"
-              class="inline-flex items-center gap-1.5 rounded-lg bg-primary-600 hover:bg-primary-700 px-3 py-1.5 text-xs font-semibold text-white transition-colors"
-            >
-              + Create Event
-            </a>
-          }
-        </div>
-        @if (upcomingEvents().length === 0) {
-          <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No upcoming events scheduled.</p>
-        } @else {
-          <ul class="space-y-3">
-            @for (event of upcomingEvents(); track event.id) {
-              <li>
-                <a
-                  [routerLink]="['/events', event.id]"
-                  class="flex items-start gap-4 rounded-xl border border-gray-100 dark:border-gray-700 p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                >
-                  <div class="flex-shrink-0 text-center min-w-[3rem]">
-                    <div class="text-xs text-gray-400">{{ event.date | formatDate }}</div>
-                  </div>
-                  <div class="flex-1 min-w-0">
-                    <p class="font-medium text-gray-900 dark:text-white truncate">{{ event.title }}</p>
-                    @if (event.city) {
-                      <p class="text-xs text-gray-500 dark:text-gray-400">📍 {{ event.city }}</p>
-                    }
-                    <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{{ event.attendeeCount }} attending</p>
-                  </div>
-                  <span class="text-xs rounded-full px-2 py-0.5"
-                        [class]="event.isAttending
-                          ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                          : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-400'">
-                    {{ event.isAttending ? 'Going' : 'View' }}
-                  </span>
-                </a>
-              </li>
+    <div class="max-w-6xl mx-auto px-4 py-8">
+      <div class="flex flex-col lg:flex-row gap-6 items-start">
+        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-2 lg:order-1">
+          <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 space-y-3 border border-gray-100 dark:border-gray-700">
+            <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+              {{ 'CLUB_DETAIL.about' | translate }}
+            </h3>
+            @if (club()!.city) {
+              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <span class="text-base" aria-hidden="true">📍</span>
+                <span>{{ club()!.city }}</span>
+              </div>
             }
-          </ul>
-        }
-      </section>
-      @if (organizerProfile()) {
-        <aside class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-          <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.organizer_title' | translate }}</h2>
-          <div class="flex items-center gap-4">
-            <div class="h-12 w-12 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-sm flex-shrink-0" aria-hidden="true">
-              {{ organizerProfile()!.displayName | initials }}
-            </div>
-            <div>
-              <p class="font-semibold text-gray-900 dark:text-white">{{ organizerProfile()!.displayName }}</p>
-              <span class="text-xs font-medium text-accent-600 dark:text-accent-400">{{ 'CLUB_DETAIL.organizer_badge' | translate }}</span>
-            </div>
+            @if (club()!.meetingDurationMinutes) {
+              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <span class="text-base" aria-hidden="true">⏱️</span>
+                <span>{{ club()!.meetingDurationMinutes }} {{ 'CLUB_DETAIL.minutes_abbr' | translate }}</span>
+              </div>
+            }
+            @if (club()!.theme) {
+              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <span class="text-base" aria-hidden="true">✨</span>
+                <span>{{ club()!.theme }}</span>
+              </div>
+            }
+            @if (club()!.tags.length > 0) {
+              <div class="flex flex-wrap gap-1.5 pt-1">
+                @for (tag of club()!.tags; track tag) {
+                  <span class="rounded-full bg-accent-100 dark:bg-accent-900/30 px-2 py-0.5 text-xs text-accent-700 dark:text-accent-300">
+                    {{ tag }}
+                  </span>
+                }
+              </div>
+            }
+            @if (club()!.nextMeetingDate) {
+              <div class="flex items-center gap-2 text-sm text-primary-700 dark:text-primary-400 font-medium pt-1 border-t border-gray-100 dark:border-gray-700">
+                <span class="text-base" aria-hidden="true">📅</span>
+                <span>{{ club()!.nextMeetingDate! | formatDate }}</span>
+              </div>
+            }
           </div>
-          @if (organizerProfile()!.socialsPublic && organizerProfile()!.socials) {
-            <div class="mt-4 flex flex-wrap gap-3">
-              @if (organizerProfile()!.socials!.telegram) {
-                <a [href]="'https://t.me/' + organizerProfile()!.socials!.telegram" target="_blank" rel="noopener noreferrer"
-                   class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram'">✈️</a>
+          @if (club()!.currentBook) {
+            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 Now reading</h3>
+              <p class="font-serif italic text-sm font-semibold text-gray-900 dark:text-white leading-snug" style="font-family:'Playfair Display',Georgia,serif">
+                {{ club()!.currentBook!.title }}
+              </p>
+              @if (club()!.currentBook!.author) {
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ club()!.currentBook!.author }}</p>
               }
-              @if (organizerProfile()!.socials!.instagram) {
-                <a [href]="'https://instagram.com/' + organizerProfile()!.socials!.instagram" target="_blank" rel="noopener noreferrer"
-                   class="text-pink-500 hover:text-pink-600 text-lg" aria-label="Instagram">📸</a>
+            </div>
+          }
+          @if (isClubOwner()) {
+            <app-club-manage-panel [clubId]="id()" />
+          }
+        </aside>
+        <div class="flex-1 min-w-0 space-y-6 order-1 lg:order-2">
+          <app-club-header
+            [club]="club()!"
+            [isMember]="isMember()"
+            [isOwner]="isClubOwner()"
+            [isAuthenticated]="!!currentUser()"
+            [isActionLoading]="isActionLoading()"
+            [currentUser]="currentUser()"
+            (join)="onJoin()"
+            (leave)="onLeave()" />
+          @if (actionError()) {
+            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+              <span aria-hidden="true">⚠️</span>
+              <span>{{ actionError() }}</span>
+            </div>
+          }
+          @if (club()!.description) {
+            <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
+              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
+            </section>
+          }
+          @if (!!currentUser() && !isMember() && !isClubOwner()) {
+            <div class="rounded-2xl border-2 border-dashed border-primary-300 dark:border-primary-700 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-primary-50 dark:bg-primary-950/30">
+              <div>
+                <p class="font-semibold text-primary-800 dark:text-primary-300">{{ 'CLUB_DETAIL.join_cta_title' | translate }}</p>
+                <p class="text-sm text-primary-600 dark:text-primary-400 mt-0.5">{{ 'CLUB_DETAIL.join_cta_desc' | translate }}</p>
+              </div>
+              <button
+                type="button"
+                (click)="onJoin()"
+                [disabled]="isActionLoading()"
+                class="flex-shrink-0 rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              >
+                {{ 'CLUB_DETAIL.join' | translate }}
+              </button>
+            </div>
+          }
+          <section class="rounded-2xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-6 border border-[#d4a96a]/20 dark:border-[#7a5c2e]/20">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                📅 {{ 'CLUB_DETAIL.events_title' | translate }}
+              </h2>
+              @if (isClubOwner()) {
+                <a
+                  [routerLink]="['/clubs', id(), 'events', 'create']"
+                  class="inline-flex items-center gap-2 rounded-xl bg-primary-600 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+                >
+                  {{ 'CLUB_DETAIL.create_event' | translate }}
+                </a>
               }
-              @if (organizerProfile()!.socials!.github) {
-                <a [href]="'https://github.com/' + organizerProfile()!.socials!.github" target="_blank" rel="noopener noreferrer"
-                   class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" aria-label="GitHub">🐙</a>
+            </div>
+            @if (upcomingEvents().length > 1) {
+              <div class="flex flex-wrap gap-2 mb-5">
+                @for (opt of sortOptions; track opt.key) {
+                  <button
+                    type="button"
+                    (click)="sortKey.set(opt.key)"
+                    class="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
+                    [class]="sortKey() === opt.key
+                      ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600'"
+                  >
+                    {{ opt.labelKey | translate }}
+                  </button>
+                }
+              </div>
+            }
+            @if (upcomingEvents().length === 0) {
+              <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                {{ 'CLUB_DETAIL.events_empty' | translate }}
+              </p>
+            } @else {
+              <div class="grid gap-5 sm:grid-cols-2">
+                @for (event of sortedUpcomingEvents(); track event.id; let i = $index) {
+                  <app-club-event-card
+                    [event]="event"
+                    [isAuthenticated]="!!currentUser()"
+                    [attending]="attendingEventId() === event.id"
+                    [index]="i"
+                    (attend)="onAttend(event.id)"
+                    (cancelAttend)="onCancelAttend(event.id)"
+                  />
+                }
+              </div>
+            }
+          </section>
+          <app-club-members-list
+            [members]="members()"
+            [clubBans]="clubBans()"
+            [isOwner]="isClubOwner()"
+            [currentUserId]="currentUserId()"
+            (kick)="handleKick($event)"
+            (ban)="handleBan($event)" />
+          <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">
+            {{ 'CLUB_DETAIL.created' | translate }} {{ club()!.createdAt | formatDate }}
+          </footer>
+        </div>
+        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-3 lg:order-3">
+          @if (members().length > 0) {
+            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                  {{ 'CLUB_DETAIL.members_title' | translate }}
+                </h3>
+                <span class="text-xs text-gray-400">{{ members().length }}</span>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                @for (member of members().slice(0, 8); track member.userId) {
+                  <div
+                    class="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                    [attr.title]="member.displayName"
+                  >
+                    {{ member.displayName | initials }}
+                  </div>
+                }
+                @if (members().length > 8) {
+                  <div class="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
+                    +{{ members().length - 8 }}
+                  </div>
+                }
+              </div>
+            </div>
+          }
+          @if (organizerProfile()) {
+            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+                {{ 'CLUB_DETAIL.organizer_title' | translate }}
+              </h3>
+              <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0" aria-hidden="true">
+                  {{ organizerProfile()!.displayName | initials }}
+                </div>
+                <div class="min-w-0">
+                  <p class="font-semibold text-sm text-gray-900 dark:text-white truncate">{{ organizerProfile()!.displayName }}</p>
+                  <span class="text-xs text-accent-600 dark:text-accent-400">{{ 'CLUB_DETAIL.organizer_badge' | translate }}</span>
+                </div>
+              </div>
+              @if (organizerProfile()!.socialsPublic && organizerProfile()!.socials) {
+                <div class="mt-3 flex flex-wrap gap-2">
+                  @if (organizerProfile()!.socials!.telegram) {
+                    <a [href]="'https://t.me/' + organizerProfile()!.socials!.telegram" target="_blank" rel="noopener noreferrer"
+                       class="text-blue-500 hover:text-blue-600 text-lg" aria-label="Telegram">✈️</a>
+                  }
+                  @if (organizerProfile()!.socials!.instagram) {
+                    <a [href]="'https://instagram.com/' + organizerProfile()!.socials!.instagram" target="_blank" rel="noopener noreferrer"
+                       class="text-pink-500 hover:text-pink-600 text-lg" aria-label="Instagram">📸</a>
+                  }
+                  @if (organizerProfile()!.socials!.github) {
+                    <a [href]="'https://github.com/' + organizerProfile()!.socials!.github" target="_blank" rel="noopener noreferrer"
+                       class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" aria-label="GitHub">🐙</a>
+                  }
+                  @if (organizerProfile()!.socials!.goodreads) {
+                    <a [href]="'https://goodreads.com/' + organizerProfile()!.socials!.goodreads" target="_blank" rel="noopener noreferrer"
+                       class="text-amber-600 hover:text-amber-700 text-lg" aria-label="Goodreads">📚</a>
+                  }
+                </div>
               }
-              @if (organizerProfile()!.socials!.goodreads) {
-                <a [href]="'https://goodreads.com/' + organizerProfile()!.socials!.goodreads" target="_blank" rel="noopener noreferrer"
-                   class="text-amber-600 hover:text-amber-700 text-lg" aria-label="Goodreads">📚</a>
+            </div>
+          }
+          @if (club()!.afterMeetingVenue) {
+            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+                {{ 'CLUB_DETAIL.after_meeting_title' | translate }}
+              </h3>
+              <p class="text-sm font-medium text-gray-900 dark:text-white">{{ club()!.afterMeetingVenue!.name }}</p>
+              @if (club()!.afterMeetingVenue!.address) {
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 {{ club()!.afterMeetingVenue!.address }}</p>
+              }
+              @if (club()!.afterMeetingVenue!.description) {
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">{{ club()!.afterMeetingVenue!.description }}</p>
               }
             </div>
           }
         </aside>
-      }
-      <app-club-members-list
-        [members]="members()"
-        [clubBans]="clubBans()"
-        [isOwner]="isClubOwner()"
-        [currentUserId]="currentUserId()"
-        (kick)="handleKick($event)"
-        (ban)="handleBan($event)" />
-      @if (isClubOwner()) {
-        <app-club-manage-panel [clubId]="id()" />
-      }
-      <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">
-        {{ 'CLUB_DETAIL.created' | translate }} {{ club()!.createdAt | formatDate }}
-      </footer>
+      </div>
     </div>
   </main>
 }
@@ -9030,6 +9339,27 @@ export class ClubsListComponent implements OnInit {
               @if (form.controls.description.errors?.['maxlength']) { {{ 'CREATE_CLUB.description_max' | translate }} }
             </p>
           }
+        </div>
+        <div>
+          <label for="club-cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'CREATE_CLUB.cover_url_label' | translate }}
+          </label>
+          @if (form.controls.coverUrl.value) {
+            <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
+              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover" (error)="form.controls.coverUrl.setValue('')" />
+            </div>
+          }
+          <input
+            id="club-cover-url"
+            type="url"
+            formControlName="coverUrl"
+            [placeholder]="'CREATE_CLUB.cover_url_placeholder' | translate"
+            class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                   px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                   transition-colors duration-150"
+          />
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
         </div>
         <fieldset>
           <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
@@ -9524,6 +9854,7 @@ interface CreateClubForm {
   description: FormControl<string>;
   isPublic: FormControl<boolean>;
   city: FormControl<string>;
+  coverUrl: FormControl<string>;
 }
 @Component({
   selector: 'app-create-club',
@@ -9553,6 +9884,7 @@ export class CreateClubComponent {
     }),
     isPublic: new FormControl(true, { nonNullable: true }),
     city: new FormControl('', { nonNullable: true }),
+    coverUrl: new FormControl('', { nonNullable: true }),
   });
   togglePublic(): void {
     const current = this.form.controls.isPublic.value;
@@ -9571,9 +9903,9 @@ export class CreateClubComponent {
     }
     this._isSubmitting.set(true);
     this._errorMessage.set(null);
-    const { name, description, isPublic, city } = this.form.getRawValue();
+    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
     try {
-      const club = await this.clubService.createClub({ name, description, isPublic, city });
+      const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
       this.router.navigate(['/clubs', club.id]);
     } catch (err) {
       this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
@@ -9611,6 +9943,7 @@ import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 import { ClubMembersListComponent } from './members/club-members-list.component';
 import { ClubHeaderComponent } from './header/club-header.component';
 import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
+import { ClubEventCardComponent } from './club-event-card/club-event-card.component';
 @Component({
   selector: 'app-club-detail',
   standalone: true,
@@ -9623,6 +9956,7 @@ import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.compo
     ClubMembersListComponent,
     ClubHeaderComponent,
     ClubManagePanelComponent,
+    ClubEventCardComponent,
   ],
   templateUrl: './club-detail.component.html',
 })
@@ -9649,6 +9983,13 @@ export class ClubDetailComponent {
   readonly errorMessage = signal<string | null>(null);
   readonly isActionLoading = signal(false);
   readonly actionError = signal<string | null>(null);
+  readonly attendingEventId = signal<string | null>(null);
+  readonly sortKey = signal<'date' | 'popular' | 'status'>('date');
+  readonly sortOptions = [
+    { key: 'date' as const,    labelKey: 'CLUB_DETAIL.sort_nearest' },
+    { key: 'popular' as const, labelKey: 'CLUB_DETAIL.sort_popular' },
+    { key: 'status' as const,  labelKey: 'CLUB_DETAIL.sort_status'  },
+  ];
   readonly isMember = computed(() => this.clubService.myClubIds().has(this.id()));
   readonly isClubOwner = computed(
     () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
@@ -9672,6 +10013,18 @@ export class ClubDetailComponent {
   readonly upcomingEvents = computed(() =>
     this.events().filter(e => e.status === 'scheduled' || e.status === 'active'),
   );
+  readonly sortedUpcomingEvents = computed(() => {
+    const events = this.upcomingEvents();
+    const key = this.sortKey();
+    if (key === 'popular') {
+      return [...events].sort((a, b) => b.attendeeCount - a.attendeeCount);
+    }
+    if (key === 'status') {
+      const order: Record<string, number> = { active: 0, scheduled: 1, rescheduled: 2 };
+      return [...events].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
+    }
+    return [...events].sort((a, b) => a.date.localeCompare(b.date));
+  });
   readonly deleteCountdown = computed<string | null>(() => {
     const club = this.club();
     if (!club) return null;
@@ -9761,6 +10114,28 @@ export class ClubDetailComponent {
   async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
     await this.clubService.banMember(this.id(), event.userId, event.duration);
     this.members.update(list => list.filter(m => m.userId !== event.userId));
+  }
+  async onAttend(eventId: string): Promise<void> {
+    this.attendingEventId.set(eventId);
+    try {
+      await this.eventService.attendEvent(eventId);
+      this.events.update(list =>
+        list.map(e => e.id === eventId ? { ...e, isAttending: true, attendeeCount: e.attendeeCount + 1 } : e),
+      );
+    } finally {
+      this.attendingEventId.set(null);
+    }
+  }
+  async onCancelAttend(eventId: string): Promise<void> {
+    this.attendingEventId.set(eventId);
+    try {
+      await this.eventService.cancelAttendance(eventId);
+      this.events.update(list =>
+        list.map(e => e.id === eventId ? { ...e, isAttending: false, attendeeCount: e.attendeeCount - 1 } : e),
+      );
+    } finally {
+      this.attendingEventId.set(null);
+    }
   }
 }
 ````

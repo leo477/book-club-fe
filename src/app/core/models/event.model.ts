@@ -23,6 +23,7 @@ export interface ClubEvent {
   lng: number | null;
   status: EventStatus;
   cancelledAt?: string;
+  coverUrl: string | null;
   theme: string | null;
   tags: string[];
   durationMinutes: number | null;

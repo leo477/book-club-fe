@@ -1,0 +1,58 @@
+@keyframes card-appear {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position:  200% center; }
+}
+
+:host {
+  display: block;
+  animation: card-appear 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.parchment-card {
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.28s ease;
+
+  &:hover {
+    transform: translateY(-6px) rotate(-0.3deg);
+    box-shadow:
+      0 20px 48px rgba(120, 80, 20, 0.18),
+      0 4px 12px rgba(120, 80, 20, 0.1),
+      inset 0 0 0 1px rgba(180, 130, 60, 0.3);
+  }
+}
+
+.rune-pill {
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.4) 50%,
+      transparent 100%
+    );
+    background-size: 200% 100%;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  &:hover::before {
+    opacity: 1;
+    animation: shimmer 0.6s linear;
+  }
+}
