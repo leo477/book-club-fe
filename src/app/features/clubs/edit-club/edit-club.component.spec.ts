@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentFixture } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { EditClubComponent } from './edit-club.component';
 import { ClubService } from '../../../core/services/club.service';
 import { ToastService } from '../../../core/services/toast.service';
