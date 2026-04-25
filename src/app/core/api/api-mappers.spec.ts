@@ -131,6 +131,16 @@ describe('mapClub', () => {
     const result = mapClub({ ...baseApiClub, cancelledAt: null });
     expect(result.cancelledAt).toBeUndefined();
   });
+
+  it('defaults memberPreviews to [] when null', () => {
+    const result = mapClub({ ...baseApiClub, memberPreviews: null as unknown as string[] });
+    expect(result.memberPreviews).toEqual([]);
+  });
+
+  it('defaults tags to [] when null', () => {
+    const result = mapClub({ ...baseApiClub, tags: null as unknown as string[] });
+    expect(result.tags).toEqual([]);
+  });
 });
 
 describe('mapClubMember', () => {
@@ -237,5 +247,10 @@ describe('mapEvent', () => {
   it('preserves cancelledAt string value when set', () => {
     const result = mapEvent({ ...baseApiEvent, cancelledAt: '2025-07-01T00:00:00' });
     expect(result.cancelledAt).toBe('2025-07-01T00:00:00');
+  });
+
+  it('defaults tags to [] when null', () => {
+    const result = mapEvent({ ...baseApiEvent, tags: null as unknown as string[] });
+    expect(result.tags).toEqual([]);
   });
 });
