@@ -46,6 +46,12 @@ export const CLUBS_ROUTES: Routes = [
             m => m.CreateEventComponent,
           ),
       },
+      {
+        path: 'edit',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('./edit-club/edit-club.component').then(m => m.EditClubComponent),
+      },
     ],
   },
 ];
