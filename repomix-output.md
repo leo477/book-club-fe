@@ -131,6 +131,9 @@ src/
         create-club/
           create-club.component.html
           create-club.component.ts
+        edit-club/
+          edit-club.component.html
+          edit-club.component.ts
         clubs.routes.ts
       events/
         create-event/
@@ -324,7 +327,9 @@ vercel.json
       "Bash(xargs -I {} basename {} .ts)",
       "Bash(xargs ls *)",
       "Bash(python -c \"from app.models.event import Event; from app.schemas.events import EventResponse, CreateEventRequest; print\\('imports OK'\\)\")",
-      "Bash(uv run *)"
+      "Bash(uv run *)",
+      "Bash(grep \"\\\\.ts$\")",
+      "Bash(grep \",0$\")"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -332,6 +337,27 @@ vercel.json
     "book-club-agents"
   ]
 }
+````
+
+## File: .github/workflows/auto-labeler.yml
+````yaml
+name: Auto Labeler
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  label:
+    name: Label PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply labels
+        uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
 ````
 
 ## File: .github/workflows/codeql.yml
@@ -371,6 +397,222 @@ jobs:
         with:
           category: '/language:javascript-typescript'
         continue-on-error: true
+````
+
+## File: .github/workflows/dependency-review.yml
+````yaml
+name: Dependency Review
+on:
+  pull_request:
+    branches: [main, develop]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  dependency-review:
+    name: Dependency Review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          comment-summary-in-pr: always
+````
+
+## File: .github/workflows/i18n-check.yml
+````yaml
+name: i18n Check
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [develop]
+permissions:
+  contents: read
+jobs:
+  i18n-check:
+    name: Check i18n Keys
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Check for missing translation keys
+        run: |
+          node -e "
+          const fs = require('fs');
+          function flatten(obj, prefix) {
+            return Object.keys(obj).reduce((acc, key) => {
+              const fullKey = prefix ? prefix + '.' + key : key;
+              if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
+                Object.assign(acc, flatten(obj[key], fullKey));
+              } else {
+                acc[fullKey] = obj[key];
+              }
+              return acc;
+            }, {});
+          }
+          const uk = JSON.parse(fs.readFileSync('public/i18n/uk.json', 'utf8'));
+          const en = JSON.parse(fs.readFileSync('public/i18n/en.json', 'utf8'));
+          const ukFlat = flatten(uk, '');
+          const enFlat = flatten(en, '');
+          const missing = Object.keys(ukFlat).filter(key => !(key in enFlat));
+          if (missing.length > 0) {
+            console.error('Missing keys in en.json:');
+            missing.forEach(k => console.error('  - ' + k));
+            process.exit(1);
+          }
+          console.log('All ' + Object.keys(ukFlat).length + ' keys present in en.json.');
+          "
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+name: Lighthouse CI
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Install dependencies
+        run: npm ci
+      - name: Build (production)
+        run: npm run build -- --configuration=production
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          configPath: .lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+````
+
+## File: .github/workflows/scorecard.yml
+````yaml
+name: OpenSSF Scorecard
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 0 * * 0'
+permissions:
+  security-events: write
+  id-token: write
+  contents: read
+  actions: read
+jobs:
+  scorecard:
+    name: Scorecard Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Run Scorecard analysis
+        uses: ossf/scorecard-action@v2.4.0
+        with:
+          results_file: results.sarif
+          results_format: sarif
+          publish_results: true
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: SARIF file
+          path: results.sarif
+          retention-days: 5
+      - name: Upload to code-scanning dashboard
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: results.sarif
+````
+
+## File: .github/workflows/secret-scan.yml
+````yaml
+name: Secret Scan
+on:
+  push:
+    branches: ['**']
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  gitleaks:
+    name: Gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+````
+
+## File: .github/labeler.yml
+````yaml
+feat:
+  - changed-files:
+      - any-glob-to-any-file: src/app/features/**
+core:
+  - changed-files:
+      - any-glob-to-any-file: src/app/core/**
+shared:
+  - changed-files:
+      - any-glob-to-any-file: src/app/shared/**
+style:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/styles/**
+          - "**/*.scss"
+          - tailwind.config.js
+i18n:
+  - changed-files:
+      - any-glob-to-any-file:
+          - public/i18n/**
+          - scripts/**
+ci:
+  - changed-files:
+      - any-glob-to-any-file: .github/**
+docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "*.md"
+          - docs/**
+build:
+  - changed-files:
+      - any-glob-to-any-file:
+          - angular.json
+          - "tsconfig*.json"
+          - "package*.json"
 ````
 
 ## File: public/robots.txt
@@ -648,136 +890,6 @@ export class ToastService {
   remove(id: string): void {
     this._toasts.update(list => list.filter(t => t.id !== id));
   }
-}
-````
-
-## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html
-````html
-<article
-  class="parchment-card relative rounded-2xl overflow-hidden flex flex-col"
-  [style.animation-delay]="index() * 80 + 'ms'"
-  [class]="'bg-gradient-to-br from-[#f9f1e3] to-[#ede0cc] dark:from-[#2a1f0f] dark:to-[#1e1508] shadow-md border border-[#d4a96a]/40 dark:border-[#7a5c2e]/40'"
->
-  @if (event().coverUrl) {
-    <div class="h-32 overflow-hidden">
-      <img [src]="event().coverUrl" [alt]="event().title" class="w-full h-full object-cover" loading="lazy" />
-    </div>
-  } @else {
-    <div class="h-1 w-full bg-gradient-to-r from-amber-400 via-primary-500 to-accent-500"></div>
-  }
-  @if (event().status !== 'scheduled') {
-    <div
-      class="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center text-base shadow-md border-2 z-10"
-      [class]="event().status === 'active'
-        ? 'bg-green-100 border-green-400 dark:bg-green-900/50 dark:border-green-600'
-        : event().status === 'cancelled'
-          ? 'bg-red-100 border-red-400 dark:bg-red-900/50 dark:border-red-600'
-          : 'bg-yellow-100 border-yellow-400 dark:bg-yellow-900/50 dark:border-yellow-600'"
-      [attr.title]="event().status"
-    >
-      {{ event().status === 'active' ? '🟢' : event().status === 'cancelled' ? '🔴' : '🟡' }}
-    </div>
-  }
-  <div class="flex flex-col flex-1 p-5 gap-3">
-    <div class="flex items-center gap-2">
-      <span class="inline-flex items-center gap-1.5 rounded-full bg-primary-100 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
-        📅 {{ event().date | formatDate }}
-      </span>
-    </div>
-    <a
-      [routerLink]="['/events', event().id]"
-      class="block font-serif text-lg font-semibold italic leading-snug text-gray-900 dark:text-amber-100 hover:text-primary-700 dark:hover:text-primary-400 transition-colors line-clamp-2"
-      style="font-family: 'Playfair Display', Georgia, serif;"
-    >
-      {{ event().title }}
-    </a>
-    @if (event().city) {
-      <p class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-amber-200/70">
-        <span>📍</span>
-        <span>{{ event().address || event().city }}</span>
-      </p>
-    }
-    @if (event().theme || event().tags.length > 0) {
-      <div class="flex flex-wrap gap-1.5">
-        @if (event().theme) {
-          <span class="rune-pill rounded-full bg-accent-100 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
-            ✨ {{ event().theme }}
-          </span>
-        }
-        @for (tag of event().tags.slice(0, 2); track tag) {
-          <span class="rune-pill rounded-full bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 px-2.5 py-0.5 text-xs text-amber-800 dark:text-amber-300">
-            🏷 {{ tag }}
-          </span>
-        }
-      </div>
-    }
-    <div class="flex items-center justify-between mt-auto pt-2 border-t border-[#d4a96a]/30 dark:border-[#7a5c2e]/30">
-      <span class="text-xs text-gray-500 dark:text-amber-200/50 flex items-center gap-1">
-        🕯️ {{ event().attendeeCount }} {{ 'CLUB_DETAIL.rsvp_attending' | translate }}
-      </span>
-      <div class="flex items-center gap-2">
-        @if (isAuthenticated() && event().status !== 'cancelled') {
-          @if (event().isAttending) {
-            <button
-              type="button"
-              [disabled]="attending()"
-              (click)="cancelAttend.emit()"
-              class="rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed px-3 py-1.5 text-xs font-semibold text-white transition-colors shadow-sm"
-            >
-              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_going' | translate }} }
-            </button>
-          } @else {
-            <button
-              type="button"
-              [disabled]="attending()"
-              (click)="attend.emit()"
-              class="rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed px-3 py-1.5 text-xs font-semibold text-white transition-colors shadow-sm"
-            >
-              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_join' | translate }} }
-            </button>
-          }
-        } @else {
-          <a
-            [routerLink]="['/events', event().id]"
-            class="rounded-lg border border-[#d4a96a]/60 dark:border-[#7a5c2e]/60 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
-          >
-            {{ 'CLUB_DETAIL.rsvp_view' | translate }} →
-          </a>
-        }
-      </div>
-    </div>
-  </div>
-  <div class="h-px w-full bg-gradient-to-r from-transparent via-amber-400/40 to-transparent"></div>
-</article>
-````
-
-## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
-import { ClubEvent } from '../../../../core/models/event.model';
-@Component({
-  selector: 'app-club-event-card',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe],
-  templateUrl: './club-event-card.component.html',
-  styleUrl: './club-event-card.component.scss',
-})
-export class ClubEventCardComponent {
-  readonly event = input.required<ClubEvent>();
-  readonly isAuthenticated = input<boolean>(false);
-  readonly attending = input<boolean>(false);
-  readonly index = input<number>(0);
-  readonly attend = output<void>();
-  readonly cancelAttend = output<void>();
 }
 ````
 
@@ -1725,12 +1837,6 @@ CREATE POLICY "Organizers can manage randomizer sessions"
   );
 ````
 
-## File: supabase/migrations/007_events_cover_image.sql
-````sql
-ALTER TABLE events
-  ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
-````
-
 ## File: .editorconfig
 ````
 # Editor configuration, see https://editorconfig.org
@@ -1750,6 +1856,26 @@ ij_typescript_use_double_quotes = false
 [*.md]
 max_line_length = off
 trim_trailing_whitespace = false
+````
+
+## File: .lighthouserc.json
+````json
+{
+  "ci": {
+    "collect": {
+      "staticDistDir": "./dist/book-club-fe/browser",
+      "numberOfRuns": 1
+    },
+    "assert": {
+      "assertions": {
+        "categories:performance": ["warn", { "minScore": 0.8 }],
+        "categories:accessibility": ["error", { "minScore": 0.9 }],
+        "categories:best-practices": ["error", { "minScore": 0.9 }],
+        "categories:seo": ["warn", { "minScore": 0.8 }]
+      }
+    }
+  }
+}
 ````
 
 ## File: angular.json
@@ -2000,30 +2126,9 @@ module.exports = {
 }
 ````
 
-## File: .github/workflows/auto-labeler.yml
+## File: .github/workflows/bundle-size.yml
 ````yaml
-name: Auto Labeler
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-permissions:
-  contents: read
-  pull-requests: write
-jobs:
-  label:
-    name: Label PR
-    runs-on: ubuntu-latest
-    steps:
-      - name: Apply labels
-        uses: actions/labeler@v5
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          configuration-path: .github/labeler.yml
-````
-
-## File: .github/workflows/dependency-review.yml
-````yaml
-name: Dependency Review
+name: Bundle Size
 on:
   pull_request:
     branches: [main, develop]
@@ -2031,80 +2136,8 @@ permissions:
   contents: read
   pull-requests: write
 jobs:
-  dependency-review:
-    name: Dependency Review
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Dependency Review
-        uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: high
-          comment-summary-in-pr: always
-````
-
-## File: .github/workflows/i18n-check.yml
-````yaml
-name: i18n Check
-on:
-  pull_request:
-    branches: [main, develop]
-  push:
-    branches: [develop]
-permissions:
-  contents: read
-jobs:
-  i18n-check:
-    name: Check i18n Keys
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Check for missing translation keys
-        run: |
-          node -e "
-          const fs = require('fs');
-          function flatten(obj, prefix) {
-            return Object.keys(obj).reduce((acc, key) => {
-              const fullKey = prefix ? prefix + '.' + key : key;
-              if (typeof obj[key] === 'object' && obj[key] !== null && !Array.isArray(obj[key])) {
-                Object.assign(acc, flatten(obj[key], fullKey));
-              } else {
-                acc[fullKey] = obj[key];
-              }
-              return acc;
-            }, {});
-          }
-          const uk = JSON.parse(fs.readFileSync('public/i18n/uk.json', 'utf8'));
-          const en = JSON.parse(fs.readFileSync('public/i18n/en.json', 'utf8'));
-          const ukFlat = flatten(uk, '');
-          const enFlat = flatten(en, '');
-          const missing = Object.keys(ukFlat).filter(key => !(key in enFlat));
-          if (missing.length > 0) {
-            console.error('Missing keys in en.json:');
-            missing.forEach(k => console.error('  - ' + k));
-            process.exit(1);
-          }
-          console.log('All ' + Object.keys(ukFlat).length + ' keys present in en.json.');
-          "
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
-name: Lighthouse CI
-on:
-  pull_request:
-    branches: [main, develop]
-  workflow_dispatch:
-permissions:
-  contents: read
-concurrency:
-  group: lighthouse-${{ github.ref }}
-  cancel-in-progress: true
-jobs:
-  lighthouse:
-    name: Lighthouse CI
+  bundle-size:
+    name: Check Bundle Size
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -2122,119 +2155,45 @@ jobs:
           key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
           restore-keys: |
             ${{ runner.os }}-node20-
-      - name: Install dependencies
-        run: npm ci
-      - name: Build (production)
-        run: npm run build -- --configuration=production
-      - name: Run Lighthouse CI
-        uses: treosh/lighthouse-ci-action@v11
+      - name: Check compressed size
+        uses: preactjs/compressed-size-action@v2
         with:
-          configPath: .lighthouserc.json
-          uploadArtifacts: true
-          temporaryPublicStorage: true
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          build-script: build -- --configuration=production
+          pattern: ./dist/book-club-fe/browser/**/*.{js,css}
+          strip-hash: true
 ````
 
-## File: .github/workflows/scorecard.yml
+## File: .github/workflows/stale.yml
 ````yaml
-name: OpenSSF Scorecard
+name: Stale Issues and PRs
 on:
-  push:
-    branches: [main]
   schedule:
-    - cron: '0 0 * * 0'
-permissions:
-  security-events: write
-  id-token: write
-  contents: read
-  actions: read
-jobs:
-  scorecard:
-    name: Scorecard Analysis
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - name: Run Scorecard analysis
-        uses: ossf/scorecard-action@v2.4.0
-        with:
-          results_file: results.sarif
-          results_format: sarif
-          publish_results: true
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: SARIF file
-          path: results.sarif
-          retention-days: 5
-      - name: Upload to code-scanning dashboard
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: results.sarif
-````
-
-## File: .github/workflows/secret-scan.yml
-````yaml
-name: Secret Scan
-on:
-  push:
-    branches: ['**']
-  pull_request:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
 permissions:
   contents: read
+  issues: write
+  pull-requests: write
 jobs:
-  gitleaks:
-    name: Gitleaks
+  stale:
+    name: Mark Stale
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Mark stale issues and PRs
+        uses: actions/stale@v9
         with:
-          fetch-depth: 0
-      - name: Run Gitleaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-````
-
-## File: .github/labeler.yml
-````yaml
-feat:
-  - changed-files:
-      - any-glob-to-any-file: src/app/features/**
-core:
-  - changed-files:
-      - any-glob-to-any-file: src/app/core/**
-shared:
-  - changed-files:
-      - any-glob-to-any-file: src/app/shared/**
-style:
-  - changed-files:
-      - any-glob-to-any-file:
-          - src/styles/**
-          - "**/*.scss"
-          - tailwind.config.js
-i18n:
-  - changed-files:
-      - any-glob-to-any-file:
-          - public/i18n/**
-          - scripts/**
-ci:
-  - changed-files:
-      - any-glob-to-any-file: .github/**
-docs:
-  - changed-files:
-      - any-glob-to-any-file:
-          - "*.md"
-          - docs/**
-build:
-  - changed-files:
-      - any-glob-to-any-file:
-          - angular.json
-          - "tsconfig*.json"
-          - "package*.json"
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-issue-message: 'Це питання неактивне 60 днів. Буде закрите через 7 днів.'
+          stale-pr-message: 'Цей PR неактивний 30 днів. Буде закритий через 7 днів.'
+          stale-issue-label: stale
+          stale-pr-label: stale
+          days-before-issue-stale: 60
+          days-before-issue-close: 7
+          days-before-pr-stale: 30
+          days-before-pr-close: 7
+          exempt-issue-labels: 'pinned,security'
+          exempt-pr-labels: 'pinned,security'
 ````
 
 ## File: .husky/pre-commit
@@ -2269,40 +2228,6 @@ export interface ChatMessage {
 export interface ChatRoom {
   id: string;
   name: string;
-}
-````
-
-## File: src/app/core/models/event.model.ts
-````typescript
-export type EventStatus = 'scheduled' | 'active' | 'held' | 'cancelled' | 'rescheduled';
-export interface AfterMeetingVenue {
-  name: string;
-  address: string;
-  description?: string;
-  lat?: number;
-  lng?: number;
-}
-export interface ClubEvent {
-  id: string;
-  clubId: string;
-  clubName: string;
-  organizerId: string;
-  title: string;
-  description: string | null;
-  date: string;
-  city: string;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  status: EventStatus;
-  cancelledAt?: string;
-  coverUrl: string | null;
-  theme: string | null;
-  tags: string[];
-  durationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  attendeeCount: number;
-  isAttending: boolean;
 }
 ````
 
@@ -2518,6 +2443,136 @@ export class SeoService {
     </style>
 ````
 
+## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html
+````html
+<article
+  class="parchment-card relative rounded-2xl overflow-hidden flex flex-col"
+  [style.animation-delay]="index() * 80 + 'ms'"
+  [class]="'bg-gradient-to-br from-[#f9f1e3] to-[#ede0cc] dark:from-[#2a1f0f] dark:to-[#1e1508] shadow-md border border-[#d4a96a]/40 dark:border-[#7a5c2e]/40'"
+>
+  @if (event().coverUrl) {
+    <div class="h-32 overflow-hidden">
+      <img [src]="event().coverUrl" [alt]="event().title" class="w-full h-full object-cover" loading="lazy" />
+    </div>
+  } @else {
+    <div class="h-1 w-full bg-gradient-to-r from-amber-400 via-primary-500 to-accent-500"></div>
+  }
+  @if (event().status !== 'scheduled') {
+    <div
+      class="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center text-base shadow-md border-2 z-10"
+      [class]="event().status === 'active'
+        ? 'bg-green-100 border-green-400 dark:bg-green-900/50 dark:border-green-600'
+        : event().status === 'cancelled'
+          ? 'bg-red-100 border-red-400 dark:bg-red-900/50 dark:border-red-600'
+          : 'bg-yellow-100 border-yellow-400 dark:bg-yellow-900/50 dark:border-yellow-600'"
+      [attr.title]="event().status"
+    >
+      {{ event().status === 'active' ? '🟢' : event().status === 'cancelled' ? '🔴' : '🟡' }}
+    </div>
+  }
+  <div class="flex flex-col flex-1 p-5 gap-3">
+    <div class="flex items-center gap-2">
+      <span class="inline-flex items-center gap-1.5 rounded-full bg-primary-100 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
+        📅 {{ event().date | formatDate }}
+      </span>
+    </div>
+    <a
+      [routerLink]="['/events', event().id]"
+      class="block font-serif text-lg font-semibold italic leading-snug text-gray-900 dark:text-amber-100 hover:text-primary-700 dark:hover:text-primary-400 transition-colors line-clamp-2"
+      style="font-family: 'Playfair Display', Georgia, serif;"
+    >
+      {{ event().title }}
+    </a>
+    @if (event().city) {
+      <p class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-amber-200/70">
+        <span>📍</span>
+        <span>{{ event().address || event().city }}</span>
+      </p>
+    }
+    @if (event().theme || event().tags.length > 0) {
+      <div class="flex flex-wrap gap-1.5">
+        @if (event().theme) {
+          <span class="rune-pill rounded-full bg-accent-100 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
+            ✨ {{ event().theme }}
+          </span>
+        }
+        @for (tag of event().tags.slice(0, 2); track tag) {
+          <span class="rune-pill rounded-full bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 px-2.5 py-0.5 text-xs text-amber-800 dark:text-amber-300">
+            🏷 {{ tag }}
+          </span>
+        }
+      </div>
+    }
+    <div class="flex items-center justify-between mt-auto pt-2 border-t border-[#d4a96a]/30 dark:border-[#7a5c2e]/30">
+      <span class="text-xs text-gray-500 dark:text-amber-200/50 flex items-center gap-1">
+        🕯️ {{ event().attendeeCount }} {{ 'CLUB_DETAIL.rsvp_attending' | translate }}
+      </span>
+      <div class="flex items-center gap-2">
+        @if (isAuthenticated() && event().status !== 'cancelled') {
+          @if (event().isAttending) {
+            <button
+              type="button"
+              [disabled]="attending()"
+              (click)="cancelAttend.emit()"
+              class="rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed px-3 py-1.5 text-xs font-semibold text-white transition-colors shadow-sm"
+            >
+              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_going' | translate }} }
+            </button>
+          } @else {
+            <button
+              type="button"
+              [disabled]="attending()"
+              (click)="attend.emit()"
+              class="rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed px-3 py-1.5 text-xs font-semibold text-white transition-colors shadow-sm"
+            >
+              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_join' | translate }} }
+            </button>
+          }
+        } @else {
+          <a
+            [routerLink]="['/events', event().id]"
+            class="rounded-lg border border-[#d4a96a]/60 dark:border-[#7a5c2e]/60 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+          >
+            {{ 'CLUB_DETAIL.rsvp_view' | translate }} →
+          </a>
+        }
+      </div>
+    </div>
+  </div>
+  <div class="h-px w-full bg-gradient-to-r from-transparent via-amber-400/40 to-transparent"></div>
+</article>
+````
+
+## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
+import { ClubEvent } from '../../../../core/models/event.model';
+@Component({
+  selector: 'app-club-event-card',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, FormatDatePipe],
+  templateUrl: './club-event-card.component.html',
+  styleUrl: './club-event-card.component.scss',
+})
+export class ClubEventCardComponent {
+  readonly event = input.required<ClubEvent>();
+  readonly isAuthenticated = input<boolean>(false);
+  readonly attending = input<boolean>(false);
+  readonly index = input<number>(0);
+  readonly attend = output<void>();
+  readonly cancelAttend = output<void>();
+}
+````
+
 ## File: src/app/features/clubs/club-detail/header/club-header.component.ts
 ````typescript
 import {
@@ -2568,35 +2623,6 @@ import { Club } from '../../../../core/models/club.model';
 export class ClubInfoComponent {
   readonly club = input.required<Club>();
 }
-````
-
-## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.html
-````html
-<div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-    <a
-      [routerLink]="['/clubs', clubId(), 'quizzes']"
-      class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">📝</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
-      </div>
-    </a>
-    <a
-      [routerLink]="['/clubs', clubId(), 'randomizer']"
-      class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">🎲</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
-      </div>
-    </a>
-  </div>
-</div>
 ````
 
 ## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.ts
@@ -2795,57 +2821,276 @@ export class ClubMembersListComponent {
 }
 ````
 
-## File: src/app/features/clubs/clubs.routes.ts
+## File: src/app/features/clubs/edit-club/edit-club.component.html
+````html
+<main class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+    <header class="text-center mb-8">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'EDIT_CLUB.subtitle' | translate }}</p>
+    </header>
+    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'EDIT_CLUB.title' | translate }}</h2>
+      @if (isLoadingClub()) {
+        <div class="flex justify-center py-12">
+          <app-loading-spinner />
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+          <div>
+            <label for="club-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'EDIT_CLUB.name_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <input
+              id="club-name"
+              type="text"
+              formControlName="name"
+              [placeholder]="'EDIT_CLUB.name_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+              [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
+              aria-describedby="name-error"
+            />
+            @if (form.controls.name.invalid && form.controls.name.touched) {
+              <p id="name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                @if (form.controls.name.errors?.['required']) { {{ 'EDIT_CLUB.name_required' | translate }} }
+                @else if (form.controls.name.errors?.['minlength']) { {{ 'EDIT_CLUB.name_min' | translate }} }
+                @else if (form.controls.name.errors?.['maxlength']) { {{ 'EDIT_CLUB.name_max' | translate }} }
+              </p>
+            }
+          </div>
+          <div>
+            <label for="club-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'EDIT_CLUB.description_label' | translate }}
+            </label>
+            <textarea
+              id="club-description"
+              formControlName="description"
+              rows="3"
+              [placeholder]="'EDIT_CLUB.description_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+              [class.border-red-400]="form.controls.description.invalid && form.controls.description.touched"
+              aria-describedby="description-error"
+            ></textarea>
+            @if (form.controls.description.invalid && form.controls.description.touched) {
+              <p id="description-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+                @if (form.controls.description.errors?.['maxlength']) { {{ 'EDIT_CLUB.description_max' | translate }} }
+              </p>
+            }
+          </div>
+          <div>
+            <label for="club-city" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'EDIT_CLUB.city_label' | translate }}
+            </label>
+            <input
+              id="club-city"
+              type="text"
+              formControlName="city"
+              [placeholder]="'EDIT_CLUB.city_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+            />
+          </div>
+          <div>
+            <label for="club-cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'EDIT_CLUB.cover_url_label' | translate }}
+            </label>
+            @if (form.controls.coverUrl.value) {
+              <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
+                <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover" (error)="form.controls.coverUrl.setValue('')" />
+              </div>
+            }
+            <input
+              id="club-cover-url"
+              type="url"
+              formControlName="coverUrl"
+              [placeholder]="'EDIT_CLUB.cover_url_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+            />
+            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'EDIT_CLUB.cover_url_hint' | translate }}</p>
+          </div>
+          <fieldset>
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'EDIT_CLUB.visibility_legend' | translate }}</legend>
+            <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
+              <div>
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'EDIT_CLUB.public_label' | translate }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'EDIT_CLUB.public_desc' | translate }}</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                [attr.aria-checked]="form.controls.isPublic.value"
+                (click)="togglePublic()"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                [class.bg-primary-600]="form.controls.isPublic.value"
+                [class.bg-gray-300]="!form.controls.isPublic.value"
+                [class.dark:bg-gray-600]="!form.controls.isPublic.value"
+              >
+                <span
+                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                  [class.translate-x-6]="form.controls.isPublic.value"
+                  [class.translate-x-1]="!form.controls.isPublic.value"
+                ></span>
+              </button>
+            </div>
+          </fieldset>
+          @if (errorMessage()) {
+            <div
+              class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+              role="alert"
+            >
+              <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+          <div class="flex gap-3 pt-2">
+            <button
+              type="button"
+              (click)="cancel()"
+              class="flex-1 rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-2.5
+                     text-sm font-semibold text-gray-700 dark:text-gray-300
+                     hover:bg-gray-50 dark:hover:bg-gray-800
+                     focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2
+                     transition-colors duration-200"
+            >
+              {{ 'EDIT_CLUB.cancel' | translate }}
+            </button>
+            <button
+              type="submit"
+              [disabled]="isSubmitting()"
+              class="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5
+                     text-sm font-semibold text-white shadow-sm
+                     hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+                     disabled:opacity-60 disabled:cursor-not-allowed
+                     transition-colors duration-200"
+            >
+              @if (isSubmitting()) {
+                <app-loading-spinner size="sm" />
+                {{ 'EDIT_CLUB.submitting' | translate }}
+              } @else {
+                {{ 'EDIT_CLUB.submit' | translate }}
+              }
+            </button>
+          </div>
+        </form>
+      }
+    </article>
+  </div>
+</main>
+````
+
+## File: src/app/features/clubs/edit-club/edit-club.component.ts
 ````typescript
-import { Routes } from '@angular/router';
-import { authGuard } from '../../core/auth/auth.guard';
-import { roleGuard } from '../../core/auth/role.guard';
-import { ClubsListComponent } from './clubs-list/clubs-list.component';
-import { ClubDetailComponent } from './club-detail/club-detail.component';
-import { CreateClubComponent } from './create-club/create-club.component';
-export const CLUBS_ROUTES: Routes = [
-  {
-    path: '',
-    component: ClubsListComponent,
-    canActivate: [authGuard],
-  },
-  {
-    path: 'create',
-    component: CreateClubComponent,
-    canActivate: [authGuard, roleGuard('organizer')],
-  },
-  {
-    path: ':id',
-    children: [
-      {
-        path: '',
-        component: ClubDetailComponent,
-        canActivate: [authGuard],
-      },
-      {
-        path: 'randomizer',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('../randomizer/randomizer.component').then(
-            m => m.RandomizerComponent,
-          ),
-      },
-      {
-        path: 'quizzes',
-        loadChildren: () =>
-          import('../quiz/quiz.routes').then(m => m.QUIZ_ROUTES),
-      },
-      {
-        path: 'events/create',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('../events/create-event/create-event.component').then(
-            m => m.CreateEventComponent,
-          ),
-      },
-    ],
-  },
-];
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  input,
+  OnInit,
+} from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+interface EditClubForm {
+  name: FormControl<string>;
+  description: FormControl<string>;
+  isPublic: FormControl<boolean>;
+  city: FormControl<string>;
+  coverUrl: FormControl<string>;
+}
+@Component({
+  selector: 'app-edit-club',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent],
+  templateUrl: './edit-club.component.html',
+})
+export class EditClubComponent implements OnInit {
+  readonly id = input.required<string>();
+  private readonly clubService = inject(ClubService);
+  private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
+  private readonly translate = inject(TranslateService);
+  private readonly _isLoadingClub = signal(true);
+  readonly isLoadingClub = this._isLoadingClub.asReadonly();
+  private readonly _isSubmitting = signal(false);
+  readonly isSubmitting = this._isSubmitting.asReadonly();
+  private readonly _errorMessage = signal<string | null>(null);
+  readonly errorMessage = this._errorMessage.asReadonly();
+  readonly form = new FormGroup<EditClubForm>({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+    isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', { nonNullable: true }),
+    coverUrl: new FormControl('', { nonNullable: true }),
+  });
+  async ngOnInit(): Promise<void> {
+    const club = await this.clubService.getClubById(this.id());
+    if (!club) {
+      this._errorMessage.set('Club not found.');
+      this._isLoadingClub.set(false);
+      return;
+    }
+    this.form.patchValue({
+      name: club.name,
+      description: club.description ?? '',
+      isPublic: club.isPublic,
+      city: club.city ?? '',
+      coverUrl: club.coverUrl ?? '',
+    });
+    this._isLoadingClub.set(false);
+  }
+  togglePublic(): void {
+    this.form.controls.isPublic.setValue(!this.form.controls.isPublic.value);
+  }
+  cancel(): void {
+    this.router.navigate(['/clubs', this.id()]);
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this._isSubmitting.set(true);
+    this._errorMessage.set(null);
+    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
+    try {
+      await this.clubService.updateClub(this.id(), {
+        name,
+        description,
+        isPublic,
+        city: city || undefined,
+        coverUrl: coverUrl || null,
+      });
+      this.toast.show(this.translate.instant('EDIT_CLUB.success'), 'success');
+      this.router.navigate(['/clubs', this.id()]);
+    } catch (err) {
+      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to update club');
+    } finally {
+      this._isSubmitting.set(false);
+    }
+  }
+}
 ````
 
 ## File: src/app/features/events/event-card/event-card.component.html
@@ -4493,6 +4738,12 @@ CREATE POLICY "Users can cancel own RSVP"
   ON event_attendees FOR DELETE USING (auth.uid() = user_id);
 ````
 
+## File: supabase/migrations/007_events_cover_image.sql
+````sql
+ALTER TABLE events
+  ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
+````
+
 ## File: .claudignore
 ````
 node_modules/
@@ -4605,26 +4856,6 @@ yarn-error.log*
   ]
 ````
 
-## File: .lighthouserc.json
-````json
-{
-  "ci": {
-    "collect": {
-      "staticDistDir": "./dist/book-club-fe/browser",
-      "numberOfRuns": 1
-    },
-    "assert": {
-      "assertions": {
-        "categories:performance": ["warn", { "minScore": 0.8 }],
-        "categories:accessibility": ["error", { "minScore": 0.9 }],
-        "categories:best-practices": ["error", { "minScore": 0.9 }],
-        "categories:seo": ["warn", { "minScore": 0.8 }]
-      }
-    }
-  }
-}
-````
-
 ## File: .lintstagedrc.cjs
 ````javascript
 module.exports = {
@@ -4709,44 +4940,6 @@ module.exports = function (config) {
     ]
   }
 }
-````
-
-## File: .github/workflows/bundle-size.yml
-````yaml
-name: Bundle Size
-on:
-  pull_request:
-    branches: [main, develop]
-permissions:
-  contents: read
-  pull-requests: write
-jobs:
-  bundle-size:
-    name: Check Bundle Size
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Check compressed size
-        uses: preactjs/compressed-size-action@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          build-script: build -- --configuration=production
-          pattern: ./dist/book-club-fe/browser/**/*.{js,css}
-          strip-hash: true
 ````
 
 ## File: .github/workflows/pr-review.yml
@@ -4873,36 +5066,112 @@ jobs:
           comment-tag: pr-review-gate
 ````
 
-## File: .github/workflows/stale.yml
-````yaml
-name: Stale Issues and PRs
-on:
-  schedule:
-    - cron: '0 1 * * *'
-  workflow_dispatch:
-permissions:
-  contents: read
-  issues: write
-  pull-requests: write
-jobs:
-  stale:
-    name: Mark Stale
-    runs-on: ubuntu-latest
-    steps:
-      - name: Mark stale issues and PRs
-        uses: actions/stale@v9
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          stale-issue-message: 'Це питання неактивне 60 днів. Буде закрите через 7 днів.'
-          stale-pr-message: 'Цей PR неактивний 30 днів. Буде закритий через 7 днів.'
-          stale-issue-label: stale
-          stale-pr-label: stale
-          days-before-issue-stale: 60
-          days-before-issue-close: 7
-          days-before-pr-stale: 30
-          days-before-pr-close: 7
-          exempt-issue-labels: 'pinned,security'
-          exempt-pr-labels: 'pinned,security'
+## File: .github/copilot-instructions.md
+````markdown
+# GitHub Copilot Instructions — Book Club Frontend
+
+## Project Overview
+
+This is a modern **Angular 20** frontend application for a book club platform. It is built with standalone components, signals-based state management, zoneless change detection, and Tailwind CSS for styling.
+
+## Tech Stack
+
+- **Framework**: Angular 20 (standalone, no NgModules)
+- **Language**: TypeScript (strict mode, no `any`)
+- **State Management**: Angular Signals (`signal()`, `computed()`, `effect()`)
+- **Change Detection**: Zoneless (`provideExperimentalZonelessChangeDetection`)
+- **Styling**: Tailwind CSS + SCSS design tokens
+- **Testing**: Jest + @testing-library/angular + Playwright (e2e)
+- **HTTP**: Typed repository services with `HttpClient`
+- **Auth**: JWT with `httpOnly` cookies, functional route guards
+- **i18n**: `@ngx-translate/core` with lazy-loaded translation files
+- **Linting**: ESLint with `@angular-eslint` + Prettier
+- **CI/CD**: GitHub Actions
+
+## Architecture Conventions
+
+- All components must be `standalone: true` with `ChangeDetectionStrategy.OnPush`
+- State lives in signal-based services — never in component properties
+- Use `computed()` for derived state, `effect()` only for side effects
+- HTTP calls go through typed repository services (`BookRepository`, `UserRepository`, etc.)
+- DTOs map API responses → domain models inside repository layer
+- Functional guards (`CanActivateFn`, `CanMatchFn`) for route protection
+- Reactive forms only (`ReactiveFormsModule`), always typed `FormGroup<{}>`
+
+## Folder Structure
+
+```
+src/
+├── app/
+│   ├── core/           # Singleton services, interceptors, guards, error handler
+│   ├── shared/         # Reusable components, directives, pipes
+│   ├── layout/         # Shell, header, footer
+│   ├── features/       # Lazy-loaded feature modules (books, profile, auth)
+│   └── app.config.ts   # Bootstrap providers
+├── assets/
+│   └── i18n/           # Translation files per locale
+└── styles/
+    ├── tokens/         # CSS custom properties (colors, spacing, typography)
+    ├── base/           # Reset, typography
+    └── utilities/      # Helper classes
+```
+
+## Code Quality Rules
+
+- **No `any`** — all types must be explicit
+- **No `::ng-deep`** — use CSS custom properties for theming
+- **No `localStorage` for tokens** — use `httpOnly` cookies or `sessionStorage`
+- **No `bypassSecurityTrustHtml`** without explicit security review
+- **No NgModules** — everything is standalone
+- Always handle 401 (token refresh), 403 (redirect), 500 (toast + log) in HTTP interceptor chain
+- All user-visible strings must be wrapped with `@ngx-translate` or `$localize`
+
+## Testing Expectations
+
+- Unit tests for all services and utilities (80%+ coverage)
+- Component tests using `@testing-library/angular` (behavior-driven)
+- E2E tests with Playwright for auth flow and critical user journeys
+- Mock `HttpClient` with `HttpClientTestingModule` + `HttpTestingController`
+
+## Agent Delegation Policy
+
+**ALWAYS delegate tasks to the appropriate MCP agent first.** Do not implement directly unless no suitable agent exists. Use parallel agent invocations when tasks are independent.
+
+### Routing Rules (strict)
+
+| Task type | Agent to use |
+|---|---|
+| CI/CD, GitHub Actions, deployment, Docker | `devops` |
+| Security audit, XSS, CSP, JWT, secret scanning | `security` |
+| Tests, coverage, Lighthouse, Playwright, contract tests | `tester` |
+| Components, Tailwind, animations, accessibility, design system | `ui` |
+| SEO, microcopy, semantic HTML, API docs, i18n copy | `web-quality-enhancer` |
+| Pre-commit review, PR readiness, Husky | `reviewer` |
+| Angular architecture, signals, routing, forms, services | `dev` |
+| Java Spring Boot backend, REST API, JPA, Kafka, Testcontainers | `java-backend-dev` |
+
+### Delegation Rules
+
+1. **Default to agents** — if a task matches an agent's domain, invoke that agent via the `task` tool
+2. **Parallel when possible** — if multiple independent tasks exist, launch multiple agents simultaneously
+3. **Copilot only does** — file reads, planning, coordination, simple 1-line fixes, git commits after agents finish
+4. **Never implement directly** what an agent specializes in — always delegate first
+
+## Custom Agents Available
+
+All agents are provided via the shared **book-club-mcp** server (`.vscode/mcp.json`).
+When invoking agents via the `task` tool, **always use the model specified below** — never default to a different model.
+
+| Agent | Model | Purpose |
+|---|---|---|
+| `dev` | `claude-sonnet-4.6` | Angular 20 architecture, implementation, and code review |
+| `reviewer` | `gpt-4.1` | Pre-commit review, Husky setup, PR readiness checks |
+| `devops` | `gpt-4.1` | CI/CD pipelines, GitHub Actions, deployment automation |
+| `security` | `claude-sonnet-4.6` | XSS, CSP, JWT security audits and input sanitization |
+| `tester` | `gpt-4.1` | Visual regression, Lighthouse, contract testing setup |
+| `ui` | `claude-haiku-4.5` | Design system, Tailwind, animations, accessibility |
+| `web-quality-enhancer` | `claude-sonnet-4.6` | SEO, microcopy, semantic HTML, API docs |
+| `java-backend-dev` | `claude-sonnet-4.6` | Java 21 microservices, Spring Boot, JPA, Kafka, JWT |
 ````
 
 ## File: src/app/core/auth/token.store.ts
@@ -4939,148 +5208,37 @@ export class TokenStore {
 }
 ````
 
-## File: src/app/core/services/event.service.ts
+## File: src/app/core/models/event.model.ts
 ````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { ApiEvent, mapEvent } from '../api/api-mappers';
-import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
-export interface CreateEventPayload {
+export type EventStatus = 'scheduled' | 'active' | 'held' | 'cancelled' | 'rescheduled';
+export interface AfterMeetingVenue {
+  name: string;
+  address: string;
+  description?: string;
+  lat?: number;
+  lng?: number;
+}
+export interface ClubEvent {
+  id: string;
+  clubId: string;
+  clubName: string;
+  organizerId: string;
   title: string;
-  description?: string | null;
+  description: string | null;
   date: string;
   city: string;
-  address?: string | null;
-  lat?: number | null;
-  lng?: number | null;
-  theme?: string | null;
-  tags?: string[];
-  durationMinutes?: number | null;
-  afterMeetingVenue?: AfterMeetingVenue | null;
-  coverUrl?: string | null;
-}
-@Injectable({ providedIn: 'root' })
-export class EventService {
-  private readonly http = inject(HttpClient);
-  private readonly _allEvents = signal<ClubEvent[]>([]);
-  private readonly _myEvents = signal<ClubEvent[]>([]);
-  private readonly _isLoading = signal(false);
-  private readonly _error = signal<string | null>(null);
-  private readonly _cityFilter = signal<string | null>(null);
-  readonly allEvents = this._allEvents.asReadonly();
-  readonly myEvents = this._myEvents.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly error = this._error.asReadonly();
-  readonly cityFilter = this._cityFilter.asReadonly();
-  readonly filteredAllEvents = computed(() => {
-    const city = this._cityFilter();
-    const events = this._allEvents();
-    return city ? events.filter(e => e.city === city) : events;
-  });
-  readonly availableCities = computed<string[]>(() => {
-    const seen = new Set<string>();
-    for (const e of this._allEvents()) seen.add(e.city);
-    return [...seen].sort((a, b) => a.localeCompare(b));
-  });
-  readonly groupedByDate = computed<Record<string, ClubEvent[]>>(() => {
-    return this.filteredAllEvents().reduce<Record<string, ClubEvent[]>>((acc, e) => {
-      const day = e.date.slice(0, 10);
-      if (!acc[day]) acc[day] = [];
-      acc[day].push(e);
-      return acc;
-    }, {});
-  });
-  setCityFilter(city: string | null): void {
-    this._cityFilter.set(city);
-  }
-  async loadAllEvents(skip = 0, limit = 50): Promise<void> {
-    this._isLoading.set(true);
-    this._error.set(null);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events`, {
-          params: { skip: String(skip), limit: String(limit) },
-        }),
-      );
-      this._allEvents.set(raw.map(mapEvent));
-    } catch {
-      this._error.set('Failed to load events');
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async loadMyEvents(): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events/my`),
-      );
-      this._myEvents.set(raw.map(mapEvent));
-    } catch {
-      this._error.set('Failed to load my events');
-    }
-  }
-  async getEventById(id: string): Promise<ClubEvent | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`),
-      );
-      return mapEvent(raw);
-    } catch {
-      return null;
-    }
-  }
-  async attendEvent(eventId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/events/${eventId}/attend`, {}),
-    );
-    this._patchEventAttending(eventId, true);
-  }
-  async cancelAttendance(eventId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/events/${eventId}/attend`),
-    );
-    this._patchEventAttending(eventId, false);
-  }
-  async createEvent(clubId: string, payload: CreateEventPayload): Promise<ClubEvent> {
-    const raw = await firstValueFrom(
-      this.http.post<ApiEvent>(`${environment.apiUrl}/clubs/${clubId}/events`, payload),
-    );
-    return mapEvent(raw);
-  }
-  async rescheduleEvent(eventId: string, newDate: string, newCity?: string, newAddress?: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/reschedule`, {
-        newDate,
-        newCity: newCity ?? null,
-        newAddress: newAddress ?? null,
-      }),
-    );
-    const updated = mapEvent(raw);
-    this._updateEvent(updated);
-  }
-  async cancelEvent(eventId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/cancel`, {}),
-    );
-    const updated = mapEvent(raw);
-    this._updateEvent(updated);
-  }
-  private _patchEventAttending(eventId: string, attending: boolean): void {
-    const patch = (list: ClubEvent[]) =>
-      list.map(e =>
-        e.id === eventId
-          ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
-          : e,
-      );
-    this._allEvents.update(patch);
-    this._myEvents.update(patch);
-  }
-  private _updateEvent(updated: ClubEvent): void {
-    this._allEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
-    this._myEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
-  }
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  status: EventStatus;
+  cancelledAt?: string;
+  coverUrl: string | null;
+  theme: string | null;
+  tags: string[];
+  durationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  attendeeCount: number;
+  isAttending: boolean;
 }
 ````
 
@@ -5407,229 +5565,112 @@ export class LoginComponent {
 
 ````
 
-## File: src/app/features/events/create-event/create-event.component.html
+## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.html
 ````html
-<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
-  <nav>
-    <a [routerLink]="['/clubs', clubId()]"
-       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-      ← Back to Club
+<div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <a
+      [routerLink]="['/clubs', clubId(), 'quizzes']"
+      class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">📝</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
+      </div>
     </a>
-  </nav>
-  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create Event</h1>
-    @if (errorMessage()) {
-      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-        {{ errorMessage() }}
-      </div>
-    }
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+    <a
+      [routerLink]="['/clubs', clubId(), 'randomizer']"
+      class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">🎲</span>
       <div>
-        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Title <span class="text-red-500">*</span>
-        </label>
-        <input id="title" type="text" formControlName="title"
-               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-               placeholder="April Discussion" />
-        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Title is required.</p>
-        }
+        <p class="font-semibold">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
       </div>
+    </a>
+    <a
+      [routerLink]="['/clubs', clubId(), 'edit']"
+      class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">✏️</span>
       <div>
-        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-        <textarea id="description" formControlName="description" rows="3"
-                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
-                  placeholder="What will you be reading or discussing?"></textarea>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.edit_club_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.edit_club_desc' | translate }}</p>
       </div>
+    </a>
+    <a
+      [routerLink]="['/clubs', clubId(), 'events', 'create']"
+      class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-4 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">📅</span>
       <div>
-        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Date & Time <span class="text-red-500">*</span>
-        </label>
-        <input id="date" type="datetime-local" formControlName="date"
-               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500" />
-        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Date is required.</p>
-        }
+        <p class="font-semibold">{{ 'CLUB_DETAIL.create_event_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.create_event_desc' | translate }}</p>
       </div>
-      <div>
-        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Location <span class="text-red-500">*</span>
-        </p>
-        <app-address-autocomplete
-          [control]="form.controls.address"
-          placeholder="Start typing an address…"
-          (selected)="onAddressSelect($event)"
-        />
-        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Location is required.</p>
-        }
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
-          <input id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
-                 class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                 placeholder="120" />
-        </div>
-        <div>
-          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
-          <input id="theme" type="text" formControlName="theme"
-                 class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                 placeholder="sci-fi" />
-        </div>
-      </div>
-      <div>
-        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
-        <input id="tags" type="text" formControlName="tagsRaw"
-               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-               placeholder="fiction, dystopia, classic (comma-separated)" />
-      </div>
-      <div>
-        <label for="cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cover image URL</label>
-        @if (form.controls.coverUrl.value) {
-          <div class="mb-2 rounded-xl overflow-hidden h-24 bg-gray-100 dark:bg-gray-700">
-            <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover" />
-          </div>
-        }
-        <input id="cover-url" type="url" formControlName="coverUrl"
-               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-               placeholder="https://example.com/cover.jpg" />
-        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Paste a public image link (JPG, PNG, WebP)</p>
-      </div>
-      <div>
-        <button type="button" (click)="toggleAfterVenue()"
-                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
-          {{ showAfterVenue() ? '− Remove after-meeting venue' : '+ Add after-meeting venue' }}
-        </button>
-        @if (showAfterVenue()) {
-          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
-            <div>
-              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Venue name <span class="text-red-500">*</span></label>
-              <input id="afterVenueName" type="text" formControlName="afterVenueName"
-                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="Cozy Cafe" />
-            </div>
-            <div>
-              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
-              <input id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
-                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="123 Main St" />
-            </div>
-            <div>
-              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-              <input id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
-                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="Optional notes" />
-            </div>
-          </div>
-        }
-      </div>
-      <div class="flex justify-end gap-3 pt-2">
-        <a [routerLink]="['/clubs', clubId()]"
-           class="rounded-xl border border-gray-300 dark:border-gray-600 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-          Cancel
-        </a>
-        <button type="submit" [disabled]="form.invalid || isSubmitting()"
-                class="rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
-          @if (isSubmitting()) { Creating… } @else { Create Event }
-        </button>
-      </div>
-    </form>
+    </a>
   </div>
-</main>
+</div>
 ````
 
-## File: src/app/features/events/create-event/create-event.component.ts
+## File: src/app/features/clubs/clubs.routes.ts
 ````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  input,
-} from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { EventService } from '../../../core/services/event.service';
-import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
-import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
-@Component({
-  selector: 'app-create-event',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent],
-  templateUrl: './create-event.component.html',
-})
-export class CreateEventComponent {
-  readonly clubId = input.required<string>();
-  private readonly fb = inject(FormBuilder);
-  private readonly eventService = inject(EventService);
-  private readonly router = inject(Router);
-  readonly isSubmitting = signal(false);
-  readonly errorMessage = signal<string | null>(null);
-  readonly showAfterVenue = signal(false);
-  readonly form = this.fb.nonNullable.group({
-    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
-    description: [''],
-    date: ['', Validators.required],
-    city: ['', Validators.required],
-    address: [''],
-    lat: [null as number | null],
-    lng: [null as number | null],
-    theme: [''],
-    tagsRaw: [''],
-    durationMinutes: [null as number | null, [Validators.min(15), Validators.max(480)]],
-    afterVenueName: [''],
-    afterVenueAddress: [''],
-    afterVenueDescription: [''],
-    coverUrl: [''],
-  });
-  onAddressSelect(suggestion: GeocodeSuggestion): void {
-    this.form.patchValue({
-      city: suggestion.city ?? suggestion.label,
-      address: suggestion.label,
-      lat: suggestion.lat,
-      lng: suggestion.lng,
-    });
-  }
-  toggleAfterVenue(): void {
-    this.showAfterVenue.update(v => !v);
-    if (!this.showAfterVenue()) {
-      this.form.patchValue({ afterVenueName: '', afterVenueAddress: '', afterVenueDescription: '' });
-    }
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid || this.isSubmitting()) return;
-    this.isSubmitting.set(true);
-    this.errorMessage.set(null);
-    const v = this.form.getRawValue();
-    const tags = v.tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
-    const afterMeetingVenue = this.showAfterVenue() && v.afterVenueName
-      ? { name: v.afterVenueName, address: v.afterVenueAddress, description: v.afterVenueDescription || undefined }
-      : undefined;
-    try {
-      const created = await this.eventService.createEvent(this.clubId(), {
-        title: v.title,
-        description: v.description || undefined,
-        date: new Date(v.date).toISOString(),
-        city: v.city,
-        address: v.address || undefined,
-        lat: v.lat ?? undefined,
-        lng: v.lng ?? undefined,
-        theme: v.theme || undefined,
-        tags,
-        durationMinutes: v.durationMinutes ?? undefined,
-        afterMeetingVenue,
-        coverUrl: v.coverUrl || null,
-      });
-      await this.router.navigate(['/events', created.id]);
-    } catch {
-      this.errorMessage.set('Failed to create event. Please try again.');
-    } finally {
-      this.isSubmitting.set(false);
-    }
-  }
-}
+import { Routes } from '@angular/router';
+import { authGuard } from '../../core/auth/auth.guard';
+import { roleGuard } from '../../core/auth/role.guard';
+import { ClubsListComponent } from './clubs-list/clubs-list.component';
+import { ClubDetailComponent } from './club-detail/club-detail.component';
+import { CreateClubComponent } from './create-club/create-club.component';
+export const CLUBS_ROUTES: Routes = [
+  {
+    path: '',
+    component: ClubsListComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'create',
+    component: CreateClubComponent,
+    canActivate: [authGuard, roleGuard('organizer')],
+  },
+  {
+    path: ':id',
+    children: [
+      {
+        path: '',
+        component: ClubDetailComponent,
+        canActivate: [authGuard],
+      },
+      {
+        path: 'randomizer',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('../randomizer/randomizer.component').then(
+            m => m.RandomizerComponent,
+          ),
+      },
+      {
+        path: 'quizzes',
+        loadChildren: () =>
+          import('../quiz/quiz.routes').then(m => m.QUIZ_ROUTES),
+      },
+      {
+        path: 'events/create',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('../events/create-event/create-event.component').then(
+            m => m.CreateEventComponent,
+          ),
+      },
+      {
+        path: 'edit',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('./edit-club/edit-club.component').then(m => m.EditClubComponent),
+      },
+    ],
+  },
+];
 ````
 
 ## File: src/app/features/events/events-feed/events-feed.component.ts
@@ -6736,6 +6777,151 @@ export interface ClubMemberDetail {
 }
 ````
 
+## File: src/app/core/services/event.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiEvent, mapEvent } from '../api/api-mappers';
+import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
+export interface CreateEventPayload {
+  title: string;
+  description?: string | null;
+  date: string;
+  city: string;
+  address?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  theme?: string | null;
+  tags?: string[];
+  durationMinutes?: number | null;
+  afterMeetingVenue?: AfterMeetingVenue | null;
+  coverUrl?: string | null;
+}
+@Injectable({ providedIn: 'root' })
+export class EventService {
+  private readonly http = inject(HttpClient);
+  private readonly _allEvents = signal<ClubEvent[]>([]);
+  private readonly _myEvents = signal<ClubEvent[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _error = signal<string | null>(null);
+  private readonly _cityFilter = signal<string | null>(null);
+  readonly allEvents = this._allEvents.asReadonly();
+  readonly myEvents = this._myEvents.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly cityFilter = this._cityFilter.asReadonly();
+  readonly filteredAllEvents = computed(() => {
+    const city = this._cityFilter();
+    const events = this._allEvents();
+    return city ? events.filter(e => e.city === city) : events;
+  });
+  readonly availableCities = computed<string[]>(() => {
+    const seen = new Set<string>();
+    for (const e of this._allEvents()) seen.add(e.city);
+    return [...seen].sort((a, b) => a.localeCompare(b));
+  });
+  readonly groupedByDate = computed<Record<string, ClubEvent[]>>(() => {
+    return this.filteredAllEvents().reduce<Record<string, ClubEvent[]>>((acc, e) => {
+      const day = e.date.slice(0, 10);
+      if (!acc[day]) acc[day] = [];
+      acc[day].push(e);
+      return acc;
+    }, {});
+  });
+  setCityFilter(city: string | null): void {
+    this._cityFilter.set(city);
+  }
+  async loadAllEvents(skip = 0, limit = 50): Promise<void> {
+    this._isLoading.set(true);
+    this._error.set(null);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events`, {
+          params: { skip: String(skip), limit: String(limit) },
+        }),
+      );
+      this._allEvents.set(raw.map(mapEvent));
+    } catch {
+      this._error.set('Failed to load events');
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async loadMyEvents(): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events/my`),
+      );
+      this._myEvents.set(raw.map(mapEvent));
+    } catch {
+      this._error.set('Failed to load my events');
+    }
+  }
+  async getEventById(id: string): Promise<ClubEvent | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`),
+      );
+      return mapEvent(raw);
+    } catch {
+      return null;
+    }
+  }
+  async attendEvent(eventId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/events/${eventId}/attend`, {}),
+    );
+    this._patchEventAttending(eventId, true);
+  }
+  async cancelAttendance(eventId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/events/${eventId}/attend`),
+    );
+    this._patchEventAttending(eventId, false);
+  }
+  async createEvent(clubId: string, payload: CreateEventPayload): Promise<ClubEvent> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiEvent>(`${environment.apiUrl}/clubs/${clubId}/events`, payload),
+    );
+    return mapEvent(raw);
+  }
+  async rescheduleEvent(eventId: string, newDate: string, newCity?: string, newAddress?: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/reschedule`, {
+        newDate,
+        newCity: newCity ?? null,
+        newAddress: newAddress ?? null,
+      }),
+    );
+    const updated = mapEvent(raw);
+    this._updateEvent(updated);
+  }
+  async cancelEvent(eventId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/cancel`, {}),
+    );
+    const updated = mapEvent(raw);
+    this._updateEvent(updated);
+  }
+  private _patchEventAttending(eventId: string, attending: boolean): void {
+    const patch = (list: ClubEvent[]) =>
+      list.map(e =>
+        e.id === eventId
+          ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
+          : e,
+      );
+    this._allEvents.update(patch);
+    this._myEvents.update(patch);
+  }
+  private _updateEvent(updated: ClubEvent): void {
+    this._allEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
+    this._myEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
+  }
+}
+````
+
 ## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
 ````html
 <div class="rounded-2xl bg-white dark:bg-gray-800 shadow hover:shadow-lg transition-shadow flex flex-col overflow-hidden">
@@ -6833,6 +7019,231 @@ export class ClubCardComponent {
     const target = new Date(dateStr).getTime();
     const now = Date.now();
     return Math.round((target - now) / 86400000);
+  }
+}
+````
+
+## File: src/app/features/events/create-event/create-event.component.html
+````html
+<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
+  <nav>
+    <a [routerLink]="['/clubs', clubId()]"
+       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+      ← Back to Club
+    </a>
+  </nav>
+  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create Event</h1>
+    @if (errorMessage()) {
+      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+      <div>
+        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Title <span class="text-red-500">*</span>
+        </label>
+        <input id="title" type="text" formControlName="title"
+               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+               placeholder="April Discussion" />
+        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Title is required.</p>
+        }
+      </div>
+      <div>
+        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+        <textarea id="description" formControlName="description" rows="3"
+                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                  placeholder="What will you be reading or discussing?"></textarea>
+      </div>
+      <div>
+        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Date & Time <span class="text-red-500">*</span>
+        </label>
+        <input id="date" type="datetime-local" formControlName="date"
+               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500" />
+        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Date is required.</p>
+        }
+      </div>
+      <div>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Location <span class="text-red-500">*</span>
+        </p>
+        <app-address-autocomplete
+          [control]="form.controls.address"
+          placeholder="Start typing an address…"
+          (selected)="onAddressSelect($event)"
+        />
+        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Location is required.</p>
+        }
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
+          <input id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
+                 class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                 placeholder="120" />
+        </div>
+        <div>
+          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
+          <input id="theme" type="text" formControlName="theme"
+                 class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                 placeholder="sci-fi" />
+        </div>
+      </div>
+      <div>
+        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
+        <input id="tags" type="text" formControlName="tagsRaw"
+               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+               placeholder="fiction, dystopia, classic (comma-separated)" />
+      </div>
+      <div>
+        <label for="cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cover image URL</label>
+        @if (form.controls.coverUrl.value) {
+          <div class="mb-2 rounded-xl overflow-hidden h-24 bg-gray-100 dark:bg-gray-700">
+            <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover" />
+          </div>
+        }
+        <input id="cover-url" type="url" formControlName="coverUrl"
+               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+               placeholder="https://example.com/cover.jpg" />
+        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Paste a public image link (JPG, PNG, WebP)</p>
+      </div>
+      <div>
+        <button type="button" (click)="toggleAfterVenue()"
+                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
+          {{ showAfterVenue() ? '− Remove after-meeting venue' : '+ Add after-meeting venue' }}
+        </button>
+        @if (showAfterVenue()) {
+          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
+            <div>
+              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Venue name <span class="text-red-500">*</span></label>
+              <input id="afterVenueName" type="text" formControlName="afterVenueName"
+                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                     placeholder="Cozy Cafe" />
+            </div>
+            <div>
+              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
+              <input id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
+                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                     placeholder="123 Main St" />
+            </div>
+            <div>
+              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+              <input id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
+                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                     placeholder="Optional notes" />
+            </div>
+          </div>
+        }
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <a [routerLink]="['/clubs', clubId()]"
+           class="rounded-xl border border-gray-300 dark:border-gray-600 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+          Cancel
+        </a>
+        <button type="submit" [disabled]="form.invalid || isSubmitting()"
+                class="rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
+          @if (isSubmitting()) { Creating… } @else { Create Event }
+        </button>
+      </div>
+    </form>
+  </div>
+</main>
+````
+
+## File: src/app/features/events/create-event/create-event.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  input,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { EventService } from '../../../core/services/event.service';
+import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
+import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
+@Component({
+  selector: 'app-create-event',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent],
+  templateUrl: './create-event.component.html',
+})
+export class CreateEventComponent {
+  readonly clubId = input.required<string>();
+  private readonly fb = inject(FormBuilder);
+  private readonly eventService = inject(EventService);
+  private readonly router = inject(Router);
+  readonly isSubmitting = signal(false);
+  readonly errorMessage = signal<string | null>(null);
+  readonly showAfterVenue = signal(false);
+  readonly form = this.fb.nonNullable.group({
+    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
+    description: [''],
+    date: ['', Validators.required],
+    city: ['', Validators.required],
+    address: [''],
+    lat: [null as number | null],
+    lng: [null as number | null],
+    theme: [''],
+    tagsRaw: [''],
+    durationMinutes: [null as number | null, [Validators.min(15), Validators.max(480)]],
+    afterVenueName: [''],
+    afterVenueAddress: [''],
+    afterVenueDescription: [''],
+    coverUrl: [''],
+  });
+  onAddressSelect(suggestion: GeocodeSuggestion): void {
+    this.form.patchValue({
+      city: suggestion.city ?? suggestion.label,
+      address: suggestion.label,
+      lat: suggestion.lat,
+      lng: suggestion.lng,
+    });
+  }
+  toggleAfterVenue(): void {
+    this.showAfterVenue.update(v => !v);
+    if (!this.showAfterVenue()) {
+      this.form.patchValue({ afterVenueName: '', afterVenueAddress: '', afterVenueDescription: '' });
+    }
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid || this.isSubmitting()) return;
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+    const v = this.form.getRawValue();
+    const tags = v.tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+    const afterMeetingVenue = this.showAfterVenue() && v.afterVenueName
+      ? { name: v.afterVenueName, address: v.afterVenueAddress, description: v.afterVenueDescription || undefined }
+      : undefined;
+    try {
+      const created = await this.eventService.createEvent(this.clubId(), {
+        title: v.title,
+        description: v.description || undefined,
+        date: new Date(v.date).toISOString(),
+        city: v.city,
+        address: v.address || undefined,
+        lat: v.lat ?? undefined,
+        lng: v.lng ?? undefined,
+        theme: v.theme || undefined,
+        tags,
+        durationMinutes: v.durationMinutes ?? undefined,
+        afterMeetingVenue,
+        coverUrl: v.coverUrl || null,
+      });
+      await this.router.navigate(['/events', created.id]);
+    } catch {
+      this.errorMessage.set('Failed to create event. Please try again.');
+    } finally {
+      this.isSubmitting.set(false);
+    }
   }
 }
 ````
@@ -7109,114 +7520,6 @@ module.exports = defineConfig([
     }
   ]
 }
-````
-
-## File: .github/copilot-instructions.md
-````markdown
-# GitHub Copilot Instructions — Book Club Frontend
-
-## Project Overview
-
-This is a modern **Angular 20** frontend application for a book club platform. It is built with standalone components, signals-based state management, zoneless change detection, and Tailwind CSS for styling.
-
-## Tech Stack
-
-- **Framework**: Angular 20 (standalone, no NgModules)
-- **Language**: TypeScript (strict mode, no `any`)
-- **State Management**: Angular Signals (`signal()`, `computed()`, `effect()`)
-- **Change Detection**: Zoneless (`provideExperimentalZonelessChangeDetection`)
-- **Styling**: Tailwind CSS + SCSS design tokens
-- **Testing**: Jest + @testing-library/angular + Playwright (e2e)
-- **HTTP**: Typed repository services with `HttpClient`
-- **Auth**: JWT with `httpOnly` cookies, functional route guards
-- **i18n**: `@ngx-translate/core` with lazy-loaded translation files
-- **Linting**: ESLint with `@angular-eslint` + Prettier
-- **CI/CD**: GitHub Actions
-
-## Architecture Conventions
-
-- All components must be `standalone: true` with `ChangeDetectionStrategy.OnPush`
-- State lives in signal-based services — never in component properties
-- Use `computed()` for derived state, `effect()` only for side effects
-- HTTP calls go through typed repository services (`BookRepository`, `UserRepository`, etc.)
-- DTOs map API responses → domain models inside repository layer
-- Functional guards (`CanActivateFn`, `CanMatchFn`) for route protection
-- Reactive forms only (`ReactiveFormsModule`), always typed `FormGroup<{}>`
-
-## Folder Structure
-
-```
-src/
-├── app/
-│   ├── core/           # Singleton services, interceptors, guards, error handler
-│   ├── shared/         # Reusable components, directives, pipes
-│   ├── layout/         # Shell, header, footer
-│   ├── features/       # Lazy-loaded feature modules (books, profile, auth)
-│   └── app.config.ts   # Bootstrap providers
-├── assets/
-│   └── i18n/           # Translation files per locale
-└── styles/
-    ├── tokens/         # CSS custom properties (colors, spacing, typography)
-    ├── base/           # Reset, typography
-    └── utilities/      # Helper classes
-```
-
-## Code Quality Rules
-
-- **No `any`** — all types must be explicit
-- **No `::ng-deep`** — use CSS custom properties for theming
-- **No `localStorage` for tokens** — use `httpOnly` cookies or `sessionStorage`
-- **No `bypassSecurityTrustHtml`** without explicit security review
-- **No NgModules** — everything is standalone
-- Always handle 401 (token refresh), 403 (redirect), 500 (toast + log) in HTTP interceptor chain
-- All user-visible strings must be wrapped with `@ngx-translate` or `$localize`
-
-## Testing Expectations
-
-- Unit tests for all services and utilities (80%+ coverage)
-- Component tests using `@testing-library/angular` (behavior-driven)
-- E2E tests with Playwright for auth flow and critical user journeys
-- Mock `HttpClient` with `HttpClientTestingModule` + `HttpTestingController`
-
-## Agent Delegation Policy
-
-**ALWAYS delegate tasks to the appropriate MCP agent first.** Do not implement directly unless no suitable agent exists. Use parallel agent invocations when tasks are independent.
-
-### Routing Rules (strict)
-
-| Task type | Agent to use |
-|---|---|
-| CI/CD, GitHub Actions, deployment, Docker | `devops` |
-| Security audit, XSS, CSP, JWT, secret scanning | `security` |
-| Tests, coverage, Lighthouse, Playwright, contract tests | `tester` |
-| Components, Tailwind, animations, accessibility, design system | `ui` |
-| SEO, microcopy, semantic HTML, API docs, i18n copy | `web-quality-enhancer` |
-| Pre-commit review, PR readiness, Husky | `reviewer` |
-| Angular architecture, signals, routing, forms, services | `dev` |
-| Java Spring Boot backend, REST API, JPA, Kafka, Testcontainers | `java-backend-dev` |
-
-### Delegation Rules
-
-1. **Default to agents** — if a task matches an agent's domain, invoke that agent via the `task` tool
-2. **Parallel when possible** — if multiple independent tasks exist, launch multiple agents simultaneously
-3. **Copilot only does** — file reads, planning, coordination, simple 1-line fixes, git commits after agents finish
-4. **Never implement directly** what an agent specializes in — always delegate first
-
-## Custom Agents Available
-
-All agents are provided via the shared **book-club-mcp** server (`.vscode/mcp.json`).
-When invoking agents via the `task` tool, **always use the model specified below** — never default to a different model.
-
-| Agent | Model | Purpose |
-|---|---|---|
-| `dev` | `claude-sonnet-4.6` | Angular 20 architecture, implementation, and code review |
-| `reviewer` | `gpt-4.1` | Pre-commit review, Husky setup, PR readiness checks |
-| `devops` | `gpt-4.1` | CI/CD pipelines, GitHub Actions, deployment automation |
-| `security` | `claude-sonnet-4.6` | XSS, CSP, JWT security audits and input sanitization |
-| `tester` | `gpt-4.1` | Visual regression, Lighthouse, contract testing setup |
-| `ui` | `claude-haiku-4.5` | Design system, Tailwind, animations, accessibility |
-| `web-quality-enhancer` | `claude-sonnet-4.6` | SEO, microcopy, semantic HTML, API docs |
-| `java-backend-dev` | `claude-sonnet-4.6` | Java 21 microservices, Spring Boot, JPA, Kafka, JWT |
 ````
 
 ## File: src/app/core/interceptors/auth.interceptor.ts
@@ -7930,196 +8233,6 @@ sonar.coverage.exclusions=\
 sonar.sourceEncoding=UTF-8
 ````
 
-## File: src/app/core/api/api-mappers.ts
-````typescript
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
-import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
-export interface ApiUserProfile {
-  id: string;
-  email: string;
-  role: UserRole;
-  displayName: string;
-  avatarUrl: string | null;
-  createdAt: string;
-  socials?: ApiUserSocials | null;
-  socialsPublic?: boolean;
-}
-export interface ApiUserSocials {
-  telegram?: string | null;
-  instagram?: string | null;
-  twitter?: string | null;
-  linkedin?: string | null;
-  github?: string | null;
-  goodreads?: string | null;
-}
-export interface ApiUserStats {
-  clubsJoined: number;
-  quizzesTaken: number;
-  quizWins: number;
-  likesReceived: number;
-  booksRead: number;
-}
-export interface ApiClub {
-  id: string;
-  name: string;
-  description: string | null;
-  coverUrl: string | null;
-  organizerId: string;
-  isPublic: boolean;
-  memberCount: number;
-  memberPreviews: string[];
-  createdAt: string;
-  city: string | null;
-  nextMeetingDate: string | null;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  theme: string | null;
-  currentBook: string | null;
-  status: ClubStatus;
-  tags: string[];
-  meetingDurationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  cancelledAt?: string | null;
-}
-export interface ApiClubMember {
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  role: 'organizer' | 'member';
-  socials?: ApiUserSocials | null;
-  socialsPublic?: boolean;
-}
-export interface ApiBanRecord {
-  userId: string;
-  clubId: string;
-  bannedAt: string;
-  duration: BanDuration;
-  bannedBy: string;
-}
-export interface ApiEvent {
-  id: string;
-  clubId: string;
-  clubName: string;
-  organizerId: string;
-  title: string;
-  description: string | null;
-  date: string;
-  city: string;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  status: EventStatus;
-  cancelledAt?: string | null;
-  coverUrl?: string | null;
-  theme: string | null;
-  tags: string[];
-  durationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  attendeeCount: number;
-  isAttending: boolean;
-}
-export function mapUserProfile(raw: ApiUserProfile): UserProfile {
-  return {
-    id: raw.id,
-    role: raw.role,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-    createdAt: raw.createdAt,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socialsPublic ?? false,
-  };
-}
-export function mapUserStats(raw: ApiUserStats): UserStats {
-  return {
-    clubsJoined: raw.clubsJoined,
-    quizzesTaken: raw.quizzesTaken,
-    quizWins: raw.quizWins,
-    likesReceived: raw.likesReceived,
-    booksRead: raw.booksRead,
-  };
-}
-export function mapClub(raw: ApiClub): Club {
-  return {
-    id: raw.id,
-    name: raw.name,
-    description: raw.description,
-    coverUrl: raw.coverUrl,
-    organizerId: raw.organizerId,
-    isPublic: raw.isPublic,
-    memberCount: raw.memberCount,
-    memberPreviews: raw.memberPreviews,
-    createdAt: raw.createdAt,
-    city: raw.city ?? '',
-    nextMeetingDate: raw.nextMeetingDate,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    theme: raw.theme,
-    currentBook: raw.currentBook ? { title: raw.currentBook, author: '', description: '' } : null,
-    status: raw.status,
-    tags: raw.tags,
-    meetingDurationMinutes: raw.meetingDurationMinutes,
-    afterMeetingVenue: raw.afterMeetingVenue,
-    cancelledAt: raw.cancelledAt ?? undefined,
-  };
-}
-export function mapEvent(raw: ApiEvent): ClubEvent {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    clubName: raw.clubName,
-    organizerId: raw.organizerId,
-    title: raw.title,
-    description: raw.description,
-    date: raw.date,
-    city: raw.city,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    status: raw.status,
-    cancelledAt: raw.cancelledAt ?? undefined,
-    coverUrl: raw.coverUrl ?? null,
-    theme: raw.theme,
-    tags: raw.tags,
-    durationMinutes: raw.durationMinutes,
-    afterMeetingVenue: raw.afterMeetingVenue,
-    attendeeCount: raw.attendeeCount,
-    isAttending: raw.isAttending,
-  };
-}
-export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
-  return {
-    userId: raw.userId,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-    role: raw.role,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socialsPublic ?? false,
-  };
-}
-export function mapBanRecord(raw: ApiBanRecord): BanRecord {
-  return {
-    userId: raw.userId,
-    clubId: raw.clubId,
-    bannedAt: raw.bannedAt,
-    duration: raw.duration,
-    bannedBy: raw.bannedBy,
-  };
-}
-function mapSocials(raw: ApiUserSocials): UserSocials {
-  return {
-    telegram: raw.telegram ?? undefined,
-    instagram: raw.instagram ?? undefined,
-    twitter: raw.twitter ?? undefined,
-    linkedin: raw.linkedin ?? undefined,
-    github: raw.github ?? undefined,
-    goodreads: raw.goodreads ?? undefined,
-  };
-}
-````
-
 ## File: src/app/core/services/chat.service.ts
 ````typescript
 import { Injectable, signal, computed, inject } from '@angular/core';
@@ -8372,861 +8485,6 @@ export class RandomizerService {
 }
 ````
 
-## File: public/i18n/en.json
-````json
-{
-  "AUTH": {
-    "activate_account": "Click it to activate your account.",
-    "back_to_login": "Back to sign in",
-    "check_email": "Check your email",
-    "confirm_password": "Confirm password",
-    "confirmation_sent": "We sent a confirmation link to",
-    "create_account_h2": "Create account",
-    "create_account_subtitle": "Create your account",
-    "creating_account": "Creating account…",
-    "display_name": "Display name",
-    "email": "Email",
-    "have_account": "Already have an account?",
-    "no_account": "Don't have an account?",
-    "password": "Password",
-    "password_medium": "Medium",
-    "password_strong": "Strong",
-    "password_weak": "Weak",
-    "passwords_no_match": "Passwords do not match",
-    "register_title": "Register",
-    "role_organizer_desc": "Create clubs & build quizzes",
-    "role_organizer_label": "Organizer",
-    "role_reader_desc": "Join clubs & take quizzes",
-    "role_reader_label": "Reader",
-    "select_role_error": "Please select a role.",
-    "sign_in_h2": "Sign in",
-    "signing_in": "Signing in…",
-    "submit_login": "Log in",
-    "want_to": "I want to…",
-    "welcome_back": "Welcome back",
-    "login_title": "Log In",
-    "submit_register": "Register",
-    "password_strength": "Password strength",
-    "account_created": "Account created successfully!",
-    "welcome_message": "Welcome,"
-  },
-  "CREATE_CLUB": {
-    "subtitle": "Create a new reading community",
-    "title": "Create a Club",
-    "basic_info_legend": "Basic information",
-    "name_label": "Club name",
-    "name_placeholder": "e.g. Northern Readers",
-    "name_required": "Club name is required.",
-    "name_min": "Name must be at least 3 characters.",
-    "name_max": "Name must not exceed 100 characters.",
-    "description_label": "Description",
-    "description_placeholder": "What books will your club read? Who is it for?",
-    "description_max": "Description must not exceed 500 characters.",
-    "city_label": "City",
-    "city_placeholder": "Kyiv",
-    "city_required": "City is required.",
-    "city_max": "City must not exceed 100 characters.",
-    "address_label": "Address",
-    "address_placeholder": "1 Khreshchatyk St.",
-    "address_max": "Address must not exceed 200 characters.",
-    "tags_duration_legend": "Tags & duration",
-    "tags_label": "Tags / Genres",
-    "tags_placeholder": "Classics, Romance, Fantasy",
-    "tags_hint": "Enter genres separated by commas",
-    "tags_max": "Tags must not exceed 300 characters.",
-    "duration_label": "Meeting duration (min)",
-    "duration_placeholder": "90",
-    "duration_min": "Duration must be at least 15 minutes.",
-    "duration_max": "Duration must not exceed 480 minutes.",
-    "visibility_legend": "Visibility",
-    "public_label": "Public club",
-    "public_desc": "Anyone can discover and join",
-    "cover_url_label": "Cover image URL",
-    "cover_url_placeholder": "https://example.com/cover.jpg",
-    "cover_url_hint": "Paste a public image link (JPG, PNG, WebP)",
-    "after_meeting_toggle": "▼ After-meeting venue",
-    "after_meeting_hide": "▲ Hide after-meeting venue info",
-    "venue_name_label": "Venue name",
-    "venue_name_placeholder": "Café Pushkin",
-    "venue_name_max": "Name must not exceed 150 characters.",
-    "venue_address_label": "Venue address",
-    "venue_address_placeholder": "2 Khreshchatyk St.",
-    "venue_address_max": "Address must not exceed 200 characters.",
-    "venue_notes_label": "Notes",
-    "venue_notes_placeholder": "Reservation at 8 pm",
-    "venue_notes_max": "Notes must not exceed 300 characters.",
-    "cancel": "Cancel",
-    "submit": "Create club",
-    "submitting": "Creating…"
-  },
-  "CLUBS": {
-    "active": "Active",
-    "all": "All Clubs",
-    "all_cities": "All cities",
-    "cancelled": "Cancelled",
-    "create": "Create club",
-    "join": "Join",
-    "member_badge": "✓ Member",
-    "member_singular": "member",
-    "members": "members",
-    "missed": "Missed",
-    "my_clubs": "My Clubs",
-    "participated": "Attended",
-    "paused": "Paused",
-    "search_placeholder": "Search clubs...",
-    "search_placeholder_full": "Search by name or description…",
-    "subtitle": "Discover communities of readers near you",
-    "title": "Book Clubs",
-    "view": "View",
-    "upcoming": "Upcoming meetings",
-    "joined": "You're a member",
-    "no_clubs": "No clubs found",
-    "book_current": "Current book",
-    "days_until": "in {{ days }} days"
-  },
-  "CLUB_DETAIL": {
-    "about": "About",
-    "back": "Back to clubs",
-    "back_short": "Back",
-    "cancel": "Cancel",
-    "created": "Created",
-    "join": "Join Club",
-    "leave": "Leave Club",
-    "manage_title": "Club management",
-    "new_date": "New meeting date",
-    "not_found": "Club not found",
-    "organizer_badge": "✨ Organizer",
-    "pause": "Pause",
-    "private": "Private",
-    "quizzes_desc": "Create & manage reading quizzes",
-    "quizzes_title": "Quizzes",
-    "randomizer_desc": "Pick the next book to read",
-    "randomizer_title": "Randomizer",
-    "reschedule": "Reschedule",
-    "reschedule_submit": "Confirm date",
-    "members_title": "Members",
-    "tags_title": "Tags",
-    "organizer_title": "Organizer",
-    "meeting_info_title": "Meeting place & time",
-    "duration_label": "Duration",
-    "minutes_abbr": "min",
-    "address_label": "Address",
-    "view_on_map": "View on map →",
-    "after_meeting_title": "After the meeting",
-    "deletion_countdown_prefix": "This club has been cancelled —",
-    "deletion_countdown_hours": "will be deleted in {{ hours }} h. {{ minutes }} min.",
-    "deletion_countdown_minutes": "will be deleted in {{ minutes }} min.",
-    "close_qr": "✕ Close",
-    "events_title": "Upcoming Events",
-    "events_empty": "No upcoming events scheduled.",
-    "create_event": "＋ Create Event",
-    "sort_nearest": "Nearest",
-    "sort_popular": "Most popular",
-    "sort_status": "By status",
-    "join_cta_title": "Want to join this club?",
-    "join_cta_desc": "Join to attend events and meet fellow readers.",
-    "rsvp_going": "✓ Going",
-    "rsvp_join": "RSVP",
-    "rsvp_view": "View",
-    "rsvp_attending": "attending"
-  },
-  "FOOTER": {
-    "privacy": "Privacy",
-    "rights": "All rights reserved",
-    "terms": "Terms"
-  },
-  "MEMBERS": {
-    "empty": "No members yet",
-    "member": "Member",
-    "organizer": "Organizer",
-    "show_qr": "QR",
-    "socials_hidden": "Hidden",
-    "title": "Members",
-    "kick": "Kick",
-    "ban": "Ban ▾",
-    "ban_1": "1 meeting",
-    "ban_3": "3 meetings",
-    "ban_5": "5 meetings",
-    "ban_permanent": "Permanently"
-  },
-  "NAV": {
-    "back_home": "← Back to home",
-    "discover": "Discover",
-    "join_free": "Join Free",
-    "login": "Log in",
-    "logout": "Log out",
-    "profile": "Profile",
-    "signed_in_as": "Signed in as",
-    "clubs": "Clubs",
-    "my_clubs": "My Clubs",
-    "register": "Register"
-  },
-  "PROFILE": {
-    "active_badge": "✓ Active",
-    "books_read": "Books read",
-    "clubs_joined": "Clubs joined",
-    "display_name_label": "Display Name",
-    "display_name_min": "Must be at least 2 characters.",
-    "display_name_placeholder": "Your display name",
-    "display_name_required": "Display name is required.",
-    "edit_profile": "Edit Profile",
-    "likes_received": "Likes Received",
-    "member_since": "Member since",
-    "name_updated": "Name updated!",
-    "no_stats": "No statistics yet — start joining clubs and taking quizzes!",
-    "quizzes_taken": "Quizzes taken",
-    "quizzes_won": "Quizzes won",
-    "role_changed_prefix": "Role updated to",
-    "role_organizer": "Organizer",
-    "role_organizer_desc": "Create clubs, run quizzes, and manage members.",
-    "role_reader": "Reader",
-    "role_reader_desc": "Discover clubs, join discussions, take quizzes.",
-    "role_subtitle": "Choose how you participate in book clubs.",
-    "role_title": "Your Role",
-    "save": "Save",
-    "save_name": "Save Name",
-    "saving": "Saving…",
-    "socials_public_label": "Show social media to all club members",
-    "socials_saved": "Social media saved!",
-    "socials_title": "Social media",
-    "stats_title": "Statistics",
-    "title": "My Profile",
-    "saved": "Saved!",
-    "role": "Role",
-    "role_admin": "Administrator",
-    "meetings_attended": "Meetings attended",
-    "meetings_missed": "Meetings missed",
-    "randomizer_wins": "Randomizer wins"
-  },
-  "RANDOMIZER": {
-    "back_to_club": "← Back to club",
-    "history_title": "Previous results",
-    "members_title": "Members",
-    "no_members": "No members in this club yet",
-    "purpose_label": "Randomizer purpose",
-    "purpose_placeholder": "e.g. Who presents the book?",
-    "save": "💾 Save result",
-    "saving": "⏳ Saving…",
-    "select_all": "Select all",
-    "selected": "selected",
-    "spin": "🎲 Spin!",
-    "spin_hint": "Press 'Spin' to select a member",
-    "spinning": "Selecting winner…",
-    "spinning_btn": "⏳ Selecting…",
-    "subtitle": "Who's next? Let fate decide.",
-    "title": "Randomizer",
-    "no_history": "No results yet",
-    "error_min": "Select at least 2 members",
-    "winner": "Winner"
-  },
-  "QUIZ": {
-    "title": "Quizzes",
-    "create": "Create quiz",
-    "take": "Start",
-    "results": "Results",
-    "score": "Score"
-  },
-  "CHAT": {
-    "title": "Club Chat",
-    "placeholder": "Type a message...",
-    "send": "Send",
-    "no_messages": "No messages yet",
-    "new_message": "New message",
-    "close": "Close chat",
-    "open": "Open chat",
-    "rooms": "Rooms"
-  },
-  "FORM_ERRORS": {
-    "required": "This field is required.",
-    "email": "Please enter a valid email address.",
-    "minlength": "Minimum {{ requiredLength }} characters required.",
-    "invalid": "Invalid value."
-  },
-  "SEO": {
-    "clubs_title": "Book Clubs | Book Club",
-    "clubs_description": "Find a book club in your city. Book discussions, reader meetups, interest communities.",
-    "clubs_og_title": "Book Clubs",
-    "login_title": "Sign In | Book Club",
-    "register_title": "Register | Book Club",
-    "profile_title": "Profile | Book Club",
-    "club_detail_title": "{{ name }} | Book Club",
-    "club_detail_og_title": "{{ name }}",
-    "site_name": "Book Club",
-    "site_url": "https://book-club-fe.vercel.app",
-    "site_description": "Book Clubs of Ukraine"
-  }
-}
-````
-
-## File: public/i18n/uk.json
-````json
-{
-  "AUTH": {
-    "activate_account": "Натисніть, щоб активувати акаунт.",
-    "back_to_login": "Назад до входу",
-    "check_email": "Перевірте пошту",
-    "confirm_password": "Підтвердіть пароль",
-    "confirmation_sent": "Ми надіслали посилання підтвердження на",
-    "create_account_h2": "Створити акаунт",
-    "create_account_subtitle": "Створіть акаунт",
-    "creating_account": "Створюємо акаунт…",
-    "display_name": "Ім'я користувача",
-    "email": "Email",
-    "have_account": "Вже є акаунт?",
-    "no_account": "Немає акаунту?",
-    "password": "Пароль",
-    "password_medium": "Середній",
-    "password_strong": "Надійний",
-    "password_weak": "Слабкий",
-    "passwords_no_match": "Паролі не збігаються",
-    "register_title": "Реєстрація",
-    "role_organizer_desc": "Створювати клуби та проводити квізи",
-    "role_organizer_label": "Організатор",
-    "role_reader_desc": "Приєднуватись до клубів та проходити квізи",
-    "role_reader_label": "Читач",
-    "select_role_error": "Будь ласка, оберіть роль.",
-    "sign_in_h2": "Увійти",
-    "signing_in": "Входимо…",
-    "submit_login": "Увійти",
-    "want_to": "Я хочу…",
-    "welcome_back": "Ласкаво просимо назад",
-    "login_title": "Вхід",
-    "submit_register": "Зареєструватися",
-    "password_strength": "Надійність паролю",
-    "account_created": "Акаунт успішно створено!",
-    "welcome_message": "Ласкаво просимо,"
-  },
-  "CREATE_CLUB": {
-    "subtitle": "Створіть нову спільноту читачів",
-    "title": "Створити клуб",
-    "basic_info_legend": "Основна інформація",
-    "name_label": "Назва клубу",
-    "name_placeholder": "Напр. Північ читачів",
-    "name_required": "Назва клубу є обов'язковою.",
-    "name_min": "Назва повинна містити щонайменше 3 символи.",
-    "name_max": "Назва не повинна перевищувати 100 символів.",
-    "description_label": "Опис",
-    "description_placeholder": "Які книги буде читати ваш клуб? Для кого він?",
-    "description_max": "Опис не повинен перевищувати 500 символів.",
-    "city_label": "Місто",
-    "city_placeholder": "Київ",
-    "city_required": "Місто є обов'язковим.",
-    "city_max": "Місто не повинно перевищувати 100 символів.",
-    "address_label": "Адреса",
-    "address_placeholder": "вул. Хрещатик, 1",
-    "address_max": "Адреса не повинна перевищувати 200 символів.",
-    "tags_duration_legend": "Теги та тривалість",
-    "tags_label": "Теги / Жанри",
-    "tags_placeholder": "Класика, Романтика, Фентезі",
-    "tags_hint": "Введіть жанри через кому",
-    "tags_max": "Теги не повинні перевищувати 300 символів.",
-    "duration_label": "Тривалість зустрічі (хв)",
-    "duration_placeholder": "90",
-    "duration_min": "Тривалість не може бути менше 15 хвилин.",
-    "duration_max": "Тривалість не може перевищувати 480 хвилин.",
-    "visibility_legend": "Видимість",
-    "public_label": "Публічний клуб",
-    "public_desc": "Хто завгодно може виявити та приєднатися",
-    "cover_url_label": "URL обкладинки",
-    "cover_url_placeholder": "https://example.com/cover.jpg",
-    "cover_url_hint": "Вставте публічне посилання на зображення (JPG, PNG, WebP)",
-    "after_meeting_toggle": "▼ Після зустрічі",
-    "after_meeting_hide": "▲ Приховати інформацію про місце після зустрічі",
-    "venue_name_label": "Назва місця",
-    "venue_name_placeholder": "Кав'ярня «Пушкін»",
-    "venue_name_max": "Назва не повинна перевищувати 150 символів.",
-    "venue_address_label": "Адреса місця",
-    "venue_address_placeholder": "вул. Хрещатик, 2",
-    "venue_address_max": "Адреса не повинна перевищувати 200 символів.",
-    "venue_notes_label": "Примітки",
-    "venue_notes_placeholder": "Бронювання на 20:00",
-    "venue_notes_max": "Примітки не повинні перевищувати 300 символів.",
-    "cancel": "Скасувати",
-    "submit": "Створити клуб",
-    "submitting": "Створення…"
-  },
-  "CLUBS": {
-    "active": "Активний",
-    "all": "Всі клуби",
-    "all_cities": "Всі міста",
-    "cancelled": "Скасовано",
-    "create": "Створити клуб",
-    "join": "Приєднатися",
-    "member_badge": "✓ Учасник",
-    "member_singular": "учасник",
-    "members": "учасників",
-    "missed": "Пропущені",
-    "my_clubs": "Мої клуби",
-    "participated": "Відвідані",
-    "paused": "Призупинено",
-    "search_placeholder": "Шукати клуби...",
-    "search_placeholder_full": "Шукати за назвою або описом…",
-    "subtitle": "Знайдіть спільноти читачів поруч",
-    "title": "Книжкові клуби",
-    "view": "Переглянути",
-    "upcoming": "Найближчі зустрічі",
-    "joined": "Ви учасник",
-    "no_clubs": "Клубів не знайдено",
-    "book_current": "Поточна книга",
-    "days_until": "за {{ days }} дн."
-  },
-  "CLUB_DETAIL": {
-    "about": "Про клуб",
-    "back": "Назад до клубів",
-    "back_short": "Назад",
-    "cancel": "Скасувати",
-    "created": "Створено",
-    "join": "Приєднатись до клубу",
-    "leave": "Покинути клуб",
-    "manage_title": "Управління клубом",
-    "new_date": "Нова дата зустрічі",
-    "not_found": "Клуб не знайдено",
-    "organizer_badge": "✨ Організатор",
-    "pause": "Призупинити",
-    "private": "Приватний",
-    "quizzes_desc": "Створюйте та керуйте квізами",
-    "quizzes_title": "Квізи",
-    "randomizer_desc": "Обирайте наступну книгу",
-    "randomizer_title": "Рандомайзер",
-    "reschedule": "Перепланувати",
-    "reschedule_submit": "Перенести зустріч",
-    "members_title": "Учасники",
-    "tags_title": "Теги",
-    "organizer_title": "Організатор",
-    "meeting_info_title": "Місце та час зустрічі",
-    "duration_label": "Тривалість",
-    "minutes_abbr": "хв",
-    "address_label": "Адреса",
-    "view_on_map": "Переглянути на карті →",
-    "after_meeting_title": "Після зустрічі",
-    "deletion_countdown_prefix": "Цей клуб скасовано —",
-    "deletion_countdown_hours": "буде видалено через {{ hours }} год. {{ minutes }} хв.",
-    "deletion_countdown_minutes": "буде видалено через {{ minutes }} хв.",
-    "close_qr": "✕ Закрити",
-    "events_title": "Найближчі події",
-    "events_empty": "Немає запланованих подій.",
-    "create_event": "＋ Створити подію",
-    "sort_nearest": "Найближчі",
-    "sort_popular": "Популярні",
-    "sort_status": "За статусом",
-    "join_cta_title": "Хочеш приєднатись до клубу?",
-    "join_cta_desc": "Вступи, щоб відвідувати зустрічі та знайомитись з читачами.",
-    "rsvp_going": "✓ Йду",
-    "rsvp_join": "Зареєструватись",
-    "rsvp_view": "Детальніше",
-    "rsvp_attending": "учасників"
-  },
-  "FOOTER": {
-    "privacy": "Конфіденційність",
-    "rights": "Усі права захищені",
-    "terms": "Умови"
-  },
-  "MEMBERS": {
-    "empty": "Немає учасників",
-    "member": "Учасник",
-    "organizer": "Організатор",
-    "show_qr": "QR",
-    "socials_hidden": "Приховано",
-    "title": "Учасники",
-    "kick": "Виключити",
-    "ban": "Заблокувати ▾",
-    "ban_1": "1 зустріч",
-    "ban_3": "3 зустрічі",
-    "ban_5": "5 зустрічей",
-    "ban_permanent": "Назавжди"
-  },
-  "NAV": {
-    "back_home": "← На головну",
-    "discover": "Огляд",
-    "join_free": "Приєднатись",
-    "login": "Увійти",
-    "logout": "Вийти",
-    "profile": "Профіль",
-    "signed_in_as": "Увійшли як",
-    "clubs": "Клуби",
-    "my_clubs": "Мої клуби",
-    "register": "Приєднатись"
-  },
-  "PROFILE": {
-    "active_badge": "✓ Активний",
-    "books_read": "Книг прочитано",
-    "clubs_joined": "Клубів приєднано",
-    "display_name_label": "Ім'я в додатку",
-    "display_name_min": "Мінімум 2 символи.",
-    "display_name_placeholder": "Ваше ім'я",
-    "display_name_required": "Ім'я є обов'язковим.",
-    "edit_profile": "Редагувати профіль",
-    "likes_received": "Отримано вподобань",
-    "member_since": "Учасник з",
-    "name_updated": "Ім'я оновлено!",
-    "no_stats": "Статистики ще немає — починайте приєднуватись до клубів і проходити квізи!",
-    "quizzes_taken": "Квізів пройдено",
-    "quizzes_won": "Квізів виграно",
-    "role_changed_prefix": "Роль змінено на",
-    "role_organizer": "Організатор",
-    "role_organizer_desc": "Створюйте клуби, проводьте квізи та керуйте учасниками.",
-    "role_reader": "Читач",
-    "role_reader_desc": "Відкривайте клуби, беріть участь у дискусіях і проходьте квізи.",
-    "role_subtitle": "Оберіть, як ви берете участь у книжкових клубах.",
-    "role_title": "Ваша роль",
-    "save": "Зберегти",
-    "save_name": "Зберегти ім'я",
-    "saving": "Збереження…",
-    "socials_public_label": "Показувати соціальні мережі всім учасникам клубів",
-    "socials_saved": "Соціальні мережі збережено!",
-    "socials_title": "Соціальні мережі",
-    "stats_title": "Статистика",
-    "title": "Особистий кабінет",
-    "saved": "Збережено!",
-    "role": "Роль",
-    "role_admin": "Адміністратор",
-    "meetings_attended": "Зустрічей відвідано",
-    "meetings_missed": "Зустрічей пропущено",
-    "randomizer_wins": "Перемог в рандомайзері"
-  },
-  "RANDOMIZER": {
-    "back_to_club": "← До клубу",
-    "history_title": "Попередні результати",
-    "members_title": "Учасники",
-    "no_members": "У цьому клубі поки немає учасників",
-    "purpose_label": "Питання / Мета рандомайзера",
-    "purpose_placeholder": "Наприклад: Хто представляє книгу?",
-    "save": "💾 Зберегти результат",
-    "saving": "⏳ Збереження…",
-    "select_all": "Обрати всіх",
-    "selected": "обрано",
-    "spin": "🎲 Крутити",
-    "spin_hint": "Натисніть «Крутити» щоб обрати учасника",
-    "spinning": "Вибираємо переможця…",
-    "spinning_btn": "⏳ Вибираємо…",
-    "subtitle": "Хто наступний? Нехай доля вирішує.",
-    "title": "Рандомайзер",
-    "no_history": "Немає результатів",
-    "error_min": "Оберіть щонайменше 2 учасників",
-    "winner": "Переможець"
-  },
-  "QUIZ": {
-    "title": "Квізи",
-    "create": "Створити квіз",
-    "take": "Почати",
-    "results": "Результати",
-    "score": "Рахунок"
-  },
-  "CHAT": {
-    "title": "Чат клубу",
-    "placeholder": "Написати повідомлення...",
-    "send": "Надіслати",
-    "no_messages": "Поки немає повідомлень",
-    "new_message": "Нове повідомлення",
-    "close": "Закрити чат",
-    "open": "Відкрити чат",
-    "rooms": "Кімнати"
-  },
-  "FORM_ERRORS": {
-    "required": "Це поле є обов'язковим.",
-    "email": "Введіть коректну адресу електронної пошти.",
-    "minlength": "Мінімум {{ requiredLength }} символів.",
-    "invalid": "Некоректне значення."
-  },
-  "SEO": {
-    "clubs_title": "Книжкові клуби | Book Club",
-    "clubs_description": "Знайдіть книжковий клуб у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
-    "clubs_og_title": "Книжкові клуби",
-    "login_title": "Вхід | Book Club",
-    "register_title": "Реєстрація | Book Club",
-    "profile_title": "Профіль | Book Club",
-    "club_detail_title": "{{ name }} | Book Club",
-    "club_detail_og_title": "{{ name }}",
-    "site_name": "Book Club",
-    "site_url": "https://book-club-fe.vercel.app",
-    "site_description": "Читацькі клуби України"
-  }
-}
-````
-
-## File: src/app/features/clubs/club-detail/club-detail.component.html
-````html
-@if (isLoading()) {
-  <main class="max-w-4xl mx-auto px-4 py-8" aria-busy="true" aria-label="Loading club details">
-    <div class="animate-pulse space-y-4">
-      <div class="h-56 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-      <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-    </div>
-  </main>
-} @else if (errorMessage()) {
-  <main class="max-w-4xl mx-auto px-4 py-8 text-center" role="alert">
-    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
-    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
-    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
-    <a
-      routerLink="/clubs"
-      class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors"
-    >
-      ← {{ 'CLUB_DETAIL.back' | translate }}
-    </a>
-  </main>
-} @else if (club()) {
-  <main class="min-h-screen">
-    <div class="relative">
-      @if (club()!.coverUrl) {
-        <img
-          [src]="club()!.coverUrl"
-          [alt]="club()!.name + ' cover'"
-          class="w-full h-56 object-cover"
-          loading="lazy"
-        />
-      } @else {
-        <div class="bg-gradient-to-br from-primary-400 to-accent-500 h-56" aria-hidden="true"></div>
-      }
-      <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
-        <a
-          routerLink="/clubs"
-          class="inline-flex items-center gap-1.5 rounded-full bg-black/30 backdrop-blur-sm px-3 py-1.5 text-sm font-medium text-white hover:bg-black/50 transition-colors"
-          [attr.aria-label]="'CLUB_DETAIL.back' | translate"
-        >
-          ← {{ 'CLUB_DETAIL.back_short' | translate }}
-        </a>
-      </nav>
-    </div>
-    <div class="max-w-6xl mx-auto px-4 py-8">
-      <div class="flex flex-col lg:flex-row gap-6 items-start">
-        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-2 lg:order-1">
-          <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 space-y-3 border border-gray-100 dark:border-gray-700">
-            <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-              {{ 'CLUB_DETAIL.about' | translate }}
-            </h3>
-            @if (club()!.city) {
-              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <span class="text-base" aria-hidden="true">📍</span>
-                <span>{{ club()!.city }}</span>
-              </div>
-            }
-            @if (club()!.meetingDurationMinutes) {
-              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <span class="text-base" aria-hidden="true">⏱️</span>
-                <span>{{ club()!.meetingDurationMinutes }} {{ 'CLUB_DETAIL.minutes_abbr' | translate }}</span>
-              </div>
-            }
-            @if (club()!.theme) {
-              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <span class="text-base" aria-hidden="true">✨</span>
-                <span>{{ club()!.theme }}</span>
-              </div>
-            }
-            @if (club()!.tags.length > 0) {
-              <div class="flex flex-wrap gap-1.5 pt-1">
-                @for (tag of club()!.tags; track tag) {
-                  <span class="rounded-full bg-accent-100 dark:bg-accent-900/30 px-2 py-0.5 text-xs text-accent-700 dark:text-accent-300">
-                    {{ tag }}
-                  </span>
-                }
-              </div>
-            }
-            @if (club()!.nextMeetingDate) {
-              <div class="flex items-center gap-2 text-sm text-primary-700 dark:text-primary-400 font-medium pt-1 border-t border-gray-100 dark:border-gray-700">
-                <span class="text-base" aria-hidden="true">📅</span>
-                <span>{{ club()!.nextMeetingDate! | formatDate }}</span>
-              </div>
-            }
-          </div>
-          @if (club()!.currentBook) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 Now reading</h3>
-              <p class="font-serif italic text-sm font-semibold text-gray-900 dark:text-white leading-snug" style="font-family:'Playfair Display',Georgia,serif">
-                {{ club()!.currentBook!.title }}
-              </p>
-              @if (club()!.currentBook!.author) {
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ club()!.currentBook!.author }}</p>
-              }
-            </div>
-          }
-          @if (isClubOwner()) {
-            <app-club-manage-panel [clubId]="id()" />
-          }
-        </aside>
-        <div class="flex-1 min-w-0 space-y-6 order-1 lg:order-2">
-          <app-club-header
-            [club]="club()!"
-            [isMember]="isMember()"
-            [isOwner]="isClubOwner()"
-            [isAuthenticated]="!!currentUser()"
-            [isActionLoading]="isActionLoading()"
-            [currentUser]="currentUser()"
-            (join)="onJoin()"
-            (leave)="onLeave()" />
-          @if (actionError()) {
-            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-              <span aria-hidden="true">⚠️</span>
-              <span>{{ actionError() }}</span>
-            </div>
-          }
-          @if (club()!.description) {
-            <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
-              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
-            </section>
-          }
-          @if (!!currentUser() && !isMember() && !isClubOwner()) {
-            <div class="rounded-2xl border-2 border-dashed border-primary-300 dark:border-primary-700 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-primary-50 dark:bg-primary-950/30">
-              <div>
-                <p class="font-semibold text-primary-800 dark:text-primary-300">{{ 'CLUB_DETAIL.join_cta_title' | translate }}</p>
-                <p class="text-sm text-primary-600 dark:text-primary-400 mt-0.5">{{ 'CLUB_DETAIL.join_cta_desc' | translate }}</p>
-              </div>
-              <button
-                type="button"
-                (click)="onJoin()"
-                [disabled]="isActionLoading()"
-                class="flex-shrink-0 rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-              >
-                {{ 'CLUB_DETAIL.join' | translate }}
-              </button>
-            </div>
-          }
-          <section class="rounded-2xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-6 border border-[#d4a96a]/20 dark:border-[#7a5c2e]/20">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                📅 {{ 'CLUB_DETAIL.events_title' | translate }}
-              </h2>
-              @if (isClubOwner()) {
-                <a
-                  [routerLink]="['/clubs', id(), 'events', 'create']"
-                  class="inline-flex items-center gap-2 rounded-xl bg-primary-600 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
-                >
-                  {{ 'CLUB_DETAIL.create_event' | translate }}
-                </a>
-              }
-            </div>
-            @if (upcomingEvents().length > 1) {
-              <div class="flex flex-wrap gap-2 mb-5">
-                @for (opt of sortOptions; track opt.key) {
-                  <button
-                    type="button"
-                    (click)="sortKey.set(opt.key)"
-                    class="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
-                    [class]="sortKey() === opt.key
-                      ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
-                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600'"
-                  >
-                    {{ opt.labelKey | translate }}
-                  </button>
-                }
-              </div>
-            }
-            @if (upcomingEvents().length === 0) {
-              <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                {{ 'CLUB_DETAIL.events_empty' | translate }}
-              </p>
-            } @else {
-              <div class="grid gap-5 sm:grid-cols-2">
-                @for (event of sortedUpcomingEvents(); track event.id; let i = $index) {
-                  <app-club-event-card
-                    [event]="event"
-                    [isAuthenticated]="!!currentUser()"
-                    [attending]="attendingEventId() === event.id"
-                    [index]="i"
-                    (attend)="onAttend(event.id)"
-                    (cancelAttend)="onCancelAttend(event.id)"
-                  />
-                }
-              </div>
-            }
-          </section>
-          <app-club-members-list
-            [members]="members()"
-            [clubBans]="clubBans()"
-            [isOwner]="isClubOwner()"
-            [currentUserId]="currentUserId()"
-            (kick)="handleKick($event)"
-            (ban)="handleBan($event)" />
-          <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">
-            {{ 'CLUB_DETAIL.created' | translate }} {{ club()!.createdAt | formatDate }}
-          </footer>
-        </div>
-        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-3 lg:order-3">
-          @if (members().length > 0) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                  {{ 'CLUB_DETAIL.members_title' | translate }}
-                </h3>
-                <span class="text-xs text-gray-400">{{ members().length }}</span>
-              </div>
-              <div class="flex flex-wrap gap-2">
-                @for (member of members().slice(0, 8); track member.userId) {
-                  <div
-                    class="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                    [attr.title]="member.displayName"
-                  >
-                    {{ member.displayName | initials }}
-                  </div>
-                }
-                @if (members().length > 8) {
-                  <div class="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
-                    +{{ members().length - 8 }}
-                  </div>
-                }
-              </div>
-            </div>
-          }
-          @if (organizerProfile()) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
-                {{ 'CLUB_DETAIL.organizer_title' | translate }}
-              </h3>
-              <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0" aria-hidden="true">
-                  {{ organizerProfile()!.displayName | initials }}
-                </div>
-                <div class="min-w-0">
-                  <p class="font-semibold text-sm text-gray-900 dark:text-white truncate">{{ organizerProfile()!.displayName }}</p>
-                  <span class="text-xs text-accent-600 dark:text-accent-400">{{ 'CLUB_DETAIL.organizer_badge' | translate }}</span>
-                </div>
-              </div>
-              @if (organizerProfile()!.socialsPublic && organizerProfile()!.socials) {
-                <div class="mt-3 flex flex-wrap gap-2">
-                  @if (organizerProfile()!.socials!.telegram) {
-                    <a [href]="'https://t.me/' + organizerProfile()!.socials!.telegram" target="_blank" rel="noopener noreferrer"
-                       class="text-blue-500 hover:text-blue-600 text-lg" aria-label="Telegram">✈️</a>
-                  }
-                  @if (organizerProfile()!.socials!.instagram) {
-                    <a [href]="'https://instagram.com/' + organizerProfile()!.socials!.instagram" target="_blank" rel="noopener noreferrer"
-                       class="text-pink-500 hover:text-pink-600 text-lg" aria-label="Instagram">📸</a>
-                  }
-                  @if (organizerProfile()!.socials!.github) {
-                    <a [href]="'https://github.com/' + organizerProfile()!.socials!.github" target="_blank" rel="noopener noreferrer"
-                       class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" aria-label="GitHub">🐙</a>
-                  }
-                  @if (organizerProfile()!.socials!.goodreads) {
-                    <a [href]="'https://goodreads.com/' + organizerProfile()!.socials!.goodreads" target="_blank" rel="noopener noreferrer"
-                       class="text-amber-600 hover:text-amber-700 text-lg" aria-label="Goodreads">📚</a>
-                  }
-                </div>
-              }
-            </div>
-          }
-          @if (club()!.afterMeetingVenue) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
-                {{ 'CLUB_DETAIL.after_meeting_title' | translate }}
-              </h3>
-              <p class="text-sm font-medium text-gray-900 dark:text-white">{{ club()!.afterMeetingVenue!.name }}</p>
-              @if (club()!.afterMeetingVenue!.address) {
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 {{ club()!.afterMeetingVenue!.address }}</p>
-              }
-              @if (club()!.afterMeetingVenue!.description) {
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">{{ club()!.afterMeetingVenue!.description }}</p>
-              }
-            </div>
-          }
-        </aside>
-      </div>
-    </div>
-  </main>
-}
-````
-
 ## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
 ````typescript
 import {
@@ -9283,151 +8541,194 @@ export class ClubsListComponent implements OnInit {
 }
 ````
 
-## File: src/app/features/clubs/create-club/create-club.component.html
-````html
-<main class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-lg">
-    <header class="text-center mb-8">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
-      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
-    </header>
-    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
-      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-        <div>
-          <label for="club-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ 'CREATE_CLUB.name_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
-          </label>
-          <input
-            id="club-name"
-            type="text"
-            formControlName="name"
-            [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
-            class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                   px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                   transition-colors duration-150"
-            [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
-            aria-describedby="name-error"
-          />
-          @if (form.controls.name.invalid && form.controls.name.touched) {
-            <p id="name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-              @if (form.controls.name.errors?.['required']) { {{ 'CREATE_CLUB.name_required' | translate }} }
-              @else if (form.controls.name.errors?.['minlength']) { {{ 'CREATE_CLUB.name_min' | translate }} }
-              @else if (form.controls.name.errors?.['maxlength']) { {{ 'CREATE_CLUB.name_max' | translate }} }
-            </p>
-          }
-        </div>
-        <div>
-          <label for="club-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ 'CREATE_CLUB.description_label' | translate }}
-          </label>
-          <textarea
-            id="club-description"
-            formControlName="description"
-            rows="3"
-            [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
-            class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                   px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                   transition-colors duration-150"
-            [class.border-red-400]="form.controls.description.invalid && form.controls.description.touched"
-            aria-describedby="description-error"
-          ></textarea>
-          @if (form.controls.description.invalid && form.controls.description.touched) {
-            <p id="description-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-              @if (form.controls.description.errors?.['maxlength']) { {{ 'CREATE_CLUB.description_max' | translate }} }
-            </p>
-          }
-        </div>
-        <div>
-          <label for="club-cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ 'CREATE_CLUB.cover_url_label' | translate }}
-          </label>
-          @if (form.controls.coverUrl.value) {
-            <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
-              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover" (error)="form.controls.coverUrl.setValue('')" />
-            </div>
-          }
-          <input
-            id="club-cover-url"
-            type="url"
-            formControlName="coverUrl"
-            [placeholder]="'CREATE_CLUB.cover_url_placeholder' | translate"
-            class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                   px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                   transition-colors duration-150"
-          />
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
-        </div>
-        <fieldset>
-          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
-          <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-            <div>
-              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'CREATE_CLUB.public_label' | translate }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'CREATE_CLUB.public_desc' | translate }}</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              [attr.aria-checked]="form.controls.isPublic.value"
-              (click)="togglePublic()"
-              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              [class.bg-primary-600]="form.controls.isPublic.value"
-              [class.bg-gray-300]="!form.controls.isPublic.value"
-              [class.dark:bg-gray-600]="!form.controls.isPublic.value"
-            >
-              <span
-                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                [class.translate-x-6]="form.controls.isPublic.value"
-                [class.translate-x-1]="!form.controls.isPublic.value"
-              ></span>
-            </button>
-          </div>
-        </fieldset>
-        @if (errorMessage()) {
-          <div
-            class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-            role="alert"
-          >
-            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
-            <span>{{ errorMessage() }}</span>
-          </div>
-        }
-        <div class="flex gap-3 pt-2">
-          <button
-            type="button"
-            (click)="cancel()"
-            class="flex-1 rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-2.5
-                   text-sm font-semibold text-gray-700 dark:text-gray-300
-                   hover:bg-gray-50 dark:hover:bg-gray-800
-                   focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2
-                   transition-colors duration-200"
-          >
-            {{ 'CREATE_CLUB.cancel' | translate }}
-          </button>
-          <button
-            type="submit"
-            [disabled]="isSubmitting()"
-            class="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5
-                   text-sm font-semibold text-white shadow-sm
-                   hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-                   disabled:opacity-60 disabled:cursor-not-allowed
-                   transition-colors duration-200"
-          >
-            @if (isSubmitting()) {
-              <app-loading-spinner size="sm" />
-              {{ 'CREATE_CLUB.submitting' | translate }}
-            } @else {
-              {{ 'CREATE_CLUB.submit' | translate }}
-            }
-          </button>
-        </div>
-      </form>
-    </article>
-  </div>
-</main>
+## File: src/app/core/api/api-mappers.ts
+````typescript
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
+import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
+export interface ApiUserProfile {
+  id: string;
+  email: string;
+  role: UserRole;
+  displayName: string;
+  avatarUrl: string | null;
+  createdAt: string;
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export interface ApiUserSocials {
+  telegram?: string | null;
+  instagram?: string | null;
+  twitter?: string | null;
+  linkedin?: string | null;
+  github?: string | null;
+  goodreads?: string | null;
+}
+export interface ApiUserStats {
+  clubsJoined: number;
+  quizzesTaken: number;
+  quizWins: number;
+  likesReceived: number;
+  booksRead: number;
+}
+export interface ApiClub {
+  id: string;
+  name: string;
+  description: string | null;
+  coverUrl: string | null;
+  organizerId: string;
+  isPublic: boolean;
+  memberCount: number;
+  memberPreviews: string[];
+  createdAt: string;
+  city: string | null;
+  nextMeetingDate: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  theme: string | null;
+  currentBook: string | null;
+  status: ClubStatus;
+  tags: string[];
+  meetingDurationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  cancelledAt?: string | null;
+}
+export interface ApiClubMember {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: 'organizer' | 'member';
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export interface ApiBanRecord {
+  userId: string;
+  clubId: string;
+  bannedAt: string;
+  duration: BanDuration;
+  bannedBy: string;
+}
+export interface ApiEvent {
+  id: string;
+  clubId: string;
+  clubName: string;
+  organizerId: string;
+  title: string;
+  description: string | null;
+  date: string;
+  city: string;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  status: EventStatus;
+  cancelledAt?: string | null;
+  coverUrl?: string | null;
+  theme: string | null;
+  tags: string[];
+  durationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  attendeeCount: number;
+  isAttending: boolean;
+}
+export function mapUserProfile(raw: ApiUserProfile): UserProfile {
+  return {
+    id: raw.id,
+    role: raw.role,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    createdAt: raw.createdAt,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
+}
+export function mapUserStats(raw: ApiUserStats): UserStats {
+  return {
+    clubsJoined: raw.clubsJoined,
+    quizzesTaken: raw.quizzesTaken,
+    quizWins: raw.quizWins,
+    likesReceived: raw.likesReceived,
+    booksRead: raw.booksRead,
+  };
+}
+export function mapClub(raw: ApiClub): Club {
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description,
+    coverUrl: raw.coverUrl,
+    organizerId: raw.organizerId,
+    isPublic: raw.isPublic,
+    memberCount: raw.memberCount,
+    memberPreviews: raw.memberPreviews ?? [],
+    createdAt: raw.createdAt,
+    city: raw.city ?? '',
+    nextMeetingDate: raw.nextMeetingDate,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    theme: raw.theme,
+    currentBook: raw.currentBook ? { title: raw.currentBook, author: '', description: '' } : null,
+    status: raw.status,
+    tags: raw.tags ?? [],
+    meetingDurationMinutes: raw.meetingDurationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    cancelledAt: raw.cancelledAt ?? undefined,
+  };
+}
+export function mapEvent(raw: ApiEvent): ClubEvent {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    clubName: raw.clubName,
+    organizerId: raw.organizerId,
+    title: raw.title,
+    description: raw.description,
+    date: raw.date,
+    city: raw.city,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    status: raw.status,
+    cancelledAt: raw.cancelledAt ?? undefined,
+    coverUrl: raw.coverUrl ?? null,
+    theme: raw.theme,
+    tags: raw.tags ?? [],
+    durationMinutes: raw.durationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    attendeeCount: raw.attendeeCount,
+    isAttending: raw.isAttending,
+  };
+}
+export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
+  return {
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    role: raw.role,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
+}
+export function mapBanRecord(raw: ApiBanRecord): BanRecord {
+  return {
+    userId: raw.userId,
+    clubId: raw.clubId,
+    bannedAt: raw.bannedAt,
+    duration: raw.duration,
+    bannedBy: raw.bannedBy,
+  };
+}
+function mapSocials(raw: ApiUserSocials): UserSocials {
+  return {
+    telegram: raw.telegram ?? undefined,
+    instagram: raw.instagram ?? undefined,
+    twitter: raw.twitter ?? undefined,
+    linkedin: raw.linkedin ?? undefined,
+    github: raw.github ?? undefined,
+    goodreads: raw.goodreads ?? undefined,
+  };
+}
 ````
 
 ## File: src/app/core/auth/auth.service.ts
@@ -9727,6 +9028,289 @@ export class QuizService {
 }
 ````
 
+## File: src/app/features/clubs/club-detail/club-detail.component.html
+````html
+@if (isLoading()) {
+  <main class="max-w-4xl mx-auto px-4 py-8" aria-busy="true" aria-label="Loading club details">
+    <div class="animate-pulse space-y-4">
+      <div class="h-56 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+    </div>
+  </main>
+} @else if (errorMessage()) {
+  <main class="max-w-4xl mx-auto px-4 py-8 text-center" role="alert">
+    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
+    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
+    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
+    <a
+      routerLink="/clubs"
+      class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors"
+    >
+      ← {{ 'CLUB_DETAIL.back' | translate }}
+    </a>
+  </main>
+} @else if (club()) {
+  <main class="min-h-screen">
+    <div class="relative">
+      @if (club()!.coverUrl) {
+        <img
+          [src]="club()!.coverUrl"
+          [alt]="club()!.name + ' cover'"
+          class="w-full h-56 object-cover"
+          loading="lazy"
+        />
+      } @else {
+        <div class="bg-gradient-to-br from-primary-400 to-accent-500 h-56" aria-hidden="true"></div>
+      }
+      <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
+        <a
+          routerLink="/clubs"
+          class="inline-flex items-center gap-1.5 rounded-full bg-black/30 backdrop-blur-sm px-3 py-1.5 text-sm font-medium text-white hover:bg-black/50 transition-colors"
+          [attr.aria-label]="'CLUB_DETAIL.back' | translate"
+        >
+          ← {{ 'CLUB_DETAIL.back_short' | translate }}
+        </a>
+      </nav>
+    </div>
+    <div class="max-w-6xl mx-auto px-4 py-8">
+      <div class="flex flex-col lg:flex-row gap-6 items-start">
+        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-2 lg:order-1">
+          <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 space-y-3 border border-gray-100 dark:border-gray-700">
+            <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+              {{ 'CLUB_DETAIL.about' | translate }}
+            </h3>
+            @if (club()!.city) {
+              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <span class="text-base" aria-hidden="true">📍</span>
+                <span>{{ club()!.city }}</span>
+              </div>
+            }
+            @if (club()!.meetingDurationMinutes) {
+              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <span class="text-base" aria-hidden="true">⏱️</span>
+                <span>{{ club()!.meetingDurationMinutes }} {{ 'CLUB_DETAIL.minutes_abbr' | translate }}</span>
+              </div>
+            }
+            @if (club()!.theme) {
+              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                <span class="text-base" aria-hidden="true">✨</span>
+                <span>{{ club()!.theme }}</span>
+              </div>
+            }
+            @if (club()!.tags.length > 0) {
+              <div class="flex flex-wrap gap-1.5 pt-1">
+                @for (tag of club()!.tags; track tag) {
+                  <span class="rounded-full bg-accent-100 dark:bg-accent-900/30 px-2 py-0.5 text-xs text-accent-700 dark:text-accent-300">
+                    {{ tag }}
+                  </span>
+                }
+              </div>
+            }
+            @if (club()!.nextMeetingDate) {
+              <div class="flex items-center gap-2 text-sm text-primary-700 dark:text-primary-400 font-medium pt-1 border-t border-gray-100 dark:border-gray-700">
+                <span class="text-base" aria-hidden="true">📅</span>
+                <span>{{ club()!.nextMeetingDate! | formatDate }}</span>
+              </div>
+            }
+          </div>
+          @if (club()!.currentBook) {
+            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 Now reading</h3>
+              <p class="font-serif italic text-sm font-semibold text-gray-900 dark:text-white leading-snug" style="font-family:'Playfair Display',Georgia,serif">
+                {{ club()!.currentBook!.title }}
+              </p>
+              @if (club()!.currentBook!.author) {
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ club()!.currentBook!.author }}</p>
+              }
+            </div>
+          }
+          @if (isClubOwner()) {
+            <app-club-manage-panel [clubId]="id()" />
+          }
+        </aside>
+        <div class="flex-1 min-w-0 space-y-6 order-1 lg:order-2">
+          <app-club-header
+            [club]="club()!"
+            [isMember]="isMember()"
+            [isOwner]="isClubOwner()"
+            [isAuthenticated]="!!currentUser()"
+            [isActionLoading]="isActionLoading()"
+            [currentUser]="currentUser()"
+            (join)="onJoin()"
+            (leave)="onLeave()" />
+          @if (actionError()) {
+            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+              <span aria-hidden="true">⚠️</span>
+              <span>{{ actionError() }}</span>
+            </div>
+          }
+          @if (club()!.description) {
+            <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
+              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
+            </section>
+          }
+          @if (!!currentUser() && !isMember() && !isClubOwner()) {
+            <div class="rounded-2xl border-2 border-dashed border-primary-300 dark:border-primary-700 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-primary-50 dark:bg-primary-950/30">
+              <div>
+                <p class="font-semibold text-primary-800 dark:text-primary-300">{{ 'CLUB_DETAIL.join_cta_title' | translate }}</p>
+                <p class="text-sm text-primary-600 dark:text-primary-400 mt-0.5">{{ 'CLUB_DETAIL.join_cta_desc' | translate }}</p>
+              </div>
+              <button
+                type="button"
+                (click)="onJoin()"
+                [disabled]="isActionLoading()"
+                class="flex-shrink-0 rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+              >
+                {{ 'CLUB_DETAIL.join' | translate }}
+              </button>
+            </div>
+          }
+          <section class="rounded-2xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-6 border border-[#d4a96a]/20 dark:border-[#7a5c2e]/20">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                📅 {{ 'CLUB_DETAIL.events_title' | translate }}
+              </h2>
+              @if (isClubOwner()) {
+                <a
+                  [routerLink]="['/clubs', id(), 'events', 'create']"
+                  class="inline-flex items-center gap-2 rounded-xl bg-primary-600 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+                >
+                  {{ 'CLUB_DETAIL.create_event' | translate }}
+                </a>
+              }
+            </div>
+            @if (upcomingEvents().length > 1) {
+              <div class="flex flex-wrap gap-2 mb-5">
+                @for (opt of sortOptions; track opt.key) {
+                  <button
+                    type="button"
+                    (click)="sortKey.set(opt.key)"
+                    class="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
+                    [class]="sortKey() === opt.key
+                      ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600'"
+                  >
+                    {{ opt.labelKey | translate }}
+                  </button>
+                }
+              </div>
+            }
+            @if (upcomingEvents().length === 0) {
+              <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                {{ 'CLUB_DETAIL.events_empty' | translate }}
+              </p>
+            } @else {
+              <div class="grid gap-5 sm:grid-cols-2">
+                @for (event of sortedUpcomingEvents(); track event.id; let i = $index) {
+                  <app-club-event-card
+                    [event]="event"
+                    [isAuthenticated]="!!currentUser()"
+                    [attending]="attendingEventId() === event.id"
+                    [index]="i"
+                    (attend)="onAttend(event.id)"
+                    (cancelAttend)="onCancelAttend(event.id)"
+                  />
+                }
+              </div>
+            }
+          </section>
+          <app-club-members-list
+            [members]="members()"
+            [clubBans]="clubBans()"
+            [isOwner]="isClubOwner()"
+            [currentUserId]="currentUserId()"
+            (kick)="handleKick($event)"
+            (ban)="handleBan($event)" />
+          <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">
+            {{ 'CLUB_DETAIL.created' | translate }} {{ club()!.createdAt | formatDate }}
+          </footer>
+        </div>
+        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-3 lg:order-3">
+          @if (members().length > 0) {
+            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+                  {{ 'CLUB_DETAIL.members_title' | translate }}
+                </h3>
+                <span class="text-xs text-gray-400">{{ members().length }}</span>
+              </div>
+              <div class="flex flex-wrap gap-2">
+                @for (member of members().slice(0, 8); track member.userId) {
+                  <div
+                    class="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+                    [attr.title]="member.displayName"
+                  >
+                    {{ member.displayName | initials }}
+                  </div>
+                }
+                @if (members().length > 8) {
+                  <div class="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
+                    +{{ members().length - 8 }}
+                  </div>
+                }
+              </div>
+            </div>
+          }
+          @if (organizerProfile()) {
+            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+                {{ 'CLUB_DETAIL.organizer_title' | translate }}
+              </h3>
+              <div class="flex items-center gap-3">
+                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0" aria-hidden="true">
+                  {{ organizerProfile()!.displayName | initials }}
+                </div>
+                <div class="min-w-0">
+                  <p class="font-semibold text-sm text-gray-900 dark:text-white truncate">{{ organizerProfile()!.displayName }}</p>
+                  <span class="text-xs text-accent-600 dark:text-accent-400">{{ 'CLUB_DETAIL.organizer_badge' | translate }}</span>
+                </div>
+              </div>
+              @if (organizerProfile()!.socialsPublic && organizerProfile()!.socials) {
+                <div class="mt-3 flex flex-wrap gap-2">
+                  @if (organizerProfile()!.socials!.telegram) {
+                    <a [href]="'https://t.me/' + organizerProfile()!.socials!.telegram" target="_blank" rel="noopener noreferrer"
+                       class="text-blue-500 hover:text-blue-600 text-lg" aria-label="Telegram">✈️</a>
+                  }
+                  @if (organizerProfile()!.socials!.instagram) {
+                    <a [href]="'https://instagram.com/' + organizerProfile()!.socials!.instagram" target="_blank" rel="noopener noreferrer"
+                       class="text-pink-500 hover:text-pink-600 text-lg" aria-label="Instagram">📸</a>
+                  }
+                  @if (organizerProfile()!.socials!.github) {
+                    <a [href]="'https://github.com/' + organizerProfile()!.socials!.github" target="_blank" rel="noopener noreferrer"
+                       class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" aria-label="GitHub">🐙</a>
+                  }
+                  @if (organizerProfile()!.socials!.goodreads) {
+                    <a [href]="'https://goodreads.com/' + organizerProfile()!.socials!.goodreads" target="_blank" rel="noopener noreferrer"
+                       class="text-amber-600 hover:text-amber-700 text-lg" aria-label="Goodreads">📚</a>
+                  }
+                </div>
+              }
+            </div>
+          }
+          @if (club()!.afterMeetingVenue) {
+            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+                {{ 'CLUB_DETAIL.after_meeting_title' | translate }}
+              </h3>
+              <p class="text-sm font-medium text-gray-900 dark:text-white">{{ club()!.afterMeetingVenue!.name }}</p>
+              @if (club()!.afterMeetingVenue!.address) {
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 {{ club()!.afterMeetingVenue!.address }}</p>
+              }
+              @if (club()!.afterMeetingVenue!.description) {
+                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">{{ club()!.afterMeetingVenue!.description }}</p>
+              }
+            </div>
+          }
+        </aside>
+      </div>
+    </div>
+  </main>
+}
+````
+
 ## File: src/app/features/clubs/clubs-list/clubs-list.component.html
 ````html
 <div class="min-h-screen">
@@ -9833,6 +9417,781 @@ export class QuizService {
     </a>
   }
 </div>
+````
+
+## File: src/app/features/clubs/create-club/create-club.component.html
+````html
+<main class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+    <header class="text-center mb-8">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
+    </header>
+    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+        <div>
+          <label for="club-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'CREATE_CLUB.name_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <input
+            id="club-name"
+            type="text"
+            formControlName="name"
+            [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
+            class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                   px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                   transition-colors duration-150"
+            [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
+            aria-describedby="name-error"
+          />
+          @if (form.controls.name.invalid && form.controls.name.touched) {
+            <p id="name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+              @if (form.controls.name.errors?.['required']) { {{ 'CREATE_CLUB.name_required' | translate }} }
+              @else if (form.controls.name.errors?.['minlength']) { {{ 'CREATE_CLUB.name_min' | translate }} }
+              @else if (form.controls.name.errors?.['maxlength']) { {{ 'CREATE_CLUB.name_max' | translate }} }
+            </p>
+          }
+        </div>
+        <div>
+          <label for="club-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'CREATE_CLUB.description_label' | translate }}
+          </label>
+          <textarea
+            id="club-description"
+            formControlName="description"
+            rows="3"
+            [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
+            class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                   px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
+                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                   transition-colors duration-150"
+            [class.border-red-400]="form.controls.description.invalid && form.controls.description.touched"
+            aria-describedby="description-error"
+          ></textarea>
+          @if (form.controls.description.invalid && form.controls.description.touched) {
+            <p id="description-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
+              @if (form.controls.description.errors?.['maxlength']) { {{ 'CREATE_CLUB.description_max' | translate }} }
+            </p>
+          }
+        </div>
+        <div>
+          <label for="club-cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'CREATE_CLUB.cover_url_label' | translate }}
+          </label>
+          @if (form.controls.coverUrl.value) {
+            <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
+              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover" (error)="form.controls.coverUrl.setValue('')" />
+            </div>
+          }
+          <input
+            id="club-cover-url"
+            type="url"
+            formControlName="coverUrl"
+            [placeholder]="'CREATE_CLUB.cover_url_placeholder' | translate"
+            class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                   px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                   transition-colors duration-150"
+          />
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
+        </div>
+        <fieldset>
+          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
+          <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
+            <div>
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'CREATE_CLUB.public_label' | translate }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'CREATE_CLUB.public_desc' | translate }}</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              [attr.aria-checked]="form.controls.isPublic.value"
+              (click)="togglePublic()"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              [class.bg-primary-600]="form.controls.isPublic.value"
+              [class.bg-gray-300]="!form.controls.isPublic.value"
+              [class.dark:bg-gray-600]="!form.controls.isPublic.value"
+            >
+              <span
+                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                [class.translate-x-6]="form.controls.isPublic.value"
+                [class.translate-x-1]="!form.controls.isPublic.value"
+              ></span>
+            </button>
+          </div>
+        </fieldset>
+        @if (errorMessage()) {
+          <div
+            class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+            role="alert"
+          >
+            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+        <div class="flex gap-3 pt-2">
+          <button
+            type="button"
+            (click)="cancel()"
+            class="flex-1 rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-2.5
+                   text-sm font-semibold text-gray-700 dark:text-gray-300
+                   hover:bg-gray-50 dark:hover:bg-gray-800
+                   focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2
+                   transition-colors duration-200"
+          >
+            {{ 'CREATE_CLUB.cancel' | translate }}
+          </button>
+          <button
+            type="submit"
+            [disabled]="isSubmitting()"
+            class="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5
+                   text-sm font-semibold text-white shadow-sm
+                   hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
+                   disabled:opacity-60 disabled:cursor-not-allowed
+                   transition-colors duration-200"
+          >
+            @if (isSubmitting()) {
+              <app-loading-spinner size="sm" />
+              {{ 'CREATE_CLUB.submitting' | translate }}
+            } @else {
+              {{ 'CREATE_CLUB.submit' | translate }}
+            }
+          </button>
+        </div>
+      </form>
+    </article>
+  </div>
+</main>
+````
+
+## File: public/i18n/en.json
+````json
+{
+  "AUTH": {
+    "activate_account": "Click it to activate your account.",
+    "back_to_login": "Back to sign in",
+    "check_email": "Check your email",
+    "confirm_password": "Confirm password",
+    "confirmation_sent": "We sent a confirmation link to",
+    "create_account_h2": "Create account",
+    "create_account_subtitle": "Create your account",
+    "creating_account": "Creating account…",
+    "display_name": "Display name",
+    "email": "Email",
+    "have_account": "Already have an account?",
+    "no_account": "Don't have an account?",
+    "password": "Password",
+    "password_medium": "Medium",
+    "password_strong": "Strong",
+    "password_weak": "Weak",
+    "passwords_no_match": "Passwords do not match",
+    "register_title": "Register",
+    "role_organizer_desc": "Create clubs & build quizzes",
+    "role_organizer_label": "Organizer",
+    "role_reader_desc": "Join clubs & take quizzes",
+    "role_reader_label": "Reader",
+    "select_role_error": "Please select a role.",
+    "sign_in_h2": "Sign in",
+    "signing_in": "Signing in…",
+    "submit_login": "Log in",
+    "want_to": "I want to…",
+    "welcome_back": "Welcome back",
+    "login_title": "Log In",
+    "submit_register": "Register",
+    "password_strength": "Password strength",
+    "account_created": "Account created successfully!",
+    "welcome_message": "Welcome,"
+  },
+  "CREATE_CLUB": {
+    "subtitle": "Create a new reading community",
+    "title": "Create a Club",
+    "basic_info_legend": "Basic information",
+    "name_label": "Club name",
+    "name_placeholder": "e.g. Northern Readers",
+    "name_required": "Club name is required.",
+    "name_min": "Name must be at least 3 characters.",
+    "name_max": "Name must not exceed 100 characters.",
+    "description_label": "Description",
+    "description_placeholder": "What books will your club read? Who is it for?",
+    "description_max": "Description must not exceed 500 characters.",
+    "city_label": "City",
+    "city_placeholder": "Kyiv",
+    "city_required": "City is required.",
+    "city_max": "City must not exceed 100 characters.",
+    "address_label": "Address",
+    "address_placeholder": "1 Khreshchatyk St.",
+    "address_max": "Address must not exceed 200 characters.",
+    "tags_duration_legend": "Tags & duration",
+    "tags_label": "Tags / Genres",
+    "tags_placeholder": "Classics, Romance, Fantasy",
+    "tags_hint": "Enter genres separated by commas",
+    "tags_max": "Tags must not exceed 300 characters.",
+    "duration_label": "Meeting duration (min)",
+    "duration_placeholder": "90",
+    "duration_min": "Duration must be at least 15 minutes.",
+    "duration_max": "Duration must not exceed 480 minutes.",
+    "visibility_legend": "Visibility",
+    "public_label": "Public club",
+    "public_desc": "Anyone can discover and join",
+    "cover_url_label": "Cover image URL",
+    "cover_url_placeholder": "https://example.com/cover.jpg",
+    "cover_url_hint": "Paste a public image link (JPG, PNG, WebP)",
+    "after_meeting_toggle": "▼ After-meeting venue",
+    "after_meeting_hide": "▲ Hide after-meeting venue info",
+    "venue_name_label": "Venue name",
+    "venue_name_placeholder": "Café Pushkin",
+    "venue_name_max": "Name must not exceed 150 characters.",
+    "venue_address_label": "Venue address",
+    "venue_address_placeholder": "2 Khreshchatyk St.",
+    "venue_address_max": "Address must not exceed 200 characters.",
+    "venue_notes_label": "Notes",
+    "venue_notes_placeholder": "Reservation at 8 pm",
+    "venue_notes_max": "Notes must not exceed 300 characters.",
+    "cancel": "Cancel",
+    "submit": "Create club",
+    "submitting": "Creating…"
+  },
+  "CLUBS": {
+    "active": "Active",
+    "all": "All Clubs",
+    "all_cities": "All cities",
+    "cancelled": "Cancelled",
+    "create": "Create club",
+    "join": "Join",
+    "member_badge": "✓ Member",
+    "member_singular": "member",
+    "members": "members",
+    "missed": "Missed",
+    "my_clubs": "My Clubs",
+    "participated": "Attended",
+    "paused": "Paused",
+    "search_placeholder": "Search clubs...",
+    "search_placeholder_full": "Search by name or description…",
+    "subtitle": "Discover communities of readers near you",
+    "title": "Book Clubs",
+    "view": "View",
+    "upcoming": "Upcoming meetings",
+    "joined": "You're a member",
+    "no_clubs": "No clubs found",
+    "book_current": "Current book",
+    "days_until": "in {{ days }} days"
+  },
+  "CLUB_DETAIL": {
+    "about": "About",
+    "back": "Back to clubs",
+    "back_short": "Back",
+    "cancel": "Cancel",
+    "created": "Created",
+    "join": "Join Club",
+    "leave": "Leave Club",
+    "manage_title": "Club management",
+    "new_date": "New meeting date",
+    "not_found": "Club not found",
+    "organizer_badge": "✨ Organizer",
+    "pause": "Pause",
+    "private": "Private",
+    "quizzes_desc": "Create & manage reading quizzes",
+    "quizzes_title": "Quizzes",
+    "randomizer_desc": "Pick the next book to read",
+    "randomizer_title": "Randomizer",
+    "reschedule": "Reschedule",
+    "reschedule_submit": "Confirm date",
+    "members_title": "Members",
+    "tags_title": "Tags",
+    "organizer_title": "Organizer",
+    "meeting_info_title": "Meeting place & time",
+    "duration_label": "Duration",
+    "minutes_abbr": "min",
+    "address_label": "Address",
+    "view_on_map": "View on map →",
+    "after_meeting_title": "After the meeting",
+    "deletion_countdown_prefix": "This club has been cancelled —",
+    "deletion_countdown_hours": "will be deleted in {{ hours }} h. {{ minutes }} min.",
+    "deletion_countdown_minutes": "will be deleted in {{ minutes }} min.",
+    "close_qr": "✕ Close",
+    "events_title": "Upcoming Events",
+    "events_empty": "No upcoming events scheduled.",
+    "create_event": "＋ Create Event",
+    "sort_nearest": "Nearest",
+    "sort_popular": "Most popular",
+    "sort_status": "By status",
+    "join_cta_title": "Want to join this club?",
+    "join_cta_desc": "Join to attend events and meet fellow readers.",
+    "rsvp_going": "✓ Going",
+    "rsvp_join": "RSVP",
+    "rsvp_view": "View",
+    "rsvp_attending": "attending",
+    "edit_club_title": "Edit Club",
+    "edit_club_desc": "Update name, description & settings",
+    "create_event_title": "Create Event",
+    "create_event_desc": "Schedule a new club event"
+  },
+  "EDIT_CLUB": {
+    "title": "Edit Club",
+    "subtitle": "Update your reading community's details",
+    "submit": "Save changes",
+    "submitting": "Saving…",
+    "cancel": "Cancel",
+    "success": "Club updated successfully!",
+    "name_label": "Club name",
+    "name_placeholder": "e.g. Northern Readers",
+    "name_required": "Club name is required.",
+    "name_min": "Name must be at least 3 characters.",
+    "name_max": "Name must not exceed 100 characters.",
+    "description_label": "Description",
+    "description_placeholder": "What books will your club read? Who is it for?",
+    "description_max": "Description must not exceed 500 characters.",
+    "city_label": "City",
+    "city_placeholder": "Kyiv",
+    "visibility_legend": "Visibility",
+    "public_label": "Public club",
+    "public_desc": "Anyone can discover and join",
+    "cover_url_label": "Cover image URL",
+    "cover_url_placeholder": "https://example.com/cover.jpg",
+    "cover_url_hint": "Paste a public image link (JPG, PNG, WebP)"
+  },
+  "FOOTER": {
+    "privacy": "Privacy",
+    "rights": "All rights reserved",
+    "terms": "Terms"
+  },
+  "MEMBERS": {
+    "empty": "No members yet",
+    "member": "Member",
+    "organizer": "Organizer",
+    "show_qr": "QR",
+    "socials_hidden": "Hidden",
+    "title": "Members",
+    "kick": "Kick",
+    "ban": "Ban ▾",
+    "ban_1": "1 meeting",
+    "ban_3": "3 meetings",
+    "ban_5": "5 meetings",
+    "ban_permanent": "Permanently"
+  },
+  "NAV": {
+    "back_home": "← Back to home",
+    "discover": "Discover",
+    "join_free": "Join Free",
+    "login": "Log in",
+    "logout": "Log out",
+    "profile": "Profile",
+    "signed_in_as": "Signed in as",
+    "clubs": "Clubs",
+    "my_clubs": "My Clubs",
+    "register": "Register"
+  },
+  "PROFILE": {
+    "active_badge": "✓ Active",
+    "books_read": "Books read",
+    "clubs_joined": "Clubs joined",
+    "display_name_label": "Display Name",
+    "display_name_min": "Must be at least 2 characters.",
+    "display_name_placeholder": "Your display name",
+    "display_name_required": "Display name is required.",
+    "edit_profile": "Edit Profile",
+    "likes_received": "Likes Received",
+    "member_since": "Member since",
+    "name_updated": "Name updated!",
+    "no_stats": "No statistics yet — start joining clubs and taking quizzes!",
+    "quizzes_taken": "Quizzes taken",
+    "quizzes_won": "Quizzes won",
+    "role_changed_prefix": "Role updated to",
+    "role_organizer": "Organizer",
+    "role_organizer_desc": "Create clubs, run quizzes, and manage members.",
+    "role_reader": "Reader",
+    "role_reader_desc": "Discover clubs, join discussions, take quizzes.",
+    "role_subtitle": "Choose how you participate in book clubs.",
+    "role_title": "Your Role",
+    "save": "Save",
+    "save_name": "Save Name",
+    "saving": "Saving…",
+    "socials_public_label": "Show social media to all club members",
+    "socials_saved": "Social media saved!",
+    "socials_title": "Social media",
+    "stats_title": "Statistics",
+    "title": "My Profile",
+    "saved": "Saved!",
+    "role": "Role",
+    "role_admin": "Administrator",
+    "meetings_attended": "Meetings attended",
+    "meetings_missed": "Meetings missed",
+    "randomizer_wins": "Randomizer wins"
+  },
+  "RANDOMIZER": {
+    "back_to_club": "← Back to club",
+    "history_title": "Previous results",
+    "members_title": "Members",
+    "no_members": "No members in this club yet",
+    "purpose_label": "Randomizer purpose",
+    "purpose_placeholder": "e.g. Who presents the book?",
+    "save": "💾 Save result",
+    "saving": "⏳ Saving…",
+    "select_all": "Select all",
+    "selected": "selected",
+    "spin": "🎲 Spin!",
+    "spin_hint": "Press 'Spin' to select a member",
+    "spinning": "Selecting winner…",
+    "spinning_btn": "⏳ Selecting…",
+    "subtitle": "Who's next? Let fate decide.",
+    "title": "Randomizer",
+    "no_history": "No results yet",
+    "error_min": "Select at least 2 members",
+    "winner": "Winner"
+  },
+  "QUIZ": {
+    "title": "Quizzes",
+    "create": "Create quiz",
+    "take": "Start",
+    "results": "Results",
+    "score": "Score"
+  },
+  "CHAT": {
+    "title": "Club Chat",
+    "placeholder": "Type a message...",
+    "send": "Send",
+    "no_messages": "No messages yet",
+    "new_message": "New message",
+    "close": "Close chat",
+    "open": "Open chat",
+    "rooms": "Rooms"
+  },
+  "FORM_ERRORS": {
+    "required": "This field is required.",
+    "email": "Please enter a valid email address.",
+    "minlength": "Minimum {{ requiredLength }} characters required.",
+    "invalid": "Invalid value."
+  },
+  "SEO": {
+    "clubs_title": "Book Clubs | Book Club",
+    "clubs_description": "Find a book club in your city. Book discussions, reader meetups, interest communities.",
+    "clubs_og_title": "Book Clubs",
+    "login_title": "Sign In | Book Club",
+    "register_title": "Register | Book Club",
+    "profile_title": "Profile | Book Club",
+    "club_detail_title": "{{ name }} | Book Club",
+    "club_detail_og_title": "{{ name }}",
+    "site_name": "Book Club",
+    "site_url": "https://book-club-fe.vercel.app",
+    "site_description": "Book Clubs of Ukraine"
+  }
+}
+````
+
+## File: public/i18n/uk.json
+````json
+{
+  "AUTH": {
+    "activate_account": "Натисніть, щоб активувати акаунт.",
+    "back_to_login": "Назад до входу",
+    "check_email": "Перевірте пошту",
+    "confirm_password": "Підтвердіть пароль",
+    "confirmation_sent": "Ми надіслали посилання підтвердження на",
+    "create_account_h2": "Створити акаунт",
+    "create_account_subtitle": "Створіть акаунт",
+    "creating_account": "Створюємо акаунт…",
+    "display_name": "Ім'я користувача",
+    "email": "Email",
+    "have_account": "Вже є акаунт?",
+    "no_account": "Немає акаунту?",
+    "password": "Пароль",
+    "password_medium": "Середній",
+    "password_strong": "Надійний",
+    "password_weak": "Слабкий",
+    "passwords_no_match": "Паролі не збігаються",
+    "register_title": "Реєстрація",
+    "role_organizer_desc": "Створювати клуби та проводити квізи",
+    "role_organizer_label": "Організатор",
+    "role_reader_desc": "Приєднуватись до клубів та проходити квізи",
+    "role_reader_label": "Читач",
+    "select_role_error": "Будь ласка, оберіть роль.",
+    "sign_in_h2": "Увійти",
+    "signing_in": "Входимо…",
+    "submit_login": "Увійти",
+    "want_to": "Я хочу…",
+    "welcome_back": "Ласкаво просимо назад",
+    "login_title": "Вхід",
+    "submit_register": "Зареєструватися",
+    "password_strength": "Надійність паролю",
+    "account_created": "Акаунт успішно створено!",
+    "welcome_message": "Ласкаво просимо,"
+  },
+  "CREATE_CLUB": {
+    "subtitle": "Створіть нову спільноту читачів",
+    "title": "Створити клуб",
+    "basic_info_legend": "Основна інформація",
+    "name_label": "Назва клубу",
+    "name_placeholder": "Напр. Північ читачів",
+    "name_required": "Назва клубу є обов'язковою.",
+    "name_min": "Назва повинна містити щонайменше 3 символи.",
+    "name_max": "Назва не повинна перевищувати 100 символів.",
+    "description_label": "Опис",
+    "description_placeholder": "Які книги буде читати ваш клуб? Для кого він?",
+    "description_max": "Опис не повинен перевищувати 500 символів.",
+    "city_label": "Місто",
+    "city_placeholder": "Київ",
+    "city_required": "Місто є обов'язковим.",
+    "city_max": "Місто не повинно перевищувати 100 символів.",
+    "address_label": "Адреса",
+    "address_placeholder": "вул. Хрещатик, 1",
+    "address_max": "Адреса не повинна перевищувати 200 символів.",
+    "tags_duration_legend": "Теги та тривалість",
+    "tags_label": "Теги / Жанри",
+    "tags_placeholder": "Класика, Романтика, Фентезі",
+    "tags_hint": "Введіть жанри через кому",
+    "tags_max": "Теги не повинні перевищувати 300 символів.",
+    "duration_label": "Тривалість зустрічі (хв)",
+    "duration_placeholder": "90",
+    "duration_min": "Тривалість не може бути менше 15 хвилин.",
+    "duration_max": "Тривалість не може перевищувати 480 хвилин.",
+    "visibility_legend": "Видимість",
+    "public_label": "Публічний клуб",
+    "public_desc": "Хто завгодно може виявити та приєднатися",
+    "cover_url_label": "URL обкладинки",
+    "cover_url_placeholder": "https://example.com/cover.jpg",
+    "cover_url_hint": "Вставте публічне посилання на зображення (JPG, PNG, WebP)",
+    "after_meeting_toggle": "▼ Після зустрічі",
+    "after_meeting_hide": "▲ Приховати інформацію про місце після зустрічі",
+    "venue_name_label": "Назва місця",
+    "venue_name_placeholder": "Кав'ярня «Пушкін»",
+    "venue_name_max": "Назва не повинна перевищувати 150 символів.",
+    "venue_address_label": "Адреса місця",
+    "venue_address_placeholder": "вул. Хрещатик, 2",
+    "venue_address_max": "Адреса не повинна перевищувати 200 символів.",
+    "venue_notes_label": "Примітки",
+    "venue_notes_placeholder": "Бронювання на 20:00",
+    "venue_notes_max": "Примітки не повинні перевищувати 300 символів.",
+    "cancel": "Скасувати",
+    "submit": "Створити клуб",
+    "submitting": "Створення…"
+  },
+  "CLUBS": {
+    "active": "Активний",
+    "all": "Всі клуби",
+    "all_cities": "Всі міста",
+    "cancelled": "Скасовано",
+    "create": "Створити клуб",
+    "join": "Приєднатися",
+    "member_badge": "✓ Учасник",
+    "member_singular": "учасник",
+    "members": "учасників",
+    "missed": "Пропущені",
+    "my_clubs": "Мої клуби",
+    "participated": "Відвідані",
+    "paused": "Призупинено",
+    "search_placeholder": "Шукати клуби...",
+    "search_placeholder_full": "Шукати за назвою або описом…",
+    "subtitle": "Знайдіть спільноти читачів поруч",
+    "title": "Книжкові клуби",
+    "view": "Переглянути",
+    "upcoming": "Найближчі зустрічі",
+    "joined": "Ви учасник",
+    "no_clubs": "Клубів не знайдено",
+    "book_current": "Поточна книга",
+    "days_until": "за {{ days }} дн."
+  },
+  "CLUB_DETAIL": {
+    "about": "Про клуб",
+    "back": "Назад до клубів",
+    "back_short": "Назад",
+    "cancel": "Скасувати",
+    "created": "Створено",
+    "join": "Приєднатись до клубу",
+    "leave": "Покинути клуб",
+    "manage_title": "Управління клубом",
+    "new_date": "Нова дата зустрічі",
+    "not_found": "Клуб не знайдено",
+    "organizer_badge": "✨ Організатор",
+    "pause": "Призупинити",
+    "private": "Приватний",
+    "quizzes_desc": "Створюйте та керуйте квізами",
+    "quizzes_title": "Квізи",
+    "randomizer_desc": "Обирайте наступну книгу",
+    "randomizer_title": "Рандомайзер",
+    "reschedule": "Перепланувати",
+    "reschedule_submit": "Перенести зустріч",
+    "members_title": "Учасники",
+    "tags_title": "Теги",
+    "organizer_title": "Організатор",
+    "meeting_info_title": "Місце та час зустрічі",
+    "duration_label": "Тривалість",
+    "minutes_abbr": "хв",
+    "address_label": "Адреса",
+    "view_on_map": "Переглянути на карті →",
+    "after_meeting_title": "Після зустрічі",
+    "deletion_countdown_prefix": "Цей клуб скасовано —",
+    "deletion_countdown_hours": "буде видалено через {{ hours }} год. {{ minutes }} хв.",
+    "deletion_countdown_minutes": "буде видалено через {{ minutes }} хв.",
+    "close_qr": "✕ Закрити",
+    "events_title": "Найближчі події",
+    "events_empty": "Немає запланованих подій.",
+    "create_event": "＋ Створити подію",
+    "sort_nearest": "Найближчі",
+    "sort_popular": "Популярні",
+    "sort_status": "За статусом",
+    "join_cta_title": "Хочеш приєднатись до клубу?",
+    "join_cta_desc": "Вступи, щоб відвідувати зустрічі та знайомитись з читачами.",
+    "rsvp_going": "✓ Йду",
+    "rsvp_join": "Зареєструватись",
+    "rsvp_view": "Детальніше",
+    "rsvp_attending": "учасників",
+    "edit_club_title": "Редагувати клуб",
+    "edit_club_desc": "Оновити назву, опис та налаштування",
+    "create_event_title": "Створити подію",
+    "create_event_desc": "Запланувати нову подію клубу"
+  },
+  "EDIT_CLUB": {
+    "title": "Редагувати клуб",
+    "subtitle": "Оновіть дані своєї читацької спільноти",
+    "submit": "Зберегти зміни",
+    "submitting": "Збереження…",
+    "cancel": "Скасувати",
+    "success": "Клуб успішно оновлено!",
+    "name_label": "Назва клубу",
+    "name_placeholder": "Напр. Північ читачів",
+    "name_required": "Назва клубу є обов'язковою.",
+    "name_min": "Назва повинна містити щонайменше 3 символи.",
+    "name_max": "Назва не повинна перевищувати 100 символів.",
+    "description_label": "Опис",
+    "description_placeholder": "Які книги буде читати ваш клуб? Для кого він?",
+    "description_max": "Опис не повинен перевищувати 500 символів.",
+    "city_label": "Місто",
+    "city_placeholder": "Київ",
+    "visibility_legend": "Видимість",
+    "public_label": "Публічний клуб",
+    "public_desc": "Хто завгодно може виявити та приєднатися",
+    "cover_url_label": "URL обкладинки",
+    "cover_url_placeholder": "https://example.com/cover.jpg",
+    "cover_url_hint": "Вставте публічне посилання на зображення (JPG, PNG, WebP)"
+  },
+  "FOOTER": {
+    "privacy": "Конфіденційність",
+    "rights": "Усі права захищені",
+    "terms": "Умови"
+  },
+  "MEMBERS": {
+    "empty": "Немає учасників",
+    "member": "Учасник",
+    "organizer": "Організатор",
+    "show_qr": "QR",
+    "socials_hidden": "Приховано",
+    "title": "Учасники",
+    "kick": "Виключити",
+    "ban": "Заблокувати ▾",
+    "ban_1": "1 зустріч",
+    "ban_3": "3 зустрічі",
+    "ban_5": "5 зустрічей",
+    "ban_permanent": "Назавжди"
+  },
+  "NAV": {
+    "back_home": "← На головну",
+    "discover": "Огляд",
+    "join_free": "Приєднатись",
+    "login": "Увійти",
+    "logout": "Вийти",
+    "profile": "Профіль",
+    "signed_in_as": "Увійшли як",
+    "clubs": "Клуби",
+    "my_clubs": "Мої клуби",
+    "register": "Приєднатись"
+  },
+  "PROFILE": {
+    "active_badge": "✓ Активний",
+    "books_read": "Книг прочитано",
+    "clubs_joined": "Клубів приєднано",
+    "display_name_label": "Ім'я в додатку",
+    "display_name_min": "Мінімум 2 символи.",
+    "display_name_placeholder": "Ваше ім'я",
+    "display_name_required": "Ім'я є обов'язковим.",
+    "edit_profile": "Редагувати профіль",
+    "likes_received": "Отримано вподобань",
+    "member_since": "Учасник з",
+    "name_updated": "Ім'я оновлено!",
+    "no_stats": "Статистики ще немає — починайте приєднуватись до клубів і проходити квізи!",
+    "quizzes_taken": "Квізів пройдено",
+    "quizzes_won": "Квізів виграно",
+    "role_changed_prefix": "Роль змінено на",
+    "role_organizer": "Організатор",
+    "role_organizer_desc": "Створюйте клуби, проводьте квізи та керуйте учасниками.",
+    "role_reader": "Читач",
+    "role_reader_desc": "Відкривайте клуби, беріть участь у дискусіях і проходьте квізи.",
+    "role_subtitle": "Оберіть, як ви берете участь у книжкових клубах.",
+    "role_title": "Ваша роль",
+    "save": "Зберегти",
+    "save_name": "Зберегти ім'я",
+    "saving": "Збереження…",
+    "socials_public_label": "Показувати соціальні мережі всім учасникам клубів",
+    "socials_saved": "Соціальні мережі збережено!",
+    "socials_title": "Соціальні мережі",
+    "stats_title": "Статистика",
+    "title": "Особистий кабінет",
+    "saved": "Збережено!",
+    "role": "Роль",
+    "role_admin": "Адміністратор",
+    "meetings_attended": "Зустрічей відвідано",
+    "meetings_missed": "Зустрічей пропущено",
+    "randomizer_wins": "Перемог в рандомайзері"
+  },
+  "RANDOMIZER": {
+    "back_to_club": "← До клубу",
+    "history_title": "Попередні результати",
+    "members_title": "Учасники",
+    "no_members": "У цьому клубі поки немає учасників",
+    "purpose_label": "Питання / Мета рандомайзера",
+    "purpose_placeholder": "Наприклад: Хто представляє книгу?",
+    "save": "💾 Зберегти результат",
+    "saving": "⏳ Збереження…",
+    "select_all": "Обрати всіх",
+    "selected": "обрано",
+    "spin": "🎲 Крутити",
+    "spin_hint": "Натисніть «Крутити» щоб обрати учасника",
+    "spinning": "Вибираємо переможця…",
+    "spinning_btn": "⏳ Вибираємо…",
+    "subtitle": "Хто наступний? Нехай доля вирішує.",
+    "title": "Рандомайзер",
+    "no_history": "Немає результатів",
+    "error_min": "Оберіть щонайменше 2 учасників",
+    "winner": "Переможець"
+  },
+  "QUIZ": {
+    "title": "Квізи",
+    "create": "Створити квіз",
+    "take": "Почати",
+    "results": "Результати",
+    "score": "Рахунок"
+  },
+  "CHAT": {
+    "title": "Чат клубу",
+    "placeholder": "Написати повідомлення...",
+    "send": "Надіслати",
+    "no_messages": "Поки немає повідомлень",
+    "new_message": "Нове повідомлення",
+    "close": "Закрити чат",
+    "open": "Відкрити чат",
+    "rooms": "Кімнати"
+  },
+  "FORM_ERRORS": {
+    "required": "Це поле є обов'язковим.",
+    "email": "Введіть коректну адресу електронної пошти.",
+    "minlength": "Мінімум {{ requiredLength }} символів.",
+    "invalid": "Некоректне значення."
+  },
+  "SEO": {
+    "clubs_title": "Книжкові клуби | Book Club",
+    "clubs_description": "Знайдіть книжковий клуб у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+    "clubs_og_title": "Книжкові клуби",
+    "login_title": "Вхід | Book Club",
+    "register_title": "Реєстрація | Book Club",
+    "profile_title": "Профіль | Book Club",
+    "club_detail_title": "{{ name }} | Book Club",
+    "club_detail_og_title": "{{ name }}",
+    "site_name": "Book Club",
+    "site_url": "https://book-club-fe.vercel.app",
+    "site_description": "Читацькі клуби України"
+  }
+}
 ````
 
 ## File: src/app/features/clubs/create-club/create-club.component.ts
@@ -10270,6 +10629,21 @@ export class ClubService {
     const club = mapClub(raw);
     this._clubs.update(existing => [club, ...existing]);
     this._myClubs.update(existing => [club, ...existing]);
+    return club;
+  }
+  async updateClub(clubId: string, payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    city?: string;
+    coverUrl?: string | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
     return club;
   }
   async joinClub(clubId: string): Promise<void> {

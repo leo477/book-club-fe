@@ -302,4 +302,64 @@ describe('ClubService – computed signals and additional methods', () => {
       expect(service.myMissedClubs()).toEqual([]);
     });
   });
+
+  describe('myOwnedClubs branch: no authenticated user', () => {
+    it('returns empty array when currentUser is null', () => {
+      authSpy.currentUser.and.returnValue(null);
+      expect(service.myOwnedClubs()).toEqual([]);
+    });
+  });
+
+  describe('filteredClubs branch: null description', () => {
+    it('handles club with null description without throwing', async () => {
+      const p = service.loadPublicClubs();
+      httpMock.expectOne(`${API}/clubs`).flush([
+        makeApiClub({ id: 'c1', name: 'Alpha', description: null }),
+      ]);
+      await p;
+      service.setSearchQuery('alpha');
+      expect(service.filteredClubs().some(c => c.id === 'c1')).toBeTrue();
+    });
+
+    it('does not match query against null description', async () => {
+      const p = service.loadPublicClubs();
+      httpMock.expectOne(`${API}/clubs`).flush([
+        makeApiClub({ id: 'c1', name: 'Beta', description: null }),
+      ]);
+      await p;
+      service.setSearchQuery('alpha');
+      expect(service.filteredClubs().length).toBe(0);
+    });
+  });
+
+  describe('upcomingByCity branch: null/empty city', () => {
+    it('groups clubs with null city under empty string key', async () => {
+      const p = service.loadPublicClubs();
+      httpMock.expectOne(`${API}/clubs`).flush([
+        makeApiClub({ id: 'c1', city: null }),
+      ]);
+      await p;
+      const byCity = service.upcomingByCity();
+      expect(byCity['']).toBeDefined();
+      expect(byCity[''].length).toBe(1);
+    });
+  });
+
+  describe('joinClub branch: already in myClubs', () => {
+    it('does not add duplicate to myClubs when already joined', async () => {
+      const allP = service.loadPublicClubs();
+      httpMock.expectOne(`${API}/clubs`).flush([makeApiClub({ id: 'c1', memberCount: 5 })]);
+      await allP;
+      const myP = service.loadMyClubs();
+      httpMock.expectOne(`${API}/clubs/my`).flush([makeApiClub({ id: 'c1' })]);
+      await myP;
+      expect(service.myClubIds().has('c1')).toBeTrue();
+
+      const joinP = service.joinClub('c1');
+      httpMock.expectOne(`${API}/clubs/c1/join`).flush({ memberCount: 6 });
+      await joinP;
+      const c1Clubs = service.myClubs().filter(c => c.id === 'c1');
+      expect(c1Clubs.length).toBe(1);
+    });
+  });
 });

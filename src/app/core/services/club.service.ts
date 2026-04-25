@@ -145,6 +145,22 @@ export class ClubService {
     return club;
   }
 
+  async updateClub(clubId: string, payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    city?: string;
+    coverUrl?: string | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    return club;
+  }
+
   async joinClub(clubId: string): Promise<void> {
     await firstValueFrom(
       this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
