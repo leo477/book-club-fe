@@ -1938,1097 +1938,6 @@ export class ToastComponent {
 
 ````
 
-## File: src/app/shared/spartan/badge/src/lib/hlm-badge.ts
-````typescript
-import { Directive, input } from '@angular/core';
-import { classes } from '@spartan-ng/helm/utils';
-import { type VariantProps, cva } from 'class-variance-authority';
-const badgeVariants = cva(
-	'h-5 gap-1 rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium transition-all has-data-[icon=inline-end]:pe-1.5 has-data-[icon=inline-start]:ps-1.5 [&>ng-icon]:text-[calc(var(--spacing)*3)] group/badge focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 inline-flex w-fit shrink-0 items-center justify-center overflow-hidden whitespace-nowrap focus-visible:ring-[3px] [&>ng-icon]:pointer-events-none',
-	{
-		variants: {
-			variant: {
-				default: 'bg-primary text-primary-foreground [a]:hover:bg-primary/80',
-				secondary: 'bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80',
-				destructive: 'bg-destructive/10 [a]:hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive dark:bg-destructive/20',
-				outline: 'border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground',
-				ghost: 'hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50',
-				link: 'text-primary underline-offset-4 hover:underline',
-			},
-		},
-		defaultVariants: {
-			variant: 'default',
-		},
-	},
-);
-export type BadgeVariants = VariantProps<typeof badgeVariants>;
-@Directive({
-	selector: '[hlmBadge],hlm-badge',
-	host: {
-		'data-slot': 'badge',
-		'[attr.data-variant]': 'variant()',
-	},
-})
-export class HlmBadge {
-	public readonly variant = input<BadgeVariants['variant']>('default');
-	constructor() {
-		classes(() => badgeVariants({ variant: this.variant() }));
-	}
-}
-````
-
-## File: src/app/shared/spartan/badge/src/index.ts
-````typescript
-import { HlmBadge } from './lib/hlm-badge';
-export * from './lib/hlm-badge';
-export const HlmBadgeImports = [HlmBadge] as const;
-````
-
-## File: src/app/shared/spartan/button/src/lib/hlm-button.token.ts
-````typescript
-import { InjectionToken, type ValueProvider, inject } from '@angular/core';
-import type { ButtonVariants } from './hlm-button';
-export interface BrnButtonConfig {
-	variant: ButtonVariants['variant'];
-	size: ButtonVariants['size'];
-}
-const defaultConfig: BrnButtonConfig = {
-	variant: 'default',
-	size: 'default',
-};
-const BrnButtonConfigToken = new InjectionToken<BrnButtonConfig>('BrnButtonConfig');
-export function provideBrnButtonConfig(config: Partial<BrnButtonConfig>): ValueProvider {
-	return { provide: BrnButtonConfigToken, useValue: { ...defaultConfig, ...config } };
-}
-export function injectBrnButtonConfig(): BrnButtonConfig {
-	return inject(BrnButtonConfigToken, { optional: true }) ?? defaultConfig;
-}
-````
-
-## File: src/app/shared/spartan/button/src/lib/hlm-button.ts
-````typescript
-import { Directive, input, signal } from '@angular/core';
-import { BrnButton } from '@spartan-ng/brain/button';
-import { classes } from '@spartan-ng/helm/utils';
-import { cva, type VariantProps } from 'class-variance-authority';
-import type { ClassValue } from 'clsx';
-import { injectBrnButtonConfig } from './hlm-button.token';
-export const buttonVariants = cva(
-	'focus-visible:border-ring focus-visible:ring-ring/50 data-[matches-spartan-invalid=true]:ring-destructive/20 dark:data-[matches-spartan-invalid=true]:ring-destructive/40 data-[matches-spartan-invalid=true]:border-destructive dark:data-[matches-spartan-invalid=true]:border-destructive/50 rounded-md border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-3 data-[matches-spartan-invalid=true]:ring-3 [&_ng-icon:not([class*=\'text-\'])]:text-[calc(var(--spacing)*4)] group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_ng-icon]:pointer-events-none [&_ng-icon]:shrink-0',
-	{
-		variants: {
-			variant: {
-				default: 'bg-primary text-primary-foreground hover:bg-primary/80',
-				outline: 'border-border bg-background hover:bg-muted hover:text-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 aria-expanded:bg-muted aria-expanded:text-foreground shadow-xs',
-				secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
-				ghost: 'hover:bg-muted hover:text-foreground dark:hover:bg-muted/50 aria-expanded:bg-muted aria-expanded:text-foreground',
-				destructive: 'bg-destructive/10 hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 text-destructive focus-visible:border-destructive/40 dark:hover:bg-destructive/30',
-				link: 'text-primary underline-offset-4 hover:underline',
-			},
-			size: {
-				default: 'h-9 gap-1.5 px-2.5 in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',
-				xs: 'h-6 gap-1 rounded-[min(var(--radius-md),8px)] px-2 text-xs in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_ng-icon:not([class*=\'text-\'])]:text-[calc(var(--spacing)*3)]',
-				sm: 'h-8 gap-1 rounded-[min(var(--radius-md),10px)] px-2.5 in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5',
-				lg: 'h-10 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3',
-				icon: 'size-9',
-				'icon-xs': 'size-6 rounded-[min(var(--radius-md),8px)] in-data-[slot=button-group]:rounded-md [&_ng-icon:not([class*=\'text-\'])]:text-[calc(var(--spacing)*3)]',
-				'icon-sm': 'size-8 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-md',
-				'icon-lg': 'size-10',
-			},
-		},
-		defaultVariants: {
-			variant: 'default',
-			size: 'default',
-		},
-	},
-);
-export type ButtonVariants = VariantProps<typeof buttonVariants>;
-@Directive({
-	selector: 'button[hlmBtn], a[hlmBtn]',
-	exportAs: 'hlmBtn',
-	hostDirectives: [{ directive: BrnButton, inputs: ['disabled'] }],
-	host: {
-		'data-slot': 'button',
-	},
-})
-export class HlmButton {
-	private readonly _config = injectBrnButtonConfig();
-	private readonly _additionalClasses = signal<ClassValue>('');
-	public readonly variant = input<ButtonVariants['variant']>(this._config.variant);
-	public readonly size = input<ButtonVariants['size']>(this._config.size);
-	constructor() {
-		classes(() => [buttonVariants({ variant: this.variant(), size: this.size() }), this._additionalClasses()]);
-	}
-	setClass(classes: string): void {
-		this._additionalClasses.set(classes);
-	}
-}
-````
-
-## File: src/app/shared/spartan/button/src/index.ts
-````typescript
-import { HlmButton } from './lib/hlm-button';
-export * from './lib/hlm-button';
-export * from './lib/hlm-button.token';
-export const HlmButtonImports = [HlmButton] as const;
-````
-
-## File: src/app/shared/spartan/card/src/lib/hlm-card-action.ts
-````typescript
-import { Directive } from '@angular/core';
-import { classes } from '@spartan-ng/helm/utils';
-@Directive({
-	selector: '[hlmCardAction]',
-	host: {
-		'data-slot': 'card-action',
-	},
-})
-export class HlmCardAction {
-	constructor() {
-		classes(() => 'col-start-2 row-span-2 row-start-1 self-start justify-self-end');
-	}
-}
-````
-
-## File: src/app/shared/spartan/card/src/lib/hlm-card-content.ts
-````typescript
-import { Directive } from '@angular/core';
-import { classes } from '@spartan-ng/helm/utils';
-@Directive({
-	selector: '[hlmCardContent]',
-	host: {
-		'data-slot': 'card-content',
-	},
-})
-export class HlmCardContent {
-	constructor() {
-		classes(() => 'px-6 group-data-[size=sm]/card:px-4');
-	}
-}
-````
-
-## File: src/app/shared/spartan/card/src/lib/hlm-card-description.ts
-````typescript
-import { Directive } from '@angular/core';
-import { classes } from '@spartan-ng/helm/utils';
-@Directive({
-	selector: '[hlmCardDescription]',
-	host: {
-		'data-slot': 'card-description',
-	},
-})
-export class HlmCardDescription {
-	constructor() {
-		classes(() => 'text-muted-foreground text-sm');
-	}
-}
-````
-
-## File: src/app/shared/spartan/card/src/lib/hlm-card-footer.ts
-````typescript
-import { Directive } from '@angular/core';
-import { classes } from '@spartan-ng/helm/utils';
-@Directive({
-	selector: '[hlmCardFooter],hlm-card-footer',
-	host: {
-		'data-slot': 'card-footer',
-	},
-})
-export class HlmCardFooter {
-	constructor() {
-		classes(() => 'rounded-b-xl px-6 group-data-[size=sm]/card:px-4 [.border-t]:pt-6 group-data-[size=sm]/card:[.border-t]:pt-4 flex items-center');
-	}
-}
-````
-
-## File: src/app/shared/spartan/card/src/lib/hlm-card-header.ts
-````typescript
-import { Directive } from '@angular/core';
-import { classes } from '@spartan-ng/helm/utils';
-@Directive({
-	selector: '[hlmCardHeader],hlm-card-header',
-	host: {
-		'data-slot': 'card-header',
-	},
-})
-export class HlmCardHeader {
-	constructor() {
-		classes(
-			() =>
-				`gap-1 rounded-t-xl px-6 group-data-[size=sm]/card:px-4 [.border-b]:pb-6 group-data-[size=sm]/card:[.border-b]:pb-4 group/card-header @container/card-header grid auto-rows-min items-start has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto]`,
-		);
-	}
-}
-````
-
-## File: src/app/shared/spartan/card/src/lib/hlm-card-title.ts
-````typescript
-import { Directive } from '@angular/core';
-import { classes } from '@spartan-ng/helm/utils';
-@Directive({
-	selector: '[hlmCardTitle]',
-	host: {
-		'data-slot': 'card-title',
-	},
-})
-export class HlmCardTitle {
-	constructor() {
-		classes(() => 'text-base leading-normal font-medium group-data-[size=sm]/card:text-sm');
-	}
-}
-````
-
-## File: src/app/shared/spartan/card/src/lib/hlm-card.ts
-````typescript
-import { Directive, input } from '@angular/core';
-import { classes } from '@spartan-ng/helm/utils';
-@Directive({
-	selector: '[hlmCard],hlm-card',
-	host: {
-		'data-slot': 'card',
-		'[attr.data-size]': 'size()',
-	},
-})
-export class HlmCard {
-	public readonly size = input<'sm' | 'default'>('default');
-	constructor() {
-		classes(() => 'ring-foreground/10 bg-card text-card-foreground gap-6 overflow-hidden rounded-xl py-6 text-sm shadow-xs ring-1 has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl group/card flex flex-col');
-	}
-}
-````
-
-## File: src/app/shared/spartan/card/src/index.ts
-````typescript
-import { HlmCard } from './lib/hlm-card';
-import { HlmCardAction } from './lib/hlm-card-action';
-import { HlmCardContent } from './lib/hlm-card-content';
-import { HlmCardDescription } from './lib/hlm-card-description';
-import { HlmCardFooter } from './lib/hlm-card-footer';
-import { HlmCardHeader } from './lib/hlm-card-header';
-import { HlmCardTitle } from './lib/hlm-card-title';
-export * from './lib/hlm-card';
-export * from './lib/hlm-card-action';
-export * from './lib/hlm-card-content';
-export * from './lib/hlm-card-description';
-export * from './lib/hlm-card-footer';
-export * from './lib/hlm-card-header';
-export * from './lib/hlm-card-title';
-export const HlmCardImports = [
-	HlmCard,
-	HlmCardAction,
-	HlmCardContent,
-	HlmCardDescription,
-	HlmCardFooter,
-	HlmCardHeader,
-	HlmCardTitle,
-] as const;
-````
-
-## File: src/app/shared/spartan/field/src/lib/hlm-field-content.ts
-````typescript
-import { Directive } from '@angular/core';
-import { classes } from '@spartan-ng/helm/utils';
-@Directive({
-	selector: '[hlmFieldContent],hlm-field-content',
-	host: {
-		'data-slot': 'field-content',
-	},
-})
-export class HlmFieldContent {
-	constructor() {
-		classes(() => 'group/field-content flex flex-1 flex-col gap-1 leading-snug');
-	}
-}
-````
-
-## File: src/app/shared/spartan/field/src/lib/hlm-field-description.ts
-````typescript
-import { Directive, effect, EffectRef, inject, input, OnDestroy } from '@angular/core';
-import { BrnFieldA11yService } from '@spartan-ng/brain/field';
-import { classes } from '@spartan-ng/helm/utils';
-import type { ClassValue } from 'clsx';
-@Directive({
-	selector: '[hlmFieldDescription],hlm-field-description',
-	host: {
-		'data-slot': 'field-description',
-		'[attr.id]': 'id()',
-	},
-})
-export class HlmFieldDescription implements OnDestroy {
-	private static _id = 0;
-	private readonly _a11y = inject(BrnFieldA11yService, { optional: true, host: true });
-	public readonly userClass = input<ClassValue>('', { alias: 'class' });
-	public readonly id = input<string>(`hlm-field-description-${HlmFieldDescription._id++}`);
-	private _registeredId?: string;
-	private readonly _cleanup: EffectRef | null = this._a11y
-		? effect(() => {
-				const a11y = this._a11y;
-				if (!a11y) return;
-				const id = this.id();
-				if (this._registeredId && this._registeredId !== id) {
-					a11y.unregisterDescription(this._registeredId);
-				}
-				if (this._registeredId !== id) {
-					a11y.registerDescription(id);
-					this._registeredId = id;
-				}
-			})
-		: null;
-	constructor() {
-		classes(() => [
-			'text-muted-foreground text-sm leading-normal font-normal group-has-[[data-orientation=horizontal]]/field:text-balance',
-			'last:mt-0 nth-last-2:-mt-1 [[data-variant=legend]+&]:-mt-1.5',
-			'[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4',
-			this.userClass(),
-		]);
-	}
-	ngOnDestroy() {
-		this._cleanup?.destroy();
-		if (this._registeredId) {
-			this._a11y?.unregisterDescription(this._registeredId);
-		}
-	}
-}
-````
-
-## File: src/app/shared/spartan/field/src/lib/hlm-field-error.ts
-````typescript
-import { BooleanInput } from '@angular/cdk/coercion';
-import {
-	booleanAttribute,
-	ChangeDetectionStrategy,
-	Component,
-	computed,
-	effect,
-	EffectRef,
-	inject,
-	input,
-	OnDestroy,
-} from '@angular/core';
-import { BrnField, BrnFieldA11yService } from '@spartan-ng/brain/field';
-import { classes } from '@spartan-ng/helm/utils';
-import { ClassValue } from 'clsx';
-@Component({
-	selector: 'hlm-field-error',
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	host: {
-		role: 'alert',
-		'data-slot': 'field-error',
-		'[attr.id]': 'id()',
-		'[hidden]': '!_display()',
-	},
-	template: `
-		@if (_display()) {
-			<ng-content />
-		}
-	`,
-})
-export class HlmFieldError implements OnDestroy {
-	private static _id = 0;
-	private readonly _field = inject(BrnField, { optional: true });
-	private readonly _a11y = inject(BrnFieldA11yService, { optional: true, host: true });
-	private _registeredId?: string;
-	private readonly _hasParentField = !!this._field;
-	public readonly id = input<string>(`hlm-field-error-${HlmFieldError._id++}`);
-	public readonly userClass = input<ClassValue>('', { alias: 'class' });
-	public readonly validator = input<string>();
-	public readonly forceShow = input<boolean, BooleanInput>(false, { transform: booleanAttribute });
-	protected readonly _display = computed(() => !this._hasParentField || this.forceShow() || this._hasError());
-	protected readonly _hasError = computed(() => {
-		const errors = this._field?.errors();
-		if (!errors) return false;
-		const validator = this.validator();
-		const spartanInvalid = this._field?.controlState()?.spartanInvalid;
-		if (!spartanInvalid) return false;
-		return validator ? validator in errors : Object.keys(errors).length > 0;
-	});
-	private readonly _cleanup: EffectRef | null = this._a11y
-		? effect(() => {
-				const a11y = this._a11y;
-				if (!a11y) return;
-				const id = this.id();
-				const hasError = this._hasError();
-				if (this._registeredId && (this._registeredId !== id || !hasError)) {
-					a11y.unregisterError(this._registeredId);
-					this._registeredId = undefined;
-				}
-				if (hasError && this._registeredId !== id) {
-					a11y.registerError(id);
-					this._registeredId = id;
-				}
-			})
-		: null;
-	constructor() {
-		classes(() => ['text-destructive text-sm font-normal', this.userClass()]);
-	}
-	ngOnDestroy() {
-		this._cleanup?.destroy();
-		if (this._registeredId) {
-			this._a11y?.unregisterError(this._registeredId);
-		}
-	}
-}
-````
-
-## File: src/app/shared/spartan/field/src/lib/hlm-field-group.ts
-````typescript
-import { Directive } from '@angular/core';
-import { classes } from '@spartan-ng/helm/utils';
-@Directive({
-	selector: '[hlmFieldGroup],hlm-field-group',
-	host: {
-		'data-slot': 'field-group',
-	},
-})
-export class HlmFieldGroup {
-	constructor() {
-		classes(
-			() =>
-				'group/field-group @container/field-group flex w-full flex-col gap-7 data-[slot=checkbox-group]:gap-3 *:data-[slot=field-group]:gap-4',
-		);
-	}
-}
-````
-
-## File: src/app/shared/spartan/field/src/lib/hlm-field-label.ts
-````typescript
-import { Directive } from '@angular/core';
-import { HlmLabel } from '@spartan-ng/helm/label';
-import { classes } from '@spartan-ng/helm/utils';
-@Directive({
-	selector: '[hlmFieldLabel],hlm-field-label',
-	hostDirectives: [HlmLabel],
-	host: {
-		'data-slot': 'field-label',
-	},
-})
-export class HlmFieldLabel {
-	constructor() {
-		classes(() => [
-			'group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50',
-			'has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col has-[>[data-slot=field]]:rounded-md has-[>[data-slot=field]]:border [&>*]:data-[slot=field]:p-4',
-			'has-data-[checked=true]:bg-primary/5 has-data-[checked=true]:border-primary dark:has-data-[checked=true]:bg-primary/10',
-			'has-data-[state=checked]:bg-primary/5 has-data-[state=checked]:border-primary dark:has-data-[state=checked]:bg-primary/10',
-		]);
-	}
-}
-````
-
-## File: src/app/shared/spartan/field/src/lib/hlm-field-legend.ts
-````typescript
-import { Directive, input } from '@angular/core';
-import { classes } from '@spartan-ng/helm/utils';
-@Directive({
-	selector: 'legend[hlmFieldLegend]',
-	host: {
-		'data-slot': 'field-legend',
-		'[attr.data-variant]': 'variant()',
-	},
-})
-export class HlmFieldLegend {
-	public readonly variant = input<'label' | 'legend'>('legend');
-	constructor() {
-		classes(() => 'mb-3 font-medium data-[variant=label]:text-sm data-[variant=legend]:text-base');
-	}
-}
-````
-
-## File: src/app/shared/spartan/field/src/lib/hlm-field-separator.ts
-````typescript
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { HlmSeparator } from '@spartan-ng/helm/separator';
-import { classes } from '@spartan-ng/helm/utils';
-@Component({
-	selector: 'hlm-field-separator',
-	imports: [HlmSeparator],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	host: {
-		'data-slot': 'field-separator',
-	},
-	template: `
-		<hlm-separator class="absolute inset-0 top-1/2" />
-		<span
-			data-slot="field-separator-content"
-			class="bg-background text-muted-foreground relative mx-auto block w-fit px-2"
-		>
-			<ng-content />
-		</span>
-	`,
-})
-export class HlmFieldSeparator {
-	constructor() {
-		classes(() => 'relative -my-2 h-5 text-sm group-data-[variant=outline]/field-group:-mb-2');
-	}
-}
-````
-
-## File: src/app/shared/spartan/field/src/lib/hlm-field-set.ts
-````typescript
-import { Directive } from '@angular/core';
-import { classes } from '@spartan-ng/helm/utils';
-@Directive({
-	selector: 'fieldset[hlmFieldSet]',
-	host: {
-		'data-slot': 'field-set',
-	},
-})
-export class HlmFieldSet {
-	constructor() {
-		classes(() => [
-			'flex flex-col gap-6',
-			'has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3',
-		]);
-	}
-}
-````
-
-## File: src/app/shared/spartan/field/src/lib/hlm-field-title.ts
-````typescript
-import { Directive } from '@angular/core';
-import { classes } from '@spartan-ng/helm/utils';
-@Directive({
-	selector: '[hlmFieldTitle],hlm-field-title',
-	host: {
-		'data-slot': 'field-label',
-	},
-})
-export class HlmFieldTitle {
-	constructor() {
-		classes(
-			() =>
-				'flex w-fit items-center gap-2 text-sm leading-snug font-medium group-data-[disabled=true]/field:opacity-50',
-		);
-	}
-}
-````
-
-## File: src/app/shared/spartan/field/src/lib/hlm-field.ts
-````typescript
-import { Directive, input } from '@angular/core';
-import { BrnField } from '@spartan-ng/brain/field';
-import { classes } from '@spartan-ng/helm/utils';
-import { cva, VariantProps } from 'class-variance-authority';
-const fieldVariants = cva('group/field data-[matches-spartan-invalid=true]:text-destructive flex w-full gap-3', {
-	variants: {
-		orientation: {
-			vertical: 'flex-col *:w-full [&>.sr-only]:w-auto',
-			horizontal: [
-				'flex-row items-center',
-				'*:data-[slot=field-label]:flex-auto',
-				'has-[>[data-slot=field-content]]:items-start has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px',
-			],
-			responsive: [
-				'flex-col *:w-full @md/field-group:flex-row @md/field-group:items-center @md/field-group:*:w-auto [&>.sr-only]:w-auto',
-				'@md/field-group:*:data-[slot=field-label]:flex-auto',
-				'@md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px',
-			],
-		},
-	},
-	defaultVariants: {
-		orientation: 'vertical',
-	},
-});
-export type FieldVariants = VariantProps<typeof fieldVariants>;
-@Directive({
-	selector: '[hlmField],hlm-field',
-	hostDirectives: [{ directive: BrnField, inputs: ['data-invalid', 'forceInvalid'] }],
-	host: {
-		role: 'group',
-		'data-slot': 'field',
-		'[attr.data-orientation]': 'orientation()',
-	},
-})
-export class HlmField {
-	public readonly orientation = input<FieldVariants['orientation']>('vertical');
-	constructor() {
-		classes(() => fieldVariants({ orientation: this.orientation() }));
-	}
-}
-````
-
-## File: src/app/shared/spartan/field/src/index.ts
-````typescript
-import { HlmField } from './lib/hlm-field';
-import { HlmFieldContent } from './lib/hlm-field-content';
-import { HlmFieldDescription } from './lib/hlm-field-description';
-import { HlmFieldError } from './lib/hlm-field-error';
-import { HlmFieldGroup } from './lib/hlm-field-group';
-import { HlmFieldLabel } from './lib/hlm-field-label';
-import { HlmFieldLegend } from './lib/hlm-field-legend';
-import { HlmFieldSeparator } from './lib/hlm-field-separator';
-import { HlmFieldSet } from './lib/hlm-field-set';
-import { HlmFieldTitle } from './lib/hlm-field-title';
-export * from './lib/hlm-field';
-export * from './lib/hlm-field-content';
-export * from './lib/hlm-field-description';
-export * from './lib/hlm-field-error';
-export * from './lib/hlm-field-group';
-export * from './lib/hlm-field-label';
-export * from './lib/hlm-field-legend';
-export * from './lib/hlm-field-separator';
-export * from './lib/hlm-field-set';
-export * from './lib/hlm-field-title';
-export const HlmFieldImports = [
-	HlmField,
-	HlmFieldContent,
-	HlmFieldDescription,
-	HlmFieldError,
-	HlmFieldGroup,
-	HlmFieldLabel,
-	HlmFieldLegend,
-	HlmFieldSeparator,
-	HlmFieldSet,
-	HlmFieldTitle,
-] as const;
-````
-
-## File: src/app/shared/spartan/input/src/lib/hlm-input.ts
-````typescript
-import { Directive, input, linkedSignal } from '@angular/core';
-import { BrnFieldControlDescribedBy } from '@spartan-ng/brain/field';
-import { BrnInput } from '@spartan-ng/brain/input';
-import { classes } from '@spartan-ng/helm/utils';
-import { cva, type VariantProps } from 'class-variance-authority';
-export const inputVariants = cva(
-	'file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
-	{
-		variants: {
-			error: {
-				auto: 'data-[matches-spartan-invalid=true]:border-destructive data-[matches-spartan-invalid=true]:ring-destructive/20 dark:data-[matches-spartan-invalid=true]:ring-destructive/40',
-				true: 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40',
-			},
-		},
-		defaultVariants: {
-			error: 'auto',
-		},
-	},
-);
-type InputVariants = VariantProps<typeof inputVariants>;
-@Directive({
-	selector: '[hlmInput]',
-	hostDirectives: [{ directive: BrnInput, inputs: ['id'] }, BrnFieldControlDescribedBy],
-})
-export class HlmInput {
-	public readonly error = input<InputVariants['error']>('auto');
-	protected readonly _state = linkedSignal(() => ({ error: this.error() }));
-	constructor() {
-		classes(() => inputVariants({ error: this._state().error }));
-	}
-}
-````
-
-## File: src/app/shared/spartan/input/src/index.ts
-````typescript
-import { HlmInput } from './lib/hlm-input';
-export * from './lib/hlm-input';
-export const HlmInputImports = [HlmInput] as const;
-````
-
-## File: src/app/shared/spartan/label/src/lib/hlm-label.ts
-````typescript
-import { Directive } from '@angular/core';
-import { BrnLabel } from '@spartan-ng/brain/label';
-import { classes } from '@spartan-ng/helm/utils';
-@Directive({
-	selector: '[hlmLabel]',
-	hostDirectives: [
-		{
-			directive: BrnLabel,
-			inputs: ['id', 'for'],
-		},
-	],
-	host: {
-		'data-slot': 'label',
-	},
-})
-export class HlmLabel {
-	constructor() {
-		classes(
-			() =>
-				'flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 peer-data-[disabled]:cursor-not-allowed peer-data-[disabled]:opacity-50 has-[[disabled]]:cursor-not-allowed has-[[disabled]]:opacity-50',
-		);
-	}
-}
-````
-
-## File: src/app/shared/spartan/label/src/index.ts
-````typescript
-import { HlmLabel } from './lib/hlm-label';
-export * from './lib/hlm-label';
-export const HlmLabelImports = [HlmLabel] as const;
-````
-
-## File: src/app/shared/spartan/separator/src/lib/hlm-separator.ts
-````typescript
-import { Directive } from '@angular/core';
-import { BrnSeparator } from '@spartan-ng/brain/separator';
-import { classes } from '@spartan-ng/helm/utils';
-export const hlmSeparatorClass =
-	'inline-flex shrink-0 bg-border data-horizontal:h-px data-horizontal:w-full data-vertical:w-px data-vertical:self-stretch';
-@Directive({
-	selector: '[hlmSeparator],hlm-separator',
-	hostDirectives: [{ directive: BrnSeparator, inputs: ['orientation', 'decorative'] }],
-})
-export class HlmSeparator {
-	constructor() {
-		classes(() => hlmSeparatorClass);
-	}
-}
-````
-
-## File: src/app/shared/spartan/separator/src/index.ts
-````typescript
-import { HlmSeparator } from './lib/hlm-separator';
-export * from './lib/hlm-separator';
-export const HlmSeparatorImports = [HlmSeparator] as const;
-````
-
-## File: src/app/shared/spartan/sonner/src/lib/hlm-toaster.ts
-````typescript
-import type { BooleanInput, NumberInput } from '@angular/cdk/coercion';
-import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, numberAttribute } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleCheck, lucideInfo, lucideLoader2, lucideOctagonX, lucideTriangleAlert } from '@ng-icons/lucide';
-import { BrnSonnerImports, type ToasterProps } from '@spartan-ng/brain/sonner';
-import { hlm } from '@spartan-ng/helm/utils';
-import type { ClassValue } from 'clsx';
-@Component({
-	selector: 'hlm-toaster',
-	imports: [BrnSonnerImports, NgIcon],
-	providers: [provideIcons({ lucideCircleCheck, lucideInfo, lucideTriangleAlert, lucideOctagonX, lucideLoader2 })],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	template: `
-		<brn-sonner-toaster
-			[class]="_computedClass()"
-			[invert]="invert()"
-			[theme]="theme()"
-			[position]="position()"
-			[hotKey]="hotKey()"
-			[richColors]="richColors()"
-			[expand]="expand()"
-			[duration]="duration()"
-			[visibleToasts]="visibleToasts()"
-			[closeButton]="closeButton()"
-			[toastOptions]="toastOptions()"
-			[offset]="offset()"
-			[style]="userStyle()"
-		>
-			<ng-template #loadingIcon>
-				<ng-icon name="lucideLoader2" class="overflow-visible! text-base [&>svg]:motion-safe:animate-spin" />
-			</ng-template>
-			<ng-template #successIcon>
-				<ng-icon name="lucideCircleCheck" class="overflow-visible! text-base" />
-			</ng-template>
-			<ng-template #errorIcon>
-				<ng-icon name="lucideOctagonX" class="overflow-visible! text-base" />
-			</ng-template>
-			<ng-template #infoIcon>
-				<ng-icon name="lucideInfo" class="overflow-visible! text-base" />
-			</ng-template>
-			<ng-template #warningIcon>
-				<ng-icon name="lucideTriangleAlert" class="overflow-visible! text-base" />
-			</ng-template>
-		</brn-sonner-toaster>
-	`,
-})
-export class HlmToaster {
-	public readonly invert = input<ToasterProps['invert'], BooleanInput>(false, {
-		transform: booleanAttribute,
-	});
-	public readonly theme = input<ToasterProps['theme']>('light');
-	public readonly position = input<ToasterProps['position']>('bottom-right');
-	public readonly hotKey = input<ToasterProps['hotkey']>(['altKey', 'KeyT']);
-	public readonly richColors = input<ToasterProps['richColors'], BooleanInput>(false, {
-		transform: booleanAttribute,
-	});
-	public readonly expand = input<ToasterProps['expand'], BooleanInput>(false, {
-		transform: booleanAttribute,
-	});
-	public readonly duration = input<ToasterProps['duration'], NumberInput>(4000, {
-		transform: numberAttribute,
-	});
-	public readonly visibleToasts = input<ToasterProps['visibleToasts'], NumberInput>(3, {
-		transform: numberAttribute,
-	});
-	public readonly closeButton = input<ToasterProps['closeButton'], BooleanInput>(false, {
-		transform: booleanAttribute,
-	});
-	public readonly toastOptions = input<ToasterProps['toastOptions']>({});
-	public readonly offset = input<ToasterProps['offset']>(null);
-	public readonly userClass = input<ClassValue>('', { alias: 'class' });
-	public readonly userStyle = input<Record<string, string>>(
-		{
-			'--normal-bg': 'var(--popover)',
-			'--normal-text': 'var(--popover-foreground)',
-			'--normal-border': 'var(--border)',
-			'--border-radius': 'var(--radius)',
-		},
-		{ alias: 'style' },
-	);
-	protected readonly _computedClass = computed(() => hlm('toaster group', this.userClass()));
-}
-````
-
-## File: src/app/shared/spartan/sonner/src/index.ts
-````typescript
-import { HlmToaster } from './lib/hlm-toaster';
-export * from './lib/hlm-toaster';
-export const HlmToasterImports = [HlmToaster] as const;
-````
-
-## File: src/app/shared/spartan/spinner/src/lib/hlm-spinner.ts
-````typescript
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideLoader2 } from '@ng-icons/lucide';
-import { classes } from '@spartan-ng/helm/utils';
-@Component({
-	selector: 'hlm-spinner',
-	imports: [NgIcon],
-	providers: [provideIcons({ lucideLoader2 })],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	host: {
-		role: 'status',
-		'[attr.aria-label]': 'ariaLabel()',
-	},
-	template: `
-		<ng-icon [name]="icon()" />
-	`,
-})
-export class HlmSpinner {
-	public readonly icon = input<string>('lucideLoader2');
-	public readonly ariaLabel = input<string>('Loading', { alias: 'aria-label' });
-	constructor() {
-		classes(() => 'inline-flex size-fit text-base motion-safe:animate-spin');
-	}
-}
-````
-
-## File: src/app/shared/spartan/spinner/src/index.ts
-````typescript
-import { HlmSpinner } from './lib/hlm-spinner';
-export * from './lib/hlm-spinner';
-export const HlmSpinnerImports = [HlmSpinner] as const;
-````
-
-## File: src/app/shared/spartan/utils/src/lib/hlm.ts
-````typescript
-import { isPlatformBrowser } from '@angular/common';
-import {
-	DestroyRef,
-	effect,
-	ElementRef,
-	HostAttributeToken,
-	inject,
-	Injector,
-	PLATFORM_ID,
-	runInInjectionContext,
-} from '@angular/core';
-import { type ClassValue, clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-export function hlm(...inputs: ClassValue[]) {
-	return twMerge(clsx(inputs));
-}
-const elementClassManagers = new WeakMap<HTMLElement, ElementClassManager>();
-let globalObserver: MutationObserver | null = null;
-const observedElements = new Set<HTMLElement>();
-interface ElementClassManager {
-	element: HTMLElement;
-	sources: Map<number, { classes: Set<string>; order: number }>;
-	baseClasses: Set<string>;
-	isUpdating: boolean;
-	nextOrder: number;
-	hasInitialized: boolean;
-	restoreRafId: number | null;
-	transitionsSuppressed: boolean;
-	previousTransition: string;
-	previousTransitionPriority: string;
-}
-let sourceCounter = 0;
-export function classes(computed: () => ClassValue[] | string, options: ClassesOptions = {}) {
-	runInInjectionContext(options.injector ?? inject(Injector), () => {
-		const elementRef = options.elementRef ?? inject(ElementRef);
-		const platformId = inject(PLATFORM_ID);
-		const destroyRef = inject(DestroyRef);
-		const baseClasses = inject(new HostAttributeToken('class'), { optional: true });
-		const element = elementRef.nativeElement;
-		const sourceId = sourceCounter++;
-		let manager = elementClassManagers.get(element);
-		if (!manager) {
-			const initialBaseClasses = new Set<string>();
-			if (baseClasses) {
-				toClassList(baseClasses).forEach((cls) => initialBaseClasses.add(cls));
-			}
-			manager = {
-				element,
-				sources: new Map(),
-				baseClasses: initialBaseClasses,
-				isUpdating: false,
-				nextOrder: 0,
-				hasInitialized: false,
-				restoreRafId: null,
-				transitionsSuppressed: false,
-				previousTransition: '',
-				previousTransitionPriority: '',
-			};
-			elementClassManagers.set(element, manager);
-			// Setup global observer if needed and register this element
-			setupGlobalObserver(platformId);
-			observedElements.add(element);
-			// Suppress transitions until the first effect writes correct classes and
-			// the browser has painted them. This prevents CSS transition animations
-			// during hydration when classes change from SSR state to client state.
-			if (isPlatformBrowser(platformId)) {
-				manager.previousTransition = element.style.getPropertyValue('transition');
-				manager.previousTransitionPriority = element.style.getPropertyPriority('transition');
-				element.style.setProperty('transition', 'none', 'important');
-				manager.transitionsSuppressed = true;
-			}
-		}
-		const sourceOrder = manager.nextOrder++;
-		function updateClasses(): void {
-			const newClasses = toClassList(computed());
-			manager!.sources.set(sourceId, {
-				classes: new Set(newClasses),
-				order: sourceOrder,
-			});
-			updateElement(manager!);
-			if (manager!.transitionsSuppressed) {
-				manager!.transitionsSuppressed = false;
-				manager!.restoreRafId = requestAnimationFrame(() => {
-					manager!.restoreRafId = null;
-					restoreTransitionSuppression(manager!);
-				});
-			}
-		}
-		destroyRef.onDestroy(() => {
-			if (manager!.restoreRafId !== null) {
-				cancelAnimationFrame(manager!.restoreRafId);
-				manager!.restoreRafId = null;
-			}
-			if (manager!.transitionsSuppressed) {
-				manager!.transitionsSuppressed = false;
-				restoreTransitionSuppression(manager!);
-			}
-			manager!.sources.delete(sourceId);
-			if (manager!.sources.size === 0) {
-				cleanupManager(element);
-			} else {
-				updateElement(manager!);
-			}
-		});
-		effect(updateClasses);
-	});
-}
-function restoreTransitionSuppression(manager: ElementClassManager): void {
-	const prev = manager.previousTransition;
-	if (prev) {
-		manager.element.style.setProperty('transition', prev, manager.previousTransitionPriority || undefined);
-	} else {
-		manager.element.style.removeProperty('transition');
-	}
-}
-function setupGlobalObserver(platformId: Object): void {
-	if (isPlatformBrowser(platformId) && !globalObserver) {
-		globalObserver = new MutationObserver((mutations) => {
-			for (const mutation of mutations) {
-				if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-					const element = mutation.target as HTMLElement;
-					const manager = elementClassManagers.get(element);
-					if (manager && observedElements.has(element)) {
-						if (manager.isUpdating) continue;
-						const currentClasses = toClassList(element.className);
-						const allSourceClasses = new Set<string>();
-						for (const source of manager.sources.values()) {
-							for (const className of source.classes) {
-								allSourceClasses.add(className);
-							}
-						}
-						manager.baseClasses.clear();
-						for (const className of currentClasses) {
-							if (!allSourceClasses.has(className)) {
-								manager.baseClasses.add(className);
-							}
-						}
-						updateElement(manager);
-					}
-				}
-			}
-		});
-		globalObserver.observe(document, {
-			attributes: true,
-			attributeFilter: ['class'],
-			subtree: true,
-		});
-	}
-}
-function updateElement(manager: ElementClassManager): void {
-	if (manager.isUpdating) return;
-	manager.isUpdating = true;
-	if (!manager.hasInitialized && manager.sources.size > 0) {
-		const currentClasses = toClassList(manager.element.className);
-		const allSourceClasses = new Set<string>();
-		for (const source of manager.sources.values()) {
-			source.classes.forEach((className) => allSourceClasses.add(className));
-		}
-		currentClasses.forEach((className) => {
-			if (!allSourceClasses.has(className)) {
-				manager.baseClasses.add(className);
-			}
-		});
-		manager.hasInitialized = true;
-	}
-	const sortedSources = Array.from(manager.sources.entries()).sort(([, a], [, b]) => a.order - b.order);
-	const allSourceClasses: string[] = [];
-	for (const [, source] of sortedSources) {
-		allSourceClasses.push(...source.classes);
-	}
-	const classesToApply =
-		allSourceClasses.length > 0 || manager.baseClasses.size > 0
-			? hlm([...allSourceClasses, ...manager.baseClasses])
-			: '';
-	// Apply the classes to the element
-	if (manager.element.className !== classesToApply) {
-		manager.element.className = classesToApply;
-	}
-	manager.isUpdating = false;
-}
-function cleanupManager(element: HTMLElement): void {
-	// Remove from global tracking
-	observedElements.delete(element);
-	elementClassManagers.delete(element);
-	// If no more elements being tracked, cleanup global observer
-	if (observedElements.size === 0 && globalObserver) {
-		globalObserver.disconnect();
-		globalObserver = null;
-	}
-}
-interface ClassesOptions {
-	elementRef?: ElementRef<HTMLElement>;
-	injector?: Injector;
-}
-// Cache for parsed class lists to avoid repeated string operations
-const classListCache = new Map<string, string[]>();
-function toClassList(className: string | ClassValue[]): string[] {
-	// For simple string inputs, use cache to avoid repeated parsing
-	if (typeof className === 'string' && classListCache.has(className)) {
-		return classListCache.get(className)!;
-	}
-	const result = clsx(className)
-		.split(' ')
-		.filter((c) => c.length > 0);
-	if (typeof className === 'string' && classListCache.size < 1000) {
-		classListCache.set(className, result);
-	}
-	return result;
-}
-````
-
-## File: src/app/shared/spartan/utils/src/index.ts
-````typescript
-export * from './lib/hlm';
-````
-
 ## File: src/app/shared/utils/.gitkeep
 ````
 
@@ -3384,14 +2293,6 @@ trim_trailing_whitespace = false
 }
 ````
 
-## File: components.json
-````json
-{
-  "componentsPath": "src/app/shared/spartan",
-  "importAlias": "@spartan-ng/helm"
-}
-````
-
 ## File: README.md
 ````markdown
 # BookClubFe
@@ -3497,74 +2398,6 @@ declined, etc.
   ],
   "exclude": [
     "src/**/*.spec.ts"
-  ]
-}
-````
-
-## File: tsconfig.json
-````json
-{
-  "compileOnSave": false,
-  "compilerOptions": {
-    "strict": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "skipLibCheck": true,
-    "isolatedModules": true,
-    "experimentalDecorators": true,
-    "importHelpers": true,
-    "target": "ES2022",
-    "module": "preserve",
-    "paths": {
-      "@spartan-ng/helm/button": [
-        "./src/app/shared/spartan/button/src/index.ts"
-      ],
-      "@spartan-ng/helm/utils": [
-        "./src/app/shared/spartan/utils/src/index.ts"
-      ],
-      "@spartan-ng/helm/badge": [
-        "./src/app/shared/spartan/badge/src/index.ts"
-      ],
-      "@spartan-ng/helm/field": [
-        "./src/app/shared/spartan/field/src/index.ts"
-      ],
-      "@spartan-ng/helm/label": [
-        "./src/app/shared/spartan/label/src/index.ts"
-      ],
-      "@spartan-ng/helm/separator": [
-        "./src/app/shared/spartan/separator/src/index.ts"
-      ],
-      "@spartan-ng/helm/input": [
-        "./src/app/shared/spartan/input/src/index.ts"
-      ],
-      "@spartan-ng/helm/spinner": [
-        "./src/app/shared/spartan/spinner/src/index.ts"
-      ],
-      "@spartan-ng/helm/sonner": [
-        "./src/app/shared/spartan/sonner/src/index.ts"
-      ],
-      "@spartan-ng/helm/card": [
-        "./src/app/shared/spartan/card/src/index.ts"
-      ]
-    }
-  },
-  "angularCompilerOptions": {
-    "enableI18nLegacyMessageIdFormat": false,
-    "strictInjectionParameters": true,
-    "strictInputAccessModifiers": true,
-    "typeCheckHostBindings": true,
-    "strictTemplates": true
-  },
-  "files": [],
-  "references": [
-    {
-      "path": "./tsconfig.app.json"
-    },
-    {
-      "path": "./tsconfig.spec.json"
-    }
   ]
 }
 ````
@@ -4506,18 +3339,18 @@ export class UploadService {
               <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
                 <fieldset class="border-0 p-0 m-0">
                   <legend class="sr-only">{{ 'AUTH.sign_in_h2' | translate }}</legend>
-                  <app-form-field
-                    [label]="'AUTH.email' | translate"
-                    type="email"
-                    placeholder="you@example.com"
-                    [control]="form.controls.email"
-                  />
-                  <app-form-field
-                    [label]="'AUTH.password' | translate"
-                    type="password"
-                    placeholder="••••••••"
-                    [control]="form.controls.password"
-                  />
+                  <hlm-field>
+                    <label hlmFieldLabel>{{ 'AUTH.email' | translate }}</label>
+                    <input hlmInput type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
+                    <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                    <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
+                  </hlm-field>
+                  <hlm-field>
+                    <label hlmFieldLabel>{{ 'AUTH.password' | translate }}</label>
+                    <input hlmInput type="password" placeholder="••••••••" [formControl]="form.controls.password" />
+                    <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                    <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
+                  </hlm-field>
                 </fieldset>
                 @if (errorMessage()) {
                   <div class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700" role="alert">
@@ -4526,16 +3359,13 @@ export class UploadService {
                   </div>
                 }
                 <button
+                  hlmBtn
                   type="submit"
                   [disabled]="isSubmitting()"
-                  class="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-2.5
-                         text-sm font-semibold text-white shadow-sm
-                         hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
-                         disabled:opacity-60 disabled:cursor-not-allowed
-                         transition-colors duration-200 mt-2"
+                  class="mt-2 w-full bg-amber-700 hover:bg-amber-800 text-white focus-visible:ring-amber-500"
                 >
                   @if (isSubmitting()) {
-                    <app-loading-spinner size="sm" />
+                    <hlm-spinner aria-label="Loading" />
                     {{ 'AUTH.signing_in' | translate }}
                   } @else {
                     {{ 'AUTH.submit_login' | translate }}
@@ -6484,6 +5314,1097 @@ export class InitialsPipe implements PipeTransform {
 }
 ````
 
+## File: src/app/shared/spartan/badge/src/lib/hlm-badge.ts
+````typescript
+import { Directive, input } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+import { type VariantProps, cva } from 'class-variance-authority';
+const badgeVariants = cva(
+	'h-5 gap-1 rounded-4xl border border-transparent px-2 py-0.5 text-xs font-medium transition-all has-data-[icon=inline-end]:pe-1.5 has-data-[icon=inline-start]:ps-1.5 [&>ng-icon]:text-[calc(var(--spacing)*3)] group/badge focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 inline-flex w-fit shrink-0 items-center justify-center overflow-hidden whitespace-nowrap focus-visible:ring-[3px] [&>ng-icon]:pointer-events-none',
+	{
+		variants: {
+			variant: {
+				default: 'bg-primary text-primary-foreground [a]:hover:bg-primary/80',
+				secondary: 'bg-secondary text-secondary-foreground [a]:hover:bg-secondary/80',
+				destructive: 'bg-destructive/10 [a]:hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 text-destructive dark:bg-destructive/20',
+				outline: 'border-border text-foreground [a]:hover:bg-muted [a]:hover:text-muted-foreground',
+				ghost: 'hover:bg-muted hover:text-muted-foreground dark:hover:bg-muted/50',
+				link: 'text-primary underline-offset-4 hover:underline',
+			},
+		},
+		defaultVariants: {
+			variant: 'default',
+		},
+	},
+);
+export type BadgeVariants = VariantProps<typeof badgeVariants>;
+@Directive({
+	selector: '[hlmBadge],hlm-badge',
+	host: {
+		'data-slot': 'badge',
+		'[attr.data-variant]': 'variant()',
+	},
+})
+export class HlmBadge {
+	public readonly variant = input<BadgeVariants['variant']>('default');
+	constructor() {
+		classes(() => badgeVariants({ variant: this.variant() }));
+	}
+}
+````
+
+## File: src/app/shared/spartan/badge/src/index.ts
+````typescript
+import { HlmBadge } from './lib/hlm-badge';
+export * from './lib/hlm-badge';
+export const HlmBadgeImports = [HlmBadge] as const;
+````
+
+## File: src/app/shared/spartan/button/src/lib/hlm-button.token.ts
+````typescript
+import { InjectionToken, type ValueProvider, inject } from '@angular/core';
+import type { ButtonVariants } from './hlm-button';
+export interface BrnButtonConfig {
+	variant: ButtonVariants['variant'];
+	size: ButtonVariants['size'];
+}
+const defaultConfig: BrnButtonConfig = {
+	variant: 'default',
+	size: 'default',
+};
+const BrnButtonConfigToken = new InjectionToken<BrnButtonConfig>('BrnButtonConfig');
+export function provideBrnButtonConfig(config: Partial<BrnButtonConfig>): ValueProvider {
+	return { provide: BrnButtonConfigToken, useValue: { ...defaultConfig, ...config } };
+}
+export function injectBrnButtonConfig(): BrnButtonConfig {
+	return inject(BrnButtonConfigToken, { optional: true }) ?? defaultConfig;
+}
+````
+
+## File: src/app/shared/spartan/button/src/lib/hlm-button.ts
+````typescript
+import { Directive, input, signal } from '@angular/core';
+import { BrnButton } from '@spartan-ng/brain/button';
+import { classes } from '@spartan-ng/helm/utils';
+import { cva, type VariantProps } from 'class-variance-authority';
+import type { ClassValue } from 'clsx';
+import { injectBrnButtonConfig } from './hlm-button.token';
+export const buttonVariants = cva(
+	'focus-visible:border-ring focus-visible:ring-ring/50 data-[matches-spartan-invalid=true]:ring-destructive/20 dark:data-[matches-spartan-invalid=true]:ring-destructive/40 data-[matches-spartan-invalid=true]:border-destructive dark:data-[matches-spartan-invalid=true]:border-destructive/50 rounded-md border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-3 data-[matches-spartan-invalid=true]:ring-3 [&_ng-icon:not([class*=\'text-\'])]:text-[calc(var(--spacing)*4)] group/button inline-flex shrink-0 items-center justify-center whitespace-nowrap transition-all outline-none select-none data-disabled:pointer-events-none data-disabled:opacity-50 [&_ng-icon]:pointer-events-none [&_ng-icon]:shrink-0',
+	{
+		variants: {
+			variant: {
+				default: 'bg-primary text-primary-foreground hover:bg-primary/80',
+				outline: 'border-border bg-background hover:bg-muted hover:text-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 aria-expanded:bg-muted aria-expanded:text-foreground shadow-xs',
+				secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground',
+				ghost: 'hover:bg-muted hover:text-foreground dark:hover:bg-muted/50 aria-expanded:bg-muted aria-expanded:text-foreground',
+				destructive: 'bg-destructive/10 hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 text-destructive focus-visible:border-destructive/40 dark:hover:bg-destructive/30',
+				link: 'text-primary underline-offset-4 hover:underline',
+			},
+			size: {
+				default: 'h-9 gap-1.5 px-2.5 in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-2 has-data-[icon=inline-start]:pl-2',
+				xs: 'h-6 gap-1 rounded-[min(var(--radius-md),8px)] px-2 text-xs in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5 [&_ng-icon:not([class*=\'text-\'])]:text-[calc(var(--spacing)*3)]',
+				sm: 'h-8 gap-1 rounded-[min(var(--radius-md),10px)] px-2.5 in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pr-1.5 has-data-[icon=inline-start]:pl-1.5',
+				lg: 'h-10 gap-1.5 px-2.5 has-data-[icon=inline-end]:pr-3 has-data-[icon=inline-start]:pl-3',
+				icon: 'size-9',
+				'icon-xs': 'size-6 rounded-[min(var(--radius-md),8px)] in-data-[slot=button-group]:rounded-md [&_ng-icon:not([class*=\'text-\'])]:text-[calc(var(--spacing)*3)]',
+				'icon-sm': 'size-8 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-md',
+				'icon-lg': 'size-10',
+			},
+		},
+		defaultVariants: {
+			variant: 'default',
+			size: 'default',
+		},
+	},
+);
+export type ButtonVariants = VariantProps<typeof buttonVariants>;
+@Directive({
+	selector: 'button[hlmBtn], a[hlmBtn]',
+	exportAs: 'hlmBtn',
+	hostDirectives: [{ directive: BrnButton, inputs: ['disabled'] }],
+	host: {
+		'data-slot': 'button',
+	},
+})
+export class HlmButton {
+	private readonly _config = injectBrnButtonConfig();
+	private readonly _additionalClasses = signal<ClassValue>('');
+	public readonly variant = input<ButtonVariants['variant']>(this._config.variant);
+	public readonly size = input<ButtonVariants['size']>(this._config.size);
+	constructor() {
+		classes(() => [buttonVariants({ variant: this.variant(), size: this.size() }), this._additionalClasses()]);
+	}
+	setClass(classes: string): void {
+		this._additionalClasses.set(classes);
+	}
+}
+````
+
+## File: src/app/shared/spartan/button/src/index.ts
+````typescript
+import { HlmButton } from './lib/hlm-button';
+export * from './lib/hlm-button';
+export * from './lib/hlm-button.token';
+export const HlmButtonImports = [HlmButton] as const;
+````
+
+## File: src/app/shared/spartan/card/src/lib/hlm-card-action.ts
+````typescript
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmCardAction]',
+	host: {
+		'data-slot': 'card-action',
+	},
+})
+export class HlmCardAction {
+	constructor() {
+		classes(() => 'col-start-2 row-span-2 row-start-1 self-start justify-self-end');
+	}
+}
+````
+
+## File: src/app/shared/spartan/card/src/lib/hlm-card-content.ts
+````typescript
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmCardContent]',
+	host: {
+		'data-slot': 'card-content',
+	},
+})
+export class HlmCardContent {
+	constructor() {
+		classes(() => 'px-6 group-data-[size=sm]/card:px-4');
+	}
+}
+````
+
+## File: src/app/shared/spartan/card/src/lib/hlm-card-description.ts
+````typescript
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmCardDescription]',
+	host: {
+		'data-slot': 'card-description',
+	},
+})
+export class HlmCardDescription {
+	constructor() {
+		classes(() => 'text-muted-foreground text-sm');
+	}
+}
+````
+
+## File: src/app/shared/spartan/card/src/lib/hlm-card-footer.ts
+````typescript
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmCardFooter],hlm-card-footer',
+	host: {
+		'data-slot': 'card-footer',
+	},
+})
+export class HlmCardFooter {
+	constructor() {
+		classes(() => 'rounded-b-xl px-6 group-data-[size=sm]/card:px-4 [.border-t]:pt-6 group-data-[size=sm]/card:[.border-t]:pt-4 flex items-center');
+	}
+}
+````
+
+## File: src/app/shared/spartan/card/src/lib/hlm-card-header.ts
+````typescript
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmCardHeader],hlm-card-header',
+	host: {
+		'data-slot': 'card-header',
+	},
+})
+export class HlmCardHeader {
+	constructor() {
+		classes(
+			() =>
+				`gap-1 rounded-t-xl px-6 group-data-[size=sm]/card:px-4 [.border-b]:pb-6 group-data-[size=sm]/card:[.border-b]:pb-4 group/card-header @container/card-header grid auto-rows-min items-start has-data-[slot=card-action]:grid-cols-[1fr_auto] has-data-[slot=card-description]:grid-rows-[auto_auto]`,
+		);
+	}
+}
+````
+
+## File: src/app/shared/spartan/card/src/lib/hlm-card-title.ts
+````typescript
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmCardTitle]',
+	host: {
+		'data-slot': 'card-title',
+	},
+})
+export class HlmCardTitle {
+	constructor() {
+		classes(() => 'text-base leading-normal font-medium group-data-[size=sm]/card:text-sm');
+	}
+}
+````
+
+## File: src/app/shared/spartan/card/src/lib/hlm-card.ts
+````typescript
+import { Directive, input } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmCard],hlm-card',
+	host: {
+		'data-slot': 'card',
+		'[attr.data-size]': 'size()',
+	},
+})
+export class HlmCard {
+	public readonly size = input<'sm' | 'default'>('default');
+	constructor() {
+		classes(() => 'ring-foreground/10 bg-card text-card-foreground gap-6 overflow-hidden rounded-xl py-6 text-sm shadow-xs ring-1 has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl group/card flex flex-col');
+	}
+}
+````
+
+## File: src/app/shared/spartan/card/src/index.ts
+````typescript
+import { HlmCard } from './lib/hlm-card';
+import { HlmCardAction } from './lib/hlm-card-action';
+import { HlmCardContent } from './lib/hlm-card-content';
+import { HlmCardDescription } from './lib/hlm-card-description';
+import { HlmCardFooter } from './lib/hlm-card-footer';
+import { HlmCardHeader } from './lib/hlm-card-header';
+import { HlmCardTitle } from './lib/hlm-card-title';
+export * from './lib/hlm-card';
+export * from './lib/hlm-card-action';
+export * from './lib/hlm-card-content';
+export * from './lib/hlm-card-description';
+export * from './lib/hlm-card-footer';
+export * from './lib/hlm-card-header';
+export * from './lib/hlm-card-title';
+export const HlmCardImports = [
+	HlmCard,
+	HlmCardAction,
+	HlmCardContent,
+	HlmCardDescription,
+	HlmCardFooter,
+	HlmCardHeader,
+	HlmCardTitle,
+] as const;
+````
+
+## File: src/app/shared/spartan/field/src/lib/hlm-field-content.ts
+````typescript
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmFieldContent],hlm-field-content',
+	host: {
+		'data-slot': 'field-content',
+	},
+})
+export class HlmFieldContent {
+	constructor() {
+		classes(() => 'group/field-content flex flex-1 flex-col gap-1 leading-snug');
+	}
+}
+````
+
+## File: src/app/shared/spartan/field/src/lib/hlm-field-description.ts
+````typescript
+import { Directive, effect, EffectRef, inject, input, OnDestroy } from '@angular/core';
+import { BrnFieldA11yService } from '@spartan-ng/brain/field';
+import { classes } from '@spartan-ng/helm/utils';
+import type { ClassValue } from 'clsx';
+@Directive({
+	selector: '[hlmFieldDescription],hlm-field-description',
+	host: {
+		'data-slot': 'field-description',
+		'[attr.id]': 'id()',
+	},
+})
+export class HlmFieldDescription implements OnDestroy {
+	private static _id = 0;
+	private readonly _a11y = inject(BrnFieldA11yService, { optional: true, host: true });
+	public readonly userClass = input<ClassValue>('', { alias: 'class' });
+	public readonly id = input<string>(`hlm-field-description-${HlmFieldDescription._id++}`);
+	private _registeredId?: string;
+	private readonly _cleanup: EffectRef | null = this._a11y
+		? effect(() => {
+				const a11y = this._a11y;
+				if (!a11y) return;
+				const id = this.id();
+				if (this._registeredId && this._registeredId !== id) {
+					a11y.unregisterDescription(this._registeredId);
+				}
+				if (this._registeredId !== id) {
+					a11y.registerDescription(id);
+					this._registeredId = id;
+				}
+			})
+		: null;
+	constructor() {
+		classes(() => [
+			'text-muted-foreground text-sm leading-normal font-normal group-has-[[data-orientation=horizontal]]/field:text-balance',
+			'last:mt-0 nth-last-2:-mt-1 [[data-variant=legend]+&]:-mt-1.5',
+			'[&>a:hover]:text-primary [&>a]:underline [&>a]:underline-offset-4',
+			this.userClass(),
+		]);
+	}
+	ngOnDestroy() {
+		this._cleanup?.destroy();
+		if (this._registeredId) {
+			this._a11y?.unregisterDescription(this._registeredId);
+		}
+	}
+}
+````
+
+## File: src/app/shared/spartan/field/src/lib/hlm-field-error.ts
+````typescript
+import { BooleanInput } from '@angular/cdk/coercion';
+import {
+	booleanAttribute,
+	ChangeDetectionStrategy,
+	Component,
+	computed,
+	effect,
+	EffectRef,
+	inject,
+	input,
+	OnDestroy,
+} from '@angular/core';
+import { BrnField, BrnFieldA11yService } from '@spartan-ng/brain/field';
+import { classes } from '@spartan-ng/helm/utils';
+import { ClassValue } from 'clsx';
+@Component({
+	selector: 'hlm-field-error',
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: {
+		role: 'alert',
+		'data-slot': 'field-error',
+		'[attr.id]': 'id()',
+		'[hidden]': '!_display()',
+	},
+	template: `
+		@if (_display()) {
+			<ng-content />
+		}
+	`,
+})
+export class HlmFieldError implements OnDestroy {
+	private static _id = 0;
+	private readonly _field = inject(BrnField, { optional: true });
+	private readonly _a11y = inject(BrnFieldA11yService, { optional: true, host: true });
+	private _registeredId?: string;
+	private readonly _hasParentField = !!this._field;
+	public readonly id = input<string>(`hlm-field-error-${HlmFieldError._id++}`);
+	public readonly userClass = input<ClassValue>('', { alias: 'class' });
+	public readonly validator = input<string>();
+	public readonly forceShow = input<boolean, BooleanInput>(false, { transform: booleanAttribute });
+	protected readonly _display = computed(() => !this._hasParentField || this.forceShow() || this._hasError());
+	protected readonly _hasError = computed(() => {
+		const errors = this._field?.errors();
+		if (!errors) return false;
+		const validator = this.validator();
+		const spartanInvalid = this._field?.controlState()?.spartanInvalid;
+		if (!spartanInvalid) return false;
+		return validator ? validator in errors : Object.keys(errors).length > 0;
+	});
+	private readonly _cleanup: EffectRef | null = this._a11y
+		? effect(() => {
+				const a11y = this._a11y;
+				if (!a11y) return;
+				const id = this.id();
+				const hasError = this._hasError();
+				if (this._registeredId && (this._registeredId !== id || !hasError)) {
+					a11y.unregisterError(this._registeredId);
+					this._registeredId = undefined;
+				}
+				if (hasError && this._registeredId !== id) {
+					a11y.registerError(id);
+					this._registeredId = id;
+				}
+			})
+		: null;
+	constructor() {
+		classes(() => ['text-destructive text-sm font-normal', this.userClass()]);
+	}
+	ngOnDestroy() {
+		this._cleanup?.destroy();
+		if (this._registeredId) {
+			this._a11y?.unregisterError(this._registeredId);
+		}
+	}
+}
+````
+
+## File: src/app/shared/spartan/field/src/lib/hlm-field-group.ts
+````typescript
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmFieldGroup],hlm-field-group',
+	host: {
+		'data-slot': 'field-group',
+	},
+})
+export class HlmFieldGroup {
+	constructor() {
+		classes(
+			() =>
+				'group/field-group @container/field-group flex w-full flex-col gap-7 data-[slot=checkbox-group]:gap-3 *:data-[slot=field-group]:gap-4',
+		);
+	}
+}
+````
+
+## File: src/app/shared/spartan/field/src/lib/hlm-field-label.ts
+````typescript
+import { Directive } from '@angular/core';
+import { HlmLabel } from '@spartan-ng/helm/label';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmFieldLabel],hlm-field-label',
+	hostDirectives: [HlmLabel],
+	host: {
+		'data-slot': 'field-label',
+	},
+})
+export class HlmFieldLabel {
+	constructor() {
+		classes(() => [
+			'group/field-label peer/field-label flex w-fit gap-2 leading-snug group-data-[disabled=true]/field:opacity-50',
+			'has-[>[data-slot=field]]:w-full has-[>[data-slot=field]]:flex-col has-[>[data-slot=field]]:rounded-md has-[>[data-slot=field]]:border [&>*]:data-[slot=field]:p-4',
+			'has-data-[checked=true]:bg-primary/5 has-data-[checked=true]:border-primary dark:has-data-[checked=true]:bg-primary/10',
+			'has-data-[state=checked]:bg-primary/5 has-data-[state=checked]:border-primary dark:has-data-[state=checked]:bg-primary/10',
+		]);
+	}
+}
+````
+
+## File: src/app/shared/spartan/field/src/lib/hlm-field-legend.ts
+````typescript
+import { Directive, input } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: 'legend[hlmFieldLegend]',
+	host: {
+		'data-slot': 'field-legend',
+		'[attr.data-variant]': 'variant()',
+	},
+})
+export class HlmFieldLegend {
+	public readonly variant = input<'label' | 'legend'>('legend');
+	constructor() {
+		classes(() => 'mb-3 font-medium data-[variant=label]:text-sm data-[variant=legend]:text-base');
+	}
+}
+````
+
+## File: src/app/shared/spartan/field/src/lib/hlm-field-separator.ts
+````typescript
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { HlmSeparator } from '@spartan-ng/helm/separator';
+import { classes } from '@spartan-ng/helm/utils';
+@Component({
+	selector: 'hlm-field-separator',
+	imports: [HlmSeparator],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: {
+		'data-slot': 'field-separator',
+	},
+	template: `
+		<hlm-separator class="absolute inset-0 top-1/2" />
+		<span
+			data-slot="field-separator-content"
+			class="bg-background text-muted-foreground relative mx-auto block w-fit px-2"
+		>
+			<ng-content />
+		</span>
+	`,
+})
+export class HlmFieldSeparator {
+	constructor() {
+		classes(() => 'relative -my-2 h-5 text-sm group-data-[variant=outline]/field-group:-mb-2');
+	}
+}
+````
+
+## File: src/app/shared/spartan/field/src/lib/hlm-field-set.ts
+````typescript
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: 'fieldset[hlmFieldSet]',
+	host: {
+		'data-slot': 'field-set',
+	},
+})
+export class HlmFieldSet {
+	constructor() {
+		classes(() => [
+			'flex flex-col gap-6',
+			'has-[>[data-slot=checkbox-group]]:gap-3 has-[>[data-slot=radio-group]]:gap-3',
+		]);
+	}
+}
+````
+
+## File: src/app/shared/spartan/field/src/lib/hlm-field-title.ts
+````typescript
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmFieldTitle],hlm-field-title',
+	host: {
+		'data-slot': 'field-label',
+	},
+})
+export class HlmFieldTitle {
+	constructor() {
+		classes(
+			() =>
+				'flex w-fit items-center gap-2 text-sm leading-snug font-medium group-data-[disabled=true]/field:opacity-50',
+		);
+	}
+}
+````
+
+## File: src/app/shared/spartan/field/src/lib/hlm-field.ts
+````typescript
+import { Directive, input } from '@angular/core';
+import { BrnField } from '@spartan-ng/brain/field';
+import { classes } from '@spartan-ng/helm/utils';
+import { cva, VariantProps } from 'class-variance-authority';
+const fieldVariants = cva('group/field data-[matches-spartan-invalid=true]:text-destructive flex w-full gap-3', {
+	variants: {
+		orientation: {
+			vertical: 'flex-col *:w-full [&>.sr-only]:w-auto',
+			horizontal: [
+				'flex-row items-center',
+				'*:data-[slot=field-label]:flex-auto',
+				'has-[>[data-slot=field-content]]:items-start has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px',
+			],
+			responsive: [
+				'flex-col *:w-full @md/field-group:flex-row @md/field-group:items-center @md/field-group:*:w-auto [&>.sr-only]:w-auto',
+				'@md/field-group:*:data-[slot=field-label]:flex-auto',
+				'@md/field-group:has-[>[data-slot=field-content]]:items-start @md/field-group:has-[>[data-slot=field-content]]:[&>[role=checkbox],[role=radio]]:mt-px',
+			],
+		},
+	},
+	defaultVariants: {
+		orientation: 'vertical',
+	},
+});
+export type FieldVariants = VariantProps<typeof fieldVariants>;
+@Directive({
+	selector: '[hlmField],hlm-field',
+	hostDirectives: [{ directive: BrnField, inputs: ['data-invalid', 'forceInvalid'] }],
+	host: {
+		role: 'group',
+		'data-slot': 'field',
+		'[attr.data-orientation]': 'orientation()',
+	},
+})
+export class HlmField {
+	public readonly orientation = input<FieldVariants['orientation']>('vertical');
+	constructor() {
+		classes(() => fieldVariants({ orientation: this.orientation() }));
+	}
+}
+````
+
+## File: src/app/shared/spartan/field/src/index.ts
+````typescript
+import { HlmField } from './lib/hlm-field';
+import { HlmFieldContent } from './lib/hlm-field-content';
+import { HlmFieldDescription } from './lib/hlm-field-description';
+import { HlmFieldError } from './lib/hlm-field-error';
+import { HlmFieldGroup } from './lib/hlm-field-group';
+import { HlmFieldLabel } from './lib/hlm-field-label';
+import { HlmFieldLegend } from './lib/hlm-field-legend';
+import { HlmFieldSeparator } from './lib/hlm-field-separator';
+import { HlmFieldSet } from './lib/hlm-field-set';
+import { HlmFieldTitle } from './lib/hlm-field-title';
+export * from './lib/hlm-field';
+export * from './lib/hlm-field-content';
+export * from './lib/hlm-field-description';
+export * from './lib/hlm-field-error';
+export * from './lib/hlm-field-group';
+export * from './lib/hlm-field-label';
+export * from './lib/hlm-field-legend';
+export * from './lib/hlm-field-separator';
+export * from './lib/hlm-field-set';
+export * from './lib/hlm-field-title';
+export const HlmFieldImports = [
+	HlmField,
+	HlmFieldContent,
+	HlmFieldDescription,
+	HlmFieldError,
+	HlmFieldGroup,
+	HlmFieldLabel,
+	HlmFieldLegend,
+	HlmFieldSeparator,
+	HlmFieldSet,
+	HlmFieldTitle,
+] as const;
+````
+
+## File: src/app/shared/spartan/input/src/lib/hlm-input.ts
+````typescript
+import { Directive, input, linkedSignal } from '@angular/core';
+import { BrnFieldControlDescribedBy } from '@spartan-ng/brain/field';
+import { BrnInput } from '@spartan-ng/brain/input';
+import { classes } from '@spartan-ng/helm/utils';
+import { cva, type VariantProps } from 'class-variance-authority';
+export const inputVariants = cva(
+	'file:text-foreground placeholder:text-muted-foreground selection:bg-primary selection:text-primary-foreground dark:bg-input/30 border-input focus-visible:border-ring focus-visible:ring-ring/50 flex h-9 w-full min-w-0 rounded-md border bg-transparent px-3 py-1 text-base shadow-xs transition-[color,box-shadow] outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:ring-[3px] disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm',
+	{
+		variants: {
+			error: {
+				auto: 'data-[matches-spartan-invalid=true]:border-destructive data-[matches-spartan-invalid=true]:ring-destructive/20 dark:data-[matches-spartan-invalid=true]:ring-destructive/40',
+				true: 'border-destructive focus-visible:border-destructive focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40',
+			},
+		},
+		defaultVariants: {
+			error: 'auto',
+		},
+	},
+);
+type InputVariants = VariantProps<typeof inputVariants>;
+@Directive({
+	selector: '[hlmInput]',
+	hostDirectives: [{ directive: BrnInput, inputs: ['id'] }, BrnFieldControlDescribedBy],
+})
+export class HlmInput {
+	public readonly error = input<InputVariants['error']>('auto');
+	protected readonly _state = linkedSignal(() => ({ error: this.error() }));
+	constructor() {
+		classes(() => inputVariants({ error: this._state().error }));
+	}
+}
+````
+
+## File: src/app/shared/spartan/input/src/index.ts
+````typescript
+import { HlmInput } from './lib/hlm-input';
+export * from './lib/hlm-input';
+export const HlmInputImports = [HlmInput] as const;
+````
+
+## File: src/app/shared/spartan/label/src/lib/hlm-label.ts
+````typescript
+import { Directive } from '@angular/core';
+import { BrnLabel } from '@spartan-ng/brain/label';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmLabel]',
+	hostDirectives: [
+		{
+			directive: BrnLabel,
+			inputs: ['id', 'for'],
+		},
+	],
+	host: {
+		'data-slot': 'label',
+	},
+})
+export class HlmLabel {
+	constructor() {
+		classes(
+			() =>
+				'flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 peer-data-[disabled]:cursor-not-allowed peer-data-[disabled]:opacity-50 has-[[disabled]]:cursor-not-allowed has-[[disabled]]:opacity-50',
+		);
+	}
+}
+````
+
+## File: src/app/shared/spartan/label/src/index.ts
+````typescript
+import { HlmLabel } from './lib/hlm-label';
+export * from './lib/hlm-label';
+export const HlmLabelImports = [HlmLabel] as const;
+````
+
+## File: src/app/shared/spartan/separator/src/lib/hlm-separator.ts
+````typescript
+import { Directive } from '@angular/core';
+import { BrnSeparator } from '@spartan-ng/brain/separator';
+import { classes } from '@spartan-ng/helm/utils';
+export const hlmSeparatorClass =
+	'inline-flex shrink-0 bg-border data-horizontal:h-px data-horizontal:w-full data-vertical:w-px data-vertical:self-stretch';
+@Directive({
+	selector: '[hlmSeparator],hlm-separator',
+	hostDirectives: [{ directive: BrnSeparator, inputs: ['orientation', 'decorative'] }],
+})
+export class HlmSeparator {
+	constructor() {
+		classes(() => hlmSeparatorClass);
+	}
+}
+````
+
+## File: src/app/shared/spartan/separator/src/index.ts
+````typescript
+import { HlmSeparator } from './lib/hlm-separator';
+export * from './lib/hlm-separator';
+export const HlmSeparatorImports = [HlmSeparator] as const;
+````
+
+## File: src/app/shared/spartan/sonner/src/lib/hlm-toaster.ts
+````typescript
+import type { BooleanInput, NumberInput } from '@angular/cdk/coercion';
+import { ChangeDetectionStrategy, Component, booleanAttribute, computed, input, numberAttribute } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircleCheck, lucideInfo, lucideLoader2, lucideOctagonX, lucideTriangleAlert } from '@ng-icons/lucide';
+import { BrnSonnerImports, type ToasterProps } from '@spartan-ng/brain/sonner';
+import { hlm } from '@spartan-ng/helm/utils';
+import type { ClassValue } from 'clsx';
+@Component({
+	selector: 'hlm-toaster',
+	imports: [BrnSonnerImports, NgIcon],
+	providers: [provideIcons({ lucideCircleCheck, lucideInfo, lucideTriangleAlert, lucideOctagonX, lucideLoader2 })],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	template: `
+		<brn-sonner-toaster
+			[class]="_computedClass()"
+			[invert]="invert()"
+			[theme]="theme()"
+			[position]="position()"
+			[hotKey]="hotKey()"
+			[richColors]="richColors()"
+			[expand]="expand()"
+			[duration]="duration()"
+			[visibleToasts]="visibleToasts()"
+			[closeButton]="closeButton()"
+			[toastOptions]="toastOptions()"
+			[offset]="offset()"
+			[style]="userStyle()"
+		>
+			<ng-template #loadingIcon>
+				<ng-icon name="lucideLoader2" class="overflow-visible! text-base [&>svg]:motion-safe:animate-spin" />
+			</ng-template>
+			<ng-template #successIcon>
+				<ng-icon name="lucideCircleCheck" class="overflow-visible! text-base" />
+			</ng-template>
+			<ng-template #errorIcon>
+				<ng-icon name="lucideOctagonX" class="overflow-visible! text-base" />
+			</ng-template>
+			<ng-template #infoIcon>
+				<ng-icon name="lucideInfo" class="overflow-visible! text-base" />
+			</ng-template>
+			<ng-template #warningIcon>
+				<ng-icon name="lucideTriangleAlert" class="overflow-visible! text-base" />
+			</ng-template>
+		</brn-sonner-toaster>
+	`,
+})
+export class HlmToaster {
+	public readonly invert = input<ToasterProps['invert'], BooleanInput>(false, {
+		transform: booleanAttribute,
+	});
+	public readonly theme = input<ToasterProps['theme']>('light');
+	public readonly position = input<ToasterProps['position']>('bottom-right');
+	public readonly hotKey = input<ToasterProps['hotkey']>(['altKey', 'KeyT']);
+	public readonly richColors = input<ToasterProps['richColors'], BooleanInput>(false, {
+		transform: booleanAttribute,
+	});
+	public readonly expand = input<ToasterProps['expand'], BooleanInput>(false, {
+		transform: booleanAttribute,
+	});
+	public readonly duration = input<ToasterProps['duration'], NumberInput>(4000, {
+		transform: numberAttribute,
+	});
+	public readonly visibleToasts = input<ToasterProps['visibleToasts'], NumberInput>(3, {
+		transform: numberAttribute,
+	});
+	public readonly closeButton = input<ToasterProps['closeButton'], BooleanInput>(false, {
+		transform: booleanAttribute,
+	});
+	public readonly toastOptions = input<ToasterProps['toastOptions']>({});
+	public readonly offset = input<ToasterProps['offset']>(null);
+	public readonly userClass = input<ClassValue>('', { alias: 'class' });
+	public readonly userStyle = input<Record<string, string>>(
+		{
+			'--normal-bg': 'var(--popover)',
+			'--normal-text': 'var(--popover-foreground)',
+			'--normal-border': 'var(--border)',
+			'--border-radius': 'var(--radius)',
+		},
+		{ alias: 'style' },
+	);
+	protected readonly _computedClass = computed(() => hlm('toaster group', this.userClass()));
+}
+````
+
+## File: src/app/shared/spartan/sonner/src/index.ts
+````typescript
+import { HlmToaster } from './lib/hlm-toaster';
+export * from './lib/hlm-toaster';
+export const HlmToasterImports = [HlmToaster] as const;
+````
+
+## File: src/app/shared/spartan/spinner/src/lib/hlm-spinner.ts
+````typescript
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideLoader2 } from '@ng-icons/lucide';
+import { classes } from '@spartan-ng/helm/utils';
+@Component({
+	selector: 'hlm-spinner',
+	imports: [NgIcon],
+	providers: [provideIcons({ lucideLoader2 })],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: {
+		role: 'status',
+		'[attr.aria-label]': 'ariaLabel()',
+	},
+	template: `
+		<ng-icon [name]="icon()" />
+	`,
+})
+export class HlmSpinner {
+	public readonly icon = input<string>('lucideLoader2');
+	public readonly ariaLabel = input<string>('Loading', { alias: 'aria-label' });
+	constructor() {
+		classes(() => 'inline-flex size-fit text-base motion-safe:animate-spin');
+	}
+}
+````
+
+## File: src/app/shared/spartan/spinner/src/index.ts
+````typescript
+import { HlmSpinner } from './lib/hlm-spinner';
+export * from './lib/hlm-spinner';
+export const HlmSpinnerImports = [HlmSpinner] as const;
+````
+
+## File: src/app/shared/spartan/utils/src/lib/hlm.ts
+````typescript
+import { isPlatformBrowser } from '@angular/common';
+import {
+	DestroyRef,
+	effect,
+	ElementRef,
+	HostAttributeToken,
+	inject,
+	Injector,
+	PLATFORM_ID,
+	runInInjectionContext,
+} from '@angular/core';
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+export function hlm(...inputs: ClassValue[]) {
+	return twMerge(clsx(inputs));
+}
+const elementClassManagers = new WeakMap<HTMLElement, ElementClassManager>();
+let globalObserver: MutationObserver | null = null;
+const observedElements = new Set<HTMLElement>();
+interface ElementClassManager {
+	element: HTMLElement;
+	sources: Map<number, { classes: Set<string>; order: number }>;
+	baseClasses: Set<string>;
+	isUpdating: boolean;
+	nextOrder: number;
+	hasInitialized: boolean;
+	restoreRafId: number | null;
+	transitionsSuppressed: boolean;
+	previousTransition: string;
+	previousTransitionPriority: string;
+}
+let sourceCounter = 0;
+export function classes(computed: () => ClassValue[] | string, options: ClassesOptions = {}) {
+	runInInjectionContext(options.injector ?? inject(Injector), () => {
+		const elementRef = options.elementRef ?? inject(ElementRef);
+		const platformId = inject(PLATFORM_ID);
+		const destroyRef = inject(DestroyRef);
+		const baseClasses = inject(new HostAttributeToken('class'), { optional: true });
+		const element = elementRef.nativeElement;
+		const sourceId = sourceCounter++;
+		let manager = elementClassManagers.get(element);
+		if (!manager) {
+			const initialBaseClasses = new Set<string>();
+			if (baseClasses) {
+				toClassList(baseClasses).forEach((cls) => initialBaseClasses.add(cls));
+			}
+			manager = {
+				element,
+				sources: new Map(),
+				baseClasses: initialBaseClasses,
+				isUpdating: false,
+				nextOrder: 0,
+				hasInitialized: false,
+				restoreRafId: null,
+				transitionsSuppressed: false,
+				previousTransition: '',
+				previousTransitionPriority: '',
+			};
+			elementClassManagers.set(element, manager);
+			// Setup global observer if needed and register this element
+			setupGlobalObserver(platformId);
+			observedElements.add(element);
+			// Suppress transitions until the first effect writes correct classes and
+			// the browser has painted them. This prevents CSS transition animations
+			// during hydration when classes change from SSR state to client state.
+			if (isPlatformBrowser(platformId)) {
+				manager.previousTransition = element.style.getPropertyValue('transition');
+				manager.previousTransitionPriority = element.style.getPropertyPriority('transition');
+				element.style.setProperty('transition', 'none', 'important');
+				manager.transitionsSuppressed = true;
+			}
+		}
+		const sourceOrder = manager.nextOrder++;
+		function updateClasses(): void {
+			const newClasses = toClassList(computed());
+			manager!.sources.set(sourceId, {
+				classes: new Set(newClasses),
+				order: sourceOrder,
+			});
+			updateElement(manager!);
+			if (manager!.transitionsSuppressed) {
+				manager!.transitionsSuppressed = false;
+				manager!.restoreRafId = requestAnimationFrame(() => {
+					manager!.restoreRafId = null;
+					restoreTransitionSuppression(manager!);
+				});
+			}
+		}
+		destroyRef.onDestroy(() => {
+			if (manager!.restoreRafId !== null) {
+				cancelAnimationFrame(manager!.restoreRafId);
+				manager!.restoreRafId = null;
+			}
+			if (manager!.transitionsSuppressed) {
+				manager!.transitionsSuppressed = false;
+				restoreTransitionSuppression(manager!);
+			}
+			manager!.sources.delete(sourceId);
+			if (manager!.sources.size === 0) {
+				cleanupManager(element);
+			} else {
+				updateElement(manager!);
+			}
+		});
+		effect(updateClasses);
+	});
+}
+function restoreTransitionSuppression(manager: ElementClassManager): void {
+	const prev = manager.previousTransition;
+	if (prev) {
+		manager.element.style.setProperty('transition', prev, manager.previousTransitionPriority || undefined);
+	} else {
+		manager.element.style.removeProperty('transition');
+	}
+}
+function setupGlobalObserver(platformId: Object): void {
+	if (isPlatformBrowser(platformId) && !globalObserver) {
+		globalObserver = new MutationObserver((mutations) => {
+			for (const mutation of mutations) {
+				if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+					const element = mutation.target as HTMLElement;
+					const manager = elementClassManagers.get(element);
+					if (manager && observedElements.has(element)) {
+						if (manager.isUpdating) continue;
+						const currentClasses = toClassList(element.className);
+						const allSourceClasses = new Set<string>();
+						for (const source of manager.sources.values()) {
+							for (const className of source.classes) {
+								allSourceClasses.add(className);
+							}
+						}
+						manager.baseClasses.clear();
+						for (const className of currentClasses) {
+							if (!allSourceClasses.has(className)) {
+								manager.baseClasses.add(className);
+							}
+						}
+						updateElement(manager);
+					}
+				}
+			}
+		});
+		globalObserver.observe(document, {
+			attributes: true,
+			attributeFilter: ['class'],
+			subtree: true,
+		});
+	}
+}
+function updateElement(manager: ElementClassManager): void {
+	if (manager.isUpdating) return;
+	manager.isUpdating = true;
+	if (!manager.hasInitialized && manager.sources.size > 0) {
+		const currentClasses = toClassList(manager.element.className);
+		const allSourceClasses = new Set<string>();
+		for (const source of manager.sources.values()) {
+			source.classes.forEach((className) => allSourceClasses.add(className));
+		}
+		currentClasses.forEach((className) => {
+			if (!allSourceClasses.has(className)) {
+				manager.baseClasses.add(className);
+			}
+		});
+		manager.hasInitialized = true;
+	}
+	const sortedSources = Array.from(manager.sources.entries()).sort(([, a], [, b]) => a.order - b.order);
+	const allSourceClasses: string[] = [];
+	for (const [, source] of sortedSources) {
+		allSourceClasses.push(...source.classes);
+	}
+	const classesToApply =
+		allSourceClasses.length > 0 || manager.baseClasses.size > 0
+			? hlm([...allSourceClasses, ...manager.baseClasses])
+			: '';
+	// Apply the classes to the element
+	if (manager.element.className !== classesToApply) {
+		manager.element.className = classesToApply;
+	}
+	manager.isUpdating = false;
+}
+function cleanupManager(element: HTMLElement): void {
+	// Remove from global tracking
+	observedElements.delete(element);
+	elementClassManagers.delete(element);
+	// If no more elements being tracked, cleanup global observer
+	if (observedElements.size === 0 && globalObserver) {
+		globalObserver.disconnect();
+		globalObserver = null;
+	}
+}
+interface ClassesOptions {
+	elementRef?: ElementRef<HTMLElement>;
+	injector?: Injector;
+}
+// Cache for parsed class lists to avoid repeated string operations
+const classListCache = new Map<string, string[]>();
+function toClassList(className: string | ClassValue[]): string[] {
+	// For simple string inputs, use cache to avoid repeated parsing
+	if (typeof className === 'string' && classListCache.has(className)) {
+		return classListCache.get(className)!;
+	}
+	const result = clsx(className)
+		.split(' ')
+		.filter((c) => c.length > 0);
+	if (typeof className === 'string' && classListCache.size < 1000) {
+		classListCache.set(className, result);
+	}
+	return result;
+}
+````
+
+## File: src/app/shared/spartan/utils/src/index.ts
+````typescript
+export * from './lib/hlm';
+````
+
 ## File: src/app/app.config.ts
 ````typescript
 import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, APP_INITIALIZER, inject } from '@angular/core';
@@ -6847,6 +6768,14 @@ module.exports = {
       "description": "Shared Copilot agents: dev, reviewer, security, devops, tester, ui, web-quality-enhancer"
     }
   }
+}
+````
+
+## File: components.json
+````json
+{
+  "componentsPath": "src/app/shared/spartan",
+  "importAlias": "@spartan-ng/helm"
 }
 ````
 
@@ -7407,6 +7336,74 @@ Round 9  ───────────────────────�
 - `address-autocomplete` — якщо `BrnComboboxComponent` не підтримує async Google Places API
 ````
 
+## File: tsconfig.json
+````json
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve",
+    "paths": {
+      "@spartan-ng/helm/button": [
+        "./src/app/shared/spartan/button/src/index.ts"
+      ],
+      "@spartan-ng/helm/utils": [
+        "./src/app/shared/spartan/utils/src/index.ts"
+      ],
+      "@spartan-ng/helm/badge": [
+        "./src/app/shared/spartan/badge/src/index.ts"
+      ],
+      "@spartan-ng/helm/field": [
+        "./src/app/shared/spartan/field/src/index.ts"
+      ],
+      "@spartan-ng/helm/label": [
+        "./src/app/shared/spartan/label/src/index.ts"
+      ],
+      "@spartan-ng/helm/separator": [
+        "./src/app/shared/spartan/separator/src/index.ts"
+      ],
+      "@spartan-ng/helm/input": [
+        "./src/app/shared/spartan/input/src/index.ts"
+      ],
+      "@spartan-ng/helm/spinner": [
+        "./src/app/shared/spartan/spinner/src/index.ts"
+      ],
+      "@spartan-ng/helm/sonner": [
+        "./src/app/shared/spartan/sonner/src/index.ts"
+      ],
+      "@spartan-ng/helm/card": [
+        "./src/app/shared/spartan/card/src/index.ts"
+      ]
+    }
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "typeCheckHostBindings": true,
+    "strictTemplates": true
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ]
+}
+````
+
 ## File: .husky/pre-commit
 ````
 #!/usr/bin/env sh
@@ -7457,10 +7454,12 @@ import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angula
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
-import { FormFieldComponent } from '../../../shared/components/form-field/form-field.component';
 import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
 import { SeoService } from '../../../core/services/seo.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 interface LoginForm {
   email: FormControl<string>;
   password: FormControl<string>;
@@ -7469,7 +7468,7 @@ interface LoginForm {
   selector: 'app-login',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, FormFieldComponent, TranslateModule, BookIntroComponent, LoadingSpinnerComponent],
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
   templateUrl: './login.component.html',
 })
 export class LoginComponent {
@@ -7545,24 +7544,24 @@ export class LoginComponent {
                 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
                   <fieldset class="border-0 p-0 m-0">
                     <legend class="sr-only">{{ 'AUTH.create_account_h2' | translate }}</legend>
-                    <app-form-field
-                      [label]="'AUTH.display_name' | translate"
-                      type="text"
-                      placeholder="Ada Lovelace"
-                      [control]="form.controls.displayName"
-                    />
-                    <app-form-field
-                      [label]="'AUTH.email' | translate"
-                      type="email"
-                      placeholder="you@example.com"
-                      [control]="form.controls.email"
-                    />
-                    <app-form-field
-                      [label]="'AUTH.password' | translate"
-                      type="password"
-                      [placeholder]="'AUTH.password' | translate"
-                      [control]="form.controls.password"
-                    />
+                    <hlm-field>
+                      <label hlmFieldLabel>{{ 'AUTH.display_name' | translate }}</label>
+                      <input hlmInput type="text" placeholder="Ada Lovelace" [formControl]="form.controls.displayName" />
+                      <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                      <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 2} }}</hlm-field-error>
+                    </hlm-field>
+                    <hlm-field>
+                      <label hlmFieldLabel>{{ 'AUTH.email' | translate }}</label>
+                      <input hlmInput type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
+                      <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                      <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
+                    </hlm-field>
+                    <hlm-field>
+                      <label hlmFieldLabel>{{ 'AUTH.password' | translate }}</label>
+                      <input hlmInput type="password" placeholder="••••••••" [formControl]="form.controls.password" />
+                      <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                      <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
+                    </hlm-field>
                     @if (passwordStrength()) {
                       <div class="flex items-center gap-2 -mt-2">
                         <div class="flex gap-1 flex-1">
@@ -7589,12 +7588,11 @@ export class LoginComponent {
                         </span>
                       </div>
                     }
-                    <app-form-field
-                      [label]="'AUTH.confirm_password' | translate"
-                      type="password"
-                      placeholder="••••••••"
-                      [control]="form.controls.confirmPassword"
-                    />
+                    <hlm-field>
+                      <label hlmFieldLabel>{{ 'AUTH.confirm_password' | translate }}</label>
+                      <input hlmInput type="password" placeholder="••••••••" [formControl]="form.controls.confirmPassword" />
+                      <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                    </hlm-field>
                     @if (form.hasError('passwordMismatch') && form.controls.confirmPassword.touched) {
                       <p class="text-xs text-red-500 -mt-3">{{ 'AUTH.passwords_no_match' | translate }}</p>
                     }
@@ -7641,16 +7639,13 @@ export class LoginComponent {
                       </div>
                     }
                     <button
+                      hlmBtn
                       type="submit"
                       [disabled]="isSubmitting()"
-                      class="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-2.5
-                             text-sm font-semibold text-white shadow-sm
-                             hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
-                             disabled:opacity-60 disabled:cursor-not-allowed
-                             transition-colors duration-200 mt-2"
+                      class="mt-2 w-full bg-amber-700 hover:bg-amber-800 text-white focus-visible:ring-amber-500"
                     >
                       @if (isSubmitting()) {
-                        <app-loading-spinner size="sm" />
+                        <hlm-spinner aria-label="Loading" />
                         {{ 'AUTH.creating_account' | translate }}
                       } @else {
                         {{ 'AUTH.create_account_h2' | translate }}
@@ -9700,10 +9695,12 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { UserRole } from '../../../core/models/user.model';
-import { FormFieldComponent } from '../../../shared/components/form-field/form-field.component';
 import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
 import { SeoService } from '../../../core/services/seo.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
   const password = group.get('password')?.value as string;
   const confirmPassword = group.get('confirmPassword')?.value as string;
@@ -9720,7 +9717,7 @@ interface RegisterForm {
   selector: 'app-register',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, FormFieldComponent, TranslateModule, BookIntroComponent, LoadingSpinnerComponent],
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
   templateUrl: './register.component.html',
 })
 export class RegisterComponent {
@@ -10649,88 +10646,6 @@ export class RandomizerService {
 }
 ````
 
-## File: package.json
-````json
-{
-  "name": "book-club-fe",
-  "version": "0.0.0",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
-    "extract-i18n": "node scripts/extract-i18n.mjs",
-    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
-    "lint": "ng lint",
-    "build-ctx": "npx repomix --no-files",
-    "prepare": "husky install",
-    "mock": "node mock-server/index.js",
-    "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\""
-  },
-  "prettier": {
-    "overrides": [
-      {
-        "files": "*.html",
-        "options": {
-          "parser": "angular"
-        }
-      }
-    ]
-  },
-  "private": true,
-  "dependencies": {
-    "@angular/cdk": "^21.2.8",
-    "@angular/common": "^21.2.10",
-    "@angular/compiler": "^21.2.10",
-    "@angular/core": "^21.2.10",
-    "@angular/forms": "^21.2.10",
-    "@angular/platform-browser": "^21.2.10",
-    "@angular/router": "^21.2.10",
-    "@ng-icons/core": ">=32.0.0 <34.0.0",
-    "@ng-icons/lucide": ">=32.0.0 <34.0.0",
-    "@ngx-translate/core": "^17.0.0",
-    "@ngx-translate/http-loader": "^17.0.0",
-    "@spartan-ng/brain": "^0.0.1-alpha.678",
-    "@spartan-ng/cli": "^0.0.1-alpha.678",
-    "@tailwindcss/postcss": "^4.2.4",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "qrcode": "^1.5.4",
-    "rxjs": "~7.8.0",
-    "tailwind-merge": "^3.5.0",
-    "tslib": "^2.3.0",
-    "tw-animate-css": "^1.4.0"
-  },
-  "devDependencies": {
-    "@angular/build": "^21.2.8",
-    "@angular/cli": "^21.2.8",
-    "@angular/compiler-cli": "^21.2.10",
-    "@types/jasmine": "~5.1.0",
-    "@types/qrcode": "^1.5.6",
-    "angular-eslint": "21.0.1",
-    "autoprefixer": "^10.4.27",
-    "concurrently": "^9.2.1",
-    "cors": "^2.8.6",
-    "eslint": "^9.39.1",
-    "eslint-plugin-rxjs-x": "^0.9.5",
-    "express": "^5.2.1",
-    "husky": "^8.0.0",
-    "jasmine-core": "~5.8.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
-    "postcss": "^8.5.9",
-    "tailwindcss": "^4.2.4",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "8.46.4"
-  }
-}
-````
-
 ## File: src/app/core/auth/auth.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -11080,6 +10995,88 @@ export class ClubsListComponent implements OnInit {
     } finally {
       this.joiningClubId.set(null);
     }
+  }
+}
+````
+
+## File: package.json
+````json
+{
+  "name": "book-club-fe",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
+    "extract-i18n": "node scripts/extract-i18n.mjs",
+    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
+    "lint": "ng lint",
+    "build-ctx": "npx repomix --no-files",
+    "prepare": "husky install",
+    "mock": "node mock-server/index.js",
+    "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\""
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "dependencies": {
+    "@angular/cdk": "^21.2.8",
+    "@angular/common": "^21.2.10",
+    "@angular/compiler": "^21.2.10",
+    "@angular/core": "^21.2.10",
+    "@angular/forms": "^21.2.10",
+    "@angular/platform-browser": "^21.2.10",
+    "@angular/router": "^21.2.10",
+    "@ng-icons/core": ">=32.0.0 <34.0.0",
+    "@ng-icons/lucide": ">=32.0.0 <34.0.0",
+    "@ngx-translate/core": "^17.0.0",
+    "@ngx-translate/http-loader": "^17.0.0",
+    "@spartan-ng/brain": "^0.0.1-alpha.678",
+    "@spartan-ng/cli": "^0.0.1-alpha.678",
+    "@tailwindcss/postcss": "^4.2.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "qrcode": "^1.5.4",
+    "rxjs": "~7.8.0",
+    "tailwind-merge": "^3.5.0",
+    "tslib": "^2.3.0",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.2.8",
+    "@angular/cli": "^21.2.8",
+    "@angular/compiler-cli": "^21.2.10",
+    "@types/jasmine": "~5.1.0",
+    "@types/qrcode": "^1.5.6",
+    "angular-eslint": "21.0.1",
+    "autoprefixer": "^10.4.27",
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.6",
+    "eslint": "^9.39.1",
+    "eslint-plugin-rxjs-x": "^0.9.5",
+    "express": "^5.2.1",
+    "husky": "^8.0.0",
+    "jasmine-core": "~5.8.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "postcss": "^8.5.9",
+    "tailwindcss": "^4.2.4",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "8.46.4"
   }
 }
 ````

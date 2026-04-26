@@ -22,20 +22,20 @@
                   <legend class="sr-only">{{ 'AUTH.sign_in_h2' | translate }}</legend>
 
                   <!-- Email -->
-                  <app-form-field
-                    [label]="'AUTH.email' | translate"
-                    type="email"
-                    placeholder="you@example.com"
-                    [control]="form.controls.email"
-                  />
+                  <hlm-field>
+                    <label hlmFieldLabel>{{ 'AUTH.email' | translate }}</label>
+                    <input hlmInput type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
+                    <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                    <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
+                  </hlm-field>
 
                   <!-- Password -->
-                  <app-form-field
-                    [label]="'AUTH.password' | translate"
-                    type="password"
-                    placeholder="••••••••"
-                    [control]="form.controls.password"
-                  />
+                  <hlm-field>
+                    <label hlmFieldLabel>{{ 'AUTH.password' | translate }}</label>
+                    <input hlmInput type="password" placeholder="••••••••" [formControl]="form.controls.password" />
+                    <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                    <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
+                  </hlm-field>
                 </fieldset>
 
                 <!-- Error alert -->
@@ -48,16 +48,13 @@
 
                 <!-- Submit button -->
                 <button
+                  hlmBtn
                   type="submit"
                   [disabled]="isSubmitting()"
-                  class="w-full flex items-center justify-center gap-2 rounded-xl bg-amber-700 px-4 py-2.5
-                         text-sm font-semibold text-white shadow-sm
-                         hover:bg-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2
-                         disabled:opacity-60 disabled:cursor-not-allowed
-                         transition-colors duration-200 mt-2"
+                  class="mt-2 w-full bg-amber-700 hover:bg-amber-800 text-white focus-visible:ring-amber-500"
                 >
                   @if (isSubmitting()) {
-                    <app-loading-spinner size="sm" />
+                    <hlm-spinner aria-label="Loading" />
                     {{ 'AUTH.signing_in' | translate }}
                   } @else {
                     {{ 'AUTH.submit_login' | translate }}
