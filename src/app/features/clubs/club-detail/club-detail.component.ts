@@ -118,6 +118,16 @@ export class ClubDetailComponent {
     return [...events].sort((a, b) => a.date.localeCompare(b.date));
   });
 
+  readonly nearestEventBook = computed<{ title: string; author: string; description: string; coverUrl: string | null } | null>(() => {
+    const nearest = [...this.events()]
+      .filter(e => e.status === 'upcoming' || e.status === 'scheduled' || e.status === 'active')
+      .sort((a, b) => a.date.localeCompare(b.date))[0];
+    const title = nearest?.bookTitle;
+    if (title) return { title, author: '', description: '', coverUrl: nearest.coverUrl ?? null };
+    const cb = this.club()?.currentBook;
+    return cb ? { ...cb, coverUrl: null } : null;
+  });
+
   readonly deleteCountdown = computed<string | null>(() => {
     const club = this.club();
     if (!club) return null;

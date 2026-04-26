@@ -133,7 +133,6 @@
     "organizer_title": "Організатор",
     "meeting_info_title": "Місце та час зустрічі",
     "duration_label": "Тривалість",
-    "minutes_abbr": "хв",
     "address_label": "Адреса",
     "view_on_map": "Переглянути на карті →",
     "after_meeting_title": "Після зустрічі",
@@ -156,7 +155,8 @@
     "edit_club_title": "Редагувати клуб",
     "edit_club_desc": "Оновити назву, опис та налаштування",
     "create_event_title": "Створити подію",
-    "create_event_desc": "Запланувати нову подію клубу"
+    "create_event_desc": "Запланувати нову подію клубу",
+    "now_reading": "Читаємо зараз"
   },
   "EDIT_CLUB": {
     "title": "Редагувати клуб",

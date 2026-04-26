@@ -12,6 +12,7 @@ import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
 
 interface EditClubForm {
   name: FormControl<string>;
@@ -25,7 +26,7 @@ interface EditClubForm {
   selector: 'app-edit-club',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent],
+  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent, CoverUploadComponent],
   templateUrl: './edit-club.component.html',
 })
 export class EditClubComponent implements OnInit {

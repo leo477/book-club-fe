@@ -133,7 +133,6 @@
     "organizer_title": "Organizer",
     "meeting_info_title": "Meeting place & time",
     "duration_label": "Duration",
-    "minutes_abbr": "min",
     "address_label": "Address",
     "view_on_map": "View on map →",
     "after_meeting_title": "After the meeting",
@@ -156,7 +155,8 @@
     "edit_club_title": "Edit Club",
     "edit_club_desc": "Update name, description & settings",
     "create_event_title": "Create Event",
-    "create_event_desc": "Schedule a new club event"
+    "create_event_desc": "Schedule a new club event",
+    "now_reading": "Now reading"
   },
   "EDIT_CLUB": {
     "title": "Edit Club",

@@ -93,6 +93,7 @@ export interface ApiEvent {
   afterMeetingVenue: AfterMeetingVenue | null;
   attendeeCount: number;
   isAttending: boolean;
+  bookTitle?: string | null;
 }
 
 export function mapUserProfile(raw: ApiUserProfile): UserProfile {
@@ -165,6 +166,7 @@ export function mapEvent(raw: ApiEvent): ClubEvent {
     afterMeetingVenue: raw.afterMeetingVenue,
     attendeeCount: raw.attendeeCount,
     isAttending: raw.isAttending,
+    bookTitle: raw.bookTitle ?? null,
   };
 }
 

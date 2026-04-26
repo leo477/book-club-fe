@@ -12,7 +12,9 @@
     "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
     "lint": "ng lint",
     "build-ctx": "npx repomix --no-files",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "mock": "node mock-server/index.js",
+    "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\""
   },
   "prettier": {
     "overrides": [
@@ -46,8 +48,11 @@
     "@types/qrcode": "^1.5.6",
     "angular-eslint": "21.0.1",
     "autoprefixer": "^10.4.27",
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.6",
     "eslint": "^9.39.1",
     "eslint-plugin-rxjs-x": "^0.9.5",
+    "express": "^5.2.1",
     "husky": "^8.0.0",
     "jasmine-core": "~5.8.0",
     "karma": "~6.4.0",
