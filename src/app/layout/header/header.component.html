@@ -1,212 +1,142 @@
-    <header
-      class="sticky top-0 z-50 bg-[#f5ede0]/80 dark:bg-gray-900/80 backdrop-blur-md
-             border-b border-amber-200/60 dark:border-gray-800"
-      role="banner"
-    >
-      <div class="max-w-6xl mx-auto px-4">
-        <div class="flex items-center justify-between h-16">
+<header
+  class="sticky top-0 z-50 bg-[#f5ede0]/80 dark:bg-gray-900/80 backdrop-blur-md
+         border-b border-amber-200/60 dark:border-gray-800"
+  role="banner"
+>
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center justify-between h-16">
 
-          <!-- ── Logo ──────────────────────────────────────────────────── -->
+      <!-- ── Logo ──────────────────────────────────────────────────── -->
+      <a
+        routerLink="/"
+        class="font-display text-xl font-bold text-gray-900 dark:text-white
+               hover:text-primary-600 dark:hover:text-primary-400
+               transition-all duration-200 focus:outline-none focus:ring-2
+               focus:ring-primary-500 focus:ring-offset-2 rounded"
+      >
+        📚 BookClub
+      </a>
+
+      <!-- ── Desktop Nav ────────────────────────────────────────────── -->
+      <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
+        <a
+          routerLink="/clubs"
+          routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
+          class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
+                 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
+                 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
+                 focus:ring-offset-2"
+        >
+          {{ 'NAV.discover' | translate }}
+        </a>
+        @if (isAuthenticated()) {
           <a
-            routerLink="/"
-            class="font-display text-xl font-bold text-gray-900 dark:text-white
-                   hover:text-primary-600 dark:hover:text-primary-400
-                   transition-all duration-200 focus:outline-none focus:ring-2
-                   focus:ring-primary-500 focus:ring-offset-2 rounded"
+            routerLink="/events"
+            routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
+            class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
+                   hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
+                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
+                   focus:ring-offset-2"
           >
-            📚 BookClub
+            📅 Events
           </a>
+        }
+      </nav>
 
-          <!-- ── Desktop Nav ────────────────────────────────────────────── -->
-          <nav
-            class="hidden md:flex items-center gap-1"
-            aria-label="Main navigation"
-          >
-            <a
-              routerLink="/clubs"
-              routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
-              class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
-                     hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
-                     focus:ring-offset-2"
-            >
-              {{ 'NAV.discover' | translate }}
-            </a>
-            @if (isAuthenticated()) {
-              <a
-                routerLink="/events"
-                routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
-                class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
-                       hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
-                       transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
-                       focus:ring-offset-2"
-              >
-                📅 Events
-              </a>
-            }
-          </nav>
+      <!-- ── Desktop Right ──────────────────────────────────────────── -->
+      <div class="hidden md:flex items-center gap-2">
 
-          <!-- ── Desktop Right ──────────────────────────────────────────── -->
-          <div class="hidden md:flex items-center gap-2">
+        <!-- Language switcher — custom (2 states, no Spartan needed) -->
+        <button
+          type="button"
+          (click)="switchLang()"
+          class="text-sm font-semibold px-2 py-1 rounded border border-current
+                 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
+                 transition-all duration-200 focus:outline-none focus:ring-2
+                 focus:ring-primary-500 focus:ring-offset-2"
+          [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+        >
+          {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
+        </button>
 
-            <!-- Language switcher -->
-            <button
-              type="button"
-              (click)="switchLang()"
-              class="text-sm font-semibold px-2 py-1 rounded border border-current
-                     text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2
-                     focus:ring-primary-500 focus:ring-offset-2"
-              [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-            >
-              {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
-            </button>
-
-            @if (isAuthenticated()) {
-              <!-- User avatar + dropdown -->
-              <div class="relative">
-                <button
-                  type="button"
-                  (click)="toggleDropdown()"
-                  class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
-                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                  [attr.aria-expanded]="isDropdownOpen()"
-                  aria-haspopup="menu"
-                  [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
-                >
-                  <div
-                    class="h-9 w-9 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
-                           flex items-center justify-center text-white text-sm font-semibold
-                           select-none"
-                    aria-hidden="true"
-                  >
-                    {{ userInitials() }}
-                  </div>
-                </button>
-
-                <!-- Dropdown -->
-                @if (isDropdownOpen()) {
-                  <div
-                    role="menu"
-                    aria-label="User menu"
-                    class="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-gray-800 shadow-lg
-                           border border-gray-100 dark:border-gray-700 py-1 z-50
-                           animate-fade-in"
-                  >
-                    <!-- User info header -->
-                    <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                      <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                        {{ currentUser()?.displayName }}
-                      </p>
-                    </div>
-
-                    <a
-                      routerLink="/profile"
-                      role="menuitem"
-                      (click)="closeDropdown()"
-                      class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200
-                             hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200
-                             focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-700"
-                    >
-                      👤 {{ 'NAV.profile' | translate }}
-                    </a>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      (click)="signOut()"
-                      class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400
-                             hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200
-                             focus:outline-none focus:bg-red-50 dark:focus:bg-red-900/20"
-                    >
-                      🚪 {{ 'NAV.logout' | translate }}
-                    </button>
-                  </div>
-
-                  <!-- Click-away overlay -->
-                  <div
-                    class="fixed inset-0 z-40"
-                    aria-hidden="true"
-                    tabindex="-1"
-                    (click)="closeDropdown()"
-                    (keydown.escape)="closeDropdown()"
-                  ></div>
-                }
-              </div>
-            } @else {
-              <a
-                routerLink="/login"
-                class="border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800
-                       text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-medium text-sm
-                       transition-all duration-200 focus:outline-none focus:ring-2
-                       focus:ring-primary-500 focus:ring-offset-2"
-              >
-                {{ 'NAV.login' | translate }}
-              </a>
-              <a
-                routerLink="/register"
-                class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg
-                       font-medium text-sm transition-all duration-200 focus:outline-none
-                       focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              >
-                {{ 'NAV.join_free' | translate }}
-              </a>
-            }
-          </div>
-
-          <!-- ── Hamburger (mobile) ─────────────────────────────────────── -->
+        @if (isAuthenticated()) {
+          <!-- User avatar + dropdown -->
           <button
             type="button"
-            class="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300
-                   hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200
+            [hlmDropdownMenuTrigger]="userMenu"
+            class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
                    focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-            (click)="toggleMenu()"
-            [attr.aria-expanded]="isMenuOpen()"
-            aria-controls="mobile-menu"
+            aria-haspopup="menu"
+            [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
           >
-            @if (isMenuOpen()) {
-              <!-- X icon -->
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            } @else {
-              <!-- Hamburger icon -->
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            }
-            <span class="sr-only">Toggle navigation menu</span>
-          </button>
-        </div>
-
-        <!-- ── Mobile Menu ────────────────────────────────────────────── -->
-        @if (isMenuOpen()) {
-          <nav
-            id="mobile-menu"
-            class="md:hidden border-t border-gray-100 dark:border-gray-800 py-3 space-y-1"
-            aria-label="Mobile navigation"
-          >
-            <a
-              routerLink="/clubs"
-              routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
-              (click)="isMenuOpen.set(false)"
-              class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                     text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2
-                     focus:ring-primary-500 focus:ring-offset-2"
+            <div
+              class="h-9 w-9 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
+                     flex items-center justify-center text-white text-sm font-semibold select-none"
+              aria-hidden="true"
             >
-              🔍 {{ 'NAV.discover' | translate }}
-            </a>
-            @if (isAuthenticated()) {
-              <a
-                routerLink="/events"
-                (click)="isMenuOpen.set(false)"
-                class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                       text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                       transition-all duration-200 focus:outline-none focus:ring-2
-                       focus:ring-primary-500 focus:ring-offset-2"
-              >
-                📅 Events
+              {{ userInitials() }}
+            </div>
+          </button>
+
+          <ng-template #userMenu>
+            <div hlmDropdownMenu>
+              <hlm-dropdown-menu-label>{{ currentUser()?.displayName }}</hlm-dropdown-menu-label>
+              <hlm-dropdown-menu-separator />
+              <a hlmDropdownMenuItem [routerLink]="['/profile']">
+                👤 {{ 'NAV.profile' | translate }}
               </a>
+              <hlm-dropdown-menu-separator />
+              <button hlmDropdownMenuItem variant="destructive" (click)="signOut()">
+                🚪 {{ 'NAV.logout' | translate }}
+              </button>
+            </div>
+          </ng-template>
+
+        } @else {
+          <a hlmBtn variant="outline" size="sm" routerLink="/login">
+            {{ 'NAV.login' | translate }}
+          </a>
+          <a hlmBtn size="sm" routerLink="/register"
+             class="bg-primary-600 hover:bg-primary-700 text-white">
+            {{ 'NAV.join_free' | translate }}
+          </a>
+        }
+      </div>
+
+      <!-- ── Hamburger (mobile) — Spartan Sheet ─────────────────────── -->
+      <hlm-sheet class="md:hidden">
+        <button
+          hlmSheetTrigger
+          type="button"
+          class="p-2 rounded-lg text-gray-600 dark:text-gray-300
+                 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200
+                 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          aria-label="Toggle navigation menu"
+        >
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        <hlm-sheet-content>
+          <hlm-sheet-header>
+            <h2 hlmSheetTitle class="font-display font-bold">📚 BookClub</h2>
+          </hlm-sheet-header>
+
+          <nav class="flex flex-col gap-1 px-4 py-2" aria-label="Mobile navigation">
+            <button hlmSheetClose [routerLink]="['/clubs']"
+                    class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                           text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                           transition-all duration-200 w-full text-left">
+              🔍 {{ 'NAV.discover' | translate }}
+            </button>
+            @if (isAuthenticated()) {
+              <button hlmSheetClose [routerLink]="['/events']"
+                      class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                             text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                             transition-all duration-200 w-full text-left">
+                📅 Events
+              </button>
             }
 
             <!-- Language switcher (mobile) -->
@@ -215,14 +145,13 @@
               (click)="switchLang()"
               class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
                      text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2
-                     focus:ring-primary-500 focus:ring-offset-2 w-full text-left"
+                     transition-all duration-200 w-full text-left"
               [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
             >
               {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
             </button>
 
-            <div class="pt-2 mt-2 border-t border-gray-100 dark:border-gray-800 space-y-1">
+            <div class="pt-2 mt-2 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-1">
               @if (isAuthenticated()) {
                 <div class="px-4 py-2">
                   <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
@@ -232,50 +161,37 @@
                     {{ currentUser()?.displayName }}
                   </p>
                 </div>
-                <a
-                  routerLink="/profile"
-                  (click)="isMenuOpen.set(false)"
-                  class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                         text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-primary-500 focus:ring-offset-2"
-                >
+                <button hlmSheetClose [routerLink]="['/profile']"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                               text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                               transition-all duration-200 w-full text-left">
                   👤 {{ 'NAV.profile' | translate }}
-                </a>
-                <button
-                  type="button"
-                  (click)="signOut()"
-                  class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                         text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-red-500 focus:ring-offset-2"
-                >
+                </button>
+                <button hlmSheetClose type="button" (click)="signOut()"
+                        class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                               text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
+                               transition-all duration-200">
                   🚪 {{ 'NAV.logout' | translate }}
                 </button>
               } @else {
-                <a
-                  routerLink="/login"
-                  (click)="isMenuOpen.set(false)"
-                  class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                         text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-primary-500 focus:ring-offset-2"
-                >
+                <button hlmSheetClose [routerLink]="['/login']"
+                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                               text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                               transition-all duration-200 w-full text-left">
                   {{ 'NAV.login' | translate }}
-                </a>
-                <a
-                  routerLink="/register"
-                  (click)="isMenuOpen.set(false)"
-                  class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                         bg-primary-600 text-white hover:bg-primary-700
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-primary-500 focus:ring-offset-2"
-                >
+                </button>
+                <button hlmSheetClose [routerLink]="['/register']"
+                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                               bg-primary-600 text-white hover:bg-primary-700
+                               transition-all duration-200 w-full text-left">
                   {{ 'NAV.join_free' | translate }}
-                </a>
+                </button>
               }
             </div>
           </nav>
-        }
-      </div>
-    </header>
+        </hlm-sheet-content>
+      </hlm-sheet>
+
+    </div>
+  </div>
+</header>

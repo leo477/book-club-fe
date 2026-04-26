@@ -1,4 +1,4 @@
-<section [attr.aria-label]="'MEMBERS.title' | translate" class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="px-6 gap-4">
   <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
     {{ 'MEMBERS.title' | translate }} ({{ members().length }})
   </h2>
@@ -60,9 +60,12 @@
               @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
                 <!-- QR toggle button -->
                 <button
+                  hlmBtn
+                  variant="secondary"
+                  size="sm"
                   type="button"
                   (click)="toggleQr(member.userId)"
-                  class="inline-flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 transition-colors ml-1"
+                  class="ml-1 text-xs"
                   [attr.aria-expanded]="showQrForUser() === member.userId"
                   [attr.aria-label]="'MEMBERS.show_qr' | translate"
                 >
@@ -75,8 +78,8 @@
                        aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
                     <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
                     <app-qr-code [value]="buildQrValue(member)" [size]="160" />
-                    <button type="button" (click)="toggleQr(member.userId)"
-                            class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mt-1">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
+                    <button hlmBtn variant="ghost" size="sm" type="button" (click)="toggleQr(member.userId)"
+                            class="mt-1 text-xs text-gray-400">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
                   </dialog>
                 }
               }
@@ -89,13 +92,12 @@
             <!-- Kick and Ban buttons (owner only) -->
             @if (isOwner() && member.role !== 'organizer') {
               <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">
-                <button type="button" (click)="kick.emit(member.userId)"
-                        class="rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-red-100 dark:hover:bg-red-900/30 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                <button hlmBtn variant="destructive" size="xs" type="button" (click)="kick.emit(member.userId)"
                          [attr.aria-label]="'MEMBERS.kick' | translate">
                   {{ 'MEMBERS.kick' | translate }}
                 </button>
-                <button type="button" (click)="toggleBanMenu(member.userId)"
-                        class="rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-orange-100 dark:hover:bg-orange-900/30 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                <button hlmBtn variant="ghost" size="xs" type="button" (click)="toggleBanMenu(member.userId)"
+                        class="text-orange-600 hover:text-orange-700"
                         [attr.aria-expanded]="showBanMenu() === member.userId">
                   {{ 'MEMBERS.ban' | translate }}
                 </button>
@@ -103,8 +105,8 @@
                   <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 py-1 min-w-36">
                     @for (duration of banDurations; track duration) {
                       <li>
-                        <button type="button" (click)="emitBan(member.userId, duration)"
-                                class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <button hlmBtn variant="ghost" type="button" (click)="emitBan(member.userId, duration)"
+                                class="w-full justify-start px-4 text-sm">
                           @if (duration === 1) { {{ 'MEMBERS.ban_1' | translate }} }
                           @else if (duration === 3) { {{ 'MEMBERS.ban_3' | translate }} }
                           @else if (duration === 5) { {{ 'MEMBERS.ban_5' | translate }} }

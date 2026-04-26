@@ -11,8 +11,11 @@ import { Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 
 interface EditClubForm {
   name: FormControl<string>;
@@ -26,7 +29,7 @@ interface EditClubForm {
   selector: 'app-edit-club',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent, CoverUploadComponent],
+  imports: [ReactiveFormsModule, TranslatePipe, CoverUploadComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
   templateUrl: './edit-club.component.html',
 })
 export class EditClubComponent implements OnInit {

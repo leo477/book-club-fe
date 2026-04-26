@@ -13,8 +13,9 @@
     <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
     <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
     <a
+      hlmBtn
       routerLink="/clubs"
-      class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors"
+      class="bg-primary-600 hover:bg-primary-700 text-white"
     >
       ← {{ 'CLUB_DETAIL.back' | translate }}
     </a>
@@ -61,7 +62,7 @@
 
           <!-- Current book -->
           @if (nearestEventBook()) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div hlmCard class="p-4 gap-3">
               <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 {{ 'CLUB_DETAIL.now_reading' | translate }}</h3>
               @if (nearestEventBook()!.coverUrl) {
                 <img
@@ -110,7 +111,7 @@
 
           <!-- Description section -->
           @if (club()!.description) {
-            <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+            <section hlmCard class="px-6 gap-3">
               <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
               <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
             </section>
@@ -124,10 +125,11 @@
                 <p class="text-sm text-primary-600 dark:text-primary-400 mt-0.5">{{ 'CLUB_DETAIL.join_cta_desc' | translate }}</p>
               </div>
               <button
+                hlmBtn
                 type="button"
                 (click)="onJoin()"
                 [disabled]="isActionLoading()"
-                class="flex-shrink-0 rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                class="flex-shrink-0 bg-primary-600 hover:bg-primary-700 text-white"
               >
                 {{ 'CLUB_DETAIL.join' | translate }}
               </button>
@@ -135,15 +137,17 @@
           }
 
           <!-- Upcoming Events section -->
-          <section class="rounded-2xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-6 border border-[#d4a96a]/20 dark:border-[#7a5c2e]/20">
+          <section hlmCard class="px-6 gap-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-[#d4a96a]/20 dark:border-[#7a5c2e]/20">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 📅 {{ 'CLUB_DETAIL.events_title' | translate }}
               </h2>
               @if (isClubOwner()) {
                 <a
+                  hlmBtn
+                  size="sm"
                   [routerLink]="['/clubs', id(), 'events', 'create']"
-                  class="inline-flex items-center gap-2 rounded-xl bg-primary-600 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+                  class="bg-primary-600 hover:bg-primary-700 text-white"
                 >
                   {{ 'CLUB_DETAIL.create_event' | translate }}
                 </a>
@@ -209,7 +213,7 @@
 
           <!-- Members preview -->
           @if (members().length > 0) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div hlmCard class="p-4 gap-3">
               <div class="flex items-center justify-between mb-3">
                 <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   {{ 'CLUB_DETAIL.members_title' | translate }}
@@ -236,7 +240,7 @@
 
           <!-- Organizer card (compact) -->
           @if (organizerProfile()) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div hlmCard class="p-4 gap-3">
               <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
                 {{ 'CLUB_DETAIL.organizer_title' | translate }}
               </h3>
@@ -274,7 +278,7 @@
 
           <!-- After-meeting venue (club level) -->
           @if (club()!.afterMeetingVenue) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div hlmCard class="p-4 gap-3">
               <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
                 {{ 'CLUB_DETAIL.after_meeting_title' | translate }}
               </h3>

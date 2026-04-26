@@ -24,6 +24,8 @@ import { ClubMembersListComponent } from './members/club-members-list.component'
 import { ClubHeaderComponent } from './header/club-header.component';
 import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
 import { ClubEventCardComponent } from './club-event-card/club-event-card.component';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCard } from '../../../shared/spartan/card/src';
 
 @Component({
   selector: 'app-club-detail',
@@ -38,6 +40,8 @@ import { ClubEventCardComponent } from './club-event-card/club-event-card.compon
     ClubHeaderComponent,
     ClubManagePanelComponent,
     ClubEventCardComponent,
+    HlmButton,
+    HlmCard,
   ],
   templateUrl: './club-detail.component.html',
 })

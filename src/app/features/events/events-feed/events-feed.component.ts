@@ -11,22 +11,22 @@ import { TranslateModule } from '@ngx-translate/core';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ClubEvent } from '../../../core/models/event.model';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { EventCardComponent } from '../event-card/event-card.component';
+import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 
 @Component({
   selector: 'app-events-feed',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, TranslateModule, LoadingSpinnerComponent, EmptyStateComponent, EventCardComponent],
+  imports: [FormsModule, TranslateModule, EmptyStateComponent, EventCardComponent, ...HlmTabsImports, HlmSpinner],
   templateUrl: './events-feed.component.html',
 })
 export class EventsFeedComponent implements OnInit {
   readonly eventService = inject(EventService);
   readonly auth = inject(AuthService);
 
-  readonly activeTab = signal<'upcoming' | 'my'>('upcoming');
   readonly attendingEventId = signal<string | null>(null);
 
   readonly sortedDates = computed(() =>

@@ -9,12 +9,15 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { QuizService } from '../../../core/services/quiz.service';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { HlmBadge } from '../../../shared/spartan/badge/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
 
 @Component({
   selector: 'app-quiz-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink],
+  imports: [RouterLink, ...HlmCardImports, HlmBadge, HlmButton],
   templateUrl: './quiz-list.component.html',
 })
 export class QuizListComponent {

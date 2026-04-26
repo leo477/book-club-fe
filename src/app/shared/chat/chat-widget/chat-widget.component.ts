@@ -4,12 +4,14 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ChatService } from '../../../core/services/chat.service';
+import { HlmButton } from '../../spartan/button/src';
+import { HlmInput } from '../../spartan/input/src';
 
 @Component({
   selector: 'app-chat-widget',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, TranslateModule, FormsModule, DatePipe],
+  imports: [CommonModule, TranslateModule, FormsModule, DatePipe, HlmButton, HlmInput],
   templateUrl: './chat-widget.component.html',
   styleUrls: ['./chat-widget.component.scss'],
 })

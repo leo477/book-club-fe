@@ -8,20 +8,24 @@ import {
 } from '@angular/core';
 import * as QRCode from 'qrcode';
 import { environment } from '../../../../environments/environment';
+import { HlmCard } from '../../spartan/card/src';
 
 @Component({
   selector: 'app-qr-code',
   standalone: true,
+  imports: [HlmCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <canvas
-      #canvas
-      [style.width.px]="size()"
-      [style.height.px]="size()"
-      class="rounded-lg"
-      [attr.aria-label]="'QR code'"
-      role="img"
-    ></canvas>
+    <div hlmCard class="flex items-center justify-center p-6 w-fit gap-0 py-6">
+      <canvas
+        #canvas
+        [style.width.px]="size()"
+        [style.height.px]="size()"
+        class="rounded-lg"
+        [attr.aria-label]="'QR code'"
+        role="img"
+      ></canvas>
+    </div>
   `,
 })
 export class QrCodeComponent {

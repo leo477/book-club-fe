@@ -80,27 +80,34 @@
         @if (isAuthenticated() && event().status !== 'cancelled') {
           @if (event().isAttending) {
             <button
+              hlmBtn
+              size="sm"
               type="button"
               [disabled]="attending()"
               (click)="cancelAttend.emit()"
-              class="rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed px-3 py-1.5 text-xs font-semibold text-white transition-colors shadow-sm"
+              class="bg-green-600 hover:bg-green-700 text-white text-xs"
             >
               @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_going' | translate }} }
             </button>
           } @else {
             <button
+              hlmBtn
+              size="sm"
               type="button"
               [disabled]="attending()"
               (click)="attend.emit()"
-              class="rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed px-3 py-1.5 text-xs font-semibold text-white transition-colors shadow-sm"
+              class="bg-primary-600 hover:bg-primary-700 text-white text-xs"
             >
               @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_join' | translate }} }
             </button>
           }
         } @else {
           <a
+            hlmBtn
+            variant="outline"
+            size="sm"
             [routerLink]="['/events', event().id]"
-            class="rounded-lg border border-[#d4a96a]/60 dark:border-[#7a5c2e]/60 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+            class="text-xs"
           >
             {{ 'CLUB_DETAIL.rsvp_view' | translate }} →
           </a>

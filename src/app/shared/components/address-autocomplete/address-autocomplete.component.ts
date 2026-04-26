@@ -1,23 +1,24 @@
 import {
-  Component, ChangeDetectionStrategy, Input, Output, EventEmitter,
-  OnInit, OnDestroy, signal, inject, ElementRef, HostListener
+  Component, ChangeDetectionStrategy, input, output,
+  OnInit, OnDestroy, signal, inject, ElementRef, HostListener,
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { Subject, switchMap, debounceTime, distinctUntilChanged, of, takeUntil } from 'rxjs';
 import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
+import { HlmInput } from '../../spartan/input/src';
 
 @Component({
   selector: 'app-address-autocomplete',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, HlmInput],
   templateUrl: './address-autocomplete.component.html',
 })
 export class AddressAutocompleteComponent implements OnInit, OnDestroy {
-  @Input({ required: true }) control!: FormControl<string>;
-  @Input() placeholder = '';
-  @Input() inputId = '';
-  @Output() selected = new EventEmitter<GeocodeSuggestion>();
+  readonly control = input.required<FormControl<string>>();
+  readonly placeholder = input<string>('');
+  readonly inputId = input<string>('');
+  readonly selected = output<GeocodeSuggestion>();
 
   private readonly geocoding = inject(GeocodingService);
   private readonly elRef = inject(ElementRef);
@@ -29,7 +30,7 @@ export class AddressAutocompleteComponent implements OnInit, OnDestroy {
   readonly activeIndex = signal(-1);
 
   ngOnInit(): void {
-    this.control.valueChanges.pipe(
+    this.control().valueChanges.pipe(
       debounceTime(300),
       distinctUntilChanged(),
       switchMap(q => {
@@ -62,7 +63,7 @@ export class AddressAutocompleteComponent implements OnInit, OnDestroy {
   }
 
   select(s: GeocodeSuggestion): void {
-    this.control.setValue(s.label, { emitEvent: false });
+    this.control().setValue(s.label, { emitEvent: false });
     this.suggestions.set([]);
     this.isOpen.set(false);
     this.selected.emit(s);

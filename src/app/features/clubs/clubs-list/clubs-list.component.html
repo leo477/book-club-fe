@@ -31,66 +31,95 @@
 
     <!-- ── Tabs: All / My Clubs (authenticated only) ────────────────── -->
     @if (auth.isAuthenticated()) {
-      <div class="flex gap-0 border-b border-gray-200 dark:border-gray-700" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          [attr.aria-selected]="activeTab() === 'all'"
-          (click)="activeTab.set('all')"
-          class="px-5 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-t"
-          [class]="activeTab() === 'all'
-            ? 'border-b-2 border-primary-600 text-primary-600 dark:text-primary-400'
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
-        >
-          {{ 'CLUBS.all' | translate }}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          [attr.aria-selected]="activeTab() === 'my'"
-          (click)="activeTab.set('my')"
-          class="px-5 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-t"
-          [class]="activeTab() === 'my'
-            ? 'border-b-2 border-primary-600 text-primary-600 dark:text-primary-400'
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
-        >
-          {{ 'CLUBS.my_clubs' | translate }}
-        </button>
-      </div>
-    }
+      <div hlmTabs tab="all">
+        <div hlmTabsList variant="line" class="w-full border-b border-gray-200 dark:border-gray-700 rounded-none">
+          <button hlmTabsTrigger="all">{{ 'CLUBS.all' | translate }}</button>
+          <button hlmTabsTrigger="my">{{ 'CLUBS.my_clubs' | translate }}</button>
+        </div>
 
-    <!-- ── Club list ──────────────────────────────────────────────────── -->
-    @if (clubService.isLoading()) {
-      <div class="py-16" aria-busy="true" aria-label="Loading clubs">
-        <app-loading-spinner size="lg" />
+        <!-- All clubs tab -->
+        <div hlmTabsContent="all" class="pt-4">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.filteredClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              title="No clubs yet"
+              description="No clubs have been created yet. Check back soon!"
+            />
+          } @else {
+            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              @for (club of clubService.filteredClubs(); track club.id) {
+                <li>
+                  <app-club-card
+                    [club]="club"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+
+        <!-- My clubs tab -->
+        <div hlmTabsContent="my" class="pt-4">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.myClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              [title]="'CLUBS.no_clubs' | translate"
+              description="Join a club to see it here."
+            />
+          } @else {
+            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              @for (club of clubService.myClubs(); track club.id) {
+                <li>
+                  <app-club-card
+                    [club]="club"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
       </div>
+
     } @else {
-      @let displayClubs = activeTab() === 'all' ? clubService.filteredClubs() : clubService.myClubs();
-
-      @if (displayClubs.length === 0) {
-        @if (activeTab() === 'all') {
-          <app-empty-state
-            icon="📚"
-            title="No clubs yet"
-            description="No clubs have been created yet. Check back soon!"
-          />
-        } @else {
-          <app-empty-state
-            icon="📚"
-            [title]="'CLUBS.no_clubs' | translate"
-            description="Join a club to see it here."
-          />
-        }
+      <!-- Non-authenticated: all clubs without tabs -->
+      @if (clubService.isLoading()) {
+        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+          <hlm-spinner />
+        </div>
+      } @else if (clubService.filteredClubs().length === 0) {
+        <app-empty-state
+          icon="📚"
+          title="No clubs yet"
+          description="No clubs have been created yet. Check back soon!"
+        />
       } @else {
         <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          @for (club of displayClubs; track club.id) {
+          @for (club of clubService.filteredClubs(); track club.id) {
             <li>
               <app-club-card
                 [club]="club"
-                [isMember]="clubService.myClubIds().has(club.id)"
-                [isOwned]="ownedClubIds().has(club.id)"
-                [isAuthenticated]="auth.isAuthenticated()"
-                [joining]="joiningClubId() === club.id"
+                [isMember]="false"
+                [isOwned]="false"
+                [isAuthenticated]="false"
+                [joining]="false"
                 (join)="onJoin(club)"
               />
             </li>

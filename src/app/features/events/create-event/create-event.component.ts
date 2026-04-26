@@ -14,6 +14,8 @@ import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs
 import { EventService } from '../../../core/services/event.service';
 import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
 import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
 import { BookCoverService } from '../../../core/services/book-cover.service';
 import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
 
@@ -21,7 +23,7 @@ import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
   selector: 'app-create-event',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent, CoverUploadComponent],
+  imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton],
   templateUrl: './create-event.component.html',
 })
 export class CreateEventComponent implements OnInit {

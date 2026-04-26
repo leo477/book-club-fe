@@ -7,12 +7,14 @@ import {
 import { RouterLink } from '@angular/router';
 import { Club } from '../../../../core/models/club.model';
 import { TranslateModule } from '@ngx-translate/core';
+import { HlmCardImports } from '../../../../shared/spartan/card/src';
+import { HlmButton } from '../../../../shared/spartan/button/src';
 
 @Component({
   selector: 'app-club-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule],
+  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton],
   templateUrl: './club-card.component.html',
 })
 export class ClubCardComponent {

@@ -32,67 +32,90 @@
       </div>
     }
 
-    <!-- ── Tabs ────────────────────────────────────────────────────── -->
+    <!-- ── Tabs (authenticated) ────────────────────────────────────── -->
     @if (auth.isAuthenticated()) {
-      <div class="flex gap-0 border-b border-gray-200 dark:border-gray-700" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          [attr.aria-selected]="activeTab() === 'upcoming'"
-          (click)="activeTab.set('upcoming')"
-          class="px-5 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-t"
-          [class]="activeTab() === 'upcoming'
-            ? 'border-b-2 border-primary-600 text-primary-600 dark:text-primary-400'
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
-        >
-          Upcoming
-        </button>
-        <button
-          type="button"
-          role="tab"
-          [attr.aria-selected]="activeTab() === 'my'"
-          (click)="activeTab.set('my')"
-          class="px-5 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-t"
-          [class]="activeTab() === 'my'
-            ? 'border-b-2 border-primary-600 text-primary-600 dark:text-primary-400'
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
-        >
-          My Events
-        </button>
-      </div>
-    }
+      <div hlmTabs tab="upcoming">
+        <div hlmTabsList variant="line" class="w-full border-b border-gray-200 dark:border-gray-700 rounded-none">
+          <button hlmTabsTrigger="upcoming">Upcoming</button>
+          <button hlmTabsTrigger="my">My Events</button>
+        </div>
 
-    <!-- ── Content ─────────────────────────────────────────────────── -->
-    @if (eventService.isLoading()) {
-      <div class="py-16" aria-busy="true">
-        <app-loading-spinner size="lg" />
-      </div>
-    } @else if (activeTab() === 'my') {
-      <!-- My Events tab — flat list from subscribed clubs -->
-      @if (eventService.myEvents().length === 0) {
-        <app-empty-state
-          icon="📅"
-          title="No upcoming events"
-          description="Join clubs to see their events here."
-        />
-      } @else {
-        <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          @for (event of eventService.myEvents(); track event.id) {
-            <li>
-              <app-event-card
-                [event]="event"
-                [isAuthenticated]="auth.isAuthenticated()"
-                [attending]="attendingEventId() === event.id"
-                (attend)="onAttend(event)"
-                (cancelAttend)="onCancelAttend(event)"
-              />
-            </li>
+        <!-- Upcoming tab -->
+        <div hlmTabsContent="upcoming" class="pt-4">
+          @if (eventService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (sortedDates().length === 0) {
+            <app-empty-state
+              icon="📅"
+              title="No upcoming events"
+              description="No events are scheduled yet. Check back soon!"
+            />
+          } @else {
+            @for (date of sortedDates(); track date) {
+              <section [attr.aria-labelledby]="'date-' + date" class="mb-8">
+                <h2
+                  [id]="'date-' + date"
+                  class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4"
+                >
+                  {{ date }}
+                </h2>
+                <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  @for (event of eventService.groupedByDate()[date]; track event.id) {
+                    <li>
+                      <app-event-card
+                        [event]="event"
+                        [isAuthenticated]="auth.isAuthenticated()"
+                        [attending]="attendingEventId() === event.id"
+                        (attend)="onAttend(event)"
+                        (cancelAttend)="onCancelAttend(event)"
+                      />
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
           }
-        </ul>
-      }
+        </div>
+
+        <!-- My Events tab -->
+        <div hlmTabsContent="my" class="pt-4">
+          @if (eventService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (eventService.myEvents().length === 0) {
+            <app-empty-state
+              icon="📅"
+              title="No upcoming events"
+              description="Join clubs to see their events here."
+            />
+          } @else {
+            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              @for (event of eventService.myEvents(); track event.id) {
+                <li>
+                  <app-event-card
+                    [event]="event"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [attending]="attendingEventId() === event.id"
+                    (attend)="onAttend(event)"
+                    (cancelAttend)="onCancelAttend(event)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+
     } @else {
-      <!-- Upcoming tab — grouped by date -->
-      @if (sortedDates().length === 0) {
+      <!-- Non-authenticated: upcoming events without tabs -->
+      @if (eventService.isLoading()) {
+        <div class="py-16 flex justify-center" aria-busy="true">
+          <hlm-spinner />
+        </div>
+      } @else if (sortedDates().length === 0) {
         <app-empty-state
           icon="📅"
           title="No upcoming events"
@@ -100,7 +123,7 @@
         />
       } @else {
         @for (date of sortedDates(); track date) {
-          <section [attr.aria-labelledby]="'date-' + date">
+          <section [attr.aria-labelledby]="'date-' + date" class="mb-8">
             <h2
               [id]="'date-' + date"
               class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4"
@@ -112,8 +135,8 @@
                 <li>
                   <app-event-card
                     [event]="event"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [attending]="attendingEventId() === event.id"
+                    [isAuthenticated]="false"
+                    [attending]="false"
                     (attend)="onAttend(event)"
                     (cancelAttend)="onCancelAttend(event)"
                   />

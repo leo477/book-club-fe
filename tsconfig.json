@@ -42,6 +42,18 @@
       ],
       "@spartan-ng/helm/card": [
         "./src/app/shared/spartan/card/src/index.ts"
+      ],
+      "@spartan-ng/helm/tabs": [
+        "./src/app/shared/spartan/tabs/src/index.ts"
+      ],
+      "@spartan-ng/helm/icon": [
+        "./src/app/shared/spartan/icon/src/index.ts"
+      ],
+      "@spartan-ng/helm/sheet": [
+        "./src/app/shared/spartan/sheet/src/index.ts"
+      ],
+      "@spartan-ng/helm/dropdown-menu": [
+        "./src/app/shared/spartan/dropdown-menu/src/index.ts"
       ]
     }
   },

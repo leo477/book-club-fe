@@ -249,6 +249,24 @@ src/
               hlm-card-title.ts
               hlm-card.ts
             index.ts
+        dropdown-menu/
+          src/
+            lib/
+              hlm-dropdown-menu-checkbox-indicator.ts
+              hlm-dropdown-menu-checkbox.ts
+              hlm-dropdown-menu-group.ts
+              hlm-dropdown-menu-item-sub-indicator.ts
+              hlm-dropdown-menu-item.ts
+              hlm-dropdown-menu-label.ts
+              hlm-dropdown-menu-radio-indicator.ts
+              hlm-dropdown-menu-radio.ts
+              hlm-dropdown-menu-separator.ts
+              hlm-dropdown-menu-shortcut.ts
+              hlm-dropdown-menu-sub.ts
+              hlm-dropdown-menu-token.ts
+              hlm-dropdown-menu-trigger.ts
+              hlm-dropdown-menu.ts
+            index.ts
         field/
           src/
             lib/
@@ -262,6 +280,12 @@ src/
               hlm-field-set.ts
               hlm-field-title.ts
               hlm-field.ts
+            index.ts
+        icon/
+          src/
+            lib/
+              hlm-icon.token.ts
+              hlm-icon.ts
             index.ts
         input/
           src/
@@ -278,6 +302,20 @@ src/
             lib/
               hlm-separator.ts
             index.ts
+        sheet/
+          src/
+            lib/
+              hlm-sheet-close.ts
+              hlm-sheet-content.ts
+              hlm-sheet-description.ts
+              hlm-sheet-footer.ts
+              hlm-sheet-header.ts
+              hlm-sheet-overlay.ts
+              hlm-sheet-portal.ts
+              hlm-sheet-title.ts
+              hlm-sheet-trigger.ts
+              hlm-sheet.ts
+            index.ts
         sonner/
           src/
             lib/
@@ -287,6 +325,16 @@ src/
           src/
             lib/
               hlm-spinner.ts
+            index.ts
+        tabs/
+          src/
+            lib/
+              hlm-tabs-content-lazy.ts
+              hlm-tabs-content.ts
+              hlm-tabs-list.ts
+              hlm-tabs-paginated-list.ts
+              hlm-tabs-trigger.ts
+              hlm-tabs.ts
             index.ts
         utils/
           src/
@@ -417,7 +465,13 @@ vercel.json
       "Bash(npx @spartan-ng/cli@latest --help)",
       "Bash(spartan --help)",
       "Bash(npx spartan *)",
-      "Bash(./node_modules/.bin/spartan --help)"
+      "Bash(./node_modules/.bin/spartan --help)",
+      "Bash(jobs -l)",
+      "Bash(awk '{print $1, $2, $11, $12, $13}')",
+      "Bash(kill 12763 54234 277440 399961)",
+      "Bash(kill 12762 54231 277438 399960)",
+      "Bash(awk '{print $2, $11, $12}')",
+      "Bash(awk '{print $2, $11, $12, $13}')"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -1000,268 +1054,205 @@ export class ToastService {
 ## File: src/app/features/quiz/quiz-create/quiz-create.component.html
 ````html
 <div class="min-h-screen p-4 sm:p-8">
-      <div class="max-w-2xl mx-auto space-y-6">
-        <header class="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
-              📝 Create Quiz
-            </h1>
-            <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
-              Step {{ currentStep() }} of 2 —
-              {{ currentStep() === 1 ? 'Quiz details' : 'Add questions' }}
+  <div class="max-w-2xl mx-auto space-y-6">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
+          📝 Create Quiz
+        </h1>
+        <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
+          Step {{ currentStep() }} of 2 —
+          {{ currentStep() === 1 ? 'Quiz details' : 'Add questions' }}
+        </p>
+      </div>
+      <a [routerLink]="['..']" class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
+        ✕ Cancel
+      </a>
+    </header>
+    <div class="flex items-center gap-0">
+      @for (step of [1, 2]; track step) {
+        <div
+          class="flex-1 h-1.5 rounded-full transition-all duration-300"
+          [class.bg-primary-500]="currentStep() >= step"
+          [class.bg-gray-200]="currentStep() < step"
+          [class.dark:bg-gray-700]="currentStep() < step"
+        ></div>
+        @if (step < 2) {
+          <div class="w-3"></div>
+        }
+      }
+    </div>
+    @if (currentStep() === 1) {
+      <form
+        [formGroup]="metaForm"
+        (ngSubmit)="nextStep()"
+        novalidate
+        class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm space-y-5"
+      >
+        <hlm-field>
+          <label hlmFieldLabel>
+            Quiz title <span class="text-red-500">*</span>
+          </label>
+          <input
+            hlmInput
+            id="quiz-title"
+            formControlName="title"
+            class="w-full"
+            placeholder="e.g. The Midnight Library — Chapter 1 Quiz"
+          />
+          <hlm-field-error validator="required">Title is required.</hlm-field-error>
+          <hlm-field-error validator="minlength">Title must be at least 3 characters.</hlm-field-error>
+          <hlm-field-error validator="maxlength">Title must not exceed 100 characters.</hlm-field-error>
+        </hlm-field>
+        <hlm-field>
+          <label hlmFieldLabel>Description</label>
+          <textarea
+            hlmInput
+            id="quiz-desc"
+            formControlName="description"
+            rows="3"
+            class="w-full resize-none"
+            placeholder="A brief description of the quiz…"
+          ></textarea>
+          <hlm-field-error validator="maxlength">Description must not exceed 500 characters.</hlm-field-error>
+        </hlm-field>
+        <div class="flex justify-end">
+          <button hlmBtn type="submit" [disabled]="metaForm.invalid"
+                  class="bg-primary-600 hover:bg-primary-700 text-white">
+            Continue →
+          </button>
+        </div>
+      </form>
+    }
+    @if (currentStep() === 2) {
+      <div class="space-y-6">
+        @if (localQuestions().length > 0) {
+          <div class="space-y-3">
+            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-widest">
+              Questions ({{ localQuestions().length }})
+            </h2>
+            @for (q of localQuestions(); track $index) {
+              <div hlmCard class="px-5 py-4 flex items-start gap-3 rounded-xl">
+                <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
+                             text-primary-700 dark:text-primary-300 text-xs font-bold flex
+                             items-center justify-center flex-shrink-0">
+                  {{ $index + 1 }}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <p class="text-gray-900 dark:text-white text-sm font-medium">{{ q.question }}</p>
+                  <p class="text-green-600 dark:text-green-400 text-xs mt-1">✓ {{ q.options[q.correctIndex] }}</p>
+                </div>
+                <button
+                  type="button"
+                  (click)="removeQuestion($index)"
+                  class="text-gray-400 hover:text-red-500 transition-colors text-lg flex-shrink-0 ml-auto leading-none"
+                  [attr.aria-label]="'Remove question ' + ($index + 1)"
+                >
+                  ✕
+                </button>
+              </div>
+            }
+          </div>
+        }
+        <form
+          [formGroup]="questionForm"
+          (ngSubmit)="addQuestion()"
+          novalidate
+          class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm space-y-5"
+        >
+          <h2 class="font-semibold text-gray-900 dark:text-white">
+            {{ localQuestions().length === 0 ? 'Add your first question' : 'Add another question' }}
+          </h2>
+          <hlm-field>
+            <label hlmFieldLabel>Question <span class="text-red-500">*</span></label>
+            <textarea
+              hlmInput
+              id="q-text"
+              formControlName="question"
+              rows="2"
+              class="w-full resize-none"
+              placeholder="What is the main theme of chapter 3?"
+            ></textarea>
+            <hlm-field-error validator="required">Question is required.</hlm-field-error>
+            <hlm-field-error validator="minlength">Question must be at least 5 characters.</hlm-field-error>
+          </hlm-field>
+          <div class="space-y-1">
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Answer options <span class="text-red-500">*</span>
+            </p>
+            <div class="space-y-2">
+              @for (idx of optionIndices; track idx) {
+                <div class="flex items-center gap-3">
+                  <label class="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      formControlName="correctIndex"
+                      [value]="idx"
+                      class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300 dark:border-gray-600 cursor-pointer"
+                    />
+                    <span
+                      class="ml-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                      [class.bg-accent-500]="questionForm.controls.correctIndex.value === idx"
+                      [class.text-white]="questionForm.controls.correctIndex.value === idx"
+                      [class.bg-gray-100]="questionForm.controls.correctIndex.value !== idx"
+                      [class.dark:bg-gray-700]="questionForm.controls.correctIndex.value !== idx"
+                      [class.text-gray-600]="questionForm.controls.correctIndex.value !== idx"
+                      [class.dark:text-gray-400]="questionForm.controls.correctIndex.value !== idx"
+                    >
+                      {{ optionLabel(idx) }}
+                    </span>
+                  </label>
+                  <input
+                    hlmInput
+                    [formControlName]="'option' + idx"
+                    [placeholder]="'Option ' + optionLabel(idx)"
+                    class="flex-1"
+                  />
+                </div>
+              }
+            </div>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              Select the radio button next to the correct answer.
             </p>
           </div>
-          <a
-            [routerLink]="['..']"
-            class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm
-                   transition-colors"
+          <button
+            hlmBtn
+            type="submit"
+            variant="outline"
+            [disabled]="questionForm.invalid"
+            class="w-full border-dashed border-primary-400 dark:border-primary-600
+                   text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
           >
-            ✕ Cancel
-          </a>
-        </header>
-        <div class="flex items-center gap-0">
-          @for (step of [1, 2]; track step) {
-            <div
-              class="flex-1 h-1.5 rounded-full transition-all duration-300"
-              [class.bg-primary-500]="currentStep() >= step"
-              [class.bg-gray-200]="currentStep() < step"
-              [class.dark:bg-gray-700]="currentStep() < step"
-            ></div>
-            @if (step < 2) {
-              <div class="w-3"></div>
-            }
-          }
-        </div>
-        @if (currentStep() === 1) {
-          <form
-            [formGroup]="metaForm"
-            (ngSubmit)="nextStep()"
-            novalidate
-            class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200
-                   dark:border-gray-800 shadow-sm space-y-5"
-          >
-            <div class="space-y-1">
-              <label
-                for="quiz-title"
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Quiz title <span class="text-red-500">*</span>
-              </label>
-              <input
-                id="quiz-title"
-                formControlName="title"
-                placeholder="e.g. The Midnight Library — Chapter 1 Quiz"
-                class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 dark:text-white
-                       bg-white dark:bg-gray-800 placeholder-gray-400 focus:outline-none
-                       focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
-                [class.border-red-400]="isInvalidTouched(metaForm.controls.title)"
-                [class.border-gray-300]="!isInvalidTouched(metaForm.controls.title)"
-                [class.dark:border-gray-600]="!isInvalidTouched(metaForm.controls.title)"
-              />
-              @if (isInvalidTouched(metaForm.controls.title)) {
-                <p class="text-red-500 text-xs">
-                  @if (metaForm.controls.title.errors?.['required']) { Title is required. }
-                  @else if (metaForm.controls.title.errors?.['minlength']) { Title must be at least 3 characters. }
-                  @else if (metaForm.controls.title.errors?.['maxlength']) { Title must not exceed 100 characters. }
-                </p>
-              }
-            </div>
-            <div class="space-y-1">
-              <label
-                for="quiz-desc"
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Description
-              </label>
-              <textarea
-                id="quiz-desc"
-                formControlName="description"
-                rows="3"
-                placeholder="A brief description of the quiz…"
-                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5
-                       text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
-                       placeholder-gray-400 resize-none focus:outline-none focus:ring-2
-                       focus:ring-primary-500 focus:border-transparent transition-colors"
-                [class.border-red-400]="isInvalidTouched(metaForm.controls.description)"
-              ></textarea>
-              @if (isInvalidTouched(metaForm.controls.description)) {
-                <p class="text-red-500 text-xs">
-                  @if (metaForm.controls.description.errors?.['maxlength']) { Description must not exceed 500 characters. }
-                </p>
-              }
-            </div>
-            <div class="flex justify-end">
-              <button
-                type="submit"
-                [disabled]="metaForm.invalid"
-                class="bg-primary-600 hover:bg-primary-500 disabled:opacity-40
-                       disabled:cursor-not-allowed text-white rounded-xl px-6 py-2.5
-                       font-medium transition-colors text-sm"
-              >
-                Continue →
-              </button>
-            </div>
-          </form>
-        }
-        @if (currentStep() === 2) {
-          <div class="space-y-6">
-            @if (localQuestions().length > 0) {
-              <div class="space-y-3">
-                <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase
-                           tracking-widest">
-                  Questions ({{ localQuestions().length }})
-                </h2>
-                @for (q of localQuestions(); track $index) {
-                  <div
-                    class="bg-white dark:bg-gray-900 rounded-xl px-5 py-4 border border-gray-200
-                           dark:border-gray-800 shadow-sm flex items-start gap-3"
-                  >
-                    <span
-                      class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
-                             text-primary-700 dark:text-primary-300 text-xs font-bold flex
-                             items-center justify-center flex-shrink-0"
-                    >
-                      {{ $index + 1 }}
-                    </span>
-                    <div class="min-w-0">
-                      <p class="text-gray-900 dark:text-white text-sm font-medium">
-                        {{ q.question }}
-                      </p>
-                      <p class="text-green-600 dark:text-green-400 text-xs mt-1">
-                        ✓ {{ q.options[q.correctIndex] }}
-                      </p>
-                    </div>
-                    <button
-                      (click)="removeQuestion($index)"
-                      class="text-gray-400 hover:text-red-500 transition-colors text-lg
-                             flex-shrink-0 ml-auto leading-none"
-                      aria-label="Remove question {{ $index + 1 }}"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                }
-              </div>
-            }
-            <form
-              [formGroup]="questionForm"
-              (ngSubmit)="addQuestion()"
-              novalidate
-              class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200
-                     dark:border-gray-800 shadow-sm space-y-5"
-            >
-              <h2 class="font-semibold text-gray-900 dark:text-white">
-                {{ localQuestions().length === 0 ? 'Add your first question' : 'Add another question' }}
-              </h2>
-              <div class="space-y-1">
-                <label
-                  for="q-text"
-                  class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  Question <span class="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="q-text"
-                  formControlName="question"
-                  rows="2"
-                  placeholder="What is the main theme of chapter 3?"
-                  class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5
-                         text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
-                         placeholder-gray-400 resize-none focus:outline-none focus:ring-2
-                         focus:ring-primary-500 focus:border-transparent transition-colors"
-                  [class.border-red-400]="isInvalidTouched(questionForm.controls.question)"
-                ></textarea>
-              </div>
-              <div class="space-y-1">
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Answer options <span class="text-red-500">*</span>
-                </p>
-                <div class="space-y-2">
-                  @for (idx of optionIndices; track idx) {
-                    <div class="flex items-center gap-3">
-                      <label class="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          formControlName="correctIndex"
-                          [value]="idx"
-                          class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300
-                                 dark:border-gray-600 cursor-pointer"
-                        />
-                        <span
-                          class="ml-2 w-6 h-6 rounded-full flex items-center justify-center
-                                 text-xs font-bold"
-                          [class.bg-accent-500]="questionForm.controls.correctIndex.value === idx"
-                          [class.text-white]="questionForm.controls.correctIndex.value === idx"
-                          [class.bg-gray-100]="questionForm.controls.correctIndex.value !== idx"
-                          [class.dark:bg-gray-700]="questionForm.controls.correctIndex.value !== idx"
-                          [class.text-gray-600]="questionForm.controls.correctIndex.value !== idx"
-                          [class.dark:text-gray-400]="questionForm.controls.correctIndex.value !== idx"
-                        >
-                          {{ optionLabel(idx) }}
-                        </span>
-                      </label>
-                      <input
-                        [formControlName]="'option' + idx"
-                        [placeholder]="'Option ' + optionLabel(idx)"
-                        class="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-4
-                               py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
-                               placeholder-gray-400 focus:outline-none focus:ring-2
-                               focus:ring-primary-500 focus:border-transparent transition-colors"
-                      />
-                    </div>
-                  }
-                </div>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  Select the radio button next to the correct answer.
-                </p>
-              </div>
-              <button
-                type="submit"
-                [disabled]="questionForm.invalid"
-                class="w-full border-2 border-dashed border-primary-400 dark:border-primary-600
-                       text-primary-600 dark:text-primary-400 hover:bg-primary-50
-                       dark:hover:bg-primary-900/20 disabled:opacity-40 disabled:cursor-not-allowed
-                       rounded-xl py-2.5 font-medium transition-colors text-sm"
-              >
-                + Add Question
-              </button>
-            </form>
-            @if (errorMessage()) {
-              <div
-                class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800
-                       rounded-xl p-4 text-red-700 dark:text-red-400 text-sm"
-              >
-                ⚠️ {{ errorMessage() }}
-              </div>
-            }
-            <div class="flex justify-between items-center pb-8">
-              <button
-                type="button"
-                (click)="previousStep()"
-                class="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white
-                       transition-colors"
-              >
-                ← Back
-              </button>
-              <button
-                type="button"
-                (click)="publishQuiz()"
-                [disabled]="localQuestions().length === 0 || isPublishing()"
-                class="bg-accent-600 hover:bg-accent-500 disabled:opacity-40
-                       disabled:cursor-not-allowed text-white rounded-xl px-8 py-2.5
-                       font-bold transition-colors text-sm"
-              >
-                {{ isPublishing() ? '…Publishing' : '🚀 Publish Quiz' }}
-                @if (localQuestions().length > 0) {
-                  ({{ localQuestions().length }}
-                  {{ localQuestions().length === 1 ? 'question' : 'questions' }})
-                }
-              </button>
-            </div>
+            + Add Question
+          </button>
+        </form>
+        @if (errorMessage()) {
+          <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-700 dark:text-red-400 text-sm">
+            ⚠️ {{ errorMessage() }}
           </div>
         }
+        <div class="flex justify-between items-center pb-8">
+          <button hlmBtn type="button" variant="ghost" (click)="previousStep()">
+            ← Back
+          </button>
+          <button
+            hlmBtn
+            type="button"
+            (click)="publishQuiz()"
+            [disabled]="localQuestions().length === 0 || isPublishing()"
+            class="bg-accent-600 hover:bg-accent-700 text-white font-bold"
+          >
+            {{ isPublishing() ? '…Publishing' : '🚀 Publish Quiz' }}
+            @if (localQuestions().length > 0) {
+              ({{ localQuestions().length }}
+              {{ localQuestions().length === 1 ? 'question' : 'questions' }})
+            }
+          </button>
+        </div>
       </div>
-    </div>
+    }
+  </div>
+</div>
 ````
 
 ## File: src/app/features/quiz/.gitkeep
@@ -1354,7 +1345,9 @@ export class ShellComponent {}
 ````html
 @if (auth.isAuthenticated()) {
   <button
-    [class]="'fixed z-50 w-14 h-14 rounded-full bg-accent-500 shadow-lg hover:shadow-xl transition-shadow duration-200 flex items-center justify-center text-white ' + fabPositionClass()"
+    hlmBtn
+    type="button"
+    [class]="'fixed z-50 w-14 h-14 rounded-full bg-accent-500 text-white shadow-lg hover:shadow-xl ' + fabPositionClass()"
     [class.animate-bounce]="isBouncing()"
     [attr.aria-label]="(chat.isOpen() ? 'CHAT.close' : 'CHAT.open') | translate"
     (click)="chat.toggleOpen()"
@@ -1377,7 +1370,10 @@ export class ShellComponent {}
           {{ 'CHAT.title' | translate }}
         </h2>
         <button
-          class="text-gray-500 hover:text-gray-700 transition-colors"
+          hlmBtn
+          variant="ghost"
+          size="icon"
+          type="button"
           [attr.aria-label]="'close'"
           (click)="chat.toggleOpen()"
         >
@@ -1440,15 +1436,18 @@ export class ShellComponent {}
       </div>
       <div class="border-t border-gray-100 p-3 flex gap-2">
         <input
+          hlmInput
           type="text"
           [(ngModel)]="messageText"
           (keydown)="onKeydown($event)"
           [placeholder]="'CHAT.placeholder' | translate"
           [attr.aria-label]="'CHAT.placeholder' | translate"
-          class="flex-1 px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+          class="flex-1 rounded-full px-4"
         />
         <button
-          class="w-10 h-10 rounded-full bg-accent-500 text-white flex items-center justify-center hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+          hlmBtn
+          type="button"
+          class="w-10 h-10 rounded-full bg-accent-500 text-white"
           [disabled]="!messageText().trim()"
           (click)="sendMessage()"
           [attr.aria-label]="'CHAT.send' | translate"
@@ -1471,11 +1470,13 @@ import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ChatService } from '../../../core/services/chat.service';
+import { HlmButton } from '../../spartan/button/src';
+import { HlmInput } from '../../spartan/input/src';
 @Component({
   selector: 'app-chat-widget',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, TranslateModule, FormsModule, DatePipe],
+  imports: [CommonModule, TranslateModule, FormsModule, DatePipe, HlmButton, HlmInput],
   templateUrl: './chat-widget.component.html',
   styleUrls: ['./chat-widget.component.scss'],
 })
@@ -1936,6 +1937,1046 @@ export class ToastComponent {
 ## File: src/app/shared/components/.gitkeep
 ````
 
+````
+
+## File: src/app/shared/spartan/dropdown-menu/src/lib/hlm-dropdown-menu-checkbox-indicator.ts
+````typescript
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCheck } from '@ng-icons/lucide';
+import { classes } from '@spartan-ng/helm/utils';
+@Component({
+	selector: 'hlm-dropdown-menu-checkbox-indicator',
+	imports: [NgIcon],
+	providers: [provideIcons({ lucideCheck })],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	template: `
+		<ng-icon class="text-base" name="lucideCheck" />
+	`,
+})
+export class HlmDropdownMenuCheckboxIndicator {
+	constructor() {
+		classes(
+			() =>
+				'pointer-events-none absolute left-2 flex size-3.5 items-center justify-center opacity-0 group-data-[checked]:opacity-100',
+		);
+	}
+}
+````
+
+## File: src/app/shared/spartan/dropdown-menu/src/lib/hlm-dropdown-menu-checkbox.ts
+````typescript
+import { type BooleanInput } from '@angular/cdk/coercion';
+import { CdkMenuItemCheckbox } from '@angular/cdk/menu';
+import { Directive, booleanAttribute, inject, input } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmDropdownMenuCheckbox]',
+	hostDirectives: [
+		{
+			directive: CdkMenuItemCheckbox,
+			inputs: ['cdkMenuItemDisabled: disabled', 'cdkMenuItemChecked: checked'],
+			outputs: ['cdkMenuItemTriggered: triggered'],
+		},
+	],
+	host: {
+		'data-slot': 'dropdown-menu-checkbox-item',
+		'[attr.data-disabled]': 'disabled() ? "" : null',
+		'[attr.data-checked]': 'checked() ? "" : null',
+	},
+})
+export class HlmDropdownMenuCheckbox {
+	private readonly _cdkMenuItem = inject(CdkMenuItemCheckbox);
+	public readonly checked = input<boolean, BooleanInput>(this._cdkMenuItem.checked, { transform: booleanAttribute });
+	public readonly disabled = input<boolean, BooleanInput>(this._cdkMenuItem.disabled, { transform: booleanAttribute });
+	constructor() {
+		classes(
+			() =>
+				'hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground group relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-2 pl-8 text-sm transition-colors outline-none select-none has-[>hlm-dropdown-menu-checkbox-indicator:last-child]:ps-2 has-[>hlm-dropdown-menu-checkbox-indicator:last-child]:pe-8 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 has-[>hlm-dropdown-menu-checkbox-indicator:last-child]:[&>hlm-dropdown-menu-checkbox-indicator]:start-auto has-[>hlm-dropdown-menu-checkbox-indicator:last-child]:[&>hlm-dropdown-menu-checkbox-indicator]:end-2',
+		);
+	}
+}
+````
+
+## File: src/app/shared/spartan/dropdown-menu/src/lib/hlm-dropdown-menu-group.ts
+````typescript
+import { CdkMenuGroup } from '@angular/cdk/menu';
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmDropdownMenuGroup],hlm-dropdown-menu-group',
+	hostDirectives: [CdkMenuGroup],
+	host: {
+		'data-slot': 'dropdown-menu-group',
+	},
+})
+export class HlmDropdownMenuGroup {
+	constructor() {
+		classes(() => 'block');
+	}
+}
+````
+
+## File: src/app/shared/spartan/dropdown-menu/src/lib/hlm-dropdown-menu-item-sub-indicator.ts
+````typescript
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideChevronRight } from '@ng-icons/lucide';
+import { classes } from '@spartan-ng/helm/utils';
+@Component({
+	selector: 'hlm-dropdown-menu-item-sub-indicator',
+	imports: [NgIcon],
+	providers: [provideIcons({ lucideChevronRight })],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	template: `
+		<ng-icon name="lucideChevronRight" class="text-base" />
+	`,
+})
+export class HlmDropdownMenuItemSubIndicator {
+	constructor() {
+		classes(() => 'ms-auto size-4');
+	}
+}
+````
+
+## File: src/app/shared/spartan/dropdown-menu/src/lib/hlm-dropdown-menu-item.ts
+````typescript
+import { type BooleanInput } from '@angular/cdk/coercion';
+import { CdkMenuItem } from '@angular/cdk/menu';
+import { booleanAttribute, Directive, HOST_TAG_NAME, inject, input } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmDropdownMenuItem]',
+	hostDirectives: [
+		{
+			directive: CdkMenuItem,
+			inputs: ['cdkMenuItemDisabled: disabled'],
+			outputs: ['cdkMenuItemTriggered: triggered'],
+		},
+	],
+	host: {
+		'data-slot': 'dropdown-menu-item',
+		'[attr.disabled]': '_isButton && disabled() ? "" : null',
+		'[attr.data-disabled]': 'disabled() ? "" : null',
+		'[attr.data-variant]': 'variant()',
+		'[attr.data-inset]': 'inset() ? "" : null',
+	},
+})
+export class HlmDropdownMenuItem {
+	protected readonly _isButton = inject(HOST_TAG_NAME) === 'button';
+	public readonly disabled = input<boolean, BooleanInput>(false, { transform: booleanAttribute });
+	public readonly variant = input<'default' | 'destructive'>('default');
+	public readonly inset = input<boolean, BooleanInput>(false, {
+		transform: booleanAttribute,
+	});
+	constructor() {
+		classes(
+			() =>
+				"hover:bg-accent focus-visible:bg-accent focus:text-accent-foreground data-[variant=destructive]:text-destructive data-[variant=destructive]:focus:bg-destructive/10 dark:data-[variant=destructive]:focus:bg-destructive/20 data-[variant=destructive]:focus:text-destructive data-[variant=destructive]:*:[ng-icon]:!text-destructive [&_ng-icon:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 data-[inset]:pl-8 [&_ng-icon]:pointer-events-none [&_ng-icon]:shrink-0 [&_svg:not([class*='text-'])]:text-base",
+		);
+	}
+}
+````
+
+## File: src/app/shared/spartan/dropdown-menu/src/lib/hlm-dropdown-menu-label.ts
+````typescript
+import { type BooleanInput } from '@angular/cdk/coercion';
+import { booleanAttribute, Directive, input } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmDropdownMenuLabel],hlm-dropdown-menu-label',
+	host: {
+		'data-slot': 'dropdown-menu-label',
+		'[attr.data-inset]': 'inset() ? "" : null',
+	},
+})
+export class HlmDropdownMenuLabel {
+	constructor() {
+		classes(() => 'block px-2 py-1.5 text-sm font-medium data-[inset]:pl-8');
+	}
+	public readonly inset = input<boolean, BooleanInput>(false, {
+		transform: booleanAttribute,
+	});
+}
+````
+
+## File: src/app/shared/spartan/dropdown-menu/src/lib/hlm-dropdown-menu-radio-indicator.ts
+````typescript
+import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideCircle } from '@ng-icons/lucide';
+import { classes } from '@spartan-ng/helm/utils';
+@Component({
+	selector: 'hlm-dropdown-menu-radio-indicator',
+	imports: [NgIcon],
+	providers: [provideIcons({ lucideCircle })],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	template: `
+		<ng-icon name="lucideCircle" class="text-[0.5rem] *:[svg]:fill-current" />
+	`,
+})
+export class HlmDropdownMenuRadioIndicator {
+	constructor() {
+		classes(
+			() =>
+				'pointer-events-none absolute left-2 flex size-3.5 items-center justify-center opacity-0 group-data-[checked]:opacity-100',
+		);
+	}
+}
+````
+
+## File: src/app/shared/spartan/dropdown-menu/src/lib/hlm-dropdown-menu-radio.ts
+````typescript
+import { type BooleanInput } from '@angular/cdk/coercion';
+import { CdkMenuItemRadio } from '@angular/cdk/menu';
+import { Directive, booleanAttribute, inject, input } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmDropdownMenuRadio]',
+	hostDirectives: [
+		{
+			directive: CdkMenuItemRadio,
+			inputs: ['cdkMenuItemDisabled: disabled', 'cdkMenuItemChecked: checked'],
+			outputs: ['cdkMenuItemTriggered: triggered'],
+		},
+	],
+	host: {
+		'data-slot': 'dropdown-menu-radio-item',
+		'[attr.data-disabled]': 'disabled() ? "" : null',
+		'[attr.data-checked]': 'checked() ? "" : null',
+	},
+})
+export class HlmDropdownMenuRadio {
+	private readonly _cdkMenuItem = inject(CdkMenuItemRadio);
+	public readonly checked = input<boolean, BooleanInput>(this._cdkMenuItem.checked, { transform: booleanAttribute });
+	public readonly disabled = input<boolean, BooleanInput>(this._cdkMenuItem.disabled, { transform: booleanAttribute });
+	constructor() {
+		classes(
+			() =>
+				'hover:bg-accent hover:text-accent-foreground focus-visible:bg-accent focus-visible:text-accent-foreground group relative flex w-full cursor-default items-center rounded-sm py-1.5 pr-2 pl-8 text-sm transition-colors outline-none select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
+		);
+	}
+}
+````
+
+## File: src/app/shared/spartan/dropdown-menu/src/lib/hlm-dropdown-menu-separator.ts
+````typescript
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmDropdownMenuSeparator],hlm-dropdown-menu-separator',
+	host: {
+		'data-slot': 'dropdown-menu-separator',
+	},
+})
+export class HlmDropdownMenuSeparator {
+	constructor() {
+		classes(() => 'bg-border -mx-1 my-1 block h-px');
+	}
+}
+````
+
+## File: src/app/shared/spartan/dropdown-menu/src/lib/hlm-dropdown-menu-shortcut.ts
+````typescript
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmDropdownMenuShortcut],hlm-dropdown-menu-shortcut',
+	host: {
+		'data-slot': 'dropdown-menu-shortcut',
+	},
+})
+export class HlmDropdownMenuShortcut {
+	constructor() {
+		classes(() => 'text-muted-foreground ml-auto text-xs tracking-widest');
+	}
+}
+````
+
+## File: src/app/shared/spartan/dropdown-menu/src/lib/hlm-dropdown-menu-sub.ts
+````typescript
+import { CdkMenu } from '@angular/cdk/menu';
+import { Directive, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmDropdownMenuSub],hlm-dropdown-menu-sub',
+	hostDirectives: [CdkMenu],
+	host: {
+		'data-slot': 'dropdown-menu-sub',
+		'[attr.data-state]': '_state()',
+		'[attr.data-side]': '_side()',
+	},
+})
+export class HlmDropdownMenuSub {
+	private readonly _host = inject(CdkMenu);
+	protected readonly _state = signal('open');
+	protected readonly _side = signal('top');
+	constructor() {
+		this.setSideWithDarkMagic();
+		this._host.closed.pipe(takeUntilDestroyed()).subscribe(() => this._state.set('closed'));
+		classes(
+			() =>
+				'bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 min-w-[8rem] origin-top overflow-hidden rounded-md border p-1 shadow-lg',
+		);
+	}
+	private setSideWithDarkMagic() {
+		const isRoot = this._host.menuStack.peek() === undefined;
+		setTimeout(() => {
+			const ps = (this._host as any)._parentTrigger._spartanLastPosition;
+			if (!ps) {
+				this._side.set(isRoot ? 'top' : 'left');
+				return;
+			}
+			const side = isRoot ? ps.originY : ps.originX === 'end' ? 'right' : 'left';
+			this._side.set(side);
+		});
+	}
+}
+````
+
+## File: src/app/shared/spartan/dropdown-menu/src/lib/hlm-dropdown-menu-token.ts
+````typescript
+import { InjectionToken, type ValueProvider, inject } from '@angular/core';
+import { type MenuAlign, type MenuSide } from '@spartan-ng/brain/core';
+export interface HlmDropdownMenuConfig {
+	align: MenuAlign;
+	side: MenuSide;
+}
+const defaultConfig: HlmDropdownMenuConfig = {
+	align: 'start',
+	side: 'bottom',
+};
+const HlmDropdownMenuConfigToken = new InjectionToken<HlmDropdownMenuConfig>('HlmDropdownMenuConfig');
+export function provideHlmDropdownMenuConfig(config: Partial<HlmDropdownMenuConfig>): ValueProvider {
+	return { provide: HlmDropdownMenuConfigToken, useValue: { ...defaultConfig, ...config } };
+}
+export function injectHlmDropdownMenuConfig(): HlmDropdownMenuConfig {
+	return inject(HlmDropdownMenuConfigToken, { optional: true }) ?? defaultConfig;
+}
+````
+
+## File: src/app/shared/spartan/dropdown-menu/src/lib/hlm-dropdown-menu-trigger.ts
+````typescript
+import { CdkMenuTrigger } from '@angular/cdk/menu';
+import { computed, Directive, effect, inject, input } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { createMenuPosition, type MenuAlign, type MenuSide } from '@spartan-ng/brain/core';
+import { injectHlmDropdownMenuConfig } from './hlm-dropdown-menu-token';
+@Directive({
+	selector: '[hlmDropdownMenuTrigger]',
+	hostDirectives: [
+		{
+			directive: CdkMenuTrigger,
+			inputs: ['cdkMenuTriggerFor: hlmDropdownMenuTrigger', 'cdkMenuTriggerData: hlmDropdownMenuTriggerData'],
+			outputs: ['cdkMenuOpened: hlmDropdownMenuOpened', 'cdkMenuClosed: hlmDropdownMenuClosed'],
+		},
+	],
+	host: {
+		'data-slot': 'dropdown-menu-trigger',
+	},
+})
+export class HlmDropdownMenuTrigger {
+	private readonly _cdkTrigger = inject(CdkMenuTrigger, { host: true });
+	private readonly _config = injectHlmDropdownMenuConfig();
+	public readonly align = input<MenuAlign>(this._config.align);
+	public readonly side = input<MenuSide>(this._config.side);
+	private readonly _menuPosition = computed(() => createMenuPosition(this.align(), this.side()));
+	constructor() {
+		this._cdkTrigger.opened.pipe(takeUntilDestroyed()).subscribe(() =>
+			setTimeout(
+				() =>
+					((this._cdkTrigger as any)._spartanLastPosition =
+						(this._cdkTrigger as any).overlayRef._positionStrategy._lastPosition),
+			),
+		);
+		effect(() => {
+			this._cdkTrigger.menuPosition = this._menuPosition();
+		});
+	}
+}
+````
+
+## File: src/app/shared/spartan/dropdown-menu/src/lib/hlm-dropdown-menu.ts
+````typescript
+import { type NumberInput } from '@angular/cdk/coercion';
+import { CdkMenu } from '@angular/cdk/menu';
+import { Directive, inject, input, numberAttribute, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmDropdownMenu],hlm-dropdown-menu',
+	hostDirectives: [CdkMenu],
+	host: {
+		'data-slot': 'dropdown-menu',
+		'[attr.data-state]': '_state()',
+		'[attr.data-side]': '_side()',
+		'[style.--side-offset]': 'sideOffset()',
+	},
+})
+export class HlmDropdownMenu {
+	private readonly _host = inject(CdkMenu);
+	protected readonly _state = signal('open');
+	protected readonly _side = signal('top');
+	public readonly sideOffset = input<number, NumberInput>(1, { transform: numberAttribute });
+	constructor() {
+		classes(
+			() =>
+				'bg-popover text-popover-foreground data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 z-50 my-[--spacing(var(--side-offset))] min-w-[8rem] origin-top overflow-x-hidden overflow-y-auto rounded-md border p-1 shadow-md',
+		);
+		this.setSideWithDarkMagic();
+		this._host.closed.pipe(takeUntilDestroyed()).subscribe(() => this._state.set('closed'));
+	}
+	private setSideWithDarkMagic() {
+		const isRoot = this._host.menuStack.peek() === undefined;
+		setTimeout(() => {
+			const ps = (this._host as any)._parentTrigger._spartanLastPosition;
+			if (!ps) {
+				this._side.set(isRoot ? 'top' : 'left');
+				return;
+			}
+			const side = isRoot ? ps.originY : ps.originX === 'end' ? 'right' : 'left';
+			this._side.set(side);
+		});
+	}
+}
+````
+
+## File: src/app/shared/spartan/dropdown-menu/src/index.ts
+````typescript
+import { HlmDropdownMenu } from './lib/hlm-dropdown-menu';
+import { HlmDropdownMenuCheckbox } from './lib/hlm-dropdown-menu-checkbox';
+import { HlmDropdownMenuCheckboxIndicator } from './lib/hlm-dropdown-menu-checkbox-indicator';
+import { HlmDropdownMenuGroup } from './lib/hlm-dropdown-menu-group';
+import { HlmDropdownMenuItem } from './lib/hlm-dropdown-menu-item';
+import { HlmDropdownMenuItemSubIndicator } from './lib/hlm-dropdown-menu-item-sub-indicator';
+import { HlmDropdownMenuLabel } from './lib/hlm-dropdown-menu-label';
+import { HlmDropdownMenuRadio } from './lib/hlm-dropdown-menu-radio';
+import { HlmDropdownMenuRadioIndicator } from './lib/hlm-dropdown-menu-radio-indicator';
+import { HlmDropdownMenuSeparator } from './lib/hlm-dropdown-menu-separator';
+import { HlmDropdownMenuShortcut } from './lib/hlm-dropdown-menu-shortcut';
+import { HlmDropdownMenuSub } from './lib/hlm-dropdown-menu-sub';
+import { HlmDropdownMenuTrigger } from './lib/hlm-dropdown-menu-trigger';
+export * from './lib/hlm-dropdown-menu';
+export * from './lib/hlm-dropdown-menu-checkbox';
+export * from './lib/hlm-dropdown-menu-checkbox-indicator';
+export * from './lib/hlm-dropdown-menu-group';
+export * from './lib/hlm-dropdown-menu-item';
+export * from './lib/hlm-dropdown-menu-item-sub-indicator';
+export * from './lib/hlm-dropdown-menu-label';
+export * from './lib/hlm-dropdown-menu-radio';
+export * from './lib/hlm-dropdown-menu-radio-indicator';
+export * from './lib/hlm-dropdown-menu-separator';
+export * from './lib/hlm-dropdown-menu-shortcut';
+export * from './lib/hlm-dropdown-menu-sub';
+export * from './lib/hlm-dropdown-menu-token';
+export * from './lib/hlm-dropdown-menu-trigger';
+export const HlmDropdownMenuImports = [
+	HlmDropdownMenu,
+	HlmDropdownMenuCheckbox,
+	HlmDropdownMenuCheckboxIndicator,
+	HlmDropdownMenuGroup,
+	HlmDropdownMenuItem,
+	HlmDropdownMenuItemSubIndicator,
+	HlmDropdownMenuLabel,
+	HlmDropdownMenuRadio,
+	HlmDropdownMenuRadioIndicator,
+	HlmDropdownMenuSeparator,
+	HlmDropdownMenuShortcut,
+	HlmDropdownMenuSub,
+	HlmDropdownMenuTrigger,
+] as const;
+````
+
+## File: src/app/shared/spartan/icon/src/lib/hlm-icon.token.ts
+````typescript
+import { InjectionToken, type ValueProvider, inject } from '@angular/core';
+import type { IconSize } from './hlm-icon';
+export interface HlmIconConfig {
+	size: IconSize;
+}
+const defaultConfig: HlmIconConfig = {
+	size: 'base',
+};
+const HlmIconConfigToken = new InjectionToken<HlmIconConfig>('HlmIconConfig');
+export function provideHlmIconConfig(config: Partial<HlmIconConfig>): ValueProvider {
+	return { provide: HlmIconConfigToken, useValue: { ...defaultConfig, ...config } };
+}
+export function injectHlmIconConfig(): HlmIconConfig {
+	return inject(HlmIconConfigToken, { optional: true }) ?? defaultConfig;
+}
+````
+
+## File: src/app/shared/spartan/icon/src/lib/hlm-icon.ts
+````typescript
+import { Directive, computed, input } from '@angular/core';
+import { injectHlmIconConfig } from './hlm-icon.token';
+export type IconSize = 'xs' | 'sm' | 'base' | 'lg' | 'xl' | 'none' | (Record<never, never> & string);
+@Directive({
+	selector: 'ng-icon[hlmIcon], ng-icon[hlm]',
+	host: {
+		'[style.--ng-icon__size]': '_computedSize()',
+	},
+})
+export class HlmIcon {
+	private readonly _config = injectHlmIconConfig();
+	public readonly size = input<IconSize>(this._config.size);
+	protected readonly _computedSize = computed(() => {
+		const size = this.size();
+		switch (size) {
+			case 'xs':
+				return '12px';
+			case 'sm':
+				return '16px';
+			case 'base':
+				return '24px';
+			case 'lg':
+				return '32px';
+			case 'xl':
+				return '48px';
+			default: {
+				return size;
+			}
+		}
+	});
+}
+````
+
+## File: src/app/shared/spartan/icon/src/index.ts
+````typescript
+import { NgIcon } from '@ng-icons/core';
+import { HlmIcon } from './lib/hlm-icon';
+export * from './lib/hlm-icon';
+export * from './lib/hlm-icon.token';
+export const HlmIconImports = [HlmIcon, NgIcon] as const;
+````
+
+## File: src/app/shared/spartan/sheet/src/lib/hlm-sheet-close.ts
+````typescript
+import { Directive } from '@angular/core';
+import { BrnSheetClose } from '@spartan-ng/brain/sheet';
+@Directive({
+	selector: 'button[hlmSheetClose]',
+	hostDirectives: [{ directive: BrnSheetClose, inputs: ['delay'] }],
+	host: {
+		'data-slot': 'sheet-close',
+	},
+})
+export class HlmSheetClose {}
+````
+
+## File: src/app/shared/spartan/sheet/src/lib/hlm-sheet-content.ts
+````typescript
+import type { BooleanInput } from '@angular/cdk/coercion';
+import {
+	booleanAttribute,
+	ChangeDetectionStrategy,
+	Component,
+	effect,
+	ElementRef,
+	inject,
+	input,
+	Renderer2,
+	signal,
+} from '@angular/core';
+import { provideIcons } from '@ng-icons/core';
+import { lucideX } from '@ng-icons/lucide';
+import { injectExposedSideProvider, injectExposesStateProvider } from '@spartan-ng/brain/core';
+import { HlmButton } from '@spartan-ng/helm/button';
+import { HlmIconImports } from '@spartan-ng/helm/icon';
+import { classes } from '@spartan-ng/helm/utils';
+import { cva } from 'class-variance-authority';
+import { HlmSheetClose } from './hlm-sheet-close';
+export const sheetVariants = cva(
+	'bg-background data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500',
+	{
+		variants: {
+			side: {
+				top: 'data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top inset-x-0 top-0 h-auto border-b',
+				bottom:
+					'data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom inset-x-0 bottom-0 h-auto border-t',
+				left: 'data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left inset-y-0 left-0 h-full w-3/4 border-r sm:max-w-sm',
+				right:
+					'data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right inset-y-0 right-0 h-full w-3/4 border-l sm:max-w-sm',
+			},
+		},
+		defaultVariants: {
+			side: 'right',
+		},
+	},
+);
+@Component({
+	selector: 'hlm-sheet-content',
+	imports: [HlmIconImports, HlmButton, HlmSheetClose],
+	providers: [provideIcons({ lucideX })],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: {
+		'data-slot': 'sheet-content',
+		'[attr.data-state]': 'state()',
+	},
+	template: `
+		<ng-content />
+		@if (showCloseButton()) {
+			<button hlmBtn variant="ghost" size="icon-sm" class="absolute end-4 top-4" hlmSheetClose>
+				<span class="sr-only">Close</span>
+				<ng-icon hlm size="sm" name="lucideX" />
+			</button>
+		}
+	`,
+})
+export class HlmSheetContent {
+	private readonly _stateProvider = injectExposesStateProvider({ host: true });
+	private readonly _sideProvider = injectExposedSideProvider({ host: true });
+	public readonly state = this._stateProvider.state ?? signal('closed');
+	private readonly _renderer = inject(Renderer2);
+	private readonly _element = inject(ElementRef);
+	public readonly showCloseButton = input<boolean, BooleanInput>(true, { transform: booleanAttribute });
+	constructor() {
+		classes(() => sheetVariants({ side: this._sideProvider.side() }));
+		effect(() => {
+			this._renderer.setAttribute(this._element.nativeElement, 'data-state', this.state());
+		});
+	}
+}
+````
+
+## File: src/app/shared/spartan/sheet/src/lib/hlm-sheet-description.ts
+````typescript
+import { Directive } from '@angular/core';
+import { BrnSheetDescription } from '@spartan-ng/brain/sheet';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmSheetDescription]',
+	hostDirectives: [BrnSheetDescription],
+	host: {
+		'data-slot': 'sheet-description',
+	},
+})
+export class HlmSheetDescription {
+	constructor() {
+		classes(() => 'text-muted-foreground text-sm');
+	}
+}
+````
+
+## File: src/app/shared/spartan/sheet/src/lib/hlm-sheet-footer.ts
+````typescript
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmSheetFooter],hlm-sheet-footer',
+	host: {
+		'data-slot': 'sheet-footer',
+	},
+})
+export class HlmSheetFooter {
+	constructor() {
+		classes(() => 'mt-auto flex flex-col gap-2 p-4');
+	}
+}
+````
+
+## File: src/app/shared/spartan/sheet/src/lib/hlm-sheet-header.ts
+````typescript
+import { Directive } from '@angular/core';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmSheetHeader],hlm-sheet-header',
+	host: {
+		'data-slot': 'sheet-header',
+	},
+})
+export class HlmSheetHeader {
+	constructor() {
+		classes(() => 'flex flex-col gap-1.5 p-4');
+	}
+}
+````
+
+## File: src/app/shared/spartan/sheet/src/lib/hlm-sheet-overlay.ts
+````typescript
+import { Directive, computed, effect, input, untracked } from '@angular/core';
+import { injectCustomClassSettable } from '@spartan-ng/brain/core';
+import { BrnSheetOverlay } from '@spartan-ng/brain/sheet';
+import { hlm } from '@spartan-ng/helm/utils';
+import type { ClassValue } from 'clsx';
+@Directive({
+	selector: '[hlmSheetOverlay],hlm-sheet-overlay',
+	hostDirectives: [BrnSheetOverlay],
+	host: {
+		'[class]': '_computedClass()',
+	},
+})
+export class HlmSheetOverlay {
+	private readonly _classSettable = injectCustomClassSettable({ optional: true, host: true });
+	public readonly userClass = input<ClassValue>('', { alias: 'class' });
+	protected readonly _computedClass = computed(() =>
+		hlm(
+			'data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 bg-black/50',
+			this.userClass(),
+		),
+	);
+	constructor() {
+		effect(() => {
+			const classValue = this._computedClass();
+			untracked(() => this._classSettable?.setClassToCustomElement(classValue));
+		});
+	}
+}
+````
+
+## File: src/app/shared/spartan/sheet/src/lib/hlm-sheet-portal.ts
+````typescript
+import { Directive } from '@angular/core';
+import { BrnSheetContent } from '@spartan-ng/brain/sheet';
+@Directive({
+	selector: '[hlmSheetPortal]',
+	hostDirectives: [{ directive: BrnSheetContent, inputs: ['context', 'class'] }],
+})
+export class HlmSheetPortal {}
+````
+
+## File: src/app/shared/spartan/sheet/src/lib/hlm-sheet-title.ts
+````typescript
+import { Directive } from '@angular/core';
+import { BrnSheetTitle } from '@spartan-ng/brain/sheet';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmSheetTitle]',
+	hostDirectives: [BrnSheetTitle],
+	host: {
+		'data-slot': 'sheet-title',
+	},
+})
+export class HlmSheetTitle {
+	constructor() {
+		classes(() => 'text-foreground font-semibold');
+	}
+}
+````
+
+## File: src/app/shared/spartan/sheet/src/lib/hlm-sheet-trigger.ts
+````typescript
+import { Directive } from '@angular/core';
+import { BrnSheetTrigger } from '@spartan-ng/brain/sheet';
+@Directive({
+	selector: 'button[hlmSheetTrigger]',
+	hostDirectives: [{ directive: BrnSheetTrigger, inputs: ['id', 'side', 'type'] }],
+	host: {
+		'data-slot': 'sheet-trigger',
+	},
+})
+export class HlmSheetTrigger {}
+````
+
+## File: src/app/shared/spartan/sheet/src/lib/hlm-sheet.ts
+````typescript
+import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
+import { BrnDialog, provideBrnDialogDefaultOptions } from '@spartan-ng/brain/dialog';
+import { BrnSheet } from '@spartan-ng/brain/sheet';
+import { HlmSheetOverlay } from './hlm-sheet-overlay';
+@Component({
+	selector: 'hlm-sheet',
+	exportAs: 'hlmSheet',
+	imports: [HlmSheetOverlay],
+	providers: [
+		{
+			provide: BrnDialog,
+			useExisting: forwardRef(() => BrnSheet),
+		},
+		{
+			provide: BrnSheet,
+			useExisting: forwardRef(() => HlmSheet),
+		},
+		provideBrnDialogDefaultOptions({
+		}),
+	],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	template: `
+		<hlm-sheet-overlay />
+		<ng-content />
+	`,
+})
+export class HlmSheet extends BrnSheet {}
+````
+
+## File: src/app/shared/spartan/sheet/src/index.ts
+````typescript
+import { HlmSheet } from './lib/hlm-sheet';
+import { HlmSheetClose } from './lib/hlm-sheet-close';
+import { HlmSheetContent } from './lib/hlm-sheet-content';
+import { HlmSheetDescription } from './lib/hlm-sheet-description';
+import { HlmSheetFooter } from './lib/hlm-sheet-footer';
+import { HlmSheetHeader } from './lib/hlm-sheet-header';
+import { HlmSheetOverlay } from './lib/hlm-sheet-overlay';
+import { HlmSheetPortal } from './lib/hlm-sheet-portal';
+import { HlmSheetTitle } from './lib/hlm-sheet-title';
+import { HlmSheetTrigger } from './lib/hlm-sheet-trigger';
+export * from './lib/hlm-sheet';
+export * from './lib/hlm-sheet-close';
+export * from './lib/hlm-sheet-content';
+export * from './lib/hlm-sheet-description';
+export * from './lib/hlm-sheet-footer';
+export * from './lib/hlm-sheet-header';
+export * from './lib/hlm-sheet-overlay';
+export * from './lib/hlm-sheet-portal';
+export * from './lib/hlm-sheet-title';
+export * from './lib/hlm-sheet-trigger';
+export const HlmSheetImports = [
+	HlmSheet,
+	HlmSheetClose,
+	HlmSheetContent,
+	HlmSheetDescription,
+	HlmSheetFooter,
+	HlmSheetHeader,
+	HlmSheetOverlay,
+	HlmSheetPortal,
+	HlmSheetTitle,
+	HlmSheetTrigger,
+] as const;
+````
+
+## File: src/app/shared/spartan/tabs/src/lib/hlm-tabs-content-lazy.ts
+````typescript
+import { Directive } from '@angular/core';
+import { BrnTabsContentLazy } from '@spartan-ng/brain/tabs';
+@Directive({
+	selector: 'ng-template[hlmTabsContentLazy]',
+	hostDirectives: [BrnTabsContentLazy],
+})
+export class HlmTabsContentLazy {}
+````
+
+## File: src/app/shared/spartan/tabs/src/lib/hlm-tabs-content.ts
+````typescript
+import { Directive, input } from '@angular/core';
+import { BrnTabsContent } from '@spartan-ng/brain/tabs';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmTabsContent]',
+	hostDirectives: [{ directive: BrnTabsContent, inputs: ['brnTabsContent: hlmTabsContent'] }],
+	host: {
+		'data-slot': 'tabs-content',
+	},
+})
+export class HlmTabsContent {
+	public readonly contentFor = input.required<string>({ alias: 'hlmTabsContent' });
+	constructor() {
+		classes(() => 'flex-1 text-sm outline-none');
+	}
+}
+````
+
+## File: src/app/shared/spartan/tabs/src/lib/hlm-tabs-list.ts
+````typescript
+import { Directive, input } from '@angular/core';
+import { BrnTabsList } from '@spartan-ng/brain/tabs';
+import { classes } from '@spartan-ng/helm/utils';
+import { type VariantProps, cva } from 'class-variance-authority';
+export const listVariants = cva(
+	'group/tabs-list text-muted-foreground inline-flex w-fit items-center justify-center rounded-lg p-[3px] group-data-horizontal/tabs:h-9 group-data-[orientation=vertical]/tabs:h-fit group-data-[orientation=vertical]/tabs:flex-col data-[variant=line]:rounded-none',
+	{
+		variants: {
+			variant: {
+				default: 'bg-muted',
+				line: 'gap-1 bg-transparent',
+			},
+		},
+		defaultVariants: {
+			variant: 'default',
+		},
+	},
+);
+type ListVariants = VariantProps<typeof listVariants>;
+@Directive({
+	selector: '[hlmTabsList],hlm-tabs-list',
+	hostDirectives: [BrnTabsList],
+	host: {
+		'data-slot': 'tabs-list',
+		'[attr.data-variant]': 'variant()',
+	},
+})
+export class HlmTabsList {
+	public readonly variant = input<ListVariants['variant']>('default');
+	constructor() {
+		classes(() => listVariants({ variant: this.variant() }));
+	}
+}
+````
+
+## File: src/app/shared/spartan/tabs/src/lib/hlm-tabs-paginated-list.ts
+````typescript
+import { CdkObserveContent } from '@angular/cdk/observers';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	type ElementRef,
+	computed,
+	contentChildren,
+	input,
+	viewChild,
+} from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideChevronLeft, lucideChevronRight } from '@ng-icons/lucide';
+import { type BrnPaginatedTabHeaderItem, BrnTabsPaginatedList, BrnTabsTrigger } from '@spartan-ng/brain/tabs';
+import { buttonVariants } from '@spartan-ng/helm/button';
+import { HlmIcon } from '@spartan-ng/helm/icon';
+import { classes, hlm } from '@spartan-ng/helm/utils';
+import type { ClassValue } from 'clsx';
+import type { Observable } from 'rxjs';
+import { listVariants } from './hlm-tabs-list';
+@Component({
+	selector: 'hlm-paginated-tabs-list',
+	imports: [CdkObserveContent, NgIcon, HlmIcon],
+	providers: [provideIcons({ lucideChevronRight, lucideChevronLeft })],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: {
+		'data-slot': 'tabs-paginated-list',
+	},
+	template: `
+		<button
+			#previousPaginator
+			data-pagination="previous"
+			type="button"
+			aria-hidden="true"
+			tabindex="-1"
+			[class.flex]="showPaginationControls()"
+			[class.hidden]="!showPaginationControls()"
+			[class]="_paginationButtonClass()"
+			[disabled]="disableScrollBefore || null"
+			(click)="_handlePaginatorClick('before')"
+			(mousedown)="_handlePaginatorPress('before', $event)"
+			(touchend)="_stopInterval()"
+		>
+			<ng-icon hlm size="base" name="lucideChevronLeft" />
+		</button>
+		<div #tabListContainer class="z-[1] flex grow overflow-hidden" (keydown)="_handleKeydown($event)">
+			<div class="relative grow transition-transform" #tabList role="tablist" (cdkObserveContent)="_onContentChanges()">
+				<div #tabListInner [class]="_tabListClass()">
+					<ng-content />
+				</div>
+			</div>
+		</div>
+		<button
+			#nextPaginator
+			data-pagination="next"
+			type="button"
+			aria-hidden="true"
+			tabindex="-1"
+			[class.flex]="showPaginationControls()"
+			[class.hidden]="!showPaginationControls()"
+			[class]="_paginationButtonClass()"
+			[disabled]="disableScrollAfter || null"
+			(click)="_handlePaginatorClick('after')"
+			(mousedown)="_handlePaginatorPress('after', $event)"
+			(touchend)="_stopInterval()"
+		>
+			<ng-icon hlm size="base" name="lucideChevronRight" />
+		</button>
+	`,
+})
+export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
+	constructor() {
+		super();
+		classes(() => 'relative flex flex-shrink-0 gap-1 overflow-hidden');
+	}
+	public readonly items = contentChildren(BrnTabsTrigger, { descendants: false });
+	public readonly itemsChanges: Observable<ReadonlyArray<BrnPaginatedTabHeaderItem>> = toObservable(this.items);
+	public readonly tabListContainer = viewChild.required<ElementRef<HTMLElement>>('tabListContainer');
+	public readonly tabList = viewChild.required<ElementRef<HTMLElement>>('tabList');
+	public readonly tabListInner = viewChild.required<ElementRef<HTMLElement>>('tabListInner');
+	public readonly nextPaginator = viewChild.required<ElementRef<HTMLElement>>('nextPaginator');
+	public readonly previousPaginator = viewChild.required<ElementRef<HTMLElement>>('previousPaginator');
+	public readonly tabListClass = input<ClassValue>('', { alias: 'tabListClass' });
+	protected readonly _tabListClass = computed(() => hlm(listVariants(), this.tabListClass()));
+	public readonly paginationButtonClass = input<ClassValue>('', { alias: 'paginationButtonClass' });
+	protected readonly _paginationButtonClass = computed(() =>
+		hlm(
+			'relative z-[2] select-none disabled:cursor-default',
+			buttonVariants({ variant: 'ghost', size: 'icon' }),
+			this.paginationButtonClass(),
+		),
+	);
+	protected _itemSelected(event: KeyboardEvent) {
+		event.preventDefault();
+	}
+}
+````
+
+## File: src/app/shared/spartan/tabs/src/lib/hlm-tabs-trigger.ts
+````typescript
+import { Directive, input } from '@angular/core';
+import { BrnTabsTrigger } from '@spartan-ng/brain/tabs';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmTabsTrigger]',
+	hostDirectives: [{ directive: BrnTabsTrigger, inputs: ['brnTabsTrigger: hlmTabsTrigger', 'disabled'] }],
+	host: {
+		'data-slot': 'tabs-trigger',
+	},
+})
+export class HlmTabsTrigger {
+	public readonly triggerFor = input.required<string>({ alias: 'hlmTabsTrigger' });
+	constructor() {
+		classes(() => [
+			`focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:outline-ring text-foreground/60 hover:text-foreground dark:text-muted-foreground dark:hover:text-foreground relative inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-1.5 rounded-md border border-transparent px-2 py-1 text-sm font-medium whitespace-nowrap transition-all group-data-[orientation=vertical]/tabs:w-full group-data-[orientation=vertical]/tabs:justify-start focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50 group-data-[variant=default]/tabs-list:data-active:shadow-sm group-data-[variant=line]/tabs-list:data-active:shadow-none [&_ng-icon]:pointer-events-none [&_ng-icon]:shrink-0 [&_ng-icon:not([class*='text-'])]:text-base`,
+			'group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:data-active:bg-transparent dark:group-data-[variant=line]/tabs-list:data-active:border-transparent dark:group-data-[variant=line]/tabs-list:data-active:bg-transparent',
+			'data-active:bg-background dark:data-active:text-foreground dark:data-active:border-input dark:data-active:bg-input/30 data-active:text-foreground',
+			'after:bg-foreground after:absolute after:opacity-0 after:transition-opacity group-data-[orientation=horizontal]/tabs:after:inset-x-0 group-data-[orientation=horizontal]/tabs:after:bottom-[-5px] group-data-[orientation=horizontal]/tabs:after:h-0.5 group-data-[orientation=vertical]/tabs:after:inset-y-0 group-data-[orientation=vertical]/tabs:after:-right-1 group-data-[orientation=vertical]/tabs:after:w-0.5 group-data-[variant=line]/tabs-list:data-active:after:opacity-100',
+		]);
+	}
+}
+````
+
+## File: src/app/shared/spartan/tabs/src/lib/hlm-tabs.ts
+````typescript
+import { Directive, input } from '@angular/core';
+import { BrnTabs } from '@spartan-ng/brain/tabs';
+import { classes } from '@spartan-ng/helm/utils';
+@Directive({
+	selector: '[hlmTabs],hlm-tabs',
+	hostDirectives: [
+		{
+			directive: BrnTabs,
+			inputs: ['orientation', 'activationMode', 'brnTabs: tab'],
+			outputs: ['tabActivated'],
+		},
+	],
+	host: {
+		'data-slot': 'tabs',
+	},
+})
+export class HlmTabs {
+	public readonly tab = input.required<string>();
+	constructor() {
+		classes(() => 'group/tabs flex gap-2 data-[orientation=horizontal]:flex-col');
+	}
+}
+````
+
+## File: src/app/shared/spartan/tabs/src/index.ts
+````typescript
+import { HlmTabs } from './lib/hlm-tabs';
+import { HlmTabsContent } from './lib/hlm-tabs-content';
+import { HlmTabsContentLazy } from './lib/hlm-tabs-content-lazy';
+import { HlmTabsList } from './lib/hlm-tabs-list';
+import { HlmTabsPaginatedList } from './lib/hlm-tabs-paginated-list';
+import { HlmTabsTrigger } from './lib/hlm-tabs-trigger';
+export * from './lib/hlm-tabs';
+export * from './lib/hlm-tabs-content';
+export * from './lib/hlm-tabs-content-lazy';
+export * from './lib/hlm-tabs-list';
+export * from './lib/hlm-tabs-paginated-list';
+export * from './lib/hlm-tabs-trigger';
+export const HlmTabsImports = [
+	HlmTabs,
+	HlmTabsList,
+	HlmTabsTrigger,
+	HlmTabsContent,
+	HlmTabsContentLazy,
+	HlmTabsPaginatedList,
+] as const;
 ````
 
 ## File: src/app/shared/utils/.gitkeep
@@ -3323,107 +4364,6 @@ export class UploadService {
 }
 ````
 
-## File: src/app/features/auth/login/login.component.html
-````html
-<div class="auth-page-wrapper">
-      <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
-      <main class="auth-form-container">
-        @if (formVisible()) {
-          <div class="w-full max-w-md animate-form-in">
-            <div class="text-center mb-8">
-              <h1 class="font-display text-3xl font-bold text-gray-900">📚 Book Club</h1>
-              <p class="text-gray-600 mt-2">{{ 'AUTH.welcome_back' | translate }}</p>
-            </div>
-            <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-amber-100">
-              <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ 'AUTH.sign_in_h2' | translate }}</h2>
-              <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
-                <fieldset class="border-0 p-0 m-0">
-                  <legend class="sr-only">{{ 'AUTH.sign_in_h2' | translate }}</legend>
-                  <hlm-field>
-                    <label hlmFieldLabel>{{ 'AUTH.email' | translate }}</label>
-                    <input hlmInput type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
-                    <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                    <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
-                  </hlm-field>
-                  <hlm-field>
-                    <label hlmFieldLabel>{{ 'AUTH.password' | translate }}</label>
-                    <input hlmInput type="password" placeholder="••••••••" [formControl]="form.controls.password" />
-                    <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                    <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
-                  </hlm-field>
-                </fieldset>
-                @if (errorMessage()) {
-                  <div class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700" role="alert">
-                    <span class="mt-0.5 shrink-0">⚠️</span>
-                    <span>{{ errorMessage() }}</span>
-                  </div>
-                }
-                <button
-                  hlmBtn
-                  type="submit"
-                  [disabled]="isSubmitting()"
-                  class="mt-2 w-full bg-amber-700 hover:bg-amber-800 text-white focus-visible:ring-amber-500"
-                >
-                  @if (isSubmitting()) {
-                    <hlm-spinner aria-label="Loading" />
-                    {{ 'AUTH.signing_in' | translate }}
-                  } @else {
-                    {{ 'AUTH.submit_login' | translate }}
-                  }
-                </button>
-              </form>
-              <p class="mt-6 text-center text-sm text-gray-600">
-                {{ 'AUTH.no_account' | translate }}
-                <a routerLink="/register" class="text-amber-700 hover:text-amber-800 font-medium">
-                  {{ 'AUTH.register_title' | translate }}
-                </a>
-              </p>
-            </div>
-            <p class="mt-6 text-center text-sm text-gray-500">
-              <a
-                routerLink="/"
-                class="inline-flex items-center gap-1 text-gray-500
-                       hover:text-gray-700 transition-all duration-200
-                       focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 rounded"
-              >
-                {{ 'NAV.back_home' | translate }}
-              </a>
-            </p>
-          </div>
-        }
-        </main>
-    </div>
-    <style>
-      .auth-page-wrapper {
-        position: relative;
-        min-height: 100vh;
-        overflow: hidden;
-      }
-      .auth-form-container {
-        position: relative;
-        z-index: 60;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 1rem;
-      }
-      .animate-form-in {
-        animation: form-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-      }
-      @keyframes form-slide-in {
-        from {
-          opacity: 0;
-          transform: translateY(24px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-    </style>
-````
-
 ## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html
 ````html
 <article
@@ -3492,27 +4432,34 @@ export class UploadService {
         @if (isAuthenticated() && event().status !== 'cancelled') {
           @if (event().isAttending) {
             <button
+              hlmBtn
+              size="sm"
               type="button"
               [disabled]="attending()"
               (click)="cancelAttend.emit()"
-              class="rounded-lg bg-green-600 hover:bg-green-700 disabled:opacity-60 disabled:cursor-not-allowed px-3 py-1.5 text-xs font-semibold text-white transition-colors shadow-sm"
+              class="bg-green-600 hover:bg-green-700 text-white text-xs"
             >
               @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_going' | translate }} }
             </button>
           } @else {
             <button
+              hlmBtn
+              size="sm"
               type="button"
               [disabled]="attending()"
               (click)="attend.emit()"
-              class="rounded-lg bg-primary-600 hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed px-3 py-1.5 text-xs font-semibold text-white transition-colors shadow-sm"
+              class="bg-primary-600 hover:bg-primary-700 text-white text-xs"
             >
               @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_join' | translate }} }
             </button>
           }
         } @else {
           <a
+            hlmBtn
+            variant="outline"
+            size="sm"
             [routerLink]="['/events', event().id]"
-            class="rounded-lg border border-[#d4a96a]/60 dark:border-[#7a5c2e]/60 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-amber-200 hover:bg-amber-50 dark:hover:bg-amber-900/20 transition-colors"
+            class="text-xs"
           >
             {{ 'CLUB_DETAIL.rsvp_view' | translate }} →
           </a>
@@ -3536,11 +4483,12 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
 import { ClubEvent } from '../../../../core/models/event.model';
+import { HlmButton } from '../../../../shared/spartan/button/src';
 @Component({
   selector: 'app-club-event-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe],
+  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton],
   templateUrl: './club-event-card.component.html',
   styleUrl: './club-event-card.component.scss',
 })
@@ -3566,11 +4514,12 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Club } from '../../../../core/models/club.model';
 import { UserProfile } from '../../../../core/models/user.model';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { HlmButton } from '../../../../shared/spartan/button/src';
 @Component({
   selector: 'app-club-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule, LoadingSpinnerComponent],
+  imports: [TranslateModule, LoadingSpinnerComponent, HlmButton],
   templateUrl: './club-header.component.html',
 })
 export class ClubHeaderComponent {
@@ -3615,11 +4564,12 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { HlmCard } from '../../../../shared/spartan/card/src';
 @Component({
   selector: 'app-club-manage-panel',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule],
+  imports: [RouterLink, TranslateModule, HlmCard],
   templateUrl: './club-manage-panel.component.html',
 })
 export class ClubManagePanelComponent {
@@ -3629,7 +4579,7 @@ export class ClubManagePanelComponent {
 
 ## File: src/app/features/clubs/club-detail/members/club-members-list.component.html
 ````html
-<section [attr.aria-label]="'MEMBERS.title' | translate" class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="px-6 gap-4">
   <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
     {{ 'MEMBERS.title' | translate }} ({{ members().length }})
   </h2>
@@ -3684,9 +4634,12 @@ export class ClubManagePanelComponent {
               }
               @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
                 <button
+                  hlmBtn
+                  variant="secondary"
+                  size="sm"
                   type="button"
                   (click)="toggleQr(member.userId)"
-                  class="inline-flex items-center gap-1 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 transition-colors ml-1"
+                  class="ml-1 text-xs"
                   [attr.aria-expanded]="showQrForUser() === member.userId"
                   [attr.aria-label]="'MEMBERS.show_qr' | translate"
                 >
@@ -3697,8 +4650,8 @@ export class ClubManagePanelComponent {
                        aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
                     <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
                     <app-qr-code [value]="buildQrValue(member)" [size]="160" />
-                    <button type="button" (click)="toggleQr(member.userId)"
-                            class="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 mt-1">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
+                    <button hlmBtn variant="ghost" size="sm" type="button" (click)="toggleQr(member.userId)"
+                            class="mt-1 text-xs text-gray-400">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
                   </dialog>
                 }
               }
@@ -3709,13 +4662,12 @@ export class ClubManagePanelComponent {
             }
             @if (isOwner() && member.role !== 'organizer') {
               <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">
-                <button type="button" (click)="kick.emit(member.userId)"
-                        class="rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-red-100 dark:hover:bg-red-900/30 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                <button hlmBtn variant="destructive" size="xs" type="button" (click)="kick.emit(member.userId)"
                          [attr.aria-label]="'MEMBERS.kick' | translate">
                   {{ 'MEMBERS.kick' | translate }}
                 </button>
-                <button type="button" (click)="toggleBanMenu(member.userId)"
-                        class="rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-orange-100 dark:hover:bg-orange-900/30 px-2 py-1 text-xs font-medium text-gray-600 dark:text-gray-300 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
+                <button hlmBtn variant="ghost" size="xs" type="button" (click)="toggleBanMenu(member.userId)"
+                        class="text-orange-600 hover:text-orange-700"
                         [attr.aria-expanded]="showBanMenu() === member.userId">
                   {{ 'MEMBERS.ban' | translate }}
                 </button>
@@ -3723,8 +4675,8 @@ export class ClubManagePanelComponent {
                   <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 py-1 min-w-36">
                     @for (duration of banDurations; track duration) {
                       <li>
-                        <button type="button" (click)="emitBan(member.userId, duration)"
-                                class="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                        <button hlmBtn variant="ghost" type="button" (click)="emitBan(member.userId, duration)"
+                                class="w-full justify-start px-4 text-sm">
                           @if (duration === 1) { {{ 'MEMBERS.ban_1' | translate }} }
                           @else if (duration === 3) { {{ 'MEMBERS.ban_3' | translate }} }
                           @else if (duration === 5) { {{ 'MEMBERS.ban_5' | translate }} }
@@ -3757,11 +4709,13 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ClubMemberDetail, BanRecord, BanDuration } from '../../../../core/models/club.model';
 import { QrCodeComponent } from '../../../../shared/components/qr-code/qr-code.component';
 import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
+import { HlmButton } from '../../../../shared/spartan/button/src';
+import { HlmCard } from '../../../../shared/spartan/card/src';
 @Component({
   selector: 'app-club-members-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule, QrCodeComponent, InitialsPipe],
+  imports: [TranslateModule, QrCodeComponent, InitialsPipe, HlmButton, HlmCard],
   templateUrl: './club-members-list.component.html',
 })
 export class ClubMembersListComponent {
@@ -3804,19 +4758,16 @@ export class ClubMembersListComponent {
 
 ## File: src/app/features/events/event-card/event-card.component.html
 ````html
-<article class="rounded-2xl bg-white dark:bg-gray-800 shadow hover:shadow-lg transition-shadow flex flex-col overflow-hidden">
+<article hlmCard class="rounded-2xl overflow-hidden flex flex-col">
   <div class="flex flex-col flex-1 p-4 gap-3">
     <div class="flex items-start justify-between gap-2">
       <div class="text-sm font-medium text-primary-600 dark:text-primary-400">
         📅 {{ event().date | formatDate }}
       </div>
       @if (event().status !== 'scheduled') {
-        <span class="text-xs rounded-full px-2 py-0.5"
-              [class]="event().status === 'cancelled'
-                ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                : event().status === 'active'
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                  : 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'">
+        <span hlmBadge
+              [variant]="event().status === 'cancelled' ? 'destructive' : event().status === 'active' ? 'default' : 'secondary'"
+              class="rounded-full text-xs">
           {{ event().status }}
         </span>
       }
@@ -3840,14 +4791,13 @@ export class ClubMembersListComponent {
     @if (event().theme || event().tags.length > 0) {
       <div class="flex flex-wrap gap-1">
         @if (event().theme) {
-          <span class="rounded-full bg-accent-100 dark:bg-accent-900/30 px-2 py-0.5 text-xs text-accent-700 dark:text-accent-300">
+          <span hlmBadge variant="secondary"
+                class="rounded-full bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300">
             {{ event().theme }}
           </span>
         }
         @for (tag of event().tags.slice(0, 2); track tag) {
-          <span class="rounded-full bg-gray-100 dark:bg-gray-700 px-2 py-0.5 text-xs text-gray-600 dark:text-gray-400">
-            {{ tag }}
-          </span>
+          <span hlmBadge variant="secondary" class="rounded-full">{{ tag }}</span>
         }
       </div>
     }
@@ -3856,29 +4806,18 @@ export class ClubMembersListComponent {
         👤 {{ event().attendeeCount }} attending
       </span>
       <div class="flex gap-2">
-        <a
-          [routerLink]="['/events', event().id]"
-          class="rounded-lg border border-gray-300 dark:border-gray-600 px-3 py-1 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        >
+        <a hlmBtn variant="outline" size="sm" [routerLink]="['/events', event().id]">
           View
         </a>
         @if (isAuthenticated() && event().status !== 'cancelled') {
           @if (event().isAttending) {
-            <button
-              type="button"
-              [disabled]="attending()"
-              (click)="cancelAttend.emit()"
-              class="rounded-lg bg-green-600 hover:bg-green-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-            >
+            <button hlmBtn type="button" size="sm" [disabled]="attending()" (click)="cancelAttend.emit()"
+                    class="bg-green-600 hover:bg-green-700 text-white">
               @if (attending()) { ⏳ } @else { ✓ Going }
             </button>
           } @else {
-            <button
-              type="button"
-              [disabled]="attending()"
-              (click)="attend.emit()"
-              class="rounded-lg bg-primary-600 hover:bg-primary-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
-            >
+            <button hlmBtn type="button" size="sm" [disabled]="attending()" (click)="attend.emit()"
+                    class="bg-primary-600 hover:bg-primary-700 text-white">
               @if (attending()) { ⏳ } @else { RSVP }
             </button>
           }
@@ -3901,11 +4840,14 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 import { ClubEvent } from '../../../core/models/event.model';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmBadge } from '../../../shared/spartan/badge/src';
 @Component({
   selector: 'app-event-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe],
+  imports: [RouterLink, TranslateModule, FormatDatePipe, ...HlmCardImports, HlmButton, HlmBadge],
   templateUrl: './event-card.component.html',
 })
 export class EventCardComponent {
@@ -4154,61 +5096,82 @@ export class EventDetailComponent {
       </div>
     }
     @if (auth.isAuthenticated()) {
-      <div class="flex gap-0 border-b border-gray-200 dark:border-gray-700" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          [attr.aria-selected]="activeTab() === 'upcoming'"
-          (click)="activeTab.set('upcoming')"
-          class="px-5 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-t"
-          [class]="activeTab() === 'upcoming'
-            ? 'border-b-2 border-primary-600 text-primary-600 dark:text-primary-400'
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
-        >
-          Upcoming
-        </button>
-        <button
-          type="button"
-          role="tab"
-          [attr.aria-selected]="activeTab() === 'my'"
-          (click)="activeTab.set('my')"
-          class="px-5 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-t"
-          [class]="activeTab() === 'my'
-            ? 'border-b-2 border-primary-600 text-primary-600 dark:text-primary-400'
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
-        >
-          My Events
-        </button>
-      </div>
-    }
-    @if (eventService.isLoading()) {
-      <div class="py-16" aria-busy="true">
-        <app-loading-spinner size="lg" />
-      </div>
-    } @else if (activeTab() === 'my') {
-      @if (eventService.myEvents().length === 0) {
-        <app-empty-state
-          icon="📅"
-          title="No upcoming events"
-          description="Join clubs to see their events here."
-        />
-      } @else {
-        <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          @for (event of eventService.myEvents(); track event.id) {
-            <li>
-              <app-event-card
-                [event]="event"
-                [isAuthenticated]="auth.isAuthenticated()"
-                [attending]="attendingEventId() === event.id"
-                (attend)="onAttend(event)"
-                (cancelAttend)="onCancelAttend(event)"
-              />
-            </li>
+      <div hlmTabs tab="upcoming">
+        <div hlmTabsList variant="line" class="w-full border-b border-gray-200 dark:border-gray-700 rounded-none">
+          <button hlmTabsTrigger="upcoming">Upcoming</button>
+          <button hlmTabsTrigger="my">My Events</button>
+        </div>
+        <div hlmTabsContent="upcoming" class="pt-4">
+          @if (eventService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (sortedDates().length === 0) {
+            <app-empty-state
+              icon="📅"
+              title="No upcoming events"
+              description="No events are scheduled yet. Check back soon!"
+            />
+          } @else {
+            @for (date of sortedDates(); track date) {
+              <section [attr.aria-labelledby]="'date-' + date" class="mb-8">
+                <h2
+                  [id]="'date-' + date"
+                  class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4"
+                >
+                  {{ date }}
+                </h2>
+                <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  @for (event of eventService.groupedByDate()[date]; track event.id) {
+                    <li>
+                      <app-event-card
+                        [event]="event"
+                        [isAuthenticated]="auth.isAuthenticated()"
+                        [attending]="attendingEventId() === event.id"
+                        (attend)="onAttend(event)"
+                        (cancelAttend)="onCancelAttend(event)"
+                      />
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
           }
-        </ul>
-      }
+        </div>
+        <div hlmTabsContent="my" class="pt-4">
+          @if (eventService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (eventService.myEvents().length === 0) {
+            <app-empty-state
+              icon="📅"
+              title="No upcoming events"
+              description="Join clubs to see their events here."
+            />
+          } @else {
+            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              @for (event of eventService.myEvents(); track event.id) {
+                <li>
+                  <app-event-card
+                    [event]="event"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [attending]="attendingEventId() === event.id"
+                    (attend)="onAttend(event)"
+                    (cancelAttend)="onCancelAttend(event)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
     } @else {
-      @if (sortedDates().length === 0) {
+      @if (eventService.isLoading()) {
+        <div class="py-16 flex justify-center" aria-busy="true">
+          <hlm-spinner />
+        </div>
+      } @else if (sortedDates().length === 0) {
         <app-empty-state
           icon="📅"
           title="No upcoming events"
@@ -4216,7 +5179,7 @@ export class EventDetailComponent {
         />
       } @else {
         @for (date of sortedDates(); track date) {
-          <section [attr.aria-labelledby]="'date-' + date">
+          <section [attr.aria-labelledby]="'date-' + date" class="mb-8">
             <h2
               [id]="'date-' + date"
               class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4"
@@ -4228,8 +5191,8 @@ export class EventDetailComponent {
                 <li>
                   <app-event-card
                     [event]="event"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [attending]="attendingEventId() === event.id"
+                    [isAuthenticated]="false"
+                    [attending]="false"
                     (attend)="onAttend(event)"
                     (cancelAttend)="onCancelAttend(event)"
                   />
@@ -4404,154 +5367,113 @@ export class ProfileStatsComponent {
 ## File: src/app/features/quiz/quiz-list/quiz-list.component.html
 ````html
 <div class="min-h-screen p-4 sm:p-8">
-      <div class="max-w-3xl mx-auto space-y-6">
-        <header class="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">
-              🧠 Quizzes
-            </h1>
-            <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-              Test your knowledge of the books you've read.
-            </p>
-          </div>
-          <div class="flex items-center gap-3">
-            @if (authService.isOrganizer()) {
-              <a
-                [routerLink]="['/clubs', id(), 'quizzes', 'create']"
-                class="inline-flex items-center gap-2 bg-accent-600 hover:bg-accent-500
-                       text-white rounded-xl px-4 py-2.5 font-medium transition-colors text-sm"
-              >
-                + Create Quiz
-              </a>
-            }
-            <nav aria-label="Breadcrumb">
-              <a
-                [routerLink]="['/clubs', id()]"
-                class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm
-                       transition-colors"
-              >
-                ← Club
-              </a>
-            </nav>
-          </div>
-        </header>
-        @if (quizService.isLoading()) {
-          <div class="space-y-4">
-            @for (_ of [1, 2, 3]; track $index) {
-              <div
-                class="h-24 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse"
-              ></div>
-            }
-          </div>
-        } @else {
-          @if (quizService.quizzes().length === 0) {
-            <div
-              class="bg-white dark:bg-gray-900 rounded-2xl p-12 text-center border
-                     border-gray-200 dark:border-gray-800"
-            >
-              <p class="text-4xl mb-3">📝</p>
-              <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">
-                No quizzes yet
-              </h2>
-              @if (authService.isOrganizer()) {
-                <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-                  Create your first quiz to engage the club.
-                </p>
-              } @else {
-                <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-                  The organizer hasn't created any quizzes yet.
-                </p>
-              }
-            </div>
-          } @else {
-            <div class="space-y-4">
-              @for (quiz of quizService.quizzes(); track quiz.id) {
-                <div
-                  class="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200
-                         dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <div class="flex items-start justify-between gap-4">
-                    <div class="min-w-0 flex-1">
-                      <div class="flex items-center gap-2 flex-wrap">
-                        <h2
-                          class="text-gray-900 dark:text-white font-semibold text-lg
-                                 truncate"
-                        >
-                          {{ quiz.title }}
-                        </h2>
-                        @if (quiz.isActive) {
-                          <span
-                            class="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30
-                                   text-green-700 dark:text-green-400 rounded-full px-2 py-0.5
-                                   text-xs font-medium"
-                          >
-                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
-                            Active
-                          </span>
-                        } @else {
-                          <span
-                            class="inline-flex items-center bg-gray-100 dark:bg-gray-800
-                                   text-gray-500 dark:text-gray-400 rounded-full px-2 py-0.5
-                                   text-xs font-medium"
-                          >
-                            Draft
-                          </span>
-                        }
-                      </div>
-                      @if (quiz.description) {
-                        <p
-                          class="text-gray-500 dark:text-gray-400 text-sm mt-1 line-clamp-2"
-                        >
-                          {{ quiz.description }}
-                        </p>
-                      }
-                    </div>
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                      @if (authService.isOrganizer()) {
-                        <button
-                          (click)="toggleActive(quiz.id, !quiz.isActive)"
-                          [disabled]="togglingId() === quiz.id"
-                          class="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors
-                                 disabled:opacity-50"
-                          [class.bg-green-100]="!quiz.isActive"
-                          [class.text-green-700]="!quiz.isActive"
-                          [class.hover:bg-green-200]="!quiz.isActive"
-                          [class.dark:bg-green-900\/30]="!quiz.isActive"
-                          [class.dark:text-green-400]="!quiz.isActive"
-                          [class.bg-gray-100]="quiz.isActive"
-                          [class.text-gray-600]="quiz.isActive"
-                          [class.hover:bg-gray-200]="quiz.isActive"
-                          [class.dark:bg-gray-800]="quiz.isActive"
-                          [class.dark:text-gray-400]="quiz.isActive"
-                        >
-                          {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
-                        </button>
-                      } @else if (quiz.isActive) {
-                        <button
-                          (click)="takeQuiz(quiz.id)"
-                          class="bg-accent-600 hover:bg-accent-500 text-white rounded-lg
-                                 px-4 py-1.5 text-sm font-medium transition-colors"
-                        >
-                          Take Quiz →
-                        </button>
-                      }
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
-          }
+  <div class="max-w-3xl mx-auto space-y-6">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🧠 Quizzes</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+          Test your knowledge of the books you've read.
+        </p>
+      </div>
+      <div class="flex items-center gap-3">
+        @if (authService.isOrganizer()) {
+          <a hlmBtn [routerLink]="['/clubs', id(), 'quizzes', 'create']"
+             class="bg-accent-600 hover:bg-accent-700 text-white">
+            + Create Quiz
+          </a>
         }
-        @if (errorMessage()) {
-          <div
-            class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800
-                   rounded-xl p-4 text-red-700 dark:text-red-400 text-sm"
-          >
-            ⚠️ {{ errorMessage() }}
-          </div>
+        <nav aria-label="Breadcrumb">
+          <a [routerLink]="['/clubs', id()]"
+             class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
+            ← Club
+          </a>
+        </nav>
+      </div>
+    </header>
+    @if (quizService.isLoading()) {
+      <div class="space-y-4">
+        @for (_ of [1, 2, 3]; track $index) {
+          <div class="h-24 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse"></div>
         }
       </div>
-    </div>
+    } @else {
+      @if (quizService.quizzes().length === 0) {
+        <div hlmCard class="rounded-2xl p-12 text-center">
+          <p class="text-4xl mb-3">📝</p>
+          <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">No quizzes yet</h2>
+          @if (authService.isOrganizer()) {
+            <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
+              Create your first quiz to engage the club.
+            </p>
+          } @else {
+            <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
+              The organizer hasn't created any quizzes yet.
+            </p>
+          }
+        </div>
+      } @else {
+        <div class="space-y-4">
+          @for (quiz of quizService.quizzes(); track quiz.id) {
+            <div hlmCard class="rounded-2xl p-5 hover:shadow-md transition-shadow">
+              <div class="flex items-start justify-between gap-4">
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <h2 class="text-gray-900 dark:text-white font-semibold text-lg truncate">
+                      {{ quiz.title }}
+                    </h2>
+                    @if (quiz.isActive) {
+                      <span hlmBadge variant="default"
+                            class="rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-transparent">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block mr-1"></span>
+                        Active
+                      </span>
+                    } @else {
+                      <span hlmBadge variant="secondary" class="rounded-full">Draft</span>
+                    }
+                  </div>
+                  @if (quiz.description) {
+                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1 line-clamp-2">
+                      {{ quiz.description }}
+                    </p>
+                  }
+                </div>
+                <div class="flex items-center gap-2 flex-shrink-0">
+                  @if (authService.isOrganizer()) {
+                    <button
+                      hlmBtn
+                      type="button"
+                      size="sm"
+                      [variant]="quiz.isActive ? 'secondary' : 'outline'"
+                      (click)="toggleActive(quiz.id, !quiz.isActive)"
+                      [disabled]="togglingId() === quiz.id"
+                    >
+                      {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
+                    </button>
+                  } @else if (quiz.isActive) {
+                    <button
+                      hlmBtn
+                      type="button"
+                      size="sm"
+                      (click)="takeQuiz(quiz.id)"
+                      class="bg-accent-600 hover:bg-accent-700 text-white"
+                    >
+                      Take Quiz →
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+    @if (errorMessage()) {
+      <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-700 dark:text-red-400 text-sm">
+        ⚠️ {{ errorMessage() }}
+      </div>
+    }
+  </div>
+</div>
 ````
 
 ## File: src/app/features/quiz/quiz-list/quiz-list.component.ts
@@ -4567,11 +5489,14 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { QuizService } from '../../../core/services/quiz.service';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { HlmBadge } from '../../../shared/spartan/badge/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
 @Component({
   selector: 'app-quiz-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink],
+  imports: [RouterLink, ...HlmCardImports, HlmBadge, HlmButton],
   templateUrl: './quiz-list.component.html',
 })
 export class QuizListComponent {
@@ -5046,19 +5971,23 @@ import {
 } from '@angular/core';
 import * as QRCode from 'qrcode';
 import { environment } from '../../../../environments/environment';
+import { HlmCard } from '../../spartan/card/src';
 @Component({
   selector: 'app-qr-code',
   standalone: true,
+  imports: [HlmCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <canvas
-      #canvas
-      [style.width.px]="size()"
-      [style.height.px]="size()"
-      class="rounded-lg"
-      [attr.aria-label]="'QR code'"
-      role="img"
-    ></canvas>
+    <div hlmCard class="flex items-center justify-center p-6 w-fit gap-0 py-6">
+      <canvas
+        #canvas
+        [style.width.px]="size()"
+        [style.height.px]="size()"
+        class="rounded-lg"
+        [attr.aria-label]="'QR code'"
+        role="img"
+      ></canvas>
+    </div>
   `,
 })
 export class QrCodeComponent {
@@ -7382,6 +8311,18 @@ Round 9  ───────────────────────�
       ],
       "@spartan-ng/helm/card": [
         "./src/app/shared/spartan/card/src/index.ts"
+      ],
+      "@spartan-ng/helm/tabs": [
+        "./src/app/shared/spartan/tabs/src/index.ts"
+      ],
+      "@spartan-ng/helm/icon": [
+        "./src/app/shared/spartan/icon/src/index.ts"
+      ],
+      "@spartan-ng/helm/sheet": [
+        "./src/app/shared/spartan/sheet/src/index.ts"
+      ],
+      "@spartan-ng/helm/dropdown-menu": [
+        "./src/app/shared/spartan/dropdown-menu/src/index.ts"
       ]
     }
   },
@@ -7444,6 +8385,1556 @@ export class TokenStore {
   snapshotRefresh(): string | null {
     return this._refreshToken();
   }
+}
+````
+
+## File: src/app/features/auth/login/login.component.html
+````html
+<div class="auth-page-wrapper">
+      <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
+      <main class="auth-form-container">
+        @if (formVisible()) {
+          <div class="w-full max-w-md animate-form-in">
+            <div class="text-center mb-8">
+              <h1 class="font-display text-3xl font-bold text-gray-900">📚 Book Club</h1>
+              <p class="text-gray-600 mt-2">{{ 'AUTH.welcome_back' | translate }}</p>
+            </div>
+            <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-amber-100">
+              <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ 'AUTH.sign_in_h2' | translate }}</h2>
+              <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+                <fieldset class="border-0 p-0 m-0">
+                  <legend class="sr-only">{{ 'AUTH.sign_in_h2' | translate }}</legend>
+                  <hlm-field>
+                    <label hlmFieldLabel>{{ 'AUTH.email' | translate }}</label>
+                    <input hlmInput type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
+                    <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                    <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
+                  </hlm-field>
+                  <hlm-field>
+                    <label hlmFieldLabel>{{ 'AUTH.password' | translate }}</label>
+                    <input hlmInput type="password" placeholder="••••••••" [formControl]="form.controls.password" />
+                    <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                    <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
+                  </hlm-field>
+                </fieldset>
+                @if (errorMessage()) {
+                  <div class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700" role="alert">
+                    <span class="mt-0.5 shrink-0">⚠️</span>
+                    <span>{{ errorMessage() }}</span>
+                  </div>
+                }
+                <button
+                  hlmBtn
+                  type="submit"
+                  [disabled]="isSubmitting()"
+                  class="mt-2 w-full bg-amber-700 hover:bg-amber-800 text-white focus-visible:ring-amber-500"
+                >
+                  @if (isSubmitting()) {
+                    <hlm-spinner aria-label="Loading" />
+                    {{ 'AUTH.signing_in' | translate }}
+                  } @else {
+                    {{ 'AUTH.submit_login' | translate }}
+                  }
+                </button>
+              </form>
+              <p class="mt-6 text-center text-sm text-gray-600">
+                {{ 'AUTH.no_account' | translate }}
+                <a routerLink="/register" class="text-amber-700 hover:text-amber-800 font-medium">
+                  {{ 'AUTH.register_title' | translate }}
+                </a>
+              </p>
+            </div>
+            <p class="mt-6 text-center text-sm text-gray-500">
+              <a
+                routerLink="/"
+                class="inline-flex items-center gap-1 text-gray-500
+                       hover:text-gray-700 transition-all duration-200
+                       focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 rounded"
+              >
+                {{ 'NAV.back_home' | translate }}
+              </a>
+            </p>
+          </div>
+        }
+        </main>
+    </div>
+    <style>
+      .auth-page-wrapper {
+        position: relative;
+        min-height: 100vh;
+        overflow: hidden;
+      }
+      .auth-form-container {
+        position: relative;
+        z-index: 60;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1rem;
+      }
+      .animate-form-in {
+        animation: form-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      @keyframes form-slide-in {
+        from {
+          opacity: 0;
+          transform: translateY(24px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    </style>
+````
+
+## File: src/app/features/clubs/club-detail/info/club-info.component.html
+````html
+
+````
+
+## File: src/app/features/clubs/edit-club/edit-club.component.html
+````html
+<main class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+    <header class="text-center mb-8">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'EDIT_CLUB.subtitle' | translate }}</p>
+    </header>
+    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'EDIT_CLUB.title' | translate }}</h2>
+      @if (isLoadingClub()) {
+        <div class="flex justify-center py-12">
+          <hlm-spinner />
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+          <hlm-field>
+            <label hlmFieldLabel>
+              {{ 'EDIT_CLUB.name_label' | translate }}
+              <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <input
+              hlmInput
+              id="club-name"
+              type="text"
+              formControlName="name"
+              class="w-full"
+              [placeholder]="'EDIT_CLUB.name_placeholder' | translate"
+            />
+            <hlm-field-error validator="required">{{ 'EDIT_CLUB.name_required' | translate }}</hlm-field-error>
+            <hlm-field-error validator="minlength">{{ 'EDIT_CLUB.name_min' | translate }}</hlm-field-error>
+            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.name_max' | translate }}</hlm-field-error>
+          </hlm-field>
+          <hlm-field>
+            <label hlmFieldLabel>{{ 'EDIT_CLUB.description_label' | translate }}</label>
+            <textarea
+              hlmInput
+              id="club-description"
+              formControlName="description"
+              rows="3"
+              class="w-full resize-none"
+              [placeholder]="'EDIT_CLUB.description_placeholder' | translate"
+            ></textarea>
+            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.description_max' | translate }}</hlm-field-error>
+          </hlm-field>
+          <hlm-field>
+            <label hlmFieldLabel>{{ 'EDIT_CLUB.city_label' | translate }}</label>
+            <input
+              hlmInput
+              id="club-city"
+              type="text"
+              formControlName="city"
+              class="w-full"
+              [placeholder]="'EDIT_CLUB.city_placeholder' | translate"
+            />
+          </hlm-field>
+          <div>
+            <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {{ 'EDIT_CLUB.cover_url_label' | translate }}
+            </p>
+            <app-cover-upload [control]="form.controls.coverUrl" />
+          </div>
+          <fieldset>
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'EDIT_CLUB.visibility_legend' | translate }}</legend>
+            <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
+              <div>
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'EDIT_CLUB.public_label' | translate }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'EDIT_CLUB.public_desc' | translate }}</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                [attr.aria-checked]="form.controls.isPublic.value"
+                (click)="togglePublic()"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                [class.bg-primary-600]="form.controls.isPublic.value"
+                [class.bg-gray-300]="!form.controls.isPublic.value"
+                [class.dark:bg-gray-600]="!form.controls.isPublic.value"
+              >
+                <span
+                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                  [class.translate-x-6]="form.controls.isPublic.value"
+                  [class.translate-x-1]="!form.controls.isPublic.value"
+                ></span>
+              </button>
+            </div>
+          </fieldset>
+          @if (errorMessage()) {
+            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+                 role="alert">
+              <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+          <div class="flex gap-3 pt-2">
+            <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
+              {{ 'EDIT_CLUB.cancel' | translate }}
+            </button>
+            <button hlmBtn type="submit" [disabled]="isSubmitting()"
+                    class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
+              @if (isSubmitting()) {
+                <hlm-spinner class="mr-2" />
+                {{ 'EDIT_CLUB.submitting' | translate }}
+              } @else {
+                {{ 'EDIT_CLUB.submit' | translate }}
+              }
+            </button>
+          </div>
+        </form>
+      }
+    </article>
+  </div>
+</main>
+````
+
+## File: src/app/features/clubs/edit-club/edit-club.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  input,
+  OnInit,
+} from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { ToastService } from '../../../core/services/toast.service';
+import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+interface EditClubForm {
+  name: FormControl<string>;
+  description: FormControl<string>;
+  isPublic: FormControl<boolean>;
+  city: FormControl<string>;
+  coverUrl: FormControl<string>;
+}
+@Component({
+  selector: 'app-edit-club',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslatePipe, CoverUploadComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './edit-club.component.html',
+})
+export class EditClubComponent implements OnInit {
+  readonly id = input.required<string>();
+  private readonly clubService = inject(ClubService);
+  private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
+  private readonly translate = inject(TranslateService);
+  private readonly _isLoadingClub = signal(true);
+  readonly isLoadingClub = this._isLoadingClub.asReadonly();
+  private readonly _isSubmitting = signal(false);
+  readonly isSubmitting = this._isSubmitting.asReadonly();
+  private readonly _errorMessage = signal<string | null>(null);
+  readonly errorMessage = this._errorMessage.asReadonly();
+  readonly form = new FormGroup<EditClubForm>({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+    isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', { nonNullable: true }),
+    coverUrl: new FormControl('', { nonNullable: true }),
+  });
+  async ngOnInit(): Promise<void> {
+    const club = await this.clubService.getClubById(this.id());
+    if (!club) {
+      this._errorMessage.set('Club not found.');
+      this._isLoadingClub.set(false);
+      return;
+    }
+    this.form.patchValue({
+      name: club.name,
+      description: club.description ?? '',
+      isPublic: club.isPublic,
+      city: club.city ?? '',
+      coverUrl: club.coverUrl ?? '',
+    });
+    this._isLoadingClub.set(false);
+  }
+  togglePublic(): void {
+    this.form.controls.isPublic.setValue(!this.form.controls.isPublic.value);
+  }
+  cancel(): void {
+    this.router.navigate(['/clubs', this.id()]);
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this._isSubmitting.set(true);
+    this._errorMessage.set(null);
+    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
+    try {
+      await this.clubService.updateClub(this.id(), {
+        name,
+        description,
+        isPublic,
+        city: city || undefined,
+        coverUrl: coverUrl || null,
+      });
+      this.toast.show(this.translate.instant('EDIT_CLUB.success'), 'success');
+      this.router.navigate(['/clubs', this.id()]);
+    } catch (err) {
+      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to update club');
+    } finally {
+      this._isSubmitting.set(false);
+    }
+  }
+}
+````
+
+## File: src/app/features/clubs/clubs.routes.ts
+````typescript
+import { Routes } from '@angular/router';
+import { authGuard } from '../../core/auth/auth.guard';
+import { roleGuard } from '../../core/auth/role.guard';
+import { ClubsListComponent } from './clubs-list/clubs-list.component';
+import { ClubDetailComponent } from './club-detail/club-detail.component';
+import { CreateClubComponent } from './create-club/create-club.component';
+export const CLUBS_ROUTES: Routes = [
+  {
+    path: '',
+    component: ClubsListComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'create',
+    component: CreateClubComponent,
+    canActivate: [authGuard, roleGuard('organizer')],
+  },
+  {
+    path: ':id',
+    children: [
+      {
+        path: '',
+        component: ClubDetailComponent,
+        canActivate: [authGuard],
+      },
+      {
+        path: 'randomizer',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('../randomizer/randomizer.component').then(
+            m => m.RandomizerComponent,
+          ),
+      },
+      {
+        path: 'quizzes',
+        loadChildren: () =>
+          import('../quiz/quiz.routes').then(m => m.QUIZ_ROUTES),
+      },
+      {
+        path: 'events/create',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('../events/create-event/create-event.component').then(
+            m => m.CreateEventComponent,
+          ),
+      },
+      {
+        path: 'edit',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('./edit-club/edit-club.component').then(m => m.EditClubComponent),
+      },
+    ],
+  },
+];
+````
+
+## File: src/app/features/events/events-feed/events-feed.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  OnInit,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
+import { EventService } from '../../../core/services/event.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { ClubEvent } from '../../../core/models/event.model';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { EventCardComponent } from '../event-card/event-card.component';
+import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+@Component({
+  selector: 'app-events-feed',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule, TranslateModule, EmptyStateComponent, EventCardComponent, ...HlmTabsImports, HlmSpinner],
+  templateUrl: './events-feed.component.html',
+})
+export class EventsFeedComponent implements OnInit {
+  readonly eventService = inject(EventService);
+  readonly auth = inject(AuthService);
+  readonly attendingEventId = signal<string | null>(null);
+  readonly sortedDates = computed(() =>
+    Object.keys(this.eventService.groupedByDate()).sort((a, b) => a.localeCompare(b)),
+  );
+  async ngOnInit(): Promise<void> {
+    await this.eventService.loadAllEvents();
+    if (this.auth.isAuthenticated()) {
+      await this.eventService.loadMyEvents();
+    }
+  }
+  async onAttend(event: ClubEvent): Promise<void> {
+    this.attendingEventId.set(event.id);
+    try {
+      await this.eventService.attendEvent(event.id);
+    } catch {
+    } finally {
+      this.attendingEventId.set(null);
+    }
+  }
+  async onCancelAttend(event: ClubEvent): Promise<void> {
+    this.attendingEventId.set(event.id);
+    try {
+      await this.eventService.cancelAttendance(event.id);
+    } catch {
+    } finally {
+      this.attendingEventId.set(null);
+    }
+  }
+}
+````
+
+## File: src/app/features/profile/profile.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+} from '@angular/core';
+import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../core/auth/auth.service';
+import { UserRole, UserSocials } from '../../core/models/user.model';
+import { SeoService } from '../../core/services/seo.service';
+import { ToastService } from '../../core/services/toast.service';
+import { SocialLinkFieldComponent, SocialField } from '../../shared/components/social-link-field/social-link-field.component';
+import { SocialBadgesComponent } from '../../shared/components/social-badges/social-badges.component';
+import { ProfileStatsComponent } from './stats/profile-stats.component';
+import { ProfileRoleSelectorComponent } from './role-selector/profile-role-selector.component';
+import { HlmButton } from '../../shared/spartan/button/src';
+import { HlmInput } from '../../shared/spartan/input/src';
+@Component({
+  selector: 'app-profile',
+  standalone: true,
+  imports: [ReactiveFormsModule, TranslateModule, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent, HlmButton, HlmInput],
+  templateUrl: './profile.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ProfileComponent {
+  protected readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  private readonly toast = inject(ToastService);
+  protected readonly socialFields: SocialField[] = [
+    {
+      key: 'telegram',
+      label: 'Telegram',
+      labelClass: 'text-blue-600 dark:text-blue-400',
+      placeholder: 'username (без @)',
+      focusRingClass: 'focus:ring-blue-500',
+    },
+    {
+      key: 'instagram',
+      label: 'Instagram',
+      labelClass: 'bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500 bg-clip-text text-transparent',
+      placeholder: 'username (без @)',
+      focusRingClass: 'focus:ring-pink-500',
+    },
+    {
+      key: 'twitter',
+      label: 'Twitter / X',
+      labelClass: 'text-gray-900 dark:text-gray-100',
+      placeholder: 'username (без @)',
+      focusRingClass: 'focus:ring-gray-800',
+    },
+    {
+      key: 'linkedin',
+      label: 'LinkedIn',
+      labelClass: 'text-blue-700 dark:text-blue-400',
+      placeholder: 'username або повний URL',
+      focusRingClass: 'focus:ring-blue-600',
+    },
+    {
+      key: 'github',
+      label: 'GitHub',
+      labelClass: 'text-gray-800 dark:text-gray-200',
+      placeholder: 'username',
+      focusRingClass: 'focus:ring-gray-700',
+    },
+    {
+      key: 'goodreads',
+      label: 'Goodreads',
+      labelClass: 'text-amber-700 dark:text-amber-400',
+      placeholder: 'username або повний URL',
+      focusRingClass: 'focus:ring-amber-500',
+    },
+  ];
+  protected readonly nameForm = new FormGroup({
+    displayName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(2)],
+    }),
+  });
+  /** Typed reactive form for updating social media links. */
+  protected readonly socialsForm = new FormGroup({
+    telegram:  new FormControl('', { nonNullable: true }),
+    instagram: new FormControl('', { nonNullable: true }),
+    twitter:   new FormControl('', { nonNullable: true }),
+    linkedin:  new FormControl('', { nonNullable: true }),
+    github:    new FormControl('', { nonNullable: true }),
+    goodreads: new FormControl('', { nonNullable: true }),
+  });
+  /** Controls whether socials are visible to all club members. */
+  protected readonly socialsPublicControl = new FormControl<boolean>(false, { nonNullable: true });
+  /** Tracks the in-flight save state (synchronous here, but keeps the pattern extensible). */
+  protected readonly isSavingName = signal(false);
+  /** Two-letter initials derived from the current user's display name. */
+  protected readonly userInitials = computed<string>(() => {
+    const name = this.auth.currentUser()?.displayName ?? '';
+    return name
+      .split(' ')
+      .map(w => w[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  });
+  /** Human-readable role label shown in the hero badge. */
+  protected readonly roleLabel = computed<string>(() =>
+    this.auth.currentUser()?.role === 'organizer' ? 'Organizer' : 'Reader',
+  );
+  protected readonly joinedDate = computed<string>(() => {
+    const raw = this.auth.currentUser()?.createdAt;
+    if (!raw) return '';
+    return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' }).format(
+      new Date(raw),
+    );
+  });
+  protected readonly userSocials = computed<UserSocials>(
+    () => this.auth.currentUser()?.socials ?? {},
+  );
+  constructor() {
+    this.seo.setPageI18n('SEO.profile_title');
+    const user = this.auth.currentUser();
+    if (user) {
+      this.nameForm.patchValue({ displayName: user.displayName });
+      this.socialsPublicControl.setValue(user.socialsPublic ?? false);
+      if (user.socials) {
+        this.socialsForm.patchValue({
+          telegram:  user.socials.telegram  ?? '',
+          instagram: user.socials.instagram ?? '',
+          twitter:   user.socials.twitter   ?? '',
+          linkedin:  user.socials.linkedin  ?? '',
+          github:    user.socials.github    ?? '',
+          goodreads: user.socials.goodreads ?? '',
+        });
+      }
+    }
+  }
+  /** Switch the user's role and show a transient success toast. */
+  protected async changeRole(role: UserRole): Promise<void> {
+    try {
+      await this.auth.updateRole(role);
+      this.toast.show('PROFILE.role_changed', 'success');
+    } catch {  }
+  }
+  protected async saveName(): Promise<void> {
+    if (this.nameForm.invalid) return;
+    this.isSavingName.set(true);
+    const { displayName } = this.nameForm.getRawValue();
+    try {
+      await this.auth.updateDisplayName(displayName);
+      this.toast.show('PROFILE.name_updated', 'success');
+    } catch {  }
+    finally {
+      this.isSavingName.set(false);
+    }
+  }
+  protected async submitSocials(): Promise<void> {
+    const raw = this.socialsForm.getRawValue();
+    const socials: UserSocials = {
+      ...(raw.telegram  ? { telegram:  raw.telegram  } : {}),
+      ...(raw.instagram ? { instagram: raw.instagram } : {}),
+      ...(raw.twitter   ? { twitter:   raw.twitter   } : {}),
+      ...(raw.linkedin  ? { linkedin:  raw.linkedin  } : {}),
+      ...(raw.github    ? { github:    raw.github    } : {}),
+      ...(raw.goodreads ? { goodreads: raw.goodreads } : {}),
+    };
+    try {
+      await this.auth.updateSocials(socials);
+      this.toast.show('PROFILE.socials_saved', 'success');
+    } catch {  }
+  }
+  protected async onSocialsPublicChange(value: boolean): Promise<void> {
+    try {
+      await this.auth.setSocialsPublic(value);
+    } catch {  }
+  }
+}
+````
+
+## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizQuestion } from '../../../core/models/quiz.model';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+interface MetaForm {
+  title: FormControl<string>;
+  description: FormControl<string>;
+}
+interface QuestionForm {
+  question: FormControl<string>;
+  option0: FormControl<string>;
+  option1: FormControl<string>;
+  option2: FormControl<string>;
+  option3: FormControl<string>;
+  correctIndex: FormControl<number>;
+}
+type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
+@Component({
+  selector: 'app-quiz-create',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
+  templateUrl: './quiz-create.component.html',
+})
+export class QuizCreateComponent {
+  private readonly quizService = inject(QuizService);
+  private readonly router = inject(Router);
+  protected readonly currentStep = signal<1 | 2>(1);
+  protected readonly localQuestions = signal<LocalQuestion[]>([]);
+  protected readonly isPublishing = signal(false);
+  protected readonly errorMessage = signal('');
+  readonly id = input<string>('');
+  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
+  protected readonly metaForm = new FormGroup<MetaForm>({
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+  });
+  protected readonly questionForm = new FormGroup<QuestionForm>({
+    question: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
+    }),
+    option0: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option1: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option2: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option3: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    correctIndex: new FormControl<number>(0, { nonNullable: true }),
+  });
+  protected isInvalidTouched(ctrl: AbstractControl): boolean {
+    return ctrl.invalid && ctrl.touched;
+  }
+  protected optionLabel(index: number): string {
+    return String.fromCodePoint(65 + index);
+  }
+  protected nextStep(): void {
+    if (this.metaForm.invalid) {
+      this.metaForm.markAllAsTouched();
+      return;
+    }
+    this.currentStep.set(2);
+  }
+  protected previousStep(): void {
+    this.currentStep.set(1);
+    this.errorMessage.set('');
+  }
+  protected addQuestion(): void {
+    if (this.questionForm.invalid) {
+      this.questionForm.markAllAsTouched();
+      return;
+    }
+    const { question, option0, option1, option2, option3, correctIndex } =
+      this.questionForm.getRawValue();
+    const newQuestion: LocalQuestion = {
+      question: question.trim(),
+      options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
+      correctIndex,
+    };
+    this.localQuestions.update(prev => [...prev, newQuestion]);
+    this.questionForm.reset({ correctIndex: 0 });
+  }
+  protected removeQuestion(index: number): void {
+    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
+  }
+  protected publishQuiz(): void {
+    const questions = this.localQuestions();
+    if (questions.length === 0) return;
+    this.isPublishing.set(true);
+    this.errorMessage.set('');
+    const { title, description } = this.metaForm.getRawValue();
+    const clubId = this.id();
+    this.quizService
+      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
+      .then(async quiz => {
+        for (const q of questions) {
+          await this.quizService.addQuestion(quiz.id, q);
+        }
+        await this.quizService.toggleActive(quiz.id, true);
+        this.isPublishing.set(false);
+        this.router.navigate(['/clubs', clubId, 'quizzes']);
+      })
+      .catch(err => {
+        this.isPublishing.set(false);
+        this.errorMessage.set((err as Error).message);
+      });
+  }
+}
+````
+
+## File: src/app/features/quiz/quiz-take/quiz-take.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizAttempt } from '../../../core/models/quiz.model';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
+@Component({
+  selector: 'app-quiz-take',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, LoadingSpinnerComponent],
+  templateUrl: './quiz-take.component.html',
+})
+export class QuizTakeComponent implements OnInit {
+  protected readonly quizService = inject(QuizService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  protected readonly state = signal<QuizState>('loading');
+  protected readonly errorMessage = signal('');
+  protected readonly currentIndex = signal(0);
+  protected readonly selectedAnswers = signal<number[]>([]);
+  protected readonly selectedOption = computed(
+    () => this.selectedAnswers()[this.currentIndex()] ?? -1,
+  );
+  protected readonly attempt = signal<QuizAttempt | null>(null);
+  protected clubId = '';
+  protected readonly currentQuestion = computed(
+    () => this.quizService.questions()[this.currentIndex()] ?? null,
+  );
+  protected readonly isLastQuestion = computed(
+    () => this.currentIndex() === this.quizService.questions().length - 1,
+  );
+  protected readonly progressPercent = computed(() => {
+    const total = this.quizService.questions().length;
+    return total === 0 ? 0 : Math.round(((this.currentIndex() + 1) / total) * 100);
+  });
+  protected readonly scorePercent = computed(() => {
+    const a = this.attempt();
+    if (!a || a.total === 0) return 0;
+    return Math.round((a.score / a.total) * 100);
+  });
+  protected readonly scoreMessage = computed(() => {
+    const pct = this.scorePercent();
+    if (pct === 100) return '🎉 Perfect score!';
+    if (pct >= 80) return '🌟 Great job!';
+    if (pct >= 60) return '👍 Good effort!';
+    if (pct >= 40) return '📖 Keep reading!';
+    return '💪 Better luck next time!';
+  });
+  ngOnInit(): void {
+    // Both :id (club) and :quizId are inherited via paramsInheritanceStrategy:'always'
+    this.clubId = this.route.snapshot.params['id'] as string;
+    const quizId = this.route.snapshot.params['quizId'] as string;
+    if (!quizId) {
+      this.errorMessage.set('Quiz not found.');
+      this.state.set('error');
+      return;
+    }
+    this.quizService
+      .loadQuestions(quizId)
+      .then(() => {
+        const count = this.quizService.questions().length;
+        if (count === 0) {
+          this.errorMessage.set('This quiz has no questions yet.');
+          this.state.set('error');
+          return;
+        }
+        this.selectedAnswers.set(new Array<number>(count).fill(-1));
+        this.state.set('taking');
+      })
+      .catch(err => {
+        this.errorMessage.set((err as Error).message);
+        this.state.set('error');
+      });
+  }
+  protected optionLabel(index: number): string {
+    return String.fromCodePoint(65 + index);
+  }
+  protected selectOption(index: number): void {
+    const current = this.currentIndex();
+    this.selectedAnswers.update(answers => {
+      const copy = [...answers];
+      copy[current] = index;
+      return copy;
+    });
+  }
+  protected next(): void {
+    if (this.selectedOption() === -1) return;
+    this.currentIndex.update(i => i + 1);
+  }
+  protected previous(): void {
+    if (this.currentIndex() === 0) return;
+    this.currentIndex.update(i => i - 1);
+  }
+  protected submit(): void {
+    if (this.selectedOption() === -1) return;
+    this.state.set('submitting');
+    const quizId = this.route.snapshot.params['quizId'] as string;
+    this.quizService
+      .submitAttempt(quizId, this.selectedAnswers())
+      .then(result => {
+        this.attempt.set(result);
+        this.state.set('results');
+      })
+      .catch(err => {
+        this.errorMessage.set((err as Error).message);
+        this.state.set('error');
+      });
+  }
+}
+````
+
+## File: src/app/features/randomizer/randomizer.component.html
+````html
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 p-4 sm:p-8">
+  <div class="max-w-4xl mx-auto space-y-8">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-white">🎲 {{ 'RANDOMIZER.title' | translate }}</h1>
+        <p class="text-primary-300 mt-1">{{ 'RANDOMIZER.subtitle' | translate }}</p>
+      </div>
+      <nav aria-label="Breadcrumb">
+        <a [routerLink]="['/clubs', clubId]" class="text-primary-300 hover:text-white transition-colors text-sm">
+          {{ 'RANDOMIZER.back_to_club' | translate }}
+        </a>
+      </nav>
+    </header>
+    <div class="bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/10">
+      <label for="purpose" class="block text-white font-medium text-sm mb-2">{{ 'RANDOMIZER.purpose_label' | translate }}</label>
+      <input
+        hlmInput
+        id="purpose"
+        type="text"
+        [formControl]="purposeControl"
+        [placeholder]="'RANDOMIZER.purpose_placeholder' | translate"
+        class="w-full rounded-xl bg-white/10 border-white/20 text-white placeholder-white/40 px-4 focus-visible:ring-primary-400"
+      />
+    </div>
+    <div class="grid lg:grid-cols-2 gap-8">
+      <section aria-labelledby="members-heading" class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 id="members-heading" class="text-white font-semibold text-lg">
+            👥 {{ 'RANDOMIZER.members_title' | translate }}
+            <span class="text-primary-300 text-sm font-normal ml-2">{{ selectedCount() }} / {{ randomizerService.candidates().length }} {{ 'RANDOMIZER.selected' | translate }}</span>
+          </h2>
+          <button
+            hlmBtn
+            variant="ghost"
+            size="sm"
+            type="button"
+            (click)="reset()"
+            class="text-xs text-primary-300 hover:text-white"
+          >
+            {{ 'RANDOMIZER.select_all' | translate }}
+          </button>
+        </div>
+        @if (randomizerService.candidates().length === 0) {
+          <div class="bg-white/10 rounded-2xl p-8 text-center text-white/60">
+            <p class="text-3xl mb-2">👤</p>
+            <p>{{ 'RANDOMIZER.no_members' | translate }}</p>
+          </div>
+        } @else {
+          <ul class="space-y-2">
+            @for (member of randomizerService.candidates(); track member.userId) {
+              <li>
+                <button
+                  type="button"
+                  (click)="randomizerService.toggleMember(member.userId)"
+                  class="w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  [class]="randomizerService.selectedIds().has(member.userId)
+                    ? 'bg-white/20 border border-white/30'
+                    : 'bg-white/5 border border-white/10 opacity-50'"
+                  [attr.aria-pressed]="randomizerService.selectedIds().has(member.userId)"
+                  [attr.aria-label]="'Toggle ' + member.displayName"
+                >
+                  <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                    {{ member.displayName | initials }}
+                  </div>
+                  <span class="text-white font-medium text-sm flex-1 text-left">{{ member.displayName }}</span>
+                  @if (randomizerService.selectedIds().has(member.userId)) {
+                    <span class="text-green-400 text-lg" aria-hidden="true">✓</span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+      <section aria-labelledby="spin-heading" class="space-y-6">
+        <h2 id="spin-heading" class="sr-only">{{ 'RANDOMIZER.title' | translate }}</h2>
+        <div class="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/10 text-center min-h-[200px] flex flex-col items-center justify-center">
+          @if (randomizerService.isSpinning()) {
+            <div class="space-y-4">
+              <div class="text-5xl animate-bounce">🎲</div>
+              <p class="text-white/70 text-sm animate-pulse">{{ 'RANDOMIZER.spinning' | translate }}</p>
+            </div>
+          } @else if (randomizerService.result()) {
+            <div class="space-y-3">
+              <div class="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl ring-4 ring-white/30">
+                {{ randomizerService.result()!.displayName | initials }}
+              </div>
+              <div>
+                <p class="text-white/60 text-xs uppercase tracking-wide mb-1">{{ randomizerService.purpose() }}</p>
+                <p class="text-white text-2xl font-bold">{{ randomizerService.result()!.displayName }}</p>
+              </div>
+              <span class="text-3xl">🏆</span>
+            </div>
+          } @else {
+            <div class="text-white/40 space-y-2">
+              <div class="text-4xl">🎯</div>
+              <p class="text-sm">{{ 'RANDOMIZER.spin_hint' | translate }}</p>
+            </div>
+          }
+        </div>
+        @if (errorMessage()) {
+          <div class="rounded-xl bg-red-500/20 border border-red-500/30 px-4 py-3 text-sm text-red-300" role="alert">
+            {{ errorMessage() }}
+          </div>
+        }
+        <div class="flex flex-col gap-3">
+          <button
+            hlmBtn
+            type="button"
+            (click)="spin()"
+            [disabled]="randomizerService.isSpinning() || selectedCount() < 2"
+            class="w-full rounded-2xl bg-gradient-to-r from-accent-500 to-primary-500 hover:from-accent-400 hover:to-primary-400 text-white font-bold py-4 text-lg shadow-lg"
+          >
+            @if (randomizerService.isSpinning()) {
+              {{ 'RANDOMIZER.spinning_btn' | translate }}
+            } @else {
+              {{ 'RANDOMIZER.spin' | translate }}
+            }
+          </button>
+          @if (randomizerService.result() && authService.isOrganizer()) {
+            <button
+              hlmBtn
+              variant="outline"
+              type="button"
+              (click)="saveSession()"
+              [disabled]="isSaving()"
+              class="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3"
+            >
+              @if (isSaving()) {
+                {{ 'RANDOMIZER.saving' | translate }}
+              } @else {
+                {{ 'RANDOMIZER.save' | translate }}
+              }
+            </button>
+          }
+        </div>
+        @if (randomizerService.history().length > 0) {
+          <div class="space-y-3">
+            <h3 class="text-white/70 text-sm font-medium uppercase tracking-wide">{{ 'RANDOMIZER.history_title' | translate }}</h3>
+            <ul class="space-y-2">
+              @for (session of randomizerService.history().slice(0, 5); track session.id) {
+                <li class="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-white/60 text-xs truncate">{{ session.purpose }}</p>
+                    @if (session.result) {
+                      <p class="text-white text-sm font-medium">🏆 {{ session.result.displayName }}</p>
+                    }
+                  </div>
+                  <span class="text-white/40 text-xs shrink-0">{{ session.createdAt | date:'dd.MM HH:mm' }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </section>
+    </div>
+  </div>
+</div>
+````
+
+## File: src/app/features/randomizer/randomizer.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  effect,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { DatePipe } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../core/auth/auth.service';
+import { RandomizerService } from '../../core/services/randomizer.service';
+import { InitialsPipe } from '../../shared/pipes/initials.pipe';
+import { HlmButton } from '../../shared/spartan/button/src';
+import { HlmInput } from '../../shared/spartan/input/src';
+@Component({
+  selector: 'app-randomizer',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule, InitialsPipe, HlmButton, HlmInput],
+  styleUrl: './randomizer.component.scss',
+  templateUrl: './randomizer.component.html',
+})
+export class RandomizerComponent implements OnInit {
+  protected readonly randomizerService = inject(RandomizerService);
+  protected readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  protected readonly isSaving = signal(false);
+  protected readonly errorMessage = signal('');
+  protected clubId = '';
+  protected readonly purposeControl = new FormControl('Хто представляє книгу?', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
+  // toSignal keeps OnPush change detection working without manual markForCheck
+  private readonly _purposeValue = toSignal(this.purposeControl.valueChanges, {
+    initialValue: this.purposeControl.value,
+  });
+  constructor() {
+    effect(() => this.randomizerService.setPurpose(this._purposeValue()));
+  }
+  protected readonly selectedCount = computed(
+    () =>
+      this.randomizerService
+        .candidates()
+        .filter(m => this.randomizerService.selectedIds().has(m.userId)).length,
+  );
+  ngOnInit(): void {
+    this.clubId = this.route.snapshot.params['id'] as string;
+    this.randomizerService.loadClubMembers(this.clubId);
+    this.randomizerService.loadHistory(this.clubId).catch(() => {});
+  }
+  protected spin(): void {
+    this.errorMessage.set('');
+    this.randomizerService.spin().catch(err => {
+      this.errorMessage.set((err as Error).message);
+    });
+  }
+  protected saveSession(): void {
+    this.isSaving.set(true);
+    this.errorMessage.set('');
+    this.randomizerService
+      .saveSession(this.clubId)
+      .then(() => this.isSaving.set(false))
+      .catch(err => {
+        this.isSaving.set(false);
+        this.errorMessage.set((err as Error).message);
+      });
+  }
+  protected reset(): void {
+    this.randomizerService.reset();
+    this.errorMessage.set('');
+  }
+}
+````
+
+## File: src/app/layout/header/header.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  computed,
+} from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { AuthService } from '../../core/auth/auth.service';
+import { HlmDropdownMenuImports } from '../../shared/spartan/dropdown-menu/src';
+import { HlmSheetImports } from '../../shared/spartan/sheet/src';
+import { HlmButton } from '../../shared/spartan/button/src';
+@Component({
+  selector: 'app-header',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, RouterLinkActive, TranslateModule, ...HlmDropdownMenuImports, ...HlmSheetImports, HlmButton],
+  templateUrl: './header.component.html',
+})
+export class HeaderComponent {
+  private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
+  readonly isAuthenticated = this.auth.isAuthenticated;
+  readonly currentUser = this.auth.currentUser;
+  readonly currentLang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: 'uk' },
+  );
+  readonly userInitials = computed(() => {
+    const name = this.currentUser()?.displayName ?? '';
+    return (
+      name
+        .split(' ')
+        .slice(0, 2)
+        .map(w => w[0]?.toUpperCase() ?? '')
+        .join('') || '?'
+    );
+  });
+  switchLang(): void {
+    const next = this.currentLang() === 'uk' ? 'en' : 'uk';
+    this.translate.use(next).subscribe();
+  }
+  async signOut(): Promise<void> {
+    await this.auth.signOut();
+  }
+}
+````
+
+## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.html
+````html
+<div class="relative">
+  <input
+    hlmInput
+    [id]="inputId() || undefined"
+    [formControl]="control()"
+    [placeholder]="placeholder()"
+    autocomplete="off"
+    class="w-full"
+    (keydown)="onKeydown($event)"
+  />
+  @if (isLoading()) {
+    <div class="absolute right-3 top-3 flex items-center justify-center">
+      <svg class="h-4 w-4 animate-spin text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+    </div>
+  }
+  @if (isOpen() && suggestions().length > 0) {
+    <ul class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-48 overflow-y-auto">
+      @for (s of suggestions(); track s.label; let i = $index) {
+        <li
+          role="option"
+          tabindex="0"
+          [attr.aria-selected]="activeIndex() === i"
+          (click)="select(s)"
+          (keydown.enter)="select(s)"
+          (keydown.space)="$event.preventDefault(); select(s)"
+          [class.bg-primary-50]="activeIndex() === i"
+          [class.dark:bg-primary-900/20]="activeIndex() === i"
+          class="cursor-pointer px-4 py-2.5 text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >{{ s.label }}</li>
+      }
+    </ul>
+  }
+</div>
+````
+
+## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
+````typescript
+import {
+  Component, ChangeDetectionStrategy, input, output,
+  OnInit, OnDestroy, signal, inject, ElementRef, HostListener,
+} from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { Subject, switchMap, debounceTime, distinctUntilChanged, of, takeUntil } from 'rxjs';
+import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
+import { HlmInput } from '../../spartan/input/src';
+@Component({
+  selector: 'app-address-autocomplete',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, HlmInput],
+  templateUrl: './address-autocomplete.component.html',
+})
+export class AddressAutocompleteComponent implements OnInit, OnDestroy {
+  readonly control = input.required<FormControl<string>>();
+  readonly placeholder = input<string>('');
+  readonly inputId = input<string>('');
+  readonly selected = output<GeocodeSuggestion>();
+  private readonly geocoding = inject(GeocodingService);
+  private readonly elRef = inject(ElementRef);
+  private readonly destroy$ = new Subject<void>();
+  readonly suggestions = signal<GeocodeSuggestion[]>([]);
+  readonly isLoading = signal(false);
+  readonly isOpen = signal(false);
+  readonly activeIndex = signal(-1);
+  ngOnInit(): void {
+    this.control().valueChanges.pipe(
+      debounceTime(300),
+      distinctUntilChanged(),
+      switchMap(q => {
+        if (!q || q.length < 2) {
+          this.suggestions.set([]);
+          this.isOpen.set(false);
+          return of([]);
+        }
+        this.isLoading.set(true);
+        return this.geocoding.autocomplete(q);
+      }),
+      takeUntil(this.destroy$),
+    ).subscribe({
+      next: (results) => {
+        this.isLoading.set(false);
+        this.suggestions.set(results);
+        this.activeIndex.set(-1);
+        this.isOpen.set(results.length > 0);
+      },
+      error: () => {
+        this.isLoading.set(false);
+        this.suggestions.set([]);
+      },
+    });
+  }
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+  select(s: GeocodeSuggestion): void {
+    this.control().setValue(s.label, { emitEvent: false });
+    this.suggestions.set([]);
+    this.isOpen.set(false);
+    this.selected.emit(s);
+  }
+  onKeydown(event: KeyboardEvent): void {
+    if (!this.isOpen()) return;
+    const len = this.suggestions().length;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i + 1) % len);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i - 1 + len) % len);
+    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
+      event.preventDefault();
+      this.select(this.suggestions()[this.activeIndex()]);
+    } else if (event.key === 'Escape') {
+      this.isOpen.set(false);
+    }
+  }
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.elRef.nativeElement.contains(event.target)) {
+      this.isOpen.set(false);
+    }
+  }
+}
+````
+
+## File: src/environments/environment.ts
+````typescript
+export const environment = {
+  production: false,
+  apiUrl: 'http://localhost:8000/api/v1',
+};
+````
+
+## File: CLAUDE.md
+````markdown
+# Project Context
+This project uses **Repomix** to provide a full map of the codebase.
+
+## Stack
+- Frontend: Angular 20 (Signals—using Angular 20 features like resource() and linkedSignal(), standalone components, SCSS, Tailwind)
+- Backend: FastAPI (Async, Pydantic v2)
+
+## Folder Structure
+- `src/app/features/` — Angular feature components (auth, clubs, profile, quiz, randomizer)
+- `src/app/core/` — Core services, guards, interceptors, models
+- `src/app/shared/` — Shared UI components, pipes, directives
+- `src/app/layout/` — Shell, header, footer
+- `public/i18n/` — Translation files (en.json, uk.json)
+- `supabase/migrations/` — SQL migrations for backend
+
+## How to Run
+- **Dev server:** `npm start` (Angular at http://localhost:4200)
+- **Build:** `npm run build`
+- **Update context:** `npm run build-ctx`
+
+## Testing & Linting
+- **Unit tests:** `npm run test` (Jest)
+- **E2E tests:** Playwright (see docs)
+- **Lint:** `npm run lint`
+
+## Pre-commit Hooks & Development Workflow
+- This project does **not** use `.pre-commit-config.yaml`, `ruff`, or `black`.
+- Pre-commit hooks are managed via Husky. The only pre-commit hook is `.husky/pre-commit`, which runs `lint-staged`.
+- The pre-commit hook updates `repomix-output.md` using `lint-staged`.
+- No Python-specific formatting or linting tools are involved in the pre-commit process.
+
+## Notes
+- Always check `repomix-output.md` for the latest project map.
+- If a file is not in repomix-output.md, assume it doesn't exist yet.
+- Backend API routes: see FastAPI project (not in this repo).
+````
+
+## File: sonar-project.properties
+````
+# Replace YOUR_ORG with your actual SonarCloud organization slug
+sonar.projectKey=leo477_book-club-fe
+sonar.organization=leo477
+sonar.projectName=Book Club Frontend
+sonar.projectVersion=1.0
+
+sonar.sources=src
+sonar.tests=src
+sonar.test.inclusions=**/*.spec.ts
+sonar.exclusions=**/node_modules/**,**/*.spec.ts,src/assets/**,src/environments/**
+
+sonar.typescript.lcov.reportPaths=coverage/book-club-fe/lcov.info
+
+# Exclude non-testable and currently untested files from coverage requirements
+sonar.coverage.exclusions=\
+  **/*.html,\
+  **/*.spec.ts,\
+  **/mocks/**,\
+  **/*.model.ts,\
+  **/*.interface.ts,\
+  **/*.config.ts,\
+  **/environments/**,\
+  src/app/features/**,\
+  src/app/layout/**,\
+  src/app/core/services/randomizer.service.ts,\
+  src/app/core/services/quiz.service.ts,\
+  src/app/core/services/club.service.ts,\
+  src/app/core/supabase/**
+
+sonar.sourceEncoding=UTF-8
+````
+
+## File: src/app/core/api/api-error.util.ts
+````typescript
+import { HttpErrorResponse } from '@angular/common/http';
+export function extractApiError(err: unknown): string {
+  if (err instanceof HttpErrorResponse) {
+    const body = err.error as { error?: unknown; detail?: unknown } | null;
+    if (typeof body?.error === 'string') return body.error;
+    const detail = body?.detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) return (detail[0] as { msg?: string })?.msg ?? err.message ?? 'Unknown error';
+    if (detail && typeof detail === 'object') return (detail as { error?: string }).error ?? err.message ?? 'Unknown error';
+    return err.message ?? 'Unknown error';
+  }
+  return 'Unknown error';
+}
+````
+
+## File: src/app/core/interceptors/auth.interceptor.ts
+````typescript
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, throwError } from 'rxjs';
+import { ToastService } from '../services/toast.service';
+import { TokenStore } from '../auth/token.store';
+import { environment } from '../../../environments/environment';
+export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const router = inject(Router);
+  const toast = inject(ToastService);
+  const tokenStore = inject(TokenStore);
+  const token = tokenStore.snapshot();
+  const authedReq = token
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
+  return next(authedReq).pipe(
+    catchError((error: unknown) => {
+      const httpError = error instanceof HttpErrorResponse ? error : null;
+      if (httpError?.status === 401 && token) {
+        tokenStore.clear();
+        router.navigate(['/login']);
+      } else if (httpError?.status === 403) {
+        router.navigate(['/clubs']);
+      } else if (httpError && httpError.status >= 500) {
+        if (!environment.production) {
+          console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
+        }
+        toast.show('A server error occurred. Please try again later.', 'error');
+      }
+      return throwError(() => error);
+    }),
+  );
+};
+````
+
+## File: src/app/core/models/club.model.ts
+````typescript
+import { UserSocials } from './user.model';
+import { AfterMeetingVenue } from './event.model';
+export type BanDuration = 1 | 3 | 5 | 'permanent';
+export type ClubStatus = 'active' | 'paused' | 'cancelled';
+export interface CurrentBook {
+  title: string;
+  author: string;
+  description: string;
+}
+export interface BanRecord {
+  userId: string;
+  clubId: string;
+  bannedAt: string;
+  duration: BanDuration;
+  bannedBy: string;
+}
+export interface Club {
+  id: string;
+  name: string;
+  description: string | null;
+  coverUrl: string | null;
+  organizerId: string;
+  isPublic: boolean;
+  memberCount: number;
+  memberPreviews: string[];
+  createdAt: string;
+  city: string;
+  nextMeetingDate: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  theme: string | null;
+  currentBook: CurrentBook | null;
+  status: ClubStatus;
+  tags: string[];
+  meetingDurationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  cancelledAt?: string;
+}
+export interface ClubMember {
+  clubId: string;
+  userId: string;
+  role: 'member' | 'organizer';
+  joinedAt: string;
+}
+export interface ClubMemberDetail {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: 'member' | 'organizer';
+  socials?: UserSocials;
+  socialsPublic: boolean;
+}
+````
+
+## File: src/app/core/models/event.model.ts
+````typescript
+export type EventStatus = 'scheduled' | 'active' | 'held' | 'cancelled' | 'rescheduled' | 'upcoming';
+export interface AfterMeetingVenue {
+  name: string;
+  address: string;
+  description?: string;
+  lat?: number;
+  lng?: number;
+}
+export interface ClubEvent {
+  id: string;
+  clubId: string;
+  clubName: string;
+  organizerId: string;
+  title: string;
+  description: string | null;
+  date: string;
+  city: string;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  status: EventStatus;
+  cancelledAt?: string;
+  coverUrl: string | null;
+  theme: string | null;
+  tags: string[];
+  durationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  attendeeCount: number;
+  isAttending: boolean;
+  bookTitle?: string | null;
 }
 ````
 
@@ -7706,1488 +10197,6 @@ export class LoginComponent {
     </style>
 ````
 
-## File: src/app/features/clubs/club-detail/info/club-info.component.html
-````html
-
-````
-
-## File: src/app/features/clubs/edit-club/edit-club.component.html
-````html
-<main class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-lg">
-    <header class="text-center mb-8">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
-      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'EDIT_CLUB.subtitle' | translate }}</p>
-    </header>
-    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'EDIT_CLUB.title' | translate }}</h2>
-      @if (isLoadingClub()) {
-        <div class="flex justify-center py-12">
-          <app-loading-spinner />
-        </div>
-      } @else {
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-          <div>
-            <label for="club-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'EDIT_CLUB.name_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
-            </label>
-            <input
-              id="club-name"
-              type="text"
-              formControlName="name"
-              [placeholder]="'EDIT_CLUB.name_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-              [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
-              aria-describedby="name-error"
-            />
-            @if (form.controls.name.invalid && form.controls.name.touched) {
-              <p id="name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                @if (form.controls.name.errors?.['required']) { {{ 'EDIT_CLUB.name_required' | translate }} }
-                @else if (form.controls.name.errors?.['minlength']) { {{ 'EDIT_CLUB.name_min' | translate }} }
-                @else if (form.controls.name.errors?.['maxlength']) { {{ 'EDIT_CLUB.name_max' | translate }} }
-              </p>
-            }
-          </div>
-          <div>
-            <label for="club-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'EDIT_CLUB.description_label' | translate }}
-            </label>
-            <textarea
-              id="club-description"
-              formControlName="description"
-              rows="3"
-              [placeholder]="'EDIT_CLUB.description_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-              [class.border-red-400]="form.controls.description.invalid && form.controls.description.touched"
-              aria-describedby="description-error"
-            ></textarea>
-            @if (form.controls.description.invalid && form.controls.description.touched) {
-              <p id="description-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-                @if (form.controls.description.errors?.['maxlength']) { {{ 'EDIT_CLUB.description_max' | translate }} }
-              </p>
-            }
-          </div>
-          <div>
-            <label for="club-city" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              {{ 'EDIT_CLUB.city_label' | translate }}
-            </label>
-            <input
-              id="club-city"
-              type="text"
-              formControlName="city"
-              [placeholder]="'EDIT_CLUB.city_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-            />
-          </div>
-          <div>
-            <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{ 'EDIT_CLUB.cover_url_label' | translate }}
-            </p>
-            <app-cover-upload [control]="form.controls.coverUrl" />
-          </div>
-          <fieldset>
-            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'EDIT_CLUB.visibility_legend' | translate }}</legend>
-            <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-              <div>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'EDIT_CLUB.public_label' | translate }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'EDIT_CLUB.public_desc' | translate }}</p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                [attr.aria-checked]="form.controls.isPublic.value"
-                (click)="togglePublic()"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                [class.bg-primary-600]="form.controls.isPublic.value"
-                [class.bg-gray-300]="!form.controls.isPublic.value"
-                [class.dark:bg-gray-600]="!form.controls.isPublic.value"
-              >
-                <span
-                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                  [class.translate-x-6]="form.controls.isPublic.value"
-                  [class.translate-x-1]="!form.controls.isPublic.value"
-                ></span>
-              </button>
-            </div>
-          </fieldset>
-          @if (errorMessage()) {
-            <div
-              class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-              role="alert"
-            >
-              <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
-              <span>{{ errorMessage() }}</span>
-            </div>
-          }
-          <div class="flex gap-3 pt-2">
-            <button
-              type="button"
-              (click)="cancel()"
-              class="flex-1 rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-2.5
-                     text-sm font-semibold text-gray-700 dark:text-gray-300
-                     hover:bg-gray-50 dark:hover:bg-gray-800
-                     focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2
-                     transition-colors duration-200"
-            >
-              {{ 'EDIT_CLUB.cancel' | translate }}
-            </button>
-            <button
-              type="submit"
-              [disabled]="isSubmitting()"
-              class="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5
-                     text-sm font-semibold text-white shadow-sm
-                     hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-                     disabled:opacity-60 disabled:cursor-not-allowed
-                     transition-colors duration-200"
-            >
-              @if (isSubmitting()) {
-                <app-loading-spinner size="sm" />
-                {{ 'EDIT_CLUB.submitting' | translate }}
-              } @else {
-                {{ 'EDIT_CLUB.submit' | translate }}
-              }
-            </button>
-          </div>
-        </form>
-      }
-    </article>
-  </div>
-</main>
-````
-
-## File: src/app/features/clubs/edit-club/edit-club.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  input,
-  OnInit,
-} from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { ToastService } from '../../../core/services/toast.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
-interface EditClubForm {
-  name: FormControl<string>;
-  description: FormControl<string>;
-  isPublic: FormControl<boolean>;
-  city: FormControl<string>;
-  coverUrl: FormControl<string>;
-}
-@Component({
-  selector: 'app-edit-club',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent, CoverUploadComponent],
-  templateUrl: './edit-club.component.html',
-})
-export class EditClubComponent implements OnInit {
-  readonly id = input.required<string>();
-  private readonly clubService = inject(ClubService);
-  private readonly router = inject(Router);
-  private readonly toast = inject(ToastService);
-  private readonly translate = inject(TranslateService);
-  private readonly _isLoadingClub = signal(true);
-  readonly isLoadingClub = this._isLoadingClub.asReadonly();
-  private readonly _isSubmitting = signal(false);
-  readonly isSubmitting = this._isSubmitting.asReadonly();
-  private readonly _errorMessage = signal<string | null>(null);
-  readonly errorMessage = this._errorMessage.asReadonly();
-  readonly form = new FormGroup<EditClubForm>({
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-    isPublic: new FormControl(true, { nonNullable: true }),
-    city: new FormControl('', { nonNullable: true }),
-    coverUrl: new FormControl('', { nonNullable: true }),
-  });
-  async ngOnInit(): Promise<void> {
-    const club = await this.clubService.getClubById(this.id());
-    if (!club) {
-      this._errorMessage.set('Club not found.');
-      this._isLoadingClub.set(false);
-      return;
-    }
-    this.form.patchValue({
-      name: club.name,
-      description: club.description ?? '',
-      isPublic: club.isPublic,
-      city: club.city ?? '',
-      coverUrl: club.coverUrl ?? '',
-    });
-    this._isLoadingClub.set(false);
-  }
-  togglePublic(): void {
-    this.form.controls.isPublic.setValue(!this.form.controls.isPublic.value);
-  }
-  cancel(): void {
-    this.router.navigate(['/clubs', this.id()]);
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this._isSubmitting.set(true);
-    this._errorMessage.set(null);
-    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
-    try {
-      await this.clubService.updateClub(this.id(), {
-        name,
-        description,
-        isPublic,
-        city: city || undefined,
-        coverUrl: coverUrl || null,
-      });
-      this.toast.show(this.translate.instant('EDIT_CLUB.success'), 'success');
-      this.router.navigate(['/clubs', this.id()]);
-    } catch (err) {
-      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to update club');
-    } finally {
-      this._isSubmitting.set(false);
-    }
-  }
-}
-````
-
-## File: src/app/features/clubs/clubs.routes.ts
-````typescript
-import { Routes } from '@angular/router';
-import { authGuard } from '../../core/auth/auth.guard';
-import { roleGuard } from '../../core/auth/role.guard';
-import { ClubsListComponent } from './clubs-list/clubs-list.component';
-import { ClubDetailComponent } from './club-detail/club-detail.component';
-import { CreateClubComponent } from './create-club/create-club.component';
-export const CLUBS_ROUTES: Routes = [
-  {
-    path: '',
-    component: ClubsListComponent,
-    canActivate: [authGuard],
-  },
-  {
-    path: 'create',
-    component: CreateClubComponent,
-    canActivate: [authGuard, roleGuard('organizer')],
-  },
-  {
-    path: ':id',
-    children: [
-      {
-        path: '',
-        component: ClubDetailComponent,
-        canActivate: [authGuard],
-      },
-      {
-        path: 'randomizer',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('../randomizer/randomizer.component').then(
-            m => m.RandomizerComponent,
-          ),
-      },
-      {
-        path: 'quizzes',
-        loadChildren: () =>
-          import('../quiz/quiz.routes').then(m => m.QUIZ_ROUTES),
-      },
-      {
-        path: 'events/create',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('../events/create-event/create-event.component').then(
-            m => m.CreateEventComponent,
-          ),
-      },
-      {
-        path: 'edit',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('./edit-club/edit-club.component').then(m => m.EditClubComponent),
-      },
-    ],
-  },
-];
-````
-
-## File: src/app/features/events/events-feed/events-feed.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  OnInit,
-} from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
-import { EventService } from '../../../core/services/event.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { ClubEvent } from '../../../core/models/event.model';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { EventCardComponent } from '../event-card/event-card.component';
-@Component({
-  selector: 'app-events-feed',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, TranslateModule, LoadingSpinnerComponent, EmptyStateComponent, EventCardComponent],
-  templateUrl: './events-feed.component.html',
-})
-export class EventsFeedComponent implements OnInit {
-  readonly eventService = inject(EventService);
-  readonly auth = inject(AuthService);
-  readonly activeTab = signal<'upcoming' | 'my'>('upcoming');
-  readonly attendingEventId = signal<string | null>(null);
-  readonly sortedDates = computed(() =>
-    Object.keys(this.eventService.groupedByDate()).sort((a, b) => a.localeCompare(b)),
-  );
-  async ngOnInit(): Promise<void> {
-    await this.eventService.loadAllEvents();
-    if (this.auth.isAuthenticated()) {
-      await this.eventService.loadMyEvents();
-    }
-  }
-  async onAttend(event: ClubEvent): Promise<void> {
-    this.attendingEventId.set(event.id);
-    try {
-      await this.eventService.attendEvent(event.id);
-    } catch {
-    } finally {
-      this.attendingEventId.set(null);
-    }
-  }
-  async onCancelAttend(event: ClubEvent): Promise<void> {
-    this.attendingEventId.set(event.id);
-    try {
-      await this.eventService.cancelAttendance(event.id);
-    } catch {
-    } finally {
-      this.attendingEventId.set(null);
-    }
-  }
-}
-````
-
-## File: src/app/features/profile/profile.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-} from '@angular/core';
-import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../core/auth/auth.service';
-import { UserRole, UserSocials } from '../../core/models/user.model';
-import { SeoService } from '../../core/services/seo.service';
-import { ToastService } from '../../core/services/toast.service';
-import { SocialLinkFieldComponent, SocialField } from '../../shared/components/social-link-field/social-link-field.component';
-import { SocialBadgesComponent } from '../../shared/components/social-badges/social-badges.component';
-import { ProfileStatsComponent } from './stats/profile-stats.component';
-import { ProfileRoleSelectorComponent } from './role-selector/profile-role-selector.component';
-@Component({
-  selector: 'app-profile',
-  standalone: true,
-  imports: [ReactiveFormsModule, TranslateModule, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent],
-  templateUrl: './profile.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class ProfileComponent {
-  protected readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  private readonly toast = inject(ToastService);
-  protected readonly socialFields: SocialField[] = [
-    {
-      key: 'telegram',
-      label: 'Telegram',
-      labelClass: 'text-blue-600 dark:text-blue-400',
-      placeholder: 'username (без @)',
-      focusRingClass: 'focus:ring-blue-500',
-    },
-    {
-      key: 'instagram',
-      label: 'Instagram',
-      labelClass: 'bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500 bg-clip-text text-transparent',
-      placeholder: 'username (без @)',
-      focusRingClass: 'focus:ring-pink-500',
-    },
-    {
-      key: 'twitter',
-      label: 'Twitter / X',
-      labelClass: 'text-gray-900 dark:text-gray-100',
-      placeholder: 'username (без @)',
-      focusRingClass: 'focus:ring-gray-800',
-    },
-    {
-      key: 'linkedin',
-      label: 'LinkedIn',
-      labelClass: 'text-blue-700 dark:text-blue-400',
-      placeholder: 'username або повний URL',
-      focusRingClass: 'focus:ring-blue-600',
-    },
-    {
-      key: 'github',
-      label: 'GitHub',
-      labelClass: 'text-gray-800 dark:text-gray-200',
-      placeholder: 'username',
-      focusRingClass: 'focus:ring-gray-700',
-    },
-    {
-      key: 'goodreads',
-      label: 'Goodreads',
-      labelClass: 'text-amber-700 dark:text-amber-400',
-      placeholder: 'username або повний URL',
-      focusRingClass: 'focus:ring-amber-500',
-    },
-  ];
-  protected readonly nameForm = new FormGroup({
-    displayName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(2)],
-    }),
-  });
-  /** Typed reactive form for updating social media links. */
-  protected readonly socialsForm = new FormGroup({
-    telegram:  new FormControl('', { nonNullable: true }),
-    instagram: new FormControl('', { nonNullable: true }),
-    twitter:   new FormControl('', { nonNullable: true }),
-    linkedin:  new FormControl('', { nonNullable: true }),
-    github:    new FormControl('', { nonNullable: true }),
-    goodreads: new FormControl('', { nonNullable: true }),
-  });
-  /** Controls whether socials are visible to all club members. */
-  protected readonly socialsPublicControl = new FormControl<boolean>(false, { nonNullable: true });
-  /** Tracks the in-flight save state (synchronous here, but keeps the pattern extensible). */
-  protected readonly isSavingName = signal(false);
-  /** Two-letter initials derived from the current user's display name. */
-  protected readonly userInitials = computed<string>(() => {
-    const name = this.auth.currentUser()?.displayName ?? '';
-    return name
-      .split(' ')
-      .map(w => w[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  });
-  /** Human-readable role label shown in the hero badge. */
-  protected readonly roleLabel = computed<string>(() =>
-    this.auth.currentUser()?.role === 'organizer' ? 'Organizer' : 'Reader',
-  );
-  protected readonly joinedDate = computed<string>(() => {
-    const raw = this.auth.currentUser()?.createdAt;
-    if (!raw) return '';
-    return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' }).format(
-      new Date(raw),
-    );
-  });
-  protected readonly userSocials = computed<UserSocials>(
-    () => this.auth.currentUser()?.socials ?? {},
-  );
-  constructor() {
-    this.seo.setPageI18n('SEO.profile_title');
-    const user = this.auth.currentUser();
-    if (user) {
-      this.nameForm.patchValue({ displayName: user.displayName });
-      this.socialsPublicControl.setValue(user.socialsPublic ?? false);
-      if (user.socials) {
-        this.socialsForm.patchValue({
-          telegram:  user.socials.telegram  ?? '',
-          instagram: user.socials.instagram ?? '',
-          twitter:   user.socials.twitter   ?? '',
-          linkedin:  user.socials.linkedin  ?? '',
-          github:    user.socials.github    ?? '',
-          goodreads: user.socials.goodreads ?? '',
-        });
-      }
-    }
-  }
-  /** Switch the user's role and show a transient success toast. */
-  protected async changeRole(role: UserRole): Promise<void> {
-    try {
-      await this.auth.updateRole(role);
-      this.toast.show('PROFILE.role_changed', 'success');
-    } catch {  }
-  }
-  protected async saveName(): Promise<void> {
-    if (this.nameForm.invalid) return;
-    this.isSavingName.set(true);
-    const { displayName } = this.nameForm.getRawValue();
-    try {
-      await this.auth.updateDisplayName(displayName);
-      this.toast.show('PROFILE.name_updated', 'success');
-    } catch {  }
-    finally {
-      this.isSavingName.set(false);
-    }
-  }
-  protected async submitSocials(): Promise<void> {
-    const raw = this.socialsForm.getRawValue();
-    const socials: UserSocials = {
-      ...(raw.telegram  ? { telegram:  raw.telegram  } : {}),
-      ...(raw.instagram ? { instagram: raw.instagram } : {}),
-      ...(raw.twitter   ? { twitter:   raw.twitter   } : {}),
-      ...(raw.linkedin  ? { linkedin:  raw.linkedin  } : {}),
-      ...(raw.github    ? { github:    raw.github    } : {}),
-      ...(raw.goodreads ? { goodreads: raw.goodreads } : {}),
-    };
-    try {
-      await this.auth.updateSocials(socials);
-      this.toast.show('PROFILE.socials_saved', 'success');
-    } catch {  }
-  }
-  protected async onSocialsPublicChange(value: boolean): Promise<void> {
-    try {
-      await this.auth.setSocialsPublic(value);
-    } catch {  }
-  }
-}
-````
-
-## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizQuestion } from '../../../core/models/quiz.model';
-interface MetaForm {
-  title: FormControl<string>;
-  description: FormControl<string>;
-}
-interface QuestionForm {
-  question: FormControl<string>;
-  option0: FormControl<string>;
-  option1: FormControl<string>;
-  option2: FormControl<string>;
-  option3: FormControl<string>;
-  correctIndex: FormControl<number>;
-}
-type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
-@Component({
-  selector: 'app-quiz-create',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink],
-  templateUrl: './quiz-create.component.html',
-})
-export class QuizCreateComponent {
-  private readonly quizService = inject(QuizService);
-  private readonly router = inject(Router);
-  protected readonly currentStep = signal<1 | 2>(1);
-  protected readonly localQuestions = signal<LocalQuestion[]>([]);
-  protected readonly isPublishing = signal(false);
-  protected readonly errorMessage = signal('');
-  readonly id = input<string>('');
-  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
-  protected readonly metaForm = new FormGroup<MetaForm>({
-    title: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-  });
-  protected readonly questionForm = new FormGroup<QuestionForm>({
-    question: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
-    }),
-    option0: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option1: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option2: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option3: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    correctIndex: new FormControl<number>(0, { nonNullable: true }),
-  });
-  protected isInvalidTouched(ctrl: AbstractControl): boolean {
-    return ctrl.invalid && ctrl.touched;
-  }
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
-  protected nextStep(): void {
-    if (this.metaForm.invalid) {
-      this.metaForm.markAllAsTouched();
-      return;
-    }
-    this.currentStep.set(2);
-  }
-  protected previousStep(): void {
-    this.currentStep.set(1);
-    this.errorMessage.set('');
-  }
-  protected addQuestion(): void {
-    if (this.questionForm.invalid) {
-      this.questionForm.markAllAsTouched();
-      return;
-    }
-    const { question, option0, option1, option2, option3, correctIndex } =
-      this.questionForm.getRawValue();
-    const newQuestion: LocalQuestion = {
-      question: question.trim(),
-      options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
-      correctIndex,
-    };
-    this.localQuestions.update(prev => [...prev, newQuestion]);
-    this.questionForm.reset({ correctIndex: 0 });
-  }
-  protected removeQuestion(index: number): void {
-    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
-  }
-  protected publishQuiz(): void {
-    const questions = this.localQuestions();
-    if (questions.length === 0) return;
-    this.isPublishing.set(true);
-    this.errorMessage.set('');
-    const { title, description } = this.metaForm.getRawValue();
-    const clubId = this.id();
-    this.quizService
-      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
-      .then(async quiz => {
-        // Add questions sequentially to preserve sort_order
-        for (const q of questions) {
-          await this.quizService.addQuestion(quiz.id, q);
-        }
-        // Activate the quiz
-        await this.quizService.toggleActive(quiz.id, true);
-        this.isPublishing.set(false);
-        this.router.navigate(['/clubs', clubId, 'quizzes']);
-      })
-      .catch(err => {
-        this.isPublishing.set(false);
-        this.errorMessage.set((err as Error).message);
-      });
-  }
-}
-````
-
-## File: src/app/features/quiz/quiz-take/quiz-take.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizAttempt } from '../../../core/models/quiz.model';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
-@Component({
-  selector: 'app-quiz-take',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LoadingSpinnerComponent],
-  templateUrl: './quiz-take.component.html',
-})
-export class QuizTakeComponent implements OnInit {
-  protected readonly quizService = inject(QuizService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  protected readonly state = signal<QuizState>('loading');
-  protected readonly errorMessage = signal('');
-  protected readonly currentIndex = signal(0);
-  protected readonly selectedAnswers = signal<number[]>([]);
-  protected readonly selectedOption = computed(
-    () => this.selectedAnswers()[this.currentIndex()] ?? -1,
-  );
-  protected readonly attempt = signal<QuizAttempt | null>(null);
-  protected clubId = '';
-  protected readonly currentQuestion = computed(
-    () => this.quizService.questions()[this.currentIndex()] ?? null,
-  );
-  protected readonly isLastQuestion = computed(
-    () => this.currentIndex() === this.quizService.questions().length - 1,
-  );
-  protected readonly progressPercent = computed(() => {
-    const total = this.quizService.questions().length;
-    return total === 0 ? 0 : Math.round(((this.currentIndex() + 1) / total) * 100);
-  });
-  protected readonly scorePercent = computed(() => {
-    const a = this.attempt();
-    if (!a || a.total === 0) return 0;
-    return Math.round((a.score / a.total) * 100);
-  });
-  protected readonly scoreMessage = computed(() => {
-    const pct = this.scorePercent();
-    if (pct === 100) return '🎉 Perfect score!';
-    if (pct >= 80) return '🌟 Great job!';
-    if (pct >= 60) return '👍 Good effort!';
-    if (pct >= 40) return '📖 Keep reading!';
-    return '💪 Better luck next time!';
-  });
-  ngOnInit(): void {
-    // Both :id (club) and :quizId are inherited via paramsInheritanceStrategy:'always'
-    this.clubId = this.route.snapshot.params['id'] as string;
-    const quizId = this.route.snapshot.params['quizId'] as string;
-    if (!quizId) {
-      this.errorMessage.set('Quiz not found.');
-      this.state.set('error');
-      return;
-    }
-    this.quizService
-      .loadQuestions(quizId)
-      .then(() => {
-        const count = this.quizService.questions().length;
-        if (count === 0) {
-          this.errorMessage.set('This quiz has no questions yet.');
-          this.state.set('error');
-          return;
-        }
-        this.selectedAnswers.set(new Array<number>(count).fill(-1));
-        this.state.set('taking');
-      })
-      .catch(err => {
-        this.errorMessage.set((err as Error).message);
-        this.state.set('error');
-      });
-  }
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
-  protected selectOption(index: number): void {
-    const current = this.currentIndex();
-    this.selectedAnswers.update(answers => {
-      const copy = [...answers];
-      copy[current] = index;
-      return copy;
-    });
-  }
-  protected next(): void {
-    if (this.selectedOption() === -1) return;
-    this.currentIndex.update(i => i + 1);
-  }
-  protected previous(): void {
-    if (this.currentIndex() === 0) return;
-    this.currentIndex.update(i => i - 1);
-  }
-  protected submit(): void {
-    if (this.selectedOption() === -1) return;
-    this.state.set('submitting');
-    const quizId = this.route.snapshot.params['quizId'] as string;
-    this.quizService
-      .submitAttempt(quizId, this.selectedAnswers())
-      .then(result => {
-        this.attempt.set(result);
-        this.state.set('results');
-      })
-      .catch(err => {
-        this.errorMessage.set((err as Error).message);
-        this.state.set('error');
-      });
-  }
-}
-````
-
-## File: src/app/features/randomizer/randomizer.component.html
-````html
-<div class="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 p-4 sm:p-8">
-  <div class="max-w-4xl mx-auto space-y-8">
-    <header class="flex items-center justify-between flex-wrap gap-4">
-      <div>
-        <h1 class="font-display text-3xl font-bold text-white">🎲 {{ 'RANDOMIZER.title' | translate }}</h1>
-        <p class="text-primary-300 mt-1">{{ 'RANDOMIZER.subtitle' | translate }}</p>
-      </div>
-      <nav aria-label="Breadcrumb">
-        <a [routerLink]="['/clubs', clubId]" class="text-primary-300 hover:text-white transition-colors text-sm">
-          {{ 'RANDOMIZER.back_to_club' | translate }}
-        </a>
-      </nav>
-    </header>
-    <div class="bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/10">
-      <label for="purpose" class="block text-white font-medium text-sm mb-2">{{ 'RANDOMIZER.purpose_label' | translate }}</label>
-      <input
-        id="purpose"
-        type="text"
-        [formControl]="purposeControl"
-        [placeholder]="'RANDOMIZER.purpose_placeholder' | translate"
-        class="w-full rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-400"
-      />
-    </div>
-    <div class="grid lg:grid-cols-2 gap-8">
-      <section aria-labelledby="members-heading" class="space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 id="members-heading" class="text-white font-semibold text-lg">
-            👥 {{ 'RANDOMIZER.members_title' | translate }}
-            <span class="text-primary-300 text-sm font-normal ml-2">{{ selectedCount() }} / {{ randomizerService.candidates().length }} {{ 'RANDOMIZER.selected' | translate }}</span>
-          </h2>
-          <button
-            type="button"
-            (click)="reset()"
-            class="text-xs text-primary-300 hover:text-white transition-colors"
-          >
-            {{ 'RANDOMIZER.select_all' | translate }}
-          </button>
-        </div>
-        @if (randomizerService.candidates().length === 0) {
-          <div class="bg-white/10 rounded-2xl p-8 text-center text-white/60">
-            <p class="text-3xl mb-2">👤</p>
-            <p>{{ 'RANDOMIZER.no_members' | translate }}</p>
-          </div>
-        } @else {
-          <ul class="space-y-2">
-            @for (member of randomizerService.candidates(); track member.userId) {
-              <li>
-                <button
-                  type="button"
-                  (click)="randomizerService.toggleMember(member.userId)"
-                  class="w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                  [class]="randomizerService.selectedIds().has(member.userId)
-                    ? 'bg-white/20 border border-white/30'
-                    : 'bg-white/5 border border-white/10 opacity-50'"
-                  [attr.aria-pressed]="randomizerService.selectedIds().has(member.userId)"
-                  [attr.aria-label]="'Toggle ' + member.displayName"
-                >
-                  <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                    {{ member.displayName | initials }}
-                  </div>
-                  <span class="text-white font-medium text-sm flex-1 text-left">{{ member.displayName }}</span>
-                  @if (randomizerService.selectedIds().has(member.userId)) {
-                    <span class="text-green-400 text-lg" aria-hidden="true">✓</span>
-                  }
-                </button>
-              </li>
-            }
-          </ul>
-        }
-      </section>
-      <section aria-labelledby="spin-heading" class="space-y-6">
-        <h2 id="spin-heading" class="sr-only">{{ 'RANDOMIZER.title' | translate }}</h2>
-        <div class="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/10 text-center min-h-[200px] flex flex-col items-center justify-center">
-          @if (randomizerService.isSpinning()) {
-            <div class="space-y-4">
-              <div class="text-5xl animate-bounce">🎲</div>
-              <p class="text-white/70 text-sm animate-pulse">{{ 'RANDOMIZER.spinning' | translate }}</p>
-            </div>
-          } @else if (randomizerService.result()) {
-            <div class="space-y-3">
-              <div class="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl ring-4 ring-white/30">
-                {{ randomizerService.result()!.displayName | initials }}
-              </div>
-              <div>
-                <p class="text-white/60 text-xs uppercase tracking-wide mb-1">{{ randomizerService.purpose() }}</p>
-                <p class="text-white text-2xl font-bold">{{ randomizerService.result()!.displayName }}</p>
-              </div>
-              <span class="text-3xl">🏆</span>
-            </div>
-          } @else {
-            <div class="text-white/40 space-y-2">
-              <div class="text-4xl">🎯</div>
-              <p class="text-sm">{{ 'RANDOMIZER.spin_hint' | translate }}</p>
-            </div>
-          }
-        </div>
-        @if (errorMessage()) {
-          <div class="rounded-xl bg-red-500/20 border border-red-500/30 px-4 py-3 text-sm text-red-300" role="alert">
-            {{ errorMessage() }}
-          </div>
-        }
-        <div class="flex flex-col gap-3">
-          <button
-            type="button"
-            (click)="spin()"
-            [disabled]="randomizerService.isSpinning() || selectedCount() < 2"
-            class="w-full rounded-2xl bg-gradient-to-r from-accent-500 to-primary-500 hover:from-accent-400 hover:to-primary-400 text-white font-bold py-4 text-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary-400 shadow-lg"
-          >
-            @if (randomizerService.isSpinning()) {
-              {{ 'RANDOMIZER.spinning_btn' | translate }}
-            } @else {
-              {{ 'RANDOMIZER.spin' | translate }}
-            }
-          </button>
-          @if (randomizerService.result() && authService.isOrganizer()) {
-            <button
-              type="button"
-              (click)="saveSession()"
-              [disabled]="isSaving()"
-              class="w-full rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium py-3 transition-all duration-200 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-400"
-            >
-              @if (isSaving()) {
-                {{ 'RANDOMIZER.saving' | translate }}
-              } @else {
-                {{ 'RANDOMIZER.save' | translate }}
-              }
-            </button>
-          }
-        </div>
-        @if (randomizerService.history().length > 0) {
-          <div class="space-y-3">
-            <h3 class="text-white/70 text-sm font-medium uppercase tracking-wide">{{ 'RANDOMIZER.history_title' | translate }}</h3>
-            <ul class="space-y-2">
-              @for (session of randomizerService.history().slice(0, 5); track session.id) {
-                <li class="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="text-white/60 text-xs truncate">{{ session.purpose }}</p>
-                    @if (session.result) {
-                      <p class="text-white text-sm font-medium">🏆 {{ session.result.displayName }}</p>
-                    }
-                  </div>
-                  <span class="text-white/40 text-xs shrink-0">{{ session.createdAt | date:'dd.MM HH:mm' }}</span>
-                </li>
-              }
-            </ul>
-          </div>
-        }
-      </section>
-    </div>
-  </div>
-</div>
-````
-
-## File: src/app/features/randomizer/randomizer.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-  signal,
-  computed,
-  effect,
-} from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DatePipe } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../core/auth/auth.service';
-import { RandomizerService } from '../../core/services/randomizer.service';
-import { InitialsPipe } from '../../shared/pipes/initials.pipe';
-@Component({
-  selector: 'app-randomizer',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule, InitialsPipe],
-  styleUrl: './randomizer.component.scss',
-  templateUrl: './randomizer.component.html',
-})
-export class RandomizerComponent implements OnInit {
-  protected readonly randomizerService = inject(RandomizerService);
-  protected readonly authService = inject(AuthService);
-  private readonly route = inject(ActivatedRoute);
-  protected readonly isSaving = signal(false);
-  protected readonly errorMessage = signal('');
-  protected clubId = '';
-  protected readonly purposeControl = new FormControl('Хто представляє книгу?', {
-    nonNullable: true,
-    validators: [Validators.required],
-  });
-  // toSignal keeps OnPush change detection working without manual markForCheck
-  private readonly _purposeValue = toSignal(this.purposeControl.valueChanges, {
-    initialValue: this.purposeControl.value,
-  });
-  constructor() {
-    effect(() => this.randomizerService.setPurpose(this._purposeValue()));
-  }
-  protected readonly selectedCount = computed(
-    () =>
-      this.randomizerService
-        .candidates()
-        .filter(m => this.randomizerService.selectedIds().has(m.userId)).length,
-  );
-  ngOnInit(): void {
-    this.clubId = this.route.snapshot.params['id'] as string;
-    this.randomizerService.loadClubMembers(this.clubId);
-    this.randomizerService.loadHistory(this.clubId).catch(() => {});
-  }
-  protected spin(): void {
-    this.errorMessage.set('');
-    this.randomizerService.spin().catch(err => {
-      this.errorMessage.set((err as Error).message);
-    });
-  }
-  protected saveSession(): void {
-    this.isSaving.set(true);
-    this.errorMessage.set('');
-    this.randomizerService
-      .saveSession(this.clubId)
-      .then(() => this.isSaving.set(false))
-      .catch(err => {
-        this.isSaving.set(false);
-        this.errorMessage.set((err as Error).message);
-      });
-  }
-  protected reset(): void {
-    this.randomizerService.reset();
-    this.errorMessage.set('');
-  }
-}
-````
-
-## File: src/app/layout/header/header.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-} from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { AuthService } from '../../core/auth/auth.service';
-@Component({
-  selector: 'app-header',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, TranslateModule],
-  templateUrl: './header.component.html',
-})
-export class HeaderComponent {
-  private readonly auth = inject(AuthService);
-  private readonly translate = inject(TranslateService);
-  readonly isMenuOpen = signal(false);
-  readonly isDropdownOpen = signal(false);
-  readonly isAuthenticated = this.auth.isAuthenticated;
-  readonly currentUser = this.auth.currentUser;
-  readonly currentLang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: 'uk' },
-  );
-  readonly userInitials = computed(() => {
-    const name = this.currentUser()?.displayName ?? '';
-    return (
-      name
-        .split(' ')
-        .slice(0, 2)
-        .map(w => w[0]?.toUpperCase() ?? '')
-        .join('') || '?'
-    );
-  });
-  switchLang(): void {
-    const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-    this.translate.use(next).subscribe();
-  }
-  toggleMenu(): void {
-    this.isMenuOpen.update(v => !v);
-    if (this.isMenuOpen()) this.isDropdownOpen.set(false);
-  }
-  toggleDropdown(): void {
-    this.isDropdownOpen.update(v => !v);
-  }
-  closeDropdown(): void {
-    this.isDropdownOpen.set(false);
-  }
-  async signOut(): Promise<void> {
-    this.closeDropdown();
-    this.isMenuOpen.set(false);
-    await this.auth.signOut();
-  }
-}
-````
-
-## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.html
-````html
-<div class="relative">
-  <input
-    [id]="inputId || null"
-    [formControl]="control"
-    [placeholder]="placeholder"
-    autocomplete="off"
-    (keydown)="onKeydown($event)"
-    class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors duration-150"
-    [class.border-red-400]="control.invalid && control.touched"
-  />
-  @if (isLoading()) {
-    <div class="absolute right-3 top-3 flex items-center justify-center">
-      <svg class="h-4 w-4 animate-spin text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-      </svg>
-    </div>
-  }
-  @if (isOpen() && suggestions().length > 0) {
-    <ul class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-48 overflow-y-auto">
-      @for (s of suggestions(); track s.label; let i = $index) {
-        <li
-          role="option"
-          tabindex="0"
-          [attr.aria-selected]="activeIndex() === i"
-          (click)="select(s)"
-          (keydown.enter)="select(s)"
-          (keydown.space)="$event.preventDefault(); select(s)"
-          [class.bg-primary-50]="activeIndex() === i"
-          [class.dark:bg-primary-900/20]="activeIndex() === i"
-          class="cursor-pointer px-4 py-2.5 text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        >{{ s.label }}</li>
-      }
-    </ul>
-  }
-</div>
-````
-
-## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
-````typescript
-import {
-  Component, ChangeDetectionStrategy, Input, Output, EventEmitter,
-  OnInit, OnDestroy, signal, inject, ElementRef, HostListener
-} from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Subject, switchMap, debounceTime, distinctUntilChanged, of, takeUntil } from 'rxjs';
-import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
-@Component({
-  selector: 'app-address-autocomplete',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule],
-  templateUrl: './address-autocomplete.component.html',
-})
-export class AddressAutocompleteComponent implements OnInit, OnDestroy {
-  @Input({ required: true }) control!: FormControl<string>;
-  @Input() placeholder = '';
-  @Input() inputId = '';
-  @Output() selected = new EventEmitter<GeocodeSuggestion>();
-  private readonly geocoding = inject(GeocodingService);
-  private readonly elRef = inject(ElementRef);
-  private readonly destroy$ = new Subject<void>();
-  readonly suggestions = signal<GeocodeSuggestion[]>([]);
-  readonly isLoading = signal(false);
-  readonly isOpen = signal(false);
-  readonly activeIndex = signal(-1);
-  ngOnInit(): void {
-    this.control.valueChanges.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      switchMap(q => {
-        if (!q || q.length < 2) {
-          this.suggestions.set([]);
-          this.isOpen.set(false);
-          return of([]);
-        }
-        this.isLoading.set(true);
-        return this.geocoding.autocomplete(q);
-      }),
-      takeUntil(this.destroy$),
-    ).subscribe({
-      next: (results) => {
-        this.isLoading.set(false);
-        this.suggestions.set(results);
-        this.activeIndex.set(-1);
-        this.isOpen.set(results.length > 0);
-      },
-      error: () => {
-        this.isLoading.set(false);
-        this.suggestions.set([]);
-      },
-    });
-  }
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-  select(s: GeocodeSuggestion): void {
-    this.control.setValue(s.label, { emitEvent: false });
-    this.suggestions.set([]);
-    this.isOpen.set(false);
-    this.selected.emit(s);
-  }
-  onKeydown(event: KeyboardEvent): void {
-    if (!this.isOpen()) return;
-    const len = this.suggestions().length;
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i + 1) % len);
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i - 1 + len) % len);
-    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
-      event.preventDefault();
-      this.select(this.suggestions()[this.activeIndex()]);
-    } else if (event.key === 'Escape') {
-      this.isOpen.set(false);
-    }
-  }
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (!this.elRef.nativeElement.contains(event.target)) {
-      this.isOpen.set(false);
-    }
-  }
-}
-````
-
-## File: src/environments/environment.ts
-````typescript
-export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:8000/api/v1',
-};
-````
-
-## File: CLAUDE.md
-````markdown
-# Project Context
-This project uses **Repomix** to provide a full map of the codebase.
-
-## Stack
-- Frontend: Angular 20 (Signals—using Angular 20 features like resource() and linkedSignal(), standalone components, SCSS, Tailwind)
-- Backend: FastAPI (Async, Pydantic v2)
-
-## Folder Structure
-- `src/app/features/` — Angular feature components (auth, clubs, profile, quiz, randomizer)
-- `src/app/core/` — Core services, guards, interceptors, models
-- `src/app/shared/` — Shared UI components, pipes, directives
-- `src/app/layout/` — Shell, header, footer
-- `public/i18n/` — Translation files (en.json, uk.json)
-- `supabase/migrations/` — SQL migrations for backend
-
-## How to Run
-- **Dev server:** `npm start` (Angular at http://localhost:4200)
-- **Build:** `npm run build`
-- **Update context:** `npm run build-ctx`
-
-## Testing & Linting
-- **Unit tests:** `npm run test` (Jest)
-- **E2E tests:** Playwright (see docs)
-- **Lint:** `npm run lint`
-
-## Pre-commit Hooks & Development Workflow
-- This project does **not** use `.pre-commit-config.yaml`, `ruff`, or `black`.
-- Pre-commit hooks are managed via Husky. The only pre-commit hook is `.husky/pre-commit`, which runs `lint-staged`.
-- The pre-commit hook updates `repomix-output.md` using `lint-staged`.
-- No Python-specific formatting or linting tools are involved in the pre-commit process.
-
-## Notes
-- Always check `repomix-output.md` for the latest project map.
-- If a file is not in repomix-output.md, assume it doesn't exist yet.
-- Backend API routes: see FastAPI project (not in this repo).
-````
-
-## File: sonar-project.properties
-````
-# Replace YOUR_ORG with your actual SonarCloud organization slug
-sonar.projectKey=leo477_book-club-fe
-sonar.organization=leo477
-sonar.projectName=Book Club Frontend
-sonar.projectVersion=1.0
-
-sonar.sources=src
-sonar.tests=src
-sonar.test.inclusions=**/*.spec.ts
-sonar.exclusions=**/node_modules/**,**/*.spec.ts,src/assets/**,src/environments/**
-
-sonar.typescript.lcov.reportPaths=coverage/book-club-fe/lcov.info
-
-# Exclude non-testable and currently untested files from coverage requirements
-sonar.coverage.exclusions=\
-  **/*.html,\
-  **/*.spec.ts,\
-  **/mocks/**,\
-  **/*.model.ts,\
-  **/*.interface.ts,\
-  **/*.config.ts,\
-  **/environments/**,\
-  src/app/features/**,\
-  src/app/layout/**,\
-  src/app/core/services/randomizer.service.ts,\
-  src/app/core/services/quiz.service.ts,\
-  src/app/core/services/club.service.ts,\
-  src/app/core/supabase/**
-
-sonar.sourceEncoding=UTF-8
-````
-
-## File: src/app/core/api/api-error.util.ts
-````typescript
-import { HttpErrorResponse } from '@angular/common/http';
-export function extractApiError(err: unknown): string {
-  if (err instanceof HttpErrorResponse) {
-    const body = err.error as { error?: unknown; detail?: unknown } | null;
-    if (typeof body?.error === 'string') return body.error;
-    const detail = body?.detail;
-    if (typeof detail === 'string') return detail;
-    if (Array.isArray(detail)) return (detail[0] as { msg?: string })?.msg ?? err.message ?? 'Unknown error';
-    if (detail && typeof detail === 'object') return (detail as { error?: string }).error ?? err.message ?? 'Unknown error';
-    return err.message ?? 'Unknown error';
-  }
-  return 'Unknown error';
-}
-````
-
-## File: src/app/core/interceptors/auth.interceptor.ts
-````typescript
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { catchError, throwError } from 'rxjs';
-import { ToastService } from '../services/toast.service';
-import { TokenStore } from '../auth/token.store';
-import { environment } from '../../../environments/environment';
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  const router = inject(Router);
-  const toast = inject(ToastService);
-  const tokenStore = inject(TokenStore);
-  const token = tokenStore.snapshot();
-  const authedReq = token
-    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : req;
-  return next(authedReq).pipe(
-    catchError((error: unknown) => {
-      const httpError = error instanceof HttpErrorResponse ? error : null;
-      if (httpError?.status === 401 && token) {
-        tokenStore.clear();
-        router.navigate(['/login']);
-      } else if (httpError?.status === 403) {
-        router.navigate(['/clubs']);
-      } else if (httpError && httpError.status >= 500) {
-        if (!environment.production) {
-          console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
-        }
-        toast.show('A server error occurred. Please try again later.', 'error');
-      }
-      return throwError(() => error);
-    }),
-  );
-};
-````
-
-## File: src/app/core/models/club.model.ts
-````typescript
-import { UserSocials } from './user.model';
-import { AfterMeetingVenue } from './event.model';
-export type BanDuration = 1 | 3 | 5 | 'permanent';
-export type ClubStatus = 'active' | 'paused' | 'cancelled';
-export interface CurrentBook {
-  title: string;
-  author: string;
-  description: string;
-}
-export interface BanRecord {
-  userId: string;
-  clubId: string;
-  bannedAt: string;
-  duration: BanDuration;
-  bannedBy: string;
-}
-export interface Club {
-  id: string;
-  name: string;
-  description: string | null;
-  coverUrl: string | null;
-  organizerId: string;
-  isPublic: boolean;
-  memberCount: number;
-  memberPreviews: string[];
-  createdAt: string;
-  city: string;
-  nextMeetingDate: string | null;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  theme: string | null;
-  currentBook: CurrentBook | null;
-  status: ClubStatus;
-  tags: string[];
-  meetingDurationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  cancelledAt?: string;
-}
-export interface ClubMember {
-  clubId: string;
-  userId: string;
-  role: 'member' | 'organizer';
-  joinedAt: string;
-}
-export interface ClubMemberDetail {
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  role: 'member' | 'organizer';
-  socials?: UserSocials;
-  socialsPublic: boolean;
-}
-````
-
-## File: src/app/core/models/event.model.ts
-````typescript
-export type EventStatus = 'scheduled' | 'active' | 'held' | 'cancelled' | 'rescheduled' | 'upcoming';
-export interface AfterMeetingVenue {
-  name: string;
-  address: string;
-  description?: string;
-  lat?: number;
-  lng?: number;
-}
-export interface ClubEvent {
-  id: string;
-  clubId: string;
-  clubName: string;
-  organizerId: string;
-  title: string;
-  description: string | null;
-  date: string;
-  city: string;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  status: EventStatus;
-  cancelledAt?: string;
-  coverUrl: string | null;
-  theme: string | null;
-  tags: string[];
-  durationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  attendeeCount: number;
-  isAttending: boolean;
-  bookTitle?: string | null;
-}
-````
-
 ## File: src/app/features/clubs/club-detail/header/club-header.component.html
 ````html
 <header class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -9204,10 +10213,11 @@ export interface ClubEvent {
     @if (!isOwner()) {
       @if (isMember()) {
         <button
+          hlmBtn
+          variant="outline"
           type="button"
           (click)="leave.emit()"
           [disabled]="isActionLoading()"
-          class="inline-flex items-center gap-2 rounded-xl border border-gray-300 dark:border-gray-600 px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
           [attr.aria-label]="'CLUB_DETAIL.leave' | translate"
         >
           @if (isActionLoading()) {
@@ -9217,10 +10227,11 @@ export interface ClubEvent {
         </button>
       } @else {
         <button
+          hlmBtn
           type="button"
           (click)="join.emit()"
           [disabled]="isActionLoading()"
-          class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          class="bg-primary-600 hover:bg-primary-700 text-white"
           [attr.aria-label]="'CLUB_DETAIL.join' | translate"
         >
           @if (isActionLoading()) {
@@ -9240,7 +10251,7 @@ export interface ClubEvent {
 
 ## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.html
 ````html
-<div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4">
+<div hlmCard class="p-4 gap-3">
   <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
   <div class="grid grid-cols-1 gap-2">
     <a
@@ -9289,7 +10300,7 @@ export interface ClubEvent {
 
 ## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
 ````html
-<div class="rounded-2xl bg-white dark:bg-gray-800 shadow hover:shadow-lg transition-shadow flex flex-col overflow-hidden">
+<div hlmCard class="rounded-2xl shadow hover:shadow-lg transition-shadow flex flex-col overflow-hidden p-0 gap-0">
   <div class="relative">
     @if (club().coverUrl) {
       <img [src]="club().coverUrl" [alt]="''" class="h-32 w-full object-cover" aria-hidden="true" loading="lazy" />
@@ -9331,24 +10342,31 @@ export interface ClubEvent {
     }
     <div class="flex items-center gap-2 mt-auto pt-1">
       <a
+        hlmBtn
+        variant="outline"
+        size="sm"
         [routerLink]="['/clubs', club().id]"
-        class="flex-1 text-center rounded-xl border border-gray-300 dark:border-gray-600 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        class="flex-1 text-center"
         [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
       >
         {{ 'CLUBS.view' | translate }}
       </a>
       @if (isAuthenticated() && !isMember()) {
         <button
+          hlmBtn
           type="button"
+          size="sm"
           (click)="join.emit()"
           [disabled]="joining()"
-          class="flex-1 rounded-xl bg-primary-600 hover:bg-primary-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+          class="flex-1 bg-primary-600 hover:bg-primary-700 text-white"
           [attr.aria-label]="('CLUBS.join' | translate) + ' ' + club().name"
         >
           @if (joining()) { ⏳ } @else { {{ 'CLUBS.join' | translate }} }
         </button>
       } @else if (isAuthenticated() && isMember()) {
-        <span class="flex-1 text-center rounded-xl bg-green-50 dark:bg-green-900/20 px-3 py-1.5 text-xs font-medium text-green-700 dark:text-green-400">{{ 'CLUBS.member_badge' | translate }}</span>
+        <span class="flex-1 text-center rounded-xl bg-green-50 dark:bg-green-900/20 px-3 py-1.5 text-xs font-medium text-green-700 dark:text-green-400">
+          {{ 'CLUBS.member_badge' | translate }}
+        </span>
       }
     </div>
   </div>
@@ -9366,11 +10384,13 @@ import {
 import { RouterLink } from '@angular/router';
 import { Club } from '../../../../core/models/club.model';
 import { TranslateModule } from '@ngx-translate/core';
+import { HlmCardImports } from '../../../../shared/spartan/card/src';
+import { HlmButton } from '../../../../shared/spartan/button/src';
 @Component({
   selector: 'app-club-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule],
+  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton],
   templateUrl: './club-card.component.html',
 })
 export class ClubCardComponent {
@@ -9678,130 +10698,6 @@ export class EventService {
 }
 ````
 
-## File: src/app/features/auth/register/register.component.ts
-````typescript
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators,
-} from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../../core/auth/auth.service';
-import { UserRole } from '../../../core/models/user.model';
-import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
-import { SeoService } from '../../../core/services/seo.service';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
-  const password = group.get('password')?.value as string;
-  const confirmPassword = group.get('confirmPassword')?.value as string;
-  return password === confirmPassword ? null : { passwordMismatch: true };
-};
-interface RegisterForm {
-  displayName: FormControl<string>;
-  email: FormControl<string>;
-  password: FormControl<string>;
-  confirmPassword: FormControl<string>;
-  role: FormControl<UserRole>;
-}
-@Component({
-  selector: 'app-register',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './register.component.html',
-})
-export class RegisterComponent {
-  private readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isSubmitting = signal(false);
-  readonly successMessage = signal(false);
-  readonly registeredEmail = signal('');
-  readonly selectedRole = signal<UserRole>('user');
-  readonly bookOpen = signal(false);
-  readonly formVisible = signal(false);
-  constructor() {
-    this.seo.setPageI18n('SEO.register_title');
-    setTimeout(() => this.formVisible.set(true), 700);
-  }
-  onBookAnimationDone(): void {
-  }
-  readonly form = new FormGroup<RegisterForm>(
-    {
-      displayName: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.minLength(2)],
-      }),
-      email: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.email],
-      }),
-      password: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.minLength(8)],
-      }),
-      confirmPassword: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-      role: new FormControl<UserRole>('user', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-    },
-    { validators: passwordMatchValidator },
-  );
-  private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
-    initialValue: '',
-  });
-  readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
-    const pw = this._passwordValue();
-    if (!pw || pw.length === 0) return null;
-    if (pw.length < 8) return 'weak';
-    const hasUpper = /[A-Z]/.test(pw);
-    const hasNumber = /\d/.test(pw);
-    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
-    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
-    if (score >= 2) return 'strong';
-    if (score === 1) return 'medium';
-    return 'weak';
-  });
-  setRole(role: UserRole): void {
-    this.selectedRole.set(role);
-    this.form.controls.role.setValue(role);
-    this.form.controls.role.markAsTouched();
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.isSubmitting.set(true);
-    this.errorMessage.set(null);
-    const { displayName, email, password, role } = this.form.getRawValue();
-    const { error } = await this.auth.signUp(email, password, displayName, role);
-    this.isSubmitting.set(false);
-    if (error) {
-      this.errorMessage.set(error);
-    } else {
-      this.registeredEmail.set(email);
-      this.successMessage.set(true);
-      this.bookOpen.set(true);
-    }
-  }
-}
-````
-
 ## File: src/app/features/events/create-event/create-event.component.html
 ````html
 <main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -9814,7 +10710,8 @@ export class RegisterComponent {
   <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
     <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create Event</h1>
     @if (errorMessage()) {
-      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+           role="alert">
         {{ errorMessage() }}
       </div>
     }
@@ -9823,8 +10720,7 @@ export class RegisterComponent {
         <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Title <span class="text-red-500">*</span>
         </label>
-        <input id="title" type="text" formControlName="title"
-               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        <input hlmInput id="title" type="text" formControlName="title" class="w-full"
                placeholder="April Discussion" />
         @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
           <p class="mt-1 text-xs text-red-600 dark:text-red-400">Title is required.</p>
@@ -9832,8 +10728,7 @@ export class RegisterComponent {
       </div>
       <div>
         <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">📖 Book title</label>
-        <input id="bookTitle" type="text" formControlName="bookTitle"
-               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        <input hlmInput id="bookTitle" type="text" formControlName="bookTitle" class="w-full"
                placeholder="The Master and Margarita" />
         @if (isFetchingCover()) {
           <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">🔍 Searching for book cover…</p>
@@ -9845,16 +10740,14 @@ export class RegisterComponent {
       </div>
       <div>
         <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-        <textarea id="description" formControlName="description" rows="3"
-                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+        <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
                   placeholder="What will you be reading or discussing?"></textarea>
       </div>
       <div>
         <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           Date & Time <span class="text-red-500">*</span>
         </label>
-        <input id="date" type="datetime-local" formControlName="date"
-               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500" />
+        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
         @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
           <p class="mt-1 text-xs text-red-600 dark:text-red-400">Date is required.</p>
         }
@@ -9875,21 +10768,17 @@ export class RegisterComponent {
       <div class="grid grid-cols-2 gap-4">
         <div>
           <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
-          <input id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
-                 class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                 placeholder="120" />
+          <input hlmInput id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
+                 class="w-full" placeholder="120" />
         </div>
         <div>
           <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
-          <input id="theme" type="text" formControlName="theme"
-                 class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                 placeholder="sci-fi" />
+          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
         </div>
       </div>
       <div>
         <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
-        <input id="tags" type="text" formControlName="tagsRaw"
-               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
                placeholder="fiction, dystopia, classic (comma-separated)" />
       </div>
       <div>
@@ -9904,33 +10793,29 @@ export class RegisterComponent {
         @if (showAfterVenue()) {
           <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
             <div>
-              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Venue name <span class="text-red-500">*</span></label>
-              <input id="afterVenueName" type="text" formControlName="afterVenueName"
-                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="Cozy Cafe" />
+              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Venue name <span class="text-red-500">*</span>
+              </label>
+              <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
+                     class="w-full" placeholder="Cozy Cafe" />
             </div>
             <div>
               <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
-              <input id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
-                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="123 Main St" />
+              <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
+                     class="w-full" placeholder="123 Main St" />
             </div>
             <div>
               <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-              <input id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
-                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="Optional notes" />
+              <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
+                     class="w-full" placeholder="Optional notes" />
             </div>
           </div>
         }
       </div>
       <div class="flex justify-end gap-3 pt-2">
-        <a [routerLink]="['/clubs', clubId()]"
-           class="rounded-xl border border-gray-300 dark:border-gray-600 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-          Cancel
-        </a>
-        <button type="submit" [disabled]="form.invalid || isSubmitting()"
-                class="rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
+        <a hlmBtn variant="outline" [routerLink]="['/clubs', clubId()]">Cancel</a>
+        <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
+                class="bg-primary-600 hover:bg-primary-700 text-white">
           @if (isSubmitting()) { Creating… } @else { Create Event }
         </button>
       </div>
@@ -9957,13 +10842,15 @@ import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs
 import { EventService } from '../../../core/services/event.service';
 import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
 import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
 import { BookCoverService } from '../../../core/services/book-cover.service';
 import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
 @Component({
   selector: 'app-create-event',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent, CoverUploadComponent],
+  imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton],
   templateUrl: './create-event.component.html',
 })
 export class CreateEventComponent implements OnInit {
@@ -10116,15 +11003,12 @@ export class CreateEventComponent implements OnInit {
             {{ 'PROFILE.display_name_label' | translate }}
           </label>
           <input
+            hlmInput
             id="displayName"
             type="text"
             formControlName="displayName"
             autocomplete="nickname"
-            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
-                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
-                   text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                   transition-all duration-200"
+            class="w-full"
             [placeholder]="'PROFILE.display_name_placeholder' | translate"
             [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
             aria-describedby="displayName-error"
@@ -10145,12 +11029,10 @@ export class CreateEventComponent implements OnInit {
         </div>
         <div class="flex items-center gap-3">
           <button
+            hlmBtn
             type="submit"
             [disabled]="nameForm.invalid || isSavingName()"
-            class="rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-50
-                   disabled:cursor-not-allowed text-white px-5 py-2.5 text-sm font-medium
-                   transition-all duration-200 focus:outline-none focus:ring-2
-                   focus:ring-primary-500 focus:ring-offset-2"
+            class="bg-primary-600 hover:bg-primary-700 text-white"
           >
             @if (isSavingName()) {
               {{ 'PROFILE.saving' | translate }}
@@ -10238,11 +11120,9 @@ export class CreateEventComponent implements OnInit {
       </div>
       <div class="flex items-center gap-3 pt-1">
         <button
+          hlmBtn
           type="submit"
-          class="rounded-xl bg-primary-600 hover:bg-primary-700 text-white
-                 px-5 py-2.5 text-sm font-medium
-                 transition-all duration-200 focus:outline-none focus:ring-2
-                 focus:ring-primary-500 focus:ring-offset-2"
+          class="bg-primary-600 hover:bg-primary-700 text-white"
         >
           {{ 'PROFILE.save' | translate }}
         </button>
@@ -10255,205 +11135,140 @@ export class CreateEventComponent implements OnInit {
 ## File: src/app/layout/header/header.component.html
 ````html
 <header
-      class="sticky top-0 z-50 bg-[#f5ede0]/80 dark:bg-gray-900/80 backdrop-blur-md
-             border-b border-amber-200/60 dark:border-gray-800"
-      role="banner"
-    >
-      <div class="max-w-6xl mx-auto px-4">
-        <div class="flex items-center justify-between h-16">
+  class="sticky top-0 z-50 bg-[#f5ede0]/80 dark:bg-gray-900/80 backdrop-blur-md
+         border-b border-amber-200/60 dark:border-gray-800"
+  role="banner"
+>
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center justify-between h-16">
+      <a
+        routerLink="/"
+        class="font-display text-xl font-bold text-gray-900 dark:text-white
+               hover:text-primary-600 dark:hover:text-primary-400
+               transition-all duration-200 focus:outline-none focus:ring-2
+               focus:ring-primary-500 focus:ring-offset-2 rounded"
+      >
+        📚 BookClub
+      </a>
+      <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
+        <a
+          routerLink="/clubs"
+          routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
+          class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
+                 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
+                 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
+                 focus:ring-offset-2"
+        >
+          {{ 'NAV.discover' | translate }}
+        </a>
+        @if (isAuthenticated()) {
           <a
-            routerLink="/"
-            class="font-display text-xl font-bold text-gray-900 dark:text-white
-                   hover:text-primary-600 dark:hover:text-primary-400
-                   transition-all duration-200 focus:outline-none focus:ring-2
-                   focus:ring-primary-500 focus:ring-offset-2 rounded"
+            routerLink="/events"
+            routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
+            class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
+                   hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
+                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
+                   focus:ring-offset-2"
           >
-            📚 BookClub
+            📅 Events
           </a>
-          <nav
-            class="hidden md:flex items-center gap-1"
-            aria-label="Main navigation"
-          >
-            <a
-              routerLink="/clubs"
-              routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
-              class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
-                     hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
-                     focus:ring-offset-2"
-            >
-              {{ 'NAV.discover' | translate }}
-            </a>
-            @if (isAuthenticated()) {
-              <a
-                routerLink="/events"
-                routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
-                class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
-                       hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
-                       transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
-                       focus:ring-offset-2"
-              >
-                📅 Events
-              </a>
-            }
-          </nav>
-          <div class="hidden md:flex items-center gap-2">
-            <button
-              type="button"
-              (click)="switchLang()"
-              class="text-sm font-semibold px-2 py-1 rounded border border-current
-                     text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2
-                     focus:ring-primary-500 focus:ring-offset-2"
-              [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-            >
-              {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
-            </button>
-            @if (isAuthenticated()) {
-              <div class="relative">
-                <button
-                  type="button"
-                  (click)="toggleDropdown()"
-                  class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
-                         focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                  [attr.aria-expanded]="isDropdownOpen()"
-                  aria-haspopup="menu"
-                  [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
-                >
-                  <div
-                    class="h-9 w-9 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
-                           flex items-center justify-center text-white text-sm font-semibold
-                           select-none"
-                    aria-hidden="true"
-                  >
-                    {{ userInitials() }}
-                  </div>
-                </button>
-                @if (isDropdownOpen()) {
-                  <div
-                    role="menu"
-                    aria-label="User menu"
-                    class="absolute right-0 mt-2 w-48 rounded-xl bg-white dark:bg-gray-800 shadow-lg
-                           border border-gray-100 dark:border-gray-700 py-1 z-50
-                           animate-fade-in"
-                  >
-                    <div class="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                      <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                        {{ currentUser()?.displayName }}
-                      </p>
-                    </div>
-                    <a
-                      routerLink="/profile"
-                      role="menuitem"
-                      (click)="closeDropdown()"
-                      class="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 dark:text-gray-200
-                             hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200
-                             focus:outline-none focus:bg-gray-50 dark:focus:bg-gray-700"
-                    >
-                      👤 {{ 'NAV.profile' | translate }}
-                    </a>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      (click)="signOut()"
-                      class="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400
-                             hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200
-                             focus:outline-none focus:bg-red-50 dark:focus:bg-red-900/20"
-                    >
-                      🚪 {{ 'NAV.logout' | translate }}
-                    </button>
-                  </div>
-                  <div
-                    class="fixed inset-0 z-40"
-                    aria-hidden="true"
-                    tabindex="-1"
-                    (click)="closeDropdown()"
-                    (keydown.escape)="closeDropdown()"
-                  ></div>
-                }
-              </div>
-            } @else {
-              <a
-                routerLink="/login"
-                class="border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800
-                       text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg font-medium text-sm
-                       transition-all duration-200 focus:outline-none focus:ring-2
-                       focus:ring-primary-500 focus:ring-offset-2"
-              >
-                {{ 'NAV.login' | translate }}
-              </a>
-              <a
-                routerLink="/register"
-                class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg
-                       font-medium text-sm transition-all duration-200 focus:outline-none
-                       focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              >
-                {{ 'NAV.join_free' | translate }}
-              </a>
-            }
-          </div>
+        }
+      </nav>
+      <div class="hidden md:flex items-center gap-2">
+        <button
+          type="button"
+          (click)="switchLang()"
+          class="text-sm font-semibold px-2 py-1 rounded border border-current
+                 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
+                 transition-all duration-200 focus:outline-none focus:ring-2
+                 focus:ring-primary-500 focus:ring-offset-2"
+          [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+        >
+          {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
+        </button>
+        @if (isAuthenticated()) {
           <button
             type="button"
-            class="md:hidden p-2 rounded-lg text-gray-600 dark:text-gray-300
-                   hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200
+            [hlmDropdownMenuTrigger]="userMenu"
+            class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
                    focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-            (click)="toggleMenu()"
-            [attr.aria-expanded]="isMenuOpen()"
-            aria-controls="mobile-menu"
+            aria-haspopup="menu"
+            [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
           >
-            @if (isMenuOpen()) {
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            } @else {
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            }
-            <span class="sr-only">Toggle navigation menu</span>
-          </button>
-        </div>
-        @if (isMenuOpen()) {
-          <nav
-            id="mobile-menu"
-            class="md:hidden border-t border-gray-100 dark:border-gray-800 py-3 space-y-1"
-            aria-label="Mobile navigation"
-          >
-            <a
-              routerLink="/clubs"
-              routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
-              (click)="isMenuOpen.set(false)"
-              class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                     text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2
-                     focus:ring-primary-500 focus:ring-offset-2"
+            <div
+              class="h-9 w-9 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
+                     flex items-center justify-center text-white text-sm font-semibold select-none"
+              aria-hidden="true"
             >
-              🔍 {{ 'NAV.discover' | translate }}
-            </a>
-            @if (isAuthenticated()) {
-              <a
-                routerLink="/events"
-                (click)="isMenuOpen.set(false)"
-                class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                       text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                       transition-all duration-200 focus:outline-none focus:ring-2
-                       focus:ring-primary-500 focus:ring-offset-2"
-              >
-                📅 Events
+              {{ userInitials() }}
+            </div>
+          </button>
+          <ng-template #userMenu>
+            <div hlmDropdownMenu>
+              <hlm-dropdown-menu-label>{{ currentUser()?.displayName }}</hlm-dropdown-menu-label>
+              <hlm-dropdown-menu-separator />
+              <a hlmDropdownMenuItem [routerLink]="['/profile']">
+                👤 {{ 'NAV.profile' | translate }}
               </a>
+              <hlm-dropdown-menu-separator />
+              <button hlmDropdownMenuItem variant="destructive" (click)="signOut()">
+                🚪 {{ 'NAV.logout' | translate }}
+              </button>
+            </div>
+          </ng-template>
+        } @else {
+          <a hlmBtn variant="outline" size="sm" routerLink="/login">
+            {{ 'NAV.login' | translate }}
+          </a>
+          <a hlmBtn size="sm" routerLink="/register"
+             class="bg-primary-600 hover:bg-primary-700 text-white">
+            {{ 'NAV.join_free' | translate }}
+          </a>
+        }
+      </div>
+      <hlm-sheet class="md:hidden">
+        <button
+          hlmSheetTrigger
+          type="button"
+          class="p-2 rounded-lg text-gray-600 dark:text-gray-300
+                 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200
+                 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          aria-label="Toggle navigation menu"
+        >
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <hlm-sheet-content>
+          <hlm-sheet-header>
+            <h2 hlmSheetTitle class="font-display font-bold">📚 BookClub</h2>
+          </hlm-sheet-header>
+          <nav class="flex flex-col gap-1 px-4 py-2" aria-label="Mobile navigation">
+            <button hlmSheetClose [routerLink]="['/clubs']"
+                    class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                           text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                           transition-all duration-200 w-full text-left">
+              🔍 {{ 'NAV.discover' | translate }}
+            </button>
+            @if (isAuthenticated()) {
+              <button hlmSheetClose [routerLink]="['/events']"
+                      class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                             text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                             transition-all duration-200 w-full text-left">
+                📅 Events
+              </button>
             }
             <button
               type="button"
               (click)="switchLang()"
               class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
                      text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 focus:outline-none focus:ring-2
-                     focus:ring-primary-500 focus:ring-offset-2 w-full text-left"
+                     transition-all duration-200 w-full text-left"
               [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
             >
               {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
             </button>
-            <div class="pt-2 mt-2 border-t border-gray-100 dark:border-gray-800 space-y-1">
+            <div class="pt-2 mt-2 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-1">
               @if (isAuthenticated()) {
                 <div class="px-4 py-2">
                   <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
@@ -10463,53 +11278,39 @@ export class CreateEventComponent implements OnInit {
                     {{ currentUser()?.displayName }}
                   </p>
                 </div>
-                <a
-                  routerLink="/profile"
-                  (click)="isMenuOpen.set(false)"
-                  class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                         text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-primary-500 focus:ring-offset-2"
-                >
+                <button hlmSheetClose [routerLink]="['/profile']"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                               text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                               transition-all duration-200 w-full text-left">
                   👤 {{ 'NAV.profile' | translate }}
-                </a>
-                <button
-                  type="button"
-                  (click)="signOut()"
-                  class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                         text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-red-500 focus:ring-offset-2"
-                >
+                </button>
+                <button hlmSheetClose type="button" (click)="signOut()"
+                        class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                               text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
+                               transition-all duration-200">
                   🚪 {{ 'NAV.logout' | translate }}
                 </button>
               } @else {
-                <a
-                  routerLink="/login"
-                  (click)="isMenuOpen.set(false)"
-                  class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                         text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-primary-500 focus:ring-offset-2"
-                >
+                <button hlmSheetClose [routerLink]="['/login']"
+                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                               text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                               transition-all duration-200 w-full text-left">
                   {{ 'NAV.login' | translate }}
-                </a>
-                <a
-                  routerLink="/register"
-                  (click)="isMenuOpen.set(false)"
-                  class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                         bg-primary-600 text-white hover:bg-primary-700
-                         transition-all duration-200 focus:outline-none focus:ring-2
-                         focus:ring-primary-500 focus:ring-offset-2"
-                >
+                </button>
+                <button hlmSheetClose [routerLink]="['/register']"
+                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                               bg-primary-600 text-white hover:bg-primary-700
+                               transition-all duration-200 w-full text-left">
                   {{ 'NAV.join_free' | translate }}
-                </a>
+                </button>
               }
             </div>
           </nav>
-        }
-      </div>
-    </header>
+        </hlm-sheet-content>
+      </hlm-sheet>
+    </div>
+  </div>
+</header>
 ````
 
 ## File: src/app/core/services/randomizer.service.ts
@@ -10642,6 +11443,130 @@ export class RandomizerService {
     const ids = new Set(this._candidates().map(m => m.userId));
     this._selectedIds.set(ids);
     this._result.set(null);
+  }
+}
+````
+
+## File: src/app/features/auth/register/register.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../core/auth/auth.service';
+import { UserRole } from '../../../core/models/user.model';
+import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
+import { SeoService } from '../../../core/services/seo.service';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
+  const password = group.get('password')?.value as string;
+  const confirmPassword = group.get('confirmPassword')?.value as string;
+  return password === confirmPassword ? null : { passwordMismatch: true };
+};
+interface RegisterForm {
+  displayName: FormControl<string>;
+  email: FormControl<string>;
+  password: FormControl<string>;
+  confirmPassword: FormControl<string>;
+  role: FormControl<UserRole>;
+}
+@Component({
+  selector: 'app-register',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './register.component.html',
+})
+export class RegisterComponent {
+  private readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  readonly errorMessage = signal<string | null>(null);
+  readonly isSubmitting = signal(false);
+  readonly successMessage = signal(false);
+  readonly registeredEmail = signal('');
+  readonly selectedRole = signal<UserRole>('user');
+  readonly bookOpen = signal(false);
+  readonly formVisible = signal(false);
+  constructor() {
+    this.seo.setPageI18n('SEO.register_title');
+    setTimeout(() => this.formVisible.set(true), 700);
+  }
+  onBookAnimationDone(): void {
+  }
+  readonly form = new FormGroup<RegisterForm>(
+    {
+      displayName: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(2)],
+      }),
+      email: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.email],
+      }),
+      password: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(8)],
+      }),
+      confirmPassword: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+      role: new FormControl<UserRole>('user', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+    },
+    { validators: passwordMatchValidator },
+  );
+  private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
+    initialValue: '',
+  });
+  readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
+    const pw = this._passwordValue();
+    if (!pw || pw.length === 0) return null;
+    if (pw.length < 8) return 'weak';
+    const hasUpper = /[A-Z]/.test(pw);
+    const hasNumber = /\d/.test(pw);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
+    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
+    if (score >= 2) return 'strong';
+    if (score === 1) return 'medium';
+    return 'weak';
+  });
+  setRole(role: UserRole): void {
+    this.selectedRole.set(role);
+    this.form.controls.role.setValue(role);
+    this.form.controls.role.markAsTouched();
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+    const { displayName, email, password, role } = this.form.getRawValue();
+    const { error } = await this.auth.signUp(email, password, displayName, role);
+    this.isSubmitting.set(false);
+    if (error) {
+      this.errorMessage.set(error);
+    } else {
+      this.registeredEmail.set(email);
+      this.successMessage.set(true);
+      this.bookOpen.set(true);
+    }
   }
 }
 ````
@@ -10959,14 +11884,15 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { Club } from '../../../core/models/club.model';
 import { SeoService } from '../../../core/services/seo.service';
 import { TranslateModule } from '@ngx-translate/core';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ClubCardComponent } from './club-card/club-card.component';
+import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 @Component({
   selector: 'app-clubs-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, LoadingSpinnerComponent, EmptyStateComponent, TranslateModule, ClubCardComponent],
+  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, ...HlmTabsImports, HlmSpinner],
   templateUrl: './clubs-list.component.html',
 })
 export class ClubsListComponent implements OnInit {
@@ -10974,7 +11900,6 @@ export class ClubsListComponent implements OnInit {
   readonly auth = inject(AuthService);
   private readonly seo = inject(SeoService);
   readonly joiningClubId = signal<string | null>(null);
-  readonly activeTab = signal<'all' | 'my'>('all');
   readonly ownedClubIds = this.clubService.myOwnedClubIds;
   async ngOnInit(): Promise<void> {
     this.seo.setPageI18n('SEO.clubs_title', {
@@ -11109,63 +12034,89 @@ export class ClubsListComponent implements OnInit {
       </div>
     }
     @if (auth.isAuthenticated()) {
-      <div class="flex gap-0 border-b border-gray-200 dark:border-gray-700" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          [attr.aria-selected]="activeTab() === 'all'"
-          (click)="activeTab.set('all')"
-          class="px-5 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-t"
-          [class]="activeTab() === 'all'
-            ? 'border-b-2 border-primary-600 text-primary-600 dark:text-primary-400'
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
-        >
-          {{ 'CLUBS.all' | translate }}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          [attr.aria-selected]="activeTab() === 'my'"
-          (click)="activeTab.set('my')"
-          class="px-5 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 rounded-t"
-          [class]="activeTab() === 'my'
-            ? 'border-b-2 border-primary-600 text-primary-600 dark:text-primary-400'
-            : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'"
-        >
-          {{ 'CLUBS.my_clubs' | translate }}
-        </button>
-      </div>
-    }
-    @if (clubService.isLoading()) {
-      <div class="py-16" aria-busy="true" aria-label="Loading clubs">
-        <app-loading-spinner size="lg" />
+      <div hlmTabs tab="all">
+        <div hlmTabsList variant="line" class="w-full border-b border-gray-200 dark:border-gray-700 rounded-none">
+          <button hlmTabsTrigger="all">{{ 'CLUBS.all' | translate }}</button>
+          <button hlmTabsTrigger="my">{{ 'CLUBS.my_clubs' | translate }}</button>
+        </div>
+        <div hlmTabsContent="all" class="pt-4">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.filteredClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              title="No clubs yet"
+              description="No clubs have been created yet. Check back soon!"
+            />
+          } @else {
+            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              @for (club of clubService.filteredClubs(); track club.id) {
+                <li>
+                  <app-club-card
+                    [club]="club"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+        <div hlmTabsContent="my" class="pt-4">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.myClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              [title]="'CLUBS.no_clubs' | translate"
+              description="Join a club to see it here."
+            />
+          } @else {
+            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              @for (club of clubService.myClubs(); track club.id) {
+                <li>
+                  <app-club-card
+                    [club]="club"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
       </div>
     } @else {
-      @let displayClubs = activeTab() === 'all' ? clubService.filteredClubs() : clubService.myClubs();
-      @if (displayClubs.length === 0) {
-        @if (activeTab() === 'all') {
-          <app-empty-state
-            icon="📚"
-            title="No clubs yet"
-            description="No clubs have been created yet. Check back soon!"
-          />
-        } @else {
-          <app-empty-state
-            icon="📚"
-            [title]="'CLUBS.no_clubs' | translate"
-            description="Join a club to see it here."
-          />
-        }
+      @if (clubService.isLoading()) {
+        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+          <hlm-spinner />
+        </div>
+      } @else if (clubService.filteredClubs().length === 0) {
+        <app-empty-state
+          icon="📚"
+          title="No clubs yet"
+          description="No clubs have been created yet. Check back soon!"
+        />
       } @else {
         <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          @for (club of displayClubs; track club.id) {
+          @for (club of clubService.filteredClubs(); track club.id) {
             <li>
               <app-club-card
                 [club]="club"
-                [isMember]="clubService.myClubIds().has(club.id)"
-                [isOwned]="ownedClubIds().has(club.id)"
-                [isAuthenticated]="auth.isAuthenticated()"
-                [joining]="joiningClubId() === club.id"
+                [isMember]="false"
+                [isOwned]="false"
+                [isAuthenticated]="false"
+                [joining]="false"
                 (join)="onJoin(club)"
               />
             </li>
@@ -11200,70 +12151,52 @@ export class ClubsListComponent implements OnInit {
     <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
       <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-        <div>
-          <label for="club-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ 'CREATE_CLUB.name_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
+        <hlm-field>
+          <label hlmFieldLabel>
+            {{ 'CREATE_CLUB.name_label' | translate }}
+            <span class="text-red-500" aria-hidden="true">*</span>
           </label>
           <input
+            hlmInput
             id="club-name"
             type="text"
             formControlName="name"
+            class="w-full"
             [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
-            class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                   px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                   transition-colors duration-150"
-            [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
-            aria-describedby="name-error"
           />
-          @if (form.controls.name.invalid && form.controls.name.touched) {
-            <p id="name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-              @if (form.controls.name.errors?.['required']) { {{ 'CREATE_CLUB.name_required' | translate }} }
-              @else if (form.controls.name.errors?.['minlength']) { {{ 'CREATE_CLUB.name_min' | translate }} }
-              @else if (form.controls.name.errors?.['maxlength']) { {{ 'CREATE_CLUB.name_max' | translate }} }
-            </p>
-          }
-        </div>
-        <div>
-          <label for="club-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ 'CREATE_CLUB.description_label' | translate }}
-          </label>
+          <hlm-field-error validator="required">{{ 'CREATE_CLUB.name_required' | translate }}</hlm-field-error>
+          <hlm-field-error validator="minlength">{{ 'CREATE_CLUB.name_min' | translate }}</hlm-field-error>
+          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.name_max' | translate }}</hlm-field-error>
+        </hlm-field>
+        <hlm-field>
+          <label hlmFieldLabel>{{ 'CREATE_CLUB.description_label' | translate }}</label>
           <textarea
+            hlmInput
             id="club-description"
             formControlName="description"
             rows="3"
+            class="w-full resize-none"
             [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
-            class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                   px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                   transition-colors duration-150"
-            [class.border-red-400]="form.controls.description.invalid && form.controls.description.touched"
-            aria-describedby="description-error"
           ></textarea>
-          @if (form.controls.description.invalid && form.controls.description.touched) {
-            <p id="description-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-              @if (form.controls.description.errors?.['maxlength']) { {{ 'CREATE_CLUB.description_max' | translate }} }
-            </p>
-          }
-        </div>
+          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.description_max' | translate }}</hlm-field-error>
+        </hlm-field>
         <div>
           <label for="club-cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             {{ 'CREATE_CLUB.cover_url_label' | translate }}
           </label>
           @if (form.controls.coverUrl.value) {
             <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
-              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover" (error)="form.controls.coverUrl.setValue('')" />
+              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover"
+                   (error)="form.controls.coverUrl.setValue('')" />
             </div>
           }
           <input
+            hlmInput
             id="club-cover-url"
             type="url"
             formControlName="coverUrl"
+            class="w-full"
             [placeholder]="'CREATE_CLUB.cover_url_placeholder' | translate"
-            class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                   px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                   transition-colors duration-150"
           />
           <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
         </div>
@@ -11293,37 +12226,20 @@ export class ClubsListComponent implements OnInit {
           </div>
         </fieldset>
         @if (errorMessage()) {
-          <div
-            class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-            role="alert"
-          >
+          <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+               role="alert">
             <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
             <span>{{ errorMessage() }}</span>
           </div>
         }
         <div class="flex gap-3 pt-2">
-          <button
-            type="button"
-            (click)="cancel()"
-            class="flex-1 rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-2.5
-                   text-sm font-semibold text-gray-700 dark:text-gray-300
-                   hover:bg-gray-50 dark:hover:bg-gray-800
-                   focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2
-                   transition-colors duration-200"
-          >
+          <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
             {{ 'CREATE_CLUB.cancel' | translate }}
           </button>
-          <button
-            type="submit"
-            [disabled]="isSubmitting()"
-            class="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5
-                   text-sm font-semibold text-white shadow-sm
-                   hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-                   disabled:opacity-60 disabled:cursor-not-allowed
-                   transition-colors duration-200"
-          >
+          <button hlmBtn type="submit" [disabled]="isSubmitting()"
+                  class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
             @if (isSubmitting()) {
-              <app-loading-spinner size="sm" />
+              <hlm-spinner class="mr-2" />
               {{ 'CREATE_CLUB.submitting' | translate }}
             } @else {
               {{ 'CREATE_CLUB.submit' | translate }}
@@ -12169,7 +13085,10 @@ import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 interface CreateClubForm {
   name: FormControl<string>;
   description: FormControl<string>;
@@ -12181,7 +13100,7 @@ interface CreateClubForm {
   selector: 'app-create-club',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent],
+  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
   templateUrl: './create-club.component.html',
 })
 export class CreateClubComponent {
@@ -12254,8 +13173,9 @@ export class CreateClubComponent {
     <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
     <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
     <a
+      hlmBtn
       routerLink="/clubs"
-      class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors"
+      class="bg-primary-600 hover:bg-primary-700 text-white"
     >
       ← {{ 'CLUB_DETAIL.back' | translate }}
     </a>
@@ -12292,7 +13212,7 @@ export class CreateClubComponent {
       <div class="flex flex-col lg:flex-row gap-6 items-start">
         <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-2 lg:order-1">
           @if (nearestEventBook()) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div hlmCard class="p-4 gap-3">
               <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 {{ 'CLUB_DETAIL.now_reading' | translate }}</h3>
               @if (nearestEventBook()!.coverUrl) {
                 <img
@@ -12330,7 +13250,7 @@ export class CreateClubComponent {
             </div>
           }
           @if (club()!.description) {
-            <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+            <section hlmCard class="px-6 gap-3">
               <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
               <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
             </section>
@@ -12342,24 +13262,27 @@ export class CreateClubComponent {
                 <p class="text-sm text-primary-600 dark:text-primary-400 mt-0.5">{{ 'CLUB_DETAIL.join_cta_desc' | translate }}</p>
               </div>
               <button
+                hlmBtn
                 type="button"
                 (click)="onJoin()"
                 [disabled]="isActionLoading()"
-                class="flex-shrink-0 rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                class="flex-shrink-0 bg-primary-600 hover:bg-primary-700 text-white"
               >
                 {{ 'CLUB_DETAIL.join' | translate }}
               </button>
             </div>
           }
-          <section class="rounded-2xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-6 border border-[#d4a96a]/20 dark:border-[#7a5c2e]/20">
+          <section hlmCard class="px-6 gap-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-[#d4a96a]/20 dark:border-[#7a5c2e]/20">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 📅 {{ 'CLUB_DETAIL.events_title' | translate }}
               </h2>
               @if (isClubOwner()) {
                 <a
+                  hlmBtn
+                  size="sm"
                   [routerLink]="['/clubs', id(), 'events', 'create']"
-                  class="inline-flex items-center gap-2 rounded-xl bg-primary-600 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+                  class="bg-primary-600 hover:bg-primary-700 text-white"
                 >
                   {{ 'CLUB_DETAIL.create_event' | translate }}
                 </a>
@@ -12413,7 +13336,7 @@ export class CreateClubComponent {
         </div>
         <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-3 lg:order-3">
           @if (members().length > 0) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div hlmCard class="p-4 gap-3">
               <div class="flex items-center justify-between mb-3">
                 <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   {{ 'CLUB_DETAIL.members_title' | translate }}
@@ -12438,7 +13361,7 @@ export class CreateClubComponent {
             </div>
           }
           @if (organizerProfile()) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div hlmCard class="p-4 gap-3">
               <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
                 {{ 'CLUB_DETAIL.organizer_title' | translate }}
               </h3>
@@ -12474,7 +13397,7 @@ export class CreateClubComponent {
             </div>
           }
           @if (club()!.afterMeetingVenue) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
+            <div hlmCard class="p-4 gap-3">
               <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
                 {{ 'CLUB_DETAIL.after_meeting_title' | translate }}
               </h3>
@@ -12750,6 +13673,8 @@ import { ClubMembersListComponent } from './members/club-members-list.component'
 import { ClubHeaderComponent } from './header/club-header.component';
 import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
 import { ClubEventCardComponent } from './club-event-card/club-event-card.component';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCard } from '../../../shared/spartan/card/src';
 @Component({
   selector: 'app-club-detail',
   standalone: true,
@@ -12763,6 +13688,8 @@ import { ClubEventCardComponent } from './club-event-card/club-event-card.compon
     ClubHeaderComponent,
     ClubManagePanelComponent,
     ClubEventCardComponent,
+    HlmButton,
+    HlmCard,
   ],
   templateUrl: './club-detail.component.html',
 })

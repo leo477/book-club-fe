@@ -12,54 +12,37 @@
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
 
         <!-- Name -->
-        <div>
-          <label for="club-name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ 'CREATE_CLUB.name_label' | translate }} <span class="text-red-500" aria-hidden="true">*</span>
+        <hlm-field>
+          <label hlmFieldLabel>
+            {{ 'CREATE_CLUB.name_label' | translate }}
+            <span class="text-red-500" aria-hidden="true">*</span>
           </label>
           <input
+            hlmInput
             id="club-name"
             type="text"
             formControlName="name"
+            class="w-full"
             [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
-            class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                   px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                   transition-colors duration-150"
-            [class.border-red-400]="form.controls.name.invalid && form.controls.name.touched"
-            aria-describedby="name-error"
           />
-          @if (form.controls.name.invalid && form.controls.name.touched) {
-            <p id="name-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-              @if (form.controls.name.errors?.['required']) { {{ 'CREATE_CLUB.name_required' | translate }} }
-              @else if (form.controls.name.errors?.['minlength']) { {{ 'CREATE_CLUB.name_min' | translate }} }
-              @else if (form.controls.name.errors?.['maxlength']) { {{ 'CREATE_CLUB.name_max' | translate }} }
-            </p>
-          }
-        </div>
+          <hlm-field-error validator="required">{{ 'CREATE_CLUB.name_required' | translate }}</hlm-field-error>
+          <hlm-field-error validator="minlength">{{ 'CREATE_CLUB.name_min' | translate }}</hlm-field-error>
+          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.name_max' | translate }}</hlm-field-error>
+        </hlm-field>
 
         <!-- Description -->
-        <div>
-          <label for="club-description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ 'CREATE_CLUB.description_label' | translate }}
-          </label>
+        <hlm-field>
+          <label hlmFieldLabel>{{ 'CREATE_CLUB.description_label' | translate }}</label>
           <textarea
+            hlmInput
             id="club-description"
             formControlName="description"
             rows="3"
+            class="w-full resize-none"
             [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
-            class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                   px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400 resize-none
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                   transition-colors duration-150"
-            [class.border-red-400]="form.controls.description.invalid && form.controls.description.touched"
-            aria-describedby="description-error"
           ></textarea>
-          @if (form.controls.description.invalid && form.controls.description.touched) {
-            <p id="description-error" class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">
-              @if (form.controls.description.errors?.['maxlength']) { {{ 'CREATE_CLUB.description_max' | translate }} }
-            </p>
-          }
-        </div>
+          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.description_max' | translate }}</hlm-field-error>
+        </hlm-field>
 
         <!-- Cover image URL -->
         <div>
@@ -68,23 +51,22 @@
           </label>
           @if (form.controls.coverUrl.value) {
             <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
-              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover" (error)="form.controls.coverUrl.setValue('')" />
+              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover"
+                   (error)="form.controls.coverUrl.setValue('')" />
             </div>
           }
           <input
+            hlmInput
             id="club-cover-url"
             type="url"
             formControlName="coverUrl"
+            class="w-full"
             [placeholder]="'CREATE_CLUB.cover_url_placeholder' | translate"
-            class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                   px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                   transition-colors duration-150"
           />
           <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
         </div>
 
-        <!-- Visibility -->
+        <!-- Visibility toggle -->
         <fieldset>
           <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
           <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
@@ -113,10 +95,8 @@
 
         <!-- Error alert -->
         @if (errorMessage()) {
-          <div
-            class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-            role="alert"
-          >
+          <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+               role="alert">
             <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
             <span>{{ errorMessage() }}</span>
           </div>
@@ -124,34 +104,20 @@
 
         <!-- Actions -->
         <div class="flex gap-3 pt-2">
-          <button
-            type="button"
-            (click)="cancel()"
-            class="flex-1 rounded-xl border border-gray-300 dark:border-gray-600 px-4 py-2.5
-                   text-sm font-semibold text-gray-700 dark:text-gray-300
-                   hover:bg-gray-50 dark:hover:bg-gray-800
-                   focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2
-                   transition-colors duration-200"
-          >
+          <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
             {{ 'CREATE_CLUB.cancel' | translate }}
           </button>
-          <button
-            type="submit"
-            [disabled]="isSubmitting()"
-            class="flex-1 flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-4 py-2.5
-                   text-sm font-semibold text-white shadow-sm
-                   hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2
-                   disabled:opacity-60 disabled:cursor-not-allowed
-                   transition-colors duration-200"
-          >
+          <button hlmBtn type="submit" [disabled]="isSubmitting()"
+                  class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
             @if (isSubmitting()) {
-              <app-loading-spinner size="sm" />
+              <hlm-spinner class="mr-2" />
               {{ 'CREATE_CLUB.submitting' | translate }}
             } @else {
               {{ 'CREATE_CLUB.submit' | translate }}
             }
           </button>
         </div>
+
       </form>
     </article>
   </div>

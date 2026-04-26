@@ -9,12 +9,14 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ClubMemberDetail, BanRecord, BanDuration } from '../../../../core/models/club.model';
 import { QrCodeComponent } from '../../../../shared/components/qr-code/qr-code.component';
 import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
+import { HlmButton } from '../../../../shared/spartan/button/src';
+import { HlmCard } from '../../../../shared/spartan/card/src';
 
 @Component({
   selector: 'app-club-members-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule, QrCodeComponent, InitialsPipe],
+  imports: [TranslateModule, QrCodeComponent, InitialsPipe, HlmButton, HlmCard],
   templateUrl: './club-members-list.component.html',
 })
 export class ClubMembersListComponent {
