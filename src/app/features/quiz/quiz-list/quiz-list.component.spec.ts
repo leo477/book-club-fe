@@ -1,0 +1,67 @@
+import { provideZonelessChangeDetection, signal } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { QuizListComponent } from './quiz-list.component';
+import { QuizService } from '../../../core/services/quiz.service';
+import { AuthService } from '../../../core/auth/auth.service';
+
+function makeQuizService() {
+  return {
+    quizzes: signal([]),
+    isLoading: signal(false),
+    activeQuiz: signal(null),
+    loadQuizzes: jasmine.createSpy('loadQuizzes').and.returnValue(Promise.resolve(undefined)),
+    toggleActive: jasmine.createSpy('toggleActive').and.returnValue(Promise.resolve()),
+  };
+}
+
+function makeAuthService() {
+  return {
+    currentUser: signal(null),
+    isAuthenticated: signal(false),
+    isOrganizer: signal(false),
+  };
+}
+
+describe('QuizListComponent', () => {
+  let quizSvc: ReturnType<typeof makeQuizService>;
+  let authSvc: ReturnType<typeof makeAuthService>;
+
+  beforeEach(async () => {
+    quizSvc = makeQuizService();
+    authSvc = makeAuthService();
+
+    await TestBed.configureTestingModule({
+      imports: [QuizListComponent],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideRouter([]),
+        { provide: QuizService, useValue: quizSvc },
+        { provide: AuthService, useValue: authSvc },
+      ],
+    }).compileComponents();
+  });
+
+  it('should create', () => {
+    const fixture = TestBed.createComponent(QuizListComponent);
+    expect(fixture.componentInstance).toBeTruthy();
+  });
+
+  it('isLoading is true while resource is pending', () => {
+    const fixture = TestBed.createComponent(QuizListComponent);
+    // resource() starts loading immediately — isLoading should be true before the promise resolves
+    expect(fixture.componentInstance.isLoading()).toBeTrue();
+  });
+
+  it('toggleActive sets errorMessage on failure', async () => {
+    quizSvc.toggleActive.and.returnValue(Promise.reject(new Error('toggle failed')));
+    const fixture = TestBed.createComponent(QuizListComponent);
+    const comp = fixture.componentInstance;
+
+    // Access protected via cast
+    (comp as unknown as { toggleActive(id: string, active: boolean): void }).toggleActive('q1', true);
+    await new Promise<void>(r => setTimeout(r));
+
+    expect((comp as unknown as { errorMessage: ReturnType<typeof signal<string>> }).errorMessage()).toBe('toggle failed');
+  });
+});

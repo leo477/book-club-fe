@@ -484,7 +484,9 @@ vercel.json
       "Read(//home/test/**)",
       "Read(//home/test/Documents/**)",
       "Bash(xargs -I {} find {} -type f -name \"*.service.ts\")",
-      "Bash(ng test *)"
+      "Bash(ng test *)",
+      "Bash(awk '/^SF:/{file=$0} /^FNDA:0,/{print file, $0}')",
+      "Bash(awk ' *)"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -1312,20 +1314,6 @@ export class FooterComponent {
 }
 ````
 
-## File: src/app/layout/shell/shell.component.html
-````html
-<app-header />
-    <main class="min-h-screen">
-      <router-outlet />
-    </main>
-    @defer (on interaction) {
-      <app-chat-widget />
-    } @placeholder {
-      <div class="fixed bottom-4 right-4 h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" aria-hidden="true"></div>
-    }
-    <app-footer />
-````
-
 ## File: src/app/layout/shell/shell.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy } from '@angular/core';
@@ -1975,6 +1963,79 @@ max_line_length = off
 trim_trailing_whitespace = false
 ````
 
+## File: .gitignore
+````
+# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
+# Angular specific
+/dist/
+/out-tsc/
+/tmp/
+/coverage/
+/e2e/test-output/
+/.angular/
+.angular/
+
+# Node modules and dependency files
+/node_modules/
+/yarn.lock
+
+# Environment files
+/.env
+
+# Angular CLI and build artefacts
+/.angular-cli.json
+/.ng/
+
+# TypeScript cache
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+````
+
 ## File: .lighthouserc.json
 ````json
 {
@@ -1990,6 +2051,22 @@ trim_trailing_whitespace = false
         "categories:best-practices": ["error", { "minScore": 0.9 }],
         "categories:seo": ["warn", { "minScore": 0.8 }]
       }
+    }
+  }
+}
+````
+
+## File: .mcp.json
+````json
+{
+  "mcpServers": {
+    "book-club-agents": {
+      "type": "stdio",
+      "command": "node",
+      "args": [
+        "../book-club-mcp/dist/index.js"
+      ],
+      "description": "Shared Copilot agents: dev, reviewer, security, devops, tester, ui, web-quality-enhancer"
     }
   }
 }
@@ -2081,6 +2158,7 @@ trim_trailing_whitespace = false
           "builder": "@angular/build:karma",
           "options": {
             "karmaConfig": "karma.conf.js",
+            "codeCoverageExclude": ["src/app/shared/spartan/**"],
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "assets": [
@@ -3711,6 +3789,20 @@ export class QuizTakeComponent implements OnInit {
         </nav>
       </div>
     </footer>
+````
+
+## File: src/app/layout/shell/shell.component.html
+````html
+<app-header />
+    <main class="min-h-screen">
+      <router-outlet />
+    </main>
+    @defer (on interaction) {
+      <app-chat-widget />
+    } @placeholder {
+      <div class="fixed bottom-4 right-4 h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" aria-hidden="true"></div>
+    }
+    <app-footer />
 ````
 
 ## File: src/app/shared/chat/chat-widget/chat-widget.component.html
@@ -6644,79 +6736,6 @@ public/i18n/**
 coverage/
 ````
 
-## File: .gitignore
-````
-# See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
-
-# Compiled output
-/dist
-/tmp
-/out-tsc
-/bazel-out
-
-# Node
-/node_modules
-npm-debug.log
-yarn-error.log
-
-# IDEs and editors
-.idea/
-.project
-.classpath
-.c9/
-*.launch
-.settings/
-*.sublime-workspace
-
-# Visual Studio Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-.history/*
-
-# Miscellaneous
-/.angular/cache
-.sass-cache/
-/connect.lock
-/coverage
-/libpeerconnection.log
-testem.log
-/typings
-
-# System files
-.DS_Store
-Thumbs.db
-# Angular specific
-/dist/
-/out-tsc/
-/tmp/
-/coverage/
-/e2e/test-output/
-/.angular/
-.angular/
-
-# Node modules and dependency files
-/node_modules/
-/yarn.lock
-
-# Environment files
-/.env
-
-# Angular CLI and build artefacts
-/.angular-cli.json
-/.ng/
-
-# TypeScript cache
-*.tsbuildinfo
-
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-````
-
 ## File: .gitleaks.toml
 ````toml
 # Gitleaks configuration
@@ -6734,22 +6753,6 @@ yarn-error.log*
 module.exports = {
   'src/**/*.{ts,py,html}': () => ['npx repomix', 'git add repomix-output.md'],
 };
-````
-
-## File: .mcp.json
-````json
-{
-  "mcpServers": {
-    "book-club-agents": {
-      "type": "stdio",
-      "command": "node",
-      "args": [
-        "../book-club-mcp/dist/index.js"
-      ],
-      "description": "Shared Copilot agents: dev, reviewer, security, devops, tester, ui, web-quality-enhancer"
-    }
-  }
-}
 ````
 
 ## File: components.json
@@ -6851,8 +6854,9 @@ module.exports = function (config) {
       dir: require('path').join(__dirname, './coverage/book-club-fe'),
       subdir: '.',
       reporters: [{ type: 'html' }, { type: 'text-summary' }, { type: 'lcovonly' }],
+      exclude: ['**/spartan/**'],
       check: {
-        global: { statements: 70, branches: 60, functions: 70, lines: 70 },
+        global: { statements: 75, branches: 60, functions: 75, lines: 75 },
       },
     },
     reporters: ['progress', 'kjhtml'],
@@ -9493,129 +9497,6 @@ export class RandomizerService {
 </article>
 ````
 
-## File: src/app/features/clubs/club-detail/members/club-members-list.component.html
-````html
-<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="glass-card px-6 gap-4">
-  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
-    {{ 'MEMBERS.title' | translate }} ({{ members().length }})
-  </h2>
-  @if (members().length === 0) {
-    <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'MEMBERS.empty' | translate }}</p>
-  } @else {
-    <ul class="divide-y divide-gray-100 dark:divide-gray-700">
-      @for (member of members(); track member.userId) {
-        <li class="flex items-center gap-4 py-3 relative">
-          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0" aria-hidden="true">
-            {{ member.displayName | initials }}
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
-              {{ member.displayName }}
-            </p>
-            @if (member.role === 'organizer') {
-              <span class="inline-block text-xs font-medium text-accent-600 dark:text-accent-400">
-                {{ 'MEMBERS.organizer' | translate }}
-              </span>
-            } @else {
-              <span class="inline-block text-xs text-gray-400 dark:text-gray-500">
-                {{ 'MEMBERS.member' | translate }}
-              </span>
-            }
-          </div>
-          <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-            @if (canSeeSocials(member)) {
-              @if (member.socials?.telegram) {
-                <a [href]="'https://t.me/' + member.socials!.telegram" target="_blank" rel="noopener noreferrer"
-                   class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram: @' + member.socials!.telegram" title="Telegram">
-                  ✈️
-                </a>
-              }
-              @if (member.socials?.instagram) {
-                <a [href]="'https://instagram.com/' + member.socials!.instagram" target="_blank" rel="noopener noreferrer"
-                   class="text-pink-500 hover:text-pink-600 text-lg" [attr.aria-label]="'Instagram: @' + member.socials!.instagram" title="Instagram">
-                  📸
-                </a>
-              }
-              @if (member.socials?.github) {
-                <a [href]="'https://github.com/' + member.socials!.github" target="_blank" rel="noopener noreferrer"
-                   class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" [attr.aria-label]="'GitHub: ' + member.socials!.github" title="GitHub">
-                  🐙
-                </a>
-              }
-              @if (member.socials?.goodreads) {
-                <a [href]="'https://goodreads.com/' + member.socials!.goodreads" target="_blank" rel="noopener noreferrer"
-                   class="text-amber-600 hover:text-amber-700 text-lg" title="Goodreads">
-                  📚
-                </a>
-              }
-              @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
-                <button
-                  hlmBtn
-                  variant="secondary"
-                  size="sm"
-                  type="button"
-                  (click)="toggleQr(member.userId)"
-                  class="ml-1 text-xs"
-                  [attr.aria-expanded]="showQrForUser() === member.userId"
-                  [attr.aria-label]="'MEMBERS.show_qr' | translate"
-                >
-                  <span aria-hidden="true">⊡</span> {{ 'MEMBERS.show_qr' | translate }}
-                </button>
-                @if (showQrForUser() === member.userId) {
-                  <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl glass-card-strong shadow-xl p-4 flex flex-col items-center gap-2"
-                       aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
-                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
-                    @defer (on idle) {
-                      <app-qr-code [value]="buildQrValue(member)" [size]="160" />
-                    } @placeholder {
-                      <div class="h-40 w-40 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" aria-hidden="true"></div>
-                    }
-                    <button hlmBtn variant="ghost" size="sm" type="button" (click)="toggleQr(member.userId)"
-                            class="mt-1 text-xs text-gray-400">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
-                  </dialog>
-                }
-              }
-            } @else {
-              <span class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
-                🔒 {{ 'MEMBERS.socials_hidden' | translate }}
-              </span>
-            }
-            @if (isOwner() && member.role !== 'organizer') {
-              <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">
-                <button hlmBtn variant="destructive" size="xs" type="button" (click)="kick.emit(member.userId)"
-                         [attr.aria-label]="'MEMBERS.kick' | translate">
-                  {{ 'MEMBERS.kick' | translate }}
-                </button>
-                <button hlmBtn variant="ghost" size="xs" type="button" (click)="toggleBanMenu(member.userId)"
-                        class="text-orange-600 hover:text-orange-700"
-                        [attr.aria-expanded]="showBanMenu() === member.userId">
-                  {{ 'MEMBERS.ban' | translate }}
-                </button>
-                @if (showBanMenu() === member.userId) {
-                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl glass-card-strong shadow-xl py-1 min-w-36">
-                    @for (duration of banDurations; track duration) {
-                      <li>
-                        <button hlmBtn variant="ghost" type="button" (click)="emitBan(member.userId, duration)"
-                                class="w-full justify-start px-4 text-sm">
-                          @if (duration === 1) { {{ 'MEMBERS.ban_1' | translate }} }
-                          @else if (duration === 3) { {{ 'MEMBERS.ban_3' | translate }} }
-                          @else if (duration === 5) { {{ 'MEMBERS.ban_5' | translate }} }
-                          @else { {{ 'MEMBERS.ban_permanent' | translate }} }
-                        </button>
-                      </li>
-                    }
-                  </menu>
-                }
-              </div>
-            }
-          </div>
-        </li>
-      }
-    </ul>
-  }
-</section>
-````
-
 ## File: src/app/features/clubs/edit-club/edit-club.component.html
 ````html
 <main class="min-h-screen flex items-center justify-center p-4">
@@ -11148,6 +11029,129 @@ export class LoginComponent {
     }
   }
 </header>
+````
+
+## File: src/app/features/clubs/club-detail/members/club-members-list.component.html
+````html
+<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="glass-card px-6 gap-4">
+  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
+    {{ 'MEMBERS.title' | translate }} ({{ members().length }})
+  </h2>
+  @if (members().length === 0) {
+    <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'MEMBERS.empty' | translate }}</p>
+  } @else {
+    <ul class="divide-y divide-gray-100 dark:divide-gray-700">
+      @for (member of members(); track member.userId) {
+        <li class="flex items-center gap-4 py-3 relative">
+          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0" aria-hidden="true">
+            {{ member.displayName | initials }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+              {{ member.displayName }}
+            </p>
+            @if (member.role === 'organizer') {
+              <span class="inline-block text-xs font-medium text-accent-600 dark:text-accent-400">
+                {{ 'MEMBERS.organizer' | translate }}
+              </span>
+            } @else {
+              <span class="inline-block text-xs text-gray-400 dark:text-gray-500">
+                {{ 'MEMBERS.member' | translate }}
+              </span>
+            }
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+            @if (canSeeSocials(member)) {
+              @if (member.socials?.telegram) {
+                <a [href]="'https://t.me/' + member.socials!.telegram" target="_blank" rel="noopener noreferrer"
+                   class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram: @' + member.socials!.telegram" title="Telegram">
+                  ✈️
+                </a>
+              }
+              @if (member.socials?.instagram) {
+                <a [href]="'https://instagram.com/' + member.socials!.instagram" target="_blank" rel="noopener noreferrer"
+                   class="text-pink-500 hover:text-pink-600 text-lg" [attr.aria-label]="'Instagram: @' + member.socials!.instagram" title="Instagram">
+                  📸
+                </a>
+              }
+              @if (member.socials?.github) {
+                <a [href]="'https://github.com/' + member.socials!.github" target="_blank" rel="noopener noreferrer"
+                   class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" [attr.aria-label]="'GitHub: ' + member.socials!.github" title="GitHub">
+                  🐙
+                </a>
+              }
+              @if (member.socials?.goodreads) {
+                <a [href]="'https://goodreads.com/' + member.socials!.goodreads" target="_blank" rel="noopener noreferrer"
+                   class="text-amber-600 hover:text-amber-700 text-lg" title="Goodreads">
+                  📚
+                </a>
+              }
+              @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
+                <button
+                  hlmBtn
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  (click)="toggleQr(member.userId)"
+                  class="ml-1 text-xs"
+                  [attr.aria-expanded]="showQrForUser() === member.userId"
+                  [attr.aria-label]="'MEMBERS.show_qr' | translate"
+                >
+                  <span aria-hidden="true">⊡</span> {{ 'MEMBERS.show_qr' | translate }}
+                </button>
+                @if (showQrForUser() === member.userId) {
+                  <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl glass-card-strong shadow-xl p-4 flex flex-col items-center gap-2"
+                       aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
+                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
+                    @defer (on idle) {
+                      <app-qr-code [value]="buildQrValue(member)" [size]="160" />
+                    } @placeholder {
+                      <div class="h-40 w-40 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" aria-hidden="true"></div>
+                    }
+                    <button hlmBtn variant="ghost" size="sm" type="button" (click)="toggleQr(member.userId)"
+                            class="mt-1 text-xs text-gray-400">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
+                  </dialog>
+                }
+              }
+            } @else {
+              <span class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                🔒 {{ 'MEMBERS.socials_hidden' | translate }}
+              </span>
+            }
+            @if (isOwner() && member.role !== 'organizer') {
+              <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">
+                <button hlmBtn variant="destructive" size="xs" type="button" (click)="kick.emit(member.userId)"
+                         [attr.aria-label]="'MEMBERS.kick' | translate">
+                  {{ 'MEMBERS.kick' | translate }}
+                </button>
+                <button hlmBtn variant="ghost" size="xs" type="button" (click)="toggleBanMenu(member.userId)"
+                        class="text-orange-600 hover:text-orange-700"
+                        [attr.aria-expanded]="showBanMenu() === member.userId">
+                  {{ 'MEMBERS.ban' | translate }}
+                </button>
+                @if (showBanMenu() === member.userId) {
+                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl glass-card-strong shadow-xl py-1 min-w-36">
+                    @for (duration of banDurations; track duration) {
+                      <li>
+                        <button hlmBtn variant="ghost" type="button" (click)="emitBan(member.userId, duration)"
+                                class="w-full justify-start px-4 text-sm">
+                          @if (duration === 1) { {{ 'MEMBERS.ban_1' | translate }} }
+                          @else if (duration === 3) { {{ 'MEMBERS.ban_3' | translate }} }
+                          @else if (duration === 5) { {{ 'MEMBERS.ban_5' | translate }} }
+                          @else { {{ 'MEMBERS.ban_permanent' | translate }} }
+                        </button>
+                      </li>
+                    }
+                  </menu>
+                }
+              </div>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>
 ````
 
 ## File: src/app/layout/header/header.component.html
