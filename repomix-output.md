@@ -1318,7 +1318,11 @@ export class FooterComponent {
     <main class="min-h-screen">
       <router-outlet />
     </main>
-    <app-chat-widget />
+    @defer (on interaction) {
+      <app-chat-widget />
+    } @placeholder {
+      <div class="fixed bottom-4 right-4 h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" aria-hidden="true"></div>
+    }
     <app-footer />
 ````
 
@@ -3222,83 +3226,6 @@ export class ClubInfoComponent {
       </section>
     }
   </main>
-}
-````
-
-## File: src/app/features/events/event-detail/event-detail.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  resource,
-  input,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { EventService } from '../../../core/services/event.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-@Component({
-  selector: 'app-event-detail',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe],
-  templateUrl: './event-detail.component.html',
-})
-export class EventDetailComponent {
-  readonly id = input.required<string>();
-  private readonly eventService = inject(EventService);
-  readonly auth = inject(AuthService);
-  readonly isActioning = signal(false);
-  private readonly _eventResource = resource({
-    params: () => this.id(),
-    loader: async ({ params: eventId }) => {
-      const found = await this.eventService.getEventById(eventId);
-      if (!found) throw new Error('Event not found.');
-      return found;
-    },
-  });
-  readonly event = computed(() => this._eventResource.value() ?? null);
-  readonly isLoading = computed(() => this._eventResource.isLoading());
-  readonly errorMessage = computed<string | null>(() => {
-    const err = this._eventResource.error();
-    if (!err) return null;
-    return err instanceof Error ? err.message : 'Failed to load event.';
-  });
-  readonly isOrganizer = computed(
-    () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,
-  );
-  async onAttend(): Promise<void> {
-    this.isActioning.set(true);
-    try {
-      await this.eventService.attendEvent(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
-    }
-  }
-  async onCancelAttend(): Promise<void> {
-    this.isActioning.set(true);
-    try {
-      await this.eventService.cancelAttendance(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
-    }
-  }
-  async onCancelEvent(): Promise<void> {
-    if (!confirm('Cancel this event?')) return;
-    this.isActioning.set(true);
-    try {
-      await this.eventService.cancelEvent(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
-    }
-  }
 }
 ````
 
@@ -8242,6 +8169,83 @@ export class EventCardComponent {
 }
 ````
 
+## File: src/app/features/events/event-detail/event-detail.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  resource,
+  input,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { EventService } from '../../../core/services/event.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+@Component({
+  selector: 'app-event-detail',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, FormatDatePipe],
+  templateUrl: './event-detail.component.html',
+})
+export class EventDetailComponent {
+  readonly id = input.required<string>();
+  private readonly eventService = inject(EventService);
+  readonly auth = inject(AuthService);
+  readonly isActioning = signal(false);
+  private readonly _eventResource = resource({
+    params: () => this.id(),
+    loader: async ({ params: eventId }) => {
+      const found = await this.eventService.getEventById(eventId);
+      if (!found) throw new Error('Event not found.');
+      return found;
+    },
+  });
+  readonly event = computed(() => this._eventResource.value() ?? null);
+  readonly isLoading = computed(() => this._eventResource.isLoading());
+  readonly errorMessage = computed<string | null>(() => {
+    const err = this._eventResource.error();
+    if (!err) return null;
+    return err instanceof Error ? err.message : 'Failed to load event.';
+  });
+  readonly isOrganizer = computed(
+    () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,
+  );
+  async onAttend(): Promise<void> {
+    this.isActioning.set(true);
+    try {
+      await this.eventService.attendEvent(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+  async onCancelAttend(): Promise<void> {
+    this.isActioning.set(true);
+    try {
+      await this.eventService.cancelAttendance(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+  async onCancelEvent(): Promise<void> {
+    if (!confirm('Cancel this event?')) return;
+    this.isActioning.set(true);
+    try {
+      await this.eventService.cancelEvent(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+}
+````
+
 ## File: src/app/features/profile/stats/profile-stats.component.html
 ````html
 <dl class="bento-grid-3">
@@ -8623,59 +8627,6 @@ export class QuizCreateComponent {
         this.isPublishing.set(false);
         this.errorMessage.set((err as Error).message);
       });
-  }
-}
-````
-
-## File: src/app/features/quiz/quiz-list/quiz-list.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  inject,
-  input,
-  resource,
-  signal,
-} from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { AuthService } from '../../../core/auth/auth.service';
-import { QuizService } from '../../../core/services/quiz.service';
-import { HlmCardImports } from '../../../shared/spartan/card/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-@Component({
-  selector: 'app-quiz-list',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ...HlmCardImports, HlmButton],
-  templateUrl: './quiz-list.component.html',
-})
-export class QuizListComponent {
-  protected readonly quizService = inject(QuizService);
-  protected readonly authService = inject(AuthService);
-  private readonly router = inject(Router);
-  protected readonly togglingId = signal<string | null>(null);
-  protected readonly errorMessage = signal('');
-  readonly id = input<string>('');
-  private readonly _quizzesResource = resource({
-    params: () => this.id(),
-    loader: ({ params: clubId }) =>
-      clubId ? this.quizService.loadQuizzes(clubId) : Promise.resolve(undefined),
-  });
-  readonly isLoading = computed(() => this._quizzesResource.isLoading());
-  protected toggleActive(quizId: string, isActive: boolean): void {
-    this.togglingId.set(quizId);
-    this.errorMessage.set('');
-    this.quizService
-      .toggleActive(quizId, isActive)
-      .then(() => this.togglingId.set(null))
-      .catch(err => {
-        this.togglingId.set(null);
-        this.errorMessage.set((err as Error).message);
-      });
-  }
-  protected takeQuiz(quizId: string): void {
-    this.router.navigate(['/clubs', this.id(), 'quizzes', quizId]);
   }
 }
 ````
@@ -9614,7 +9565,11 @@ export class RandomizerService {
                   <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl glass-card-strong shadow-xl p-4 flex flex-col items-center gap-2"
                        aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
                     <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
-                    <app-qr-code [value]="buildQrValue(member)" [size]="160" />
+                    @defer (on idle) {
+                      <app-qr-code [value]="buildQrValue(member)" [size]="160" />
+                    } @placeholder {
+                      <div class="h-40 w-40 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" aria-hidden="true"></div>
+                    }
                     <button hlmBtn variant="ghost" size="sm" type="button" (click)="toggleQr(member.userId)"
                             class="mt-1 text-xs text-gray-400">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
                   </dialog>
@@ -10456,6 +10411,59 @@ export class ProfileComponent {
     }
   </div>
 </div>
+````
+
+## File: src/app/features/quiz/quiz-list/quiz-list.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  inject,
+  input,
+  resource,
+  signal,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../../core/auth/auth.service';
+import { QuizService } from '../../../core/services/quiz.service';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+@Component({
+  selector: 'app-quiz-list',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, ...HlmCardImports, HlmButton],
+  templateUrl: './quiz-list.component.html',
+})
+export class QuizListComponent {
+  protected readonly quizService = inject(QuizService);
+  protected readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  protected readonly togglingId = signal<string | null>(null);
+  protected readonly errorMessage = signal('');
+  readonly id = input<string>('');
+  private readonly _quizzesResource = resource({
+    params: () => this.id(),
+    loader: ({ params: clubId }) =>
+      clubId ? this.quizService.loadQuizzes(clubId) : Promise.resolve(undefined),
+  });
+  readonly isLoading = computed(() => this._quizzesResource.isLoading());
+  protected toggleActive(quizId: string, isActive: boolean): void {
+    this.togglingId.set(quizId);
+    this.errorMessage.set('');
+    this.quizService
+      .toggleActive(quizId, isActive)
+      .then(() => this.togglingId.set(null))
+      .catch(err => {
+        this.togglingId.set(null);
+        this.errorMessage.set((err as Error).message);
+      });
+  }
+  protected takeQuiz(quizId: string): void {
+    this.router.navigate(['/clubs', this.id(), 'quizzes', quizId]);
+  }
+}
 ````
 
 ## File: src/app/features/randomizer/randomizer.component.ts

@@ -2,6 +2,10 @@
     <main class="min-h-screen">
       <router-outlet />
     </main>
-    <app-chat-widget />
+    @defer (on interaction) {
+      <app-chat-widget />
+    } @placeholder {
+      <div class="fixed bottom-4 right-4 h-12 w-12 rounded-full bg-gray-200 dark:bg-gray-700 animate-pulse" aria-hidden="true"></div>
+    }
     <app-footer />
   
