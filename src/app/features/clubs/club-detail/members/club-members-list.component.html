@@ -1,4 +1,4 @@
-<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="px-6 gap-4">
+<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="glass-card px-6 gap-4">
   <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
     {{ 'MEMBERS.title' | translate }} ({{ members().length }})
   </h2>
@@ -74,7 +74,7 @@
 
                 <!-- QR popover -->
                 @if (showQrForUser() === member.userId) {
-                  <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 p-4 flex flex-col items-center gap-2"
+                  <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl glass-card-strong shadow-xl p-4 flex flex-col items-center gap-2"
                        aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
                     <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
                     <app-qr-code [value]="buildQrValue(member)" [size]="160" />
@@ -102,7 +102,7 @@
                   {{ 'MEMBERS.ban' | translate }}
                 </button>
                 @if (showBanMenu() === member.userId) {
-                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 py-1 min-w-36">
+                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl glass-card-strong shadow-xl py-1 min-w-36">
                     @for (duration of banDurations; track duration) {
                       <li>
                         <button hlmBtn variant="ghost" type="button" (click)="emitBan(member.userId, duration)"

@@ -38,7 +38,7 @@
         [formGroup]="metaForm"
         (ngSubmit)="nextStep()"
         novalidate
-        class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm space-y-5"
+        class="glass-card p-6 space-y-5"
       >
         <!-- Title -->
         <hlm-field>
@@ -91,7 +91,7 @@
               Questions ({{ localQuestions().length }})
             </h2>
             @for (q of localQuestions(); track $index) {
-              <div hlmCard class="px-5 py-4 flex items-start gap-3 rounded-xl">
+              <div hlmCard class="glass-card-subtle px-5 py-4 flex items-start gap-3 rounded-xl">
                 <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
                              text-primary-700 dark:text-primary-300 text-xs font-bold flex
                              items-center justify-center flex-shrink-0">
@@ -119,7 +119,7 @@
           [formGroup]="questionForm"
           (ngSubmit)="addQuestion()"
           novalidate
-          class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm space-y-5"
+          class="glass-card p-6 space-y-5"
         >
           <h2 class="font-semibold text-gray-900 dark:text-white">
             {{ localQuestions().length === 0 ? 'Add your first question' : 'Add another question' }}

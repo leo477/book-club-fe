@@ -1433,26 +1433,6 @@ export class BookIntroComponent {
 }
 ````
 
-## File: src/app/shared/components/empty-state/empty-state.component.html
-````html
-<div class="flex flex-col items-center justify-center py-16 px-4 text-center glass-card-subtle">
-  <div class="text-5xl mb-4" aria-hidden="true">{{ icon() }}</div>
-  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ title() }}</h3>
-  <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">{{ description() }}</p>
-  @if (actionLabel()) {
-    <button
-      type="button"
-      (click)="actionClick.emit()"
-      class="bg-gradient-brand text-white px-5 py-2 rounded-[var(--bento-radius)] font-medium
-             transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2
-             focus:ring-primary-500 focus:ring-offset-2"
-    >
-      {{ actionLabel() }}
-    </button>
-  }
-</div>
-````
-
 ## File: src/app/shared/components/empty-state/empty-state.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
@@ -3332,7 +3312,7 @@ export class ProfileStatsComponent {
         [formGroup]="metaForm"
         (ngSubmit)="nextStep()"
         novalidate
-        class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm space-y-5"
+        class="glass-card p-6 space-y-5"
       >
         <hlm-field>
           <label hlmFieldLabel>
@@ -3377,7 +3357,7 @@ export class ProfileStatsComponent {
               Questions ({{ localQuestions().length }})
             </h2>
             @for (q of localQuestions(); track $index) {
-              <div hlmCard class="px-5 py-4 flex items-start gap-3 rounded-xl">
+              <div hlmCard class="glass-card-subtle px-5 py-4 flex items-start gap-3 rounded-xl">
                 <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
                              text-primary-700 dark:text-primary-300 text-xs font-bold flex
                              items-center justify-center flex-shrink-0">
@@ -3403,7 +3383,7 @@ export class ProfileStatsComponent {
           [formGroup]="questionForm"
           (ngSubmit)="addQuestion()"
           novalidate
-          class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200 dark:border-gray-800 shadow-sm space-y-5"
+          class="glass-card p-6 space-y-5"
         >
           <h2 class="font-semibold text-gray-900 dark:text-white">
             {{ localQuestions().length === 0 ? 'Add your first question' : 'Add another question' }}
@@ -3712,6 +3692,127 @@ export class ProfileStatsComponent {
         }
       </div>
     </div>
+````
+
+## File: src/app/features/quiz/quiz-take/quiz-take.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+} from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizAttempt } from '../../../core/models/quiz.model';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
+@Component({
+  selector: 'app-quiz-take',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, LoadingSpinnerComponent],
+  templateUrl: './quiz-take.component.html',
+})
+export class QuizTakeComponent implements OnInit {
+  protected readonly quizService = inject(QuizService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  protected readonly state = signal<QuizState>('loading');
+  protected readonly errorMessage = signal('');
+  protected readonly currentIndex = signal(0);
+  protected readonly selectedAnswers = signal<number[]>([]);
+  protected readonly selectedOption = computed(
+    () => this.selectedAnswers()[this.currentIndex()] ?? -1,
+  );
+  protected readonly attempt = signal<QuizAttempt | null>(null);
+  protected clubId = '';
+  protected readonly currentQuestion = computed(
+    () => this.quizService.questions()[this.currentIndex()] ?? null,
+  );
+  protected readonly isLastQuestion = computed(
+    () => this.currentIndex() === this.quizService.questions().length - 1,
+  );
+  protected readonly progressPercent = computed(() => {
+    const total = this.quizService.questions().length;
+    return total === 0 ? 0 : Math.round(((this.currentIndex() + 1) / total) * 100);
+  });
+  protected readonly scorePercent = computed(() => {
+    const a = this.attempt();
+    if (!a || a.total === 0) return 0;
+    return Math.round((a.score / a.total) * 100);
+  });
+  protected readonly scoreMessage = computed(() => {
+    const pct = this.scorePercent();
+    if (pct === 100) return '🎉 Perfect score!';
+    if (pct >= 80) return '🌟 Great job!';
+    if (pct >= 60) return '👍 Good effort!';
+    if (pct >= 40) return '📖 Keep reading!';
+    return '💪 Better luck next time!';
+  });
+  ngOnInit(): void {
+    // Both :id (club) and :quizId are inherited via paramsInheritanceStrategy:'always'
+    this.clubId = this.route.snapshot.params['id'] as string;
+    const quizId = this.route.snapshot.params['quizId'] as string;
+    if (!quizId) {
+      this.errorMessage.set('Quiz not found.');
+      this.state.set('error');
+      return;
+    }
+    this.quizService
+      .loadQuestions(quizId)
+      .then(() => {
+        const count = this.quizService.questions().length;
+        if (count === 0) {
+          this.errorMessage.set('This quiz has no questions yet.');
+          this.state.set('error');
+          return;
+        }
+        this.selectedAnswers.set(new Array<number>(count).fill(-1));
+        this.state.set('taking');
+      })
+      .catch(err => {
+        this.errorMessage.set((err as Error).message);
+        this.state.set('error');
+      });
+  }
+  protected optionLabel(index: number): string {
+    return String.fromCodePoint(65 + index);
+  }
+  protected selectOption(index: number): void {
+    const current = this.currentIndex();
+    this.selectedAnswers.update(answers => {
+      const copy = [...answers];
+      copy[current] = index;
+      return copy;
+    });
+  }
+  protected next(): void {
+    if (this.selectedOption() === -1) return;
+    this.currentIndex.update(i => i + 1);
+  }
+  protected previous(): void {
+    if (this.currentIndex() === 0) return;
+    this.currentIndex.update(i => i - 1);
+  }
+  protected submit(): void {
+    if (this.selectedOption() === -1) return;
+    this.state.set('submitting');
+    const quizId = this.route.snapshot.params['quizId'] as string;
+    this.quizService
+      .submitAttempt(quizId, this.selectedAnswers())
+      .then(result => {
+        this.attempt.set(result);
+        this.state.set('results');
+      })
+      .catch(err => {
+        this.errorMessage.set((err as Error).message);
+        this.state.set('error');
+      });
+  }
+}
 ````
 
 ## File: src/app/layout/footer/footer.component.html
@@ -4044,6 +4145,26 @@ export class CoverUploadComponent {
     });
   }
 }
+````
+
+## File: src/app/shared/components/empty-state/empty-state.component.html
+````html
+<div class="flex flex-col items-center justify-center py-16 px-4 text-center glass-card-subtle">
+  <div class="text-5xl mb-4" aria-hidden="true">{{ icon() }}</div>
+  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ title() }}</h3>
+  <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">{{ description() }}</p>
+  @if (actionLabel()) {
+    <button
+      type="button"
+      (click)="actionClick.emit()"
+      class="bg-gradient-brand text-white px-5 py-2 rounded-[var(--bento-radius)] font-medium
+             transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2
+             focus:ring-primary-500 focus:ring-offset-2"
+    >
+      {{ actionLabel() }}
+    </button>
+  }
+</div>
 ````
 
 ## File: src/app/shared/components/form-field/form-field.component.ts
@@ -7928,7 +8049,7 @@ export class ClubManagePanelComponent {
 
 ## File: src/app/features/clubs/club-detail/members/club-members-list.component.html
 ````html
-<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="px-6 gap-4">
+<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="glass-card px-6 gap-4">
   <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
     {{ 'MEMBERS.title' | translate }} ({{ members().length }})
   </h2>
@@ -7995,7 +8116,7 @@ export class ClubManagePanelComponent {
                   <span aria-hidden="true">⊡</span> {{ 'MEMBERS.show_qr' | translate }}
                 </button>
                 @if (showQrForUser() === member.userId) {
-                  <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 p-4 flex flex-col items-center gap-2"
+                  <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl glass-card-strong shadow-xl p-4 flex flex-col items-center gap-2"
                        aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
                     <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
                     <app-qr-code [value]="buildQrValue(member)" [size]="160" />
@@ -8021,7 +8142,7 @@ export class ClubManagePanelComponent {
                   {{ 'MEMBERS.ban' | translate }}
                 </button>
                 @if (showBanMenu() === member.userId) {
-                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl bg-white dark:bg-gray-800 shadow-xl border border-gray-200 dark:border-gray-700 py-1 min-w-36">
+                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl glass-card-strong shadow-xl py-1 min-w-36">
                     @for (duration of banDurations; track duration) {
                       <li>
                         <button hlmBtn variant="ghost" type="button" (click)="emitBan(member.userId, duration)"
@@ -8231,118 +8352,149 @@ export class EventCardComponent {
 }
 ````
 
-## File: src/app/features/quiz/quiz-list/quiz-list.component.html
-````html
-<div class="min-h-screen p-4 sm:p-8">
-  <div class="max-w-3xl mx-auto space-y-6">
-    <header class="flex items-center justify-between flex-wrap gap-4">
-      <div>
-        <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🧠 Quizzes</h1>
-        <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-          Test your knowledge of the books you've read.
-        </p>
-      </div>
-      <div class="flex items-center gap-3">
-        @if (authService.isOrganizer()) {
-          <a hlmBtn [routerLink]="['/clubs', id(), 'quizzes', 'create']"
-             class="bg-gradient-brand text-white border-0 hover:opacity-90">
-            + Create Quiz
-          </a>
-        }
-        <nav aria-label="Breadcrumb">
-          <a [routerLink]="['/clubs', id()]"
-             class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-            ← Club
-          </a>
-        </nav>
-      </div>
-    </header>
-    @if (quizService.isLoading()) {
-      <div class="bento-grid-3">
-        @for (_ of [1, 2, 3]; track $index) {
-          <div class="h-28 glass-card-subtle animate-pulse"></div>
-        }
-      </div>
-    } @else {
-      @if (quizService.quizzes().length === 0) {
-        <div class="glass-card p-12 text-center">
-          <p class="text-4xl mb-3">📝</p>
-          <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">No quizzes yet</h2>
-          @if (authService.isOrganizer()) {
-            <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-              Create your first quiz to engage the club.
-            </p>
-          } @else {
-            <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-              The organizer hasn't created any quizzes yet.
-            </p>
-          }
-        </div>
-      } @else {
-        <div class="bento-grid-3">
-          @for (quiz of quizService.quizzes(); track quiz.id) {
-            <div class="glass-card p-5 flex flex-col gap-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5">
-              <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-2 flex-wrap mb-1">
-                    <h2 class="text-gray-900 dark:text-white font-semibold truncate">
-                      {{ quiz.title }}
-                    </h2>
-                    @if (quiz.isActive) {
-                      <span class="inline-flex items-center gap-1 rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
-                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
-                        Active
-                      </span>
-                    } @else {
-                      <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-500 dark:text-gray-400">
-                        Draft
-                      </span>
-                    }
-                  </div>
-                  @if (quiz.description) {
-                    <p class="text-gray-500 dark:text-gray-400 text-xs line-clamp-2">
-                      {{ quiz.description }}
-                    </p>
-                  }
-                </div>
-              </div>
-              <div class="flex items-center gap-2 mt-auto">
-                @if (authService.isOrganizer()) {
-                  <button
-                    hlmBtn
-                    type="button"
-                    size="sm"
-                    [variant]="quiz.isActive ? 'secondary' : 'outline'"
-                    (click)="toggleActive(quiz.id, !quiz.isActive)"
-                    [disabled]="togglingId() === quiz.id"
-                    class="w-full"
-                  >
-                    {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
-                  </button>
-                } @else if (quiz.isActive) {
-                  <button
-                    hlmBtn
-                    type="button"
-                    size="sm"
-                    (click)="takeQuiz(quiz.id)"
-                    class="w-full bg-gradient-brand text-white border-0 hover:opacity-90"
-                  >
-                    Take Quiz →
-                  </button>
-                }
-              </div>
-            </div>
-          }
-        </div>
-      }
+## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizQuestion } from '../../../core/models/quiz.model';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+interface MetaForm {
+  title: FormControl<string>;
+  description: FormControl<string>;
+}
+interface QuestionForm {
+  question: FormControl<string>;
+  option0: FormControl<string>;
+  option1: FormControl<string>;
+  option2: FormControl<string>;
+  option3: FormControl<string>;
+  correctIndex: FormControl<number>;
+}
+type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
+@Component({
+  selector: 'app-quiz-create',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
+  templateUrl: './quiz-create.component.html',
+})
+export class QuizCreateComponent {
+  private readonly quizService = inject(QuizService);
+  private readonly router = inject(Router);
+  protected readonly currentStep = signal<1 | 2>(1);
+  protected readonly localQuestions = signal<LocalQuestion[]>([]);
+  protected readonly isPublishing = signal(false);
+  protected readonly errorMessage = signal('');
+  readonly id = input<string>('');
+  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
+  protected readonly metaForm = new FormGroup<MetaForm>({
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+  });
+  protected readonly questionForm = new FormGroup<QuestionForm>({
+    question: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
+    }),
+    option0: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option1: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option2: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option3: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    correctIndex: new FormControl<number>(0, { nonNullable: true }),
+  });
+  protected isInvalidTouched(ctrl: AbstractControl): boolean {
+    return ctrl.invalid && ctrl.touched;
+  }
+  protected optionLabel(index: number): string {
+    return String.fromCodePoint(65 + index);
+  }
+  protected nextStep(): void {
+    if (this.metaForm.invalid) {
+      this.metaForm.markAllAsTouched();
+      return;
     }
-    @if (errorMessage()) {
-      <div class="glass-card px-4 py-3 text-red-700 dark:text-red-400 text-sm" role="alert">
-        ⚠️ {{ errorMessage() }}
-      </div>
+    this.currentStep.set(2);
+  }
+  protected previousStep(): void {
+    this.currentStep.set(1);
+    this.errorMessage.set('');
+  }
+  protected addQuestion(): void {
+    if (this.questionForm.invalid) {
+      this.questionForm.markAllAsTouched();
+      return;
     }
-  </div>
-</div>
+    const { question, option0, option1, option2, option3, correctIndex } =
+      this.questionForm.getRawValue();
+    const newQuestion: LocalQuestion = {
+      question: question.trim(),
+      options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
+      correctIndex,
+    };
+    this.localQuestions.update(prev => [...prev, newQuestion]);
+    this.questionForm.reset({ correctIndex: 0 });
+  }
+  protected removeQuestion(index: number): void {
+    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
+  }
+  protected publishQuiz(): void {
+    const questions = this.localQuestions();
+    if (questions.length === 0) return;
+    this.isPublishing.set(true);
+    this.errorMessage.set('');
+    const { title, description } = this.metaForm.getRawValue();
+    const clubId = this.id();
+    this.quizService
+      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
+      .then(async quiz => {
+        for (const q of questions) {
+          await this.quizService.addQuestion(quiz.id, q);
+        }
+        await this.quizService.toggleActive(quiz.id, true);
+        this.isPublishing.set(false);
+        this.router.navigate(['/clubs', clubId, 'quizzes']);
+      })
+      .catch(err => {
+        this.isPublishing.set(false);
+        this.errorMessage.set((err as Error).message);
+      });
+  }
+}
 ````
 
 ## File: src/app/features/quiz/quiz-list/quiz-list.component.ts
@@ -8402,125 +8554,166 @@ export class QuizListComponent {
 }
 ````
 
-## File: src/app/features/quiz/quiz-take/quiz-take.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizAttempt } from '../../../core/models/quiz.model';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
-@Component({
-  selector: 'app-quiz-take',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LoadingSpinnerComponent],
-  templateUrl: './quiz-take.component.html',
-})
-export class QuizTakeComponent implements OnInit {
-  protected readonly quizService = inject(QuizService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  protected readonly state = signal<QuizState>('loading');
-  protected readonly errorMessage = signal('');
-  protected readonly currentIndex = signal(0);
-  protected readonly selectedAnswers = signal<number[]>([]);
-  protected readonly selectedOption = computed(
-    () => this.selectedAnswers()[this.currentIndex()] ?? -1,
-  );
-  protected readonly attempt = signal<QuizAttempt | null>(null);
-  protected clubId = '';
-  protected readonly currentQuestion = computed(
-    () => this.quizService.questions()[this.currentIndex()] ?? null,
-  );
-  protected readonly isLastQuestion = computed(
-    () => this.currentIndex() === this.quizService.questions().length - 1,
-  );
-  protected readonly progressPercent = computed(() => {
-    const total = this.quizService.questions().length;
-    return total === 0 ? 0 : Math.round(((this.currentIndex() + 1) / total) * 100);
-  });
-  protected readonly scorePercent = computed(() => {
-    const a = this.attempt();
-    if (!a || a.total === 0) return 0;
-    return Math.round((a.score / a.total) * 100);
-  });
-  protected readonly scoreMessage = computed(() => {
-    const pct = this.scorePercent();
-    if (pct === 100) return '🎉 Perfect score!';
-    if (pct >= 80) return '🌟 Great job!';
-    if (pct >= 60) return '👍 Good effort!';
-    if (pct >= 40) return '📖 Keep reading!';
-    return '💪 Better luck next time!';
-  });
-  ngOnInit(): void {
-    // Both :id (club) and :quizId are inherited via paramsInheritanceStrategy:'always'
-    this.clubId = this.route.snapshot.params['id'] as string;
-    const quizId = this.route.snapshot.params['quizId'] as string;
-    if (!quizId) {
-      this.errorMessage.set('Quiz not found.');
-      this.state.set('error');
-      return;
-    }
-    this.quizService
-      .loadQuestions(quizId)
-      .then(() => {
-        const count = this.quizService.questions().length;
-        if (count === 0) {
-          this.errorMessage.set('This quiz has no questions yet.');
-          this.state.set('error');
-          return;
+## File: src/app/features/randomizer/randomizer.component.html
+````html
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 p-4 sm:p-8">
+  <div class="max-w-4xl mx-auto space-y-8">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-white">🎲 {{ 'RANDOMIZER.title' | translate }}</h1>
+        <p class="text-primary-300 mt-1">{{ 'RANDOMIZER.subtitle' | translate }}</p>
+      </div>
+      <nav aria-label="Breadcrumb">
+        <a [routerLink]="['/clubs', clubId]" class="text-primary-300 hover:text-white transition-colors text-sm">
+          {{ 'RANDOMIZER.back_to_club' | translate }}
+        </a>
+      </nav>
+    </header>
+    <div class="bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/10">
+      <label for="purpose" class="block text-white font-medium text-sm mb-2">{{ 'RANDOMIZER.purpose_label' | translate }}</label>
+      <input
+        hlmInput
+        id="purpose"
+        type="text"
+        [formControl]="purposeControl"
+        [placeholder]="'RANDOMIZER.purpose_placeholder' | translate"
+        class="w-full rounded-xl bg-white/10 border-white/20 text-white placeholder-white/40 px-4 focus-visible:ring-primary-400"
+      />
+    </div>
+    <div class="grid lg:grid-cols-2 gap-8">
+      <section aria-labelledby="members-heading" class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 id="members-heading" class="text-white font-semibold text-lg">
+            👥 {{ 'RANDOMIZER.members_title' | translate }}
+            <span class="text-primary-300 text-sm font-normal ml-2">{{ selectedCount() }} / {{ randomizerService.candidates().length }} {{ 'RANDOMIZER.selected' | translate }}</span>
+          </h2>
+          <button
+            hlmBtn
+            variant="ghost"
+            size="sm"
+            type="button"
+            (click)="reset()"
+            class="text-xs text-primary-300 hover:text-white"
+          >
+            {{ 'RANDOMIZER.select_all' | translate }}
+          </button>
+        </div>
+        @if (randomizerService.candidates().length === 0) {
+          <div class="bg-white/10 rounded-2xl p-8 text-center text-white/60">
+            <p class="text-3xl mb-2">👤</p>
+            <p>{{ 'RANDOMIZER.no_members' | translate }}</p>
+          </div>
+        } @else {
+          <ul class="space-y-2">
+            @for (member of randomizerService.candidates(); track member.userId) {
+              <li>
+                <button
+                  type="button"
+                  (click)="randomizerService.toggleMember(member.userId)"
+                  class="w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  [class]="randomizerService.selectedIds().has(member.userId)
+                    ? 'bg-white/20 border border-white/30'
+                    : 'bg-white/5 border border-white/10 opacity-50'"
+                  [attr.aria-pressed]="randomizerService.selectedIds().has(member.userId)"
+                  [attr.aria-label]="'Toggle ' + member.displayName"
+                >
+                  <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                    {{ member.displayName | initials }}
+                  </div>
+                  <span class="text-white font-medium text-sm flex-1 text-left">{{ member.displayName }}</span>
+                  @if (randomizerService.selectedIds().has(member.userId)) {
+                    <span class="text-green-400 text-lg" aria-hidden="true">✓</span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
         }
-        this.selectedAnswers.set(new Array<number>(count).fill(-1));
-        this.state.set('taking');
-      })
-      .catch(err => {
-        this.errorMessage.set((err as Error).message);
-        this.state.set('error');
-      });
-  }
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
-  protected selectOption(index: number): void {
-    const current = this.currentIndex();
-    this.selectedAnswers.update(answers => {
-      const copy = [...answers];
-      copy[current] = index;
-      return copy;
-    });
-  }
-  protected next(): void {
-    if (this.selectedOption() === -1) return;
-    this.currentIndex.update(i => i + 1);
-  }
-  protected previous(): void {
-    if (this.currentIndex() === 0) return;
-    this.currentIndex.update(i => i - 1);
-  }
-  protected submit(): void {
-    if (this.selectedOption() === -1) return;
-    this.state.set('submitting');
-    const quizId = this.route.snapshot.params['quizId'] as string;
-    this.quizService
-      .submitAttempt(quizId, this.selectedAnswers())
-      .then(result => {
-        this.attempt.set(result);
-        this.state.set('results');
-      })
-      .catch(err => {
-        this.errorMessage.set((err as Error).message);
-        this.state.set('error');
-      });
-  }
-}
+      </section>
+      <section aria-labelledby="spin-heading" class="space-y-6">
+        <h2 id="spin-heading" class="sr-only">{{ 'RANDOMIZER.title' | translate }}</h2>
+        <div class="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/10 text-center min-h-[200px] flex flex-col items-center justify-center">
+          @if (randomizerService.isSpinning()) {
+            <div class="space-y-4">
+              <div class="text-5xl animate-bounce">🎲</div>
+              <p class="text-white/70 text-sm animate-pulse">{{ 'RANDOMIZER.spinning' | translate }}</p>
+            </div>
+          } @else if (randomizerService.result()) {
+            <div class="space-y-3">
+              <div class="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl ring-4 ring-white/30">
+                {{ randomizerService.result()!.displayName | initials }}
+              </div>
+              <div>
+                <p class="text-white/60 text-xs uppercase tracking-wide mb-1">{{ randomizerService.purpose() }}</p>
+                <p class="text-white text-2xl font-bold">{{ randomizerService.result()!.displayName }}</p>
+              </div>
+              <span class="text-3xl">🏆</span>
+            </div>
+          } @else {
+            <div class="text-white/40 space-y-2">
+              <div class="text-4xl">🎯</div>
+              <p class="text-sm">{{ 'RANDOMIZER.spin_hint' | translate }}</p>
+            </div>
+          }
+        </div>
+        @if (errorMessage()) {
+          <div class="rounded-xl bg-red-500/20 border border-red-500/30 px-4 py-3 text-sm text-red-300" role="alert">
+            {{ errorMessage() }}
+          </div>
+        }
+        <div class="flex flex-col gap-3">
+          <button
+            hlmBtn
+            type="button"
+            (click)="spin()"
+            [disabled]="randomizerService.isSpinning() || selectedCount() < 2"
+            class="w-full rounded-2xl bg-gradient-to-r from-accent-500 to-primary-500 hover:from-accent-400 hover:to-primary-400 text-white font-bold py-4 text-lg shadow-lg"
+          >
+            @if (randomizerService.isSpinning()) {
+              {{ 'RANDOMIZER.spinning_btn' | translate }}
+            } @else {
+              {{ 'RANDOMIZER.spin' | translate }}
+            }
+          </button>
+          @if (randomizerService.result() && authService.isOrganizer()) {
+            <button
+              hlmBtn
+              variant="outline"
+              type="button"
+              (click)="saveSession()"
+              [disabled]="isSaving()"
+              class="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3"
+            >
+              @if (isSaving()) {
+                {{ 'RANDOMIZER.saving' | translate }}
+              } @else {
+                {{ 'RANDOMIZER.save' | translate }}
+              }
+            </button>
+          }
+        </div>
+        @if (randomizerService.history().length > 0) {
+          <div class="space-y-3">
+            <h3 class="text-white/70 text-sm font-medium uppercase tracking-wide">{{ 'RANDOMIZER.history_title' | translate }}</h3>
+            <ul class="space-y-2">
+              @for (session of randomizerService.history().slice(0, 5); track session.id) {
+                <li class="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-white/60 text-xs truncate">{{ session.purpose }}</p>
+                    @if (session.result) {
+                      <p class="text-white text-sm font-medium">🏆 {{ session.result.displayName }}</p>
+                    }
+                  </div>
+                  <span class="text-white/40 text-xs shrink-0">{{ session.createdAt | date:'dd.MM HH:mm' }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </section>
+    </div>
+  </div>
+</div>
 ````
 
 ## File: src/app/shared/components/qr-code/qr-code.component.ts
@@ -8946,6 +9139,140 @@ export interface ClubEvent {
   attendeeCount: number;
   isAttending: boolean;
   bookTitle?: string | null;
+}
+````
+
+## File: src/app/core/services/randomizer.service.ts
+````typescript
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../auth/auth.service';
+import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
+import { ApiClubMember, mapClubMember } from '../api/api-mappers';
+import { environment } from '../../../environments/environment';
+interface ApiMemberCandidate {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+interface ApiRandomizerSession {
+  id: string;
+  clubId: string;
+  createdBy: string;
+  purpose: string;
+  candidates: ApiMemberCandidate[];
+  result: ApiMemberCandidate | null;
+  createdAt: string;
+}
+function mapMemberCandidate(raw: ApiMemberCandidate): MemberCandidate {
+  return {
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+  };
+}
+function mapRandomizerSession(raw: ApiRandomizerSession): RandomizerSession {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    createdBy: raw.createdBy,
+    purpose: raw.purpose,
+    candidates: raw.candidates.map(mapMemberCandidate),
+    result: raw.result ? mapMemberCandidate(raw.result) : null,
+    createdAt: raw.createdAt,
+  };
+}
+@Injectable({ providedIn: 'root' })
+export class RandomizerService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly apiUrl = environment.apiUrl;
+  private readonly _candidates = signal<MemberCandidate[]>([]);
+  private readonly _selectedIds = signal<Set<string>>(new Set());
+  private readonly _result = signal<MemberCandidate | null>(null);
+  private readonly _isSpinning = signal(false);
+  private readonly _history = signal<RandomizerSession[]>([]);
+  private readonly _purpose = signal('Хто представляє книгу?');
+  readonly candidates = this._candidates.asReadonly();
+  readonly selectedIds = this._selectedIds.asReadonly();
+  readonly result = this._result.asReadonly();
+  readonly isSpinning = this._isSpinning.asReadonly();
+  readonly history = this._history.asReadonly();
+  readonly purpose = this._purpose.asReadonly();
+  setPurpose(purpose: string): void {
+    this._purpose.set(purpose);
+  }
+  async loadClubMembers(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${this.apiUrl}/clubs/${clubId}/members`),
+    );
+    const members: MemberCandidate[] = raw.map(m => {
+      const detail = mapClubMember(m);
+      return { userId: detail.userId, displayName: detail.displayName, avatarUrl: detail.avatarUrl };
+    });
+    this._candidates.set(members);
+    this._selectedIds.set(new Set(members.map(m => m.userId)));
+    this._result.set(null);
+  }
+  toggleMember(userId: string): void {
+    this._selectedIds.update(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  }
+  async spin(): Promise<void> {
+    const selected = this._candidates().filter(m => this._selectedIds().has(m.userId));
+    if (selected.length < 2) throw new Error('Потрібно мінімум 2 учасники');
+    this._isSpinning.set(true);
+    this._result.set(null);
+    await new Promise<void>(resolve => setTimeout(resolve, 2000));
+    const max = Math.floor(0x100000000 / selected.length) * selected.length;
+    let rand: number;
+    do {
+      rand = crypto.getRandomValues(new Uint32Array(1))[0];
+    } while (rand >= max);
+    const idx = rand % selected.length;
+    this._result.set(selected[idx]);
+    this._isSpinning.set(false);
+  }
+  async saveSession(clubId: string): Promise<void> {
+    const user = this.auth.currentUser();
+    if (!user) throw new Error('Not authenticated');
+    const result = this._result();
+    if (!result) throw new Error('No result to save');
+    const body = {
+      purpose: this._purpose(),
+      candidates: this._candidates()
+        .filter(m => this._selectedIds().has(m.userId))
+        .map(m => m.userId),
+      result: result.userId,
+    };
+    const raw = await firstValueFrom(
+      this.http.post<ApiRandomizerSession>(
+        `${this.apiUrl}/clubs/${clubId}/randomizer/sessions`,
+        body,
+      ),
+    );
+    const session = mapRandomizerSession(raw);
+    this._history.update(prev => [session, ...prev]);
+  }
+  async loadHistory(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiRandomizerSession[]>(`${this.apiUrl}/clubs/${clubId}/randomizer/history`),
+    );
+    this._history.set(raw.map(mapRandomizerSession));
+  }
+  reset(): void {
+    const ids = new Set(this._candidates().map(m => m.userId));
+    this._selectedIds.set(ids);
+    this._result.set(null);
+  }
 }
 ````
 
@@ -9806,309 +10133,116 @@ export class ProfileComponent {
 }
 ````
 
-## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizQuestion } from '../../../core/models/quiz.model';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmCardImports } from '../../../shared/spartan/card/src';
-interface MetaForm {
-  title: FormControl<string>;
-  description: FormControl<string>;
-}
-interface QuestionForm {
-  question: FormControl<string>;
-  option0: FormControl<string>;
-  option1: FormControl<string>;
-  option2: FormControl<string>;
-  option3: FormControl<string>;
-  correctIndex: FormControl<number>;
-}
-type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
-@Component({
-  selector: 'app-quiz-create',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
-  templateUrl: './quiz-create.component.html',
-})
-export class QuizCreateComponent {
-  private readonly quizService = inject(QuizService);
-  private readonly router = inject(Router);
-  protected readonly currentStep = signal<1 | 2>(1);
-  protected readonly localQuestions = signal<LocalQuestion[]>([]);
-  protected readonly isPublishing = signal(false);
-  protected readonly errorMessage = signal('');
-  readonly id = input<string>('');
-  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
-  protected readonly metaForm = new FormGroup<MetaForm>({
-    title: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-  });
-  protected readonly questionForm = new FormGroup<QuestionForm>({
-    question: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
-    }),
-    option0: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option1: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option2: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option3: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    correctIndex: new FormControl<number>(0, { nonNullable: true }),
-  });
-  protected isInvalidTouched(ctrl: AbstractControl): boolean {
-    return ctrl.invalid && ctrl.touched;
-  }
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
-  protected nextStep(): void {
-    if (this.metaForm.invalid) {
-      this.metaForm.markAllAsTouched();
-      return;
-    }
-    this.currentStep.set(2);
-  }
-  protected previousStep(): void {
-    this.currentStep.set(1);
-    this.errorMessage.set('');
-  }
-  protected addQuestion(): void {
-    if (this.questionForm.invalid) {
-      this.questionForm.markAllAsTouched();
-      return;
-    }
-    const { question, option0, option1, option2, option3, correctIndex } =
-      this.questionForm.getRawValue();
-    const newQuestion: LocalQuestion = {
-      question: question.trim(),
-      options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
-      correctIndex,
-    };
-    this.localQuestions.update(prev => [...prev, newQuestion]);
-    this.questionForm.reset({ correctIndex: 0 });
-  }
-  protected removeQuestion(index: number): void {
-    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
-  }
-  protected publishQuiz(): void {
-    const questions = this.localQuestions();
-    if (questions.length === 0) return;
-    this.isPublishing.set(true);
-    this.errorMessage.set('');
-    const { title, description } = this.metaForm.getRawValue();
-    const clubId = this.id();
-    this.quizService
-      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
-      .then(async quiz => {
-        for (const q of questions) {
-          await this.quizService.addQuestion(quiz.id, q);
-        }
-        await this.quizService.toggleActive(quiz.id, true);
-        this.isPublishing.set(false);
-        this.router.navigate(['/clubs', clubId, 'quizzes']);
-      })
-      .catch(err => {
-        this.isPublishing.set(false);
-        this.errorMessage.set((err as Error).message);
-      });
-  }
-}
-````
-
-## File: src/app/features/randomizer/randomizer.component.html
+## File: src/app/features/quiz/quiz-list/quiz-list.component.html
 ````html
-<div class="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 p-4 sm:p-8">
-  <div class="max-w-4xl mx-auto space-y-8">
+<div class="min-h-screen p-4 sm:p-8">
+  <div class="max-w-3xl mx-auto space-y-6">
     <header class="flex items-center justify-between flex-wrap gap-4">
       <div>
-        <h1 class="font-display text-3xl font-bold text-white">🎲 {{ 'RANDOMIZER.title' | translate }}</h1>
-        <p class="text-primary-300 mt-1">{{ 'RANDOMIZER.subtitle' | translate }}</p>
+        <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🧠 Quizzes</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+          Test your knowledge of the books you've read.
+        </p>
       </div>
-      <nav aria-label="Breadcrumb">
-        <a [routerLink]="['/clubs', clubId]" class="text-primary-300 hover:text-white transition-colors text-sm">
-          {{ 'RANDOMIZER.back_to_club' | translate }}
-        </a>
-      </nav>
+      <div class="flex items-center gap-3">
+        @if (authService.isOrganizer()) {
+          <a hlmBtn [routerLink]="['/clubs', id(), 'quizzes', 'create']"
+             class="bg-gradient-brand text-white border-0 hover:opacity-90">
+            + Create Quiz
+          </a>
+        }
+        <nav aria-label="Breadcrumb">
+          <a [routerLink]="['/clubs', id()]"
+             class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
+            ← Club
+          </a>
+        </nav>
+      </div>
     </header>
-    <div class="bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/10">
-      <label for="purpose" class="block text-white font-medium text-sm mb-2">{{ 'RANDOMIZER.purpose_label' | translate }}</label>
-      <input
-        hlmInput
-        id="purpose"
-        type="text"
-        [formControl]="purposeControl"
-        [placeholder]="'RANDOMIZER.purpose_placeholder' | translate"
-        class="w-full rounded-xl bg-white/10 border-white/20 text-white placeholder-white/40 px-4 focus-visible:ring-primary-400"
-      />
-    </div>
-    <div class="grid lg:grid-cols-2 gap-8">
-      <section aria-labelledby="members-heading" class="space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 id="members-heading" class="text-white font-semibold text-lg">
-            👥 {{ 'RANDOMIZER.members_title' | translate }}
-            <span class="text-primary-300 text-sm font-normal ml-2">{{ selectedCount() }} / {{ randomizerService.candidates().length }} {{ 'RANDOMIZER.selected' | translate }}</span>
-          </h2>
-          <button
-            hlmBtn
-            variant="ghost"
-            size="sm"
-            type="button"
-            (click)="reset()"
-            class="text-xs text-primary-300 hover:text-white"
-          >
-            {{ 'RANDOMIZER.select_all' | translate }}
-          </button>
-        </div>
-        @if (randomizerService.candidates().length === 0) {
-          <div class="bg-white/10 rounded-2xl p-8 text-center text-white/60">
-            <p class="text-3xl mb-2">👤</p>
-            <p>{{ 'RANDOMIZER.no_members' | translate }}</p>
-          </div>
-        } @else {
-          <ul class="space-y-2">
-            @for (member of randomizerService.candidates(); track member.userId) {
-              <li>
-                <button
-                  type="button"
-                  (click)="randomizerService.toggleMember(member.userId)"
-                  class="w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                  [class]="randomizerService.selectedIds().has(member.userId)
-                    ? 'bg-white/20 border border-white/30'
-                    : 'bg-white/5 border border-white/10 opacity-50'"
-                  [attr.aria-pressed]="randomizerService.selectedIds().has(member.userId)"
-                  [attr.aria-label]="'Toggle ' + member.displayName"
-                >
-                  <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                    {{ member.displayName | initials }}
-                  </div>
-                  <span class="text-white font-medium text-sm flex-1 text-left">{{ member.displayName }}</span>
-                  @if (randomizerService.selectedIds().has(member.userId)) {
-                    <span class="text-green-400 text-lg" aria-hidden="true">✓</span>
-                  }
-                </button>
-              </li>
-            }
-          </ul>
+    @if (quizService.isLoading()) {
+      <div class="bento-grid-3">
+        @for (_ of [1, 2, 3]; track $index) {
+          <div class="h-28 glass-card-subtle animate-pulse"></div>
         }
-      </section>
-      <section aria-labelledby="spin-heading" class="space-y-6">
-        <h2 id="spin-heading" class="sr-only">{{ 'RANDOMIZER.title' | translate }}</h2>
-        <div class="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/10 text-center min-h-[200px] flex flex-col items-center justify-center">
-          @if (randomizerService.isSpinning()) {
-            <div class="space-y-4">
-              <div class="text-5xl animate-bounce">🎲</div>
-              <p class="text-white/70 text-sm animate-pulse">{{ 'RANDOMIZER.spinning' | translate }}</p>
-            </div>
-          } @else if (randomizerService.result()) {
-            <div class="space-y-3">
-              <div class="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl ring-4 ring-white/30">
-                {{ randomizerService.result()!.displayName | initials }}
-              </div>
-              <div>
-                <p class="text-white/60 text-xs uppercase tracking-wide mb-1">{{ randomizerService.purpose() }}</p>
-                <p class="text-white text-2xl font-bold">{{ randomizerService.result()!.displayName }}</p>
-              </div>
-              <span class="text-3xl">🏆</span>
-            </div>
+      </div>
+    } @else {
+      @if (quizService.quizzes().length === 0) {
+        <div class="glass-card p-12 text-center">
+          <p class="text-4xl mb-3">📝</p>
+          <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">No quizzes yet</h2>
+          @if (authService.isOrganizer()) {
+            <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
+              Create your first quiz to engage the club.
+            </p>
           } @else {
-            <div class="text-white/40 space-y-2">
-              <div class="text-4xl">🎯</div>
-              <p class="text-sm">{{ 'RANDOMIZER.spin_hint' | translate }}</p>
-            </div>
+            <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
+              The organizer hasn't created any quizzes yet.
+            </p>
           }
         </div>
-        @if (errorMessage()) {
-          <div class="rounded-xl bg-red-500/20 border border-red-500/30 px-4 py-3 text-sm text-red-300" role="alert">
-            {{ errorMessage() }}
-          </div>
-        }
-        <div class="flex flex-col gap-3">
-          <button
-            hlmBtn
-            type="button"
-            (click)="spin()"
-            [disabled]="randomizerService.isSpinning() || selectedCount() < 2"
-            class="w-full rounded-2xl bg-gradient-to-r from-accent-500 to-primary-500 hover:from-accent-400 hover:to-primary-400 text-white font-bold py-4 text-lg shadow-lg"
-          >
-            @if (randomizerService.isSpinning()) {
-              {{ 'RANDOMIZER.spinning_btn' | translate }}
-            } @else {
-              {{ 'RANDOMIZER.spin' | translate }}
-            }
-          </button>
-          @if (randomizerService.result() && authService.isOrganizer()) {
-            <button
-              hlmBtn
-              variant="outline"
-              type="button"
-              (click)="saveSession()"
-              [disabled]="isSaving()"
-              class="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3"
-            >
-              @if (isSaving()) {
-                {{ 'RANDOMIZER.saving' | translate }}
-              } @else {
-                {{ 'RANDOMIZER.save' | translate }}
-              }
-            </button>
-          }
-        </div>
-        @if (randomizerService.history().length > 0) {
-          <div class="space-y-3">
-            <h3 class="text-white/70 text-sm font-medium uppercase tracking-wide">{{ 'RANDOMIZER.history_title' | translate }}</h3>
-            <ul class="space-y-2">
-              @for (session of randomizerService.history().slice(0, 5); track session.id) {
-                <li class="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="text-white/60 text-xs truncate">{{ session.purpose }}</p>
-                    @if (session.result) {
-                      <p class="text-white text-sm font-medium">🏆 {{ session.result.displayName }}</p>
+      } @else {
+        <div class="bento-grid-3">
+          @for (quiz of quizService.quizzes(); track quiz.id) {
+            <div class="glass-card p-5 flex flex-col gap-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2 flex-wrap mb-1">
+                    <h2 class="text-gray-900 dark:text-white font-semibold truncate">
+                      {{ quiz.title }}
+                    </h2>
+                    @if (quiz.isActive) {
+                      <span class="inline-flex items-center gap-1 rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
+                        Active
+                      </span>
+                    } @else {
+                      <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-500 dark:text-gray-400">
+                        Draft
+                      </span>
                     }
                   </div>
-                  <span class="text-white/40 text-xs shrink-0">{{ session.createdAt | date:'dd.MM HH:mm' }}</span>
-                </li>
-              }
-            </ul>
-          </div>
-        }
-      </section>
-    </div>
+                  @if (quiz.description) {
+                    <p class="text-gray-500 dark:text-gray-400 text-xs line-clamp-2">
+                      {{ quiz.description }}
+                    </p>
+                  }
+                </div>
+              </div>
+              <div class="flex items-center gap-2 mt-auto">
+                @if (authService.isOrganizer()) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    size="sm"
+                    [variant]="quiz.isActive ? 'secondary' : 'outline'"
+                    (click)="toggleActive(quiz.id, !quiz.isActive)"
+                    [disabled]="togglingId() === quiz.id"
+                    class="w-full"
+                  >
+                    {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
+                  </button>
+                } @else if (quiz.isActive) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    size="sm"
+                    (click)="takeQuiz(quiz.id)"
+                    class="w-full bg-gradient-brand text-white border-0 hover:opacity-90"
+                  >
+                    Take Quiz →
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+    @if (errorMessage()) {
+      <div class="glass-card px-4 py-3 text-red-700 dark:text-red-400 text-sm" role="alert">
+        ⚠️ {{ errorMessage() }}
+      </div>
+    }
   </div>
 </div>
 ````
@@ -10671,140 +10805,6 @@ export class EventService {
 }
 ````
 
-## File: src/app/core/services/randomizer.service.ts
-````typescript
-import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { AuthService } from '../auth/auth.service';
-import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
-import { ApiClubMember, mapClubMember } from '../api/api-mappers';
-import { environment } from '../../../environments/environment';
-interface ApiMemberCandidate {
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-}
-interface ApiRandomizerSession {
-  id: string;
-  clubId: string;
-  createdBy: string;
-  purpose: string;
-  candidates: ApiMemberCandidate[];
-  result: ApiMemberCandidate | null;
-  createdAt: string;
-}
-function mapMemberCandidate(raw: ApiMemberCandidate): MemberCandidate {
-  return {
-    userId: raw.userId,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-  };
-}
-function mapRandomizerSession(raw: ApiRandomizerSession): RandomizerSession {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    createdBy: raw.createdBy,
-    purpose: raw.purpose,
-    candidates: raw.candidates.map(mapMemberCandidate),
-    result: raw.result ? mapMemberCandidate(raw.result) : null,
-    createdAt: raw.createdAt,
-  };
-}
-@Injectable({ providedIn: 'root' })
-export class RandomizerService {
-  private readonly http = inject(HttpClient);
-  private readonly auth = inject(AuthService);
-  private readonly apiUrl = environment.apiUrl;
-  private readonly _candidates = signal<MemberCandidate[]>([]);
-  private readonly _selectedIds = signal<Set<string>>(new Set());
-  private readonly _result = signal<MemberCandidate | null>(null);
-  private readonly _isSpinning = signal(false);
-  private readonly _history = signal<RandomizerSession[]>([]);
-  private readonly _purpose = signal('Хто представляє книгу?');
-  readonly candidates = this._candidates.asReadonly();
-  readonly selectedIds = this._selectedIds.asReadonly();
-  readonly result = this._result.asReadonly();
-  readonly isSpinning = this._isSpinning.asReadonly();
-  readonly history = this._history.asReadonly();
-  readonly purpose = this._purpose.asReadonly();
-  setPurpose(purpose: string): void {
-    this._purpose.set(purpose);
-  }
-  async loadClubMembers(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiClubMember[]>(`${this.apiUrl}/clubs/${clubId}/members`),
-    );
-    const members: MemberCandidate[] = raw.map(m => {
-      const detail = mapClubMember(m);
-      return { userId: detail.userId, displayName: detail.displayName, avatarUrl: detail.avatarUrl };
-    });
-    this._candidates.set(members);
-    this._selectedIds.set(new Set(members.map(m => m.userId)));
-    this._result.set(null);
-  }
-  toggleMember(userId: string): void {
-    this._selectedIds.update(prev => {
-      const next = new Set(prev);
-      if (next.has(userId)) {
-        next.delete(userId);
-      } else {
-        next.add(userId);
-      }
-      return next;
-    });
-  }
-  async spin(): Promise<void> {
-    const selected = this._candidates().filter(m => this._selectedIds().has(m.userId));
-    if (selected.length < 2) throw new Error('Потрібно мінімум 2 учасники');
-    this._isSpinning.set(true);
-    this._result.set(null);
-    await new Promise<void>(resolve => setTimeout(resolve, 2000));
-    const max = Math.floor(0x100000000 / selected.length) * selected.length;
-    let rand: number;
-    do {
-      rand = crypto.getRandomValues(new Uint32Array(1))[0];
-    } while (rand >= max);
-    const idx = rand % selected.length;
-    this._result.set(selected[idx]);
-    this._isSpinning.set(false);
-  }
-  async saveSession(clubId: string): Promise<void> {
-    const user = this.auth.currentUser();
-    if (!user) throw new Error('Not authenticated');
-    const result = this._result();
-    if (!result) throw new Error('No result to save');
-    const body = {
-      purpose: this._purpose(),
-      candidates: this._candidates()
-        .filter(m => this._selectedIds().has(m.userId))
-        .map(m => m.userId),
-      result: result.userId,
-    };
-    const raw = await firstValueFrom(
-      this.http.post<ApiRandomizerSession>(
-        `${this.apiUrl}/clubs/${clubId}/randomizer/sessions`,
-        body,
-      ),
-    );
-    const session = mapRandomizerSession(raw);
-    this._history.update(prev => [session, ...prev]);
-  }
-  async loadHistory(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiRandomizerSession[]>(`${this.apiUrl}/clubs/${clubId}/randomizer/history`),
-    );
-    this._history.set(raw.map(mapRandomizerSession));
-  }
-  reset(): void {
-    const ids = new Set(this._candidates().map(m => m.userId));
-    this._selectedIds.set(ids);
-    this._result.set(null);
-  }
-}
-````
-
 ## File: src/app/features/auth/login/login.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
@@ -11079,12 +11079,12 @@ export class LoginComponent {
 
 ## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.html
 ````html
-<div hlmCard class="p-4 gap-3">
+<div hlmCard class="glass-card-subtle p-4 gap-3">
   <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
   <div class="grid grid-cols-1 gap-2">
     <a
       [routerLink]="['/clubs', clubId(), 'quizzes']"
-      class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
     >
       <span class="text-xl" aria-hidden="true">📝</span>
       <div>
@@ -11094,7 +11094,7 @@ export class LoginComponent {
     </a>
     <a
       [routerLink]="['/clubs', clubId(), 'randomizer']"
-      class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
     >
       <span class="text-xl" aria-hidden="true">🎲</span>
       <div>
@@ -11104,7 +11104,7 @@ export class LoginComponent {
     </a>
     <a
       [routerLink]="['/clubs', clubId(), 'edit']"
-      class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
     >
       <span class="text-xl" aria-hidden="true">✏️</span>
       <div>
@@ -11114,7 +11114,7 @@ export class LoginComponent {
     </a>
     <a
       [routerLink]="['/clubs', clubId(), 'events', 'create']"
-      class="flex items-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
     >
       <span class="text-xl" aria-hidden="true">📅</span>
       <div>
@@ -11307,6 +11307,289 @@ export class LoginComponent {
     </div>
   </div>
 </header>
+````
+
+## File: src/app/core/services/quiz.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
+interface ApiQuiz {
+  id: string;
+  clubId: string;
+  createdBy: string;
+  title: string;
+  description: string | null;
+  isActive: boolean;
+}
+interface ApiQuizQuestion {
+  id: string;
+  quizId: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+}
+interface ApiAttemptResponse {
+  id: string;
+  quizId: string;
+  userId: string;
+  score: number;
+  total: number;
+  answers: number[];
+}
+function mapQuiz(raw: ApiQuiz): Quiz {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    createdBy: raw.createdBy,
+    title: raw.title,
+    description: raw.description,
+    isActive: raw.isActive,
+  };
+}
+function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
+  return {
+    id: raw.id,
+    quizId: raw.quizId,
+    question: raw.question,
+    options: raw.options,
+    correctIndex: raw.correctIndex,
+  };
+}
+function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
+  return {
+    id: raw.id,
+    quizId: raw.quizId,
+    userId: raw.userId,
+    score: raw.score,
+    total: raw.total,
+    answers: raw.answers,
+  };
+}
+@Injectable({ providedIn: 'root' })
+export class QuizService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _quizzes = signal<Quiz[]>([]);
+  private readonly _questions = signal<QuizQuestion[]>([]);
+  private readonly _isLoading = signal(false);
+  readonly quizzes = this._quizzes.asReadonly();
+  readonly questions = this._questions.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
+  async loadQuizzes(clubId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
+      );
+      this._quizzes.set(raw.map(mapQuiz));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async createQuiz(data: {
+    clubId: string;
+    title: string;
+    description: string;
+  }): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
+          title: data.title,
+          description: data.description || null,
+        }),
+      );
+      const quiz = mapQuiz(raw);
+      this._quizzes.update(prev => [quiz, ...prev]);
+      return quiz;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async addQuestion(
+    quizId: string,
+    q: Omit<QuizQuestion, 'id' | 'quizId'>,
+  ): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
+          question: q.question,
+          options: q.options,
+          correctIndex: q.correctIndex,
+        }),
+      );
+      this._questions.update(prev => [...prev, mapQuestion(raw)]);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async loadQuestions(quizId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
+      );
+      this._questions.set(raw.map(mapQuestion));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
+      );
+      return mapAttempt(raw);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { isActive }),
+      );
+      this._quizzes.update(prev =>
+        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+}
+````
+
+## File: src/app/features/auth/register/register.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../core/auth/auth.service';
+import { UserRole } from '../../../core/models/user.model';
+import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
+import { SeoService } from '../../../core/services/seo.service';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
+  const password = group.get('password')?.value as string;
+  const confirmPassword = group.get('confirmPassword')?.value as string;
+  return password === confirmPassword ? null : { passwordMismatch: true };
+};
+interface RegisterForm {
+  displayName: FormControl<string>;
+  email: FormControl<string>;
+  password: FormControl<string>;
+  confirmPassword: FormControl<string>;
+  role: FormControl<UserRole>;
+}
+@Component({
+  selector: 'app-register',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './register.component.html',
+  styleUrl: './register.component.scss',
+})
+export class RegisterComponent {
+  private readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  readonly errorMessage = signal<string | null>(null);
+  readonly isSubmitting = signal(false);
+  readonly successMessage = signal(false);
+  readonly registeredEmail = signal('');
+  readonly selectedRole = signal<UserRole>('user');
+  readonly bookOpen = signal(false);
+  readonly formVisible = signal(false);
+  constructor() {
+    this.seo.setPageI18n('SEO.register_title');
+    setTimeout(() => this.formVisible.set(true), 700);
+  }
+  onBookAnimationDone(): void {
+  }
+  readonly form = new FormGroup<RegisterForm>(
+    {
+      displayName: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(2)],
+      }),
+      email: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.email],
+      }),
+      password: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(8)],
+      }),
+      confirmPassword: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+      role: new FormControl<UserRole>('user', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+    },
+    { validators: passwordMatchValidator },
+  );
+  private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
+    initialValue: '',
+  });
+  readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
+    const pw = this._passwordValue();
+    if (!pw || pw.length === 0) return null;
+    if (pw.length < 8) return 'weak';
+    const hasUpper = /[A-Z]/.test(pw);
+    const hasNumber = /\d/.test(pw);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
+    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
+    if (score >= 2) return 'strong';
+    if (score === 1) return 'medium';
+    return 'weak';
+  });
+  setRole(role: UserRole): void {
+    this.selectedRole.set(role);
+    this.form.controls.role.setValue(role);
+    this.form.controls.role.markAsTouched();
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+    const { displayName, email, password, role } = this.form.getRawValue();
+    const { error } = await this.auth.signUp(email, password, displayName, role);
+    this.isSubmitting.set(false);
+    if (error) {
+      this.errorMessage.set(error);
+    } else {
+      this.registeredEmail.set(email);
+      this.successMessage.set(true);
+      this.bookOpen.set(true);
+    }
+  }
+}
 ````
 
 ## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
@@ -11686,428 +11969,6 @@ export class CreateEventComponent implements OnInit {
 }
 ````
 
-## File: src/app/core/auth/auth.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, resource, signal } from '@angular/core';
-import { Router } from '@angular/router';
-import { catchError, firstValueFrom, of } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
-import { TokenStore } from './token.store';
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: ApiUserProfile;
-}
-@Injectable({ providedIn: 'root' })
-export class AuthService {
-  private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
-  private readonly tokenStore = inject(TokenStore);
-  private readonly _currentUser = signal<UserProfile | null>(null);
-  private readonly _isLoading = signal<boolean>(true);
-  readonly currentUser = this._currentUser.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly isAuthenticated = computed(() => this._currentUser() !== null);
-  readonly userRole = computed(() => this._currentUser()?.role ?? null);
-  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
-  private readonly _statsResource = resource({
-    params: () => this._currentUser()?.id ?? null,
-    loader: ({ params: userId }) => {
-      if (!userId) return Promise.resolve(null as UserStats | null);
-      return firstValueFrom(
-        this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
-          catchError(() => of(null)),
-        ),
-      ).then(raw => (raw ? mapUserStats(raw) : null));
-    },
-  });
-  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
-  constructor() {
-    const token = this.tokenStore.snapshot();
-    if (token) {
-      firstValueFrom(
-        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
-          catchError(() => {
-            this.tokenStore.clear();
-            return of(null);
-          }),
-        ),
-      ).then(raw => {
-        this._currentUser.set(raw ? mapUserProfile(raw) : null);
-        this._isLoading.set(false);
-      });
-    } else {
-      this._isLoading.set(false);
-    }
-  }
-  async signUp(
-    email: string,
-    password: string,
-    displayName: string,
-    role: UserRole,
-  ): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
-          email,
-          password,
-          displayName,
-          role,
-        }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signIn(email: string, password: string): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signOut(): Promise<void> {
-    try {
-      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
-    } catch {  }
-    this.tokenStore.clear();
-    this._currentUser.set(null);
-    this.router.navigate(['/login']);
-  }
-  async updateRole(role: UserRole): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
-    );
-    this._currentUser.set({ ...user, role });
-  }
-  async updateDisplayName(name: string): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
-    );
-    this._currentUser.set({ ...user, displayName: name });
-  }
-  async updateSocials(socials: UserSocials): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
-    );
-    this._currentUser.set({ ...user, socials });
-  }
-  async setSocialsPublic(value: boolean): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
-        socialsPublic: value,
-      }),
-    );
-    this._currentUser.set({ ...user, socialsPublic: value });
-  }
-}
-````
-
-## File: src/app/core/services/quiz.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal, computed } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { Quiz, QuizAttempt, QuizQuestion } from '../models/quiz.model';
-interface ApiQuiz {
-  id: string;
-  clubId: string;
-  createdBy: string;
-  title: string;
-  description: string | null;
-  isActive: boolean;
-}
-interface ApiQuizQuestion {
-  id: string;
-  quizId: string;
-  question: string;
-  options: string[];
-  correctIndex: number;
-}
-interface ApiAttemptResponse {
-  id: string;
-  quizId: string;
-  userId: string;
-  score: number;
-  total: number;
-  answers: number[];
-}
-function mapQuiz(raw: ApiQuiz): Quiz {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    createdBy: raw.createdBy,
-    title: raw.title,
-    description: raw.description,
-    isActive: raw.isActive,
-  };
-}
-function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
-  return {
-    id: raw.id,
-    quizId: raw.quizId,
-    question: raw.question,
-    options: raw.options,
-    correctIndex: raw.correctIndex,
-  };
-}
-function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
-  return {
-    id: raw.id,
-    quizId: raw.quizId,
-    userId: raw.userId,
-    score: raw.score,
-    total: raw.total,
-    answers: raw.answers,
-  };
-}
-@Injectable({ providedIn: 'root' })
-export class QuizService {
-  private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _quizzes = signal<Quiz[]>([]);
-  private readonly _questions = signal<QuizQuestion[]>([]);
-  private readonly _isLoading = signal(false);
-  readonly quizzes = this._quizzes.asReadonly();
-  readonly questions = this._questions.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
-  async loadQuizzes(clubId: string): Promise<void> {
-    this._isLoading.set(true);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
-      );
-      this._quizzes.set(raw.map(mapQuiz));
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async createQuiz(data: {
-    clubId: string;
-    title: string;
-    description: string;
-  }): Promise<Quiz> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
-          title: data.title,
-          description: data.description || null,
-        }),
-      );
-      const quiz = mapQuiz(raw);
-      this._quizzes.update(prev => [quiz, ...prev]);
-      return quiz;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async addQuestion(
-    quizId: string,
-    q: Omit<QuizQuestion, 'id' | 'quizId'>,
-  ): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
-          question: q.question,
-          options: q.options,
-          correctIndex: q.correctIndex,
-        }),
-      );
-      this._questions.update(prev => [...prev, mapQuestion(raw)]);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async loadQuestions(quizId: string): Promise<void> {
-    this._isLoading.set(true);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
-      );
-      this._questions.set(raw.map(mapQuestion));
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
-      );
-      return mapAttempt(raw);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { isActive }),
-      );
-      this._quizzes.update(prev =>
-        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-}
-````
-
-## File: src/app/features/auth/register/register.component.ts
-````typescript
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators,
-} from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../../core/auth/auth.service';
-import { UserRole } from '../../../core/models/user.model';
-import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
-import { SeoService } from '../../../core/services/seo.service';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
-  const password = group.get('password')?.value as string;
-  const confirmPassword = group.get('confirmPassword')?.value as string;
-  return password === confirmPassword ? null : { passwordMismatch: true };
-};
-interface RegisterForm {
-  displayName: FormControl<string>;
-  email: FormControl<string>;
-  password: FormControl<string>;
-  confirmPassword: FormControl<string>;
-  role: FormControl<UserRole>;
-}
-@Component({
-  selector: 'app-register',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './register.component.html',
-  styleUrl: './register.component.scss',
-})
-export class RegisterComponent {
-  private readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isSubmitting = signal(false);
-  readonly successMessage = signal(false);
-  readonly registeredEmail = signal('');
-  readonly selectedRole = signal<UserRole>('user');
-  readonly bookOpen = signal(false);
-  readonly formVisible = signal(false);
-  constructor() {
-    this.seo.setPageI18n('SEO.register_title');
-    setTimeout(() => this.formVisible.set(true), 700);
-  }
-  onBookAnimationDone(): void {
-  }
-  readonly form = new FormGroup<RegisterForm>(
-    {
-      displayName: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.minLength(2)],
-      }),
-      email: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.email],
-      }),
-      password: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.minLength(8)],
-      }),
-      confirmPassword: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-      role: new FormControl<UserRole>('user', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-    },
-    { validators: passwordMatchValidator },
-  );
-  private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
-    initialValue: '',
-  });
-  readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
-    const pw = this._passwordValue();
-    if (!pw || pw.length === 0) return null;
-    if (pw.length < 8) return 'weak';
-    const hasUpper = /[A-Z]/.test(pw);
-    const hasNumber = /\d/.test(pw);
-    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
-    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
-    if (score >= 2) return 'strong';
-    if (score === 1) return 'medium';
-    return 'weak';
-  });
-  setRole(role: UserRole): void {
-    this.selectedRole.set(role);
-    this.form.controls.role.setValue(role);
-    this.form.controls.role.markAsTouched();
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.isSubmitting.set(true);
-    this.errorMessage.set(null);
-    const { displayName, email, password, role } = this.form.getRawValue();
-    const { error } = await this.auth.signUp(email, password, displayName, role);
-    this.isSubmitting.set(false);
-    if (error) {
-      this.errorMessage.set(error);
-    } else {
-      this.registeredEmail.set(email);
-      this.successMessage.set(true);
-      this.bookOpen.set(true);
-    }
-  }
-}
-````
-
 ## File: src/app/features/profile/profile.component.html
 ````html
 <div class="min-h-screen bg-gradient-to-br from-primary-950/30 via-transparent to-accent-950/20">
@@ -12250,6 +12111,145 @@ export class RegisterComponent {
     </section>
   </div>
 </div>
+````
+
+## File: src/app/core/auth/auth.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, resource, signal } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, firstValueFrom, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
+import { TokenStore } from './token.store';
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: ApiUserProfile;
+}
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly tokenStore = inject(TokenStore);
+  private readonly _currentUser = signal<UserProfile | null>(null);
+  private readonly _isLoading = signal<boolean>(true);
+  readonly currentUser = this._currentUser.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly isAuthenticated = computed(() => this._currentUser() !== null);
+  readonly userRole = computed(() => this._currentUser()?.role ?? null);
+  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
+  private readonly _statsResource = resource({
+    params: () => this._currentUser()?.id ?? null,
+    loader: ({ params: userId }) => {
+      if (!userId) return Promise.resolve(null as UserStats | null);
+      return firstValueFrom(
+        this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
+          catchError(() => of(null)),
+        ),
+      ).then(raw => (raw ? mapUserStats(raw) : null));
+    },
+  });
+  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
+  constructor() {
+    const token = this.tokenStore.snapshot();
+    if (token) {
+      firstValueFrom(
+        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
+          catchError(() => {
+            this.tokenStore.clear();
+            return of(null);
+          }),
+        ),
+      ).then(raw => {
+        this._currentUser.set(raw ? mapUserProfile(raw) : null);
+        this._isLoading.set(false);
+      });
+    } else {
+      this._isLoading.set(false);
+    }
+  }
+  async signUp(
+    email: string,
+    password: string,
+    displayName: string,
+    role: UserRole,
+  ): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
+          email,
+          password,
+          displayName,
+          role,
+        }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signIn(email: string, password: string): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signOut(): Promise<void> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
+    } catch {  }
+    this.tokenStore.clear();
+    this._currentUser.set(null);
+    this.router.navigate(['/login']);
+  }
+  async updateRole(role: UserRole): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
+    );
+    this._currentUser.set({ ...user, role });
+  }
+  async updateDisplayName(name: string): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
+    );
+    this._currentUser.set({ ...user, displayName: name });
+  }
+  async updateSocials(socials: UserSocials): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
+    );
+    this._currentUser.set({ ...user, socials });
+  }
+  async setSocialsPublic(value: boolean): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
+        socialsPublic: value,
+      }),
+    );
+    this._currentUser.set({ ...user, socialsPublic: value });
+  }
+}
 ````
 
 ## File: package.json
@@ -13210,6 +13210,145 @@ function mapSocials(raw: ApiUserSocials): UserSocials {
 }
 ````
 
+## File: src/app/features/clubs/clubs-list/clubs-list.component.html
+````html
+<div class="min-h-screen">
+  <section aria-label="Search clubs" class="glass-hero bg-gradient-brand px-4 py-14 text-center">
+    <div class="relative z-10">
+      <h1 class="font-display text-4xl font-bold text-white mb-2 drop-shadow-sm">{{ 'CLUBS.title' | translate }}</h1>
+      <p class="text-white/80 mb-8">{{ 'CLUBS.subtitle' | translate }}</p>
+      <div class="mx-auto max-w-xl relative">
+        <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/60" aria-hidden="true">🔍</span>
+        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
+        <input
+          id="club-search"
+          type="search"
+          [ngModel]="clubService.searchQuery()"
+          (ngModelChange)="clubService.setSearchQuery($event)"
+          [placeholder]="'CLUBS.search_placeholder_full' | translate"
+          class="w-full rounded-full glass-card px-5 pl-10 py-3 text-sm text-gray-900 dark:text-white placeholder-white/60 border-0 focus:outline-none focus:ring-2 focus:ring-white/50"
+          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
+        />
+      </div>
+    </div>
+  </section>
+  <div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
+    @if (clubService.error()) {
+      <div class="flex items-start gap-2 rounded-[var(--bento-radius)] glass-card px-4 py-3 text-sm text-red-700 dark:text-red-400 border-red-200/50 dark:border-red-800/50" role="alert">
+        <span aria-hidden="true">⚠️</span>
+        <span>{{ clubService.error() }}</span>
+      </div>
+    }
+    @if (auth.isAuthenticated()) {
+      <div hlmTabs tab="all">
+        <div hlmTabsList variant="line" class="w-full border-b border-gray-200 dark:border-gray-700 rounded-none">
+          <button hlmTabsTrigger="all">{{ 'CLUBS.all' | translate }}</button>
+          <button hlmTabsTrigger="my">{{ 'CLUBS.my_clubs' | translate }}</button>
+        </div>
+        <div hlmTabsContent="all" class="pt-6">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.filteredClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              title="No clubs yet"
+              description="No clubs have been created yet. Check back soon!"
+            />
+          } @else {
+            <ul class="bento-grid">
+              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                  <app-club-card
+                    [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+        <div hlmTabsContent="my" class="pt-6">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.myClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              [title]="'CLUBS.no_clubs' | translate"
+              description="Join a club to see it here."
+            />
+          } @else {
+            <ul class="bento-grid">
+              @for (club of clubService.myClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                  <app-club-card
+                    [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+    } @else {
+      @if (clubService.isLoading()) {
+        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+          <hlm-spinner />
+        </div>
+      } @else if (clubService.filteredClubs().length === 0) {
+        <app-empty-state
+          icon="📚"
+          title="No clubs yet"
+          description="No clubs have been created yet. Check back soon!"
+        />
+      } @else {
+        <ul class="bento-grid">
+          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+              <app-club-card
+                [club]="club"
+                [variant]="i === 0 ? 'featured' : 'default'"
+                [isMember]="false"
+                [isOwned]="false"
+                [isAuthenticated]="false"
+                [joining]="false"
+                (join)="onJoin(club)"
+              />
+            </li>
+          }
+        </ul>
+      }
+    }
+  </div>
+  @if (auth.isOrganizer()) {
+    <a
+      routerLink="/clubs/create"
+      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gradient-brand shadow-xl hover:shadow-accent-500/30 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:ring-offset-2 transition-all duration-200"
+      [attr.aria-label]="'CLUBS.create' | translate"
+      [title]="'CLUBS.create' | translate"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+      </svg>
+    </a>
+  }
+</div>
+````
+
 ## File: src/app/features/clubs/create-club/create-club.component.html
 ````html
 <main class="min-h-screen flex items-center justify-center p-4">
@@ -13604,145 +13743,6 @@ jobs:
           DEPLOY_URL=$(vercel deploy --prebuilt ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
           echo "Deployed to: $DEPLOY_URL"
-````
-
-## File: src/app/features/clubs/clubs-list/clubs-list.component.html
-````html
-<div class="min-h-screen">
-  <section aria-label="Search clubs" class="glass-hero bg-gradient-brand px-4 py-14 text-center">
-    <div class="relative z-10">
-      <h1 class="font-display text-4xl font-bold text-white mb-2 drop-shadow-sm">{{ 'CLUBS.title' | translate }}</h1>
-      <p class="text-white/80 mb-8">{{ 'CLUBS.subtitle' | translate }}</p>
-      <div class="mx-auto max-w-xl relative">
-        <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/60" aria-hidden="true">🔍</span>
-        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
-        <input
-          id="club-search"
-          type="search"
-          [ngModel]="clubService.searchQuery()"
-          (ngModelChange)="clubService.setSearchQuery($event)"
-          [placeholder]="'CLUBS.search_placeholder_full' | translate"
-          class="w-full rounded-full glass-card px-5 pl-10 py-3 text-sm text-gray-900 dark:text-white placeholder-white/60 border-0 focus:outline-none focus:ring-2 focus:ring-white/50"
-          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
-        />
-      </div>
-    </div>
-  </section>
-  <div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
-    @if (clubService.error()) {
-      <div class="flex items-start gap-2 rounded-[var(--bento-radius)] glass-card px-4 py-3 text-sm text-red-700 dark:text-red-400 border-red-200/50 dark:border-red-800/50" role="alert">
-        <span aria-hidden="true">⚠️</span>
-        <span>{{ clubService.error() }}</span>
-      </div>
-    }
-    @if (auth.isAuthenticated()) {
-      <div hlmTabs tab="all">
-        <div hlmTabsList variant="line" class="w-full border-b border-gray-200 dark:border-gray-700 rounded-none">
-          <button hlmTabsTrigger="all">{{ 'CLUBS.all' | translate }}</button>
-          <button hlmTabsTrigger="my">{{ 'CLUBS.my_clubs' | translate }}</button>
-        </div>
-        <div hlmTabsContent="all" class="pt-6">
-          @if (clubService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
-              <hlm-spinner />
-            </div>
-          } @else if (clubService.filteredClubs().length === 0) {
-            <app-empty-state
-              icon="📚"
-              title="No clubs yet"
-              description="No clubs have been created yet. Check back soon!"
-            />
-          } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-                  <app-club-card
-                    [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
-                    [isMember]="clubService.myClubIds().has(club.id)"
-                    [isOwned]="ownedClubIds().has(club.id)"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [joining]="joiningClubId() === club.id"
-                    (join)="onJoin(club)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-        <div hlmTabsContent="my" class="pt-6">
-          @if (clubService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true">
-              <hlm-spinner />
-            </div>
-          } @else if (clubService.myClubs().length === 0) {
-            <app-empty-state
-              icon="📚"
-              [title]="'CLUBS.no_clubs' | translate"
-              description="Join a club to see it here."
-            />
-          } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.myClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-                  <app-club-card
-                    [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
-                    [isMember]="clubService.myClubIds().has(club.id)"
-                    [isOwned]="ownedClubIds().has(club.id)"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [joining]="joiningClubId() === club.id"
-                    (join)="onJoin(club)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      </div>
-    } @else {
-      @if (clubService.isLoading()) {
-        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
-          <hlm-spinner />
-        </div>
-      } @else if (clubService.filteredClubs().length === 0) {
-        <app-empty-state
-          icon="📚"
-          title="No clubs yet"
-          description="No clubs have been created yet. Check back soon!"
-        />
-      } @else {
-        <ul class="bento-grid">
-          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-              <app-club-card
-                [club]="club"
-                [variant]="i === 0 ? 'featured' : 'default'"
-                [isMember]="false"
-                [isOwned]="false"
-                [isAuthenticated]="false"
-                [joining]="false"
-                (join)="onJoin(club)"
-              />
-            </li>
-          }
-        </ul>
-      }
-    }
-  </div>
-  @if (auth.isOrganizer()) {
-    <a
-      routerLink="/clubs/create"
-      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gradient-brand shadow-xl hover:shadow-accent-500/30 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:ring-offset-2 transition-all duration-200"
-      [attr.aria-label]="'CLUBS.create' | translate"
-      [title]="'CLUBS.create' | translate"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-      </svg>
-    </a>
-  }
-</div>
 ````
 
 ## File: src/app/features/clubs/create-club/create-club.component.ts
