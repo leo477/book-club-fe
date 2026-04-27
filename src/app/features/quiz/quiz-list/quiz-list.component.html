@@ -12,7 +12,7 @@
       <div class="flex items-center gap-3">
         @if (authService.isOrganizer()) {
           <a hlmBtn [routerLink]="['/clubs', id(), 'quizzes', 'create']"
-             class="bg-accent-600 hover:bg-accent-700 text-white">
+             class="bg-gradient-brand text-white border-0 hover:opacity-90">
             + Create Quiz
           </a>
         }
@@ -27,16 +27,16 @@
 
     <!-- ── Loading (skeleton) ── -->
     @if (quizService.isLoading()) {
-      <div class="space-y-4">
+      <div class="bento-grid-3">
         @for (_ of [1, 2, 3]; track $index) {
-          <div class="h-24 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse"></div>
+          <div class="h-28 glass-card-subtle animate-pulse"></div>
         }
       </div>
     } @else {
 
       <!-- ── Empty state ── -->
       @if (quizService.quizzes().length === 0) {
-        <div hlmCard class="rounded-2xl p-12 text-center">
+        <div class="glass-card p-12 text-center">
           <p class="text-4xl mb-3">📝</p>
           <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">No quizzes yet</h2>
           @if (authService.isOrganizer()) {
@@ -51,58 +51,60 @@
         </div>
 
       } @else {
-        <!-- ── Quiz cards ── -->
-        <div class="space-y-4">
+        <!-- ── Quiz cards bento grid ── -->
+        <div class="bento-grid-3">
           @for (quiz of quizService.quizzes(); track quiz.id) {
-            <div hlmCard class="rounded-2xl p-5 hover:shadow-md transition-shadow">
-              <div class="flex items-start justify-between gap-4">
+            <div class="glass-card p-5 flex flex-col gap-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5">
+              <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <h2 class="text-gray-900 dark:text-white font-semibold text-lg truncate">
+                  <div class="flex items-center gap-2 flex-wrap mb-1">
+                    <h2 class="text-gray-900 dark:text-white font-semibold truncate">
                       {{ quiz.title }}
                     </h2>
                     @if (quiz.isActive) {
-                      <span hlmBadge variant="default"
-                            class="rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-transparent">
-                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block mr-1"></span>
+                      <span class="inline-flex items-center gap-1 rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
                         Active
                       </span>
                     } @else {
-                      <span hlmBadge variant="secondary" class="rounded-full">Draft</span>
+                      <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-500 dark:text-gray-400">
+                        Draft
+                      </span>
                     }
                   </div>
                   @if (quiz.description) {
-                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1 line-clamp-2">
+                    <p class="text-gray-500 dark:text-gray-400 text-xs line-clamp-2">
                       {{ quiz.description }}
                     </p>
                   }
                 </div>
+              </div>
 
-                <!-- Actions -->
-                <div class="flex items-center gap-2 flex-shrink-0">
-                  @if (authService.isOrganizer()) {
-                    <button
-                      hlmBtn
-                      type="button"
-                      size="sm"
-                      [variant]="quiz.isActive ? 'secondary' : 'outline'"
-                      (click)="toggleActive(quiz.id, !quiz.isActive)"
-                      [disabled]="togglingId() === quiz.id"
-                    >
-                      {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
-                    </button>
-                  } @else if (quiz.isActive) {
-                    <button
-                      hlmBtn
-                      type="button"
-                      size="sm"
-                      (click)="takeQuiz(quiz.id)"
-                      class="bg-accent-600 hover:bg-accent-700 text-white"
-                    >
-                      Take Quiz →
-                    </button>
-                  }
-                </div>
+              <!-- Actions -->
+              <div class="flex items-center gap-2 mt-auto">
+                @if (authService.isOrganizer()) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    size="sm"
+                    [variant]="quiz.isActive ? 'secondary' : 'outline'"
+                    (click)="toggleActive(quiz.id, !quiz.isActive)"
+                    [disabled]="togglingId() === quiz.id"
+                    class="w-full"
+                  >
+                    {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
+                  </button>
+                } @else if (quiz.isActive) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    size="sm"
+                    (click)="takeQuiz(quiz.id)"
+                    class="w-full bg-gradient-brand text-white border-0 hover:opacity-90"
+                  >
+                    Take Quiz →
+                  </button>
+                }
               </div>
             </div>
           }
@@ -112,7 +114,7 @@
 
     <!-- ── Error ── -->
     @if (errorMessage()) {
-      <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-700 dark:text-red-400 text-sm">
+      <div class="glass-card px-4 py-3 text-red-700 dark:text-red-400 text-sm" role="alert">
         ⚠️ {{ errorMessage() }}
       </div>
     }

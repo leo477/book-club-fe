@@ -722,6 +722,38 @@ jobs:
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
 ````
 
+## File: .github/workflows/stale.yml
+````yaml
+name: Stale Issues and PRs
+on:
+  schedule:
+    - cron: '0 1 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+jobs:
+  stale:
+    name: Mark Stale
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark stale issues and PRs
+        uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          stale-issue-message: 'Це питання неактивне 60 днів. Буде закрите через 7 днів.'
+          stale-pr-message: 'Цей PR неактивний 30 днів. Буде закритий через 7 днів.'
+          stale-issue-label: stale
+          stale-pr-label: stale
+          days-before-issue-stale: 60
+          days-before-issue-close: 7
+          days-before-pr-stale: 30
+          days-before-pr-close: 7
+          exempt-issue-labels: 'pinned,security'
+          exempt-pr-labels: 'pinned,security'
+````
+
 ## File: .github/labeler.yml
 ````yaml
 feat:
@@ -1403,22 +1435,22 @@ export class BookIntroComponent {
 
 ## File: src/app/shared/components/empty-state/empty-state.component.html
 ````html
-<div class="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div class="text-5xl mb-4" aria-hidden="true">{{ icon() }}</div>
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ title() }}</h3>
-      <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">{{ description() }}</p>
-      @if (actionLabel()) {
-        <button
-          type="button"
-          (click)="actionClick.emit()"
-          class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium
-                 transition-all duration-200 focus:outline-none focus:ring-2
-                 focus:ring-primary-500 focus:ring-offset-2"
-        >
-          {{ actionLabel() }}
-        </button>
-      }
-    </div>
+<div class="flex flex-col items-center justify-center py-16 px-4 text-center glass-card-subtle">
+  <div class="text-5xl mb-4" aria-hidden="true">{{ icon() }}</div>
+  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ title() }}</h3>
+  <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">{{ description() }}</p>
+  @if (actionLabel()) {
+    <button
+      type="button"
+      (click)="actionClick.emit()"
+      class="bg-gradient-brand text-white px-5 py-2 rounded-[var(--bento-radius)] font-medium
+             transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2
+             focus:ring-primary-500 focus:ring-offset-2"
+    >
+      {{ actionLabel() }}
+    </button>
+  }
+</div>
 ````
 
 ## File: src/app/shared/components/empty-state/empty-state.component.ts
@@ -1462,6 +1494,14 @@ export class EmptyStateComponent {
         <p class="text-xs text-red-500 mt-0.5">{{ errorMessage() }}</p>
       }
     </div>
+````
+
+## File: src/app/shared/components/loading-spinner/loading-spinner.component.html
+````html
+<output [class]="containerClass()" aria-label="Loading">
+      <div [class]="spinnerClass()"></div>
+      <span class="sr-only">Loading…</span>
+    </output>
 ````
 
 ## File: src/app/shared/components/loading-spinner/loading-spinner.component.ts
@@ -2205,38 +2245,6 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ steps.gate.outputs.body }}
           comment-tag: pr-review-gate
-````
-
-## File: .github/workflows/stale.yml
-````yaml
-name: Stale Issues and PRs
-on:
-  schedule:
-    - cron: '0 1 * * *'
-  workflow_dispatch:
-permissions:
-  contents: read
-  issues: write
-  pull-requests: write
-jobs:
-  stale:
-    name: Mark Stale
-    runs-on: ubuntu-latest
-    steps:
-      - name: Mark stale issues and PRs
-        uses: actions/stale@v9
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          stale-issue-message: 'Це питання неактивне 60 днів. Буде закрите через 7 днів.'
-          stale-pr-message: 'Цей PR неактивний 30 днів. Буде закритий через 7 днів.'
-          stale-issue-label: stale
-          stale-pr-label: stale
-          days-before-issue-stale: 60
-          days-before-issue-close: 7
-          days-before-pr-stale: 30
-          days-before-pr-close: 7
-          exempt-issue-labels: 'pinned,security'
-          exempt-pr-labels: 'pinned,security'
 ````
 
 ## File: .github/copilot-instructions.md
@@ -3271,42 +3279,6 @@ export class ProfileRoleSelectorComponent {
 }
 ````
 
-## File: src/app/features/profile/stats/profile-stats.component.html
-````html
-<dl class="bento-grid-3">
-  <div class="glass-card-subtle p-5 text-center">
-    <div class="text-3xl mb-2" aria-hidden="true">📚</div>
-    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.clubs_joined' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.clubsJoined ?? 0 }}</dd>
-  </div>
-  <div class="glass-card-subtle p-5 text-center">
-    <div class="text-3xl mb-2" aria-hidden="true">🧠</div>
-    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_taken' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.quizzesTaken ?? 0 }}</dd>
-  </div>
-  <div class="glass-card-subtle p-5 text-center">
-    <div class="text-3xl mb-2" aria-hidden="true">🏆</div>
-    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_won' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.quizWins ?? 0 }}</dd>
-  </div>
-  <div class="glass-card-subtle p-5 text-center">
-    <div class="text-3xl mb-2" aria-hidden="true">❤️</div>
-    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.likes_received' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.likesReceived ?? 0 }}</dd>
-  </div>
-  <div class="glass-card-subtle p-5 text-center">
-    <div class="text-3xl mb-2" aria-hidden="true">📖</div>
-    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.books_read' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.booksRead ?? 0 }}</dd>
-  </div>
-</dl>
-@if (!stats()) {
-  <p class="text-center text-sm text-gray-400 dark:text-gray-500 mt-4">
-    {{ 'PROFILE.no_stats' | translate }}
-  </p>
-}
-````
-
 ## File: src/app/features/profile/stats/profile-stats.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, input } from '@angular/core';
@@ -4119,14 +4091,6 @@ export class FormFieldComponent {
     return this.translate.instant('FORM_ERRORS.invalid');
   });
 }
-````
-
-## File: src/app/shared/components/loading-spinner/loading-spinner.component.html
-````html
-<output [class]="containerClass()" aria-label="Loading">
-      <div [class]="spinnerClass()"></div>
-      <span class="sr-only">Loading…</span>
-    </output>
 ````
 
 ## File: src/app/shared/components/social-badges/social-badges.component.html
@@ -8231,6 +8195,42 @@ export class EventCardComponent {
 }
 ````
 
+## File: src/app/features/profile/stats/profile-stats.component.html
+````html
+<dl class="bento-grid-3">
+  <div class="glass-card-subtle p-5 text-center">
+    <div class="text-3xl mb-2" aria-hidden="true">📚</div>
+    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.clubs_joined' | translate }}</dt>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.clubsJoined ?? 0 }}</dd>
+  </div>
+  <div class="glass-card-subtle p-5 text-center">
+    <div class="text-3xl mb-2" aria-hidden="true">🧠</div>
+    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_taken' | translate }}</dt>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.quizzesTaken ?? 0 }}</dd>
+  </div>
+  <div class="glass-card-subtle p-5 text-center">
+    <div class="text-3xl mb-2" aria-hidden="true">🏆</div>
+    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_won' | translate }}</dt>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.quizWins ?? 0 }}</dd>
+  </div>
+  <div class="glass-card-subtle p-5 text-center">
+    <div class="text-3xl mb-2" aria-hidden="true">❤️</div>
+    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.likes_received' | translate }}</dt>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.likesReceived ?? 0 }}</dd>
+  </div>
+  <div class="glass-card-subtle p-5 text-center">
+    <div class="text-3xl mb-2" aria-hidden="true">📖</div>
+    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.books_read' | translate }}</dt>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.booksRead ?? 0 }}</dd>
+  </div>
+</dl>
+@if (!stats()) {
+  <p class="text-center text-sm text-gray-400 dark:text-gray-500 mt-4">
+    {{ 'PROFILE.no_stats' | translate }}
+  </p>
+}
+````
+
 ## File: src/app/features/quiz/quiz-list/quiz-list.component.html
 ````html
 <div class="min-h-screen p-4 sm:p-8">
@@ -8245,7 +8245,7 @@ export class EventCardComponent {
       <div class="flex items-center gap-3">
         @if (authService.isOrganizer()) {
           <a hlmBtn [routerLink]="['/clubs', id(), 'quizzes', 'create']"
-             class="bg-accent-600 hover:bg-accent-700 text-white">
+             class="bg-gradient-brand text-white border-0 hover:opacity-90">
             + Create Quiz
           </a>
         }
@@ -8258,14 +8258,14 @@ export class EventCardComponent {
       </div>
     </header>
     @if (quizService.isLoading()) {
-      <div class="space-y-4">
+      <div class="bento-grid-3">
         @for (_ of [1, 2, 3]; track $index) {
-          <div class="h-24 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse"></div>
+          <div class="h-28 glass-card-subtle animate-pulse"></div>
         }
       </div>
     } @else {
       @if (quizService.quizzes().length === 0) {
-        <div hlmCard class="rounded-2xl p-12 text-center">
+        <div class="glass-card p-12 text-center">
           <p class="text-4xl mb-3">📝</p>
           <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">No quizzes yet</h2>
           @if (authService.isOrganizer()) {
@@ -8279,55 +8279,57 @@ export class EventCardComponent {
           }
         </div>
       } @else {
-        <div class="space-y-4">
+        <div class="bento-grid-3">
           @for (quiz of quizService.quizzes(); track quiz.id) {
-            <div hlmCard class="rounded-2xl p-5 hover:shadow-md transition-shadow">
-              <div class="flex items-start justify-between gap-4">
+            <div class="glass-card p-5 flex flex-col gap-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5">
+              <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-2 flex-wrap">
-                    <h2 class="text-gray-900 dark:text-white font-semibold text-lg truncate">
+                  <div class="flex items-center gap-2 flex-wrap mb-1">
+                    <h2 class="text-gray-900 dark:text-white font-semibold truncate">
                       {{ quiz.title }}
                     </h2>
                     @if (quiz.isActive) {
-                      <span hlmBadge variant="default"
-                            class="rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-transparent">
-                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block mr-1"></span>
+                      <span class="inline-flex items-center gap-1 rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
                         Active
                       </span>
                     } @else {
-                      <span hlmBadge variant="secondary" class="rounded-full">Draft</span>
+                      <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-500 dark:text-gray-400">
+                        Draft
+                      </span>
                     }
                   </div>
                   @if (quiz.description) {
-                    <p class="text-gray-500 dark:text-gray-400 text-sm mt-1 line-clamp-2">
+                    <p class="text-gray-500 dark:text-gray-400 text-xs line-clamp-2">
                       {{ quiz.description }}
                     </p>
                   }
                 </div>
-                <div class="flex items-center gap-2 flex-shrink-0">
-                  @if (authService.isOrganizer()) {
-                    <button
-                      hlmBtn
-                      type="button"
-                      size="sm"
-                      [variant]="quiz.isActive ? 'secondary' : 'outline'"
-                      (click)="toggleActive(quiz.id, !quiz.isActive)"
-                      [disabled]="togglingId() === quiz.id"
-                    >
-                      {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
-                    </button>
-                  } @else if (quiz.isActive) {
-                    <button
-                      hlmBtn
-                      type="button"
-                      size="sm"
-                      (click)="takeQuiz(quiz.id)"
-                      class="bg-accent-600 hover:bg-accent-700 text-white"
-                    >
-                      Take Quiz →
-                    </button>
-                  }
-                </div>
+              </div>
+              <div class="flex items-center gap-2 mt-auto">
+                @if (authService.isOrganizer()) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    size="sm"
+                    [variant]="quiz.isActive ? 'secondary' : 'outline'"
+                    (click)="toggleActive(quiz.id, !quiz.isActive)"
+                    [disabled]="togglingId() === quiz.id"
+                    class="w-full"
+                  >
+                    {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
+                  </button>
+                } @else if (quiz.isActive) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    size="sm"
+                    (click)="takeQuiz(quiz.id)"
+                    class="w-full bg-gradient-brand text-white border-0 hover:opacity-90"
+                  >
+                    Take Quiz →
+                  </button>
+                }
               </div>
             </div>
           }
@@ -8335,7 +8337,7 @@ export class EventCardComponent {
       }
     }
     @if (errorMessage()) {
-      <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-700 dark:text-red-400 text-sm">
+      <div class="glass-card px-4 py-3 text-red-700 dark:text-red-400 text-sm" role="alert">
         ⚠️ {{ errorMessage() }}
       </div>
     }
@@ -10669,6 +10671,140 @@ export class EventService {
 }
 ````
 
+## File: src/app/core/services/randomizer.service.ts
+````typescript
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../auth/auth.service';
+import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
+import { ApiClubMember, mapClubMember } from '../api/api-mappers';
+import { environment } from '../../../environments/environment';
+interface ApiMemberCandidate {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+interface ApiRandomizerSession {
+  id: string;
+  clubId: string;
+  createdBy: string;
+  purpose: string;
+  candidates: ApiMemberCandidate[];
+  result: ApiMemberCandidate | null;
+  createdAt: string;
+}
+function mapMemberCandidate(raw: ApiMemberCandidate): MemberCandidate {
+  return {
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+  };
+}
+function mapRandomizerSession(raw: ApiRandomizerSession): RandomizerSession {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    createdBy: raw.createdBy,
+    purpose: raw.purpose,
+    candidates: raw.candidates.map(mapMemberCandidate),
+    result: raw.result ? mapMemberCandidate(raw.result) : null,
+    createdAt: raw.createdAt,
+  };
+}
+@Injectable({ providedIn: 'root' })
+export class RandomizerService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly apiUrl = environment.apiUrl;
+  private readonly _candidates = signal<MemberCandidate[]>([]);
+  private readonly _selectedIds = signal<Set<string>>(new Set());
+  private readonly _result = signal<MemberCandidate | null>(null);
+  private readonly _isSpinning = signal(false);
+  private readonly _history = signal<RandomizerSession[]>([]);
+  private readonly _purpose = signal('Хто представляє книгу?');
+  readonly candidates = this._candidates.asReadonly();
+  readonly selectedIds = this._selectedIds.asReadonly();
+  readonly result = this._result.asReadonly();
+  readonly isSpinning = this._isSpinning.asReadonly();
+  readonly history = this._history.asReadonly();
+  readonly purpose = this._purpose.asReadonly();
+  setPurpose(purpose: string): void {
+    this._purpose.set(purpose);
+  }
+  async loadClubMembers(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${this.apiUrl}/clubs/${clubId}/members`),
+    );
+    const members: MemberCandidate[] = raw.map(m => {
+      const detail = mapClubMember(m);
+      return { userId: detail.userId, displayName: detail.displayName, avatarUrl: detail.avatarUrl };
+    });
+    this._candidates.set(members);
+    this._selectedIds.set(new Set(members.map(m => m.userId)));
+    this._result.set(null);
+  }
+  toggleMember(userId: string): void {
+    this._selectedIds.update(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  }
+  async spin(): Promise<void> {
+    const selected = this._candidates().filter(m => this._selectedIds().has(m.userId));
+    if (selected.length < 2) throw new Error('Потрібно мінімум 2 учасники');
+    this._isSpinning.set(true);
+    this._result.set(null);
+    await new Promise<void>(resolve => setTimeout(resolve, 2000));
+    const max = Math.floor(0x100000000 / selected.length) * selected.length;
+    let rand: number;
+    do {
+      rand = crypto.getRandomValues(new Uint32Array(1))[0];
+    } while (rand >= max);
+    const idx = rand % selected.length;
+    this._result.set(selected[idx]);
+    this._isSpinning.set(false);
+  }
+  async saveSession(clubId: string): Promise<void> {
+    const user = this.auth.currentUser();
+    if (!user) throw new Error('Not authenticated');
+    const result = this._result();
+    if (!result) throw new Error('No result to save');
+    const body = {
+      purpose: this._purpose(),
+      candidates: this._candidates()
+        .filter(m => this._selectedIds().has(m.userId))
+        .map(m => m.userId),
+      result: result.userId,
+    };
+    const raw = await firstValueFrom(
+      this.http.post<ApiRandomizerSession>(
+        `${this.apiUrl}/clubs/${clubId}/randomizer/sessions`,
+        body,
+      ),
+    );
+    const session = mapRandomizerSession(raw);
+    this._history.update(prev => [session, ...prev]);
+  }
+  async loadHistory(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiRandomizerSession[]>(`${this.apiUrl}/clubs/${clubId}/randomizer/history`),
+    );
+    this._history.set(raw.map(mapRandomizerSession));
+  }
+  reset(): void {
+    const ids = new Set(this._candidates().map(m => m.userId));
+    this._selectedIds.set(ids);
+    this._result.set(null);
+  }
+}
+````
+
 ## File: src/app/features/auth/login/login.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
@@ -10990,138 +11126,187 @@ export class LoginComponent {
 </div>
 ````
 
-## File: src/app/core/services/randomizer.service.ts
-````typescript
-import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { AuthService } from '../auth/auth.service';
-import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
-import { ApiClubMember, mapClubMember } from '../api/api-mappers';
-import { environment } from '../../../environments/environment';
-interface ApiMemberCandidate {
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-}
-interface ApiRandomizerSession {
-  id: string;
-  clubId: string;
-  createdBy: string;
-  purpose: string;
-  candidates: ApiMemberCandidate[];
-  result: ApiMemberCandidate | null;
-  createdAt: string;
-}
-function mapMemberCandidate(raw: ApiMemberCandidate): MemberCandidate {
-  return {
-    userId: raw.userId,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-  };
-}
-function mapRandomizerSession(raw: ApiRandomizerSession): RandomizerSession {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    createdBy: raw.createdBy,
-    purpose: raw.purpose,
-    candidates: raw.candidates.map(mapMemberCandidate),
-    result: raw.result ? mapMemberCandidate(raw.result) : null,
-    createdAt: raw.createdAt,
-  };
-}
-@Injectable({ providedIn: 'root' })
-export class RandomizerService {
-  private readonly http = inject(HttpClient);
-  private readonly auth = inject(AuthService);
-  private readonly apiUrl = environment.apiUrl;
-  private readonly _candidates = signal<MemberCandidate[]>([]);
-  private readonly _selectedIds = signal<Set<string>>(new Set());
-  private readonly _result = signal<MemberCandidate | null>(null);
-  private readonly _isSpinning = signal(false);
-  private readonly _history = signal<RandomizerSession[]>([]);
-  private readonly _purpose = signal('Хто представляє книгу?');
-  readonly candidates = this._candidates.asReadonly();
-  readonly selectedIds = this._selectedIds.asReadonly();
-  readonly result = this._result.asReadonly();
-  readonly isSpinning = this._isSpinning.asReadonly();
-  readonly history = this._history.asReadonly();
-  readonly purpose = this._purpose.asReadonly();
-  setPurpose(purpose: string): void {
-    this._purpose.set(purpose);
-  }
-  async loadClubMembers(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiClubMember[]>(`${this.apiUrl}/clubs/${clubId}/members`),
-    );
-    const members: MemberCandidate[] = raw.map(m => {
-      const detail = mapClubMember(m);
-      return { userId: detail.userId, displayName: detail.displayName, avatarUrl: detail.avatarUrl };
-    });
-    this._candidates.set(members);
-    this._selectedIds.set(new Set(members.map(m => m.userId)));
-    this._result.set(null);
-  }
-  toggleMember(userId: string): void {
-    this._selectedIds.update(prev => {
-      const next = new Set(prev);
-      if (next.has(userId)) {
-        next.delete(userId);
-      } else {
-        next.add(userId);
-      }
-      return next;
-    });
-  }
-  async spin(): Promise<void> {
-    const selected = this._candidates().filter(m => this._selectedIds().has(m.userId));
-    if (selected.length < 2) throw new Error('Потрібно мінімум 2 учасники');
-    this._isSpinning.set(true);
-    this._result.set(null);
-    await new Promise<void>(resolve => setTimeout(resolve, 2000));
-    const max = Math.floor(0x100000000 / selected.length) * selected.length;
-    let rand: number;
-    do {
-      rand = crypto.getRandomValues(new Uint32Array(1))[0];
-    } while (rand >= max);
-    const idx = rand % selected.length;
-    this._result.set(selected[idx]);
-    this._isSpinning.set(false);
-  }
-  async saveSession(clubId: string): Promise<void> {
-    const user = this.auth.currentUser();
-    if (!user) throw new Error('Not authenticated');
-    const result = this._result();
-    if (!result) throw new Error('No result to save');
-    const body = {
-      purpose: this._purpose(),
-      candidates: this._candidates()
-        .filter(m => this._selectedIds().has(m.userId))
-        .map(m => m.userId),
-      result: result.userId,
-    };
-    const raw = await firstValueFrom(
-      this.http.post<ApiRandomizerSession>(
-        `${this.apiUrl}/clubs/${clubId}/randomizer/sessions`,
-        body,
-      ),
-    );
-    const session = mapRandomizerSession(raw);
-    this._history.update(prev => [session, ...prev]);
-  }
-  async loadHistory(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiRandomizerSession[]>(`${this.apiUrl}/clubs/${clubId}/randomizer/history`),
-    );
-    this._history.set(raw.map(mapRandomizerSession));
-  }
-  reset(): void {
-    const ids = new Set(this._candidates().map(m => m.userId));
-    this._selectedIds.set(ids);
-    this._result.set(null);
-  }
-}
+## File: src/app/layout/header/header.component.html
+````html
+<header
+  class="sticky top-0 z-50 backdrop-blur-[14px] -webkit-backdrop-filter
+         bg-white/60 dark:bg-gray-950/60
+         border-b border-white/30 dark:border-white/10
+         shadow-[0_2px_16px_rgba(0,0,0,0.06)]"
+  role="banner"
+>
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex items-center justify-between h-16">
+      <a
+        routerLink="/"
+        class="font-display text-xl font-bold text-gray-900 dark:text-white
+               hover:text-primary-600 dark:hover:text-primary-400
+               transition-all duration-200 focus:outline-none focus:ring-2
+               focus:ring-primary-500 focus:ring-offset-2 rounded"
+      >
+        📚 BookClub
+      </a>
+      <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
+        <a
+          routerLink="/clubs"
+          routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
+          class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
+                 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
+                 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
+                 focus:ring-offset-2"
+        >
+          {{ 'NAV.discover' | translate }}
+        </a>
+        @if (isAuthenticated()) {
+          <a
+            routerLink="/events"
+            routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
+            class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
+                   hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
+                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
+                   focus:ring-offset-2"
+          >
+            📅 Events
+          </a>
+        }
+      </nav>
+      <div class="hidden md:flex items-center gap-2">
+        <button
+          type="button"
+          (click)="switchLang()"
+          class="text-sm font-semibold px-2 py-1 rounded border border-current
+                 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
+                 transition-all duration-200 focus:outline-none focus:ring-2
+                 focus:ring-primary-500 focus:ring-offset-2"
+          [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+        >
+          {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
+        </button>
+        @if (isAuthenticated()) {
+          <button
+            type="button"
+            [hlmDropdownMenuTrigger]="userMenu"
+            class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
+                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            aria-haspopup="menu"
+            [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
+          >
+            <div
+              class="h-9 w-9 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
+                     flex items-center justify-center text-white text-sm font-semibold select-none"
+              aria-hidden="true"
+            >
+              {{ userInitials() }}
+            </div>
+          </button>
+          <ng-template #userMenu>
+            <div hlmDropdownMenu>
+              <hlm-dropdown-menu-label>{{ currentUser()?.displayName }}</hlm-dropdown-menu-label>
+              <hlm-dropdown-menu-separator />
+              <a hlmDropdownMenuItem [routerLink]="['/profile']">
+                👤 {{ 'NAV.profile' | translate }}
+              </a>
+              <hlm-dropdown-menu-separator />
+              <button hlmDropdownMenuItem variant="destructive" (click)="signOut()">
+                🚪 {{ 'NAV.logout' | translate }}
+              </button>
+            </div>
+          </ng-template>
+        } @else {
+          <a hlmBtn variant="outline" size="sm" routerLink="/login">
+            {{ 'NAV.login' | translate }}
+          </a>
+          <a hlmBtn size="sm" routerLink="/register"
+             class="bg-gradient-brand text-white border-0 hover:opacity-90">
+            {{ 'NAV.join_free' | translate }}
+          </a>
+        }
+      </div>
+      <hlm-sheet class="md:hidden">
+        <button
+          hlmSheetTrigger
+          type="button"
+          class="p-2 rounded-lg text-gray-600 dark:text-gray-300
+                 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200
+                 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          aria-label="Toggle navigation menu"
+        >
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <hlm-sheet-content>
+          <hlm-sheet-header>
+            <h2 hlmSheetTitle class="font-display font-bold">📚 BookClub</h2>
+          </hlm-sheet-header>
+          <nav class="flex flex-col gap-1 px-4 py-2" aria-label="Mobile navigation">
+            <button hlmSheetClose [routerLink]="['/clubs']"
+                    class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                           text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                           transition-all duration-200 w-full text-left">
+              🔍 {{ 'NAV.discover' | translate }}
+            </button>
+            @if (isAuthenticated()) {
+              <button hlmSheetClose [routerLink]="['/events']"
+                      class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                             text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                             transition-all duration-200 w-full text-left">
+                📅 Events
+              </button>
+            }
+            <button
+              type="button"
+              (click)="switchLang()"
+              class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                     text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                     transition-all duration-200 w-full text-left"
+              [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+            >
+              {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
+            </button>
+            <div class="pt-2 mt-2 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-1">
+              @if (isAuthenticated()) {
+                <div class="px-4 py-2">
+                  <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+                    {{ 'NAV.signed_in_as' | translate }}
+                  </p>
+                  <p class="text-sm font-medium text-gray-900 dark:text-white mt-0.5">
+                    {{ currentUser()?.displayName }}
+                  </p>
+                </div>
+                <button hlmSheetClose [routerLink]="['/profile']"
+                        class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                               text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                               transition-all duration-200 w-full text-left">
+                  👤 {{ 'NAV.profile' | translate }}
+                </button>
+                <button hlmSheetClose type="button" (click)="signOut()"
+                        class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                               text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
+                               transition-all duration-200">
+                  🚪 {{ 'NAV.logout' | translate }}
+                </button>
+              } @else {
+                <button hlmSheetClose [routerLink]="['/login']"
+                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                               text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
+                               transition-all duration-200 w-full text-left">
+                  {{ 'NAV.login' | translate }}
+                </button>
+                <button hlmSheetClose [routerLink]="['/register']"
+                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                               bg-gradient-brand text-white hover:opacity-90
+                               transition-all duration-200 w-full text-left">
+                  {{ 'NAV.join_free' | translate }}
+                </button>
+              }
+            </div>
+          </nav>
+        </hlm-sheet-content>
+      </hlm-sheet>
+    </div>
+  </div>
+</header>
 ````
 
 ## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
@@ -11499,331 +11684,6 @@ export class CreateEventComponent implements OnInit {
     }
   }
 }
-````
-
-## File: src/app/features/profile/profile.component.html
-````html
-<div class="min-h-screen bg-gradient-to-br from-primary-950/30 via-transparent to-accent-950/20">
-  <div class="max-w-2xl mx-auto space-y-5 py-8 px-4">
-    <section
-      aria-labelledby="profile-heading"
-      class="glass-card-strong p-8 text-center"
-    >
-      <div
-        class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-brand
-               flex items-center justify-center text-white text-3xl font-bold select-none
-               shadow-lg ring-4 ring-white/20"
-        aria-hidden="true"
-      >
-        {{ userInitials() }}
-      </div>
-      <h1 id="profile-heading" class="text-2xl font-bold text-gray-900 dark:text-white">
-        {{ auth.currentUser()?.displayName }}
-      </h1>
-      <span
-        class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
-        [class]="auth.currentUser()?.role === 'organizer'
-          ? 'bg-accent-100/80 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
-          : 'bg-primary-100/80 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
-      >
-        {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
-        {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
-      </span>
-      @if (joinedDate()) {
-        <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
-          {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
-        </p>
-      }
-    </section>
-    <section aria-labelledby="edit-name-heading" class="glass-card p-6">
-      <h2 id="edit-name-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
-        <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
-      </h2>
-      <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
-        <div class="space-y-4">
-          <div>
-            <label for="displayName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              {{ 'PROFILE.display_name_label' | translate }}
-            </label>
-            <input
-              hlmInput
-              id="displayName"
-              type="text"
-              formControlName="displayName"
-              autocomplete="nickname"
-              class="w-full"
-              [placeholder]="'PROFILE.display_name_placeholder' | translate"
-              [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
-              aria-describedby="displayName-error"
-            />
-            @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
-              <p id="displayName-error" role="alert" class="mt-1.5 text-xs text-red-600 dark:text-red-400">
-                @if (nameForm.controls.displayName.hasError('required')) {
-                  {{ 'PROFILE.display_name_required' | translate }}
-                } @else if (nameForm.controls.displayName.hasError('minlength')) {
-                  {{ 'PROFILE.display_name_min' | translate }}
-                }
-              </p>
-            }
-          </div>
-          <div class="flex items-center gap-3">
-            <button
-              hlmBtn
-              type="submit"
-              [disabled]="nameForm.invalid || isSavingName()"
-              class="bg-gradient-brand text-white border-0 hover:opacity-90"
-            >
-              @if (isSavingName()) {
-                {{ 'PROFILE.saving' | translate }}
-              } @else {
-                {{ 'PROFILE.save_name' | translate }}
-              }
-            </button>
-          </div>
-        </div>
-      </form>
-    </section>
-    <section aria-labelledby="role-heading" class="glass-card p-6">
-      <h2 id="role-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
-        <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
-      </h2>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-        {{ 'PROFILE.role_subtitle' | translate }}
-      </p>
-      <app-profile-role-selector
-        [currentRole]="auth.currentUser()?.role ?? 'user'"
-        (roleChange)="changeRole($event)"
-      />
-    </section>
-    <section aria-labelledby="stats-heading" class="glass-card p-6">
-      <h2 id="stats-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
-        <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
-      </h2>
-      <app-profile-stats [stats]="auth.userStats()" />
-    </section>
-    <section aria-labelledby="socials-heading" class="glass-card p-6">
-      <h2 id="socials-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
-        <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
-      </h2>
-      <div class="flex items-center gap-3 mb-4 p-3 rounded-[var(--bento-radius)] glass-card-subtle">
-        <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
-          <input
-            type="checkbox"
-            [formControl]="socialsPublicControl"
-            (change)="onSocialsPublicChange(socialsPublicControl.value)"
-            class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-          />
-          {{ 'PROFILE.socials_public_label' | translate }}
-        </label>
-      </div>
-      @if (
-        userSocials().telegram  ||
-        userSocials().instagram ||
-        userSocials().twitter   ||
-        userSocials().linkedin  ||
-        userSocials().github    ||
-        userSocials().goodreads
-      ) {
-        <div class="flex flex-wrap gap-2 mb-6">
-          <app-social-badges [socials]="userSocials()" />
-        </div>
-      }
-      <form [formGroup]="socialsForm" (ngSubmit)="submitSocials()" novalidate class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          @for (social of socialFields; track social.key) {
-            <app-social-link-field [config]="social" [form]="socialsForm" />
-          }
-        </div>
-        <div class="flex items-center gap-3 pt-1">
-          <button hlmBtn type="submit" class="bg-gradient-brand text-white border-0 hover:opacity-90">
-            {{ 'PROFILE.save' | translate }}
-          </button>
-        </div>
-      </form>
-    </section>
-  </div>
-</div>
-````
-
-## File: src/app/layout/header/header.component.html
-````html
-<header
-  class="sticky top-0 z-50 bg-[#f5ede0]/80 dark:bg-gray-900/80 backdrop-blur-md
-         border-b border-amber-200/60 dark:border-gray-800"
-  role="banner"
->
-  <div class="max-w-6xl mx-auto px-4">
-    <div class="flex items-center justify-between h-16">
-      <a
-        routerLink="/"
-        class="font-display text-xl font-bold text-gray-900 dark:text-white
-               hover:text-primary-600 dark:hover:text-primary-400
-               transition-all duration-200 focus:outline-none focus:ring-2
-               focus:ring-primary-500 focus:ring-offset-2 rounded"
-      >
-        📚 BookClub
-      </a>
-      <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
-        <a
-          routerLink="/clubs"
-          routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
-          class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
-                 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
-                 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
-                 focus:ring-offset-2"
-        >
-          {{ 'NAV.discover' | translate }}
-        </a>
-        @if (isAuthenticated()) {
-          <a
-            routerLink="/events"
-            routerLinkActive="text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/30"
-            class="px-4 py-2 rounded-lg text-sm font-medium text-gray-600 dark:text-gray-300
-                   hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800
-                   transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500
-                   focus:ring-offset-2"
-          >
-            📅 Events
-          </a>
-        }
-      </nav>
-      <div class="hidden md:flex items-center gap-2">
-        <button
-          type="button"
-          (click)="switchLang()"
-          class="text-sm font-semibold px-2 py-1 rounded border border-current
-                 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800
-                 transition-all duration-200 focus:outline-none focus:ring-2
-                 focus:ring-primary-500 focus:ring-offset-2"
-          [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-        >
-          {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
-        </button>
-        @if (isAuthenticated()) {
-          <button
-            type="button"
-            [hlmDropdownMenuTrigger]="userMenu"
-            class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-            aria-haspopup="menu"
-            [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
-          >
-            <div
-              class="h-9 w-9 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
-                     flex items-center justify-center text-white text-sm font-semibold select-none"
-              aria-hidden="true"
-            >
-              {{ userInitials() }}
-            </div>
-          </button>
-          <ng-template #userMenu>
-            <div hlmDropdownMenu>
-              <hlm-dropdown-menu-label>{{ currentUser()?.displayName }}</hlm-dropdown-menu-label>
-              <hlm-dropdown-menu-separator />
-              <a hlmDropdownMenuItem [routerLink]="['/profile']">
-                👤 {{ 'NAV.profile' | translate }}
-              </a>
-              <hlm-dropdown-menu-separator />
-              <button hlmDropdownMenuItem variant="destructive" (click)="signOut()">
-                🚪 {{ 'NAV.logout' | translate }}
-              </button>
-            </div>
-          </ng-template>
-        } @else {
-          <a hlmBtn variant="outline" size="sm" routerLink="/login">
-            {{ 'NAV.login' | translate }}
-          </a>
-          <a hlmBtn size="sm" routerLink="/register"
-             class="bg-primary-600 hover:bg-primary-700 text-white">
-            {{ 'NAV.join_free' | translate }}
-          </a>
-        }
-      </div>
-      <hlm-sheet class="md:hidden">
-        <button
-          hlmSheetTrigger
-          type="button"
-          class="p-2 rounded-lg text-gray-600 dark:text-gray-300
-                 hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200
-                 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-          aria-label="Toggle navigation menu"
-        >
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        <hlm-sheet-content>
-          <hlm-sheet-header>
-            <h2 hlmSheetTitle class="font-display font-bold">📚 BookClub</h2>
-          </hlm-sheet-header>
-          <nav class="flex flex-col gap-1 px-4 py-2" aria-label="Mobile navigation">
-            <button hlmSheetClose [routerLink]="['/clubs']"
-                    class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                           text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                           transition-all duration-200 w-full text-left">
-              🔍 {{ 'NAV.discover' | translate }}
-            </button>
-            @if (isAuthenticated()) {
-              <button hlmSheetClose [routerLink]="['/events']"
-                      class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                             text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                             transition-all duration-200 w-full text-left">
-                📅 Events
-              </button>
-            }
-            <button
-              type="button"
-              (click)="switchLang()"
-              class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                     text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                     transition-all duration-200 w-full text-left"
-              [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-            >
-              {{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}
-            </button>
-            <div class="pt-2 mt-2 border-t border-gray-100 dark:border-gray-800 flex flex-col gap-1">
-              @if (isAuthenticated()) {
-                <div class="px-4 py-2">
-                  <p class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wide">
-                    {{ 'NAV.signed_in_as' | translate }}
-                  </p>
-                  <p class="text-sm font-medium text-gray-900 dark:text-white mt-0.5">
-                    {{ currentUser()?.displayName }}
-                  </p>
-                </div>
-                <button hlmSheetClose [routerLink]="['/profile']"
-                        class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                               text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                               transition-all duration-200 w-full text-left">
-                  👤 {{ 'NAV.profile' | translate }}
-                </button>
-                <button hlmSheetClose type="button" (click)="signOut()"
-                        class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                               text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
-                               transition-all duration-200">
-                  🚪 {{ 'NAV.logout' | translate }}
-                </button>
-              } @else {
-                <button hlmSheetClose [routerLink]="['/login']"
-                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                               text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800
-                               transition-all duration-200 w-full text-left">
-                  {{ 'NAV.login' | translate }}
-                </button>
-                <button hlmSheetClose [routerLink]="['/register']"
-                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                               bg-primary-600 text-white hover:bg-primary-700
-                               transition-all duration-200 w-full text-left">
-                  {{ 'NAV.join_free' | translate }}
-                </button>
-              }
-            </div>
-          </nav>
-        </hlm-sheet-content>
-      </hlm-sheet>
-    </div>
-  </div>
-</header>
 ````
 
 ## File: src/app/core/auth/auth.service.ts
@@ -12246,6 +12106,150 @@ export class RegisterComponent {
     }
   }
 }
+````
+
+## File: src/app/features/profile/profile.component.html
+````html
+<div class="min-h-screen bg-gradient-to-br from-primary-950/30 via-transparent to-accent-950/20">
+  <div class="max-w-2xl mx-auto space-y-5 py-8 px-4">
+    <section
+      aria-labelledby="profile-heading"
+      class="glass-card-strong p-8 text-center"
+    >
+      <div
+        class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-brand
+               flex items-center justify-center text-white text-3xl font-bold select-none
+               shadow-lg ring-4 ring-white/20"
+        aria-hidden="true"
+      >
+        {{ userInitials() }}
+      </div>
+      <h1 id="profile-heading" class="text-2xl font-bold text-gray-900 dark:text-white">
+        {{ auth.currentUser()?.displayName }}
+      </h1>
+      <span
+        class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
+        [class]="auth.currentUser()?.role === 'organizer'
+          ? 'bg-accent-100/80 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
+          : 'bg-primary-100/80 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
+      >
+        {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
+        {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
+      </span>
+      @if (joinedDate()) {
+        <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
+          {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
+        </p>
+      }
+    </section>
+    <section aria-labelledby="edit-name-heading" class="glass-card p-6">
+      <h2 id="edit-name-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+        <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
+      </h2>
+      <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
+        <div class="space-y-4">
+          <div>
+            <label for="displayName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              {{ 'PROFILE.display_name_label' | translate }}
+            </label>
+            <input
+              hlmInput
+              id="displayName"
+              type="text"
+              formControlName="displayName"
+              autocomplete="nickname"
+              class="w-full"
+              [placeholder]="'PROFILE.display_name_placeholder' | translate"
+              [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
+              aria-describedby="displayName-error"
+            />
+            @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
+              <p id="displayName-error" role="alert" class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                @if (nameForm.controls.displayName.hasError('required')) {
+                  {{ 'PROFILE.display_name_required' | translate }}
+                } @else if (nameForm.controls.displayName.hasError('minlength')) {
+                  {{ 'PROFILE.display_name_min' | translate }}
+                }
+              </p>
+            }
+          </div>
+          <div class="flex items-center gap-3">
+            <button
+              hlmBtn
+              type="submit"
+              [disabled]="nameForm.invalid || isSavingName()"
+              class="bg-gradient-brand text-white border-0 hover:opacity-90"
+            >
+              @if (isSavingName()) {
+                {{ 'PROFILE.saving' | translate }}
+              } @else {
+                {{ 'PROFILE.save_name' | translate }}
+              }
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+    <section aria-labelledby="role-heading" class="glass-card p-6">
+      <h2 id="role-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+        <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
+      </h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+        {{ 'PROFILE.role_subtitle' | translate }}
+      </p>
+      <app-profile-role-selector
+        [currentRole]="auth.currentUser()?.role ?? 'user'"
+        (roleChange)="changeRole($event)"
+      />
+    </section>
+    <section aria-labelledby="stats-heading" class="glass-card p-6">
+      <h2 id="stats-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+        <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
+      </h2>
+      <app-profile-stats [stats]="auth.userStats()" />
+    </section>
+    <section aria-labelledby="socials-heading" class="glass-card p-6">
+      <h2 id="socials-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+        <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
+      </h2>
+      <div class="flex items-center gap-3 mb-4 p-3 rounded-[var(--bento-radius)] glass-card-subtle">
+        <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
+          <input
+            type="checkbox"
+            [formControl]="socialsPublicControl"
+            (change)="onSocialsPublicChange(socialsPublicControl.value)"
+            class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+          />
+          {{ 'PROFILE.socials_public_label' | translate }}
+        </label>
+      </div>
+      @if (
+        userSocials().telegram  ||
+        userSocials().instagram ||
+        userSocials().twitter   ||
+        userSocials().linkedin  ||
+        userSocials().github    ||
+        userSocials().goodreads
+      ) {
+        <div class="flex flex-wrap gap-2 mb-6">
+          <app-social-badges [socials]="userSocials()" />
+        </div>
+      }
+      <form [formGroup]="socialsForm" (ngSubmit)="submitSocials()" novalidate class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          @for (social of socialFields; track social.key) {
+            <app-social-link-field [config]="social" [form]="socialsForm" />
+          }
+        </div>
+        <div class="flex items-center gap-3 pt-1">
+          <button hlmBtn type="submit" class="bg-gradient-brand text-white border-0 hover:opacity-90">
+            {{ 'PROFILE.save' | translate }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
 ````
 
 ## File: package.json
