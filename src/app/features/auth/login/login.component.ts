@@ -21,6 +21,7 @@ interface LoginForm {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
   templateUrl: './login.component.html',
+  styleUrl: './login.component.scss',
 })
 export class LoginComponent {
   private readonly auth = inject(AuthService);

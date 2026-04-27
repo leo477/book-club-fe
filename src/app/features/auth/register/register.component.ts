@@ -40,6 +40,7 @@ interface RegisterForm {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
   templateUrl: './register.component.html',
+  styleUrl: './register.component.scss',
 })
 export class RegisterComponent {
   private readonly auth = inject(AuthService);

@@ -7885,102 +7885,71 @@ export class TokenStore {
 ## File: src/app/features/auth/login/login.component.html
 ````html
 <div class="auth-page-wrapper">
-      <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
-      <main class="auth-form-container">
-        @if (formVisible()) {
-          <div class="w-full max-w-md animate-form-in">
-            <div class="text-center mb-8">
-              <h1 class="font-display text-3xl font-bold text-gray-900">📚 Book Club</h1>
-              <p class="text-gray-600 mt-2">{{ 'AUTH.welcome_back' | translate }}</p>
-            </div>
-            <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-amber-100">
-              <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ 'AUTH.sign_in_h2' | translate }}</h2>
-              <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
-                <fieldset class="border-0 p-0 m-0">
-                  <legend class="sr-only">{{ 'AUTH.sign_in_h2' | translate }}</legend>
-                  <hlm-field>
-                    <label hlmFieldLabel>{{ 'AUTH.email' | translate }}</label>
-                    <input hlmInput type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
-                    <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                    <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
-                  </hlm-field>
-                  <hlm-field>
-                    <label hlmFieldLabel>{{ 'AUTH.password' | translate }}</label>
-                    <input hlmInput type="password" placeholder="••••••••" [formControl]="form.controls.password" />
-                    <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                    <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
-                  </hlm-field>
-                </fieldset>
-                @if (errorMessage()) {
-                  <div class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700" role="alert">
-                    <span class="mt-0.5 shrink-0">⚠️</span>
-                    <span>{{ errorMessage() }}</span>
-                  </div>
-                }
-                <button
-                  hlmBtn
-                  type="submit"
-                  [disabled]="isSubmitting()"
-                  class="mt-2 w-full bg-amber-700 hover:bg-amber-800 text-white focus-visible:ring-amber-500"
-                >
-                  @if (isSubmitting()) {
-                    <hlm-spinner aria-label="Loading" />
-                    {{ 'AUTH.signing_in' | translate }}
-                  } @else {
-                    {{ 'AUTH.submit_login' | translate }}
-                  }
-                </button>
-              </form>
-              <p class="mt-6 text-center text-sm text-gray-600">
-                {{ 'AUTH.no_account' | translate }}
-                <a routerLink="/register" class="text-amber-700 hover:text-amber-800 font-medium">
-                  {{ 'AUTH.register_title' | translate }}
-                </a>
-              </p>
-            </div>
-            <p class="mt-6 text-center text-sm text-gray-500">
-              <a
-                routerLink="/"
-                class="inline-flex items-center gap-1 text-gray-500
-                       hover:text-gray-700 transition-all duration-200
-                       focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 rounded"
-              >
-                {{ 'NAV.back_home' | translate }}
-              </a>
-            </p>
-          </div>
-        }
-        </main>
-    </div>
-    <style>
-      .auth-page-wrapper {
-        position: relative;
-        min-height: 100vh;
-        overflow: hidden;
-      }
-      .auth-form-container {
-        position: relative;
-        z-index: 60;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 1rem;
-      }
-      .animate-form-in {
-        animation: form-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-      }
-      @keyframes form-slide-in {
-        from {
-          opacity: 0;
-          transform: translateY(24px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-    </style>
+  <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
+  <main class="auth-form-container">
+    @if (formVisible()) {
+      <div class="w-full max-w-md animate-form-in">
+        <div class="text-center mb-8">
+          <h1 class="font-display text-3xl font-bold text-white drop-shadow-sm">📚 Book Club</h1>
+          <p class="text-white/70 mt-2">{{ 'AUTH.welcome_back' | translate }}</p>
+        </div>
+        <div class="glass-card-strong p-8">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'AUTH.sign_in_h2' | translate }}</h2>
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+            <fieldset class="border-0 p-0 m-0">
+              <legend class="sr-only">{{ 'AUTH.sign_in_h2' | translate }}</legend>
+              <hlm-field>
+                <label hlmFieldLabel>{{ 'AUTH.email' | translate }}</label>
+                <input hlmInput type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
+                <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
+              </hlm-field>
+              <hlm-field>
+                <label hlmFieldLabel>{{ 'AUTH.password' | translate }}</label>
+                <input hlmInput type="password" placeholder="••••••••" [formControl]="form.controls.password" />
+                <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
+              </hlm-field>
+            </fieldset>
+            @if (errorMessage()) {
+              <div class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+                <span class="mt-0.5 shrink-0">⚠️</span>
+                <span>{{ errorMessage() }}</span>
+              </div>
+            }
+            <button
+              hlmBtn
+              type="submit"
+              [disabled]="isSubmitting()"
+              class="mt-2 w-full bg-gradient-brand text-white border-0 hover:opacity-90 focus-visible:ring-primary-500"
+            >
+              @if (isSubmitting()) {
+                <hlm-spinner aria-label="Loading" />
+                {{ 'AUTH.signing_in' | translate }}
+              } @else {
+                {{ 'AUTH.submit_login' | translate }}
+              }
+            </button>
+          </form>
+          <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+            {{ 'AUTH.no_account' | translate }}
+            <a routerLink="/register" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">
+              {{ 'AUTH.register_title' | translate }}
+            </a>
+          </p>
+        </div>
+        <p class="mt-6 text-center text-sm">
+          <a
+            routerLink="/"
+            class="inline-flex items-center gap-1 text-white/60 hover:text-white/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 rounded"
+          >
+            {{ 'NAV.back_home' | translate }}
+          </a>
+        </p>
+      </div>
+    }
+  </main>
+</div>
 ````
 
 ## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.ts
@@ -8311,79 +8280,6 @@ export const CLUBS_ROUTES: Routes = [
 ];
 ````
 
-## File: src/app/features/events/event-card/event-card.component.html
-````html
-<article class="glass-card flex flex-col overflow-hidden h-full transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5">
-  <div class="flex flex-col flex-1 p-4 gap-3">
-    <div class="flex items-start justify-between gap-2">
-      <span class="inline-flex items-center gap-1 rounded-full bg-primary-100/80 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/60 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
-        📅 {{ event().date | formatDate }}
-      </span>
-      @if (event().status !== 'scheduled') {
-        <span hlmBadge
-              [variant]="event().status === 'cancelled' ? 'destructive' : event().status === 'active' ? 'default' : 'secondary'"
-              class="rounded-full text-xs flex-shrink-0">
-          {{ event().status }}
-        </span>
-      }
-    </div>
-    <h3 class="font-semibold text-gray-900 dark:text-white leading-snug line-clamp-2">
-      {{ event().title }}
-    </h3>
-    <a
-      [routerLink]="['/clubs', event().clubId]"
-      class="text-xs text-primary-600 dark:text-primary-400 hover:underline"
-      (click)="$event.stopPropagation()"
-    >
-      📚 {{ event().clubName }}
-    </a>
-    @if (event().city) {
-      <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-        <span aria-hidden="true">📍</span>
-        <span>{{ event().address || event().city }}</span>
-      </p>
-    }
-    @if (event().theme || event().tags.length > 0) {
-      <div class="flex flex-wrap gap-1.5">
-        @if (event().theme) {
-          <span class="rounded-full bg-accent-100/80 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700/60 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
-            ✨ {{ event().theme }}
-          </span>
-        }
-        @for (tag of event().tags.slice(0, 2); track tag) {
-          <span class="rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-600 dark:text-gray-400">
-            🏷 {{ tag }}
-          </span>
-        }
-      </div>
-    }
-    <div class="flex items-center justify-between mt-auto pt-2 border-t border-white/20 dark:border-white/10">
-      <span class="text-xs text-gray-500 dark:text-gray-400">
-        👥 {{ event().attendeeCount }} attending
-      </span>
-      <div class="flex gap-2">
-        <a hlmBtn variant="outline" size="sm" [routerLink]="['/events', event().id]">
-          View
-        </a>
-        @if (isAuthenticated() && event().status !== 'cancelled') {
-          @if (event().isAttending) {
-            <button hlmBtn type="button" size="sm" [disabled]="attending()" (click)="cancelAttend.emit()"
-                    class="bg-green-600 hover:bg-green-700 text-white">
-              @if (attending()) { ⏳ } @else { ✓ Going }
-            </button>
-          } @else {
-            <button hlmBtn type="button" size="sm" [disabled]="attending()" (click)="attend.emit()"
-                    class="bg-primary-600 hover:bg-primary-700 text-white">
-              @if (attending()) { ⏳ } @else { RSVP }
-            </button>
-          }
-        }
-      </div>
-    </div>
-  </div>
-</article>
-````
-
 ## File: src/app/features/events/event-card/event-card.component.ts
 ````typescript
 import {
@@ -8413,154 +8309,6 @@ export class EventCardComponent {
   readonly attend = output<void>();
   readonly cancelAttend = output<void>();
 }
-````
-
-## File: src/app/features/events/events-feed/events-feed.component.html
-````html
-<div class="min-h-screen">
-  <section class="glass-hero bg-gradient-brand px-4 py-14 text-center">
-    <div class="relative z-10">
-      <h1 class="font-display text-4xl font-bold text-white mb-2 drop-shadow-sm">Events</h1>
-      <p class="text-white/80 mb-8">Discover and join upcoming book club events</p>
-      @if (eventService.availableCities().length > 0) {
-        <div class="mx-auto max-w-sm">
-          <select
-            [ngModel]="eventService.cityFilter()"
-            (ngModelChange)="eventService.setCityFilter($event || null)"
-            class="w-full rounded-full glass-card px-4 py-2.5 text-sm text-gray-900 dark:text-white border-0 focus:outline-none focus:ring-2 focus:ring-white/50 appearance-none cursor-pointer"
-          >
-            <option value="">📍 All cities</option>
-            @for (city of eventService.availableCities(); track city) {
-              <option [value]="city">📍 {{ city }}</option>
-            }
-          </select>
-        </div>
-      }
-    </div>
-  </section>
-  <div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
-    @if (eventService.error()) {
-      <div class="flex items-start gap-2 glass-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-        <span aria-hidden="true">⚠️</span>
-        <span>{{ eventService.error() }}</span>
-      </div>
-    }
-    @if (auth.isAuthenticated()) {
-      <div hlmTabs tab="upcoming">
-        <div hlmTabsList variant="line" class="w-full border-b border-gray-200 dark:border-gray-700 rounded-none">
-          <button hlmTabsTrigger="upcoming">Upcoming</button>
-          <button hlmTabsTrigger="my">My Events</button>
-        </div>
-        <div hlmTabsContent="upcoming" class="pt-6">
-          @if (eventService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true">
-              <hlm-spinner />
-            </div>
-          } @else if (sortedDates().length === 0) {
-            <app-empty-state
-              icon="📅"
-              title="No upcoming events"
-              description="No events are scheduled yet. Check back soon!"
-            />
-          } @else {
-            @for (date of sortedDates(); track date) {
-              <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
-                <div class="flex items-center gap-3 mb-5">
-                  <h2
-                    [id]="'date-' + date"
-                    class="glass-card-subtle inline-flex px-4 py-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide"
-                  >
-                    📆 {{ date }}
-                  </h2>
-                  <div class="flex-1 h-px bg-white/30 dark:bg-white/10"></div>
-                </div>
-                <ul class="bento-grid-3">
-                  @for (event of eventService.groupedByDate()[date]; track event.id) {
-                    <li>
-                      <app-event-card
-                        [event]="event"
-                        [isAuthenticated]="auth.isAuthenticated()"
-                        [attending]="attendingEventId() === event.id"
-                        (attend)="onAttend(event)"
-                        (cancelAttend)="onCancelAttend(event)"
-                      />
-                    </li>
-                  }
-                </ul>
-              </section>
-            }
-          }
-        </div>
-        <div hlmTabsContent="my" class="pt-6">
-          @if (eventService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true">
-              <hlm-spinner />
-            </div>
-          } @else if (eventService.myEvents().length === 0) {
-            <app-empty-state
-              icon="📅"
-              title="No upcoming events"
-              description="Join clubs to see their events here."
-            />
-          } @else {
-            <ul class="bento-grid-3">
-              @for (event of eventService.myEvents(); track event.id) {
-                <li>
-                  <app-event-card
-                    [event]="event"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [attending]="attendingEventId() === event.id"
-                    (attend)="onAttend(event)"
-                    (cancelAttend)="onCancelAttend(event)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      </div>
-    } @else {
-      @if (eventService.isLoading()) {
-        <div class="py-16 flex justify-center" aria-busy="true">
-          <hlm-spinner />
-        </div>
-      } @else if (sortedDates().length === 0) {
-        <app-empty-state
-          icon="📅"
-          title="No upcoming events"
-          description="No events are scheduled yet. Check back soon!"
-        />
-      } @else {
-        @for (date of sortedDates(); track date) {
-          <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
-            <div class="flex items-center gap-3 mb-5">
-              <h2
-                [id]="'date-' + date"
-                class="glass-card-subtle inline-flex px-4 py-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide"
-              >
-                📆 {{ date }}
-              </h2>
-              <div class="flex-1 h-px bg-white/30 dark:bg-white/10"></div>
-            </div>
-            <ul class="bento-grid-3">
-              @for (event of eventService.groupedByDate()[date]; track event.id) {
-                <li>
-                  <app-event-card
-                    [event]="event"
-                    [isAuthenticated]="false"
-                    [attending]="false"
-                    (attend)="onAttend(event)"
-                    (cancelAttend)="onCancelAttend(event)"
-                  />
-                </li>
-              }
-            </ul>
-          </section>
-        }
-      }
-    }
-  </div>
-</div>
 ````
 
 ## File: src/app/features/quiz/quiz-list/quiz-list.component.html
@@ -9302,6 +9050,7 @@ interface LoginForm {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
   templateUrl: './login.component.html',
+  styleUrl: './login.component.scss',
 })
 export class LoginComponent {
   private readonly auth = inject(AuthService);
@@ -9350,192 +9099,152 @@ export class LoginComponent {
 ## File: src/app/features/auth/register/register.component.html
 ````html
 <div class="auth-page-wrapper">
-      <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
-      <main class="auth-form-container">
-        @if (formVisible()) {
-          <div class="w-full max-w-md animate-form-in">
-            <div class="text-center mb-8">
-              <h1 class="font-display text-3xl font-bold text-gray-900">📚 Book Club</h1>
-              <p class="text-gray-600 mt-2">{{ 'AUTH.create_account_subtitle' | translate }}</p>
-            </div>
-            @if (successMessage()) {
-              <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 text-center border border-amber-100">
-                <div class="text-5xl mb-4">🎉</div>
-                <h2 class="text-xl font-semibold text-gray-900 mb-2">{{ 'AUTH.account_created' | translate }}</h2>
-                <p class="text-gray-600 text-sm">
-                  {{ 'AUTH.welcome_message' | translate }} <strong>{{ registeredEmail() }}</strong>.
-                </p>
-                <a routerLink="/login"
-                   class="mt-6 inline-block text-sm text-amber-700 hover:text-amber-800 font-medium">
-                  {{ 'AUTH.back_to_login' | translate }}
-                </a>
-              </div>
-            } @else {
-              <div class="bg-white/85 backdrop-blur-md rounded-2xl shadow-2xl p-8 border border-amber-100">
-                <h2 class="text-xl font-semibold text-gray-900 mb-6">{{ 'AUTH.create_account_h2' | translate }}</h2>
-                <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
-                  <fieldset class="border-0 p-0 m-0">
-                    <legend class="sr-only">{{ 'AUTH.create_account_h2' | translate }}</legend>
-                    <hlm-field>
-                      <label hlmFieldLabel>{{ 'AUTH.display_name' | translate }}</label>
-                      <input hlmInput type="text" placeholder="Ada Lovelace" [formControl]="form.controls.displayName" />
-                      <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                      <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 2} }}</hlm-field-error>
-                    </hlm-field>
-                    <hlm-field>
-                      <label hlmFieldLabel>{{ 'AUTH.email' | translate }}</label>
-                      <input hlmInput type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
-                      <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                      <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
-                    </hlm-field>
-                    <hlm-field>
-                      <label hlmFieldLabel>{{ 'AUTH.password' | translate }}</label>
-                      <input hlmInput type="password" placeholder="••••••••" [formControl]="form.controls.password" />
-                      <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                      <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
-                    </hlm-field>
-                    @if (passwordStrength()) {
-                      <div class="flex items-center gap-2 -mt-2">
-                        <div class="flex gap-1 flex-1">
-                          <div
-                            class="h-1 flex-1 rounded-full transition-colors"
-                            [class]="passwordStrength() !== null ? 'bg-red-400' : 'bg-gray-200'"
-                          ></div>
-                          <div
-                            class="h-1 flex-1 rounded-full transition-colors"
-                            [class]="passwordStrength() === 'medium' || passwordStrength() === 'strong' ? 'bg-yellow-400' : 'bg-gray-200'"
-                          ></div>
-                          <div
-                            class="h-1 flex-1 rounded-full transition-colors"
-                            [class]="passwordStrength() === 'strong' ? 'bg-green-500' : 'bg-gray-200'"
-                          ></div>
-                        </div>
-                        <span
-                          class="text-xs font-medium"
+  <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
+  <main class="auth-form-container">
+    @if (formVisible()) {
+      <div class="w-full max-w-md animate-form-in">
+        <div class="text-center mb-8">
+          <h1 class="font-display text-3xl font-bold text-white drop-shadow-sm">📚 Book Club</h1>
+          <p class="text-white/70 mt-2">{{ 'AUTH.create_account_subtitle' | translate }}</p>
+        </div>
+        @if (successMessage()) {
+          <div class="glass-card-strong p-8 text-center">
+            <div class="text-5xl mb-4">🎉</div>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'AUTH.account_created' | translate }}</h2>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">
+              {{ 'AUTH.welcome_message' | translate }} <strong>{{ registeredEmail() }}</strong>.
+            </p>
+            <a routerLink="/login"
+               class="mt-6 inline-block text-sm text-primary-600 dark:text-primary-400 hover:underline font-medium">
+              {{ 'AUTH.back_to_login' | translate }}
+            </a>
+          </div>
+        } @else {
+          <div class="glass-card-strong p-8">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'AUTH.create_account_h2' | translate }}</h2>
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+              <fieldset class="border-0 p-0 m-0">
+                <legend class="sr-only">{{ 'AUTH.create_account_h2' | translate }}</legend>
+                <hlm-field>
+                  <label hlmFieldLabel>{{ 'AUTH.display_name' | translate }}</label>
+                  <input hlmInput type="text" placeholder="Ada Lovelace" [formControl]="form.controls.displayName" />
+                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                  <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 2} }}</hlm-field-error>
+                </hlm-field>
+                <hlm-field>
+                  <label hlmFieldLabel>{{ 'AUTH.email' | translate }}</label>
+                  <input hlmInput type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
+                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                  <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
+                </hlm-field>
+                <hlm-field>
+                  <label hlmFieldLabel>{{ 'AUTH.password' | translate }}</label>
+                  <input hlmInput type="password" placeholder="••••••••" [formControl]="form.controls.password" />
+                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                  <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
+                </hlm-field>
+                @if (passwordStrength()) {
+                  <div class="flex items-center gap-2 -mt-2">
+                    <div class="flex gap-1 flex-1">
+                      <div class="h-1 flex-1 rounded-full transition-colors"
+                           [class]="passwordStrength() !== null ? 'bg-red-400' : 'bg-gray-200'"></div>
+                      <div class="h-1 flex-1 rounded-full transition-colors"
+                           [class]="passwordStrength() === 'medium' || passwordStrength() === 'strong' ? 'bg-yellow-400' : 'bg-gray-200'"></div>
+                      <div class="h-1 flex-1 rounded-full transition-colors"
+                           [class]="passwordStrength() === 'strong' ? 'bg-green-500' : 'bg-gray-200'"></div>
+                    </div>
+                    <span class="text-xs font-medium"
                           [class]="passwordStrength() === 'strong' ? 'text-green-600' :
-                                   passwordStrength() === 'medium' ? 'text-yellow-600' :
-                                   'text-red-500'"
-                        >
-                          {{ passwordStrength() === 'strong' ? ('AUTH.password_strong' | translate) : passwordStrength() === 'medium' ? ('AUTH.password_medium' | translate) : ('AUTH.password_weak' | translate) }}
-                        </span>
-                      </div>
-                    }
-                    <hlm-field>
-                      <label hlmFieldLabel>{{ 'AUTH.confirm_password' | translate }}</label>
-                      <input hlmInput type="password" placeholder="••••••••" [formControl]="form.controls.confirmPassword" />
-                      <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                    </hlm-field>
-                    @if (form.hasError('passwordMismatch') && form.controls.confirmPassword.touched) {
-                      <p class="text-xs text-red-500 -mt-3">{{ 'AUTH.passwords_no_match' | translate }}</p>
-                    }
-                    <fieldset class="border-0 p-0 m-0">
-                      <legend class="text-sm font-medium text-gray-700 block mb-1.5">{{ 'AUTH.want_to' | translate }}</legend>
-                      <div class="grid grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          (click)="setRole('user')"
-                          [attr.aria-pressed]="selectedRole() === 'user'"
-                          [class.ring-2]="selectedRole() === 'user'"
-                          [class.ring-amber-500]="selectedRole() === 'user'"
-                          [class.bg-amber-50]="selectedRole() === 'user'"
-                          [class.bg-gray-50]="selectedRole() !== 'user'"
-                          class="p-4 rounded-xl border border-gray-200 text-left transition-all focus:outline-none focus:ring-2 focus:ring-amber-500"
-                        >
-                          <div class="text-2xl mb-1">📖</div>
-                          <div class="font-medium text-sm text-gray-900">{{ 'AUTH.role_reader_label' | translate }}</div>
-                          <div class="text-xs text-gray-500">{{ 'AUTH.role_reader_desc' | translate }}</div>
-                        </button>
-                        <button
-                          type="button"
-                          (click)="setRole('organizer')"
-                          [attr.aria-pressed]="selectedRole() === 'organizer'"
-                          [class.ring-2]="selectedRole() === 'organizer'"
-                          [class.ring-amber-500]="selectedRole() === 'organizer'"
-                          [class.bg-amber-50]="selectedRole() === 'organizer'"
-                          [class.bg-gray-50]="selectedRole() !== 'organizer'"
-                          class="p-4 rounded-xl border border-gray-200 text-left transition-all focus:outline-none focus:ring-2 focus:ring-amber-500"
-                        >
-                          <div class="text-2xl mb-1">🎯</div>
-                          <div class="font-medium text-sm text-gray-900">{{ 'AUTH.role_organizer_label' | translate }}</div>
-                          <div class="text-xs text-gray-500">{{ 'AUTH.role_organizer_desc' | translate }}</div>
-                        </button>
-                      </div>
-                      @if (form.controls.role.invalid && form.controls.role.touched) {
-                        <p class="text-xs text-red-500 mt-0.5">{{ 'AUTH.select_role_error' | translate }}</p>
-                      }
-                    </fieldset>
-                    @if (errorMessage()) {
-                      <div class="flex items-start gap-2 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700" role="alert">
-                        <span class="mt-0.5 shrink-0">⚠️</span>
-                        <span>{{ errorMessage() }}</span>
-                      </div>
-                    }
+                                   passwordStrength() === 'medium' ? 'text-yellow-600' : 'text-red-500'">
+                      {{ passwordStrength() === 'strong' ? ('AUTH.password_strong' | translate) :
+                         passwordStrength() === 'medium' ? ('AUTH.password_medium' | translate) :
+                         ('AUTH.password_weak' | translate) }}
+                    </span>
+                  </div>
+                }
+                <hlm-field>
+                  <label hlmFieldLabel>{{ 'AUTH.confirm_password' | translate }}</label>
+                  <input hlmInput type="password" placeholder="••••••••" [formControl]="form.controls.confirmPassword" />
+                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                </hlm-field>
+                @if (form.hasError('passwordMismatch') && form.controls.confirmPassword.touched) {
+                  <p class="text-xs text-red-500 -mt-3">{{ 'AUTH.passwords_no_match' | translate }}</p>
+                }
+                <fieldset class="border-0 p-0 m-0">
+                  <legend class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">{{ 'AUTH.want_to' | translate }}</legend>
+                  <div class="grid grid-cols-2 gap-3">
                     <button
-                      hlmBtn
-                      type="submit"
-                      [disabled]="isSubmitting()"
-                      class="mt-2 w-full bg-amber-700 hover:bg-amber-800 text-white focus-visible:ring-amber-500"
+                      type="button"
+                      (click)="setRole('user')"
+                      [attr.aria-pressed]="selectedRole() === 'user'"
+                      class="p-4 rounded-[var(--bento-radius)] border text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      [class]="selectedRole() === 'user'
+                        ? 'glass-card-subtle border-primary-400 ring-2 ring-primary-400/50'
+                        : 'glass-card-subtle border-white/20 hover:border-primary-300'"
                     >
-                      @if (isSubmitting()) {
-                        <hlm-spinner aria-label="Loading" />
-                        {{ 'AUTH.creating_account' | translate }}
-                      } @else {
-                        {{ 'AUTH.create_account_h2' | translate }}
-                      }
+                      <div class="text-2xl mb-1">📖</div>
+                      <div class="font-medium text-sm text-gray-900 dark:text-white">{{ 'AUTH.role_reader_label' | translate }}</div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">{{ 'AUTH.role_reader_desc' | translate }}</div>
                     </button>
-                  </fieldset>
-                </form>
-                <p class="mt-6 text-center text-sm text-gray-600">
-                  {{ 'AUTH.have_account' | translate }}
-                  <a routerLink="/login" class="text-amber-700 hover:text-amber-800 font-medium">
-                    {{ 'AUTH.sign_in_h2' | translate }}
-                  </a>
-                </p>
-              </div>
-            }
-            <p class="mt-6 text-center text-sm text-gray-500">
-              <a
-                routerLink="/"
-                class="inline-flex items-center gap-1 text-gray-500
-                       hover:text-gray-700 transition-all duration-200
-                       focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 rounded"
-              >
-                {{ 'NAV.back_home' | translate }}
+                    <button
+                      type="button"
+                      (click)="setRole('organizer')"
+                      [attr.aria-pressed]="selectedRole() === 'organizer'"
+                      class="p-4 rounded-[var(--bento-radius)] border text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      [class]="selectedRole() === 'organizer'
+                        ? 'glass-card-subtle border-accent-400 ring-2 ring-accent-400/50'
+                        : 'glass-card-subtle border-white/20 hover:border-accent-300'"
+                    >
+                      <div class="text-2xl mb-1">🎯</div>
+                      <div class="font-medium text-sm text-gray-900 dark:text-white">{{ 'AUTH.role_organizer_label' | translate }}</div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">{{ 'AUTH.role_organizer_desc' | translate }}</div>
+                    </button>
+                  </div>
+                  @if (form.controls.role.invalid && form.controls.role.touched) {
+                    <p class="text-xs text-red-500 mt-0.5">{{ 'AUTH.select_role_error' | translate }}</p>
+                  }
+                </fieldset>
+                @if (errorMessage()) {
+                  <div class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+                    <span class="mt-0.5 shrink-0">⚠️</span>
+                    <span>{{ errorMessage() }}</span>
+                  </div>
+                }
+                <button
+                  hlmBtn
+                  type="submit"
+                  [disabled]="isSubmitting()"
+                  class="mt-2 w-full bg-gradient-brand text-white border-0 hover:opacity-90 focus-visible:ring-primary-500"
+                >
+                  @if (isSubmitting()) {
+                    <hlm-spinner aria-label="Loading" />
+                    {{ 'AUTH.creating_account' | translate }}
+                  } @else {
+                    {{ 'AUTH.create_account_h2' | translate }}
+                  }
+                </button>
+              </fieldset>
+            </form>
+            <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+              {{ 'AUTH.have_account' | translate }}
+              <a routerLink="/login" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">
+                {{ 'AUTH.sign_in_h2' | translate }}
               </a>
             </p>
           </div>
         }
-        </main>
-    </div>
-    <style>
-      .auth-page-wrapper {
-        position: relative;
-        min-height: 100vh;
-        overflow: hidden;
-      }
-      .auth-form-container {
-        position: relative;
-        z-index: 60;
-        min-height: 100vh;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 1rem;
-      }
-      .animate-form-in {
-        animation: form-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
-      }
-      @keyframes form-slide-in {
-        from {
-          opacity: 0;
-          transform: translateY(24px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-    </style>
+        <p class="mt-6 text-center text-sm">
+          <a
+            routerLink="/"
+            class="inline-flex items-center gap-1 text-white/60 hover:text-white/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 rounded"
+          >
+            {{ 'NAV.back_home' | translate }}
+          </a>
+        </p>
+      </div>
+    }
+  </main>
+</div>
 ````
 
 ## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html
@@ -9863,6 +9572,227 @@ export class EditClubComponent implements OnInit {
     }
   }
 }
+````
+
+## File: src/app/features/events/event-card/event-card.component.html
+````html
+<article class="glass-card flex flex-col overflow-hidden h-full transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5">
+  <div class="flex flex-col flex-1 p-4 gap-3">
+    <div class="flex items-start justify-between gap-2">
+      <span class="inline-flex items-center gap-1 rounded-full bg-primary-100/80 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/60 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
+        📅 {{ event().date | formatDate }}
+      </span>
+      @if (event().status !== 'scheduled') {
+        <span hlmBadge
+              [variant]="event().status === 'cancelled' ? 'destructive' : event().status === 'active' ? 'default' : 'secondary'"
+              class="rounded-full text-xs flex-shrink-0">
+          {{ event().status }}
+        </span>
+      }
+    </div>
+    <h3 class="font-semibold text-gray-900 dark:text-white leading-snug line-clamp-2">
+      {{ event().title }}
+    </h3>
+    <a
+      [routerLink]="['/clubs', event().clubId]"
+      class="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+      (click)="$event.stopPropagation()"
+    >
+      📚 {{ event().clubName }}
+    </a>
+    @if (event().city) {
+      <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+        <span aria-hidden="true">📍</span>
+        <span>{{ event().address || event().city }}</span>
+      </p>
+    }
+    @if (event().theme || event().tags.length > 0) {
+      <div class="flex flex-wrap gap-1.5">
+        @if (event().theme) {
+          <span class="rounded-full bg-accent-100/80 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700/60 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
+            ✨ {{ event().theme }}
+          </span>
+        }
+        @for (tag of event().tags.slice(0, 2); track tag) {
+          <span class="rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-600 dark:text-gray-400">
+            🏷 {{ tag }}
+          </span>
+        }
+      </div>
+    }
+    <div class="flex items-center justify-between mt-auto pt-2 border-t border-white/20 dark:border-white/10">
+      <span class="text-xs text-gray-500 dark:text-gray-400">
+        👥 {{ event().attendeeCount }} attending
+      </span>
+      <div class="flex gap-2">
+        <a hlmBtn variant="outline" size="sm" [routerLink]="['/events', event().id]">
+          View
+        </a>
+        @if (isAuthenticated() && event().status !== 'cancelled') {
+          @if (event().isAttending) {
+            <button hlmBtn type="button" size="sm" [disabled]="attending()" (click)="cancelAttend.emit()"
+                    class="bg-green-600 hover:bg-green-700 text-white">
+              @if (attending()) { ⏳ } @else { ✓ Going }
+            </button>
+          } @else {
+            <button hlmBtn type="button" size="sm" [disabled]="attending()" (click)="attend.emit()"
+                    class="bg-primary-600 hover:bg-primary-700 text-white">
+              @if (attending()) { ⏳ } @else { RSVP }
+            </button>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</article>
+````
+
+## File: src/app/features/events/events-feed/events-feed.component.html
+````html
+<div class="min-h-screen">
+  <section class="glass-hero bg-gradient-brand px-4 py-14 text-center">
+    <div class="relative z-10">
+      <h1 class="font-display text-4xl font-bold text-white mb-2 drop-shadow-sm">Events</h1>
+      <p class="text-white/80 mb-8">Discover and join upcoming book club events</p>
+      @if (eventService.availableCities().length > 0) {
+        <div class="mx-auto max-w-sm">
+          <select
+            [ngModel]="eventService.cityFilter()"
+            (ngModelChange)="eventService.setCityFilter($event || null)"
+            class="w-full rounded-full glass-card px-4 py-2.5 text-sm text-gray-900 dark:text-white border-0 focus:outline-none focus:ring-2 focus:ring-white/50 appearance-none cursor-pointer"
+          >
+            <option value="">📍 All cities</option>
+            @for (city of eventService.availableCities(); track city) {
+              <option [value]="city">📍 {{ city }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
+  </section>
+  <div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
+    @if (eventService.error()) {
+      <div class="flex items-start gap-2 glass-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+        <span aria-hidden="true">⚠️</span>
+        <span>{{ eventService.error() }}</span>
+      </div>
+    }
+    @if (auth.isAuthenticated()) {
+      <div hlmTabs tab="upcoming">
+        <div hlmTabsList variant="line" class="w-full border-b border-gray-200 dark:border-gray-700 rounded-none">
+          <button hlmTabsTrigger="upcoming">Upcoming</button>
+          <button hlmTabsTrigger="my">My Events</button>
+        </div>
+        <div hlmTabsContent="upcoming" class="pt-6">
+          @if (eventService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (sortedDates().length === 0) {
+            <app-empty-state
+              icon="📅"
+              title="No upcoming events"
+              description="No events are scheduled yet. Check back soon!"
+            />
+          } @else {
+            @for (date of sortedDates(); track date) {
+              <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
+                <div class="flex items-center gap-3 mb-5">
+                  <h2
+                    [id]="'date-' + date"
+                    class="glass-card-subtle inline-flex px-4 py-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide"
+                  >
+                    📆 {{ date }}
+                  </h2>
+                  <div class="flex-1 h-px bg-white/30 dark:bg-white/10"></div>
+                </div>
+                <ul class="bento-grid-3">
+                  @for (event of eventService.groupedByDate()[date]; track event.id) {
+                    <li>
+                      <app-event-card
+                        [event]="event"
+                        [isAuthenticated]="auth.isAuthenticated()"
+                        [attending]="attendingEventId() === event.id"
+                        (attend)="onAttend(event)"
+                        (cancelAttend)="onCancelAttend(event)"
+                      />
+                    </li>
+                  }
+                </ul>
+              </section>
+            }
+          }
+        </div>
+        <div hlmTabsContent="my" class="pt-6">
+          @if (eventService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (eventService.myEvents().length === 0) {
+            <app-empty-state
+              icon="📅"
+              title="No upcoming events"
+              description="Join clubs to see their events here."
+            />
+          } @else {
+            <ul class="bento-grid-3">
+              @for (event of eventService.myEvents(); track event.id) {
+                <li>
+                  <app-event-card
+                    [event]="event"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [attending]="attendingEventId() === event.id"
+                    (attend)="onAttend(event)"
+                    (cancelAttend)="onCancelAttend(event)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+    } @else {
+      @if (eventService.isLoading()) {
+        <div class="py-16 flex justify-center" aria-busy="true">
+          <hlm-spinner />
+        </div>
+      } @else if (sortedDates().length === 0) {
+        <app-empty-state
+          icon="📅"
+          title="No upcoming events"
+          description="No events are scheduled yet. Check back soon!"
+        />
+      } @else {
+        @for (date of sortedDates(); track date) {
+          <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
+            <div class="flex items-center gap-3 mb-5">
+              <h2
+                [id]="'date-' + date"
+                class="glass-card-subtle inline-flex px-4 py-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide"
+              >
+                📆 {{ date }}
+              </h2>
+              <div class="flex-1 h-px bg-white/30 dark:bg-white/10"></div>
+            </div>
+            <ul class="bento-grid-3">
+              @for (event of eventService.groupedByDate()[date]; track event.id) {
+                <li>
+                  <app-event-card
+                    [event]="event"
+                    [isAuthenticated]="false"
+                    [attending]="false"
+                    (attend)="onAttend(event)"
+                    (cancelAttend)="onCancelAttend(event)"
+                  />
+                </li>
+              }
+            </ul>
+          </section>
+        }
+      }
+    }
+  </div>
+</div>
 ````
 
 ## File: src/app/features/events/events-feed/events-feed.component.ts
@@ -11245,6 +11175,7 @@ interface RegisterForm {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
   templateUrl: './register.component.html',
+  styleUrl: './register.component.scss',
 })
 export class RegisterComponent {
   private readonly auth = inject(AuthService);
@@ -13437,229 +13368,6 @@ function mapSocials(raw: ApiUserSocials): UserSocials {
 </main>
 ````
 
-## File: src/app/features/clubs/clubs-list/clubs-list.component.html
-````html
-<div class="min-h-screen">
-  <section aria-label="Search clubs" class="glass-hero bg-gradient-brand px-4 py-14 text-center">
-    <div class="relative z-10">
-      <h1 class="font-display text-4xl font-bold text-white mb-2 drop-shadow-sm">{{ 'CLUBS.title' | translate }}</h1>
-      <p class="text-white/80 mb-8">{{ 'CLUBS.subtitle' | translate }}</p>
-      <div class="mx-auto max-w-xl relative">
-        <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/60" aria-hidden="true">🔍</span>
-        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
-        <input
-          id="club-search"
-          type="search"
-          [ngModel]="clubService.searchQuery()"
-          (ngModelChange)="clubService.setSearchQuery($event)"
-          [placeholder]="'CLUBS.search_placeholder_full' | translate"
-          class="w-full rounded-full glass-card px-5 pl-10 py-3 text-sm text-gray-900 dark:text-white placeholder-white/60 border-0 focus:outline-none focus:ring-2 focus:ring-white/50"
-          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
-        />
-      </div>
-    </div>
-  </section>
-  <div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
-    @if (clubService.error()) {
-      <div class="flex items-start gap-2 rounded-[var(--bento-radius)] glass-card px-4 py-3 text-sm text-red-700 dark:text-red-400 border-red-200/50 dark:border-red-800/50" role="alert">
-        <span aria-hidden="true">⚠️</span>
-        <span>{{ clubService.error() }}</span>
-      </div>
-    }
-    @if (auth.isAuthenticated()) {
-      <div hlmTabs tab="all">
-        <div hlmTabsList variant="line" class="w-full border-b border-gray-200 dark:border-gray-700 rounded-none">
-          <button hlmTabsTrigger="all">{{ 'CLUBS.all' | translate }}</button>
-          <button hlmTabsTrigger="my">{{ 'CLUBS.my_clubs' | translate }}</button>
-        </div>
-        <div hlmTabsContent="all" class="pt-6">
-          @if (clubService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
-              <hlm-spinner />
-            </div>
-          } @else if (clubService.filteredClubs().length === 0) {
-            <app-empty-state
-              icon="📚"
-              title="No clubs yet"
-              description="No clubs have been created yet. Check back soon!"
-            />
-          } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-                  <app-club-card
-                    [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
-                    [isMember]="clubService.myClubIds().has(club.id)"
-                    [isOwned]="ownedClubIds().has(club.id)"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [joining]="joiningClubId() === club.id"
-                    (join)="onJoin(club)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-        <div hlmTabsContent="my" class="pt-6">
-          @if (clubService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true">
-              <hlm-spinner />
-            </div>
-          } @else if (clubService.myClubs().length === 0) {
-            <app-empty-state
-              icon="📚"
-              [title]="'CLUBS.no_clubs' | translate"
-              description="Join a club to see it here."
-            />
-          } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.myClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-                  <app-club-card
-                    [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
-                    [isMember]="clubService.myClubIds().has(club.id)"
-                    [isOwned]="ownedClubIds().has(club.id)"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [joining]="joiningClubId() === club.id"
-                    (join)="onJoin(club)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      </div>
-    } @else {
-      @if (clubService.isLoading()) {
-        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
-          <hlm-spinner />
-        </div>
-      } @else if (clubService.filteredClubs().length === 0) {
-        <app-empty-state
-          icon="📚"
-          title="No clubs yet"
-          description="No clubs have been created yet. Check back soon!"
-        />
-      } @else {
-        <ul class="bento-grid">
-          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-              <app-club-card
-                [club]="club"
-                [variant]="i === 0 ? 'featured' : 'default'"
-                [isMember]="false"
-                [isOwned]="false"
-                [isAuthenticated]="false"
-                [joining]="false"
-                (join)="onJoin(club)"
-              />
-            </li>
-          }
-        </ul>
-      }
-    }
-  </div>
-  @if (auth.isOrganizer()) {
-    <a
-      routerLink="/clubs/create"
-      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gradient-brand shadow-xl hover:shadow-accent-500/30 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:ring-offset-2 transition-all duration-200"
-      [attr.aria-label]="'CLUBS.create' | translate"
-      [title]="'CLUBS.create' | translate"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-      </svg>
-    </a>
-  }
-</div>
-````
-
-## File: src/app/features/clubs/create-club/create-club.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-} from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-interface CreateClubForm {
-  name: FormControl<string>;
-  description: FormControl<string>;
-  isPublic: FormControl<boolean>;
-  city: FormControl<string>;
-  coverUrl: FormControl<string>;
-}
-@Component({
-  selector: 'app-create-club',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './create-club.component.html',
-})
-export class CreateClubComponent {
-  private readonly clubService = inject(ClubService);
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly _errorMessage = signal<string | null>(null);
-  readonly errorMessage = this._errorMessage.asReadonly();
-  private readonly _isSubmitting = signal(false);
-  readonly isSubmitting = this._isSubmitting.asReadonly();
-  private readonly _showAfterMeeting = signal(false);
-  readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
-  readonly form = new FormGroup<CreateClubForm>({
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-    isPublic: new FormControl(true, { nonNullable: true }),
-    city: new FormControl('', { nonNullable: true }),
-    coverUrl: new FormControl('', { nonNullable: true }),
-  });
-  togglePublic(): void {
-    const current = this.form.controls.isPublic.value;
-    this.form.controls.isPublic.setValue(!current);
-  }
-  toggleAfterMeeting(): void {
-    this._showAfterMeeting.update(v => !v);
-  }
-  cancel(): void {
-    this.router.navigate(['/clubs']);
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this._isSubmitting.set(true);
-    this._errorMessage.set(null);
-    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
-    try {
-      const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
-      this.router.navigate(['/clubs', club.id]);
-    } catch (err) {
-      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
-    } finally {
-      this._isSubmitting.set(false);
-    }
-  }
-}
-````
-
 ## File: .github/workflows/ci.yml
 ````yaml
 name: CI
@@ -13942,6 +13650,229 @@ jobs:
           DEPLOY_URL=$(vercel deploy --prebuilt ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
           echo "Deployed to: $DEPLOY_URL"
+````
+
+## File: src/app/features/clubs/clubs-list/clubs-list.component.html
+````html
+<div class="min-h-screen">
+  <section aria-label="Search clubs" class="glass-hero bg-gradient-brand px-4 py-14 text-center">
+    <div class="relative z-10">
+      <h1 class="font-display text-4xl font-bold text-white mb-2 drop-shadow-sm">{{ 'CLUBS.title' | translate }}</h1>
+      <p class="text-white/80 mb-8">{{ 'CLUBS.subtitle' | translate }}</p>
+      <div class="mx-auto max-w-xl relative">
+        <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/60" aria-hidden="true">🔍</span>
+        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
+        <input
+          id="club-search"
+          type="search"
+          [ngModel]="clubService.searchQuery()"
+          (ngModelChange)="clubService.setSearchQuery($event)"
+          [placeholder]="'CLUBS.search_placeholder_full' | translate"
+          class="w-full rounded-full glass-card px-5 pl-10 py-3 text-sm text-gray-900 dark:text-white placeholder-white/60 border-0 focus:outline-none focus:ring-2 focus:ring-white/50"
+          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
+        />
+      </div>
+    </div>
+  </section>
+  <div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
+    @if (clubService.error()) {
+      <div class="flex items-start gap-2 rounded-[var(--bento-radius)] glass-card px-4 py-3 text-sm text-red-700 dark:text-red-400 border-red-200/50 dark:border-red-800/50" role="alert">
+        <span aria-hidden="true">⚠️</span>
+        <span>{{ clubService.error() }}</span>
+      </div>
+    }
+    @if (auth.isAuthenticated()) {
+      <div hlmTabs tab="all">
+        <div hlmTabsList variant="line" class="w-full border-b border-gray-200 dark:border-gray-700 rounded-none">
+          <button hlmTabsTrigger="all">{{ 'CLUBS.all' | translate }}</button>
+          <button hlmTabsTrigger="my">{{ 'CLUBS.my_clubs' | translate }}</button>
+        </div>
+        <div hlmTabsContent="all" class="pt-6">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.filteredClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              title="No clubs yet"
+              description="No clubs have been created yet. Check back soon!"
+            />
+          } @else {
+            <ul class="bento-grid">
+              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                  <app-club-card
+                    [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+        <div hlmTabsContent="my" class="pt-6">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.myClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              [title]="'CLUBS.no_clubs' | translate"
+              description="Join a club to see it here."
+            />
+          } @else {
+            <ul class="bento-grid">
+              @for (club of clubService.myClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                  <app-club-card
+                    [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      </div>
+    } @else {
+      @if (clubService.isLoading()) {
+        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+          <hlm-spinner />
+        </div>
+      } @else if (clubService.filteredClubs().length === 0) {
+        <app-empty-state
+          icon="📚"
+          title="No clubs yet"
+          description="No clubs have been created yet. Check back soon!"
+        />
+      } @else {
+        <ul class="bento-grid">
+          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+              <app-club-card
+                [club]="club"
+                [variant]="i === 0 ? 'featured' : 'default'"
+                [isMember]="false"
+                [isOwned]="false"
+                [isAuthenticated]="false"
+                [joining]="false"
+                (join)="onJoin(club)"
+              />
+            </li>
+          }
+        </ul>
+      }
+    }
+  </div>
+  @if (auth.isOrganizer()) {
+    <a
+      routerLink="/clubs/create"
+      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gradient-brand shadow-xl hover:shadow-accent-500/30 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:ring-offset-2 transition-all duration-200"
+      [attr.aria-label]="'CLUBS.create' | translate"
+      [title]="'CLUBS.create' | translate"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+      </svg>
+    </a>
+  }
+</div>
+````
+
+## File: src/app/features/clubs/create-club/create-club.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+} from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+interface CreateClubForm {
+  name: FormControl<string>;
+  description: FormControl<string>;
+  isPublic: FormControl<boolean>;
+  city: FormControl<string>;
+  coverUrl: FormControl<string>;
+}
+@Component({
+  selector: 'app-create-club',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './create-club.component.html',
+})
+export class CreateClubComponent {
+  private readonly clubService = inject(ClubService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly _errorMessage = signal<string | null>(null);
+  readonly errorMessage = this._errorMessage.asReadonly();
+  private readonly _isSubmitting = signal(false);
+  readonly isSubmitting = this._isSubmitting.asReadonly();
+  private readonly _showAfterMeeting = signal(false);
+  readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
+  readonly form = new FormGroup<CreateClubForm>({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+    isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', { nonNullable: true }),
+    coverUrl: new FormControl('', { nonNullable: true }),
+  });
+  togglePublic(): void {
+    const current = this.form.controls.isPublic.value;
+    this.form.controls.isPublic.setValue(!current);
+  }
+  toggleAfterMeeting(): void {
+    this._showAfterMeeting.update(v => !v);
+  }
+  cancel(): void {
+    this.router.navigate(['/clubs']);
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this._isSubmitting.set(true);
+    this._errorMessage.set(null);
+    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
+    try {
+      const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
+      this.router.navigate(['/clubs', club.id]);
+    } catch (err) {
+      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
+    } finally {
+      this._isSubmitting.set(false);
+    }
+  }
+}
 ````
 
 ## File: src/app/core/services/club.service.ts
