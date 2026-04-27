@@ -1258,108 +1258,6 @@ export class ToastService {
 }
 ````
 
-## File: src/app/features/clubs/club-detail/club-sidebar-right/club-sidebar-right.component.html
-````html
-@if (members().length > 0) {
-  <div hlmCard class="glass-card-subtle p-4 gap-3">
-    <div class="flex items-center justify-between mb-3">
-      <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-        {{ 'CLUB_DETAIL.members_title' | translate }}
-      </h3>
-      <span class="text-xs text-gray-400">{{ members().length }}</span>
-    </div>
-    <div class="flex flex-wrap gap-2">
-      @for (member of members().slice(0, 8); track member.userId) {
-        <div
-          class="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-          [attr.title]="member.displayName"
-        >
-          {{ member.displayName | initials }}
-        </div>
-      }
-      @if (members().length > 8) {
-        <div class="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
-          +{{ members().length - 8 }}
-        </div>
-      }
-    </div>
-  </div>
-}
-@if (organizerProfile()) {
-  <div hlmCard class="glass-card-subtle p-4 gap-3">
-    <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
-      {{ 'CLUB_DETAIL.organizer_title' | translate }}
-    </h3>
-    <div class="flex items-center gap-3">
-      <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0" aria-hidden="true">
-        {{ organizerProfile()!.displayName | initials }}
-      </div>
-      <div class="min-w-0">
-        <p class="font-semibold text-sm text-gray-900 dark:text-white truncate">{{ organizerProfile()!.displayName }}</p>
-        <span class="text-xs text-accent-600 dark:text-accent-400">{{ 'CLUB_DETAIL.organizer_badge' | translate }}</span>
-      </div>
-    </div>
-    @if (organizerProfile()!.socialsPublic && organizerProfile()!.socials) {
-      <div class="mt-3 flex flex-wrap gap-2">
-        @if (organizerProfile()!.socials!.telegram) {
-          <a [href]="'https://t.me/' + organizerProfile()!.socials!.telegram" target="_blank" rel="noopener noreferrer"
-             class="text-blue-500 hover:text-blue-600 text-lg" aria-label="Telegram">✈️</a>
-        }
-        @if (organizerProfile()!.socials!.instagram) {
-          <a [href]="'https://instagram.com/' + organizerProfile()!.socials!.instagram" target="_blank" rel="noopener noreferrer"
-             class="text-pink-500 hover:text-pink-600 text-lg" aria-label="Instagram">📸</a>
-        }
-        @if (organizerProfile()!.socials!.github) {
-          <a [href]="'https://github.com/' + organizerProfile()!.socials!.github" target="_blank" rel="noopener noreferrer"
-             class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" aria-label="GitHub">🐙</a>
-        }
-        @if (organizerProfile()!.socials!.goodreads) {
-          <a [href]="'https://goodreads.com/' + organizerProfile()!.socials!.goodreads" target="_blank" rel="noopener noreferrer"
-             class="text-amber-600 hover:text-amber-700 text-lg" aria-label="Goodreads">📚</a>
-        }
-      </div>
-    }
-  </div>
-}
-@if (club().afterMeetingVenue) {
-  <div hlmCard class="glass-card-subtle p-4 gap-3">
-    <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
-      {{ 'CLUB_DETAIL.after_meeting_title' | translate }}
-    </h3>
-    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ club().afterMeetingVenue!.name }}</p>
-    @if (club().afterMeetingVenue!.address) {
-      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 {{ club().afterMeetingVenue!.address }}</p>
-    }
-    @if (club().afterMeetingVenue!.description) {
-      <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">{{ club().afterMeetingVenue!.description }}</p>
-    }
-  </div>
-}
-````
-
-## File: src/app/features/clubs/club-detail/club-sidebar-right/club-sidebar-right.component.ts
-````typescript
-import { Component, ChangeDetectionStrategy, input } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
-import { HlmCard } from '../../../../shared/spartan/card/src';
-import { Club } from '../../../../core/models/club.model';
-import { ClubMemberDetail } from '../../../../core/models/club.model';
-import { UserProfile } from '../../../../core/models/user.model';
-@Component({
-  selector: 'app-club-sidebar-right',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule, InitialsPipe, HlmCard],
-  templateUrl: './club-sidebar-right.component.html',
-})
-export class ClubSidebarRightComponent {
-  readonly club = input.required<Club>();
-  readonly members = input.required<ClubMemberDetail[]>();
-  readonly organizerProfile = input<UserProfile | null>(null);
-}
-````
-
 ## File: src/app/features/quiz/.gitkeep
 ````
 
@@ -3082,6 +2980,108 @@ export class UploadService {
 }
 ````
 
+## File: src/app/features/clubs/club-detail/club-sidebar-right/club-sidebar-right.component.html
+````html
+@if (members().length > 0) {
+  <div hlmCard class="glass-card-subtle p-4 gap-3">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+        {{ 'CLUB_DETAIL.members_title' | translate }}
+      </h3>
+      <span class="text-xs text-gray-400">{{ members().length }}</span>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      @for (member of members().slice(0, 8); track member.userId) {
+        <div
+          class="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+          [attr.title]="member.displayName"
+        >
+          {{ member.displayName | initials }}
+        </div>
+      }
+      @if (members().length > 8) {
+        <div class="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
+          +{{ members().length - 8 }}
+        </div>
+      }
+    </div>
+  </div>
+}
+@if (organizerProfile()) {
+  <div hlmCard class="glass-card-subtle p-4 gap-3">
+    <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+      {{ 'CLUB_DETAIL.organizer_title' | translate }}
+    </h3>
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0" aria-hidden="true">
+        {{ organizerProfile()!.displayName | initials }}
+      </div>
+      <div class="min-w-0">
+        <p class="font-semibold text-sm text-gray-900 dark:text-white truncate">{{ organizerProfile()!.displayName }}</p>
+        <span class="text-xs text-accent-600 dark:text-accent-400">{{ 'CLUB_DETAIL.organizer_badge' | translate }}</span>
+      </div>
+    </div>
+    @if (organizerProfile()!.socialsPublic && organizerProfile()!.socials) {
+      <div class="mt-3 flex flex-wrap gap-2">
+        @if (organizerProfile()!.socials!.telegram) {
+          <a [href]="'https://t.me/' + organizerProfile()!.socials!.telegram" target="_blank" rel="noopener noreferrer"
+             class="text-blue-500 hover:text-blue-600 text-lg" aria-label="Telegram">✈️</a>
+        }
+        @if (organizerProfile()!.socials!.instagram) {
+          <a [href]="'https://instagram.com/' + organizerProfile()!.socials!.instagram" target="_blank" rel="noopener noreferrer"
+             class="text-pink-500 hover:text-pink-600 text-lg" aria-label="Instagram">📸</a>
+        }
+        @if (organizerProfile()!.socials!.github) {
+          <a [href]="'https://github.com/' + organizerProfile()!.socials!.github" target="_blank" rel="noopener noreferrer"
+             class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" aria-label="GitHub">🐙</a>
+        }
+        @if (organizerProfile()!.socials!.goodreads) {
+          <a [href]="'https://goodreads.com/' + organizerProfile()!.socials!.goodreads" target="_blank" rel="noopener noreferrer"
+             class="text-amber-600 hover:text-amber-700 text-lg" aria-label="Goodreads">📚</a>
+        }
+      </div>
+    }
+  </div>
+}
+@if (club().afterMeetingVenue) {
+  <div hlmCard class="glass-card-subtle p-4 gap-3">
+    <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+      {{ 'CLUB_DETAIL.after_meeting_title' | translate }}
+    </h3>
+    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ club().afterMeetingVenue!.name }}</p>
+    @if (club().afterMeetingVenue!.address) {
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 {{ club().afterMeetingVenue!.address }}</p>
+    }
+    @if (club().afterMeetingVenue!.description) {
+      <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">{{ club().afterMeetingVenue!.description }}</p>
+    }
+  </div>
+}
+````
+
+## File: src/app/features/clubs/club-detail/club-sidebar-right/club-sidebar-right.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
+import { HlmCard } from '../../../../shared/spartan/card/src';
+import { Club } from '../../../../core/models/club.model';
+import { ClubMemberDetail } from '../../../../core/models/club.model';
+import { UserProfile } from '../../../../core/models/user.model';
+@Component({
+  selector: 'app-club-sidebar-right',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslateModule, InitialsPipe, HlmCard],
+  templateUrl: './club-sidebar-right.component.html',
+})
+export class ClubSidebarRightComponent {
+  readonly club = input.required<Club>();
+  readonly members = input.required<ClubMemberDetail[]>();
+  readonly organizerProfile = input<UserProfile | null>(null);
+}
+````
+
 ## File: src/app/features/clubs/club-detail/info/club-info.component.ts
 ````typescript
 import {
@@ -3233,14 +3233,13 @@ import {
   inject,
   signal,
   computed,
-  effect,
+  resource,
   input,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { ClubEvent } from '../../../core/models/event.model';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 @Component({
   selector: 'app-event-detail',
@@ -3253,36 +3252,30 @@ export class EventDetailComponent {
   readonly id = input.required<string>();
   private readonly eventService = inject(EventService);
   readonly auth = inject(AuthService);
-  readonly event = signal<ClubEvent | null>(null);
-  readonly isLoading = signal(true);
-  readonly errorMessage = signal<string | null>(null);
   readonly isActioning = signal(false);
+  private readonly _eventResource = resource({
+    params: () => this.id(),
+    loader: async ({ params: eventId }) => {
+      const found = await this.eventService.getEventById(eventId);
+      if (!found) throw new Error('Event not found.');
+      return found;
+    },
+  });
+  readonly event = computed(() => this._eventResource.value() ?? null);
+  readonly isLoading = computed(() => this._eventResource.isLoading());
+  readonly errorMessage = computed<string | null>(() => {
+    const err = this._eventResource.error();
+    if (!err) return null;
+    return err instanceof Error ? err.message : 'Failed to load event.';
+  });
   readonly isOrganizer = computed(
     () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,
   );
-  constructor() {
-    effect((onCleanup) => {
-      const eventId = this.id();
-      let cancelled = false;
-      onCleanup(() => { cancelled = true; });
-      this.isLoading.set(true);
-      this.eventService.getEventById(eventId).then(found => {
-        if (cancelled) return;
-        this.event.set(found);
-        if (!found) this.errorMessage.set('Event not found.');
-      }).catch(() => {
-        if (!cancelled) this.errorMessage.set('Failed to load event.');
-      }).finally(() => {
-        if (!cancelled) this.isLoading.set(false);
-      });
-    });
-  }
   async onAttend(): Promise<void> {
     this.isActioning.set(true);
     try {
       await this.eventService.attendEvent(this.id());
-      const updated = await this.eventService.getEventById(this.id());
-      if (updated) this.event.set(updated);
+      this._eventResource.reload();
     } finally {
       this.isActioning.set(false);
     }
@@ -3291,8 +3284,7 @@ export class EventDetailComponent {
     this.isActioning.set(true);
     try {
       await this.eventService.cancelAttendance(this.id());
-      const updated = await this.eventService.getEventById(this.id());
-      if (updated) this.event.set(updated);
+      this._eventResource.reload();
     } finally {
       this.isActioning.set(false);
     }
@@ -3302,8 +3294,7 @@ export class EventDetailComponent {
     this.isActioning.set(true);
     try {
       await this.eventService.cancelEvent(this.id());
-      const updated = await this.eventService.getEventById(this.id());
-      if (updated) this.event.set(updated);
+      this._eventResource.reload();
     } finally {
       this.isActioning.set(false);
     }
@@ -8641,9 +8632,10 @@ export class QuizCreateComponent {
 import {
   ChangeDetectionStrategy,
   Component,
-  effect,
+  computed,
   inject,
   input,
+  resource,
   signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
@@ -8665,16 +8657,12 @@ export class QuizListComponent {
   protected readonly togglingId = signal<string | null>(null);
   protected readonly errorMessage = signal('');
   readonly id = input<string>('');
-  constructor() {
-    effect(() => {
-      const clubId = this.id();
-      if (clubId) {
-        this.quizService.loadQuizzes(clubId).catch(err => {
-          this.errorMessage.set((err as Error).message);
-        });
-      }
-    });
-  }
+  private readonly _quizzesResource = resource({
+    params: () => this.id(),
+    loader: ({ params: clubId }) =>
+      clubId ? this.quizService.loadQuizzes(clubId) : Promise.resolve(undefined),
+  });
+  readonly isLoading = computed(() => this._quizzesResource.isLoading());
   protected toggleActive(quizId: string, isActive: boolean): void {
     this.togglingId.set(quizId);
     this.errorMessage.set('');
@@ -12613,6 +12601,290 @@ export class ClubsListComponent implements OnInit {
 }
 ````
 
+## File: .github/workflows/ci.yml
+````yaml
+name: CI
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests (ChromeHeadless)
+        run: npm run test:ci -- --code-coverage
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Install dependencies
+        run: npm ci
+      - name: Build (production)
+        run: npm run build -- --configuration=production
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Install dependencies
+        run: npm ci
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Install dependencies
+        run: npm ci
+      - name: Type check
+        run: npx tsc --noEmit -p tsconfig.app.json
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    needs: [test]
+    permissions:
+      contents: read
+      pull-requests: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Download coverage artifact
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage
+          path: coverage
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Wait for SonarCloud analysis to complete
+        if: github.event_name == 'push'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          TASK_ID=$(grep ceTaskId .scannerwork/report-task.txt | cut -d= -f2)
+          echo "Waiting for SonarCloud task: $TASK_ID"
+          for i in $(seq 1 60); do
+            STATUS=$(curl -s -H "Authorization: Bearer $SONAR_TOKEN" "https://sonarcloud.io/api/ce/task?id=$TASK_ID" | python3 -c "import json,sys; print(json.load(sys.stdin)['task']['status'])")
+            echo "Attempt $i: $STATUS"
+            if [ "$STATUS" = "SUCCESS" ]; then
+              echo "Analysis complete."
+              exit 0
+            fi
+            if [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "CANCELLED" ]; then
+              echo "SonarCloud analysis failed with status: $STATUS"
+              exit 1
+            fi
+            sleep 5
+          done
+          echo "Timed out waiting for SonarCloud analysis"
+          exit 1
+      - name: Export SonarCloud issues as SARIF
+        if: github.event_name == 'push'
+        run: |
+          curl -s -u "${{ secrets.SONAR_TOKEN }}:" \
+            "https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&ps=500" \
+            -o sonar-issues.json
+          node -e "
+            const data = require('./sonar-issues.json');
+            const sarif = {
+              version: '2.1.0',
+              '\$schema': 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
+              runs: [{
+                tool: {
+                  driver: {
+                    name: 'SonarCloud',
+                    informationUri: 'https://sonarcloud.io',
+                    rules: []
+                  }
+                },
+                results: (data.issues || []).map(issue => ({
+                  ruleId: issue.rule,
+                  message: { text: issue.message },
+                  level: issue.severity === 'BLOCKER' || issue.severity === 'CRITICAL' ? 'error' :
+                         issue.severity === 'MAJOR' ? 'warning' : 'note',
+                  locations: [{
+                    physicalLocation: {
+                      artifactLocation: { uri: issue.component.split(':').pop() },
+                      region: {
+                        startLine: issue.textRange ? issue.textRange.startLine : 1,
+                        endLine: issue.textRange ? issue.textRange.endLine : 1
+                      }
+                    }
+                  }]
+                }))
+              }]
+            };
+            require('fs').writeFileSync('sonar.sarif', JSON.stringify(sarif, null, 2));
+            console.log('SARIF generated with ' + sarif.runs[0].results.length + ' issues');
+          "
+      - name: Upload SARIF to GitHub Code Scanning
+        if: github.event_name == 'push'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: sonar.sarif
+          category: sonarcloud
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: [lint, test, build, security, typecheck, sonarcloud]
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      - name: Pull Vercel project settings
+        run: vercel pull --yes --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Build project via Vercel
+        run: vercel build ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          DEPLOY_URL=$(vercel deploy --prebuilt ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          echo "Deployed to: $DEPLOY_URL"
+````
+
 ## File: public/i18n/en.json
 ````json
 {
@@ -13682,290 +13954,6 @@ function mapSocials(raw: ApiUserSocials): UserSocials {
     </article>
   </div>
 </main>
-````
-
-## File: .github/workflows/ci.yml
-````yaml
-name: CI
-on:
-  push:
-    branches: [develop, main]
-  pull_request:
-    branches: [develop, main]
-permissions:
-  contents: read
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
-jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Install dependencies
-        run: npm ci
-      - name: Lint
-        run: npm run lint
-  test:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Install dependencies
-        run: npm ci
-      - name: Run tests (ChromeHeadless)
-        run: npm run test:ci -- --code-coverage
-      - name: Upload coverage artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage/
-          retention-days: 7
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Install dependencies
-        run: npm ci
-      - name: Build (production)
-        run: npm run build -- --configuration=production
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Install dependencies
-        run: npm ci
-      - name: Audit dependencies
-        run: npm audit --audit-level=high
-  typecheck:
-    name: Type Check
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Install dependencies
-        run: npm ci
-      - name: Type check
-        run: npx tsc --noEmit -p tsconfig.app.json
-  sonarcloud:
-    name: SonarCloud
-    runs-on: ubuntu-latest
-    needs: [test]
-    permissions:
-      contents: read
-      pull-requests: read
-      security-events: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Download coverage artifact
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          name: coverage
-          path: coverage
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v6.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      - name: Wait for SonarCloud analysis to complete
-        if: github.event_name == 'push'
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          TASK_ID=$(grep ceTaskId .scannerwork/report-task.txt | cut -d= -f2)
-          echo "Waiting for SonarCloud task: $TASK_ID"
-          for i in $(seq 1 60); do
-            STATUS=$(curl -s -H "Authorization: Bearer $SONAR_TOKEN" "https://sonarcloud.io/api/ce/task?id=$TASK_ID" | python3 -c "import json,sys; print(json.load(sys.stdin)['task']['status'])")
-            echo "Attempt $i: $STATUS"
-            if [ "$STATUS" = "SUCCESS" ]; then
-              echo "Analysis complete."
-              exit 0
-            fi
-            if [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "CANCELLED" ]; then
-              echo "SonarCloud analysis failed with status: $STATUS"
-              exit 1
-            fi
-            sleep 5
-          done
-          echo "Timed out waiting for SonarCloud analysis"
-          exit 1
-      - name: Export SonarCloud issues as SARIF
-        if: github.event_name == 'push'
-        run: |
-          curl -s -u "${{ secrets.SONAR_TOKEN }}:" \
-            "https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&ps=500" \
-            -o sonar-issues.json
-          node -e "
-            const data = require('./sonar-issues.json');
-            const sarif = {
-              version: '2.1.0',
-              '\$schema': 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
-              runs: [{
-                tool: {
-                  driver: {
-                    name: 'SonarCloud',
-                    informationUri: 'https://sonarcloud.io',
-                    rules: []
-                  }
-                },
-                results: (data.issues || []).map(issue => ({
-                  ruleId: issue.rule,
-                  message: { text: issue.message },
-                  level: issue.severity === 'BLOCKER' || issue.severity === 'CRITICAL' ? 'error' :
-                         issue.severity === 'MAJOR' ? 'warning' : 'note',
-                  locations: [{
-                    physicalLocation: {
-                      artifactLocation: { uri: issue.component.split(':').pop() },
-                      region: {
-                        startLine: issue.textRange ? issue.textRange.startLine : 1,
-                        endLine: issue.textRange ? issue.textRange.endLine : 1
-                      }
-                    }
-                  }]
-                }))
-              }]
-            };
-            require('fs').writeFileSync('sonar.sarif', JSON.stringify(sarif, null, 2));
-            console.log('SARIF generated with ' + sarif.runs[0].results.length + ' issues');
-          "
-      - name: Upload SARIF to GitHub Code Scanning
-        if: github.event_name == 'push'
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: sonar.sarif
-          category: sonarcloud
-  deploy:
-    name: Deploy to Vercel
-    runs-on: ubuntu-latest
-    needs: [lint, test, build, security, typecheck, sonarcloud]
-    if: github.event_name == 'push'
-    permissions:
-      contents: read
-    environment:
-      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
-      url: ${{ steps.deploy.outputs.url }}
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-      - name: Pull Vercel project settings
-        run: vercel pull --yes --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Build project via Vercel
-        run: vercel build ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Deploy to Vercel
-        id: deploy
-        run: |
-          DEPLOY_URL=$(vercel deploy --prebuilt ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
-          echo "Deployed to: $DEPLOY_URL"
 ````
 
 ## File: src/app/features/clubs/create-club/create-club.component.ts

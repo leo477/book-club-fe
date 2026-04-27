@@ -1,23 +1,23 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  effect,
+  computed,
   inject,
   input,
+  resource,
   signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { QuizService } from '../../../core/services/quiz.service';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
-import { HlmBadge } from '../../../shared/spartan/badge/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
 
 @Component({
   selector: 'app-quiz-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ...HlmCardImports, HlmBadge, HlmButton],
+  imports: [RouterLink, ...HlmCardImports, HlmButton],
   templateUrl: './quiz-list.component.html',
 })
 export class QuizListComponent {
@@ -30,16 +30,13 @@ export class QuizListComponent {
 
   readonly id = input<string>('');
 
-  constructor() {
-    effect(() => {
-      const clubId = this.id();
-      if (clubId) {
-        this.quizService.loadQuizzes(clubId).catch(err => {
-          this.errorMessage.set((err as Error).message);
-        });
-      }
-    });
-  }
+  private readonly _quizzesResource = resource({
+    params: () => this.id(),
+    loader: ({ params: clubId }) =>
+      clubId ? this.quizService.loadQuizzes(clubId) : Promise.resolve(undefined),
+  });
+
+  readonly isLoading = computed(() => this._quizzesResource.isLoading());
 
   protected toggleActive(quizId: string, isActive: boolean): void {
     this.togglingId.set(quizId);
