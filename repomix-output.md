@@ -7983,110 +7983,6 @@ export class TokenStore {
     </style>
 ````
 
-## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html
-````html
-<article
-  class="parchment-card glass-card flex flex-col overflow-hidden h-full"
-  [style.animation-delay]="index() * 80 + 'ms'"
->
-  @if (event().coverUrl) {
-    <div class="h-28 overflow-hidden flex-shrink-0">
-      <img [src]="event().coverUrl" [alt]="event().title" class="w-full h-full object-cover" loading="lazy" />
-    </div>
-  } @else {
-    <div class="h-1 w-full bg-gradient-to-r from-primary-500 via-accent-500 to-primary-400 flex-shrink-0"></div>
-  }
-  @if (event().status !== 'scheduled') {
-    <div
-      class="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center text-sm shadow-sm border z-10"
-      [class]="event().status === 'active'
-        ? 'bg-green-100/80 border-green-400 dark:bg-green-900/50 dark:border-green-600'
-        : event().status === 'cancelled'
-          ? 'bg-red-100/80 border-red-400 dark:bg-red-900/50 dark:border-red-600'
-          : 'bg-yellow-100/80 border-yellow-400 dark:bg-yellow-900/50 dark:border-yellow-600'"
-      [attr.title]="event().status"
-    >
-      {{ event().status === 'active' ? '🟢' : event().status === 'cancelled' ? '🔴' : '🟡' }}
-    </div>
-  }
-  <div class="flex flex-col flex-1 p-4 gap-3">
-    <div>
-      <span class="inline-flex items-center gap-1.5 rounded-full bg-primary-100/80 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/60 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
-        📅 {{ event().date | formatDate }}
-      </span>
-    </div>
-    <a
-      [routerLink]="['/events', event().id]"
-      class="block font-display text-base font-semibold leading-snug text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors line-clamp-2"
-    >
-      {{ event().title }}
-    </a>
-    @if (event().city) {
-      <p class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-        <span aria-hidden="true">📍</span>
-        <span>{{ event().address || event().city }}</span>
-      </p>
-    }
-    @if (event().theme || event().tags.length > 0) {
-      <div class="flex flex-wrap gap-1.5">
-        @if (event().theme) {
-          <span class="rune-pill rounded-full bg-accent-100/80 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700/60 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
-            ✨ {{ event().theme }}
-          </span>
-        }
-        @for (tag of event().tags.slice(0, 2); track tag) {
-          <span class="rune-pill rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-600 dark:text-gray-400">
-            🏷 {{ tag }}
-          </span>
-        }
-      </div>
-    }
-    <div class="flex items-center justify-between mt-auto pt-2 border-t border-white/20 dark:border-white/10">
-      <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-        👥 {{ event().attendeeCount }} {{ 'CLUB_DETAIL.rsvp_attending' | translate }}
-      </span>
-      <div class="flex items-center gap-2">
-        @if (isAuthenticated() && event().status !== 'cancelled') {
-          @if (event().isAttending) {
-            <button
-              hlmBtn
-              size="sm"
-              type="button"
-              [disabled]="attending()"
-              (click)="cancelAttend.emit()"
-              class="bg-green-600 hover:bg-green-700 text-white text-xs"
-            >
-              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_going' | translate }} }
-            </button>
-          } @else {
-            <button
-              hlmBtn
-              size="sm"
-              type="button"
-              [disabled]="attending()"
-              (click)="attend.emit()"
-              class="bg-primary-600 hover:bg-primary-700 text-white text-xs"
-            >
-              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_join' | translate }} }
-            </button>
-          }
-        } @else {
-          <a
-            hlmBtn
-            variant="outline"
-            size="sm"
-            [routerLink]="['/events', event().id]"
-            class="text-xs"
-          >
-            {{ 'CLUB_DETAIL.rsvp_view' | translate }} →
-          </a>
-        }
-      </div>
-    </div>
-  </div>
-</article>
-````
-
 ## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.ts
 ````typescript
 import {
@@ -8417,16 +8313,16 @@ export const CLUBS_ROUTES: Routes = [
 
 ## File: src/app/features/events/event-card/event-card.component.html
 ````html
-<article hlmCard class="rounded-2xl overflow-hidden flex flex-col">
+<article class="glass-card flex flex-col overflow-hidden h-full transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5">
   <div class="flex flex-col flex-1 p-4 gap-3">
     <div class="flex items-start justify-between gap-2">
-      <div class="text-sm font-medium text-primary-600 dark:text-primary-400">
+      <span class="inline-flex items-center gap-1 rounded-full bg-primary-100/80 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/60 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
         📅 {{ event().date | formatDate }}
-      </div>
+      </span>
       @if (event().status !== 'scheduled') {
         <span hlmBadge
               [variant]="event().status === 'cancelled' ? 'destructive' : event().status === 'active' ? 'default' : 'secondary'"
-              class="rounded-full text-xs">
+              class="rounded-full text-xs flex-shrink-0">
           {{ event().status }}
         </span>
       }
@@ -8448,21 +8344,22 @@ export const CLUBS_ROUTES: Routes = [
       </p>
     }
     @if (event().theme || event().tags.length > 0) {
-      <div class="flex flex-wrap gap-1">
+      <div class="flex flex-wrap gap-1.5">
         @if (event().theme) {
-          <span hlmBadge variant="secondary"
-                class="rounded-full bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300">
-            {{ event().theme }}
+          <span class="rounded-full bg-accent-100/80 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700/60 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
+            ✨ {{ event().theme }}
           </span>
         }
         @for (tag of event().tags.slice(0, 2); track tag) {
-          <span hlmBadge variant="secondary" class="rounded-full">{{ tag }}</span>
+          <span class="rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-600 dark:text-gray-400">
+            🏷 {{ tag }}
+          </span>
         }
       </div>
     }
-    <div class="flex items-center justify-between mt-auto pt-1">
+    <div class="flex items-center justify-between mt-auto pt-2 border-t border-white/20 dark:border-white/10">
       <span class="text-xs text-gray-500 dark:text-gray-400">
-        👤 {{ event().attendeeCount }} attending
+        👥 {{ event().attendeeCount }} attending
       </span>
       <div class="flex gap-2">
         <a hlmBtn variant="outline" size="sm" [routerLink]="['/events', event().id]">
@@ -8521,27 +8418,29 @@ export class EventCardComponent {
 ## File: src/app/features/events/events-feed/events-feed.component.html
 ````html
 <div class="min-h-screen">
-  <section class="bg-gradient-to-br from-primary-600 to-accent-600 px-4 py-12 text-center">
-    <h1 class="font-display text-4xl font-bold text-white mb-2">Events</h1>
-    <p class="text-primary-100 mb-8">Discover and join upcoming book club events</p>
-    @if (eventService.availableCities().length > 0) {
-      <div class="mx-auto max-w-xl">
-        <select
-          [ngModel]="eventService.cityFilter()"
-          (ngModelChange)="eventService.setCityFilter($event || null)"
-          class="w-full rounded-full bg-white/20 backdrop-blur-sm text-white placeholder-white/70 border border-white/30 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/70 appearance-none"
-        >
-          <option value="">All cities</option>
-          @for (city of eventService.availableCities(); track city) {
-            <option [value]="city">📍 {{ city }}</option>
-          }
-        </select>
-      </div>
-    }
+  <section class="glass-hero bg-gradient-brand px-4 py-14 text-center">
+    <div class="relative z-10">
+      <h1 class="font-display text-4xl font-bold text-white mb-2 drop-shadow-sm">Events</h1>
+      <p class="text-white/80 mb-8">Discover and join upcoming book club events</p>
+      @if (eventService.availableCities().length > 0) {
+        <div class="mx-auto max-w-sm">
+          <select
+            [ngModel]="eventService.cityFilter()"
+            (ngModelChange)="eventService.setCityFilter($event || null)"
+            class="w-full rounded-full glass-card px-4 py-2.5 text-sm text-gray-900 dark:text-white border-0 focus:outline-none focus:ring-2 focus:ring-white/50 appearance-none cursor-pointer"
+          >
+            <option value="">📍 All cities</option>
+            @for (city of eventService.availableCities(); track city) {
+              <option [value]="city">📍 {{ city }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
   </section>
   <div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
     @if (eventService.error()) {
-      <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+      <div class="flex items-start gap-2 glass-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
         <span aria-hidden="true">⚠️</span>
         <span>{{ eventService.error() }}</span>
       </div>
@@ -8552,7 +8451,7 @@ export class EventCardComponent {
           <button hlmTabsTrigger="upcoming">Upcoming</button>
           <button hlmTabsTrigger="my">My Events</button>
         </div>
-        <div hlmTabsContent="upcoming" class="pt-4">
+        <div hlmTabsContent="upcoming" class="pt-6">
           @if (eventService.isLoading()) {
             <div class="py-16 flex justify-center" aria-busy="true">
               <hlm-spinner />
@@ -8565,14 +8464,17 @@ export class EventCardComponent {
             />
           } @else {
             @for (date of sortedDates(); track date) {
-              <section [attr.aria-labelledby]="'date-' + date" class="mb-8">
-                <h2
-                  [id]="'date-' + date"
-                  class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4"
-                >
-                  {{ date }}
-                </h2>
-                <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
+                <div class="flex items-center gap-3 mb-5">
+                  <h2
+                    [id]="'date-' + date"
+                    class="glass-card-subtle inline-flex px-4 py-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide"
+                  >
+                    📆 {{ date }}
+                  </h2>
+                  <div class="flex-1 h-px bg-white/30 dark:bg-white/10"></div>
+                </div>
+                <ul class="bento-grid-3">
                   @for (event of eventService.groupedByDate()[date]; track event.id) {
                     <li>
                       <app-event-card
@@ -8589,7 +8491,7 @@ export class EventCardComponent {
             }
           }
         </div>
-        <div hlmTabsContent="my" class="pt-4">
+        <div hlmTabsContent="my" class="pt-6">
           @if (eventService.isLoading()) {
             <div class="py-16 flex justify-center" aria-busy="true">
               <hlm-spinner />
@@ -8601,7 +8503,7 @@ export class EventCardComponent {
               description="Join clubs to see their events here."
             />
           } @else {
-            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <ul class="bento-grid-3">
               @for (event of eventService.myEvents(); track event.id) {
                 <li>
                   <app-event-card
@@ -8630,14 +8532,17 @@ export class EventCardComponent {
         />
       } @else {
         @for (date of sortedDates(); track date) {
-          <section [attr.aria-labelledby]="'date-' + date" class="mb-8">
-            <h2
-              [id]="'date-' + date"
-              class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4"
-            >
-              {{ date }}
-            </h2>
-            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
+            <div class="flex items-center gap-3 mb-5">
+              <h2
+                [id]="'date-' + date"
+                class="glass-card-subtle inline-flex px-4 py-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide"
+              >
+                📆 {{ date }}
+              </h2>
+              <div class="flex-1 h-px bg-white/30 dark:bg-white/10"></div>
+            </div>
+            <ul class="bento-grid-3">
               @for (event of eventService.groupedByDate()[date]; track event.id) {
                 <li>
                   <app-event-card
@@ -9631,6 +9536,110 @@ export class LoginComponent {
         }
       }
     </style>
+````
+
+## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html
+````html
+<article
+  class="parchment-card glass-card flex flex-col overflow-hidden h-full"
+  [style.animation-delay]="index() * 80 + 'ms'"
+>
+  @if (event().coverUrl) {
+    <div class="h-28 overflow-hidden flex-shrink-0">
+      <img [src]="event().coverUrl" [alt]="event().title" class="w-full h-full object-cover" loading="lazy" />
+    </div>
+  } @else {
+    <div class="h-1 w-full bg-gradient-to-r from-primary-500 via-accent-500 to-primary-400 flex-shrink-0"></div>
+  }
+  @if (event().status !== 'scheduled') {
+    <div
+      class="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center text-sm shadow-sm border z-10"
+      [class]="event().status === 'active'
+        ? 'bg-green-100/80 border-green-400 dark:bg-green-900/50 dark:border-green-600'
+        : event().status === 'cancelled'
+          ? 'bg-red-100/80 border-red-400 dark:bg-red-900/50 dark:border-red-600'
+          : 'bg-yellow-100/80 border-yellow-400 dark:bg-yellow-900/50 dark:border-yellow-600'"
+      [attr.title]="event().status"
+    >
+      {{ event().status === 'active' ? '🟢' : event().status === 'cancelled' ? '🔴' : '🟡' }}
+    </div>
+  }
+  <div class="flex flex-col flex-1 p-4 gap-3">
+    <div>
+      <span class="inline-flex items-center gap-1.5 rounded-full bg-primary-100/80 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/60 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
+        📅 {{ event().date | formatDate }}
+      </span>
+    </div>
+    <a
+      [routerLink]="['/events', event().id]"
+      class="block font-display text-base font-semibold leading-snug text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors line-clamp-2"
+    >
+      {{ event().title }}
+    </a>
+    @if (event().city) {
+      <p class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+        <span aria-hidden="true">📍</span>
+        <span>{{ event().address || event().city }}</span>
+      </p>
+    }
+    @if (event().theme || event().tags.length > 0) {
+      <div class="flex flex-wrap gap-1.5">
+        @if (event().theme) {
+          <span class="rune-pill rounded-full bg-accent-100/80 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700/60 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
+            ✨ {{ event().theme }}
+          </span>
+        }
+        @for (tag of event().tags.slice(0, 2); track tag) {
+          <span class="rune-pill rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-600 dark:text-gray-400">
+            🏷 {{ tag }}
+          </span>
+        }
+      </div>
+    }
+    <div class="flex items-center justify-between mt-auto pt-2 border-t border-white/20 dark:border-white/10">
+      <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+        👥 {{ event().attendeeCount }} {{ 'CLUB_DETAIL.rsvp_attending' | translate }}
+      </span>
+      <div class="flex items-center gap-2">
+        @if (isAuthenticated() && event().status !== 'cancelled') {
+          @if (event().isAttending) {
+            <button
+              hlmBtn
+              size="sm"
+              type="button"
+              [disabled]="attending()"
+              (click)="cancelAttend.emit()"
+              class="bg-green-600 hover:bg-green-700 text-white text-xs"
+            >
+              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_going' | translate }} }
+            </button>
+          } @else {
+            <button
+              hlmBtn
+              size="sm"
+              type="button"
+              [disabled]="attending()"
+              (click)="attend.emit()"
+              class="bg-primary-600 hover:bg-primary-700 text-white text-xs"
+            >
+              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_join' | translate }} }
+            </button>
+          }
+        } @else {
+          <a
+            hlmBtn
+            variant="outline"
+            size="sm"
+            [routerLink]="['/events', event().id]"
+            class="text-xs"
+          >
+            {{ 'CLUB_DETAIL.rsvp_view' | translate }} →
+          </a>
+        }
+      </div>
+    </div>
+  </div>
+</article>
 ````
 
 ## File: src/app/features/clubs/edit-club/edit-club.component.html
@@ -11061,133 +11070,6 @@ export class EventService {
 </div>
 ````
 
-## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
-````html
-<div
-  class="flex flex-col overflow-hidden h-full transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5"
-  [class]="variant() === 'featured' ? 'glass-card-strong' : 'glass-card'"
->
-  <div class="relative overflow-hidden flex-shrink-0"
-       [class]="variant() === 'featured' ? 'h-48' : 'h-32'">
-    @if (club().coverUrl) {
-      <img [src]="club().coverUrl" [alt]="''" class="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
-    } @else {
-      <div class="w-full h-full bg-gradient-to-br from-primary-400 to-accent-500" aria-hidden="true"></div>
-    }
-    @if (variant() === 'featured') {
-      <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none"></div>
-    }
-  </div>
-  <div class="flex flex-col flex-1 gap-3"
-       [class]="variant() === 'featured' ? 'p-5' : 'p-4'">
-    <div>
-      <h3
-        class="font-semibold text-gray-900 dark:text-white leading-snug flex items-center gap-1.5"
-        [class]="variant() === 'featured' ? 'text-lg line-clamp-2' : 'text-base line-clamp-1'"
-      >
-        {{ club().name }}
-        @if (isOwned()) {
-          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 flex-shrink-0" title="Your club">👑</span>
-        }
-      </h3>
-      @if (club().description) {
-        <p
-          class="text-xs text-gray-500 dark:text-gray-400 mt-1"
-          [class]="variant() === 'featured' ? 'line-clamp-3' : 'line-clamp-2'"
-        >
-          {{ club().description }}
-        </p>
-      }
-    </div>
-    @if (club().memberPreviews.length > 0) {
-      <div class="flex items-center gap-1.5">
-        @for (url of club().memberPreviews.slice(0, 4); track url) {
-          <div
-            class="h-7 w-7 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0 overflow-hidden"
-            aria-hidden="true"
-          >
-            @if (url) {
-              <img [src]="url" class="h-full w-full object-cover" alt="" />
-            } @else {
-              ?
-            }
-          </div>
-        }
-        @if (club().memberCount > 4) {
-          <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">+{{ club().memberCount - 4 }}</span>
-        }
-        <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto">{{ club().memberCount }} members</span>
-      </div>
-    }
-    <div class="flex items-center gap-2 mt-auto pt-1">
-      <a
-        hlmBtn
-        variant="outline"
-        size="sm"
-        [routerLink]="['/clubs', club().id]"
-        class="flex-1 text-center"
-        [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
-      >
-        {{ 'CLUBS.view' | translate }}
-      </a>
-      @if (isAuthenticated() && !isMember()) {
-        <button
-          hlmBtn
-          type="button"
-          size="sm"
-          (click)="join.emit()"
-          [disabled]="joining()"
-          class="flex-1 bg-primary-600 hover:bg-primary-700 text-white"
-          [attr.aria-label]="('CLUBS.join' | translate) + ' ' + club().name"
-        >
-          @if (joining()) { ⏳ } @else { {{ 'CLUBS.join' | translate }} }
-        </button>
-      } @else if (isAuthenticated() && isMember()) {
-        <span class="flex-1 text-center rounded-xl bg-green-50 dark:bg-green-900/20 px-3 py-1.5 text-xs font-medium text-green-700 dark:text-green-400">
-          {{ 'CLUBS.member_badge' | translate }}
-        </span>
-      }
-    </div>
-  </div>
-</div>
-````
-
-## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { Club } from '../../../../core/models/club.model';
-import { TranslateModule } from '@ngx-translate/core';
-import { HlmCardImports } from '../../../../shared/spartan/card/src';
-import { HlmButton } from '../../../../shared/spartan/button/src';
-@Component({
-  selector: 'app-club-card',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton],
-  templateUrl: './club-card.component.html',
-})
-export class ClubCardComponent {
-  readonly club = input.required<Club>();
-  readonly isMember = input.required<boolean>();
-  readonly isOwned = input<boolean>(false);
-  readonly isAuthenticated = input<boolean>(false);
-  readonly joining = input<boolean>(false);
-  readonly variant = input<'default' | 'featured'>('default');
-  readonly join = output<void>();
-  protected daysUntil(dateStr: string): number {
-    const target = new Date(dateStr).getTime();
-    const now = Date.now();
-    return Math.round((target - now) / 86400000);
-  }
-}
-````
-
 ## File: src/app/core/services/randomizer.service.ts
 ````typescript
 import { Injectable, inject, signal } from '@angular/core';
@@ -11442,6 +11324,133 @@ export class RegisterComponent {
       this.successMessage.set(true);
       this.bookOpen.set(true);
     }
+  }
+}
+````
+
+## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
+````html
+<div
+  class="flex flex-col overflow-hidden h-full transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5"
+  [class]="variant() === 'featured' ? 'glass-card-strong' : 'glass-card'"
+>
+  <div class="relative overflow-hidden flex-shrink-0"
+       [class]="variant() === 'featured' ? 'h-48' : 'h-32'">
+    @if (club().coverUrl) {
+      <img [src]="club().coverUrl" [alt]="''" class="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
+    } @else {
+      <div class="w-full h-full bg-gradient-to-br from-primary-400 to-accent-500" aria-hidden="true"></div>
+    }
+    @if (variant() === 'featured') {
+      <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none"></div>
+    }
+  </div>
+  <div class="flex flex-col flex-1 gap-3"
+       [class]="variant() === 'featured' ? 'p-5' : 'p-4'">
+    <div>
+      <h3
+        class="font-semibold text-gray-900 dark:text-white leading-snug flex items-center gap-1.5"
+        [class]="variant() === 'featured' ? 'text-lg line-clamp-2' : 'text-base line-clamp-1'"
+      >
+        {{ club().name }}
+        @if (isOwned()) {
+          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 flex-shrink-0" title="Your club">👑</span>
+        }
+      </h3>
+      @if (club().description) {
+        <p
+          class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+          [class]="variant() === 'featured' ? 'line-clamp-3' : 'line-clamp-2'"
+        >
+          {{ club().description }}
+        </p>
+      }
+    </div>
+    @if (club().memberPreviews.length > 0) {
+      <div class="flex items-center gap-1.5">
+        @for (url of club().memberPreviews.slice(0, 4); track url) {
+          <div
+            class="h-7 w-7 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0 overflow-hidden"
+            aria-hidden="true"
+          >
+            @if (url) {
+              <img [src]="url" class="h-full w-full object-cover" alt="" />
+            } @else {
+              ?
+            }
+          </div>
+        }
+        @if (club().memberCount > 4) {
+          <span class="text-xs text-gray-500 dark:text-gray-400 ml-1">+{{ club().memberCount - 4 }}</span>
+        }
+        <span class="text-xs text-gray-400 dark:text-gray-500 ml-auto">{{ club().memberCount }} members</span>
+      </div>
+    }
+    <div class="flex items-center gap-2 mt-auto pt-1">
+      <a
+        hlmBtn
+        variant="outline"
+        size="sm"
+        [routerLink]="['/clubs', club().id]"
+        class="flex-1 text-center"
+        [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
+      >
+        {{ 'CLUBS.view' | translate }}
+      </a>
+      @if (isAuthenticated() && !isMember()) {
+        <button
+          hlmBtn
+          type="button"
+          size="sm"
+          (click)="join.emit()"
+          [disabled]="joining()"
+          class="flex-1 bg-primary-600 hover:bg-primary-700 text-white"
+          [attr.aria-label]="('CLUBS.join' | translate) + ' ' + club().name"
+        >
+          @if (joining()) { ⏳ } @else { {{ 'CLUBS.join' | translate }} }
+        </button>
+      } @else if (isAuthenticated() && isMember()) {
+        <span class="flex-1 text-center rounded-xl bg-green-50 dark:bg-green-900/20 px-3 py-1.5 text-xs font-medium text-green-700 dark:text-green-400">
+          {{ 'CLUBS.member_badge' | translate }}
+        </span>
+      }
+    </div>
+  </div>
+</div>
+````
+
+## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { Club } from '../../../../core/models/club.model';
+import { TranslateModule } from '@ngx-translate/core';
+import { HlmCardImports } from '../../../../shared/spartan/card/src';
+import { HlmButton } from '../../../../shared/spartan/button/src';
+@Component({
+  selector: 'app-club-card',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton],
+  templateUrl: './club-card.component.html',
+})
+export class ClubCardComponent {
+  readonly club = input.required<Club>();
+  readonly isMember = input.required<boolean>();
+  readonly isOwned = input<boolean>(false);
+  readonly isAuthenticated = input<boolean>(false);
+  readonly joining = input<boolean>(false);
+  readonly variant = input<'default' | 'featured'>('default');
+  readonly join = output<void>();
+  protected daysUntil(dateStr: string): number {
+    const target = new Date(dateStr).getTime();
+    const now = Date.now();
+    return Math.round((target - now) / 86400000);
   }
 }
 ````
@@ -13316,6 +13325,118 @@ function mapSocials(raw: ApiUserSocials): UserSocials {
 }
 ````
 
+## File: src/app/features/clubs/create-club/create-club.component.html
+````html
+<main class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+    <header class="text-center mb-8">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
+    </header>
+    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+        <hlm-field>
+          <label hlmFieldLabel>
+            {{ 'CREATE_CLUB.name_label' | translate }}
+            <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <input
+            hlmInput
+            id="club-name"
+            type="text"
+            formControlName="name"
+            class="w-full"
+            [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
+          />
+          <hlm-field-error validator="required">{{ 'CREATE_CLUB.name_required' | translate }}</hlm-field-error>
+          <hlm-field-error validator="minlength">{{ 'CREATE_CLUB.name_min' | translate }}</hlm-field-error>
+          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.name_max' | translate }}</hlm-field-error>
+        </hlm-field>
+        <hlm-field>
+          <label hlmFieldLabel>{{ 'CREATE_CLUB.description_label' | translate }}</label>
+          <textarea
+            hlmInput
+            id="club-description"
+            formControlName="description"
+            rows="3"
+            class="w-full resize-none"
+            [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
+          ></textarea>
+          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.description_max' | translate }}</hlm-field-error>
+        </hlm-field>
+        <div>
+          <label for="club-cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'CREATE_CLUB.cover_url_label' | translate }}
+          </label>
+          @if (form.controls.coverUrl.value) {
+            <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
+              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover"
+                   (error)="form.controls.coverUrl.setValue('')" />
+            </div>
+          }
+          <input
+            hlmInput
+            id="club-cover-url"
+            type="url"
+            formControlName="coverUrl"
+            class="w-full"
+            [placeholder]="'CREATE_CLUB.cover_url_placeholder' | translate"
+          />
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
+        </div>
+        <fieldset>
+          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
+          <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
+            <div>
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'CREATE_CLUB.public_label' | translate }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'CREATE_CLUB.public_desc' | translate }}</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              [attr.aria-checked]="form.controls.isPublic.value"
+              (click)="togglePublic()"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              [class.bg-primary-600]="form.controls.isPublic.value"
+              [class.bg-gray-300]="!form.controls.isPublic.value"
+              [class.dark:bg-gray-600]="!form.controls.isPublic.value"
+            >
+              <span
+                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                [class.translate-x-6]="form.controls.isPublic.value"
+                [class.translate-x-1]="!form.controls.isPublic.value"
+              ></span>
+            </button>
+          </div>
+        </fieldset>
+        @if (errorMessage()) {
+          <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+               role="alert">
+            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+        <div class="flex gap-3 pt-2">
+          <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
+            {{ 'CREATE_CLUB.cancel' | translate }}
+          </button>
+          <button hlmBtn type="submit" [disabled]="isSubmitting()"
+                  class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
+            @if (isSubmitting()) {
+              <hlm-spinner class="mr-2" />
+              {{ 'CREATE_CLUB.submitting' | translate }}
+            } @else {
+              {{ 'CREATE_CLUB.submit' | translate }}
+            }
+          </button>
+        </div>
+      </form>
+    </article>
+  </div>
+</main>
+````
+
 ## File: src/app/features/clubs/clubs-list/clubs-list.component.html
 ````html
 <div class="min-h-screen">
@@ -13453,118 +13574,6 @@ function mapSocials(raw: ApiUserSocials): UserSocials {
     </a>
   }
 </div>
-````
-
-## File: src/app/features/clubs/create-club/create-club.component.html
-````html
-<main class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-lg">
-    <header class="text-center mb-8">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
-      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
-    </header>
-    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
-      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-        <hlm-field>
-          <label hlmFieldLabel>
-            {{ 'CREATE_CLUB.name_label' | translate }}
-            <span class="text-red-500" aria-hidden="true">*</span>
-          </label>
-          <input
-            hlmInput
-            id="club-name"
-            type="text"
-            formControlName="name"
-            class="w-full"
-            [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
-          />
-          <hlm-field-error validator="required">{{ 'CREATE_CLUB.name_required' | translate }}</hlm-field-error>
-          <hlm-field-error validator="minlength">{{ 'CREATE_CLUB.name_min' | translate }}</hlm-field-error>
-          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.name_max' | translate }}</hlm-field-error>
-        </hlm-field>
-        <hlm-field>
-          <label hlmFieldLabel>{{ 'CREATE_CLUB.description_label' | translate }}</label>
-          <textarea
-            hlmInput
-            id="club-description"
-            formControlName="description"
-            rows="3"
-            class="w-full resize-none"
-            [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
-          ></textarea>
-          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.description_max' | translate }}</hlm-field-error>
-        </hlm-field>
-        <div>
-          <label for="club-cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ 'CREATE_CLUB.cover_url_label' | translate }}
-          </label>
-          @if (form.controls.coverUrl.value) {
-            <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
-              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover"
-                   (error)="form.controls.coverUrl.setValue('')" />
-            </div>
-          }
-          <input
-            hlmInput
-            id="club-cover-url"
-            type="url"
-            formControlName="coverUrl"
-            class="w-full"
-            [placeholder]="'CREATE_CLUB.cover_url_placeholder' | translate"
-          />
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
-        </div>
-        <fieldset>
-          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
-          <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-            <div>
-              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'CREATE_CLUB.public_label' | translate }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'CREATE_CLUB.public_desc' | translate }}</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              [attr.aria-checked]="form.controls.isPublic.value"
-              (click)="togglePublic()"
-              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              [class.bg-primary-600]="form.controls.isPublic.value"
-              [class.bg-gray-300]="!form.controls.isPublic.value"
-              [class.dark:bg-gray-600]="!form.controls.isPublic.value"
-            >
-              <span
-                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                [class.translate-x-6]="form.controls.isPublic.value"
-                [class.translate-x-1]="!form.controls.isPublic.value"
-              ></span>
-            </button>
-          </div>
-        </fieldset>
-        @if (errorMessage()) {
-          <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-               role="alert">
-            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
-            <span>{{ errorMessage() }}</span>
-          </div>
-        }
-        <div class="flex gap-3 pt-2">
-          <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
-            {{ 'CREATE_CLUB.cancel' | translate }}
-          </button>
-          <button hlmBtn type="submit" [disabled]="isSubmitting()"
-                  class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
-            @if (isSubmitting()) {
-              <hlm-spinner class="mr-2" />
-              {{ 'CREATE_CLUB.submitting' | translate }}
-            } @else {
-              {{ 'CREATE_CLUB.submit' | translate }}
-            }
-          </button>
-        </div>
-      </form>
-    </article>
-  </div>
-</main>
 ````
 
 ## File: src/app/features/clubs/create-club/create-club.component.ts
@@ -13935,6 +13944,234 @@ jobs:
           echo "Deployed to: $DEPLOY_URL"
 ````
 
+## File: src/app/core/services/club.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
+import { AuthService } from '../auth/auth.service';
+import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
+import { ClubEvent } from '../models/event.model';
+@Injectable({ providedIn: 'root' })
+export class ClubService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly _clubs = signal<Club[]>([]);
+  private readonly _myClubs = signal<Club[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _error = signal<string | null>(null);
+  private readonly _searchQuery = signal('');
+  private readonly _cityFilter = signal<string | null>(null);
+  readonly clubs = this._clubs.asReadonly();
+  readonly myClubs = this._myClubs.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly searchQuery = this._searchQuery.asReadonly();
+  readonly myOwnedClubs = computed<Club[]>(() => {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return [];
+    return this._clubs().filter(c => c.organizerId === userId);
+  });
+  readonly myOwnedClubIds = computed<Set<string>>(() =>
+    new Set(this.myOwnedClubs().map(c => c.id)),
+  );
+  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
+  readonly availableCities = computed<string[]>(() => {
+    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
+    return cities.sort((a, b) => a.localeCompare(b));
+  });
+  readonly filteredClubs = computed(() => {
+    const q = this._searchQuery().toLowerCase().trim();
+    const city = this._cityFilter();
+    let clubs = this._clubs();
+    if (q) {
+      clubs = clubs.filter(
+        c =>
+          c.name.toLowerCase().includes(q) ||
+          (c.description?.toLowerCase().includes(q) ?? false),
+      );
+    }
+    if (city) {
+      clubs = clubs.filter(c => c.city === city);
+    }
+    return clubs;
+  });
+  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
+    const clubs = this.filteredClubs();
+    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
+      const city = club.city || '';
+      if (!acc[city]) acc[city] = [];
+      acc[city].push(club);
+      return acc;
+    }, {});
+  });
+  readonly myParticipatedClubs = computed<Club[]>(() => []);
+  readonly myMissedClubs = computed<Club[]>(() => []);
+  setSearchQuery(query: string): void {
+    this._searchQuery.set(query);
+  }
+  setCityFilter(city: string | null): void {
+    this._cityFilter.set(city);
+  }
+  async loadPublicClubs(): Promise<void> {
+    this._isLoading.set(true);
+    this._error.set(null);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
+      );
+      this._clubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load clubs');
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async loadMyClubs(): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
+      );
+      this._myClubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load my clubs');
+    }
+  }
+  async getClubById(id: string): Promise<Club | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
+      );
+      return mapClub(raw);
+    } catch {
+      return null;
+    }
+  }
+  async createClub(payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    coverUrl?: string | null;
+    city?: string;
+    tags?: string[];
+    meetingDurationMinutes?: number | null;
+    afterMeetingVenue?: { name: string; address: string; description: string } | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
+        name: payload.name,
+        description: payload.description,
+        isPublic: payload.isPublic,
+        coverUrl: payload.coverUrl ?? null,
+        city: payload.city,
+        tags: payload.tags,
+        meetingDurationMinutes: payload.meetingDurationMinutes,
+        afterMeetingVenue: payload.afterMeetingVenue,
+      }),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(existing => [club, ...existing]);
+    this._myClubs.update(existing => [club, ...existing]);
+    return club;
+  }
+  async updateClub(clubId: string, payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    city?: string;
+    coverUrl?: string | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    return club;
+  }
+  async joinClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
+    );
+    this._clubs.update(list =>
+      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
+    );
+    const club = this._clubs().find(c => c.id === clubId);
+    if (club && !this.myClubIds().has(clubId)) {
+      this._myClubs.update(list => [club, ...list]);
+    }
+  }
+  async leaveClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
+    );
+    this._clubs.update(list =>
+      list.map(c =>
+        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
+      ),
+    );
+    this._myClubs.update(list => list.filter(c => c.id !== clubId));
+  }
+  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
+    );
+    return raw.map(mapClubMember);
+  }
+  async kickMember(clubId: string, userId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
+    );
+  }
+  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
+    );
+  }
+  async getBans(clubId: string): Promise<BanRecord[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
+    );
+    return raw.map(mapBanRecord);
+  }
+  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
+    );
+    return raw.map(mapEvent);
+  }
+  async pauseClub(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/pause`, {}),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+  async cancelClub(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/cancel`, {}),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/reschedule`, { newDate }),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+  msUntilDeletion(club: Club): number | null {
+    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
+    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
+    const remaining = deletionTime - Date.now();
+    return remaining > 0 ? remaining : null;
+  }
+}
+````
+
 ## File: src/app/features/clubs/club-detail/club-detail.component.html
 ````html
 @if (isLoading()) {
@@ -14193,234 +14430,6 @@ jobs:
       </div>
     </div>
   </main>
-}
-````
-
-## File: src/app/core/services/club.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
-import { AuthService } from '../auth/auth.service';
-import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
-import { ClubEvent } from '../models/event.model';
-@Injectable({ providedIn: 'root' })
-export class ClubService {
-  private readonly http = inject(HttpClient);
-  private readonly auth = inject(AuthService);
-  private readonly _clubs = signal<Club[]>([]);
-  private readonly _myClubs = signal<Club[]>([]);
-  private readonly _isLoading = signal(false);
-  private readonly _error = signal<string | null>(null);
-  private readonly _searchQuery = signal('');
-  private readonly _cityFilter = signal<string | null>(null);
-  readonly clubs = this._clubs.asReadonly();
-  readonly myClubs = this._myClubs.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly error = this._error.asReadonly();
-  readonly searchQuery = this._searchQuery.asReadonly();
-  readonly myOwnedClubs = computed<Club[]>(() => {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) return [];
-    return this._clubs().filter(c => c.organizerId === userId);
-  });
-  readonly myOwnedClubIds = computed<Set<string>>(() =>
-    new Set(this.myOwnedClubs().map(c => c.id)),
-  );
-  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
-  readonly availableCities = computed<string[]>(() => {
-    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
-    return cities.sort((a, b) => a.localeCompare(b));
-  });
-  readonly filteredClubs = computed(() => {
-    const q = this._searchQuery().toLowerCase().trim();
-    const city = this._cityFilter();
-    let clubs = this._clubs();
-    if (q) {
-      clubs = clubs.filter(
-        c =>
-          c.name.toLowerCase().includes(q) ||
-          (c.description?.toLowerCase().includes(q) ?? false),
-      );
-    }
-    if (city) {
-      clubs = clubs.filter(c => c.city === city);
-    }
-    return clubs;
-  });
-  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
-    const clubs = this.filteredClubs();
-    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
-      const city = club.city || '';
-      if (!acc[city]) acc[city] = [];
-      acc[city].push(club);
-      return acc;
-    }, {});
-  });
-  readonly myParticipatedClubs = computed<Club[]>(() => []);
-  readonly myMissedClubs = computed<Club[]>(() => []);
-  setSearchQuery(query: string): void {
-    this._searchQuery.set(query);
-  }
-  setCityFilter(city: string | null): void {
-    this._cityFilter.set(city);
-  }
-  async loadPublicClubs(): Promise<void> {
-    this._isLoading.set(true);
-    this._error.set(null);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
-      );
-      this._clubs.set(raw.map(mapClub));
-    } catch {
-      this._error.set('Failed to load clubs');
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async loadMyClubs(): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
-      );
-      this._myClubs.set(raw.map(mapClub));
-    } catch {
-      this._error.set('Failed to load my clubs');
-    }
-  }
-  async getClubById(id: string): Promise<Club | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
-      );
-      return mapClub(raw);
-    } catch {
-      return null;
-    }
-  }
-  async createClub(payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    coverUrl?: string | null;
-    city?: string;
-    tags?: string[];
-    meetingDurationMinutes?: number | null;
-    afterMeetingVenue?: { name: string; address: string; description: string } | null;
-  }): Promise<Club> {
-    const raw = await firstValueFrom(
-      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
-        name: payload.name,
-        description: payload.description,
-        isPublic: payload.isPublic,
-        coverUrl: payload.coverUrl ?? null,
-        city: payload.city,
-        tags: payload.tags,
-        meetingDurationMinutes: payload.meetingDurationMinutes,
-        afterMeetingVenue: payload.afterMeetingVenue,
-      }),
-    );
-    const club = mapClub(raw);
-    this._clubs.update(existing => [club, ...existing]);
-    this._myClubs.update(existing => [club, ...existing]);
-    return club;
-  }
-  async updateClub(clubId: string, payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    city?: string;
-    coverUrl?: string | null;
-  }): Promise<Club> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
-    );
-    const club = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    return club;
-  }
-  async joinClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
-    );
-    this._clubs.update(list =>
-      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
-    );
-    const club = this._clubs().find(c => c.id === clubId);
-    if (club && !this.myClubIds().has(clubId)) {
-      this._myClubs.update(list => [club, ...list]);
-    }
-  }
-  async leaveClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
-    );
-    this._clubs.update(list =>
-      list.map(c =>
-        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
-      ),
-    );
-    this._myClubs.update(list => list.filter(c => c.id !== clubId));
-  }
-  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
-    );
-    return raw.map(mapClubMember);
-  }
-  async kickMember(clubId: string, userId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
-    );
-  }
-  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
-    );
-  }
-  async getBans(clubId: string): Promise<BanRecord[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
-    );
-    return raw.map(mapBanRecord);
-  }
-  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
-    );
-    return raw.map(mapEvent);
-  }
-  async pauseClub(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/pause`, {}),
-    );
-    const updated = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
-  }
-  async cancelClub(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/cancel`, {}),
-    );
-    const updated = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
-  }
-  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/reschedule`, { newDate }),
-    );
-    const updated = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
-  }
-  msUntilDeletion(club: Club): number | null {
-    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
-    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
-    const remaining = deletionTime - Date.now();
-    return remaining > 0 ? remaining : null;
-  }
 }
 ````
 

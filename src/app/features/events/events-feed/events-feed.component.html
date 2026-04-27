@@ -1,32 +1,34 @@
 <div class="min-h-screen">
 
   <!-- ── Hero ─────────────────────────────────────────────────────────── -->
-  <section class="bg-gradient-to-br from-primary-600 to-accent-600 px-4 py-12 text-center">
-    <h1 class="font-display text-4xl font-bold text-white mb-2">Events</h1>
-    <p class="text-primary-100 mb-8">Discover and join upcoming book club events</p>
+  <section class="glass-hero bg-gradient-brand px-4 py-14 text-center">
+    <div class="relative z-10">
+      <h1 class="font-display text-4xl font-bold text-white mb-2 drop-shadow-sm">Events</h1>
+      <p class="text-white/80 mb-8">Discover and join upcoming book club events</p>
 
-    <!-- City filter -->
-    @if (eventService.availableCities().length > 0) {
-      <div class="mx-auto max-w-xl">
-        <select
-          [ngModel]="eventService.cityFilter()"
-          (ngModelChange)="eventService.setCityFilter($event || null)"
-          class="w-full rounded-full bg-white/20 backdrop-blur-sm text-white placeholder-white/70 border border-white/30 px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/70 appearance-none"
-        >
-          <option value="">All cities</option>
-          @for (city of eventService.availableCities(); track city) {
-            <option [value]="city">📍 {{ city }}</option>
-          }
-        </select>
-      </div>
-    }
+      <!-- City filter -->
+      @if (eventService.availableCities().length > 0) {
+        <div class="mx-auto max-w-sm">
+          <select
+            [ngModel]="eventService.cityFilter()"
+            (ngModelChange)="eventService.setCityFilter($event || null)"
+            class="w-full rounded-full glass-card px-4 py-2.5 text-sm text-gray-900 dark:text-white border-0 focus:outline-none focus:ring-2 focus:ring-white/50 appearance-none cursor-pointer"
+          >
+            <option value="">📍 All cities</option>
+            @for (city of eventService.availableCities(); track city) {
+              <option [value]="city">📍 {{ city }}</option>
+            }
+          </select>
+        </div>
+      }
+    </div>
   </section>
 
   <div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
 
     <!-- ── Error ─────────────────────────────────────────────────────── -->
     @if (eventService.error()) {
-      <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+      <div class="flex items-start gap-2 glass-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
         <span aria-hidden="true">⚠️</span>
         <span>{{ eventService.error() }}</span>
       </div>
@@ -41,7 +43,7 @@
         </div>
 
         <!-- Upcoming tab -->
-        <div hlmTabsContent="upcoming" class="pt-4">
+        <div hlmTabsContent="upcoming" class="pt-6">
           @if (eventService.isLoading()) {
             <div class="py-16 flex justify-center" aria-busy="true">
               <hlm-spinner />
@@ -54,14 +56,17 @@
             />
           } @else {
             @for (date of sortedDates(); track date) {
-              <section [attr.aria-labelledby]="'date-' + date" class="mb-8">
-                <h2
-                  [id]="'date-' + date"
-                  class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4"
-                >
-                  {{ date }}
-                </h2>
-                <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
+                <div class="flex items-center gap-3 mb-5">
+                  <h2
+                    [id]="'date-' + date"
+                    class="glass-card-subtle inline-flex px-4 py-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide"
+                  >
+                    📆 {{ date }}
+                  </h2>
+                  <div class="flex-1 h-px bg-white/30 dark:bg-white/10"></div>
+                </div>
+                <ul class="bento-grid-3">
                   @for (event of eventService.groupedByDate()[date]; track event.id) {
                     <li>
                       <app-event-card
@@ -80,7 +85,7 @@
         </div>
 
         <!-- My Events tab -->
-        <div hlmTabsContent="my" class="pt-4">
+        <div hlmTabsContent="my" class="pt-6">
           @if (eventService.isLoading()) {
             <div class="py-16 flex justify-center" aria-busy="true">
               <hlm-spinner />
@@ -92,7 +97,7 @@
               description="Join clubs to see their events here."
             />
           } @else {
-            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <ul class="bento-grid-3">
               @for (event of eventService.myEvents(); track event.id) {
                 <li>
                   <app-event-card
@@ -123,14 +128,17 @@
         />
       } @else {
         @for (date of sortedDates(); track date) {
-          <section [attr.aria-labelledby]="'date-' + date" class="mb-8">
-            <h2
-              [id]="'date-' + date"
-              class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4"
-            >
-              {{ date }}
-            </h2>
-            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
+            <div class="flex items-center gap-3 mb-5">
+              <h2
+                [id]="'date-' + date"
+                class="glass-card-subtle inline-flex px-4 py-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide"
+              >
+                📆 {{ date }}
+              </h2>
+              <div class="flex-1 h-px bg-white/30 dark:bg-white/10"></div>
+            </div>
+            <ul class="bento-grid-3">
               @for (event of eventService.groupedByDate()[date]; track event.id) {
                 <li>
                   <app-event-card
