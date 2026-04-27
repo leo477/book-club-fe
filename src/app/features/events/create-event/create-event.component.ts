@@ -65,7 +65,7 @@ export class CreateEventComponent implements OnInit {
       distinctUntilChanged(),
       filter(v => v.length > 2),
       tap(() => { this.isFetchingCover.set(true); this.coverFetchFailed.set(false); }),
-      switchMap(title => this.bookCoverService.fetchCover(title)),
+      switchMap(title => this.bookCoverService.fetchCover$(title)),
       takeUntilDestroyed(this.destroyRef),
     ).subscribe(url => {
       this.isFetchingCover.set(false);

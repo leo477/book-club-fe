@@ -20,7 +20,8 @@ import { environment } from '../../../environments/environment';
  *
  * The error is always re-thrown so callers can still handle it locally if needed.
  */
-export const authInterceptor: HttpInterceptorFn = (req, next) => {
+// eslint-disable-next-line rxjs-x/finnish
+export const authInterceptor: HttpInterceptorFn = (req, next$) => {
   const router = inject(Router);
   const toast = inject(ToastService);
   const tokenStore = inject(TokenStore);
@@ -30,7 +31,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : req;
 
-  return next(authedReq).pipe(
+  return next$(authedReq).pipe(
     catchError((error: unknown) => {
       const httpError = error instanceof HttpErrorResponse ? error : null;
       if (httpError?.status === 401 && token) {

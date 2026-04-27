@@ -27,7 +27,7 @@ describe('GeocodingService', () => {
   afterEach(() => httpMock.verify());
 
   it('autocomplete sends GET with default lang and limit', () => {
-    service.autocomplete('Київ').subscribe();
+    service.autocomplete$('Київ').subscribe();
 
     const req = httpMock.expectOne(r => r.url === BASE);
     expect(req.request.method).toBe('GET');
@@ -39,14 +39,14 @@ describe('GeocodingService', () => {
 
   it('autocomplete returns suggestions array', () => {
     let result: GeocodeSuggestion[] = [];
-    service.autocomplete('Київ').subscribe(s => (result = s));
+    service.autocomplete$('Київ').subscribe(s => (result = s));
 
     httpMock.expectOne(r => r.url === BASE).flush(mockSuggestions);
     expect(result).toEqual(mockSuggestions);
   });
 
   it('autocomplete sends custom lang and limit', () => {
-    service.autocomplete('Lviv', 'en', 3).subscribe();
+    service.autocomplete$('Lviv', 'en', 3).subscribe();
 
     const req = httpMock.expectOne(r => r.url === BASE);
     expect(req.request.params.get('lang')).toBe('en');

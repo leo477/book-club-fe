@@ -27,7 +27,7 @@ describe('BookCoverService', () => {
   it('fetchCover returns cover URL when cover_i exists', () => {
     let result: string | null | undefined;
 
-    service.fetchCover('Dune').subscribe(url => (result = url));
+    service.fetchCover$('Dune').subscribe(url => (result = url));
 
     const req = httpMock.expectOne(r => r.url.includes('openlibrary.org'));
     expect(req.request.method).toBe('GET');
@@ -39,7 +39,7 @@ describe('BookCoverService', () => {
   it('fetchCover returns null when no cover_i', () => {
     let result: string | null | undefined;
 
-    service.fetchCover('Unknown Book').subscribe(url => (result = url));
+    service.fetchCover$('Unknown Book').subscribe(url => (result = url));
 
     const req = httpMock.expectOne(r => r.url.includes('openlibrary.org'));
     req.flush({ docs: [{}] });
@@ -50,7 +50,7 @@ describe('BookCoverService', () => {
   it('fetchCover returns null on HTTP error', () => {
     let result: string | null | undefined;
 
-    service.fetchCover('Error Book').subscribe(url => (result = url));
+    service.fetchCover$('Error Book').subscribe(url => (result = url));
 
     const req = httpMock.expectOne(r => r.url.includes('openlibrary.org'));
     req.flush('Server error', { status: 500, statusText: 'Internal Server Error' });

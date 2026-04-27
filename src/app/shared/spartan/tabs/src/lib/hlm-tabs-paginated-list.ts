@@ -79,6 +79,7 @@ export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
 
 	public readonly items = contentChildren(BrnTabsTrigger, { descendants: false });
 	/** Explicitly annotating type to avoid non-portable inferred type */
+	// eslint-disable-next-line rxjs-x/finnish
 	public readonly itemsChanges: Observable<ReadonlyArray<BrnPaginatedTabHeaderItem>> = toObservable(this.items);
 
 	public readonly tabListContainer = viewChild.required<ElementRef<HTMLElement>>('tabListContainer');

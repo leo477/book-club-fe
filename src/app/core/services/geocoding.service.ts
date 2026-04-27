@@ -15,7 +15,7 @@ export interface GeocodeSuggestion {
 export class GeocodingService {
   private readonly http = inject(HttpClient);
 
-  autocomplete(q: string, lang = 'uk', limit = 5): Observable<GeocodeSuggestion[]> {
+  autocomplete$(q: string, lang = 'uk', limit = 5): Observable<GeocodeSuggestion[]> {
     return this.http.get<GeocodeSuggestion[]>(`${environment.apiUrl}/geocode/autocomplete`, {
       params: { q, lang, limit: String(limit) },
     });

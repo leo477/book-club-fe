@@ -29,7 +29,7 @@ describe('UploadService', () => {
     const file = new File(['dummy content'], 'cover.jpg', { type: 'image/jpeg' });
     let result: string | undefined;
 
-    service.uploadCover(file).subscribe(url => (result = url));
+    service.uploadCover$(file).subscribe(url => (result = url));
 
     const req = httpMock.expectOne(`${environment.apiUrl}/upload/cover`);
     expect(req.request.method).toBe('POST');
@@ -41,7 +41,7 @@ describe('UploadService', () => {
   it('uploadCover includes the file in FormData', () => {
     const file = new File(['dummy content'], 'cover.jpg', { type: 'image/jpeg' });
 
-    service.uploadCover(file).subscribe();
+    service.uploadCover$(file).subscribe();
 
     const req = httpMock.expectOne(`${environment.apiUrl}/upload/cover`);
     expect(req.request.method).toBe('POST');

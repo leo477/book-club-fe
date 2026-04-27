@@ -14,14 +14,7 @@ export interface ApiUserProfile {
   socialsPublic?: boolean;
 }
 
-export interface ApiUserSocials {
-  telegram?: string | null;
-  instagram?: string | null;
-  twitter?: string | null;
-  linkedin?: string | null;
-  github?: string | null;
-  goodreads?: string | null;
-}
+export type ApiUserSocials = { [K in keyof UserSocials]?: string | null };
 
 export interface ApiUserStats {
   clubsJoined: number;

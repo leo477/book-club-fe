@@ -4,6 +4,7 @@ import { toObservable } from '@angular/core/rxjs-interop';
 import { filter, map, take } from 'rxjs';
 import { AuthService } from './auth.service';
 
+// eslint-disable-next-line rxjs-x/finnish
 export const authGuard: CanActivateFn = () => {
   const auth = inject(AuthService);
   const router = inject(Router);

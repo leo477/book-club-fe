@@ -43,7 +43,7 @@ export class AddressAutocompleteComponent {
             return of([]);
           }
           this.isLoading.set(true);
-          return this.geocoding.autocomplete(q);
+          return this.geocoding.autocomplete$(q);
         }),
         takeUntilDestroyed(this.destroyRef),
       ).subscribe({

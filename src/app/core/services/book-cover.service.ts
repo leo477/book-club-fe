@@ -10,7 +10,7 @@ interface OpenLibraryResponse {
 export class BookCoverService {
   private readonly http = inject(HttpClient);
 
-  fetchCover(title: string): Observable<string | null> {
+  fetchCover$(title: string): Observable<string | null> {
     const params = `q=${encodeURIComponent(title)}&fields=cover_i&limit=1`;
     return this.http
       .get<OpenLibraryResponse>(`https://openlibrary.org/search.json?${params}`)

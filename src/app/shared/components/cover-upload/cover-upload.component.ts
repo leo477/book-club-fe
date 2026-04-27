@@ -113,7 +113,7 @@ export class CoverUploadComponent {
     this.uploadError.set(null);
     this.isUploading.set(true);
 
-    this.uploadService.uploadCover(file).subscribe({
+    this.uploadService.uploadCover$(file).subscribe({
       next: url => {
         this.control().setValue(url);
         this.isUploading.set(false);

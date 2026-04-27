@@ -7,7 +7,7 @@ import { environment } from '../../../environments/environment';
 export class UploadService {
   private readonly http = inject(HttpClient);
 
-  uploadCover(file: File): Observable<string> {
+  uploadCover$(file: File): Observable<string> {
     const form = new FormData();
     form.append('file', file);
     return this.http

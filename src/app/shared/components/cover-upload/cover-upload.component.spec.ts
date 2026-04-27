@@ -7,7 +7,7 @@ import { UploadService } from '../../../core/services/upload.service';
 
 function makeUploadService() {
   return {
-    uploadCover: jasmine.createSpy('uploadCover').and.returnValue(of('https://cdn.example.com/img.jpg')),
+    uploadCover$: jasmine.createSpy('uploadCover$').and.returnValue(of('https://cdn.example.com/img.jpg')),
   };
 }
 
