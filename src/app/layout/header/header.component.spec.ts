@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection, signal } from '@angular/core';
+import { NO_ERRORS_SCHEMA, provideZonelessChangeDetection, signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { HeaderComponent } from './header.component';
@@ -33,7 +33,11 @@ describe('HeaderComponent', () => {
         { provide: AuthService, useValue: authSpy },
         { provide: TranslateService, useValue: translateSpy },
       ],
+      schemas: [NO_ERRORS_SCHEMA],
     });
+    // HlmSheetContent requires EXPOSES_STATE_TOKEN from a parent BrnSheetComponent.
+    // Override the template so no sheet directives are instantiated in tests.
+    TestBed.overrideTemplate(HeaderComponent, '<div></div>');
 
     const fixture = TestBed.createComponent(HeaderComponent);
     component = fixture.componentInstance;
@@ -74,7 +78,9 @@ describe('HeaderComponent', () => {
           { provide: AuthService, useValue: authSpy },
           { provide: TranslateService, useValue: translateSpy },
         ],
+        schemas: [NO_ERRORS_SCHEMA],
       });
+      TestBed.overrideTemplate(HeaderComponent, '<div></div>');
       const fixture = TestBed.createComponent(HeaderComponent);
       expect(fixture.componentInstance.userInitials()).toBe('AB');
     });

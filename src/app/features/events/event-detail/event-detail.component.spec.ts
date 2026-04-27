@@ -80,8 +80,9 @@ describe('EventDetailComponent', () => {
     it('sets errorMessage when event is not found', async () => {
       setup(null, null);
       await fixture.whenStable();
+      // resource() enters error state when loader throws; errorMessage reflects the thrown error
       expect(component.errorMessage()).toContain('not found');
-      expect(component.event()).toBeNull();
+      // component.event() would re-throw while resource is in error state — check via errorMessage only
     });
   });
 

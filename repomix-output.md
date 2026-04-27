@@ -2072,126 +2072,6 @@ yarn-error.log*
 }
 ````
 
-## File: angular.json
-````json
-{
-  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
-  "version": 1,
-  "newProjectRoot": "projects",
-  "projects": {
-    "book-club-fe": {
-      "projectType": "application",
-      "schematics": {
-        "@schematics/angular:component": {
-          "style": "scss"
-        }
-      },
-      "root": "",
-      "sourceRoot": "src",
-      "prefix": "app",
-      "architect": {
-        "build": {
-          "builder": "@angular/build:application",
-          "options": {
-            "browser": "src/main.ts",
-            "tsConfig": "tsconfig.app.json",
-            "inlineStyleLanguage": "scss",
-            "allowedCommonJsDependencies": [
-              "qrcode"
-            ],
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": [
-              "src/styles.scss"
-            ]
-          },
-          "configurations": {
-            "production": {
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
-                }
-              ],
-              "outputHashing": "all",
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
-                }
-              ]
-            },
-            "development": {
-              "optimization": false,
-              "extractLicenses": false,
-              "sourceMap": true
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "serve": {
-          "builder": "@angular/build:dev-server",
-          "configurations": {
-            "production": {
-              "buildTarget": "book-club-fe:build:production"
-            },
-            "development": {
-              "buildTarget": "book-club-fe:build:development"
-            }
-          },
-          "defaultConfiguration": "development"
-        },
-        "extract-i18n": {
-          "builder": "@angular/build:extract-i18n"
-        },
-        "test": {
-          "builder": "@angular/build:karma",
-          "options": {
-            "karmaConfig": "karma.conf.js",
-            "codeCoverageExclude": ["src/app/shared/spartan/**"],
-            "tsConfig": "tsconfig.spec.json",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": [
-              "src/styles.scss"
-            ]
-          }
-        },
-        "lint": {
-          "builder": "@angular-eslint/builder:lint",
-          "options": {
-            "lintFilePatterns": [
-              "src/**/*.ts",
-              "src/**/*.html"
-            ]
-          }
-        }
-      }
-    }
-  },
-  "cli": {
-    "schematicCollections": [
-      "angular-eslint"
-    ]
-  }
-}
-````
-
 ## File: README.md
 ````markdown
 # BookClubFe
@@ -6755,6 +6635,126 @@ module.exports = {
 };
 ````
 
+## File: angular.json
+````json
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "book-club-fe": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "src/main.ts",
+            "tsConfig": "tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": [
+              "qrcode"
+            ],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
+            ],
+            "styles": [
+              "src/styles.scss"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ]
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "book-club-fe:build:production"
+            },
+            "development": {
+              "buildTarget": "book-club-fe:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "extract-i18n": {
+          "builder": "@angular/build:extract-i18n"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "karmaConfig": "karma.conf.js",
+            "codeCoverageExclude": ["src/app/shared/spartan/**"],
+            "tsConfig": "tsconfig.spec.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
+            ],
+            "styles": [
+              "src/styles.scss"
+            ]
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "cli": {
+    "schematicCollections": [
+      "angular-eslint"
+    ]
+  }
+}
+````
+
 ## File: components.json
 ````json
 {
@@ -6829,47 +6829,6 @@ module.exports = defineConfig([
     rules: {},
   }
 ]);
-````
-
-## File: karma.conf.js
-````javascript
-module.exports = function (config) {
-  config.set({
-    basePath: '',
-    frameworks: ['jasmine'],
-    plugins: [
-      require('karma-jasmine'),
-      require('karma-chrome-launcher'),
-      require('karma-jasmine-html-reporter'),
-      require('karma-coverage'),
-    ],
-    client: {
-      jasmine: {},
-      clearContext: false,
-    },
-    jasmineHtmlReporter: {
-      suppressAll: true,
-    },
-    coverageReporter: {
-      dir: require('path').join(__dirname, './coverage/book-club-fe'),
-      subdir: '.',
-      reporters: [{ type: 'html' }, { type: 'text-summary' }, { type: 'lcovonly' }],
-      exclude: ['**/spartan/**'],
-      check: {
-        global: { statements: 75, branches: 60, functions: 75, lines: 75 },
-      },
-    },
-    reporters: ['progress', 'kjhtml'],
-    browsers: ['ChromeHeadless'],
-    customLaunchers: {
-      ChromeHeadlessCI: {
-        base: 'ChromeHeadless',
-        flags: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
-      },
-    },
-    restartOnFileChange: true,
-  });
-};
 ````
 
 ## File: postcss.config.json
@@ -8946,6 +8905,47 @@ This project uses **Repomix** to provide a full map of the codebase.
 - Always check `repomix-output.md` for the latest project map.
 - If a file is not in repomix-output.md, assume it doesn't exist yet.
 - Backend API routes: see FastAPI project (not in this repo).
+````
+
+## File: karma.conf.js
+````javascript
+module.exports = function (config) {
+  config.set({
+    basePath: '',
+    frameworks: ['jasmine'],
+    plugins: [
+      require('karma-jasmine'),
+      require('karma-chrome-launcher'),
+      require('karma-jasmine-html-reporter'),
+      require('karma-coverage'),
+    ],
+    client: {
+      jasmine: {},
+      clearContext: false,
+    },
+    jasmineHtmlReporter: {
+      suppressAll: true,
+    },
+    coverageReporter: {
+      dir: require('path').join(__dirname, './coverage/book-club-fe'),
+      subdir: '.',
+      reporters: [{ type: 'html' }, { type: 'text-summary' }, { type: 'lcovonly' }],
+      exclude: ['**/spartan/**'],
+      check: {
+        global: { statements: 75, branches: 60, functions: 75, lines: 75 },
+      },
+    },
+    reporters: ['progress', 'kjhtml'],
+    browsers: ['ChromeHeadless'],
+    customLaunchers: {
+      ChromeHeadlessCI: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+      },
+    },
+    restartOnFileChange: true,
+  });
+};
 ````
 
 ## File: postcss.config.mjs
@@ -12557,62 +12557,6 @@ export class AuthService {
 }
 ````
 
-## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  OnInit,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { Club } from '../../../core/models/club.model';
-import { SeoService } from '../../../core/services/seo.service';
-import { TranslateModule } from '@ngx-translate/core';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { ClubCardComponent } from './club-card/club-card.component';
-import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-@Component({
-  selector: 'app-clubs-list',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, ...HlmTabsImports, HlmSpinner],
-  templateUrl: './clubs-list.component.html',
-})
-export class ClubsListComponent implements OnInit {
-  readonly clubService = inject(ClubService);
-  readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  readonly joiningClubId = signal<string | null>(null);
-  readonly ownedClubIds = this.clubService.myOwnedClubIds;
-  async ngOnInit(): Promise<void> {
-    this.seo.setPageI18n('SEO.clubs_title', {
-      descriptionKey: 'SEO.clubs_description',
-      ogTitleKey: 'SEO.clubs_og_title',
-    });
-    this.seo.injectWebSiteJsonLd();
-    await this.clubService.loadPublicClubs();
-    if (this.auth.isAuthenticated()) {
-      await this.clubService.loadMyClubs();
-    }
-  }
-  async onJoin(club: Club): Promise<void> {
-    this.joiningClubId.set(club.id);
-    try {
-      await this.clubService.joinClub(club.id);
-    } catch {
-    } finally {
-      this.joiningClubId.set(null);
-    }
-  }
-}
-````
-
 ## File: .github/workflows/ci.yml
 ````yaml
 name: CI
@@ -12895,6 +12839,62 @@ jobs:
           DEPLOY_URL=$(vercel deploy --prebuilt ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }})
           echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
           echo "Deployed to: $DEPLOY_URL"
+````
+
+## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  OnInit,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { Club } from '../../../core/models/club.model';
+import { SeoService } from '../../../core/services/seo.service';
+import { TranslateModule } from '@ngx-translate/core';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { ClubCardComponent } from './club-card/club-card.component';
+import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+@Component({
+  selector: 'app-clubs-list',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, ...HlmTabsImports, HlmSpinner],
+  templateUrl: './clubs-list.component.html',
+})
+export class ClubsListComponent implements OnInit {
+  readonly clubService = inject(ClubService);
+  readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  readonly joiningClubId = signal<string | null>(null);
+  readonly ownedClubIds = this.clubService.myOwnedClubIds;
+  async ngOnInit(): Promise<void> {
+    this.seo.setPageI18n('SEO.clubs_title', {
+      descriptionKey: 'SEO.clubs_description',
+      ogTitleKey: 'SEO.clubs_og_title',
+    });
+    this.seo.injectWebSiteJsonLd();
+    await this.clubService.loadPublicClubs();
+    if (this.auth.isAuthenticated()) {
+      await this.clubService.loadMyClubs();
+    }
+  }
+  async onJoin(club: Club): Promise<void> {
+    this.joiningClubId.set(club.id);
+    try {
+      await this.clubService.joinClub(club.id);
+    } catch {
+    } finally {
+      this.joiningClubId.set(null);
+    }
+  }
+}
 ````
 
 ## File: public/i18n/en.json
