@@ -1,21 +1,23 @@
 <div class="min-h-screen">
 
   <!-- ── Hero / Search ─────────────────────────────────────────────────── -->
-  <section aria-label="Search clubs" class="bg-gradient-to-br from-primary-600 to-accent-600 px-4 py-12 text-center">
-    <h1 class="font-display text-4xl font-bold text-white mb-2">{{ 'CLUBS.title' | translate }}</h1>
-    <p class="text-primary-100 mb-8">{{ 'CLUBS.subtitle' | translate }}</p>
-    <div class="mx-auto max-w-xl relative">
-      <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true">🔍</span>
-      <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
-      <input
-        id="club-search"
-        type="search"
-        [ngModel]="clubService.searchQuery()"
-        (ngModelChange)="clubService.setSearchQuery($event)"
-        [placeholder]="'CLUBS.search_placeholder_full' | translate"
-        class="w-full rounded-full shadow-sm bg-white dark:bg-gray-800 pl-10 pr-5 py-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 border-0 focus:outline-none focus:ring-2 focus:ring-white/70"
-        [attr.aria-label]="'CLUBS.search_placeholder' | translate"
-      />
+  <section aria-label="Search clubs" class="glass-hero bg-gradient-brand px-4 py-14 text-center">
+    <div class="relative z-10">
+      <h1 class="font-display text-4xl font-bold text-white mb-2 drop-shadow-sm">{{ 'CLUBS.title' | translate }}</h1>
+      <p class="text-white/80 mb-8">{{ 'CLUBS.subtitle' | translate }}</p>
+      <div class="mx-auto max-w-xl relative">
+        <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/60" aria-hidden="true">🔍</span>
+        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
+        <input
+          id="club-search"
+          type="search"
+          [ngModel]="clubService.searchQuery()"
+          (ngModelChange)="clubService.setSearchQuery($event)"
+          [placeholder]="'CLUBS.search_placeholder_full' | translate"
+          class="w-full rounded-full glass-card px-5 pl-10 py-3 text-sm text-gray-900 dark:text-white placeholder-white/60 border-0 focus:outline-none focus:ring-2 focus:ring-white/50"
+          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
+        />
+      </div>
     </div>
   </section>
 
@@ -23,7 +25,7 @@
 
     <!-- ── Global error ───────────────────────────────────────────────── -->
     @if (clubService.error()) {
-      <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+      <div class="flex items-start gap-2 rounded-[var(--bento-radius)] glass-card px-4 py-3 text-sm text-red-700 dark:text-red-400 border-red-200/50 dark:border-red-800/50" role="alert">
         <span aria-hidden="true">⚠️</span>
         <span>{{ clubService.error() }}</span>
       </div>
@@ -38,7 +40,7 @@
         </div>
 
         <!-- All clubs tab -->
-        <div hlmTabsContent="all" class="pt-4">
+        <div hlmTabsContent="all" class="pt-6">
           @if (clubService.isLoading()) {
             <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
               <hlm-spinner />
@@ -50,11 +52,12 @@
               description="No clubs have been created yet. Check back soon!"
             />
           } @else {
-            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              @for (club of clubService.filteredClubs(); track club.id) {
-                <li>
+            <ul class="bento-grid">
+              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
                   <app-club-card
                     [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
                     [isMember]="clubService.myClubIds().has(club.id)"
                     [isOwned]="ownedClubIds().has(club.id)"
                     [isAuthenticated]="auth.isAuthenticated()"
@@ -68,7 +71,7 @@
         </div>
 
         <!-- My clubs tab -->
-        <div hlmTabsContent="my" class="pt-4">
+        <div hlmTabsContent="my" class="pt-6">
           @if (clubService.isLoading()) {
             <div class="py-16 flex justify-center" aria-busy="true">
               <hlm-spinner />
@@ -80,11 +83,12 @@
               description="Join a club to see it here."
             />
           } @else {
-            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              @for (club of clubService.myClubs(); track club.id) {
-                <li>
+            <ul class="bento-grid">
+              @for (club of clubService.myClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
                   <app-club-card
                     [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
                     [isMember]="clubService.myClubIds().has(club.id)"
                     [isOwned]="ownedClubIds().has(club.id)"
                     [isAuthenticated]="auth.isAuthenticated()"
@@ -111,11 +115,12 @@
           description="No clubs have been created yet. Check back soon!"
         />
       } @else {
-        <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          @for (club of clubService.filteredClubs(); track club.id) {
-            <li>
+        <ul class="bento-grid">
+          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
               <app-club-card
                 [club]="club"
+                [variant]="i === 0 ? 'featured' : 'default'"
                 [isMember]="false"
                 [isOwned]="false"
                 [isAuthenticated]="false"
@@ -134,11 +139,11 @@
   @if (auth.isOrganizer()) {
     <a
       routerLink="/clubs/create"
-      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-accent-500 hover:bg-accent-600 text-white shadow-xl focus:outline-none focus:ring-2 focus:ring-accent-400 focus:ring-offset-2 transition-colors"
+      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gradient-brand shadow-xl hover:shadow-accent-500/30 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:ring-offset-2 transition-all duration-200"
       [attr.aria-label]="'CLUBS.create' | translate"
       [title]="'CLUBS.create' | translate"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
       </svg>
     </a>

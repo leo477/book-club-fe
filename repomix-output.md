@@ -1918,15 +1918,6 @@ trim_trailing_whitespace = false
 }
 ````
 
-## File: postcss.config.json
-````json
-{
-  "plugins": {
-    "@tailwindcss/postcss": {}
-  }
-}
-````
-
 ## File: README.md
 ````markdown
 # BookClubFe
@@ -2052,463 +2043,6 @@ declined, etc.
     "src/**/*.ts"
   ]
 }
-````
-
-## File: ui_changes.md
-````markdown
-# UI Changes Plan: Bento Grid + Glassmorphism Redesign
-
-## Context
-
-Проєкт book-club-fe (Angular 20) потребує повного редизайну під **Bento Grid** та **Glassmorphism** стилістику.
-Паралельно є два активних баги:
-
-1. **Порожня сторінка при старті** — замість `/login` відкривається пустий shell
-2. **Стилі не застосовуються** — елементи відображаються без стилів після останнього апгрейду
-
-**Мета:** Сучасний, консистентний UI з Bento Grid розмітками на всіх сторінках та glassmorphism-картками/формами, без регресій у функціональності.
-
----
-
-## Поточний стан (аудит)
-
-### Баги (до редизайну — Round 0)
-
-**Порожня сторінка:** `app.routes.ts:21` — `path: ''` завантажує `ShellComponent` **без гарда**. Дочірній редирект `'' → 'clubs'` (рядок 46) запускає `authGuard` асинхронно, тому користувач бачить порожній shell (~200–500ms) до редиректу на `/login`.
-
-**Стилі зникли:** `styles.scss` та `postcss.config.mjs` налаштовані правильно (`@import "tailwindcss"` + `@tailwindcss/postcss`). Ймовірна причина — зіпсований PostCSS/Vite кеш або зміна у `vite.config.ts`. Потребує діагностики при старті Round 0.
-
-### Що вже є (не ламати)
-- Glassmorphism частково: `backdrop-blur-md`, `bg-white/85` у auth + header
-- CSS Grid на clubs-list (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`)
-- Design tokens у `@theme` (primary sky-blue, accent purple) у `styles.scss:5–34`
-- Spartan UI (HLM) компоненти: button, card, input, field, badge, sheet, spinner у `src/app/shared/spartan/`
-- Dark mode через `.dark` CSS змінні у `styles.scss:65–90`
-
----
-
-## MCP Агенти
-
-| Агент | Модель | Роль у плані |
-|-------|--------|--------------|
-| **dev** | claude-sonnet-4-6 | Основна реалізація Angular — routing, компоненти, логіка |
-| **ui** | claude-haiku-4-5-20251001 | HTML/CSS редизайн, Bento Grid верстка, glassmorphism стилі |
-| **reviewer** | claude-haiku-4-5-20251001 | Code review перед кожним комітом, перевірка регресій |
-| **tester** | claude-haiku-4-5-20251001 | Візуальна регресія, перевірка стилів після кожного раунду |
-
----
-
-## Раунди
-
----
-
-### Round 0 — Hotfix: Баги (пріоритет №1)
-
-**Ціль:** Виправити обидва баги до початку редизайну.
-
-**Агенти:** `dev`
-
-#### Задача 0.1 — Порожня сторінка
-
-**Файл:** `src/app/app.routes.ts`
-
-**Фікс:** Додати `canActivate: [authGuard]` на кореневий маршрут ShellComponent (рядок 20–22):
-
-```typescript
-{
-  path: '',
-  component: ShellComponent,
-  canActivate: [authGuard],   // ← додати
-  children: [ ... ]
-}
-```
-
-Це змусить `authGuard` спрацювати **до** рендеру ShellComponent — user одразу отримає redirect на `/login`.
-
-**Перевірка:** Відкрити `http://localhost:4200/` без токену → має одразу редиректити на `/login` без порожнього флешу.
-
-#### Задача 0.2 — Діагностика стилів
-
-**Агент:** `dev`
-
-**Кроки:**
-1. `rm -rf .angular/cache node_modules/.cache` — очистити Vite/Angular кеш
-2. `npm start` — перевірити чи завантажуються стилі
-3. Якщо не допомогло — перевірити `vite.config.ts` на наявність кастомних postcss налаштувань що конфліктують з `postcss.config.mjs`
-4. Перевірити чи `@import "tailwindcss"` у `styles.scss:1` генерує CSS у DevTools (Network → styles.scss)
-
-**Можливі причини:**
-- Конфлікт між `postcss.config.mjs` та `vite.config.ts` (якщо там є вбудований postcss)
-- `angular.json` не вказує на правильний `styles.scss` (перевірити рядки 32–34)
-- `@spartan-ng/brain/hlm-tailwind-preset.css` файл не існує після апгрейду (перевірити `node_modules/@spartan-ng/brain/`)
-
----
-
-### Round 1 — Design Tokens + Global Foundation
-
-**Ціль:** Встановити глобальну дизайн-систему для Bento Grid + Glassmorphism.
-
-**Агенти:** `ui` (верстка), `dev` (TypeScript утиліти)
-
-#### Задача 1.1 — Glassmorphism токени у styles.scss
-
-**Файл:** `src/styles.scss`
-
-Додати у `@theme` блок (після рядка 34):
-
-```scss
-@theme {
-  /* Glassmorphism */
-  --glass-bg: rgba(255, 255, 255, 0.12);
-  --glass-bg-strong: rgba(255, 255, 255, 0.25);
-  --glass-border: rgba(255, 255, 255, 0.20);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
-  --glass-blur: blur(12px);
-  --glass-blur-strong: blur(20px);
-
-  /* Bento Grid spacing */
-  --bento-gap: 1rem;
-  --bento-gap-lg: 1.5rem;
-  --bento-radius: 1.25rem;
-  --bento-radius-lg: 1.75rem;
-}
-```
-
-#### Задача 1.2 — Reusable Tailwind utility classes
-
-**Файл:** `src/styles.scss` (додати після design tokens)
-
-```scss
-@layer utilities {
-  /* Glassmorphism card */
-  .glass-card {
-    background: var(--glass-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--bento-radius);
-    box-shadow: var(--glass-shadow);
-  }
-
-  .glass-card-strong {
-    background: var(--glass-bg-strong);
-    backdrop-filter: var(--glass-blur-strong);
-    -webkit-backdrop-filter: var(--glass-blur-strong);
-    border: 1px solid var(--glass-border);
-    border-radius: var(--bento-radius-lg);
-    box-shadow: var(--glass-shadow);
-  }
-
-  /* Bento grid layouts */
-  .bento-grid {
-    display: grid;
-    gap: var(--bento-gap);
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  .bento-grid-3 {
-    display: grid;
-    gap: var(--bento-gap);
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  /* Bento cell sizes */
-  .bento-span-2 { grid-column: span 2; }
-  .bento-span-3 { grid-column: span 3; }
-  .bento-span-row-2 { grid-row: span 2; }
-
-  /* Glass input */
-  .glass-input {
-    background: rgba(255, 255, 255, 0.08);
-    border: 1px solid var(--glass-border);
-    backdrop-filter: blur(4px);
-  }
-}
-```
-
-#### Задача 1.3 — Dark mode glassmorphism
-
-У `.dark` блок (`styles.scss:65`) додати override для glass:
-
-```scss
-.dark {
-  --glass-bg: rgba(255, 255, 255, 0.05);
-  --glass-bg-strong: rgba(255, 255, 255, 0.10);
-  --glass-border: rgba(255, 255, 255, 0.10);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.40);
-}
-```
-
-#### Задача 1.4 — HLM Card override
-
-**Файл:** `src/app/shared/spartan/ui-card-helm/src/lib/hlm-card.directive.ts`
-
-Переглянути поточні класи HlmCard, додати variant `glass` через CVA або просто оновити базові класи щоб вони включали `rounded-[var(--bento-radius)]`.
-
-**Перевірка R1:** `npm start` → перевірити у DevTools що `.glass-card` та `.bento-grid` класи доступні.
-
----
-
-### Round 2 — Clubs: Bento Grid (найбільший impact)
-
-**Ціль:** Clubs List та Club Detail — основні сторінки користувача.
-
-**Агенти:** `dev` (логіка), `ui` (HTML/CSS шаблони)
-
-#### Задача 2.1 — Clubs List: Bento Grid розмітка
-
-**Файл:** `src/app/features/clubs/clubs-list/clubs-list.component.html`
-
-**Поточно:** `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5` — однакові карточки.
-
-**Нове:** Перша карточка (featured) займає `span 2` (ширша), решта — стандартні. На мобайлі — linear stack.
-
-```html
-<!-- Hero section з glassmorphism -->
-<section class="relative overflow-hidden min-h-[280px] rounded-[var(--bento-radius-lg)] glass-card-strong px-8 py-10 mb-6">
-  <div class="absolute inset-0 bg-gradient-to-br from-primary-600/40 to-accent-600/40 -z-10"></div>
-  <!-- search + title -->
-</section>
-
-<!-- Bento Grid -->
-<div class="bento-grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-  <!-- Featured club (span 2) -->
-  @if (clubs()[0]) {
-    <div class="bento-span-2 bento-span-row-2">
-      <app-club-card [club]="clubs()[0]" variant="featured" />
-    </div>
-  }
-  <!-- Regular clubs -->
-  @for (club of clubs().slice(1); track club.id) {
-    <app-club-card [club]="club" />
-  }
-</div>
-```
-
-#### Задача 2.2 — ClubCardComponent: glassmorphism + featured variant
-
-**Файл:** `src/app/features/clubs/clubs-list/club-card/club-card.component.ts`
-
-Додати `@Input() variant: 'default' | 'featured' = 'default'`. У HTML:
-- Default: `glass-card p-4 hover:scale-[1.02] transition-transform`
-- Featured: `glass-card-strong p-6 flex flex-col justify-between` + більший текст заголовку
-
-#### Задача 2.3 — Club Detail: Bento layout
-
-**Файл:** `src/app/features/clubs/club-detail/club-detail.component.html`
-
-**Поточно:** `flex flex-col lg:flex-row gap-6`
-
-**Нове:** Справжній Bento Grid для desktop:
-
-```
-[ Book Cover + Info (span 2, row 2) ] [ Members (span 2) ]
-                                       [ Schedule (span 2) ]
-[ Description (span 4) ]
-[ Upcoming Events — bento grid всередині (span 4) ]
-```
-
-- Всі секції отримують `glass-card` клас
-- Hero: `glass-card-strong` з gradient overlay
-
-#### Задача 2.4 — ClubEventCard: glassmorphism refinement
-
-**Файл:** `src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html` та `.scss`
-
-Замінити `.parchment-card` на glassmorphism стиль (прибрати старий parchment ефект). Зберегти `@keyframes card-appear` анімацію — вона хороша.
-
-**Перевірка R2:** Відкрити `/clubs` — перевірити що featured card ширша, всі карточки з glass ефектом, hover анімації працюють. Пройти в club detail.
-
----
-
-### Round 3 — Events Feed: Bento по датах
-
-**Ціль:** Events Feed з glassmorphism групуванням по датах.
-
-**Агенти:** `ui` (розмітка), `dev` (логіка групування якщо треба змінювати)
-
-#### Задача 3.1 — Events Feed layout
-
-**Файл:** `src/app/features/events/events-feed/events-feed.component.html`
-
-**Нове:** Кожна дата-група — окремий Bento Grid. Перший event у групі — featured (span 2), решта — стандартні.
-
-- Фільтр міста: `glass-card` pill-стиль
-- Date header: glassmorphism sticky pill `glass-card px-4 py-1.5 text-sm font-medium sticky top-20 z-10`
-
-#### Задача 3.2 — EventCard: glassmorphism
-
-**Файл:** `src/app/features/events/event-card/event-card.component.html`
-
-Замінити поточні Tailwind класи на `glass-card` + hover ефект. Зберегти всю логіку.
-
-**Перевірка R3:** Відкрити `/events` — перевірити групи по датах, featured event.
-
----
-
-### Round 4 — Auth Forms: Glassmorphism Polish
-
-**Ціль:** Login/Register — консистентний glassmorphism з backdrop.
-
-**Агенти:** `ui`
-
-#### Задача 4.1 — Login page
-
-**Файл:** `src/app/features/auth/login/login.component.html`
-
-**Поточно:** вже має `bg-white/85 backdrop-blur-md` — хороший старт.
-
-**Нове:**
-- Прибрати inline `<style>` блок — перенести в component SCSS файл (або Tailwind)
-- Фон: `bg-gradient-to-br from-primary-900 via-accent-900 to-primary-800` + animated mesh
-- Карточка: `glass-card-strong max-w-md w-full mx-auto`
-- Inputs: `glass-input` клас
-- Submit button: gradient `from-primary-500 to-accent-500`
-
-#### Задача 4.2 — Register page
-
-**Файл:** `src/app/features/auth/register/register.component.html`
-
-Аналогічно до login — консистентний стиль.
-
-**Перевірка R4:** Відкрити `/login` та `/register` — glassmorphism форма на темному gradient фоні.
-
----
-
-### Round 5 — Profile: Bento Sections
-
-**Ціль:** Profile page — секційний Bento Grid замість вертикального стека.
-
-**Агенти:** `ui`, `dev`
-
-#### Задача 5.1 — Profile layout
-
-**Файл:** `src/app/features/profile/profile.component.html`
-
-**Нове Bento Grid для desktop:**
-
-```
-[ Avatar + Name + Role (span 2, row 2) ] [ Stats (span 2) ]
-                                          [ Social Links (span 2) ]
-[ Edit Form (span 4) ]
-```
-
-- Кожна секція: `glass-card`
-- Avatar: ring з `ring-2 ring-primary-400/50`
-
-#### Задача 5.2 — Profile Stats
-
-**Файл:** `src/app/features/profile/profile-stats/profile-stats.component.html`
-
-Bento мікро-grid 2×2 для stats карточок (books read, clubs joined, events attended тощо).
-
-**Перевірка R5:** Відкрити `/profile` — секції як bento, stats карточки.
-
----
-
-### Round 6 — Secondary Pages + Shared
-
-**Ціль:** Quiz, Randomizer, Shared компоненти — уніфікувати.
-
-**Агенти:** `ui`
-
-#### Задача 6.1 — Quiz List
-
-**Файл:** `src/app/features/quiz/quiz-list/quiz-list.component.html`
-
-Замінити `space-y-4` вертикальний стек на `bento-grid-3` — quiz карточки як bento cells.
-
-#### Задача 6.2 — Shared компоненти
-
-- `empty-state` → `glass-card` стиль
-- `loading-spinner` → зберегти, але обгорнути у glass-overlay якщо використовується як page-level loader
-- `form-field` → оновити border/focus стилі під glassmorphism (більш subtle)
-
-#### Задача 6.3 — Header refinement
-
-**Файл:** `src/app/layout/header/header.component.html`
-
-Header вже має `backdrop-blur` — перевірити консистентність з рештою, можливо посилити `bg-white/10` → `glass-card` стиль.
-
-**Перевірка R6:** Пройтись по всіх сторінках — візуальна консистентність.
-
----
-
-### Round 7 — Review + Visual Regression
-
-**Ціль:** Фінальна перевірка якості коду та відсутності регресій.
-
-**Агенти:** `reviewer`, `tester`
-
-#### Задача 7.1 — Code Review
-
-**Агент:** `reviewer`
-
-Перевірити всі змінені файли на:
-- Відсутність inline styles (все у SCSS або Tailwind)
-- Правильне використання `glass-card` / `bento-grid` класів
-- Відсутність дублювання стилів
-- Angular 20 best practices (OnPush, signals, standalone)
-
-#### Задача 7.2 — Visual Regression Tests
-
-**Агент:** `tester`
-
-Playwright screenshots для кожної сторінки:
-- `/login`, `/register`
-- `/clubs`, `/clubs/:id`
-- `/events`
-- `/profile`
-
-Порівняти до/після — зафіксувати як baseline для майбутніх змін.
-
-#### Задача 7.3 — Unit Tests
-
-**Агент:** `tester`
-
-Запустити `npm run test` — всі 53 тести мають проходити (регресій не повинно бути, якщо тільки змінювались HTML/CSS).
-
----
-
-## Критичні файли
-
-| Файл | Зміни |
-|------|-------|
-| `src/styles.scss` | R1: glass/bento токени + utility classes |
-| `src/app/app.routes.ts:20` | R0: додати `canActivate: [authGuard]` |
-| `src/app/features/clubs/clubs-list/clubs-list.component.html` | R2: bento grid |
-| `src/app/features/clubs/clubs-list/club-card/club-card.component.html` | R2: glassmorphism + featured variant |
-| `src/app/features/clubs/club-detail/club-detail.component.html` | R2: bento layout |
-| `src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html` | R2: glass cards |
-| `src/app/features/events/events-feed/events-feed.component.html` | R3: bento by date |
-| `src/app/features/auth/login/login.component.html` | R4: glass form + move inline styles |
-| `src/app/features/auth/register/register.component.html` | R4: glass form |
-| `src/app/features/profile/profile.component.html` | R5: bento sections |
-| `src/app/shared/spartan/ui-card-helm/` | R1: glass variant |
-
----
-
-## Технічні обмеження
-
-- **Tailwind v4**: немає `tailwind.config.ts` — конфіг через `@theme` у `styles.scss`. Кастомні утиліти через `@layer utilities`.
-- **Spartan UI (HLM)**: HlmCard/HlmButton використовують CVA — розширювати через `className` input або додатковий variant, не переписувати базові компоненти.
-- **OnPush**: всі компоненти з `ChangeDetectionStrategy.OnPush` — нові `@Input()` variants мають бути чистими значеннями.
-- **Angular animations**: поточні SCSS `@keyframes` (card-appear, shimmer, winner-pop) — зберегти, не замінювати.
-- **Dark mode**: всі нові glass стилі мають мати `.dark` override.
-
----
-
-## Порядок виконання
-
-```
-Round 0 (Hotfix)   → Round 1 (Foundation) → Round 2 (Clubs)
-     → Round 3 (Events) → Round 4 (Auth) → Round 5 (Profile)
-          → Round 6 (Secondary) → Round 7 (Review)
-```
-
-Round 0 є блокуючим — без нього редизайн не починати (баги ускладнять тестування).
-Round 1 є блокуючим для всіх наступних — design tokens мають бути визначені першими.
-Round 2–6 можна частково паралелізувати (різні feature-директорії незалежні).
 ````
 
 ## File: .github/workflows/bundle-size.yml
@@ -7021,60 +6555,6 @@ export const appConfig: ApplicationConfig = {
 };
 ````
 
-## File: src/app/app.routes.ts
-````typescript
-import { Routes } from '@angular/router';
-import { authGuard } from './core/auth/auth.guard';
-import { roleGuard } from './core/auth/role.guard';
-import { ShellComponent } from './layout/shell/shell.component';
-export const routes: Routes = [
-  {
-    path: 'login',
-    loadComponent: () =>
-      import('./features/auth/login/login.component').then(m => m.LoginComponent),
-  },
-  {
-    path: 'register',
-    loadComponent: () =>
-      import('./features/auth/register/register.component').then(m => m.RegisterComponent),
-  },
-  {
-    path: '',
-    component: ShellComponent,
-    canActivate: [authGuard],
-    children: [
-      // Protected: any authenticated user
-      {
-        path: 'clubs',
-        canActivate: [authGuard],
-        loadChildren: () => import('./features/clubs/clubs.routes').then(m => m.CLUBS_ROUTES),
-      },
-      {
-        path: 'events',
-        canActivate: [authGuard],
-        loadChildren: () => import('./features/events/events.routes').then(m => m.EVENTS_ROUTES),
-      },
-      {
-        path: 'manage',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('./features/clubs/clubs-list/clubs-list.component').then(
-            m => m.ClubsListComponent,
-          ),
-      },
-      { path: '', redirectTo: 'clubs', pathMatch: 'full' },
-      {
-        path: 'profile',
-        canActivate: [authGuard],
-        loadComponent: () =>
-          import('./features/profile/profile.component').then(m => m.ProfileComponent),
-      },
-      { path: '**', redirectTo: 'clubs' },
-    ],
-  },
-];
-````
-
 ## File: src/environments/environment.prod.ts
 ````typescript
 export const environment = {
@@ -7453,19 +6933,13 @@ module.exports = function (config) {
 };
 ````
 
-## File: postcss.config.mjs
-````javascript
-import tailwindcss from '@tailwindcss/postcss';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-export default {
-  plugins: [
-    tailwindcss({ base: __dirname }),
-  ],
-};
+## File: postcss.config.json
+````json
+{
+  "plugins": {
+    "@tailwindcss/postcss": {}
+  }
+}
 ````
 
 ## File: repomix.config.json
@@ -7908,6 +7382,463 @@ Round 9  ───────────────────────�
 - `address-autocomplete` — якщо `BrnComboboxComponent` не підтримує async Google Places API
 ````
 
+## File: ui_changes.md
+````markdown
+# UI Changes Plan: Bento Grid + Glassmorphism Redesign
+
+## Context
+
+Проєкт book-club-fe (Angular 20) потребує повного редизайну під **Bento Grid** та **Glassmorphism** стилістику.
+Паралельно є два активних баги:
+
+1. **Порожня сторінка при старті** — замість `/login` відкривається пустий shell
+2. **Стилі не застосовуються** — елементи відображаються без стилів після останнього апгрейду
+
+**Мета:** Сучасний, консистентний UI з Bento Grid розмітками на всіх сторінках та glassmorphism-картками/формами, без регресій у функціональності.
+
+---
+
+## Поточний стан (аудит)
+
+### Баги (до редизайну — Round 0)
+
+**Порожня сторінка:** `app.routes.ts:21` — `path: ''` завантажує `ShellComponent` **без гарда**. Дочірній редирект `'' → 'clubs'` (рядок 46) запускає `authGuard` асинхронно, тому користувач бачить порожній shell (~200–500ms) до редиректу на `/login`.
+
+**Стилі зникли:** `styles.scss` та `postcss.config.mjs` налаштовані правильно (`@import "tailwindcss"` + `@tailwindcss/postcss`). Ймовірна причина — зіпсований PostCSS/Vite кеш або зміна у `vite.config.ts`. Потребує діагностики при старті Round 0.
+
+### Що вже є (не ламати)
+- Glassmorphism частково: `backdrop-blur-md`, `bg-white/85` у auth + header
+- CSS Grid на clubs-list (`grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`)
+- Design tokens у `@theme` (primary sky-blue, accent purple) у `styles.scss:5–34`
+- Spartan UI (HLM) компоненти: button, card, input, field, badge, sheet, spinner у `src/app/shared/spartan/`
+- Dark mode через `.dark` CSS змінні у `styles.scss:65–90`
+
+---
+
+## MCP Агенти
+
+| Агент | Модель | Роль у плані |
+|-------|--------|--------------|
+| **dev** | claude-sonnet-4-6 | Основна реалізація Angular — routing, компоненти, логіка |
+| **ui** | claude-haiku-4-5-20251001 | HTML/CSS редизайн, Bento Grid верстка, glassmorphism стилі |
+| **reviewer** | claude-haiku-4-5-20251001 | Code review перед кожним комітом, перевірка регресій |
+| **tester** | claude-haiku-4-5-20251001 | Візуальна регресія, перевірка стилів після кожного раунду |
+
+---
+
+## Раунди
+
+---
+
+### Round 0 — Hotfix: Баги (пріоритет №1)
+
+**Ціль:** Виправити обидва баги до початку редизайну.
+
+**Агенти:** `dev`
+
+#### Задача 0.1 — Порожня сторінка
+
+**Файл:** `src/app/app.routes.ts`
+
+**Фікс:** Додати `canActivate: [authGuard]` на кореневий маршрут ShellComponent (рядок 20–22):
+
+```typescript
+{
+  path: '',
+  component: ShellComponent,
+  canActivate: [authGuard],   // ← додати
+  children: [ ... ]
+}
+```
+
+Це змусить `authGuard` спрацювати **до** рендеру ShellComponent — user одразу отримає redirect на `/login`.
+
+**Перевірка:** Відкрити `http://localhost:4200/` без токену → має одразу редиректити на `/login` без порожнього флешу.
+
+#### Задача 0.2 — Діагностика стилів
+
+**Агент:** `dev`
+
+**Кроки:**
+1. `rm -rf .angular/cache node_modules/.cache` — очистити Vite/Angular кеш
+2. `npm start` — перевірити чи завантажуються стилі
+3. Якщо не допомогло — перевірити `vite.config.ts` на наявність кастомних postcss налаштувань що конфліктують з `postcss.config.mjs`
+4. Перевірити чи `@import "tailwindcss"` у `styles.scss:1` генерує CSS у DevTools (Network → styles.scss)
+
+**Можливі причини:**
+- Конфлікт між `postcss.config.mjs` та `vite.config.ts` (якщо там є вбудований postcss)
+- `angular.json` не вказує на правильний `styles.scss` (перевірити рядки 32–34)
+- `@spartan-ng/brain/hlm-tailwind-preset.css` файл не існує після апгрейду (перевірити `node_modules/@spartan-ng/brain/`)
+
+---
+
+### Round 1 — Design Tokens + Global Foundation
+
+**Ціль:** Встановити глобальну дизайн-систему для Bento Grid + Glassmorphism.
+
+**Агенти:** `ui` (верстка), `dev` (TypeScript утиліти)
+
+#### Задача 1.1 — Glassmorphism токени у styles.scss
+
+**Файл:** `src/styles.scss`
+
+Додати у `@theme` блок (після рядка 34):
+
+```scss
+@theme {
+  /* Glassmorphism */
+  --glass-bg: rgba(255, 255, 255, 0.12);
+  --glass-bg-strong: rgba(255, 255, 255, 0.25);
+  --glass-border: rgba(255, 255, 255, 0.20);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+  --glass-blur: blur(12px);
+  --glass-blur-strong: blur(20px);
+
+  /* Bento Grid spacing */
+  --bento-gap: 1rem;
+  --bento-gap-lg: 1.5rem;
+  --bento-radius: 1.25rem;
+  --bento-radius-lg: 1.75rem;
+}
+```
+
+#### Задача 1.2 — Reusable Tailwind utility classes
+
+**Файл:** `src/styles.scss` (додати після design tokens)
+
+```scss
+@layer utilities {
+  /* Glassmorphism card */
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--bento-radius);
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-card-strong {
+    background: var(--glass-bg-strong);
+    backdrop-filter: var(--glass-blur-strong);
+    -webkit-backdrop-filter: var(--glass-blur-strong);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--bento-radius-lg);
+    box-shadow: var(--glass-shadow);
+  }
+
+  /* Bento grid layouts */
+  .bento-grid {
+    display: grid;
+    gap: var(--bento-gap);
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .bento-grid-3 {
+    display: grid;
+    gap: var(--bento-gap);
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  /* Bento cell sizes */
+  .bento-span-2 { grid-column: span 2; }
+  .bento-span-3 { grid-column: span 3; }
+  .bento-span-row-2 { grid-row: span 2; }
+
+  /* Glass input */
+  .glass-input {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(4px);
+  }
+}
+```
+
+#### Задача 1.3 — Dark mode glassmorphism
+
+У `.dark` блок (`styles.scss:65`) додати override для glass:
+
+```scss
+.dark {
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-bg-strong: rgba(255, 255, 255, 0.10);
+  --glass-border: rgba(255, 255, 255, 0.10);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.40);
+}
+```
+
+#### Задача 1.4 — HLM Card override
+
+**Файл:** `src/app/shared/spartan/ui-card-helm/src/lib/hlm-card.directive.ts`
+
+Переглянути поточні класи HlmCard, додати variant `glass` через CVA або просто оновити базові класи щоб вони включали `rounded-[var(--bento-radius)]`.
+
+**Перевірка R1:** `npm start` → перевірити у DevTools що `.glass-card` та `.bento-grid` класи доступні.
+
+---
+
+### Round 2 — Clubs: Bento Grid (найбільший impact)
+
+**Ціль:** Clubs List та Club Detail — основні сторінки користувача.
+
+**Агенти:** `dev` (логіка), `ui` (HTML/CSS шаблони)
+
+#### Задача 2.1 — Clubs List: Bento Grid розмітка
+
+**Файл:** `src/app/features/clubs/clubs-list/clubs-list.component.html`
+
+**Поточно:** `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5` — однакові карточки.
+
+**Нове:** Перша карточка (featured) займає `span 2` (ширша), решта — стандартні. На мобайлі — linear stack.
+
+```html
+<!-- Hero section з glassmorphism -->
+<section class="relative overflow-hidden min-h-[280px] rounded-[var(--bento-radius-lg)] glass-card-strong px-8 py-10 mb-6">
+  <div class="absolute inset-0 bg-gradient-to-br from-primary-600/40 to-accent-600/40 -z-10"></div>
+  <!-- search + title -->
+</section>
+
+<!-- Bento Grid -->
+<div class="bento-grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+  <!-- Featured club (span 2) -->
+  @if (clubs()[0]) {
+    <div class="bento-span-2 bento-span-row-2">
+      <app-club-card [club]="clubs()[0]" variant="featured" />
+    </div>
+  }
+  <!-- Regular clubs -->
+  @for (club of clubs().slice(1); track club.id) {
+    <app-club-card [club]="club" />
+  }
+</div>
+```
+
+#### Задача 2.2 — ClubCardComponent: glassmorphism + featured variant
+
+**Файл:** `src/app/features/clubs/clubs-list/club-card/club-card.component.ts`
+
+Додати `@Input() variant: 'default' | 'featured' = 'default'`. У HTML:
+- Default: `glass-card p-4 hover:scale-[1.02] transition-transform`
+- Featured: `glass-card-strong p-6 flex flex-col justify-between` + більший текст заголовку
+
+#### Задача 2.3 — Club Detail: Bento layout
+
+**Файл:** `src/app/features/clubs/club-detail/club-detail.component.html`
+
+**Поточно:** `flex flex-col lg:flex-row gap-6`
+
+**Нове:** Справжній Bento Grid для desktop:
+
+```
+[ Book Cover + Info (span 2, row 2) ] [ Members (span 2) ]
+                                       [ Schedule (span 2) ]
+[ Description (span 4) ]
+[ Upcoming Events — bento grid всередині (span 4) ]
+```
+
+- Всі секції отримують `glass-card` клас
+- Hero: `glass-card-strong` з gradient overlay
+
+#### Задача 2.4 — ClubEventCard: glassmorphism refinement
+
+**Файл:** `src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html` та `.scss`
+
+Замінити `.parchment-card` на glassmorphism стиль (прибрати старий parchment ефект). Зберегти `@keyframes card-appear` анімацію — вона хороша.
+
+**Перевірка R2:** Відкрити `/clubs` — перевірити що featured card ширша, всі карточки з glass ефектом, hover анімації працюють. Пройти в club detail.
+
+---
+
+### Round 3 — Events Feed: Bento по датах
+
+**Ціль:** Events Feed з glassmorphism групуванням по датах.
+
+**Агенти:** `ui` (розмітка), `dev` (логіка групування якщо треба змінювати)
+
+#### Задача 3.1 — Events Feed layout
+
+**Файл:** `src/app/features/events/events-feed/events-feed.component.html`
+
+**Нове:** Кожна дата-група — окремий Bento Grid. Перший event у групі — featured (span 2), решта — стандартні.
+
+- Фільтр міста: `glass-card` pill-стиль
+- Date header: glassmorphism sticky pill `glass-card px-4 py-1.5 text-sm font-medium sticky top-20 z-10`
+
+#### Задача 3.2 — EventCard: glassmorphism
+
+**Файл:** `src/app/features/events/event-card/event-card.component.html`
+
+Замінити поточні Tailwind класи на `glass-card` + hover ефект. Зберегти всю логіку.
+
+**Перевірка R3:** Відкрити `/events` — перевірити групи по датах, featured event.
+
+---
+
+### Round 4 — Auth Forms: Glassmorphism Polish
+
+**Ціль:** Login/Register — консистентний glassmorphism з backdrop.
+
+**Агенти:** `ui`
+
+#### Задача 4.1 — Login page
+
+**Файл:** `src/app/features/auth/login/login.component.html`
+
+**Поточно:** вже має `bg-white/85 backdrop-blur-md` — хороший старт.
+
+**Нове:**
+- Прибрати inline `<style>` блок — перенести в component SCSS файл (або Tailwind)
+- Фон: `bg-gradient-to-br from-primary-900 via-accent-900 to-primary-800` + animated mesh
+- Карточка: `glass-card-strong max-w-md w-full mx-auto`
+- Inputs: `glass-input` клас
+- Submit button: gradient `from-primary-500 to-accent-500`
+
+#### Задача 4.2 — Register page
+
+**Файл:** `src/app/features/auth/register/register.component.html`
+
+Аналогічно до login — консистентний стиль.
+
+**Перевірка R4:** Відкрити `/login` та `/register` — glassmorphism форма на темному gradient фоні.
+
+---
+
+### Round 5 — Profile: Bento Sections
+
+**Ціль:** Profile page — секційний Bento Grid замість вертикального стека.
+
+**Агенти:** `ui`, `dev`
+
+#### Задача 5.1 — Profile layout
+
+**Файл:** `src/app/features/profile/profile.component.html`
+
+**Нове Bento Grid для desktop:**
+
+```
+[ Avatar + Name + Role (span 2, row 2) ] [ Stats (span 2) ]
+                                          [ Social Links (span 2) ]
+[ Edit Form (span 4) ]
+```
+
+- Кожна секція: `glass-card`
+- Avatar: ring з `ring-2 ring-primary-400/50`
+
+#### Задача 5.2 — Profile Stats
+
+**Файл:** `src/app/features/profile/profile-stats/profile-stats.component.html`
+
+Bento мікро-grid 2×2 для stats карточок (books read, clubs joined, events attended тощо).
+
+**Перевірка R5:** Відкрити `/profile` — секції як bento, stats карточки.
+
+---
+
+### Round 6 — Secondary Pages + Shared
+
+**Ціль:** Quiz, Randomizer, Shared компоненти — уніфікувати.
+
+**Агенти:** `ui`
+
+#### Задача 6.1 — Quiz List
+
+**Файл:** `src/app/features/quiz/quiz-list/quiz-list.component.html`
+
+Замінити `space-y-4` вертикальний стек на `bento-grid-3` — quiz карточки як bento cells.
+
+#### Задача 6.2 — Shared компоненти
+
+- `empty-state` → `glass-card` стиль
+- `loading-spinner` → зберегти, але обгорнути у glass-overlay якщо використовується як page-level loader
+- `form-field` → оновити border/focus стилі під glassmorphism (більш subtle)
+
+#### Задача 6.3 — Header refinement
+
+**Файл:** `src/app/layout/header/header.component.html`
+
+Header вже має `backdrop-blur` — перевірити консистентність з рештою, можливо посилити `bg-white/10` → `glass-card` стиль.
+
+**Перевірка R6:** Пройтись по всіх сторінках — візуальна консистентність.
+
+---
+
+### Round 7 — Review + Visual Regression
+
+**Ціль:** Фінальна перевірка якості коду та відсутності регресій.
+
+**Агенти:** `reviewer`, `tester`
+
+#### Задача 7.1 — Code Review
+
+**Агент:** `reviewer`
+
+Перевірити всі змінені файли на:
+- Відсутність inline styles (все у SCSS або Tailwind)
+- Правильне використання `glass-card` / `bento-grid` класів
+- Відсутність дублювання стилів
+- Angular 20 best practices (OnPush, signals, standalone)
+
+#### Задача 7.2 — Visual Regression Tests
+
+**Агент:** `tester`
+
+Playwright screenshots для кожної сторінки:
+- `/login`, `/register`
+- `/clubs`, `/clubs/:id`
+- `/events`
+- `/profile`
+
+Порівняти до/після — зафіксувати як baseline для майбутніх змін.
+
+#### Задача 7.3 — Unit Tests
+
+**Агент:** `tester`
+
+Запустити `npm run test` — всі 53 тести мають проходити (регресій не повинно бути, якщо тільки змінювались HTML/CSS).
+
+---
+
+## Критичні файли
+
+| Файл | Зміни |
+|------|-------|
+| `src/styles.scss` | R1: glass/bento токени + utility classes |
+| `src/app/app.routes.ts:20` | R0: додати `canActivate: [authGuard]` |
+| `src/app/features/clubs/clubs-list/clubs-list.component.html` | R2: bento grid |
+| `src/app/features/clubs/clubs-list/club-card/club-card.component.html` | R2: glassmorphism + featured variant |
+| `src/app/features/clubs/club-detail/club-detail.component.html` | R2: bento layout |
+| `src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html` | R2: glass cards |
+| `src/app/features/events/events-feed/events-feed.component.html` | R3: bento by date |
+| `src/app/features/auth/login/login.component.html` | R4: glass form + move inline styles |
+| `src/app/features/auth/register/register.component.html` | R4: glass form |
+| `src/app/features/profile/profile.component.html` | R5: bento sections |
+| `src/app/shared/spartan/ui-card-helm/` | R1: glass variant |
+
+---
+
+## Технічні обмеження
+
+- **Tailwind v4**: немає `tailwind.config.ts` — конфіг через `@theme` у `styles.scss`. Кастомні утиліти через `@layer utilities`.
+- **Spartan UI (HLM)**: HlmCard/HlmButton використовують CVA — розширювати через `className` input або додатковий variant, не переписувати базові компоненти.
+- **OnPush**: всі компоненти з `ChangeDetectionStrategy.OnPush` — нові `@Input()` variants мають бути чистими значеннями.
+- **Angular animations**: поточні SCSS `@keyframes` (card-appear, shimmer, winner-pop) — зберегти, не замінювати.
+- **Dark mode**: всі нові glass стилі мають мати `.dark` override.
+
+---
+
+## Порядок виконання
+
+```
+Round 0 (Hotfix)   → Round 1 (Foundation) → Round 2 (Clubs)
+     → Round 3 (Events) → Round 4 (Auth) → Round 5 (Profile)
+          → Round 6 (Secondary) → Round 7 (Review)
+```
+
+Round 0 є блокуючим — без нього редизайн не починати (баги ускладнять тестування).
+Round 1 є блокуючим для всіх наступних — design tokens мають бути визначені першими.
+Round 2–6 можна частково паралелізувати (різні feature-директорії незалежні).
+````
+
 ## File: .husky/pre-commit
 ````
 #!/usr/bin/env sh
@@ -8055,66 +7986,64 @@ export class TokenStore {
 ## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html
 ````html
 <article
-  class="parchment-card relative rounded-2xl overflow-hidden flex flex-col"
+  class="parchment-card glass-card flex flex-col overflow-hidden h-full"
   [style.animation-delay]="index() * 80 + 'ms'"
-  [class]="'bg-gradient-to-br from-[#f9f1e3] to-[#ede0cc] dark:from-[#2a1f0f] dark:to-[#1e1508] shadow-md border border-[#d4a96a]/40 dark:border-[#7a5c2e]/40'"
 >
   @if (event().coverUrl) {
-    <div class="h-32 overflow-hidden">
+    <div class="h-28 overflow-hidden flex-shrink-0">
       <img [src]="event().coverUrl" [alt]="event().title" class="w-full h-full object-cover" loading="lazy" />
     </div>
   } @else {
-    <div class="h-1 w-full bg-gradient-to-r from-amber-400 via-primary-500 to-accent-500"></div>
+    <div class="h-1 w-full bg-gradient-to-r from-primary-500 via-accent-500 to-primary-400 flex-shrink-0"></div>
   }
   @if (event().status !== 'scheduled') {
     <div
-      class="absolute top-3 right-3 w-10 h-10 rounded-full flex items-center justify-center text-base shadow-md border-2 z-10"
+      class="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center text-sm shadow-sm border z-10"
       [class]="event().status === 'active'
-        ? 'bg-green-100 border-green-400 dark:bg-green-900/50 dark:border-green-600'
+        ? 'bg-green-100/80 border-green-400 dark:bg-green-900/50 dark:border-green-600'
         : event().status === 'cancelled'
-          ? 'bg-red-100 border-red-400 dark:bg-red-900/50 dark:border-red-600'
-          : 'bg-yellow-100 border-yellow-400 dark:bg-yellow-900/50 dark:border-yellow-600'"
+          ? 'bg-red-100/80 border-red-400 dark:bg-red-900/50 dark:border-red-600'
+          : 'bg-yellow-100/80 border-yellow-400 dark:bg-yellow-900/50 dark:border-yellow-600'"
       [attr.title]="event().status"
     >
       {{ event().status === 'active' ? '🟢' : event().status === 'cancelled' ? '🔴' : '🟡' }}
     </div>
   }
-  <div class="flex flex-col flex-1 p-5 gap-3">
-    <div class="flex items-center gap-2">
-      <span class="inline-flex items-center gap-1.5 rounded-full bg-primary-100 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
+  <div class="flex flex-col flex-1 p-4 gap-3">
+    <div>
+      <span class="inline-flex items-center gap-1.5 rounded-full bg-primary-100/80 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/60 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
         📅 {{ event().date | formatDate }}
       </span>
     </div>
     <a
       [routerLink]="['/events', event().id]"
-      class="block font-serif text-lg font-semibold italic leading-snug text-gray-900 dark:text-amber-100 hover:text-primary-700 dark:hover:text-primary-400 transition-colors line-clamp-2"
-      style="font-family: 'Playfair Display', Georgia, serif;"
+      class="block font-display text-base font-semibold leading-snug text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors line-clamp-2"
     >
       {{ event().title }}
     </a>
     @if (event().city) {
-      <p class="flex items-center gap-1.5 text-xs text-gray-600 dark:text-amber-200/70">
-        <span>📍</span>
+      <p class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+        <span aria-hidden="true">📍</span>
         <span>{{ event().address || event().city }}</span>
       </p>
     }
     @if (event().theme || event().tags.length > 0) {
       <div class="flex flex-wrap gap-1.5">
         @if (event().theme) {
-          <span class="rune-pill rounded-full bg-accent-100 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
+          <span class="rune-pill rounded-full bg-accent-100/80 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700/60 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
             ✨ {{ event().theme }}
           </span>
         }
         @for (tag of event().tags.slice(0, 2); track tag) {
-          <span class="rune-pill rounded-full bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 px-2.5 py-0.5 text-xs text-amber-800 dark:text-amber-300">
+          <span class="rune-pill rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-600 dark:text-gray-400">
             🏷 {{ tag }}
           </span>
         }
       </div>
     }
-    <div class="flex items-center justify-between mt-auto pt-2 border-t border-[#d4a96a]/30 dark:border-[#7a5c2e]/30">
-      <span class="text-xs text-gray-500 dark:text-amber-200/50 flex items-center gap-1">
-        🕯️ {{ event().attendeeCount }} {{ 'CLUB_DETAIL.rsvp_attending' | translate }}
+    <div class="flex items-center justify-between mt-auto pt-2 border-t border-white/20 dark:border-white/10">
+      <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+        👥 {{ event().attendeeCount }} {{ 'CLUB_DETAIL.rsvp_attending' | translate }}
       </span>
       <div class="flex items-center gap-2">
         @if (isAuthenticated() && event().status !== 'cancelled') {
@@ -8155,7 +8084,6 @@ export class TokenStore {
       </div>
     </div>
   </div>
-  <div class="h-px w-full bg-gradient-to-r from-transparent via-amber-400/40 to-transparent"></div>
 </article>
 ````
 
@@ -9070,6 +8998,60 @@ export class QrCodeComponent {
 }
 ````
 
+## File: src/app/app.routes.ts
+````typescript
+import { Routes } from '@angular/router';
+import { authGuard } from './core/auth/auth.guard';
+import { roleGuard } from './core/auth/role.guard';
+import { ShellComponent } from './layout/shell/shell.component';
+export const routes: Routes = [
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/login/login.component').then(m => m.LoginComponent),
+  },
+  {
+    path: 'register',
+    loadComponent: () =>
+      import('./features/auth/register/register.component').then(m => m.RegisterComponent),
+  },
+  {
+    path: '',
+    component: ShellComponent,
+    canActivate: [authGuard],
+    children: [
+      // Protected: any authenticated user
+      {
+        path: 'clubs',
+        canActivate: [authGuard],
+        loadChildren: () => import('./features/clubs/clubs.routes').then(m => m.CLUBS_ROUTES),
+      },
+      {
+        path: 'events',
+        canActivate: [authGuard],
+        loadChildren: () => import('./features/events/events.routes').then(m => m.EVENTS_ROUTES),
+      },
+      {
+        path: 'manage',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('./features/clubs/clubs-list/clubs-list.component').then(
+            m => m.ClubsListComponent,
+          ),
+      },
+      { path: '', redirectTo: 'clubs', pathMatch: 'full' },
+      {
+        path: 'profile',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/profile/profile.component').then(m => m.ProfileComponent),
+      },
+      { path: '**', redirectTo: 'clubs' },
+    ],
+  },
+];
+````
+
 ## File: src/environments/environment.ts
 ````typescript
 export const environment = {
@@ -9115,6 +9097,21 @@ This project uses **Repomix** to provide a full map of the codebase.
 - Always check `repomix-output.md` for the latest project map.
 - If a file is not in repomix-output.md, assume it doesn't exist yet.
 - Backend API routes: see FastAPI project (not in this repo).
+````
+
+## File: postcss.config.mjs
+````javascript
+import tailwindcss from '@tailwindcss/postcss';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+export default {
+  plugins: [
+    tailwindcss({ base: __dirname }),
+  ],
+};
 ````
 
 ## File: sonar-project.properties
@@ -11066,24 +11063,40 @@ export class EventService {
 
 ## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
 ````html
-<div hlmCard class="rounded-2xl shadow hover:shadow-lg transition-shadow flex flex-col overflow-hidden p-0 gap-0">
-  <div class="relative">
+<div
+  class="flex flex-col overflow-hidden h-full transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5"
+  [class]="variant() === 'featured' ? 'glass-card-strong' : 'glass-card'"
+>
+  <div class="relative overflow-hidden flex-shrink-0"
+       [class]="variant() === 'featured' ? 'h-48' : 'h-32'">
     @if (club().coverUrl) {
-      <img [src]="club().coverUrl" [alt]="''" class="h-32 w-full object-cover" aria-hidden="true" loading="lazy" />
+      <img [src]="club().coverUrl" [alt]="''" class="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
     } @else {
-      <div class="h-32 bg-gradient-to-br from-primary-400 to-accent-500" aria-hidden="true"></div>
+      <div class="w-full h-full bg-gradient-to-br from-primary-400 to-accent-500" aria-hidden="true"></div>
+    }
+    @if (variant() === 'featured') {
+      <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none"></div>
     }
   </div>
-  <div class="flex flex-col flex-1 p-4 gap-3">
+  <div class="flex flex-col flex-1 gap-3"
+       [class]="variant() === 'featured' ? 'p-5' : 'p-4'">
     <div>
-      <h3 class="font-semibold text-gray-900 dark:text-white leading-snug line-clamp-1 flex items-center gap-1.5">
+      <h3
+        class="font-semibold text-gray-900 dark:text-white leading-snug flex items-center gap-1.5"
+        [class]="variant() === 'featured' ? 'text-lg line-clamp-2' : 'text-base line-clamp-1'"
+      >
         {{ club().name }}
         @if (isOwned()) {
-          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400" title="Your club">👑</span>
+          <span class="text-xs font-semibold text-amber-600 dark:text-amber-400 flex-shrink-0" title="Your club">👑</span>
         }
       </h3>
       @if (club().description) {
-        <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{{ club().description }}</p>
+        <p
+          class="text-xs text-gray-500 dark:text-gray-400 mt-1"
+          [class]="variant() === 'featured' ? 'line-clamp-3' : 'line-clamp-2'"
+        >
+          {{ club().description }}
+        </p>
       }
     </div>
     @if (club().memberPreviews.length > 0) {
@@ -11165,6 +11178,7 @@ export class ClubCardComponent {
   readonly isOwned = input<boolean>(false);
   readonly isAuthenticated = input<boolean>(false);
   readonly joining = input<boolean>(false);
+  readonly variant = input<'default' | 'featured'>('default');
   readonly join = output<void>();
   protected daysUntil(dateStr: string): number {
     const target = new Date(dateStr).getTime();
@@ -13305,26 +13319,28 @@ function mapSocials(raw: ApiUserSocials): UserSocials {
 ## File: src/app/features/clubs/clubs-list/clubs-list.component.html
 ````html
 <div class="min-h-screen">
-  <section aria-label="Search clubs" class="bg-gradient-to-br from-primary-600 to-accent-600 px-4 py-12 text-center">
-    <h1 class="font-display text-4xl font-bold text-white mb-2">{{ 'CLUBS.title' | translate }}</h1>
-    <p class="text-primary-100 mb-8">{{ 'CLUBS.subtitle' | translate }}</p>
-    <div class="mx-auto max-w-xl relative">
-      <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true">🔍</span>
-      <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
-      <input
-        id="club-search"
-        type="search"
-        [ngModel]="clubService.searchQuery()"
-        (ngModelChange)="clubService.setSearchQuery($event)"
-        [placeholder]="'CLUBS.search_placeholder_full' | translate"
-        class="w-full rounded-full shadow-sm bg-white dark:bg-gray-800 pl-10 pr-5 py-3 text-sm text-gray-900 dark:text-white placeholder-gray-400 border-0 focus:outline-none focus:ring-2 focus:ring-white/70"
-        [attr.aria-label]="'CLUBS.search_placeholder' | translate"
-      />
+  <section aria-label="Search clubs" class="glass-hero bg-gradient-brand px-4 py-14 text-center">
+    <div class="relative z-10">
+      <h1 class="font-display text-4xl font-bold text-white mb-2 drop-shadow-sm">{{ 'CLUBS.title' | translate }}</h1>
+      <p class="text-white/80 mb-8">{{ 'CLUBS.subtitle' | translate }}</p>
+      <div class="mx-auto max-w-xl relative">
+        <span class="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-white/60" aria-hidden="true">🔍</span>
+        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
+        <input
+          id="club-search"
+          type="search"
+          [ngModel]="clubService.searchQuery()"
+          (ngModelChange)="clubService.setSearchQuery($event)"
+          [placeholder]="'CLUBS.search_placeholder_full' | translate"
+          class="w-full rounded-full glass-card px-5 pl-10 py-3 text-sm text-gray-900 dark:text-white placeholder-white/60 border-0 focus:outline-none focus:ring-2 focus:ring-white/50"
+          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
+        />
+      </div>
     </div>
   </section>
   <div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
     @if (clubService.error()) {
-      <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+      <div class="flex items-start gap-2 rounded-[var(--bento-radius)] glass-card px-4 py-3 text-sm text-red-700 dark:text-red-400 border-red-200/50 dark:border-red-800/50" role="alert">
         <span aria-hidden="true">⚠️</span>
         <span>{{ clubService.error() }}</span>
       </div>
@@ -13335,7 +13351,7 @@ function mapSocials(raw: ApiUserSocials): UserSocials {
           <button hlmTabsTrigger="all">{{ 'CLUBS.all' | translate }}</button>
           <button hlmTabsTrigger="my">{{ 'CLUBS.my_clubs' | translate }}</button>
         </div>
-        <div hlmTabsContent="all" class="pt-4">
+        <div hlmTabsContent="all" class="pt-6">
           @if (clubService.isLoading()) {
             <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
               <hlm-spinner />
@@ -13347,11 +13363,12 @@ function mapSocials(raw: ApiUserSocials): UserSocials {
               description="No clubs have been created yet. Check back soon!"
             />
           } @else {
-            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              @for (club of clubService.filteredClubs(); track club.id) {
-                <li>
+            <ul class="bento-grid">
+              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
                   <app-club-card
                     [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
                     [isMember]="clubService.myClubIds().has(club.id)"
                     [isOwned]="ownedClubIds().has(club.id)"
                     [isAuthenticated]="auth.isAuthenticated()"
@@ -13363,7 +13380,7 @@ function mapSocials(raw: ApiUserSocials): UserSocials {
             </ul>
           }
         </div>
-        <div hlmTabsContent="my" class="pt-4">
+        <div hlmTabsContent="my" class="pt-6">
           @if (clubService.isLoading()) {
             <div class="py-16 flex justify-center" aria-busy="true">
               <hlm-spinner />
@@ -13375,11 +13392,12 @@ function mapSocials(raw: ApiUserSocials): UserSocials {
               description="Join a club to see it here."
             />
           } @else {
-            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              @for (club of clubService.myClubs(); track club.id) {
-                <li>
+            <ul class="bento-grid">
+              @for (club of clubService.myClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
                   <app-club-card
                     [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
                     [isMember]="clubService.myClubIds().has(club.id)"
                     [isOwned]="ownedClubIds().has(club.id)"
                     [isAuthenticated]="auth.isAuthenticated()"
@@ -13404,11 +13422,12 @@ function mapSocials(raw: ApiUserSocials): UserSocials {
           description="No clubs have been created yet. Check back soon!"
         />
       } @else {
-        <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          @for (club of clubService.filteredClubs(); track club.id) {
-            <li>
+        <ul class="bento-grid">
+          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
               <app-club-card
                 [club]="club"
+                [variant]="i === 0 ? 'featured' : 'default'"
                 [isMember]="false"
                 [isOwned]="false"
                 [isAuthenticated]="false"
@@ -13424,11 +13443,11 @@ function mapSocials(raw: ApiUserSocials): UserSocials {
   @if (auth.isOrganizer()) {
     <a
       routerLink="/clubs/create"
-      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-accent-500 hover:bg-accent-600 text-white shadow-xl focus:outline-none focus:ring-2 focus:ring-accent-400 focus:ring-offset-2 transition-colors"
+      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full bg-gradient-brand shadow-xl hover:shadow-accent-500/30 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:ring-offset-2 transition-all duration-200"
       [attr.aria-label]="'CLUBS.create' | translate"
       [title]="'CLUBS.create' | translate"
     >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
       </svg>
     </a>
@@ -13942,26 +13961,26 @@ jobs:
   </main>
 } @else if (club()) {
   <main class="min-h-screen">
-    <div class="relative">
+    <div class="relative glass-hero">
       @if (club()!.coverUrl) {
         <img
           [src]="club()!.coverUrl"
           [alt]="club()!.name + ' cover'"
-          class="w-full h-56 object-cover"
+          class="w-full h-64 object-cover"
           loading="lazy"
         />
       } @else {
-        <div class="bg-gradient-to-br from-primary-400 to-accent-500 h-56" aria-hidden="true"></div>
+        <div class="bg-gradient-brand h-64" aria-hidden="true"></div>
       }
-      <div class="absolute inset-0 flex items-center justify-center pointer-events-none px-6">
-        <h1 class="font-fantasy font-bold text-white uppercase tracking-widest text-4xl sm:text-5xl lg:text-6xl text-center drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+      <div class="absolute inset-0 flex items-end justify-center pointer-events-none px-6 pb-8">
+        <h1 class="font-fantasy font-bold text-white uppercase tracking-widest text-4xl sm:text-5xl lg:text-6xl text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
           {{ club()!.name }}
         </h1>
       </div>
       <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
         <a
           routerLink="/clubs"
-          class="inline-flex items-center gap-1.5 rounded-full bg-black/30 backdrop-blur-sm px-3 py-1.5 text-sm font-medium text-white hover:bg-black/50 transition-colors"
+          class="inline-flex items-center gap-1.5 rounded-full glass-card px-3 py-1.5 text-sm font-medium text-white hover:scale-105 transition-all duration-200"
           [attr.aria-label]="'CLUB_DETAIL.back' | translate"
         >
           ← {{ 'CLUB_DETAIL.back_short' | translate }}
@@ -13972,7 +13991,7 @@ jobs:
       <div class="flex flex-col lg:flex-row gap-6 items-start">
         <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-2 lg:order-1">
           @if (nearestEventBook()) {
-            <div hlmCard class="p-4 gap-3">
+            <div hlmCard class="glass-card-subtle p-4 gap-3">
               <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 {{ 'CLUB_DETAIL.now_reading' | translate }}</h3>
               @if (nearestEventBook()!.coverUrl) {
                 <img
@@ -14010,7 +14029,7 @@ jobs:
             </div>
           }
           @if (club()!.description) {
-            <section hlmCard class="px-6 gap-3">
+            <section hlmCard class="glass-card-subtle px-6 gap-3">
               <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
               <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
             </section>
@@ -14032,7 +14051,7 @@ jobs:
               </button>
             </div>
           }
-          <section hlmCard class="px-6 gap-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-[#d4a96a]/20 dark:border-[#7a5c2e]/20">
+          <section hlmCard class="glass-card px-6 gap-4">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 📅 {{ 'CLUB_DETAIL.events_title' | translate }}
@@ -14096,7 +14115,7 @@ jobs:
         </div>
         <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-3 lg:order-3">
           @if (members().length > 0) {
-            <div hlmCard class="p-4 gap-3">
+            <div hlmCard class="glass-card-subtle p-4 gap-3">
               <div class="flex items-center justify-between mb-3">
                 <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   {{ 'CLUB_DETAIL.members_title' | translate }}
@@ -14121,7 +14140,7 @@ jobs:
             </div>
           }
           @if (organizerProfile()) {
-            <div hlmCard class="p-4 gap-3">
+            <div hlmCard class="glass-card-subtle p-4 gap-3">
               <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
                 {{ 'CLUB_DETAIL.organizer_title' | translate }}
               </h3>
@@ -14157,7 +14176,7 @@ jobs:
             </div>
           }
           @if (club()!.afterMeetingVenue) {
-            <div hlmCard class="p-4 gap-3">
+            <div hlmCard class="glass-card-subtle p-4 gap-3">
               <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
                 {{ 'CLUB_DETAIL.after_meeting_title' | translate }}
               </h3>

@@ -24,20 +24,20 @@
   <main class="min-h-screen">
 
     <!-- Cover image + back navigation (full width) -->
-    <div class="relative">
+    <div class="relative glass-hero">
       @if (club()!.coverUrl) {
         <img
           [src]="club()!.coverUrl"
           [alt]="club()!.name + ' cover'"
-          class="w-full h-56 object-cover"
+          class="w-full h-64 object-cover"
           loading="lazy"
         />
       } @else {
-        <div class="bg-gradient-to-br from-primary-400 to-accent-500 h-56" aria-hidden="true"></div>
+        <div class="bg-gradient-brand h-64" aria-hidden="true"></div>
       }
 
-      <div class="absolute inset-0 flex items-center justify-center pointer-events-none px-6">
-        <h1 class="font-fantasy font-bold text-white uppercase tracking-widest text-4xl sm:text-5xl lg:text-6xl text-center drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
+      <div class="absolute inset-0 flex items-end justify-center pointer-events-none px-6 pb-8">
+        <h1 class="font-fantasy font-bold text-white uppercase tracking-widest text-4xl sm:text-5xl lg:text-6xl text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
           {{ club()!.name }}
         </h1>
       </div>
@@ -45,7 +45,7 @@
       <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
         <a
           routerLink="/clubs"
-          class="inline-flex items-center gap-1.5 rounded-full bg-black/30 backdrop-blur-sm px-3 py-1.5 text-sm font-medium text-white hover:bg-black/50 transition-colors"
+          class="inline-flex items-center gap-1.5 rounded-full glass-card px-3 py-1.5 text-sm font-medium text-white hover:scale-105 transition-all duration-200"
           [attr.aria-label]="'CLUB_DETAIL.back' | translate"
         >
           ← {{ 'CLUB_DETAIL.back_short' | translate }}
@@ -62,7 +62,7 @@
 
           <!-- Current book -->
           @if (nearestEventBook()) {
-            <div hlmCard class="p-4 gap-3">
+            <div hlmCard class="glass-card-subtle p-4 gap-3">
               <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 {{ 'CLUB_DETAIL.now_reading' | translate }}</h3>
               @if (nearestEventBook()!.coverUrl) {
                 <img
@@ -111,7 +111,7 @@
 
           <!-- Description section -->
           @if (club()!.description) {
-            <section hlmCard class="px-6 gap-3">
+            <section hlmCard class="glass-card-subtle px-6 gap-3">
               <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
               <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
             </section>
@@ -137,7 +137,7 @@
           }
 
           <!-- Upcoming Events section -->
-          <section hlmCard class="px-6 gap-4 bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border-[#d4a96a]/20 dark:border-[#7a5c2e]/20">
+          <section hlmCard class="glass-card px-6 gap-4">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 📅 {{ 'CLUB_DETAIL.events_title' | translate }}
@@ -213,7 +213,7 @@
 
           <!-- Members preview -->
           @if (members().length > 0) {
-            <div hlmCard class="p-4 gap-3">
+            <div hlmCard class="glass-card-subtle p-4 gap-3">
               <div class="flex items-center justify-between mb-3">
                 <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
                   {{ 'CLUB_DETAIL.members_title' | translate }}
@@ -240,7 +240,7 @@
 
           <!-- Organizer card (compact) -->
           @if (organizerProfile()) {
-            <div hlmCard class="p-4 gap-3">
+            <div hlmCard class="glass-card-subtle p-4 gap-3">
               <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
                 {{ 'CLUB_DETAIL.organizer_title' | translate }}
               </h3>
@@ -278,7 +278,7 @@
 
           <!-- After-meeting venue (club level) -->
           @if (club()!.afterMeetingVenue) {
-            <div hlmCard class="p-4 gap-3">
+            <div hlmCard class="glass-card-subtle p-4 gap-3">
               <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
                 {{ 'CLUB_DETAIL.after_meeting_title' | translate }}
               </h3>
