@@ -112,6 +112,9 @@ src/
           club-event-card/
             club-event-card.component.html
             club-event-card.component.ts
+          club-sidebar-right/
+            club-sidebar-right.component.html
+            club-sidebar-right.component.ts
           header/
             club-header.component.html
             club-header.component.ts
@@ -1255,6 +1258,108 @@ export class ToastService {
 }
 ````
 
+## File: src/app/features/clubs/club-detail/club-sidebar-right/club-sidebar-right.component.html
+````html
+@if (members().length > 0) {
+  <div hlmCard class="glass-card-subtle p-4 gap-3">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+        {{ 'CLUB_DETAIL.members_title' | translate }}
+      </h3>
+      <span class="text-xs text-gray-400">{{ members().length }}</span>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      @for (member of members().slice(0, 8); track member.userId) {
+        <div
+          class="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+          [attr.title]="member.displayName"
+        >
+          {{ member.displayName | initials }}
+        </div>
+      }
+      @if (members().length > 8) {
+        <div class="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
+          +{{ members().length - 8 }}
+        </div>
+      }
+    </div>
+  </div>
+}
+@if (organizerProfile()) {
+  <div hlmCard class="glass-card-subtle p-4 gap-3">
+    <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+      {{ 'CLUB_DETAIL.organizer_title' | translate }}
+    </h3>
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0" aria-hidden="true">
+        {{ organizerProfile()!.displayName | initials }}
+      </div>
+      <div class="min-w-0">
+        <p class="font-semibold text-sm text-gray-900 dark:text-white truncate">{{ organizerProfile()!.displayName }}</p>
+        <span class="text-xs text-accent-600 dark:text-accent-400">{{ 'CLUB_DETAIL.organizer_badge' | translate }}</span>
+      </div>
+    </div>
+    @if (organizerProfile()!.socialsPublic && organizerProfile()!.socials) {
+      <div class="mt-3 flex flex-wrap gap-2">
+        @if (organizerProfile()!.socials!.telegram) {
+          <a [href]="'https://t.me/' + organizerProfile()!.socials!.telegram" target="_blank" rel="noopener noreferrer"
+             class="text-blue-500 hover:text-blue-600 text-lg" aria-label="Telegram">✈️</a>
+        }
+        @if (organizerProfile()!.socials!.instagram) {
+          <a [href]="'https://instagram.com/' + organizerProfile()!.socials!.instagram" target="_blank" rel="noopener noreferrer"
+             class="text-pink-500 hover:text-pink-600 text-lg" aria-label="Instagram">📸</a>
+        }
+        @if (organizerProfile()!.socials!.github) {
+          <a [href]="'https://github.com/' + organizerProfile()!.socials!.github" target="_blank" rel="noopener noreferrer"
+             class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" aria-label="GitHub">🐙</a>
+        }
+        @if (organizerProfile()!.socials!.goodreads) {
+          <a [href]="'https://goodreads.com/' + organizerProfile()!.socials!.goodreads" target="_blank" rel="noopener noreferrer"
+             class="text-amber-600 hover:text-amber-700 text-lg" aria-label="Goodreads">📚</a>
+        }
+      </div>
+    }
+  </div>
+}
+@if (club().afterMeetingVenue) {
+  <div hlmCard class="glass-card-subtle p-4 gap-3">
+    <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+      {{ 'CLUB_DETAIL.after_meeting_title' | translate }}
+    </h3>
+    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ club().afterMeetingVenue!.name }}</p>
+    @if (club().afterMeetingVenue!.address) {
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 {{ club().afterMeetingVenue!.address }}</p>
+    }
+    @if (club().afterMeetingVenue!.description) {
+      <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">{{ club().afterMeetingVenue!.description }}</p>
+    }
+  </div>
+}
+````
+
+## File: src/app/features/clubs/club-detail/club-sidebar-right/club-sidebar-right.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, input } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
+import { HlmCard } from '../../../../shared/spartan/card/src';
+import { Club } from '../../../../core/models/club.model';
+import { ClubMemberDetail } from '../../../../core/models/club.model';
+import { UserProfile } from '../../../../core/models/user.model';
+@Component({
+  selector: 'app-club-sidebar-right',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslateModule, InitialsPipe, HlmCard],
+  templateUrl: './club-sidebar-right.component.html',
+})
+export class ClubSidebarRightComponent {
+  readonly club = input.required<Club>();
+  readonly members = input.required<ClubMemberDetail[]>();
+  readonly organizerProfile = input<UserProfile | null>(null);
+}
+````
+
 ## File: src/app/features/quiz/.gitkeep
 ````
 
@@ -2172,118 +2277,6 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
 ````
 
-## File: refactor_opus.md
-````markdown
-# Refactor Opus — Angular 20 Book-Club FE
-
-> Раунди R1–R6. Кожен завершується `npm run lint && npm run test && npm run build` + git commit.
-
----
-
-## R1 — RxJS Antipattern Cleanup
-
-**Мета:** Ліквідувати останні `subscribe()` без cleanup та архаїчний `OnInit/OnDestroy + destroy$`.
-
-**Scope:**
-- `src/app/layout/header/header.component.ts:51` — `translate.use(next).subscribe()` → `firstValueFrom`
-- `src/app/shared/components/address-autocomplete/address-autocomplete.component.ts` — `OnInit/OnDestroy + Subject<void> destroy$` + ручний `valueChanges.subscribe()` → `toSignal()` + `takeUntilDestroyed`
-
-**Агент:** general-purpose
-
-**Acceptance:**
-- 0 `subscribe()` без cleanup у scope-файлах
-- `lint` clean, `test` 53/53, ручна перевірка autocomplete + lang switch
-
----
-
-## R2 — Decomposition of Large Files
-
-**Мета:** Жоден файл не перевищує 180 LOC (TS) / 220 LOC (HTML).
-
-**Scope:**
-- `src/app/shared/components/book-intro/book-intro.component.ts` (297 LOC) → split presentational + container
-- `src/app/features/clubs/club-detail/club-detail.component.ts` (258 LOC) → `ClubMembershipActionsService` або inline-actions component
-- `src/app/features/clubs/club-detail/club-detail.component.html` (301 LOC) → `ClubHeaderComponent`, `ClubInfoCardComponent`
-- `src/app/core/services/club.service.ts` (252 LOC) → `ClubReadService` (queries) + `ClubMembershipService` (mutations)
-
-**Агент:** Plan → general-purpose
-
-**Acceptance:**
-- Жоден файл >180 LOC TS / >220 LOC HTML
-- Всі тести зелені, lint clean
-
----
-
-## R3 — Angular 20 Modernization: httpResource / linkedSignal
-
-**Мета:** Використати Angular 20 `httpResource()`, `linkedSignal`, `resource()` замість manual Promise/subscribe HTTP-патернів.
-
-**Scope:**
-- `src/app/core/auth/auth.service.ts` — розширити `resource()` → `linkedSignal` для derived stats
-- Quiz / Club / Event сервіси — замінити manual signal+Promise на `resource()` де доречно
-- Перейти на `httpResource()` для HTTP queries без side-effects
-
-**Агент:** Explore → Plan → general-purpose
-
-**Acceptance:**
-- Сервіси без ручного `.subscribe()` для HTTP
-- Всі тести проходять, lint clean
-
----
-
-## R4 — Performance: @defer + NgOptimizedImage + track audit
-
-**Мета:** Зменшити initial bundle, прискорити рендеринг важких компонентів.
-
-**Scope:**
-- `@defer` блоки для `quiz-take`, `club-detail`, `randomizer`
-- Замінити `<img loading="lazy">` → `NgOptimizedImage`
-- Audit `@for` — замінити `track $index` → `track item.id` де є стабільний ключ
-
-**Агент:** general-purpose
-
-**Acceptance:**
-- `npm run build` — initial bundle ≤ поточному
-- lint clean, всі тести зелені
-
----
-
-## R5 — Test Coverage Bump
-
-**Мета:** Coverage functions ≥ 75%.
-
-**Компоненти без тестів (14):** `profile`, `randomizer`, `quiz-create`, `quiz-take`, `quiz-list`, `chat-widget`, `social-link-field`, `cover-upload`, `social-badges`, `book-intro`, `qr-code`, `role-selector`, `profile-stats`
-**Сервіси без тестів (2):** `book-cover.service`, `upload.service`
-
-Мінімум: smoke-тест (component creates) + 1 інтеграційний сценарій.
-
-**Агент:** general-purpose
-
-**Acceptance:**
-- Coverage functions ≥ 75%
-- Всі тести зелені
-
----
-
-## R6 — Polish & Dedup
-
-**Мета:** 0 lint warnings, усунення дрібних дублювань.
-
-**Scope:**
-- Barrel-export для spartan/helm: `src/app/shared/spartan/index.ts`
-- Dedupe `ApiUserSocials` ↔ `UserSocials` у `core/api/api-mappers.ts`
-- Видалити inline `style="font-family:..."` у `club-detail.html`
-- `.nonNullable` для всіх FormControl де передбачається non-null
-- Виправити `rxjs-x/finnish notation` warnings у `auth.guard.ts` / `auth.interceptor.ts`
-
-**Агент:** general-purpose
-
-**Acceptance:**
-- 0 `npm run lint` warnings
-- ≤10 LOC дельта на файл
-- Всі тести зелені
-````
-
 ## File: SECURITY.md
 ````markdown
 # Security Policy
@@ -2307,6 +2300,40 @@ Use this section to tell people how to report a vulnerability.
 Tell them where to go, how often they can expect to get an update on a
 reported vulnerability, what to expect if the vulnerability is accepted or
 declined, etc.
+````
+
+## File: sonar-project.properties
+````
+# Replace YOUR_ORG with your actual SonarCloud organization slug
+sonar.projectKey=leo477_book-club-fe
+sonar.organization=leo477
+sonar.projectName=Book Club Frontend
+sonar.projectVersion=1.0
+
+sonar.sources=src
+sonar.tests=src
+sonar.test.inclusions=**/*.spec.ts
+sonar.exclusions=**/node_modules/**,**/*.spec.ts,src/assets/**,src/environments/**
+
+sonar.typescript.lcov.reportPaths=coverage/book-club-fe/lcov.info
+
+# Exclude non-testable and currently untested files from coverage requirements
+sonar.coverage.exclusions=\
+  **/*.html,\
+  **/*.spec.ts,\
+  **/mocks/**,\
+  **/*.model.ts,\
+  **/*.interface.ts,\
+  **/*.config.ts,\
+  **/environments/**,\
+  src/app/features/**,\
+  src/app/layout/**,\
+  src/app/core/services/randomizer.service.ts,\
+  src/app/core/services/quiz.service.ts,\
+  src/app/core/services/club.service.ts,\
+  src/app/core/supabase/**
+
+sonar.sourceEncoding=UTF-8
 ````
 
 ## File: tsconfig.app.json
@@ -6932,6 +6959,118 @@ module.exports = function (config) {
 }
 ````
 
+## File: refactor_opus.md
+````markdown
+# Refactor Opus — Angular 20 Book-Club FE
+
+> Раунди R1–R6. Кожен завершується `npm run lint && npm run test && npm run build` + git commit.
+
+---
+
+## R1 — RxJS Antipattern Cleanup
+
+**Мета:** Ліквідувати останні `subscribe()` без cleanup та архаїчний `OnInit/OnDestroy + destroy$`.
+
+**Scope:**
+- `src/app/layout/header/header.component.ts:51` — `translate.use(next).subscribe()` → `firstValueFrom`
+- `src/app/shared/components/address-autocomplete/address-autocomplete.component.ts` — `OnInit/OnDestroy + Subject<void> destroy$` + ручний `valueChanges.subscribe()` → `toSignal()` + `takeUntilDestroyed`
+
+**Агент:** general-purpose
+
+**Acceptance:**
+- 0 `subscribe()` без cleanup у scope-файлах
+- `lint` clean, `test` 53/53, ручна перевірка autocomplete + lang switch
+
+---
+
+## R2 — Decomposition of Large Files
+
+**Мета:** Жоден файл не перевищує 180 LOC (TS) / 220 LOC (HTML).
+
+**Scope:**
+- `src/app/shared/components/book-intro/book-intro.component.ts` (297 LOC) → split presentational + container
+- `src/app/features/clubs/club-detail/club-detail.component.ts` (258 LOC) → `ClubMembershipActionsService` або inline-actions component
+- `src/app/features/clubs/club-detail/club-detail.component.html` (301 LOC) → `ClubHeaderComponent`, `ClubInfoCardComponent`
+- `src/app/core/services/club.service.ts` (252 LOC) → `ClubReadService` (queries) + `ClubMembershipService` (mutations)
+
+**Агент:** Plan → general-purpose
+
+**Acceptance:**
+- Жоден файл >180 LOC TS / >220 LOC HTML
+- Всі тести зелені, lint clean
+
+---
+
+## R3 — Angular 20 Modernization: httpResource / linkedSignal
+
+**Мета:** Використати Angular 20 `httpResource()`, `linkedSignal`, `resource()` замість manual Promise/subscribe HTTP-патернів.
+
+**Scope:**
+- `src/app/core/auth/auth.service.ts` — розширити `resource()` → `linkedSignal` для derived stats
+- Quiz / Club / Event сервіси — замінити manual signal+Promise на `resource()` де доречно
+- Перейти на `httpResource()` для HTTP queries без side-effects
+
+**Агент:** Explore → Plan → general-purpose
+
+**Acceptance:**
+- Сервіси без ручного `.subscribe()` для HTTP
+- Всі тести проходять, lint clean
+
+---
+
+## R4 — Performance: @defer + NgOptimizedImage + track audit
+
+**Мета:** Зменшити initial bundle, прискорити рендеринг важких компонентів.
+
+**Scope:**
+- `@defer` блоки для `quiz-take`, `club-detail`, `randomizer`
+- Замінити `<img loading="lazy">` → `NgOptimizedImage`
+- Audit `@for` — замінити `track $index` → `track item.id` де є стабільний ключ
+
+**Агент:** general-purpose
+
+**Acceptance:**
+- `npm run build` — initial bundle ≤ поточному
+- lint clean, всі тести зелені
+
+---
+
+## R5 — Test Coverage Bump
+
+**Мета:** Coverage functions ≥ 75%.
+
+**Компоненти без тестів (14):** `profile`, `randomizer`, `quiz-create`, `quiz-take`, `quiz-list`, `chat-widget`, `social-link-field`, `cover-upload`, `social-badges`, `book-intro`, `qr-code`, `role-selector`, `profile-stats`
+**Сервіси без тестів (2):** `book-cover.service`, `upload.service`
+
+Мінімум: smoke-тест (component creates) + 1 інтеграційний сценарій.
+
+**Агент:** general-purpose
+
+**Acceptance:**
+- Coverage functions ≥ 75%
+- Всі тести зелені
+
+---
+
+## R6 — Polish & Dedup
+
+**Мета:** 0 lint warnings, усунення дрібних дублювань.
+
+**Scope:**
+- Barrel-export для spartan/helm: `src/app/shared/spartan/index.ts`
+- Dedupe `ApiUserSocials` ↔ `UserSocials` у `core/api/api-mappers.ts`
+- Видалити inline `style="font-family:..."` у `club-detail.html`
+- `.nonNullable` для всіх FormControl де передбачається non-null
+- Виправити `rxjs-x/finnish notation` warnings у `auth.guard.ts` / `auth.interceptor.ts`
+
+**Агент:** general-purpose
+
+**Acceptance:**
+- 0 `npm run lint` warnings
+- ≤10 LOC дельта на файл
+- Всі тести зелені
+````
+
 ## File: repomix.config.json
 ````json
 {
@@ -6953,40 +7092,6 @@ module.exports = function (config) {
     ]
   }
 }
-````
-
-## File: sonar-project.properties
-````
-# Replace YOUR_ORG with your actual SonarCloud organization slug
-sonar.projectKey=leo477_book-club-fe
-sonar.organization=leo477
-sonar.projectName=Book Club Frontend
-sonar.projectVersion=1.0
-
-sonar.sources=src
-sonar.tests=src
-sonar.test.inclusions=**/*.spec.ts
-sonar.exclusions=**/node_modules/**,**/*.spec.ts,src/assets/**,src/environments/**
-
-sonar.typescript.lcov.reportPaths=coverage/book-club-fe/lcov.info
-
-# Exclude non-testable and currently untested files from coverage requirements
-sonar.coverage.exclusions=\
-  **/*.html,\
-  **/*.spec.ts,\
-  **/mocks/**,\
-  **/*.model.ts,\
-  **/*.interface.ts,\
-  **/*.config.ts,\
-  **/environments/**,\
-  src/app/features/**,\
-  src/app/layout/**,\
-  src/app/core/services/randomizer.service.ts,\
-  src/app/core/services/quiz.service.ts,\
-  src/app/core/services/club.service.ts,\
-  src/app/core/supabase/**
-
-sonar.sourceEncoding=UTF-8
 ````
 
 ## File: spartan_plan.md
@@ -10447,61 +10552,6 @@ export class RandomizerComponent implements OnInit {
 }
 ````
 
-## File: src/app/layout/header/header.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  computed,
-} from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith, firstValueFrom } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { AuthService } from '../../core/auth/auth.service';
-import { HlmDropdownMenuImports } from '../../shared/spartan/dropdown-menu/src';
-import { HlmSheetImports } from '../../shared/spartan/sheet/src';
-import { HlmButton } from '../../shared/spartan/button/src';
-@Component({
-  selector: 'app-header',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, TranslateModule, ...HlmDropdownMenuImports, ...HlmSheetImports, HlmButton],
-  templateUrl: './header.component.html',
-})
-export class HeaderComponent {
-  private readonly auth = inject(AuthService);
-  private readonly translate = inject(TranslateService);
-  readonly isAuthenticated = this.auth.isAuthenticated;
-  readonly currentUser = this.auth.currentUser;
-  readonly currentLang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: 'uk' },
-  );
-  readonly userInitials = computed(() => {
-    const name = this.currentUser()?.displayName ?? '';
-    return (
-      name
-        .split(' ')
-        .slice(0, 2)
-        .map(w => w[0]?.toUpperCase() ?? '')
-        .join('') || '?'
-    );
-  });
-  switchLang(): void {
-    const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-    void firstValueFrom(this.translate.use(next));
-  }
-  async signOut(): Promise<void> {
-    await this.auth.signOut();
-  }
-}
-````
-
 ## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.html
 ````html
 <div class="relative">
@@ -10540,97 +10590,6 @@ export class HeaderComponent {
     </ul>
   }
 </div>
-````
-
-## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
-````typescript
-import {
-  Component, ChangeDetectionStrategy, input, output,
-  DestroyRef, signal, inject, ElementRef, HostListener, effect,
-} from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { switchMap, debounceTime, distinctUntilChanged, of } from 'rxjs';
-import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
-import { HlmInput } from '../../spartan/input/src';
-@Component({
-  selector: 'app-address-autocomplete',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, HlmInput],
-  templateUrl: './address-autocomplete.component.html',
-})
-export class AddressAutocompleteComponent {
-  readonly control = input.required<FormControl<string>>();
-  readonly placeholder = input<string>('');
-  readonly inputId = input<string>('');
-  readonly selected = output<GeocodeSuggestion>();
-  private readonly geocoding = inject(GeocodingService);
-  private readonly elRef = inject(ElementRef);
-  private readonly destroyRef = inject(DestroyRef);
-  readonly suggestions = signal<GeocodeSuggestion[]>([]);
-  readonly isLoading = signal(false);
-  readonly isOpen = signal(false);
-  readonly activeIndex = signal(-1);
-  constructor() {
-    effect(() => {
-      const ctrl = this.control();
-      ctrl.valueChanges.pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        switchMap(q => {
-          if (!q || q.length < 2) {
-            this.suggestions.set([]);
-            this.isOpen.set(false);
-            return of([]);
-          }
-          this.isLoading.set(true);
-          return this.geocoding.autocomplete(q);
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      ).subscribe({
-        next: (results) => {
-          this.isLoading.set(false);
-          this.suggestions.set(results);
-          this.activeIndex.set(-1);
-          this.isOpen.set(results.length > 0);
-        },
-        error: () => {
-          this.isLoading.set(false);
-          this.suggestions.set([]);
-        },
-      });
-    });
-  }
-  select(s: GeocodeSuggestion): void {
-    this.control().setValue(s.label, { emitEvent: false });
-    this.suggestions.set([]);
-    this.isOpen.set(false);
-    this.selected.emit(s);
-  }
-  onKeydown(event: KeyboardEvent): void {
-    if (!this.isOpen()) return;
-    const len = this.suggestions().length;
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i + 1) % len);
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i - 1 + len) % len);
-    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
-      event.preventDefault();
-      this.select(this.suggestions()[this.activeIndex()]);
-    } else if (event.key === 'Escape') {
-      this.isOpen.set(false);
-    }
-  }
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (!this.elRef.nativeElement.contains(event.target)) {
-      this.isOpen.set(false);
-    }
-  }
-}
 ````
 
 ## File: vercel.json
@@ -11376,6 +11335,152 @@ export class LoginComponent {
     </div>
   </div>
 </header>
+````
+
+## File: src/app/layout/header/header.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  computed,
+} from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith, firstValueFrom } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { AuthService } from '../../core/auth/auth.service';
+import { HlmDropdownMenuImports } from '../../shared/spartan/dropdown-menu/src';
+import { HlmSheetImports } from '../../shared/spartan/sheet/src';
+import { HlmButton } from '../../shared/spartan/button/src';
+@Component({
+  selector: 'app-header',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, RouterLinkActive, TranslateModule, ...HlmDropdownMenuImports, ...HlmSheetImports, HlmButton],
+  templateUrl: './header.component.html',
+})
+export class HeaderComponent {
+  private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
+  readonly isAuthenticated = this.auth.isAuthenticated;
+  readonly currentUser = this.auth.currentUser;
+  readonly currentLang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: 'uk' },
+  );
+  readonly userInitials = computed(() => {
+    const name = this.currentUser()?.displayName ?? '';
+    return (
+      name
+        .split(' ')
+        .slice(0, 2)
+        .map(w => w[0]?.toUpperCase() ?? '')
+        .join('') || '?'
+    );
+  });
+  switchLang(): void {
+    const next = this.currentLang() === 'uk' ? 'en' : 'uk';
+    void firstValueFrom(this.translate.use(next));
+  }
+  async signOut(): Promise<void> {
+    await this.auth.signOut();
+  }
+}
+````
+
+## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
+````typescript
+import {
+  Component, ChangeDetectionStrategy, input, output,
+  DestroyRef, signal, inject, ElementRef, HostListener, effect,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { switchMap, debounceTime, distinctUntilChanged, of } from 'rxjs';
+import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
+import { HlmInput } from '../../spartan/input/src';
+@Component({
+  selector: 'app-address-autocomplete',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, HlmInput],
+  templateUrl: './address-autocomplete.component.html',
+})
+export class AddressAutocompleteComponent {
+  readonly control = input.required<FormControl<string>>();
+  readonly placeholder = input<string>('');
+  readonly inputId = input<string>('');
+  readonly selected = output<GeocodeSuggestion>();
+  private readonly geocoding = inject(GeocodingService);
+  private readonly elRef = inject(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly suggestions = signal<GeocodeSuggestion[]>([]);
+  readonly isLoading = signal(false);
+  readonly isOpen = signal(false);
+  readonly activeIndex = signal(-1);
+  constructor() {
+    effect(() => {
+      const ctrl = this.control();
+      ctrl.valueChanges.pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(q => {
+          if (!q || q.length < 2) {
+            this.suggestions.set([]);
+            this.isOpen.set(false);
+            return of([]);
+          }
+          this.isLoading.set(true);
+          return this.geocoding.autocomplete(q);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      ).subscribe({
+        next: (results) => {
+          this.isLoading.set(false);
+          this.suggestions.set(results);
+          this.activeIndex.set(-1);
+          this.isOpen.set(results.length > 0);
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.suggestions.set([]);
+        },
+      });
+    });
+  }
+  select(s: GeocodeSuggestion): void {
+    this.control().setValue(s.label, { emitEvent: false });
+    this.suggestions.set([]);
+    this.isOpen.set(false);
+    this.selected.emit(s);
+  }
+  onKeydown(event: KeyboardEvent): void {
+    if (!this.isOpen()) return;
+    const len = this.suggestions().length;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i + 1) % len);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i - 1 + len) % len);
+    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
+      event.preventDefault();
+      this.select(this.suggestions()[this.activeIndex()]);
+    } else if (event.key === 'Escape') {
+      this.isOpen.set(false);
+    }
+  }
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.elRef.nativeElement.contains(event.target)) {
+      this.isOpen.set(false);
+    }
+  }
+}
 ````
 
 ## File: src/app/core/services/quiz.service.ts
@@ -14146,22 +14251,17 @@ export class ClubService {
     return raw.map(mapEvent);
   }
   async pauseClub(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/pause`, {}),
-    );
-    const updated = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+    await this.patchClubAndSync(clubId, 'pause');
   }
   async cancelClub(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/cancel`, {}),
-    );
-    const updated = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+    await this.patchClubAndSync(clubId, 'cancel');
   }
   async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
+  }
+  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
     const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/reschedule`, { newDate }),
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
     );
     const updated = mapClub(raw);
     this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
@@ -14354,81 +14454,11 @@ export class ClubService {
           </footer>
         </div>
         <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-3 lg:order-3">
-          @if (members().length > 0) {
-            <div hlmCard class="glass-card-subtle p-4 gap-3">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                  {{ 'CLUB_DETAIL.members_title' | translate }}
-                </h3>
-                <span class="text-xs text-gray-400">{{ members().length }}</span>
-              </div>
-              <div class="flex flex-wrap gap-2">
-                @for (member of members().slice(0, 8); track member.userId) {
-                  <div
-                    class="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                    [attr.title]="member.displayName"
-                  >
-                    {{ member.displayName | initials }}
-                  </div>
-                }
-                @if (members().length > 8) {
-                  <div class="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
-                    +{{ members().length - 8 }}
-                  </div>
-                }
-              </div>
-            </div>
-          }
-          @if (organizerProfile()) {
-            <div hlmCard class="glass-card-subtle p-4 gap-3">
-              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
-                {{ 'CLUB_DETAIL.organizer_title' | translate }}
-              </h3>
-              <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0" aria-hidden="true">
-                  {{ organizerProfile()!.displayName | initials }}
-                </div>
-                <div class="min-w-0">
-                  <p class="font-semibold text-sm text-gray-900 dark:text-white truncate">{{ organizerProfile()!.displayName }}</p>
-                  <span class="text-xs text-accent-600 dark:text-accent-400">{{ 'CLUB_DETAIL.organizer_badge' | translate }}</span>
-                </div>
-              </div>
-              @if (organizerProfile()!.socialsPublic && organizerProfile()!.socials) {
-                <div class="mt-3 flex flex-wrap gap-2">
-                  @if (organizerProfile()!.socials!.telegram) {
-                    <a [href]="'https://t.me/' + organizerProfile()!.socials!.telegram" target="_blank" rel="noopener noreferrer"
-                       class="text-blue-500 hover:text-blue-600 text-lg" aria-label="Telegram">✈️</a>
-                  }
-                  @if (organizerProfile()!.socials!.instagram) {
-                    <a [href]="'https://instagram.com/' + organizerProfile()!.socials!.instagram" target="_blank" rel="noopener noreferrer"
-                       class="text-pink-500 hover:text-pink-600 text-lg" aria-label="Instagram">📸</a>
-                  }
-                  @if (organizerProfile()!.socials!.github) {
-                    <a [href]="'https://github.com/' + organizerProfile()!.socials!.github" target="_blank" rel="noopener noreferrer"
-                       class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" aria-label="GitHub">🐙</a>
-                  }
-                  @if (organizerProfile()!.socials!.goodreads) {
-                    <a [href]="'https://goodreads.com/' + organizerProfile()!.socials!.goodreads" target="_blank" rel="noopener noreferrer"
-                       class="text-amber-600 hover:text-amber-700 text-lg" aria-label="Goodreads">📚</a>
-                  }
-                </div>
-              }
-            </div>
-          }
-          @if (club()!.afterMeetingVenue) {
-            <div hlmCard class="glass-card-subtle p-4 gap-3">
-              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
-                {{ 'CLUB_DETAIL.after_meeting_title' | translate }}
-              </h3>
-              <p class="text-sm font-medium text-gray-900 dark:text-white">{{ club()!.afterMeetingVenue!.name }}</p>
-              @if (club()!.afterMeetingVenue!.address) {
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 {{ club()!.afterMeetingVenue!.address }}</p>
-              }
-              @if (club()!.afterMeetingVenue!.description) {
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">{{ club()!.afterMeetingVenue!.description }}</p>
-              }
-            </div>
-          }
+          <app-club-sidebar-right
+            [club]="club()!"
+            [members]="members()"
+            [organizerProfile]="organizerProfile()"
+          />
         </aside>
       </div>
     </div>
@@ -14458,12 +14488,12 @@ import { ClubEvent } from '../../../core/models/event.model';
 import { UserProfile } from '../../../core/models/user.model';
 import { EventService } from '../../../core/services/event.service';
 import { SeoService } from '../../../core/services/seo.service';
-import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 import { ClubMembersListComponent } from './members/club-members-list.component';
 import { ClubHeaderComponent } from './header/club-header.component';
 import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
 import { ClubEventCardComponent } from './club-event-card/club-event-card.component';
+import { ClubSidebarRightComponent } from './club-sidebar-right/club-sidebar-right.component';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCard } from '../../../shared/spartan/card/src';
 @Component({
@@ -14473,12 +14503,12 @@ import { HlmCard } from '../../../shared/spartan/card/src';
   imports: [
     RouterLink,
     TranslateModule,
-    InitialsPipe,
     FormatDatePipe,
     ClubMembersListComponent,
     ClubHeaderComponent,
     ClubManagePanelComponent,
     ClubEventCardComponent,
+    ClubSidebarRightComponent,
     HlmButton,
     HlmCard,
   ],
@@ -14615,30 +14645,10 @@ export class ClubDetailComponent {
     }
   }
   async onJoin(): Promise<void> {
-    this.isActionLoading.set(true);
-    this.actionError.set(null);
-    try {
-      await this.clubService.joinClub(this.id());
-      const updated = await this.clubService.getClubById(this.id());
-      if (updated) this.club.set(updated);
-    } catch (err) {
-      this.actionError.set(err instanceof Error ? err.message : 'Failed to join club');
-    } finally {
-      this.isActionLoading.set(false);
-    }
+    await this.performMembershipAction(() => this.clubService.joinClub(this.id()), 'Failed to join club');
   }
   async onLeave(): Promise<void> {
-    this.isActionLoading.set(true);
-    this.actionError.set(null);
-    try {
-      await this.clubService.leaveClub(this.id());
-      const updated = await this.clubService.getClubById(this.id());
-      if (updated) this.club.set(updated);
-    } catch (err) {
-      this.actionError.set(err instanceof Error ? err.message : 'Failed to leave club');
-    } finally {
-      this.isActionLoading.set(false);
-    }
+    await this.performMembershipAction(() => this.clubService.leaveClub(this.id()), 'Failed to leave club');
   }
   async handleKick(userId: string): Promise<void> {
     await this.clubService.kickMember(this.id(), userId);
@@ -14649,22 +14659,38 @@ export class ClubDetailComponent {
     this.members.update(list => list.filter(m => m.userId !== event.userId));
   }
   async onAttend(eventId: string): Promise<void> {
-    this.attendingEventId.set(eventId);
-    try {
-      await this.eventService.attendEvent(eventId);
-      this.events.update(list =>
-        list.map(e => e.id === eventId ? { ...e, isAttending: true, attendeeCount: e.attendeeCount + 1 } : e),
-      );
-    } finally {
-      this.attendingEventId.set(null);
-    }
+    await this.performAttendanceAction(eventId, true);
   }
   async onCancelAttend(eventId: string): Promise<void> {
+    await this.performAttendanceAction(eventId, false);
+  }
+  private async performMembershipAction(action: () => Promise<void>, errorFallback: string): Promise<void> {
+    this.isActionLoading.set(true);
+    this.actionError.set(null);
+    try {
+      await action();
+      const updated = await this.clubService.getClubById(this.id());
+      if (updated) this.club.set(updated);
+    } catch (err) {
+      this.actionError.set(err instanceof Error ? err.message : errorFallback);
+    } finally {
+      this.isActionLoading.set(false);
+    }
+  }
+  private async performAttendanceAction(eventId: string, attending: boolean): Promise<void> {
     this.attendingEventId.set(eventId);
     try {
-      await this.eventService.cancelAttendance(eventId);
+      if (attending) {
+        await this.eventService.attendEvent(eventId);
+      } else {
+        await this.eventService.cancelAttendance(eventId);
+      }
       this.events.update(list =>
-        list.map(e => e.id === eventId ? { ...e, isAttending: false, attendeeCount: e.attendeeCount - 1 } : e),
+        list.map(e =>
+          e.id === eventId
+            ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
+            : e,
+        ),
       );
     } finally {
       this.attendingEventId.set(null);

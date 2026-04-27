@@ -18,12 +18,12 @@ import { ClubEvent } from '../../../core/models/event.model';
 import { UserProfile } from '../../../core/models/user.model';
 import { EventService } from '../../../core/services/event.service';
 import { SeoService } from '../../../core/services/seo.service';
-import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 import { ClubMembersListComponent } from './members/club-members-list.component';
 import { ClubHeaderComponent } from './header/club-header.component';
 import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
 import { ClubEventCardComponent } from './club-event-card/club-event-card.component';
+import { ClubSidebarRightComponent } from './club-sidebar-right/club-sidebar-right.component';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCard } from '../../../shared/spartan/card/src';
 
@@ -34,12 +34,12 @@ import { HlmCard } from '../../../shared/spartan/card/src';
   imports: [
     RouterLink,
     TranslateModule,
-    InitialsPipe,
     FormatDatePipe,
     ClubMembersListComponent,
     ClubHeaderComponent,
     ClubManagePanelComponent,
     ClubEventCardComponent,
+    ClubSidebarRightComponent,
     HlmButton,
     HlmCard,
   ],
@@ -195,31 +195,11 @@ export class ClubDetailComponent {
   }
 
   async onJoin(): Promise<void> {
-    this.isActionLoading.set(true);
-    this.actionError.set(null);
-    try {
-      await this.clubService.joinClub(this.id());
-      const updated = await this.clubService.getClubById(this.id());
-      if (updated) this.club.set(updated);
-    } catch (err) {
-      this.actionError.set(err instanceof Error ? err.message : 'Failed to join club');
-    } finally {
-      this.isActionLoading.set(false);
-    }
+    await this.performMembershipAction(() => this.clubService.joinClub(this.id()), 'Failed to join club');
   }
 
   async onLeave(): Promise<void> {
-    this.isActionLoading.set(true);
-    this.actionError.set(null);
-    try {
-      await this.clubService.leaveClub(this.id());
-      const updated = await this.clubService.getClubById(this.id());
-      if (updated) this.club.set(updated);
-    } catch (err) {
-      this.actionError.set(err instanceof Error ? err.message : 'Failed to leave club');
-    } finally {
-      this.isActionLoading.set(false);
-    }
+    await this.performMembershipAction(() => this.clubService.leaveClub(this.id()), 'Failed to leave club');
   }
 
   async handleKick(userId: string): Promise<void> {
@@ -233,23 +213,41 @@ export class ClubDetailComponent {
   }
 
   async onAttend(eventId: string): Promise<void> {
-    this.attendingEventId.set(eventId);
-    try {
-      await this.eventService.attendEvent(eventId);
-      this.events.update(list =>
-        list.map(e => e.id === eventId ? { ...e, isAttending: true, attendeeCount: e.attendeeCount + 1 } : e),
-      );
-    } finally {
-      this.attendingEventId.set(null);
-    }
+    await this.performAttendanceAction(eventId, true);
   }
 
   async onCancelAttend(eventId: string): Promise<void> {
+    await this.performAttendanceAction(eventId, false);
+  }
+
+  private async performMembershipAction(action: () => Promise<void>, errorFallback: string): Promise<void> {
+    this.isActionLoading.set(true);
+    this.actionError.set(null);
+    try {
+      await action();
+      const updated = await this.clubService.getClubById(this.id());
+      if (updated) this.club.set(updated);
+    } catch (err) {
+      this.actionError.set(err instanceof Error ? err.message : errorFallback);
+    } finally {
+      this.isActionLoading.set(false);
+    }
+  }
+
+  private async performAttendanceAction(eventId: string, attending: boolean): Promise<void> {
     this.attendingEventId.set(eventId);
     try {
-      await this.eventService.cancelAttendance(eventId);
+      if (attending) {
+        await this.eventService.attendEvent(eventId);
+      } else {
+        await this.eventService.cancelAttendance(eventId);
+      }
       this.events.update(list =>
-        list.map(e => e.id === eventId ? { ...e, isAttending: false, attendeeCount: e.attendeeCount - 1 } : e),
+        list.map(e =>
+          e.id === eventId
+            ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
+            : e,
+        ),
       );
     } finally {
       this.attendingEventId.set(null);
