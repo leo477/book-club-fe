@@ -33,7 +33,7 @@ function setup(geocodingResult: GeocodeSuggestion[] | Error = mockSuggestions) {
   const fixture: ComponentFixture<AddressAutocompleteComponent> = TestBed.createComponent(AddressAutocompleteComponent);
   const component = fixture.componentInstance;
   const control = new FormControl<string>('', { nonNullable: true });
-  component.control = control;
+  fixture.componentRef.setInput('control', control);
   fixture.detectChanges();
   return { fixture, component, control, geocodingSpy };
 }
@@ -228,10 +228,10 @@ describe('AddressAutocompleteComponent', () => {
     });
   });
 
-  describe('ngOnDestroy()', () => {
-    it('stops reacting to valueChanges after destroy', (done) => {
-      const { component, control, geocodingSpy } = setup();
-      component.ngOnDestroy();
+  describe('destroy', () => {
+    it('stops reacting to valueChanges after component is destroyed', (done) => {
+      const { fixture, control, geocodingSpy } = setup();
+      fixture.destroy();
       control.setValue('Ки');
       setTimeout(() => {
         expect(geocodingSpy.autocomplete).not.toHaveBeenCalled();

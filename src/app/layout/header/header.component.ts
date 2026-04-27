@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith } from 'rxjs';
+import { map, startWith, firstValueFrom } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { HlmDropdownMenuImports } from '../../shared/spartan/dropdown-menu/src';
@@ -48,7 +48,7 @@ export class HeaderComponent {
 
   switchLang(): void {
     const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-    this.translate.use(next).subscribe();
+    void firstValueFrom(this.translate.use(next));
   }
 
   async signOut(): Promise<void> {

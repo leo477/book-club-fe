@@ -377,6 +377,7 @@ package.json
 postcss.config.json
 postcss.config.mjs
 README.md
+refactor_opus.md
 repomix.config.json
 SECURITY.md
 sonar-project.properties
@@ -474,7 +475,13 @@ vercel.json
       "Bash(kill 12762 54231 277438 399960)",
       "Bash(awk '{print $2, $11, $12}')",
       "Bash(awk '{print $2, $11, $12, $13}')",
-      "Bash(npx @tailwindcss/cli -i src/styles.scss -o /tmp/tw-test.css)"
+      "Bash(npx @tailwindcss/cli -i src/styles.scss -o /tmp/tw-test.css)",
+      "Bash(grep *)",
+      "Bash(xargs -I {} sh -c 'echo \"=== {} ===\" && head -40 {}')",
+      "Read(//home/test/**)",
+      "Read(//home/test/Documents/**)",
+      "Bash(xargs -I {} find {} -type f -name \"*.service.ts\")",
+      "Bash(ng test *)"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -503,6 +510,44 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           configuration-path: .github/labeler.yml
+````
+
+## File: .github/workflows/bundle-size.yml
+````yaml
+name: Bundle Size
+on:
+  pull_request:
+    branches: [main, develop]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  bundle-size:
+    name: Check Bundle Size
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Check compressed size
+        uses: preactjs/compressed-size-action@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          build-script: build -- --configuration=production
+          pattern: ./dist/book-club-fe/browser/**/*.{js,css}
+          strip-hash: true
 ````
 
 ## File: .github/workflows/codeql.yml
@@ -655,6 +700,130 @@ jobs:
           configPath: .lighthouserc.json
           uploadArtifacts: true
           temporaryPublicStorage: true
+````
+
+## File: .github/workflows/pr-review.yml
+````yaml
+name: pr-review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - develop
+      - main
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+concurrency:
+  group: pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Cache Angular cache
+        uses: actions/cache@v4
+        with:
+          path: .angular/cache
+          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
+      - run: npm ci
+      - run: npm run lint
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Cache Angular cache
+        uses: actions/cache@v4
+        with:
+          path: .angular/cache
+          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
+      - run: npm ci
+      - run: npx tsc --noEmit -p tsconfig.app.json
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Cache Angular cache
+        uses: actions/cache@v4
+        with:
+          path: .angular/cache
+          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
+      - run: npm ci
+      - run: npm run test:ci
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: Cache Angular cache
+        uses: actions/cache@v4
+        with:
+          path: .angular/cache
+          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
+      - run: npm ci
+      - run: npm run build -- --configuration=production
+  gate:
+    name: gate
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, test, build]
+    if: always()
+    steps:
+      - name: Check job results and post PR comment
+        id: gate
+        uses: actions/github-script@v7
+        env:
+          NEEDS: ${{ toJson(needs) }}
+        with:
+          script: |
+            const needs = JSON.parse(process.env.NEEDS);
+            const failed = Object.entries(needs)
+              .filter(([name, job]) => job.result === 'failure' || job.result === 'cancelled')
+              .map(([name]) => name);
+            let body;
+            if (failed.length > 0) {
+              body = `❌ The following jobs failed or were cancelled:\n\n${failed.map(j => `- ${j}`).join('\n')}\n\nPlease check the logs and fix the issues.`;
+              core.setFailed('Some jobs failed or were cancelled.');
+            } else {
+              body = '✅ All automated checks passed — ready for human review';
+            }
+            core.setOutput('body', body);
+      - name: Create or update PR comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ steps.gate.outputs.body }}
+          comment-tag: pr-review-gate
 ````
 
 ## File: .github/workflows/scorecard.yml
@@ -2003,6 +2172,118 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
 ````
 
+## File: refactor_opus.md
+````markdown
+# Refactor Opus — Angular 20 Book-Club FE
+
+> Раунди R1–R6. Кожен завершується `npm run lint && npm run test && npm run build` + git commit.
+
+---
+
+## R1 — RxJS Antipattern Cleanup
+
+**Мета:** Ліквідувати останні `subscribe()` без cleanup та архаїчний `OnInit/OnDestroy + destroy$`.
+
+**Scope:**
+- `src/app/layout/header/header.component.ts:51` — `translate.use(next).subscribe()` → `firstValueFrom`
+- `src/app/shared/components/address-autocomplete/address-autocomplete.component.ts` — `OnInit/OnDestroy + Subject<void> destroy$` + ручний `valueChanges.subscribe()` → `toSignal()` + `takeUntilDestroyed`
+
+**Агент:** general-purpose
+
+**Acceptance:**
+- 0 `subscribe()` без cleanup у scope-файлах
+- `lint` clean, `test` 53/53, ручна перевірка autocomplete + lang switch
+
+---
+
+## R2 — Decomposition of Large Files
+
+**Мета:** Жоден файл не перевищує 180 LOC (TS) / 220 LOC (HTML).
+
+**Scope:**
+- `src/app/shared/components/book-intro/book-intro.component.ts` (297 LOC) → split presentational + container
+- `src/app/features/clubs/club-detail/club-detail.component.ts` (258 LOC) → `ClubMembershipActionsService` або inline-actions component
+- `src/app/features/clubs/club-detail/club-detail.component.html` (301 LOC) → `ClubHeaderComponent`, `ClubInfoCardComponent`
+- `src/app/core/services/club.service.ts` (252 LOC) → `ClubReadService` (queries) + `ClubMembershipService` (mutations)
+
+**Агент:** Plan → general-purpose
+
+**Acceptance:**
+- Жоден файл >180 LOC TS / >220 LOC HTML
+- Всі тести зелені, lint clean
+
+---
+
+## R3 — Angular 20 Modernization: httpResource / linkedSignal
+
+**Мета:** Використати Angular 20 `httpResource()`, `linkedSignal`, `resource()` замість manual Promise/subscribe HTTP-патернів.
+
+**Scope:**
+- `src/app/core/auth/auth.service.ts` — розширити `resource()` → `linkedSignal` для derived stats
+- Quiz / Club / Event сервіси — замінити manual signal+Promise на `resource()` де доречно
+- Перейти на `httpResource()` для HTTP queries без side-effects
+
+**Агент:** Explore → Plan → general-purpose
+
+**Acceptance:**
+- Сервіси без ручного `.subscribe()` для HTTP
+- Всі тести проходять, lint clean
+
+---
+
+## R4 — Performance: @defer + NgOptimizedImage + track audit
+
+**Мета:** Зменшити initial bundle, прискорити рендеринг важких компонентів.
+
+**Scope:**
+- `@defer` блоки для `quiz-take`, `club-detail`, `randomizer`
+- Замінити `<img loading="lazy">` → `NgOptimizedImage`
+- Audit `@for` — замінити `track $index` → `track item.id` де є стабільний ключ
+
+**Агент:** general-purpose
+
+**Acceptance:**
+- `npm run build` — initial bundle ≤ поточному
+- lint clean, всі тести зелені
+
+---
+
+## R5 — Test Coverage Bump
+
+**Мета:** Coverage functions ≥ 75%.
+
+**Компоненти без тестів (14):** `profile`, `randomizer`, `quiz-create`, `quiz-take`, `quiz-list`, `chat-widget`, `social-link-field`, `cover-upload`, `social-badges`, `book-intro`, `qr-code`, `role-selector`, `profile-stats`
+**Сервіси без тестів (2):** `book-cover.service`, `upload.service`
+
+Мінімум: smoke-тест (component creates) + 1 інтеграційний сценарій.
+
+**Агент:** general-purpose
+
+**Acceptance:**
+- Coverage functions ≥ 75%
+- Всі тести зелені
+
+---
+
+## R6 — Polish & Dedup
+
+**Мета:** 0 lint warnings, усунення дрібних дублювань.
+
+**Scope:**
+- Barrel-export для spartan/helm: `src/app/shared/spartan/index.ts`
+- Dedupe `ApiUserSocials` ↔ `UserSocials` у `core/api/api-mappers.ts`
+- Видалити inline `style="font-family:..."` у `club-detail.html`
+- `.nonNullable` для всіх FormControl де передбачається non-null
+- Виправити `rxjs-x/finnish notation` warnings у `auth.guard.ts` / `auth.interceptor.ts`
+
+**Агент:** general-purpose
+
+**Acceptance:**
+- 0 `npm run lint` warnings
+- ≤10 LOC дельта на файл
+- Всі тести зелені
+````
+
 ## File: SECURITY.md
 ````markdown
 # Security Policy
@@ -2063,168 +2344,6 @@ declined, etc.
     "src/**/*.ts"
   ]
 }
-````
-
-## File: .github/workflows/bundle-size.yml
-````yaml
-name: Bundle Size
-on:
-  pull_request:
-    branches: [main, develop]
-permissions:
-  contents: read
-  pull-requests: write
-jobs:
-  bundle-size:
-    name: Check Bundle Size
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Check compressed size
-        uses: preactjs/compressed-size-action@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          build-script: build -- --configuration=production
-          pattern: ./dist/book-club-fe/browser/**/*.{js,css}
-          strip-hash: true
-````
-
-## File: .github/workflows/pr-review.yml
-````yaml
-name: pr-review
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches:
-      - develop
-      - main
-permissions:
-  contents: read
-  pull-requests: write
-  statuses: write
-concurrency:
-  group: pr-review-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-jobs:
-  lint:
-    name: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-      - name: Cache Angular cache
-        uses: actions/cache@v4
-        with:
-          path: .angular/cache
-          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
-      - run: npm ci
-      - run: npm run lint
-  typecheck:
-    name: typecheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-      - name: Cache Angular cache
-        uses: actions/cache@v4
-        with:
-          path: .angular/cache
-          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
-      - run: npm ci
-      - run: npx tsc --noEmit -p tsconfig.app.json
-  test:
-    name: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-      - name: Cache Angular cache
-        uses: actions/cache@v4
-        with:
-          path: .angular/cache
-          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
-      - run: npm ci
-      - run: npm run test:ci
-      - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage
-  build:
-    name: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-      - name: Cache Angular cache
-        uses: actions/cache@v4
-        with:
-          path: .angular/cache
-          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
-      - run: npm ci
-      - run: npm run build -- --configuration=production
-  gate:
-    name: gate
-    runs-on: ubuntu-latest
-    needs: [lint, typecheck, test, build]
-    if: always()
-    steps:
-      - name: Check job results and post PR comment
-        id: gate
-        uses: actions/github-script@v7
-        env:
-          NEEDS: ${{ toJson(needs) }}
-        with:
-          script: |
-            const needs = JSON.parse(process.env.NEEDS);
-            const failed = Object.entries(needs)
-              .filter(([name, job]) => job.result === 'failure' || job.result === 'cancelled')
-              .map(([name]) => name);
-            let body;
-            if (failed.length > 0) {
-              body = `❌ The following jobs failed or were cancelled:\n\n${failed.map(j => `- ${j}`).join('\n')}\n\nPlease check the logs and fix the issues.`;
-              core.setFailed('Some jobs failed or were cancelled.');
-            } else {
-              body = '✅ All automated checks passed — ready for human review';
-            }
-            core.setOutput('body', body);
-      - name: Create or update PR comment
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: ${{ steps.gate.outputs.body }}
-          comment-tag: pr-review-gate
 ````
 
 ## File: .github/copilot-instructions.md
@@ -3274,210 +3393,6 @@ import { UserStats } from '../../../core/models/user.model';
 export class ProfileStatsComponent {
   readonly stats = input<UserStats | null | undefined>(null);
 }
-````
-
-## File: src/app/features/quiz/quiz-create/quiz-create.component.html
-````html
-<div class="min-h-screen p-4 sm:p-8">
-  <div class="max-w-2xl mx-auto space-y-6">
-    <header class="flex items-center justify-between flex-wrap gap-4">
-      <div>
-        <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
-          📝 Create Quiz
-        </h1>
-        <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
-          Step {{ currentStep() }} of 2 —
-          {{ currentStep() === 1 ? 'Quiz details' : 'Add questions' }}
-        </p>
-      </div>
-      <a [routerLink]="['..']" class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-        ✕ Cancel
-      </a>
-    </header>
-    <div class="flex items-center gap-0">
-      @for (step of [1, 2]; track step) {
-        <div
-          class="flex-1 h-1.5 rounded-full transition-all duration-300"
-          [class.bg-primary-500]="currentStep() >= step"
-          [class.bg-gray-200]="currentStep() < step"
-          [class.dark:bg-gray-700]="currentStep() < step"
-        ></div>
-        @if (step < 2) {
-          <div class="w-3"></div>
-        }
-      }
-    </div>
-    @if (currentStep() === 1) {
-      <form
-        [formGroup]="metaForm"
-        (ngSubmit)="nextStep()"
-        novalidate
-        class="glass-card p-6 space-y-5"
-      >
-        <hlm-field>
-          <label hlmFieldLabel>
-            Quiz title <span class="text-red-500">*</span>
-          </label>
-          <input
-            hlmInput
-            id="quiz-title"
-            formControlName="title"
-            class="w-full"
-            placeholder="e.g. The Midnight Library — Chapter 1 Quiz"
-          />
-          <hlm-field-error validator="required">Title is required.</hlm-field-error>
-          <hlm-field-error validator="minlength">Title must be at least 3 characters.</hlm-field-error>
-          <hlm-field-error validator="maxlength">Title must not exceed 100 characters.</hlm-field-error>
-        </hlm-field>
-        <hlm-field>
-          <label hlmFieldLabel>Description</label>
-          <textarea
-            hlmInput
-            id="quiz-desc"
-            formControlName="description"
-            rows="3"
-            class="w-full resize-none"
-            placeholder="A brief description of the quiz…"
-          ></textarea>
-          <hlm-field-error validator="maxlength">Description must not exceed 500 characters.</hlm-field-error>
-        </hlm-field>
-        <div class="flex justify-end">
-          <button hlmBtn type="submit" [disabled]="metaForm.invalid"
-                  class="bg-primary-600 hover:bg-primary-700 text-white">
-            Continue →
-          </button>
-        </div>
-      </form>
-    }
-    @if (currentStep() === 2) {
-      <div class="space-y-6">
-        @if (localQuestions().length > 0) {
-          <div class="space-y-3">
-            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-widest">
-              Questions ({{ localQuestions().length }})
-            </h2>
-            @for (q of localQuestions(); track $index) {
-              <div hlmCard class="glass-card-subtle px-5 py-4 flex items-start gap-3 rounded-xl">
-                <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
-                             text-primary-700 dark:text-primary-300 text-xs font-bold flex
-                             items-center justify-center flex-shrink-0">
-                  {{ $index + 1 }}
-                </span>
-                <div class="min-w-0 flex-1">
-                  <p class="text-gray-900 dark:text-white text-sm font-medium">{{ q.question }}</p>
-                  <p class="text-green-600 dark:text-green-400 text-xs mt-1">✓ {{ q.options[q.correctIndex] }}</p>
-                </div>
-                <button
-                  type="button"
-                  (click)="removeQuestion($index)"
-                  class="text-gray-400 hover:text-red-500 transition-colors text-lg flex-shrink-0 ml-auto leading-none"
-                  [attr.aria-label]="'Remove question ' + ($index + 1)"
-                >
-                  ✕
-                </button>
-              </div>
-            }
-          </div>
-        }
-        <form
-          [formGroup]="questionForm"
-          (ngSubmit)="addQuestion()"
-          novalidate
-          class="glass-card p-6 space-y-5"
-        >
-          <h2 class="font-semibold text-gray-900 dark:text-white">
-            {{ localQuestions().length === 0 ? 'Add your first question' : 'Add another question' }}
-          </h2>
-          <hlm-field>
-            <label hlmFieldLabel>Question <span class="text-red-500">*</span></label>
-            <textarea
-              hlmInput
-              id="q-text"
-              formControlName="question"
-              rows="2"
-              class="w-full resize-none"
-              placeholder="What is the main theme of chapter 3?"
-            ></textarea>
-            <hlm-field-error validator="required">Question is required.</hlm-field-error>
-            <hlm-field-error validator="minlength">Question must be at least 5 characters.</hlm-field-error>
-          </hlm-field>
-          <div class="space-y-1">
-            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Answer options <span class="text-red-500">*</span>
-            </p>
-            <div class="space-y-2">
-              @for (idx of optionIndices; track idx) {
-                <div class="flex items-center gap-3">
-                  <label class="flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      formControlName="correctIndex"
-                      [value]="idx"
-                      class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300 dark:border-gray-600 cursor-pointer"
-                    />
-                    <span
-                      class="ml-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                      [class.bg-accent-500]="questionForm.controls.correctIndex.value === idx"
-                      [class.text-white]="questionForm.controls.correctIndex.value === idx"
-                      [class.bg-gray-100]="questionForm.controls.correctIndex.value !== idx"
-                      [class.dark:bg-gray-700]="questionForm.controls.correctIndex.value !== idx"
-                      [class.text-gray-600]="questionForm.controls.correctIndex.value !== idx"
-                      [class.dark:text-gray-400]="questionForm.controls.correctIndex.value !== idx"
-                    >
-                      {{ optionLabel(idx) }}
-                    </span>
-                  </label>
-                  <input
-                    hlmInput
-                    [formControlName]="'option' + idx"
-                    [placeholder]="'Option ' + optionLabel(idx)"
-                    class="flex-1"
-                  />
-                </div>
-              }
-            </div>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              Select the radio button next to the correct answer.
-            </p>
-          </div>
-          <button
-            hlmBtn
-            type="submit"
-            variant="outline"
-            [disabled]="questionForm.invalid"
-            class="w-full border-dashed border-primary-400 dark:border-primary-600
-                   text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
-          >
-            + Add Question
-          </button>
-        </form>
-        @if (errorMessage()) {
-          <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-700 dark:text-red-400 text-sm">
-            ⚠️ {{ errorMessage() }}
-          </div>
-        }
-        <div class="flex justify-between items-center pb-8">
-          <button hlmBtn type="button" variant="ghost" (click)="previousStep()">
-            ← Back
-          </button>
-          <button
-            hlmBtn
-            type="button"
-            (click)="publishQuiz()"
-            [disabled]="localQuestions().length === 0 || isPublishing()"
-            class="bg-accent-600 hover:bg-accent-700 text-white font-bold"
-          >
-            {{ isPublishing() ? '…Publishing' : '🚀 Publish Quiz' }}
-            @if (localQuestions().length > 0) {
-              ({{ localQuestions().length }}
-              {{ localQuestions().length === 1 ? 'question' : 'questions' }})
-            }
-          </button>
-        </div>
-      </div>
-    }
-  </div>
-</div>
 ````
 
 ## File: src/app/features/quiz/quiz-take/quiz-take.component.html
@@ -7040,6 +6955,40 @@ module.exports = function (config) {
 }
 ````
 
+## File: sonar-project.properties
+````
+# Replace YOUR_ORG with your actual SonarCloud organization slug
+sonar.projectKey=leo477_book-club-fe
+sonar.organization=leo477
+sonar.projectName=Book Club Frontend
+sonar.projectVersion=1.0
+
+sonar.sources=src
+sonar.tests=src
+sonar.test.inclusions=**/*.spec.ts
+sonar.exclusions=**/node_modules/**,**/*.spec.ts,src/assets/**,src/environments/**
+
+sonar.typescript.lcov.reportPaths=coverage/book-club-fe/lcov.info
+
+# Exclude non-testable and currently untested files from coverage requirements
+sonar.coverage.exclusions=\
+  **/*.html,\
+  **/*.spec.ts,\
+  **/mocks/**,\
+  **/*.model.ts,\
+  **/*.interface.ts,\
+  **/*.config.ts,\
+  **/environments/**,\
+  src/app/features/**,\
+  src/app/layout/**,\
+  src/app/core/services/randomizer.service.ts,\
+  src/app/core/services/quiz.service.ts,\
+  src/app/core/services/club.service.ts,\
+  src/app/core/supabase/**
+
+sonar.sourceEncoding=UTF-8
+````
+
 ## File: spartan_plan.md
 ````markdown
 # Spartan UI Migration Plan — book-club-fe
@@ -8047,125 +7996,6 @@ export class ClubManagePanelComponent {
 }
 ````
 
-## File: src/app/features/clubs/club-detail/members/club-members-list.component.html
-````html
-<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="glass-card px-6 gap-4">
-  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
-    {{ 'MEMBERS.title' | translate }} ({{ members().length }})
-  </h2>
-  @if (members().length === 0) {
-    <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'MEMBERS.empty' | translate }}</p>
-  } @else {
-    <ul class="divide-y divide-gray-100 dark:divide-gray-700">
-      @for (member of members(); track member.userId) {
-        <li class="flex items-center gap-4 py-3 relative">
-          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0" aria-hidden="true">
-            {{ member.displayName | initials }}
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
-              {{ member.displayName }}
-            </p>
-            @if (member.role === 'organizer') {
-              <span class="inline-block text-xs font-medium text-accent-600 dark:text-accent-400">
-                {{ 'MEMBERS.organizer' | translate }}
-              </span>
-            } @else {
-              <span class="inline-block text-xs text-gray-400 dark:text-gray-500">
-                {{ 'MEMBERS.member' | translate }}
-              </span>
-            }
-          </div>
-          <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-            @if (canSeeSocials(member)) {
-              @if (member.socials?.telegram) {
-                <a [href]="'https://t.me/' + member.socials!.telegram" target="_blank" rel="noopener noreferrer"
-                   class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram: @' + member.socials!.telegram" title="Telegram">
-                  ✈️
-                </a>
-              }
-              @if (member.socials?.instagram) {
-                <a [href]="'https://instagram.com/' + member.socials!.instagram" target="_blank" rel="noopener noreferrer"
-                   class="text-pink-500 hover:text-pink-600 text-lg" [attr.aria-label]="'Instagram: @' + member.socials!.instagram" title="Instagram">
-                  📸
-                </a>
-              }
-              @if (member.socials?.github) {
-                <a [href]="'https://github.com/' + member.socials!.github" target="_blank" rel="noopener noreferrer"
-                   class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" [attr.aria-label]="'GitHub: ' + member.socials!.github" title="GitHub">
-                  🐙
-                </a>
-              }
-              @if (member.socials?.goodreads) {
-                <a [href]="'https://goodreads.com/' + member.socials!.goodreads" target="_blank" rel="noopener noreferrer"
-                   class="text-amber-600 hover:text-amber-700 text-lg" title="Goodreads">
-                  📚
-                </a>
-              }
-              @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
-                <button
-                  hlmBtn
-                  variant="secondary"
-                  size="sm"
-                  type="button"
-                  (click)="toggleQr(member.userId)"
-                  class="ml-1 text-xs"
-                  [attr.aria-expanded]="showQrForUser() === member.userId"
-                  [attr.aria-label]="'MEMBERS.show_qr' | translate"
-                >
-                  <span aria-hidden="true">⊡</span> {{ 'MEMBERS.show_qr' | translate }}
-                </button>
-                @if (showQrForUser() === member.userId) {
-                  <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl glass-card-strong shadow-xl p-4 flex flex-col items-center gap-2"
-                       aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
-                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
-                    <app-qr-code [value]="buildQrValue(member)" [size]="160" />
-                    <button hlmBtn variant="ghost" size="sm" type="button" (click)="toggleQr(member.userId)"
-                            class="mt-1 text-xs text-gray-400">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
-                  </dialog>
-                }
-              }
-            } @else {
-              <span class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
-                🔒 {{ 'MEMBERS.socials_hidden' | translate }}
-              </span>
-            }
-            @if (isOwner() && member.role !== 'organizer') {
-              <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">
-                <button hlmBtn variant="destructive" size="xs" type="button" (click)="kick.emit(member.userId)"
-                         [attr.aria-label]="'MEMBERS.kick' | translate">
-                  {{ 'MEMBERS.kick' | translate }}
-                </button>
-                <button hlmBtn variant="ghost" size="xs" type="button" (click)="toggleBanMenu(member.userId)"
-                        class="text-orange-600 hover:text-orange-700"
-                        [attr.aria-expanded]="showBanMenu() === member.userId">
-                  {{ 'MEMBERS.ban' | translate }}
-                </button>
-                @if (showBanMenu() === member.userId) {
-                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl glass-card-strong shadow-xl py-1 min-w-36">
-                    @for (duration of banDurations; track duration) {
-                      <li>
-                        <button hlmBtn variant="ghost" type="button" (click)="emitBan(member.userId, duration)"
-                                class="w-full justify-start px-4 text-sm">
-                          @if (duration === 1) { {{ 'MEMBERS.ban_1' | translate }} }
-                          @else if (duration === 3) { {{ 'MEMBERS.ban_3' | translate }} }
-                          @else if (duration === 5) { {{ 'MEMBERS.ban_5' | translate }} }
-                          @else { {{ 'MEMBERS.ban_permanent' | translate }} }
-                        </button>
-                      </li>
-                    }
-                  </menu>
-                }
-              </div>
-            }
-          </div>
-        </li>
-      }
-    </ul>
-  }
-</section>
-````
-
 ## File: src/app/features/clubs/club-detail/members/club-members-list.component.ts
 ````typescript
 import {
@@ -8352,6 +8182,210 @@ export class EventCardComponent {
 }
 ````
 
+## File: src/app/features/quiz/quiz-create/quiz-create.component.html
+````html
+<div class="min-h-screen p-4 sm:p-8">
+  <div class="max-w-2xl mx-auto space-y-6">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
+          📝 Create Quiz
+        </h1>
+        <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
+          Step {{ currentStep() }} of 2 —
+          {{ currentStep() === 1 ? 'Quiz details' : 'Add questions' }}
+        </p>
+      </div>
+      <a [routerLink]="['..']" class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
+        ✕ Cancel
+      </a>
+    </header>
+    <div class="flex items-center gap-0">
+      @for (step of [1, 2]; track step) {
+        <div
+          class="flex-1 h-1.5 rounded-full transition-all duration-300"
+          [class.bg-primary-500]="currentStep() >= step"
+          [class.bg-gray-200]="currentStep() < step"
+          [class.dark:bg-gray-700]="currentStep() < step"
+        ></div>
+        @if (step < 2) {
+          <div class="w-3"></div>
+        }
+      }
+    </div>
+    @if (currentStep() === 1) {
+      <form
+        [formGroup]="metaForm"
+        (ngSubmit)="nextStep()"
+        novalidate
+        class="glass-card p-6 space-y-5"
+      >
+        <hlm-field>
+          <label hlmFieldLabel>
+            Quiz title <span class="text-red-500">*</span>
+          </label>
+          <input
+            hlmInput
+            id="quiz-title"
+            formControlName="title"
+            class="w-full"
+            placeholder="e.g. The Midnight Library — Chapter 1 Quiz"
+          />
+          <hlm-field-error validator="required">Title is required.</hlm-field-error>
+          <hlm-field-error validator="minlength">Title must be at least 3 characters.</hlm-field-error>
+          <hlm-field-error validator="maxlength">Title must not exceed 100 characters.</hlm-field-error>
+        </hlm-field>
+        <hlm-field>
+          <label hlmFieldLabel>Description</label>
+          <textarea
+            hlmInput
+            id="quiz-desc"
+            formControlName="description"
+            rows="3"
+            class="w-full resize-none"
+            placeholder="A brief description of the quiz…"
+          ></textarea>
+          <hlm-field-error validator="maxlength">Description must not exceed 500 characters.</hlm-field-error>
+        </hlm-field>
+        <div class="flex justify-end">
+          <button hlmBtn type="submit" [disabled]="metaForm.invalid"
+                  class="bg-primary-600 hover:bg-primary-700 text-white">
+            Continue →
+          </button>
+        </div>
+      </form>
+    }
+    @if (currentStep() === 2) {
+      <div class="space-y-6">
+        @if (localQuestions().length > 0) {
+          <div class="space-y-3">
+            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-widest">
+              Questions ({{ localQuestions().length }})
+            </h2>
+            @for (q of localQuestions(); track $index) {
+              <div hlmCard class="glass-card-subtle px-5 py-4 flex items-start gap-3 rounded-xl">
+                <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
+                             text-primary-700 dark:text-primary-300 text-xs font-bold flex
+                             items-center justify-center flex-shrink-0">
+                  {{ $index + 1 }}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <p class="text-gray-900 dark:text-white text-sm font-medium">{{ q.question }}</p>
+                  <p class="text-green-600 dark:text-green-400 text-xs mt-1">✓ {{ q.options[q.correctIndex] }}</p>
+                </div>
+                <button
+                  type="button"
+                  (click)="removeQuestion($index)"
+                  class="text-gray-400 hover:text-red-500 transition-colors text-lg flex-shrink-0 ml-auto leading-none"
+                  [attr.aria-label]="'Remove question ' + ($index + 1)"
+                >
+                  ✕
+                </button>
+              </div>
+            }
+          </div>
+        }
+        <form
+          [formGroup]="questionForm"
+          (ngSubmit)="addQuestion()"
+          novalidate
+          class="glass-card p-6 space-y-5"
+        >
+          <h2 class="font-semibold text-gray-900 dark:text-white">
+            {{ localQuestions().length === 0 ? 'Add your first question' : 'Add another question' }}
+          </h2>
+          <hlm-field>
+            <label hlmFieldLabel>Question <span class="text-red-500">*</span></label>
+            <textarea
+              hlmInput
+              id="q-text"
+              formControlName="question"
+              rows="2"
+              class="w-full resize-none"
+              placeholder="What is the main theme of chapter 3?"
+            ></textarea>
+            <hlm-field-error validator="required">Question is required.</hlm-field-error>
+            <hlm-field-error validator="minlength">Question must be at least 5 characters.</hlm-field-error>
+          </hlm-field>
+          <div class="space-y-1">
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Answer options <span class="text-red-500">*</span>
+            </p>
+            <div class="space-y-2">
+              @for (idx of optionIndices; track idx) {
+                <div class="flex items-center gap-3">
+                  <label class="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      formControlName="correctIndex"
+                      [value]="idx"
+                      class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300 dark:border-gray-600 cursor-pointer"
+                    />
+                    <span
+                      class="ml-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                      [class.bg-accent-500]="questionForm.controls.correctIndex.value === idx"
+                      [class.text-white]="questionForm.controls.correctIndex.value === idx"
+                      [class.bg-gray-100]="questionForm.controls.correctIndex.value !== idx"
+                      [class.dark:bg-gray-700]="questionForm.controls.correctIndex.value !== idx"
+                      [class.text-gray-600]="questionForm.controls.correctIndex.value !== idx"
+                      [class.dark:text-gray-400]="questionForm.controls.correctIndex.value !== idx"
+                    >
+                      {{ optionLabel(idx) }}
+                    </span>
+                  </label>
+                  <input
+                    hlmInput
+                    [formControlName]="'option' + idx"
+                    [placeholder]="'Option ' + optionLabel(idx)"
+                    class="flex-1"
+                  />
+                </div>
+              }
+            </div>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              Select the radio button next to the correct answer.
+            </p>
+          </div>
+          <button
+            hlmBtn
+            type="submit"
+            variant="outline"
+            [disabled]="questionForm.invalid"
+            class="w-full border-dashed border-primary-400 dark:border-primary-600
+                   text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+          >
+            + Add Question
+          </button>
+        </form>
+        @if (errorMessage()) {
+          <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-700 dark:text-red-400 text-sm">
+            ⚠️ {{ errorMessage() }}
+          </div>
+        }
+        <div class="flex justify-between items-center pb-8">
+          <button hlmBtn type="button" variant="ghost" (click)="previousStep()">
+            ← Back
+          </button>
+          <button
+            hlmBtn
+            type="button"
+            (click)="publishQuiz()"
+            [disabled]="localQuestions().length === 0 || isPublishing()"
+            class="bg-accent-600 hover:bg-accent-700 text-white font-bold"
+          >
+            {{ isPublishing() ? '…Publishing' : '🚀 Publish Quiz' }}
+            @if (localQuestions().length > 0) {
+              ({{ localQuestions().length }}
+              {{ localQuestions().length === 1 ? 'question' : 'questions' }})
+            }
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+````
+
 ## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
 ````typescript
 import {
@@ -8511,13 +8545,12 @@ import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../../core/auth/auth.service';
 import { QuizService } from '../../../core/services/quiz.service';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
-import { HlmBadge } from '../../../shared/spartan/badge/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
 @Component({
   selector: 'app-quiz-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ...HlmCardImports, HlmBadge, HlmButton],
+  imports: [RouterLink, ...HlmCardImports, HlmButton],
   templateUrl: './quiz-list.component.html',
 })
 export class QuizListComponent {
@@ -8880,40 +8913,6 @@ export default {
     tailwindcss({ base: __dirname }),
   ],
 };
-````
-
-## File: sonar-project.properties
-````
-# Replace YOUR_ORG with your actual SonarCloud organization slug
-sonar.projectKey=leo477_book-club-fe
-sonar.organization=leo477
-sonar.projectName=Book Club Frontend
-sonar.projectVersion=1.0
-
-sonar.sources=src
-sonar.tests=src
-sonar.test.inclusions=**/*.spec.ts
-sonar.exclusions=**/node_modules/**,**/*.spec.ts,src/assets/**,src/environments/**
-
-sonar.typescript.lcov.reportPaths=coverage/book-club-fe/lcov.info
-
-# Exclude non-testable and currently untested files from coverage requirements
-sonar.coverage.exclusions=\
-  **/*.html,\
-  **/*.spec.ts,\
-  **/mocks/**,\
-  **/*.model.ts,\
-  **/*.interface.ts,\
-  **/*.config.ts,\
-  **/environments/**,\
-  src/app/features/**,\
-  src/app/layout/**,\
-  src/app/core/services/randomizer.service.ts,\
-  src/app/core/services/quiz.service.ts,\
-  src/app/core/services/club.service.ts,\
-  src/app/core/supabase/**
-
-sonar.sourceEncoding=UTF-8
 ````
 
 ## File: tsconfig.json
@@ -9448,6 +9447,125 @@ export class RandomizerService {
     </div>
   </div>
 </article>
+````
+
+## File: src/app/features/clubs/club-detail/members/club-members-list.component.html
+````html
+<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="glass-card px-6 gap-4">
+  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
+    {{ 'MEMBERS.title' | translate }} ({{ members().length }})
+  </h2>
+  @if (members().length === 0) {
+    <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'MEMBERS.empty' | translate }}</p>
+  } @else {
+    <ul class="divide-y divide-gray-100 dark:divide-gray-700">
+      @for (member of members(); track member.userId) {
+        <li class="flex items-center gap-4 py-3 relative">
+          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0" aria-hidden="true">
+            {{ member.displayName | initials }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+              {{ member.displayName }}
+            </p>
+            @if (member.role === 'organizer') {
+              <span class="inline-block text-xs font-medium text-accent-600 dark:text-accent-400">
+                {{ 'MEMBERS.organizer' | translate }}
+              </span>
+            } @else {
+              <span class="inline-block text-xs text-gray-400 dark:text-gray-500">
+                {{ 'MEMBERS.member' | translate }}
+              </span>
+            }
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+            @if (canSeeSocials(member)) {
+              @if (member.socials?.telegram) {
+                <a [href]="'https://t.me/' + member.socials!.telegram" target="_blank" rel="noopener noreferrer"
+                   class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram: @' + member.socials!.telegram" title="Telegram">
+                  ✈️
+                </a>
+              }
+              @if (member.socials?.instagram) {
+                <a [href]="'https://instagram.com/' + member.socials!.instagram" target="_blank" rel="noopener noreferrer"
+                   class="text-pink-500 hover:text-pink-600 text-lg" [attr.aria-label]="'Instagram: @' + member.socials!.instagram" title="Instagram">
+                  📸
+                </a>
+              }
+              @if (member.socials?.github) {
+                <a [href]="'https://github.com/' + member.socials!.github" target="_blank" rel="noopener noreferrer"
+                   class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" [attr.aria-label]="'GitHub: ' + member.socials!.github" title="GitHub">
+                  🐙
+                </a>
+              }
+              @if (member.socials?.goodreads) {
+                <a [href]="'https://goodreads.com/' + member.socials!.goodreads" target="_blank" rel="noopener noreferrer"
+                   class="text-amber-600 hover:text-amber-700 text-lg" title="Goodreads">
+                  📚
+                </a>
+              }
+              @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
+                <button
+                  hlmBtn
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  (click)="toggleQr(member.userId)"
+                  class="ml-1 text-xs"
+                  [attr.aria-expanded]="showQrForUser() === member.userId"
+                  [attr.aria-label]="'MEMBERS.show_qr' | translate"
+                >
+                  <span aria-hidden="true">⊡</span> {{ 'MEMBERS.show_qr' | translate }}
+                </button>
+                @if (showQrForUser() === member.userId) {
+                  <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl glass-card-strong shadow-xl p-4 flex flex-col items-center gap-2"
+                       aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
+                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
+                    <app-qr-code [value]="buildQrValue(member)" [size]="160" />
+                    <button hlmBtn variant="ghost" size="sm" type="button" (click)="toggleQr(member.userId)"
+                            class="mt-1 text-xs text-gray-400">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
+                  </dialog>
+                }
+              }
+            } @else {
+              <span class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                🔒 {{ 'MEMBERS.socials_hidden' | translate }}
+              </span>
+            }
+            @if (isOwner() && member.role !== 'organizer') {
+              <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">
+                <button hlmBtn variant="destructive" size="xs" type="button" (click)="kick.emit(member.userId)"
+                         [attr.aria-label]="'MEMBERS.kick' | translate">
+                  {{ 'MEMBERS.kick' | translate }}
+                </button>
+                <button hlmBtn variant="ghost" size="xs" type="button" (click)="toggleBanMenu(member.userId)"
+                        class="text-orange-600 hover:text-orange-700"
+                        [attr.aria-expanded]="showBanMenu() === member.userId">
+                  {{ 'MEMBERS.ban' | translate }}
+                </button>
+                @if (showBanMenu() === member.userId) {
+                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl glass-card-strong shadow-xl py-1 min-w-36">
+                    @for (duration of banDurations; track duration) {
+                      <li>
+                        <button hlmBtn variant="ghost" type="button" (click)="emitBan(member.userId, duration)"
+                                class="w-full justify-start px-4 text-sm">
+                          @if (duration === 1) { {{ 'MEMBERS.ban_1' | translate }} }
+                          @else if (duration === 3) { {{ 'MEMBERS.ban_3' | translate }} }
+                          @else if (duration === 5) { {{ 'MEMBERS.ban_5' | translate }} }
+                          @else { {{ 'MEMBERS.ban_permanent' | translate }} }
+                        </button>
+                      </li>
+                    }
+                  </menu>
+                }
+              </div>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>
 ````
 
 ## File: src/app/features/clubs/edit-club/edit-club.component.html
@@ -10339,7 +10457,7 @@ import {
 } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith } from 'rxjs';
+import { map, startWith, firstValueFrom } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { HlmDropdownMenuImports } from '../../shared/spartan/dropdown-menu/src';
@@ -10376,7 +10494,7 @@ export class HeaderComponent {
   });
   switchLang(): void {
     const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-    this.translate.use(next).subscribe();
+    void firstValueFrom(this.translate.use(next));
   }
   async signOut(): Promise<void> {
     await this.auth.signOut();
@@ -10428,10 +10546,11 @@ export class HeaderComponent {
 ````typescript
 import {
   Component, ChangeDetectionStrategy, input, output,
-  OnInit, OnDestroy, signal, inject, ElementRef, HostListener,
+  DestroyRef, signal, inject, ElementRef, HostListener, effect,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Subject, switchMap, debounceTime, distinctUntilChanged, of, takeUntil } from 'rxjs';
+import { switchMap, debounceTime, distinctUntilChanged, of } from 'rxjs';
 import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
 import { HlmInput } from '../../spartan/input/src';
 @Component({
@@ -10441,48 +10560,47 @@ import { HlmInput } from '../../spartan/input/src';
   imports: [ReactiveFormsModule, HlmInput],
   templateUrl: './address-autocomplete.component.html',
 })
-export class AddressAutocompleteComponent implements OnInit, OnDestroy {
+export class AddressAutocompleteComponent {
   readonly control = input.required<FormControl<string>>();
   readonly placeholder = input<string>('');
   readonly inputId = input<string>('');
   readonly selected = output<GeocodeSuggestion>();
   private readonly geocoding = inject(GeocodingService);
   private readonly elRef = inject(ElementRef);
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
   readonly suggestions = signal<GeocodeSuggestion[]>([]);
   readonly isLoading = signal(false);
   readonly isOpen = signal(false);
   readonly activeIndex = signal(-1);
-  ngOnInit(): void {
-    this.control().valueChanges.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      switchMap(q => {
-        if (!q || q.length < 2) {
+  constructor() {
+    effect(() => {
+      const ctrl = this.control();
+      ctrl.valueChanges.pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(q => {
+          if (!q || q.length < 2) {
+            this.suggestions.set([]);
+            this.isOpen.set(false);
+            return of([]);
+          }
+          this.isLoading.set(true);
+          return this.geocoding.autocomplete(q);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      ).subscribe({
+        next: (results) => {
+          this.isLoading.set(false);
+          this.suggestions.set(results);
+          this.activeIndex.set(-1);
+          this.isOpen.set(results.length > 0);
+        },
+        error: () => {
+          this.isLoading.set(false);
           this.suggestions.set([]);
-          this.isOpen.set(false);
-          return of([]);
-        }
-        this.isLoading.set(true);
-        return this.geocoding.autocomplete(q);
-      }),
-      takeUntil(this.destroy$),
-    ).subscribe({
-      next: (results) => {
-        this.isLoading.set(false);
-        this.suggestions.set(results);
-        this.activeIndex.set(-1);
-        this.isOpen.set(results.length > 0);
-      },
-      error: () => {
-        this.isLoading.set(false);
-        this.suggestions.set([]);
-      },
+        },
+      });
     });
-  }
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
   }
   select(s: GeocodeSuggestion): void {
     this.control().setValue(s.label, { emitEvent: false });
@@ -11077,55 +11195,6 @@ export class LoginComponent {
 </header>
 ````
 
-## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.html
-````html
-<div hlmCard class="glass-card-subtle p-4 gap-3">
-  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
-  <div class="grid grid-cols-1 gap-2">
-    <a
-      [routerLink]="['/clubs', clubId(), 'quizzes']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">📝</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
-      </div>
-    </a>
-    <a
-      [routerLink]="['/clubs', clubId(), 'randomizer']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">🎲</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
-      </div>
-    </a>
-    <a
-      [routerLink]="['/clubs', clubId(), 'edit']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">✏️</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.edit_club_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.edit_club_desc' | translate }}</p>
-      </div>
-    </a>
-    <a
-      [routerLink]="['/clubs', clubId(), 'events', 'create']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">📅</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.create_event_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.create_event_desc' | translate }}</p>
-      </div>
-    </a>
-  </div>
-</div>
-````
-
 ## File: src/app/layout/header/header.component.html
 ````html
 <header
@@ -11590,6 +11659,55 @@ export class RegisterComponent {
     }
   }
 }
+````
+
+## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.html
+````html
+<div hlmCard class="glass-card-subtle p-4 gap-3">
+  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
+  <div class="grid grid-cols-1 gap-2">
+    <a
+      [routerLink]="['/clubs', clubId(), 'quizzes']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">📝</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
+      </div>
+    </a>
+    <a
+      [routerLink]="['/clubs', clubId(), 'randomizer']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">🎲</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
+      </div>
+    </a>
+    <a
+      [routerLink]="['/clubs', clubId(), 'edit']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">✏️</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.edit_club_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.edit_club_desc' | translate }}</p>
+      </div>
+    </a>
+    <a
+      [routerLink]="['/clubs', clubId(), 'events', 'create']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">📅</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.create_event_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.create_event_desc' | translate }}</p>
+      </div>
+    </a>
+  </div>
+</div>
 ````
 
 ## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
