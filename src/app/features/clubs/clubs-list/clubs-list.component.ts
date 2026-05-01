@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   inject,
   signal,
+  linkedSignal,
   OnInit,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -29,7 +30,7 @@ export class ClubsListComponent implements OnInit {
   private readonly seo = inject(SeoService);
 
   readonly joiningClubId = signal<string | null>(null);
-  readonly activeTab = signal<'all' | 'my'>('all');
+  readonly activeTab = linkedSignal<'all' | 'my'>(() => { void this.clubService.clubs(); return 'all'; });
   readonly ownedClubIds = this.clubService.myOwnedClubIds;
 
   async ngOnInit(): Promise<void> {

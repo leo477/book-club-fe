@@ -4,6 +4,7 @@ import {
   inject,
   signal,
   computed,
+  linkedSignal,
   OnInit,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -26,7 +27,7 @@ export class EventsFeedComponent implements OnInit {
   readonly eventService = inject(EventService);
   readonly auth = inject(AuthService);
 
-  readonly activeTab = signal<'upcoming' | 'my'>('upcoming');
+  readonly activeTab = linkedSignal<'upcoming' | 'my'>(() => { void this.eventService.allEvents(); return 'upcoming'; });
   readonly attendingEventId = signal<string | null>(null);
 
   readonly sortedDates = computed(() =>

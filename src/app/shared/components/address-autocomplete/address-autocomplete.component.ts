@@ -1,9 +1,10 @@
 import {
-  Component, ChangeDetectionStrategy, Input, Output, EventEmitter,
-  OnInit, OnDestroy, signal, inject, ElementRef, HostListener
+  Component, ChangeDetectionStrategy, DestroyRef, OnInit,
+  signal, inject, ElementRef, HostListener, input, output
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { Subject, switchMap, debounceTime, distinctUntilChanged, of, takeUntil } from 'rxjs';
+import { switchMap, debounceTime, distinctUntilChanged, of } from 'rxjs';
 import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
 
 @Component({
@@ -13,15 +14,15 @@ import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geoc
   imports: [ReactiveFormsModule],
   templateUrl: './address-autocomplete.component.html',
 })
-export class AddressAutocompleteComponent implements OnInit, OnDestroy {
-  @Input({ required: true }) control!: FormControl<string>;
-  @Input() placeholder = '';
-  @Input() inputId = '';
-  @Output() selected = new EventEmitter<GeocodeSuggestion>();
+export class AddressAutocompleteComponent implements OnInit {
+  readonly control = input.required<FormControl<string>>();
+  readonly placeholder = input('');
+  readonly inputId = input('');
+  readonly selected = output<GeocodeSuggestion>();
 
   private readonly geocoding = inject(GeocodingService);
   private readonly elRef = inject(ElementRef);
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly suggestions = signal<GeocodeSuggestion[]>([]);
   readonly isLoading = signal(false);
@@ -29,7 +30,7 @@ export class AddressAutocompleteComponent implements OnInit, OnDestroy {
   readonly activeIndex = signal(-1);
 
   ngOnInit(): void {
-    this.control.valueChanges.pipe(
+    this.control().valueChanges.pipe(
       debounceTime(300),
       distinctUntilChanged(),
       switchMap(q => {
@@ -41,7 +42,7 @@ export class AddressAutocompleteComponent implements OnInit, OnDestroy {
         this.isLoading.set(true);
         return this.geocoding.autocomplete(q);
       }),
-      takeUntil(this.destroy$),
+      takeUntilDestroyed(this.destroyRef),
     ).subscribe({
       next: (results) => {
         this.isLoading.set(false);
@@ -56,13 +57,8 @@ export class AddressAutocompleteComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
   select(s: GeocodeSuggestion): void {
-    this.control.setValue(s.label, { emitEvent: false });
+    this.control().setValue(s.label, { emitEvent: false });
     this.suggestions.set([]);
     this.isOpen.set(false);
     this.selected.emit(s);

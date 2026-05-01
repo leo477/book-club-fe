@@ -6,6 +6,7 @@ import {
   computed,
   effect,
   input,
+  linkedSignal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -70,7 +71,7 @@ export class ClubDetailComponent {
   readonly actionError = signal<string | null>(null);
   readonly attendingEventId = signal<string | null>(null);
 
-  readonly sortKey = signal<'date' | 'popular' | 'status'>('date');
+  readonly sortKey = linkedSignal<'date' | 'popular' | 'status'>(() => { void this.id(); return 'date'; });
 
   readonly sortOptions = [
     { key: 'date' as const,    labelKey: 'CLUB_DETAIL.sort_nearest' },

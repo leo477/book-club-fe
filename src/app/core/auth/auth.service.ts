@@ -1,7 +1,8 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, resource, signal } from '@angular/core';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { catchError, firstValueFrom, of } from 'rxjs';
+import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { extractApiError } from '../api/api-error.util';
 import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
@@ -29,15 +30,14 @@ export class AuthService {
   readonly userRole = computed(() => this._currentUser()?.role ?? null);
   readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
 
-  private readonly _statsResource = resource({
+  private readonly _statsResource = rxResource({
     params: () => this._currentUser()?.id ?? null,
     loader: ({ params: userId }) => {
-      if (!userId) return Promise.resolve(null as UserStats | null);
-      return firstValueFrom(
-        this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
-          catchError(() => of(null)),
-        ),
-      ).then(raw => (raw ? mapUserStats(raw) : null));
+      if (!userId) return of(null as UserStats | null);
+      return this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
+        map(raw => mapUserStats(raw)),
+        catchError(() => of(null)),
+      );
     },
   });
   readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
