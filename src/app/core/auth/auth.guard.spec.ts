@@ -6,6 +6,7 @@ import { authGuard } from './auth.guard';
 import { AuthService } from './auth.service';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 
+// eslint-disable-next-line rxjs-x/finnish
 function runGuard() {
   return TestBed.runInInjectionContext(() =>
     authGuard(null as unknown as ActivatedRouteSnapshot, null as unknown as RouterStateSnapshot)
@@ -53,6 +54,7 @@ describe('authGuard', () => {
     });
 
     it('returns UrlTree to /login when not authenticated', () => {
+      // eslint-disable-next-line rxjs-x/finnish
       const result = runGuard();
       expect(result instanceof UrlTree).toBeTrue();
       expect((result as UrlTree).toString()).toBe('/login');

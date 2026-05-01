@@ -4,30 +4,42 @@ import {
   inject,
   signal,
   input,
+  OnInit,
+  DestroyRef,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs';
 import { EventService } from '../../../core/services/event.service';
 import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
+import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { BookCoverService } from '../../../core/services/book-cover.service';
 import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
 
 @Component({
   selector: 'app-create-event',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent],
+  imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton],
   templateUrl: './create-event.component.html',
 })
-export class CreateEventComponent {
+export class CreateEventComponent implements OnInit {
   readonly clubId = input.required<string>();
 
   private readonly fb = inject(FormBuilder);
   private readonly eventService = inject(EventService);
   private readonly router = inject(Router);
+  private readonly bookCoverService = inject(BookCoverService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly showAfterVenue = signal(false);
+  readonly isFetchingCover = signal(false);
+  readonly coverFetchFailed = signal(false);
 
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
@@ -44,7 +56,26 @@ export class CreateEventComponent {
     afterVenueAddress: [''],
     afterVenueDescription: [''],
     coverUrl: [''],
+    bookTitle: [''],
   });
+
+  ngOnInit(): void {
+    this.form.controls.bookTitle.valueChanges.pipe(
+      debounceTime(600),
+      distinctUntilChanged(),
+      filter(v => v.length > 2),
+      tap(() => { this.isFetchingCover.set(true); this.coverFetchFailed.set(false); }),
+      switchMap(title => this.bookCoverService.fetchCover$(title)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(url => {
+      this.isFetchingCover.set(false);
+      if (url && !this.form.controls.coverUrl.value) {
+        this.form.controls.coverUrl.setValue(url);
+      } else if (!url) {
+        this.coverFetchFailed.set(true);
+      }
+    });
+  }
 
   onAddressSelect(suggestion: GeocodeSuggestion): void {
     this.form.patchValue({
@@ -87,6 +118,7 @@ export class CreateEventComponent {
         durationMinutes: v.durationMinutes ?? undefined,
         afterMeetingVenue,
         coverUrl: v.coverUrl || null,
+        bookTitle: v.bookTitle || null,
       });
       await this.router.navigate(['/events', created.id]);
     } catch {

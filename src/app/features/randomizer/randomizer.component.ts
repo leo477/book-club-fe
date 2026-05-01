@@ -15,12 +15,14 @@ import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { RandomizerService } from '../../core/services/randomizer.service';
 import { InitialsPipe } from '../../shared/pipes/initials.pipe';
+import { HlmButton } from '../../shared/spartan/button/src';
+import { HlmInput } from '../../shared/spartan/input/src';
 
 @Component({
   selector: 'app-randomizer',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule, InitialsPipe],
+  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule, InitialsPipe, HlmButton, HlmInput],
   styleUrl: './randomizer.component.scss',
   templateUrl: './randomizer.component.html',
 })

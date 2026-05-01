@@ -1,234 +1,165 @@
-<div class="max-w-2xl mx-auto space-y-6 py-8 px-4">
+<div class="min-h-screen bg-gradient-to-br from-primary-950/30 via-transparent to-accent-950/20">
+  <div class="max-w-2xl mx-auto space-y-5 py-8 px-4">
 
-  <!-- ══════════════════════════════════════════════════════════════════ -->
-  <!-- Section 1 — Hero / Avatar                                         -->
-  <!-- ══════════════════════════════════════════════════════════════════ -->
-  <section
-    aria-labelledby="profile-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-8 text-center"
-  >
-    <!-- Avatar circle -->
-    <div
-      class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-to-br from-primary-400 to-accent-500
-             flex items-center justify-center text-white text-3xl font-bold select-none shadow-md"
-      aria-hidden="true"
+    <!-- ── Section 1 — Hero / Avatar ─────────────────────────────────── -->
+    <section
+      aria-labelledby="profile-heading"
+      class="glass-card-strong p-8 text-center"
     >
-      {{ userInitials() }}
-    </div>
+      <!-- Avatar circle -->
+      <div
+        class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-brand
+               flex items-center justify-center text-white text-3xl font-bold select-none
+               shadow-lg ring-4 ring-white/20"
+        aria-hidden="true"
+      >
+        {{ userInitials() }}
+      </div>
 
-    <!-- Display name -->
-    <h1
-      id="profile-heading"
-      class="text-2xl font-bold text-gray-900 dark:text-white"
-    >
-      {{ auth.currentUser()?.displayName }}
-    </h1>
+      <h1 id="profile-heading" class="text-2xl font-bold text-gray-900 dark:text-white">
+        {{ auth.currentUser()?.displayName }}
+      </h1>
 
-    <!-- Role badge -->
-    <span
-      class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
-      [class]="auth.currentUser()?.role === 'organizer'
-        ? 'bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
-        : 'bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
-    >
-      {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
-      {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
-    </span>
+      <!-- Role badge -->
+      <span
+        class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
+        [class]="auth.currentUser()?.role === 'organizer'
+          ? 'bg-accent-100/80 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
+          : 'bg-primary-100/80 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
+      >
+        {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
+        {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
+      </span>
 
-    <!-- Joined date -->
-    @if (joinedDate()) {
-      <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
-        {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
-      </p>
-    }
-  </section>
+      @if (joinedDate()) {
+        <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
+          {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
+        </p>
+      }
+    </section>
 
-  <!-- ══════════════════════════════════════════════════════════════════ -->
-  <!-- Section 2 — Edit Display Name                                     -->
-  <!-- ══════════════════════════════════════════════════════════════════ -->
-  <section
-    aria-labelledby="edit-name-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="edit-name-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
-    >
-      <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
-    </h2>
+    <!-- ── Section 2 — Edit Display Name ─────────────────────────────── -->
+    <section aria-labelledby="edit-name-heading" class="glass-card p-6">
+      <h2 id="edit-name-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+        <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
+      </h2>
 
-    <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
-      <div class="space-y-4">
-        <!-- Display name field -->
-        <div>
-          <label
-            for="displayName"
-            class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5"
-          >
-            {{ 'PROFILE.display_name_label' | translate }}
-          </label>
-          <input
-            id="displayName"
-            type="text"
-            formControlName="displayName"
-            autocomplete="nickname"
-            class="w-full rounded-xl border border-gray-200 dark:border-gray-700
-                   bg-gray-50 dark:bg-gray-900 px-4 py-2.5 text-sm
-                   text-gray-900 dark:text-white placeholder-gray-400
-                   focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                   transition-all duration-200"
-            [placeholder]="'PROFILE.display_name_placeholder' | translate"
-            [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
-            aria-describedby="displayName-error"
-          />
+      <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
+        <div class="space-y-4">
+          <div>
+            <label for="displayName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              {{ 'PROFILE.display_name_label' | translate }}
+            </label>
+            <input
+              hlmInput
+              id="displayName"
+              type="text"
+              formControlName="displayName"
+              autocomplete="nickname"
+              class="w-full"
+              [placeholder]="'PROFILE.display_name_placeholder' | translate"
+              [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
+              aria-describedby="displayName-error"
+            />
+            @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
+              <p id="displayName-error" role="alert" class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                @if (nameForm.controls.displayName.hasError('required')) {
+                  {{ 'PROFILE.display_name_required' | translate }}
+                } @else if (nameForm.controls.displayName.hasError('minlength')) {
+                  {{ 'PROFILE.display_name_min' | translate }}
+                }
+              </p>
+            }
+          </div>
 
-          <!-- Validation error -->
-          @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
-            <p
-              id="displayName-error"
-              role="alert"
-              class="mt-1.5 text-xs text-red-600 dark:text-red-400"
+          <div class="flex items-center gap-3">
+            <button
+              hlmBtn
+              type="submit"
+              [disabled]="nameForm.invalid || isSavingName()"
+              class="bg-gradient-brand text-white border-0 hover:opacity-90"
             >
-              @if (nameForm.controls.displayName.hasError('required')) {
-                {{ 'PROFILE.display_name_required' | translate }}
-              } @else if (nameForm.controls.displayName.hasError('minlength')) {
-                {{ 'PROFILE.display_name_min' | translate }}
+              @if (isSavingName()) {
+                {{ 'PROFILE.saving' | translate }}
+              } @else {
+                {{ 'PROFILE.save_name' | translate }}
               }
-            </p>
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <!-- ── Section 3 — Change Role ────────────────────────────────────── -->
+    <section aria-labelledby="role-heading" class="glass-card p-6">
+      <h2 id="role-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+        <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
+      </h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+        {{ 'PROFILE.role_subtitle' | translate }}
+      </p>
+      <app-profile-role-selector
+        [currentRole]="auth.currentUser()?.role ?? 'user'"
+        (roleChange)="changeRole($event)"
+      />
+    </section>
+
+    <!-- ── Section 4 — Statistics ─────────────────────────────────────── -->
+    <section aria-labelledby="stats-heading" class="glass-card p-6">
+      <h2 id="stats-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+        <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
+      </h2>
+      <app-profile-stats [stats]="auth.userStats()" />
+    </section>
+
+    <!-- ── Section 5 — Social Media Links ────────────────────────────── -->
+    <section aria-labelledby="socials-heading" class="glass-card p-6">
+      <h2 id="socials-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+        <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
+      </h2>
+
+      <!-- Privacy toggle -->
+      <div class="flex items-center gap-3 mb-4 p-3 rounded-[var(--bento-radius)] glass-card-subtle">
+        <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
+          <input
+            type="checkbox"
+            [formControl]="socialsPublicControl"
+            (change)="onSocialsPublicChange(socialsPublicControl.value)"
+            class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+          />
+          {{ 'PROFILE.socials_public_label' | translate }}
+        </label>
+      </div>
+
+      <!-- Current social badges -->
+      @if (
+        userSocials().telegram  ||
+        userSocials().instagram ||
+        userSocials().twitter   ||
+        userSocials().linkedin  ||
+        userSocials().github    ||
+        userSocials().goodreads
+      ) {
+        <div class="flex flex-wrap gap-2 mb-6">
+          <app-social-badges [socials]="userSocials()" />
+        </div>
+      }
+
+      <!-- Edit form -->
+      <form [formGroup]="socialsForm" (ngSubmit)="submitSocials()" novalidate class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          @for (social of socialFields; track social.key) {
+            <app-social-link-field [config]="social" [form]="socialsForm" />
           }
         </div>
 
-        <!-- Save row -->
-        <div class="flex items-center gap-3">
-          <button
-            type="submit"
-            [disabled]="nameForm.invalid || isSavingName()"
-            class="rounded-xl bg-primary-600 hover:bg-primary-700 disabled:opacity-50
-                   disabled:cursor-not-allowed text-white px-5 py-2.5 text-sm font-medium
-                   transition-all duration-200 focus:outline-none focus:ring-2
-                   focus:ring-primary-500 focus:ring-offset-2"
-          >
-            @if (isSavingName()) {
-              {{ 'PROFILE.saving' | translate }}
-            } @else {
-              {{ 'PROFILE.save_name' | translate }}
-            }
+        <div class="flex items-center gap-3 pt-1">
+          <button hlmBtn type="submit" class="bg-gradient-brand text-white border-0 hover:opacity-90">
+            {{ 'PROFILE.save' | translate }}
           </button>
-
         </div>
-      </div>
-    </form>
-  </section>
+      </form>
+    </section>
 
-  <!-- ══════════════════════════════════════════════════════════════════ -->
-  <!-- Section 3 — Change Role                                           -->
-  <!-- ══════════════════════════════════════════════════════════════════ -->
-  <section
-    aria-labelledby="role-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="role-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2"
-    >
-      <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
-    </h2>
-    <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-      {{ 'PROFILE.role_subtitle' | translate }}
-    </p>
-
-    <app-profile-role-selector
-      [currentRole]="auth.currentUser()?.role ?? 'user'"
-      (roleChange)="changeRole($event)"
-    />
-
-  </section>
-
-  <!-- ══════════════════════════════════════════════════════════════════ -->
-  <!-- Section 4 — Statistics                                            -->
-  <!-- ══════════════════════════════════════════════════════════════════ -->
-  <section
-    aria-labelledby="stats-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="stats-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
-    >
-      <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
-    </h2>
-
-    <app-profile-stats [stats]="auth.userStats()" />
-  </section>
-
-  <!-- ══════════════════════════════════════════════════════════════════ -->
-  <!-- Section 5 — Social Media Links                                    -->
-  <!-- ══════════════════════════════════════════════════════════════════ -->
-  <section
-    aria-labelledby="socials-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="socials-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
-    >
-      <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
-    </h2>
-
-    <!-- ── Privacy toggle ─────────────────────────────────────────────── -->
-    <div class="flex items-center gap-3 mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
-      <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
-        <input
-          type="checkbox"
-          [formControl]="socialsPublicControl"
-          (change)="onSocialsPublicChange(socialsPublicControl.value)"
-          class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-        />
-        {{ 'PROFILE.socials_public_label' | translate }}
-      </label>
-    </div>
-
-    <!-- ── Current social badges ───────────────────────────────────── -->
-    @if (
-      userSocials().telegram  ||
-      userSocials().instagram ||
-      userSocials().twitter   ||
-      userSocials().linkedin  ||
-      userSocials().github    ||
-      userSocials().goodreads
-    ) {
-      <div class="flex flex-wrap gap-2 mb-6">
-        <app-social-badges [socials]="userSocials()" />
-      </div>
-    }
-
-    <!-- ── Edit form ────────────────────────────────────────────────── -->
-    <form
-      [formGroup]="socialsForm"
-      (ngSubmit)="submitSocials()"
-      novalidate
-      class="space-y-4"
-    >
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        @for (social of socialFields; track social.key) {
-          <app-social-link-field [config]="social" [form]="socialsForm" />
-        }
-      </div>
-
-      <!-- Submit row -->
-      <div class="flex items-center gap-3 pt-1">
-        <button
-          type="submit"
-          class="rounded-xl bg-primary-600 hover:bg-primary-700 text-white
-                 px-5 py-2.5 text-sm font-medium
-                 transition-all duration-200 focus:outline-none focus:ring-2
-                 focus:ring-primary-500 focus:ring-offset-2"
-        >
-          {{ 'PROFILE.save' | translate }}
-        </button>
-      </div>
-    </form>
-
-  </section>
-
+  </div>
 </div>

@@ -57,6 +57,8 @@ The content is organized as follows:
   labeler.yml
 .husky/
   pre-commit
+mock-server/
+  index.js
 public/
   i18n/
     en.json
@@ -87,6 +89,7 @@ src/
         randomizer.model.ts
         user.model.ts
       services/
+        book-cover.service.ts
         chat.service.ts
         club.service.ts
         event.service.ts
@@ -95,6 +98,7 @@ src/
         randomizer.service.ts
         seo.service.ts
         toast.service.ts
+        upload.service.ts
     features/
       auth/
         login/
@@ -108,6 +112,9 @@ src/
           club-event-card/
             club-event-card.component.html
             club-event-card.component.ts
+          club-sidebar-right/
+            club-sidebar-right.component.html
+            club-sidebar-right.component.ts
           header/
             club-header.component.html
             club-header.component.ts
@@ -196,6 +203,8 @@ src/
           address-autocomplete.component.ts
         book-intro/
           book-intro.component.ts
+        cover-upload/
+          cover-upload.component.ts
         empty-state/
           empty-state.component.html
           empty-state.component.ts
@@ -220,6 +229,122 @@ src/
       pipes/
         format-date.pipe.ts
         initials.pipe.ts
+      spartan/
+        badge/
+          src/
+            lib/
+              hlm-badge.ts
+            index.ts
+        button/
+          src/
+            lib/
+              hlm-button.token.ts
+              hlm-button.ts
+            index.ts
+        card/
+          src/
+            lib/
+              hlm-card-action.ts
+              hlm-card-content.ts
+              hlm-card-description.ts
+              hlm-card-footer.ts
+              hlm-card-header.ts
+              hlm-card-title.ts
+              hlm-card.ts
+            index.ts
+        dropdown-menu/
+          src/
+            lib/
+              hlm-dropdown-menu-checkbox-indicator.ts
+              hlm-dropdown-menu-checkbox.ts
+              hlm-dropdown-menu-group.ts
+              hlm-dropdown-menu-item-sub-indicator.ts
+              hlm-dropdown-menu-item.ts
+              hlm-dropdown-menu-label.ts
+              hlm-dropdown-menu-radio-indicator.ts
+              hlm-dropdown-menu-radio.ts
+              hlm-dropdown-menu-separator.ts
+              hlm-dropdown-menu-shortcut.ts
+              hlm-dropdown-menu-sub.ts
+              hlm-dropdown-menu-token.ts
+              hlm-dropdown-menu-trigger.ts
+              hlm-dropdown-menu.ts
+            index.ts
+        field/
+          src/
+            lib/
+              hlm-field-content.ts
+              hlm-field-description.ts
+              hlm-field-error.ts
+              hlm-field-group.ts
+              hlm-field-label.ts
+              hlm-field-legend.ts
+              hlm-field-separator.ts
+              hlm-field-set.ts
+              hlm-field-title.ts
+              hlm-field.ts
+            index.ts
+        icon/
+          src/
+            lib/
+              hlm-icon.token.ts
+              hlm-icon.ts
+            index.ts
+        input/
+          src/
+            lib/
+              hlm-input.ts
+            index.ts
+        label/
+          src/
+            lib/
+              hlm-label.ts
+            index.ts
+        separator/
+          src/
+            lib/
+              hlm-separator.ts
+            index.ts
+        sheet/
+          src/
+            lib/
+              hlm-sheet-close.ts
+              hlm-sheet-content.ts
+              hlm-sheet-description.ts
+              hlm-sheet-footer.ts
+              hlm-sheet-header.ts
+              hlm-sheet-overlay.ts
+              hlm-sheet-portal.ts
+              hlm-sheet-title.ts
+              hlm-sheet-trigger.ts
+              hlm-sheet.ts
+            index.ts
+        sonner/
+          src/
+            lib/
+              hlm-toaster.ts
+            index.ts
+        spinner/
+          src/
+            lib/
+              hlm-spinner.ts
+            index.ts
+        tabs/
+          src/
+            lib/
+              hlm-tabs-content-lazy.ts
+              hlm-tabs-content.ts
+              hlm-tabs-list.ts
+              hlm-tabs-paginated-list.ts
+              hlm-tabs-trigger.ts
+              hlm-tabs.ts
+            index.ts
+        utils/
+          src/
+            lib/
+              hlm.ts
+            index.ts
+        index.ts
       utils/
         .gitkeep
     app.config.ts
@@ -249,16 +374,21 @@ supabase/
 .mcp.json
 angular.json
 CLAUDE.md
+components.json
 eslint.config.js
 karma.conf.js
 package.json
+postcss.config.json
+postcss.config.mjs
 README.md
+refactor_opus.md
 repomix.config.json
 SECURITY.md
 sonar-project.properties
-tailwind.config.js
+spartan_plan.md
 tsconfig.app.json
 tsconfig.json
 tsconfig.spec.json
+ui_changes.md
 vercel.json
 ```

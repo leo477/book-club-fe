@@ -15,6 +15,10 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { QuizService } from '../../../core/services/quiz.service';
 import { QuizQuestion } from '../../../core/models/quiz.model';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
 
 interface MetaForm {
   title: FormControl<string>;
@@ -36,7 +40,7 @@ type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
   selector: 'app-quiz-create',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
   templateUrl: './quiz-create.component.html',
 })
 export class QuizCreateComponent {
@@ -143,11 +147,9 @@ export class QuizCreateComponent {
     this.quizService
       .createQuiz({ clubId, title: title.trim(), description: description.trim() })
       .then(async quiz => {
-        // Add questions sequentially to preserve sort_order
         for (const q of questions) {
           await this.quizService.addQuestion(quiz.id, q);
         }
-        // Activate the quiz
         await this.quizService.toggleActive(quiz.id, true);
         this.isPublishing.set(false);
         this.router.navigate(['/clubs', clubId, 'quizzes']);

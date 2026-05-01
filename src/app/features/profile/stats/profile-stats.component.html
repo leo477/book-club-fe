@@ -1,54 +1,39 @@
-<dl class="grid grid-cols-2 sm:grid-cols-3 gap-4">
+<dl class="bento-grid-3">
 
-  <!-- Clubs Joined -->
-  <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
+  <div class="glass-card-subtle p-5 text-center">
     <div class="text-3xl mb-2" aria-hidden="true">📚</div>
     <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.clubs_joined' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">
-      {{ stats()?.clubsJoined ?? 0 }}
-    </dd>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.clubsJoined ?? 0 }}</dd>
   </div>
 
-  <!-- Quizzes Taken -->
-  <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
+  <div class="glass-card-subtle p-5 text-center">
     <div class="text-3xl mb-2" aria-hidden="true">🧠</div>
     <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_taken' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">
-      {{ stats()?.quizzesTaken ?? 0 }}
-    </dd>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.quizzesTaken ?? 0 }}</dd>
   </div>
 
-  <!-- Quiz Wins -->
-  <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
+  <div class="glass-card-subtle p-5 text-center">
     <div class="text-3xl mb-2" aria-hidden="true">🏆</div>
     <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_won' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">
-      {{ stats()?.quizWins ?? 0 }}
-    </dd>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.quizWins ?? 0 }}</dd>
   </div>
 
-  <!-- Likes Received -->
-  <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
+  <div class="glass-card-subtle p-5 text-center">
     <div class="text-3xl mb-2" aria-hidden="true">❤️</div>
     <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.likes_received' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">
-      {{ stats()?.likesReceived ?? 0 }}
-    </dd>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.likesReceived ?? 0 }}</dd>
   </div>
 
-  <!-- Books Read -->
-  <div class="rounded-xl bg-gray-50 dark:bg-gray-900/50 p-5 text-center">
+  <div class="glass-card-subtle p-5 text-center">
     <div class="text-3xl mb-2" aria-hidden="true">📖</div>
     <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.books_read' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">
-      {{ stats()?.booksRead ?? 0 }}
-    </dd>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.booksRead ?? 0 }}</dd>
   </div>
 
 </dl>
 
 @if (!stats()) {
-  <p class="text-center text-sm text-gray-400 dark:text-gray-500 mt-2">
+  <p class="text-center text-sm text-gray-400 dark:text-gray-500 mt-4">
     {{ 'PROFILE.no_stats' | translate }}
   </p>
 }

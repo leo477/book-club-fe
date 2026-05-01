@@ -6,6 +6,7 @@ import { roleGuard } from './role.guard';
 import { AuthService } from './auth.service';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 
+// eslint-disable-next-line rxjs-x/finnish
 function runGuard(role: 'organizer' | 'user') {
   return TestBed.runInInjectionContext(() =>
     roleGuard(role)(null as unknown as ActivatedRouteSnapshot, null as unknown as RouterStateSnapshot)
@@ -53,6 +54,7 @@ describe('roleGuard', () => {
     });
 
     it('returns UrlTree to /clubs when role does not match', () => {
+      // eslint-disable-next-line rxjs-x/finnish
       const result = runGuard('organizer');
       expect(result instanceof UrlTree).toBeTrue();
       expect((result as UrlTree).toString()).toBe('/clubs');

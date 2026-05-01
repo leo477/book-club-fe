@@ -8,12 +8,13 @@ import { TranslateModule } from '@ngx-translate/core';
 import { Club } from '../../../../core/models/club.model';
 import { UserProfile } from '../../../../core/models/user.model';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { HlmButton } from '../../../../shared/spartan/button/src';
 
 @Component({
   selector: 'app-club-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule, LoadingSpinnerComponent],
+  imports: [TranslateModule, LoadingSpinnerComponent, HlmButton],
   templateUrl: './club-header.component.html',
 })
 export class ClubHeaderComponent {

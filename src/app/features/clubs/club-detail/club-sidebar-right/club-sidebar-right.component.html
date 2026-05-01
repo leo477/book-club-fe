@@ -1,0 +1,80 @@
+<!-- Members preview -->
+@if (members().length > 0) {
+  <div hlmCard class="glass-card-subtle p-4 gap-3">
+    <div class="flex items-center justify-between mb-3">
+      <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
+        {{ 'CLUB_DETAIL.members_title' | translate }}
+      </h3>
+      <span class="text-xs text-gray-400">{{ members().length }}</span>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      @for (member of members().slice(0, 8); track member.userId) {
+        <div
+          class="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
+          [attr.title]="member.displayName"
+        >
+          {{ member.displayName | initials }}
+        </div>
+      }
+      @if (members().length > 8) {
+        <div class="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
+          +{{ members().length - 8 }}
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- Organizer card (compact) -->
+@if (organizerProfile()) {
+  <div hlmCard class="glass-card-subtle p-4 gap-3">
+    <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+      {{ 'CLUB_DETAIL.organizer_title' | translate }}
+    </h3>
+    <div class="flex items-center gap-3">
+      <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0" aria-hidden="true">
+        {{ organizerProfile()!.displayName | initials }}
+      </div>
+      <div class="min-w-0">
+        <p class="font-semibold text-sm text-gray-900 dark:text-white truncate">{{ organizerProfile()!.displayName }}</p>
+        <span class="text-xs text-accent-600 dark:text-accent-400">{{ 'CLUB_DETAIL.organizer_badge' | translate }}</span>
+      </div>
+    </div>
+    @if (organizerProfile()!.socialsPublic && organizerProfile()!.socials) {
+      <div class="mt-3 flex flex-wrap gap-2">
+        @if (organizerProfile()!.socials!.telegram) {
+          <a [href]="'https://t.me/' + organizerProfile()!.socials!.telegram" target="_blank" rel="noopener noreferrer"
+             class="text-blue-500 hover:text-blue-600 text-lg" aria-label="Telegram">✈️</a>
+        }
+        @if (organizerProfile()!.socials!.instagram) {
+          <a [href]="'https://instagram.com/' + organizerProfile()!.socials!.instagram" target="_blank" rel="noopener noreferrer"
+             class="text-pink-500 hover:text-pink-600 text-lg" aria-label="Instagram">📸</a>
+        }
+        @if (organizerProfile()!.socials!.github) {
+          <a [href]="'https://github.com/' + organizerProfile()!.socials!.github" target="_blank" rel="noopener noreferrer"
+             class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" aria-label="GitHub">🐙</a>
+        }
+        @if (organizerProfile()!.socials!.goodreads) {
+          <a [href]="'https://goodreads.com/' + organizerProfile()!.socials!.goodreads" target="_blank" rel="noopener noreferrer"
+             class="text-amber-600 hover:text-amber-700 text-lg" aria-label="Goodreads">📚</a>
+        }
+      </div>
+    }
+  </div>
+}
+
+<!-- After-meeting venue (club level) -->
+@if (club().afterMeetingVenue) {
+  <div hlmCard class="glass-card-subtle p-4 gap-3">
+    <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
+      {{ 'CLUB_DETAIL.after_meeting_title' | translate }}
+    </h3>
+    <p class="text-sm font-medium text-gray-900 dark:text-white">{{ club().afterMeetingVenue!.name }}</p>
+    @if (club().afterMeetingVenue!.address) {
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 {{ club().afterMeetingVenue!.address }}</p>
+    }
+    @if (club().afterMeetingVenue!.description) {
+      <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">{{ club().afterMeetingVenue!.description }}</p>
+    }
+  </div>
+}

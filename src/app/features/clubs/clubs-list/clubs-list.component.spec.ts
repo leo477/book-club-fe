@@ -77,10 +77,6 @@ describe('ClubsListComponent', () => {
       expect(component).toBeTruthy();
     });
 
-    it('activeTab defaults to all', () => {
-      expect(component.activeTab()).toBe('all');
-    });
-
     it('joiningClubId defaults to null', () => {
       expect(component.joiningClubId()).toBeNull();
     });

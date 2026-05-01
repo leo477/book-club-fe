@@ -20,6 +20,7 @@ export const routes: Routes = [
   {
     path: '',
     component: ShellComponent,
+    canActivate: [authGuard],
     children: [
       // Protected: any authenticated user
       {

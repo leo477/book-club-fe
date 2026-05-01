@@ -14,14 +14,7 @@ export interface ApiUserProfile {
   socialsPublic?: boolean;
 }
 
-export interface ApiUserSocials {
-  telegram?: string | null;
-  instagram?: string | null;
-  twitter?: string | null;
-  linkedin?: string | null;
-  github?: string | null;
-  goodreads?: string | null;
-}
+export type ApiUserSocials = { [K in keyof UserSocials]?: string | null };
 
 export interface ApiUserStats {
   clubsJoined: number;
@@ -93,6 +86,7 @@ export interface ApiEvent {
   afterMeetingVenue: AfterMeetingVenue | null;
   attendeeCount: number;
   isAttending: boolean;
+  bookTitle?: string | null;
 }
 
 export function mapUserProfile(raw: ApiUserProfile): UserProfile {
@@ -165,6 +159,7 @@ export function mapEvent(raw: ApiEvent): ClubEvent {
     afterMeetingVenue: raw.afterMeetingVenue,
     attendeeCount: raw.attendeeCount,
     isAttending: raw.isAttending,
+    bookTitle: raw.bookTitle ?? null,
   };
 }
 

@@ -15,11 +15,13 @@ import { SocialLinkFieldComponent, SocialField } from '../../shared/components/s
 import { SocialBadgesComponent } from '../../shared/components/social-badges/social-badges.component';
 import { ProfileStatsComponent } from './stats/profile-stats.component';
 import { ProfileRoleSelectorComponent } from './role-selector/profile-role-selector.component';
+import { HlmButton } from '../../shared/spartan/button/src';
+import { HlmInput } from '../../shared/spartan/input/src';
 
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslateModule, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent],
+  imports: [ReactiveFormsModule, TranslateModule, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent, HlmButton, HlmInput],
   templateUrl: './profile.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

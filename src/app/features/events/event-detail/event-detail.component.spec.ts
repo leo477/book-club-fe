@@ -80,8 +80,9 @@ describe('EventDetailComponent', () => {
     it('sets errorMessage when event is not found', async () => {
       setup(null, null);
       await fixture.whenStable();
-      expect(component.errorMessage()).toBe('Event not found.');
-      expect(component.event()).toBeNull();
+      // resource() enters error state when loader throws; errorMessage reflects the thrown error
+      expect(component.errorMessage()).toContain('not found');
+      // component.event() would re-throw while resource is in error state — check via errorMessage only
     });
   });
 
@@ -106,12 +107,13 @@ describe('EventDetailComponent', () => {
   });
 
   describe('onAttend', () => {
-    it('calls attendEvent and then getEventById', async () => {
+    it('calls attendEvent and reloads the resource', async () => {
       setup();
       await fixture.whenStable();
       eventServiceSpy.getEventById.calls.reset();
 
       await component.onAttend();
+      await fixture.whenStable();
 
       expect(eventServiceSpy.attendEvent).toHaveBeenCalledWith('e1');
       expect(eventServiceSpy.getEventById).toHaveBeenCalledWith('e1');
@@ -126,12 +128,13 @@ describe('EventDetailComponent', () => {
   });
 
   describe('onCancelAttend', () => {
-    it('calls cancelAttendance and then getEventById', async () => {
+    it('calls cancelAttendance and reloads the resource', async () => {
       setup();
       await fixture.whenStable();
       eventServiceSpy.getEventById.calls.reset();
 
       await component.onCancelAttend();
+      await fixture.whenStable();
 
       expect(eventServiceSpy.cancelAttendance).toHaveBeenCalledWith('e1');
       expect(eventServiceSpy.getEventById).toHaveBeenCalledWith('e1');
@@ -156,13 +159,14 @@ describe('EventDetailComponent', () => {
       expect(eventServiceSpy.cancelEvent).not.toHaveBeenCalled();
     });
 
-    it('calls cancelEvent and reloads event when confirmed', async () => {
+    it('calls cancelEvent and reloads the resource when confirmed', async () => {
       setup({ id: 'u1' });
       await fixture.whenStable();
       spyOn(window, 'confirm').and.returnValue(true);
       eventServiceSpy.getEventById.calls.reset();
 
       await component.onCancelEvent();
+      await fixture.whenStable();
 
       expect(eventServiceSpy.cancelEvent).toHaveBeenCalledWith('e1');
       expect(eventServiceSpy.getEventById).toHaveBeenCalledWith('e1');

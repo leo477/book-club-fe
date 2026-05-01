@@ -1,4 +1,4 @@
-export type EventStatus = 'scheduled' | 'active' | 'held' | 'cancelled' | 'rescheduled';
+export type EventStatus = 'scheduled' | 'active' | 'held' | 'cancelled' | 'rescheduled' | 'upcoming';
 
 export interface AfterMeetingVenue {
   name: string;
@@ -30,4 +30,5 @@ export interface ClubEvent {
   afterMeetingVenue: AfterMeetingVenue | null;
   attendeeCount: number;
   isAttending: boolean;
+  bookTitle?: string | null;
 }
