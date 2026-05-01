@@ -38,24 +38,24 @@
 
                 <!-- Display name -->
                 <hlm-field>
-                  <label hlmFieldLabel>{{ 'AUTH.display_name' | translate }}</label>
-                  <input hlmInput type="text" placeholder="Ada Lovelace" [formControl]="form.controls.displayName" />
+                  <label hlmFieldLabel for="reg-display-name">{{ 'AUTH.display_name' | translate }}</label>
+                  <input hlmInput id="reg-display-name" type="text" placeholder="Ada Lovelace" [formControl]="form.controls.displayName" />
                   <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
                   <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 2} }}</hlm-field-error>
                 </hlm-field>
 
                 <!-- Email -->
                 <hlm-field>
-                  <label hlmFieldLabel>{{ 'AUTH.email' | translate }}</label>
-                  <input hlmInput type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
+                  <label hlmFieldLabel for="reg-email">{{ 'AUTH.email' | translate }}</label>
+                  <input hlmInput id="reg-email" type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
                   <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
                   <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
                 </hlm-field>
 
                 <!-- Password -->
                 <hlm-field>
-                  <label hlmFieldLabel>{{ 'AUTH.password' | translate }}</label>
-                  <input hlmInput type="password" placeholder="••••••••" [formControl]="form.controls.password" />
+                  <label hlmFieldLabel for="reg-password">{{ 'AUTH.password' | translate }}</label>
+                  <input hlmInput id="reg-password" type="password" placeholder="••••••••" [formControl]="form.controls.password" />
                   <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
                   <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
                 </hlm-field>
@@ -83,8 +83,8 @@
 
                 <!-- Confirm password -->
                 <hlm-field>
-                  <label hlmFieldLabel>{{ 'AUTH.confirm_password' | translate }}</label>
-                  <input hlmInput type="password" placeholder="••••••••" [formControl]="form.controls.confirmPassword" />
+                  <label hlmFieldLabel for="reg-confirm-password">{{ 'AUTH.confirm_password' | translate }}</label>
+                  <input hlmInput id="reg-confirm-password" type="password" placeholder="••••••••" [formControl]="form.controls.confirmPassword" />
                   <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
                 </hlm-field>
                 @if (form.hasError('passwordMismatch') && form.controls.confirmPassword.touched) {
