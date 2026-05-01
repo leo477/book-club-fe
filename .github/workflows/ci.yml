@@ -28,7 +28,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
       - name: Cache npm and Angular cache
         uses: actions/cache@v4
         with:
@@ -54,7 +54,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
       - name: Cache npm and Angular cache
         uses: actions/cache@v4
         with:
@@ -87,7 +87,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
       - name: Cache npm and Angular cache
         uses: actions/cache@v4
         with:
@@ -113,7 +113,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
       - name: Cache npm and Angular cache
         uses: actions/cache@v4
         with:
@@ -139,7 +139,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
       - name: Cache npm and Angular cache
         uses: actions/cache@v4
         with:
@@ -170,7 +170,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
       - name: Cache npm and Angular cache
         uses: actions/cache@v4
         with:
@@ -280,7 +280,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
       - name: Install Vercel CLI
         run: npm install --global vercel@latest
       - name: Pull Vercel project settings
