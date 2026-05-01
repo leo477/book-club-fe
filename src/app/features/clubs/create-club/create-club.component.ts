@@ -9,7 +9,10 @@ import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 
 interface CreateClubForm {
   name: FormControl<string>;
@@ -23,7 +26,7 @@ interface CreateClubForm {
   selector: 'app-create-club',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, LoadingSpinnerComponent],
+  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
   templateUrl: './create-club.component.html',
 })
 export class CreateClubComponent {

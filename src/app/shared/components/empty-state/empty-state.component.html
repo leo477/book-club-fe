@@ -1,17 +1,16 @@
-    <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
-      <div class="text-5xl mb-4" aria-hidden="true">{{ icon() }}</div>
-      <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ title() }}</h3>
-      <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">{{ description() }}</p>
-      @if (actionLabel()) {
-        <button
-          type="button"
-          (click)="actionClick.emit()"
-          class="bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg font-medium
-                 transition-all duration-200 focus:outline-none focus:ring-2
-                 focus:ring-primary-500 focus:ring-offset-2"
-        >
-          {{ actionLabel() }}
-        </button>
-      }
-    </div>
-  
+<div class="flex flex-col items-center justify-center py-16 px-4 text-center glass-card-subtle">
+  <div class="text-5xl mb-4" aria-hidden="true">{{ icon() }}</div>
+  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ title() }}</h3>
+  <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">{{ description() }}</p>
+  @if (actionLabel()) {
+    <button
+      type="button"
+      (click)="actionClick.emit()"
+      class="bg-gradient-brand text-white px-5 py-2 rounded-[var(--bento-radius)] font-medium
+             transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2
+             focus:ring-primary-500 focus:ring-offset-2"
+    >
+      {{ actionLabel() }}
+    </button>
+  }
+</div>

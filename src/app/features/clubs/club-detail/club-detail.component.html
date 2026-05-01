@@ -13,8 +13,9 @@
     <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
     <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
     <a
+      hlmBtn
       routerLink="/clubs"
-      class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors"
+      class="bg-primary-600 hover:bg-primary-700 text-white"
     >
       ← {{ 'CLUB_DETAIL.back' | translate }}
     </a>
@@ -23,22 +24,28 @@
   <main class="min-h-screen">
 
     <!-- Cover image + back navigation (full width) -->
-    <div class="relative">
+    <div class="relative glass-hero">
       @if (club()!.coverUrl) {
         <img
           [src]="club()!.coverUrl"
           [alt]="club()!.name + ' cover'"
-          class="w-full h-56 object-cover"
+          class="w-full h-64 object-cover"
           loading="lazy"
         />
       } @else {
-        <div class="bg-gradient-to-br from-primary-400 to-accent-500 h-56" aria-hidden="true"></div>
+        <div class="bg-gradient-brand h-64" aria-hidden="true"></div>
       }
+
+      <div class="absolute inset-0 flex items-end justify-center pointer-events-none px-6 pb-8">
+        <h1 class="font-fantasy font-bold text-white uppercase tracking-widest text-4xl sm:text-5xl lg:text-6xl text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
+          {{ club()!.name }}
+        </h1>
+      </div>
 
       <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
         <a
           routerLink="/clubs"
-          class="inline-flex items-center gap-1.5 rounded-full bg-black/30 backdrop-blur-sm px-3 py-1.5 text-sm font-medium text-white hover:bg-black/50 transition-colors"
+          class="inline-flex items-center gap-1.5 rounded-full glass-card px-3 py-1.5 text-sm font-medium text-white hover:scale-105 transition-all duration-200"
           [attr.aria-label]="'CLUB_DETAIL.back' | translate"
         >
           ← {{ 'CLUB_DETAIL.back_short' | translate }}
@@ -53,60 +60,22 @@
         <!-- ═══════ LEFT SIDEBAR ═══════ -->
         <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-2 lg:order-1">
 
-          <!-- Club meta card -->
-          <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 space-y-3 border border-gray-100 dark:border-gray-700">
-            <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-              {{ 'CLUB_DETAIL.about' | translate }}
-            </h3>
-
-            @if (club()!.city) {
-              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <span class="text-base" aria-hidden="true">📍</span>
-                <span>{{ club()!.city }}</span>
-              </div>
-            }
-
-            @if (club()!.meetingDurationMinutes) {
-              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <span class="text-base" aria-hidden="true">⏱️</span>
-                <span>{{ club()!.meetingDurationMinutes }} {{ 'CLUB_DETAIL.minutes_abbr' | translate }}</span>
-              </div>
-            }
-
-            @if (club()!.theme) {
-              <div class="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
-                <span class="text-base" aria-hidden="true">✨</span>
-                <span>{{ club()!.theme }}</span>
-              </div>
-            }
-
-            @if (club()!.tags.length > 0) {
-              <div class="flex flex-wrap gap-1.5 pt-1">
-                @for (tag of club()!.tags; track tag) {
-                  <span class="rounded-full bg-accent-100 dark:bg-accent-900/30 px-2 py-0.5 text-xs text-accent-700 dark:text-accent-300">
-                    {{ tag }}
-                  </span>
-                }
-              </div>
-            }
-
-            @if (club()!.nextMeetingDate) {
-              <div class="flex items-center gap-2 text-sm text-primary-700 dark:text-primary-400 font-medium pt-1 border-t border-gray-100 dark:border-gray-700">
-                <span class="text-base" aria-hidden="true">📅</span>
-                <span>{{ club()!.nextMeetingDate! | formatDate }}</span>
-              </div>
-            }
-          </div>
-
           <!-- Current book -->
-          @if (club()!.currentBook) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 Now reading</h3>
-              <p class="font-serif italic text-sm font-semibold text-gray-900 dark:text-white leading-snug" style="font-family:'Playfair Display',Georgia,serif">
-                {{ club()!.currentBook!.title }}
+          @if (nearestEventBook()) {
+            <div hlmCard class="glass-card-subtle p-4 gap-3">
+              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 {{ 'CLUB_DETAIL.now_reading' | translate }}</h3>
+              @if (nearestEventBook()!.coverUrl) {
+                <img
+                  [src]="nearestEventBook()!.coverUrl!"
+                  [alt]="nearestEventBook()!.title"
+                  class="w-full rounded-xl object-cover mb-3 max-h-40"
+                />
+              }
+              <p class="font-serif italic text-sm font-semibold text-gray-900 dark:text-white leading-snug">
+                {{ nearestEventBook()!.title }}
               </p>
-              @if (club()!.currentBook!.author) {
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ club()!.currentBook!.author }}</p>
+              @if (nearestEventBook()!.author) {
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ nearestEventBook()!.author }}</p>
               }
             </div>
           }
@@ -142,7 +111,7 @@
 
           <!-- Description section -->
           @if (club()!.description) {
-            <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+            <section hlmCard class="glass-card-subtle px-6 gap-3">
               <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
               <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
             </section>
@@ -156,10 +125,11 @@
                 <p class="text-sm text-primary-600 dark:text-primary-400 mt-0.5">{{ 'CLUB_DETAIL.join_cta_desc' | translate }}</p>
               </div>
               <button
+                hlmBtn
                 type="button"
                 (click)="onJoin()"
                 [disabled]="isActionLoading()"
-                class="flex-shrink-0 rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white shadow-sm disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                class="flex-shrink-0 bg-primary-600 hover:bg-primary-700 text-white"
               >
                 {{ 'CLUB_DETAIL.join' | translate }}
               </button>
@@ -167,15 +137,17 @@
           }
 
           <!-- Upcoming Events section -->
-          <section class="rounded-2xl bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm shadow-sm p-6 border border-[#d4a96a]/20 dark:border-[#7a5c2e]/20">
+          <section hlmCard class="glass-card px-6 gap-4">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 📅 {{ 'CLUB_DETAIL.events_title' | translate }}
               </h2>
               @if (isClubOwner()) {
                 <a
+                  hlmBtn
+                  size="sm"
                   [routerLink]="['/clubs', id(), 'events', 'create']"
-                  class="inline-flex items-center gap-2 rounded-xl bg-primary-600 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors"
+                  class="bg-primary-600 hover:bg-primary-700 text-white"
                 >
                   {{ 'CLUB_DETAIL.create_event' | translate }}
                 </a>
@@ -238,88 +210,11 @@
 
         <!-- ═══════ RIGHT SIDEBAR ═══════ -->
         <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-3 lg:order-3">
-
-          <!-- Members preview -->
-          @if (members().length > 0) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-              <div class="flex items-center justify-between mb-3">
-                <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
-                  {{ 'CLUB_DETAIL.members_title' | translate }}
-                </h3>
-                <span class="text-xs text-gray-400">{{ members().length }}</span>
-              </div>
-              <div class="flex flex-wrap gap-2">
-                @for (member of members().slice(0, 8); track member.userId) {
-                  <div
-                    class="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-xs font-bold flex-shrink-0"
-                    [attr.title]="member.displayName"
-                  >
-                    {{ member.displayName | initials }}
-                  </div>
-                }
-                @if (members().length > 8) {
-                  <div class="h-8 w-8 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-500 dark:text-gray-400">
-                    +{{ members().length - 8 }}
-                  </div>
-                }
-              </div>
-            </div>
-          }
-
-          <!-- Organizer card (compact) -->
-          @if (organizerProfile()) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
-                {{ 'CLUB_DETAIL.organizer_title' | translate }}
-              </h3>
-              <div class="flex items-center gap-3">
-                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white font-bold text-xs flex-shrink-0" aria-hidden="true">
-                  {{ organizerProfile()!.displayName | initials }}
-                </div>
-                <div class="min-w-0">
-                  <p class="font-semibold text-sm text-gray-900 dark:text-white truncate">{{ organizerProfile()!.displayName }}</p>
-                  <span class="text-xs text-accent-600 dark:text-accent-400">{{ 'CLUB_DETAIL.organizer_badge' | translate }}</span>
-                </div>
-              </div>
-              @if (organizerProfile()!.socialsPublic && organizerProfile()!.socials) {
-                <div class="mt-3 flex flex-wrap gap-2">
-                  @if (organizerProfile()!.socials!.telegram) {
-                    <a [href]="'https://t.me/' + organizerProfile()!.socials!.telegram" target="_blank" rel="noopener noreferrer"
-                       class="text-blue-500 hover:text-blue-600 text-lg" aria-label="Telegram">✈️</a>
-                  }
-                  @if (organizerProfile()!.socials!.instagram) {
-                    <a [href]="'https://instagram.com/' + organizerProfile()!.socials!.instagram" target="_blank" rel="noopener noreferrer"
-                       class="text-pink-500 hover:text-pink-600 text-lg" aria-label="Instagram">📸</a>
-                  }
-                  @if (organizerProfile()!.socials!.github) {
-                    <a [href]="'https://github.com/' + organizerProfile()!.socials!.github" target="_blank" rel="noopener noreferrer"
-                       class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" aria-label="GitHub">🐙</a>
-                  }
-                  @if (organizerProfile()!.socials!.goodreads) {
-                    <a [href]="'https://goodreads.com/' + organizerProfile()!.socials!.goodreads" target="_blank" rel="noopener noreferrer"
-                       class="text-amber-600 hover:text-amber-700 text-lg" aria-label="Goodreads">📚</a>
-                  }
-                </div>
-              }
-            </div>
-          }
-
-          <!-- After-meeting venue (club level) -->
-          @if (club()!.afterMeetingVenue) {
-            <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-4 border border-gray-100 dark:border-gray-700">
-              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
-                {{ 'CLUB_DETAIL.after_meeting_title' | translate }}
-              </h3>
-              <p class="text-sm font-medium text-gray-900 dark:text-white">{{ club()!.afterMeetingVenue!.name }}</p>
-              @if (club()!.afterMeetingVenue!.address) {
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 {{ club()!.afterMeetingVenue!.address }}</p>
-              }
-              @if (club()!.afterMeetingVenue!.description) {
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1 italic">{{ club()!.afterMeetingVenue!.description }}</p>
-              }
-            </div>
-          }
-
+          <app-club-sidebar-right
+            [club]="club()!"
+            [members]="members()"
+            [organizerProfile]="organizerProfile()"
+          />
         </aside>
 
       </div>

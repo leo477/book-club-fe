@@ -3,7 +3,6 @@ import {
   ChangeDetectionStrategy,
   inject,
   signal,
-  linkedSignal,
   OnInit,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -13,15 +12,16 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { Club } from '../../../core/models/club.model';
 import { SeoService } from '../../../core/services/seo.service';
 import { TranslateModule } from '@ngx-translate/core';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ClubCardComponent } from './club-card/club-card.component';
+import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 
 @Component({
   selector: 'app-clubs-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, LoadingSpinnerComponent, EmptyStateComponent, TranslateModule, ClubCardComponent],
+  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, ...HlmTabsImports, HlmSpinner],
   templateUrl: './clubs-list.component.html',
 })
 export class ClubsListComponent implements OnInit {
@@ -30,7 +30,6 @@ export class ClubsListComponent implements OnInit {
   private readonly seo = inject(SeoService);
 
   readonly joiningClubId = signal<string | null>(null);
-  readonly activeTab = linkedSignal<'all' | 'my'>(() => { void this.clubService.clubs(); return 'all'; });
   readonly ownedClubIds = this.clubService.myOwnedClubIds;
 
   async ngOnInit(): Promise<void> {

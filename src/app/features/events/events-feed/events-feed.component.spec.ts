@@ -67,8 +67,8 @@ describe('EventsFeedComponent', () => {
   describe('initial state', () => {
     beforeEach(() => setup());
 
-    it('activeTab defaults to upcoming', () => {
-      expect(component.activeTab()).toBe('upcoming');
+    it('creates component', () => {
+      expect(component).toBeTruthy();
     });
 
     it('attendingEventId defaults to null', () => {

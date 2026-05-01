@@ -4,18 +4,14 @@ import {
   inject,
   signal,
   computed,
+  resource,
   input,
 } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { map, catchError, of } from 'rxjs';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-event-detail',
@@ -27,25 +23,27 @@ import { environment } from '../../../../environments/environment';
 export class EventDetailComponent {
   readonly id = input.required<string>();
 
-  private readonly http = inject(HttpClient);
   private readonly eventService = inject(EventService);
   readonly auth = inject(AuthService);
 
-  private readonly _eventResource = rxResource({
+  readonly isActioning = signal(false);
+
+  private readonly _eventResource = resource({
     params: () => this.id(),
-    loader: ({ params: id }) =>
-      this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(
-        map(mapEvent),
-        catchError(() => of(null)),
-      ),
+    loader: async ({ params: eventId }) => {
+      const found = await this.eventService.getEventById(eventId);
+      if (!found) throw new Error('Event not found.');
+      return found;
+    },
   });
 
   readonly event = computed(() => this._eventResource.value() ?? null);
-  readonly isLoading = this._eventResource.isLoading;
-  readonly errorMessage = computed(() =>
-    !this._eventResource.isLoading() && this._eventResource.error() ? 'EVENT.LOAD_ERROR' : null,
-  );
-  readonly isActioning = signal(false);
+  readonly isLoading = computed(() => this._eventResource.isLoading());
+  readonly errorMessage = computed<string | null>(() => {
+    const err = this._eventResource.error();
+    if (!err) return null;
+    return err instanceof Error ? err.message : 'Failed to load event.';
+  });
 
   readonly isOrganizer = computed(
     () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,

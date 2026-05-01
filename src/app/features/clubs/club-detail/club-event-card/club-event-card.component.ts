@@ -8,12 +8,13 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
 import { ClubEvent } from '../../../../core/models/event.model';
+import { HlmButton } from '../../../../shared/spartan/button/src';
 
 @Component({
   selector: 'app-club-event-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe],
+  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton],
   templateUrl: './club-event-card.component.html',
   styleUrl: './club-event-card.component.scss',
 })

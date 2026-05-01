@@ -1,23 +1,24 @@
 import {
-  Component, ChangeDetectionStrategy, DestroyRef, OnInit,
-  signal, inject, ElementRef, HostListener, input, output
+  Component, ChangeDetectionStrategy, input, output,
+  DestroyRef, signal, inject, ElementRef, HostListener, effect,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { switchMap, debounceTime, distinctUntilChanged, of } from 'rxjs';
 import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
+import { HlmInput } from '../../spartan/input/src';
 
 @Component({
   selector: 'app-address-autocomplete',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, HlmInput],
   templateUrl: './address-autocomplete.component.html',
 })
-export class AddressAutocompleteComponent implements OnInit {
+export class AddressAutocompleteComponent {
   readonly control = input.required<FormControl<string>>();
-  readonly placeholder = input('');
-  readonly inputId = input('');
+  readonly placeholder = input<string>('');
+  readonly inputId = input<string>('');
   readonly selected = output<GeocodeSuggestion>();
 
   private readonly geocoding = inject(GeocodingService);
@@ -29,31 +30,34 @@ export class AddressAutocompleteComponent implements OnInit {
   readonly isOpen = signal(false);
   readonly activeIndex = signal(-1);
 
-  ngOnInit(): void {
-    this.control().valueChanges.pipe(
-      debounceTime(300),
-      distinctUntilChanged(),
-      switchMap(q => {
-        if (!q || q.length < 2) {
+  constructor() {
+    effect(() => {
+      const ctrl = this.control();
+      ctrl.valueChanges.pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(q => {
+          if (!q || q.length < 2) {
+            this.suggestions.set([]);
+            this.isOpen.set(false);
+            return of([]);
+          }
+          this.isLoading.set(true);
+          return this.geocoding.autocomplete$(q);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      ).subscribe({
+        next: (results) => {
+          this.isLoading.set(false);
+          this.suggestions.set(results);
+          this.activeIndex.set(-1);
+          this.isOpen.set(results.length > 0);
+        },
+        error: () => {
+          this.isLoading.set(false);
           this.suggestions.set([]);
-          this.isOpen.set(false);
-          return of([]);
-        }
-        this.isLoading.set(true);
-        return this.geocoding.autocomplete(q);
-      }),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe({
-      next: (results) => {
-        this.isLoading.set(false);
-        this.suggestions.set(results);
-        this.activeIndex.set(-1);
-        this.isOpen.set(results.length > 0);
-      },
-      error: () => {
-        this.isLoading.set(false);
-        this.suggestions.set([]);
-      },
+        },
+      });
     });
   }
 

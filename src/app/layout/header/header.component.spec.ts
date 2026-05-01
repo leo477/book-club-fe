@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection, signal } from '@angular/core';
+import { NO_ERRORS_SCHEMA, provideZonelessChangeDetection, signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { HeaderComponent } from './header.component';
@@ -33,65 +33,20 @@ describe('HeaderComponent', () => {
         { provide: AuthService, useValue: authSpy },
         { provide: TranslateService, useValue: translateSpy },
       ],
+      schemas: [NO_ERRORS_SCHEMA],
     });
+    // HlmSheetContent requires EXPOSES_STATE_TOKEN from a parent BrnSheetComponent.
+    // Override the template so no sheet directives are instantiated in tests.
+    TestBed.overrideTemplate(HeaderComponent, '<div></div>');
 
     const fixture = TestBed.createComponent(HeaderComponent);
     component = fixture.componentInstance;
   });
 
-  it('starts with menu and dropdown closed', () => {
-    expect(component.isMenuOpen()).toBeFalse();
-    expect(component.isDropdownOpen()).toBeFalse();
-  });
-
-  describe('toggleMenu', () => {
-    it('opens menu', () => {
-      component.toggleMenu();
-      expect(component.isMenuOpen()).toBeTrue();
-    });
-
-    it('closes menu when toggled again', () => {
-      component.toggleMenu();
-      component.toggleMenu();
-      expect(component.isMenuOpen()).toBeFalse();
-    });
-
-    it('closes dropdown when opening menu', () => {
-      component.isDropdownOpen.set(true);
-      component.toggleMenu();
-      expect(component.isDropdownOpen()).toBeFalse();
-    });
-  });
-
-  describe('toggleDropdown', () => {
-    it('opens dropdown', () => {
-      component.toggleDropdown();
-      expect(component.isDropdownOpen()).toBeTrue();
-    });
-
-    it('closes dropdown when toggled again', () => {
-      component.toggleDropdown();
-      component.toggleDropdown();
-      expect(component.isDropdownOpen()).toBeFalse();
-    });
-  });
-
-  describe('closeDropdown', () => {
-    it('closes dropdown', () => {
-      component.isDropdownOpen.set(true);
-      component.closeDropdown();
-      expect(component.isDropdownOpen()).toBeFalse();
-    });
-  });
-
   describe('signOut', () => {
-    it('calls auth.signOut and closes menu', async () => {
-      component.isMenuOpen.set(true);
-      component.isDropdownOpen.set(true);
+    it('calls auth.signOut', async () => {
       await component.signOut();
       expect(authSpy.signOut).toHaveBeenCalled();
-      expect(component.isMenuOpen()).toBeFalse();
-      expect(component.isDropdownOpen()).toBeFalse();
     });
   });
 
@@ -123,7 +78,9 @@ describe('HeaderComponent', () => {
           { provide: AuthService, useValue: authSpy },
           { provide: TranslateService, useValue: translateSpy },
         ],
+        schemas: [NO_ERRORS_SCHEMA],
       });
+      TestBed.overrideTemplate(HeaderComponent, '<div></div>');
       const fixture = TestBed.createComponent(HeaderComponent);
       expect(fixture.componentInstance.userInitials()).toBe('AB');
     });

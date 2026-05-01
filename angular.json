@@ -82,6 +82,7 @@
           "builder": "@angular/build:karma",
           "options": {
             "karmaConfig": "karma.conf.js",
+            "codeCoverageExclude": ["src/app/shared/spartan/**"],
             "tsConfig": "tsconfig.spec.json",
             "inlineStyleLanguage": "scss",
             "assets": [

@@ -1,7 +1,9 @@
 @if (auth.isAuthenticated()) {
   <!-- Chat FAB Button -->
   <button
-    [class]="'fixed z-50 w-14 h-14 rounded-full bg-accent-500 shadow-lg hover:shadow-xl transition-shadow duration-200 flex items-center justify-center text-white ' + fabPositionClass()"
+    hlmBtn
+    type="button"
+    [class]="'fixed z-50 w-14 h-14 rounded-full bg-accent-500 text-white shadow-lg hover:shadow-xl ' + fabPositionClass()"
     [class.animate-bounce]="isBouncing()"
     [attr.aria-label]="(chat.isOpen() ? 'CHAT.close' : 'CHAT.open') | translate"
     (click)="chat.toggleOpen()"
@@ -30,7 +32,10 @@
           {{ 'CHAT.title' | translate }}
         </h2>
         <button
-          class="text-gray-500 hover:text-gray-700 transition-colors"
+          hlmBtn
+          variant="ghost"
+          size="icon"
+          type="button"
           [attr.aria-label]="'close'"
           (click)="chat.toggleOpen()"
         >
@@ -106,15 +111,18 @@
       <!-- Input Area -->
       <div class="border-t border-gray-100 p-3 flex gap-2">
         <input
+          hlmInput
           type="text"
           [(ngModel)]="messageText"
           (keydown)="onKeydown($event)"
           [placeholder]="'CHAT.placeholder' | translate"
           [attr.aria-label]="'CHAT.placeholder' | translate"
-          class="flex-1 px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+          class="flex-1 rounded-full px-4"
         />
         <button
-          class="w-10 h-10 rounded-full bg-accent-500 text-white flex items-center justify-center hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+          hlmBtn
+          type="button"
+          class="w-10 h-10 rounded-full bg-accent-500 text-white"
           [disabled]="!messageText().trim()"
           (click)="sendMessage()"
           [attr.aria-label]="'CHAT.send' | translate"

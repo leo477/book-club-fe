@@ -1,159 +1,123 @@
-    <div class="min-h-screen p-4 sm:p-8">
-      <div class="max-w-3xl mx-auto space-y-6">
-        <!-- ── Header ── -->
-        <header class="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">
-              🧠 Quizzes
-            </h1>
-            <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-              Test your knowledge of the books you've read.
-            </p>
-          </div>
-          <div class="flex items-center gap-3">
-            @if (authService.isOrganizer()) {
-              <a
-                [routerLink]="['/clubs', id(), 'quizzes', 'create']"
-                class="inline-flex items-center gap-2 bg-accent-600 hover:bg-accent-500
-                       text-white rounded-xl px-4 py-2.5 font-medium transition-colors text-sm"
-              >
-                + Create Quiz
-              </a>
-            }
-            <nav aria-label="Breadcrumb">
-              <a
-                [routerLink]="['/clubs', id()]"
-                class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm
-                       transition-colors"
-              >
-                ← Club
-              </a>
-            </nav>
-          </div>
-        </header>
+<div class="min-h-screen p-4 sm:p-8">
+  <div class="max-w-3xl mx-auto space-y-6">
 
-        <!-- ── Loading ── -->
-        @if (quizService.isLoading()) {
-          <div class="space-y-4">
-            @for (_ of [1, 2, 3]; track $index) {
-              <div
-                class="h-24 bg-gray-200 dark:bg-gray-800 rounded-2xl animate-pulse"
-              ></div>
-            }
-          </div>
-        } @else {
-          <!-- ── Empty state ── -->
-          @if (quizService.quizzes().length === 0) {
-            <div
-              class="bg-white dark:bg-gray-900 rounded-2xl p-12 text-center border
-                     border-gray-200 dark:border-gray-800"
-            >
-              <p class="text-4xl mb-3">📝</p>
-              <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">
-                No quizzes yet
-              </h2>
-              @if (authService.isOrganizer()) {
-                <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-                  Create your first quiz to engage the club.
-                </p>
-              } @else {
-                <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-                  The organizer hasn't created any quizzes yet.
-                </p>
-              }
-            </div>
-          } @else {
-            <!-- ── Quiz cards ── -->
-            <div class="space-y-4">
-              @for (quiz of quizService.quizzes(); track quiz.id) {
-                <div
-                  class="bg-white dark:bg-gray-900 rounded-2xl p-5 border border-gray-200
-                         dark:border-gray-800 shadow-sm hover:shadow-md transition-shadow"
-                >
-                  <div class="flex items-start justify-between gap-4">
-                    <div class="min-w-0 flex-1">
-                      <div class="flex items-center gap-2 flex-wrap">
-                        <h2
-                          class="text-gray-900 dark:text-white font-semibold text-lg
-                                 truncate"
-                        >
-                          {{ quiz.title }}
-                        </h2>
-                        @if (quiz.isActive) {
-                          <span
-                            class="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/30
-                                   text-green-700 dark:text-green-400 rounded-full px-2 py-0.5
-                                   text-xs font-medium"
-                          >
-                            <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
-                            Active
-                          </span>
-                        } @else {
-                          <span
-                            class="inline-flex items-center bg-gray-100 dark:bg-gray-800
-                                   text-gray-500 dark:text-gray-400 rounded-full px-2 py-0.5
-                                   text-xs font-medium"
-                          >
-                            Draft
-                          </span>
-                        }
-                      </div>
-                      @if (quiz.description) {
-                        <p
-                          class="text-gray-500 dark:text-gray-400 text-sm mt-1 line-clamp-2"
-                        >
-                          {{ quiz.description }}
-                        </p>
-                      }
-                    </div>
-
-                    <!-- Actions -->
-                    <div class="flex items-center gap-2 flex-shrink-0">
-                      @if (authService.isOrganizer()) {
-                        <button
-                          (click)="toggleActive(quiz.id, !quiz.isActive)"
-                          [disabled]="togglingId() === quiz.id"
-                          class="text-xs font-medium px-3 py-1.5 rounded-lg transition-colors
-                                 disabled:opacity-50"
-                          [class.bg-green-100]="!quiz.isActive"
-                          [class.text-green-700]="!quiz.isActive"
-                          [class.hover:bg-green-200]="!quiz.isActive"
-                          [class.dark:bg-green-900\/30]="!quiz.isActive"
-                          [class.dark:text-green-400]="!quiz.isActive"
-                          [class.bg-gray-100]="quiz.isActive"
-                          [class.text-gray-600]="quiz.isActive"
-                          [class.hover:bg-gray-200]="quiz.isActive"
-                          [class.dark:bg-gray-800]="quiz.isActive"
-                          [class.dark:text-gray-400]="quiz.isActive"
-                        >
-                          {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
-                        </button>
-                      } @else if (quiz.isActive) {
-                        <button
-                          (click)="takeQuiz(quiz.id)"
-                          class="bg-accent-600 hover:bg-accent-500 text-white rounded-lg
-                                 px-4 py-1.5 text-sm font-medium transition-colors"
-                        >
-                          Take Quiz →
-                        </button>
-                      }
-                    </div>
-                  </div>
-                </div>
-              }
-            </div>
-          }
+    <!-- ── Header ── -->
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🧠 Quizzes</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+          Test your knowledge of the books you've read.
+        </p>
+      </div>
+      <div class="flex items-center gap-3">
+        @if (authService.isOrganizer()) {
+          <a hlmBtn [routerLink]="['/clubs', id(), 'quizzes', 'create']"
+             class="bg-gradient-brand text-white border-0 hover:opacity-90">
+            + Create Quiz
+          </a>
         }
+        <nav aria-label="Breadcrumb">
+          <a [routerLink]="['/clubs', id()]"
+             class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
+            ← Club
+          </a>
+        </nav>
+      </div>
+    </header>
 
-        <!-- ── Error ── -->
-        @if (errorMessage()) {
-          <div
-            class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800
-                   rounded-xl p-4 text-red-700 dark:text-red-400 text-sm"
-          >
-            ⚠️ {{ errorMessage() }}
-          </div>
+    <!-- ── Loading (skeleton) ── -->
+    @if (quizService.isLoading()) {
+      <div class="bento-grid-3">
+        @for (_ of [1, 2, 3]; track $index) {
+          <div class="h-28 glass-card-subtle animate-pulse"></div>
         }
       </div>
-    </div>
-  
+    } @else {
+
+      <!-- ── Empty state ── -->
+      @if (quizService.quizzes().length === 0) {
+        <div class="glass-card p-12 text-center">
+          <p class="text-4xl mb-3">📝</p>
+          <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">No quizzes yet</h2>
+          @if (authService.isOrganizer()) {
+            <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
+              Create your first quiz to engage the club.
+            </p>
+          } @else {
+            <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
+              The organizer hasn't created any quizzes yet.
+            </p>
+          }
+        </div>
+
+      } @else {
+        <!-- ── Quiz cards bento grid ── -->
+        <div class="bento-grid-3">
+          @for (quiz of quizService.quizzes(); track quiz.id) {
+            <div class="glass-card p-5 flex flex-col gap-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2 flex-wrap mb-1">
+                    <h2 class="text-gray-900 dark:text-white font-semibold truncate">
+                      {{ quiz.title }}
+                    </h2>
+                    @if (quiz.isActive) {
+                      <span class="inline-flex items-center gap-1 rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
+                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
+                        Active
+                      </span>
+                    } @else {
+                      <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-500 dark:text-gray-400">
+                        Draft
+                      </span>
+                    }
+                  </div>
+                  @if (quiz.description) {
+                    <p class="text-gray-500 dark:text-gray-400 text-xs line-clamp-2">
+                      {{ quiz.description }}
+                    </p>
+                  }
+                </div>
+              </div>
+
+              <!-- Actions -->
+              <div class="flex items-center gap-2 mt-auto">
+                @if (authService.isOrganizer()) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    size="sm"
+                    [variant]="quiz.isActive ? 'secondary' : 'outline'"
+                    (click)="toggleActive(quiz.id, !quiz.isActive)"
+                    [disabled]="togglingId() === quiz.id"
+                    class="w-full"
+                  >
+                    {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
+                  </button>
+                } @else if (quiz.isActive) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    size="sm"
+                    (click)="takeQuiz(quiz.id)"
+                    class="w-full bg-gradient-brand text-white border-0 hover:opacity-90"
+                  >
+                    Take Quiz →
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    <!-- ── Error ── -->
+    @if (errorMessage()) {
+      <div class="glass-card px-4 py-3 text-red-700 dark:text-red-400 text-sm" role="alert">
+        ⚠️ {{ errorMessage() }}
+      </div>
+    }
+
+  </div>
+</div>

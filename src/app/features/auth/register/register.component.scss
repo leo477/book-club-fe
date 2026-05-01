@@ -1,0 +1,44 @@
+.auth-page-wrapper {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background: linear-gradient(135deg,
+    var(--color-primary-900) 0%,
+    #1a0a2e 40%,
+    var(--color-accent-900) 100%);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 80% 10%, rgba(217, 70, 239, 0.18) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 50% at 20% 80%, rgba(14, 165, 233, 0.15) 0%, transparent 60%);
+    pointer-events: none;
+  }
+}
+
+.auth-form-container {
+  position: relative;
+  z-index: 60;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.animate-form-in {
+  animation: form-slide-in 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes form-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
