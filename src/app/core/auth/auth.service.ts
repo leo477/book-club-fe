@@ -30,9 +30,9 @@ export class AuthService {
   readonly userRole = computed(() => this._currentUser()?.role ?? null);
   readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
 
-  private readonly _statsResource = rxResource({
+  private readonly _statsResource = rxResource<UserStats | null, string | null>({
     params: () => this._currentUser()?.id ?? null,
-    loader: ({ params: userId }) => {
+    stream: ({ params: userId }) => {
       if (!userId) return of(null as UserStats | null);
       return this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
         map(raw => mapUserStats(raw)),
