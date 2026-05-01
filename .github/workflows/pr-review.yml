@@ -25,7 +25,7 @@ jobs:
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
       - name: Cache Angular cache
         uses: actions/cache@v4
@@ -43,7 +43,7 @@ jobs:
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
       - name: Cache Angular cache
         uses: actions/cache@v4
@@ -61,7 +61,7 @@ jobs:
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
       - name: Cache Angular cache
         uses: actions/cache@v4
@@ -84,7 +84,7 @@ jobs:
       - name: Use Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: 'npm'
       - name: Cache Angular cache
         uses: actions/cache@v4
