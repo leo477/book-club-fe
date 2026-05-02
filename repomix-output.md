@@ -39,6 +39,9 @@ The content is organized as follows:
 # Directory Structure
 ```
 .claude/
+  hooks/
+    auto-agent-select.sh
+    file-agent-select.sh
   settings.local.json
 .github/
   workflows/
@@ -398,6 +401,111 @@ vercel.json
 
 # Files
 
+## File: .claude/hooks/auto-agent-select.sh
+````bash
+set -euo pipefail
+INPUT=$(cat)
+PROMPT=$(echo "$INPUT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('prompt','').lower())" 2>/dev/null || echo "")
+detect_agent() {
+  local text="$1"
+  if echo "$text" | grep -qiE "angular|component|service|signal|rxresource|standalone|template|pipe|directive"; then
+    echo "dev"
+  elif echo "$text" | grep -qiE "sonar|ci[/ ]?cd|github action|docker|deploy|workflow|pipeline|build|vercel"; then
+    echo "devops"
+  elif echo "$text" | grep -qiE "pytest|python test|backend test"; then
+    echo "python-backend-tester"
+  elif echo "$text" | grep -qiE "python review|fastapi review|backend review"; then
+    echo "python-backend-reviewer"
+  elif echo "$text" | grep -qiE "python|fastapi|django|pydantic|sqlalchemy|alembic|celery|uvicorn"; then
+    echo "python-backend-dev"
+  elif echo "$text" | grep -qiE "java|spring|springboot|maven|gradle|jpa|hibernate|kotlin"; then
+    echo "java-backend-dev"
+  elif echo "$text" | grep -qiE "spec|test|coverage|jest|playwright|e2e|unit test"; then
+    echo "tester"
+  elif echo "$text" | grep -qiE "security|xss|injection|auth|csrf|vulnerability|owasp|sanitize"; then
+    echo "security"
+  elif echo "$text" | grep -qiE "commit|review|pull request|\bpr\b|before push|code review"; then
+    echo "reviewer"
+  elif echo "$text" | grep -qiE "ui|design|tailwind|scss|accessible|layout|style|spartan"; then
+    echo "ui"
+  elif echo "$text" | grep -qiE "seo|content|copy|i18n|translation|meta|sitemap|documentation"; then
+    echo "web-quality-enhancer"
+  else
+    echo ""
+  fi
+}
+AGENT=$(detect_agent "$PROMPT")
+[ -z "$AGENT" ] && exit 0
+python3 - "$AGENT" <<'PYEOF'
+import json, sys
+agent = sys.argv[1]
+messages = {
+  "dev": "Angular 21 expert context active: focus on signals (resource/rxResource/linkedSignal), standalone components, input()/output() APIs, TypeScript strict mode, SCSS/Tailwind. Apply the dev MCP agent expertise.",
+  "devops": "DevOps/CI context active: focus on GitHub Actions, SonarCloud, Docker, Vercel deployment pipelines, build optimization, security scanning. Apply the devops MCP agent expertise.",
+  "tester": "Testing expert context active: focus on Jest unit tests, Angular TestBed, fixture patterns, Playwright E2E, coverage thresholds. Apply the tester MCP agent expertise.",
+  "security": "Security expert context active: focus on OWASP Top 10, Angular security (XSS, CSRF), auth flows, dependency vulnerabilities. Apply the security MCP agent expertise.",
+  "reviewer": "Code reviewer context active: focus on correctness, readability, Angular patterns, test coverage, commit quality. Apply the reviewer MCP agent expertise.",
+  "ui": "UI/UX expert context active: focus on Tailwind, SCSS, accessibility (a11y), responsive design, Spartan UI components. Apply the ui MCP agent expertise.",
+  "web-quality-enhancer": "Web quality expert context active: focus on SEO, i18n/translations, meta tags, content copy quality, API documentation. Apply the web-quality-enhancer MCP agent expertise.",
+  "java-backend-dev": "Java backend expert context active: focus on Spring Boot, JPA/Hibernate, Maven/Gradle, REST API design, Java 21 features. Apply the java-backend-dev MCP agent expertise.",
+  "python-backend-dev": "Python backend expert context active: focus on FastAPI, Pydantic v2, SQLAlchemy, Alembic migrations, Celery/ARQ tasks, pytest. Apply the python-backend-dev MCP agent expertise.",
+  "python-backend-tester": "Python testing expert context active: focus on pytest, FastAPI TestClient, fixtures, mocking, coverage for Python backend. Apply the python-backend-tester MCP agent expertise.",
+  "python-backend-reviewer": "Python code reviewer context active: focus on FastAPI patterns, Pydantic validation, security, performance, correctness. Apply the python-backend-reviewer MCP agent expertise.",
+}
+msg = messages.get(agent, "")
+if msg:
+    print(json.dumps({"systemMessage": msg}))
+PYEOF
+````
+
+## File: .claude/hooks/file-agent-select.sh
+````bash
+set -euo pipefail
+INPUT=$(cat)
+FILE=$(echo "$INPUT" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',{}).get('file_path',''))" 2>/dev/null || echo "")
+[ -z "$FILE" ] && exit 0
+detect_by_path() {
+  local f="$1"
+  if echo "$f" | grep -qE "\.(component|service|pipe|directive|guard|resolver)\.ts$"; then
+    echo "dev"
+  elif echo "$f" | grep -qE "test_.*\.py$|_test\.py$"; then
+    echo "python-backend-tester"
+  elif echo "$f" | grep -qE "(routers|schemas|models|crud|api)/.*\.py$"; then
+    echo "python-backend-dev"
+  elif echo "$f" | grep -qE "\.py$"; then
+    echo "python-backend-dev"
+  elif echo "$f" | grep -qE "\.spec\.ts$"; then
+    echo "tester"
+  elif echo "$f" | grep -qE "(\.github/workflows|sonar-project\.properties|Dockerfile|docker-compose|vercel\.json)"; then
+    echo "devops"
+  elif echo "$f" | grep -qE "\.(scss|html)$|src/app/layout/|shared/spartan/"; then
+    echo "ui"
+  elif echo "$f" | grep -qE "public/i18n/"; then
+    echo "web-quality-enhancer"
+  else
+    echo ""
+  fi
+}
+AGENT=$(detect_by_path "$FILE")
+[ -z "$AGENT" ] && exit 0
+python3 - "$AGENT" <<'PYEOF'
+import json, sys
+agent = sys.argv[1]
+labels = {
+  "dev": "dev (Angular 21)",
+  "tester": "tester (Jest/Playwright)",
+  "devops": "devops (CI/CD)",
+  "ui": "ui (Tailwind/SCSS)",
+  "python-backend-dev": "python-backend-dev (FastAPI/Pydantic)",
+  "python-backend-tester": "python-backend-tester (pytest)",
+  "python-backend-reviewer": "python-backend-reviewer",
+  "web-quality-enhancer": "web-quality-enhancer (i18n/SEO)",
+}
+label = labels.get(agent, agent)
+print(json.dumps({"systemMessage": f"File context: apply {label} MCP agent expertise for this file."}))
+PYEOF
+````
+
 ## File: .claude/settings.local.json
 ````json
 {
@@ -455,13 +563,44 @@ vercel.json
       "Bash(npx jest *)",
       "Bash(npm test *)",
       "Bash(node_modules/.bin/ng test *)",
-      "Bash(node_modules/.bin/tsc --noEmit --project tsconfig.spec.json)"
+      "Bash(node_modules/.bin/tsc --noEmit --project tsconfig.spec.json)",
+      "Bash(grep -E '\\(auth\\\\.service|event-detail\\\\.component|address-autocomplete\\\\.component\\)\\\\.ts$')",
+      "Bash(grep '\\\\.ts$')",
+      "Bash(grep -v '\\\\.spec\\\\.ts$')",
+      "Bash(chmod +x *)",
+      "Bash(/home/dmytr/angular/book-club-fe/.claude/hooks/auto-agent-select.sh)",
+      "Bash(grep -v \"^--$\")",
+      "Bash(xargs ls *)",
+      "Bash(npx ng *)"
     ]
   },
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "book-club-agents"
-  ]
+  ],
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/dmytr/angular/book-club-fe/.claude/hooks/auto-agent-select.sh"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "/home/dmytr/angular/book-club-fe/.claude/hooks/file-agent-select.sh"
+          }
+        ]
+      }
+    ]
+  }
 }
 ````
 
@@ -2203,40 +2342,6 @@ Use this section to tell people how to report a vulnerability.
 Tell them where to go, how often they can expect to get an update on a
 reported vulnerability, what to expect if the vulnerability is accepted or
 declined, etc.
-````
-
-## File: sonar-project.properties
-````
-# Replace YOUR_ORG with your actual SonarCloud organization slug
-sonar.projectKey=leo477_book-club-fe
-sonar.organization=leo477
-sonar.projectName=Book Club Frontend
-sonar.projectVersion=1.0
-
-sonar.sources=src
-sonar.tests=src
-sonar.test.inclusions=**/*.spec.ts
-sonar.exclusions=**/node_modules/**,**/*.spec.ts,src/assets/**,src/environments/**
-
-sonar.typescript.lcov.reportPaths=coverage/book-club-fe/lcov.info
-
-# Exclude non-testable and currently untested files from coverage requirements
-sonar.coverage.exclusions=\
-  **/*.html,\
-  **/*.spec.ts,\
-  **/mocks/**,\
-  **/*.model.ts,\
-  **/*.interface.ts,\
-  **/*.config.ts,\
-  **/environments/**,\
-  src/app/features/**,\
-  src/app/layout/**,\
-  src/app/core/services/randomizer.service.ts,\
-  src/app/core/services/quiz.service.ts,\
-  src/app/core/services/club.service.ts,\
-  src/app/core/supabase/**
-
-sonar.sourceEncoding=UTF-8
 ````
 
 ## File: tsconfig.app.json
@@ -9294,6 +9399,37 @@ export default {
     tailwindcss({ base: __dirname }),
   ],
 };
+````
+
+## File: sonar-project.properties
+````
+# Replace YOUR_ORG with your actual SonarCloud organization slug
+sonar.projectKey=leo477_book-club-fe
+sonar.organization=leo477
+sonar.projectName=Book Club Frontend
+sonar.projectVersion=1.0
+
+sonar.sources=src
+sonar.tests=src
+sonar.test.inclusions=**/*.spec.ts
+sonar.exclusions=**/node_modules/**,**/*.spec.ts,src/assets/**,src/environments/**
+
+sonar.typescript.lcov.reportPaths=coverage/book-club-fe/lcov.info
+
+# Exclude non-testable and currently untested files from coverage requirements
+sonar.coverage.exclusions=\
+  **/*.html,\
+  **/*.spec.ts,\
+  **/mocks/**,\
+  **/*.model.ts,\
+  **/*.interface.ts,\
+  **/*.config.ts,\
+  **/environments/**,\
+  src/app/features/**,\
+  src/app/layout/**,\
+  src/app/shared/spartan/**
+
+sonar.sourceEncoding=UTF-8
 ````
 
 ## File: tsconfig.json

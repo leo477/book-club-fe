@@ -432,4 +432,67 @@ describe('AuthService', () => {
       httpMock.expectNone(`${API}/users/me/socials-visibility`);
     });
   });
+
+  describe('userStats', () => {
+    beforeEach(() => {
+      routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
+        token: jasmine.createSpy().and.returnValue(null),
+      });
+      tokenStoreSpy.snapshot.and.returnValue(null);
+
+      TestBed.configureTestingModule({
+        imports: [HttpClientTestingModule],
+        providers: [
+          provideZonelessChangeDetection(),
+          AuthService,
+          { provide: Router, useValue: routerSpy },
+          { provide: TokenStore, useValue: tokenStoreSpy },
+        ],
+      });
+      const result = buildService();
+      httpMock = result.httpMock;
+    });
+
+    it('returns null when no user is logged in', () => {
+      const { service } = buildService();
+      expect(service.userStats()).toBeNull();
+    });
+
+    it('fetches and maps stats after sign-in', async () => {
+      const { service } = buildService();
+      const loginP = service.signIn('test@test.com', 'password');
+      httpMock.expectOne(`${API}/auth/login`).flush({
+        accessToken: 'token', refreshToken: 'refresh', user: rawProfile,
+      });
+      await loginP;
+
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/users/me/stats`).flush({
+        clubsJoined: 3, quizzesTaken: 5, quizWins: 2, likesReceived: 10, booksRead: 7,
+      });
+      await Promise.resolve();
+
+      expect(service.userStats()).toEqual({
+        clubsJoined: 3, quizzesTaken: 5, quizWins: 2, likesReceived: 10, booksRead: 7,
+      });
+    });
+
+    it('returns null when stats request fails', async () => {
+      const { service } = buildService();
+      const loginP = service.signIn('test@test.com', 'password');
+      httpMock.expectOne(`${API}/auth/login`).flush({
+        accessToken: 'token', refreshToken: 'refresh', user: rawProfile,
+      });
+      await loginP;
+
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/users/me/stats`).flush(
+        {}, { status: 500, statusText: 'Server Error' },
+      );
+      await Promise.resolve();
+
+      expect(service.userStats()).toBeNull();
+    });
+  });
 });
