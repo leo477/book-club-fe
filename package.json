@@ -27,6 +27,9 @@
     ]
   },
   "private": true,
+  "overrides": {
+    "picomatch": "^4.0.4"
+  },
   "dependencies": {
     "@angular/cdk": "^21.2.8",
     "@angular/common": "^21.2.10",

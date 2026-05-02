@@ -440,7 +440,18 @@ vercel.json
       "Bash(git stash *)",
       "Bash(git checkout *)",
       "Bash(grep -n 'autocomplete\\\\$\\\\|dot' /home/dmytr/angular/book-club-fe/src/app/features/events/create-event/create-event.component.spec.ts)",
-      "Bash(grep -n 'autocomplete\\\\$\\\\|dot' /home/dmytr/angular/book-club-fe/src/app/shared/components/address-autocomplete/address-autocomplete.component.spec.ts)"
+      "Bash(grep -n 'autocomplete\\\\$\\\\|dot' /home/dmytr/angular/book-club-fe/src/app/shared/components/address-autocomplete/address-autocomplete.component.spec.ts)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(gh run *)",
+      "Bash(npm --version)",
+      "Bash(nvm list *)",
+      "Bash(gh api *)",
+      "Bash(npm audit *)",
+      "Bash(python3 -c \"import json,sys; jobs=json.load\\(sys.stdin\\)['jobs']; [print\\(j['name'], j['conclusion'], [s['name']+':'+str\\(s['conclusion']\\) for s in j['steps'] if s['conclusion']=='failure']\\) for j in jobs]\")",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); vulns=d.get\\('vulnerabilities',{}\\); [print\\(k, v.get\\('severity'\\), 'fixable' if not v.get\\('fixAvailable',{}\\).get\\('isSemVerMajor'\\) else 'breaking'\\) for k,v in vulns.items\\(\\) if v.get\\('isDirect',False\\) or True]\")",
+      "Bash(npm ls *)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d.get\\('overrides',{}\\), indent=2\\)\\); print\\('---'\\); print\\(json.dumps\\(d.get\\('resolutions',{}\\), indent=2\\)\\)\")"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -469,44 +480,6 @@ jobs:
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           configuration-path: .github/labeler.yml
-````
-
-## File: .github/workflows/bundle-size.yml
-````yaml
-name: Bundle Size
-on:
-  pull_request:
-    branches: [main, develop]
-permissions:
-  contents: read
-  pull-requests: write
-jobs:
-  bundle-size:
-    name: Check Bundle Size
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Check compressed size
-        uses: preactjs/compressed-size-action@v2
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-          build-script: build -- --configuration=production
-          pattern: ./dist/book-club-fe/browser/**/*.{js,css}
-          strip-hash: true
 ````
 
 ## File: .github/workflows/codeql.yml
@@ -615,174 +588,6 @@ jobs:
           }
           console.log('All ' + Object.keys(ukFlat).length + ' keys present in en.json.');
           "
-````
-
-## File: .github/workflows/lighthouse.yml
-````yaml
-name: Lighthouse CI
-on:
-  pull_request:
-    branches: [main, develop]
-  workflow_dispatch:
-permissions:
-  contents: read
-concurrency:
-  group: lighthouse-${{ github.ref }}
-  cancel-in-progress: true
-jobs:
-  lighthouse:
-    name: Lighthouse CI
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Install dependencies
-        run: npm ci
-      - name: Build (production)
-        run: npm run build -- --configuration=production
-      - name: Run Lighthouse CI
-        uses: treosh/lighthouse-ci-action@v11
-        with:
-          configPath: .lighthouserc.json
-          uploadArtifacts: true
-          temporaryPublicStorage: true
-````
-
-## File: .github/workflows/pr-review.yml
-````yaml
-name: pr-review
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
-    branches:
-      - develop
-      - main
-permissions:
-  contents: read
-  pull-requests: write
-  statuses: write
-concurrency:
-  group: pr-review-${{ github.event.pull_request.number }}
-  cancel-in-progress: true
-jobs:
-  lint:
-    name: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-      - name: Cache Angular cache
-        uses: actions/cache@v4
-        with:
-          path: .angular/cache
-          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
-      - run: npm ci
-      - run: npm run lint
-  typecheck:
-    name: typecheck
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-      - name: Cache Angular cache
-        uses: actions/cache@v4
-        with:
-          path: .angular/cache
-          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
-      - run: npm ci
-      - run: npx tsc --noEmit -p tsconfig.app.json
-  test:
-    name: test
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-      - name: Cache Angular cache
-        uses: actions/cache@v4
-        with:
-          path: .angular/cache
-          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
-      - run: npm ci
-      - run: npm run test:ci
-      - name: Upload coverage artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage
-  build:
-    name: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: 'npm'
-      - name: Cache Angular cache
-        uses: actions/cache@v4
-        with:
-          path: .angular/cache
-          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
-      - run: npm ci
-      - run: npm run build -- --configuration=production
-  gate:
-    name: gate
-    runs-on: ubuntu-latest
-    needs: [lint, typecheck, test, build]
-    if: always()
-    steps:
-      - name: Check job results and post PR comment
-        id: gate
-        uses: actions/github-script@v7
-        env:
-          NEEDS: ${{ toJson(needs) }}
-        with:
-          script: |
-            const needs = JSON.parse(process.env.NEEDS);
-            const failed = Object.entries(needs)
-              .filter(([name, job]) => job.result === 'failure' || job.result === 'cancelled')
-              .map(([name]) => name);
-            let body;
-            if (failed.length > 0) {
-              body = `❌ The following jobs failed or were cancelled:\n\n${failed.map(j => `- ${j}`).join('\n')}\n\nPlease check the logs and fix the issues.`;
-              core.setFailed('Some jobs failed or were cancelled.');
-            } else {
-              body = '✅ All automated checks passed — ready for human review';
-            }
-            core.setOutput('body', body);
-      - name: Create or update PR comment
-        uses: peter-evans/create-or-update-comment@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          issue-number: ${{ github.event.pull_request.number }}
-          body: ${{ steps.gate.outputs.body }}
-          comment-tag: pr-review-gate
 ````
 
 ## File: .github/workflows/scorecard.yml
@@ -2286,86 +2091,6 @@ trim_trailing_whitespace = false
 }
 ````
 
-## File: eslint.config.js
-````javascript
-const eslint = require("@eslint/js");
-const { defineConfig } = require("eslint/config");
-const tseslint = require("typescript-eslint");
-const angular = require("angular-eslint");
-const rxjsX = require("eslint-plugin-rxjs-x");
-module.exports = defineConfig([
-  {
-    files: ["**/*.ts"],
-    extends: [
-      eslint.configs.recommended,
-      tseslint.configs.strict,
-      tseslint.configs.stylisticTypeChecked,
-      angular.configs.tsRecommended,
-      rxjsX.configs.recommended,
-    ],
-    processor: angular.processInlineTemplates,
-    languageOptions: {
-      parserOptions: {
-        project: ["./tsconfig.app.json", "./tsconfig.spec.json"],
-        tsconfigRootDir: __dirname,
-      },
-    },
-    rules: {
-      "@angular-eslint/directive-selector": [
-        "error",
-        {
-          type: "attribute",
-          prefix: "app",
-          style: "camelCase",
-        },
-      ],
-      "@angular-eslint/component-selector": [
-        "error",
-        {
-          type: "element",
-          prefix: "app",
-          style: "kebab-case",
-        },
-      ],
-      "@typescript-eslint/no-extraneous-class": [
-        "error",
-        { allowWithDecorator: true },
-      ],
-      "@typescript-eslint/no-invalid-void-type": "off",
-      "@typescript-eslint/no-unused-vars": [
-        "error",
-        { "argsIgnorePattern": "^_" },
-      ],
-      "rxjs-x/no-unsafe-takeuntil": "error",
-      "rxjs-x/no-floating-observables": "error",
-      "rxjs-x/no-unbound-methods": "error",
-      "rxjs-x/no-subject-value": "error",
-      "rxjs-x/finnish": "warn",
-    },
-  },
-  {
-    files: ["src/app/shared/spartan/**/*.ts", "src/app/shared/spartan/**/*.html"],
-    rules: {
-      "@angular-eslint/directive-selector": "off",
-      "@angular-eslint/component-selector": "off",
-      "@typescript-eslint/no-non-null-assertion": "off",
-      "@angular-eslint/no-input-rename": "off",
-      "@typescript-eslint/array-type": "off",
-      "@angular-eslint/template/interactive-supports-focus": "off",
-    },
-  },
-  {
-    files: ["**/*.html"],
-    extends: [
-      angular.configs.templateRecommended,
-      angular.configs.templateAccessibility,
-    ],
-    rules: {
-    },
-  }
-]);
-````
-
 ## File: README.md
 ````markdown
 # BookClubFe
@@ -2720,290 +2445,6 @@ Manual smoke tests:
 ## File: verbose
 ````
 
-````
-
-## File: .github/workflows/ci.yml
-````yaml
-name: CI
-on:
-  push:
-    branches: [develop, main]
-  pull_request:
-    branches: [develop, main]
-permissions:
-  contents: read
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
-jobs:
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Install dependencies
-        run: npm ci
-      - name: Lint
-        run: npm run lint
-  test:
-    name: Unit Tests
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Install dependencies
-        run: npm ci
-      - name: Run tests (ChromeHeadless)
-        run: npm run test:ci -- --code-coverage
-      - name: Upload coverage artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage
-          path: coverage/
-          retention-days: 7
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Install dependencies
-        run: npm ci
-      - name: Build (production)
-        run: npm run build -- --configuration=production
-  security:
-    name: Security Scan
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Install dependencies
-        run: npm ci
-      - name: Audit dependencies
-        run: npm audit --audit-level=high
-  typecheck:
-    name: Type Check
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Install dependencies
-        run: npm ci
-      - name: Type check
-        run: npx tsc --noEmit -p tsconfig.app.json
-  sonarcloud:
-    name: SonarCloud
-    runs-on: ubuntu-latest
-    needs: [test]
-    permissions:
-      contents: read
-      pull-requests: read
-      security-events: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Cache npm and Angular cache
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.npm
-            .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node20-
-      - name: Download coverage artifact
-        continue-on-error: true
-        uses: actions/download-artifact@v4
-        with:
-          name: coverage
-          path: coverage
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v6.0.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      - name: Wait for SonarCloud analysis to complete
-        if: github.event_name == 'push'
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: |
-          TASK_ID=$(grep ceTaskId .scannerwork/report-task.txt | cut -d= -f2)
-          echo "Waiting for SonarCloud task: $TASK_ID"
-          for i in $(seq 1 60); do
-            STATUS=$(curl -s -H "Authorization: Bearer $SONAR_TOKEN" "https://sonarcloud.io/api/ce/task?id=$TASK_ID" | python3 -c "import json,sys; print(json.load(sys.stdin)['task']['status'])")
-            echo "Attempt $i: $STATUS"
-            if [ "$STATUS" = "SUCCESS" ]; then
-              echo "Analysis complete."
-              exit 0
-            fi
-            if [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "CANCELLED" ]; then
-              echo "SonarCloud analysis failed with status: $STATUS"
-              exit 1
-            fi
-            sleep 5
-          done
-          echo "Timed out waiting for SonarCloud analysis"
-          exit 1
-      - name: Export SonarCloud issues as SARIF
-        if: github.event_name == 'push'
-        run: |
-          curl -s -u "${{ secrets.SONAR_TOKEN }}:" \
-            "https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&ps=500" \
-            -o sonar-issues.json
-          node -e "
-            const data = require('./sonar-issues.json');
-            const sarif = {
-              version: '2.1.0',
-              '\$schema': 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
-              runs: [{
-                tool: {
-                  driver: {
-                    name: 'SonarCloud',
-                    informationUri: 'https://sonarcloud.io',
-                    rules: []
-                  }
-                },
-                results: (data.issues || []).map(issue => ({
-                  ruleId: issue.rule,
-                  message: { text: issue.message },
-                  level: issue.severity === 'BLOCKER' || issue.severity === 'CRITICAL' ? 'error' :
-                         issue.severity === 'MAJOR' ? 'warning' : 'note',
-                  locations: [{
-                    physicalLocation: {
-                      artifactLocation: { uri: issue.component.split(':').pop() },
-                      region: {
-                        startLine: issue.textRange ? issue.textRange.startLine : 1,
-                        endLine: issue.textRange ? issue.textRange.endLine : 1
-                      }
-                    }
-                  }]
-                }))
-              }]
-            };
-            require('fs').writeFileSync('sonar.sarif', JSON.stringify(sarif, null, 2));
-            console.log('SARIF generated with ' + sarif.runs[0].results.length + ' issues');
-          "
-      - name: Upload SARIF to GitHub Code Scanning
-        if: github.event_name == 'push'
-        uses: github/codeql-action/upload-sarif@v3
-        with:
-          sarif_file: sonar.sarif
-          category: sonarcloud
-  deploy:
-    name: Deploy to Vercel
-    runs-on: ubuntu-latest
-    needs: [lint, test, build, security, typecheck, sonarcloud]
-    if: github.event_name == 'push'
-    permissions:
-      contents: read
-    environment:
-      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
-      url: ${{ steps.deploy.outputs.url }}
-    env:
-      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Install Vercel CLI
-        run: npm install --global vercel@latest
-      - name: Pull Vercel project settings
-        run: vercel pull --yes --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Build project via Vercel
-        run: vercel build ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
-      - name: Deploy to Vercel
-        id: deploy
-        run: |
-          DEPLOY_URL=$(vercel deploy --prebuilt ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }})
-          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
-          echo "Deployed to: $DEPLOY_URL"
 ````
 
 ## File: .github/copilot-instructions.md
@@ -7170,6 +6611,86 @@ module.exports = {
 }
 ````
 
+## File: eslint.config.js
+````javascript
+const eslint = require("@eslint/js");
+const { defineConfig } = require("eslint/config");
+const tseslint = require("typescript-eslint");
+const angular = require("angular-eslint");
+const rxjsX = require("eslint-plugin-rxjs-x");
+module.exports = defineConfig([
+  {
+    files: ["**/*.ts"],
+    extends: [
+      eslint.configs.recommended,
+      tseslint.configs.strict,
+      tseslint.configs.stylisticTypeChecked,
+      angular.configs.tsRecommended,
+      rxjsX.configs.recommended,
+    ],
+    processor: angular.processInlineTemplates,
+    languageOptions: {
+      parserOptions: {
+        project: ["./tsconfig.app.json", "./tsconfig.spec.json"],
+        tsconfigRootDir: __dirname,
+      },
+    },
+    rules: {
+      "@angular-eslint/directive-selector": [
+        "error",
+        {
+          type: "attribute",
+          prefix: "app",
+          style: "camelCase",
+        },
+      ],
+      "@angular-eslint/component-selector": [
+        "error",
+        {
+          type: "element",
+          prefix: "app",
+          style: "kebab-case",
+        },
+      ],
+      "@typescript-eslint/no-extraneous-class": [
+        "error",
+        { allowWithDecorator: true },
+      ],
+      "@typescript-eslint/no-invalid-void-type": "off",
+      "@typescript-eslint/no-unused-vars": [
+        "error",
+        { "argsIgnorePattern": "^_" },
+      ],
+      "rxjs-x/no-unsafe-takeuntil": "error",
+      "rxjs-x/no-floating-observables": "error",
+      "rxjs-x/no-unbound-methods": "error",
+      "rxjs-x/no-subject-value": "error",
+      "rxjs-x/finnish": "warn",
+    },
+  },
+  {
+    files: ["src/app/shared/spartan/**/*.ts", "src/app/shared/spartan/**/*.html"],
+    rules: {
+      "@angular-eslint/directive-selector": "off",
+      "@angular-eslint/component-selector": "off",
+      "@typescript-eslint/no-non-null-assertion": "off",
+      "@angular-eslint/no-input-rename": "off",
+      "@typescript-eslint/array-type": "off",
+      "@angular-eslint/template/interactive-supports-focus": "off",
+    },
+  },
+  {
+    files: ["**/*.html"],
+    extends: [
+      angular.configs.templateRecommended,
+      angular.configs.templateAccessibility,
+    ],
+    rules: {
+    },
+  }
+]);
+````
+
 ## File: postcss.config.json
 ````json
 {
@@ -8188,6 +7709,496 @@ Round 1 є блокуючим для всіх наступних — design toke
 Round 2–6 можна частково паралелізувати (різні feature-директорії незалежні).
 ````
 
+## File: .github/workflows/bundle-size.yml
+````yaml
+name: Bundle Size
+on:
+  pull_request:
+    branches: [main, develop]
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  bundle-size:
+    name: Check Bundle Size
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Check compressed size
+        uses: preactjs/compressed-size-action@v2
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          build-script: build -- --configuration=production
+          pattern: ./dist/book-club-fe/browser/**/*.{js,css}
+          strip-hash: true
+````
+
+## File: .github/workflows/ci.yml
+````yaml
+name: CI
+on:
+  push:
+    branches: [develop, main]
+  pull_request:
+    branches: [develop, main]
+permissions:
+  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Install dependencies
+        run: npm ci
+      - name: Lint
+        run: npm run lint
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Install dependencies
+        run: npm ci
+      - name: Run tests (ChromeHeadless)
+        run: npm run test:ci -- --code-coverage
+      - name: Upload coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 7
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Install dependencies
+        run: npm ci
+      - name: Build (production)
+        run: npm run build -- --configuration=production
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Install dependencies
+        run: npm ci
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Install dependencies
+        run: npm ci
+      - name: Type check
+        run: npx tsc --noEmit -p tsconfig.app.json
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    needs: [test]
+    permissions:
+      contents: read
+      pull-requests: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Download coverage artifact
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage
+          path: coverage
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      - name: Wait for SonarCloud analysis to complete
+        if: github.event_name == 'push'
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          TASK_ID=$(grep ceTaskId .scannerwork/report-task.txt | cut -d= -f2)
+          echo "Waiting for SonarCloud task: $TASK_ID"
+          for i in $(seq 1 60); do
+            STATUS=$(curl -s -H "Authorization: Bearer $SONAR_TOKEN" "https://sonarcloud.io/api/ce/task?id=$TASK_ID" | python3 -c "import json,sys; print(json.load(sys.stdin)['task']['status'])")
+            echo "Attempt $i: $STATUS"
+            if [ "$STATUS" = "SUCCESS" ]; then
+              echo "Analysis complete."
+              exit 0
+            fi
+            if [ "$STATUS" = "FAILED" ] || [ "$STATUS" = "CANCELLED" ]; then
+              echo "SonarCloud analysis failed with status: $STATUS"
+              exit 1
+            fi
+            sleep 5
+          done
+          echo "Timed out waiting for SonarCloud analysis"
+          exit 1
+      - name: Export SonarCloud issues as SARIF
+        if: github.event_name == 'push'
+        run: |
+          curl -s -u "${{ secrets.SONAR_TOKEN }}:" \
+            "https://sonarcloud.io/api/issues/search?projectKeys=leo477_book-club-fe&resolved=false&ps=500" \
+            -o sonar-issues.json
+          node -e "
+            const data = require('./sonar-issues.json');
+            const sarif = {
+              version: '2.1.0',
+              '\$schema': 'https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json',
+              runs: [{
+                tool: {
+                  driver: {
+                    name: 'SonarCloud',
+                    informationUri: 'https://sonarcloud.io',
+                    rules: []
+                  }
+                },
+                results: (data.issues || []).map(issue => ({
+                  ruleId: issue.rule,
+                  message: { text: issue.message },
+                  level: issue.severity === 'BLOCKER' || issue.severity === 'CRITICAL' ? 'error' :
+                         issue.severity === 'MAJOR' ? 'warning' : 'note',
+                  locations: [{
+                    physicalLocation: {
+                      artifactLocation: { uri: issue.component.split(':').pop() },
+                      region: {
+                        startLine: issue.textRange ? issue.textRange.startLine : 1,
+                        endLine: issue.textRange ? issue.textRange.endLine : 1
+                      }
+                    }
+                  }]
+                }))
+              }]
+            };
+            require('fs').writeFileSync('sonar.sarif', JSON.stringify(sarif, null, 2));
+            console.log('SARIF generated with ' + sarif.runs[0].results.length + ' issues');
+          "
+      - name: Upload SARIF to GitHub Code Scanning
+        if: github.event_name == 'push'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: sonar.sarif
+          category: sonarcloud
+  deploy:
+    name: Deploy to Vercel
+    runs-on: ubuntu-latest
+    needs: [lint, test, build, security, typecheck, sonarcloud]
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
+      url: ${{ steps.deploy.outputs.url }}
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+      - name: Pull Vercel project settings
+        run: vercel pull --yes --environment=${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }} --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Build project via Vercel
+        run: vercel build ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }}
+      - name: Deploy to Vercel
+        id: deploy
+        run: |
+          DEPLOY_URL=$(vercel deploy --prebuilt ${{ github.ref == 'refs/heads/main' && '--prod' || '' }} --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$DEPLOY_URL" >> $GITHUB_OUTPUT
+          echo "Deployed to: $DEPLOY_URL"
+````
+
+## File: .github/workflows/lighthouse.yml
+````yaml
+name: Lighthouse CI
+on:
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: lighthouse-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Cache npm and Angular cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.npm
+            .angular/cache
+          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node20-
+      - name: Install dependencies
+        run: npm ci
+      - name: Build (production)
+        run: npm run build -- --configuration=production
+      - name: Run Lighthouse CI
+        uses: treosh/lighthouse-ci-action@v11
+        with:
+          configPath: .lighthouserc.json
+          uploadArtifacts: true
+          temporaryPublicStorage: true
+````
+
+## File: .github/workflows/pr-review.yml
+````yaml
+name: pr-review
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    branches:
+      - develop
+      - main
+permissions:
+  contents: read
+  pull-requests: write
+  statuses: write
+concurrency:
+  group: pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - name: Cache Angular cache
+        uses: actions/cache@v4
+        with:
+          path: .angular/cache
+          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
+      - run: npm ci
+      - run: npm run lint
+  typecheck:
+    name: typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - name: Cache Angular cache
+        uses: actions/cache@v4
+        with:
+          path: .angular/cache
+          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
+      - run: npm ci
+      - run: npx tsc --noEmit -p tsconfig.app.json
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - name: Cache Angular cache
+        uses: actions/cache@v4
+        with:
+          path: .angular/cache
+          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
+      - run: npm ci
+      - run: npm run test:ci
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: 'npm'
+      - name: Cache Angular cache
+        uses: actions/cache@v4
+        with:
+          path: .angular/cache
+          key: ${{ runner.os }}-angular-${{ hashFiles('package-lock.json') }}
+      - run: npm ci
+      - run: npm run build -- --configuration=production
+  gate:
+    name: gate
+    runs-on: ubuntu-latest
+    needs: [lint, typecheck, test, build]
+    if: always()
+    steps:
+      - name: Check job results and post PR comment
+        id: gate
+        uses: actions/github-script@v7
+        env:
+          NEEDS: ${{ toJson(needs) }}
+        with:
+          script: |
+            const needs = JSON.parse(process.env.NEEDS);
+            const failed = Object.entries(needs)
+              .filter(([name, job]) => job.result === 'failure' || job.result === 'cancelled')
+              .map(([name]) => name);
+            let body;
+            if (failed.length > 0) {
+              body = `❌ The following jobs failed or were cancelled:\n\n${failed.map(j => `- ${j}`).join('\n')}\n\nPlease check the logs and fix the issues.`;
+              core.setFailed('Some jobs failed or were cancelled.');
+            } else {
+              body = '✅ All automated checks passed — ready for human review';
+            }
+            core.setOutput('body', body);
+      - name: Create or update PR comment
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          issue-number: ${{ github.event.pull_request.number }}
+          body: ${{ steps.gate.outputs.body }}
+          comment-tag: pr-review-gate
+````
+
 ## File: .husky/pre-commit
 ````
 #!/usr/bin/env sh
@@ -8491,76 +8502,6 @@ export class UploadService {
 }
 ````
 
-## File: src/app/features/auth/login/login.component.html
-````html
-<div class="auth-page-wrapper">
-  <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
-  <main class="auth-form-container">
-    @if (formVisible()) {
-      <div class="w-full max-w-md animate-form-in">
-        <div class="text-center mb-8">
-          <h1 class="font-display text-3xl font-bold text-white drop-shadow-sm">📚 Book Club</h1>
-          <p class="text-white/70 mt-2">{{ 'AUTH.welcome_back' | translate }}</p>
-        </div>
-        <div class="glass-card-strong p-8">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'AUTH.sign_in_h2' | translate }}</h2>
-          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
-            <fieldset class="border-0 p-0 m-0">
-              <legend class="sr-only">{{ 'AUTH.sign_in_h2' | translate }}</legend>
-              <hlm-field>
-                <label hlmFieldLabel for="login-email">{{ 'AUTH.email' | translate }}</label>
-                <input hlmInput id="login-email" type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
-                <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
-              </hlm-field>
-              <hlm-field>
-                <label hlmFieldLabel for="login-password">{{ 'AUTH.password' | translate }}</label>
-                <input hlmInput id="login-password" type="password" placeholder="••••••••" [formControl]="form.controls.password" />
-                <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
-              </hlm-field>
-            </fieldset>
-            @if (errorMessage()) {
-              <div class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-                <span class="mt-0.5 shrink-0">⚠️</span>
-                <span>{{ errorMessage() }}</span>
-              </div>
-            }
-            <button
-              hlmBtn
-              type="submit"
-              [disabled]="isSubmitting()"
-              class="mt-2 w-full bg-gradient-brand text-white border-0 hover:opacity-90 focus-visible:ring-primary-500"
-            >
-              @if (isSubmitting()) {
-                <hlm-spinner aria-label="Loading" />
-                {{ 'AUTH.signing_in' | translate }}
-              } @else {
-                {{ 'AUTH.submit_login' | translate }}
-              }
-            </button>
-          </form>
-          <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            {{ 'AUTH.no_account' | translate }}
-            <a routerLink="/register" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">
-              {{ 'AUTH.register_title' | translate }}
-            </a>
-          </p>
-        </div>
-        <p class="mt-6 text-center text-sm">
-          <a
-            routerLink="/"
-            class="inline-flex items-center gap-1 text-white/60 hover:text-white/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 rounded"
-          >
-            {{ 'NAV.back_home' | translate }}
-          </a>
-        </p>
-      </div>
-    }
-  </main>
-</div>
-````
-
 ## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.ts
 ````typescript
 import {
@@ -8835,210 +8776,6 @@ export class EventCardComponent {
     {{ 'PROFILE.no_stats' | translate }}
   </p>
 }
-````
-
-## File: src/app/features/quiz/quiz-create/quiz-create.component.html
-````html
-<div class="min-h-screen p-4 sm:p-8">
-  <div class="max-w-2xl mx-auto space-y-6">
-    <header class="flex items-center justify-between flex-wrap gap-4">
-      <div>
-        <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
-          📝 Create Quiz
-        </h1>
-        <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
-          Step {{ currentStep() }} of 2 —
-          {{ currentStep() === 1 ? 'Quiz details' : 'Add questions' }}
-        </p>
-      </div>
-      <a [routerLink]="['..']" class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-        ✕ Cancel
-      </a>
-    </header>
-    <div class="flex items-center gap-0">
-      @for (step of [1, 2]; track step) {
-        <div
-          class="flex-1 h-1.5 rounded-full transition-all duration-300"
-          [class.bg-primary-500]="currentStep() >= step"
-          [class.bg-gray-200]="currentStep() < step"
-          [class.dark:bg-gray-700]="currentStep() < step"
-        ></div>
-        @if (step < 2) {
-          <div class="w-3"></div>
-        }
-      }
-    </div>
-    @if (currentStep() === 1) {
-      <form
-        [formGroup]="metaForm"
-        (ngSubmit)="nextStep()"
-        novalidate
-        class="glass-card p-6 space-y-5"
-      >
-        <hlm-field>
-          <label hlmFieldLabel for="quiz-title">
-            Quiz title <span class="text-red-500">*</span>
-          </label>
-          <input
-            hlmInput
-            id="quiz-title"
-            formControlName="title"
-            class="w-full"
-            placeholder="e.g. The Midnight Library — Chapter 1 Quiz"
-          />
-          <hlm-field-error validator="required">Title is required.</hlm-field-error>
-          <hlm-field-error validator="minlength">Title must be at least 3 characters.</hlm-field-error>
-          <hlm-field-error validator="maxlength">Title must not exceed 100 characters.</hlm-field-error>
-        </hlm-field>
-        <hlm-field>
-          <label hlmFieldLabel for="quiz-desc">Description</label>
-          <textarea
-            hlmInput
-            id="quiz-desc"
-            formControlName="description"
-            rows="3"
-            class="w-full resize-none"
-            placeholder="A brief description of the quiz…"
-          ></textarea>
-          <hlm-field-error validator="maxlength">Description must not exceed 500 characters.</hlm-field-error>
-        </hlm-field>
-        <div class="flex justify-end">
-          <button hlmBtn type="submit" [disabled]="metaForm.invalid"
-                  class="bg-primary-600 hover:bg-primary-700 text-white">
-            Continue →
-          </button>
-        </div>
-      </form>
-    }
-    @if (currentStep() === 2) {
-      <div class="space-y-6">
-        @if (localQuestions().length > 0) {
-          <div class="space-y-3">
-            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-widest">
-              Questions ({{ localQuestions().length }})
-            </h2>
-            @for (q of localQuestions(); track $index) {
-              <div hlmCard class="glass-card-subtle px-5 py-4 flex items-start gap-3 rounded-xl">
-                <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
-                             text-primary-700 dark:text-primary-300 text-xs font-bold flex
-                             items-center justify-center flex-shrink-0">
-                  {{ $index + 1 }}
-                </span>
-                <div class="min-w-0 flex-1">
-                  <p class="text-gray-900 dark:text-white text-sm font-medium">{{ q.question }}</p>
-                  <p class="text-green-600 dark:text-green-400 text-xs mt-1">✓ {{ q.options[q.correctIndex] }}</p>
-                </div>
-                <button
-                  type="button"
-                  (click)="removeQuestion($index)"
-                  class="text-gray-400 hover:text-red-500 transition-colors text-lg flex-shrink-0 ml-auto leading-none"
-                  [attr.aria-label]="'Remove question ' + ($index + 1)"
-                >
-                  ✕
-                </button>
-              </div>
-            }
-          </div>
-        }
-        <form
-          [formGroup]="questionForm"
-          (ngSubmit)="addQuestion()"
-          novalidate
-          class="glass-card p-6 space-y-5"
-        >
-          <h2 class="font-semibold text-gray-900 dark:text-white">
-            {{ localQuestions().length === 0 ? 'Add your first question' : 'Add another question' }}
-          </h2>
-          <hlm-field>
-            <label hlmFieldLabel for="q-text">Question <span class="text-red-500">*</span></label>
-            <textarea
-              hlmInput
-              id="q-text"
-              formControlName="question"
-              rows="2"
-              class="w-full resize-none"
-              placeholder="What is the main theme of chapter 3?"
-            ></textarea>
-            <hlm-field-error validator="required">Question is required.</hlm-field-error>
-            <hlm-field-error validator="minlength">Question must be at least 5 characters.</hlm-field-error>
-          </hlm-field>
-          <div class="space-y-1">
-            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Answer options <span class="text-red-500">*</span>
-            </p>
-            <div class="space-y-2">
-              @for (idx of optionIndices; track idx) {
-                <div class="flex items-center gap-3">
-                  <label class="flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      formControlName="correctIndex"
-                      [value]="idx"
-                      class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300 dark:border-gray-600 cursor-pointer"
-                    />
-                    <span
-                      class="ml-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                      [class.bg-accent-500]="questionForm.controls.correctIndex.value === idx"
-                      [class.text-white]="questionForm.controls.correctIndex.value === idx"
-                      [class.bg-gray-100]="questionForm.controls.correctIndex.value !== idx"
-                      [class.dark:bg-gray-700]="questionForm.controls.correctIndex.value !== idx"
-                      [class.text-gray-600]="questionForm.controls.correctIndex.value !== idx"
-                      [class.dark:text-gray-400]="questionForm.controls.correctIndex.value !== idx"
-                    >
-                      {{ optionLabel(idx) }}
-                    </span>
-                  </label>
-                  <input
-                    hlmInput
-                    [formControlName]="'option' + idx"
-                    [placeholder]="'Option ' + optionLabel(idx)"
-                    class="flex-1"
-                  />
-                </div>
-              }
-            </div>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              Select the radio button next to the correct answer.
-            </p>
-          </div>
-          <button
-            hlmBtn
-            type="submit"
-            variant="outline"
-            [disabled]="questionForm.invalid"
-            class="w-full border-dashed border-primary-400 dark:border-primary-600
-                   text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
-          >
-            + Add Question
-          </button>
-        </form>
-        @if (errorMessage()) {
-          <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-700 dark:text-red-400 text-sm">
-            ⚠️ {{ errorMessage() }}
-          </div>
-        }
-        <div class="flex justify-between items-center pb-8">
-          <button hlmBtn type="button" variant="ghost" (click)="previousStep()">
-            ← Back
-          </button>
-          <button
-            hlmBtn
-            type="button"
-            (click)="publishQuiz()"
-            [disabled]="localQuestions().length === 0 || isPublishing()"
-            class="bg-accent-600 hover:bg-accent-700 text-white font-bold"
-          >
-            {{ isPublishing() ? '…Publishing' : '🚀 Publish Quiz' }}
-            @if (localQuestions().length > 0) {
-              ({{ localQuestions().length }}
-              {{ localQuestions().length === 1 ? 'question' : 'questions' }})
-            }
-          </button>
-        </div>
-      </div>
-    }
-  </div>
-</div>
 ````
 
 ## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
@@ -9437,106 +9174,6 @@ export class QrCodeComponent {
 }
 ````
 
-## File: src/app/shared/spartan/tabs/src/lib/hlm-tabs-paginated-list.ts
-````typescript
-import { CdkObserveContent } from '@angular/cdk/observers';
-import {
-	ChangeDetectionStrategy,
-	Component,
-	type ElementRef,
-	computed,
-	contentChildren,
-	input,
-	viewChild,
-} from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideChevronLeft, lucideChevronRight } from '@ng-icons/lucide';
-import { type BrnPaginatedTabHeaderItem, BrnTabsPaginatedList, BrnTabsTrigger } from '@spartan-ng/brain/tabs';
-import { buttonVariants } from '@spartan-ng/helm/button';
-import { HlmIcon } from '@spartan-ng/helm/icon';
-import { classes, hlm } from '@spartan-ng/helm/utils';
-import type { ClassValue } from 'clsx';
-import type { Observable } from 'rxjs';
-import { listVariants } from './hlm-tabs-list';
-@Component({
-	selector: 'hlm-paginated-tabs-list',
-	imports: [CdkObserveContent, NgIcon, HlmIcon],
-	providers: [provideIcons({ lucideChevronRight, lucideChevronLeft })],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	host: {
-		'data-slot': 'tabs-paginated-list',
-	},
-	template: `
-		<button
-			#previousPaginator
-			data-pagination="previous"
-			type="button"
-			aria-hidden="true"
-			tabindex="-1"
-			[class.flex]="showPaginationControls()"
-			[class.hidden]="!showPaginationControls()"
-			[class]="_paginationButtonClass()"
-			[disabled]="disableScrollBefore || null"
-			(click)="_handlePaginatorClick('before')"
-			(mousedown)="_handlePaginatorPress('before', $event)"
-			(touchend)="_stopInterval()"
-		>
-			<ng-icon hlm size="base" name="lucideChevronLeft" />
-		</button>
-		<div #tabListContainer class="z-[1] flex grow overflow-hidden" tabindex="0" (keydown)="_handleKeydown($event)">
-			<div class="relative grow transition-transform" #tabList role="tablist" (cdkObserveContent)="_onContentChanges()">
-				<div #tabListInner [class]="_tabListClass()">
-					<ng-content />
-				</div>
-			</div>
-		</div>
-		<button
-			#nextPaginator
-			data-pagination="next"
-			type="button"
-			aria-hidden="true"
-			tabindex="-1"
-			[class.flex]="showPaginationControls()"
-			[class.hidden]="!showPaginationControls()"
-			[class]="_paginationButtonClass()"
-			[disabled]="disableScrollAfter || null"
-			(click)="_handlePaginatorClick('after')"
-			(mousedown)="_handlePaginatorPress('after', $event)"
-			(touchend)="_stopInterval()"
-		>
-			<ng-icon hlm size="base" name="lucideChevronRight" />
-		</button>
-	`,
-})
-export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
-	constructor() {
-		super();
-		classes(() => 'relative flex flex-shrink-0 gap-1 overflow-hidden');
-	}
-	public readonly items = contentChildren(BrnTabsTrigger, { descendants: false });
-	public readonly itemsChanges: Observable<ReadonlyArray<BrnPaginatedTabHeaderItem>> = toObservable(this.items);
-	public readonly tabListContainer = viewChild.required<ElementRef<HTMLElement>>('tabListContainer');
-	public readonly tabList = viewChild.required<ElementRef<HTMLElement>>('tabList');
-	public readonly tabListInner = viewChild.required<ElementRef<HTMLElement>>('tabListInner');
-	public readonly nextPaginator = viewChild.required<ElementRef<HTMLElement>>('nextPaginator');
-	public readonly previousPaginator = viewChild.required<ElementRef<HTMLElement>>('previousPaginator');
-	public readonly tabListClass = input<ClassValue>('', { alias: 'tabListClass' });
-	protected readonly _tabListClass = computed(() => hlm(listVariants(), this.tabListClass()));
-	public readonly paginationButtonClass = input<ClassValue>('', { alias: 'paginationButtonClass' });
-	protected readonly _paginationButtonClass = computed(() =>
-		hlm(
-			'relative z-[2] select-none disabled:cursor-default',
-			buttonVariants({ variant: 'ghost', size: 'icon' }),
-			this.paginationButtonClass(),
-		),
-	);
-	protected _itemSelected(event: KeyboardEvent) {
-		event.preventDefault();
-	}
-}
-````
-
 ## File: src/app/app.routes.ts
 ````typescript
 import { Routes } from '@angular/router';
@@ -9813,6 +9450,76 @@ export interface ClubEvent {
 }
 ````
 
+## File: src/app/features/auth/login/login.component.html
+````html
+<div class="auth-page-wrapper">
+  <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
+  <main class="auth-form-container">
+    @if (formVisible()) {
+      <div class="w-full max-w-md animate-form-in">
+        <div class="text-center mb-8">
+          <h1 class="font-display text-3xl font-bold text-white drop-shadow-sm">📚 Book Club</h1>
+          <p class="text-white/70 mt-2">{{ 'AUTH.welcome_back' | translate }}</p>
+        </div>
+        <div class="glass-card-strong p-8">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'AUTH.sign_in_h2' | translate }}</h2>
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+            <fieldset class="border-0 p-0 m-0">
+              <legend class="sr-only">{{ 'AUTH.sign_in_h2' | translate }}</legend>
+              <hlm-field>
+                <label hlmFieldLabel for="login-email">{{ 'AUTH.email' | translate }}</label>
+                <input hlmInput id="login-email" type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
+                <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
+              </hlm-field>
+              <hlm-field>
+                <label hlmFieldLabel for="login-password">{{ 'AUTH.password' | translate }}</label>
+                <input hlmInput id="login-password" type="password" placeholder="••••••••" [formControl]="form.controls.password" />
+                <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
+              </hlm-field>
+            </fieldset>
+            @if (errorMessage()) {
+              <div class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+                <span class="mt-0.5 shrink-0">⚠️</span>
+                <span>{{ errorMessage() }}</span>
+              </div>
+            }
+            <button
+              hlmBtn
+              type="submit"
+              [disabled]="isSubmitting()"
+              class="mt-2 w-full bg-gradient-brand text-white border-0 hover:opacity-90 focus-visible:ring-primary-500"
+            >
+              @if (isSubmitting()) {
+                <hlm-spinner aria-label="Loading" />
+                {{ 'AUTH.signing_in' | translate }}
+              } @else {
+                {{ 'AUTH.submit_login' | translate }}
+              }
+            </button>
+          </form>
+          <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+            {{ 'AUTH.no_account' | translate }}
+            <a routerLink="/register" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">
+              {{ 'AUTH.register_title' | translate }}
+            </a>
+          </p>
+        </div>
+        <p class="mt-6 text-center text-sm">
+          <a
+            routerLink="/"
+            class="inline-flex items-center gap-1 text-white/60 hover:text-white/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 rounded"
+          >
+            {{ 'NAV.back_home' | translate }}
+          </a>
+        </p>
+      </div>
+    }
+  </main>
+</div>
+````
+
 ## File: src/app/features/auth/login/login.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
@@ -9880,157 +9587,6 @@ export class LoginComponent {
     }
   }
 }
-````
-
-## File: src/app/features/auth/register/register.component.html
-````html
-<div class="auth-page-wrapper">
-  <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
-  <main class="auth-form-container">
-    @if (formVisible()) {
-      <div class="w-full max-w-md animate-form-in">
-        <div class="text-center mb-8">
-          <h1 class="font-display text-3xl font-bold text-white drop-shadow-sm">📚 Book Club</h1>
-          <p class="text-white/70 mt-2">{{ 'AUTH.create_account_subtitle' | translate }}</p>
-        </div>
-        @if (successMessage()) {
-          <div class="glass-card-strong p-8 text-center">
-            <div class="text-5xl mb-4">🎉</div>
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'AUTH.account_created' | translate }}</h2>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">
-              {{ 'AUTH.welcome_message' | translate }} <strong>{{ registeredEmail() }}</strong>.
-            </p>
-            <a routerLink="/login"
-               class="mt-6 inline-block text-sm text-primary-600 dark:text-primary-400 hover:underline font-medium">
-              {{ 'AUTH.back_to_login' | translate }}
-            </a>
-          </div>
-        } @else {
-          <div class="glass-card-strong p-8">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'AUTH.create_account_h2' | translate }}</h2>
-            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
-              <fieldset class="border-0 p-0 m-0">
-                <legend class="sr-only">{{ 'AUTH.create_account_h2' | translate }}</legend>
-                <hlm-field>
-                  <label hlmFieldLabel for="reg-display-name">{{ 'AUTH.display_name' | translate }}</label>
-                  <input hlmInput id="reg-display-name" type="text" placeholder="Ada Lovelace" [formControl]="form.controls.displayName" />
-                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                  <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 2} }}</hlm-field-error>
-                </hlm-field>
-                <hlm-field>
-                  <label hlmFieldLabel for="reg-email">{{ 'AUTH.email' | translate }}</label>
-                  <input hlmInput id="reg-email" type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
-                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                  <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
-                </hlm-field>
-                <hlm-field>
-                  <label hlmFieldLabel for="reg-password">{{ 'AUTH.password' | translate }}</label>
-                  <input hlmInput id="reg-password" type="password" placeholder="••••••••" [formControl]="form.controls.password" />
-                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                  <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
-                </hlm-field>
-                @if (passwordStrength()) {
-                  <div class="flex items-center gap-2 -mt-2">
-                    <div class="flex gap-1 flex-1">
-                      <div class="h-1 flex-1 rounded-full transition-colors"
-                           [class]="passwordStrength() !== null ? 'bg-red-400' : 'bg-gray-200'"></div>
-                      <div class="h-1 flex-1 rounded-full transition-colors"
-                           [class]="passwordStrength() === 'medium' || passwordStrength() === 'strong' ? 'bg-yellow-400' : 'bg-gray-200'"></div>
-                      <div class="h-1 flex-1 rounded-full transition-colors"
-                           [class]="passwordStrength() === 'strong' ? 'bg-green-500' : 'bg-gray-200'"></div>
-                    </div>
-                    <span class="text-xs font-medium"
-                          [class]="passwordStrength() === 'strong' ? 'text-green-600' :
-                                   passwordStrength() === 'medium' ? 'text-yellow-600' : 'text-red-500'">
-                      {{ passwordStrength() === 'strong' ? ('AUTH.password_strong' | translate) :
-                         passwordStrength() === 'medium' ? ('AUTH.password_medium' | translate) :
-                         ('AUTH.password_weak' | translate) }}
-                    </span>
-                  </div>
-                }
-                <hlm-field>
-                  <label hlmFieldLabel for="reg-confirm-password">{{ 'AUTH.confirm_password' | translate }}</label>
-                  <input hlmInput id="reg-confirm-password" type="password" placeholder="••••••••" [formControl]="form.controls.confirmPassword" />
-                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                </hlm-field>
-                @if (form.hasError('passwordMismatch') && form.controls.confirmPassword.touched) {
-                  <p class="text-xs text-red-500 -mt-3">{{ 'AUTH.passwords_no_match' | translate }}</p>
-                }
-                <fieldset class="border-0 p-0 m-0">
-                  <legend class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">{{ 'AUTH.want_to' | translate }}</legend>
-                  <div class="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      (click)="setRole('user')"
-                      [attr.aria-pressed]="selectedRole() === 'user'"
-                      class="p-4 rounded-[var(--bento-radius)] border text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      [class]="selectedRole() === 'user'
-                        ? 'glass-card-subtle border-primary-400 ring-2 ring-primary-400/50'
-                        : 'glass-card-subtle border-white/20 hover:border-primary-300'"
-                    >
-                      <div class="text-2xl mb-1">📖</div>
-                      <div class="font-medium text-sm text-gray-900 dark:text-white">{{ 'AUTH.role_reader_label' | translate }}</div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400">{{ 'AUTH.role_reader_desc' | translate }}</div>
-                    </button>
-                    <button
-                      type="button"
-                      (click)="setRole('organizer')"
-                      [attr.aria-pressed]="selectedRole() === 'organizer'"
-                      class="p-4 rounded-[var(--bento-radius)] border text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      [class]="selectedRole() === 'organizer'
-                        ? 'glass-card-subtle border-accent-400 ring-2 ring-accent-400/50'
-                        : 'glass-card-subtle border-white/20 hover:border-accent-300'"
-                    >
-                      <div class="text-2xl mb-1">🎯</div>
-                      <div class="font-medium text-sm text-gray-900 dark:text-white">{{ 'AUTH.role_organizer_label' | translate }}</div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400">{{ 'AUTH.role_organizer_desc' | translate }}</div>
-                    </button>
-                  </div>
-                  @if (form.controls.role.invalid && form.controls.role.touched) {
-                    <p class="text-xs text-red-500 mt-0.5">{{ 'AUTH.select_role_error' | translate }}</p>
-                  }
-                </fieldset>
-                @if (errorMessage()) {
-                  <div class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-                    <span class="mt-0.5 shrink-0">⚠️</span>
-                    <span>{{ errorMessage() }}</span>
-                  </div>
-                }
-                <button
-                  hlmBtn
-                  type="submit"
-                  [disabled]="isSubmitting()"
-                  class="mt-2 w-full bg-gradient-brand text-white border-0 hover:opacity-90 focus-visible:ring-primary-500"
-                >
-                  @if (isSubmitting()) {
-                    <hlm-spinner aria-label="Loading" />
-                    {{ 'AUTH.creating_account' | translate }}
-                  } @else {
-                    {{ 'AUTH.create_account_h2' | translate }}
-                  }
-                </button>
-              </fieldset>
-            </form>
-            <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-              {{ 'AUTH.have_account' | translate }}
-              <a routerLink="/login" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">
-                {{ 'AUTH.sign_in_h2' | translate }}
-              </a>
-            </p>
-          </div>
-        }
-        <p class="mt-6 text-center text-sm">
-          <a
-            routerLink="/"
-            class="inline-flex items-center gap-1 text-white/60 hover:text-white/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 rounded"
-          >
-            {{ 'NAV.back_home' | translate }}
-          </a>
-        </p>
-      </div>
-    }
-  </main>
-</div>
 ````
 
 ## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html
@@ -10135,121 +9691,6 @@ export class LoginComponent {
     </div>
   </div>
 </article>
-````
-
-## File: src/app/features/clubs/edit-club/edit-club.component.html
-````html
-<main class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-lg">
-    <header class="text-center mb-8">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
-      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'EDIT_CLUB.subtitle' | translate }}</p>
-    </header>
-    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'EDIT_CLUB.title' | translate }}</h2>
-      @if (isLoadingClub()) {
-        <div class="flex justify-center py-12">
-          <hlm-spinner />
-        </div>
-      } @else {
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-          <hlm-field>
-            <label hlmFieldLabel for="club-name">
-              {{ 'EDIT_CLUB.name_label' | translate }}
-              <span class="text-red-500" aria-hidden="true">*</span>
-            </label>
-            <input
-              hlmInput
-              id="club-name"
-              type="text"
-              formControlName="name"
-              class="w-full"
-              [placeholder]="'EDIT_CLUB.name_placeholder' | translate"
-            />
-            <hlm-field-error validator="required">{{ 'EDIT_CLUB.name_required' | translate }}</hlm-field-error>
-            <hlm-field-error validator="minlength">{{ 'EDIT_CLUB.name_min' | translate }}</hlm-field-error>
-            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.name_max' | translate }}</hlm-field-error>
-          </hlm-field>
-          <hlm-field>
-            <label hlmFieldLabel for="club-description">{{ 'EDIT_CLUB.description_label' | translate }}</label>
-            <textarea
-              hlmInput
-              id="club-description"
-              formControlName="description"
-              rows="3"
-              class="w-full resize-none"
-              [placeholder]="'EDIT_CLUB.description_placeholder' | translate"
-            ></textarea>
-            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.description_max' | translate }}</hlm-field-error>
-          </hlm-field>
-          <hlm-field>
-            <label hlmFieldLabel for="club-city">{{ 'EDIT_CLUB.city_label' | translate }}</label>
-            <input
-              hlmInput
-              id="club-city"
-              type="text"
-              formControlName="city"
-              class="w-full"
-              [placeholder]="'EDIT_CLUB.city_placeholder' | translate"
-            />
-          </hlm-field>
-          <div>
-            <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{ 'EDIT_CLUB.cover_url_label' | translate }}
-            </p>
-            <app-cover-upload [control]="form.controls.coverUrl" />
-          </div>
-          <fieldset>
-            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'EDIT_CLUB.visibility_legend' | translate }}</legend>
-            <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-              <div>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'EDIT_CLUB.public_label' | translate }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'EDIT_CLUB.public_desc' | translate }}</p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                [attr.aria-checked]="form.controls.isPublic.value"
-                (click)="togglePublic()"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                [class.bg-primary-600]="form.controls.isPublic.value"
-                [class.bg-gray-300]="!form.controls.isPublic.value"
-                [class.dark:bg-gray-600]="!form.controls.isPublic.value"
-              >
-                <span
-                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                  [class.translate-x-6]="form.controls.isPublic.value"
-                  [class.translate-x-1]="!form.controls.isPublic.value"
-                ></span>
-              </button>
-            </div>
-          </fieldset>
-          @if (errorMessage()) {
-            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-                 role="alert">
-              <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
-              <span>{{ errorMessage() }}</span>
-            </div>
-          }
-          <div class="flex gap-3 pt-2">
-            <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
-              {{ 'EDIT_CLUB.cancel' | translate }}
-            </button>
-            <button hlmBtn type="submit" [disabled]="isSubmitting()"
-                    class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
-              @if (isSubmitting()) {
-                <hlm-spinner class="mr-2" />
-                {{ 'EDIT_CLUB.submitting' | translate }}
-              } @else {
-                {{ 'EDIT_CLUB.submit' | translate }}
-              }
-            </button>
-          </div>
-        </form>
-      }
-    </article>
-  </div>
-</main>
 ````
 
 ## File: src/app/features/clubs/edit-club/edit-club.component.ts
@@ -10904,6 +10345,210 @@ export class ProfileComponent {
 }
 ````
 
+## File: src/app/features/quiz/quiz-create/quiz-create.component.html
+````html
+<div class="min-h-screen p-4 sm:p-8">
+  <div class="max-w-2xl mx-auto space-y-6">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
+          📝 Create Quiz
+        </h1>
+        <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
+          Step {{ currentStep() }} of 2 —
+          {{ currentStep() === 1 ? 'Quiz details' : 'Add questions' }}
+        </p>
+      </div>
+      <a [routerLink]="['..']" class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
+        ✕ Cancel
+      </a>
+    </header>
+    <div class="flex items-center gap-0">
+      @for (step of [1, 2]; track step) {
+        <div
+          class="flex-1 h-1.5 rounded-full transition-all duration-300"
+          [class.bg-primary-500]="currentStep() >= step"
+          [class.bg-gray-200]="currentStep() < step"
+          [class.dark:bg-gray-700]="currentStep() < step"
+        ></div>
+        @if (step < 2) {
+          <div class="w-3"></div>
+        }
+      }
+    </div>
+    @if (currentStep() === 1) {
+      <form
+        [formGroup]="metaForm"
+        (ngSubmit)="nextStep()"
+        novalidate
+        class="glass-card p-6 space-y-5"
+      >
+        <hlm-field>
+          <label hlmFieldLabel for="quiz-title">
+            Quiz title <span class="text-red-500">*</span>
+          </label>
+          <input
+            hlmInput
+            id="quiz-title"
+            formControlName="title"
+            class="w-full"
+            placeholder="e.g. The Midnight Library — Chapter 1 Quiz"
+          />
+          <hlm-field-error validator="required">Title is required.</hlm-field-error>
+          <hlm-field-error validator="minlength">Title must be at least 3 characters.</hlm-field-error>
+          <hlm-field-error validator="maxlength">Title must not exceed 100 characters.</hlm-field-error>
+        </hlm-field>
+        <hlm-field>
+          <label hlmFieldLabel for="quiz-desc">Description</label>
+          <textarea
+            hlmInput
+            id="quiz-desc"
+            formControlName="description"
+            rows="3"
+            class="w-full resize-none"
+            placeholder="A brief description of the quiz…"
+          ></textarea>
+          <hlm-field-error validator="maxlength">Description must not exceed 500 characters.</hlm-field-error>
+        </hlm-field>
+        <div class="flex justify-end">
+          <button hlmBtn type="submit" [disabled]="metaForm.invalid"
+                  class="bg-primary-600 hover:bg-primary-700 text-white">
+            Continue →
+          </button>
+        </div>
+      </form>
+    }
+    @if (currentStep() === 2) {
+      <div class="space-y-6">
+        @if (localQuestions().length > 0) {
+          <div class="space-y-3">
+            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-widest">
+              Questions ({{ localQuestions().length }})
+            </h2>
+            @for (q of localQuestions(); track $index) {
+              <div hlmCard class="glass-card-subtle px-5 py-4 flex items-start gap-3 rounded-xl">
+                <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
+                             text-primary-700 dark:text-primary-300 text-xs font-bold flex
+                             items-center justify-center flex-shrink-0">
+                  {{ $index + 1 }}
+                </span>
+                <div class="min-w-0 flex-1">
+                  <p class="text-gray-900 dark:text-white text-sm font-medium">{{ q.question }}</p>
+                  <p class="text-green-600 dark:text-green-400 text-xs mt-1">✓ {{ q.options[q.correctIndex] }}</p>
+                </div>
+                <button
+                  type="button"
+                  (click)="removeQuestion($index)"
+                  class="text-gray-400 hover:text-red-500 transition-colors text-lg flex-shrink-0 ml-auto leading-none"
+                  [attr.aria-label]="'Remove question ' + ($index + 1)"
+                >
+                  ✕
+                </button>
+              </div>
+            }
+          </div>
+        }
+        <form
+          [formGroup]="questionForm"
+          (ngSubmit)="addQuestion()"
+          novalidate
+          class="glass-card p-6 space-y-5"
+        >
+          <h2 class="font-semibold text-gray-900 dark:text-white">
+            {{ localQuestions().length === 0 ? 'Add your first question' : 'Add another question' }}
+          </h2>
+          <hlm-field>
+            <label hlmFieldLabel for="q-text">Question <span class="text-red-500">*</span></label>
+            <textarea
+              hlmInput
+              id="q-text"
+              formControlName="question"
+              rows="2"
+              class="w-full resize-none"
+              placeholder="What is the main theme of chapter 3?"
+            ></textarea>
+            <hlm-field-error validator="required">Question is required.</hlm-field-error>
+            <hlm-field-error validator="minlength">Question must be at least 5 characters.</hlm-field-error>
+          </hlm-field>
+          <div class="space-y-1">
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Answer options <span class="text-red-500">*</span>
+            </p>
+            <div class="space-y-2">
+              @for (idx of optionIndices; track idx) {
+                <div class="flex items-center gap-3">
+                  <label class="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      formControlName="correctIndex"
+                      [value]="idx"
+                      class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300 dark:border-gray-600 cursor-pointer"
+                    />
+                    <span
+                      class="ml-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                      [class.bg-accent-500]="questionForm.controls.correctIndex.value === idx"
+                      [class.text-white]="questionForm.controls.correctIndex.value === idx"
+                      [class.bg-gray-100]="questionForm.controls.correctIndex.value !== idx"
+                      [class.dark:bg-gray-700]="questionForm.controls.correctIndex.value !== idx"
+                      [class.text-gray-600]="questionForm.controls.correctIndex.value !== idx"
+                      [class.dark:text-gray-400]="questionForm.controls.correctIndex.value !== idx"
+                    >
+                      {{ optionLabel(idx) }}
+                    </span>
+                  </label>
+                  <input
+                    hlmInput
+                    [formControlName]="'option' + idx"
+                    [placeholder]="'Option ' + optionLabel(idx)"
+                    class="flex-1"
+                  />
+                </div>
+              }
+            </div>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              Select the radio button next to the correct answer.
+            </p>
+          </div>
+          <button
+            hlmBtn
+            type="submit"
+            variant="outline"
+            [disabled]="questionForm.invalid"
+            class="w-full border-dashed border-primary-400 dark:border-primary-600
+                   text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+          >
+            + Add Question
+          </button>
+        </form>
+        @if (errorMessage()) {
+          <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-700 dark:text-red-400 text-sm">
+            ⚠️ {{ errorMessage() }}
+          </div>
+        }
+        <div class="flex justify-between items-center pb-8">
+          <button hlmBtn type="button" variant="ghost" (click)="previousStep()">
+            ← Back
+          </button>
+          <button
+            hlmBtn
+            type="button"
+            (click)="publishQuiz()"
+            [disabled]="localQuestions().length === 0 || isPublishing()"
+            class="bg-accent-600 hover:bg-accent-700 text-white font-bold"
+          >
+            {{ isPublishing() ? '…Publishing' : '🚀 Publish Quiz' }}
+            @if (localQuestions().length > 0) {
+              ({{ localQuestions().length }}
+              {{ localQuestions().length === 1 ? 'question' : 'questions' }})
+            }
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+````
+
 ## File: src/app/features/quiz/quiz-list/quiz-list.component.html
 ````html
 <div class="min-h-screen p-4 sm:p-8">
@@ -11068,6 +10713,106 @@ export class QuizListComponent {
   protected takeQuiz(quizId: string): void {
     this.router.navigate(['/clubs', this.id(), 'quizzes', quizId]);
   }
+}
+````
+
+## File: src/app/shared/spartan/tabs/src/lib/hlm-tabs-paginated-list.ts
+````typescript
+import { CdkObserveContent } from '@angular/cdk/observers';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	type ElementRef,
+	computed,
+	contentChildren,
+	input,
+	viewChild,
+} from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideChevronLeft, lucideChevronRight } from '@ng-icons/lucide';
+import { type BrnPaginatedTabHeaderItem, BrnTabsPaginatedList, BrnTabsTrigger } from '@spartan-ng/brain/tabs';
+import { buttonVariants } from '@spartan-ng/helm/button';
+import { HlmIcon } from '@spartan-ng/helm/icon';
+import { classes, hlm } from '@spartan-ng/helm/utils';
+import type { ClassValue } from 'clsx';
+import type { Observable } from 'rxjs';
+import { listVariants } from './hlm-tabs-list';
+@Component({
+	selector: 'hlm-paginated-tabs-list',
+	imports: [CdkObserveContent, NgIcon, HlmIcon],
+	providers: [provideIcons({ lucideChevronRight, lucideChevronLeft })],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: {
+		'data-slot': 'tabs-paginated-list',
+	},
+	template: `
+		<button
+			#previousPaginator
+			data-pagination="previous"
+			type="button"
+			aria-hidden="true"
+			tabindex="-1"
+			[class.flex]="showPaginationControls()"
+			[class.hidden]="!showPaginationControls()"
+			[class]="_paginationButtonClass()"
+			[disabled]="disableScrollBefore || null"
+			(click)="_handlePaginatorClick('before')"
+			(mousedown)="_handlePaginatorPress('before', $event)"
+			(touchend)="_stopInterval()"
+		>
+			<ng-icon hlm size="base" name="lucideChevronLeft" />
+		</button>
+		<div #tabListContainer class="z-[1] flex grow overflow-hidden" tabindex="0" (keydown)="_handleKeydown($event)">
+			<div class="relative grow transition-transform" #tabList role="tablist" (cdkObserveContent)="_onContentChanges()">
+				<div #tabListInner [class]="_tabListClass()">
+					<ng-content />
+				</div>
+			</div>
+		</div>
+		<button
+			#nextPaginator
+			data-pagination="next"
+			type="button"
+			aria-hidden="true"
+			tabindex="-1"
+			[class.flex]="showPaginationControls()"
+			[class.hidden]="!showPaginationControls()"
+			[class]="_paginationButtonClass()"
+			[disabled]="disableScrollAfter || null"
+			(click)="_handlePaginatorClick('after')"
+			(mousedown)="_handlePaginatorPress('after', $event)"
+			(touchend)="_stopInterval()"
+		>
+			<ng-icon hlm size="base" name="lucideChevronRight" />
+		</button>
+	`,
+})
+export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
+	constructor() {
+		super();
+		classes(() => 'relative flex flex-shrink-0 gap-1 overflow-hidden');
+	}
+	public readonly items = contentChildren(BrnTabsTrigger, { descendants: false });
+	public readonly itemsChanges: Observable<ReadonlyArray<BrnPaginatedTabHeaderItem>> = toObservable(this.items);
+	public readonly tabListContainer = viewChild.required<ElementRef<HTMLElement>>('tabListContainer');
+	public readonly tabList = viewChild.required<ElementRef<HTMLElement>>('tabList');
+	public readonly tabListInner = viewChild.required<ElementRef<HTMLElement>>('tabListInner');
+	public readonly nextPaginator = viewChild.required<ElementRef<HTMLElement>>('nextPaginator');
+	public readonly previousPaginator = viewChild.required<ElementRef<HTMLElement>>('previousPaginator');
+	public readonly tabListClass = input<ClassValue>('', { alias: 'tabListClass' });
+	protected readonly _tabListClass = computed(() => hlm(listVariants(), this.tabListClass()));
+	public readonly paginationButtonClass = input<ClassValue>('', { alias: 'paginationButtonClass' });
+	protected readonly _paginationButtonClass = computed(() =>
+		hlm(
+			'relative z-[2] select-none disabled:cursor-default',
+			buttonVariants({ variant: 'ghost', size: 'icon' }),
+			this.paginationButtonClass(),
+		),
+	);
+	protected _itemSelected(event: KeyboardEvent) {
+		event.preventDefault();
+	}
 }
 ````
 
@@ -11569,6 +11314,157 @@ export class QuizService {
 }
 ````
 
+## File: src/app/features/auth/register/register.component.html
+````html
+<div class="auth-page-wrapper">
+  <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
+  <main class="auth-form-container">
+    @if (formVisible()) {
+      <div class="w-full max-w-md animate-form-in">
+        <div class="text-center mb-8">
+          <h1 class="font-display text-3xl font-bold text-white drop-shadow-sm">📚 Book Club</h1>
+          <p class="text-white/70 mt-2">{{ 'AUTH.create_account_subtitle' | translate }}</p>
+        </div>
+        @if (successMessage()) {
+          <div class="glass-card-strong p-8 text-center">
+            <div class="text-5xl mb-4">🎉</div>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'AUTH.account_created' | translate }}</h2>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">
+              {{ 'AUTH.welcome_message' | translate }} <strong>{{ registeredEmail() }}</strong>.
+            </p>
+            <a routerLink="/login"
+               class="mt-6 inline-block text-sm text-primary-600 dark:text-primary-400 hover:underline font-medium">
+              {{ 'AUTH.back_to_login' | translate }}
+            </a>
+          </div>
+        } @else {
+          <div class="glass-card-strong p-8">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'AUTH.create_account_h2' | translate }}</h2>
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+              <fieldset class="border-0 p-0 m-0">
+                <legend class="sr-only">{{ 'AUTH.create_account_h2' | translate }}</legend>
+                <hlm-field>
+                  <label hlmFieldLabel for="reg-display-name">{{ 'AUTH.display_name' | translate }}</label>
+                  <input hlmInput id="reg-display-name" type="text" placeholder="Ada Lovelace" [formControl]="form.controls.displayName" />
+                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                  <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 2} }}</hlm-field-error>
+                </hlm-field>
+                <hlm-field>
+                  <label hlmFieldLabel for="reg-email">{{ 'AUTH.email' | translate }}</label>
+                  <input hlmInput id="reg-email" type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
+                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                  <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
+                </hlm-field>
+                <hlm-field>
+                  <label hlmFieldLabel for="reg-password">{{ 'AUTH.password' | translate }}</label>
+                  <input hlmInput id="reg-password" type="password" placeholder="••••••••" [formControl]="form.controls.password" />
+                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                  <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
+                </hlm-field>
+                @if (passwordStrength()) {
+                  <div class="flex items-center gap-2 -mt-2">
+                    <div class="flex gap-1 flex-1">
+                      <div class="h-1 flex-1 rounded-full transition-colors"
+                           [class]="passwordStrength() !== null ? 'bg-red-400' : 'bg-gray-200'"></div>
+                      <div class="h-1 flex-1 rounded-full transition-colors"
+                           [class]="passwordStrength() === 'medium' || passwordStrength() === 'strong' ? 'bg-yellow-400' : 'bg-gray-200'"></div>
+                      <div class="h-1 flex-1 rounded-full transition-colors"
+                           [class]="passwordStrength() === 'strong' ? 'bg-green-500' : 'bg-gray-200'"></div>
+                    </div>
+                    <span class="text-xs font-medium"
+                          [class]="passwordStrength() === 'strong' ? 'text-green-600' :
+                                   passwordStrength() === 'medium' ? 'text-yellow-600' : 'text-red-500'">
+                      {{ passwordStrength() === 'strong' ? ('AUTH.password_strong' | translate) :
+                         passwordStrength() === 'medium' ? ('AUTH.password_medium' | translate) :
+                         ('AUTH.password_weak' | translate) }}
+                    </span>
+                  </div>
+                }
+                <hlm-field>
+                  <label hlmFieldLabel for="reg-confirm-password">{{ 'AUTH.confirm_password' | translate }}</label>
+                  <input hlmInput id="reg-confirm-password" type="password" placeholder="••••••••" [formControl]="form.controls.confirmPassword" />
+                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                </hlm-field>
+                @if (form.hasError('passwordMismatch') && form.controls.confirmPassword.touched) {
+                  <p class="text-xs text-red-500 -mt-3">{{ 'AUTH.passwords_no_match' | translate }}</p>
+                }
+                <fieldset class="border-0 p-0 m-0">
+                  <legend class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">{{ 'AUTH.want_to' | translate }}</legend>
+                  <div class="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      (click)="setRole('user')"
+                      [attr.aria-pressed]="selectedRole() === 'user'"
+                      class="p-4 rounded-[var(--bento-radius)] border text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      [class]="selectedRole() === 'user'
+                        ? 'glass-card-subtle border-primary-400 ring-2 ring-primary-400/50'
+                        : 'glass-card-subtle border-white/20 hover:border-primary-300'"
+                    >
+                      <div class="text-2xl mb-1">📖</div>
+                      <div class="font-medium text-sm text-gray-900 dark:text-white">{{ 'AUTH.role_reader_label' | translate }}</div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">{{ 'AUTH.role_reader_desc' | translate }}</div>
+                    </button>
+                    <button
+                      type="button"
+                      (click)="setRole('organizer')"
+                      [attr.aria-pressed]="selectedRole() === 'organizer'"
+                      class="p-4 rounded-[var(--bento-radius)] border text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      [class]="selectedRole() === 'organizer'
+                        ? 'glass-card-subtle border-accent-400 ring-2 ring-accent-400/50'
+                        : 'glass-card-subtle border-white/20 hover:border-accent-300'"
+                    >
+                      <div class="text-2xl mb-1">🎯</div>
+                      <div class="font-medium text-sm text-gray-900 dark:text-white">{{ 'AUTH.role_organizer_label' | translate }}</div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">{{ 'AUTH.role_organizer_desc' | translate }}</div>
+                    </button>
+                  </div>
+                  @if (form.controls.role.invalid && form.controls.role.touched) {
+                    <p class="text-xs text-red-500 mt-0.5">{{ 'AUTH.select_role_error' | translate }}</p>
+                  }
+                </fieldset>
+                @if (errorMessage()) {
+                  <div class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+                    <span class="mt-0.5 shrink-0">⚠️</span>
+                    <span>{{ errorMessage() }}</span>
+                  </div>
+                }
+                <button
+                  hlmBtn
+                  type="submit"
+                  [disabled]="isSubmitting()"
+                  class="mt-2 w-full bg-gradient-brand text-white border-0 hover:opacity-90 focus-visible:ring-primary-500"
+                >
+                  @if (isSubmitting()) {
+                    <hlm-spinner aria-label="Loading" />
+                    {{ 'AUTH.creating_account' | translate }}
+                  } @else {
+                    {{ 'AUTH.create_account_h2' | translate }}
+                  }
+                </button>
+              </fieldset>
+            </form>
+            <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+              {{ 'AUTH.have_account' | translate }}
+              <a routerLink="/login" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">
+                {{ 'AUTH.sign_in_h2' | translate }}
+              </a>
+            </p>
+          </div>
+        }
+        <p class="mt-6 text-center text-sm">
+          <a
+            routerLink="/"
+            class="inline-flex items-center gap-1 text-white/60 hover:text-white/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 rounded"
+          >
+            {{ 'NAV.back_home' | translate }}
+          </a>
+        </p>
+      </div>
+    }
+  </main>
+</div>
+````
+
 ## File: src/app/features/auth/register/register.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
@@ -11869,6 +11765,121 @@ export class RegisterComponent {
 </section>
 ````
 
+## File: src/app/features/clubs/edit-club/edit-club.component.html
+````html
+<main class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+    <header class="text-center mb-8">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'EDIT_CLUB.subtitle' | translate }}</p>
+    </header>
+    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'EDIT_CLUB.title' | translate }}</h2>
+      @if (isLoadingClub()) {
+        <div class="flex justify-center py-12">
+          <hlm-spinner />
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+          <hlm-field>
+            <label hlmFieldLabel for="club-name">
+              {{ 'EDIT_CLUB.name_label' | translate }}
+              <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <input
+              hlmInput
+              id="club-name"
+              type="text"
+              formControlName="name"
+              class="w-full"
+              [placeholder]="'EDIT_CLUB.name_placeholder' | translate"
+            />
+            <hlm-field-error validator="required">{{ 'EDIT_CLUB.name_required' | translate }}</hlm-field-error>
+            <hlm-field-error validator="minlength">{{ 'EDIT_CLUB.name_min' | translate }}</hlm-field-error>
+            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.name_max' | translate }}</hlm-field-error>
+          </hlm-field>
+          <hlm-field>
+            <label hlmFieldLabel for="club-description">{{ 'EDIT_CLUB.description_label' | translate }}</label>
+            <textarea
+              hlmInput
+              id="club-description"
+              formControlName="description"
+              rows="3"
+              class="w-full resize-none"
+              [placeholder]="'EDIT_CLUB.description_placeholder' | translate"
+            ></textarea>
+            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.description_max' | translate }}</hlm-field-error>
+          </hlm-field>
+          <hlm-field>
+            <label hlmFieldLabel for="club-city">{{ 'EDIT_CLUB.city_label' | translate }}</label>
+            <input
+              hlmInput
+              id="club-city"
+              type="text"
+              formControlName="city"
+              class="w-full"
+              [placeholder]="'EDIT_CLUB.city_placeholder' | translate"
+            />
+          </hlm-field>
+          <div>
+            <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {{ 'EDIT_CLUB.cover_url_label' | translate }}
+            </p>
+            <app-cover-upload [control]="form.controls.coverUrl" />
+          </div>
+          <fieldset>
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'EDIT_CLUB.visibility_legend' | translate }}</legend>
+            <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
+              <div>
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'EDIT_CLUB.public_label' | translate }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'EDIT_CLUB.public_desc' | translate }}</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                [attr.aria-checked]="form.controls.isPublic.value"
+                (click)="togglePublic()"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                [class.bg-primary-600]="form.controls.isPublic.value"
+                [class.bg-gray-300]="!form.controls.isPublic.value"
+                [class.dark:bg-gray-600]="!form.controls.isPublic.value"
+              >
+                <span
+                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                  [class.translate-x-6]="form.controls.isPublic.value"
+                  [class.translate-x-1]="!form.controls.isPublic.value"
+                ></span>
+              </button>
+            </div>
+          </fieldset>
+          @if (errorMessage()) {
+            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+                 role="alert">
+              <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+          <div class="flex gap-3 pt-2">
+            <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
+              {{ 'EDIT_CLUB.cancel' | translate }}
+            </button>
+            <button hlmBtn type="submit" [disabled]="isSubmitting()"
+                    class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
+              @if (isSubmitting()) {
+                <hlm-spinner class="mr-2" />
+                {{ 'EDIT_CLUB.submitting' | translate }}
+              } @else {
+                {{ 'EDIT_CLUB.submit' | translate }}
+              }
+            </button>
+          </div>
+        </form>
+      }
+    </article>
+  </div>
+</main>
+````
+
 ## File: src/app/features/events/event-detail/event-detail.component.ts
 ````typescript
 import {
@@ -11883,7 +11894,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { map, catchError, of } from 'rxjs';
+import { map } from 'rxjs';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
@@ -11907,7 +11918,6 @@ export class EventDetailComponent {
     stream: ({ params: id }) =>
       this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(
         map(mapEvent),
-        catchError(() => of(null)),
       ),
   });
   readonly event = computed(() => this._eventResource.value() ?? null);
@@ -12587,118 +12597,6 @@ export class ClubCardComponent {
         </button>
       </div>
     </form>
-  </div>
-</main>
-````
-
-## File: src/app/features/clubs/create-club/create-club.component.html
-````html
-<main class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-lg">
-    <header class="text-center mb-8">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
-      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
-    </header>
-    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
-      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-        <hlm-field>
-          <label hlmFieldLabel for="club-name">
-            {{ 'CREATE_CLUB.name_label' | translate }}
-            <span class="text-red-500" aria-hidden="true">*</span>
-          </label>
-          <input
-            hlmInput
-            id="club-name"
-            type="text"
-            formControlName="name"
-            class="w-full"
-            [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
-          />
-          <hlm-field-error validator="required">{{ 'CREATE_CLUB.name_required' | translate }}</hlm-field-error>
-          <hlm-field-error validator="minlength">{{ 'CREATE_CLUB.name_min' | translate }}</hlm-field-error>
-          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.name_max' | translate }}</hlm-field-error>
-        </hlm-field>
-        <hlm-field>
-          <label hlmFieldLabel for="club-description">{{ 'CREATE_CLUB.description_label' | translate }}</label>
-          <textarea
-            hlmInput
-            id="club-description"
-            formControlName="description"
-            rows="3"
-            class="w-full resize-none"
-            [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
-          ></textarea>
-          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.description_max' | translate }}</hlm-field-error>
-        </hlm-field>
-        <div>
-          <label for="club-cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ 'CREATE_CLUB.cover_url_label' | translate }}
-          </label>
-          @if (form.controls.coverUrl.value) {
-            <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
-              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover"
-                   (error)="form.controls.coverUrl.setValue('')" />
-            </div>
-          }
-          <input
-            hlmInput
-            id="club-cover-url"
-            type="url"
-            formControlName="coverUrl"
-            class="w-full"
-            [placeholder]="'CREATE_CLUB.cover_url_placeholder' | translate"
-          />
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
-        </div>
-        <fieldset>
-          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
-          <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-            <div>
-              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'CREATE_CLUB.public_label' | translate }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'CREATE_CLUB.public_desc' | translate }}</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              [attr.aria-checked]="form.controls.isPublic.value"
-              (click)="togglePublic()"
-              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              [class.bg-primary-600]="form.controls.isPublic.value"
-              [class.bg-gray-300]="!form.controls.isPublic.value"
-              [class.dark:bg-gray-600]="!form.controls.isPublic.value"
-            >
-              <span
-                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                [class.translate-x-6]="form.controls.isPublic.value"
-                [class.translate-x-1]="!form.controls.isPublic.value"
-              ></span>
-            </button>
-          </div>
-        </fieldset>
-        @if (errorMessage()) {
-          <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-               role="alert">
-            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
-            <span>{{ errorMessage() }}</span>
-          </div>
-        }
-        <div class="flex gap-3 pt-2">
-          <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
-            {{ 'CREATE_CLUB.cancel' | translate }}
-          </button>
-          <button hlmBtn type="submit" [disabled]="isSubmitting()"
-                  class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
-            @if (isSubmitting()) {
-              <hlm-spinner class="mr-2" />
-              {{ 'CREATE_CLUB.submitting' | translate }}
-            } @else {
-              {{ 'CREATE_CLUB.submit' | translate }}
-            }
-          </button>
-        </div>
-      </form>
-    </article>
   </div>
 </main>
 ````
@@ -13880,6 +13778,118 @@ export class ClubsListComponent implements OnInit {
 }
 ````
 
+## File: src/app/features/clubs/create-club/create-club.component.html
+````html
+<main class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+    <header class="text-center mb-8">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
+    </header>
+    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+        <hlm-field>
+          <label hlmFieldLabel for="club-name">
+            {{ 'CREATE_CLUB.name_label' | translate }}
+            <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <input
+            hlmInput
+            id="club-name"
+            type="text"
+            formControlName="name"
+            class="w-full"
+            [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
+          />
+          <hlm-field-error validator="required">{{ 'CREATE_CLUB.name_required' | translate }}</hlm-field-error>
+          <hlm-field-error validator="minlength">{{ 'CREATE_CLUB.name_min' | translate }}</hlm-field-error>
+          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.name_max' | translate }}</hlm-field-error>
+        </hlm-field>
+        <hlm-field>
+          <label hlmFieldLabel for="club-description">{{ 'CREATE_CLUB.description_label' | translate }}</label>
+          <textarea
+            hlmInput
+            id="club-description"
+            formControlName="description"
+            rows="3"
+            class="w-full resize-none"
+            [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
+          ></textarea>
+          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.description_max' | translate }}</hlm-field-error>
+        </hlm-field>
+        <div>
+          <label for="club-cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'CREATE_CLUB.cover_url_label' | translate }}
+          </label>
+          @if (form.controls.coverUrl.value) {
+            <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
+              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover"
+                   (error)="form.controls.coverUrl.setValue('')" />
+            </div>
+          }
+          <input
+            hlmInput
+            id="club-cover-url"
+            type="url"
+            formControlName="coverUrl"
+            class="w-full"
+            [placeholder]="'CREATE_CLUB.cover_url_placeholder' | translate"
+          />
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
+        </div>
+        <fieldset>
+          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
+          <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
+            <div>
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'CREATE_CLUB.public_label' | translate }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'CREATE_CLUB.public_desc' | translate }}</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              [attr.aria-checked]="form.controls.isPublic.value"
+              (click)="togglePublic()"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              [class.bg-primary-600]="form.controls.isPublic.value"
+              [class.bg-gray-300]="!form.controls.isPublic.value"
+              [class.dark:bg-gray-600]="!form.controls.isPublic.value"
+            >
+              <span
+                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                [class.translate-x-6]="form.controls.isPublic.value"
+                [class.translate-x-1]="!form.controls.isPublic.value"
+              ></span>
+            </button>
+          </div>
+        </fieldset>
+        @if (errorMessage()) {
+          <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+               role="alert">
+            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+        <div class="flex gap-3 pt-2">
+          <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
+            {{ 'CREATE_CLUB.cancel' | translate }}
+          </button>
+          <button hlmBtn type="submit" [disabled]="isSubmitting()"
+                  class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
+            @if (isSubmitting()) {
+              <hlm-spinner class="mr-2" />
+              {{ 'CREATE_CLUB.submitting' | translate }}
+            } @else {
+              {{ 'CREATE_CLUB.submit' | translate }}
+            }
+          </button>
+        </div>
+      </form>
+    </article>
+  </div>
+</main>
+````
+
 ## File: src/app/features/clubs/create-club/create-club.component.ts
 ````typescript
 import {
@@ -13995,6 +14005,9 @@ export class CreateClubComponent {
     ]
   },
   "private": true,
+  "overrides": {
+    "picomatch": "^4.0.4"
+  },
   "dependencies": {
     "@angular/cdk": "^21.2.8",
     "@angular/common": "^21.2.10",

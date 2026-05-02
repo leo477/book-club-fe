@@ -10,7 +10,7 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { map, catchError, of } from 'rxjs';
+import { map } from 'rxjs';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
@@ -37,7 +37,6 @@ export class EventDetailComponent {
     stream: ({ params: id }) =>
       this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(
         map(mapEvent),
-        catchError(() => of(null)),
       ),
   });
 
