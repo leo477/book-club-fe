@@ -132,6 +132,7 @@ describe('EventDetailComponent', () => {
 
       await component.onAttend();
       expect(eventServiceSpy.attendEvent).toHaveBeenCalledWith('e1');
+      fixture.detectChanges();
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       await fixture.whenStable();
     });
@@ -142,6 +143,7 @@ describe('EventDetailComponent', () => {
       await fixture.whenStable();
 
       await component.onAttend();
+      fixture.detectChanges();
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       expect(component.isActioning()).toBeFalse();
     });
@@ -155,6 +157,7 @@ describe('EventDetailComponent', () => {
 
       await component.onCancelAttend();
       expect(eventServiceSpy.cancelAttendance).toHaveBeenCalledWith('e1');
+      fixture.detectChanges();
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       await fixture.whenStable();
     });
@@ -165,6 +168,7 @@ describe('EventDetailComponent', () => {
       await fixture.whenStable();
 
       await component.onCancelAttend();
+      fixture.detectChanges();
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       expect(component.isActioning()).toBeFalse();
     });
@@ -190,6 +194,7 @@ describe('EventDetailComponent', () => {
 
       await component.onCancelEvent();
       expect(eventServiceSpy.cancelEvent).toHaveBeenCalledWith('e1');
+      fixture.detectChanges();
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       await fixture.whenStable();
     });
@@ -201,6 +206,7 @@ describe('EventDetailComponent', () => {
       spyOn(window, 'confirm').and.returnValue(true);
 
       await component.onCancelEvent();
+      fixture.detectChanges();
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       expect(component.isActioning()).toBeFalse();
     });
