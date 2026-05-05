@@ -627,7 +627,8 @@ PYEOF
       "Bash(git -C /home/dmytr/angular/book-club-be log --oneline -3)",
       "Bash(git -C /home/dmytr/angular/book-club-fe status --short)",
       "Bash(git *)",
-      "Bash(npm view *)"
+      "Bash(npm view *)",
+      "Bash(grep \"\\\\.ts$\")"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -2861,79 +2862,6 @@ export interface QuizLeaderboardEntry {
 }
 ````
 
-## File: src/app/core/services/book-vote.service.ts
-````typescript
-import { Injectable, signal } from '@angular/core';
-import { BookOption, BookVoteRound } from '../models/book-vote.model';
-@Injectable({ providedIn: 'root' })
-export class BookVoteService {
-  private readonly _rounds = signal<Record<string, BookVoteRound>>({});
-  getRound(clubId: string): BookVoteRound | null {
-    return this._rounds()[clubId] ?? null;
-  }
-  createRound(clubId: string): void {
-    const round: BookVoteRound = {
-      id: crypto.randomUUID(),
-      clubId,
-      status: 'open',
-      options: [],
-      totalVotes: 0,
-      winnerId: null,
-    };
-    this._rounds.update(r => ({ ...r, [clubId]: round }));
-  }
-  addOption(clubId: string, title: string, author: string): void {
-    this._patchRound(clubId, round => ({
-      ...round,
-      options: [
-        ...round.options,
-        { id: crypto.randomUUID(), title: title.trim(), author: author.trim(), votes: 0, hasVoted: false },
-      ],
-    }));
-  }
-  removeOption(clubId: string, optionId: string): void {
-    this._patchRound(clubId, round => {
-      const removed = round.options.find(o => o.id === optionId);
-      const options = round.options.filter(o => o.id !== optionId);
-      const totalVotes = round.totalVotes - (removed?.votes ?? 0);
-      return { ...round, options, totalVotes };
-    });
-  }
-  vote(clubId: string, optionId: string): void {
-    this._patchRound(clubId, round => {
-      const options = round.options.map((o): BookOption => {
-        if (o.hasVoted && o.id !== optionId) return { ...o, votes: Math.max(0, o.votes - 1), hasVoted: false };
-        if (o.id === optionId && !o.hasVoted) return { ...o, votes: o.votes + 1, hasVoted: true };
-        return o;
-      });
-      return { ...round, options, totalVotes: options.reduce((s, o) => s + o.votes, 0) };
-    });
-  }
-  unvote(clubId: string, optionId: string): void {
-    this._patchRound(clubId, round => {
-      const options = round.options.map((o): BookOption =>
-        o.id === optionId ? { ...o, votes: Math.max(0, o.votes - 1), hasVoted: false } : o,
-      );
-      return { ...round, options, totalVotes: options.reduce((s, o) => s + o.votes, 0) };
-    });
-  }
-  closeRound(clubId: string): void {
-    this._patchRound(clubId, round => {
-      const winner = [...round.options].sort((a, b) => b.votes - a.votes)[0] ?? null;
-      return { ...round, status: 'closed', winnerId: winner?.id ?? null };
-    });
-  }
-  clearRound(clubId: string): void {
-    this._rounds.update(r => Object.fromEntries(Object.entries(r).filter(([k]) => k !== clubId)));
-  }
-  private _patchRound(clubId: string, fn: (r: BookVoteRound) => BookVoteRound): void {
-    const current = this._rounds()[clubId];
-    if (!current) return;
-    this._rounds.update(r => ({ ...r, [clubId]: fn(current) }));
-  }
-}
-````
-
 ## File: src/app/core/services/seo.service.ts
 ````typescript
 import { Injectable, inject } from '@angular/core';
@@ -3763,220 +3691,6 @@ export class ProfileStatsComponent {
 </div>
 ````
 
-## File: src/app/features/quiz/quiz-edit/quiz-edit.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  inject,
-  input,
-  linkedSignal,
-  resource,
-  signal,
-} from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmCardImports } from '../../../shared/spartan/card/src';
-interface MetaForm {
-  title: FormControl<string>;
-  description: FormControl<string>;
-}
-interface QuestionForm {
-  question: FormControl<string>;
-  option0: FormControl<string>;
-  option1: FormControl<string>;
-  option2: FormControl<string>;
-  option3: FormControl<string>;
-  correctIndex: FormControl<number>;
-}
-interface EditableQuestion {
-  id?: string;
-  question: string;
-  options: string[];
-  correctIndex: number;
-}
-@Component({
-  selector: 'app-quiz-edit',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
-  templateUrl: './quiz-edit.component.html',
-})
-export class QuizEditComponent {
-  private readonly quizService = inject(QuizService);
-  private readonly router = inject(Router);
-  readonly id = input<string>('');
-  readonly quizId = input<string>('');
-  private readonly _quizResource = resource({
-    params: () => this.quizId(),
-    loader: ({ params: qId }) =>
-      qId ? this.quizService.getQuiz(qId) : Promise.resolve(null),
-  });
-  private readonly _questionsResource = resource({
-    params: () => this.quizId(),
-    loader: ({ params: qId }) =>
-      qId ? this.quizService.getQuestions(qId) : Promise.resolve([]),
-  });
-  readonly quiz = computed(() => this._quizResource.value() ?? null);
-  readonly isLoading = computed(
-    () => this._quizResource.isLoading() || this._questionsResource.isLoading(),
-  );
-  readonly isDraft = computed(() => (this.quiz()?.status ?? 'draft') === 'draft');
-  readonly localQuestions = linkedSignal<EditableQuestion[]>(
-    () =>
-      (this._questionsResource.value() ?? []).map(q => ({
-        id: q.id,
-        question: q.question,
-        options: [...q.options],
-        correctIndex: q.correctIndex,
-      })),
-  );
-  private readonly _deletedIds = signal<string[]>([]);
-  readonly currentStep = signal<1 | 2>(1);
-  readonly isSaving = signal(false);
-  readonly errorMessage = signal('');
-  readonly canSave = computed(
-    () => this.localQuestions().length > 0 && !this.isSaving() && this.isDraft(),
-  );
-  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
-  readonly metaForm = new FormGroup<MetaForm>({
-    title: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-  });
-  readonly questionForm = new FormGroup<QuestionForm>({
-    question: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
-    }),
-    option0: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option1: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option2: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option3: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    correctIndex: new FormControl<number>(0, { nonNullable: true }),
-  });
-  private readonly _syncEffect = effect(() => {
-    const quiz = this._quizResource.value();
-    if (quiz) {
-      this.metaForm.patchValue({
-        title: quiz.title,
-        description: quiz.description ?? '',
-      });
-      if (quiz.status !== 'draft') {
-        this.metaForm.disable();
-      }
-    }
-  });
-  protected isInvalidTouched(ctrl: AbstractControl): boolean {
-    return ctrl.invalid && ctrl.touched;
-  }
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
-  protected nextStep(): void {
-    if (this.metaForm.invalid) {
-      this.metaForm.markAllAsTouched();
-      return;
-    }
-    this.currentStep.set(2);
-  }
-  protected previousStep(): void {
-    this.currentStep.set(1);
-    this.errorMessage.set('');
-  }
-  protected addQuestion(): void {
-    if (this.questionForm.invalid) {
-      this.questionForm.markAllAsTouched();
-      return;
-    }
-    const { question, option0, option1, option2, option3, correctIndex } =
-      this.questionForm.getRawValue();
-    this.localQuestions.update(prev => [
-      ...prev,
-      {
-        question: question.trim(),
-        options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
-        correctIndex,
-      },
-    ]);
-    this.questionForm.reset({ correctIndex: 0 });
-  }
-  protected removeQuestion(index: number): void {
-    const q = this.localQuestions()[index];
-    const qId = q.id;
-    if (qId) {
-      this._deletedIds.update(ids => [...ids, qId]);
-    }
-    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
-  }
-  protected saveChanges(): void {
-    if (!this.canSave()) return;
-    this.isSaving.set(true);
-    this.errorMessage.set('');
-    const qId = this.quizId();
-    const { title, description } = this.metaForm.getRawValue();
-    (async () => {
-      await this.quizService.updateQuiz(qId, {
-        title: title.trim(),
-        description: description.trim(),
-      });
-      for (const id of this._deletedIds()) {
-        await this.quizService.deleteQuestion(qId, id);
-      }
-      for (const q of this.localQuestions()) {
-        if (q.id) {
-          await this.quizService.updateQuestion(qId, q.id, {
-            question: q.question,
-            options: q.options,
-            correctIndex: q.correctIndex,
-          });
-        } else {
-          await this.quizService.addQuestion(qId, {
-            question: q.question,
-            options: q.options,
-            correctIndex: q.correctIndex,
-          });
-        }
-      }
-      this.isSaving.set(false);
-      this.router.navigate(['/clubs', this.id(), 'quizzes']);
-    })().catch(err => {
-      this.isSaving.set(false);
-      this.errorMessage.set((err as Error).message);
-    });
-  }
-}
-````
-
 ## File: src/app/features/quiz/quiz-leaderboard/leaderboard-podium/leaderboard-podium.component.html
 ````html
 <div class="flex items-end justify-center gap-3 px-4 py-6">
@@ -4423,276 +4137,6 @@ export class QuizPreviewComponent {
         this.isActivating.set(false);
         this.errorMessage.set((err as Error).message);
       });
-  }
-}
-````
-
-## File: src/app/features/quiz/quiz-session/quiz-session.component.html
-````html
-<div class="min-h-screen p-4 sm:p-8">
-  <div class="max-w-3xl mx-auto space-y-6">
-    <header class="flex items-center justify-between flex-wrap gap-4">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🎮 Quiz Session</h1>
-      <a [routerLink]="['/clubs', id(), 'quizzes']"
-         class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-        ← Back to Quizzes
-      </a>
-    </header>
-    @if (isLoadingSession()) {
-      <div class="glass-card h-32 animate-pulse"></div>
-    } @else {
-      @if (!session()) {
-        <div class="glass-card p-6 space-y-5">
-          <h2 class="font-semibold text-gray-900 dark:text-white text-lg">Start a Session</h2>
-          <p class="text-gray-500 dark:text-gray-400 text-sm">
-            Select an event — attendees will be enrolled as participants automatically.
-          </p>
-          <div class="space-y-2">
-            <label for="event-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Event</label>
-            <select
-              id="event-select"
-              class="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
-              [value]="selectedEventId()"
-              (change)="selectedEventId.set($any($event.target).value)"
-            >
-              <option value="" disabled selected>Select event…</option>
-              @for (event of clubEvents(); track event.id) {
-                <option [value]="event.id">
-                  {{ event.title }} — {{ event.date | date:'mediumDate' }}
-                </option>
-              }
-            </select>
-            @if (clubEvents().length === 0) {
-              <p class="text-xs text-yellow-600 dark:text-yellow-400">No events found for this club.</p>
-            }
-          </div>
-          <button
-            hlmBtn
-            type="button"
-            (click)="startSession()"
-            [disabled]="!selectedEventId() || isStarting()"
-            class="bg-gradient-brand text-white border-0 hover:opacity-90"
-          >
-            {{ isStarting() ? '⏳ Starting…' : '🚀 Start Session' }}
-          </button>
-        </div>
-      }
-      @if (session(); as s) {
-        <div class="space-y-6">
-          <div class="glass-card p-5 flex items-center gap-4 flex-wrap">
-            <span class="inline-flex items-center gap-2 rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-3 py-1.5 text-sm font-semibold text-green-700 dark:text-green-400">
-              <span class="w-2 h-2 rounded-full bg-green-500 inline-block animate-pulse"></span>
-              Live
-            </span>
-            <span class="text-gray-500 dark:text-gray-400 text-sm">
-              Started {{ s.startedAt | date:'medium' }}
-            </span>
-            <span class="text-gray-700 dark:text-gray-300 text-sm font-medium">
-              👥 {{ s.participantCount }} participants enrolled
-            </span>
-          </div>
-          <div class="space-y-4">
-            <div class="flex items-center justify-between">
-              <h2 class="font-semibold text-gray-900 dark:text-white text-lg">🏆 Live Leaderboard</h2>
-              <button
-                hlmBtn
-                type="button"
-                variant="outline"
-                size="sm"
-                (click)="manualRefresh()"
-                [disabled]="isLeaderboardLoading()"
-              >
-                {{ isLeaderboardLoading() ? '↻ Refreshing…' : '↻ Refresh' }}
-              </button>
-            </div>
-            @if (leaderboard().length === 0 && !isLeaderboardLoading()) {
-              <div class="glass-card p-8 text-center">
-                <p class="text-2xl mb-2">⏳</p>
-                <p class="text-gray-500 dark:text-gray-400 text-sm">No participants yet. Waiting for responses…</p>
-              </div>
-            } @else {
-              <app-leaderboard-podium
-                [first]="podiumFirst()"
-                [second]="podiumSecond()"
-                [third]="podiumThird()"
-              />
-              @if (leaderboardRest().length > 0) {
-                <div class="glass-card overflow-hidden">
-                  <table class="w-full text-sm">
-                    <thead class="bg-gray-50/80 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 uppercase tracking-wide text-xs">
-                      <tr>
-                        <th class="px-4 py-3 text-left w-12">Rank</th>
-                        <th class="px-4 py-3 text-left">Player</th>
-                        <th class="px-4 py-3 text-right">Score</th>
-                        <th class="px-4 py-3 text-right">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                      @for (entry of leaderboardRest(); track entry.userId) {
-                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                          <td class="px-4 py-3 text-gray-500 dark:text-gray-400 font-mono text-center">{{ entry.rank }}</td>
-                          <td class="px-4 py-3">
-                            <div class="flex items-center gap-2">
-                              <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300 flex-shrink-0">
-                                {{ entry.displayName.slice(0, 2).toUpperCase() }}
-                              </div>
-                              <span class="text-gray-900 dark:text-white font-medium truncate">{{ entry.displayName }}</span>
-                            </div>
-                          </td>
-                          <td class="px-4 py-3 text-right">
-                            <span class="font-semibold text-gray-900 dark:text-white">{{ entry.score }}</span>
-                            <span class="text-gray-400">/{{ entry.totalQuestions }}</span>
-                          </td>
-                          <td class="px-4 py-3 text-right">
-                            @if (entry.hasAttempted) {
-                              <span class="inline-flex rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2 py-0.5 text-xs text-green-700 dark:text-green-400">Completed</span>
-                            } @else {
-                              <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2 py-0.5 text-xs text-gray-500 dark:text-gray-400">Not yet</span>
-                            }
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
-              }
-            }
-          </div>
-          <div class="flex justify-end pt-2">
-            <button
-              hlmBtn
-              type="button"
-              (click)="endSession()"
-              [disabled]="isEnding()"
-              class="bg-red-600 hover:bg-red-700 text-white border-0"
-            >
-              {{ isEnding() ? '⏳ Ending…' : '🔴 End Session' }}
-            </button>
-          </div>
-        </div>
-      }
-      @if (errorMessage()) {
-        <div class="glass-card px-4 py-3 text-red-700 dark:text-red-400 text-sm" role="alert">
-          ⚠️ {{ errorMessage() }}
-        </div>
-      }
-    }
-  </div>
-</div>
-````
-
-## File: src/app/features/quiz/quiz-session/quiz-session.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  inject,
-  input,
-  resource,
-  signal,
-} from '@angular/core';
-import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { Router } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizSession } from '../../../core/models/quiz.model';
-import { ClubEvent } from '../../../core/models/event.model';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmCardImports } from '../../../shared/spartan/card/src';
-import { LeaderboardPodiumComponent } from '../quiz-leaderboard/leaderboard-podium/leaderboard-podium.component';
-@Component({
-  selector: 'app-quiz-session',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, DatePipe, ...HlmCardImports, HlmButton, LeaderboardPodiumComponent],
-  templateUrl: './quiz-session.component.html',
-})
-export class QuizSessionComponent implements OnInit, OnDestroy {
-  private readonly quizService = inject(QuizService);
-  private readonly router = inject(Router);
-  readonly id = input<string>('');
-  readonly quizId = input<string>('');
-  readonly session = signal<QuizSession | null>(null);
-  readonly clubEvents = signal<ClubEvent[]>([]);
-  readonly isLoadingSession = signal(true);
-  readonly selectedEventId = signal('');
-  readonly isStarting = signal(false);
-  readonly isEnding = signal(false);
-  readonly errorMessage = signal('');
-  private readonly _refreshTick = signal(0);
-  private readonly _leaderboardResource = resource({
-    params: () => ({
-      quizId: this.quizId(),
-      sessionId: this.session()?.id,
-      tick: this._refreshTick(),
-    }),
-    loader: ({ params }) =>
-      params.sessionId && params.quizId
-        ? this.quizService.getLeaderboard(params.quizId, params.sessionId)
-        : Promise.resolve([]),
-  });
-  readonly leaderboard = computed(() => this._leaderboardResource.value() ?? []);
-  readonly isLeaderboardLoading = computed(() => this._leaderboardResource.isLoading());
-  readonly podiumFirst = computed(() => this.leaderboard()[0] ?? null);
-  readonly podiumSecond = computed(() => this.leaderboard()[1] ?? null);
-  readonly podiumThird = computed(() => this.leaderboard()[2] ?? null);
-  readonly leaderboardRest = computed(() => this.leaderboard().slice(3));
-  private _refreshInterval?: ReturnType<typeof setInterval>;
-  ngOnInit(): void {
-    Promise.all([
-      this.quizService
-        .getActiveSession(this.quizId())
-        .then(s => this.session.set(s)),
-      this.quizService
-        .loadClubEvents(this.id())
-        .then(e => this.clubEvents.set(e))
-        .catch(() => undefined),
-    ]).finally(() => this.isLoadingSession.set(false));
-    this._refreshInterval = setInterval(
-      () => this._refreshTick.update(n => n + 1),
-      15_000,
-    );
-  }
-  ngOnDestroy(): void {
-    clearInterval(this._refreshInterval);
-  }
-  protected startSession(): void {
-    const eventId = this.selectedEventId();
-    if (!eventId) return;
-    this.isStarting.set(true);
-    this.errorMessage.set('');
-    this.quizService
-      .startSession(this.quizId(), eventId)
-      .then(s => {
-        this.session.set(s);
-        this.isStarting.set(false);
-      })
-      .catch(err => {
-        this.errorMessage.set((err as Error).message);
-        this.isStarting.set(false);
-      });
-  }
-  protected endSession(): void {
-    const s = this.session();
-    if (!s) return;
-    this.isEnding.set(true);
-    this.errorMessage.set('');
-    this.quizService
-      .endSession(this.quizId(), s.id)
-      .then(() => {
-        this.isEnding.set(false);
-        this.router.navigate(['/clubs', this.id(), 'quizzes']);
-      })
-      .catch(err => {
-        this.errorMessage.set((err as Error).message);
-        this.isEnding.set(false);
-      });
-  }
-  protected manualRefresh(): void {
-    this._refreshTick.update(n => n + 1);
   }
 }
 ````
@@ -9334,6 +8778,79 @@ export class BookCoverService {
 }
 ````
 
+## File: src/app/core/services/book-vote.service.ts
+````typescript
+import { Injectable, signal } from '@angular/core';
+import { BookOption, BookVoteRound } from '../models/book-vote.model';
+@Injectable({ providedIn: 'root' })
+export class BookVoteService {
+  private readonly _rounds = signal<Record<string, BookVoteRound>>({});
+  getRound(clubId: string): BookVoteRound | null {
+    return this._rounds()[clubId] ?? null;
+  }
+  createRound(clubId: string): void {
+    const round: BookVoteRound = {
+      id: crypto.randomUUID(),
+      clubId,
+      status: 'open',
+      options: [],
+      totalVotes: 0,
+      winnerId: null,
+    };
+    this._rounds.update(r => ({ ...r, [clubId]: round }));
+  }
+  addOption(clubId: string, title: string, author: string): void {
+    this._patchRound(clubId, round => ({
+      ...round,
+      options: [
+        ...round.options,
+        { id: crypto.randomUUID(), title: title.trim(), author: author.trim(), votes: 0, hasVoted: false },
+      ],
+    }));
+  }
+  removeOption(clubId: string, optionId: string): void {
+    this._patchRound(clubId, round => {
+      const removed = round.options.find(o => o.id === optionId);
+      const options = round.options.filter(o => o.id !== optionId);
+      const totalVotes = round.totalVotes - (removed?.votes ?? 0);
+      return { ...round, options, totalVotes };
+    });
+  }
+  vote(clubId: string, optionId: string): void {
+    this._patchRound(clubId, round => {
+      const options = round.options.map((o): BookOption => {
+        if (o.hasVoted && o.id !== optionId) return { ...o, votes: Math.max(0, o.votes - 1), hasVoted: false };
+        if (o.id === optionId && !o.hasVoted) return { ...o, votes: o.votes + 1, hasVoted: true };
+        return o;
+      });
+      return { ...round, options, totalVotes: options.reduce((s, o) => s + o.votes, 0) };
+    });
+  }
+  unvote(clubId: string, optionId: string): void {
+    this._patchRound(clubId, round => {
+      const options = round.options.map((o): BookOption =>
+        o.id === optionId ? { ...o, votes: Math.max(0, o.votes - 1), hasVoted: false } : o,
+      );
+      return { ...round, options, totalVotes: options.reduce((s, o) => s + o.votes, 0) };
+    });
+  }
+  closeRound(clubId: string): void {
+    this._patchRound(clubId, round => {
+      const winner = [...round.options].sort((a, b) => b.votes - a.votes)[0] ?? null;
+      return { ...round, status: 'closed', winnerId: winner?.id ?? null };
+    });
+  }
+  clearRound(clubId: string): void {
+    this._rounds.update(r => Object.fromEntries(Object.entries(r).filter(([k]) => k !== clubId)));
+  }
+  private _patchRound(clubId: string, fn: (r: BookVoteRound) => BookVoteRound): void {
+    const current = this._rounds()[clubId];
+    if (!current) return;
+    this._rounds.update(r => ({ ...r, [clubId]: fn(current) }));
+  }
+}
+````
+
 ## File: src/app/core/services/geocoding.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -9780,6 +9297,490 @@ export const CLUBS_ROUTES: Routes = [
 }
 ````
 
+## File: src/app/features/quiz/quiz-edit/quiz-edit.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  inject,
+  input,
+  linkedSignal,
+  resource,
+  signal,
+} from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { QuizService } from '../../../core/services/quiz.service';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+interface MetaForm {
+  title: FormControl<string>;
+  description: FormControl<string>;
+}
+interface QuestionForm {
+  question: FormControl<string>;
+  option0: FormControl<string>;
+  option1: FormControl<string>;
+  option2: FormControl<string>;
+  option3: FormControl<string>;
+  correctIndex: FormControl<number>;
+}
+interface EditableQuestion {
+  id?: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+}
+@Component({
+  selector: 'app-quiz-edit',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
+  templateUrl: './quiz-edit.component.html',
+})
+export class QuizEditComponent {
+  private readonly quizService = inject(QuizService);
+  private readonly router = inject(Router);
+  readonly id = input<string>('');
+  readonly quizId = input<string>('');
+  private readonly _quizResource = resource({
+    params: () => this.quizId(),
+    loader: ({ params: qId }) =>
+      qId ? this.quizService.getQuiz(qId) : Promise.resolve(null),
+  });
+  private readonly _questionsResource = resource({
+    params: () => this.quizId(),
+    loader: ({ params: qId }) =>
+      qId ? this.quizService.getQuestions(qId) : Promise.resolve([]),
+  });
+  readonly quiz = computed(() => this._quizResource.value() ?? null);
+  readonly isLoading = computed(
+    () => this._quizResource.isLoading() || this._questionsResource.isLoading(),
+  );
+  readonly isDraft = computed(() => (this.quiz()?.status ?? 'draft') === 'draft');
+  readonly localQuestions = linkedSignal<EditableQuestion[]>(
+    () =>
+      (this._questionsResource.value() ?? []).map(q => ({
+        id: q.id,
+        question: q.question,
+        options: [...q.options],
+        correctIndex: q.correctIndex,
+      })),
+  );
+  private readonly _deletedIds = signal<string[]>([]);
+  readonly currentStep = signal<1 | 2>(1);
+  readonly isSaving = signal(false);
+  readonly errorMessage = signal('');
+  readonly canSave = computed(
+    () => this.localQuestions().length > 0 && !this.isSaving() && this.isDraft(),
+  );
+  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
+  readonly metaForm = new FormGroup<MetaForm>({
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+  });
+  readonly questionForm = new FormGroup<QuestionForm>({
+    question: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
+    }),
+    option0: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option1: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option2: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option3: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    correctIndex: new FormControl<number>(0, { nonNullable: true }),
+  });
+  private readonly _syncEffect = effect(() => {
+    const quiz = this._quizResource.value();
+    if (quiz) {
+      this.metaForm.patchValue({
+        title: quiz.title,
+        description: quiz.description ?? '',
+      });
+      if (quiz.status !== 'draft') {
+        this.metaForm.disable();
+      }
+    }
+  });
+  protected isInvalidTouched(ctrl: AbstractControl): boolean {
+    return ctrl.invalid && ctrl.touched;
+  }
+  protected optionLabel(index: number): string {
+    return String.fromCodePoint(65 + index);
+  }
+  protected nextStep(): void {
+    if (this.metaForm.invalid) {
+      this.metaForm.markAllAsTouched();
+      return;
+    }
+    this.currentStep.set(2);
+  }
+  protected previousStep(): void {
+    this.currentStep.set(1);
+    this.errorMessage.set('');
+  }
+  protected addQuestion(): void {
+    if (this.questionForm.invalid) {
+      this.questionForm.markAllAsTouched();
+      return;
+    }
+    const { question, option0, option1, option2, option3, correctIndex } =
+      this.questionForm.getRawValue();
+    this.localQuestions.update(prev => [
+      ...prev,
+      {
+        question: question.trim(),
+        options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
+        correctIndex,
+      },
+    ]);
+    this.questionForm.reset({ correctIndex: 0 });
+  }
+  protected removeQuestion(index: number): void {
+    const q = this.localQuestions()[index];
+    const qId = q.id;
+    if (qId) {
+      this._deletedIds.update(ids => [...ids, qId]);
+    }
+    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
+  }
+  protected saveChanges(): void {
+    if (!this.canSave()) return;
+    this.isSaving.set(true);
+    this.errorMessage.set('');
+    const qId = this.quizId();
+    const { title, description } = this.metaForm.getRawValue();
+    (async () => {
+      await this.quizService.updateQuiz(qId, {
+        title: title.trim(),
+        description: description.trim(),
+      });
+      for (const id of this._deletedIds()) {
+        await this.quizService.deleteQuestion(qId, id);
+      }
+      for (const q of this.localQuestions()) {
+        if (q.id) {
+          await this.quizService.updateQuestion(qId, q.id, {
+            question: q.question,
+            options: q.options,
+            correctIndex: q.correctIndex,
+          });
+        } else {
+          await this.quizService.addQuestion(qId, {
+            question: q.question,
+            options: q.options,
+            correctIndex: q.correctIndex,
+          });
+        }
+      }
+      this.isSaving.set(false);
+      this.router.navigate(['/clubs', this.id(), 'quizzes']);
+    })().catch(err => {
+      this.isSaving.set(false);
+      this.errorMessage.set((err as Error).message);
+    });
+  }
+}
+````
+
+## File: src/app/features/quiz/quiz-session/quiz-session.component.html
+````html
+<div class="min-h-screen p-4 sm:p-8">
+  <div class="max-w-3xl mx-auto space-y-6">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🎮 Quiz Session</h1>
+      <a [routerLink]="['/clubs', id(), 'quizzes']"
+         class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
+        ← Back to Quizzes
+      </a>
+    </header>
+    @if (isLoadingSession()) {
+      <div class="glass-card h-32 animate-pulse"></div>
+    } @else {
+      @if (!session()) {
+        <div class="glass-card p-6 space-y-5">
+          <h2 class="font-semibold text-gray-900 dark:text-white text-lg">Start a Session</h2>
+          <p class="text-gray-500 dark:text-gray-400 text-sm">
+            Select an event — attendees will be enrolled as participants automatically.
+          </p>
+          <div class="space-y-2">
+            <label for="event-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Event</label>
+            <select
+              id="event-select"
+              class="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+              [value]="selectedEventId()"
+              (change)="selectedEventId.set($any($event.target).value)"
+            >
+              <option value="" disabled selected>Select event…</option>
+              @for (event of clubEvents(); track event.id) {
+                <option [value]="event.id">
+                  {{ event.title }} — {{ event.date | date:'mediumDate' }}
+                </option>
+              }
+            </select>
+            @if (clubEvents().length === 0) {
+              <p class="text-xs text-yellow-600 dark:text-yellow-400">No events found for this club.</p>
+            }
+          </div>
+          <button
+            hlmBtn
+            type="button"
+            (click)="startSession()"
+            [disabled]="!selectedEventId() || isStarting()"
+            class="bg-gradient-brand text-white border-0 hover:opacity-90"
+          >
+            {{ isStarting() ? '⏳ Starting…' : '🚀 Start Session' }}
+          </button>
+        </div>
+      }
+      @if (session(); as s) {
+        <div class="space-y-6">
+          <div class="glass-card p-5 flex items-center gap-4 flex-wrap">
+            <span class="inline-flex items-center gap-2 rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-3 py-1.5 text-sm font-semibold text-green-700 dark:text-green-400">
+              <span class="w-2 h-2 rounded-full bg-green-500 inline-block animate-pulse"></span>
+              Live
+            </span>
+            <span class="text-gray-500 dark:text-gray-400 text-sm">
+              Started {{ s.startedAt | date:'medium' }}
+            </span>
+            <span class="text-gray-700 dark:text-gray-300 text-sm font-medium">
+              👥 {{ s.participantCount }} participants enrolled
+            </span>
+          </div>
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <h2 class="font-semibold text-gray-900 dark:text-white text-lg">🏆 Live Leaderboard</h2>
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                (click)="manualRefresh()"
+                [disabled]="isLeaderboardLoading()"
+              >
+                {{ isLeaderboardLoading() ? '↻ Refreshing…' : '↻ Refresh' }}
+              </button>
+            </div>
+            @if (leaderboard().length === 0 && !isLeaderboardLoading()) {
+              <div class="glass-card p-8 text-center">
+                <p class="text-2xl mb-2">⏳</p>
+                <p class="text-gray-500 dark:text-gray-400 text-sm">No participants yet. Waiting for responses…</p>
+              </div>
+            } @else {
+              <app-leaderboard-podium
+                [first]="podiumFirst()"
+                [second]="podiumSecond()"
+                [third]="podiumThird()"
+              />
+              @if (leaderboardRest().length > 0) {
+                <div class="glass-card overflow-hidden">
+                  <table class="w-full text-sm">
+                    <thead class="bg-gray-50/80 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 uppercase tracking-wide text-xs">
+                      <tr>
+                        <th class="px-4 py-3 text-left w-12">Rank</th>
+                        <th class="px-4 py-3 text-left">Player</th>
+                        <th class="px-4 py-3 text-right">Score</th>
+                        <th class="px-4 py-3 text-right">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+                      @for (entry of leaderboardRest(); track entry.userId) {
+                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+                          <td class="px-4 py-3 text-gray-500 dark:text-gray-400 font-mono text-center">{{ entry.rank }}</td>
+                          <td class="px-4 py-3">
+                            <div class="flex items-center gap-2">
+                              <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300 flex-shrink-0">
+                                {{ entry.displayName.slice(0, 2).toUpperCase() }}
+                              </div>
+                              <span class="text-gray-900 dark:text-white font-medium truncate">{{ entry.displayName }}</span>
+                            </div>
+                          </td>
+                          <td class="px-4 py-3 text-right">
+                            <span class="font-semibold text-gray-900 dark:text-white">{{ entry.score }}</span>
+                            <span class="text-gray-400">/{{ entry.totalQuestions }}</span>
+                          </td>
+                          <td class="px-4 py-3 text-right">
+                            @if (entry.hasAttempted) {
+                              <span class="inline-flex rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2 py-0.5 text-xs text-green-700 dark:text-green-400">Completed</span>
+                            } @else {
+                              <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2 py-0.5 text-xs text-gray-500 dark:text-gray-400">Not yet</span>
+                            }
+                          </td>
+                        </tr>
+                      }
+                    </tbody>
+                  </table>
+                </div>
+              }
+            }
+          </div>
+          <div class="flex justify-end pt-2">
+            <button
+              hlmBtn
+              type="button"
+              (click)="endSession()"
+              [disabled]="isEnding()"
+              class="bg-red-600 hover:bg-red-700 text-white border-0"
+            >
+              {{ isEnding() ? '⏳ Ending…' : '🔴 End Session' }}
+            </button>
+          </div>
+        </div>
+      }
+      @if (errorMessage()) {
+        <div class="glass-card px-4 py-3 text-red-700 dark:text-red-400 text-sm" role="alert">
+          ⚠️ {{ errorMessage() }}
+        </div>
+      }
+    }
+  </div>
+</div>
+````
+
+## File: src/app/features/quiz/quiz-session/quiz-session.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnDestroy,
+  OnInit,
+  computed,
+  inject,
+  input,
+  resource,
+  signal,
+} from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizSession } from '../../../core/models/quiz.model';
+import { ClubEvent } from '../../../core/models/event.model';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { LeaderboardPodiumComponent } from '../quiz-leaderboard/leaderboard-podium/leaderboard-podium.component';
+@Component({
+  selector: 'app-quiz-session',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, DatePipe, ...HlmCardImports, HlmButton, LeaderboardPodiumComponent],
+  templateUrl: './quiz-session.component.html',
+})
+export class QuizSessionComponent implements OnInit, OnDestroy {
+  private readonly quizService = inject(QuizService);
+  private readonly router = inject(Router);
+  readonly id = input<string>('');
+  readonly quizId = input<string>('');
+  readonly session = signal<QuizSession | null>(null);
+  readonly clubEvents = signal<ClubEvent[]>([]);
+  readonly isLoadingSession = signal(true);
+  readonly selectedEventId = signal('');
+  readonly isStarting = signal(false);
+  readonly isEnding = signal(false);
+  readonly errorMessage = signal('');
+  private readonly _refreshTick = signal(0);
+  private readonly _leaderboardResource = resource({
+    params: () => ({
+      quizId: this.quizId(),
+      sessionId: this.session()?.id,
+      tick: this._refreshTick(),
+    }),
+    loader: ({ params }) =>
+      params.sessionId && params.quizId
+        ? this.quizService.getLeaderboard(params.quizId, params.sessionId)
+        : Promise.resolve([]),
+  });
+  readonly leaderboard = computed(() => this._leaderboardResource.value() ?? []);
+  readonly isLeaderboardLoading = computed(() => this._leaderboardResource.isLoading());
+  readonly podiumFirst = computed(() => this.leaderboard()[0] ?? null);
+  readonly podiumSecond = computed(() => this.leaderboard()[1] ?? null);
+  readonly podiumThird = computed(() => this.leaderboard()[2] ?? null);
+  readonly leaderboardRest = computed(() => this.leaderboard().slice(3));
+  private _refreshInterval?: ReturnType<typeof setInterval>;
+  ngOnInit(): void {
+    Promise.all([
+      this.quizService
+        .getActiveSession(this.quizId())
+        .then(s => this.session.set(s)),
+      this.quizService
+        .loadClubEvents(this.id())
+        .then(e => this.clubEvents.set(e))
+        .catch(() => undefined),
+    ]).finally(() => this.isLoadingSession.set(false));
+    this._refreshInterval = setInterval(
+      () => this._refreshTick.update(n => n + 1),
+      15_000,
+    );
+  }
+  ngOnDestroy(): void {
+    clearInterval(this._refreshInterval);
+  }
+  protected startSession(): void {
+    const eventId = this.selectedEventId();
+    if (!eventId) return;
+    this.isStarting.set(true);
+    this.errorMessage.set('');
+    this.quizService
+      .startSession(this.quizId(), eventId)
+      .then(s => {
+        this.session.set(s);
+        this.isStarting.set(false);
+      })
+      .catch(err => {
+        this.errorMessage.set((err as Error).message);
+        this.isStarting.set(false);
+      });
+  }
+  protected endSession(): void {
+    const s = this.session();
+    if (!s) return;
+    this.isEnding.set(true);
+    this.errorMessage.set('');
+    this.quizService
+      .endSession(this.quizId(), s.id)
+      .then(() => {
+        this.isEnding.set(false);
+        this.router.navigate(['/clubs', this.id(), 'quizzes']);
+      })
+      .catch(err => {
+        this.errorMessage.set((err as Error).message);
+        this.isEnding.set(false);
+      });
+  }
+  protected manualRefresh(): void {
+    this._refreshTick.update(n => n + 1);
+  }
+}
+````
+
 ## File: src/app/features/randomizer/randomizer.component.ts
 ````typescript
 import {
@@ -9874,329 +9875,6 @@ export class RandomizerComponent implements OnInit {
       <div class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-accent-500/30 animate-pulse" aria-hidden="true"></div>
     }
     <app-footer />
-````
-
-## File: src/app/shared/chat/chat-widget/chat-widget.component.html
-````html
-@if (auth.isAuthenticated()) {
-  <button
-    hlmBtn
-    type="button"
-    [class]="'fixed z-50 w-14 h-14 rounded-full bg-accent-500 text-white shadow-lg hover:shadow-xl ' + fabPositionClass()"
-    [class.animate-bounce]="isBouncing()"
-    [attr.aria-label]="(chat.isOpen() ? 'CHAT.close' : 'CHAT.open') | translate"
-    (click)="chat.toggleOpen()"
-  >
-    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
-    </svg>
-    @if (chat.unreadCount() > 0) {
-      <div class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold">
-        {{ chat.unreadCount() > 9 ? '9+' : (chat.unreadCount() | number) }}
-      </div>
-    }
-  </button>
-  @if (chat.isOpen()) {
-    <div
-      [class]="'fixed z-40 w-80 max-h-[480px] flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 chat-panel ' + panelPositionClass()"
-    >
-      <div class="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-          {{ 'CHAT.title' | translate }}
-        </h2>
-        <button
-          hlmBtn
-          variant="ghost"
-          size="icon"
-          type="button"
-          [attr.aria-label]="'CHAT.close' | translate"
-          (click)="chat.toggleOpen()"
-        >
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
-          </svg>
-        </button>
-      </div>
-      @if (chat.rooms().length > 1 || auth.isOrganizer()) {
-        <div class="flex items-center border-b border-gray-100 dark:border-gray-700 px-3 py-2 gap-2">
-          <div class="flex overflow-x-auto gap-2 flex-1 min-w-0">
-            @for (room of chat.rooms(); track room.id) {
-              <button
-                class="px-3 py-1.5 rounded-lg whitespace-nowrap font-medium text-sm transition-colors duration-200 flex-shrink-0"
-                [ngClass]="{
-                  'bg-accent-500 text-white': chat.activeRoomId() === room.id,
-                  'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700': chat.activeRoomId() !== room.id
-                }"
-                role="tab"
-                [attr.aria-selected]="chat.activeRoomId() === room.id"
-                (click)="chat.openRoom(room.id)"
-              >
-                {{ room.name }}
-              </button>
-            }
-          </div>
-          @if (auth.isOrganizer()) {
-            <button
-              type="button"
-              class="flex-shrink-0 w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-accent-100 hover:text-accent-600 flex items-center justify-center transition-colors text-lg leading-none"
-              [attr.aria-label]="'CHAT.add_room' | translate"
-              (click)="toggleCreateRoom()"
-            >+</button>
-          }
-        </div>
-      }
-      @if (isCreatingRoom()) {
-        <div class="flex items-center gap-2 px-3 py-2 border-b border-gray-100 dark:border-gray-700">
-          <input
-            hlmInput
-            type="text"
-            [ngModel]="newRoomName()"
-            (ngModelChange)="newRoomName.set($event)"
-            (keydown)="onRoomNameKeydown($event)"
-            [placeholder]="'CHAT.room_name_placeholder' | translate"
-            class="flex-1 text-sm rounded-lg h-8 px-3"
-          />
-          <button
-            hlmBtn
-            size="sm"
-            type="button"
-            class="bg-accent-500 text-white text-xs px-2 h-8"
-            [disabled]="!newRoomName().trim()"
-            (click)="submitCreateRoom()"
-          >{{ 'CHAT.create_room' | translate }}</button>
-        </div>
-      }
-      @if (chat.rooms().length === 0) {
-        <div class="flex items-center justify-center flex-1 text-gray-400 dark:text-gray-500 text-sm px-4">
-          {{ 'CHAT.no_rooms' | translate }}
-        </div>
-      } @else {
-        <div
-          class="flex-1 overflow-y-auto p-3 space-y-2 messages-scroll"
-          role="log"
-          aria-live="polite"
-        >
-          @if (chat.activeMessages().length === 0) {
-            <div class="flex items-center justify-center h-full text-gray-400 dark:text-gray-500">
-              {{ 'CHAT.no_messages' | translate }}
-            </div>
-          } @else {
-            @for (message of chat.activeMessages(); track message.id) {
-              @if (!message.isMuted || auth.isOrganizer()) {
-                <div
-                  class="relative group"
-                  [ngClass]="{ 'flex justify-end': message.isOwn, 'flex justify-start': !message.isOwn }"
-                >
-                  <div class="flex flex-col max-w-[75%]">
-                    @if (!message.isOwn) {
-                      <div class="flex items-center gap-1 px-3 mb-1">
-                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ message.senderName }}</span>
-                        @if (message.isMuted) {
-                          <span class="text-xs text-red-400 italic">{{ 'CHAT.muted_label' | translate }}</span>
-                        }
-                      </div>
-                    }
-                    <div
-                      class="px-4 py-2 rounded-2xl transition-opacity"
-                      [class.opacity-40]="message.isMuted"
-                      [ngClass]="{
-                        'bg-accent-500 text-white rounded-br-sm': message.isOwn,
-                        'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-sm': !message.isOwn
-                      }"
-                    >
-                      {{ message.text }}
-                    </div>
-                    <span class="text-xs text-gray-400 px-3 mt-1"
-                          [class.text-right]="message.isOwn">
-                      {{ message.timestamp | date: 'HH:mm' }}
-                    </span>
-                  </div>
-                  @if (auth.isOrganizer() && !message.isOwn) {
-                    <div class="relative self-center ml-1">
-                      <button
-                        type="button"
-                        class="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        [attr.aria-label]="'moderation'"
-                        (click)="toggleMenu(message.id)"
-                      >
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z"/>
-                        </svg>
-                      </button>
-                      @if (openMenuId() === message.id) {
-                        <div class="absolute left-full top-0 ml-1 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg py-1 min-w-[130px]">
-                          @if (!message.isMuted) {
-                            <button
-                              type="button"
-                              class="w-full text-left px-3 py-1.5 text-xs text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
-                              (click)="muteUser(message.senderId)"
-                            >{{ 'CHAT.mute' | translate }}</button>
-                          } @else {
-                            <button
-                              type="button"
-                              class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                              (click)="unmuteUser(message.senderId)"
-                            >{{ 'CHAT.unmute' | translate }}</button>
-                          }
-                          <button
-                            type="button"
-                            class="w-full text-left px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                            (click)="banUser(message.senderId, 600)"
-                          >{{ 'CHAT.ban_600s' | translate }}</button>
-                          <div class="my-0.5 border-t border-gray-100 dark:border-gray-700"></div>
-                          <button
-                            type="button"
-                            class="w-full text-left px-3 py-1.5 text-xs text-red-700 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium"
-                            (click)="deleteMessage(message.id)"
-                          >{{ 'CHAT.delete_message' | translate }}</button>
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-              }
-            }
-          }
-          <div #messagesEnd></div>
-        </div>
-        <div class="border-t border-gray-100 dark:border-gray-700 p-3 flex gap-2">
-          <input
-            hlmInput
-            type="text"
-            [(ngModel)]="messageText"
-            (keydown)="onKeydown($event)"
-            [placeholder]="'CHAT.placeholder' | translate"
-            [attr.aria-label]="'CHAT.placeholder' | translate"
-            class="flex-1 rounded-full px-4"
-          />
-          <button
-            hlmBtn
-            type="button"
-            class="w-10 h-10 rounded-full bg-accent-500 text-white"
-            [disabled]="!messageText().trim()"
-            (click)="sendMessage()"
-            [attr.aria-label]="'CHAT.send' | translate"
-          >
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M16.6915026,12.4744748 L3.50612381,13.2599618 C3.19218622,13.2599618 3.03521743,13.4170592 3.03521743,13.5741566 L1.15159189,20.0151496 C0.8376543,20.8006365 0.99,21.89 1.77946707,22.52 C2.41,22.99 3.50612381,23.1 4.13399899,22.8429026 L21.714504,14.0454487 C22.6563168,13.5741566 23.1272231,12.6315722 22.9702544,11.6889879 L4.13399899,1.16584166 C3.50612381,0.9087443 2.40999006,1.01484963 1.77946707,1.4861418 C0.994623095,2.11535496 0.837654326,3.20500913 1.15159189,3.9904961 L3.03521743,10.4314891 C3.03521743,10.5885864 3.19218622,10.7456838 3.50612381,10.7456838 L16.6915026,11.5311707 C16.6915026,11.5311707 17.1624089,11.5311707 17.1624089,12.0024628 C17.1624089,12.4744748 16.6915026,12.4744748 16.6915026,12.4744748 Z"/>
-            </svg>
-          </button>
-        </div>
-      }
-    </div>
-  }
-}
-````
-
-## File: src/app/shared/chat/chat-widget/chat-widget.component.ts
-````typescript
-import { Component, ChangeDetectionStrategy, inject, signal, effect, computed } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
-import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../../core/auth/auth.service';
-import { ChatService } from '../../../core/services/chat.service';
-import { ClubService } from '../../../core/services/club.service';
-import { HlmButton } from '../../spartan/button/src';
-import { HlmInput } from '../../spartan/input/src';
-@Component({
-  selector: 'app-chat-widget',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, TranslateModule, FormsModule, DatePipe, HlmButton, HlmInput],
-  templateUrl: './chat-widget.component.html',
-  styleUrls: ['./chat-widget.component.scss'],
-})
-export class ChatWidgetComponent {
-  protected readonly auth = inject(AuthService);
-  protected readonly chat = inject(ChatService);
-  private readonly clubService = inject(ClubService);
-  protected readonly messageText = signal('');
-  protected readonly isBouncing = signal(false);
-  protected readonly openMenuId = signal<string | null>(null);
-  protected readonly isCreatingRoom = signal(false);
-  protected readonly newRoomName = signal('');
-  protected readonly fabPositionClass = computed(() =>
-    this.auth.isOrganizer() ? 'bottom-24 right-6' : 'bottom-6 right-6'
-  );
-  protected readonly panelPositionClass = computed(() =>
-    this.auth.isOrganizer() ? 'bottom-40 right-6' : 'bottom-24 right-6'
-  );
-  private _clubsLoadTriggered = false;
-  constructor() {
-    effect(() => {
-      if (this.chat.hasNewMessage()) {
-        this.isBouncing.set(true);
-        setTimeout(() => this.isBouncing.set(false), 1000);
-      }
-    });
-    effect(() => {
-      const user = this.auth.currentUser();
-      if (!user) {
-        this._clubsLoadTriggered = false;
-        this.chat.clearRooms();
-        return;
-      }
-      const clubs = this.clubService.myClubs();
-      if (clubs.length > 0) {
-        this._clubsLoadTriggered = false;
-        this.chat.loadAllClubRooms(clubs, user.id);
-      } else if (!this._clubsLoadTriggered) {
-        this._clubsLoadTriggered = true;
-        this.clubService.loadMyClubs().catch(() => undefined);
-      }
-    });
-  }
-  protected sendMessage(): void {
-    const text = this.messageText().trim();
-    if (!text) return;
-    const user = this.auth.currentUser();
-    if (!user) return;
-    this.chat.sendMessage(text, { id: user.id, displayName: user.displayName });
-    this.messageText.set('');
-  }
-  protected onKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter' && !event.shiftKey) {
-      event.preventDefault();
-      this.sendMessage();
-    }
-  }
-  protected toggleMenu(msgId: string): void {
-    this.openMenuId.update(id => (id === msgId ? null : msgId));
-  }
-  protected muteUser(userId: string): void {
-    this.chat.muteUser(userId);
-    this.openMenuId.set(null);
-  }
-  protected unmuteUser(userId: string): void {
-    this.chat.unmuteUser(userId);
-    this.openMenuId.set(null);
-  }
-  protected deleteMessage(messageId: string): void {
-    this.chat.deleteMessage(messageId);
-    this.openMenuId.set(null);
-  }
-  protected banUser(userId: string, durationSeconds: number): void {
-    this.chat.banUserFromChat(userId, durationSeconds);
-    this.openMenuId.set(null);
-  }
-  protected toggleCreateRoom(): void {
-    this.isCreatingRoom.update(v => !v);
-    this.newRoomName.set('');
-  }
-  protected submitCreateRoom(): void {
-    const name = this.newRoomName().trim();
-    const clubId = this.chat.activeRoom()?.clubId;
-    if (!name || !clubId) return;
-    this.chat.createRoom(clubId, name);
-    this.newRoomName.set('');
-    this.isCreatingRoom.set(false);
-  }
-  protected onRoomNameKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter') { event.preventDefault(); this.submitCreateRoom(); }
-    if (event.key === 'Escape') { this.isCreatingRoom.set(false); }
-  }
-}
 ````
 
 ## File: src/app/shared/components/cover-upload/cover-upload.component.ts
@@ -11387,6 +11065,329 @@ export class QuizCreateComponent {
         this.isSaving.set(false);
         this.errorMessage.set((err as Error).message);
       });
+  }
+}
+````
+
+## File: src/app/shared/chat/chat-widget/chat-widget.component.html
+````html
+@if (auth.isAuthenticated()) {
+  <button
+    hlmBtn
+    type="button"
+    [class]="'fixed z-50 w-14 h-14 rounded-full bg-accent-500 text-white shadow-lg hover:shadow-xl ' + fabPositionClass()"
+    [class.animate-bounce]="isBouncing()"
+    [attr.aria-label]="(chat.isOpen() ? 'CHAT.close' : 'CHAT.open') | translate"
+    (click)="chat.toggleOpen()"
+  >
+    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+    </svg>
+    @if (chat.unreadCount() > 0) {
+      <div class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold">
+        {{ chat.unreadCount() > 9 ? '9+' : (chat.unreadCount() | number) }}
+      </div>
+    }
+  </button>
+  @if (chat.isOpen()) {
+    <div
+      [class]="'fixed z-40 w-80 max-h-[480px] flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 chat-panel ' + panelPositionClass()"
+    >
+      <div class="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
+        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
+          {{ 'CHAT.title' | translate }}
+        </h2>
+        <button
+          hlmBtn
+          variant="ghost"
+          size="icon"
+          type="button"
+          [attr.aria-label]="'CHAT.close' | translate"
+          (click)="chat.toggleOpen()"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+          </svg>
+        </button>
+      </div>
+      @if (chat.rooms().length > 1 || auth.isOrganizer()) {
+        <div class="flex items-center border-b border-gray-100 dark:border-gray-700 px-3 py-2 gap-2">
+          <div class="flex overflow-x-auto gap-2 flex-1 min-w-0">
+            @for (room of chat.rooms(); track room.id) {
+              <button
+                class="px-3 py-1.5 rounded-lg whitespace-nowrap font-medium text-sm transition-colors duration-200 flex-shrink-0"
+                [ngClass]="{
+                  'bg-accent-500 text-white': chat.activeRoomId() === room.id,
+                  'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700': chat.activeRoomId() !== room.id
+                }"
+                role="tab"
+                [attr.aria-selected]="chat.activeRoomId() === room.id"
+                (click)="chat.openRoom(room.id)"
+              >
+                {{ room.name }}
+              </button>
+            }
+          </div>
+          @if (auth.isOrganizer()) {
+            <button
+              type="button"
+              class="flex-shrink-0 w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-accent-100 hover:text-accent-600 flex items-center justify-center transition-colors text-lg leading-none"
+              [attr.aria-label]="'CHAT.add_room' | translate"
+              (click)="toggleCreateRoom()"
+            >+</button>
+          }
+        </div>
+      }
+      @if (isCreatingRoom()) {
+        <div class="flex items-center gap-2 px-3 py-2 border-b border-gray-100 dark:border-gray-700">
+          <input
+            hlmInput
+            type="text"
+            [ngModel]="newRoomName()"
+            (ngModelChange)="newRoomName.set($event)"
+            (keydown)="onRoomNameKeydown($event)"
+            [placeholder]="'CHAT.room_name_placeholder' | translate"
+            class="flex-1 text-sm rounded-lg h-8 px-3"
+          />
+          <button
+            hlmBtn
+            size="sm"
+            type="button"
+            class="bg-accent-500 text-white text-xs px-2 h-8"
+            [disabled]="!newRoomName().trim()"
+            (click)="submitCreateRoom()"
+          >{{ 'CHAT.create_room' | translate }}</button>
+        </div>
+      }
+      @if (chat.rooms().length === 0) {
+        <div class="flex items-center justify-center flex-1 text-gray-400 dark:text-gray-500 text-sm px-4">
+          {{ 'CHAT.no_rooms' | translate }}
+        </div>
+      } @else {
+        <div
+          class="flex-1 overflow-y-auto p-3 space-y-2 messages-scroll"
+          role="log"
+          aria-live="polite"
+        >
+          @if (chat.activeMessages().length === 0) {
+            <div class="flex items-center justify-center h-full text-gray-400 dark:text-gray-500">
+              {{ 'CHAT.no_messages' | translate }}
+            </div>
+          } @else {
+            @for (message of chat.activeMessages(); track message.id) {
+              @if (!message.isMuted || auth.isOrganizer()) {
+                <div
+                  class="relative group"
+                  [ngClass]="{ 'flex justify-end': message.isOwn, 'flex justify-start': !message.isOwn }"
+                >
+                  <div class="flex flex-col max-w-[75%]">
+                    @if (!message.isOwn) {
+                      <div class="flex items-center gap-1 px-3 mb-1">
+                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ message.senderName }}</span>
+                        @if (message.isMuted) {
+                          <span class="text-xs text-red-400 italic">{{ 'CHAT.muted_label' | translate }}</span>
+                        }
+                      </div>
+                    }
+                    <div
+                      class="px-4 py-2 rounded-2xl transition-opacity"
+                      [class.opacity-40]="message.isMuted"
+                      [ngClass]="{
+                        'bg-accent-500 text-white rounded-br-sm': message.isOwn,
+                        'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-sm': !message.isOwn
+                      }"
+                    >
+                      {{ message.text }}
+                    </div>
+                    <span class="text-xs text-gray-400 px-3 mt-1"
+                          [class.text-right]="message.isOwn">
+                      {{ message.timestamp | date: 'HH:mm' }}
+                    </span>
+                  </div>
+                  @if (auth.isOrganizer() && !message.isOwn) {
+                    <div class="relative self-center ml-1">
+                      <button
+                        type="button"
+                        class="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
+                        [attr.aria-label]="'moderation'"
+                        (click)="toggleMenu(message.id)"
+                      >
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z"/>
+                        </svg>
+                      </button>
+                      @if (openMenuId() === message.id) {
+                        <div class="absolute left-full top-0 ml-1 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg py-1 min-w-[130px]">
+                          @if (!message.isMuted) {
+                            <button
+                              type="button"
+                              class="w-full text-left px-3 py-1.5 text-xs text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
+                              (click)="muteUser(message.senderId)"
+                            >{{ 'CHAT.mute' | translate }}</button>
+                          } @else {
+                            <button
+                              type="button"
+                              class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                              (click)="unmuteUser(message.senderId)"
+                            >{{ 'CHAT.unmute' | translate }}</button>
+                          }
+                          <button
+                            type="button"
+                            class="w-full text-left px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                            (click)="banUser(message.senderId, 600)"
+                          >{{ 'CHAT.ban_600s' | translate }}</button>
+                          <div class="my-0.5 border-t border-gray-100 dark:border-gray-700"></div>
+                          <button
+                            type="button"
+                            class="w-full text-left px-3 py-1.5 text-xs text-red-700 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium"
+                            (click)="deleteMessage(message.id)"
+                          >{{ 'CHAT.delete_message' | translate }}</button>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            }
+          }
+          <div #messagesEnd></div>
+        </div>
+        <div class="border-t border-gray-100 dark:border-gray-700 p-3 flex gap-2">
+          <input
+            hlmInput
+            type="text"
+            [(ngModel)]="messageText"
+            (keydown)="onKeydown($event)"
+            [placeholder]="'CHAT.placeholder' | translate"
+            [attr.aria-label]="'CHAT.placeholder' | translate"
+            class="flex-1 rounded-full px-4"
+          />
+          <button
+            hlmBtn
+            type="button"
+            class="w-10 h-10 rounded-full bg-accent-500 text-white"
+            [disabled]="!messageText().trim()"
+            (click)="sendMessage()"
+            [attr.aria-label]="'CHAT.send' | translate"
+          >
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M16.6915026,12.4744748 L3.50612381,13.2599618 C3.19218622,13.2599618 3.03521743,13.4170592 3.03521743,13.5741566 L1.15159189,20.0151496 C0.8376543,20.8006365 0.99,21.89 1.77946707,22.52 C2.41,22.99 3.50612381,23.1 4.13399899,22.8429026 L21.714504,14.0454487 C22.6563168,13.5741566 23.1272231,12.6315722 22.9702544,11.6889879 L4.13399899,1.16584166 C3.50612381,0.9087443 2.40999006,1.01484963 1.77946707,1.4861418 C0.994623095,2.11535496 0.837654326,3.20500913 1.15159189,3.9904961 L3.03521743,10.4314891 C3.03521743,10.5885864 3.19218622,10.7456838 3.50612381,10.7456838 L16.6915026,11.5311707 C16.6915026,11.5311707 17.1624089,11.5311707 17.1624089,12.0024628 C17.1624089,12.4744748 16.6915026,12.4744748 16.6915026,12.4744748 Z"/>
+            </svg>
+          </button>
+        </div>
+      }
+    </div>
+  }
+}
+````
+
+## File: src/app/shared/chat/chat-widget/chat-widget.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, inject, signal, effect, computed } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../core/auth/auth.service';
+import { ChatService } from '../../../core/services/chat.service';
+import { ClubService } from '../../../core/services/club.service';
+import { HlmButton } from '../../spartan/button/src';
+import { HlmInput } from '../../spartan/input/src';
+@Component({
+  selector: 'app-chat-widget',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [CommonModule, TranslateModule, FormsModule, DatePipe, HlmButton, HlmInput],
+  templateUrl: './chat-widget.component.html',
+  styleUrls: ['./chat-widget.component.scss'],
+})
+export class ChatWidgetComponent {
+  protected readonly auth = inject(AuthService);
+  protected readonly chat = inject(ChatService);
+  private readonly clubService = inject(ClubService);
+  protected readonly messageText = signal('');
+  protected readonly isBouncing = signal(false);
+  protected readonly openMenuId = signal<string | null>(null);
+  protected readonly isCreatingRoom = signal(false);
+  protected readonly newRoomName = signal('');
+  protected readonly fabPositionClass = computed(() =>
+    this.auth.isOrganizer() ? 'bottom-24 right-6' : 'bottom-6 right-6'
+  );
+  protected readonly panelPositionClass = computed(() =>
+    this.auth.isOrganizer() ? 'bottom-40 right-6' : 'bottom-24 right-6'
+  );
+  private _clubsLoadTriggered = false;
+  constructor() {
+    effect(() => {
+      if (this.chat.hasNewMessage()) {
+        this.isBouncing.set(true);
+        setTimeout(() => this.isBouncing.set(false), 1000);
+      }
+    });
+    effect(() => {
+      const user = this.auth.currentUser();
+      if (!user) {
+        this._clubsLoadTriggered = false;
+        this.chat.clearRooms();
+        return;
+      }
+      const clubs = this.clubService.myClubs();
+      if (clubs.length > 0) {
+        this._clubsLoadTriggered = false;
+        this.chat.loadAllClubRooms(clubs, user.id);
+      } else if (!this._clubsLoadTriggered) {
+        this._clubsLoadTriggered = true;
+        this.clubService.loadMyClubs().catch(() => undefined);
+      }
+    });
+  }
+  protected sendMessage(): void {
+    const text = this.messageText().trim();
+    if (!text) return;
+    const user = this.auth.currentUser();
+    if (!user) return;
+    this.chat.sendMessage(text, { id: user.id, displayName: user.displayName });
+    this.messageText.set('');
+  }
+  protected onKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      this.sendMessage();
+    }
+  }
+  protected toggleMenu(msgId: string): void {
+    this.openMenuId.update(id => (id === msgId ? null : msgId));
+  }
+  protected muteUser(userId: string): void {
+    this.chat.muteUser(userId);
+    this.openMenuId.set(null);
+  }
+  protected unmuteUser(userId: string): void {
+    this.chat.unmuteUser(userId);
+    this.openMenuId.set(null);
+  }
+  protected deleteMessage(messageId: string): void {
+    this.chat.deleteMessage(messageId);
+    this.openMenuId.set(null);
+  }
+  protected banUser(userId: string, durationSeconds: number): void {
+    this.chat.banUserFromChat(userId, durationSeconds);
+    this.openMenuId.set(null);
+  }
+  protected toggleCreateRoom(): void {
+    this.isCreatingRoom.update(v => !v);
+    this.newRoomName.set('');
+  }
+  protected submitCreateRoom(): void {
+    const name = this.newRoomName().trim();
+    const clubId = this.chat.activeRoom()?.clubId;
+    if (!name || !clubId) return;
+    this.chat.createRoom(clubId, name);
+    this.newRoomName.set('');
+    this.isCreatingRoom.set(false);
+  }
+  protected onRoomNameKeydown(event: KeyboardEvent): void {
+    if (event.key === 'Enter') { event.preventDefault(); this.submitCreateRoom(); }
+    if (event.key === 'Escape') { this.isCreatingRoom.set(false); }
   }
 }
 ````
@@ -13493,343 +13494,6 @@ export class EventService {
 }
 ````
 
-## File: src/app/core/services/quiz.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal, computed } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { Quiz, QuizAttempt, QuizQuestion, QuizStatus, QuizSession, QuizLeaderboardEntry } from '../models/quiz.model';
-import { ClubEvent } from '../models/event.model';
-interface ApiQuiz {
-  id: string;
-  clubId: string;
-  createdBy: string;
-  title: string;
-  description: string | null;
-  isActive: boolean;
-  status: string;
-}
-interface ApiQuizQuestion {
-  id: string;
-  quizId: string;
-  question: string;
-  options: string[];
-  correctIndex: number;
-}
-interface ApiAttemptResponse {
-  id: string;
-  quizId: string;
-  userId: string;
-  score: number;
-  total: number;
-  answers: number[];
-}
-interface ApiQuizSession {
-  id: string;
-  quizId: string;
-  eventId: string;
-  startedBy: string;
-  startedAt: string;
-  closedAt: string | null;
-  participantCount: number;
-}
-interface ApiLeaderboardEntry {
-  rank: number;
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  score: number;
-  totalQuestions: number;
-  hasAttempted: boolean;
-}
-function mapQuiz(raw: ApiQuiz): Quiz {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    createdBy: raw.createdBy,
-    title: raw.title,
-    description: raw.description,
-    status: (raw.status as QuizStatus) ?? 'draft',
-    isActive: raw.isActive,
-  };
-}
-function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
-  return {
-    id: raw.id,
-    quizId: raw.quizId,
-    question: raw.question,
-    options: raw.options,
-    correctIndex: raw.correctIndex,
-  };
-}
-function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
-  return {
-    id: raw.id,
-    quizId: raw.quizId,
-    userId: raw.userId,
-    score: raw.score,
-    total: raw.total,
-    answers: raw.answers,
-  };
-}
-function mapSession(raw: ApiQuizSession): QuizSession {
-  return { ...raw };
-}
-function mapLeaderboardEntry(raw: ApiLeaderboardEntry): QuizLeaderboardEntry {
-  return { ...raw };
-}
-@Injectable({ providedIn: 'root' })
-export class QuizService {
-  private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _quizzes = signal<Quiz[]>([]);
-  private readonly _questions = signal<QuizQuestion[]>([]);
-  private readonly _isLoading = signal(false);
-  private readonly _session = signal<QuizSession | null>(null);
-  private readonly _leaderboard = signal<QuizLeaderboardEntry[]>([]);
-  readonly quizzes = this._quizzes.asReadonly();
-  readonly questions = this._questions.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly session = this._session.asReadonly();
-  readonly leaderboard = this._leaderboard.asReadonly();
-  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
-  async loadQuizzes(clubId: string): Promise<void> {
-    this._isLoading.set(true);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
-      );
-      this._quizzes.set(raw.map(mapQuiz));
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async createQuiz(data: {
-    clubId: string;
-    title: string;
-    description: string;
-  }): Promise<Quiz> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
-          title: data.title,
-          description: data.description || null,
-        }),
-      );
-      const quiz = mapQuiz(raw);
-      this._quizzes.update(prev => [quiz, ...prev]);
-      return quiz;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async addQuestion(
-    quizId: string,
-    q: Omit<QuizQuestion, 'id' | 'quizId'>,
-  ): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
-          question: q.question,
-          options: q.options,
-          correctIndex: q.correctIndex,
-        }),
-      );
-      this._questions.update(prev => [...prev, mapQuestion(raw)]);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async loadQuestions(quizId: string): Promise<void> {
-    this._isLoading.set(true);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
-      );
-      this._questions.set(raw.map(mapQuestion));
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
-      );
-      return mapAttempt(raw);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { isActive }),
-      );
-      this._quizzes.update(prev =>
-        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async getQuiz(quizId: string): Promise<Quiz> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuiz>(`${this.api}/quizzes/${quizId}`),
-      );
-      return mapQuiz(raw);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async getQuestions(quizId: string): Promise<QuizQuestion[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
-      );
-      return raw.map(mapQuestion);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async updateQuiz(
-    quizId: string,
-    data: { title: string; description: string },
-  ): Promise<Quiz> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.patch<ApiQuiz>(`${this.api}/quizzes/${quizId}`, data),
-      );
-      const quiz = mapQuiz(raw);
-      this._quizzes.update(prev => prev.map(q => (q.id === quizId ? quiz : q)));
-      return quiz;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async updateQuestion(
-    quizId: string,
-    questionId: string,
-    q: Partial<Omit<QuizQuestion, 'id' | 'quizId'>>,
-  ): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.patch(
-          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
-          q,
-        ),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async deleteQuestion(quizId: string, questionId: string): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.delete(
-          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
-        ),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async reorderQuestions(quizId: string, orderedIds: string[]): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.put(`${this.api}/quizzes/${quizId}/questions/order`, {
-          order: orderedIds,
-        }),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async startSession(quizId: string, eventId: string): Promise<QuizSession> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuizSession>(
-          `${this.api}/quizzes/${quizId}/sessions`,
-          { eventId },
-        ),
-      );
-      const session = mapSession(raw);
-      this._session.set(session);
-      return session;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async getActiveSession(quizId: string): Promise<QuizSession | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuizSession>(
-          `${this.api}/quizzes/${quizId}/sessions/active`,
-        ),
-      );
-      return mapSession(raw);
-    } catch {
-      return null;
-    }
-  }
-  async getLeaderboard(
-    quizId: string,
-    sessionId: string,
-  ): Promise<QuizLeaderboardEntry[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<{ entries: ApiLeaderboardEntry[] }>(
-          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/leaderboard`,
-        ),
-      );
-      return raw.entries.map(mapLeaderboardEntry);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async endSession(quizId: string, sessionId: string): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.patch(
-          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/close`,
-          {},
-        ),
-      );
-      this._session.set(null);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async getClubQuizzes(clubId: string): Promise<Quiz[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
-      );
-      return raw.map(mapQuiz);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ClubEvent[]>(`${this.api}/clubs/${clubId}/events`),
-      );
-      return raw;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-}
-````
-
 ## File: src/app/features/clubs/club-detail/header/club-header.component.html
 ````html
 <header class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -14343,6 +14007,343 @@ export class HeaderComponent {
   }
   async signOut(): Promise<void> {
     await this.auth.signOut();
+  }
+}
+````
+
+## File: src/app/core/services/quiz.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { Quiz, QuizAttempt, QuizQuestion, QuizStatus, QuizSession, QuizLeaderboardEntry } from '../models/quiz.model';
+import { ClubEvent } from '../models/event.model';
+interface ApiQuiz {
+  id: string;
+  clubId: string;
+  createdBy: string;
+  title: string;
+  description: string | null;
+  isActive: boolean;
+  status: string;
+}
+interface ApiQuizQuestion {
+  id: string;
+  quizId: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+}
+interface ApiAttemptResponse {
+  id: string;
+  quizId: string;
+  userId: string;
+  score: number;
+  total: number;
+  answers: number[];
+}
+interface ApiQuizSession {
+  id: string;
+  quizId: string;
+  eventId: string;
+  startedBy: string;
+  startedAt: string;
+  closedAt: string | null;
+  participantCount: number;
+}
+interface ApiLeaderboardEntry {
+  rank: number;
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  score: number;
+  totalQuestions: number;
+  hasAttempted: boolean;
+}
+function mapQuiz(raw: ApiQuiz): Quiz {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    createdBy: raw.createdBy,
+    title: raw.title,
+    description: raw.description,
+    status: (raw.status as QuizStatus) ?? 'draft',
+    isActive: raw.isActive,
+  };
+}
+function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
+  return {
+    id: raw.id,
+    quizId: raw.quizId,
+    question: raw.question,
+    options: raw.options,
+    correctIndex: raw.correctIndex,
+  };
+}
+function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
+  return {
+    id: raw.id,
+    quizId: raw.quizId,
+    userId: raw.userId,
+    score: raw.score,
+    total: raw.total,
+    answers: raw.answers,
+  };
+}
+function mapSession(raw: ApiQuizSession): QuizSession {
+  return { ...raw };
+}
+function mapLeaderboardEntry(raw: ApiLeaderboardEntry): QuizLeaderboardEntry {
+  return { ...raw };
+}
+@Injectable({ providedIn: 'root' })
+export class QuizService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _quizzes = signal<Quiz[]>([]);
+  private readonly _questions = signal<QuizQuestion[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _session = signal<QuizSession | null>(null);
+  private readonly _leaderboard = signal<QuizLeaderboardEntry[]>([]);
+  readonly quizzes = this._quizzes.asReadonly();
+  readonly questions = this._questions.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly session = this._session.asReadonly();
+  readonly leaderboard = this._leaderboard.asReadonly();
+  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
+  async loadQuizzes(clubId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
+      );
+      this._quizzes.set(raw.map(mapQuiz));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async createQuiz(data: {
+    clubId: string;
+    title: string;
+    description: string;
+  }): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
+          title: data.title,
+          description: data.description || null,
+        }),
+      );
+      const quiz = mapQuiz(raw);
+      this._quizzes.update(prev => [quiz, ...prev]);
+      return quiz;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async addQuestion(
+    quizId: string,
+    q: Omit<QuizQuestion, 'id' | 'quizId'>,
+  ): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
+          question: q.question,
+          options: q.options,
+          correctIndex: q.correctIndex,
+        }),
+      );
+      this._questions.update(prev => [...prev, mapQuestion(raw)]);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async loadQuestions(quizId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
+      );
+      this._questions.set(raw.map(mapQuestion));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
+      );
+      return mapAttempt(raw);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { isActive }),
+      );
+      this._quizzes.update(prev =>
+        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getQuiz(quizId: string): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz>(`${this.api}/quizzes/${quizId}`),
+      );
+      return mapQuiz(raw);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getQuestions(quizId: string): Promise<QuizQuestion[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
+      );
+      return raw.map(mapQuestion);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async updateQuiz(
+    quizId: string,
+    data: { title: string; description: string },
+  ): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.patch<ApiQuiz>(`${this.api}/quizzes/${quizId}`, data),
+      );
+      const quiz = mapQuiz(raw);
+      this._quizzes.update(prev => prev.map(q => (q.id === quizId ? quiz : q)));
+      return quiz;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async updateQuestion(
+    quizId: string,
+    questionId: string,
+    q: Partial<Omit<QuizQuestion, 'id' | 'quizId'>>,
+  ): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(
+          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
+          q,
+        ),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async deleteQuestion(quizId: string, questionId: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.delete(
+          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
+        ),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async reorderQuestions(quizId: string, orderedIds: string[]): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.put(`${this.api}/quizzes/${quizId}/questions/order`, {
+          order: orderedIds,
+        }),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async startSession(quizId: string, eventId: string): Promise<QuizSession> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuizSession>(
+          `${this.api}/quizzes/${quizId}/sessions`,
+          { eventId },
+        ),
+      );
+      const session = mapSession(raw);
+      this._session.set(session);
+      return session;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getActiveSession(quizId: string): Promise<QuizSession | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizSession>(
+          `${this.api}/quizzes/${quizId}/sessions/active`,
+        ),
+      );
+      return mapSession(raw);
+    } catch {
+      return null;
+    }
+  }
+  async getLeaderboard(
+    quizId: string,
+    sessionId: string,
+  ): Promise<QuizLeaderboardEntry[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<{ entries: ApiLeaderboardEntry[] }>(
+          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/leaderboard`,
+        ),
+      );
+      return raw.entries.map(mapLeaderboardEntry);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async endSession(quizId: string, sessionId: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(
+          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/close`,
+          {},
+        ),
+      );
+      this._session.set(null);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getClubQuizzes(clubId: string): Promise<Quiz[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
+      );
+      return raw.map(mapQuiz);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ClubEvent[]>(`${this.api}/clubs/${clubId}/events`),
+      );
+      return raw;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
   }
 }
 ````
@@ -15065,145 +15066,6 @@ export class CreateClubComponent {
       this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
     } finally {
       this._isSubmitting.set(false);
-    }
-  }
-}
-````
-
-## File: src/app/features/events/create-event/create-event.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  computed,
-  inject,
-  signal,
-  input,
-  resource,
-  OnInit,
-  DestroyRef,
-} from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs';
-import { EventService } from '../../../core/services/event.service';
-import { QuizService } from '../../../core/services/quiz.service';
-import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
-import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { BookCoverService } from '../../../core/services/book-cover.service';
-import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
-@Component({
-  selector: 'app-create-event',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton],
-  templateUrl: './create-event.component.html',
-})
-export class CreateEventComponent implements OnInit {
-  readonly clubId = input.required<string>();
-  private readonly fb = inject(FormBuilder);
-  private readonly eventService = inject(EventService);
-  private readonly quizService = inject(QuizService);
-  private readonly router = inject(Router);
-  private readonly bookCoverService = inject(BookCoverService);
-  private readonly destroyRef = inject(DestroyRef);
-  readonly isSubmitting = signal(false);
-  readonly errorMessage = signal<string | null>(null);
-  readonly showAfterVenue = signal(false);
-  readonly isFetchingCover = signal(false);
-  readonly coverFetchFailed = signal(false);
-  private readonly _quizzesResource = resource({
-    params: () => ({ clubId: this.clubId() }),
-    loader: ({ params }) => this.quizService.getClubQuizzes(params.clubId),
-  });
-  readonly activeQuizzes = computed(() =>
-    (this._quizzesResource.value() ?? []).filter(
-      q => q.status === 'active' || q.status === 'live',
-    ),
-  );
-  readonly form = this.fb.nonNullable.group({
-    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
-    description: [''],
-    date: ['', Validators.required],
-    city: ['', Validators.required],
-    address: [''],
-    lat: [null as number | null],
-    lng: [null as number | null],
-    theme: [''],
-    tagsRaw: [''],
-    durationMinutes: [null as number | null, [Validators.min(15), Validators.max(480)]],
-    afterVenueName: [''],
-    afterVenueAddress: [''],
-    afterVenueDescription: [''],
-    coverUrl: [''],
-    bookTitle: [''],
-    quizId: [null as string | null],
-  });
-  ngOnInit(): void {
-    this.form.controls.bookTitle.valueChanges.pipe(
-      debounceTime(600),
-      distinctUntilChanged(),
-      filter(v => v.length > 2),
-      tap(() => { this.isFetchingCover.set(true); this.coverFetchFailed.set(false); }),
-      switchMap(title => this.bookCoverService.fetchCover$(title)),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe(url => {
-      this.isFetchingCover.set(false);
-      if (url && !this.form.controls.coverUrl.value) {
-        this.form.controls.coverUrl.setValue(url);
-      } else if (!url) {
-        this.coverFetchFailed.set(true);
-      }
-    });
-  }
-  onAddressSelect(suggestion: GeocodeSuggestion): void {
-    this.form.patchValue({
-      city: suggestion.city ?? suggestion.label,
-      address: suggestion.label,
-      lat: suggestion.lat,
-      lng: suggestion.lng,
-    });
-  }
-  toggleAfterVenue(): void {
-    this.showAfterVenue.update(v => !v);
-    if (!this.showAfterVenue()) {
-      this.form.patchValue({ afterVenueName: '', afterVenueAddress: '', afterVenueDescription: '' });
-    }
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid || this.isSubmitting()) return;
-    this.isSubmitting.set(true);
-    this.errorMessage.set(null);
-    const v = this.form.getRawValue();
-    const tags = v.tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
-    const afterMeetingVenue = this.showAfterVenue() && v.afterVenueName
-      ? { name: v.afterVenueName, address: v.afterVenueAddress, description: v.afterVenueDescription || undefined }
-      : undefined;
-    try {
-      const created = await this.eventService.createEvent(this.clubId(), {
-        title: v.title,
-        description: v.description || undefined,
-        date: new Date(v.date).toISOString(),
-        city: v.city,
-        address: v.address || undefined,
-        lat: v.lat ?? undefined,
-        lng: v.lng ?? undefined,
-        theme: v.theme || undefined,
-        tags,
-        durationMinutes: v.durationMinutes ?? undefined,
-        afterMeetingVenue,
-        coverUrl: v.coverUrl || null,
-        bookTitle: v.bookTitle || null,
-        quizId: v.quizId ?? null,
-      });
-      await this.router.navigate(['/events', created.id]);
-    } catch {
-      this.errorMessage.set('Failed to create event. Please try again.');
-    } finally {
-      this.isSubmitting.set(false);
     }
   }
 }
@@ -16179,6 +16041,145 @@ export class ClubsListComponent implements OnInit {
     } catch {
     } finally {
       this.joiningClubId.set(null);
+    }
+  }
+}
+````
+
+## File: src/app/features/events/create-event/create-event.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  computed,
+  inject,
+  signal,
+  input,
+  resource,
+  OnInit,
+  DestroyRef,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs';
+import { EventService } from '../../../core/services/event.service';
+import { QuizService } from '../../../core/services/quiz.service';
+import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
+import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { BookCoverService } from '../../../core/services/book-cover.service';
+import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
+@Component({
+  selector: 'app-create-event',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton],
+  templateUrl: './create-event.component.html',
+})
+export class CreateEventComponent implements OnInit {
+  readonly clubId = input.required<string>();
+  private readonly fb = inject(FormBuilder);
+  private readonly eventService = inject(EventService);
+  private readonly quizService = inject(QuizService);
+  private readonly router = inject(Router);
+  private readonly bookCoverService = inject(BookCoverService);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly isSubmitting = signal(false);
+  readonly errorMessage = signal<string | null>(null);
+  readonly showAfterVenue = signal(false);
+  readonly isFetchingCover = signal(false);
+  readonly coverFetchFailed = signal(false);
+  private readonly _quizzesResource = resource({
+    params: () => ({ clubId: this.clubId() }),
+    loader: ({ params }) => this.quizService.getClubQuizzes(params.clubId),
+  });
+  readonly activeQuizzes = computed(() =>
+    (this._quizzesResource.value() ?? []).filter(
+      q => q.status === 'active' || q.status === 'live',
+    ),
+  );
+  readonly form = this.fb.nonNullable.group({
+    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
+    description: [''],
+    date: ['', Validators.required],
+    city: ['', Validators.required],
+    address: [''],
+    lat: [null as number | null],
+    lng: [null as number | null],
+    theme: [''],
+    tagsRaw: [''],
+    durationMinutes: [null as number | null, [Validators.min(15), Validators.max(480)]],
+    afterVenueName: [''],
+    afterVenueAddress: [''],
+    afterVenueDescription: [''],
+    coverUrl: [''],
+    bookTitle: [''],
+    quizId: [null as string | null],
+  });
+  ngOnInit(): void {
+    this.form.controls.bookTitle.valueChanges.pipe(
+      debounceTime(600),
+      distinctUntilChanged(),
+      filter(v => v.length > 2),
+      tap(() => { this.isFetchingCover.set(true); this.coverFetchFailed.set(false); }),
+      switchMap(title => this.bookCoverService.fetchCover$(title)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(url => {
+      this.isFetchingCover.set(false);
+      if (url && !this.form.controls.coverUrl.value) {
+        this.form.controls.coverUrl.setValue(url);
+      } else if (!url) {
+        this.coverFetchFailed.set(true);
+      }
+    });
+  }
+  onAddressSelect(suggestion: GeocodeSuggestion): void {
+    this.form.patchValue({
+      city: suggestion.city ?? suggestion.label,
+      address: suggestion.label,
+      lat: suggestion.lat,
+      lng: suggestion.lng,
+    });
+  }
+  toggleAfterVenue(): void {
+    this.showAfterVenue.update(v => !v);
+    if (!this.showAfterVenue()) {
+      this.form.patchValue({ afterVenueName: '', afterVenueAddress: '', afterVenueDescription: '' });
+    }
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid || this.isSubmitting()) return;
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+    const v = this.form.getRawValue();
+    const tags = v.tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+    const afterMeetingVenue = this.showAfterVenue() && v.afterVenueName
+      ? { name: v.afterVenueName, address: v.afterVenueAddress, description: v.afterVenueDescription || undefined }
+      : undefined;
+    try {
+      const created = await this.eventService.createEvent(this.clubId(), {
+        title: v.title,
+        description: v.description || undefined,
+        date: new Date(v.date).toISOString(),
+        city: v.city,
+        address: v.address || undefined,
+        lat: v.lat ?? undefined,
+        lng: v.lng ?? undefined,
+        theme: v.theme || undefined,
+        tags,
+        durationMinutes: v.durationMinutes ?? undefined,
+        afterMeetingVenue,
+        coverUrl: v.coverUrl || null,
+        bookTitle: v.bookTitle || null,
+        quizId: v.quizId ?? null,
+      });
+      await this.router.navigate(['/events', created.id]);
+    } catch {
+      this.errorMessage.set('Failed to create event. Please try again.');
+    } finally {
+      this.isSubmitting.set(false);
     }
   }
 }
