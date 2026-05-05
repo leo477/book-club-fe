@@ -55,7 +55,7 @@ describe('BookVoteSectionComponent', () => {
       c.newTitle.set('Great Book');
       c.newAuthor.set('Author Name');
       c.addOption();
-      expect(c.round()!.options.length).toBe(1);
+      expect(c.round()?.options.length).toBe(1);
       expect(c.addError()).toBe('');
     });
   });
@@ -63,39 +63,39 @@ describe('BookVoteSectionComponent', () => {
   describe('removeOption', () => {
     it('removes option by id', async () => {
       const { comp } = await setup();
-      const c = comp as unknown as { createRound(): void; addOption(): void; newTitle: { set(v: string): void }; removeOption(id: string): void; round: () => { options: Array<{ id: string }> } | null };
+      const c = comp as unknown as { createRound(): void; addOption(): void; newTitle: { set(v: string): void }; removeOption(id: string): void; round: () => { options: { id: string }[] } | null };
       c.createRound();
       c.newTitle.set('Book');
       c.addOption();
-      const optionId = c.round()!.options[0].id;
+      const optionId = c.round()?.options[0].id ?? '';
       c.removeOption(optionId);
-      expect(c.round()!.options.length).toBe(0);
+      expect(c.round()?.options.length).toBe(0);
     });
   });
 
   describe('toggleVote', () => {
     it('votes when hasVoted is false', async () => {
       const { comp } = await setup();
-      const c = comp as unknown as { createRound(): void; addOption(): void; newTitle: { set(v: string): void }; toggleVote(opt: { id: string; hasVoted: boolean }): void; round: () => { options: Array<{ id: string; hasVoted: boolean; votes: number }> } | null };
+      const c = comp as unknown as { createRound(): void; addOption(): void; newTitle: { set(v: string): void }; toggleVote(opt: { id: string; hasVoted: boolean }): void; round: () => { options: { id: string; hasVoted: boolean; votes: number }[] } | null };
       c.createRound();
       c.newTitle.set('Book');
       c.addOption();
-      const option = c.round()!.options[0];
+      const option = c.round()?.options[0] ?? { id: '', hasVoted: false, votes: 0 };
       c.toggleVote({ ...option, hasVoted: false });
-      expect(c.round()!.options[0].hasVoted).toBeTrue();
+      expect(c.round()?.options[0].hasVoted).toBeTrue();
     });
 
     it('unvotes when hasVoted is true', async () => {
       const { comp } = await setup();
-      const c = comp as unknown as { createRound(): void; addOption(): void; newTitle: { set(v: string): void }; toggleVote(opt: { id: string; hasVoted: boolean }): void; round: () => { options: Array<{ id: string; hasVoted: boolean; votes: number }> } | null };
+      const c = comp as unknown as { createRound(): void; addOption(): void; newTitle: { set(v: string): void }; toggleVote(opt: { id: string; hasVoted: boolean }): void; round: () => { options: { id: string; hasVoted: boolean; votes: number }[] } | null };
       c.createRound();
       c.newTitle.set('Book');
       c.addOption();
-      const option = c.round()!.options[0];
+      const option = c.round()?.options[0] ?? { id: '', hasVoted: false, votes: 0 };
       c.toggleVote({ ...option, hasVoted: false });
-      const voted = c.round()!.options[0];
+      const voted = c.round()?.options[0] ?? { id: '', hasVoted: true, votes: 1 };
       c.toggleVote({ ...voted, hasVoted: true });
-      expect(c.round()!.options[0].hasVoted).toBeFalse();
+      expect(c.round()?.options[0].hasVoted).toBeFalse();
     });
   });
 
@@ -114,7 +114,7 @@ describe('BookVoteSectionComponent', () => {
       const c = comp as unknown as { createRound(): void; closeRound(): void; round: () => { status: string } | null };
       c.createRound();
       c.closeRound();
-      expect(c.round()!.status).toBe('closed');
+      expect(c.round()?.status).toBe('closed');
     });
 
     it('newRound clears and recreates round', async () => {
@@ -123,7 +123,7 @@ describe('BookVoteSectionComponent', () => {
       c.createRound();
       c.closeRound();
       c.newRound();
-      expect(c.round()!.status).toBe('open');
+      expect(c.round()?.status).toBe('open');
     });
   });
 });

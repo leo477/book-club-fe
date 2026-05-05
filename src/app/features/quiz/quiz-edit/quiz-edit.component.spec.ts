@@ -22,7 +22,7 @@ function makeQuizService(quiz: Quiz | null = mockQuiz, questions: QuizQuestion[]
   };
 }
 
-type CompInternal = {
+interface CompInternal {
   isInvalidTouched(ctrl: unknown): boolean;
   optionLabel(i: number): string;
   nextStep(): void;
@@ -38,7 +38,7 @@ type CompInternal = {
   localQuestions: () => unknown[];
   metaForm: { invalid: boolean; valid: boolean; markAllAsTouched(): void; getRawValue(): { title: string; description: string } };
   questionForm: { invalid: boolean; valid: boolean; markAllAsTouched(): void; getRawValue(): { question: string; option0: string; option1: string; option2: string; option3: string; correctIndex: number } };
-};
+}
 
 describe('QuizEditComponent', () => {
   async function setup(quiz: Quiz | null = mockQuiz, questions: QuizQuestion[] = [mockQuestion]) {

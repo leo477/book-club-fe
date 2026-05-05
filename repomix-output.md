@@ -628,7 +628,8 @@ PYEOF
       "Bash(git -C /home/dmytr/angular/book-club-fe status --short)",
       "Bash(git *)",
       "Bash(npm view *)",
-      "Bash(grep \"\\\\.ts$\")"
+      "Bash(grep \"\\\\.ts$\")",
+      "Bash(grep -v \"^\\\\s*$\")"
     ]
   },
   "enableAllProjectMcpServers": true,

@@ -76,9 +76,6 @@ describe('QuizPreviewComponent', () => {
   describe('activateQuiz', () => {
     it('calls toggleActive and navigates on success', async () => {
       const { comp, quizSvc } = await setup();
-      TestBed.runInInjectionContext(() => {
-        (comp as unknown as { quizId: () => string });
-      });
       const c = comp as unknown as { activateQuiz(): void; isActivating: () => boolean; errorMessage: () => string };
       c.activateQuiz();
       await new Promise<void>(r => setTimeout(r));
