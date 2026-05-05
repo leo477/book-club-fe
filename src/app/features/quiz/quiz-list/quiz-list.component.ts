@@ -8,6 +8,7 @@ import {
   signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { QuizService } from '../../../core/services/quiz.service';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
@@ -17,7 +18,7 @@ import { HlmButton } from '../../../shared/spartan/button/src';
   selector: 'app-quiz-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ...HlmCardImports, HlmButton],
+  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton],
   templateUrl: './quiz-list.component.html',
 })
 export class QuizListComponent {

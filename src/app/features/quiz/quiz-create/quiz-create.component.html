@@ -209,11 +209,11 @@
           <button
             hlmBtn
             type="button"
-            (click)="publishQuiz()"
-            [disabled]="localQuestions().length === 0 || isPublishing()"
+            (click)="saveQuiz()"
+            [disabled]="localQuestions().length === 0 || isSaving()"
             class="bg-accent-600 hover:bg-accent-700 text-white font-bold"
           >
-            {{ isPublishing() ? '…Publishing' : '🚀 Publish Quiz' }}
+            {{ isSaving() ? '…Saving' : '💾 Save as Draft' }}
             @if (localQuestions().length > 0) {
               ({{ localQuestions().length }}
               {{ localQuestions().length === 1 ? 'question' : 'questions' }})

@@ -1,38 +1,40 @@
-<article class="glass-card flex flex-col overflow-hidden h-full transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5">
+<article class="parchment-card flex flex-col overflow-hidden h-full
+                hover:shadow-[var(--shadow-parchment-lg)] transition-shadow duration-200">
 
   <div class="flex flex-col flex-1 p-4 gap-3">
 
     <!-- Date + Status badge -->
     <div class="flex items-start justify-between gap-2">
-      <span class="inline-flex items-center gap-1 rounded-full bg-primary-100/80 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/60 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
-        📅 {{ event().date | formatDate }}
+      <span class="date-badge">
+        {{ event().date | formatDate }}
       </span>
       @if (event().status !== 'scheduled') {
         <span hlmBadge
-              [variant]="event().status === 'cancelled' ? 'destructive' : event().status === 'active' ? 'default' : 'secondary'"
+              [variant]="event().status === 'cancelled' ? 'destructive'
+                       : event().status === 'active' ? 'default' : 'secondary'"
               class="rounded-full text-xs flex-shrink-0">
           {{ event().status }}
         </span>
       }
     </div>
 
-    <!-- Title -->
-    <h3 class="font-semibold text-gray-900 dark:text-white leading-snug line-clamp-2">
+    <!-- Title (Playfair Display) -->
+    <h3 class="font-display font-semibold text-[var(--color-ink)] leading-snug line-clamp-2">
       {{ event().title }}
     </h3>
 
     <!-- Club name -->
     <a
       [routerLink]="['/clubs', event().clubId]"
-      class="text-xs text-primary-600 dark:text-primary-400 hover:underline"
+      class="text-xs text-[var(--color-primary-600)] dark:text-[#fbbf24] hover:underline font-medium"
       (click)="$event.stopPropagation()"
     >
-      📚 {{ event().clubName }}
+      {{ event().clubName }}
     </a>
 
     <!-- Location -->
     @if (event().city) {
-      <p class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+      <p class="text-xs text-[var(--color-ink-muted)] flex items-center gap-1">
         <span aria-hidden="true">📍</span>
         <span>{{ event().address || event().city }}</span>
       </p>
@@ -42,22 +44,30 @@
     @if (event().theme || event().tags.length > 0) {
       <div class="flex flex-wrap gap-1.5">
         @if (event().theme) {
-          <span class="rounded-full bg-accent-100/80 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700/60 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
-            ✨ {{ event().theme }}
+          <span class="rounded-full
+                       bg-[var(--color-accent-100)]/80 dark:bg-[var(--color-accent-900)]/40
+                       border border-[var(--color-accent-300)] dark:border-[var(--color-accent-700)]/60
+                       px-2.5 py-0.5 text-xs font-medium
+                       text-[var(--color-accent-700)] dark:text-[var(--color-accent-300)]">
+            {{ event().theme }}
           </span>
         }
         @for (tag of event().tags.slice(0, 2); track tag) {
-          <span class="rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-600 dark:text-gray-400">
-            🏷 {{ tag }}
+          <span class="rounded-full
+                       bg-[var(--color-surface-raised)]
+                       border border-[var(--color-sepia-mid)]
+                       px-2.5 py-0.5 text-xs text-[var(--color-ink-muted)]">
+            {{ tag }}
           </span>
         }
       </div>
     }
 
     <!-- Attendee count + RSVP -->
-    <div class="flex items-center justify-between mt-auto pt-2 border-t border-white/20 dark:border-white/10">
-      <span class="text-xs text-gray-500 dark:text-gray-400">
-        👥 {{ event().attendeeCount }} attending
+    <div class="flex items-center justify-between mt-auto pt-2
+                border-t border-[var(--color-sepia-mid)]">
+      <span class="text-xs text-[var(--color-ink-muted)]">
+        {{ event().attendeeCount }} attending
       </span>
       <div class="flex gap-2">
         <a hlmBtn variant="outline" size="sm" [routerLink]="['/events', event().id]">
@@ -65,14 +75,16 @@
         </a>
         @if (isAuthenticated() && event().status !== 'cancelled') {
           @if (event().isAttending) {
-            <button hlmBtn type="button" size="sm" [disabled]="attending()" (click)="cancelAttend.emit()"
-                    class="bg-green-600 hover:bg-green-700 text-white">
-              @if (attending()) { ⏳ } @else { ✓ Going }
+            <button hlmBtn type="button" size="sm" [disabled]="attending()"
+                    (click)="cancelAttend.emit()"
+                    class="bg-[var(--color-accent-600)] hover:bg-[var(--color-accent-700)] text-white">
+              @if (attending()) { <hlm-spinner size="xs" /> } @else { ✓ Going }
             </button>
           } @else {
-            <button hlmBtn type="button" size="sm" [disabled]="attending()" (click)="attend.emit()"
-                    class="bg-primary-600 hover:bg-primary-700 text-white">
-              @if (attending()) { ⏳ } @else { RSVP }
+            <button hlmBtn type="button" size="sm" [disabled]="attending()"
+                    (click)="attend.emit()"
+                    class="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white">
+              @if (attending()) { <hlm-spinner size="xs" /> } @else { RSVP }
             </button>
           }
         }

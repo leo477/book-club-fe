@@ -9,6 +9,7 @@ import { HlmCard } from '../../../../shared/spartan/card/src';
 
 @Component({
   selector: 'app-club-manage-panel',
+  host: { class: 'block' },
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [RouterLink, TranslateModule, HlmCard],

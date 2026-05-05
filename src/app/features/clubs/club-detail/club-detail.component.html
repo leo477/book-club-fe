@@ -1,5 +1,5 @@
 @if (isLoading()) {
-  <main class="max-w-4xl mx-auto px-4 py-8" aria-busy="true" aria-label="Loading club details">
+  <main class="page-max-w px-6 py-8" aria-busy="true" aria-label="Loading club details">
     <div class="animate-pulse space-y-4">
       <div class="h-56 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
       <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
@@ -8,7 +8,7 @@
     </div>
   </main>
 } @else if (errorMessage()) {
-  <main class="max-w-4xl mx-auto px-4 py-8 text-center" role="alert">
+  <main class="page-max-w px-6 py-8 text-center" role="alert">
     <p class="text-6xl mb-4" aria-hidden="true">😕</p>
     <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
     <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
@@ -24,7 +24,7 @@
   <main class="min-h-screen">
 
     <!-- Cover image + back navigation (full width) -->
-    <div class="relative glass-hero">
+    <div class="relative parchment-hero">
       @if (club()!.coverUrl) {
         <img
           [src]="club()!.coverUrl"
@@ -33,7 +33,7 @@
           loading="lazy"
         />
       } @else {
-        <div class="bg-gradient-brand h-64" aria-hidden="true"></div>
+        <div class="bg-gradient-fantasy h-64" aria-hidden="true"></div>
       }
 
       <div class="absolute inset-0 flex items-end justify-center pointer-events-none px-6 pb-8">
@@ -45,7 +45,7 @@
       <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
         <a
           routerLink="/clubs"
-          class="inline-flex items-center gap-1.5 rounded-full glass-card px-3 py-1.5 text-sm font-medium text-white hover:scale-105 transition-all duration-200"
+          class="inline-flex items-center gap-1.5 rounded-full parchment-card px-3 py-1.5 text-sm font-medium text-[var(--color-ink)] hover:scale-105 transition-all duration-200"
           [attr.aria-label]="'CLUB_DETAIL.back' | translate"
         >
           ← {{ 'CLUB_DETAIL.back_short' | translate }}
@@ -54,7 +54,7 @@
     </div>
 
     <!-- 3-column layout -->
-    <div class="max-w-screen-2xl mx-auto py-8">
+    <div class="page-max-w px-6 py-8">
       <div class="flex flex-col lg:flex-row gap-6 items-start">
 
         <!-- ═══════ LEFT SIDEBAR ═══════ -->
@@ -62,7 +62,7 @@
 
           <!-- Current book -->
           @if (nearestEventBook()) {
-            <div hlmCard class="glass-card-subtle p-4 gap-3">
+            <div hlmCard class="parchment-card-sunken p-4 gap-3">
               <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 {{ 'CLUB_DETAIL.now_reading' | translate }}</h3>
               @if (nearestEventBook()!.coverUrl) {
                 <img
@@ -88,7 +88,7 @@
         </aside>
 
         <!-- ═══════ MAIN CONTENT ═══════ -->
-        <div class="flex-1 min-w-0 space-y-6 order-1 lg:order-2">
+        <div class="flex-1 min-w-0 flex flex-col gap-8 order-1 lg:order-2">
 
           <!-- Club header -->
           <app-club-header
@@ -97,8 +97,6 @@
             [isOwner]="isClubOwner()"
             [isAuthenticated]="!!currentUser()"
             [isActionLoading]="isActionLoading()"
-            [currentUser]="currentUser()"
-            (join)="onJoin()"
             (leave)="onLeave()" />
 
           <!-- Action error -->
@@ -111,18 +109,27 @@
 
           <!-- Description section -->
           @if (club()!.description) {
-            <section hlmCard class="glass-card-subtle px-6 gap-3">
+            <section hlmCard class="parchment-card-sunken px-6 gap-3">
               <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
               <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
             </section>
           }
 
+          <!-- Book Voting -->
+          @if (isMember() || isClubOwner()) {
+            <app-book-vote-section
+              [clubId]="id()"
+              [isOwner]="isClubOwner()"
+              [isMember]="isMember()"
+            />
+          }
+
           <!-- Join CTA for authenticated non-members -->
           @if (!!currentUser() && !isMember() && !isClubOwner()) {
-            <div class="rounded-2xl border-2 border-dashed border-primary-300 dark:border-primary-700 p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-primary-50 dark:bg-primary-950/30">
+            <div class="rounded-2xl border-2 border-dashed border-[var(--color-sepia)] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[var(--color-surface-raised)]">
               <div>
-                <p class="font-semibold text-primary-800 dark:text-primary-300">{{ 'CLUB_DETAIL.join_cta_title' | translate }}</p>
-                <p class="text-sm text-primary-600 dark:text-primary-400 mt-0.5">{{ 'CLUB_DETAIL.join_cta_desc' | translate }}</p>
+                <p class="font-semibold text-[var(--color-ink)]">{{ 'CLUB_DETAIL.join_cta_title' | translate }}</p>
+                <p class="text-sm text-[var(--color-ink-muted)] mt-0.5">{{ 'CLUB_DETAIL.join_cta_desc' | translate }}</p>
               </div>
               <button
                 hlmBtn
@@ -137,7 +144,7 @@
           }
 
           <!-- Upcoming Events section -->
-          <section hlmCard class="glass-card px-6 gap-4">
+          <section hlmCard class="parchment-card px-6 gap-4">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
                 📅 {{ 'CLUB_DETAIL.events_title' | translate }}
@@ -163,7 +170,7 @@
                     (click)="sortKey.set(opt.key)"
                     class="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
                     [class]="sortKey() === opt.key
-                      ? 'bg-primary-600 text-white border-primary-600 shadow-sm'
+                      ? 'bg-[var(--color-primary-600)] text-white border-[var(--color-primary-600)] shadow-sm'
                       : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600'"
                   >
                     {{ opt.labelKey | translate }}
@@ -212,7 +219,6 @@
         <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-3 lg:order-3">
           <app-club-sidebar-right
             [club]="club()!"
-            [members]="members()"
             [organizerProfile]="organizerProfile()"
           />
         </aside>

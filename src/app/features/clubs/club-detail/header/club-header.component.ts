@@ -6,7 +6,6 @@ import {
 } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { Club } from '../../../../core/models/club.model';
-import { UserProfile } from '../../../../core/models/user.model';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { HlmButton } from '../../../../shared/spartan/button/src';
 
@@ -23,8 +22,6 @@ export class ClubHeaderComponent {
   readonly isOwner = input.required<boolean>();
   readonly isAuthenticated = input.required<boolean>();
   readonly isActionLoading = input.required<boolean>();
-  readonly currentUser = input<UserProfile | null>(null);
 
-  readonly join = output<void>();
   readonly leave = output<void>();
 }

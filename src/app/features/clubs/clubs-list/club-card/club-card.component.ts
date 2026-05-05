@@ -9,12 +9,14 @@ import { Club } from '../../../../core/models/club.model';
 import { TranslateModule } from '@ngx-translate/core';
 import { HlmCardImports } from '../../../../shared/spartan/card/src';
 import { HlmButton } from '../../../../shared/spartan/button/src';
+import { HlmSeparator } from '../../../../shared/spartan/separator/src';
+import { HlmSpinner } from '../../../../shared/spartan/spinner/src';
 
 @Component({
   selector: 'app-club-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton],
+  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton, HlmSeparator, HlmSpinner],
   templateUrl: './club-card.component.html',
 })
 export class ClubCardComponent {

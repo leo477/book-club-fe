@@ -1,0 +1,72 @@
+<div class="flex items-end justify-center gap-3 px-4 py-6">
+
+  <!-- 2nd place (silver) -->
+  <div class="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
+    @if (second()) {
+      <div class="w-12 h-12 rounded-full ring-2 ring-gray-300 dark:ring-gray-500 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-300 overflow-hidden">
+        @if (second()!.avatarUrl) {
+          <img [src]="second()!.avatarUrl" [alt]="second()!.displayName" class="w-full h-full object-cover" />
+        } @else {
+          {{ initials(second()!.displayName) }}
+        }
+      </div>
+      <p class="text-xs text-gray-700 dark:text-gray-300 font-medium text-center truncate w-full px-1">{{ second()!.displayName }}</p>
+      <span class="inline-flex items-center rounded-full bg-gray-200/80 dark:bg-gray-700/60 text-gray-700 dark:text-gray-300 px-2.5 py-0.5 text-xs font-bold border border-gray-300 dark:border-gray-600">
+        {{ second()!.score }}/{{ second()!.totalQuestions }}
+      </span>
+    } @else {
+      <div class="w-12 h-12 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-300 dark:text-gray-600 text-lg">—</div>
+      <p class="text-xs text-gray-400 dark:text-gray-600 text-center">2nd</p>
+    }
+    <div class="w-full h-24 rounded-t-xl flex items-center justify-center text-2xl bg-gradient-to-t from-gray-200 to-gray-100 dark:from-gray-700 dark:to-gray-600">
+      🥈
+    </div>
+  </div>
+
+  <!-- 1st place (gold) — tallest -->
+  <div class="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
+    @if (first()) {
+      <div class="w-14 h-14 rounded-full ring-4 ring-yellow-400 dark:ring-yellow-500 bg-yellow-100 dark:bg-yellow-900/40 flex items-center justify-center text-base font-bold text-yellow-700 dark:text-yellow-300 overflow-hidden">
+        @if (first()!.avatarUrl) {
+          <img [src]="first()!.avatarUrl" [alt]="first()!.displayName" class="w-full h-full object-cover" />
+        } @else {
+          {{ initials(first()!.displayName) }}
+        }
+      </div>
+      <p class="text-xs text-gray-900 dark:text-white font-bold text-center truncate w-full px-1">{{ first()!.displayName }}</p>
+      <span class="inline-flex items-center rounded-full bg-yellow-400 text-yellow-900 px-2.5 py-0.5 text-xs font-bold border border-yellow-500">
+        {{ first()!.score }}/{{ first()!.totalQuestions }}
+      </span>
+    } @else {
+      <div class="w-14 h-14 rounded-full border-2 border-dashed border-yellow-300 dark:border-yellow-700 flex items-center justify-center text-yellow-300 dark:text-yellow-700 text-xl">—</div>
+      <p class="text-xs text-gray-400 dark:text-gray-600 text-center">1st</p>
+    }
+    <div class="w-full h-32 rounded-t-xl flex items-center justify-center text-3xl bg-gradient-to-t from-yellow-300 to-yellow-100 dark:from-yellow-600/60 dark:to-yellow-400/30">
+      🥇
+    </div>
+  </div>
+
+  <!-- 3rd place (bronze) — shortest -->
+  <div class="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
+    @if (third()) {
+      <div class="w-12 h-12 rounded-full ring-2 ring-amber-500 dark:ring-amber-600 bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-sm font-bold text-amber-700 dark:text-amber-300 overflow-hidden">
+        @if (third()!.avatarUrl) {
+          <img [src]="third()!.avatarUrl" [alt]="third()!.displayName" class="w-full h-full object-cover" />
+        } @else {
+          {{ initials(third()!.displayName) }}
+        }
+      </div>
+      <p class="text-xs text-amber-800 dark:text-amber-300 font-medium text-center truncate w-full px-1">{{ third()!.displayName }}</p>
+      <span class="inline-flex items-center rounded-full bg-amber-600/80 text-white px-2.5 py-0.5 text-xs font-bold border border-amber-500">
+        {{ third()!.score }}/{{ third()!.totalQuestions }}
+      </span>
+    } @else {
+      <div class="w-12 h-12 rounded-full border-2 border-dashed border-amber-300 dark:border-amber-700 flex items-center justify-center text-amber-300 dark:text-amber-700 text-lg">—</div>
+      <p class="text-xs text-gray-400 dark:text-gray-600 text-center">3rd</p>
+    }
+    <div class="w-full h-20 rounded-t-xl flex items-center justify-center text-2xl bg-gradient-to-t from-amber-600/70 to-amber-400/40 dark:from-amber-700/60 dark:to-amber-500/30">
+      🥉
+    </div>
+  </div>
+
+</div>

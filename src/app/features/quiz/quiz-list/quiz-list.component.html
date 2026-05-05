@@ -61,15 +61,29 @@
                     <h2 class="text-gray-900 dark:text-white font-semibold truncate">
                       {{ quiz.title }}
                     </h2>
-                    @if (quiz.isActive) {
-                      <span class="inline-flex items-center gap-1 rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
-                        <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
-                        Active
-                      </span>
-                    } @else {
-                      <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-500 dark:text-gray-400">
-                        Draft
-                      </span>
+                    @switch (quiz.status) {
+                      @case ('live') {
+                        <span class="inline-flex items-center gap-1 rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
+                          <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse"></span>
+                          Live
+                        </span>
+                      }
+                      @case ('active') {
+                        <span class="inline-flex items-center gap-1 rounded-full bg-blue-100/80 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700/60 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-400">
+                          <span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span>
+                          Active
+                        </span>
+                      }
+                      @case ('closed') {
+                        <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-400 dark:text-gray-500">
+                          Closed
+                        </span>
+                      }
+                      @default {
+                        <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-500 dark:text-gray-400">
+                          Draft
+                        </span>
+                      }
                     }
                   </div>
                   @if (quiz.description) {
@@ -81,20 +95,46 @@
               </div>
 
               <!-- Actions -->
-              <div class="flex items-center gap-2 mt-auto">
+              <div class="flex items-center gap-2 mt-auto flex-wrap">
                 @if (authService.isOrganizer()) {
-                  <button
-                    hlmBtn
-                    type="button"
-                    size="sm"
-                    [variant]="quiz.isActive ? 'secondary' : 'outline'"
-                    (click)="toggleActive(quiz.id, !quiz.isActive)"
-                    [disabled]="togglingId() === quiz.id"
-                    class="w-full"
-                  >
-                    {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
-                  </button>
-                } @else if (quiz.isActive) {
+                  <!-- Preview (always) -->
+                  <a hlmBtn size="sm" variant="outline"
+                     [routerLink]="['/clubs', id(), 'quizzes', quiz.id, 'preview']">
+                    {{ 'QUIZ.preview' | translate }}
+                  </a>
+
+                  <!-- Edit (draft only) -->
+                  @if (quiz.status === 'draft') {
+                    <a hlmBtn size="sm" variant="ghost"
+                       [routerLink]="['/clubs', id(), 'quizzes', quiz.id, 'edit']">
+                      {{ 'QUIZ.edit' | translate }}
+                    </a>
+                  }
+
+                  <!-- Manage Session (active or live) -->
+                  @if (quiz.status !== 'draft' && quiz.status !== 'closed') {
+                    <a hlmBtn size="sm"
+                       class="bg-gradient-brand text-white border-0 hover:opacity-90"
+                       [routerLink]="['/clubs', id(), 'quizzes', quiz.id, 'session']">
+                      {{ 'QUIZ.manage_session' | translate }}
+                    </a>
+                  }
+
+                  <!-- Activate/Deactivate toggle (draft ↔ active) -->
+                  @if (quiz.status === 'draft' || quiz.status === 'active') {
+                    <button
+                      hlmBtn
+                      type="button"
+                      size="sm"
+                      [variant]="quiz.isActive ? 'secondary' : 'outline'"
+                      (click)="toggleActive(quiz.id, !quiz.isActive)"
+                      [disabled]="togglingId() === quiz.id"
+                    >
+                      {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
+                    </button>
+                  }
+                } @else if (quiz.isActive || quiz.status === 'live' || quiz.status === 'active') {
+                  <!-- Member: Take Quiz -->
                   <button
                     hlmBtn
                     type="button"
@@ -104,6 +144,14 @@
                   >
                     Take Quiz →
                   </button>
+                }
+
+                <!-- Leaderboard (live — visible to all) -->
+                @if (quiz.status === 'live') {
+                  <a hlmBtn size="sm" variant="outline"
+                     [routerLink]="['/clubs', id(), 'quizzes', quiz.id, 'leaderboard']">
+                    {{ 'QUIZ.leaderboard' | translate }}
+                  </a>
                 }
               </div>
             </div>

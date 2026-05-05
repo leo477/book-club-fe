@@ -8,21 +8,31 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, startWith, firstValueFrom } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideSun, lucideMoon } from '@ng-icons/lucide';
 import { AuthService } from '../../core/auth/auth.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { HlmDropdownMenuImports } from '../../shared/spartan/dropdown-menu/src';
 import { HlmSheetImports } from '../../shared/spartan/sheet/src';
 import { HlmButton } from '../../shared/spartan/button/src';
+import { HlmIconImports } from '../../shared/spartan/icon/src';
 
 @Component({
   selector: 'app-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, TranslateModule, ...HlmDropdownMenuImports, ...HlmSheetImports, HlmButton],
+  providers: [provideIcons({ lucideSun, lucideMoon })],
+  imports: [
+    RouterLink, RouterLinkActive, TranslateModule, NgIcon,
+    ...HlmIconImports,
+    ...HlmDropdownMenuImports, ...HlmSheetImports, HlmButton,
+  ],
   templateUrl: './header.component.html',
 })
 export class HeaderComponent {
-  private readonly auth = inject(AuthService);
+  private readonly auth      = inject(AuthService);
   private readonly translate = inject(TranslateService);
+  readonly themeService      = inject(ThemeService);
 
   readonly isAuthenticated = this.auth.isAuthenticated;
   readonly currentUser = this.auth.currentUser;

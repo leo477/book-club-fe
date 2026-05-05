@@ -1,9 +1,11 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  computed,
   inject,
   signal,
   input,
+  resource,
   OnInit,
   DestroyRef,
 } from '@angular/core';
@@ -12,6 +14,7 @@ import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs';
 import { EventService } from '../../../core/services/event.service';
+import { QuizService } from '../../../core/services/quiz.service';
 import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
 import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
 import { HlmInput } from '../../../shared/spartan/input/src';
@@ -31,6 +34,7 @@ export class CreateEventComponent implements OnInit {
 
   private readonly fb = inject(FormBuilder);
   private readonly eventService = inject(EventService);
+  private readonly quizService = inject(QuizService);
   private readonly router = inject(Router);
   private readonly bookCoverService = inject(BookCoverService);
   private readonly destroyRef = inject(DestroyRef);
@@ -40,6 +44,16 @@ export class CreateEventComponent implements OnInit {
   readonly showAfterVenue = signal(false);
   readonly isFetchingCover = signal(false);
   readonly coverFetchFailed = signal(false);
+
+  private readonly _quizzesResource = resource({
+    params: () => ({ clubId: this.clubId() }),
+    loader: ({ params }) => this.quizService.getClubQuizzes(params.clubId),
+  });
+  readonly activeQuizzes = computed(() =>
+    (this._quizzesResource.value() ?? []).filter(
+      q => q.status === 'active' || q.status === 'live',
+    ),
+  );
 
   readonly form = this.fb.nonNullable.group({
     title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
@@ -57,6 +71,7 @@ export class CreateEventComponent implements OnInit {
     afterVenueDescription: [''],
     coverUrl: [''],
     bookTitle: [''],
+    quizId: [null as string | null],
   });
 
   ngOnInit(): void {
@@ -119,6 +134,7 @@ export class CreateEventComponent implements OnInit {
         afterMeetingVenue,
         coverUrl: v.coverUrl || null,
         bookTitle: v.bookTitle || null,
+        quizId: v.quizId || null,
       });
       await this.router.navigate(['/events', created.id]);
     } catch {

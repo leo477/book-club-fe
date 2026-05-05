@@ -1,10 +1,15 @@
 <div class="min-h-screen">
 
   <!-- ── Hero ─────────────────────────────────────────────────────────── -->
-  <section class="glass-hero bg-gradient-brand px-4 py-14 text-center">
+  <section class="parchment-hero px-4 py-14 text-center">
     <div class="relative z-10">
-      <h1 class="font-display text-4xl font-bold text-white mb-2 drop-shadow-sm">Events</h1>
-      <p class="text-white/80 mb-8">Discover and join upcoming book club events</p>
+      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
+                 text-[var(--color-ink)] mb-2 drop-shadow-sm">
+        {{ 'NAV.events' | translate }}
+      </h1>
+      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-8">
+        Discover and join upcoming book club gatherings
+      </p>
 
       <!-- City filter -->
       @if (eventService.availableCities().length > 0) {
@@ -12,11 +17,11 @@
           <select
             [ngModel]="eventService.cityFilter()"
             (ngModelChange)="eventService.setCityFilter($event || null)"
-            class="w-full rounded-full glass-card px-4 py-2.5 text-sm text-gray-900 dark:text-white border-0 focus:outline-none focus:ring-2 focus:ring-white/50 appearance-none cursor-pointer"
+            class="w-full parchment-input rounded-full px-4 py-2.5 text-sm appearance-none cursor-pointer"
           >
-            <option value="">📍 All cities</option>
+            <option value="">All cities</option>
             @for (city of eventService.availableCities(); track city) {
-              <option [value]="city">📍 {{ city }}</option>
+              <option [value]="city">{{ city }}</option>
             }
           </select>
         </div>
@@ -24,26 +29,79 @@
     </div>
   </section>
 
-  <div class="max-w-6xl mx-auto px-4 py-8 space-y-8">
+  <div class="page-container py-8 space-y-8">
 
     <!-- ── Error ─────────────────────────────────────────────────────── -->
     @if (eventService.error()) {
-      <div class="flex items-start gap-2 glass-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
         <span aria-hidden="true">⚠️</span>
         <span>{{ eventService.error() }}</span>
       </div>
     }
 
-    <!-- ── Tabs (authenticated) ────────────────────────────────────── -->
+    <!-- ── Segmented control: Upcoming / My Events (authenticated) ──── -->
     @if (auth.isAuthenticated()) {
-      <div hlmTabs tab="upcoming">
-        <div hlmTabsList variant="line" class="w-full border-b border-gray-200 dark:border-gray-700 rounded-none">
-          <button hlmTabsTrigger="upcoming">Upcoming</button>
-          <button hlmTabsTrigger="my">My Events</button>
-        </div>
 
-        <!-- Upcoming tab -->
-        <div hlmTabsContent="upcoming" class="pt-6">
+      <!-- Pill switcher -->
+      <div class="flex justify-center" role="tablist" aria-label="Event filter">
+        <div class="relative flex rounded-full p-1
+                    bg-[var(--color-surface-sunken)]
+                    border border-[var(--color-sepia)]
+                    shadow-inner">
+          <!-- Sliding pill -->
+          <div class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full
+                      bg-[var(--color-surface-raised)]
+                      shadow-[var(--shadow-parchment)]
+                      transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+               [style.left]="activeTab() === 'upcoming' ? '4px' : '50%'"
+               aria-hidden="true">
+          </div>
+
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'upcoming'"
+            (click)="activeTab.set('upcoming')"
+            class="relative z-10 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'upcoming'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            Upcoming
+          </button>
+
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'my'"
+            (click)="activeTab.set('my')"
+            class="relative z-10 flex items-center gap-1.5 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'my'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            My Events
+            @if (eventService.myEvents().length > 0) {
+              <span class="inline-flex items-center justify-center
+                           h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
+                           transition-colors duration-300"
+                    [class]="activeTab() === 'my'
+                      ? 'bg-[var(--color-primary-600)] text-white'
+                      : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]'">
+                {{ eventService.myEvents().length }}
+              </span>
+            }
+          </button>
+        </div>
+      </div>
+
+      <!-- Upcoming panel -->
+      @if (activeTab() === 'upcoming') {
+        <div class="pt-6" role="tabpanel">
           @if (eventService.isLoading()) {
             <div class="py-16 flex justify-center" aria-busy="true">
               <hlm-spinner />
@@ -57,14 +115,13 @@
           } @else {
             @for (date of sortedDates(); track date) {
               <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
-                <div class="flex items-center gap-3 mb-5">
+                <div class="date-section-divider mb-5" aria-hidden="true">
                   <h2
                     [id]="'date-' + date"
-                    class="glass-card-subtle inline-flex px-4 py-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide"
+                    class="date-badge font-fantasy tracking-wider uppercase"
                   >
-                    📆 {{ date }}
+                    ✦ {{ date }} ✦
                   </h2>
-                  <div class="flex-1 h-px bg-white/30 dark:bg-white/10"></div>
                 </div>
                 <ul class="bento-grid-3">
                   @for (event of eventService.groupedByDate()[date]; track event.id) {
@@ -83,9 +140,11 @@
             }
           }
         </div>
+      }
 
-        <!-- My Events tab -->
-        <div hlmTabsContent="my" class="pt-6">
+      <!-- My Events panel -->
+      @if (activeTab() === 'my') {
+        <div class="pt-6" role="tabpanel">
           @if (eventService.isLoading()) {
             <div class="py-16 flex justify-center" aria-busy="true">
               <hlm-spinner />
@@ -112,7 +171,7 @@
             </ul>
           }
         </div>
-      </div>
+      }
 
     } @else {
       <!-- Non-authenticated: upcoming events without tabs -->
@@ -129,14 +188,13 @@
       } @else {
         @for (date of sortedDates(); track date) {
           <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
-            <div class="flex items-center gap-3 mb-5">
+            <div class="date-section-divider mb-5" aria-hidden="true">
               <h2
                 [id]="'date-' + date"
-                class="glass-card-subtle inline-flex px-4 py-1.5 text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-wide"
+                class="date-badge font-fantasy tracking-wider uppercase"
               >
-                📆 {{ date }}
+                ✦ {{ date }} ✦
               </h2>
-              <div class="flex-1 h-px bg-white/30 dark:bg-white/10"></div>
             </div>
             <ul class="bento-grid-3">
               @for (event of eventService.groupedByDate()[date]; track event.id) {

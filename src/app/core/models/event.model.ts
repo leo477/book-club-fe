@@ -31,4 +31,5 @@ export interface ClubEvent {
   attendeeCount: number;
   isAttending: boolean;
   bookTitle?: string | null;
+  quizId?: string | null;
 }

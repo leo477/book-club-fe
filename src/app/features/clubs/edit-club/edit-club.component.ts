@@ -9,8 +9,8 @@ import {
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { toast } from '@spartan-ng/brain/sonner';
 import { ClubService } from '../../../core/services/club.service';
-import { ToastService } from '../../../core/services/toast.service';
 import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
 import { HlmFieldImports } from '../../../shared/spartan/field/src';
 import { HlmInput } from '../../../shared/spartan/input/src';
@@ -37,7 +37,6 @@ export class EditClubComponent implements OnInit {
 
   private readonly clubService = inject(ClubService);
   private readonly router = inject(Router);
-  private readonly toast = inject(ToastService);
   private readonly translate = inject(TranslateService);
 
   private readonly _isLoadingClub = signal(true);
@@ -105,7 +104,7 @@ export class EditClubComponent implements OnInit {
         city: city || undefined,
         coverUrl: coverUrl || null,
       });
-      this.toast.show(this.translate.instant('EDIT_CLUB.success'), 'success');
+      toast.success(this.translate.instant('EDIT_CLUB.success'));
       this.router.navigate(['/clubs', this.id()]);
     } catch (err) {
       this._errorMessage.set(err instanceof Error ? err.message : 'Failed to update club');

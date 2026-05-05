@@ -14,14 +14,13 @@ import { SeoService } from '../../../core/services/seo.service';
 import { TranslateModule } from '@ngx-translate/core';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ClubCardComponent } from './club-card/club-card.component';
-import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
 import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 
 @Component({
   selector: 'app-clubs-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, ...HlmTabsImports, HlmSpinner],
+  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, HlmSpinner],
   templateUrl: './clubs-list.component.html',
 })
 export class ClubsListComponent implements OnInit {
@@ -31,6 +30,7 @@ export class ClubsListComponent implements OnInit {
 
   readonly joiningClubId = signal<string | null>(null);
   readonly ownedClubIds = this.clubService.myOwnedClubIds;
+  readonly activeTab = signal<'all' | 'my'>('all');
 
   async ngOnInit(): Promise<void> {
     this.seo.setPageI18n('SEO.clubs_title', {

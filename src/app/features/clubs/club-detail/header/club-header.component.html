@@ -27,25 +27,7 @@
           }
           {{ 'CLUB_DETAIL.leave' | translate }}
         </button>
-      } @else {
-        <button
-          hlmBtn
-          type="button"
-          (click)="join.emit()"
-          [disabled]="isActionLoading()"
-          class="bg-primary-600 hover:bg-primary-700 text-white"
-          [attr.aria-label]="'CLUB_DETAIL.join' | translate"
-        >
-          @if (isActionLoading()) {
-            <app-loading-spinner size="sm" />
-          }
-          {{ 'CLUB_DETAIL.join' | translate }}
-        </button>
       }
-    } @else {
-      <span class="inline-flex items-center gap-1.5 rounded-xl bg-accent-100 dark:bg-accent-900/30 px-4 py-2.5 text-sm font-semibold text-accent-700 dark:text-accent-300">
-        {{ 'CLUB_DETAIL.organizer_badge' | translate }}
-      </span>
     }
   }
 </header>

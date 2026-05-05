@@ -1,0 +1,186 @@
+@if (round() || isOwner()) {
+<section class="parchment-card px-6 py-5 flex flex-col gap-4">
+
+  <!-- ── Header ──────────────────────────────────────────────────── -->
+  <div class="flex items-center justify-between">
+    <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+      📚 Голосування за наступну книгу
+    </h2>
+
+    @if (isOwner()) {
+      @if (round()?.status === 'open') {
+        <button hlmBtn variant="outline" size="sm" type="button" (click)="closeRound()">
+          Закрити голосування
+        </button>
+      } @else if (round()?.status === 'closed') {
+        <button hlmBtn size="sm" type="button" (click)="newRound()">
+          Нове голосування
+        </button>
+      }
+    }
+  </div>
+
+  <!-- ── No active round (owner only) ────────────────────────────── -->
+  @if (!round()) {
+    <div class="flex flex-col items-center gap-3 py-6 text-center">
+      <p class="text-sm text-[var(--color-ink-muted)]">
+        Запропонуйте учасникам клубу обрати наступну книгу
+      </p>
+      <button hlmBtn size="sm" type="button" (click)="createRound()">
+        Почати голосування
+      </button>
+    </div>
+  }
+
+  <!-- ── Open round ───────────────────────────────────────────────── -->
+  @if (round()?.status === 'open') {
+
+    @if (round()!.options.length === 0) {
+      <p class="text-sm text-[var(--color-ink-muted)] text-center py-4">
+        Додайте книги для голосування нижче
+      </p>
+    } @else {
+      <ul class="flex flex-col gap-3">
+        @for (option of round()!.options; track option.id) {
+          <li class="flex flex-col gap-1.5 rounded-xl p-3
+                     bg-[var(--color-surface-sunken)]
+                     border border-[var(--color-sepia)]">
+
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="font-display font-semibold text-sm text-[var(--color-ink)] leading-snug truncate">
+                  {{ option.title }}
+                </p>
+                @if (option.author) {
+                  <p class="text-xs text-[var(--color-ink-muted)] mt-0.5">{{ option.author }}</p>
+                }
+              </div>
+
+              <div class="flex items-center gap-2 flex-shrink-0">
+                @if (isMember() || isOwner()) {
+                  <button
+                    hlmBtn
+                    type="button"
+                    size="sm"
+                    [attr.variant]="option.hasVoted ? 'default' : 'outline'"
+                    (click)="toggleVote(option)"
+                    class="text-xs"
+                  >
+                    {{ option.hasVoted ? '✓ Проголосовано' : 'Голосувати' }}
+                  </button>
+                }
+                @if (isOwner() && option.votes === 0) {
+                  <button
+                    type="button"
+                    (click)="removeOption(option.id)"
+                    class="text-[var(--color-ink-muted)] hover:text-red-600 dark:hover:text-red-400
+                           transition-colors duration-150 p-1 rounded"
+                    aria-label="Видалити варіант"
+                  >
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="h-1.5 rounded-full bg-[var(--color-surface-raised)] overflow-hidden">
+              <div
+                class="h-full rounded-full bg-[var(--color-primary-600)] transition-all duration-500"
+                [style.width.%]="getPercent(option)"
+              ></div>
+            </div>
+            <p class="text-[11px] text-[var(--color-ink-muted)]">
+              {{ option.votes }} {{ option.votes === 1 ? 'голос' : 'голосів' }} · {{ getPercent(option) }}%
+            </p>
+
+          </li>
+        }
+      </ul>
+    }
+
+    <!-- Add book form (owner only) -->
+    @if (isOwner()) {
+      <div class="border-t border-[var(--color-sepia)] pt-4 flex flex-col gap-2">
+        <p class="text-xs font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide">Додати книгу</p>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input
+            type="text"
+            [ngModel]="newTitle()"
+            (ngModelChange)="newTitle.set($event)"
+            placeholder="Назва книги *"
+            class="flex-1 min-w-0 parchment-input rounded-lg px-3 py-2 text-sm"
+          />
+          <input
+            type="text"
+            [ngModel]="newAuthor()"
+            (ngModelChange)="newAuthor.set($event)"
+            placeholder="Автор"
+            class="flex-1 min-w-0 parchment-input rounded-lg px-3 py-2 text-sm"
+          />
+          <button hlmBtn size="sm" type="button" (click)="addOption()" class="flex-shrink-0">
+            Додати
+          </button>
+        </div>
+        @if (addError()) {
+          <p class="text-xs text-red-600 dark:text-red-400">{{ addError() }}</p>
+        }
+      </div>
+    }
+  }
+
+  <!-- ── Closed round: results ────────────────────────────────────── -->
+  @if (round()?.status === 'closed') {
+    <ul class="flex flex-col gap-3">
+      @for (option of sortedOptions(); track option.id) {
+        <li
+          class="flex flex-col gap-1.5 rounded-xl p-3 border transition-colors"
+          [class]="option.id === round()!.winnerId
+            ? 'bg-[var(--color-primary-50)] dark:bg-[var(--color-primary-900)]/20 border-[var(--color-primary-400)] ring-1 ring-[var(--color-primary-400)]'
+            : 'bg-[var(--color-surface-sunken)] border-[var(--color-sepia)]'"
+        >
+          <div class="flex items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="font-display font-semibold text-sm text-[var(--color-ink)] leading-snug truncate">
+                {{ option.title }}
+              </p>
+              @if (option.author) {
+                <p class="text-xs text-[var(--color-ink-muted)] mt-0.5">{{ option.author }}</p>
+              }
+            </div>
+            @if (option.id === round()!.winnerId) {
+              <span class="flex-shrink-0 text-xs font-bold
+                           text-[var(--color-primary-700)] dark:text-[#fbbf24]
+                           bg-[var(--color-primary-100)] dark:bg-[var(--color-primary-900)]/40
+                           border border-[var(--color-primary-300)] dark:border-[var(--color-primary-700)]/60
+                           rounded-full px-2.5 py-0.5">
+                🏆 Переможець
+              </span>
+            }
+          </div>
+
+          <div class="h-1.5 rounded-full bg-[var(--color-surface-raised)] overflow-hidden">
+            <div
+              class="h-full rounded-full transition-all duration-500"
+              [class]="option.id === round()!.winnerId
+                ? 'bg-[var(--color-primary-500)]'
+                : 'bg-[var(--color-ink-muted)]/40'"
+              [style.width.%]="getPercent(option)"
+            ></div>
+          </div>
+          <p class="text-[11px] text-[var(--color-ink-muted)]">
+            {{ option.votes }} {{ option.votes === 1 ? 'голос' : 'голосів' }} · {{ getPercent(option) }}%
+          </p>
+        </li>
+      }
+    </ul>
+
+    @if (round()!.options.length === 0) {
+      <p class="text-sm text-[var(--color-ink-muted)] text-center py-4">Варіанти не додавалися</p>
+    }
+  }
+
+</section>
+}

@@ -5,9 +5,11 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
   isOwn: boolean;
+  isMuted?: boolean;
 }
 
 export interface ChatRoom {
   id: string;
   name: string;
+  clubId: string;
 }
