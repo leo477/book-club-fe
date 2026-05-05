@@ -134,7 +134,7 @@ export class CreateEventComponent implements OnInit {
         afterMeetingVenue,
         coverUrl: v.coverUrl || null,
         bookTitle: v.bookTitle || null,
-        quizId: v.quizId || null,
+        quizId: v.quizId ?? null,
       });
       await this.router.navigate(['/events', created.id]);
     } catch {

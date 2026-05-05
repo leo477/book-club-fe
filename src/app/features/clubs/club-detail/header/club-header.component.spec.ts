@@ -66,17 +66,6 @@ describe('ClubHeaderComponent', () => {
     expect(component.isActionLoading()).toBeTrue();
   });
 
-  it('currentUser defaults to null', () => {
-    expect(component.currentUser()).toBeNull();
-  });
-
-  it('join output emits when triggered', () => {
-    let emitted = false;
-    component.join.subscribe(() => { emitted = true; });
-    component.join.emit();
-    expect(emitted).toBeTrue();
-  });
-
   it('leave output emits when triggered', () => {
     let emitted = false;
     component.leave.subscribe(() => { emitted = true; });

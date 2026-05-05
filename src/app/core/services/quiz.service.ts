@@ -65,7 +65,7 @@ function mapQuiz(raw: ApiQuiz): Quiz {
     title: raw.title,
     description: raw.description,
     status: (raw.status as QuizStatus) ?? 'draft',
-    isActive: raw.status !== 'draft',
+    isActive: raw.isActive,
   };
 }
 

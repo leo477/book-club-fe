@@ -13,7 +13,7 @@ import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Router } from '@angular/router';
 import { QuizService } from '../../../core/services/quiz.service';
-import { QuizSession, QuizLeaderboardEntry } from '../../../core/models/quiz.model';
+import { QuizSession } from '../../../core/models/quiz.model';
 import { ClubEvent } from '../../../core/models/event.model';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';

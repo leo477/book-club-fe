@@ -61,7 +61,7 @@ export class ChatWidgetComponent {
         this.chat.loadAllClubRooms(clubs, user.id);
       } else if (!this._clubsLoadTriggered) {
         this._clubsLoadTriggered = true;
-        this.clubService.loadMyClubs().catch(() => {});
+        this.clubService.loadMyClubs().catch(() => undefined);
       }
     });
   }

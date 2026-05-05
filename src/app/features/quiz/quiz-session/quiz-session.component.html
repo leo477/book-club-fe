@@ -24,8 +24,9 @@
           </p>
 
           <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Event</label>
+            <label for="event-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Event</label>
             <select
+              id="event-select"
               class="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
               [value]="selectedEventId()"
               (change)="selectedEventId.set($any($event.target).value)"

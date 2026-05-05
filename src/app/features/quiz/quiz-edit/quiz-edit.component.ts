@@ -18,7 +18,6 @@ import {
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { QuizService } from '../../../core/services/quiz.service';
-import { QuizQuestion } from '../../../core/models/quiz.model';
 import { HlmFieldImports } from '../../../shared/spartan/field/src';
 import { HlmInput } from '../../../shared/spartan/input/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
@@ -38,12 +37,12 @@ interface QuestionForm {
   correctIndex: FormControl<number>;
 }
 
-type EditableQuestion = {
+interface EditableQuestion {
   id?: string;
   question: string;
   options: string[];
   correctIndex: number;
-};
+}
 
 @Component({
   selector: 'app-quiz-edit',
@@ -188,8 +187,9 @@ export class QuizEditComponent {
 
   protected removeQuestion(index: number): void {
     const q = this.localQuestions()[index];
-    if (q.id) {
-      this._deletedIds.update(ids => [...ids, q.id!]);
+    const qId = q.id;
+    if (qId) {
+      this._deletedIds.update(ids => [...ids, qId]);
     }
     this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
   }

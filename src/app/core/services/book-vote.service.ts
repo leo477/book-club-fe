@@ -68,11 +68,7 @@ export class BookVoteService {
   }
 
   clearRound(clubId: string): void {
-    this._rounds.update(r => {
-      const next = { ...r };
-      delete next[clubId];
-      return next;
-    });
+    this._rounds.update(r => Object.fromEntries(Object.entries(r).filter(([k]) => k !== clubId)));
   }
 
   private _patchRound(clubId: string, fn: (r: BookVoteRound) => BookVoteRound): void {
