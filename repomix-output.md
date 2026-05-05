@@ -2017,6 +2017,33 @@ CREATE POLICY "Organizers can manage randomizer sessions"
   );
 ````
 
+## File: .claudignore
+````
+node_modules/
+dist/
+.git/
+**/__pycache__/**
+*.log
+*.json
+*.sqlite
+*.db
+*.csv
+*.tsv
+*.zip
+*.tar
+*.gz
+*.7z
+*.bak
+*.tmp
+*.swp
+*.swo
+*.DS_Store
+*.coverage
+*.spec.ts
+public/i18n/**
+coverage/
+````
+
 ## File: .editorconfig
 ````
 # Editor configuration, see https://editorconfig.org
@@ -2149,6 +2176,29 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+````
+
+## File: repomix.config.json
+````json
+{
+  "output": {
+    "style": "markdown",
+    "removeComments": true,
+    "removeEmptyLines": true,
+    "showLineNumbers": false
+  },
+  "ignore": {
+    "customPatterns": [
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/venv/**",
+      "**/*.scss",
+      "**/*.css",
+      "**/*.spec.ts",
+      "package-lock.json"
+    ]
+  }
+}
 ````
 
 ## File: SECURITY.md
@@ -2319,6 +2369,15 @@ When invoking agents via the `task` tool, **always use the model specified below
 | `ui` | `claude-haiku-4.5` | Design system, Tailwind, animations, accessibility |
 | `web-quality-enhancer` | `claude-sonnet-4.6` | SEO, microcopy, semantic HTML, API docs |
 | `java-backend-dev` | `claude-sonnet-4.6` | Java 21 microservices, Spring Boot, JPA, Kafka, JWT |
+````
+
+## File: .husky/pre-commit
+````
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+npx lint-staged
+npx repomix --no-files
 ````
 
 ## File: mock-server/index.js
@@ -6949,33 +7008,6 @@ ALTER TABLE events
   ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
 ````
 
-## File: .claudignore
-````
-node_modules/
-dist/
-.git/
-**/__pycache__/**
-*.log
-*.json
-*.sqlite
-*.db
-*.csv
-*.tsv
-*.zip
-*.tar
-*.gz
-*.7z
-*.bak
-*.tmp
-*.swp
-*.swo
-*.DS_Store
-*.coverage
-*.spec.ts
-public/i18n/**
-coverage/
-````
-
 ## File: .gitignore
 ````
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
@@ -7264,29 +7296,6 @@ module.exports = defineConfig([
 - 0 `npm run lint` warnings
 - ≤10 LOC дельта на файл
 - Всі тести зелені
-````
-
-## File: repomix.config.json
-````json
-{
-  "output": {
-    "style": "markdown",
-    "removeComments": true,
-    "removeEmptyLines": true,
-    "showLineNumbers": false
-  },
-  "ignore": {
-    "customPatterns": [
-      "**/node_modules/**",
-      "**/dist/**",
-      "**/venv/**",
-      "**/*.scss",
-      "**/*.css",
-      "**/*.spec.ts",
-      "package-lock.json"
-    ]
-  }
-}
 ````
 
 ## File: spartan_plan.md
@@ -8651,15 +8660,6 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ steps.gate.outputs.body }}
           comment-tag: pr-review-gate
-````
-
-## File: .husky/pre-commit
-````
-#!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
-
-npx lint-staged
-npx repomix --no-files
 ````
 
 ## File: src/app/core/auth/token.store.ts
@@ -10245,6 +10245,45 @@ export const environment = {
 }
 ````
 
+## File: CLAUDE.md
+````markdown
+# Project Context
+This project uses **Repomix** to provide a full map of the codebase.
+
+## Stack
+- Frontend: Angular 21 (Signals — resource(), rxResource(), linkedSignal(), input()/output(), standalone components, SCSS, Tailwind)
+- Backend: FastAPI (Async, Pydantic v2)
+
+## Folder Structure
+- `src/app/features/` — Angular feature components (auth, clubs, profile, quiz, randomizer)
+- `src/app/core/` — Core services, guards, interceptors, models
+- `src/app/shared/` — Shared UI components, pipes, directives
+- `src/app/layout/` — Shell, header, footer
+- `public/i18n/` — Translation files (en.json, uk.json)
+- `supabase/migrations/` — SQL migrations for backend
+
+## How to Run
+- **Dev server:** `npm start` (Angular at http://localhost:4200)
+- **Build:** `npm run build`
+- **Update context:** `npm run build-ctx`
+
+## Testing & Linting
+- **Unit tests:** `npm run test` (Jest)
+- **E2E tests:** Playwright (see docs)
+- **Lint:** `npm run lint`
+
+## Pre-commit Hooks & Development Workflow
+- This project does **not** use `.pre-commit-config.yaml`, `ruff`, or `black`.
+- Pre-commit hooks are managed via Husky. The only pre-commit hook is `.husky/pre-commit`, which runs `lint-staged`.
+- The pre-commit hook updates `repomix-output.md` using `lint-staged`.
+- No Python-specific formatting or linting tools are involved in the pre-commit process.
+
+## Notes
+- Always check `repomix-output.md` for the latest project map.
+- If a file is not in repomix-output.md, assume it doesn't exist yet.
+- Backend API routes: see FastAPI project (not in this repo).
+````
+
 ## File: karma.conf.js
 ````javascript
 module.exports = function (config) {
@@ -11491,45 +11530,6 @@ export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
 		event.preventDefault();
 	}
 }
-````
-
-## File: CLAUDE.md
-````markdown
-# Project Context
-This project uses **Repomix** to provide a full map of the codebase.
-
-## Stack
-- Frontend: Angular 21 (Signals — resource(), rxResource(), linkedSignal(), input()/output(), standalone components, SCSS, Tailwind)
-- Backend: FastAPI (Async, Pydantic v2)
-
-## Folder Structure
-- `src/app/features/` — Angular feature components (auth, clubs, profile, quiz, randomizer)
-- `src/app/core/` — Core services, guards, interceptors, models
-- `src/app/shared/` — Shared UI components, pipes, directives
-- `src/app/layout/` — Shell, header, footer
-- `public/i18n/` — Translation files (en.json, uk.json)
-- `supabase/migrations/` — SQL migrations for backend
-
-## How to Run
-- **Dev server:** `npm start` (Angular at http://localhost:4200)
-- **Build:** `npm run build`
-- **Update context:** `npm run build-ctx`
-
-## Testing & Linting
-- **Unit tests:** `npm run test` (Jest)
-- **E2E tests:** Playwright (see docs)
-- **Lint:** `npm run lint`
-
-## Pre-commit Hooks & Development Workflow
-- This project does **not** use `.pre-commit-config.yaml`, `ruff`, or `black`.
-- Pre-commit hooks are managed via Husky. The only pre-commit hook is `.husky/pre-commit`, which runs `lint-staged`.
-- The pre-commit hook updates `repomix-output.md` using `lint-staged`.
-- No Python-specific formatting or linting tools are involved in the pre-commit process.
-
-## Notes
-- Always check `repomix-output.md` for the latest project map.
-- If a file is not in repomix-output.md, assume it doesn't exist yet.
-- Backend API routes: see FastAPI project (not in this repo).
 ````
 
 ## File: src/app/core/models/event.model.ts

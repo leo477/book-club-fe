@@ -277,4 +277,197 @@ describe('ChatService', () => {
       expect(getActiveMessages(service)).toEqual([]);
     });
   });
+
+  describe('loadMessages() with params', () => {
+    it('should include before and limit query params when provided', () => {
+      service.loadMessages('room-1', { before: 'cursor-xyz', limit: 20 });
+      const req = httpMock.expectOne(r =>
+        r.url === `${API}/chat/rooms/room-1/messages` &&
+        r.params.get('before') === 'cursor-xyz' &&
+        r.params.get('limit') === '20',
+      );
+      req.flush([]);
+    });
+
+    it('should not include params when not provided', () => {
+      service.loadMessages('room-1');
+      const req = httpMock.expectOne(`${API}/chat/rooms/room-1/messages`);
+      expect(req.request.params.keys().length).toBe(0);
+      req.flush([]);
+    });
+  });
+
+  describe('loadAllClubRooms()', () => {
+    async function flushMicrotasks(n = 5): Promise<void> {
+      for (let i = 0; i < n; i++) await Promise.resolve();
+    }
+
+    it('loads rooms from multiple clubs and merges them', async () => {
+      service.loadAllClubRooms([
+        { id: 'club-1', name: 'Club A' },
+        { id: 'club-2', name: 'Club B' },
+      ]);
+
+      httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([{ id: 'r1', name: 'General' }]);
+      httpMock.expectOne(`${API}/clubs/club-2/chat/rooms`).flush([{ id: 'r2', name: 'General' }]);
+
+      await flushMicrotasks();
+
+      // First room is auto-selected so loadMessages fires for r1
+      httpMock.expectOne(`${API}/chat/rooms/r1/messages`).flush([]);
+
+      await flushMicrotasks();
+
+      expect(getRooms(service).length).toBe(2);
+      expect(getRooms(service)[0].name).toBe('Club A · General');
+      expect(getRooms(service)[1].name).toBe('Club B · General');
+    });
+
+    it('uses plain room name when only one club', async () => {
+      service.loadAllClubRooms([{ id: 'club-1', name: 'Club A' }]);
+
+      httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([{ id: 'r1', name: 'General' }]);
+
+      await flushMicrotasks();
+
+      httpMock.expectOne(`${API}/chat/rooms/r1/messages`).flush([]);
+
+      expect(getRooms(service)[0].name).toBe('General');
+    });
+
+    it('sets userId when provided', async () => {
+      service.loadAllClubRooms([{ id: 'club-1', name: 'Club A' }], 'user-5');
+
+      httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([{ id: 'r1', name: 'General' }]);
+
+      await flushMicrotasks();
+
+      httpMock.expectOne(`${API}/chat/rooms/r1/messages`).flush([{
+        id: 'm1', senderId: 'user-5', senderName: 'Me', text: 'Hi',
+        timestamp: '2024-01-01T00:00:00Z',
+      }]);
+
+      await flushMicrotasks();
+
+      expect(getActiveMessages(service)[0].isOwn).toBeTrue();
+    });
+
+    it('gracefully handles failed club room requests', async () => {
+      service.loadAllClubRooms([
+        { id: 'club-1', name: 'Club A' },
+        { id: 'club-bad', name: 'Club B' },
+      ]);
+
+      httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([{ id: 'r1', name: 'General' }]);
+      httpMock.expectOne(`${API}/clubs/club-bad/chat/rooms`).flush(
+        { detail: 'Error' }, { status: 500, statusText: 'Error' },
+      );
+
+      await flushMicrotasks();
+
+      httpMock.expectOne(`${API}/chat/rooms/r1/messages`).flush([]);
+
+      expect(getRooms(service).length).toBe(1);
+    });
+  });
+
+  describe('clearRooms()', () => {
+    it('resets all signals to initial state', async () => {
+      service.loadRooms('club-1');
+      const req = httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`);
+      req.flush([{ id: 'r1', name: 'General' }]);
+      await Promise.resolve();
+      httpMock.expectOne(`${API}/chat/rooms/r1/messages`).flush([]);
+
+      service.clearRooms();
+
+      expect(getRooms(service)).toEqual([]);
+      expect(getActiveRoomId(service)).toBeNull();
+      expect(getUnreadCount(service)).toBe(0);
+      expect(getIsOpen(service)).toBe(false);
+      expect(getHasNewMessage(service)).toBe(false);
+    });
+  });
+
+  describe('muteUser() / unmuteUser()', () => {
+    it('muteUser adds user to muted set', () => {
+      service.muteUser('user-bad');
+      expect(service.mutedUserIds().has('user-bad')).toBeTrue();
+    });
+
+    it('unmuteUser removes user from muted set', () => {
+      service.muteUser('user-bad');
+      service.unmuteUser('user-bad');
+      expect(service.mutedUserIds().has('user-bad')).toBeFalse();
+    });
+
+    it('activeMessages() marks muted user messages', async () => {
+      service.loadRooms('club-1');
+      const roomsReq = httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`);
+      roomsReq.flush([{ id: 'r1', name: 'General' }]);
+      await Promise.resolve();
+
+      const msgsReq = httpMock.expectOne(`${API}/chat/rooms/r1/messages`);
+      msgsReq.flush([{
+        id: 'm1', senderId: 'bad-user', senderName: 'Spammer', text: 'Spam',
+        timestamp: '2024-01-01T00:00:00Z',
+      }]);
+      await Promise.resolve();
+
+      service.muteUser('bad-user');
+      expect(getActiveMessages(service)[0].isMuted).toBeTrue();
+    });
+  });
+
+  describe('deleteMessage()', () => {
+    it('removes message from messages map on success', async () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
+      service.deleteMessage('msg-to-delete');
+
+      const req = httpMock.expectOne(`${API}/chat/rooms/room-1/messages/msg-to-delete`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+    });
+
+    it('does nothing when activeRoomId is null', () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set(null);
+      service.deleteMessage('msg-x');
+      httpMock.expectNone(`${API}/chat/rooms/null/messages/msg-x`);
+    });
+  });
+
+  describe('banUserFromChat()', () => {
+    it('sends POST with userId and duration', () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
+      service.banUserFromChat('bad-user', 3600);
+
+      const req = httpMock.expectOne(`${API}/chat/rooms/room-1/ban`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ user_id: 'bad-user', duration_seconds: 3600 });
+      req.flush(null);
+    });
+
+    it('does nothing when activeRoomId is null', () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set(null);
+      service.banUserFromChat('bad-user', 3600);
+      httpMock.expectNone(`${API}/chat/rooms/null/ban`);
+    });
+  });
+
+  describe('createRoom()', () => {
+    it('sends POST and appends new room to rooms signal', async () => {
+      service.createRoom('club-1', 'New Room');
+
+      const req = httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ name: 'New Room' });
+      req.flush({ id: 'new-room-id', name: 'New Room' });
+
+      await Promise.resolve();
+
+      expect(getRooms(service).length).toBe(1);
+      expect(getRooms(service)[0].id).toBe('new-room-id');
+      expect(getRooms(service)[0].clubId).toBe('club-1');
+    });
+  });
 });

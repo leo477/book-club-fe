@@ -221,4 +221,229 @@ describe('QuizService', () => {
       await expectAsync(p).toBeRejectedWithError();
     });
   });
+
+  describe('getQuiz', () => {
+    it('returns mapped quiz by id', async () => {
+      const p = service.getQuiz('q1');
+      httpMock.expectOne(`${API}/quizzes/q1`).flush(rawQuiz);
+      const quiz = await p;
+      expect(quiz.id).toBe('q1');
+      expect(quiz.title).toBe('Test Quiz');
+    });
+
+    it('throws on HTTP error', async () => {
+      const p = service.getQuiz('q1');
+      httpMock.expectOne(`${API}/quizzes/q1`).flush({}, { status: 404, statusText: 'Not Found' });
+      await expectAsync(p).toBeRejectedWithError();
+    });
+  });
+
+  describe('getQuestions', () => {
+    it('returns mapped questions array', async () => {
+      const p = service.getQuestions('q1');
+      httpMock.expectOne(`${API}/quizzes/q1/questions`).flush([rawQuestion]);
+      const questions = await p;
+      expect(questions.length).toBe(1);
+      expect(questions[0].question).toBe('What is 2+2?');
+    });
+
+    it('throws on HTTP error', async () => {
+      const p = service.getQuestions('q1');
+      httpMock.expectOne(`${API}/quizzes/q1/questions`).flush({}, { status: 500, statusText: 'Error' });
+      await expectAsync(p).toBeRejectedWithError();
+    });
+  });
+
+  describe('updateQuiz', () => {
+    it('sends PATCH and updates quiz in list', async () => {
+      const loadP = service.loadQuizzes('c1');
+      httpMock.expectOne(`${API}/clubs/c1/quizzes`).flush([rawQuiz]);
+      await loadP;
+
+      const updated = { ...rawQuiz, title: 'Updated Title', description: 'New desc' };
+      const p = service.updateQuiz('q1', { title: 'Updated Title', description: 'New desc' });
+      const req = httpMock.expectOne(`${API}/quizzes/q1`);
+      expect(req.request.method).toBe('PATCH');
+      req.flush(updated);
+      const quiz = await p;
+      expect(quiz.title).toBe('Updated Title');
+      expect(service.quizzes()[0].title).toBe('Updated Title');
+    });
+
+    it('throws on HTTP error', async () => {
+      const p = service.updateQuiz('q1', { title: 'X', description: '' });
+      httpMock.expectOne(`${API}/quizzes/q1`).flush({}, { status: 500, statusText: 'Error' });
+      await expectAsync(p).toBeRejectedWithError();
+    });
+  });
+
+  describe('updateQuestion', () => {
+    it('sends PATCH to correct endpoint', async () => {
+      const p = service.updateQuestion('q1', 'qq1', { question: 'Updated?' });
+      const req = httpMock.expectOne(`${API}/quizzes/q1/questions/qq1`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ question: 'Updated?' });
+      req.flush({});
+      await p;
+    });
+
+    it('throws on HTTP error', async () => {
+      const p = service.updateQuestion('q1', 'qq1', { question: 'X' });
+      httpMock.expectOne(`${API}/quizzes/q1/questions/qq1`).flush({}, { status: 500, statusText: 'Error' });
+      await expectAsync(p).toBeRejectedWithError();
+    });
+  });
+
+  describe('deleteQuestion', () => {
+    it('sends DELETE to correct endpoint', async () => {
+      const p = service.deleteQuestion('q1', 'qq1');
+      const req = httpMock.expectOne(`${API}/quizzes/q1/questions/qq1`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+      await p;
+    });
+
+    it('throws on HTTP error', async () => {
+      const p = service.deleteQuestion('q1', 'qq1');
+      httpMock.expectOne(`${API}/quizzes/q1/questions/qq1`).flush({}, { status: 500, statusText: 'Error' });
+      await expectAsync(p).toBeRejectedWithError();
+    });
+  });
+
+  describe('reorderQuestions', () => {
+    it('sends PUT with order array', async () => {
+      const p = service.reorderQuestions('q1', ['qq2', 'qq1']);
+      const req = httpMock.expectOne(`${API}/quizzes/q1/questions/order`);
+      expect(req.request.method).toBe('PUT');
+      expect(req.request.body).toEqual({ order: ['qq2', 'qq1'] });
+      req.flush({});
+      await p;
+    });
+
+    it('throws on HTTP error', async () => {
+      const p = service.reorderQuestions('q1', ['qq1']);
+      httpMock.expectOne(`${API}/quizzes/q1/questions/order`).flush({}, { status: 500, statusText: 'Error' });
+      await expectAsync(p).toBeRejectedWithError();
+    });
+  });
+
+  describe('startSession', () => {
+    const rawSession = {
+      id: 's1', quizId: 'q1', eventId: 'e1', startedBy: 'u1',
+      startedAt: '2024-01-01T00:00:00Z', closedAt: null, participantCount: 0,
+    };
+
+    it('sends POST and updates session signal', async () => {
+      const p = service.startSession('q1', 'e1');
+      const req = httpMock.expectOne(`${API}/quizzes/q1/sessions`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ eventId: 'e1' });
+      req.flush(rawSession);
+      const session = await p;
+      expect(session.id).toBe('s1');
+      expect(service.session()?.id).toBe('s1');
+    });
+
+    it('throws on HTTP error', async () => {
+      const p = service.startSession('q1', 'e1');
+      httpMock.expectOne(`${API}/quizzes/q1/sessions`).flush({}, { status: 500, statusText: 'Error' });
+      await expectAsync(p).toBeRejectedWithError();
+    });
+  });
+
+  describe('getActiveSession', () => {
+    const rawSession = {
+      id: 's1', quizId: 'q1', eventId: 'e1', startedBy: 'u1',
+      startedAt: '2024-01-01T00:00:00Z', closedAt: null, participantCount: 0,
+    };
+
+    it('returns mapped session on success', async () => {
+      const p = service.getActiveSession('q1');
+      httpMock.expectOne(`${API}/quizzes/q1/sessions/active`).flush(rawSession);
+      const session = await p;
+      expect(session?.id).toBe('s1');
+    });
+
+    it('returns null on HTTP error', async () => {
+      const p = service.getActiveSession('q1');
+      httpMock.expectOne(`${API}/quizzes/q1/sessions/active`).flush({}, { status: 404, statusText: 'Not Found' });
+      const session = await p;
+      expect(session).toBeNull();
+    });
+  });
+
+  describe('getLeaderboard', () => {
+    const rawEntry = {
+      rank: 1, userId: 'u1', displayName: 'Alice', avatarUrl: null,
+      score: 5, totalQuestions: 5, hasAttempted: true,
+    };
+
+    it('returns mapped leaderboard entries', async () => {
+      const p = service.getLeaderboard('q1', 's1');
+      httpMock.expectOne(`${API}/quizzes/q1/sessions/s1/leaderboard`).flush({ entries: [rawEntry] });
+      const entries = await p;
+      expect(entries.length).toBe(1);
+      expect(entries[0].rank).toBe(1);
+      expect(entries[0].displayName).toBe('Alice');
+    });
+
+    it('throws on HTTP error', async () => {
+      const p = service.getLeaderboard('q1', 's1');
+      httpMock.expectOne(`${API}/quizzes/q1/sessions/s1/leaderboard`).flush({}, { status: 500, statusText: 'Error' });
+      await expectAsync(p).toBeRejectedWithError();
+    });
+  });
+
+  describe('endSession', () => {
+    it('sends PATCH to close session and clears session signal', async () => {
+      const p = service.endSession('q1', 's1');
+      const req = httpMock.expectOne(`${API}/quizzes/q1/sessions/s1/close`);
+      expect(req.request.method).toBe('PATCH');
+      req.flush({});
+      await p;
+      expect(service.session()).toBeNull();
+    });
+
+    it('throws on HTTP error', async () => {
+      const p = service.endSession('q1', 's1');
+      httpMock.expectOne(`${API}/quizzes/q1/sessions/s1/close`).flush({}, { status: 500, statusText: 'Error' });
+      await expectAsync(p).toBeRejectedWithError();
+    });
+  });
+
+  describe('getClubQuizzes', () => {
+    it('returns mapped quizzes array without updating signal', async () => {
+      const p = service.getClubQuizzes('c1');
+      httpMock.expectOne(`${API}/clubs/c1/quizzes`).flush([rawQuiz]);
+      const quizzes = await p;
+      expect(quizzes.length).toBe(1);
+      expect(quizzes[0].id).toBe('q1');
+      // Does NOT update the quizzes signal
+      expect(service.quizzes()).toEqual([]);
+    });
+
+    it('throws on HTTP error', async () => {
+      const p = service.getClubQuizzes('c1');
+      httpMock.expectOne(`${API}/clubs/c1/quizzes`).flush({}, { status: 500, statusText: 'Error' });
+      await expectAsync(p).toBeRejectedWithError();
+    });
+  });
+
+  describe('loadClubEvents', () => {
+    const rawEvent = { id: 'ev1', title: 'Event 1', clubId: 'c1' };
+
+    it('returns events array', async () => {
+      const p = service.loadClubEvents('c1');
+      httpMock.expectOne(`${API}/clubs/c1/events`).flush([rawEvent]);
+      const events = await p;
+      expect(events.length).toBe(1);
+      expect((events[0] as { id: string }).id).toBe('ev1');
+    });
+
+    it('throws on HTTP error', async () => {
+      const p = service.loadClubEvents('c1');
+      httpMock.expectOne(`${API}/clubs/c1/events`).flush({}, { status: 500, statusText: 'Error' });
+      await expectAsync(p).toBeRejectedWithError();
+    });
+  });
 });
