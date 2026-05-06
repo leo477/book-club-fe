@@ -56,10 +56,10 @@ export class HeaderComponent {
     );
   });
 
-  switchLang(): void {
-    const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-    void firstValueFrom(this.translate.use(next));
-  }
+  async switchLang(): Promise<void> {
+  const next = this.currentLang() === 'uk' ? 'en' : 'uk';
+  await firstValueFrom(this.translate.use(next));
+}
 
   async signOut(): Promise<void> {
     await this.auth.signOut();

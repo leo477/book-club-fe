@@ -4833,7 +4833,10 @@ export class QuizTakeComponent implements OnInit {
   private readonly router = inject(Router);
   protected readonly state = signal<QuizState>('loading');
   protected readonly errorMessage = signal('');
-  protected readonly currentIndex = linkedSignal(() => { void this.quizService.questions(); return 0; });
+  protected readonly currentIndex = linkedSignal(() => {
+  this.quizService.questions(); // Реєструємо залежність: коли питання зміняться, індекс скинеться
+  return 0;
+});
   protected readonly selectedAnswers = signal<number[]>([]);
   protected readonly selectedOption = computed(
     () => this.selectedAnswers()[this.currentIndex()] ?? -1,
@@ -12811,9 +12814,9 @@ export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
 	public readonly tabListInner = viewChild.required<ElementRef<HTMLElement>>('tabListInner');
 	public readonly nextPaginator = viewChild.required<ElementRef<HTMLElement>>('nextPaginator');
 	public readonly previousPaginator = viewChild.required<ElementRef<HTMLElement>>('previousPaginator');
-	public readonly tabListClass = input<ClassValue>('', { alias: 'tabListClass' });
+	public readonly tabListClass = input<ClassValue>('');
 	protected readonly _tabListClass = computed(() => hlm(listVariants(), this.tabListClass()));
-	public readonly paginationButtonClass = input<ClassValue>('', { alias: 'paginationButtonClass' });
+	public readonly paginationButtonClass = input<ClassValue>('');
 	protected readonly _paginationButtonClass = computed(() =>
 		hlm(
 			'relative z-[2] select-none disabled:cursor-default',
@@ -14124,10 +14127,10 @@ export class HeaderComponent {
         .join('') || '?'
     );
   });
-  switchLang(): void {
-    const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-    void firstValueFrom(this.translate.use(next));
-  }
+  async switchLang(): Promise<void> {
+  const next = this.currentLang() === 'uk' ? 'en' : 'uk';
+  await firstValueFrom(this.translate.use(next));
+}
   async signOut(): Promise<void> {
     await this.auth.signOut();
   }
