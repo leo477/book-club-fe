@@ -77,7 +77,10 @@ export class ClubDetailComponent {
   readonly actionError = signal<string | null>(null);
   readonly attendingEventId = signal<string | null>(null);
 
-  readonly sortKey = linkedSignal<'date' | 'popular' | 'status'>(() => { void this.id(); return 'date'; });
+  readonly sortKey = linkedSignal<'date' | 'popular' | 'status'>(() => {
+    this.id(); 
+    return 'date'; 
+    });
 
   readonly sortOptions = [
     { key: 'date' as const,    labelKey: 'CLUB_DETAIL.sort_nearest' },
