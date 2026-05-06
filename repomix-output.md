@@ -4381,57 +4381,27 @@ export const EVENTS_ROUTES: Routes = [
           ⚠️ This quiz is live and cannot be edited. Questions and metadata are read-only.
         </div>
       }
-      <div class="flex items-center gap-0">
+      <div class="flex items-center gap-3">
         @for (step of [1, 2]; track step) {
-          <div
-            class="flex-1 h-1.5 rounded-full transition-all duration-300"
-            [class.bg-primary-500]="currentStep() >= step"
-            [class.bg-gray-200]="currentStep() < step"
-            [class.dark:bg-gray-700]="currentStep() < step"
-          ></div>
-          @if (step < 2) {
-            <div class="w-3"></div>
-          }
+          <div class="flex-1 h-1.5 rounded-full transition-all duration-300"
+               [class]="currentStep() >= step ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'">
+          </div>
         }
       </div>
       @if (currentStep() === 1) {
-        <form
-          [formGroup]="metaForm"
-          (ngSubmit)="nextStep()"
-          novalidate
-          class="glass-card p-6 space-y-5"
-        >
+        <form [formGroup]="metaForm" (ngSubmit)="nextStep()" novalidate class="glass-card p-6 space-y-5">
           <hlm-field>
-            <label hlmFieldLabel for="quiz-title">
-              Quiz title <span class="text-red-500">*</span>
-            </label>
-            <input
-              hlmInput
-              id="quiz-title"
-              formControlName="title"
-              class="w-full"
-              placeholder="e.g. The Midnight Library — Chapter 1 Quiz"
-            />
+            <label hlmFieldLabel for="quiz-title">Quiz title <span class="text-red-500">*</span></label>
+            <input hlmInput id="quiz-title" formControlName="title" class="w-full" placeholder="e.g. Mistborn: The Final Empire"/>
             <hlm-field-error validator="required">Title is required.</hlm-field-error>
-            <hlm-field-error validator="minlength">Title must be at least 3 characters.</hlm-field-error>
-            <hlm-field-error validator="maxlength">Title must not exceed 100 characters.</hlm-field-error>
+            <hlm-field-error validator="minlength">Too short (min 3).</hlm-field-error>
           </hlm-field>
           <hlm-field>
             <label hlmFieldLabel for="quiz-desc">Description</label>
-            <textarea
-              hlmInput
-              id="quiz-desc"
-              formControlName="description"
-              rows="3"
-              class="w-full resize-none"
-              placeholder="A brief description of the quiz…"
-            ></textarea>
-            <hlm-field-error validator="maxlength">Description must not exceed 500 characters.</hlm-field-error>
+            <textarea hlmInput id="quiz-desc" formControlName="description" rows="3" class="w-full resize-none"></textarea>
           </hlm-field>
           <div class="flex justify-end">
-            <button hlmBtn type="submit"
-                    [disabled]="metaForm.invalid || !isDraft()"
-                    class="bg-primary-600 hover:bg-primary-700 text-white">
+            <button hlmBtn type="submit" [disabled]="metaForm.invalid || !isDraft()" class="bg-primary-600 text-white">
               Continue →
             </button>
           </div>
@@ -4441,133 +4411,60 @@ export const EVENTS_ROUTES: Routes = [
         <div class="space-y-6">
           @if (localQuestions().length > 0) {
             <div class="space-y-3">
-              <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-widest">
+              <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-widest">
                 Questions ({{ localQuestions().length }})
               </h2>
               @for (q of localQuestions(); track $index) {
-                <div hlmCard class="glass-card-subtle px-5 py-4 flex items-start gap-3 rounded-xl">
-                  <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
-                               text-primary-700 dark:text-primary-300 text-xs font-bold flex
-                               items-center justify-center flex-shrink-0">
+                <div hlmCard class="glass-card-subtle px-5 py-4 flex items-start gap-3 rounded-xl relative">
+                  <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-xs font-bold flex items-center justify-center">
                     {{ $index + 1 }}
                   </span>
-                  <div class="min-w-0 flex-1">
-                    <p class="text-gray-900 dark:text-white text-sm font-medium">{{ q.question }}</p>
+                  <div class="flex-1">
+                    <p class="text-sm font-medium">{{ q.question }}</p>
                     <p class="text-green-600 dark:text-green-400 text-xs mt-1">✓ {{ q.options[q.correctIndex] }}</p>
-                    @if (q.id) {
-                      <p class="text-gray-400 dark:text-gray-600 text-xs mt-0.5">saved</p>
-                    } @else {
-                      <p class="text-blue-400 dark:text-blue-500 text-xs mt-0.5">new</p>
-                    }
+                    <p [class]="q.id ? 'text-gray-400' : 'text-blue-400'" class="text-[10px] uppercase font-bold mt-1">
+                      {{ q.id ? 'saved' : 'new' }}
+                    </p>
                   </div>
                   @if (isDraft()) {
-                    <button
-                      type="button"
-                      (click)="removeQuestion($index)"
-                      class="text-gray-400 hover:text-red-500 transition-colors text-lg flex-shrink-0 ml-auto leading-none"
-                      [attr.aria-label]="'Remove question ' + ($index + 1)"
-                    >
-                      ✕
-                    </button>
+                    <button type="button" (click)="removeQuestion($index)" class="text-gray-400 hover:text-red-500 transition-colors">✕</button>
                   }
                 </div>
               }
             </div>
           }
           @if (isDraft()) {
-            <form
-              [formGroup]="questionForm"
-              (ngSubmit)="addQuestion()"
-              novalidate
-              class="glass-card p-6 space-y-5"
-            >
-              <h2 class="font-semibold text-gray-900 dark:text-white">
-                {{ localQuestions().length === 0 ? 'Add your first question' : 'Add another question' }}
-              </h2>
+            <form [formGroup]="questionForm" (ngSubmit)="addQuestion()" class="glass-card p-6 space-y-5">
+              <h2 class="font-semibold">{{ localQuestions().length === 0 ? 'Add your first question' : 'Add another' }}</h2>
               <hlm-field>
-                <label hlmFieldLabel for="q-text">Question <span class="text-red-500">*</span></label>
-                <textarea
-                  hlmInput
-                  id="q-text"
-                  formControlName="question"
-                  rows="2"
-                  class="w-full resize-none"
-                  placeholder="What is the main theme of chapter 3?"
-                ></textarea>
-                <hlm-field-error validator="required">Question is required.</hlm-field-error>
-                <hlm-field-error validator="minlength">Question must be at least 5 characters.</hlm-field-error>
+                <label hlmFieldLabel for="q-text">Question *</label>
+                <textarea hlmInput id="q-text" formControlName="question" rows="2" class="w-full resize-none"></textarea>
               </hlm-field>
-              <div class="space-y-1">
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Answer options <span class="text-red-500">*</span>
-                </p>
-                <div class="space-y-2">
-                  @for (idx of optionIndices; track idx) {
-                    <div class="flex items-center gap-3">
-                      <label class="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          formControlName="correctIndex"
-                          [value]="idx"
-                          class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300 dark:border-gray-600 cursor-pointer"
-                        />
-                        <span
-                          class="ml-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                          [class.bg-accent-500]="questionForm.controls.correctIndex.value === idx"
-                          [class.text-white]="questionForm.controls.correctIndex.value === idx"
-                          [class.bg-gray-100]="questionForm.controls.correctIndex.value !== idx"
-                          [class.dark:bg-gray-700]="questionForm.controls.correctIndex.value !== idx"
-                          [class.text-gray-600]="questionForm.controls.correctIndex.value !== idx"
-                          [class.dark:text-gray-400]="questionForm.controls.correctIndex.value !== idx"
-                        >
-                          {{ optionLabel(idx) }}
-                        </span>
-                      </label>
-                      <input
-                        hlmInput
-                        [formControlName]="'option' + idx"
-                        [placeholder]="'Option ' + optionLabel(idx)"
-                        class="flex-1"
-                      />
-                    </div>
-                  }
-                </div>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  Select the radio button next to the correct answer.
-                </p>
+              <div class="space-y-3">
+                <p class="text-sm font-medium">Answer options *</p>
+                @for (idx of optionIndices; track idx) {
+                  <div class="flex items-center gap-3">
+                    <input type="radio" formControlName="correctIndex" [value]="idx" class="w-4 h-4 text-accent-600" />
+                    <input hlmInput [formControlName]="'option' + idx" [placeholder]="'Option ' + optionLabel(idx)" class="flex-1"/>
+                  </div>
+                }
               </div>
-              <button
-                hlmBtn
-                type="submit"
-                variant="outline"
-                [disabled]="questionForm.invalid"
-                class="w-full border-dashed border-primary-400 dark:border-primary-600
-                       text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
-              >
+              <button hlmBtn type="submit" variant="outline" [disabled]="questionForm.invalid" class="w-full border-dashed">
                 + Add Question
               </button>
             </form>
           }
           @if (errorMessage()) {
-            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-700 dark:text-red-400 text-sm">
+            <div class="bg-red-50 dark:bg-red-900/20 text-red-700 p-4 rounded-xl text-sm border border-red-200">
               ⚠️ {{ errorMessage() }}
             </div>
           }
           <div class="flex justify-between items-center pb-8">
-            <button hlmBtn type="button" variant="ghost" (click)="previousStep()">
-              ← Back
-            </button>
-            <button
-              hlmBtn
-              type="button"
-              (click)="saveChanges()"
-              [disabled]="!canSave()"
-              class="bg-accent-600 hover:bg-accent-700 text-white font-bold"
-            >
+            <button hlmBtn variant="ghost" (click)="previousStep()">← Back</button>
+            <button hlmBtn (click)="saveChanges()" [disabled]="!canSave()" class="bg-accent-600 text-white font-bold px-6">
               {{ isSaving() ? '⏳ Saving…' : '💾 Save Changes' }}
               @if (localQuestions().length > 0) {
-                ({{ localQuestions().length }}
-                {{ localQuestions().length === 1 ? 'question' : 'questions' }})
+                 ({{ localQuestions().length }} {{ localQuestions().length === 1 ? 'question' : 'questions' }})
               }
             </button>
           </div>
@@ -4802,131 +4699,6 @@ export abstract class LeaderboardBaseComponent implements OnDestroy {
     }
   </div>
 </div>
-````
-
-## File: src/app/features/quiz/quiz-take/quiz-take.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-  linkedSignal,
-} from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizAttempt } from '../../../core/models/quiz.model';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
-@Component({
-  selector: 'app-quiz-take',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LoadingSpinnerComponent],
-  templateUrl: './quiz-take.component.html',
-})
-export class QuizTakeComponent implements OnInit {
-  protected readonly quizService = inject(QuizService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  protected readonly state = signal<QuizState>('loading');
-  protected readonly errorMessage = signal('');
-  protected readonly currentIndex = linkedSignal(() => {
-  this.quizService.questions(); // Реєструємо залежність: коли питання зміняться, індекс скинеться
-  return 0;
-});
-  protected readonly selectedAnswers = signal<number[]>([]);
-  protected readonly selectedOption = computed(
-    () => this.selectedAnswers()[this.currentIndex()] ?? -1,
-  );
-  protected readonly attempt = signal<QuizAttempt | null>(null);
-  protected clubId = '';
-  protected readonly currentQuestion = computed(
-    () => this.quizService.questions()[this.currentIndex()] ?? null,
-  );
-  protected readonly isLastQuestion = computed(
-    () => this.currentIndex() === this.quizService.questions().length - 1,
-  );
-  protected readonly progressPercent = computed(() => {
-    const total = this.quizService.questions().length;
-    return total === 0 ? 0 : Math.round(((this.currentIndex() + 1) / total) * 100);
-  });
-  protected readonly scorePercent = computed(() => {
-    const a = this.attempt();
-    if (!a || a.total === 0) return 0;
-    return Math.round((a.score / a.total) * 100);
-  });
-  protected readonly scoreMessage = computed(() => {
-    const pct = this.scorePercent();
-    if (pct === 100) return '🎉 Perfect score!';
-    if (pct >= 80) return '🌟 Great job!';
-    if (pct >= 60) return '👍 Good effort!';
-    if (pct >= 40) return '📖 Keep reading!';
-    return '💪 Better luck next time!';
-  });
-  ngOnInit(): void {
-    // Both :id (club) and :quizId are inherited via paramsInheritanceStrategy:'always'
-    this.clubId = this.route.snapshot.params['id'] as string;
-    const quizId = this.route.snapshot.params['quizId'] as string;
-    if (!quizId) {
-      this.errorMessage.set('Quiz not found.');
-      this.state.set('error');
-      return;
-    }
-    this.quizService
-      .loadQuestions(quizId)
-      .then(() => {
-        const count = this.quizService.questions().length;
-        if (count === 0) {
-          this.errorMessage.set('This quiz has no questions yet.');
-          this.state.set('error');
-          return;
-        }
-        this.selectedAnswers.set(new Array<number>(count).fill(-1));
-        this.state.set('taking');
-      })
-      .catch(err => {
-        this.errorMessage.set((err as Error).message);
-        this.state.set('error');
-      });
-  }
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
-  protected selectOption(index: number): void {
-    const current = this.currentIndex();
-    this.selectedAnswers.update(answers => {
-      const copy = [...answers];
-      copy[current] = index;
-      return copy;
-    });
-  }
-  protected next(): void {
-    if (this.selectedOption() === -1) return;
-    this.currentIndex.update(i => i + 1);
-  }
-  protected previous(): void {
-    if (this.currentIndex() === 0) return;
-    this.currentIndex.update(i => i - 1);
-  }
-  protected submit(): void {
-    if (this.selectedOption() === -1) return;
-    this.state.set('submitting');
-    const quizId = this.route.snapshot.params['quizId'] as string;
-    this.quizService
-      .submitAttempt(quizId, this.selectedAnswers())
-      .then(result => {
-        this.attempt.set(result);
-        this.state.set('results');
-      })
-      .catch(err => {
-        this.errorMessage.set((err as Error).message);
-        this.state.set('error');
-      });
-  }
-}
 ````
 
 ## File: src/app/features/quiz/quiz-detail-base.component.ts
@@ -10419,6 +10191,131 @@ export class QuizPreviewComponent extends QuizDetailBaseComponent {
 }
 ````
 
+## File: src/app/features/quiz/quiz-take/quiz-take.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  linkedSignal,
+} from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizAttempt } from '../../../core/models/quiz.model';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
+@Component({
+  selector: 'app-quiz-take',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, LoadingSpinnerComponent],
+  templateUrl: './quiz-take.component.html',
+})
+export class QuizTakeComponent implements OnInit {
+  protected readonly quizService = inject(QuizService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  protected readonly state = signal<QuizState>('loading');
+  protected readonly errorMessage = signal('');
+  protected readonly currentIndex = linkedSignal(() => {
+  this.quizService.questions(); // Реєструємо залежність: коли питання зміняться, індекс скинеться
+  return 0;
+});
+  protected readonly selectedAnswers = signal<number[]>([]);
+  protected readonly selectedOption = computed(
+    () => this.selectedAnswers()[this.currentIndex()] ?? -1,
+  );
+  protected readonly attempt = signal<QuizAttempt | null>(null);
+  protected clubId = '';
+  protected readonly currentQuestion = computed(
+    () => this.quizService.questions()[this.currentIndex()] ?? null,
+  );
+  protected readonly isLastQuestion = computed(
+    () => this.currentIndex() === this.quizService.questions().length - 1,
+  );
+  protected readonly progressPercent = computed(() => {
+    const total = this.quizService.questions().length;
+    return total === 0 ? 0 : Math.round(((this.currentIndex() + 1) / total) * 100);
+  });
+  protected readonly scorePercent = computed(() => {
+    const a = this.attempt();
+    if (!a || a.total === 0) return 0;
+    return Math.round((a.score / a.total) * 100);
+  });
+  protected readonly scoreMessage = computed(() => {
+    const pct = this.scorePercent();
+    if (pct === 100) return '🎉 Perfect score!';
+    if (pct >= 80) return '🌟 Great job!';
+    if (pct >= 60) return '👍 Good effort!';
+    if (pct >= 40) return '📖 Keep reading!';
+    return '💪 Better luck next time!';
+  });
+  ngOnInit(): void {
+    // Both :id (club) and :quizId are inherited via paramsInheritanceStrategy:'always'
+    this.clubId = this.route.snapshot.params['id'] as string;
+    const quizId = this.route.snapshot.params['quizId'] as string;
+    if (!quizId) {
+      this.errorMessage.set('Quiz not found.');
+      this.state.set('error');
+      return;
+    }
+    this.quizService
+      .loadQuestions(quizId)
+      .then(() => {
+        const count = this.quizService.questions().length;
+        if (count === 0) {
+          this.errorMessage.set('This quiz has no questions yet.');
+          this.state.set('error');
+          return;
+        }
+        this.selectedAnswers.set(new Array<number>(count).fill(-1));
+        this.state.set('taking');
+      })
+      .catch(err => {
+        this.errorMessage.set((err as Error).message);
+        this.state.set('error');
+      });
+  }
+  protected optionLabel(index: number): string {
+    return String.fromCodePoint(65 + index);
+  }
+  protected selectOption(index: number): void {
+    const current = this.currentIndex();
+    this.selectedAnswers.update(answers => {
+      const copy = [...answers];
+      copy[current] = index;
+      return copy;
+    });
+  }
+  protected next(): void {
+    if (this.selectedOption() === -1) return;
+    this.currentIndex.update(i => i + 1);
+  }
+  protected previous(): void {
+    if (this.currentIndex() === 0) return;
+    this.currentIndex.update(i => i - 1);
+  }
+  protected submit(): void {
+    if (this.selectedOption() === -1) return;
+    this.state.set('submitting');
+    const quizId = this.route.snapshot.params['quizId'] as string;
+    this.quizService
+      .submitAttempt(quizId, this.selectedAnswers())
+      .then(result => {
+        this.attempt.set(result);
+        this.state.set('results');
+      })
+      .catch(err => {
+        this.errorMessage.set((err as Error).message);
+        this.state.set('error');
+      });
+  }
+}
+````
+
 ## File: src/app/layout/shell/shell.component.html
 ````html
 <app-header />
@@ -12730,106 +12627,6 @@ export class ChatWidgetComponent {
 }
 ````
 
-## File: src/app/shared/spartan/tabs/src/lib/hlm-tabs-paginated-list.ts
-````typescript
-import { CdkObserveContent } from '@angular/cdk/observers';
-import {
-	ChangeDetectionStrategy,
-	Component,
-	type ElementRef,
-	computed,
-	contentChildren,
-	input,
-	viewChild,
-} from '@angular/core';
-import { toObservable } from '@angular/core/rxjs-interop';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideChevronLeft, lucideChevronRight } from '@ng-icons/lucide';
-import { type BrnPaginatedTabHeaderItem, BrnTabsPaginatedList, BrnTabsTrigger } from '@spartan-ng/brain/tabs';
-import { buttonVariants } from '@spartan-ng/helm/button';
-import { HlmIcon } from '@spartan-ng/helm/icon';
-import { classes, hlm } from '@spartan-ng/helm/utils';
-import type { ClassValue } from 'clsx';
-import type { Observable } from 'rxjs';
-import { listVariants } from './hlm-tabs-list';
-@Component({
-	selector: 'hlm-paginated-tabs-list',
-	imports: [CdkObserveContent, NgIcon, HlmIcon],
-	providers: [provideIcons({ lucideChevronRight, lucideChevronLeft })],
-	changeDetection: ChangeDetectionStrategy.OnPush,
-	host: {
-		'data-slot': 'tabs-paginated-list',
-	},
-	template: `
-		<button
-			#previousPaginator
-			data-pagination="previous"
-			type="button"
-			aria-hidden="true"
-			tabindex="-1"
-			[class.flex]="showPaginationControls()"
-			[class.hidden]="!showPaginationControls()"
-			[class]="_paginationButtonClass()"
-			[disabled]="disableScrollBefore || null"
-			(click)="_handlePaginatorClick('before')"
-			(mousedown)="_handlePaginatorPress('before', $event)"
-			(touchend)="_stopInterval()"
-		>
-			<ng-icon hlm size="base" name="lucideChevronLeft" />
-		</button>
-		<div #tabListContainer class="z-[1] flex grow overflow-hidden" tabindex="0" (keydown)="_handleKeydown($event)">
-			<div class="relative grow transition-transform" #tabList role="tablist" (cdkObserveContent)="_onContentChanges()">
-				<div #tabListInner [class]="_tabListClass()">
-					<ng-content />
-				</div>
-			</div>
-		</div>
-		<button
-			#nextPaginator
-			data-pagination="next"
-			type="button"
-			aria-hidden="true"
-			tabindex="-1"
-			[class.flex]="showPaginationControls()"
-			[class.hidden]="!showPaginationControls()"
-			[class]="_paginationButtonClass()"
-			[disabled]="disableScrollAfter || null"
-			(click)="_handlePaginatorClick('after')"
-			(mousedown)="_handlePaginatorPress('after', $event)"
-			(touchend)="_stopInterval()"
-		>
-			<ng-icon hlm size="base" name="lucideChevronRight" />
-		</button>
-	`,
-})
-export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
-	constructor() {
-		super();
-		classes(() => 'relative flex flex-shrink-0 gap-1 overflow-hidden');
-	}
-	public readonly items = contentChildren(BrnTabsTrigger, { descendants: false });
-	public readonly itemsChanges: Observable<ReadonlyArray<BrnPaginatedTabHeaderItem>> = toObservable(this.items);
-	public readonly tabListContainer = viewChild.required<ElementRef<HTMLElement>>('tabListContainer');
-	public readonly tabList = viewChild.required<ElementRef<HTMLElement>>('tabList');
-	public readonly tabListInner = viewChild.required<ElementRef<HTMLElement>>('tabListInner');
-	public readonly nextPaginator = viewChild.required<ElementRef<HTMLElement>>('nextPaginator');
-	public readonly previousPaginator = viewChild.required<ElementRef<HTMLElement>>('previousPaginator');
-	public readonly tabListClass = input<ClassValue>('');
-	protected readonly _tabListClass = computed(() => hlm(listVariants(), this.tabListClass()));
-	public readonly paginationButtonClass = input<ClassValue>('');
-	protected readonly _paginationButtonClass = computed(() =>
-		hlm(
-			'relative z-[2] select-none disabled:cursor-default',
-			buttonVariants({ variant: 'ghost', size: 'icon' }),
-			this.paginationButtonClass(),
-		),
-	);
-	protected _itemSelected(event: KeyboardEvent) {
-		event.preventDefault();
-	}
-}
-````
-
 ## File: angular.json
 ````json
 {
@@ -14072,71 +13869,6 @@ export class EditClubComponent implements OnInit {
 </div>
 ````
 
-## File: src/app/layout/header/header.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  computed,
-} from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith, firstValueFrom } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideSun, lucideMoon } from '@ng-icons/lucide';
-import { AuthService } from '../../core/auth/auth.service';
-import { ThemeService } from '../../core/services/theme.service';
-import { HlmDropdownMenuImports } from '../../shared/spartan/dropdown-menu/src';
-import { HlmSheetImports } from '../../shared/spartan/sheet/src';
-import { HlmButton } from '../../shared/spartan/button/src';
-import { HlmIconImports } from '../../shared/spartan/icon/src';
-@Component({
-  selector: 'app-header',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [provideIcons({ lucideSun, lucideMoon })],
-  imports: [
-    RouterLink, RouterLinkActive, TranslateModule, NgIcon,
-    ...HlmIconImports,
-    ...HlmDropdownMenuImports, ...HlmSheetImports, HlmButton,
-  ],
-  templateUrl: './header.component.html',
-})
-export class HeaderComponent {
-  private readonly auth      = inject(AuthService);
-  private readonly translate = inject(TranslateService);
-  readonly themeService      = inject(ThemeService);
-  readonly isAuthenticated = this.auth.isAuthenticated;
-  readonly currentUser = this.auth.currentUser;
-  readonly currentLang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: 'uk' },
-  );
-  readonly userInitials = computed(() => {
-    const name = this.currentUser()?.displayName ?? '';
-    return (
-      name
-        .split(' ')
-        .slice(0, 2)
-        .map(w => w[0]?.toUpperCase() ?? '')
-        .join('') || '?'
-    );
-  });
-  async switchLang(): Promise<void> {
-  const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-  await firstValueFrom(this.translate.use(next));
-}
-  async signOut(): Promise<void> {
-    await this.auth.signOut();
-  }
-}
-````
-
 ## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.html
 ````html
 <div class="relative">
@@ -14176,6 +13908,106 @@ export class HeaderComponent {
     </ul>
   }
 </div>
+````
+
+## File: src/app/shared/spartan/tabs/src/lib/hlm-tabs-paginated-list.ts
+````typescript
+import { CdkObserveContent } from '@angular/cdk/observers';
+import {
+	ChangeDetectionStrategy,
+	Component,
+	type ElementRef,
+	computed,
+	contentChildren,
+	input,
+	viewChild,
+} from '@angular/core';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideChevronLeft, lucideChevronRight } from '@ng-icons/lucide';
+import { type BrnPaginatedTabHeaderItem, BrnTabsPaginatedList, BrnTabsTrigger } from '@spartan-ng/brain/tabs';
+import { buttonVariants } from '@spartan-ng/helm/button';
+import { HlmIcon } from '@spartan-ng/helm/icon';
+import { classes, hlm } from '@spartan-ng/helm/utils';
+import type { ClassValue } from 'clsx';
+import type { Observable } from 'rxjs';
+import { listVariants } from './hlm-tabs-list';
+@Component({
+	selector: 'hlm-paginated-tabs-list',
+	imports: [CdkObserveContent, NgIcon, HlmIcon],
+	providers: [provideIcons({ lucideChevronRight, lucideChevronLeft })],
+	changeDetection: ChangeDetectionStrategy.OnPush,
+	host: {
+		'data-slot': 'tabs-paginated-list',
+	},
+	template: `
+		<button
+			#previousPaginator
+			data-pagination="previous"
+			type="button"
+			aria-hidden="true"
+			tabindex="-1"
+			[class.flex]="showPaginationControls()"
+			[class.hidden]="!showPaginationControls()"
+			[class]="_paginationButtonClass()"
+			[disabled]="disableScrollBefore || null"
+			(click)="_handlePaginatorClick('before')"
+			(mousedown)="_handlePaginatorPress('before', $event)"
+			(touchend)="_stopInterval()"
+		>
+			<ng-icon hlm size="base" name="lucideChevronLeft" />
+		</button>
+		<div #tabListContainer class="z-[1] flex grow overflow-hidden" tabindex="0" (keydown)="_handleKeydown($event)">
+			<div class="relative grow transition-transform" #tabList role="tablist" (cdkObserveContent)="_onContentChanges()">
+				<div #tabListInner [class]="_tabListClass()">
+					<ng-content />
+				</div>
+			</div>
+		</div>
+		<button
+			#nextPaginator
+			data-pagination="next"
+			type="button"
+			aria-hidden="true"
+			tabindex="-1"
+			[class.flex]="showPaginationControls()"
+			[class.hidden]="!showPaginationControls()"
+			[class]="_paginationButtonClass()"
+			[disabled]="disableScrollAfter || null"
+			(click)="_handlePaginatorClick('after')"
+			(mousedown)="_handlePaginatorPress('after', $event)"
+			(touchend)="_stopInterval()"
+		>
+			<ng-icon hlm size="base" name="lucideChevronRight" />
+		</button>
+	`,
+})
+export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
+	constructor() {
+		super();
+		classes(() => 'relative flex flex-shrink-0 gap-1 overflow-hidden');
+	}
+	public readonly items = contentChildren(BrnTabsTrigger, { descendants: false });
+	public readonly itemsChanges: Observable<ReadonlyArray<BrnPaginatedTabHeaderItem>> = toObservable(this.items);
+	public readonly tabListContainer = viewChild.required<ElementRef<HTMLElement>>('tabListContainer');
+	public readonly tabList = viewChild.required<ElementRef<HTMLElement>>('tabList');
+	public readonly tabListInner = viewChild.required<ElementRef<HTMLElement>>('tabListInner');
+	public readonly nextPaginator = viewChild.required<ElementRef<HTMLElement>>('nextPaginator');
+	public readonly previousPaginator = viewChild.required<ElementRef<HTMLElement>>('previousPaginator');
+	public readonly tabListClass = input<ClassValue>('');
+	protected readonly _tabListClass = computed(() => hlm(listVariants(), this.tabListClass()));
+	public readonly paginationButtonClass = input<ClassValue>('');
+	protected readonly _paginationButtonClass = computed(() =>
+		hlm(
+			'relative z-[2] select-none disabled:cursor-default',
+			buttonVariants({ variant: 'ghost', size: 'icon' }),
+			this.paginationButtonClass(),
+		),
+	);
+	protected _itemSelected(event: KeyboardEvent) {
+		event.preventDefault();
+	}
+}
 ````
 
 ## File: src/app/core/services/event.service.ts
@@ -14849,6 +14681,71 @@ export class EventsFeedComponent implements OnInit {
     </div>
   </div>
 </header>
+````
+
+## File: src/app/layout/header/header.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  computed,
+} from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith, firstValueFrom } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideSun, lucideMoon } from '@ng-icons/lucide';
+import { AuthService } from '../../core/auth/auth.service';
+import { ThemeService } from '../../core/services/theme.service';
+import { HlmDropdownMenuImports } from '../../shared/spartan/dropdown-menu/src';
+import { HlmSheetImports } from '../../shared/spartan/sheet/src';
+import { HlmButton } from '../../shared/spartan/button/src';
+import { HlmIconImports } from '../../shared/spartan/icon/src';
+@Component({
+  selector: 'app-header',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideIcons({ lucideSun, lucideMoon })],
+  imports: [
+    RouterLink, RouterLinkActive, TranslateModule, NgIcon,
+    ...HlmIconImports,
+    ...HlmDropdownMenuImports, ...HlmSheetImports, HlmButton,
+  ],
+  templateUrl: './header.component.html',
+})
+export class HeaderComponent {
+  private readonly auth      = inject(AuthService);
+  private readonly translate = inject(TranslateService);
+  readonly themeService      = inject(ThemeService);
+  readonly isAuthenticated = this.auth.isAuthenticated;
+  readonly currentUser = this.auth.currentUser;
+  readonly currentLang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: 'uk' },
+  );
+  readonly userInitials = computed(() => {
+    const name = this.currentUser()?.displayName ?? '';
+    return (
+      name
+        .split(' ')
+        .slice(0, 2)
+        .map(w => w[0]?.toUpperCase() ?? '')
+        .join('') || '?'
+    );
+  });
+  async switchLang(): Promise<void> {
+  const next = this.currentLang() === 'uk' ? 'en' : 'uk';
+  await firstValueFrom(this.translate.use(next));
+}
+  async signOut(): Promise<void> {
+    await this.auth.signOut();
+  }
+}
 ````
 
 ## File: public/i18n/en.json

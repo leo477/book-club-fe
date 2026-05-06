@@ -8,7 +8,7 @@
           ✏️ Edit Quiz
         </h1>
         <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
-          Step {{ currentStep() }} of 2 —
+          Step {{ currentStep() }} of 2 — 
           {{ currentStep() === 1 ? 'Quiz details' : 'Edit questions' }}
         </p>
       </div>
@@ -17,7 +17,6 @@
       </a>
     </header>
 
-    <!-- ── Loading skeleton ── -->
     @if (isLoading()) {
       <div class="space-y-4">
         @for (_ of [1, 2, 3]; track $index) {
@@ -26,226 +25,121 @@
       </div>
     } @else {
 
-      <!-- ── Warning banner (non-draft) ── -->
+      <!-- ── Status Banner (Locked if not draft) ── -->
       @if (!isDraft()) {
         <div class="glass-card px-4 py-3 bg-yellow-50/80 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/60 text-yellow-800 dark:text-yellow-300 text-sm rounded-xl" role="alert">
           ⚠️ This quiz is live and cannot be edited. Questions and metadata are read-only.
         </div>
       }
 
-      <!-- ── Step indicator ── -->
-      <div class="flex items-center gap-0">
+      <!-- ── Step Progress Bar ── -->
+      <div class="flex items-center gap-3">
         @for (step of [1, 2]; track step) {
-          <div
-            class="flex-1 h-1.5 rounded-full transition-all duration-300"
-            [class.bg-primary-500]="currentStep() >= step"
-            [class.bg-gray-200]="currentStep() < step"
-            [class.dark:bg-gray-700]="currentStep() < step"
-          ></div>
-          @if (step < 2) {
-            <div class="w-3"></div>
-          }
+          <div class="flex-1 h-1.5 rounded-full transition-all duration-300"
+               [class]="currentStep() >= step ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'">
+          </div>
         }
       </div>
 
-      <!-- ── Step 1: Quiz metadata ── -->
+      <!-- ── Step 1: Metadata ── -->
       @if (currentStep() === 1) {
-        <form
-          [formGroup]="metaForm"
-          (ngSubmit)="nextStep()"
-          novalidate
-          class="glass-card p-6 space-y-5"
-        >
+        <form [formGroup]="metaForm" (ngSubmit)="nextStep()" novalidate class="glass-card p-6 space-y-5">
           <hlm-field>
-            <label hlmFieldLabel for="quiz-title">
-              Quiz title <span class="text-red-500">*</span>
-            </label>
-            <input
-              hlmInput
-              id="quiz-title"
-              formControlName="title"
-              class="w-full"
-              placeholder="e.g. The Midnight Library — Chapter 1 Quiz"
-            />
+            <label hlmFieldLabel for="quiz-title">Quiz title <span class="text-red-500">*</span></label>
+            <input hlmInput id="quiz-title" formControlName="title" class="w-full" placeholder="e.g. Mistborn: The Final Empire"/>
             <hlm-field-error validator="required">Title is required.</hlm-field-error>
-            <hlm-field-error validator="minlength">Title must be at least 3 characters.</hlm-field-error>
-            <hlm-field-error validator="maxlength">Title must not exceed 100 characters.</hlm-field-error>
+            <hlm-field-error validator="minlength">Too short (min 3).</hlm-field-error>
           </hlm-field>
 
           <hlm-field>
             <label hlmFieldLabel for="quiz-desc">Description</label>
-            <textarea
-              hlmInput
-              id="quiz-desc"
-              formControlName="description"
-              rows="3"
-              class="w-full resize-none"
-              placeholder="A brief description of the quiz…"
-            ></textarea>
-            <hlm-field-error validator="maxlength">Description must not exceed 500 characters.</hlm-field-error>
+            <textarea hlmInput id="quiz-desc" formControlName="description" rows="3" class="w-full resize-none"></textarea>
           </hlm-field>
 
           <div class="flex justify-end">
-            <button hlmBtn type="submit"
-                    [disabled]="metaForm.invalid || !isDraft()"
-                    class="bg-primary-600 hover:bg-primary-700 text-white">
+            <button hlmBtn type="submit" [disabled]="metaForm.invalid || !isDraft()" class="bg-primary-600 text-white">
               Continue →
             </button>
           </div>
         </form>
       }
 
-      <!-- ── Step 2: Edit questions ── -->
+      <!-- ── Step 2: Questions ── -->
       @if (currentStep() === 2) {
         <div class="space-y-6">
-
-          <!-- Existing questions list -->
+          
+          <!-- List -->
           @if (localQuestions().length > 0) {
             <div class="space-y-3">
-              <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-widest">
+              <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-widest">
                 Questions ({{ localQuestions().length }})
               </h2>
               @for (q of localQuestions(); track $index) {
-                <div hlmCard class="glass-card-subtle px-5 py-4 flex items-start gap-3 rounded-xl">
-                  <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
-                               text-primary-700 dark:text-primary-300 text-xs font-bold flex
-                               items-center justify-center flex-shrink-0">
+                <div hlmCard class="glass-card-subtle px-5 py-4 flex items-start gap-3 rounded-xl relative">
+                  <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-xs font-bold flex items-center justify-center">
                     {{ $index + 1 }}
                   </span>
-                  <div class="min-w-0 flex-1">
-                    <p class="text-gray-900 dark:text-white text-sm font-medium">{{ q.question }}</p>
+                  <div class="flex-1">
+                    <p class="text-sm font-medium">{{ q.question }}</p>
                     <p class="text-green-600 dark:text-green-400 text-xs mt-1">✓ {{ q.options[q.correctIndex] }}</p>
-                    @if (q.id) {
-                      <p class="text-gray-400 dark:text-gray-600 text-xs mt-0.5">saved</p>
-                    } @else {
-                      <p class="text-blue-400 dark:text-blue-500 text-xs mt-0.5">new</p>
-                    }
+                    <p [class]="q.id ? 'text-gray-400' : 'text-blue-400'" class="text-[10px] uppercase font-bold mt-1">
+                      {{ q.id ? 'saved' : 'new' }}
+                    </p>
                   </div>
                   @if (isDraft()) {
-                    <button
-                      type="button"
-                      (click)="removeQuestion($index)"
-                      class="text-gray-400 hover:text-red-500 transition-colors text-lg flex-shrink-0 ml-auto leading-none"
-                      [attr.aria-label]="'Remove question ' + ($index + 1)"
-                    >
-                      ✕
-                    </button>
+                    <button type="button" (click)="removeQuestion($index)" class="text-gray-400 hover:text-red-500 transition-colors">✕</button>
                   }
                 </div>
               }
             </div>
           }
 
-          <!-- Add question form (draft only) -->
+          <!-- Form (only for drafts) -->
           @if (isDraft()) {
-            <form
-              [formGroup]="questionForm"
-              (ngSubmit)="addQuestion()"
-              novalidate
-              class="glass-card p-6 space-y-5"
-            >
-              <h2 class="font-semibold text-gray-900 dark:text-white">
-                {{ localQuestions().length === 0 ? 'Add your first question' : 'Add another question' }}
-              </h2>
-
+            <form [formGroup]="questionForm" (ngSubmit)="addQuestion()" class="glass-card p-6 space-y-5">
+              <h2 class="font-semibold">{{ localQuestions().length === 0 ? 'Add your first question' : 'Add another' }}</h2>
+              
               <hlm-field>
-                <label hlmFieldLabel for="q-text">Question <span class="text-red-500">*</span></label>
-                <textarea
-                  hlmInput
-                  id="q-text"
-                  formControlName="question"
-                  rows="2"
-                  class="w-full resize-none"
-                  placeholder="What is the main theme of chapter 3?"
-                ></textarea>
-                <hlm-field-error validator="required">Question is required.</hlm-field-error>
-                <hlm-field-error validator="minlength">Question must be at least 5 characters.</hlm-field-error>
+                <label hlmFieldLabel for="q-text">Question *</label>
+                <textarea hlmInput id="q-text" formControlName="question" rows="2" class="w-full resize-none"></textarea>
               </hlm-field>
 
-              <div class="space-y-1">
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Answer options <span class="text-red-500">*</span>
-                </p>
-                <div class="space-y-2">
-                  @for (idx of optionIndices; track idx) {
-                    <div class="flex items-center gap-3">
-                      <label class="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          formControlName="correctIndex"
-                          [value]="idx"
-                          class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300 dark:border-gray-600 cursor-pointer"
-                        />
-                        <span
-                          class="ml-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                          [class.bg-accent-500]="questionForm.controls.correctIndex.value === idx"
-                          [class.text-white]="questionForm.controls.correctIndex.value === idx"
-                          [class.bg-gray-100]="questionForm.controls.correctIndex.value !== idx"
-                          [class.dark:bg-gray-700]="questionForm.controls.correctIndex.value !== idx"
-                          [class.text-gray-600]="questionForm.controls.correctIndex.value !== idx"
-                          [class.dark:text-gray-400]="questionForm.controls.correctIndex.value !== idx"
-                        >
-                          {{ optionLabel(idx) }}
-                        </span>
-                      </label>
-                      <input
-                        hlmInput
-                        [formControlName]="'option' + idx"
-                        [placeholder]="'Option ' + optionLabel(idx)"
-                        class="flex-1"
-                      />
-                    </div>
-                  }
-                </div>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  Select the radio button next to the correct answer.
-                </p>
+              <div class="space-y-3">
+                <p class="text-sm font-medium">Answer options *</p>
+                @for (idx of optionIndices; track idx) {
+                  <div class="flex items-center gap-3">
+                    <input type="radio" formControlName="correctIndex" [value]="idx" class="w-4 h-4 text-accent-600" />
+                    <input hlmInput [formControlName]="'option' + idx" [placeholder]="'Option ' + optionLabel(idx)" class="flex-1"/>
+                  </div>
+                }
               </div>
 
-              <button
-                hlmBtn
-                type="submit"
-                variant="outline"
-                [disabled]="questionForm.invalid"
-                class="w-full border-dashed border-primary-400 dark:border-primary-600
-                       text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
-              >
+              <button hlmBtn type="submit" variant="outline" [disabled]="questionForm.invalid" class="w-full border-dashed">
                 + Add Question
               </button>
             </form>
           }
 
-          <!-- Error -->
           @if (errorMessage()) {
-            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-700 dark:text-red-400 text-sm">
+            <div class="bg-red-50 dark:bg-red-900/20 text-red-700 p-4 rounded-xl text-sm border border-red-200">
               ⚠️ {{ errorMessage() }}
             </div>
           }
 
-          <!-- Save / back actions -->
+          <!-- Footer Actions -->
           <div class="flex justify-between items-center pb-8">
-            <button hlmBtn type="button" variant="ghost" (click)="previousStep()">
-              ← Back
-            </button>
-            <button
-              hlmBtn
-              type="button"
-              (click)="saveChanges()"
-              [disabled]="!canSave()"
-              class="bg-accent-600 hover:bg-accent-700 text-white font-bold"
-            >
+            <button hlmBtn variant="ghost" (click)="previousStep()">← Back</button>
+            
+            <button hlmBtn (click)="saveChanges()" [disabled]="!canSave()" class="bg-accent-600 text-white font-bold px-6">
               {{ isSaving() ? '⏳ Saving…' : '💾 Save Changes' }}
               @if (localQuestions().length > 0) {
-                ({{ localQuestions().length }}
-                {{ localQuestions().length === 1 ? 'question' : 'questions' }})
+                 ({{ localQuestions().length }} {{ localQuestions().length === 1 ? 'question' : 'questions' }})
               }
             </button>
           </div>
 
         </div>
       }
-
     }
-
   </div>
 </div>
