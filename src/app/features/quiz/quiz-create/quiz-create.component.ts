@@ -49,7 +49,7 @@ export class QuizCreateComponent {
 
   protected readonly currentStep = signal<1 | 2>(1);
   protected readonly localQuestions = signal<LocalQuestion[]>([]);
-  protected readonly isPublishing = signal(false);
+  protected readonly isSaving = signal(false);
   protected readonly errorMessage = signal('');
 
   readonly id = input<string>('');
@@ -134,11 +134,11 @@ export class QuizCreateComponent {
     this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
   }
 
-  protected publishQuiz(): void {
+  protected saveQuiz(): void {
     const questions = this.localQuestions();
     if (questions.length === 0) return;
 
-    this.isPublishing.set(true);
+    this.isSaving.set(true);
     this.errorMessage.set('');
 
     const { title, description } = this.metaForm.getRawValue();
@@ -150,12 +150,11 @@ export class QuizCreateComponent {
         for (const q of questions) {
           await this.quizService.addQuestion(quiz.id, q);
         }
-        await this.quizService.toggleActive(quiz.id, true);
-        this.isPublishing.set(false);
+        this.isSaving.set(false);
         this.router.navigate(['/clubs', clubId, 'quizzes']);
       })
       .catch(err => {
-        this.isPublishing.set(false);
+        this.isSaving.set(false);
         this.errorMessage.set((err as Error).message);
       });
   }

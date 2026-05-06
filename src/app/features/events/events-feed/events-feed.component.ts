@@ -13,14 +13,13 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { ClubEvent } from '../../../core/models/event.model';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { EventCardComponent } from '../event-card/event-card.component';
-import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
 import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 
 @Component({
   selector: 'app-events-feed',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, TranslateModule, EmptyStateComponent, EventCardComponent, ...HlmTabsImports, HlmSpinner],
+  imports: [FormsModule, TranslateModule, EmptyStateComponent, EventCardComponent, HlmSpinner],
   templateUrl: './events-feed.component.html',
 })
 export class EventsFeedComponent implements OnInit {
@@ -28,6 +27,7 @@ export class EventsFeedComponent implements OnInit {
   readonly auth = inject(AuthService);
 
   readonly attendingEventId = signal<string | null>(null);
+  readonly activeTab = signal<'upcoming' | 'my'>('upcoming');
 
   readonly sortedDates = computed(() =>
     Object.keys(this.eventService.groupedByDate()).sort((a, b) => a.localeCompare(b)),

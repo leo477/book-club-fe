@@ -58,11 +58,23 @@ module.exports = defineConfig([
     },
   },
   {
+    files: ["src/app/shared/spartan/**/*.ts", "src/app/shared/spartan/**/*.html"],
+    rules: {
+      "@angular-eslint/directive-selector": "off",
+      "@angular-eslint/component-selector": "off",
+      "@typescript-eslint/no-non-null-assertion": "off",
+      "@angular-eslint/no-input-rename": "off",
+      "@typescript-eslint/array-type": "off",
+      "@angular-eslint/template/interactive-supports-focus": "off",
+    },
+  },
+  {
     files: ["**/*.html"],
     extends: [
       angular.configs.templateRecommended,
       angular.configs.templateAccessibility,
     ],
-    rules: {},
+    rules: {
+    },
   }
 ]);

@@ -1,8 +1,8 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { toast } from '@spartan-ng/brain/sonner';
 import { catchError, throwError } from 'rxjs';
-import { ToastService } from '../services/toast.service';
 import { TokenStore } from '../auth/token.store';
 import { environment } from '../../../environments/environment';
 
@@ -23,7 +23,6 @@ import { environment } from '../../../environments/environment';
 // eslint-disable-next-line rxjs-x/finnish
 export const authInterceptor: HttpInterceptorFn = (req, next$) => {
   const router = inject(Router);
-  const toast = inject(ToastService);
   const tokenStore = inject(TokenStore);
 
   const token = tokenStore.snapshot();
@@ -43,7 +42,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
         if (!environment.production) {
           console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
         }
-        toast.show('A server error occurred. Please try again later.', 'error');
+        toast.error('A server error occurred. Please try again later.');
       }
       return throwError(() => error);
     }),

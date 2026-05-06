@@ -6,6 +6,7 @@ import {
   computed,
   effect,
   input,
+  linkedSignal,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -24,6 +25,7 @@ import { ClubHeaderComponent } from './header/club-header.component';
 import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
 import { ClubEventCardComponent } from './club-event-card/club-event-card.component';
 import { ClubSidebarRightComponent } from './club-sidebar-right/club-sidebar-right.component';
+import { BookVoteSectionComponent } from './book-vote/book-vote-section.component';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCard } from '../../../shared/spartan/card/src';
 
@@ -40,6 +42,7 @@ import { HlmCard } from '../../../shared/spartan/card/src';
     ClubManagePanelComponent,
     ClubEventCardComponent,
     ClubSidebarRightComponent,
+    BookVoteSectionComponent,
     HlmButton,
     HlmCard,
   ],
@@ -74,7 +77,10 @@ export class ClubDetailComponent {
   readonly actionError = signal<string | null>(null);
   readonly attendingEventId = signal<string | null>(null);
 
-  readonly sortKey = signal<'date' | 'popular' | 'status'>('date');
+  readonly sortKey = linkedSignal<'date' | 'popular' | 'status'>(() => {
+    this.id(); 
+    return 'date'; 
+    });
 
   readonly sortOptions = [
     { key: 'date' as const,    labelKey: 'CLUB_DETAIL.sort_nearest' },

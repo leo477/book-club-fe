@@ -3,9 +3,9 @@ import { ComponentFixture } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { toast } from '@spartan-ng/brain/sonner';
 import { EditClubComponent } from './edit-club.component';
 import { ClubService } from '../../../core/services/club.service';
-import { ToastService } from '../../../core/services/toast.service';
 import { Club } from '../../../core/models/club.model';
 
 const mockClub: Club = {
@@ -21,7 +21,6 @@ describe('EditClubComponent', () => {
   let fixture: ComponentFixture<EditClubComponent>;
   let component: EditClubComponent;
   let clubServiceSpy: jasmine.SpyObj<ClubService>;
-  let toastSpy: jasmine.SpyObj<ToastService>;
   let router: Router;
 
   beforeEach(() => {
@@ -30,15 +29,12 @@ describe('EditClubComponent', () => {
     const mockClubUpdated: Club = { ...mockClub, name: 'Updated Club' };
     clubServiceSpy.updateClub.and.returnValue(Promise.resolve(mockClubUpdated));
 
-    toastSpy = jasmine.createSpyObj('ToastService', ['show']);
-
     TestBed.configureTestingModule({
       imports: [EditClubComponent, TranslateModule.forRoot()],
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: ClubService, useValue: clubServiceSpy },
-        { provide: ToastService, useValue: toastSpy },
       ],
     });
 
@@ -116,8 +112,9 @@ describe('EditClubComponent', () => {
     });
 
     it('shows toast and navigates on success', async () => {
+      spyOn(toast, 'success');
       await component.onSubmit();
-      expect(toastSpy.show).toHaveBeenCalled();
+      expect(toast.success).toHaveBeenCalled();
       expect(router.navigate).toHaveBeenCalledWith(['/clubs', 'c1']);
     });
 

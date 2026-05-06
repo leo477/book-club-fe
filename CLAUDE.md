@@ -2,7 +2,7 @@
 This project uses **Repomix** to provide a full map of the codebase.
 
 ## Stack
-- Frontend: Angular 20 (Signals—using Angular 20 features like resource() and linkedSignal(), standalone components, SCSS, Tailwind)
+- Frontend: Angular 21 (Signals — resource(), rxResource(), linkedSignal(), input()/output(), standalone components, SCSS, Tailwind)
 - Backend: FastAPI (Async, Pydantic v2)
 
 ## Folder Structure

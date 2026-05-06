@@ -1,0 +1,136 @@
+<div class="min-h-screen p-4 sm:p-8">
+  <div class="max-w-3xl mx-auto space-y-6">
+
+    <!-- ── Header ── -->
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🎮 Quiz Session</h1>
+      <a [routerLink]="['/clubs', id(), 'quizzes']"
+         class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
+        ← Back to Quizzes
+      </a>
+    </header>
+
+    <!-- ── Loading ── -->
+    @if (isLoadingSession()) {
+      <div class="glass-card h-32 animate-pulse"></div>
+    } @else {
+
+      <!-- ── NO SESSION: event picker + start ── -->
+      @if (!session()) {
+        <div class="glass-card p-6 space-y-5">
+          <h2 class="font-semibold text-gray-900 dark:text-white text-lg">Start a Session</h2>
+          <p class="text-gray-500 dark:text-gray-400 text-sm">
+            Select an event — attendees will be enrolled as participants automatically.
+          </p>
+
+          <div class="space-y-2">
+            <label for="event-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Event</label>
+            <select
+              id="event-select"
+              class="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
+              [value]="selectedEventId()"
+              (change)="selectedEventId.set($any($event.target).value)"
+            >
+              <option value="" disabled selected>Select event…</option>
+              @for (event of clubEvents(); track event.id) {
+                <option [value]="event.id">
+                  {{ event.title }} — {{ event.date | date:'mediumDate' }}
+                </option>
+              }
+            </select>
+            @if (clubEvents().length === 0) {
+              <p class="text-xs text-yellow-600 dark:text-yellow-400">No events found for this club.</p>
+            }
+          </div>
+
+          <button
+            hlmBtn
+            type="button"
+            (click)="startSession()"
+            [disabled]="!selectedEventId() || isStarting()"
+            class="bg-gradient-brand text-white border-0 hover:opacity-90"
+          >
+            {{ isStarting() ? '⏳ Starting…' : '🚀 Start Session' }}
+          </button>
+        </div>
+      }
+
+      <!-- ── ACTIVE SESSION ── -->
+      @if (session(); as s) {
+        <div class="space-y-6">
+
+          <!-- Session info -->
+          <div class="glass-card p-5 flex items-center gap-4 flex-wrap">
+            <span class="inline-flex items-center gap-2 rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-3 py-1.5 text-sm font-semibold text-green-700 dark:text-green-400">
+              <span class="w-2 h-2 rounded-full bg-green-500 inline-block animate-pulse"></span>
+              Live
+            </span>
+            <span class="text-gray-500 dark:text-gray-400 text-sm">
+              Started {{ s.startedAt | date:'medium' }}
+            </span>
+            <span class="text-gray-700 dark:text-gray-300 text-sm font-medium">
+              👥 {{ s.participantCount }} participants enrolled
+            </span>
+          </div>
+
+          <!-- Leaderboard -->
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <h2 class="font-semibold text-gray-900 dark:text-white text-lg">🏆 Live Leaderboard</h2>
+              <button
+                hlmBtn
+                type="button"
+                variant="outline"
+                size="sm"
+                (click)="manualRefresh()"
+                [disabled]="isLeaderboardLoading()"
+              >
+                {{ isLeaderboardLoading() ? '↻ Refreshing…' : '↻ Refresh' }}
+              </button>
+            </div>
+
+            @if (leaderboard().length === 0 && !isLeaderboardLoading()) {
+              <div class="glass-card p-8 text-center">
+                <p class="text-2xl mb-2">⏳</p>
+                <p class="text-gray-500 dark:text-gray-400 text-sm">No participants yet. Waiting for responses…</p>
+              </div>
+            } @else {
+              <app-leaderboard-podium
+                [first]="podiumFirst()"
+                [second]="podiumSecond()"
+                [third]="podiumThird()"
+              />
+
+              @if (rest().length > 0) {
+                <app-leaderboard-rest-table [entries]="rest()" />
+              }
+            }
+          </div>
+
+          <!-- End session -->
+          <div class="flex justify-end pt-2">
+            <button
+              hlmBtn
+              type="button"
+              (click)="endSession()"
+              [disabled]="isEnding()"
+              class="bg-red-600 hover:bg-red-700 text-white border-0"
+            >
+              {{ isEnding() ? '⏳ Ending…' : '🔴 End Session' }}
+            </button>
+          </div>
+
+        </div>
+      }
+
+      <!-- ── Error ── -->
+      @if (errorMessage()) {
+        <div class="glass-card px-4 py-3 text-red-700 dark:text-red-400 text-sm" role="alert">
+          ⚠️ {{ errorMessage() }}
+        </div>
+      }
+
+    }
+
+  </div>
+</div>

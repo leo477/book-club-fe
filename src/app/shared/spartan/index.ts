@@ -5,8 +5,6 @@ export * from './dropdown-menu/src';
 export * from './field/src';
 export * from './icon/src';
 export * from './input/src';
-export * from './label/src';
-export * from './separator/src';
 export * from './sheet/src';
 export * from './sonner/src';
 export * from './spinner/src';

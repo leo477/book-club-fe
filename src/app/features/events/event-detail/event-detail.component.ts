@@ -4,14 +4,19 @@ import {
   inject,
   signal,
   computed,
-  resource,
   input,
 } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
+import { ClubEvent } from '../../../core/models/event.model';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-event-detail',
@@ -23,27 +28,24 @@ import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 export class EventDetailComponent {
   readonly id = input.required<string>();
 
+  private readonly http = inject(HttpClient);
   private readonly eventService = inject(EventService);
   readonly auth = inject(AuthService);
 
-  readonly isActioning = signal(false);
-
-  private readonly _eventResource = resource({
+  private readonly _eventResource = rxResource<ClubEvent | null, string>({
     params: () => this.id(),
-    loader: async ({ params: eventId }) => {
-      const found = await this.eventService.getEventById(eventId);
-      if (!found) throw new Error('Event not found.');
-      return found;
-    },
+    stream: ({ params: id }) =>
+      this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(
+        map(mapEvent),
+      ),
   });
 
   readonly event = computed(() => this._eventResource.value() ?? null);
-  readonly isLoading = computed(() => this._eventResource.isLoading());
-  readonly errorMessage = computed<string | null>(() => {
-    const err = this._eventResource.error();
-    if (!err) return null;
-    return err instanceof Error ? err.message : 'Failed to load event.';
-  });
+  readonly isLoading = this._eventResource.isLoading;
+  readonly errorMessage = computed(() =>
+    !this._eventResource.isLoading() && this._eventResource.error() ? 'EVENT.LOAD_ERROR' : null,
+  );
+  readonly isActioning = signal(false);
 
   readonly isOrganizer = computed(
     () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,

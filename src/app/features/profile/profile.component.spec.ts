@@ -1,10 +1,10 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { TranslateModule } from '@ngx-translate/core';
+import { toast } from '@spartan-ng/brain/sonner';
 import { ProfileComponent } from './profile.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { SeoService } from '../../core/services/seo.service';
-import { ToastService } from '../../core/services/toast.service';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 
 function makeAuthService(overrides: Partial<{ displayName: string; role: string; createdAt: string }> = {}) {
@@ -37,12 +37,6 @@ function makeSeoService() {
   };
 }
 
-function makeToastService() {
-  return {
-    show: jasmine.createSpy('show'),
-  };
-}
-
 describe('ProfileComponent', () => {
   let authSvc: ReturnType<typeof makeAuthService>;
 
@@ -55,7 +49,6 @@ describe('ProfileComponent', () => {
         provideZonelessChangeDetection(),
         { provide: AuthService, useValue: authSvc },
         { provide: SeoService, useValue: makeSeoService() },
-        { provide: ToastService, useValue: makeToastService() },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
@@ -101,7 +94,6 @@ describe('ProfileComponent', () => {
       saveName(): Promise<void>;
     };
 
-    // Clear the value to make the form invalid
     comp.nameForm.controls.displayName.setValue('');
     expect(comp.nameForm.invalid).toBeTrue();
 
@@ -112,7 +104,7 @@ describe('ProfileComponent', () => {
 
   it('saveName() calls updateDisplayName and shows toast on success', async () => {
     await setup({ displayName: 'Alice' });
-    const toastSvc = TestBed.inject(ToastService) as unknown as { show: jasmine.Spy };
+    spyOn(toast, 'success');
     const fixture = TestBed.createComponent(ProfileComponent);
     fixture.detectChanges();
     const comp = fixture.componentInstance as unknown as {
@@ -124,7 +116,7 @@ describe('ProfileComponent', () => {
     await comp.saveName();
 
     expect(authSvc.updateDisplayName).toHaveBeenCalledWith('Alice Smith');
-    expect(toastSvc.show).toHaveBeenCalledWith('PROFILE.name_updated', 'success');
+    expect(toast.success).toHaveBeenCalled();
   });
 
   it('constructor seeds nameForm.displayName from currentUser', async () => {

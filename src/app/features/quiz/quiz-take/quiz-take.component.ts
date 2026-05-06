@@ -5,6 +5,7 @@ import {
   computed,
   inject,
   signal,
+  linkedSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { QuizService } from '../../../core/services/quiz.service';
@@ -27,7 +28,10 @@ export class QuizTakeComponent implements OnInit {
 
   protected readonly state = signal<QuizState>('loading');
   protected readonly errorMessage = signal('');
-  protected readonly currentIndex = signal(0);
+  protected readonly currentIndex = linkedSignal(() => {
+  this.quizService.questions(); // Реєструємо залежність: коли питання зміняться, індекс скинеться
+  return 0; 
+});
   protected readonly selectedAnswers = signal<number[]>([]);
   protected readonly selectedOption = computed(
     () => this.selectedAnswers()[this.currentIndex()] ?? -1,

@@ -1,3 +1,5 @@
+export type QuizStatus = 'draft' | 'active' | 'live' | 'closed';
+
 export interface Quiz {
   id: string;
   clubId: string;
@@ -5,6 +7,7 @@ export interface Quiz {
   title: string;
   description: string | null;
   isActive: boolean;
+  status: QuizStatus;
 }
 
 export interface QuizQuestion {
@@ -22,4 +25,24 @@ export interface QuizAttempt {
   score: number;
   total: number;
   answers: number[];
+}
+
+export interface QuizSession {
+  id: string;
+  quizId: string;
+  eventId: string;
+  startedBy: string;
+  startedAt: string;
+  closedAt: string | null;
+  participantCount: number;
+}
+
+export interface QuizLeaderboardEntry {
+  rank: number;
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  score: number;
+  totalQuestions: number;
+  hasAttempted: boolean;
 }

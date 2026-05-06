@@ -6,11 +6,11 @@ import {
   computed,
 } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { toast } from '@spartan-ng/brain/sonner';
 import { AuthService } from '../../core/auth/auth.service';
 import { UserRole, UserSocials } from '../../core/models/user.model';
 import { SeoService } from '../../core/services/seo.service';
-import { ToastService } from '../../core/services/toast.service';
 import { SocialLinkFieldComponent, SocialField } from '../../shared/components/social-link-field/social-link-field.component';
 import { SocialBadgesComponent } from '../../shared/components/social-badges/social-badges.component';
 import { ProfileStatsComponent } from './stats/profile-stats.component';
@@ -28,7 +28,7 @@ import { HlmInput } from '../../shared/spartan/input/src';
 export class ProfileComponent {
   protected readonly auth = inject(AuthService);
   private readonly seo = inject(SeoService);
-  private readonly toast = inject(ToastService);
+  private readonly translate = inject(TranslateService);
 
   protected readonly socialFields: SocialField[] = [
     {
@@ -157,7 +157,7 @@ export class ProfileComponent {
   protected async changeRole(role: UserRole): Promise<void> {
     try {
       await this.auth.updateRole(role);
-      this.toast.show('PROFILE.role_changed', 'success');
+      toast.success(this.translate.instant('PROFILE.role_changed'));
     } catch { /* error already handled by interceptor */ }
   }
 
@@ -168,7 +168,7 @@ export class ProfileComponent {
     const { displayName } = this.nameForm.getRawValue();
     try {
       await this.auth.updateDisplayName(displayName);
-      this.toast.show('PROFILE.name_updated', 'success');
+      toast.success(this.translate.instant('PROFILE.name_updated'));
     } catch { /* error already handled by interceptor */ }
     finally {
       this.isSavingName.set(false);
@@ -191,7 +191,7 @@ export class ProfileComponent {
 
     try {
       await this.auth.updateSocials(socials);
-      this.toast.show('PROFILE.socials_saved', 'success');
+      toast.success(this.translate.instant('PROFILE.socials_saved'));
     } catch { /* error already handled by interceptor */ }
   }
 

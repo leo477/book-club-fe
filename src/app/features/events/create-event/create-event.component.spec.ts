@@ -33,7 +33,7 @@ describe('CreateEventComponent', () => {
     eventServiceSpy.createEvent.and.returnValue(Promise.resolve(makeEvent()));
 
     const geocodingSpy = jasmine.createSpyObj('GeocodingService', ['autocomplete$']);
-    geocodingSpy['autocomplete$'].and.returnValue(of([]));
+    geocodingSpy.autocomplete$.and.returnValue(of([]));
 
     TestBed.configureTestingModule({
       imports: [CreateEventComponent],

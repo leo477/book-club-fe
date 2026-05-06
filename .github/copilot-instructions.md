@@ -2,14 +2,14 @@
 
 ## Project Overview
 
-This is a modern **Angular 20** frontend application for a book club platform. It is built with standalone components, signals-based state management, zoneless change detection, and Tailwind CSS for styling.
+This is a modern **Angular 21** frontend application for a book club platform. It is built with standalone components, signals-based state management, zoneless change detection, and Tailwind CSS for styling.
 
 ## Tech Stack
 
-- **Framework**: Angular 20 (standalone, no NgModules)
+- **Framework**: Angular 21 (standalone, no NgModules)
 - **Language**: TypeScript (strict mode, no `any`)
 - **State Management**: Angular Signals (`signal()`, `computed()`, `effect()`)
-- **Change Detection**: Zoneless (`provideExperimentalZonelessChangeDetection`)
+- **Change Detection**: Zoneless (`provideZonelessChangeDetection`)
 - **Styling**: Tailwind CSS + SCSS design tokens
 - **Testing**: Jest + @testing-library/angular + Playwright (e2e)
 - **HTTP**: Typed repository services with `HttpClient`
@@ -94,7 +94,7 @@ When invoking agents via the `task` tool, **always use the model specified below
 
 | Agent | Model | Purpose |
 |---|---|---|
-| `dev` | `claude-sonnet-4.6` | Angular 20 architecture, implementation, and code review |
+| `dev` | `claude-sonnet-4.6` | Angular 21 architecture, rxResource, linkedSignal, implementation, and code review |
 | `reviewer` | `gpt-4.1` | Pre-commit review, Husky setup, PR readiness checks |
 | `devops` | `gpt-4.1` | CI/CD pipelines, GitHub Actions, deployment automation |
 | `security` | `claude-sonnet-4.6` | XSS, CSP, JWT security audits and input sanitization |

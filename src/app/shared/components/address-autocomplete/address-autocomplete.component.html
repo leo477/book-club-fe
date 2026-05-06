@@ -5,8 +5,9 @@
     [formControl]="control()"
     [placeholder]="placeholder()"
     autocomplete="off"
-    class="w-full"
     (keydown)="onKeydown($event)"
+    class="w-full"
+    [class.border-red-400]="control().invalid && control().touched"
   />
 
   @if (isLoading()) {

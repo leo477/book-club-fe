@@ -33,26 +33,28 @@ describe('AuthService', () => {
     localStorage.clear();
   });
 
-  describe('constructor — no token', () => {
-    beforeEach(() => {
-      routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
-        token: jasmine.createSpy().and.returnValue(null),
-      });
-      tokenStoreSpy.snapshot.and.returnValue(null);
-
-      TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
-        providers: [
-          provideZonelessChangeDetection(),
-          AuthService,
-          { provide: Router, useValue: routerSpy },
-          { provide: TokenStore, useValue: tokenStoreSpy },
-        ],
-      });
-      const result = buildService();
-      httpMock = result.httpMock;
+  function setupTestbed(tokenValue: string | null = null) {
+    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
+    tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
+      token: jasmine.createSpy().and.returnValue(tokenValue),
     });
+    tokenStoreSpy.snapshot.and.returnValue(tokenValue);
+
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [
+        provideZonelessChangeDetection(),
+        AuthService,
+        { provide: Router, useValue: routerSpy },
+        { provide: TokenStore, useValue: tokenStoreSpy },
+      ],
+    });
+    const result = buildService();
+    httpMock = result.httpMock;
+  }
+
+  describe('constructor — no token', () => {
+    beforeEach(() => { setupTestbed(); });
 
     it('isLoading is false immediately when no token', () => {
       const { service } = buildService();
@@ -73,25 +75,7 @@ describe('AuthService', () => {
   });
 
   describe('constructor — with valid token', () => {
-    beforeEach(() => {
-      routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
-        token: jasmine.createSpy().and.returnValue('valid-token'),
-      });
-      tokenStoreSpy.snapshot.and.returnValue('valid-token');
-
-      TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
-        providers: [
-          provideZonelessChangeDetection(),
-          AuthService,
-          { provide: Router, useValue: routerSpy },
-          { provide: TokenStore, useValue: tokenStoreSpy },
-        ],
-      });
-      const result = buildService();
-      httpMock = result.httpMock;
-    });
+    beforeEach(() => { setupTestbed('valid-token'); });
 
     it('starts loading when token exists', () => {
       const { service } = buildService();
@@ -123,25 +107,7 @@ describe('AuthService', () => {
   });
 
   describe('signIn', () => {
-    beforeEach(() => {
-      routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
-        token: jasmine.createSpy().and.returnValue(null),
-      });
-      tokenStoreSpy.snapshot.and.returnValue(null);
-
-      TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
-        providers: [
-          provideZonelessChangeDetection(),
-          AuthService,
-          { provide: Router, useValue: routerSpy },
-          { provide: TokenStore, useValue: tokenStoreSpy },
-        ],
-      });
-      const result = buildService();
-      httpMock = result.httpMock;
-    });
+    beforeEach(() => { setupTestbed(); });
 
     it('sets token and user on success', async () => {
       const { service } = buildService();
@@ -179,25 +145,7 @@ describe('AuthService', () => {
   });
 
   describe('signUp', () => {
-    beforeEach(() => {
-      routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
-        token: jasmine.createSpy().and.returnValue(null),
-      });
-      tokenStoreSpy.snapshot.and.returnValue(null);
-
-      TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
-        providers: [
-          provideZonelessChangeDetection(),
-          AuthService,
-          { provide: Router, useValue: routerSpy },
-          { provide: TokenStore, useValue: tokenStoreSpy },
-        ],
-      });
-      const result = buildService();
-      httpMock = result.httpMock;
-    });
+    beforeEach(() => { setupTestbed(); });
 
     it('sets token and user on success', async () => {
       const { service } = buildService();
@@ -229,25 +177,7 @@ describe('AuthService', () => {
   });
 
   describe('signOut', () => {
-    beforeEach(() => {
-      routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
-        token: jasmine.createSpy().and.returnValue(null),
-      });
-      tokenStoreSpy.snapshot.and.returnValue(null);
-
-      TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
-        providers: [
-          provideZonelessChangeDetection(),
-          AuthService,
-          { provide: Router, useValue: routerSpy },
-          { provide: TokenStore, useValue: tokenStoreSpy },
-        ],
-      });
-      const result = buildService();
-      httpMock = result.httpMock;
-    });
+    beforeEach(() => { setupTestbed(); });
 
     it('clears token and navigates to /login', async () => {
       const { service } = buildService();
@@ -271,23 +201,7 @@ describe('AuthService', () => {
 
   describe('updateRole', () => {
     beforeEach(async () => {
-      routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
-        token: jasmine.createSpy().and.returnValue(null),
-      });
-      tokenStoreSpy.snapshot.and.returnValue(null);
-
-      TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
-        providers: [
-          provideZonelessChangeDetection(),
-          AuthService,
-          { provide: Router, useValue: routerSpy },
-          { provide: TokenStore, useValue: tokenStoreSpy },
-        ],
-      });
-      const result = buildService();
-      httpMock = result.httpMock;
+      setupTestbed();
 
       // Sign in first to set currentUser
       const { service } = buildService();
@@ -314,25 +228,7 @@ describe('AuthService', () => {
   });
 
   describe('updateDisplayName', () => {
-    beforeEach(async () => {
-      routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
-        token: jasmine.createSpy().and.returnValue(null),
-      });
-      tokenStoreSpy.snapshot.and.returnValue(null);
-
-      TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
-        providers: [
-          provideZonelessChangeDetection(),
-          AuthService,
-          { provide: Router, useValue: routerSpy },
-          { provide: TokenStore, useValue: tokenStoreSpy },
-        ],
-      });
-      const result = buildService();
-      httpMock = result.httpMock;
-    });
+    beforeEach(async () => { setupTestbed(); });
 
     it('updates displayName in currentUser', async () => {
       const { service } = buildService();
@@ -354,25 +250,7 @@ describe('AuthService', () => {
   });
 
   describe('updateSocials', () => {
-    beforeEach(() => {
-      routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
-        token: jasmine.createSpy().and.returnValue(null),
-      });
-      tokenStoreSpy.snapshot.and.returnValue(null);
-
-      TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
-        providers: [
-          provideZonelessChangeDetection(),
-          AuthService,
-          { provide: Router, useValue: routerSpy },
-          { provide: TokenStore, useValue: tokenStoreSpy },
-        ],
-      });
-      const result = buildService();
-      httpMock = result.httpMock;
-    });
+    beforeEach(() => { setupTestbed(); });
 
     it('updates socials in currentUser', async () => {
       const { service } = buildService();
@@ -394,25 +272,7 @@ describe('AuthService', () => {
   });
 
   describe('setSocialsPublic', () => {
-    beforeEach(() => {
-      routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-      tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
-        token: jasmine.createSpy().and.returnValue(null),
-      });
-      tokenStoreSpy.snapshot.and.returnValue(null);
-
-      TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
-        providers: [
-          provideZonelessChangeDetection(),
-          AuthService,
-          { provide: Router, useValue: routerSpy },
-          { provide: TokenStore, useValue: tokenStoreSpy },
-        ],
-      });
-      const result = buildService();
-      httpMock = result.httpMock;
-    });
+    beforeEach(() => { setupTestbed(); });
 
     it('updates socialsPublic in currentUser', async () => {
       const { service } = buildService();
@@ -430,6 +290,51 @@ describe('AuthService', () => {
       const { service } = buildService();
       await service.setSocialsPublic(true);
       httpMock.expectNone(`${API}/users/me/socials-visibility`);
+    });
+  });
+
+  describe('userStats', () => {
+    beforeEach(() => { setupTestbed(); });
+
+    it('returns null when no user is logged in', () => {
+      const { service } = buildService();
+      expect(service.userStats()).toBeNull();
+    });
+
+    it('fetches and maps stats after sign-in', async () => {
+      const { service } = buildService();
+      const loginP = service.signIn('test@test.com', 'password');
+      httpMock.expectOne(`${API}/auth/login`).flush({
+        accessToken: 'token', refreshToken: 'refresh', user: rawProfile,
+      });
+      await loginP;
+
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/users/me/stats`).flush({
+        clubsJoined: 3, quizzesTaken: 5, quizWins: 2, likesReceived: 10, booksRead: 7,
+      });
+      await Promise.resolve();
+
+      expect(service.userStats()).toEqual({
+        clubsJoined: 3, quizzesTaken: 5, quizWins: 2, likesReceived: 10, booksRead: 7,
+      });
+    });
+
+    it('returns null when stats request fails', async () => {
+      const { service } = buildService();
+      const loginP = service.signIn('test@test.com', 'password');
+      httpMock.expectOne(`${API}/auth/login`).flush({
+        accessToken: 'token', refreshToken: 'refresh', user: rawProfile,
+      });
+      await loginP;
+
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/users/me/stats`).flush(
+        {}, { status: 500, statusText: 'Server Error' },
+      );
+      await Promise.resolve();
+
+      expect(service.userStats()).toBeNull();
     });
   });
 });

@@ -34,6 +34,7 @@ export class ChatService {
   private readonly _unreadCount = signal<number>(0);
   private readonly _isOpen = signal<boolean>(false);
   private readonly _hasNewMessage = signal<boolean>(false);
+  private readonly _mutedUserIds = signal<Set<string>>(new Set());
 
   // Tracks the current user id so we can mark own messages.
   private currentUserId: string | null = null;
@@ -46,14 +47,17 @@ export class ChatService {
   readonly unreadCount = this._unreadCount.asReadonly();
   readonly isOpen = this._isOpen.asReadonly();
   readonly hasNewMessage = this._hasNewMessage.asReadonly();
+  readonly mutedUserIds = this._mutedUserIds.asReadonly();
 
   readonly activeRoom = computed(() =>
     this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
   );
 
-  readonly activeMessages = computed(
-    () => this._messages()[this._activeRoomId() ?? ''] ?? [],
-  );
+  readonly activeMessages = computed(() => {
+    const msgs = this._messages()[this._activeRoomId() ?? ''] ?? [];
+    const muted = this._mutedUserIds();
+    return msgs.map(m => ({ ...m, isMuted: muted.has(m.senderId) }));
+  });
 
   // ── Public API ────────────────────────────────────────────────────────────
 
@@ -64,9 +68,8 @@ export class ChatService {
     }
     firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
       .then(raw => {
-        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name }));
+        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId }));
         this._rooms.set(rooms);
-        // Auto-select the first room when none is active or active room is gone.
         const currentId = this._activeRoomId();
         if (!currentId || !rooms.some(r => r.id === currentId)) {
           const first = rooms[0];
@@ -77,6 +80,35 @@ export class ChatService {
         }
       })
       .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
+  }
+
+  /** Fetch rooms for all user clubs in parallel and merge into one flat list. */
+  loadAllClubRooms(clubs: { id: string; name: string }[], userId?: string): void {
+    if (userId !== undefined) this.currentUserId = userId;
+
+    const multipleClubs = clubs.length > 1;
+    const requests = clubs.map(club =>
+      firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${club.id}/chat/rooms`))
+        .then(raw => raw.map(r => ({
+          id: r.id,
+          name: multipleClubs ? `${club.name} · ${r.name}` : r.name,
+          clubId: club.id,
+        })))
+        .catch(() => [] as ChatRoom[]),
+    );
+
+    Promise.all(requests).then(results => {
+      const allRooms = results.flat();
+      this._rooms.set(allRooms);
+      const currentId = this._activeRoomId();
+      if (!currentId || !allRooms.some(r => r.id === currentId)) {
+        const first = allRooms[0];
+        if (first) {
+          this._activeRoomId.set(first.id);
+          this.loadMessages(first.id);
+        }
+      }
+    }).catch((err: unknown) => console.error('[ChatService] loadAllClubRooms error', err));
   }
 
   /** Fetch messages for a room and update the messages map. */
@@ -115,6 +147,29 @@ export class ChatService {
     this._hasNewMessage.set(false);
   }
 
+  clearRooms(): void {
+    this._rooms.set([]);
+    this._messages.set({});
+    this._activeRoomId.set(null);
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+    this._isOpen.set(false);
+    this._mutedUserIds.set(new Set());
+    this.currentUserId = null;
+  }
+
+  muteUser(userId: string): void {
+    this._mutedUserIds.update(set => new Set([...set, userId]));
+  }
+
+  unmuteUser(userId: string): void {
+    this._mutedUserIds.update(set => {
+      const next = new Set(set);
+      next.delete(userId);
+      return next;
+    });
+  }
+
   /** Send a message to the active room, then reload messages from the API. */
   sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
     const roomId = this._activeRoomId();
@@ -130,6 +185,50 @@ export class ChatService {
         this.loadMessages(roomId);
       })
       .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
+  }
+
+  deleteMessage(messageId: string): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    firstValueFrom(
+      this.http.delete(`${this.api}/chat/rooms/${roomId}/messages/${messageId}`),
+    )
+      .then(() => {
+        this._messages.update(map => ({
+          ...map,
+          [roomId]: (map[roomId] ?? []).filter(m => m.id !== messageId),
+        }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] deleteMessage error', err));
+  }
+
+  banUserFromChat(userId: string, durationSeconds: number): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    firstValueFrom(
+      this.http.post(`${this.api}/chat/rooms/${roomId}/ban`, {
+        user_id: userId,
+        duration_seconds: durationSeconds,
+      }),
+    )
+      .then(() => {
+        this._messages.update(map => ({
+          ...map,
+          [roomId]: (map[roomId] ?? []).filter(m => m.senderId !== userId),
+        }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
+  }
+
+  createRoom(clubId: string, name: string): void {
+    firstValueFrom(
+      this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),
+    )
+      .then(raw => {
+        const room: ChatRoom = { id: raw.id, name: raw.name, clubId };
+        this._rooms.update(rooms => [...rooms, room]);
+      })
+      .catch((err: unknown) => console.error('[ChatService] createRoom error', err));
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────

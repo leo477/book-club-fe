@@ -3,20 +3,18 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
+import { toast } from '@spartan-ng/brain/sonner';
 import { authInterceptor } from './auth.interceptor';
-import { ToastService } from '../services/toast.service';
 import { TokenStore } from '../auth/token.store';
 
 describe('authInterceptor', () => {
   let http: HttpClient;
   let httpMock: HttpTestingController;
   let routerSpy: jasmine.SpyObj<Router>;
-  let toastSpy: jasmine.SpyObj<ToastService>;
   let tokenStoreSpy: jasmine.SpyObj<TokenStore>;
 
   function setup(token: string | null = null) {
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-    toastSpy = jasmine.createSpyObj('ToastService', ['show']);
     tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'clear'], {
       token: jasmine.createSpy().and.returnValue(token),
     });
@@ -28,7 +26,6 @@ describe('authInterceptor', () => {
         provideHttpClient(withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
         { provide: Router, useValue: routerSpy },
-        { provide: ToastService, useValue: toastSpy },
         { provide: TokenStore, useValue: tokenStoreSpy },
       ],
     });
@@ -83,13 +80,11 @@ describe('authInterceptor', () => {
 
   it('shows toast on 500', () => {
     setup('my-token');
+    spyOn(toast, 'error');
     http.get('/api/test').subscribe({ error: jasmine.createSpy('errorHandler') });
     const req = httpMock.expectOne('/api/test');
     req.flush({ detail: 'Server Error' }, { status: 500, statusText: 'Internal Server Error' });
-    expect(toastSpy.show).toHaveBeenCalledWith(
-      'A server error occurred. Please try again later.',
-      'error',
-    );
+    expect(toast.error).toHaveBeenCalledWith('A server error occurred. Please try again later.');
   });
 
   it('re-throws the error after handling', (done) => {
@@ -106,9 +101,10 @@ describe('authInterceptor', () => {
 
   it('does not show toast on non-5xx errors', () => {
     setup('my-token');
+    spyOn(toast, 'error');
     http.get('/api/test').subscribe({ error: jasmine.createSpy('errorHandler') });
     const req = httpMock.expectOne('/api/test');
     req.flush({}, { status: 400, statusText: 'Bad Request' });
-    expect(toastSpy.show).not.toHaveBeenCalled();
+    expect(toast.error).not.toHaveBeenCalled();
   });
 });

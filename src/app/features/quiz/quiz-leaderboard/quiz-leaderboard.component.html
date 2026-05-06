@@ -1,0 +1,61 @@
+<div class="min-h-screen p-4 sm:p-8">
+  <div class="max-w-3xl mx-auto space-y-6">
+
+    <!-- ── Header ── -->
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🏆 Leaderboard</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">Auto-refreshes every 30 seconds</p>
+      </div>
+      <a [routerLink]="['/clubs', id(), 'quizzes']"
+         class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
+        ← Back to Quizzes
+      </a>
+    </header>
+
+    <!-- ── Loading ── -->
+    @if (isLoadingSession()) {
+      <div class="space-y-4">
+        <div class="glass-card h-48 animate-pulse"></div>
+        <div class="glass-card h-32 animate-pulse"></div>
+      </div>
+    } @else {
+
+      <!-- ── No active session ── -->
+      @if (!session()) {
+        <div class="glass-card p-12 text-center">
+          <p class="text-4xl mb-3">🎯</p>
+          <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">No active session</h2>
+          <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
+            The quiz session hasn't started yet.
+          </p>
+        </div>
+      } @else {
+
+        <!-- ── Leaderboard content ── -->
+        @if (leaderboard().length === 0 && !isLeaderboardLoading()) {
+          <div class="glass-card p-12 text-center">
+            <p class="text-4xl mb-3">⏳</p>
+            <p class="text-gray-500 dark:text-gray-400">No participants yet.</p>
+          </div>
+        } @else {
+
+          <!-- Podium (top 3) -->
+          <div class="glass-card overflow-hidden">
+            <app-leaderboard-podium
+              [first]="podiumFirst()"
+              [second]="podiumSecond()"
+              [third]="podiumThird()"
+            />
+          </div>
+
+          <!-- Ranks 4+ -->
+          @if (rest().length > 0) {
+            <app-leaderboard-rest-table [entries]="rest()" />
+          }
+        }
+      }
+    }
+
+  </div>
+</div>

@@ -17,6 +17,30 @@ export const QUIZ_ROUTES: Routes = [
       import('./quiz-create/quiz-create.component').then(m => m.QuizCreateComponent),
   },
   {
+    path: ':quizId/edit',
+    canActivate: [authGuard, roleGuard('organizer')],
+    loadComponent: () =>
+      import('./quiz-edit/quiz-edit.component').then(m => m.QuizEditComponent),
+  },
+  {
+    path: ':quizId/preview',
+    canActivate: [authGuard, roleGuard('organizer')],
+    loadComponent: () =>
+      import('./quiz-preview/quiz-preview.component').then(m => m.QuizPreviewComponent),
+  },
+  {
+    path: ':quizId/session',
+    canActivate: [authGuard, roleGuard('organizer')],
+    loadComponent: () =>
+      import('./quiz-session/quiz-session.component').then(m => m.QuizSessionComponent),
+  },
+  {
+    path: ':quizId/leaderboard',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./quiz-leaderboard/quiz-leaderboard.component').then(m => m.QuizLeaderboardComponent),
+  },
+  {
     path: ':quizId',
     canActivate: [authGuard],
     loadComponent: () =>

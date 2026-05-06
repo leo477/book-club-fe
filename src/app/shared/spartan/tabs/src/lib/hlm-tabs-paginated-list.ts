@@ -45,7 +45,7 @@ import { listVariants } from './hlm-tabs-list';
 			<ng-icon hlm size="base" name="lucideChevronLeft" />
 		</button>
 
-		<div #tabListContainer class="z-[1] flex grow overflow-hidden" (keydown)="_handleKeydown($event)">
+		<div #tabListContainer class="z-[1] flex grow overflow-hidden" tabindex="0" (keydown)="_handleKeydown($event)">
 			<div class="relative grow transition-transform" #tabList role="tablist" (cdkObserveContent)="_onContentChanges()">
 				<div #tabListInner [class]="_tabListClass()">
 					<ng-content />
@@ -88,10 +88,10 @@ export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
 	public readonly nextPaginator = viewChild.required<ElementRef<HTMLElement>>('nextPaginator');
 	public readonly previousPaginator = viewChild.required<ElementRef<HTMLElement>>('previousPaginator');
 
-	public readonly tabListClass = input<ClassValue>('', { alias: 'tabListClass' });
+	public readonly tabListClass = input<ClassValue>('');
 	protected readonly _tabListClass = computed(() => hlm(listVariants(), this.tabListClass()));
 
-	public readonly paginationButtonClass = input<ClassValue>('', { alias: 'paginationButtonClass' });
+	public readonly paginationButtonClass = input<ClassValue>('');
 	protected readonly _paginationButtonClass = computed(() =>
 		hlm(
 			'relative z-[2] select-none disabled:cursor-default',
