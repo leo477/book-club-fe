@@ -184,6 +184,10 @@ src/
           leaderboard-podium/
             leaderboard-podium.component.html
             leaderboard-podium.component.ts
+          leaderboard-rest-table/
+            leaderboard-rest-table.component.html
+            leaderboard-rest-table.component.ts
+          leaderboard-base.component.ts
           quiz-leaderboard.component.html
           quiz-leaderboard.component.ts
         quiz-list/
@@ -199,6 +203,7 @@ src/
           quiz-take.component.html
           quiz-take.component.ts
         .gitkeep
+        quiz-detail-base.component.ts
         quiz.routes.ts
       randomizer/
         .gitkeep
@@ -629,7 +634,9 @@ PYEOF
       "Bash(git *)",
       "Bash(npm view *)",
       "Bash(grep \"\\\\.ts$\")",
-      "Bash(grep -v \"^\\\\s*$\")"
+      "Bash(grep -v \"^\\\\s*$\")",
+      "Bash(grep -E \"\\\\.\\(ts\\)$\")",
+      "Bash(curl *)"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -1140,6 +1147,124 @@ export interface UserProfile {
 }
 ````
 
+## File: src/app/features/quiz/quiz-leaderboard/leaderboard-rest-table/leaderboard-rest-table.component.html
+````html
+<div class="glass-card overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50/80 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 uppercase tracking-wide text-xs">
+      <tr>
+        <th class="px-4 py-3 text-left w-12">Rank</th>
+        <th class="px-4 py-3 text-left">Player</th>
+        <th class="px-4 py-3 text-right">Score</th>
+        <th class="px-4 py-3 text-right">Status</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+      @for (entry of entries(); track entry.userId) {
+        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+          <td class="px-4 py-3 text-gray-500 dark:text-gray-400 font-mono text-center">{{ entry.rank }}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300 flex-shrink-0">
+                {{ entry.displayName | initials }}
+              </div>
+              <span class="text-gray-900 dark:text-white font-medium truncate">{{ entry.displayName }}</span>
+            </div>
+          </td>
+          <td class="px-4 py-3 text-right">
+            <div class="flex items-center justify-end gap-2">
+              <span class="font-semibold text-gray-900 dark:text-white">{{ entry.score }}</span>
+              <span class="text-gray-400">/{{ entry.totalQuestions }}</span>
+              <div class="w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-primary-500 rounded-full transition-all"
+                  [style.width.%]="entry.totalQuestions > 0 ? (entry.score / entry.totalQuestions) * 100 : 0"
+                ></div>
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3 text-right">
+            @if (entry.hasAttempted) {
+              <span class="inline-flex rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2 py-0.5 text-xs text-green-700 dark:text-green-400">Completed</span>
+            } @else {
+              <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2 py-0.5 text-xs text-gray-500 dark:text-gray-400">Not yet</span>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>
+````
+
+## File: src/app/features/quiz/quiz-leaderboard/leaderboard-rest-table/leaderboard-rest-table.component.ts
+````typescript
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { QuizLeaderboardEntry } from '../../../../core/models/quiz.model';
+import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
+@Component({
+  selector: 'app-leaderboard-rest-table',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [InitialsPipe],
+  templateUrl: './leaderboard-rest-table.component.html',
+})
+export class LeaderboardRestTableComponent {
+  readonly entries = input<QuizLeaderboardEntry[]>([]);
+}
+````
+
+## File: src/app/features/quiz/quiz-leaderboard/leaderboard-base.component.ts
+````typescript
+import {
+  Directive,
+  OnDestroy,
+  computed,
+  inject,
+  input,
+  resource,
+  signal,
+} from '@angular/core';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizSession, QuizLeaderboardEntry } from '../../../core/models/quiz.model';
+@Directive()
+export abstract class LeaderboardBaseComponent implements OnDestroy {
+  protected readonly quizService = inject(QuizService);
+  readonly id = input<string>('');
+  readonly quizId = input<string>('');
+  readonly session = signal<QuizSession | null>(null);
+  readonly isLoadingSession = signal(true);
+  protected readonly _refreshTick = signal(0);
+  private readonly _leaderboardResource = resource({
+    params: () => ({
+      quizId: this.quizId(),
+      sessionId: this.session()?.id,
+      tick: this._refreshTick(),
+    }),
+    loader: ({ params }) =>
+      params.sessionId && params.quizId
+        ? this.quizService.getLeaderboard(params.quizId, params.sessionId)
+        : Promise.resolve<QuizLeaderboardEntry[]>([]),
+  });
+  readonly leaderboard = computed(() => this._leaderboardResource.value() ?? []);
+  readonly isLeaderboardLoading = computed(() => this._leaderboardResource.isLoading());
+  readonly podiumFirst = computed(() => this.leaderboard()[0] ?? null);
+  readonly podiumSecond = computed(() => this.leaderboard()[1] ?? null);
+  readonly podiumThird = computed(() => this.leaderboard()[2] ?? null);
+  readonly rest = computed(() => this.leaderboard().slice(3));
+  private _refreshInterval?: ReturnType<typeof setInterval>;
+  protected startPolling(intervalMs: number): void {
+    this._refreshInterval = setInterval(
+      () => this._refreshTick.update(n => n + 1),
+      intervalMs,
+    );
+  }
+  ngOnDestroy(): void {
+    clearInterval(this._refreshInterval);
+  }
+}
+````
+
 ## File: src/app/features/quiz/quiz-take/quiz-take.component.html
 ````html
 <div class="min-h-screen flex flex-col items-center p-4 sm:p-8">
@@ -1357,6 +1482,39 @@ export interface UserProfile {
 ## File: src/app/features/quiz/.gitkeep
 ````
 
+````
+
+## File: src/app/features/quiz/quiz-detail-base.component.ts
+````typescript
+import {
+  Directive,
+  computed,
+  inject,
+  input,
+  resource,
+} from '@angular/core';
+import { QuizService } from '../../core/services/quiz.service';
+@Directive()
+export abstract class QuizDetailBaseComponent {
+  protected readonly quizService = inject(QuizService);
+  readonly id = input<string>('');
+  readonly quizId = input<string>('');
+  protected readonly _quizResource = resource({
+    params: () => this.quizId(),
+    loader: ({ params: qId }) =>
+      qId ? this.quizService.getQuiz(qId) : Promise.resolve(null),
+  });
+  protected readonly _questionsResource = resource({
+    params: () => this.quizId(),
+    loader: ({ params: qId }) =>
+      qId ? this.quizService.getQuestions(qId) : Promise.resolve([]),
+  });
+  readonly quiz = computed(() => this._quizResource.value() ?? null);
+  readonly questions = computed(() => this._questionsResource.value() ?? []);
+  readonly isLoading = computed(
+    () => this._quizResource.isLoading() || this._questionsResource.isLoading(),
+  );
+}
 ````
 
 ## File: src/app/features/randomizer/.gitkeep
@@ -1728,6 +1886,53 @@ export class EmptyStateComponent {
     </div>
 ````
 
+## File: src/app/shared/components/form-field/form-field.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, inject, input, computed } from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { map, startWith } from 'rxjs';
+@Component({
+  selector: 'app-form-field',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslateModule],
+  templateUrl: './form-field.component.html',
+})
+export class FormFieldComponent {
+  private readonly translate = inject(TranslateService);
+  readonly label = input.required<string>();
+  readonly control = input.required<FormControl<string | null>>();
+  readonly type = input<'text' | 'email' | 'password'>('text');
+  readonly placeholder = input('');
+  readonly formControl = computed(() => this.control());
+  readonly hasError = computed(() => {
+    const ctrl = this.control();
+    return ctrl.invalid && ctrl.touched;
+  });
+  private readonly _lang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: this.translate.currentLang ?? 'uk' },
+  );
+  readonly errorMessage = computed(() => {
+    this._lang();
+    const ctrl = this.control();
+    if (!ctrl.errors) return '';
+    if (ctrl.errors['required']) return this.translate.instant('FORM_ERRORS.required');
+    if (ctrl.errors['email']) return this.translate.instant('FORM_ERRORS.email');
+    if (ctrl.errors['minlength']) {
+      const req = (ctrl.errors['minlength'] as { requiredLength: number }).requiredLength;
+      return this.translate.instant('FORM_ERRORS.minlength', { requiredLength: req });
+    }
+    return this.translate.instant('FORM_ERRORS.invalid');
+  });
+}
+````
+
 ## File: src/app/shared/components/loading-spinner/loading-spinner.component.html
 ````html
 <output [class]="containerClass()" aria-label="Loading">
@@ -1785,13 +1990,12 @@ export class FormatDatePipe implements PipeTransform {
 import { Pipe, PipeTransform } from '@angular/core';
 @Pipe({ name: 'initials', standalone: true, pure: true })
 export class InitialsPipe implements PipeTransform {
-  transform(displayName: string): string {
-    return displayName
-      .split(' ')
-      .map(w => w[0])
-      .join('')
-      .slice(0, 2)
-      .toUpperCase();
+  transform(name: string | null | undefined): string {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    return parts.length >= 2
+      ? (parts[0][0] + parts[1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
   }
 }
 ````
@@ -1799,6 +2003,57 @@ export class InitialsPipe implements PipeTransform {
 ## File: src/app/shared/utils/.gitkeep
 ````
 
+````
+
+## File: src/app/app.config.ts
+````typescript
+import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, APP_INITIALIZER, inject } from '@angular/core';
+import {
+  provideRouter,
+  withComponentInputBinding,
+  withViewTransitions,
+  withRouterConfig,
+} from '@angular/router';
+import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
+import { provideTranslateService, provideTranslateLoader, TranslateService } from '@ngx-translate/core';
+import { TranslateHttpLoader, provideTranslateHttpLoader } from '@ngx-translate/http-loader';
+import { catchError, firstValueFrom, of } from 'rxjs';
+import { routes } from './app.routes';
+import { authInterceptor } from './core/interceptors/auth.interceptor';
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideBrowserGlobalErrorListeners(),
+    provideZonelessChangeDetection(),
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      withViewTransitions(),
+      withRouterConfig({ paramsInheritanceStrategy: 'always' }),
+    ),
+    provideHttpClient(
+      withFetch(),
+      withInterceptors([authInterceptor]),
+    ),
+    provideTranslateService({
+      defaultLanguage: 'uk',
+      loader: provideTranslateLoader(TranslateHttpLoader),
+    }),
+    ...provideTranslateHttpLoader({ prefix: '/i18n/', suffix: '.json' }),
+    {
+      provide: APP_INITIALIZER,
+      useFactory: () => {
+        const translate = inject(TranslateService);
+        return () =>
+          firstValueFrom(
+            translate.use('uk').pipe(
+              catchError(() => translate.use('en').pipe(catchError(() => of(null)))),
+            ),
+          );
+      },
+      multi: true,
+    },
+  ],
+};
 ````
 
 ## File: src/index.html
@@ -2095,6 +2350,13 @@ trim_trailing_whitespace = false
     }
   }
 }
+````
+
+## File: .lintstagedrc.cjs
+````javascript
+module.exports = {
+  'src/**/*.{ts,py,html}': () => ['npx repomix', 'git add repomix-output.md'],
+};
 ````
 
 ## File: .mcp.json
@@ -3760,7 +4022,7 @@ export class ProfileStatsComponent {
         @if (second()!.avatarUrl) {
           <img [src]="second()!.avatarUrl" [alt]="second()!.displayName" class="w-full h-full object-cover" />
         } @else {
-          {{ initials(second()!.displayName) }}
+          {{ second()!.displayName | initials }}
         }
       </div>
       <p class="text-xs text-gray-700 dark:text-gray-300 font-medium text-center truncate w-full px-1">{{ second()!.displayName }}</p>
@@ -3781,7 +4043,7 @@ export class ProfileStatsComponent {
         @if (first()!.avatarUrl) {
           <img [src]="first()!.avatarUrl" [alt]="first()!.displayName" class="w-full h-full object-cover" />
         } @else {
-          {{ initials(first()!.displayName) }}
+          {{ first()!.displayName | initials }}
         }
       </div>
       <p class="text-xs text-gray-900 dark:text-white font-bold text-center truncate w-full px-1">{{ first()!.displayName }}</p>
@@ -3802,7 +4064,7 @@ export class ProfileStatsComponent {
         @if (third()!.avatarUrl) {
           <img [src]="third()!.avatarUrl" [alt]="third()!.displayName" class="w-full h-full object-cover" />
         } @else {
-          {{ initials(third()!.displayName) }}
+          {{ third()!.displayName | initials }}
         }
       </div>
       <p class="text-xs text-amber-800 dark:text-amber-300 font-medium text-center truncate w-full px-1">{{ third()!.displayName }}</p>
@@ -3824,25 +4086,19 @@ export class ProfileStatsComponent {
 ````typescript
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { QuizLeaderboardEntry } from '../../../../core/models/quiz.model';
+import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
 @Component({
   selector: 'app-leaderboard-podium',
   host: { class: 'block' },
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [],
+  imports: [InitialsPipe],
   templateUrl: './leaderboard-podium.component.html',
 })
 export class LeaderboardPodiumComponent {
   readonly first  = input<QuizLeaderboardEntry | null>(null);
   readonly second = input<QuizLeaderboardEntry | null>(null);
   readonly third  = input<QuizLeaderboardEntry | null>(null);
-  protected initials(name: string | null | undefined): string {
-    if (!name) return '?';
-    const parts = name.trim().split(/\s+/);
-    return parts.length >= 2
-      ? (parts[0][0] + parts[1][0]).toUpperCase()
-      : name.slice(0, 2).toUpperCase();
-  }
 }
 ````
 
@@ -3889,52 +4145,7 @@ export class LeaderboardPodiumComponent {
             />
           </div>
           @if (rest().length > 0) {
-            <div class="glass-card overflow-hidden">
-              <table class="w-full text-sm">
-                <thead class="bg-gray-50/80 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 uppercase tracking-wide text-xs">
-                  <tr>
-                    <th class="px-4 py-3 text-left w-12">Rank</th>
-                    <th class="px-4 py-3 text-left">Player</th>
-                    <th class="px-4 py-3 text-right">Score</th>
-                    <th class="px-4 py-3 text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                  @for (entry of rest(); track entry.userId) {
-                    <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                      <td class="px-4 py-3 text-gray-500 dark:text-gray-400 font-mono text-center">{{ entry.rank }}</td>
-                      <td class="px-4 py-3">
-                        <div class="flex items-center gap-2">
-                          <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300 flex-shrink-0">
-                            {{ initials(entry.displayName) }}
-                          </div>
-                          <span class="text-gray-900 dark:text-white font-medium truncate">{{ entry.displayName }}</span>
-                        </div>
-                      </td>
-                      <td class="px-4 py-3 text-right">
-                        <div class="flex items-center justify-end gap-2">
-                          <span class="font-semibold text-gray-900 dark:text-white">{{ entry.score }}</span>
-                          <span class="text-gray-400">/{{ entry.totalQuestions }}</span>
-                          <div class="w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                            <div
-                              class="h-full bg-primary-500 rounded-full transition-all"
-                              [style.width.%]="entry.totalQuestions > 0 ? (entry.score / entry.totalQuestions) * 100 : 0"
-                            ></div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="px-4 py-3 text-right">
-                        @if (entry.hasAttempted) {
-                          <span class="inline-flex rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2 py-0.5 text-xs text-green-700 dark:text-green-400">Completed</span>
-                        } @else {
-                          <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2 py-0.5 text-xs text-gray-500 dark:text-gray-400">Not yet</span>
-                        }
-                      </td>
-                    </tr>
-                  }
-                </tbody>
-              </table>
-            </div>
+            <app-leaderboard-rest-table [entries]="rest()" />
           }
         }
       }
@@ -3945,54 +4156,21 @@ export class LeaderboardPodiumComponent {
 
 ## File: src/app/features/quiz/quiz-leaderboard/quiz-leaderboard.component.ts
 ````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  inject,
-  input,
-  resource,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizSession } from '../../../core/models/quiz.model';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
 import { LeaderboardPodiumComponent } from './leaderboard-podium/leaderboard-podium.component';
+import { LeaderboardRestTableComponent } from './leaderboard-rest-table/leaderboard-rest-table.component';
+import { LeaderboardBaseComponent } from './leaderboard-base.component';
 @Component({
   selector: 'app-quiz-leaderboard',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ...HlmCardImports, LeaderboardPodiumComponent],
+  imports: [RouterLink, ...HlmCardImports, InitialsPipe, LeaderboardPodiumComponent, LeaderboardRestTableComponent],
   templateUrl: './quiz-leaderboard.component.html',
 })
-export class QuizLeaderboardComponent implements OnInit, OnDestroy {
-  private readonly quizService = inject(QuizService);
-  readonly id = input<string>('');
-  readonly quizId = input<string>('');
-  readonly session = signal<QuizSession | null>(null);
-  readonly isLoadingSession = signal(true);
-  private readonly _refreshTick = signal(0);
-  private readonly _leaderboardResource = resource({
-    params: () => ({
-      quizId: this.quizId(),
-      sessionId: this.session()?.id,
-      tick: this._refreshTick(),
-    }),
-    loader: ({ params }) =>
-      params.sessionId && params.quizId
-        ? this.quizService.getLeaderboard(params.quizId, params.sessionId)
-        : Promise.resolve([]),
-  });
-  readonly leaderboard = computed(() => this._leaderboardResource.value() ?? []);
-  readonly isLeaderboardLoading = computed(() => this._leaderboardResource.isLoading());
-  readonly podiumFirst = computed(() => this.leaderboard()[0] ?? null);
-  readonly podiumSecond = computed(() => this.leaderboard()[1] ?? null);
-  readonly podiumThird = computed(() => this.leaderboard()[2] ?? null);
-  readonly rest = computed(() => this.leaderboard().slice(3));
-  private _refreshInterval?: ReturnType<typeof setInterval>;
+export class QuizLeaderboardComponent extends LeaderboardBaseComponent implements OnInit {
   ngOnInit(): void {
     this.quizService
       .getActiveSession(this.quizId())
@@ -4000,19 +4178,7 @@ export class QuizLeaderboardComponent implements OnInit, OnDestroy {
         this.session.set(s);
         this.isLoadingSession.set(false);
       });
-    this._refreshInterval = setInterval(
-      () => this._refreshTick.update(n => n + 1),
-      30_000,
-    );
-  }
-  ngOnDestroy(): void {
-    clearInterval(this._refreshInterval);
-  }
-  protected initials(name: string): string {
-    const parts = name.trim().split(/\s+/);
-    return parts.length >= 2
-      ? (parts[0][0] + parts[1][0]).toUpperCase()
-      : name.slice(0, 2).toUpperCase();
+    this.startPolling(30_000);
   }
 }
 ````
@@ -4131,15 +4297,13 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  inject,
-  input,
-  resource,
   signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
+import { inject } from '@angular/core';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
 @Component({
   selector: 'app-quiz-preview',
   standalone: true,
@@ -4147,26 +4311,8 @@ import { HlmCardImports } from '../../../shared/spartan/card/src';
   imports: [RouterLink, ...HlmCardImports, HlmButton],
   templateUrl: './quiz-preview.component.html',
 })
-export class QuizPreviewComponent {
-  protected readonly quizService = inject(QuizService);
+export class QuizPreviewComponent extends QuizDetailBaseComponent {
   private readonly router = inject(Router);
-  readonly id = input<string>('');
-  readonly quizId = input<string>('');
-  private readonly _quizResource = resource({
-    params: () => this.quizId(),
-    loader: ({ params: qId }) =>
-      qId ? this.quizService.getQuiz(qId) : Promise.resolve(null),
-  });
-  private readonly _questionsResource = resource({
-    params: () => this.quizId(),
-    loader: ({ params: qId }) =>
-      qId ? this.quizService.getQuestions(qId) : Promise.resolve([]),
-  });
-  readonly quiz = computed(() => this._quizResource.value() ?? null);
-  readonly questions = computed(() => this._questionsResource.value() ?? []);
-  readonly isLoading = computed(
-    () => this._quizResource.isLoading() || this._questionsResource.isLoading(),
-  );
   readonly currentIndex = signal(0);
   readonly currentQuestion = computed(() => this.questions()[this.currentIndex()] ?? null);
   readonly isFirstQuestion = computed(() => this.currentIndex() === 0);
@@ -4536,6 +4682,88 @@ export const QUIZ_ROUTES: Routes = [
 </div>
 ````
 
+## File: src/app/features/randomizer/randomizer.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  inject,
+  signal,
+  computed,
+  effect,
+} from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
+import { ActivatedRoute, RouterLink } from '@angular/router';
+import { DatePipe } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../core/auth/auth.service';
+import { RandomizerService } from '../../core/services/randomizer.service';
+import { InitialsPipe } from '../../shared/pipes/initials.pipe';
+import { HlmButton } from '../../shared/spartan/button/src';
+import { HlmInput } from '../../shared/spartan/input/src';
+@Component({
+  selector: 'app-randomizer',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule, InitialsPipe, HlmButton, HlmInput],
+  styleUrl: './randomizer.component.scss',
+  templateUrl: './randomizer.component.html',
+})
+export class RandomizerComponent implements OnInit {
+  protected readonly randomizerService = inject(RandomizerService);
+  protected readonly authService = inject(AuthService);
+  private readonly route = inject(ActivatedRoute);
+  protected readonly isSaving = signal(false);
+  protected readonly errorMessage = signal('');
+  protected clubId = '';
+  protected readonly purposeControl = new FormControl('Хто представляє книгу?', {
+    nonNullable: true,
+    validators: [Validators.required],
+  });
+  // toSignal keeps OnPush change detection working without manual markForCheck
+  private readonly _purposeValue = toSignal(this.purposeControl.valueChanges, {
+    initialValue: this.purposeControl.value,
+  });
+  constructor() {
+    effect(() => this.randomizerService.setPurpose(this._purposeValue()));
+  }
+  protected readonly selectedCount = computed(
+    () =>
+      this.randomizerService
+        .candidates()
+        .filter(m => this.randomizerService.selectedIds().has(m.userId)).length,
+  );
+  ngOnInit(): void {
+    this.clubId = this.route.snapshot.params['id'] as string;
+    this.randomizerService.loadClubMembers(this.clubId);
+    this.randomizerService.loadHistory(this.clubId).catch(() => {});
+  }
+  protected spin(): void {
+    this.errorMessage.set('');
+    this.randomizerService.spin().catch(err => {
+      this.errorMessage.set((err as Error).message);
+    });
+  }
+  protected saveSession(): void {
+    this.isSaving.set(true);
+    this.errorMessage.set('');
+    this.randomizerService
+      .saveSession(this.clubId)
+      .then(() => this.isSaving.set(false))
+      .catch(err => {
+        this.isSaving.set(false);
+        this.errorMessage.set((err as Error).message);
+      });
+  }
+  protected reset(): void {
+    this.randomizerService.reset();
+    this.errorMessage.set('');
+  }
+}
+````
+
 ## File: src/app/layout/shell/shell.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
@@ -4576,50 +4804,53 @@ export class ShellComponent {
 </div>
 ````
 
-## File: src/app/shared/components/form-field/form-field.component.ts
+## File: src/app/shared/components/qr-code/qr-code.component.ts
 ````typescript
-import { Component, ChangeDetectionStrategy, inject, input, computed } from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { map, startWith } from 'rxjs';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  effect,
+  input,
+  viewChild,
+} from '@angular/core';
+import * as QRCode from 'qrcode';
+import { environment } from '../../../../environments/environment';
+import { HlmCard } from '../../spartan/card/src';
 @Component({
-  selector: 'app-form-field',
+  selector: 'app-qr-code',
   standalone: true,
+  imports: [HlmCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslateModule],
-  templateUrl: './form-field.component.html',
+  template: `
+    <div hlmCard class="flex items-center justify-center p-6 w-fit gap-0 py-6">
+      <canvas
+        #canvas
+        [style.width.px]="size()"
+        [style.height.px]="size()"
+        class="rounded-lg"
+        [attr.aria-label]="'QR code'"
+        role="img"
+      ></canvas>
+    </div>
+  `,
 })
-export class FormFieldComponent {
-  private readonly translate = inject(TranslateService);
-  readonly label = input.required<string>();
-  readonly control = input.required<FormControl<string | null>>();
-  readonly type = input<'text' | 'email' | 'password'>('text');
-  readonly placeholder = input('');
-  readonly formControl = computed(() => this.control());
-  readonly hasError = computed(() => {
-    const ctrl = this.control();
-    return ctrl.invalid && ctrl.touched;
-  });
-  private readonly _lang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: this.translate.currentLang ?? 'uk' },
-  );
-  readonly errorMessage = computed(() => {
-    this._lang();
-    const ctrl = this.control();
-    if (!ctrl.errors) return '';
-    if (ctrl.errors['required']) return this.translate.instant('FORM_ERRORS.required');
-    if (ctrl.errors['email']) return this.translate.instant('FORM_ERRORS.email');
-    if (ctrl.errors['minlength']) {
-      const req = (ctrl.errors['minlength'] as { requiredLength: number }).requiredLength;
-      return this.translate.instant('FORM_ERRORS.minlength', { requiredLength: req });
-    }
-    return this.translate.instant('FORM_ERRORS.invalid');
-  });
+export class QrCodeComponent {
+  readonly value = input.required<string>();
+  readonly size = input<number>(200);
+  private readonly canvasRef =
+    viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
+  constructor() {
+    effect(() => {
+      const val = this.value();
+      const sz = this.size();
+      const canvas = this.canvasRef().nativeElement;
+      if (!val || !canvas) return;
+      QRCode.toCanvas(canvas, val, { width: sz, margin: 2 }, (err) => {
+        if (err && !environment.production) console.error('QR generation error:', err);
+      });
+    });
+  }
 }
 ````
 
@@ -6856,57 +7087,6 @@ function toClassList(className: string | ClassValue[]): string[] {
 export * from './lib/hlm';
 ````
 
-## File: src/app/app.config.ts
-````typescript
-import { ApplicationConfig, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, APP_INITIALIZER, inject } from '@angular/core';
-import {
-  provideRouter,
-  withComponentInputBinding,
-  withViewTransitions,
-  withRouterConfig,
-} from '@angular/router';
-import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
-import { provideTranslateService, provideTranslateLoader, TranslateService } from '@ngx-translate/core';
-import { TranslateHttpLoader, provideTranslateHttpLoader } from '@ngx-translate/http-loader';
-import { catchError, firstValueFrom, of } from 'rxjs';
-import { routes } from './app.routes';
-import { authInterceptor } from './core/interceptors/auth.interceptor';
-export const appConfig: ApplicationConfig = {
-  providers: [
-    provideBrowserGlobalErrorListeners(),
-    provideZonelessChangeDetection(),
-    provideRouter(
-      routes,
-      withComponentInputBinding(),
-      withViewTransitions(),
-      withRouterConfig({ paramsInheritanceStrategy: 'always' }),
-    ),
-    provideHttpClient(
-      withFetch(),
-      withInterceptors([authInterceptor]),
-    ),
-    provideTranslateService({
-      defaultLanguage: 'uk',
-      loader: provideTranslateLoader(TranslateHttpLoader),
-    }),
-    ...provideTranslateHttpLoader({ prefix: '/i18n/', suffix: '.json' }),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: () => {
-        const translate = inject(TranslateService);
-        return () =>
-          firstValueFrom(
-            translate.use('uk').pipe(
-              catchError(() => translate.use('en').pipe(catchError(() => of(null)))),
-            ),
-          );
-      },
-      multi: true,
-    },
-  ],
-};
-````
-
 ## File: src/app/app.html
 ````html
 <router-outlet />
@@ -7082,11 +7262,43 @@ yarn-error.log*
 .aider*
 ````
 
-## File: .lintstagedrc.cjs
-````javascript
-module.exports = {
-  'src/**/*.{ts,py,html}': () => ['npx repomix', 'git add repomix-output.md'],
-};
+## File: CLAUDE.md
+````markdown
+# Project Context
+This project uses **Repomix** to provide a full map of the codebase.
+
+## Stack
+- Frontend: Angular 21 (Signals — resource(), rxResource(), linkedSignal(), input()/output(), standalone components, SCSS, Tailwind)
+- Backend: FastAPI (Async, Pydantic v2)
+
+## Folder Structure
+- `src/app/features/` — Angular feature components (auth, clubs, profile, quiz, randomizer)
+- `src/app/core/` — Core services, guards, interceptors, models
+- `src/app/shared/` — Shared UI components, pipes, directives
+- `src/app/layout/` — Shell, header, footer
+- `public/i18n/` — Translation files (en.json, uk.json)
+- `supabase/migrations/` — SQL migrations for backend
+
+## How to Run
+- **Dev server:** `npm start` (Angular at http://localhost:4200)
+- **Build:** `npm run build`
+- **Update context:** `npm run build-ctx`
+
+## Testing & Linting
+- **Unit tests:** `npm run test` (Jest)
+- **E2E tests:** Playwright (see docs)
+- **Lint:** `npm run lint`
+
+## Pre-commit Hooks & Development Workflow
+- This project does **not** use `.pre-commit-config.yaml`, `ruff`, or `black`.
+- Pre-commit hooks are managed via Husky. The only pre-commit hook is `.husky/pre-commit`, which runs `lint-staged`.
+- The pre-commit hook updates `repomix-output.md` using `lint-staged`.
+- No Python-specific formatting or linting tools are involved in the pre-commit process.
+
+## Notes
+- Always check `repomix-output.md` for the latest project map.
+- If a file is not in repomix-output.md, assume it doesn't exist yet.
+- Backend API routes: see FastAPI project (not in this repo).
 ````
 
 ## File: components.json
@@ -7175,6 +7387,47 @@ module.exports = defineConfig([
     },
   }
 ]);
+````
+
+## File: karma.conf.js
+````javascript
+module.exports = function (config) {
+  config.set({
+    basePath: '',
+    frameworks: ['jasmine'],
+    plugins: [
+      require('karma-jasmine'),
+      require('karma-chrome-launcher'),
+      require('karma-jasmine-html-reporter'),
+      require('karma-coverage'),
+    ],
+    client: {
+      jasmine: {},
+      clearContext: false,
+    },
+    jasmineHtmlReporter: {
+      suppressAll: true,
+    },
+    coverageReporter: {
+      dir: require('path').join(__dirname, './coverage/book-club-fe'),
+      subdir: '.',
+      reporters: [{ type: 'html' }, { type: 'text-summary' }, { type: 'lcovonly' }],
+      exclude: ['**/spartan/**'],
+      check: {
+        global: { statements: 75, branches: 60, functions: 75, lines: 75 },
+      },
+    },
+    reporters: ['progress', 'kjhtml'],
+    browsers: ['ChromeHeadless'],
+    customLaunchers: {
+      ChromeHeadlessCI: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
+      },
+    },
+    restartOnFileChange: true,
+  });
+};
 ````
 
 ## File: postcss.config.json
@@ -9305,12 +9558,10 @@ import {
   Component,
   computed,
   effect,
-  inject,
-  input,
   linkedSignal,
-  resource,
   signal,
 } from '@angular/core';
+import { inject } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -9319,11 +9570,11 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
 import { HlmFieldImports } from '../../../shared/spartan/field/src';
 import { HlmInput } from '../../../shared/spartan/input/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
 interface MetaForm {
   title: FormControl<string>;
   description: FormControl<string>;
@@ -9349,25 +9600,8 @@ interface EditableQuestion {
   imports: [ReactiveFormsModule, RouterLink, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
   templateUrl: './quiz-edit.component.html',
 })
-export class QuizEditComponent {
-  private readonly quizService = inject(QuizService);
+export class QuizEditComponent extends QuizDetailBaseComponent {
   private readonly router = inject(Router);
-  readonly id = input<string>('');
-  readonly quizId = input<string>('');
-  private readonly _quizResource = resource({
-    params: () => this.quizId(),
-    loader: ({ params: qId }) =>
-      qId ? this.quizService.getQuiz(qId) : Promise.resolve(null),
-  });
-  private readonly _questionsResource = resource({
-    params: () => this.quizId(),
-    loader: ({ params: qId }) =>
-      qId ? this.quizService.getQuestions(qId) : Promise.resolve([]),
-  });
-  readonly quiz = computed(() => this._quizResource.value() ?? null);
-  readonly isLoading = computed(
-    () => this._quizResource.isLoading() || this._questionsResource.isLoading(),
-  );
   readonly isDraft = computed(() => (this.quiz()?.status ?? 'draft') === 'draft');
   readonly localQuestions = linkedSignal<EditableQuestion[]>(
     () =>
@@ -9601,45 +9835,8 @@ export class QuizEditComponent {
                 [second]="podiumSecond()"
                 [third]="podiumThird()"
               />
-              @if (leaderboardRest().length > 0) {
-                <div class="glass-card overflow-hidden">
-                  <table class="w-full text-sm">
-                    <thead class="bg-gray-50/80 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 uppercase tracking-wide text-xs">
-                      <tr>
-                        <th class="px-4 py-3 text-left w-12">Rank</th>
-                        <th class="px-4 py-3 text-left">Player</th>
-                        <th class="px-4 py-3 text-right">Score</th>
-                        <th class="px-4 py-3 text-right">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                      @for (entry of leaderboardRest(); track entry.userId) {
-                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                          <td class="px-4 py-3 text-gray-500 dark:text-gray-400 font-mono text-center">{{ entry.rank }}</td>
-                          <td class="px-4 py-3">
-                            <div class="flex items-center gap-2">
-                              <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300 flex-shrink-0">
-                                {{ entry.displayName.slice(0, 2).toUpperCase() }}
-                              </div>
-                              <span class="text-gray-900 dark:text-white font-medium truncate">{{ entry.displayName }}</span>
-                            </div>
-                          </td>
-                          <td class="px-4 py-3 text-right">
-                            <span class="font-semibold text-gray-900 dark:text-white">{{ entry.score }}</span>
-                            <span class="text-gray-400">/{{ entry.totalQuestions }}</span>
-                          </td>
-                          <td class="px-4 py-3 text-right">
-                            @if (entry.hasAttempted) {
-                              <span class="inline-flex rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2 py-0.5 text-xs text-green-700 dark:text-green-400">Completed</span>
-                            } @else {
-                              <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2 py-0.5 text-xs text-gray-500 dark:text-gray-400">Not yet</span>
-                            }
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
+              @if (rest().length > 0) {
+                <app-leaderboard-rest-table [entries]="rest()" />
               }
             }
           </div>
@@ -9671,61 +9868,32 @@ export class QuizEditComponent {
 import {
   ChangeDetectionStrategy,
   Component,
-  OnDestroy,
   OnInit,
-  computed,
-  inject,
-  input,
-  resource,
   signal,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { Router } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizSession } from '../../../core/models/quiz.model';
+import { Router, RouterLink } from '@angular/router';
+import { inject } from '@angular/core';
 import { ClubEvent } from '../../../core/models/event.model';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
 import { LeaderboardPodiumComponent } from '../quiz-leaderboard/leaderboard-podium/leaderboard-podium.component';
+import { LeaderboardRestTableComponent } from '../quiz-leaderboard/leaderboard-rest-table/leaderboard-rest-table.component';
+import { LeaderboardBaseComponent } from '../quiz-leaderboard/leaderboard-base.component';
 @Component({
   selector: 'app-quiz-session',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, DatePipe, ...HlmCardImports, HlmButton, LeaderboardPodiumComponent],
+  imports: [RouterLink, DatePipe, ...HlmCardImports, HlmButton, LeaderboardPodiumComponent, LeaderboardRestTableComponent],
   templateUrl: './quiz-session.component.html',
 })
-export class QuizSessionComponent implements OnInit, OnDestroy {
-  private readonly quizService = inject(QuizService);
+export class QuizSessionComponent extends LeaderboardBaseComponent implements OnInit {
   private readonly router = inject(Router);
-  readonly id = input<string>('');
-  readonly quizId = input<string>('');
-  readonly session = signal<QuizSession | null>(null);
   readonly clubEvents = signal<ClubEvent[]>([]);
-  readonly isLoadingSession = signal(true);
   readonly selectedEventId = signal('');
   readonly isStarting = signal(false);
   readonly isEnding = signal(false);
   readonly errorMessage = signal('');
-  private readonly _refreshTick = signal(0);
-  private readonly _leaderboardResource = resource({
-    params: () => ({
-      quizId: this.quizId(),
-      sessionId: this.session()?.id,
-      tick: this._refreshTick(),
-    }),
-    loader: ({ params }) =>
-      params.sessionId && params.quizId
-        ? this.quizService.getLeaderboard(params.quizId, params.sessionId)
-        : Promise.resolve([]),
-  });
-  readonly leaderboard = computed(() => this._leaderboardResource.value() ?? []);
-  readonly isLeaderboardLoading = computed(() => this._leaderboardResource.isLoading());
-  readonly podiumFirst = computed(() => this.leaderboard()[0] ?? null);
-  readonly podiumSecond = computed(() => this.leaderboard()[1] ?? null);
-  readonly podiumThird = computed(() => this.leaderboard()[2] ?? null);
-  readonly leaderboardRest = computed(() => this.leaderboard().slice(3));
-  private _refreshInterval?: ReturnType<typeof setInterval>;
   ngOnInit(): void {
     Promise.all([
       this.quizService
@@ -9736,13 +9904,7 @@ export class QuizSessionComponent implements OnInit, OnDestroy {
         .then(e => this.clubEvents.set(e))
         .catch(() => undefined),
     ]).finally(() => this.isLoadingSession.set(false));
-    this._refreshInterval = setInterval(
-      () => this._refreshTick.update(n => n + 1),
-      15_000,
-    );
-  }
-  ngOnDestroy(): void {
-    clearInterval(this._refreshInterval);
+    this.startPolling(15_000);
   }
   protected startSession(): void {
     const eventId = this.selectedEventId();
@@ -9778,88 +9940,6 @@ export class QuizSessionComponent implements OnInit, OnDestroy {
   }
   protected manualRefresh(): void {
     this._refreshTick.update(n => n + 1);
-  }
-}
-````
-
-## File: src/app/features/randomizer/randomizer.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  inject,
-  signal,
-  computed,
-  effect,
-} from '@angular/core';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
-import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DatePipe } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../core/auth/auth.service';
-import { RandomizerService } from '../../core/services/randomizer.service';
-import { InitialsPipe } from '../../shared/pipes/initials.pipe';
-import { HlmButton } from '../../shared/spartan/button/src';
-import { HlmInput } from '../../shared/spartan/input/src';
-@Component({
-  selector: 'app-randomizer',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule, InitialsPipe, HlmButton, HlmInput],
-  styleUrl: './randomizer.component.scss',
-  templateUrl: './randomizer.component.html',
-})
-export class RandomizerComponent implements OnInit {
-  protected readonly randomizerService = inject(RandomizerService);
-  protected readonly authService = inject(AuthService);
-  private readonly route = inject(ActivatedRoute);
-  protected readonly isSaving = signal(false);
-  protected readonly errorMessage = signal('');
-  protected clubId = '';
-  protected readonly purposeControl = new FormControl('Хто представляє книгу?', {
-    nonNullable: true,
-    validators: [Validators.required],
-  });
-  // toSignal keeps OnPush change detection working without manual markForCheck
-  private readonly _purposeValue = toSignal(this.purposeControl.valueChanges, {
-    initialValue: this.purposeControl.value,
-  });
-  constructor() {
-    effect(() => this.randomizerService.setPurpose(this._purposeValue()));
-  }
-  protected readonly selectedCount = computed(
-    () =>
-      this.randomizerService
-        .candidates()
-        .filter(m => this.randomizerService.selectedIds().has(m.userId)).length,
-  );
-  ngOnInit(): void {
-    this.clubId = this.route.snapshot.params['id'] as string;
-    this.randomizerService.loadClubMembers(this.clubId);
-    this.randomizerService.loadHistory(this.clubId).catch(() => {});
-  }
-  protected spin(): void {
-    this.errorMessage.set('');
-    this.randomizerService.spin().catch(err => {
-      this.errorMessage.set((err as Error).message);
-    });
-  }
-  protected saveSession(): void {
-    this.isSaving.set(true);
-    this.errorMessage.set('');
-    this.randomizerService
-      .saveSession(this.clubId)
-      .then(() => this.isSaving.set(false))
-      .catch(err => {
-        this.isSaving.set(false);
-        this.errorMessage.set((err as Error).message);
-      });
-  }
-  protected reset(): void {
-    this.randomizerService.reset();
-    this.errorMessage.set('');
   }
 }
 ````
@@ -9992,56 +10072,6 @@ export class CoverUploadComponent {
         this.isUploading.set(false);
         this.previewUrl.set(null);
       },
-    });
-  }
-}
-````
-
-## File: src/app/shared/components/qr-code/qr-code.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  effect,
-  input,
-  viewChild,
-} from '@angular/core';
-import * as QRCode from 'qrcode';
-import { environment } from '../../../../environments/environment';
-import { HlmCard } from '../../spartan/card/src';
-@Component({
-  selector: 'app-qr-code',
-  standalone: true,
-  imports: [HlmCard],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div hlmCard class="flex items-center justify-center p-6 w-fit gap-0 py-6">
-      <canvas
-        #canvas
-        [style.width.px]="size()"
-        [style.height.px]="size()"
-        class="rounded-lg"
-        [attr.aria-label]="'QR code'"
-        role="img"
-      ></canvas>
-    </div>
-  `,
-})
-export class QrCodeComponent {
-  readonly value = input.required<string>();
-  readonly size = input<number>(200);
-  private readonly canvasRef =
-    viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
-  constructor() {
-    effect(() => {
-      const val = this.value();
-      const sz = this.size();
-      const canvas = this.canvasRef().nativeElement;
-      if (!val || !canvas) return;
-      QRCode.toCanvas(canvas, val, { width: sz, margin: 2 }, (err) => {
-        if (err && !environment.production) console.error('QR generation error:', err);
-      });
     });
   }
 }
@@ -10243,86 +10273,6 @@ export const environment = {
     ]
   }
 }
-````
-
-## File: CLAUDE.md
-````markdown
-# Project Context
-This project uses **Repomix** to provide a full map of the codebase.
-
-## Stack
-- Frontend: Angular 21 (Signals — resource(), rxResource(), linkedSignal(), input()/output(), standalone components, SCSS, Tailwind)
-- Backend: FastAPI (Async, Pydantic v2)
-
-## Folder Structure
-- `src/app/features/` — Angular feature components (auth, clubs, profile, quiz, randomizer)
-- `src/app/core/` — Core services, guards, interceptors, models
-- `src/app/shared/` — Shared UI components, pipes, directives
-- `src/app/layout/` — Shell, header, footer
-- `public/i18n/` — Translation files (en.json, uk.json)
-- `supabase/migrations/` — SQL migrations for backend
-
-## How to Run
-- **Dev server:** `npm start` (Angular at http://localhost:4200)
-- **Build:** `npm run build`
-- **Update context:** `npm run build-ctx`
-
-## Testing & Linting
-- **Unit tests:** `npm run test` (Jest)
-- **E2E tests:** Playwright (see docs)
-- **Lint:** `npm run lint`
-
-## Pre-commit Hooks & Development Workflow
-- This project does **not** use `.pre-commit-config.yaml`, `ruff`, or `black`.
-- Pre-commit hooks are managed via Husky. The only pre-commit hook is `.husky/pre-commit`, which runs `lint-staged`.
-- The pre-commit hook updates `repomix-output.md` using `lint-staged`.
-- No Python-specific formatting or linting tools are involved in the pre-commit process.
-
-## Notes
-- Always check `repomix-output.md` for the latest project map.
-- If a file is not in repomix-output.md, assume it doesn't exist yet.
-- Backend API routes: see FastAPI project (not in this repo).
-````
-
-## File: karma.conf.js
-````javascript
-module.exports = function (config) {
-  config.set({
-    basePath: '',
-    frameworks: ['jasmine'],
-    plugins: [
-      require('karma-jasmine'),
-      require('karma-chrome-launcher'),
-      require('karma-jasmine-html-reporter'),
-      require('karma-coverage'),
-    ],
-    client: {
-      jasmine: {},
-      clearContext: false,
-    },
-    jasmineHtmlReporter: {
-      suppressAll: true,
-    },
-    coverageReporter: {
-      dir: require('path').join(__dirname, './coverage/book-club-fe'),
-      subdir: '.',
-      reporters: [{ type: 'html' }, { type: 'text-summary' }, { type: 'lcovonly' }],
-      exclude: ['**/spartan/**'],
-      check: {
-        global: { statements: 75, branches: 60, functions: 75, lines: 75 },
-      },
-    },
-    reporters: ['progress', 'kjhtml'],
-    browsers: ['ChromeHeadless'],
-    customLaunchers: {
-      ChromeHeadlessCI: {
-        base: 'ChromeHeadless',
-        flags: ['--no-sandbox', '--disable-gpu', '--disable-dev-shm-usage'],
-      },
-    },
-    restartOnFileChange: true,
-  });
-};
 ````
 
 ## File: postcss.config.mjs
@@ -11530,6 +11480,42 @@ export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
 		event.preventDefault();
 	}
 }
+````
+
+## File: src/app/core/interceptors/auth.interceptor.ts
+````typescript
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { toast } from '@spartan-ng/brain/sonner';
+import { catchError, throwError } from 'rxjs';
+import { TokenStore } from '../auth/token.store';
+import { environment } from '../../../environments/environment';
+export const authInterceptor: HttpInterceptorFn = (req, next$) => {
+  const router = inject(Router);
+  const tokenStore = inject(TokenStore);
+  const token = tokenStore.snapshot();
+  const authedReq = token
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
+  return next$(authedReq).pipe(
+    catchError((error: unknown) => {
+      const httpError = error instanceof HttpErrorResponse ? error : null;
+      if (httpError?.status === 401 && token) {
+        tokenStore.clear();
+        router.navigate(['/login']);
+      } else if (httpError?.status === 403) {
+        router.navigate(['/clubs']);
+      } else if (httpError && httpError.status >= 500) {
+        if (!environment.production) {
+          console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
+        }
+        toast.error('A server error occurred. Please try again later.');
+      }
+      return throwError(() => error);
+    }),
+  );
+};
 ````
 
 ## File: src/app/core/models/event.model.ts
@@ -13105,42 +13091,6 @@ export class QuizListComponent {
 </div>
 ````
 
-## File: src/app/core/interceptors/auth.interceptor.ts
-````typescript
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { toast } from '@spartan-ng/brain/sonner';
-import { catchError, throwError } from 'rxjs';
-import { TokenStore } from '../auth/token.store';
-import { environment } from '../../../environments/environment';
-export const authInterceptor: HttpInterceptorFn = (req, next$) => {
-  const router = inject(Router);
-  const tokenStore = inject(TokenStore);
-  const token = tokenStore.snapshot();
-  const authedReq = token
-    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : req;
-  return next$(authedReq).pipe(
-    catchError((error: unknown) => {
-      const httpError = error instanceof HttpErrorResponse ? error : null;
-      if (httpError?.status === 401 && token) {
-        tokenStore.clear();
-        router.navigate(['/login']);
-      } else if (httpError?.status === 403) {
-        router.navigate(['/clubs']);
-      } else if (httpError && httpError.status >= 500) {
-        if (!environment.production) {
-          console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
-        }
-        toast.error('A server error occurred. Please try again later.');
-      }
-      return throwError(() => error);
-    }),
-  );
-};
-````
-
 ## File: src/app/core/services/chat.service.ts
 ````typescript
 import { Injectable, signal, computed, inject } from '@angular/core';
@@ -13491,6 +13441,343 @@ export class EventService {
   private _updateEvent(updated: ClubEvent): void {
     this._allEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
     this._myEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
+  }
+}
+````
+
+## File: src/app/core/services/quiz.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { Quiz, QuizAttempt, QuizQuestion, QuizStatus, QuizSession, QuizLeaderboardEntry } from '../models/quiz.model';
+import { ClubEvent } from '../models/event.model';
+interface ApiQuiz {
+  id: string;
+  clubId: string;
+  createdBy: string;
+  title: string;
+  description: string | null;
+  isActive: boolean;
+  status: string;
+}
+interface ApiQuizQuestion {
+  id: string;
+  quizId: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+}
+interface ApiAttemptResponse {
+  id: string;
+  quizId: string;
+  userId: string;
+  score: number;
+  total: number;
+  answers: number[];
+}
+interface ApiQuizSession {
+  id: string;
+  quizId: string;
+  eventId: string;
+  startedBy: string;
+  startedAt: string;
+  closedAt: string | null;
+  participantCount: number;
+}
+interface ApiLeaderboardEntry {
+  rank: number;
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  score: number;
+  totalQuestions: number;
+  hasAttempted: boolean;
+}
+function mapQuiz(raw: ApiQuiz): Quiz {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    createdBy: raw.createdBy,
+    title: raw.title,
+    description: raw.description,
+    status: (raw.status as QuizStatus) ?? 'draft',
+    isActive: raw.isActive,
+  };
+}
+function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
+  return {
+    id: raw.id,
+    quizId: raw.quizId,
+    question: raw.question,
+    options: raw.options,
+    correctIndex: raw.correctIndex,
+  };
+}
+function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
+  return {
+    id: raw.id,
+    quizId: raw.quizId,
+    userId: raw.userId,
+    score: raw.score,
+    total: raw.total,
+    answers: raw.answers,
+  };
+}
+function mapSession(raw: ApiQuizSession): QuizSession {
+  return { ...raw };
+}
+function mapLeaderboardEntry(raw: ApiLeaderboardEntry): QuizLeaderboardEntry {
+  return { ...raw };
+}
+@Injectable({ providedIn: 'root' })
+export class QuizService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _quizzes = signal<Quiz[]>([]);
+  private readonly _questions = signal<QuizQuestion[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _session = signal<QuizSession | null>(null);
+  private readonly _leaderboard = signal<QuizLeaderboardEntry[]>([]);
+  readonly quizzes = this._quizzes.asReadonly();
+  readonly questions = this._questions.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly session = this._session.asReadonly();
+  readonly leaderboard = this._leaderboard.asReadonly();
+  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
+  async loadQuizzes(clubId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
+      );
+      this._quizzes.set(raw.map(mapQuiz));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async createQuiz(data: {
+    clubId: string;
+    title: string;
+    description: string;
+  }): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
+          title: data.title,
+          description: data.description || null,
+        }),
+      );
+      const quiz = mapQuiz(raw);
+      this._quizzes.update(prev => [quiz, ...prev]);
+      return quiz;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async addQuestion(
+    quizId: string,
+    q: Omit<QuizQuestion, 'id' | 'quizId'>,
+  ): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
+          question: q.question,
+          options: q.options,
+          correctIndex: q.correctIndex,
+        }),
+      );
+      this._questions.update(prev => [...prev, mapQuestion(raw)]);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async loadQuestions(quizId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
+      );
+      this._questions.set(raw.map(mapQuestion));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
+      );
+      return mapAttempt(raw);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { isActive }),
+      );
+      this._quizzes.update(prev =>
+        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getQuiz(quizId: string): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz>(`${this.api}/quizzes/${quizId}`),
+      );
+      return mapQuiz(raw);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getQuestions(quizId: string): Promise<QuizQuestion[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
+      );
+      return raw.map(mapQuestion);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async updateQuiz(
+    quizId: string,
+    data: { title: string; description: string },
+  ): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.patch<ApiQuiz>(`${this.api}/quizzes/${quizId}`, data),
+      );
+      const quiz = mapQuiz(raw);
+      this._quizzes.update(prev => prev.map(q => (q.id === quizId ? quiz : q)));
+      return quiz;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async updateQuestion(
+    quizId: string,
+    questionId: string,
+    q: Partial<Omit<QuizQuestion, 'id' | 'quizId'>>,
+  ): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(
+          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
+          q,
+        ),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async deleteQuestion(quizId: string, questionId: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.delete(
+          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
+        ),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async reorderQuestions(quizId: string, orderedIds: string[]): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.put(`${this.api}/quizzes/${quizId}/questions/order`, {
+          order: orderedIds,
+        }),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async startSession(quizId: string, eventId: string): Promise<QuizSession> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuizSession>(
+          `${this.api}/quizzes/${quizId}/sessions`,
+          { eventId },
+        ),
+      );
+      const session = mapSession(raw);
+      this._session.set(session);
+      return session;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getActiveSession(quizId: string): Promise<QuizSession | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizSession>(
+          `${this.api}/quizzes/${quizId}/sessions/active`,
+        ),
+      );
+      return mapSession(raw);
+    } catch {
+      return null;
+    }
+  }
+  async getLeaderboard(
+    quizId: string,
+    sessionId: string,
+  ): Promise<QuizLeaderboardEntry[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<{ entries: ApiLeaderboardEntry[] }>(
+          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/leaderboard`,
+        ),
+      );
+      return raw.entries.map(mapLeaderboardEntry);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async endSession(quizId: string, sessionId: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(
+          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/close`,
+          {},
+        ),
+      );
+      this._session.set(null);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getClubQuizzes(clubId: string): Promise<Quiz[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
+      );
+      return raw.map(mapQuiz);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ClubEvent[]>(`${this.api}/clubs/${clubId}/events`),
+      );
+      return raw;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
   }
 }
 ````
@@ -14012,339 +14299,141 @@ export class HeaderComponent {
 }
 ````
 
-## File: src/app/core/services/quiz.service.ts
+## File: src/app/core/auth/auth.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal, computed } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
+import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { extractApiError } from '../api/api-error.util';
-import { Quiz, QuizAttempt, QuizQuestion, QuizStatus, QuizSession, QuizLeaderboardEntry } from '../models/quiz.model';
-import { ClubEvent } from '../models/event.model';
-interface ApiQuiz {
-  id: string;
-  clubId: string;
-  createdBy: string;
-  title: string;
-  description: string | null;
-  isActive: boolean;
-  status: string;
-}
-interface ApiQuizQuestion {
-  id: string;
-  quizId: string;
-  question: string;
-  options: string[];
-  correctIndex: number;
-}
-interface ApiAttemptResponse {
-  id: string;
-  quizId: string;
-  userId: string;
-  score: number;
-  total: number;
-  answers: number[];
-}
-interface ApiQuizSession {
-  id: string;
-  quizId: string;
-  eventId: string;
-  startedBy: string;
-  startedAt: string;
-  closedAt: string | null;
-  participantCount: number;
-}
-interface ApiLeaderboardEntry {
-  rank: number;
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  score: number;
-  totalQuestions: number;
-  hasAttempted: boolean;
-}
-function mapQuiz(raw: ApiQuiz): Quiz {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    createdBy: raw.createdBy,
-    title: raw.title,
-    description: raw.description,
-    status: (raw.status as QuizStatus) ?? 'draft',
-    isActive: raw.isActive,
-  };
-}
-function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
-  return {
-    id: raw.id,
-    quizId: raw.quizId,
-    question: raw.question,
-    options: raw.options,
-    correctIndex: raw.correctIndex,
-  };
-}
-function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
-  return {
-    id: raw.id,
-    quizId: raw.quizId,
-    userId: raw.userId,
-    score: raw.score,
-    total: raw.total,
-    answers: raw.answers,
-  };
-}
-function mapSession(raw: ApiQuizSession): QuizSession {
-  return { ...raw };
-}
-function mapLeaderboardEntry(raw: ApiLeaderboardEntry): QuizLeaderboardEntry {
-  return { ...raw };
+import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
+import { TokenStore } from './token.store';
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: ApiUserProfile;
 }
 @Injectable({ providedIn: 'root' })
-export class QuizService {
+export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _quizzes = signal<Quiz[]>([]);
-  private readonly _questions = signal<QuizQuestion[]>([]);
-  private readonly _isLoading = signal(false);
-  private readonly _session = signal<QuizSession | null>(null);
-  private readonly _leaderboard = signal<QuizLeaderboardEntry[]>([]);
-  readonly quizzes = this._quizzes.asReadonly();
-  readonly questions = this._questions.asReadonly();
+  private readonly router = inject(Router);
+  private readonly tokenStore = inject(TokenStore);
+  private readonly _currentUser = signal<UserProfile | null>(null);
+  private readonly _isLoading = signal<boolean>(true);
+  readonly currentUser = this._currentUser.asReadonly();
   readonly isLoading = this._isLoading.asReadonly();
-  readonly session = this._session.asReadonly();
-  readonly leaderboard = this._leaderboard.asReadonly();
-  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
-  async loadQuizzes(clubId: string): Promise<void> {
-    this._isLoading.set(true);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
+  readonly isAuthenticated = computed(() => this._currentUser() !== null);
+  readonly userRole = computed(() => this._currentUser()?.role ?? null);
+  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
+  private readonly _statsResource = rxResource<UserStats | null, string | null>({
+    params: () => this._currentUser()?.id ?? null,
+    stream: ({ params: userId }) => {
+      if (!userId) return of(null as UserStats | null);
+      return this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
+        map(raw => mapUserStats(raw)),
+        catchError(() => of(null)),
       );
-      this._quizzes.set(raw.map(mapQuiz));
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    } finally {
+    },
+  });
+  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
+  constructor() {
+    const token = this.tokenStore.snapshot();
+    if (token) {
+      firstValueFrom(
+        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
+          catchError(() => {
+            this.tokenStore.clear();
+            return of(null);
+          }),
+        ),
+      ).then(raw => {
+        this._currentUser.set(raw ? mapUserProfile(raw) : null);
+        this._isLoading.set(false);
+      });
+    } else {
       this._isLoading.set(false);
     }
   }
-  async createQuiz(data: {
-    clubId: string;
-    title: string;
-    description: string;
-  }): Promise<Quiz> {
+  async signUp(
+    email: string,
+    password: string,
+    displayName: string,
+    role: UserRole,
+  ): Promise<{ error: string | null }> {
     try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
-          title: data.title,
-          description: data.description || null,
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
+          email,
+          password,
+          displayName,
+          role,
         }),
       );
-      const quiz = mapQuiz(raw);
-      this._quizzes.update(prev => [quiz, ...prev]);
-      return quiz;
+      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
     } catch (err) {
-      throw new Error(extractApiError(err));
+      return { error: extractApiError(err) };
     }
   }
-  async addQuestion(
-    quizId: string,
-    q: Omit<QuizQuestion, 'id' | 'quizId'>,
-  ): Promise<void> {
+  async signIn(email: string, password: string): Promise<{ error: string | null }> {
     try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
-          question: q.question,
-          options: q.options,
-          correctIndex: q.correctIndex,
-        }),
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
       );
-      this._questions.update(prev => [...prev, mapQuestion(raw)]);
+      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
     } catch (err) {
-      throw new Error(extractApiError(err));
+      return { error: extractApiError(err) };
     }
   }
-  async loadQuestions(quizId: string): Promise<void> {
-    this._isLoading.set(true);
+  async signOut(): Promise<void> {
     try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
-      );
-      this._questions.set(raw.map(mapQuestion));
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    } finally {
-      this._isLoading.set(false);
-    }
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
+    } catch {  }
+    this.tokenStore.clear();
+    this._currentUser.set(null);
+    this.router.navigate(['/login']);
   }
-  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
-      );
-      return mapAttempt(raw);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
+  async updateRole(role: UserRole): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
+    );
+    this._currentUser.set({ ...user, role });
   }
-  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { isActive }),
-      );
-      this._quizzes.update(prev =>
-        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
+  async updateDisplayName(name: string): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
+    );
+    this._currentUser.set({ ...user, displayName: name });
   }
-  async getQuiz(quizId: string): Promise<Quiz> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuiz>(`${this.api}/quizzes/${quizId}`),
-      );
-      return mapQuiz(raw);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
+  async updateSocials(socials: UserSocials): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
+    );
+    this._currentUser.set({ ...user, socials });
   }
-  async getQuestions(quizId: string): Promise<QuizQuestion[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
-      );
-      return raw.map(mapQuestion);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async updateQuiz(
-    quizId: string,
-    data: { title: string; description: string },
-  ): Promise<Quiz> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.patch<ApiQuiz>(`${this.api}/quizzes/${quizId}`, data),
-      );
-      const quiz = mapQuiz(raw);
-      this._quizzes.update(prev => prev.map(q => (q.id === quizId ? quiz : q)));
-      return quiz;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async updateQuestion(
-    quizId: string,
-    questionId: string,
-    q: Partial<Omit<QuizQuestion, 'id' | 'quizId'>>,
-  ): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.patch(
-          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
-          q,
-        ),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async deleteQuestion(quizId: string, questionId: string): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.delete(
-          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
-        ),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async reorderQuestions(quizId: string, orderedIds: string[]): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.put(`${this.api}/quizzes/${quizId}/questions/order`, {
-          order: orderedIds,
-        }),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async startSession(quizId: string, eventId: string): Promise<QuizSession> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuizSession>(
-          `${this.api}/quizzes/${quizId}/sessions`,
-          { eventId },
-        ),
-      );
-      const session = mapSession(raw);
-      this._session.set(session);
-      return session;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async getActiveSession(quizId: string): Promise<QuizSession | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuizSession>(
-          `${this.api}/quizzes/${quizId}/sessions/active`,
-        ),
-      );
-      return mapSession(raw);
-    } catch {
-      return null;
-    }
-  }
-  async getLeaderboard(
-    quizId: string,
-    sessionId: string,
-  ): Promise<QuizLeaderboardEntry[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<{ entries: ApiLeaderboardEntry[] }>(
-          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/leaderboard`,
-        ),
-      );
-      return raw.entries.map(mapLeaderboardEntry);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async endSession(quizId: string, sessionId: string): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.patch(
-          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/close`,
-          {},
-        ),
-      );
-      this._session.set(null);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async getClubQuizzes(clubId: string): Promise<Quiz[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
-      );
-      return raw.map(mapQuiz);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ClubEvent[]>(`${this.api}/clubs/${clubId}/events`),
-      );
-      return raw;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
+  async setSocialsPublic(value: boolean): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
+        socialsPublic: value,
+      }),
+    );
+    this._currentUser.set({ ...user, socialsPublic: value });
   }
 }
 ````
@@ -14732,341 +14821,6 @@ export class AddressAutocompleteComponent {
   onDocumentClick(event: MouseEvent): void {
     if (!this.elRef.nativeElement.contains(event.target)) {
       this.isOpen.set(false);
-    }
-  }
-}
-````
-
-## File: src/app/core/auth/auth.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
-import { catchError, firstValueFrom, map, of } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
-import { TokenStore } from './token.store';
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: ApiUserProfile;
-}
-@Injectable({ providedIn: 'root' })
-export class AuthService {
-  private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
-  private readonly tokenStore = inject(TokenStore);
-  private readonly _currentUser = signal<UserProfile | null>(null);
-  private readonly _isLoading = signal<boolean>(true);
-  readonly currentUser = this._currentUser.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly isAuthenticated = computed(() => this._currentUser() !== null);
-  readonly userRole = computed(() => this._currentUser()?.role ?? null);
-  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
-  private readonly _statsResource = rxResource<UserStats | null, string | null>({
-    params: () => this._currentUser()?.id ?? null,
-    stream: ({ params: userId }) => {
-      if (!userId) return of(null as UserStats | null);
-      return this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
-        map(raw => mapUserStats(raw)),
-        catchError(() => of(null)),
-      );
-    },
-  });
-  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
-  constructor() {
-    const token = this.tokenStore.snapshot();
-    if (token) {
-      firstValueFrom(
-        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
-          catchError(() => {
-            this.tokenStore.clear();
-            return of(null);
-          }),
-        ),
-      ).then(raw => {
-        this._currentUser.set(raw ? mapUserProfile(raw) : null);
-        this._isLoading.set(false);
-      });
-    } else {
-      this._isLoading.set(false);
-    }
-  }
-  async signUp(
-    email: string,
-    password: string,
-    displayName: string,
-    role: UserRole,
-  ): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
-          email,
-          password,
-          displayName,
-          role,
-        }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signIn(email: string, password: string): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signOut(): Promise<void> {
-    try {
-      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
-    } catch {  }
-    this.tokenStore.clear();
-    this._currentUser.set(null);
-    this.router.navigate(['/login']);
-  }
-  async updateRole(role: UserRole): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
-    );
-    this._currentUser.set({ ...user, role });
-  }
-  async updateDisplayName(name: string): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
-    );
-    this._currentUser.set({ ...user, displayName: name });
-  }
-  async updateSocials(socials: UserSocials): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
-    );
-    this._currentUser.set({ ...user, socials });
-  }
-  async setSocialsPublic(value: boolean): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
-        socialsPublic: value,
-      }),
-    );
-    this._currentUser.set({ ...user, socialsPublic: value });
-  }
-}
-````
-
-## File: src/app/features/clubs/create-club/create-club.component.html
-````html
-<main class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-lg">
-    <header class="text-center mb-8">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
-      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
-    </header>
-    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
-      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-        <hlm-field>
-          <label hlmFieldLabel for="club-name">
-            {{ 'CREATE_CLUB.name_label' | translate }}
-            <span class="text-red-500" aria-hidden="true">*</span>
-          </label>
-          <input
-            hlmInput
-            id="club-name"
-            type="text"
-            formControlName="name"
-            class="w-full"
-            [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
-          />
-          <hlm-field-error validator="required">{{ 'CREATE_CLUB.name_required' | translate }}</hlm-field-error>
-          <hlm-field-error validator="minlength">{{ 'CREATE_CLUB.name_min' | translate }}</hlm-field-error>
-          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.name_max' | translate }}</hlm-field-error>
-        </hlm-field>
-        <hlm-field>
-          <label hlmFieldLabel for="club-description">{{ 'CREATE_CLUB.description_label' | translate }}</label>
-          <textarea
-            hlmInput
-            id="club-description"
-            formControlName="description"
-            rows="3"
-            class="w-full resize-none"
-            [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
-          ></textarea>
-          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.description_max' | translate }}</hlm-field-error>
-        </hlm-field>
-        <div>
-          <label for="club-cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ 'CREATE_CLUB.cover_url_label' | translate }}
-          </label>
-          @if (form.controls.coverUrl.value) {
-            <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
-              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover"
-                   (error)="form.controls.coverUrl.setValue('')" />
-            </div>
-          }
-          <input
-            hlmInput
-            id="club-cover-url"
-            type="url"
-            formControlName="coverUrl"
-            class="w-full"
-            [placeholder]="'CREATE_CLUB.cover_url_placeholder' | translate"
-          />
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
-        </div>
-        <fieldset>
-          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
-          <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-            <div>
-              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'CREATE_CLUB.public_label' | translate }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'CREATE_CLUB.public_desc' | translate }}</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              [attr.aria-checked]="form.controls.isPublic.value"
-              (click)="togglePublic()"
-              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              [class.bg-primary-600]="form.controls.isPublic.value"
-              [class.bg-gray-300]="!form.controls.isPublic.value"
-              [class.dark:bg-gray-600]="!form.controls.isPublic.value"
-            >
-              <span
-                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                [class.translate-x-6]="form.controls.isPublic.value"
-                [class.translate-x-1]="!form.controls.isPublic.value"
-              ></span>
-            </button>
-          </div>
-        </fieldset>
-        @if (errorMessage()) {
-          <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-               role="alert">
-            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
-            <span>{{ errorMessage() }}</span>
-          </div>
-        }
-        <div class="flex gap-3 pt-2">
-          <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
-            {{ 'CREATE_CLUB.cancel' | translate }}
-          </button>
-          <button hlmBtn type="submit" [disabled]="isSubmitting()"
-                  class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
-            @if (isSubmitting()) {
-              <hlm-spinner class="mr-2" />
-              {{ 'CREATE_CLUB.submitting' | translate }}
-            } @else {
-              {{ 'CREATE_CLUB.submit' | translate }}
-            }
-          </button>
-        </div>
-      </form>
-    </article>
-  </div>
-</main>
-````
-
-## File: src/app/features/clubs/create-club/create-club.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-} from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-interface CreateClubForm {
-  name: FormControl<string>;
-  description: FormControl<string>;
-  isPublic: FormControl<boolean>;
-  city: FormControl<string>;
-  coverUrl: FormControl<string>;
-}
-@Component({
-  selector: 'app-create-club',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './create-club.component.html',
-})
-export class CreateClubComponent {
-  private readonly clubService = inject(ClubService);
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly _errorMessage = signal<string | null>(null);
-  readonly errorMessage = this._errorMessage.asReadonly();
-  private readonly _isSubmitting = signal(false);
-  readonly isSubmitting = this._isSubmitting.asReadonly();
-  private readonly _showAfterMeeting = signal(false);
-  readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
-  readonly form = new FormGroup<CreateClubForm>({
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-    isPublic: new FormControl(true, { nonNullable: true }),
-    city: new FormControl('', { nonNullable: true }),
-    coverUrl: new FormControl('', { nonNullable: true }),
-  });
-  togglePublic(): void {
-    const current = this.form.controls.isPublic.value;
-    this.form.controls.isPublic.setValue(!current);
-  }
-  toggleAfterMeeting(): void {
-    this._showAfterMeeting.update(v => !v);
-  }
-  cancel(): void {
-    this.router.navigate(['/clubs']);
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this._isSubmitting.set(true);
-    this._errorMessage.set(null);
-    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
-    try {
-      const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
-      this.router.navigate(['/clubs', club.id]);
-    } catch (err) {
-      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
-    } finally {
-      this._isSubmitting.set(false);
     }
   }
 }
@@ -15798,6 +15552,288 @@ export class CreateClubComponent {
 }
 ````
 
+## File: src/app/features/clubs/create-club/create-club.component.html
+````html
+<main class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+    <header class="text-center mb-8">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
+    </header>
+    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+        <hlm-field>
+          <label hlmFieldLabel for="club-name">
+            {{ 'CREATE_CLUB.name_label' | translate }}
+            <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <input
+            hlmInput
+            id="club-name"
+            type="text"
+            formControlName="name"
+            class="w-full"
+            [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
+          />
+          <hlm-field-error validator="required">{{ 'CREATE_CLUB.name_required' | translate }}</hlm-field-error>
+          <hlm-field-error validator="minlength">{{ 'CREATE_CLUB.name_min' | translate }}</hlm-field-error>
+          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.name_max' | translate }}</hlm-field-error>
+        </hlm-field>
+        <hlm-field>
+          <label hlmFieldLabel for="club-description">{{ 'CREATE_CLUB.description_label' | translate }}</label>
+          <textarea
+            hlmInput
+            id="club-description"
+            formControlName="description"
+            rows="3"
+            class="w-full resize-none"
+            [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
+          ></textarea>
+          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.description_max' | translate }}</hlm-field-error>
+        </hlm-field>
+        <div>
+          <label for="club-cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'CREATE_CLUB.cover_url_label' | translate }}
+          </label>
+          @if (form.controls.coverUrl.value) {
+            <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
+              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover"
+                   (error)="form.controls.coverUrl.setValue('')" />
+            </div>
+          }
+          <input
+            hlmInput
+            id="club-cover-url"
+            type="url"
+            formControlName="coverUrl"
+            class="w-full"
+            [placeholder]="'CREATE_CLUB.cover_url_placeholder' | translate"
+          />
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
+        </div>
+        <fieldset>
+          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
+          <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
+            <div>
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'CREATE_CLUB.public_label' | translate }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'CREATE_CLUB.public_desc' | translate }}</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              [attr.aria-checked]="form.controls.isPublic.value"
+              (click)="togglePublic()"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              [class.bg-primary-600]="form.controls.isPublic.value"
+              [class.bg-gray-300]="!form.controls.isPublic.value"
+              [class.dark:bg-gray-600]="!form.controls.isPublic.value"
+            >
+              <span
+                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                [class.translate-x-6]="form.controls.isPublic.value"
+                [class.translate-x-1]="!form.controls.isPublic.value"
+              ></span>
+            </button>
+          </div>
+        </fieldset>
+        @if (errorMessage()) {
+          <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+               role="alert">
+            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+        <div class="flex gap-3 pt-2">
+          <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
+            {{ 'CREATE_CLUB.cancel' | translate }}
+          </button>
+          <button hlmBtn type="submit" [disabled]="isSubmitting()"
+                  class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
+            @if (isSubmitting()) {
+              <hlm-spinner class="mr-2" />
+              {{ 'CREATE_CLUB.submitting' | translate }}
+            } @else {
+              {{ 'CREATE_CLUB.submit' | translate }}
+            }
+          </button>
+        </div>
+      </form>
+    </article>
+  </div>
+</main>
+````
+
+## File: src/app/features/clubs/create-club/create-club.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+} from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+interface CreateClubForm {
+  name: FormControl<string>;
+  description: FormControl<string>;
+  isPublic: FormControl<boolean>;
+  city: FormControl<string>;
+  coverUrl: FormControl<string>;
+}
+@Component({
+  selector: 'app-create-club',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './create-club.component.html',
+})
+export class CreateClubComponent {
+  private readonly clubService = inject(ClubService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly _errorMessage = signal<string | null>(null);
+  readonly errorMessage = this._errorMessage.asReadonly();
+  private readonly _isSubmitting = signal(false);
+  readonly isSubmitting = this._isSubmitting.asReadonly();
+  private readonly _showAfterMeeting = signal(false);
+  readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
+  readonly form = new FormGroup<CreateClubForm>({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+    isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', { nonNullable: true }),
+    coverUrl: new FormControl('', { nonNullable: true }),
+  });
+  togglePublic(): void {
+    const current = this.form.controls.isPublic.value;
+    this.form.controls.isPublic.setValue(!current);
+  }
+  toggleAfterMeeting(): void {
+    this._showAfterMeeting.update(v => !v);
+  }
+  cancel(): void {
+    this.router.navigate(['/clubs']);
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this._isSubmitting.set(true);
+    this._errorMessage.set(null);
+    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
+    try {
+      const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
+      this.router.navigate(['/clubs', club.id]);
+    } catch (err) {
+      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
+    } finally {
+      this._isSubmitting.set(false);
+    }
+  }
+}
+````
+
+## File: package.json
+````json
+{
+  "name": "book-club-fe",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
+    "extract-i18n": "node scripts/extract-i18n.mjs",
+    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
+    "lint": "ng lint",
+    "build-ctx": "npx repomix --no-files",
+    "prepare": "husky install",
+    "mock": "node mock-server/index.js",
+    "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\""
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "overrides": {
+    "picomatch": "^4.0.4",
+    "axios": "1.15.2"
+  },
+  "dependencies": {
+    "@angular/cdk": "^21.2.8",
+    "@angular/common": "^21.2.10",
+    "@angular/compiler": "^21.2.10",
+    "@angular/core": "^21.2.10",
+    "@angular/forms": "^21.2.10",
+    "@angular/platform-browser": "^21.2.10",
+    "@angular/router": "^21.2.10",
+    "@ng-icons/core": ">=32.0.0 <34.0.0",
+    "@ng-icons/lucide": ">=32.0.0 <34.0.0",
+    "@ngx-translate/core": "^17.0.0",
+    "@ngx-translate/http-loader": "^17.0.0",
+    "@spartan-ng/brain": "^0.0.1-alpha.678",
+    "@spartan-ng/cli": "^0.0.1-alpha.678",
+    "@tailwindcss/postcss": "^4.2.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "qrcode": "^1.5.4",
+    "rxjs": "~7.8.0",
+    "tailwind-merge": "^3.5.0",
+    "tslib": "^2.3.0",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.2.8",
+    "@angular/cli": "^21.2.8",
+    "@angular/compiler-cli": "^21.2.10",
+    "@types/jasmine": "~5.1.0",
+    "@types/qrcode": "^1.5.6",
+    "angular-eslint": "21.0.1",
+    "autoprefixer": "^10.4.27",
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.6",
+    "eslint": "^9.39.1",
+    "eslint-plugin-rxjs-x": "^0.9.5",
+    "express": "^5.2.1",
+    "husky": "^8.0.0",
+    "jasmine-core": "~5.8.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "postcss": "^8.5.9",
+    "tailwindcss": "^4.2.4",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "8.46.4"
+  }
+}
+````
+
 ## File: src/app/features/clubs/clubs-list/clubs-list.component.html
 ````html
 <div class="min-h-screen">
@@ -16182,92 +16218,6 @@ export class CreateEventComponent implements OnInit {
     } finally {
       this.isSubmitting.set(false);
     }
-  }
-}
-````
-
-## File: package.json
-````json
-{
-  "name": "book-club-fe",
-  "version": "0.0.0",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
-    "extract-i18n": "node scripts/extract-i18n.mjs",
-    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
-    "lint": "ng lint",
-    "build-ctx": "npx repomix --no-files",
-    "prepare": "husky install",
-    "mock": "node mock-server/index.js",
-    "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\""
-  },
-  "prettier": {
-    "overrides": [
-      {
-        "files": "*.html",
-        "options": {
-          "parser": "angular"
-        }
-      }
-    ]
-  },
-  "private": true,
-  "overrides": {
-    "picomatch": "^4.0.4",
-    "axios": "1.15.2"
-  },
-  "dependencies": {
-    "@angular/cdk": "^21.2.8",
-    "@angular/common": "^21.2.10",
-    "@angular/compiler": "^21.2.10",
-    "@angular/core": "^21.2.10",
-    "@angular/forms": "^21.2.10",
-    "@angular/platform-browser": "^21.2.10",
-    "@angular/router": "^21.2.10",
-    "@ng-icons/core": ">=32.0.0 <34.0.0",
-    "@ng-icons/lucide": ">=32.0.0 <34.0.0",
-    "@ngx-translate/core": "^17.0.0",
-    "@ngx-translate/http-loader": "^17.0.0",
-    "@spartan-ng/brain": "^0.0.1-alpha.678",
-    "@spartan-ng/cli": "^0.0.1-alpha.678",
-    "@tailwindcss/postcss": "^4.2.4",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "qrcode": "^1.5.4",
-    "rxjs": "~7.8.0",
-    "tailwind-merge": "^3.5.0",
-    "tslib": "^2.3.0",
-    "tw-animate-css": "^1.4.0"
-  },
-  "devDependencies": {
-    "@angular/build": "^21.2.8",
-    "@angular/cli": "^21.2.8",
-    "@angular/compiler-cli": "^21.2.10",
-    "@types/jasmine": "~5.1.0",
-    "@types/qrcode": "^1.5.6",
-    "angular-eslint": "21.0.1",
-    "autoprefixer": "^10.4.27",
-    "concurrently": "^9.2.1",
-    "cors": "^2.8.6",
-    "eslint": "^9.39.1",
-    "eslint-plugin-rxjs-x": "^0.9.5",
-    "express": "^5.2.1",
-    "husky": "^8.0.0",
-    "jasmine-core": "~5.8.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
-    "postcss": "^8.5.9",
-    "tailwindcss": "^4.2.4",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "8.46.4"
   }
 }
 ````

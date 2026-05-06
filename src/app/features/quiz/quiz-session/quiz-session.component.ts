@@ -1,68 +1,34 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  OnDestroy,
   OnInit,
-  computed,
-  inject,
-  input,
-  resource,
   signal,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { RouterLink } from '@angular/router';
-import { Router } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizSession } from '../../../core/models/quiz.model';
+import { Router, RouterLink } from '@angular/router';
+import { inject } from '@angular/core';
 import { ClubEvent } from '../../../core/models/event.model';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
 import { LeaderboardPodiumComponent } from '../quiz-leaderboard/leaderboard-podium/leaderboard-podium.component';
+import { LeaderboardRestTableComponent } from '../quiz-leaderboard/leaderboard-rest-table/leaderboard-rest-table.component';
+import { LeaderboardBaseComponent } from '../quiz-leaderboard/leaderboard-base.component';
 
 @Component({
   selector: 'app-quiz-session',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, DatePipe, ...HlmCardImports, HlmButton, LeaderboardPodiumComponent],
+  imports: [RouterLink, DatePipe, ...HlmCardImports, HlmButton, LeaderboardPodiumComponent, LeaderboardRestTableComponent],
   templateUrl: './quiz-session.component.html',
 })
-export class QuizSessionComponent implements OnInit, OnDestroy {
-  private readonly quizService = inject(QuizService);
+export class QuizSessionComponent extends LeaderboardBaseComponent implements OnInit {
   private readonly router = inject(Router);
 
-  readonly id = input<string>('');
-  readonly quizId = input<string>('');
-
-  readonly session = signal<QuizSession | null>(null);
   readonly clubEvents = signal<ClubEvent[]>([]);
-  readonly isLoadingSession = signal(true);
   readonly selectedEventId = signal('');
   readonly isStarting = signal(false);
   readonly isEnding = signal(false);
   readonly errorMessage = signal('');
-
-  private readonly _refreshTick = signal(0);
-
-  private readonly _leaderboardResource = resource({
-    params: () => ({
-      quizId: this.quizId(),
-      sessionId: this.session()?.id,
-      tick: this._refreshTick(),
-    }),
-    loader: ({ params }) =>
-      params.sessionId && params.quizId
-        ? this.quizService.getLeaderboard(params.quizId, params.sessionId)
-        : Promise.resolve([]),
-  });
-
-  readonly leaderboard = computed(() => this._leaderboardResource.value() ?? []);
-  readonly isLeaderboardLoading = computed(() => this._leaderboardResource.isLoading());
-  readonly podiumFirst = computed(() => this.leaderboard()[0] ?? null);
-  readonly podiumSecond = computed(() => this.leaderboard()[1] ?? null);
-  readonly podiumThird = computed(() => this.leaderboard()[2] ?? null);
-  readonly leaderboardRest = computed(() => this.leaderboard().slice(3));
-
-  private _refreshInterval?: ReturnType<typeof setInterval>;
 
   ngOnInit(): void {
     Promise.all([
@@ -75,14 +41,7 @@ export class QuizSessionComponent implements OnInit, OnDestroy {
         .catch(() => undefined),
     ]).finally(() => this.isLoadingSession.set(false));
 
-    this._refreshInterval = setInterval(
-      () => this._refreshTick.update(n => n + 1),
-      15_000,
-    );
-  }
-
-  ngOnDestroy(): void {
-    clearInterval(this._refreshInterval);
+    this.startPolling(15_000);
   }
 
   protected startSession(): void {

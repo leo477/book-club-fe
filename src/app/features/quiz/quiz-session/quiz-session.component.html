@@ -101,45 +101,8 @@
                 [third]="podiumThird()"
               />
 
-              @if (leaderboardRest().length > 0) {
-                <div class="glass-card overflow-hidden">
-                  <table class="w-full text-sm">
-                    <thead class="bg-gray-50/80 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 uppercase tracking-wide text-xs">
-                      <tr>
-                        <th class="px-4 py-3 text-left w-12">Rank</th>
-                        <th class="px-4 py-3 text-left">Player</th>
-                        <th class="px-4 py-3 text-right">Score</th>
-                        <th class="px-4 py-3 text-right">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-                      @for (entry of leaderboardRest(); track entry.userId) {
-                        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-                          <td class="px-4 py-3 text-gray-500 dark:text-gray-400 font-mono text-center">{{ entry.rank }}</td>
-                          <td class="px-4 py-3">
-                            <div class="flex items-center gap-2">
-                              <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300 flex-shrink-0">
-                                {{ entry.displayName.slice(0, 2).toUpperCase() }}
-                              </div>
-                              <span class="text-gray-900 dark:text-white font-medium truncate">{{ entry.displayName }}</span>
-                            </div>
-                          </td>
-                          <td class="px-4 py-3 text-right">
-                            <span class="font-semibold text-gray-900 dark:text-white">{{ entry.score }}</span>
-                            <span class="text-gray-400">/{{ entry.totalQuestions }}</span>
-                          </td>
-                          <td class="px-4 py-3 text-right">
-                            @if (entry.hasAttempted) {
-                              <span class="inline-flex rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2 py-0.5 text-xs text-green-700 dark:text-green-400">Completed</span>
-                            } @else {
-                              <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2 py-0.5 text-xs text-gray-500 dark:text-gray-400">Not yet</span>
-                            }
-                          </td>
-                        </tr>
-                      }
-                    </tbody>
-                  </table>
-                </div>
+              @if (rest().length > 0) {
+                <app-leaderboard-rest-table [entries]="rest()" />
               }
             }
           </div>

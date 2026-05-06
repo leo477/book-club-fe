@@ -18,25 +18,4 @@ describe('LeaderboardPodiumComponent', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  describe('initials', () => {
-    it('returns ? for null/empty', async () => {
-      const { comp } = await setup();
-      const initials = (comp as unknown as { initials(n: string | null | undefined): string }).initials;
-      expect(initials.call(comp, null)).toBe('?');
-      expect(initials.call(comp, undefined)).toBe('?');
-      expect(initials.call(comp, '')).toBe('?');
-    });
-
-    it('returns two initials for full name', async () => {
-      const { comp } = await setup();
-      const initials = (comp as unknown as { initials(n: string): string }).initials;
-      expect(initials.call(comp, 'John Doe')).toBe('JD');
-    });
-
-    it('returns first two chars for single word', async () => {
-      const { comp } = await setup();
-      const initials = (comp as unknown as { initials(n: string): string }).initials;
-      expect(initials.call(comp, 'Alice')).toBe('AL');
-    });
-  });
 });

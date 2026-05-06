@@ -3,12 +3,10 @@ import {
   Component,
   computed,
   effect,
-  inject,
-  input,
   linkedSignal,
-  resource,
   signal,
 } from '@angular/core';
+import { inject } from '@angular/core';
 import {
   AbstractControl,
   FormControl,
@@ -17,11 +15,11 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
 import { HlmFieldImports } from '../../../shared/spartan/field/src';
 import { HlmInput } from '../../../shared/spartan/input/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
 
 interface MetaForm {
   title: FormControl<string>;
@@ -51,29 +49,9 @@ interface EditableQuestion {
   imports: [ReactiveFormsModule, RouterLink, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
   templateUrl: './quiz-edit.component.html',
 })
-export class QuizEditComponent {
-  private readonly quizService = inject(QuizService);
+export class QuizEditComponent extends QuizDetailBaseComponent {
   private readonly router = inject(Router);
 
-  readonly id = input<string>('');
-  readonly quizId = input<string>('');
-
-  private readonly _quizResource = resource({
-    params: () => this.quizId(),
-    loader: ({ params: qId }) =>
-      qId ? this.quizService.getQuiz(qId) : Promise.resolve(null),
-  });
-
-  private readonly _questionsResource = resource({
-    params: () => this.quizId(),
-    loader: ({ params: qId }) =>
-      qId ? this.quizService.getQuestions(qId) : Promise.resolve([]),
-  });
-
-  readonly quiz = computed(() => this._quizResource.value() ?? null);
-  readonly isLoading = computed(
-    () => this._quizResource.isLoading() || this._questionsResource.isLoading(),
-  );
   readonly isDraft = computed(() => (this.quiz()?.status ?? 'draft') === 'draft');
 
   readonly localQuestions = linkedSignal<EditableQuestion[]>(

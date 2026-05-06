@@ -51,18 +51,4 @@ describe('QuizLeaderboardComponent', () => {
     comp.ngOnInit();
     expect(() => comp.ngOnDestroy()).not.toThrow();
   });
-
-  describe('initials', () => {
-    it('returns two initials for full name', async () => {
-      const { comp } = await setup();
-      const initials = (comp as unknown as { initials(n: string): string }).initials;
-      expect(initials.call(comp, 'Jane Smith')).toBe('JS');
-    });
-
-    it('returns first two chars for single word', async () => {
-      const { comp } = await setup();
-      const initials = (comp as unknown as { initials(n: string): string }).initials;
-      expect(initials.call(comp, 'Bob')).toBe('BO');
-    });
-  });
 });

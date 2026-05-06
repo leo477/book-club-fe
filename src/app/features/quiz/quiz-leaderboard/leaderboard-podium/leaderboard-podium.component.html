@@ -7,7 +7,7 @@
         @if (second()!.avatarUrl) {
           <img [src]="second()!.avatarUrl" [alt]="second()!.displayName" class="w-full h-full object-cover" />
         } @else {
-          {{ initials(second()!.displayName) }}
+          {{ second()!.displayName | initials }}
         }
       </div>
       <p class="text-xs text-gray-700 dark:text-gray-300 font-medium text-center truncate w-full px-1">{{ second()!.displayName }}</p>
@@ -30,7 +30,7 @@
         @if (first()!.avatarUrl) {
           <img [src]="first()!.avatarUrl" [alt]="first()!.displayName" class="w-full h-full object-cover" />
         } @else {
-          {{ initials(first()!.displayName) }}
+          {{ first()!.displayName | initials }}
         }
       </div>
       <p class="text-xs text-gray-900 dark:text-white font-bold text-center truncate w-full px-1">{{ first()!.displayName }}</p>
@@ -53,7 +53,7 @@
         @if (third()!.avatarUrl) {
           <img [src]="third()!.avatarUrl" [alt]="third()!.displayName" class="w-full h-full object-cover" />
         } @else {
-          {{ initials(third()!.displayName) }}
+          {{ third()!.displayName | initials }}
         }
       </div>
       <p class="text-xs text-amber-800 dark:text-amber-300 font-medium text-center truncate w-full px-1">{{ third()!.displayName }}</p>
