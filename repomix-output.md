@@ -636,7 +636,14 @@ PYEOF
       "Bash(grep \"\\\\.ts$\")",
       "Bash(grep -v \"^\\\\s*$\")",
       "Bash(grep -E \"\\\\.\\(ts\\)$\")",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(sed -n '78,90p' /home/dmytr/angular/book-club-fe/src/app/core/services/quiz.service.spec.ts)",
+      "Bash(sed -n '124,135p' /home/dmytr/angular/book-club-fe/src/app/core/services/quiz.service.spec.ts)",
+      "Bash(sed -n '143,155p' /home/dmytr/angular/book-club-fe/src/app/core/services/quiz.service.spec.ts)",
+      "Bash(sed -n '126,144p' /home/dmytr/angular/book-club-fe/src/app/core/auth/auth.service.spec.ts)",
+      "Bash(sed -n '357,375p' /home/dmytr/angular/book-club-fe/src/app/core/auth/auth.service.spec.ts)",
+      "Bash(sed -n '397,415p' /home/dmytr/angular/book-club-fe/src/app/core/auth/auth.service.spec.ts)",
+      "Bash(sed -n '437,455p' /home/dmytr/angular/book-club-fe/src/app/core/auth/auth.service.spec.ts)"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -1147,120 +1154,86 @@ export interface UserProfile {
 }
 ````
 
-## File: src/app/features/quiz/quiz-leaderboard/leaderboard-rest-table/leaderboard-rest-table.component.html
-````html
-<div class="glass-card overflow-hidden">
-  <table class="w-full text-sm">
-    <thead class="bg-gray-50/80 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 uppercase tracking-wide text-xs">
-      <tr>
-        <th class="px-4 py-3 text-left w-12">Rank</th>
-        <th class="px-4 py-3 text-left">Player</th>
-        <th class="px-4 py-3 text-right">Score</th>
-        <th class="px-4 py-3 text-right">Status</th>
-      </tr>
-    </thead>
-    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
-      @for (entry of entries(); track entry.userId) {
-        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
-          <td class="px-4 py-3 text-gray-500 dark:text-gray-400 font-mono text-center">{{ entry.rank }}</td>
-          <td class="px-4 py-3">
-            <div class="flex items-center gap-2">
-              <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300 flex-shrink-0">
-                {{ entry.displayName | initials }}
-              </div>
-              <span class="text-gray-900 dark:text-white font-medium truncate">{{ entry.displayName }}</span>
-            </div>
-          </td>
-          <td class="px-4 py-3 text-right">
-            <div class="flex items-center justify-end gap-2">
-              <span class="font-semibold text-gray-900 dark:text-white">{{ entry.score }}</span>
-              <span class="text-gray-400">/{{ entry.totalQuestions }}</span>
-              <div class="w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                <div
-                  class="h-full bg-primary-500 rounded-full transition-all"
-                  [style.width.%]="entry.totalQuestions > 0 ? (entry.score / entry.totalQuestions) * 100 : 0"
-                ></div>
-              </div>
-            </div>
-          </td>
-          <td class="px-4 py-3 text-right">
-            @if (entry.hasAttempted) {
-              <span class="inline-flex rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2 py-0.5 text-xs text-green-700 dark:text-green-400">Completed</span>
-            } @else {
-              <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2 py-0.5 text-xs text-gray-500 dark:text-gray-400">Not yet</span>
-            }
-          </td>
-        </tr>
-      }
-    </tbody>
-  </table>
-</div>
-````
-
-## File: src/app/features/quiz/quiz-leaderboard/leaderboard-rest-table/leaderboard-rest-table.component.ts
+## File: src/app/core/services/seo.service.ts
 ````typescript
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { QuizLeaderboardEntry } from '../../../../core/models/quiz.model';
-import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
-@Component({
-  selector: 'app-leaderboard-rest-table',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [InitialsPipe],
-  templateUrl: './leaderboard-rest-table.component.html',
-})
-export class LeaderboardRestTableComponent {
-  readonly entries = input<QuizLeaderboardEntry[]>([]);
+import { Injectable, inject } from '@angular/core';
+import { Meta, Title } from '@angular/platform-browser';
+import { DOCUMENT } from '@angular/common';
+import { TranslateService } from '@ngx-translate/core';
+export interface SeoConfig {
+  title: string;
+  description?: string;
+  ogTitle?: string;
+  ogDescription?: string;
+  canonical?: string;
 }
-````
-
-## File: src/app/features/quiz/quiz-leaderboard/leaderboard-base.component.ts
-````typescript
-import {
-  Directive,
-  OnDestroy,
-  computed,
-  inject,
-  input,
-  resource,
-  signal,
-} from '@angular/core';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizSession, QuizLeaderboardEntry } from '../../../core/models/quiz.model';
-@Directive()
-export abstract class LeaderboardBaseComponent implements OnDestroy {
-  protected readonly quizService = inject(QuizService);
-  readonly id = input<string>('');
-  readonly quizId = input<string>('');
-  readonly session = signal<QuizSession | null>(null);
-  readonly isLoadingSession = signal(true);
-  protected readonly _refreshTick = signal(0);
-  private readonly _leaderboardResource = resource({
-    params: () => ({
-      quizId: this.quizId(),
-      sessionId: this.session()?.id,
-      tick: this._refreshTick(),
-    }),
-    loader: ({ params }) =>
-      params.sessionId && params.quizId
-        ? this.quizService.getLeaderboard(params.quizId, params.sessionId)
-        : Promise.resolve<QuizLeaderboardEntry[]>([]),
-  });
-  readonly leaderboard = computed(() => this._leaderboardResource.value() ?? []);
-  readonly isLeaderboardLoading = computed(() => this._leaderboardResource.isLoading());
-  readonly podiumFirst = computed(() => this.leaderboard()[0] ?? null);
-  readonly podiumSecond = computed(() => this.leaderboard()[1] ?? null);
-  readonly podiumThird = computed(() => this.leaderboard()[2] ?? null);
-  readonly rest = computed(() => this.leaderboard().slice(3));
-  private _refreshInterval?: ReturnType<typeof setInterval>;
-  protected startPolling(intervalMs: number): void {
-    this._refreshInterval = setInterval(
-      () => this._refreshTick.update(n => n + 1),
-      intervalMs,
-    );
+@Injectable({ providedIn: 'root' })
+export class SeoService {
+  private readonly title = inject(Title);
+  private readonly meta = inject(Meta);
+  private readonly document = inject(DOCUMENT);
+  private readonly translate = inject(TranslateService);
+  setPage(config: SeoConfig): void {
+    const { title, description, ogTitle, ogDescription, canonical } = config;
+    this.title.setTitle(title);
+    this.meta.updateTag({ name: 'twitter:title', content: ogTitle ?? title });
+    this.meta.updateTag({ property: 'og:title', content: ogTitle ?? title });
+    if (description) {
+      this.meta.updateTag({ name: 'description', content: description });
+      this.meta.updateTag({ property: 'og:description', content: ogDescription ?? description });
+    }
+    if (canonical) {
+      this.meta.updateTag({ property: 'og:url', content: canonical });
+      this.setCanonical(canonical);
+    }
   }
-  ngOnDestroy(): void {
-    clearInterval(this._refreshInterval);
+  private setCanonical(url: string): void {
+    let link: HTMLLinkElement | null = this.document.querySelector('link[rel="canonical"]');
+    if (!link) {
+      link = this.document.createElement('link');
+      link.setAttribute('rel', 'canonical');
+      this.document.head.appendChild(link);
+    }
+    link.setAttribute('href', url);
+  }
+  setPageI18n(
+    titleKey: string,
+    opts?: {
+      descriptionKey?: string;
+      ogTitleKey?: string;
+      canonical?: string;
+      params?: Record<string, unknown>;
+    }
+  ): void {
+    this.setPage({
+      title: this.translate.instant(titleKey, opts?.params),
+      description: opts?.descriptionKey
+        ? this.translate.instant(opts.descriptionKey, opts?.params)
+        : undefined,
+      ogTitle: opts?.ogTitleKey
+        ? this.translate.instant(opts.ogTitleKey, opts?.params)
+        : undefined,
+      canonical: opts?.canonical,
+    });
+  }
+  injectWebSiteJsonLd(): void {
+    this.injectJsonLd({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: this.translate.instant('SEO.site_name'),
+      url: this.translate.instant('SEO.site_url'),
+      description: this.translate.instant('SEO.site_description'),
+    });
+  }
+  injectJsonLd(schema: object): void {
+    const existing = this.document.head.querySelector('script[type="application/ld+json"]');
+    if (existing) {
+      existing.remove();
+    }
+    const script = this.document.createElement('script');
+    script.type = 'application/ld+json';
+    script.textContent = JSON.stringify(schema);
+    this.document.head.appendChild(script);
   }
 }
 ````
@@ -1482,39 +1455,6 @@ export abstract class LeaderboardBaseComponent implements OnDestroy {
 ## File: src/app/features/quiz/.gitkeep
 ````
 
-````
-
-## File: src/app/features/quiz/quiz-detail-base.component.ts
-````typescript
-import {
-  Directive,
-  computed,
-  inject,
-  input,
-  resource,
-} from '@angular/core';
-import { QuizService } from '../../core/services/quiz.service';
-@Directive()
-export abstract class QuizDetailBaseComponent {
-  protected readonly quizService = inject(QuizService);
-  readonly id = input<string>('');
-  readonly quizId = input<string>('');
-  protected readonly _quizResource = resource({
-    params: () => this.quizId(),
-    loader: ({ params: qId }) =>
-      qId ? this.quizService.getQuiz(qId) : Promise.resolve(null),
-  });
-  protected readonly _questionsResource = resource({
-    params: () => this.quizId(),
-    loader: ({ params: qId }) =>
-      qId ? this.quizService.getQuestions(qId) : Promise.resolve([]),
-  });
-  readonly quiz = computed(() => this._quizResource.value() ?? null);
-  readonly questions = computed(() => this._questionsResource.value() ?? []);
-  readonly isLoading = computed(
-    () => this._quizResource.isLoading() || this._questionsResource.isLoading(),
-  );
-}
 ````
 
 ## File: src/app/features/randomizer/.gitkeep
@@ -1985,21 +1925,6 @@ export class FormatDatePipe implements PipeTransform {
 }
 ````
 
-## File: src/app/shared/pipes/initials.pipe.ts
-````typescript
-import { Pipe, PipeTransform } from '@angular/core';
-@Pipe({ name: 'initials', standalone: true, pure: true })
-export class InitialsPipe implements PipeTransform {
-  transform(name: string | null | undefined): string {
-    if (!name) return '?';
-    const parts = name.trim().split(/\s+/);
-    return parts.length >= 2
-      ? (parts[0][0] + parts[1][0]).toUpperCase()
-      : name.slice(0, 2).toUpperCase();
-  }
-}
-````
-
 ## File: src/app/shared/utils/.gitkeep
 ````
 
@@ -2053,6 +1978,14 @@ export const appConfig: ApplicationConfig = {
       multi: true,
     },
   ],
+};
+````
+
+## File: src/environments/environment.prod.ts
+````typescript
+export const environment = {
+  production: true,
+  apiUrl: 'https://book-club-be.onrender.com/api/v1',
 };
 ````
 
@@ -3100,6 +3033,40 @@ export const authGuard: CanActivateFn = () => {
 };
 ````
 
+## File: src/app/core/auth/token.store.ts
+````typescript
+import { Injectable, signal } from '@angular/core';
+const TOKEN_KEY = 'bc_access_token';
+const REFRESH_TOKEN_KEY = 'bc_refresh_token';
+@Injectable({ providedIn: 'root' })
+export class TokenStore {
+  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
+  private readonly _refreshToken = signal<string | null>(localStorage.getItem(REFRESH_TOKEN_KEY));
+  readonly token = this._token.asReadonly();
+  readonly refreshToken = this._refreshToken.asReadonly();
+  set(token: string): void {
+    localStorage.setItem(TOKEN_KEY, token);
+    this._token.set(token);
+  }
+  setRefresh(token: string): void {
+    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+    this._refreshToken.set(token);
+  }
+  clear(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    this._token.set(null);
+    this._refreshToken.set(null);
+  }
+  snapshot(): string | null {
+    return this._token();
+  }
+  snapshotRefresh(): string | null {
+    return this._refreshToken();
+  }
+}
+````
+
 ## File: src/app/core/models/book-vote.model.ts
 ````typescript
 export interface BookOption {
@@ -3184,86 +3151,136 @@ export interface QuizLeaderboardEntry {
 }
 ````
 
-## File: src/app/core/services/seo.service.ts
+## File: src/app/core/services/randomizer.service.ts
 ````typescript
-import { Injectable, inject } from '@angular/core';
-import { Meta, Title } from '@angular/platform-browser';
-import { DOCUMENT } from '@angular/common';
-import { TranslateService } from '@ngx-translate/core';
-export interface SeoConfig {
-  title: string;
-  description?: string;
-  ogTitle?: string;
-  ogDescription?: string;
-  canonical?: string;
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../auth/auth.service';
+import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
+import { ApiClubMember, mapClubMember } from '../api/api-mappers';
+import { environment } from '../../../environments/environment';
+interface ApiMemberCandidate {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+interface ApiRandomizerSession {
+  id: string;
+  clubId: string;
+  createdBy: string;
+  purpose: string;
+  candidates: ApiMemberCandidate[];
+  result: ApiMemberCandidate | null;
+  createdAt: string;
+}
+function mapMemberCandidate(raw: ApiMemberCandidate): MemberCandidate {
+  return {
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+  };
+}
+function mapRandomizerSession(raw: ApiRandomizerSession): RandomizerSession {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    createdBy: raw.createdBy,
+    purpose: raw.purpose,
+    candidates: raw.candidates.map(mapMemberCandidate),
+    result: raw.result ? mapMemberCandidate(raw.result) : null,
+    createdAt: raw.createdAt,
+  };
 }
 @Injectable({ providedIn: 'root' })
-export class SeoService {
-  private readonly title = inject(Title);
-  private readonly meta = inject(Meta);
-  private readonly document = inject(DOCUMENT);
-  private readonly translate = inject(TranslateService);
-  setPage(config: SeoConfig): void {
-    const { title, description, ogTitle, ogDescription, canonical } = config;
-    this.title.setTitle(title);
-    this.meta.updateTag({ name: 'twitter:title', content: ogTitle ?? title });
-    this.meta.updateTag({ property: 'og:title', content: ogTitle ?? title });
-    if (description) {
-      this.meta.updateTag({ name: 'description', content: description });
-      this.meta.updateTag({ property: 'og:description', content: ogDescription ?? description });
-    }
-    if (canonical) {
-      this.meta.updateTag({ property: 'og:url', content: canonical });
-      this.setCanonical(canonical);
-    }
+export class RandomizerService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly apiUrl = environment.apiUrl;
+  private readonly _candidates = signal<MemberCandidate[]>([]);
+  private readonly _selectedIds = signal<Set<string>>(new Set());
+  private readonly _result = signal<MemberCandidate | null>(null);
+  private readonly _isSpinning = signal(false);
+  private readonly _history = signal<RandomizerSession[]>([]);
+  private readonly _purpose = signal('Хто представляє книгу?');
+  readonly candidates = this._candidates.asReadonly();
+  readonly selectedIds = this._selectedIds.asReadonly();
+  readonly result = this._result.asReadonly();
+  readonly isSpinning = this._isSpinning.asReadonly();
+  readonly history = this._history.asReadonly();
+  readonly purpose = this._purpose.asReadonly();
+  setPurpose(purpose: string): void {
+    this._purpose.set(purpose);
   }
-  private setCanonical(url: string): void {
-    let link: HTMLLinkElement | null = this.document.querySelector('link[rel="canonical"]');
-    if (!link) {
-      link = this.document.createElement('link');
-      link.setAttribute('rel', 'canonical');
-      this.document.head.appendChild(link);
-    }
-    link.setAttribute('href', url);
+  async loadClubMembers(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${this.apiUrl}/clubs/${clubId}/members`),
+    );
+    const members: MemberCandidate[] = raw.map(m => {
+      const detail = mapClubMember(m);
+      return { userId: detail.userId, displayName: detail.displayName, avatarUrl: detail.avatarUrl };
+    });
+    this._candidates.set(members);
+    this._selectedIds.set(new Set(members.map(m => m.userId)));
+    this._result.set(null);
   }
-  setPageI18n(
-    titleKey: string,
-    opts?: {
-      descriptionKey?: string;
-      ogTitleKey?: string;
-      canonical?: string;
-      params?: Record<string, unknown>;
-    }
-  ): void {
-    this.setPage({
-      title: this.translate.instant(titleKey, opts?.params),
-      description: opts?.descriptionKey
-        ? this.translate.instant(opts.descriptionKey, opts?.params)
-        : undefined,
-      ogTitle: opts?.ogTitleKey
-        ? this.translate.instant(opts.ogTitleKey, opts?.params)
-        : undefined,
-      canonical: opts?.canonical,
+  toggleMember(userId: string): void {
+    this._selectedIds.update(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
     });
   }
-  injectWebSiteJsonLd(): void {
-    this.injectJsonLd({
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: this.translate.instant('SEO.site_name'),
-      url: this.translate.instant('SEO.site_url'),
-      description: this.translate.instant('SEO.site_description'),
-    });
+  async spin(): Promise<void> {
+    const selected = this._candidates().filter(m => this._selectedIds().has(m.userId));
+    if (selected.length < 2) throw new Error('Потрібно мінімум 2 учасники');
+    this._isSpinning.set(true);
+    this._result.set(null);
+    await new Promise<void>(resolve => setTimeout(resolve, 2000));
+    const max = Math.floor(0x100000000 / selected.length) * selected.length;
+    let rand: number;
+    do {
+      rand = crypto.getRandomValues(new Uint32Array(1))[0];
+    } while (rand >= max);
+    const idx = rand % selected.length;
+    this._result.set(selected[idx]);
+    this._isSpinning.set(false);
   }
-  injectJsonLd(schema: object): void {
-    const existing = this.document.head.querySelector('script[type="application/ld+json"]');
-    if (existing) {
-      existing.remove();
-    }
-    const script = this.document.createElement('script');
-    script.type = 'application/ld+json';
-    script.textContent = JSON.stringify(schema);
-    this.document.head.appendChild(script);
+  async saveSession(clubId: string): Promise<void> {
+    const user = this.auth.currentUser();
+    if (!user) throw new Error('Not authenticated');
+    const result = this._result();
+    if (!result) throw new Error('No result to save');
+    const body = {
+      purpose: this._purpose(),
+      candidates: this._candidates()
+        .filter(m => this._selectedIds().has(m.userId))
+        .map(m => m.userId),
+      result: result.userId,
+    };
+    const raw = await firstValueFrom(
+      this.http.post<ApiRandomizerSession>(
+        `${this.apiUrl}/clubs/${clubId}/randomizer/sessions`,
+        body,
+      ),
+    );
+    const session = mapRandomizerSession(raw);
+    this._history.update(prev => [session, ...prev]);
+  }
+  async loadHistory(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiRandomizerSession[]>(`${this.apiUrl}/clubs/${clubId}/randomizer/history`),
+    );
+    this._history.set(raw.map(mapRandomizerSession));
+  }
+  reset(): void {
+    const ids = new Set(this._candidates().map(m => m.userId));
+    this._selectedIds.set(ids);
+    this._result.set(null);
   }
 }
 ````
@@ -4013,172 +4030,120 @@ export class ProfileStatsComponent {
 </div>
 ````
 
-## File: src/app/features/quiz/quiz-leaderboard/leaderboard-podium/leaderboard-podium.component.html
+## File: src/app/features/quiz/quiz-leaderboard/leaderboard-rest-table/leaderboard-rest-table.component.html
 ````html
-<div class="flex items-end justify-center gap-3 px-4 py-6">
-  <div class="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
-    @if (second()) {
-      <div class="w-12 h-12 rounded-full ring-2 ring-gray-300 dark:ring-gray-500 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-300 overflow-hidden">
-        @if (second()!.avatarUrl) {
-          <img [src]="second()!.avatarUrl" [alt]="second()!.displayName" class="w-full h-full object-cover" />
-        } @else {
-          {{ second()!.displayName | initials }}
-        }
-      </div>
-      <p class="text-xs text-gray-700 dark:text-gray-300 font-medium text-center truncate w-full px-1">{{ second()!.displayName }}</p>
-      <span class="inline-flex items-center rounded-full bg-gray-200/80 dark:bg-gray-700/60 text-gray-700 dark:text-gray-300 px-2.5 py-0.5 text-xs font-bold border border-gray-300 dark:border-gray-600">
-        {{ second()!.score }}/{{ second()!.totalQuestions }}
-      </span>
-    } @else {
-      <div class="w-12 h-12 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-300 dark:text-gray-600 text-lg">—</div>
-      <p class="text-xs text-gray-400 dark:text-gray-600 text-center">2nd</p>
-    }
-    <div class="w-full h-24 rounded-t-xl flex items-center justify-center text-2xl bg-gradient-to-t from-gray-200 to-gray-100 dark:from-gray-700 dark:to-gray-600">
-      🥈
-    </div>
-  </div>
-  <div class="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
-    @if (first()) {
-      <div class="w-14 h-14 rounded-full ring-4 ring-yellow-400 dark:ring-yellow-500 bg-yellow-100 dark:bg-yellow-900/40 flex items-center justify-center text-base font-bold text-yellow-700 dark:text-yellow-300 overflow-hidden">
-        @if (first()!.avatarUrl) {
-          <img [src]="first()!.avatarUrl" [alt]="first()!.displayName" class="w-full h-full object-cover" />
-        } @else {
-          {{ first()!.displayName | initials }}
-        }
-      </div>
-      <p class="text-xs text-gray-900 dark:text-white font-bold text-center truncate w-full px-1">{{ first()!.displayName }}</p>
-      <span class="inline-flex items-center rounded-full bg-yellow-400 text-yellow-900 px-2.5 py-0.5 text-xs font-bold border border-yellow-500">
-        {{ first()!.score }}/{{ first()!.totalQuestions }}
-      </span>
-    } @else {
-      <div class="w-14 h-14 rounded-full border-2 border-dashed border-yellow-300 dark:border-yellow-700 flex items-center justify-center text-yellow-300 dark:text-yellow-700 text-xl">—</div>
-      <p class="text-xs text-gray-400 dark:text-gray-600 text-center">1st</p>
-    }
-    <div class="w-full h-32 rounded-t-xl flex items-center justify-center text-3xl bg-gradient-to-t from-yellow-300 to-yellow-100 dark:from-yellow-600/60 dark:to-yellow-400/30">
-      🥇
-    </div>
-  </div>
-  <div class="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
-    @if (third()) {
-      <div class="w-12 h-12 rounded-full ring-2 ring-amber-500 dark:ring-amber-600 bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-sm font-bold text-amber-700 dark:text-amber-300 overflow-hidden">
-        @if (third()!.avatarUrl) {
-          <img [src]="third()!.avatarUrl" [alt]="third()!.displayName" class="w-full h-full object-cover" />
-        } @else {
-          {{ third()!.displayName | initials }}
-        }
-      </div>
-      <p class="text-xs text-amber-800 dark:text-amber-300 font-medium text-center truncate w-full px-1">{{ third()!.displayName }}</p>
-      <span class="inline-flex items-center rounded-full bg-amber-600/80 text-white px-2.5 py-0.5 text-xs font-bold border border-amber-500">
-        {{ third()!.score }}/{{ third()!.totalQuestions }}
-      </span>
-    } @else {
-      <div class="w-12 h-12 rounded-full border-2 border-dashed border-amber-300 dark:border-amber-700 flex items-center justify-center text-amber-300 dark:text-amber-700 text-lg">—</div>
-      <p class="text-xs text-gray-400 dark:text-gray-600 text-center">3rd</p>
-    }
-    <div class="w-full h-20 rounded-t-xl flex items-center justify-center text-2xl bg-gradient-to-t from-amber-600/70 to-amber-400/40 dark:from-amber-700/60 dark:to-amber-500/30">
-      🥉
-    </div>
-  </div>
+<div class="glass-card overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-gray-50/80 dark:bg-gray-800/60 text-gray-500 dark:text-gray-400 uppercase tracking-wide text-xs">
+      <tr>
+        <th class="px-4 py-3 text-left w-12">Rank</th>
+        <th class="px-4 py-3 text-left">Player</th>
+        <th class="px-4 py-3 text-right">Score</th>
+        <th class="px-4 py-3 text-right">Status</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-100 dark:divide-gray-800">
+      @for (entry of entries(); track entry.userId) {
+        <tr class="hover:bg-gray-50/50 dark:hover:bg-gray-800/30 transition-colors">
+          <td class="px-4 py-3 text-gray-500 dark:text-gray-400 font-mono text-center">{{ entry.rank }}</td>
+          <td class="px-4 py-3">
+            <div class="flex items-center gap-2">
+              <div class="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-bold text-gray-600 dark:text-gray-300 flex-shrink-0">
+                {{ entry.displayName | initials }}
+              </div>
+              <span class="text-gray-900 dark:text-white font-medium truncate">{{ entry.displayName }}</span>
+            </div>
+          </td>
+          <td class="px-4 py-3 text-right">
+            <div class="flex items-center justify-end gap-2">
+              <span class="font-semibold text-gray-900 dark:text-white">{{ entry.score }}</span>
+              <span class="text-gray-400">/{{ entry.totalQuestions }}</span>
+              <div class="w-16 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-primary-500 rounded-full transition-all"
+                  [style.width.%]="entry.totalQuestions > 0 ? (entry.score / entry.totalQuestions) * 100 : 0"
+                ></div>
+              </div>
+            </div>
+          </td>
+          <td class="px-4 py-3 text-right">
+            @if (entry.hasAttempted) {
+              <span class="inline-flex rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2 py-0.5 text-xs text-green-700 dark:text-green-400">Completed</span>
+            } @else {
+              <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2 py-0.5 text-xs text-gray-500 dark:text-gray-400">Not yet</span>
+            }
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
 </div>
 ````
 
-## File: src/app/features/quiz/quiz-leaderboard/leaderboard-podium/leaderboard-podium.component.ts
+## File: src/app/features/quiz/quiz-leaderboard/leaderboard-rest-table/leaderboard-rest-table.component.ts
 ````typescript
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { QuizLeaderboardEntry } from '../../../../core/models/quiz.model';
 import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
 @Component({
-  selector: 'app-leaderboard-podium',
-  host: { class: 'block' },
+  selector: 'app-leaderboard-rest-table',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [InitialsPipe],
-  templateUrl: './leaderboard-podium.component.html',
+  templateUrl: './leaderboard-rest-table.component.html',
 })
-export class LeaderboardPodiumComponent {
-  readonly first  = input<QuizLeaderboardEntry | null>(null);
-  readonly second = input<QuizLeaderboardEntry | null>(null);
-  readonly third  = input<QuizLeaderboardEntry | null>(null);
+export class LeaderboardRestTableComponent {
+  readonly entries = input<QuizLeaderboardEntry[]>([]);
 }
 ````
 
-## File: src/app/features/quiz/quiz-leaderboard/quiz-leaderboard.component.html
-````html
-<div class="min-h-screen p-4 sm:p-8">
-  <div class="max-w-3xl mx-auto space-y-6">
-    <header class="flex items-center justify-between flex-wrap gap-4">
-      <div>
-        <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🏆 Leaderboard</h1>
-        <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">Auto-refreshes every 30 seconds</p>
-      </div>
-      <a [routerLink]="['/clubs', id(), 'quizzes']"
-         class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-        ← Back to Quizzes
-      </a>
-    </header>
-    @if (isLoadingSession()) {
-      <div class="space-y-4">
-        <div class="glass-card h-48 animate-pulse"></div>
-        <div class="glass-card h-32 animate-pulse"></div>
-      </div>
-    } @else {
-      @if (!session()) {
-        <div class="glass-card p-12 text-center">
-          <p class="text-4xl mb-3">🎯</p>
-          <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">No active session</h2>
-          <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-            The quiz session hasn't started yet.
-          </p>
-        </div>
-      } @else {
-        @if (leaderboard().length === 0 && !isLeaderboardLoading()) {
-          <div class="glass-card p-12 text-center">
-            <p class="text-4xl mb-3">⏳</p>
-            <p class="text-gray-500 dark:text-gray-400">No participants yet.</p>
-          </div>
-        } @else {
-          <div class="glass-card overflow-hidden">
-            <app-leaderboard-podium
-              [first]="podiumFirst()"
-              [second]="podiumSecond()"
-              [third]="podiumThird()"
-            />
-          </div>
-          @if (rest().length > 0) {
-            <app-leaderboard-rest-table [entries]="rest()" />
-          }
-        }
-      }
-    }
-  </div>
-</div>
-````
-
-## File: src/app/features/quiz/quiz-leaderboard/quiz-leaderboard.component.ts
+## File: src/app/features/quiz/quiz-leaderboard/leaderboard-base.component.ts
 ````typescript
-import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { HlmCardImports } from '../../../shared/spartan/card/src';
-import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
-import { LeaderboardPodiumComponent } from './leaderboard-podium/leaderboard-podium.component';
-import { LeaderboardRestTableComponent } from './leaderboard-rest-table/leaderboard-rest-table.component';
-import { LeaderboardBaseComponent } from './leaderboard-base.component';
-@Component({
-  selector: 'app-quiz-leaderboard',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ...HlmCardImports, InitialsPipe, LeaderboardPodiumComponent, LeaderboardRestTableComponent],
-  templateUrl: './quiz-leaderboard.component.html',
-})
-export class QuizLeaderboardComponent extends LeaderboardBaseComponent implements OnInit {
-  ngOnInit(): void {
-    this.quizService
-      .getActiveSession(this.quizId())
-      .then(s => {
-        this.session.set(s);
-        this.isLoadingSession.set(false);
-      });
-    this.startPolling(30_000);
+import {
+  Directive,
+  OnDestroy,
+  computed,
+  inject,
+  input,
+  resource,
+  signal,
+} from '@angular/core';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizSession, QuizLeaderboardEntry } from '../../../core/models/quiz.model';
+@Directive()
+export abstract class LeaderboardBaseComponent implements OnDestroy {
+  protected readonly quizService = inject(QuizService);
+  readonly id = input<string>('');
+  readonly quizId = input<string>('');
+  readonly session = signal<QuizSession | null>(null);
+  readonly isLoadingSession = signal(true);
+  protected readonly _refreshTick = signal(0);
+  private readonly _leaderboardResource = resource({
+    params: () => ({
+      quizId: this.quizId(),
+      sessionId: this.session()?.id,
+      tick: this._refreshTick(),
+    }),
+    loader: ({ params }) =>
+      params.sessionId && params.quizId
+        ? this.quizService.getLeaderboard(params.quizId, params.sessionId)
+        : Promise.resolve<QuizLeaderboardEntry[]>([]),
+  });
+  readonly leaderboard = computed(() => this._leaderboardResource.value() ?? []);
+  readonly isLeaderboardLoading = computed(() => this._leaderboardResource.isLoading());
+  readonly podiumFirst = computed(() => this.leaderboard()[0] ?? null);
+  readonly podiumSecond = computed(() => this.leaderboard()[1] ?? null);
+  readonly podiumThird = computed(() => this.leaderboard()[2] ?? null);
+  readonly rest = computed(() => this.leaderboard().slice(3));
+  private _refreshInterval?: ReturnType<typeof setInterval>;
+  protected startPolling(intervalMs: number): void {
+    this._refreshInterval = setInterval(
+      () => this._refreshTick.update(n => n + 1),
+      intervalMs,
+    );
+  }
+  ngOnDestroy(): void {
+    clearInterval(this._refreshInterval);
   }
 }
 ````
@@ -4289,62 +4254,6 @@ export class QuizLeaderboardComponent extends LeaderboardBaseComponent implement
     }
   </div>
 </div>
-````
-
-## File: src/app/features/quiz/quiz-preview/quiz-preview.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  signal,
-} from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { inject } from '@angular/core';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmCardImports } from '../../../shared/spartan/card/src';
-import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
-@Component({
-  selector: 'app-quiz-preview',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ...HlmCardImports, HlmButton],
-  templateUrl: './quiz-preview.component.html',
-})
-export class QuizPreviewComponent extends QuizDetailBaseComponent {
-  private readonly router = inject(Router);
-  readonly currentIndex = signal(0);
-  readonly currentQuestion = computed(() => this.questions()[this.currentIndex()] ?? null);
-  readonly isFirstQuestion = computed(() => this.currentIndex() === 0);
-  readonly isLastQuestion = computed(
-    () => this.currentIndex() === this.questions().length - 1,
-  );
-  readonly isActivating = signal(false);
-  readonly errorMessage = signal('');
-  protected readonly optionIndices: readonly number[] = [0, 1, 2, 3];
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
-  protected prev(): void {
-    if (!this.isFirstQuestion()) this.currentIndex.update(i => i - 1);
-  }
-  protected next(): void {
-    if (!this.isLastQuestion()) this.currentIndex.update(i => i + 1);
-  }
-  protected activateQuiz(): void {
-    this.isActivating.set(true);
-    this.quizService
-      .toggleActive(this.quizId(), true)
-      .then(() => {
-        this.isActivating.set(false);
-        this.router.navigate(['/clubs', this.id(), 'quizzes']);
-      })
-      .catch(err => {
-        this.isActivating.set(false);
-        this.errorMessage.set((err as Error).message);
-      });
-  }
-}
 ````
 
 ## File: src/app/features/quiz/quiz-take/quiz-take.component.ts
@@ -4466,6 +4375,39 @@ export class QuizTakeComponent implements OnInit {
         this.state.set('error');
       });
   }
+}
+````
+
+## File: src/app/features/quiz/quiz-detail-base.component.ts
+````typescript
+import {
+  Directive,
+  computed,
+  inject,
+  input,
+  resource,
+} from '@angular/core';
+import { QuizService } from '../../core/services/quiz.service';
+@Directive()
+export abstract class QuizDetailBaseComponent {
+  protected readonly quizService = inject(QuizService);
+  readonly id = input<string>('');
+  readonly quizId = input<string>('');
+  protected readonly _quizResource = resource({
+    params: () => this.quizId(),
+    loader: ({ params: qId }) =>
+      qId ? this.quizService.getQuiz(qId) : Promise.resolve(null),
+  });
+  protected readonly _questionsResource = resource({
+    params: () => this.quizId(),
+    loader: ({ params: qId }) =>
+      qId ? this.quizService.getQuestions(qId) : Promise.resolve([]),
+  });
+  readonly quiz = computed(() => this._quizResource.value() ?? null);
+  readonly questions = computed(() => this._questionsResource.value() ?? []);
+  readonly isLoading = computed(
+    () => this._quizResource.isLoading() || this._questionsResource.isLoading(),
+  );
 }
 ````
 
@@ -5053,6 +4995,21 @@ export interface SocialField {
 export class SocialLinkFieldComponent {
   readonly config = input.required<SocialField>();
   readonly form = input.required<FormGroup>();
+}
+````
+
+## File: src/app/shared/pipes/initials.pipe.ts
+````typescript
+import { Pipe, PipeTransform } from '@angular/core';
+@Pipe({ name: 'initials', standalone: true, pure: true })
+export class InitialsPipe implements PipeTransform {
+  transform(name: string | null | undefined): string {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    return parts.length >= 2
+      ? (parts[0][0] + parts[1][0]).toUpperCase()
+      : name.slice(0, 2).toUpperCase();
+  }
 }
 ````
 
@@ -7108,11 +7065,11 @@ import { HlmToasterImports } from './shared/spartan';
 export class App {}
 ````
 
-## File: src/environments/environment.prod.ts
+## File: src/environments/environment.ts
 ````typescript
 export const environment = {
-  production: true,
-  apiUrl: 'https://book-club-be.onrender.com/api/v1',
+  production: false,
+  apiUrl: 'http://localhost:8000/api/v1',
 };
 ````
 
@@ -8915,40 +8872,6 @@ jobs:
           comment-tag: pr-review-gate
 ````
 
-## File: src/app/core/auth/token.store.ts
-````typescript
-import { Injectable, signal } from '@angular/core';
-const TOKEN_KEY = 'bc_access_token';
-const REFRESH_TOKEN_KEY = 'bc_refresh_token';
-@Injectable({ providedIn: 'root' })
-export class TokenStore {
-  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
-  private readonly _refreshToken = signal<string | null>(localStorage.getItem(REFRESH_TOKEN_KEY));
-  readonly token = this._token.asReadonly();
-  readonly refreshToken = this._refreshToken.asReadonly();
-  set(token: string): void {
-    localStorage.setItem(TOKEN_KEY, token);
-    this._token.set(token);
-  }
-  setRefresh(token: string): void {
-    localStorage.setItem(REFRESH_TOKEN_KEY, token);
-    this._refreshToken.set(token);
-  }
-  clear(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    this._token.set(null);
-    this._refreshToken.set(null);
-  }
-  snapshot(): string | null {
-    return this._token();
-  }
-  snapshotRefresh(): string | null {
-    return this._refreshToken();
-  }
-}
-````
-
 ## File: src/app/core/models/club.model.ts
 ````typescript
 import { UserSocials } from './user.model';
@@ -9129,140 +9052,6 @@ export class GeocodingService {
 }
 ````
 
-## File: src/app/core/services/randomizer.service.ts
-````typescript
-import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { AuthService } from '../auth/auth.service';
-import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
-import { ApiClubMember, mapClubMember } from '../api/api-mappers';
-import { environment } from '../../../environments/environment';
-interface ApiMemberCandidate {
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-}
-interface ApiRandomizerSession {
-  id: string;
-  clubId: string;
-  createdBy: string;
-  purpose: string;
-  candidates: ApiMemberCandidate[];
-  result: ApiMemberCandidate | null;
-  createdAt: string;
-}
-function mapMemberCandidate(raw: ApiMemberCandidate): MemberCandidate {
-  return {
-    userId: raw.userId,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-  };
-}
-function mapRandomizerSession(raw: ApiRandomizerSession): RandomizerSession {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    createdBy: raw.createdBy,
-    purpose: raw.purpose,
-    candidates: raw.candidates.map(mapMemberCandidate),
-    result: raw.result ? mapMemberCandidate(raw.result) : null,
-    createdAt: raw.createdAt,
-  };
-}
-@Injectable({ providedIn: 'root' })
-export class RandomizerService {
-  private readonly http = inject(HttpClient);
-  private readonly auth = inject(AuthService);
-  private readonly apiUrl = environment.apiUrl;
-  private readonly _candidates = signal<MemberCandidate[]>([]);
-  private readonly _selectedIds = signal<Set<string>>(new Set());
-  private readonly _result = signal<MemberCandidate | null>(null);
-  private readonly _isSpinning = signal(false);
-  private readonly _history = signal<RandomizerSession[]>([]);
-  private readonly _purpose = signal('Хто представляє книгу?');
-  readonly candidates = this._candidates.asReadonly();
-  readonly selectedIds = this._selectedIds.asReadonly();
-  readonly result = this._result.asReadonly();
-  readonly isSpinning = this._isSpinning.asReadonly();
-  readonly history = this._history.asReadonly();
-  readonly purpose = this._purpose.asReadonly();
-  setPurpose(purpose: string): void {
-    this._purpose.set(purpose);
-  }
-  async loadClubMembers(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiClubMember[]>(`${this.apiUrl}/clubs/${clubId}/members`),
-    );
-    const members: MemberCandidate[] = raw.map(m => {
-      const detail = mapClubMember(m);
-      return { userId: detail.userId, displayName: detail.displayName, avatarUrl: detail.avatarUrl };
-    });
-    this._candidates.set(members);
-    this._selectedIds.set(new Set(members.map(m => m.userId)));
-    this._result.set(null);
-  }
-  toggleMember(userId: string): void {
-    this._selectedIds.update(prev => {
-      const next = new Set(prev);
-      if (next.has(userId)) {
-        next.delete(userId);
-      } else {
-        next.add(userId);
-      }
-      return next;
-    });
-  }
-  async spin(): Promise<void> {
-    const selected = this._candidates().filter(m => this._selectedIds().has(m.userId));
-    if (selected.length < 2) throw new Error('Потрібно мінімум 2 учасники');
-    this._isSpinning.set(true);
-    this._result.set(null);
-    await new Promise<void>(resolve => setTimeout(resolve, 2000));
-    const max = Math.floor(0x100000000 / selected.length) * selected.length;
-    let rand: number;
-    do {
-      rand = crypto.getRandomValues(new Uint32Array(1))[0];
-    } while (rand >= max);
-    const idx = rand % selected.length;
-    this._result.set(selected[idx]);
-    this._isSpinning.set(false);
-  }
-  async saveSession(clubId: string): Promise<void> {
-    const user = this.auth.currentUser();
-    if (!user) throw new Error('Not authenticated');
-    const result = this._result();
-    if (!result) throw new Error('No result to save');
-    const body = {
-      purpose: this._purpose(),
-      candidates: this._candidates()
-        .filter(m => this._selectedIds().has(m.userId))
-        .map(m => m.userId),
-      result: result.userId,
-    };
-    const raw = await firstValueFrom(
-      this.http.post<ApiRandomizerSession>(
-        `${this.apiUrl}/clubs/${clubId}/randomizer/sessions`,
-        body,
-      ),
-    );
-    const session = mapRandomizerSession(raw);
-    this._history.update(prev => [session, ...prev]);
-  }
-  async loadHistory(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiRandomizerSession[]>(`${this.apiUrl}/clubs/${clubId}/randomizer/history`),
-    );
-    this._history.set(raw.map(mapRandomizerSession));
-  }
-  reset(): void {
-    const ids = new Set(this._candidates().map(m => m.userId));
-    this._selectedIds.set(ids);
-    this._result.set(null);
-  }
-}
-````
-
 ## File: src/app/core/services/upload.service.ts
 ````typescript
 import { Injectable, inject } from '@angular/core';
@@ -9278,6 +9067,75 @@ export class UploadService {
     return this.http
       .post<{ url: string }>(`${environment.apiUrl}/upload/cover`, form)
       .pipe(map(r => r.url));
+  }
+}
+````
+
+## File: src/app/features/auth/login/login.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../core/auth/auth.service';
+import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
+import { SeoService } from '../../../core/services/seo.service';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+interface LoginForm {
+  email: FormControl<string>;
+  password: FormControl<string>;
+}
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.scss',
+})
+export class LoginComponent {
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly seo = inject(SeoService);
+  readonly errorMessage = signal<string | null>(null);
+  readonly isSubmitting = signal(false);
+  readonly bookOpen = signal(false);
+  readonly formVisible = signal(false);
+  constructor() {
+    this.seo.setPageI18n('SEO.login_title');
+    setTimeout(() => this.formVisible.set(true), 700);
+  }
+  onBookAnimationDone(): void {
+    this.router.navigate(['/clubs']);
+  }
+  readonly form = new FormGroup<LoginForm>({
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email],
+    }),
+    password: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(8)],
+    }),
+  });
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+    const { email, password } = this.form.getRawValue();
+    const { error } = await this.auth.signIn(email, password);
+    this.isSubmitting.set(false);
+    if (error) {
+      this.errorMessage.set(error);
+    } else {
+      this.bookOpen.set(true);
+    }
   }
 }
 ````
@@ -9548,6 +9406,1610 @@ export const CLUBS_ROUTES: Routes = [
   <p class="text-center text-sm text-gray-400 dark:text-gray-500 mt-4">
     {{ 'PROFILE.no_stats' | translate }}
   </p>
+}
+````
+
+## File: src/app/features/quiz/quiz-leaderboard/leaderboard-podium/leaderboard-podium.component.html
+````html
+<div class="flex items-end justify-center gap-3 px-4 py-6">
+  <div class="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
+    @if (second()) {
+      <div class="w-12 h-12 rounded-full ring-2 ring-gray-300 dark:ring-gray-500 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-300 overflow-hidden">
+        @if (second()!.avatarUrl) {
+          <img [src]="second()!.avatarUrl" [alt]="second()!.displayName" class="w-full h-full object-cover" />
+        } @else {
+          {{ second()!.displayName | initials }}
+        }
+      </div>
+      <p class="text-xs text-gray-700 dark:text-gray-300 font-medium text-center truncate w-full px-1">{{ second()!.displayName }}</p>
+      <span class="inline-flex items-center rounded-full bg-gray-200/80 dark:bg-gray-700/60 text-gray-700 dark:text-gray-300 px-2.5 py-0.5 text-xs font-bold border border-gray-300 dark:border-gray-600">
+        {{ second()!.score }}/{{ second()!.totalQuestions }}
+      </span>
+    } @else {
+      <div class="w-12 h-12 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center text-gray-300 dark:text-gray-600 text-lg">—</div>
+      <p class="text-xs text-gray-400 dark:text-gray-600 text-center">2nd</p>
+    }
+    <div class="w-full h-24 rounded-t-xl flex items-center justify-center text-2xl bg-gradient-to-t from-gray-200 to-gray-100 dark:from-gray-700 dark:to-gray-600">
+      🥈
+    </div>
+  </div>
+  <div class="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
+    @if (first()) {
+      <div class="w-14 h-14 rounded-full ring-4 ring-yellow-400 dark:ring-yellow-500 bg-yellow-100 dark:bg-yellow-900/40 flex items-center justify-center text-base font-bold text-yellow-700 dark:text-yellow-300 overflow-hidden">
+        @if (first()!.avatarUrl) {
+          <img [src]="first()!.avatarUrl" [alt]="first()!.displayName" class="w-full h-full object-cover" />
+        } @else {
+          {{ first()!.displayName | initials }}
+        }
+      </div>
+      <p class="text-xs text-gray-900 dark:text-white font-bold text-center truncate w-full px-1">{{ first()!.displayName }}</p>
+      <span class="inline-flex items-center rounded-full bg-yellow-400 text-yellow-900 px-2.5 py-0.5 text-xs font-bold border border-yellow-500">
+        {{ first()!.score }}/{{ first()!.totalQuestions }}
+      </span>
+    } @else {
+      <div class="w-14 h-14 rounded-full border-2 border-dashed border-yellow-300 dark:border-yellow-700 flex items-center justify-center text-yellow-300 dark:text-yellow-700 text-xl">—</div>
+      <p class="text-xs text-gray-400 dark:text-gray-600 text-center">1st</p>
+    }
+    <div class="w-full h-32 rounded-t-xl flex items-center justify-center text-3xl bg-gradient-to-t from-yellow-300 to-yellow-100 dark:from-yellow-600/60 dark:to-yellow-400/30">
+      🥇
+    </div>
+  </div>
+  <div class="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
+    @if (third()) {
+      <div class="w-12 h-12 rounded-full ring-2 ring-amber-500 dark:ring-amber-600 bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-sm font-bold text-amber-700 dark:text-amber-300 overflow-hidden">
+        @if (third()!.avatarUrl) {
+          <img [src]="third()!.avatarUrl" [alt]="third()!.displayName" class="w-full h-full object-cover" />
+        } @else {
+          {{ third()!.displayName | initials }}
+        }
+      </div>
+      <p class="text-xs text-amber-800 dark:text-amber-300 font-medium text-center truncate w-full px-1">{{ third()!.displayName }}</p>
+      <span class="inline-flex items-center rounded-full bg-amber-600/80 text-white px-2.5 py-0.5 text-xs font-bold border border-amber-500">
+        {{ third()!.score }}/{{ third()!.totalQuestions }}
+      </span>
+    } @else {
+      <div class="w-12 h-12 rounded-full border-2 border-dashed border-amber-300 dark:border-amber-700 flex items-center justify-center text-amber-300 dark:text-amber-700 text-lg">—</div>
+      <p class="text-xs text-gray-400 dark:text-gray-600 text-center">3rd</p>
+    }
+    <div class="w-full h-20 rounded-t-xl flex items-center justify-center text-2xl bg-gradient-to-t from-amber-600/70 to-amber-400/40 dark:from-amber-700/60 dark:to-amber-500/30">
+      🥉
+    </div>
+  </div>
+</div>
+````
+
+## File: src/app/features/quiz/quiz-leaderboard/leaderboard-podium/leaderboard-podium.component.ts
+````typescript
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { QuizLeaderboardEntry } from '../../../../core/models/quiz.model';
+import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
+@Component({
+  selector: 'app-leaderboard-podium',
+  host: { class: 'block' },
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [InitialsPipe],
+  templateUrl: './leaderboard-podium.component.html',
+})
+export class LeaderboardPodiumComponent {
+  readonly first  = input<QuizLeaderboardEntry | null>(null);
+  readonly second = input<QuizLeaderboardEntry | null>(null);
+  readonly third  = input<QuizLeaderboardEntry | null>(null);
+}
+````
+
+## File: src/app/features/quiz/quiz-leaderboard/quiz-leaderboard.component.html
+````html
+<div class="min-h-screen p-4 sm:p-8">
+  <div class="max-w-3xl mx-auto space-y-6">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🏆 Leaderboard</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">Auto-refreshes every 30 seconds</p>
+      </div>
+      <a [routerLink]="['/clubs', id(), 'quizzes']"
+         class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
+        ← Back to Quizzes
+      </a>
+    </header>
+    @if (isLoadingSession()) {
+      <div class="space-y-4">
+        <div class="glass-card h-48 animate-pulse"></div>
+        <div class="glass-card h-32 animate-pulse"></div>
+      </div>
+    } @else {
+      @if (!session()) {
+        <div class="glass-card p-12 text-center">
+          <p class="text-4xl mb-3">🎯</p>
+          <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">No active session</h2>
+          <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
+            The quiz session hasn't started yet.
+          </p>
+        </div>
+      } @else {
+        @if (leaderboard().length === 0 && !isLeaderboardLoading()) {
+          <div class="glass-card p-12 text-center">
+            <p class="text-4xl mb-3">⏳</p>
+            <p class="text-gray-500 dark:text-gray-400">No participants yet.</p>
+          </div>
+        } @else {
+          <div class="glass-card overflow-hidden">
+            <app-leaderboard-podium
+              [first]="podiumFirst()"
+              [second]="podiumSecond()"
+              [third]="podiumThird()"
+            />
+          </div>
+          @if (rest().length > 0) {
+            <app-leaderboard-rest-table [entries]="rest()" />
+          }
+        }
+      }
+    }
+  </div>
+</div>
+````
+
+## File: src/app/features/quiz/quiz-leaderboard/quiz-leaderboard.component.ts
+````typescript
+import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
+import { LeaderboardPodiumComponent } from './leaderboard-podium/leaderboard-podium.component';
+import { LeaderboardRestTableComponent } from './leaderboard-rest-table/leaderboard-rest-table.component';
+import { LeaderboardBaseComponent } from './leaderboard-base.component';
+@Component({
+  selector: 'app-quiz-leaderboard',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, ...HlmCardImports, InitialsPipe, LeaderboardPodiumComponent, LeaderboardRestTableComponent],
+  templateUrl: './quiz-leaderboard.component.html',
+})
+export class QuizLeaderboardComponent extends LeaderboardBaseComponent implements OnInit {
+  ngOnInit(): void {
+    this.quizService
+      .getActiveSession(this.quizId())
+      .then(s => {
+        this.session.set(s);
+        this.isLoadingSession.set(false);
+      });
+    this.startPolling(30_000);
+  }
+}
+````
+
+## File: src/app/features/quiz/quiz-preview/quiz-preview.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  signal,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { inject } from '@angular/core';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
+@Component({
+  selector: 'app-quiz-preview',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, ...HlmCardImports, HlmButton],
+  templateUrl: './quiz-preview.component.html',
+})
+export class QuizPreviewComponent extends QuizDetailBaseComponent {
+  private readonly router = inject(Router);
+  readonly currentIndex = signal(0);
+  readonly currentQuestion = computed(() => this.questions()[this.currentIndex()] ?? null);
+  readonly isFirstQuestion = computed(() => this.currentIndex() === 0);
+  readonly isLastQuestion = computed(
+    () => this.currentIndex() === this.questions().length - 1,
+  );
+  readonly isActivating = signal(false);
+  readonly errorMessage = signal('');
+  protected readonly optionIndices: readonly number[] = [0, 1, 2, 3];
+  protected optionLabel(index: number): string {
+    return String.fromCodePoint(65 + index);
+  }
+  protected prev(): void {
+    if (!this.isFirstQuestion()) this.currentIndex.update(i => i - 1);
+  }
+  protected next(): void {
+    if (!this.isLastQuestion()) this.currentIndex.update(i => i + 1);
+  }
+  protected activateQuiz(): void {
+    this.isActivating.set(true);
+    this.quizService
+      .toggleActive(this.quizId(), true)
+      .then(() => {
+        this.isActivating.set(false);
+        this.router.navigate(['/clubs', this.id(), 'quizzes']);
+      })
+      .catch(err => {
+        this.isActivating.set(false);
+        this.errorMessage.set((err as Error).message);
+      });
+  }
+}
+````
+
+## File: src/app/layout/shell/shell.component.html
+````html
+<app-header />
+    <main class="min-h-screen">
+      <router-outlet />
+    </main>
+    @defer (on idle) {
+      <app-chat-widget />
+    } @placeholder {
+      <div class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-accent-500/30 animate-pulse" aria-hidden="true"></div>
+    }
+    <app-footer />
+````
+
+## File: src/app/shared/components/cover-upload/cover-upload.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  DestroyRef,
+  inject,
+  signal,
+  input,
+  effect,
+} from '@angular/core';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { UploadService } from '../../../core/services/upload.service';
+@Component({
+  selector: 'app-cover-upload',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule],
+  template: `
+    <div class="space-y-2">
+      @if (previewUrl() || externalUrl()) {
+        <div class="relative rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
+          <img
+            [src]="previewUrl() || externalUrl()"
+            alt="Cover preview"
+            class="w-full h-full object-cover"
+            (error)="clearPreview()"
+          />
+          <button
+            type="button"
+            (click)="clearPreview()"
+            class="absolute top-1 right-1 rounded-full bg-black/50 text-white text-xs px-2 py-0.5 hover:bg-black/70 transition-colors"
+          >✕</button>
+        </div>
+      }
+      <div class="flex gap-2">
+        <button
+          type="button"
+          (click)="fileInput.click()"
+          [disabled]="isUploading()"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
+        >
+          @if (isUploading()) {
+            <span class="animate-spin">⏳</span> Uploading…
+          } @else {
+            📁 Upload image
+          }
+        </button>
+        <button
+          type="button"
+          (click)="showUrlInput.set(!showUrlInput())"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >
+          🔗 {{ showUrlInput() ? 'Hide URL' : 'Enter URL' }}
+        </button>
+      </div>
+      @if (showUrlInput()) {
+        <input
+          type="url"
+          [formControl]="control()"
+          placeholder="https://example.com/cover.jpg"
+          class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        />
+      }
+      @if (uploadError()) {
+        <p class="text-xs text-red-600 dark:text-red-400">{{ uploadError() }}</p>
+      }
+      <input
+        #fileInput
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        class="hidden"
+        (change)="onFileSelected($event)"
+      />
+    </div>
+  `,
+})
+export class CoverUploadComponent {
+  readonly control = input.required<FormControl<string>>();
+  private readonly uploadService = inject(UploadService);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly isUploading = signal(false);
+  readonly uploadError = signal<string | null>(null);
+  readonly showUrlInput = signal(false);
+  readonly previewUrl = signal<string | null>(null);
+  readonly externalUrl = signal<string>('');
+  constructor() {
+    effect(onCleanup => {
+      const ctrl = this.control();
+      this.externalUrl.set(ctrl.value);
+      const sub = ctrl.valueChanges.subscribe(v => this.externalUrl.set(v ?? ''));
+      onCleanup(() => sub.unsubscribe());
+    });
+  }
+  clearPreview(): void {
+    this.previewUrl.set(null);
+    this.control().setValue('');
+  }
+  onFileSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    this.previewUrl.set(URL.createObjectURL(file));
+    this.uploadError.set(null);
+    this.isUploading.set(true);
+    this.uploadService.uploadCover$(file).subscribe({
+      next: url => {
+        this.control().setValue(url);
+        this.isUploading.set(false);
+      },
+      error: () => {
+        this.uploadError.set('Upload failed. Please try again or use a URL.');
+        this.isUploading.set(false);
+        this.previewUrl.set(null);
+      },
+    });
+  }
+}
+````
+
+## File: src/app/shared/spartan/index.ts
+````typescript
+export * from './badge/src';
+export * from './button/src';
+export * from './card/src';
+export * from './dropdown-menu/src';
+export * from './field/src';
+export * from './icon/src';
+export * from './input/src';
+export * from './sheet/src';
+export * from './sonner/src';
+export * from './spinner/src';
+export * from './tabs/src';
+export * from './utils/src';
+````
+
+## File: src/app/app.routes.ts
+````typescript
+import { Routes } from '@angular/router';
+import { authGuard } from './core/auth/auth.guard';
+import { roleGuard } from './core/auth/role.guard';
+import { ShellComponent } from './layout/shell/shell.component';
+export const routes: Routes = [
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/login/login.component').then(m => m.LoginComponent),
+  },
+  {
+    path: 'register',
+    loadComponent: () =>
+      import('./features/auth/register/register.component').then(m => m.RegisterComponent),
+  },
+  {
+    path: '',
+    component: ShellComponent,
+    canActivate: [authGuard],
+    children: [
+      // Protected: any authenticated user
+      {
+        path: 'clubs',
+        canActivate: [authGuard],
+        loadChildren: () => import('./features/clubs/clubs.routes').then(m => m.CLUBS_ROUTES),
+      },
+      {
+        path: 'events',
+        canActivate: [authGuard],
+        loadChildren: () => import('./features/events/events.routes').then(m => m.EVENTS_ROUTES),
+      },
+      {
+        path: 'manage',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('./features/clubs/clubs-list/clubs-list.component').then(
+            m => m.ClubsListComponent,
+          ),
+      },
+      { path: '', redirectTo: 'clubs', pathMatch: 'full' },
+      {
+        path: 'profile',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/profile/profile.component').then(m => m.ProfileComponent),
+      },
+      { path: '**', redirectTo: 'clubs' },
+    ],
+  },
+];
+````
+
+## File: angular.json
+````json
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "book-club-fe": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "app",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "browser": "src/main.ts",
+            "tsConfig": "tsconfig.app.json",
+            "inlineStyleLanguage": "scss",
+            "allowedCommonJsDependencies": [
+              "qrcode"
+            ],
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
+            ],
+            "styles": [
+              "src/styles.css"
+            ]
+          },
+          "configurations": {
+            "production": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "4kB",
+                  "maximumError": "8kB"
+                }
+              ],
+              "outputHashing": "all",
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.prod.ts"
+                }
+              ]
+            },
+            "development": {
+              "optimization": false,
+              "extractLicenses": false,
+              "sourceMap": true
+            }
+          },
+          "defaultConfiguration": "production"
+        },
+        "serve": {
+          "builder": "@angular/build:dev-server",
+          "configurations": {
+            "production": {
+              "buildTarget": "book-club-fe:build:production"
+            },
+            "development": {
+              "buildTarget": "book-club-fe:build:development"
+            }
+          },
+          "defaultConfiguration": "development"
+        },
+        "extract-i18n": {
+          "builder": "@angular/build:extract-i18n"
+        },
+        "test": {
+          "builder": "@angular/build:karma",
+          "options": {
+            "karmaConfig": "karma.conf.js",
+            "codeCoverageExclude": ["src/app/shared/spartan/**"],
+            "tsConfig": "tsconfig.spec.json",
+            "inlineStyleLanguage": "scss",
+            "assets": [
+              {
+                "glob": "**/*",
+                "input": "public"
+              }
+            ],
+            "styles": [
+              "src/styles.css"
+            ]
+          }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
+          }
+        }
+      }
+    }
+  },
+  "cli": {
+    "schematicCollections": [
+      "angular-eslint"
+    ]
+  }
+}
+````
+
+## File: postcss.config.mjs
+````javascript
+import tailwindcss from '@tailwindcss/postcss';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+export default {
+  plugins: [
+    tailwindcss({ base: __dirname }),
+  ],
+};
+````
+
+## File: sonar-project.properties
+````
+# Replace YOUR_ORG with your actual SonarCloud organization slug
+sonar.projectKey=leo477_book-club-fe
+sonar.organization=leo477
+sonar.projectName=Book Club Frontend
+sonar.projectVersion=1.0
+
+sonar.sources=src
+sonar.tests=src
+sonar.test.inclusions=**/*.spec.ts
+sonar.exclusions=**/node_modules/**,**/*.spec.ts,src/assets/**,src/environments/**
+
+sonar.typescript.lcov.reportPaths=coverage/book-club-fe/lcov.info
+
+# Exclude non-testable and currently untested files from coverage requirements
+sonar.coverage.exclusions=\
+  **/*.html,\
+  **/*.spec.ts,\
+  **/mocks/**,\
+  **/*.model.ts,\
+  **/*.interface.ts,\
+  **/*.config.ts,\
+  **/environments/**,\
+  src/app/features/**,\
+  src/app/layout/**,\
+  src/app/shared/spartan/**
+
+sonar.sourceEncoding=UTF-8
+````
+
+## File: tsconfig.json
+````json
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "strict": true,
+    "noImplicitOverride": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "experimentalDecorators": true,
+    "importHelpers": true,
+    "target": "ES2022",
+    "module": "preserve",
+    "paths": {
+      "@spartan-ng/helm/button": [
+        "./src/app/shared/spartan/button/src/index.ts"
+      ],
+      "@spartan-ng/helm/utils": [
+        "./src/app/shared/spartan/utils/src/index.ts"
+      ],
+      "@spartan-ng/helm/badge": [
+        "./src/app/shared/spartan/badge/src/index.ts"
+      ],
+      "@spartan-ng/helm/field": [
+        "./src/app/shared/spartan/field/src/index.ts"
+      ],
+      "@spartan-ng/helm/label": [
+        "./src/app/shared/spartan/label/src/index.ts"
+      ],
+      "@spartan-ng/helm/separator": [
+        "./src/app/shared/spartan/separator/src/index.ts"
+      ],
+      "@spartan-ng/helm/input": [
+        "./src/app/shared/spartan/input/src/index.ts"
+      ],
+      "@spartan-ng/helm/spinner": [
+        "./src/app/shared/spartan/spinner/src/index.ts"
+      ],
+      "@spartan-ng/helm/sonner": [
+        "./src/app/shared/spartan/sonner/src/index.ts"
+      ],
+      "@spartan-ng/helm/card": [
+        "./src/app/shared/spartan/card/src/index.ts"
+      ],
+      "@spartan-ng/helm/tabs": [
+        "./src/app/shared/spartan/tabs/src/index.ts"
+      ],
+      "@spartan-ng/helm/icon": [
+        "./src/app/shared/spartan/icon/src/index.ts"
+      ],
+      "@spartan-ng/helm/sheet": [
+        "./src/app/shared/spartan/sheet/src/index.ts"
+      ],
+      "@spartan-ng/helm/dropdown-menu": [
+        "./src/app/shared/spartan/dropdown-menu/src/index.ts"
+      ]
+    }
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "typeCheckHostBindings": true,
+    "strictTemplates": true
+  },
+  "files": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ]
+}
+````
+
+## File: vercel.json
+````json
+{
+
+  "buildCommand": "npm run build -- --configuration=production",
+  "outputDirectory": "dist/book-club-fe/browser",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "X-Frame-Options", "value": "DENY" },
+        { "key": "X-XSS-Protection", "value": "1; mode=block" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
+        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
+        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://vercel.live https://book-club-be.onrender.com wss://*.pusher.com https://*.pusher.com https://*.pusherapp.com; frame-src https://vercel.live; frame-ancestors 'none';" }
+      ]
+    }
+  ]
+}
+````
+
+## File: src/app/core/api/api-error.util.ts
+````typescript
+import { HttpErrorResponse } from '@angular/common/http';
+export function extractApiError(err: unknown): string {
+  if (err instanceof HttpErrorResponse) {
+    const body = err.error as { error?: unknown; detail?: unknown } | null;
+    if (typeof body?.error === 'string') return body.error;
+    const detail = body?.detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) return (detail[0] as { msg?: string })?.msg ?? err.message ?? 'Unknown error';
+    if (detail && typeof detail === 'object') return (detail as { error?: string }).error ?? err.message ?? 'Unknown error';
+    return err.message ?? 'Unknown error';
+  }
+  return 'Unknown error';
+}
+````
+
+## File: src/app/core/interceptors/auth.interceptor.ts
+````typescript
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { toast } from '@spartan-ng/brain/sonner';
+import { catchError, throwError } from 'rxjs';
+import { TokenStore } from '../auth/token.store';
+import { environment } from '../../../environments/environment';
+export const authInterceptor: HttpInterceptorFn = (req, next$) => {
+  const router = inject(Router);
+  const tokenStore = inject(TokenStore);
+  const token = tokenStore.snapshot();
+  const authedReq = token
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
+  return next$(authedReq).pipe(
+    catchError((error: unknown) => {
+      const httpError = error instanceof HttpErrorResponse ? error : null;
+      if (httpError?.status === 401 && token) {
+        tokenStore.clear();
+        router.navigate(['/login']);
+      } else if (httpError?.status === 403) {
+        router.navigate(['/clubs']);
+      } else if (httpError && httpError.status >= 500) {
+        if (!environment.production) {
+          console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
+        }
+        toast.error('A server error occurred. Please try again later.');
+      }
+      return throwError(() => error);
+    }),
+  );
+};
+````
+
+## File: src/app/features/auth/login/login.component.html
+````html
+<div class="auth-page-wrapper">
+  <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
+  <main class="auth-form-container">
+    @if (formVisible()) {
+      <div class="w-full max-w-md animate-form-in">
+        <div class="text-center mb-8">
+          <h1 class="font-display text-3xl font-bold text-white drop-shadow-sm">📚 Book Club</h1>
+          <p class="text-white/70 mt-2">{{ 'AUTH.welcome_back' | translate }}</p>
+        </div>
+        <div class="glass-card-strong p-8">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'AUTH.sign_in_h2' | translate }}</h2>
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+            <fieldset class="border-0 p-0 m-0">
+              <legend class="sr-only">{{ 'AUTH.sign_in_h2' | translate }}</legend>
+              <hlm-field>
+                <label hlmFieldLabel for="login-email">{{ 'AUTH.email' | translate }}</label>
+                <input hlmInput id="login-email" type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
+                <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
+              </hlm-field>
+              <hlm-field>
+                <label hlmFieldLabel for="login-password">{{ 'AUTH.password' | translate }}</label>
+                <input hlmInput id="login-password" type="password" placeholder="••••••••" [formControl]="form.controls.password" />
+                <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
+              </hlm-field>
+            </fieldset>
+            @if (errorMessage()) {
+              <div class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+                <span class="mt-0.5 shrink-0">⚠️</span>
+                <span>{{ errorMessage() }}</span>
+              </div>
+            }
+            <button
+              hlmBtn
+              type="submit"
+              [disabled]="isSubmitting()"
+              class="mt-2 w-full bg-gradient-brand text-white border-0 hover:opacity-90 focus-visible:ring-primary-500"
+            >
+              @if (isSubmitting()) {
+                <hlm-spinner aria-label="Loading" />
+                {{ 'AUTH.signing_in' | translate }}
+              } @else {
+                {{ 'AUTH.submit_login' | translate }}
+              }
+            </button>
+          </form>
+          <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+            {{ 'AUTH.no_account' | translate }}
+            <a routerLink="/register" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">
+              {{ 'AUTH.register_title' | translate }}
+            </a>
+          </p>
+        </div>
+        <p class="mt-6 text-center text-sm">
+          <a
+            routerLink="/"
+            class="inline-flex items-center gap-1 text-white/60 hover:text-white/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 rounded"
+          >
+            {{ 'NAV.back_home' | translate }}
+          </a>
+        </p>
+      </div>
+    }
+  </main>
+</div>
+````
+
+## File: src/app/features/auth/register/register.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
+import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../core/auth/auth.service';
+import { UserRole } from '../../../core/models/user.model';
+import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
+import { SeoService } from '../../../core/services/seo.service';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
+  const password = group.get('password')?.value as string;
+  const confirmPassword = group.get('confirmPassword')?.value as string;
+  return password === confirmPassword ? null : { passwordMismatch: true };
+};
+interface RegisterForm {
+  displayName: FormControl<string>;
+  email: FormControl<string>;
+  password: FormControl<string>;
+  confirmPassword: FormControl<string>;
+  role: FormControl<UserRole>;
+}
+@Component({
+  selector: 'app-register',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './register.component.html',
+  styleUrl: './register.component.scss',
+})
+export class RegisterComponent {
+  private readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  readonly errorMessage = signal<string | null>(null);
+  readonly isSubmitting = signal(false);
+  readonly successMessage = signal(false);
+  readonly registeredEmail = signal('');
+  readonly selectedRole = signal<UserRole>('user');
+  readonly bookOpen = signal(false);
+  readonly formVisible = signal(false);
+  constructor() {
+    this.seo.setPageI18n('SEO.register_title');
+    setTimeout(() => this.formVisible.set(true), 700);
+  }
+  onBookAnimationDone(): void {
+  }
+  readonly form = new FormGroup<RegisterForm>(
+    {
+      displayName: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(2)],
+      }),
+      email: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.email],
+      }),
+      password: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(8)],
+      }),
+      confirmPassword: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+      role: new FormControl<UserRole>('user', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+    },
+    { validators: passwordMatchValidator },
+  );
+  private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
+    initialValue: '',
+  });
+  readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
+    const pw = this._passwordValue();
+    if (!pw || pw.length === 0) return null;
+    if (pw.length < 8) return 'weak';
+    const hasUpper = /[A-Z]/.test(pw);
+    const hasNumber = /\d/.test(pw);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
+    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
+    if (score >= 2) return 'strong';
+    if (score === 1) return 'medium';
+    return 'weak';
+  });
+  setRole(role: UserRole): void {
+    this.selectedRole.set(role);
+    this.form.controls.role.setValue(role);
+    this.form.controls.role.markAsTouched();
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+    const { displayName, email, password, role } = this.form.getRawValue();
+    const { error } = await this.auth.signUp(email, password, displayName, role);
+    this.isSubmitting.set(false);
+    if (error) {
+      this.errorMessage.set(error);
+    } else {
+      this.registeredEmail.set(email);
+      this.successMessage.set(true);
+      this.bookOpen.set(true);
+    }
+  }
+}
+````
+
+## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html
+````html
+<article
+  class="parchment-card glass-card flex flex-col overflow-hidden h-full"
+  [style.animation-delay]="index() * 80 + 'ms'"
+>
+  @if (event().coverUrl) {
+    <div class="h-28 overflow-hidden flex-shrink-0">
+      <img [src]="event().coverUrl" [alt]="event().title" class="w-full h-full object-cover" loading="lazy" />
+    </div>
+  } @else {
+    <div class="h-1 w-full bg-gradient-to-r from-primary-500 via-accent-500 to-primary-400 flex-shrink-0"></div>
+  }
+  @if (event().status !== 'scheduled') {
+    <div
+      class="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center text-sm shadow-sm border z-10"
+      [class]="event().status === 'active'
+        ? 'bg-green-100/80 border-green-400 dark:bg-green-900/50 dark:border-green-600'
+        : event().status === 'cancelled'
+          ? 'bg-red-100/80 border-red-400 dark:bg-red-900/50 dark:border-red-600'
+          : 'bg-yellow-100/80 border-yellow-400 dark:bg-yellow-900/50 dark:border-yellow-600'"
+      [attr.title]="event().status"
+    >
+      {{ event().status === 'active' ? '🟢' : event().status === 'cancelled' ? '🔴' : '🟡' }}
+    </div>
+  }
+  <div class="flex flex-col flex-1 p-4 gap-3">
+    <div>
+      <span class="inline-flex items-center gap-1.5 rounded-full bg-primary-100/80 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/60 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
+        📅 {{ event().date | formatDate }}
+      </span>
+    </div>
+    <a
+      [routerLink]="['/events', event().id]"
+      class="block font-display text-base font-semibold leading-snug text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors line-clamp-2"
+    >
+      {{ event().title }}
+    </a>
+    @if (event().city) {
+      <p class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+        <span aria-hidden="true">📍</span>
+        <span>{{ event().address || event().city }}</span>
+      </p>
+    }
+    @if (event().theme || event().tags.length > 0) {
+      <div class="flex flex-wrap gap-1.5">
+        @if (event().theme) {
+          <span class="rune-pill rounded-full bg-accent-100/80 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700/60 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
+            ✨ {{ event().theme }}
+          </span>
+        }
+        @for (tag of event().tags.slice(0, 2); track tag) {
+          <span class="rune-pill rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-600 dark:text-gray-400">
+            🏷 {{ tag }}
+          </span>
+        }
+      </div>
+    }
+    <div class="flex items-center justify-between mt-auto pt-2 border-t border-white/20 dark:border-white/10">
+      <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+        👥 {{ event().attendeeCount }} {{ 'CLUB_DETAIL.rsvp_attending' | translate }}
+      </span>
+      <div class="flex items-center gap-2">
+        @if (isAuthenticated() && event().status !== 'cancelled') {
+          @if (event().isAttending) {
+            <button
+              hlmBtn
+              size="sm"
+              type="button"
+              [disabled]="attending()"
+              (click)="cancelAttend.emit()"
+              class="bg-green-600 hover:bg-green-700 text-white text-xs"
+            >
+              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_going' | translate }} }
+            </button>
+          } @else {
+            <button
+              hlmBtn
+              size="sm"
+              type="button"
+              [disabled]="attending()"
+              (click)="attend.emit()"
+              class="bg-primary-600 hover:bg-primary-700 text-white text-xs"
+            >
+              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_join' | translate }} }
+            </button>
+          }
+        } @else {
+          <a
+            hlmBtn
+            variant="outline"
+            size="sm"
+            [routerLink]="['/events', event().id]"
+            class="text-xs"
+          >
+            {{ 'CLUB_DETAIL.rsvp_view' | translate }} →
+          </a>
+        }
+      </div>
+    </div>
+  </div>
+</article>
+````
+
+## File: src/app/features/clubs/club-detail/header/club-header.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+} from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { Club } from '../../../../core/models/club.model';
+import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
+import { HlmButton } from '../../../../shared/spartan/button/src';
+@Component({
+  selector: 'app-club-header',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [TranslateModule, LoadingSpinnerComponent, HlmButton],
+  templateUrl: './club-header.component.html',
+})
+export class ClubHeaderComponent {
+  readonly club = input.required<Club>();
+  readonly isMember = input.required<boolean>();
+  readonly isOwner = input.required<boolean>();
+  readonly isAuthenticated = input.required<boolean>();
+  readonly isActionLoading = input.required<boolean>();
+  readonly leave = output<void>();
+}
+````
+
+## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { HlmCard } from '../../../../shared/spartan/card/src';
+@Component({
+  selector: 'app-club-manage-panel',
+  host: { class: 'block' },
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, HlmCard],
+  templateUrl: './club-manage-panel.component.html',
+})
+export class ClubManagePanelComponent {
+  readonly clubId = input.required<string>();
+}
+````
+
+## File: src/app/features/events/event-card/event-card.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { ClubEvent } from '../../../core/models/event.model';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmBadge } from '../../../shared/spartan/badge/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+@Component({
+  selector: 'app-event-card',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, FormatDatePipe, ...HlmCardImports, HlmButton, HlmBadge, HlmSpinner],
+  templateUrl: './event-card.component.html',
+})
+export class EventCardComponent {
+  readonly event = input.required<ClubEvent>();
+  readonly isAuthenticated = input<boolean>(false);
+  readonly attending = input<boolean>(false);
+  readonly attend = output<void>();
+  readonly cancelAttend = output<void>();
+}
+````
+
+## File: src/app/features/profile/profile.component.html
+````html
+<div class="min-h-screen bg-gradient-to-br from-primary-950/30 via-transparent to-accent-950/20">
+  <div class="max-w-2xl mx-auto space-y-5 py-8 px-4">
+    <section
+      aria-labelledby="profile-heading"
+      class="glass-card-strong p-8 text-center"
+    >
+      <div
+        class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-brand
+               flex items-center justify-center text-white text-3xl font-bold select-none
+               shadow-lg ring-4 ring-white/20"
+        aria-hidden="true"
+      >
+        {{ userInitials() }}
+      </div>
+      <h1 id="profile-heading" class="text-2xl font-bold text-gray-900 dark:text-white">
+        {{ auth.currentUser()?.displayName }}
+      </h1>
+      <span
+        class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
+        [class]="auth.currentUser()?.role === 'organizer'
+          ? 'bg-accent-100/80 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
+          : 'bg-primary-100/80 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
+      >
+        {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
+        {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
+      </span>
+      @if (joinedDate()) {
+        <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
+          {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
+        </p>
+      }
+    </section>
+    <section aria-labelledby="edit-name-heading" class="glass-card p-6">
+      <h2 id="edit-name-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+        <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
+      </h2>
+      <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
+        <div class="space-y-4">
+          <div>
+            <label for="displayName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              {{ 'PROFILE.display_name_label' | translate }}
+            </label>
+            <input
+              hlmInput
+              id="displayName"
+              type="text"
+              formControlName="displayName"
+              autocomplete="nickname"
+              class="w-full"
+              [placeholder]="'PROFILE.display_name_placeholder' | translate"
+              [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
+              aria-describedby="displayName-error"
+            />
+            @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
+              <p id="displayName-error" role="alert" class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                @if (nameForm.controls.displayName.hasError('required')) {
+                  {{ 'PROFILE.display_name_required' | translate }}
+                } @else if (nameForm.controls.displayName.hasError('minlength')) {
+                  {{ 'PROFILE.display_name_min' | translate }}
+                }
+              </p>
+            }
+          </div>
+          <div class="flex items-center gap-3">
+            <button
+              hlmBtn
+              type="submit"
+              [disabled]="nameForm.invalid || isSavingName()"
+              class="bg-gradient-brand text-white border-0 hover:opacity-90"
+            >
+              @if (isSavingName()) {
+                {{ 'PROFILE.saving' | translate }}
+              } @else {
+                {{ 'PROFILE.save_name' | translate }}
+              }
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+    <section aria-labelledby="role-heading" class="glass-card p-6">
+      <h2 id="role-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+        <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
+      </h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+        {{ 'PROFILE.role_subtitle' | translate }}
+      </p>
+      <app-profile-role-selector
+        [currentRole]="auth.currentUser()?.role ?? 'user'"
+        (roleChange)="changeRole($event)"
+      />
+    </section>
+    <section aria-labelledby="stats-heading" class="glass-card p-6">
+      <h2 id="stats-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+        <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
+      </h2>
+      <app-profile-stats [stats]="auth.userStats()" />
+    </section>
+    <section aria-labelledby="socials-heading" class="glass-card p-6">
+      <h2 id="socials-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+        <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
+      </h2>
+      <div class="flex items-center gap-3 mb-4 p-3 rounded-[var(--bento-radius)] glass-card-subtle">
+        <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
+          <input
+            type="checkbox"
+            [formControl]="socialsPublicControl"
+            (change)="onSocialsPublicChange(socialsPublicControl.value)"
+            class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+          />
+          {{ 'PROFILE.socials_public_label' | translate }}
+        </label>
+      </div>
+      @if (
+        userSocials().telegram  ||
+        userSocials().instagram ||
+        userSocials().twitter   ||
+        userSocials().linkedin  ||
+        userSocials().github    ||
+        userSocials().goodreads
+      ) {
+        <div class="flex flex-wrap gap-2 mb-6">
+          <app-social-badges [socials]="userSocials()" />
+        </div>
+      }
+      <form [formGroup]="socialsForm" (ngSubmit)="submitSocials()" novalidate class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          @for (social of socialFields; track social.key) {
+            <app-social-link-field [config]="social" [form]="socialsForm" />
+          }
+        </div>
+        <div class="flex items-center gap-3 pt-1">
+          <button hlmBtn type="submit" class="bg-gradient-brand text-white border-0 hover:opacity-90">
+            {{ 'PROFILE.save' | translate }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+````
+
+## File: src/app/features/profile/profile.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+} from '@angular/core';
+import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { toast } from '@spartan-ng/brain/sonner';
+import { AuthService } from '../../core/auth/auth.service';
+import { UserRole, UserSocials } from '../../core/models/user.model';
+import { SeoService } from '../../core/services/seo.service';
+import { SocialLinkFieldComponent, SocialField } from '../../shared/components/social-link-field/social-link-field.component';
+import { SocialBadgesComponent } from '../../shared/components/social-badges/social-badges.component';
+import { ProfileStatsComponent } from './stats/profile-stats.component';
+import { ProfileRoleSelectorComponent } from './role-selector/profile-role-selector.component';
+import { HlmButton } from '../../shared/spartan/button/src';
+import { HlmInput } from '../../shared/spartan/input/src';
+@Component({
+  selector: 'app-profile',
+  standalone: true,
+  imports: [ReactiveFormsModule, TranslateModule, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent, HlmButton, HlmInput],
+  templateUrl: './profile.component.html',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+})
+export class ProfileComponent {
+  protected readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  private readonly translate = inject(TranslateService);
+  protected readonly socialFields: SocialField[] = [
+    {
+      key: 'telegram',
+      label: 'Telegram',
+      labelClass: 'text-blue-600 dark:text-blue-400',
+      placeholder: 'username (без @)',
+      focusRingClass: 'focus:ring-blue-500',
+    },
+    {
+      key: 'instagram',
+      label: 'Instagram',
+      labelClass: 'bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500 bg-clip-text text-transparent',
+      placeholder: 'username (без @)',
+      focusRingClass: 'focus:ring-pink-500',
+    },
+    {
+      key: 'twitter',
+      label: 'Twitter / X',
+      labelClass: 'text-gray-900 dark:text-gray-100',
+      placeholder: 'username (без @)',
+      focusRingClass: 'focus:ring-gray-800',
+    },
+    {
+      key: 'linkedin',
+      label: 'LinkedIn',
+      labelClass: 'text-blue-700 dark:text-blue-400',
+      placeholder: 'username або повний URL',
+      focusRingClass: 'focus:ring-blue-600',
+    },
+    {
+      key: 'github',
+      label: 'GitHub',
+      labelClass: 'text-gray-800 dark:text-gray-200',
+      placeholder: 'username',
+      focusRingClass: 'focus:ring-gray-700',
+    },
+    {
+      key: 'goodreads',
+      label: 'Goodreads',
+      labelClass: 'text-amber-700 dark:text-amber-400',
+      placeholder: 'username або повний URL',
+      focusRingClass: 'focus:ring-amber-500',
+    },
+  ];
+  protected readonly nameForm = new FormGroup({
+    displayName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(2)],
+    }),
+  });
+  /** Typed reactive form for updating social media links. */
+  protected readonly socialsForm = new FormGroup({
+    telegram:  new FormControl('', { nonNullable: true }),
+    instagram: new FormControl('', { nonNullable: true }),
+    twitter:   new FormControl('', { nonNullable: true }),
+    linkedin:  new FormControl('', { nonNullable: true }),
+    github:    new FormControl('', { nonNullable: true }),
+    goodreads: new FormControl('', { nonNullable: true }),
+  });
+  /** Controls whether socials are visible to all club members. */
+  protected readonly socialsPublicControl = new FormControl<boolean>(false, { nonNullable: true });
+  /** Tracks the in-flight save state (synchronous here, but keeps the pattern extensible). */
+  protected readonly isSavingName = signal(false);
+  /** Two-letter initials derived from the current user's display name. */
+  protected readonly userInitials = computed<string>(() => {
+    const name = this.auth.currentUser()?.displayName ?? '';
+    return name
+      .split(' ')
+      .map(w => w[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  });
+  /** Human-readable role label shown in the hero badge. */
+  protected readonly roleLabel = computed<string>(() =>
+    this.auth.currentUser()?.role === 'organizer' ? 'Organizer' : 'Reader',
+  );
+  protected readonly joinedDate = computed<string>(() => {
+    const raw = this.auth.currentUser()?.createdAt;
+    if (!raw) return '';
+    return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' }).format(
+      new Date(raw),
+    );
+  });
+  protected readonly userSocials = computed<UserSocials>(
+    () => this.auth.currentUser()?.socials ?? {},
+  );
+  constructor() {
+    this.seo.setPageI18n('SEO.profile_title');
+    const user = this.auth.currentUser();
+    if (user) {
+      this.nameForm.patchValue({ displayName: user.displayName });
+      this.socialsPublicControl.setValue(user.socialsPublic ?? false);
+      if (user.socials) {
+        this.socialsForm.patchValue({
+          telegram:  user.socials.telegram  ?? '',
+          instagram: user.socials.instagram ?? '',
+          twitter:   user.socials.twitter   ?? '',
+          linkedin:  user.socials.linkedin  ?? '',
+          github:    user.socials.github    ?? '',
+          goodreads: user.socials.goodreads ?? '',
+        });
+      }
+    }
+  }
+  /** Switch the user's role and show a transient success toast. */
+  protected async changeRole(role: UserRole): Promise<void> {
+    try {
+      await this.auth.updateRole(role);
+      toast.success(this.translate.instant('PROFILE.role_changed'));
+    } catch {  }
+  }
+  protected async saveName(): Promise<void> {
+    if (this.nameForm.invalid) return;
+    this.isSavingName.set(true);
+    const { displayName } = this.nameForm.getRawValue();
+    try {
+      await this.auth.updateDisplayName(displayName);
+      toast.success(this.translate.instant('PROFILE.name_updated'));
+    } catch {  }
+    finally {
+      this.isSavingName.set(false);
+    }
+  }
+  protected async submitSocials(): Promise<void> {
+    const raw = this.socialsForm.getRawValue();
+    const socials: UserSocials = {
+      ...(raw.telegram  ? { telegram:  raw.telegram  } : {}),
+      ...(raw.instagram ? { instagram: raw.instagram } : {}),
+      ...(raw.twitter   ? { twitter:   raw.twitter   } : {}),
+      ...(raw.linkedin  ? { linkedin:  raw.linkedin  } : {}),
+      ...(raw.github    ? { github:    raw.github    } : {}),
+      ...(raw.goodreads ? { goodreads: raw.goodreads } : {}),
+    };
+    try {
+      await this.auth.updateSocials(socials);
+      toast.success(this.translate.instant('PROFILE.socials_saved'));
+    } catch {  }
+  }
+  protected async onSocialsPublicChange(value: boolean): Promise<void> {
+    try {
+      await this.auth.setSocialsPublic(value);
+    } catch {  }
+  }
+}
+````
+
+## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizQuestion } from '../../../core/models/quiz.model';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+interface MetaForm {
+  title: FormControl<string>;
+  description: FormControl<string>;
+}
+interface QuestionForm {
+  question: FormControl<string>;
+  option0: FormControl<string>;
+  option1: FormControl<string>;
+  option2: FormControl<string>;
+  option3: FormControl<string>;
+  correctIndex: FormControl<number>;
+}
+type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
+@Component({
+  selector: 'app-quiz-create',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
+  templateUrl: './quiz-create.component.html',
+})
+export class QuizCreateComponent {
+  private readonly quizService = inject(QuizService);
+  private readonly router = inject(Router);
+  protected readonly currentStep = signal<1 | 2>(1);
+  protected readonly localQuestions = signal<LocalQuestion[]>([]);
+  protected readonly isSaving = signal(false);
+  protected readonly errorMessage = signal('');
+  readonly id = input<string>('');
+  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
+  protected readonly metaForm = new FormGroup<MetaForm>({
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+  });
+  protected readonly questionForm = new FormGroup<QuestionForm>({
+    question: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
+    }),
+    option0: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option1: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option2: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option3: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    correctIndex: new FormControl<number>(0, { nonNullable: true }),
+  });
+  protected isInvalidTouched(ctrl: AbstractControl): boolean {
+    return ctrl.invalid && ctrl.touched;
+  }
+  protected optionLabel(index: number): string {
+    return String.fromCodePoint(65 + index);
+  }
+  protected nextStep(): void {
+    if (this.metaForm.invalid) {
+      this.metaForm.markAllAsTouched();
+      return;
+    }
+    this.currentStep.set(2);
+  }
+  protected previousStep(): void {
+    this.currentStep.set(1);
+    this.errorMessage.set('');
+  }
+  protected addQuestion(): void {
+    if (this.questionForm.invalid) {
+      this.questionForm.markAllAsTouched();
+      return;
+    }
+    const { question, option0, option1, option2, option3, correctIndex } =
+      this.questionForm.getRawValue();
+    const newQuestion: LocalQuestion = {
+      question: question.trim(),
+      options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
+      correctIndex,
+    };
+    this.localQuestions.update(prev => [...prev, newQuestion]);
+    this.questionForm.reset({ correctIndex: 0 });
+  }
+  protected removeQuestion(index: number): void {
+    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
+  }
+  protected saveQuiz(): void {
+    const questions = this.localQuestions();
+    if (questions.length === 0) return;
+    this.isSaving.set(true);
+    this.errorMessage.set('');
+    const { title, description } = this.metaForm.getRawValue();
+    const clubId = this.id();
+    this.quizService
+      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
+      .then(async quiz => {
+        for (const q of questions) {
+          await this.quizService.addQuestion(quiz.id, q);
+        }
+        this.isSaving.set(false);
+        this.router.navigate(['/clubs', clubId, 'quizzes']);
+      })
+      .catch(err => {
+        this.isSaving.set(false);
+        this.errorMessage.set((err as Error).message);
+      });
+  }
 }
 ````
 
@@ -9940,1121 +11402,6 @@ export class QuizSessionComponent extends LeaderboardBaseComponent implements On
   }
   protected manualRefresh(): void {
     this._refreshTick.update(n => n + 1);
-  }
-}
-````
-
-## File: src/app/layout/shell/shell.component.html
-````html
-<app-header />
-    <main class="min-h-screen">
-      <router-outlet />
-    </main>
-    @defer (on idle) {
-      <app-chat-widget />
-    } @placeholder {
-      <div class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-accent-500/30 animate-pulse" aria-hidden="true"></div>
-    }
-    <app-footer />
-````
-
-## File: src/app/shared/components/cover-upload/cover-upload.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  DestroyRef,
-  inject,
-  signal,
-  input,
-  effect,
-} from '@angular/core';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { UploadService } from '../../../core/services/upload.service';
-@Component({
-  selector: 'app-cover-upload',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule],
-  template: `
-    <div class="space-y-2">
-      @if (previewUrl() || externalUrl()) {
-        <div class="relative rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
-          <img
-            [src]="previewUrl() || externalUrl()"
-            alt="Cover preview"
-            class="w-full h-full object-cover"
-            (error)="clearPreview()"
-          />
-          <button
-            type="button"
-            (click)="clearPreview()"
-            class="absolute top-1 right-1 rounded-full bg-black/50 text-white text-xs px-2 py-0.5 hover:bg-black/70 transition-colors"
-          >✕</button>
-        </div>
-      }
-      <div class="flex gap-2">
-        <button
-          type="button"
-          (click)="fileInput.click()"
-          [disabled]="isUploading()"
-          class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
-        >
-          @if (isUploading()) {
-            <span class="animate-spin">⏳</span> Uploading…
-          } @else {
-            📁 Upload image
-          }
-        </button>
-        <button
-          type="button"
-          (click)="showUrlInput.set(!showUrlInput())"
-          class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        >
-          🔗 {{ showUrlInput() ? 'Hide URL' : 'Enter URL' }}
-        </button>
-      </div>
-      @if (showUrlInput()) {
-        <input
-          type="url"
-          [formControl]="control()"
-          placeholder="https://example.com/cover.jpg"
-          class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-        />
-      }
-      @if (uploadError()) {
-        <p class="text-xs text-red-600 dark:text-red-400">{{ uploadError() }}</p>
-      }
-      <input
-        #fileInput
-        type="file"
-        accept="image/jpeg,image/png,image/webp"
-        class="hidden"
-        (change)="onFileSelected($event)"
-      />
-    </div>
-  `,
-})
-export class CoverUploadComponent {
-  readonly control = input.required<FormControl<string>>();
-  private readonly uploadService = inject(UploadService);
-  private readonly destroyRef = inject(DestroyRef);
-  readonly isUploading = signal(false);
-  readonly uploadError = signal<string | null>(null);
-  readonly showUrlInput = signal(false);
-  readonly previewUrl = signal<string | null>(null);
-  readonly externalUrl = signal<string>('');
-  constructor() {
-    effect(onCleanup => {
-      const ctrl = this.control();
-      this.externalUrl.set(ctrl.value);
-      const sub = ctrl.valueChanges.subscribe(v => this.externalUrl.set(v ?? ''));
-      onCleanup(() => sub.unsubscribe());
-    });
-  }
-  clearPreview(): void {
-    this.previewUrl.set(null);
-    this.control().setValue('');
-  }
-  onFileSelected(event: Event): void {
-    const file = (event.target as HTMLInputElement).files?.[0];
-    if (!file) return;
-    this.previewUrl.set(URL.createObjectURL(file));
-    this.uploadError.set(null);
-    this.isUploading.set(true);
-    this.uploadService.uploadCover$(file).subscribe({
-      next: url => {
-        this.control().setValue(url);
-        this.isUploading.set(false);
-      },
-      error: () => {
-        this.uploadError.set('Upload failed. Please try again or use a URL.');
-        this.isUploading.set(false);
-        this.previewUrl.set(null);
-      },
-    });
-  }
-}
-````
-
-## File: src/app/shared/spartan/index.ts
-````typescript
-export * from './badge/src';
-export * from './button/src';
-export * from './card/src';
-export * from './dropdown-menu/src';
-export * from './field/src';
-export * from './icon/src';
-export * from './input/src';
-export * from './sheet/src';
-export * from './sonner/src';
-export * from './spinner/src';
-export * from './tabs/src';
-export * from './utils/src';
-````
-
-## File: src/app/app.routes.ts
-````typescript
-import { Routes } from '@angular/router';
-import { authGuard } from './core/auth/auth.guard';
-import { roleGuard } from './core/auth/role.guard';
-import { ShellComponent } from './layout/shell/shell.component';
-export const routes: Routes = [
-  {
-    path: 'login',
-    loadComponent: () =>
-      import('./features/auth/login/login.component').then(m => m.LoginComponent),
-  },
-  {
-    path: 'register',
-    loadComponent: () =>
-      import('./features/auth/register/register.component').then(m => m.RegisterComponent),
-  },
-  {
-    path: '',
-    component: ShellComponent,
-    canActivate: [authGuard],
-    children: [
-      // Protected: any authenticated user
-      {
-        path: 'clubs',
-        canActivate: [authGuard],
-        loadChildren: () => import('./features/clubs/clubs.routes').then(m => m.CLUBS_ROUTES),
-      },
-      {
-        path: 'events',
-        canActivate: [authGuard],
-        loadChildren: () => import('./features/events/events.routes').then(m => m.EVENTS_ROUTES),
-      },
-      {
-        path: 'manage',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('./features/clubs/clubs-list/clubs-list.component').then(
-            m => m.ClubsListComponent,
-          ),
-      },
-      { path: '', redirectTo: 'clubs', pathMatch: 'full' },
-      {
-        path: 'profile',
-        canActivate: [authGuard],
-        loadComponent: () =>
-          import('./features/profile/profile.component').then(m => m.ProfileComponent),
-      },
-      { path: '**', redirectTo: 'clubs' },
-    ],
-  },
-];
-````
-
-## File: src/environments/environment.ts
-````typescript
-export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:8000/api/v1',
-};
-````
-
-## File: angular.json
-````json
-{
-  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
-  "version": 1,
-  "newProjectRoot": "projects",
-  "projects": {
-    "book-club-fe": {
-      "projectType": "application",
-      "schematics": {
-        "@schematics/angular:component": {
-          "style": "scss"
-        }
-      },
-      "root": "",
-      "sourceRoot": "src",
-      "prefix": "app",
-      "architect": {
-        "build": {
-          "builder": "@angular/build:application",
-          "options": {
-            "browser": "src/main.ts",
-            "tsConfig": "tsconfig.app.json",
-            "inlineStyleLanguage": "scss",
-            "allowedCommonJsDependencies": [
-              "qrcode"
-            ],
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": [
-              "src/styles.css"
-            ]
-          },
-          "configurations": {
-            "production": {
-              "budgets": [
-                {
-                  "type": "initial",
-                  "maximumWarning": "500kB",
-                  "maximumError": "1MB"
-                },
-                {
-                  "type": "anyComponentStyle",
-                  "maximumWarning": "4kB",
-                  "maximumError": "8kB"
-                }
-              ],
-              "outputHashing": "all",
-              "fileReplacements": [
-                {
-                  "replace": "src/environments/environment.ts",
-                  "with": "src/environments/environment.prod.ts"
-                }
-              ]
-            },
-            "development": {
-              "optimization": false,
-              "extractLicenses": false,
-              "sourceMap": true
-            }
-          },
-          "defaultConfiguration": "production"
-        },
-        "serve": {
-          "builder": "@angular/build:dev-server",
-          "configurations": {
-            "production": {
-              "buildTarget": "book-club-fe:build:production"
-            },
-            "development": {
-              "buildTarget": "book-club-fe:build:development"
-            }
-          },
-          "defaultConfiguration": "development"
-        },
-        "extract-i18n": {
-          "builder": "@angular/build:extract-i18n"
-        },
-        "test": {
-          "builder": "@angular/build:karma",
-          "options": {
-            "karmaConfig": "karma.conf.js",
-            "codeCoverageExclude": ["src/app/shared/spartan/**"],
-            "tsConfig": "tsconfig.spec.json",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": [
-              "src/styles.css"
-            ]
-          }
-        },
-        "lint": {
-          "builder": "@angular-eslint/builder:lint",
-          "options": {
-            "lintFilePatterns": [
-              "src/**/*.ts",
-              "src/**/*.html"
-            ]
-          }
-        }
-      }
-    }
-  },
-  "cli": {
-    "schematicCollections": [
-      "angular-eslint"
-    ]
-  }
-}
-````
-
-## File: postcss.config.mjs
-````javascript
-import tailwindcss from '@tailwindcss/postcss';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-export default {
-  plugins: [
-    tailwindcss({ base: __dirname }),
-  ],
-};
-````
-
-## File: sonar-project.properties
-````
-# Replace YOUR_ORG with your actual SonarCloud organization slug
-sonar.projectKey=leo477_book-club-fe
-sonar.organization=leo477
-sonar.projectName=Book Club Frontend
-sonar.projectVersion=1.0
-
-sonar.sources=src
-sonar.tests=src
-sonar.test.inclusions=**/*.spec.ts
-sonar.exclusions=**/node_modules/**,**/*.spec.ts,src/assets/**,src/environments/**
-
-sonar.typescript.lcov.reportPaths=coverage/book-club-fe/lcov.info
-
-# Exclude non-testable and currently untested files from coverage requirements
-sonar.coverage.exclusions=\
-  **/*.html,\
-  **/*.spec.ts,\
-  **/mocks/**,\
-  **/*.model.ts,\
-  **/*.interface.ts,\
-  **/*.config.ts,\
-  **/environments/**,\
-  src/app/features/**,\
-  src/app/layout/**,\
-  src/app/shared/spartan/**
-
-sonar.sourceEncoding=UTF-8
-````
-
-## File: tsconfig.json
-````json
-{
-  "compileOnSave": false,
-  "compilerOptions": {
-    "strict": true,
-    "noImplicitOverride": true,
-    "noPropertyAccessFromIndexSignature": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "skipLibCheck": true,
-    "isolatedModules": true,
-    "experimentalDecorators": true,
-    "importHelpers": true,
-    "target": "ES2022",
-    "module": "preserve",
-    "paths": {
-      "@spartan-ng/helm/button": [
-        "./src/app/shared/spartan/button/src/index.ts"
-      ],
-      "@spartan-ng/helm/utils": [
-        "./src/app/shared/spartan/utils/src/index.ts"
-      ],
-      "@spartan-ng/helm/badge": [
-        "./src/app/shared/spartan/badge/src/index.ts"
-      ],
-      "@spartan-ng/helm/field": [
-        "./src/app/shared/spartan/field/src/index.ts"
-      ],
-      "@spartan-ng/helm/label": [
-        "./src/app/shared/spartan/label/src/index.ts"
-      ],
-      "@spartan-ng/helm/separator": [
-        "./src/app/shared/spartan/separator/src/index.ts"
-      ],
-      "@spartan-ng/helm/input": [
-        "./src/app/shared/spartan/input/src/index.ts"
-      ],
-      "@spartan-ng/helm/spinner": [
-        "./src/app/shared/spartan/spinner/src/index.ts"
-      ],
-      "@spartan-ng/helm/sonner": [
-        "./src/app/shared/spartan/sonner/src/index.ts"
-      ],
-      "@spartan-ng/helm/card": [
-        "./src/app/shared/spartan/card/src/index.ts"
-      ],
-      "@spartan-ng/helm/tabs": [
-        "./src/app/shared/spartan/tabs/src/index.ts"
-      ],
-      "@spartan-ng/helm/icon": [
-        "./src/app/shared/spartan/icon/src/index.ts"
-      ],
-      "@spartan-ng/helm/sheet": [
-        "./src/app/shared/spartan/sheet/src/index.ts"
-      ],
-      "@spartan-ng/helm/dropdown-menu": [
-        "./src/app/shared/spartan/dropdown-menu/src/index.ts"
-      ]
-    }
-  },
-  "angularCompilerOptions": {
-    "enableI18nLegacyMessageIdFormat": false,
-    "strictInjectionParameters": true,
-    "strictInputAccessModifiers": true,
-    "typeCheckHostBindings": true,
-    "strictTemplates": true
-  },
-  "files": [],
-  "references": [
-    {
-      "path": "./tsconfig.app.json"
-    },
-    {
-      "path": "./tsconfig.spec.json"
-    }
-  ]
-}
-````
-
-## File: vercel.json
-````json
-{
-
-  "buildCommand": "npm run build -- --configuration=production",
-  "outputDirectory": "dist/book-club-fe/browser",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-XSS-Protection", "value": "1; mode=block" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
-        { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
-        { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://vercel.live; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://*.supabase.co https://vercel.live https://book-club-be.onrender.com wss://*.pusher.com https://*.pusher.com https://*.pusherapp.com; frame-src https://vercel.live; frame-ancestors 'none';" }
-      ]
-    }
-  ]
-}
-````
-
-## File: src/app/core/api/api-error.util.ts
-````typescript
-import { HttpErrorResponse } from '@angular/common/http';
-export function extractApiError(err: unknown): string {
-  if (err instanceof HttpErrorResponse) {
-    const body = err.error as { error?: unknown; detail?: unknown } | null;
-    if (typeof body?.error === 'string') return body.error;
-    const detail = body?.detail;
-    if (typeof detail === 'string') return detail;
-    if (Array.isArray(detail)) return (detail[0] as { msg?: string })?.msg ?? err.message ?? 'Unknown error';
-    if (detail && typeof detail === 'object') return (detail as { error?: string }).error ?? err.message ?? 'Unknown error';
-    return err.message ?? 'Unknown error';
-  }
-  return 'Unknown error';
-}
-````
-
-## File: src/app/features/auth/login/login.component.html
-````html
-<div class="auth-page-wrapper">
-  <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
-  <main class="auth-form-container">
-    @if (formVisible()) {
-      <div class="w-full max-w-md animate-form-in">
-        <div class="text-center mb-8">
-          <h1 class="font-display text-3xl font-bold text-white drop-shadow-sm">📚 Book Club</h1>
-          <p class="text-white/70 mt-2">{{ 'AUTH.welcome_back' | translate }}</p>
-        </div>
-        <div class="glass-card-strong p-8">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'AUTH.sign_in_h2' | translate }}</h2>
-          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
-            <fieldset class="border-0 p-0 m-0">
-              <legend class="sr-only">{{ 'AUTH.sign_in_h2' | translate }}</legend>
-              <hlm-field>
-                <label hlmFieldLabel for="login-email">{{ 'AUTH.email' | translate }}</label>
-                <input hlmInput id="login-email" type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
-                <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
-              </hlm-field>
-              <hlm-field>
-                <label hlmFieldLabel for="login-password">{{ 'AUTH.password' | translate }}</label>
-                <input hlmInput id="login-password" type="password" placeholder="••••••••" [formControl]="form.controls.password" />
-                <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
-              </hlm-field>
-            </fieldset>
-            @if (errorMessage()) {
-              <div class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-                <span class="mt-0.5 shrink-0">⚠️</span>
-                <span>{{ errorMessage() }}</span>
-              </div>
-            }
-            <button
-              hlmBtn
-              type="submit"
-              [disabled]="isSubmitting()"
-              class="mt-2 w-full bg-gradient-brand text-white border-0 hover:opacity-90 focus-visible:ring-primary-500"
-            >
-              @if (isSubmitting()) {
-                <hlm-spinner aria-label="Loading" />
-                {{ 'AUTH.signing_in' | translate }}
-              } @else {
-                {{ 'AUTH.submit_login' | translate }}
-              }
-            </button>
-          </form>
-          <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            {{ 'AUTH.no_account' | translate }}
-            <a routerLink="/register" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">
-              {{ 'AUTH.register_title' | translate }}
-            </a>
-          </p>
-        </div>
-        <p class="mt-6 text-center text-sm">
-          <a
-            routerLink="/"
-            class="inline-flex items-center gap-1 text-white/60 hover:text-white/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 rounded"
-          >
-            {{ 'NAV.back_home' | translate }}
-          </a>
-        </p>
-      </div>
-    }
-  </main>
-</div>
-````
-
-## File: src/app/features/auth/login/login.component.ts
-````typescript
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../../core/auth/auth.service';
-import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
-import { SeoService } from '../../../core/services/seo.service';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-interface LoginForm {
-  email: FormControl<string>;
-  password: FormControl<string>;
-}
-@Component({
-  selector: 'app-login',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.scss',
-})
-export class LoginComponent {
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly seo = inject(SeoService);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isSubmitting = signal(false);
-  readonly bookOpen = signal(false);
-  readonly formVisible = signal(false);
-  constructor() {
-    this.seo.setPageI18n('SEO.login_title');
-    setTimeout(() => this.formVisible.set(true), 700);
-  }
-  onBookAnimationDone(): void {
-    this.router.navigate(['/clubs']);
-  }
-  readonly form = new FormGroup<LoginForm>({
-    email: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.email],
-    }),
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(8)],
-    }),
-  });
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.isSubmitting.set(true);
-    this.errorMessage.set(null);
-    const { email, password } = this.form.getRawValue();
-    const { error } = await this.auth.signIn(email, password);
-    this.isSubmitting.set(false);
-    if (error) {
-      this.errorMessage.set(error);
-    } else {
-      this.bookOpen.set(true);
-    }
-  }
-}
-````
-
-## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html
-````html
-<article
-  class="parchment-card glass-card flex flex-col overflow-hidden h-full"
-  [style.animation-delay]="index() * 80 + 'ms'"
->
-  @if (event().coverUrl) {
-    <div class="h-28 overflow-hidden flex-shrink-0">
-      <img [src]="event().coverUrl" [alt]="event().title" class="w-full h-full object-cover" loading="lazy" />
-    </div>
-  } @else {
-    <div class="h-1 w-full bg-gradient-to-r from-primary-500 via-accent-500 to-primary-400 flex-shrink-0"></div>
-  }
-  @if (event().status !== 'scheduled') {
-    <div
-      class="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center text-sm shadow-sm border z-10"
-      [class]="event().status === 'active'
-        ? 'bg-green-100/80 border-green-400 dark:bg-green-900/50 dark:border-green-600'
-        : event().status === 'cancelled'
-          ? 'bg-red-100/80 border-red-400 dark:bg-red-900/50 dark:border-red-600'
-          : 'bg-yellow-100/80 border-yellow-400 dark:bg-yellow-900/50 dark:border-yellow-600'"
-      [attr.title]="event().status"
-    >
-      {{ event().status === 'active' ? '🟢' : event().status === 'cancelled' ? '🔴' : '🟡' }}
-    </div>
-  }
-  <div class="flex flex-col flex-1 p-4 gap-3">
-    <div>
-      <span class="inline-flex items-center gap-1.5 rounded-full bg-primary-100/80 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/60 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
-        📅 {{ event().date | formatDate }}
-      </span>
-    </div>
-    <a
-      [routerLink]="['/events', event().id]"
-      class="block font-display text-base font-semibold leading-snug text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors line-clamp-2"
-    >
-      {{ event().title }}
-    </a>
-    @if (event().city) {
-      <p class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-        <span aria-hidden="true">📍</span>
-        <span>{{ event().address || event().city }}</span>
-      </p>
-    }
-    @if (event().theme || event().tags.length > 0) {
-      <div class="flex flex-wrap gap-1.5">
-        @if (event().theme) {
-          <span class="rune-pill rounded-full bg-accent-100/80 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700/60 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
-            ✨ {{ event().theme }}
-          </span>
-        }
-        @for (tag of event().tags.slice(0, 2); track tag) {
-          <span class="rune-pill rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-600 dark:text-gray-400">
-            🏷 {{ tag }}
-          </span>
-        }
-      </div>
-    }
-    <div class="flex items-center justify-between mt-auto pt-2 border-t border-white/20 dark:border-white/10">
-      <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-        👥 {{ event().attendeeCount }} {{ 'CLUB_DETAIL.rsvp_attending' | translate }}
-      </span>
-      <div class="flex items-center gap-2">
-        @if (isAuthenticated() && event().status !== 'cancelled') {
-          @if (event().isAttending) {
-            <button
-              hlmBtn
-              size="sm"
-              type="button"
-              [disabled]="attending()"
-              (click)="cancelAttend.emit()"
-              class="bg-green-600 hover:bg-green-700 text-white text-xs"
-            >
-              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_going' | translate }} }
-            </button>
-          } @else {
-            <button
-              hlmBtn
-              size="sm"
-              type="button"
-              [disabled]="attending()"
-              (click)="attend.emit()"
-              class="bg-primary-600 hover:bg-primary-700 text-white text-xs"
-            >
-              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_join' | translate }} }
-            </button>
-          }
-        } @else {
-          <a
-            hlmBtn
-            variant="outline"
-            size="sm"
-            [routerLink]="['/events', event().id]"
-            class="text-xs"
-          >
-            {{ 'CLUB_DETAIL.rsvp_view' | translate }} →
-          </a>
-        }
-      </div>
-    </div>
-  </div>
-</article>
-````
-
-## File: src/app/features/clubs/club-detail/header/club-header.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-} from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-import { Club } from '../../../../core/models/club.model';
-import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
-import { HlmButton } from '../../../../shared/spartan/button/src';
-@Component({
-  selector: 'app-club-header',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule, LoadingSpinnerComponent, HlmButton],
-  templateUrl: './club-header.component.html',
-})
-export class ClubHeaderComponent {
-  readonly club = input.required<Club>();
-  readonly isMember = input.required<boolean>();
-  readonly isOwner = input.required<boolean>();
-  readonly isAuthenticated = input.required<boolean>();
-  readonly isActionLoading = input.required<boolean>();
-  readonly leave = output<void>();
-}
-````
-
-## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { HlmCard } from '../../../../shared/spartan/card/src';
-@Component({
-  selector: 'app-club-manage-panel',
-  host: { class: 'block' },
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, HlmCard],
-  templateUrl: './club-manage-panel.component.html',
-})
-export class ClubManagePanelComponent {
-  readonly clubId = input.required<string>();
-}
-````
-
-## File: src/app/features/events/event-card/event-card.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-import { ClubEvent } from '../../../core/models/event.model';
-import { HlmCardImports } from '../../../shared/spartan/card/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmBadge } from '../../../shared/spartan/badge/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-@Component({
-  selector: 'app-event-card',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe, ...HlmCardImports, HlmButton, HlmBadge, HlmSpinner],
-  templateUrl: './event-card.component.html',
-})
-export class EventCardComponent {
-  readonly event = input.required<ClubEvent>();
-  readonly isAuthenticated = input<boolean>(false);
-  readonly attending = input<boolean>(false);
-  readonly attend = output<void>();
-  readonly cancelAttend = output<void>();
-}
-````
-
-## File: src/app/features/profile/profile.component.html
-````html
-<div class="min-h-screen bg-gradient-to-br from-primary-950/30 via-transparent to-accent-950/20">
-  <div class="max-w-2xl mx-auto space-y-5 py-8 px-4">
-    <section
-      aria-labelledby="profile-heading"
-      class="glass-card-strong p-8 text-center"
-    >
-      <div
-        class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-brand
-               flex items-center justify-center text-white text-3xl font-bold select-none
-               shadow-lg ring-4 ring-white/20"
-        aria-hidden="true"
-      >
-        {{ userInitials() }}
-      </div>
-      <h1 id="profile-heading" class="text-2xl font-bold text-gray-900 dark:text-white">
-        {{ auth.currentUser()?.displayName }}
-      </h1>
-      <span
-        class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
-        [class]="auth.currentUser()?.role === 'organizer'
-          ? 'bg-accent-100/80 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
-          : 'bg-primary-100/80 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
-      >
-        {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
-        {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
-      </span>
-      @if (joinedDate()) {
-        <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
-          {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
-        </p>
-      }
-    </section>
-    <section aria-labelledby="edit-name-heading" class="glass-card p-6">
-      <h2 id="edit-name-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
-        <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
-      </h2>
-      <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
-        <div class="space-y-4">
-          <div>
-            <label for="displayName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              {{ 'PROFILE.display_name_label' | translate }}
-            </label>
-            <input
-              hlmInput
-              id="displayName"
-              type="text"
-              formControlName="displayName"
-              autocomplete="nickname"
-              class="w-full"
-              [placeholder]="'PROFILE.display_name_placeholder' | translate"
-              [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
-              aria-describedby="displayName-error"
-            />
-            @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
-              <p id="displayName-error" role="alert" class="mt-1.5 text-xs text-red-600 dark:text-red-400">
-                @if (nameForm.controls.displayName.hasError('required')) {
-                  {{ 'PROFILE.display_name_required' | translate }}
-                } @else if (nameForm.controls.displayName.hasError('minlength')) {
-                  {{ 'PROFILE.display_name_min' | translate }}
-                }
-              </p>
-            }
-          </div>
-          <div class="flex items-center gap-3">
-            <button
-              hlmBtn
-              type="submit"
-              [disabled]="nameForm.invalid || isSavingName()"
-              class="bg-gradient-brand text-white border-0 hover:opacity-90"
-            >
-              @if (isSavingName()) {
-                {{ 'PROFILE.saving' | translate }}
-              } @else {
-                {{ 'PROFILE.save_name' | translate }}
-              }
-            </button>
-          </div>
-        </div>
-      </form>
-    </section>
-    <section aria-labelledby="role-heading" class="glass-card p-6">
-      <h2 id="role-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
-        <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
-      </h2>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-        {{ 'PROFILE.role_subtitle' | translate }}
-      </p>
-      <app-profile-role-selector
-        [currentRole]="auth.currentUser()?.role ?? 'user'"
-        (roleChange)="changeRole($event)"
-      />
-    </section>
-    <section aria-labelledby="stats-heading" class="glass-card p-6">
-      <h2 id="stats-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
-        <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
-      </h2>
-      <app-profile-stats [stats]="auth.userStats()" />
-    </section>
-    <section aria-labelledby="socials-heading" class="glass-card p-6">
-      <h2 id="socials-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
-        <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
-      </h2>
-      <div class="flex items-center gap-3 mb-4 p-3 rounded-[var(--bento-radius)] glass-card-subtle">
-        <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
-          <input
-            type="checkbox"
-            [formControl]="socialsPublicControl"
-            (change)="onSocialsPublicChange(socialsPublicControl.value)"
-            class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-          />
-          {{ 'PROFILE.socials_public_label' | translate }}
-        </label>
-      </div>
-      @if (
-        userSocials().telegram  ||
-        userSocials().instagram ||
-        userSocials().twitter   ||
-        userSocials().linkedin  ||
-        userSocials().github    ||
-        userSocials().goodreads
-      ) {
-        <div class="flex flex-wrap gap-2 mb-6">
-          <app-social-badges [socials]="userSocials()" />
-        </div>
-      }
-      <form [formGroup]="socialsForm" (ngSubmit)="submitSocials()" novalidate class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          @for (social of socialFields; track social.key) {
-            <app-social-link-field [config]="social" [form]="socialsForm" />
-          }
-        </div>
-        <div class="flex items-center gap-3 pt-1">
-          <button hlmBtn type="submit" class="bg-gradient-brand text-white border-0 hover:opacity-90">
-            {{ 'PROFILE.save' | translate }}
-          </button>
-        </div>
-      </form>
-    </section>
-  </div>
-</div>
-````
-
-## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  Validators,
-} from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizQuestion } from '../../../core/models/quiz.model';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmCardImports } from '../../../shared/spartan/card/src';
-interface MetaForm {
-  title: FormControl<string>;
-  description: FormControl<string>;
-}
-interface QuestionForm {
-  question: FormControl<string>;
-  option0: FormControl<string>;
-  option1: FormControl<string>;
-  option2: FormControl<string>;
-  option3: FormControl<string>;
-  correctIndex: FormControl<number>;
-}
-type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
-@Component({
-  selector: 'app-quiz-create',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
-  templateUrl: './quiz-create.component.html',
-})
-export class QuizCreateComponent {
-  private readonly quizService = inject(QuizService);
-  private readonly router = inject(Router);
-  protected readonly currentStep = signal<1 | 2>(1);
-  protected readonly localQuestions = signal<LocalQuestion[]>([]);
-  protected readonly isSaving = signal(false);
-  protected readonly errorMessage = signal('');
-  readonly id = input<string>('');
-  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
-  protected readonly metaForm = new FormGroup<MetaForm>({
-    title: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-  });
-  protected readonly questionForm = new FormGroup<QuestionForm>({
-    question: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
-    }),
-    option0: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option1: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option2: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option3: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    correctIndex: new FormControl<number>(0, { nonNullable: true }),
-  });
-  protected isInvalidTouched(ctrl: AbstractControl): boolean {
-    return ctrl.invalid && ctrl.touched;
-  }
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
-  protected nextStep(): void {
-    if (this.metaForm.invalid) {
-      this.metaForm.markAllAsTouched();
-      return;
-    }
-    this.currentStep.set(2);
-  }
-  protected previousStep(): void {
-    this.currentStep.set(1);
-    this.errorMessage.set('');
-  }
-  protected addQuestion(): void {
-    if (this.questionForm.invalid) {
-      this.questionForm.markAllAsTouched();
-      return;
-    }
-    const { question, option0, option1, option2, option3, correctIndex } =
-      this.questionForm.getRawValue();
-    const newQuestion: LocalQuestion = {
-      question: question.trim(),
-      options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
-      correctIndex,
-    };
-    this.localQuestions.update(prev => [...prev, newQuestion]);
-    this.questionForm.reset({ correctIndex: 0 });
-  }
-  protected removeQuestion(index: number): void {
-    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
-  }
-  protected saveQuiz(): void {
-    const questions = this.localQuestions();
-    if (questions.length === 0) return;
-    this.isSaving.set(true);
-    this.errorMessage.set('');
-    const { title, description } = this.metaForm.getRawValue();
-    const clubId = this.id();
-    this.quizService
-      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
-      .then(async quiz => {
-        for (const q of questions) {
-          await this.quizService.addQuestion(quiz.id, q);
-        }
-        this.isSaving.set(false);
-        this.router.navigate(['/clubs', clubId, 'quizzes']);
-      })
-      .catch(err => {
-        this.isSaving.set(false);
-        this.errorMessage.set((err as Error).message);
-      });
   }
 }
 ````
@@ -11482,42 +11829,6 @@ export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
 }
 ````
 
-## File: src/app/core/interceptors/auth.interceptor.ts
-````typescript
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
-import { inject } from '@angular/core';
-import { Router } from '@angular/router';
-import { toast } from '@spartan-ng/brain/sonner';
-import { catchError, throwError } from 'rxjs';
-import { TokenStore } from '../auth/token.store';
-import { environment } from '../../../environments/environment';
-export const authInterceptor: HttpInterceptorFn = (req, next$) => {
-  const router = inject(Router);
-  const tokenStore = inject(TokenStore);
-  const token = tokenStore.snapshot();
-  const authedReq = token
-    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : req;
-  return next$(authedReq).pipe(
-    catchError((error: unknown) => {
-      const httpError = error instanceof HttpErrorResponse ? error : null;
-      if (httpError?.status === 401 && token) {
-        tokenStore.clear();
-        router.navigate(['/login']);
-      } else if (httpError?.status === 403) {
-        router.navigate(['/clubs']);
-      } else if (httpError && httpError.status >= 500) {
-        if (!environment.production) {
-          console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
-        }
-        toast.error('A server error occurred. Please try again later.');
-      }
-      return throwError(() => error);
-    }),
-  );
-};
-````
-
 ## File: src/app/core/models/event.model.ts
 ````typescript
 export type EventStatus = 'scheduled' | 'active' | 'held' | 'cancelled' | 'rescheduled' | 'upcoming';
@@ -11551,6 +11862,550 @@ export interface ClubEvent {
   isAttending: boolean;
   bookTitle?: string | null;
   quizId?: string | null;
+}
+````
+
+## File: src/app/core/services/chat.service.ts
+````typescript
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { ChatMessage, ChatRoom } from '../models/chat.model';
+import { environment } from '../../../environments/environment';
+interface ApiChatRoom {
+  id: string;
+  name: string;
+}
+interface ApiChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: string;
+}
+@Injectable({ providedIn: 'root' })
+export class ChatService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _rooms = signal<ChatRoom[]>([]);
+  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
+  private readonly _activeRoomId = signal<string | null>(null);
+  private readonly _unreadCount = signal<number>(0);
+  private readonly _isOpen = signal<boolean>(false);
+  private readonly _hasNewMessage = signal<boolean>(false);
+  private readonly _mutedUserIds = signal<Set<string>>(new Set());
+  private currentUserId: string | null = null;
+  readonly rooms = this._rooms.asReadonly();
+  readonly messages = this._messages.asReadonly();
+  readonly activeRoomId = this._activeRoomId.asReadonly();
+  readonly unreadCount = this._unreadCount.asReadonly();
+  readonly isOpen = this._isOpen.asReadonly();
+  readonly hasNewMessage = this._hasNewMessage.asReadonly();
+  readonly mutedUserIds = this._mutedUserIds.asReadonly();
+  readonly activeRoom = computed(() =>
+    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
+  );
+  readonly activeMessages = computed(() => {
+    const msgs = this._messages()[this._activeRoomId() ?? ''] ?? [];
+    const muted = this._mutedUserIds();
+    return msgs.map(m => ({ ...m, isMuted: muted.has(m.senderId) }));
+  });
+  // ── Public API ────────────────────────────────────────────────────────────
+  /** Fetch chat rooms for a given club and seed the rooms signal. */
+  loadRooms(clubId: string, userId?: string): void {
+    if (userId !== undefined) {
+      this.currentUserId = userId;
+    }
+    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
+      .then(raw => {
+        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId }));
+        this._rooms.set(rooms);
+        const currentId = this._activeRoomId();
+        if (!currentId || !rooms.some(r => r.id === currentId)) {
+          const first = rooms[0];
+          if (first) {
+            this._activeRoomId.set(first.id);
+            this.loadMessages(first.id);
+          }
+        }
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
+  }
+  loadAllClubRooms(clubs: { id: string; name: string }[], userId?: string): void {
+    if (userId !== undefined) this.currentUserId = userId;
+    const multipleClubs = clubs.length > 1;
+    const requests = clubs.map(club =>
+      firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${club.id}/chat/rooms`))
+        .then(raw => raw.map(r => ({
+          id: r.id,
+          name: multipleClubs ? `${club.name} · ${r.name}` : r.name,
+          clubId: club.id,
+        })))
+        .catch(() => [] as ChatRoom[]),
+    );
+    Promise.all(requests).then(results => {
+      const allRooms = results.flat();
+      this._rooms.set(allRooms);
+      const currentId = this._activeRoomId();
+      if (!currentId || !allRooms.some(r => r.id === currentId)) {
+        const first = allRooms[0];
+        if (first) {
+          this._activeRoomId.set(first.id);
+          this.loadMessages(first.id);
+        }
+      }
+    }).catch((err: unknown) => console.error('[ChatService] loadAllClubRooms error', err));
+  }
+  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
+    const query: Record<string, string> = {};
+    if (params?.before) query['before'] = params.before;
+    if (params?.limit != null) query['limit'] = String(params.limit);
+    firstValueFrom(
+      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
+        params: query,
+      }),
+    )
+      .then(raw => {
+        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
+        this._messages.update(map => ({ ...map, [roomId]: msgs }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
+  }
+  toggleOpen(): void {
+    this._isOpen.update(v => !v);
+    if (this._isOpen()) {
+      this.markAsRead();
+    }
+  }
+  openRoom(roomId: string): void {
+    this._activeRoomId.set(roomId);
+    this.loadMessages(roomId);
+    this.markAsRead();
+  }
+  markAsRead(): void {
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+  }
+  clearRooms(): void {
+    this._rooms.set([]);
+    this._messages.set({});
+    this._activeRoomId.set(null);
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+    this._isOpen.set(false);
+    this._mutedUserIds.set(new Set());
+    this.currentUserId = null;
+  }
+  muteUser(userId: string): void {
+    this._mutedUserIds.update(set => new Set([...set, userId]));
+  }
+  unmuteUser(userId: string): void {
+    this._mutedUserIds.update(set => {
+      const next = new Set(set);
+      next.delete(userId);
+      return next;
+    });
+  }
+  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    this.currentUserId = currentUser.id;
+    firstValueFrom(
+      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
+    )
+      .then(() => {
+        this.loadMessages(roomId);
+      })
+      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
+  }
+  deleteMessage(messageId: string): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    firstValueFrom(
+      this.http.delete(`${this.api}/chat/rooms/${roomId}/messages/${messageId}`),
+    )
+      .then(() => {
+        this._messages.update(map => ({
+          ...map,
+          [roomId]: (map[roomId] ?? []).filter(m => m.id !== messageId),
+        }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] deleteMessage error', err));
+  }
+  banUserFromChat(userId: string, durationSeconds: number): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    firstValueFrom(
+      this.http.post(`${this.api}/chat/rooms/${roomId}/ban`, {
+        user_id: userId,
+        duration_seconds: durationSeconds,
+      }),
+    )
+      .then(() => {
+        this._messages.update(map => ({
+          ...map,
+          [roomId]: (map[roomId] ?? []).filter(m => m.senderId !== userId),
+        }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
+  }
+  createRoom(clubId: string, name: string): void {
+    firstValueFrom(
+      this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),
+    )
+      .then(raw => {
+        const room: ChatRoom = { id: raw.id, name: raw.name, clubId };
+        this._rooms.update(rooms => [...rooms, room]);
+      })
+      .catch((err: unknown) => console.error('[ChatService] createRoom error', err));
+  }
+  private mapMessage(m: ApiChatMessage): ChatMessage {
+    return {
+      id: m.id,
+      senderId: m.senderId,
+      senderName: m.senderName,
+      text: m.text,
+      timestamp: new Date(m.timestamp),
+      isOwn: m.senderId === this.currentUserId,
+    };
+  }
+}
+````
+
+## File: src/app/core/services/quiz.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { Quiz, QuizAttempt, QuizQuestion, QuizStatus, QuizSession, QuizLeaderboardEntry } from '../models/quiz.model';
+import { ClubEvent } from '../models/event.model';
+interface ApiQuiz {
+  id: string;
+  clubId: string;
+  createdBy: string;
+  title: string;
+  description: string | null;
+  isActive: boolean;
+  status: string;
+}
+interface ApiQuizQuestion {
+  id: string;
+  quizId: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+}
+interface ApiAttemptResponse {
+  id: string;
+  quizId: string;
+  userId: string;
+  score: number;
+  total: number;
+  answers: number[];
+}
+interface ApiQuizSession {
+  id: string;
+  quizId: string;
+  eventId: string;
+  startedBy: string;
+  startedAt: string;
+  closedAt: string | null;
+  participantCount: number;
+}
+interface ApiLeaderboardEntry {
+  rank: number;
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  score: number;
+  totalQuestions: number;
+  hasAttempted: boolean;
+}
+function mapQuiz(raw: ApiQuiz): Quiz {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    createdBy: raw.createdBy,
+    title: raw.title,
+    description: raw.description,
+    status: (raw.status as QuizStatus) ?? 'draft',
+    isActive: raw.isActive,
+  };
+}
+function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
+  return {
+    id: raw.id,
+    quizId: raw.quizId,
+    question: raw.question,
+    options: raw.options,
+    correctIndex: raw.correctIndex,
+  };
+}
+function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
+  return {
+    id: raw.id,
+    quizId: raw.quizId,
+    userId: raw.userId,
+    score: raw.score,
+    total: raw.total,
+    answers: raw.answers,
+  };
+}
+function mapSession(raw: ApiQuizSession): QuizSession {
+  return { ...raw };
+}
+function mapLeaderboardEntry(raw: ApiLeaderboardEntry): QuizLeaderboardEntry {
+  return { ...raw };
+}
+@Injectable({ providedIn: 'root' })
+export class QuizService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _quizzes = signal<Quiz[]>([]);
+  private readonly _questions = signal<QuizQuestion[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _session = signal<QuizSession | null>(null);
+  private readonly _leaderboard = signal<QuizLeaderboardEntry[]>([]);
+  readonly quizzes = this._quizzes.asReadonly();
+  readonly questions = this._questions.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly session = this._session.asReadonly();
+  readonly leaderboard = this._leaderboard.asReadonly();
+  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
+  async loadQuizzes(clubId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
+      );
+      this._quizzes.set(raw.map(mapQuiz));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async createQuiz(data: {
+    clubId: string;
+    title: string;
+    description: string;
+  }): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
+          title: data.title,
+          description: data.description || null,
+        }),
+      );
+      const quiz = mapQuiz(raw);
+      this._quizzes.update(prev => [quiz, ...prev]);
+      return quiz;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async addQuestion(
+    quizId: string,
+    q: Omit<QuizQuestion, 'id' | 'quizId'>,
+  ): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
+          question: q.question,
+          options: q.options,
+          correctIndex: q.correctIndex,
+        }),
+      );
+      this._questions.update(prev => [...prev, mapQuestion(raw)]);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async loadQuestions(quizId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
+      );
+      this._questions.set(raw.map(mapQuestion));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
+      );
+      return mapAttempt(raw);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { isActive }),
+      );
+      this._quizzes.update(prev =>
+        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getQuiz(quizId: string): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz>(`${this.api}/quizzes/${quizId}`),
+      );
+      return mapQuiz(raw);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getQuestions(quizId: string): Promise<QuizQuestion[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
+      );
+      return raw.map(mapQuestion);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async updateQuiz(
+    quizId: string,
+    data: { title: string; description: string },
+  ): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.patch<ApiQuiz>(`${this.api}/quizzes/${quizId}`, data),
+      );
+      const quiz = mapQuiz(raw);
+      this._quizzes.update(prev => prev.map(q => (q.id === quizId ? quiz : q)));
+      return quiz;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async updateQuestion(
+    quizId: string,
+    questionId: string,
+    q: Partial<Omit<QuizQuestion, 'id' | 'quizId'>>,
+  ): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(
+          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
+          q,
+        ),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async deleteQuestion(quizId: string, questionId: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.delete(
+          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
+        ),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async reorderQuestions(quizId: string, orderedIds: string[]): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.put(`${this.api}/quizzes/${quizId}/questions/order`, {
+          order: orderedIds,
+        }),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async startSession(quizId: string, eventId: string): Promise<QuizSession> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuizSession>(
+          `${this.api}/quizzes/${quizId}/sessions`,
+          { eventId },
+        ),
+      );
+      const session = mapSession(raw);
+      this._session.set(session);
+      return session;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getActiveSession(quizId: string): Promise<QuizSession | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizSession>(
+          `${this.api}/quizzes/${quizId}/sessions/active`,
+        ),
+      );
+      return mapSession(raw);
+    } catch {
+      return null;
+    }
+  }
+  async getLeaderboard(
+    quizId: string,
+    sessionId: string,
+  ): Promise<QuizLeaderboardEntry[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<{ entries: ApiLeaderboardEntry[] }>(
+          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/leaderboard`,
+        ),
+      );
+      return raw.entries.map(mapLeaderboardEntry);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async endSession(quizId: string, sessionId: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(
+          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/close`,
+          {},
+        ),
+      );
+      this._session.set(null);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getClubQuizzes(clubId: string): Promise<Quiz[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
+      );
+      return raw.map(mapQuiz);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ClubEvent[]>(`${this.api}/clubs/${clubId}/events`),
+      );
+      return raw;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
 }
 ````
 
@@ -11703,131 +12558,6 @@ export interface ClubEvent {
     }
   </main>
 </div>
-````
-
-## File: src/app/features/auth/register/register.component.ts
-````typescript
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators,
-} from '@angular/forms';
-import { RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../../core/auth/auth.service';
-import { UserRole } from '../../../core/models/user.model';
-import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
-import { SeoService } from '../../../core/services/seo.service';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
-  const password = group.get('password')?.value as string;
-  const confirmPassword = group.get('confirmPassword')?.value as string;
-  return password === confirmPassword ? null : { passwordMismatch: true };
-};
-interface RegisterForm {
-  displayName: FormControl<string>;
-  email: FormControl<string>;
-  password: FormControl<string>;
-  confirmPassword: FormControl<string>;
-  role: FormControl<UserRole>;
-}
-@Component({
-  selector: 'app-register',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './register.component.html',
-  styleUrl: './register.component.scss',
-})
-export class RegisterComponent {
-  private readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isSubmitting = signal(false);
-  readonly successMessage = signal(false);
-  readonly registeredEmail = signal('');
-  readonly selectedRole = signal<UserRole>('user');
-  readonly bookOpen = signal(false);
-  readonly formVisible = signal(false);
-  constructor() {
-    this.seo.setPageI18n('SEO.register_title');
-    setTimeout(() => this.formVisible.set(true), 700);
-  }
-  onBookAnimationDone(): void {
-  }
-  readonly form = new FormGroup<RegisterForm>(
-    {
-      displayName: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.minLength(2)],
-      }),
-      email: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.email],
-      }),
-      password: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.minLength(8)],
-      }),
-      confirmPassword: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-      role: new FormControl<UserRole>('user', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-    },
-    { validators: passwordMatchValidator },
-  );
-  private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
-    initialValue: '',
-  });
-  readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
-    const pw = this._passwordValue();
-    if (!pw || pw.length === 0) return null;
-    if (pw.length < 8) return 'weak';
-    const hasUpper = /[A-Z]/.test(pw);
-    const hasNumber = /\d/.test(pw);
-    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
-    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
-    if (score >= 2) return 'strong';
-    if (score === 1) return 'medium';
-    return 'weak';
-  });
-  setRole(role: UserRole): void {
-    this.selectedRole.set(role);
-    this.form.controls.role.setValue(role);
-    this.form.controls.role.markAsTouched();
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.isSubmitting.set(true);
-    this.errorMessage.set(null);
-    const { displayName, email, password, role } = this.form.getRawValue();
-    const { error } = await this.auth.signUp(email, password, displayName, role);
-    this.isSubmitting.set(false);
-    if (error) {
-      this.errorMessage.set(error);
-    } else {
-      this.registeredEmail.set(email);
-      this.successMessage.set(true);
-      this.bookOpen.set(true);
-    }
-  }
-}
 ````
 
 ## File: src/app/features/clubs/club-detail/members/club-members-list.component.html
@@ -12461,185 +13191,6 @@ export class EditClubComponent implements OnInit {
 </div>
 ````
 
-## File: src/app/features/profile/profile.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-} from '@angular/core';
-import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
-import { AuthService } from '../../core/auth/auth.service';
-import { UserRole, UserSocials } from '../../core/models/user.model';
-import { SeoService } from '../../core/services/seo.service';
-import { SocialLinkFieldComponent, SocialField } from '../../shared/components/social-link-field/social-link-field.component';
-import { SocialBadgesComponent } from '../../shared/components/social-badges/social-badges.component';
-import { ProfileStatsComponent } from './stats/profile-stats.component';
-import { ProfileRoleSelectorComponent } from './role-selector/profile-role-selector.component';
-import { HlmButton } from '../../shared/spartan/button/src';
-import { HlmInput } from '../../shared/spartan/input/src';
-@Component({
-  selector: 'app-profile',
-  standalone: true,
-  imports: [ReactiveFormsModule, TranslateModule, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent, HlmButton, HlmInput],
-  templateUrl: './profile.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class ProfileComponent {
-  protected readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  private readonly translate = inject(TranslateService);
-  protected readonly socialFields: SocialField[] = [
-    {
-      key: 'telegram',
-      label: 'Telegram',
-      labelClass: 'text-blue-600 dark:text-blue-400',
-      placeholder: 'username (без @)',
-      focusRingClass: 'focus:ring-blue-500',
-    },
-    {
-      key: 'instagram',
-      label: 'Instagram',
-      labelClass: 'bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500 bg-clip-text text-transparent',
-      placeholder: 'username (без @)',
-      focusRingClass: 'focus:ring-pink-500',
-    },
-    {
-      key: 'twitter',
-      label: 'Twitter / X',
-      labelClass: 'text-gray-900 dark:text-gray-100',
-      placeholder: 'username (без @)',
-      focusRingClass: 'focus:ring-gray-800',
-    },
-    {
-      key: 'linkedin',
-      label: 'LinkedIn',
-      labelClass: 'text-blue-700 dark:text-blue-400',
-      placeholder: 'username або повний URL',
-      focusRingClass: 'focus:ring-blue-600',
-    },
-    {
-      key: 'github',
-      label: 'GitHub',
-      labelClass: 'text-gray-800 dark:text-gray-200',
-      placeholder: 'username',
-      focusRingClass: 'focus:ring-gray-700',
-    },
-    {
-      key: 'goodreads',
-      label: 'Goodreads',
-      labelClass: 'text-amber-700 dark:text-amber-400',
-      placeholder: 'username або повний URL',
-      focusRingClass: 'focus:ring-amber-500',
-    },
-  ];
-  protected readonly nameForm = new FormGroup({
-    displayName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(2)],
-    }),
-  });
-  /** Typed reactive form for updating social media links. */
-  protected readonly socialsForm = new FormGroup({
-    telegram:  new FormControl('', { nonNullable: true }),
-    instagram: new FormControl('', { nonNullable: true }),
-    twitter:   new FormControl('', { nonNullable: true }),
-    linkedin:  new FormControl('', { nonNullable: true }),
-    github:    new FormControl('', { nonNullable: true }),
-    goodreads: new FormControl('', { nonNullable: true }),
-  });
-  /** Controls whether socials are visible to all club members. */
-  protected readonly socialsPublicControl = new FormControl<boolean>(false, { nonNullable: true });
-  /** Tracks the in-flight save state (synchronous here, but keeps the pattern extensible). */
-  protected readonly isSavingName = signal(false);
-  /** Two-letter initials derived from the current user's display name. */
-  protected readonly userInitials = computed<string>(() => {
-    const name = this.auth.currentUser()?.displayName ?? '';
-    return name
-      .split(' ')
-      .map(w => w[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  });
-  /** Human-readable role label shown in the hero badge. */
-  protected readonly roleLabel = computed<string>(() =>
-    this.auth.currentUser()?.role === 'organizer' ? 'Organizer' : 'Reader',
-  );
-  protected readonly joinedDate = computed<string>(() => {
-    const raw = this.auth.currentUser()?.createdAt;
-    if (!raw) return '';
-    return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' }).format(
-      new Date(raw),
-    );
-  });
-  protected readonly userSocials = computed<UserSocials>(
-    () => this.auth.currentUser()?.socials ?? {},
-  );
-  constructor() {
-    this.seo.setPageI18n('SEO.profile_title');
-    const user = this.auth.currentUser();
-    if (user) {
-      this.nameForm.patchValue({ displayName: user.displayName });
-      this.socialsPublicControl.setValue(user.socialsPublic ?? false);
-      if (user.socials) {
-        this.socialsForm.patchValue({
-          telegram:  user.socials.telegram  ?? '',
-          instagram: user.socials.instagram ?? '',
-          twitter:   user.socials.twitter   ?? '',
-          linkedin:  user.socials.linkedin  ?? '',
-          github:    user.socials.github    ?? '',
-          goodreads: user.socials.goodreads ?? '',
-        });
-      }
-    }
-  }
-  /** Switch the user's role and show a transient success toast. */
-  protected async changeRole(role: UserRole): Promise<void> {
-    try {
-      await this.auth.updateRole(role);
-      toast.success(this.translate.instant('PROFILE.role_changed'));
-    } catch {  }
-  }
-  protected async saveName(): Promise<void> {
-    if (this.nameForm.invalid) return;
-    this.isSavingName.set(true);
-    const { displayName } = this.nameForm.getRawValue();
-    try {
-      await this.auth.updateDisplayName(displayName);
-      toast.success(this.translate.instant('PROFILE.name_updated'));
-    } catch {  }
-    finally {
-      this.isSavingName.set(false);
-    }
-  }
-  protected async submitSocials(): Promise<void> {
-    const raw = this.socialsForm.getRawValue();
-    const socials: UserSocials = {
-      ...(raw.telegram  ? { telegram:  raw.telegram  } : {}),
-      ...(raw.instagram ? { instagram: raw.instagram } : {}),
-      ...(raw.twitter   ? { twitter:   raw.twitter   } : {}),
-      ...(raw.linkedin  ? { linkedin:  raw.linkedin  } : {}),
-      ...(raw.github    ? { github:    raw.github    } : {}),
-      ...(raw.goodreads ? { goodreads: raw.goodreads } : {}),
-    };
-    try {
-      await this.auth.updateSocials(socials);
-      toast.success(this.translate.instant('PROFILE.socials_saved'));
-    } catch {  }
-  }
-  protected async onSocialsPublicChange(value: boolean): Promise<void> {
-    try {
-      await this.auth.setSocialsPublic(value);
-    } catch {  }
-  }
-}
-````
-
 ## File: src/app/features/quiz/quiz-create/quiz-create.component.html
 ````html
 <div class="min-h-screen p-4 sm:p-8">
@@ -13091,209 +13642,141 @@ export class QuizListComponent {
 </div>
 ````
 
-## File: src/app/core/services/chat.service.ts
+## File: src/app/core/auth/auth.service.ts
 ````typescript
-import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { ChatMessage, ChatRoom } from '../models/chat.model';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
+import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
-interface ApiChatRoom {
-  id: string;
-  name: string;
-}
-interface ApiChatMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  text: string;
-  timestamp: string;
+import { extractApiError } from '../api/api-error.util';
+import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
+import { TokenStore } from './token.store';
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: ApiUserProfile;
 }
 @Injectable({ providedIn: 'root' })
-export class ChatService {
+export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _rooms = signal<ChatRoom[]>([]);
-  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
-  private readonly _activeRoomId = signal<string | null>(null);
-  private readonly _unreadCount = signal<number>(0);
-  private readonly _isOpen = signal<boolean>(false);
-  private readonly _hasNewMessage = signal<boolean>(false);
-  private readonly _mutedUserIds = signal<Set<string>>(new Set());
-  private currentUserId: string | null = null;
-  readonly rooms = this._rooms.asReadonly();
-  readonly messages = this._messages.asReadonly();
-  readonly activeRoomId = this._activeRoomId.asReadonly();
-  readonly unreadCount = this._unreadCount.asReadonly();
-  readonly isOpen = this._isOpen.asReadonly();
-  readonly hasNewMessage = this._hasNewMessage.asReadonly();
-  readonly mutedUserIds = this._mutedUserIds.asReadonly();
-  readonly activeRoom = computed(() =>
-    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
-  );
-  readonly activeMessages = computed(() => {
-    const msgs = this._messages()[this._activeRoomId() ?? ''] ?? [];
-    const muted = this._mutedUserIds();
-    return msgs.map(m => ({ ...m, isMuted: muted.has(m.senderId) }));
+  private readonly router = inject(Router);
+  private readonly tokenStore = inject(TokenStore);
+  private readonly _currentUser = signal<UserProfile | null>(null);
+  private readonly _isLoading = signal<boolean>(true);
+  readonly currentUser = this._currentUser.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly isAuthenticated = computed(() => this._currentUser() !== null);
+  readonly userRole = computed(() => this._currentUser()?.role ?? null);
+  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
+  private readonly _statsResource = rxResource<UserStats | null, string | null>({
+    params: () => this._currentUser()?.id ?? null,
+    stream: ({ params: userId }) => {
+      if (!userId) return of(null as UserStats | null);
+      return this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
+        map(raw => mapUserStats(raw)),
+        catchError(() => of(null)),
+      );
+    },
   });
-  // ── Public API ────────────────────────────────────────────────────────────
-  /** Fetch chat rooms for a given club and seed the rooms signal. */
-  loadRooms(clubId: string, userId?: string): void {
-    if (userId !== undefined) {
-      this.currentUserId = userId;
+  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
+  constructor() {
+    const token = this.tokenStore.snapshot();
+    if (token) {
+      firstValueFrom(
+        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
+          catchError(() => {
+            this.tokenStore.clear();
+            return of(null);
+          }),
+        ),
+      ).then(raw => {
+        this._currentUser.set(raw ? mapUserProfile(raw) : null);
+        this._isLoading.set(false);
+      });
+    } else {
+      this._isLoading.set(false);
     }
-    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
-      .then(raw => {
-        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId }));
-        this._rooms.set(rooms);
-        const currentId = this._activeRoomId();
-        if (!currentId || !rooms.some(r => r.id === currentId)) {
-          const first = rooms[0];
-          if (first) {
-            this._activeRoomId.set(first.id);
-            this.loadMessages(first.id);
-          }
-        }
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
   }
-  loadAllClubRooms(clubs: { id: string; name: string }[], userId?: string): void {
-    if (userId !== undefined) this.currentUserId = userId;
-    const multipleClubs = clubs.length > 1;
-    const requests = clubs.map(club =>
-      firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${club.id}/chat/rooms`))
-        .then(raw => raw.map(r => ({
-          id: r.id,
-          name: multipleClubs ? `${club.name} · ${r.name}` : r.name,
-          clubId: club.id,
-        })))
-        .catch(() => [] as ChatRoom[]),
+  async signUp(
+    email: string,
+    password: string,
+    displayName: string,
+    role: UserRole,
+  ): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
+          email,
+          password,
+          displayName,
+          role,
+        }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signIn(email: string, password: string): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signOut(): Promise<void> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
+    } catch {  }
+    this.tokenStore.clear();
+    this._currentUser.set(null);
+    this.router.navigate(['/login']);
+  }
+  async updateRole(role: UserRole): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
     );
-    Promise.all(requests).then(results => {
-      const allRooms = results.flat();
-      this._rooms.set(allRooms);
-      const currentId = this._activeRoomId();
-      if (!currentId || !allRooms.some(r => r.id === currentId)) {
-        const first = allRooms[0];
-        if (first) {
-          this._activeRoomId.set(first.id);
-          this.loadMessages(first.id);
-        }
-      }
-    }).catch((err: unknown) => console.error('[ChatService] loadAllClubRooms error', err));
+    this._currentUser.set({ ...user, role });
   }
-  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
-    const query: Record<string, string> = {};
-    if (params?.before) query['before'] = params.before;
-    if (params?.limit != null) query['limit'] = String(params.limit);
-    firstValueFrom(
-      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
-        params: query,
+  async updateDisplayName(name: string): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
+    );
+    this._currentUser.set({ ...user, displayName: name });
+  }
+  async updateSocials(socials: UserSocials): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
+    );
+    this._currentUser.set({ ...user, socials });
+  }
+  async setSocialsPublic(value: boolean): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
+        socialsPublic: value,
       }),
-    )
-      .then(raw => {
-        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
-        this._messages.update(map => ({ ...map, [roomId]: msgs }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
-  }
-  toggleOpen(): void {
-    this._isOpen.update(v => !v);
-    if (this._isOpen()) {
-      this.markAsRead();
-    }
-  }
-  openRoom(roomId: string): void {
-    this._activeRoomId.set(roomId);
-    this.loadMessages(roomId);
-    this.markAsRead();
-  }
-  markAsRead(): void {
-    this._unreadCount.set(0);
-    this._hasNewMessage.set(false);
-  }
-  clearRooms(): void {
-    this._rooms.set([]);
-    this._messages.set({});
-    this._activeRoomId.set(null);
-    this._unreadCount.set(0);
-    this._hasNewMessage.set(false);
-    this._isOpen.set(false);
-    this._mutedUserIds.set(new Set());
-    this.currentUserId = null;
-  }
-  muteUser(userId: string): void {
-    this._mutedUserIds.update(set => new Set([...set, userId]));
-  }
-  unmuteUser(userId: string): void {
-    this._mutedUserIds.update(set => {
-      const next = new Set(set);
-      next.delete(userId);
-      return next;
-    });
-  }
-  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    this.currentUserId = currentUser.id;
-    firstValueFrom(
-      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
-    )
-      .then(() => {
-        this.loadMessages(roomId);
-      })
-      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
-  }
-  deleteMessage(messageId: string): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    firstValueFrom(
-      this.http.delete(`${this.api}/chat/rooms/${roomId}/messages/${messageId}`),
-    )
-      .then(() => {
-        this._messages.update(map => ({
-          ...map,
-          [roomId]: (map[roomId] ?? []).filter(m => m.id !== messageId),
-        }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] deleteMessage error', err));
-  }
-  banUserFromChat(userId: string, durationSeconds: number): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    firstValueFrom(
-      this.http.post(`${this.api}/chat/rooms/${roomId}/ban`, {
-        user_id: userId,
-        duration_seconds: durationSeconds,
-      }),
-    )
-      .then(() => {
-        this._messages.update(map => ({
-          ...map,
-          [roomId]: (map[roomId] ?? []).filter(m => m.senderId !== userId),
-        }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
-  }
-  createRoom(clubId: string, name: string): void {
-    firstValueFrom(
-      this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),
-    )
-      .then(raw => {
-        const room: ChatRoom = { id: raw.id, name: raw.name, clubId };
-        this._rooms.update(rooms => [...rooms, room]);
-      })
-      .catch((err: unknown) => console.error('[ChatService] createRoom error', err));
-  }
-  private mapMessage(m: ApiChatMessage): ChatMessage {
-    return {
-      id: m.id,
-      senderId: m.senderId,
-      senderName: m.senderName,
-      text: m.text,
-      timestamp: new Date(m.timestamp),
-      isOwn: m.senderId === this.currentUserId,
-    };
+    );
+    this._currentUser.set({ ...user, socialsPublic: value });
   }
 }
 ````
@@ -13441,343 +13924,6 @@ export class EventService {
   private _updateEvent(updated: ClubEvent): void {
     this._allEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
     this._myEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
-  }
-}
-````
-
-## File: src/app/core/services/quiz.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal, computed } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { Quiz, QuizAttempt, QuizQuestion, QuizStatus, QuizSession, QuizLeaderboardEntry } from '../models/quiz.model';
-import { ClubEvent } from '../models/event.model';
-interface ApiQuiz {
-  id: string;
-  clubId: string;
-  createdBy: string;
-  title: string;
-  description: string | null;
-  isActive: boolean;
-  status: string;
-}
-interface ApiQuizQuestion {
-  id: string;
-  quizId: string;
-  question: string;
-  options: string[];
-  correctIndex: number;
-}
-interface ApiAttemptResponse {
-  id: string;
-  quizId: string;
-  userId: string;
-  score: number;
-  total: number;
-  answers: number[];
-}
-interface ApiQuizSession {
-  id: string;
-  quizId: string;
-  eventId: string;
-  startedBy: string;
-  startedAt: string;
-  closedAt: string | null;
-  participantCount: number;
-}
-interface ApiLeaderboardEntry {
-  rank: number;
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  score: number;
-  totalQuestions: number;
-  hasAttempted: boolean;
-}
-function mapQuiz(raw: ApiQuiz): Quiz {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    createdBy: raw.createdBy,
-    title: raw.title,
-    description: raw.description,
-    status: (raw.status as QuizStatus) ?? 'draft',
-    isActive: raw.isActive,
-  };
-}
-function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
-  return {
-    id: raw.id,
-    quizId: raw.quizId,
-    question: raw.question,
-    options: raw.options,
-    correctIndex: raw.correctIndex,
-  };
-}
-function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
-  return {
-    id: raw.id,
-    quizId: raw.quizId,
-    userId: raw.userId,
-    score: raw.score,
-    total: raw.total,
-    answers: raw.answers,
-  };
-}
-function mapSession(raw: ApiQuizSession): QuizSession {
-  return { ...raw };
-}
-function mapLeaderboardEntry(raw: ApiLeaderboardEntry): QuizLeaderboardEntry {
-  return { ...raw };
-}
-@Injectable({ providedIn: 'root' })
-export class QuizService {
-  private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _quizzes = signal<Quiz[]>([]);
-  private readonly _questions = signal<QuizQuestion[]>([]);
-  private readonly _isLoading = signal(false);
-  private readonly _session = signal<QuizSession | null>(null);
-  private readonly _leaderboard = signal<QuizLeaderboardEntry[]>([]);
-  readonly quizzes = this._quizzes.asReadonly();
-  readonly questions = this._questions.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly session = this._session.asReadonly();
-  readonly leaderboard = this._leaderboard.asReadonly();
-  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
-  async loadQuizzes(clubId: string): Promise<void> {
-    this._isLoading.set(true);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
-      );
-      this._quizzes.set(raw.map(mapQuiz));
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async createQuiz(data: {
-    clubId: string;
-    title: string;
-    description: string;
-  }): Promise<Quiz> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
-          title: data.title,
-          description: data.description || null,
-        }),
-      );
-      const quiz = mapQuiz(raw);
-      this._quizzes.update(prev => [quiz, ...prev]);
-      return quiz;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async addQuestion(
-    quizId: string,
-    q: Omit<QuizQuestion, 'id' | 'quizId'>,
-  ): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
-          question: q.question,
-          options: q.options,
-          correctIndex: q.correctIndex,
-        }),
-      );
-      this._questions.update(prev => [...prev, mapQuestion(raw)]);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async loadQuestions(quizId: string): Promise<void> {
-    this._isLoading.set(true);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
-      );
-      this._questions.set(raw.map(mapQuestion));
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
-      );
-      return mapAttempt(raw);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { isActive }),
-      );
-      this._quizzes.update(prev =>
-        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async getQuiz(quizId: string): Promise<Quiz> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuiz>(`${this.api}/quizzes/${quizId}`),
-      );
-      return mapQuiz(raw);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async getQuestions(quizId: string): Promise<QuizQuestion[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
-      );
-      return raw.map(mapQuestion);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async updateQuiz(
-    quizId: string,
-    data: { title: string; description: string },
-  ): Promise<Quiz> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.patch<ApiQuiz>(`${this.api}/quizzes/${quizId}`, data),
-      );
-      const quiz = mapQuiz(raw);
-      this._quizzes.update(prev => prev.map(q => (q.id === quizId ? quiz : q)));
-      return quiz;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async updateQuestion(
-    quizId: string,
-    questionId: string,
-    q: Partial<Omit<QuizQuestion, 'id' | 'quizId'>>,
-  ): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.patch(
-          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
-          q,
-        ),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async deleteQuestion(quizId: string, questionId: string): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.delete(
-          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
-        ),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async reorderQuestions(quizId: string, orderedIds: string[]): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.put(`${this.api}/quizzes/${quizId}/questions/order`, {
-          order: orderedIds,
-        }),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async startSession(quizId: string, eventId: string): Promise<QuizSession> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuizSession>(
-          `${this.api}/quizzes/${quizId}/sessions`,
-          { eventId },
-        ),
-      );
-      const session = mapSession(raw);
-      this._session.set(session);
-      return session;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async getActiveSession(quizId: string): Promise<QuizSession | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuizSession>(
-          `${this.api}/quizzes/${quizId}/sessions/active`,
-        ),
-      );
-      return mapSession(raw);
-    } catch {
-      return null;
-    }
-  }
-  async getLeaderboard(
-    quizId: string,
-    sessionId: string,
-  ): Promise<QuizLeaderboardEntry[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<{ entries: ApiLeaderboardEntry[] }>(
-          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/leaderboard`,
-        ),
-      );
-      return raw.entries.map(mapLeaderboardEntry);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async endSession(quizId: string, sessionId: string): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.patch(
-          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/close`,
-          {},
-        ),
-      );
-      this._session.set(null);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async getClubQuizzes(clubId: string): Promise<Quiz[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
-      );
-      return raw.map(mapQuiz);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ClubEvent[]>(`${this.api}/clubs/${clubId}/events`),
-      );
-      return raw;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
   }
 }
 ````
@@ -14295,533 +14441,6 @@ export class HeaderComponent {
   }
   async signOut(): Promise<void> {
     await this.auth.signOut();
-  }
-}
-````
-
-## File: src/app/core/auth/auth.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
-import { catchError, firstValueFrom, map, of } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
-import { TokenStore } from './token.store';
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: ApiUserProfile;
-}
-@Injectable({ providedIn: 'root' })
-export class AuthService {
-  private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
-  private readonly tokenStore = inject(TokenStore);
-  private readonly _currentUser = signal<UserProfile | null>(null);
-  private readonly _isLoading = signal<boolean>(true);
-  readonly currentUser = this._currentUser.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly isAuthenticated = computed(() => this._currentUser() !== null);
-  readonly userRole = computed(() => this._currentUser()?.role ?? null);
-  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
-  private readonly _statsResource = rxResource<UserStats | null, string | null>({
-    params: () => this._currentUser()?.id ?? null,
-    stream: ({ params: userId }) => {
-      if (!userId) return of(null as UserStats | null);
-      return this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
-        map(raw => mapUserStats(raw)),
-        catchError(() => of(null)),
-      );
-    },
-  });
-  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
-  constructor() {
-    const token = this.tokenStore.snapshot();
-    if (token) {
-      firstValueFrom(
-        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
-          catchError(() => {
-            this.tokenStore.clear();
-            return of(null);
-          }),
-        ),
-      ).then(raw => {
-        this._currentUser.set(raw ? mapUserProfile(raw) : null);
-        this._isLoading.set(false);
-      });
-    } else {
-      this._isLoading.set(false);
-    }
-  }
-  async signUp(
-    email: string,
-    password: string,
-    displayName: string,
-    role: UserRole,
-  ): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
-          email,
-          password,
-          displayName,
-          role,
-        }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signIn(email: string, password: string): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signOut(): Promise<void> {
-    try {
-      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
-    } catch {  }
-    this.tokenStore.clear();
-    this._currentUser.set(null);
-    this.router.navigate(['/login']);
-  }
-  async updateRole(role: UserRole): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
-    );
-    this._currentUser.set({ ...user, role });
-  }
-  async updateDisplayName(name: string): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
-    );
-    this._currentUser.set({ ...user, displayName: name });
-  }
-  async updateSocials(socials: UserSocials): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
-    );
-    this._currentUser.set({ ...user, socials });
-  }
-  async setSocialsPublic(value: boolean): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
-        socialsPublic: value,
-      }),
-    );
-    this._currentUser.set({ ...user, socialsPublic: value });
-  }
-}
-````
-
-## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
-````html
-<div
-  class="flex flex-col overflow-hidden h-full"
-  [class]="variant() === 'featured'
-    ? 'parchment-card-raised'
-    : 'parchment-card hover:shadow-[var(--shadow-parchment-lg)] transition-shadow duration-200'"
->
-  <div class="relative overflow-hidden flex-shrink-0"
-       [class]="variant() === 'featured' ? 'h-48' : 'h-32'">
-    @if (club().coverUrl) {
-      <img [src]="club().coverUrl" [alt]="''" class="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
-    } @else {
-      <div class="w-full h-full bg-gradient-fantasy" aria-hidden="true"></div>
-    }
-    @if (variant() === 'featured') {
-      <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none"></div>
-    }
-  </div>
-  <div class="flex flex-col flex-1 gap-3"
-       [class]="variant() === 'featured' ? 'p-5' : 'p-4'">
-    <div>
-      <h3
-        class="font-display font-semibold text-[var(--color-ink)] leading-snug flex items-center gap-1.5"
-        [class]="variant() === 'featured' ? 'text-lg line-clamp-2' : 'text-base line-clamp-1'"
-      >
-        {{ club().name }}
-        @if (isOwned()) {
-          <span class="text-xs font-bold text-[var(--color-primary-600)] dark:text-[#fbbf24] flex-shrink-0"
-                title="Your club" aria-label="Your club">✦</span>
-        }
-      </h3>
-      @if (club().description) {
-        <p
-          class="text-xs text-[var(--color-ink-muted)] mt-1.5"
-          [class]="variant() === 'featured' ? 'line-clamp-3' : 'line-clamp-2'"
-        >
-          {{ club().description }}
-        </p>
-      }
-    </div>
-    @if (club().memberPreviews.length > 0) {
-      <div class="flex items-center gap-1.5">
-        @for (url of club().memberPreviews.slice(0, 4); track url) {
-          <div
-            class="h-7 w-7 rounded-full avatar-gradient flex items-center justify-center
-                   text-white text-[10px] font-bold shrink-0 overflow-hidden"
-            aria-hidden="true"
-          >
-            @if (url) {
-              <img [src]="url" class="h-full w-full object-cover" alt="" />
-            } @else { ? }
-          </div>
-        }
-        @if (club().memberCount > 4) {
-          <span class="text-xs text-[var(--color-ink-muted)] ml-1">+{{ club().memberCount - 4 }}</span>
-        }
-        <span class="text-xs text-[var(--color-ink-muted)] ml-auto">
-          {{ club().memberCount }} {{ 'CLUBS.members' | translate }}
-        </span>
-      </div>
-    }
-    <hlm-separator />
-    <div class="flex items-center gap-2 mt-auto">
-      @if (isAuthenticated() && !isMember()) {
-        <button
-          hlmBtn
-          type="button"
-          size="sm"
-          (click)="join.emit()"
-          [disabled]="joining()"
-          class="flex-1"
-          [attr.aria-label]="('CLUBS.join' | translate) + ' ' + club().name"
-        >
-          @if (joining()) { <hlm-spinner size="xs" /> } @else { {{ 'CLUBS.join' | translate }} }
-        </button>
-        <a
-          hlmBtn
-          variant="outline"
-          size="sm"
-          [routerLink]="['/clubs', club().id]"
-          class="flex-shrink-0"
-          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
-        >
-          {{ 'CLUBS.view' | translate }}
-        </a>
-      } @else if (isAuthenticated() && isMember()) {
-        <a
-          hlmBtn
-          size="sm"
-          [routerLink]="['/clubs', club().id]"
-          class="flex-1 text-center"
-          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
-        >
-          {{ 'CLUBS.view' | translate }}
-        </a>
-        <span class="rounded-lg
-                     bg-[var(--color-accent-100)] dark:bg-[var(--color-accent-900)]/30
-                     border border-[var(--color-accent-300)] dark:border-[var(--color-accent-700)]/60
-                     px-3 py-1.5 text-xs font-semibold
-                     text-[var(--color-accent-700)] dark:text-[var(--color-accent-300)]">
-          {{ 'CLUBS.member_badge' | translate }}
-        </span>
-      } @else {
-        <a
-          hlmBtn
-          size="sm"
-          [routerLink]="['/clubs', club().id]"
-          class="flex-1 text-center"
-          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
-        >
-          {{ 'CLUBS.view' | translate }}
-        </a>
-      }
-    </div>
-  </div>
-</div>
-````
-
-## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { Club } from '../../../../core/models/club.model';
-import { TranslateModule } from '@ngx-translate/core';
-import { HlmCardImports } from '../../../../shared/spartan/card/src';
-import { HlmButton } from '../../../../shared/spartan/button/src';
-import { HlmSeparator } from '../../../../shared/spartan/separator/src';
-import { HlmSpinner } from '../../../../shared/spartan/spinner/src';
-@Component({
-  selector: 'app-club-card',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton, HlmSeparator, HlmSpinner],
-  templateUrl: './club-card.component.html',
-})
-export class ClubCardComponent {
-  readonly club = input.required<Club>();
-  readonly isMember = input.required<boolean>();
-  readonly isOwned = input<boolean>(false);
-  readonly isAuthenticated = input<boolean>(false);
-  readonly joining = input<boolean>(false);
-  readonly variant = input<'default' | 'featured'>('default');
-  readonly join = output<void>();
-  protected daysUntil(dateStr: string): number {
-    const target = new Date(dateStr).getTime();
-    const now = Date.now();
-    return Math.round((target - now) / 86400000);
-  }
-}
-````
-
-## File: src/app/features/events/create-event/create-event.component.html
-````html
-<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
-  <nav>
-    <a [routerLink]="['/clubs', clubId()]"
-       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-      ← Back to Club
-    </a>
-  </nav>
-  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create Event</h1>
-    @if (errorMessage()) {
-      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-           role="alert">
-        {{ errorMessage() }}
-      </div>
-    }
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-      <div>
-        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Title <span class="text-red-500">*</span>
-        </label>
-        <input hlmInput id="title" type="text" formControlName="title" class="w-full"
-               placeholder="April Discussion" />
-        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Title is required.</p>
-        }
-      </div>
-      <div>
-        <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">📖 Book title</label>
-        <input hlmInput id="bookTitle" type="text" formControlName="bookTitle" class="w-full"
-               placeholder="The Master and Margarita" />
-        @if (isFetchingCover()) {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">🔍 Searching for book cover…</p>
-        } @else if (coverFetchFailed()) {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">No cover found — you can add one manually below.</p>
-        } @else {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">What book will you discuss at this event?</p>
-        }
-      </div>
-      <div>
-        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-        <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
-                  placeholder="What will you be reading or discussing?"></textarea>
-      </div>
-      <div>
-        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Date & Time <span class="text-red-500">*</span>
-        </label>
-        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
-        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Date is required.</p>
-        }
-      </div>
-      <div>
-        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Location <span class="text-red-500">*</span>
-        </p>
-        <app-address-autocomplete
-          [control]="form.controls.address"
-          placeholder="Start typing an address…"
-          (selected)="onAddressSelect($event)"
-        />
-        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Location is required.</p>
-        }
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
-          <input hlmInput id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
-                 class="w-full" placeholder="120" />
-        </div>
-        <div>
-          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
-          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
-        </div>
-      </div>
-      <div>
-        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
-        <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
-               placeholder="fiction, dystopia, classic (comma-separated)" />
-      </div>
-      <div>
-        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cover image</p>
-        <app-cover-upload [control]="form.controls.coverUrl" />
-      </div>
-      @if (activeQuizzes().length > 0) {
-        <div>
-          <label for="quizId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            🧠 Linked quiz
-          </label>
-          <select id="quizId" formControlName="quizId"
-                  class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
-            <option [ngValue]="null">— No quiz —</option>
-            @for (quiz of activeQuizzes(); track quiz.id) {
-              <option [value]="quiz.id">{{ quiz.title }}</option>
-            }
-          </select>
-        </div>
-      }
-      <div>
-        <button type="button" (click)="toggleAfterVenue()"
-                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
-          {{ showAfterVenue() ? '− Remove after-meeting venue' : '+ Add after-meeting venue' }}
-        </button>
-        @if (showAfterVenue()) {
-          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
-            <div>
-              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Venue name <span class="text-red-500">*</span>
-              </label>
-              <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
-                     class="w-full" placeholder="Cozy Cafe" />
-            </div>
-            <div>
-              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
-              <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
-                     class="w-full" placeholder="123 Main St" />
-            </div>
-            <div>
-              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-              <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
-                     class="w-full" placeholder="Optional notes" />
-            </div>
-          </div>
-        }
-      </div>
-      <div class="flex justify-end gap-3 pt-2">
-        <a hlmBtn variant="outline" [routerLink]="['/clubs', clubId()]">Cancel</a>
-        <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
-                class="bg-primary-600 hover:bg-primary-700 text-white">
-          @if (isSubmitting()) { Creating… } @else { Create Event }
-        </button>
-      </div>
-    </form>
-  </div>
-</main>
-````
-
-## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
-````typescript
-import {
-  Component, ChangeDetectionStrategy, input, output,
-  DestroyRef, signal, inject, ElementRef, HostListener, effect,
-} from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { switchMap, debounceTime, distinctUntilChanged, of } from 'rxjs';
-import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
-import { HlmInput } from '../../spartan/input/src';
-@Component({
-  selector: 'app-address-autocomplete',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, HlmInput],
-  templateUrl: './address-autocomplete.component.html',
-})
-export class AddressAutocompleteComponent {
-  readonly control = input.required<FormControl<string>>();
-  readonly placeholder = input<string>('');
-  readonly inputId = input<string>('');
-  readonly selected = output<GeocodeSuggestion>();
-  private readonly geocoding = inject(GeocodingService);
-  private readonly elRef = inject(ElementRef);
-  private readonly destroyRef = inject(DestroyRef);
-  readonly suggestions = signal<GeocodeSuggestion[]>([]);
-  readonly isLoading = signal(false);
-  readonly isOpen = signal(false);
-  readonly activeIndex = signal(-1);
-  constructor() {
-    effect(() => {
-      const ctrl = this.control();
-      ctrl.valueChanges.pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        switchMap(q => {
-          if (!q || q.length < 2) {
-            this.suggestions.set([]);
-            this.isOpen.set(false);
-            return of([]);
-          }
-          this.isLoading.set(true);
-          return this.geocoding.autocomplete$(q);
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      ).subscribe({
-        next: (results) => {
-          this.isLoading.set(false);
-          this.suggestions.set(results);
-          this.activeIndex.set(-1);
-          this.isOpen.set(results.length > 0);
-        },
-        error: () => {
-          this.isLoading.set(false);
-          this.suggestions.set([]);
-        },
-      });
-    });
-  }
-  select(s: GeocodeSuggestion): void {
-    this.control().setValue(s.label, { emitEvent: false });
-    this.suggestions.set([]);
-    this.isOpen.set(false);
-    this.selected.emit(s);
-  }
-  onKeydown(event: KeyboardEvent): void {
-    if (!this.isOpen()) return;
-    const len = this.suggestions().length;
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i + 1) % len);
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i - 1 + len) % len);
-    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
-      event.preventDefault();
-      this.select(this.suggestions()[this.activeIndex()]);
-    } else if (event.key === 'Escape') {
-      this.isOpen.set(false);
-    }
-  }
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (!this.elRef.nativeElement.contains(event.target)) {
-      this.isOpen.set(false);
-    }
   }
 }
 ````
@@ -15552,6 +15171,450 @@ export class AddressAutocompleteComponent {
 }
 ````
 
+## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
+````html
+<div
+  class="flex flex-col overflow-hidden h-full"
+  [class]="variant() === 'featured'
+    ? 'parchment-card-raised'
+    : 'parchment-card hover:shadow-[var(--shadow-parchment-lg)] transition-shadow duration-200'"
+>
+  <div class="relative overflow-hidden flex-shrink-0"
+       [class]="variant() === 'featured' ? 'h-48' : 'h-32'">
+    @if (club().coverUrl) {
+      <img [src]="club().coverUrl" [alt]="''" class="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
+    } @else {
+      <div class="w-full h-full bg-gradient-fantasy" aria-hidden="true"></div>
+    }
+    @if (variant() === 'featured') {
+      <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none"></div>
+    }
+  </div>
+  <div class="flex flex-col flex-1 gap-3"
+       [class]="variant() === 'featured' ? 'p-5' : 'p-4'">
+    <div>
+      <h3
+        class="font-display font-semibold text-[var(--color-ink)] leading-snug flex items-center gap-1.5"
+        [class]="variant() === 'featured' ? 'text-lg line-clamp-2' : 'text-base line-clamp-1'"
+      >
+        {{ club().name }}
+        @if (isOwned()) {
+          <span class="text-xs font-bold text-[var(--color-primary-600)] dark:text-[#fbbf24] flex-shrink-0"
+                title="Your club" aria-label="Your club">✦</span>
+        }
+      </h3>
+      @if (club().description) {
+        <p
+          class="text-xs text-[var(--color-ink-muted)] mt-1.5"
+          [class]="variant() === 'featured' ? 'line-clamp-3' : 'line-clamp-2'"
+        >
+          {{ club().description }}
+        </p>
+      }
+    </div>
+    @if (club().memberPreviews.length > 0) {
+      <div class="flex items-center gap-1.5">
+        @for (url of club().memberPreviews.slice(0, 4); track url) {
+          <div
+            class="h-7 w-7 rounded-full avatar-gradient flex items-center justify-center
+                   text-white text-[10px] font-bold shrink-0 overflow-hidden"
+            aria-hidden="true"
+          >
+            @if (url) {
+              <img [src]="url" class="h-full w-full object-cover" alt="" />
+            } @else { ? }
+          </div>
+        }
+        @if (club().memberCount > 4) {
+          <span class="text-xs text-[var(--color-ink-muted)] ml-1">+{{ club().memberCount - 4 }}</span>
+        }
+        <span class="text-xs text-[var(--color-ink-muted)] ml-auto">
+          {{ club().memberCount }} {{ 'CLUBS.members' | translate }}
+        </span>
+      </div>
+    }
+    <hlm-separator />
+    <div class="flex items-center gap-2 mt-auto">
+      @if (isAuthenticated() && !isMember()) {
+        <button
+          hlmBtn
+          type="button"
+          size="sm"
+          (click)="join.emit()"
+          [disabled]="joining()"
+          class="flex-1"
+          [attr.aria-label]="('CLUBS.join' | translate) + ' ' + club().name"
+        >
+          @if (joining()) { <hlm-spinner size="xs" /> } @else { {{ 'CLUBS.join' | translate }} }
+        </button>
+        <a
+          hlmBtn
+          variant="outline"
+          size="sm"
+          [routerLink]="['/clubs', club().id]"
+          class="flex-shrink-0"
+          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
+        >
+          {{ 'CLUBS.view' | translate }}
+        </a>
+      } @else if (isAuthenticated() && isMember()) {
+        <a
+          hlmBtn
+          size="sm"
+          [routerLink]="['/clubs', club().id]"
+          class="flex-1 text-center"
+          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
+        >
+          {{ 'CLUBS.view' | translate }}
+        </a>
+        <span class="rounded-lg
+                     bg-[var(--color-accent-100)] dark:bg-[var(--color-accent-900)]/30
+                     border border-[var(--color-accent-300)] dark:border-[var(--color-accent-700)]/60
+                     px-3 py-1.5 text-xs font-semibold
+                     text-[var(--color-accent-700)] dark:text-[var(--color-accent-300)]">
+          {{ 'CLUBS.member_badge' | translate }}
+        </span>
+      } @else {
+        <a
+          hlmBtn
+          size="sm"
+          [routerLink]="['/clubs', club().id]"
+          class="flex-1 text-center"
+          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
+        >
+          {{ 'CLUBS.view' | translate }}
+        </a>
+      }
+    </div>
+  </div>
+</div>
+````
+
+## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { Club } from '../../../../core/models/club.model';
+import { TranslateModule } from '@ngx-translate/core';
+import { HlmCardImports } from '../../../../shared/spartan/card/src';
+import { HlmButton } from '../../../../shared/spartan/button/src';
+import { HlmSeparator } from '../../../../shared/spartan/separator/src';
+import { HlmSpinner } from '../../../../shared/spartan/spinner/src';
+@Component({
+  selector: 'app-club-card',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton, HlmSeparator, HlmSpinner],
+  templateUrl: './club-card.component.html',
+})
+export class ClubCardComponent {
+  readonly club = input.required<Club>();
+  readonly isMember = input.required<boolean>();
+  readonly isOwned = input<boolean>(false);
+  readonly isAuthenticated = input<boolean>(false);
+  readonly joining = input<boolean>(false);
+  readonly variant = input<'default' | 'featured'>('default');
+  readonly join = output<void>();
+  protected daysUntil(dateStr: string): number {
+    const target = new Date(dateStr).getTime();
+    const now = Date.now();
+    return Math.round((target - now) / 86400000);
+  }
+}
+````
+
+## File: src/app/features/events/create-event/create-event.component.html
+````html
+<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
+  <nav>
+    <a [routerLink]="['/clubs', clubId()]"
+       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+      ← Back to Club
+    </a>
+  </nav>
+  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create Event</h1>
+    @if (errorMessage()) {
+      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+           role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+      <div>
+        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Title <span class="text-red-500">*</span>
+        </label>
+        <input hlmInput id="title" type="text" formControlName="title" class="w-full"
+               placeholder="April Discussion" />
+        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Title is required.</p>
+        }
+      </div>
+      <div>
+        <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">📖 Book title</label>
+        <input hlmInput id="bookTitle" type="text" formControlName="bookTitle" class="w-full"
+               placeholder="The Master and Margarita" />
+        @if (isFetchingCover()) {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">🔍 Searching for book cover…</p>
+        } @else if (coverFetchFailed()) {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">No cover found — you can add one manually below.</p>
+        } @else {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">What book will you discuss at this event?</p>
+        }
+      </div>
+      <div>
+        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+        <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
+                  placeholder="What will you be reading or discussing?"></textarea>
+      </div>
+      <div>
+        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Date & Time <span class="text-red-500">*</span>
+        </label>
+        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
+        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Date is required.</p>
+        }
+      </div>
+      <div>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Location <span class="text-red-500">*</span>
+        </p>
+        <app-address-autocomplete
+          [control]="form.controls.address"
+          placeholder="Start typing an address…"
+          (selected)="onAddressSelect($event)"
+        />
+        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Location is required.</p>
+        }
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
+          <input hlmInput id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
+                 class="w-full" placeholder="120" />
+        </div>
+        <div>
+          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
+          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
+        </div>
+      </div>
+      <div>
+        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
+        <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
+               placeholder="fiction, dystopia, classic (comma-separated)" />
+      </div>
+      <div>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cover image</p>
+        <app-cover-upload [control]="form.controls.coverUrl" />
+      </div>
+      @if (activeQuizzes().length > 0) {
+        <div>
+          <label for="quizId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            🧠 Linked quiz
+          </label>
+          <select id="quizId" formControlName="quizId"
+                  class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+            <option [ngValue]="null">— No quiz —</option>
+            @for (quiz of activeQuizzes(); track quiz.id) {
+              <option [value]="quiz.id">{{ quiz.title }}</option>
+            }
+          </select>
+        </div>
+      }
+      <div>
+        <button type="button" (click)="toggleAfterVenue()"
+                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
+          {{ showAfterVenue() ? '− Remove after-meeting venue' : '+ Add after-meeting venue' }}
+        </button>
+        @if (showAfterVenue()) {
+          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
+            <div>
+              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Venue name <span class="text-red-500">*</span>
+              </label>
+              <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
+                     class="w-full" placeholder="Cozy Cafe" />
+            </div>
+            <div>
+              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
+              <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
+                     class="w-full" placeholder="123 Main St" />
+            </div>
+            <div>
+              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+              <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
+                     class="w-full" placeholder="Optional notes" />
+            </div>
+          </div>
+        }
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <a hlmBtn variant="outline" [routerLink]="['/clubs', clubId()]">Cancel</a>
+        <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
+                class="bg-primary-600 hover:bg-primary-700 text-white">
+          @if (isSubmitting()) { Creating… } @else { Create Event }
+        </button>
+      </div>
+    </form>
+  </div>
+</main>
+````
+
+## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
+````typescript
+import {
+  Component, ChangeDetectionStrategy, input, output,
+  DestroyRef, signal, inject, ElementRef, HostListener, effect,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { switchMap, debounceTime, distinctUntilChanged, of } from 'rxjs';
+import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
+import { HlmInput } from '../../spartan/input/src';
+@Component({
+  selector: 'app-address-autocomplete',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, HlmInput],
+  templateUrl: './address-autocomplete.component.html',
+})
+export class AddressAutocompleteComponent {
+  readonly control = input.required<FormControl<string>>();
+  readonly placeholder = input<string>('');
+  readonly inputId = input<string>('');
+  readonly selected = output<GeocodeSuggestion>();
+  private readonly geocoding = inject(GeocodingService);
+  private readonly elRef = inject(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly suggestions = signal<GeocodeSuggestion[]>([]);
+  readonly isLoading = signal(false);
+  readonly isOpen = signal(false);
+  readonly activeIndex = signal(-1);
+  constructor() {
+    effect(() => {
+      const ctrl = this.control();
+      ctrl.valueChanges.pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(q => {
+          if (!q || q.length < 2) {
+            this.suggestions.set([]);
+            this.isOpen.set(false);
+            return of([]);
+          }
+          this.isLoading.set(true);
+          return this.geocoding.autocomplete$(q);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      ).subscribe({
+        next: (results) => {
+          this.isLoading.set(false);
+          this.suggestions.set(results);
+          this.activeIndex.set(-1);
+          this.isOpen.set(results.length > 0);
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.suggestions.set([]);
+        },
+      });
+    });
+  }
+  select(s: GeocodeSuggestion): void {
+    this.control().setValue(s.label, { emitEvent: false });
+    this.suggestions.set([]);
+    this.isOpen.set(false);
+    this.selected.emit(s);
+  }
+  onKeydown(event: KeyboardEvent): void {
+    if (!this.isOpen()) return;
+    const len = this.suggestions().length;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i + 1) % len);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i - 1 + len) % len);
+    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
+      event.preventDefault();
+      this.select(this.suggestions()[this.activeIndex()]);
+    } else if (event.key === 'Escape') {
+      this.isOpen.set(false);
+    }
+  }
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.elRef.nativeElement.contains(event.target)) {
+      this.isOpen.set(false);
+    }
+  }
+}
+````
+
+## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  OnInit,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { Club } from '../../../core/models/club.model';
+import { SeoService } from '../../../core/services/seo.service';
+import { TranslateModule } from '@ngx-translate/core';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { ClubCardComponent } from './club-card/club-card.component';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+@Component({
+  selector: 'app-clubs-list',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, HlmSpinner],
+  templateUrl: './clubs-list.component.html',
+})
+export class ClubsListComponent implements OnInit {
+  readonly clubService = inject(ClubService);
+  readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  readonly joiningClubId = signal<string | null>(null);
+  readonly ownedClubIds = this.clubService.myOwnedClubIds;
+  readonly activeTab = signal<'all' | 'my'>('all');
+  async ngOnInit(): Promise<void> {
+    this.seo.setPageI18n('SEO.clubs_title', {
+      descriptionKey: 'SEO.clubs_description',
+      ogTitleKey: 'SEO.clubs_og_title',
+    });
+    this.seo.injectWebSiteJsonLd();
+    await this.clubService.loadPublicClubs();
+    if (this.auth.isAuthenticated()) {
+      await this.clubService.loadMyClubs();
+    }
+  }
+  async onJoin(club: Club): Promise<void> {
+    this.joiningClubId.set(club.id);
+    try {
+      await this.clubService.joinClub(club.id);
+    } catch {
+    } finally {
+      this.joiningClubId.set(null);
+    }
+  }
+}
+````
+
 ## File: src/app/features/clubs/create-club/create-club.component.html
 ````html
 <main class="min-h-screen flex items-center justify-center p-4">
@@ -16025,62 +16088,6 @@ export class CreateClubComponent {
     </a>
   }
 </div>
-````
-
-## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  OnInit,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { Club } from '../../../core/models/club.model';
-import { SeoService } from '../../../core/services/seo.service';
-import { TranslateModule } from '@ngx-translate/core';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { ClubCardComponent } from './club-card/club-card.component';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-@Component({
-  selector: 'app-clubs-list',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, HlmSpinner],
-  templateUrl: './clubs-list.component.html',
-})
-export class ClubsListComponent implements OnInit {
-  readonly clubService = inject(ClubService);
-  readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  readonly joiningClubId = signal<string | null>(null);
-  readonly ownedClubIds = this.clubService.myOwnedClubIds;
-  readonly activeTab = signal<'all' | 'my'>('all');
-  async ngOnInit(): Promise<void> {
-    this.seo.setPageI18n('SEO.clubs_title', {
-      descriptionKey: 'SEO.clubs_description',
-      ogTitleKey: 'SEO.clubs_og_title',
-    });
-    this.seo.injectWebSiteJsonLd();
-    await this.clubService.loadPublicClubs();
-    if (this.auth.isAuthenticated()) {
-      await this.clubService.loadMyClubs();
-    }
-  }
-  async onJoin(club: Club): Promise<void> {
-    this.joiningClubId.set(club.id);
-    try {
-      await this.clubService.joinClub(club.id);
-    } catch {
-    } finally {
-      this.joiningClubId.set(null);
-    }
-  }
-}
 ````
 
 ## File: src/app/features/events/create-event/create-event.component.ts
