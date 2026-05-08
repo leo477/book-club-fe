@@ -197,6 +197,7 @@ src/
           quiz-take.component.ts
         .gitkeep
         quiz-detail-base.component.ts
+        quiz-form.utils.ts
         quiz.routes.ts
       randomizer/
         .gitkeep
@@ -372,6 +373,9 @@ src/
   environments/
     environment.prod.ts
     environment.ts
+  testing/
+    event-test.helpers.ts
+    quiz-spec.helpers.ts
   index.html
   main.ts
 supabase/
@@ -886,6 +890,140 @@ export interface UserProfile {
 }
 ````
 
+## File: src/app/core/services/randomizer.service.ts
+````typescript
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../auth/auth.service';
+import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
+import { ApiClubMember, mapClubMember } from '../api/api-mappers';
+import { environment } from '../../../environments/environment';
+interface ApiMemberCandidate {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+}
+interface ApiRandomizerSession {
+  id: string;
+  clubId: string;
+  createdBy: string;
+  purpose: string;
+  candidates: ApiMemberCandidate[];
+  result: ApiMemberCandidate | null;
+  createdAt: string;
+}
+function mapMemberCandidate(raw: ApiMemberCandidate): MemberCandidate {
+  return {
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+  };
+}
+function mapRandomizerSession(raw: ApiRandomizerSession): RandomizerSession {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    createdBy: raw.createdBy,
+    purpose: raw.purpose,
+    candidates: raw.candidates.map(mapMemberCandidate),
+    result: raw.result ? mapMemberCandidate(raw.result) : null,
+    createdAt: raw.createdAt,
+  };
+}
+@Injectable({ providedIn: 'root' })
+export class RandomizerService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly apiUrl = environment.apiUrl;
+  private readonly _candidates = signal<MemberCandidate[]>([]);
+  private readonly _selectedIds = signal<Set<string>>(new Set());
+  private readonly _result = signal<MemberCandidate | null>(null);
+  private readonly _isSpinning = signal(false);
+  private readonly _history = signal<RandomizerSession[]>([]);
+  private readonly _purpose = signal('Хто представляє книгу?');
+  readonly candidates = this._candidates.asReadonly();
+  readonly selectedIds = this._selectedIds.asReadonly();
+  readonly result = this._result.asReadonly();
+  readonly isSpinning = this._isSpinning.asReadonly();
+  readonly history = this._history.asReadonly();
+  readonly purpose = this._purpose.asReadonly();
+  setPurpose(purpose: string): void {
+    this._purpose.set(purpose);
+  }
+  async loadClubMembers(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${this.apiUrl}/clubs/${clubId}/members`),
+    );
+    const members: MemberCandidate[] = raw.map(m => {
+      const detail = mapClubMember(m);
+      return { userId: detail.userId, displayName: detail.displayName, avatarUrl: detail.avatarUrl };
+    });
+    this._candidates.set(members);
+    this._selectedIds.set(new Set(members.map(m => m.userId)));
+    this._result.set(null);
+  }
+  toggleMember(userId: string): void {
+    this._selectedIds.update(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  }
+  async spin(): Promise<void> {
+    const selected = this._candidates().filter(m => this._selectedIds().has(m.userId));
+    if (selected.length < 2) throw new Error('Потрібно мінімум 2 учасники');
+    this._isSpinning.set(true);
+    this._result.set(null);
+    await new Promise<void>(resolve => setTimeout(resolve, 2000));
+    const max = Math.floor(0x100000000 / selected.length) * selected.length;
+    let rand: number;
+    do {
+      rand = crypto.getRandomValues(new Uint32Array(1))[0];
+    } while (rand >= max);
+    const idx = rand % selected.length;
+    this._result.set(selected[idx]);
+    this._isSpinning.set(false);
+  }
+  async saveSession(clubId: string): Promise<void> {
+    const user = this.auth.currentUser();
+    if (!user) throw new Error('Not authenticated');
+    const result = this._result();
+    if (!result) throw new Error('No result to save');
+    const body = {
+      purpose: this._purpose(),
+      candidates: this._candidates()
+        .filter(m => this._selectedIds().has(m.userId))
+        .map(m => m.userId),
+      result: result.userId,
+    };
+    const raw = await firstValueFrom(
+      this.http.post<ApiRandomizerSession>(
+        `${this.apiUrl}/clubs/${clubId}/randomizer/sessions`,
+        body,
+      ),
+    );
+    const session = mapRandomizerSession(raw);
+    this._history.update(prev => [session, ...prev]);
+  }
+  async loadHistory(clubId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiRandomizerSession[]>(`${this.apiUrl}/clubs/${clubId}/randomizer/history`),
+    );
+    this._history.set(raw.map(mapRandomizerSession));
+  }
+  reset(): void {
+    const ids = new Set(this._candidates().map(m => m.userId));
+    this._selectedIds.set(ids);
+    this._result.set(null);
+  }
+}
+````
+
 ## File: src/app/core/services/seo.service.ts
 ````typescript
 import { Injectable, inject } from '@angular/core';
@@ -1085,6 +1223,67 @@ export class ProfileStatsComponent {
 ## File: src/app/features/quiz/.gitkeep
 ````
 
+````
+
+## File: src/app/features/quiz/quiz-form.utils.ts
+````typescript
+import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
+export interface MetaForm {
+  title: FormControl<string>;
+  description: FormControl<string>;
+}
+export interface QuestionForm {
+  question: FormControl<string>;
+  option0: FormControl<string>;
+  option1: FormControl<string>;
+  option2: FormControl<string>;
+  option3: FormControl<string>;
+  correctIndex: FormControl<number>;
+}
+export const OPTION_INDICES: readonly number[] = [0, 1, 2, 3];
+export function buildMetaForm(): FormGroup<MetaForm> {
+  return new FormGroup<MetaForm>({
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+  });
+}
+export function buildQuestionForm(): FormGroup<QuestionForm> {
+  return new FormGroup<QuestionForm>({
+    question: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
+    }),
+    option0: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option1: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option2: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option3: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    correctIndex: new FormControl<number>(0, { nonNullable: true }),
+  });
+}
+export function optionLabel(index: number): string {
+  return String.fromCodePoint(65 + index);
+}
+export function isInvalidTouched(ctrl: AbstractControl): boolean {
+  return ctrl.invalid && ctrl.touched;
+}
 ````
 
 ## File: src/app/features/randomizer/.gitkeep
@@ -1821,6 +2020,49 @@ export const environment = {
 };
 ````
 
+## File: src/testing/event-test.helpers.ts
+````typescript
+import { ClubEvent } from '../app/core/models/event.model';
+import { ApiEvent } from '../app/core/api/api-mappers';
+const BASE_EVENT = {
+  id: 'e1', clubId: 'c1', clubName: 'Test Club', organizerId: 'u1',
+  title: 'Test Event', description: null,
+  date: '2025-06-01T10:00:00', city: 'Kyiv',
+  address: null, lat: null, lng: null, status: 'scheduled' as const,
+  coverUrl: null, theme: null, tags: [],
+  durationMinutes: null, afterMeetingVenue: null,
+  attendeeCount: 5, isAttending: false,
+};
+export function makeClubEvent(overrides: Partial<ClubEvent> = {}): ClubEvent {
+  return { ...BASE_EVENT, ...overrides };
+}
+export function makeApiEvent(overrides: Partial<ApiEvent> = {}): ApiEvent {
+  return { ...BASE_EVENT, ...overrides };
+}
+````
+
+## File: src/testing/quiz-spec.helpers.ts
+````typescript
+import { Component, NO_ERRORS_SCHEMA, Type, provideZonelessChangeDetection } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { QuizService } from '../app/core/services/quiz.service';
+@Component({ template: '', standalone: true })
+export class StubComponent {}
+export async function configureQuizTestBed(component: Type<unknown>, quizSvc: unknown): Promise<void> {
+  await TestBed.configureTestingModule({
+    imports: [component as Type<unknown>, TranslateModule.forRoot()],
+    providers: [
+      provideZonelessChangeDetection(),
+      provideRouter([{ path: '**', component: StubComponent }]),
+      { provide: QuizService, useValue: quizSvc },
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+  }).compileComponents();
+}
+````
+
 ## File: src/index.html
 ````html
 <!doctype html>
@@ -2364,6 +2606,23 @@ npx lint-staged
 npx repomix --no-files
 ````
 
+## File: src/app/core/api/api-error.util.ts
+````typescript
+import { HttpErrorResponse } from '@angular/common/http';
+export function extractApiError(err: unknown): string {
+  if (err instanceof HttpErrorResponse) {
+    const body = err.error as { error?: unknown; detail?: unknown } | null;
+    if (typeof body?.error === 'string') return body.error;
+    const detail = body?.detail;
+    if (typeof detail === 'string') return detail;
+    if (Array.isArray(detail)) return (detail[0] as { msg?: string })?.msg ?? err.message ?? 'Unknown error';
+    if (detail && typeof detail === 'object') return (detail as { error?: string }).error ?? err.message ?? 'Unknown error';
+    return err.message ?? 'Unknown error';
+  }
+  return 'Unknown error';
+}
+````
+
 ## File: src/app/core/auth/auth.guard.ts
 ````typescript
 import { inject } from '@angular/core';
@@ -2503,136 +2762,209 @@ export interface QuizLeaderboardEntry {
 }
 ````
 
-## File: src/app/core/services/randomizer.service.ts
+## File: src/app/core/services/chat.service.ts
 ````typescript
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { AuthService } from '../auth/auth.service';
-import { MemberCandidate, RandomizerSession } from '../models/randomizer.model';
-import { ApiClubMember, mapClubMember } from '../api/api-mappers';
+import { ChatMessage, ChatRoom } from '../models/chat.model';
 import { environment } from '../../../environments/environment';
-interface ApiMemberCandidate {
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-}
-interface ApiRandomizerSession {
+interface ApiChatRoom {
   id: string;
-  clubId: string;
-  createdBy: string;
-  purpose: string;
-  candidates: ApiMemberCandidate[];
-  result: ApiMemberCandidate | null;
-  createdAt: string;
+  name: string;
 }
-function mapMemberCandidate(raw: ApiMemberCandidate): MemberCandidate {
-  return {
-    userId: raw.userId,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-  };
-}
-function mapRandomizerSession(raw: ApiRandomizerSession): RandomizerSession {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    createdBy: raw.createdBy,
-    purpose: raw.purpose,
-    candidates: raw.candidates.map(mapMemberCandidate),
-    result: raw.result ? mapMemberCandidate(raw.result) : null,
-    createdAt: raw.createdAt,
-  };
+interface ApiChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: string;
 }
 @Injectable({ providedIn: 'root' })
-export class RandomizerService {
+export class ChatService {
   private readonly http = inject(HttpClient);
-  private readonly auth = inject(AuthService);
-  private readonly apiUrl = environment.apiUrl;
-  private readonly _candidates = signal<MemberCandidate[]>([]);
-  private readonly _selectedIds = signal<Set<string>>(new Set());
-  private readonly _result = signal<MemberCandidate | null>(null);
-  private readonly _isSpinning = signal(false);
-  private readonly _history = signal<RandomizerSession[]>([]);
-  private readonly _purpose = signal('Хто представляє книгу?');
-  readonly candidates = this._candidates.asReadonly();
-  readonly selectedIds = this._selectedIds.asReadonly();
-  readonly result = this._result.asReadonly();
-  readonly isSpinning = this._isSpinning.asReadonly();
-  readonly history = this._history.asReadonly();
-  readonly purpose = this._purpose.asReadonly();
-  setPurpose(purpose: string): void {
-    this._purpose.set(purpose);
+  private readonly api = environment.apiUrl;
+  private readonly _rooms = signal<ChatRoom[]>([]);
+  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
+  private readonly _activeRoomId = signal<string | null>(null);
+  private readonly _unreadCount = signal<number>(0);
+  private readonly _isOpen = signal<boolean>(false);
+  private readonly _hasNewMessage = signal<boolean>(false);
+  private readonly _mutedUserIds = signal<Set<string>>(new Set());
+  private currentUserId: string | null = null;
+  readonly rooms = this._rooms.asReadonly();
+  readonly messages = this._messages.asReadonly();
+  readonly activeRoomId = this._activeRoomId.asReadonly();
+  readonly unreadCount = this._unreadCount.asReadonly();
+  readonly isOpen = this._isOpen.asReadonly();
+  readonly hasNewMessage = this._hasNewMessage.asReadonly();
+  readonly mutedUserIds = this._mutedUserIds.asReadonly();
+  readonly activeRoom = computed(() =>
+    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
+  );
+  readonly activeMessages = computed(() => {
+    const msgs = this._messages()[this._activeRoomId() ?? ''] ?? [];
+    const muted = this._mutedUserIds();
+    return msgs.map(m => ({ ...m, isMuted: muted.has(m.senderId) }));
+  });
+  // ── Public API ────────────────────────────────────────────────────────────
+  /** Fetch chat rooms for a given club and seed the rooms signal. */
+  loadRooms(clubId: string, userId?: string): void {
+    if (userId !== undefined) {
+      this.currentUserId = userId;
+    }
+    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
+      .then(raw => {
+        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId }));
+        this._rooms.set(rooms);
+        const currentId = this._activeRoomId();
+        if (!currentId || !rooms.some(r => r.id === currentId)) {
+          const first = rooms[0];
+          if (first) {
+            this._activeRoomId.set(first.id);
+            this.loadMessages(first.id);
+          }
+        }
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
   }
-  async loadClubMembers(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiClubMember[]>(`${this.apiUrl}/clubs/${clubId}/members`),
+  loadAllClubRooms(clubs: { id: string; name: string }[], userId?: string): void {
+    if (userId !== undefined) this.currentUserId = userId;
+    const multipleClubs = clubs.length > 1;
+    const requests = clubs.map(club =>
+      firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${club.id}/chat/rooms`))
+        .then(raw => raw.map(r => ({
+          id: r.id,
+          name: multipleClubs ? `${club.name} · ${r.name}` : r.name,
+          clubId: club.id,
+        })))
+        .catch(() => [] as ChatRoom[]),
     );
-    const members: MemberCandidate[] = raw.map(m => {
-      const detail = mapClubMember(m);
-      return { userId: detail.userId, displayName: detail.displayName, avatarUrl: detail.avatarUrl };
-    });
-    this._candidates.set(members);
-    this._selectedIds.set(new Set(members.map(m => m.userId)));
-    this._result.set(null);
-  }
-  toggleMember(userId: string): void {
-    this._selectedIds.update(prev => {
-      const next = new Set(prev);
-      if (next.has(userId)) {
-        next.delete(userId);
-      } else {
-        next.add(userId);
+    Promise.all(requests).then(results => {
+      const allRooms = results.flat();
+      this._rooms.set(allRooms);
+      const currentId = this._activeRoomId();
+      if (!currentId || !allRooms.some(r => r.id === currentId)) {
+        const first = allRooms[0];
+        if (first) {
+          this._activeRoomId.set(first.id);
+          this.loadMessages(first.id);
+        }
       }
+    }).catch((err: unknown) => console.error('[ChatService] loadAllClubRooms error', err));
+  }
+  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
+    const query: Record<string, string> = {};
+    if (params?.before) query['before'] = params.before;
+    if (params?.limit != null) query['limit'] = String(params.limit);
+    firstValueFrom(
+      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
+        params: query,
+      }),
+    )
+      .then(raw => {
+        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
+        this._messages.update(map => ({ ...map, [roomId]: msgs }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
+  }
+  toggleOpen(): void {
+    this._isOpen.update(v => !v);
+    if (this._isOpen()) {
+      this.markAsRead();
+    }
+  }
+  openRoom(roomId: string): void {
+    this._activeRoomId.set(roomId);
+    this.loadMessages(roomId);
+    this.markAsRead();
+  }
+  markAsRead(): void {
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+  }
+  clearRooms(): void {
+    this._rooms.set([]);
+    this._messages.set({});
+    this._activeRoomId.set(null);
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+    this._isOpen.set(false);
+    this._mutedUserIds.set(new Set());
+    this.currentUserId = null;
+  }
+  muteUser(userId: string): void {
+    this._mutedUserIds.update(set => new Set([...set, userId]));
+  }
+  unmuteUser(userId: string): void {
+    this._mutedUserIds.update(set => {
+      const next = new Set(set);
+      next.delete(userId);
       return next;
     });
   }
-  async spin(): Promise<void> {
-    const selected = this._candidates().filter(m => this._selectedIds().has(m.userId));
-    if (selected.length < 2) throw new Error('Потрібно мінімум 2 учасники');
-    this._isSpinning.set(true);
-    this._result.set(null);
-    await new Promise<void>(resolve => setTimeout(resolve, 2000));
-    const max = Math.floor(0x100000000 / selected.length) * selected.length;
-    let rand: number;
-    do {
-      rand = crypto.getRandomValues(new Uint32Array(1))[0];
-    } while (rand >= max);
-    const idx = rand % selected.length;
-    this._result.set(selected[idx]);
-    this._isSpinning.set(false);
+  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    this.currentUserId = currentUser.id;
+    firstValueFrom(
+      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
+    )
+      .then(() => {
+        this.loadMessages(roomId);
+      })
+      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
   }
-  async saveSession(clubId: string): Promise<void> {
-    const user = this.auth.currentUser();
-    if (!user) throw new Error('Not authenticated');
-    const result = this._result();
-    if (!result) throw new Error('No result to save');
-    const body = {
-      purpose: this._purpose(),
-      candidates: this._candidates()
-        .filter(m => this._selectedIds().has(m.userId))
-        .map(m => m.userId),
-      result: result.userId,
+  deleteMessage(messageId: string): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    firstValueFrom(
+      this.http.delete(`${this.api}/chat/rooms/${roomId}/messages/${messageId}`),
+    )
+      .then(() => {
+        this._messages.update(map => ({
+          ...map,
+          [roomId]: (map[roomId] ?? []).filter(m => m.id !== messageId),
+        }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] deleteMessage error', err));
+  }
+  banUserFromChat(userId: string, durationSeconds: number): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    firstValueFrom(
+      this.http.post(`${this.api}/chat/rooms/${roomId}/ban`, {
+        user_id: userId,
+        duration_seconds: durationSeconds,
+      }),
+    )
+      .then(() => {
+        this._messages.update(map => ({
+          ...map,
+          [roomId]: (map[roomId] ?? []).filter(m => m.senderId !== userId),
+        }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
+  }
+  createRoom(clubId: string, name: string): void {
+    firstValueFrom(
+      this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),
+    )
+      .then(raw => {
+        const room: ChatRoom = { id: raw.id, name: raw.name, clubId };
+        this._rooms.update(rooms => [...rooms, room]);
+      })
+      .catch((err: unknown) => console.error('[ChatService] createRoom error', err));
+  }
+  private mapMessage(m: ApiChatMessage): ChatMessage {
+    return {
+      id: m.id,
+      senderId: m.senderId,
+      senderName: m.senderName,
+      text: m.text,
+      timestamp: new Date(m.timestamp),
+      isOwn: m.senderId === this.currentUserId,
     };
-    const raw = await firstValueFrom(
-      this.http.post<ApiRandomizerSession>(
-        `${this.apiUrl}/clubs/${clubId}/randomizer/sessions`,
-        body,
-      ),
-    );
-    const session = mapRandomizerSession(raw);
-    this._history.update(prev => [session, ...prev]);
-  }
-  async loadHistory(clubId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiRandomizerSession[]>(`${this.apiUrl}/clubs/${clubId}/randomizer/history`),
-    );
-    this._history.set(raw.map(mapRandomizerSession));
-  }
-  reset(): void {
-    const ids = new Set(this._candidates().map(m => m.userId));
-    this._selectedIds.set(ids);
-    this._result.set(null);
   }
 }
 ````
@@ -6697,23 +7029,6 @@ jobs:
           comment-tag: pr-review-gate
 ````
 
-## File: src/app/core/api/api-error.util.ts
-````typescript
-import { HttpErrorResponse } from '@angular/common/http';
-export function extractApiError(err: unknown): string {
-  if (err instanceof HttpErrorResponse) {
-    const body = err.error as { error?: unknown; detail?: unknown } | null;
-    if (typeof body?.error === 'string') return body.error;
-    const detail = body?.detail;
-    if (typeof detail === 'string') return detail;
-    if (Array.isArray(detail)) return (detail[0] as { msg?: string })?.msg ?? err.message ?? 'Unknown error';
-    if (detail && typeof detail === 'object') return (detail as { error?: string }).error ?? err.message ?? 'Unknown error';
-    return err.message ?? 'Unknown error';
-  }
-  return 'Unknown error';
-}
-````
-
 ## File: src/app/core/models/club.model.ts
 ````typescript
 import { UserSocials } from './user.model';
@@ -6870,213 +7185,6 @@ export class BookVoteService {
 }
 ````
 
-## File: src/app/core/services/chat.service.ts
-````typescript
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { ChatMessage, ChatRoom } from '../models/chat.model';
-import { environment } from '../../../environments/environment';
-interface ApiChatRoom {
-  id: string;
-  name: string;
-}
-interface ApiChatMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  text: string;
-  timestamp: string;
-}
-@Injectable({ providedIn: 'root' })
-export class ChatService {
-  private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _rooms = signal<ChatRoom[]>([]);
-  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
-  private readonly _activeRoomId = signal<string | null>(null);
-  private readonly _unreadCount = signal<number>(0);
-  private readonly _isOpen = signal<boolean>(false);
-  private readonly _hasNewMessage = signal<boolean>(false);
-  private readonly _mutedUserIds = signal<Set<string>>(new Set());
-  private currentUserId: string | null = null;
-  readonly rooms = this._rooms.asReadonly();
-  readonly messages = this._messages.asReadonly();
-  readonly activeRoomId = this._activeRoomId.asReadonly();
-  readonly unreadCount = this._unreadCount.asReadonly();
-  readonly isOpen = this._isOpen.asReadonly();
-  readonly hasNewMessage = this._hasNewMessage.asReadonly();
-  readonly mutedUserIds = this._mutedUserIds.asReadonly();
-  readonly activeRoom = computed(() =>
-    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
-  );
-  readonly activeMessages = computed(() => {
-    const msgs = this._messages()[this._activeRoomId() ?? ''] ?? [];
-    const muted = this._mutedUserIds();
-    return msgs.map(m => ({ ...m, isMuted: muted.has(m.senderId) }));
-  });
-  // ── Public API ────────────────────────────────────────────────────────────
-  /** Fetch chat rooms for a given club and seed the rooms signal. */
-  loadRooms(clubId: string, userId?: string): void {
-    if (userId !== undefined) {
-      this.currentUserId = userId;
-    }
-    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
-      .then(raw => {
-        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId }));
-        this._rooms.set(rooms);
-        const currentId = this._activeRoomId();
-        if (!currentId || !rooms.some(r => r.id === currentId)) {
-          const first = rooms[0];
-          if (first) {
-            this._activeRoomId.set(first.id);
-            this.loadMessages(first.id);
-          }
-        }
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
-  }
-  loadAllClubRooms(clubs: { id: string; name: string }[], userId?: string): void {
-    if (userId !== undefined) this.currentUserId = userId;
-    const multipleClubs = clubs.length > 1;
-    const requests = clubs.map(club =>
-      firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${club.id}/chat/rooms`))
-        .then(raw => raw.map(r => ({
-          id: r.id,
-          name: multipleClubs ? `${club.name} · ${r.name}` : r.name,
-          clubId: club.id,
-        })))
-        .catch(() => [] as ChatRoom[]),
-    );
-    Promise.all(requests).then(results => {
-      const allRooms = results.flat();
-      this._rooms.set(allRooms);
-      const currentId = this._activeRoomId();
-      if (!currentId || !allRooms.some(r => r.id === currentId)) {
-        const first = allRooms[0];
-        if (first) {
-          this._activeRoomId.set(first.id);
-          this.loadMessages(first.id);
-        }
-      }
-    }).catch((err: unknown) => console.error('[ChatService] loadAllClubRooms error', err));
-  }
-  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
-    const query: Record<string, string> = {};
-    if (params?.before) query['before'] = params.before;
-    if (params?.limit != null) query['limit'] = String(params.limit);
-    firstValueFrom(
-      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
-        params: query,
-      }),
-    )
-      .then(raw => {
-        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
-        this._messages.update(map => ({ ...map, [roomId]: msgs }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
-  }
-  toggleOpen(): void {
-    this._isOpen.update(v => !v);
-    if (this._isOpen()) {
-      this.markAsRead();
-    }
-  }
-  openRoom(roomId: string): void {
-    this._activeRoomId.set(roomId);
-    this.loadMessages(roomId);
-    this.markAsRead();
-  }
-  markAsRead(): void {
-    this._unreadCount.set(0);
-    this._hasNewMessage.set(false);
-  }
-  clearRooms(): void {
-    this._rooms.set([]);
-    this._messages.set({});
-    this._activeRoomId.set(null);
-    this._unreadCount.set(0);
-    this._hasNewMessage.set(false);
-    this._isOpen.set(false);
-    this._mutedUserIds.set(new Set());
-    this.currentUserId = null;
-  }
-  muteUser(userId: string): void {
-    this._mutedUserIds.update(set => new Set([...set, userId]));
-  }
-  unmuteUser(userId: string): void {
-    this._mutedUserIds.update(set => {
-      const next = new Set(set);
-      next.delete(userId);
-      return next;
-    });
-  }
-  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    this.currentUserId = currentUser.id;
-    firstValueFrom(
-      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
-    )
-      .then(() => {
-        this.loadMessages(roomId);
-      })
-      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
-  }
-  deleteMessage(messageId: string): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    firstValueFrom(
-      this.http.delete(`${this.api}/chat/rooms/${roomId}/messages/${messageId}`),
-    )
-      .then(() => {
-        this._messages.update(map => ({
-          ...map,
-          [roomId]: (map[roomId] ?? []).filter(m => m.id !== messageId),
-        }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] deleteMessage error', err));
-  }
-  banUserFromChat(userId: string, durationSeconds: number): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    firstValueFrom(
-      this.http.post(`${this.api}/chat/rooms/${roomId}/ban`, {
-        user_id: userId,
-        duration_seconds: durationSeconds,
-      }),
-    )
-      .then(() => {
-        this._messages.update(map => ({
-          ...map,
-          [roomId]: (map[roomId] ?? []).filter(m => m.senderId !== userId),
-        }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
-  }
-  createRoom(clubId: string, name: string): void {
-    firstValueFrom(
-      this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),
-    )
-      .then(raw => {
-        const room: ChatRoom = { id: raw.id, name: raw.name, clubId };
-        this._rooms.update(rooms => [...rooms, room]);
-      })
-      .catch((err: unknown) => console.error('[ChatService] createRoom error', err));
-  }
-  private mapMessage(m: ApiChatMessage): ChatMessage {
-    return {
-      id: m.id,
-      senderId: m.senderId,
-      senderName: m.senderName,
-      text: m.text,
-      timestamp: new Date(m.timestamp),
-      isOwn: m.senderId === this.currentUserId,
-    };
-  }
-}
-````
-
 ## File: src/app/core/services/geocoding.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -7097,6 +7205,343 @@ export class GeocodingService {
     return this.http.get<GeocodeSuggestion[]>(`${environment.apiUrl}/geocode/autocomplete`, {
       params: { q, lang, limit: String(limit) },
     });
+  }
+}
+````
+
+## File: src/app/core/services/quiz.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject, signal, computed } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { Quiz, QuizAttempt, QuizQuestion, QuizStatus, QuizSession, QuizLeaderboardEntry } from '../models/quiz.model';
+import { ClubEvent } from '../models/event.model';
+interface ApiQuiz {
+  id: string;
+  clubId: string;
+  createdBy: string;
+  title: string;
+  description: string | null;
+  isActive: boolean;
+  status: string;
+}
+interface ApiQuizQuestion {
+  id: string;
+  quizId: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+}
+interface ApiAttemptResponse {
+  id: string;
+  quizId: string;
+  userId: string;
+  score: number;
+  total: number;
+  answers: number[];
+}
+interface ApiQuizSession {
+  id: string;
+  quizId: string;
+  eventId: string;
+  startedBy: string;
+  startedAt: string;
+  closedAt: string | null;
+  participantCount: number;
+}
+interface ApiLeaderboardEntry {
+  rank: number;
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  score: number;
+  totalQuestions: number;
+  hasAttempted: boolean;
+}
+function mapQuiz(raw: ApiQuiz): Quiz {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    createdBy: raw.createdBy,
+    title: raw.title,
+    description: raw.description,
+    status: (raw.status as QuizStatus) ?? 'draft',
+    isActive: raw.isActive,
+  };
+}
+function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
+  return {
+    id: raw.id,
+    quizId: raw.quizId,
+    question: raw.question,
+    options: raw.options,
+    correctIndex: raw.correctIndex,
+  };
+}
+function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
+  return {
+    id: raw.id,
+    quizId: raw.quizId,
+    userId: raw.userId,
+    score: raw.score,
+    total: raw.total,
+    answers: raw.answers,
+  };
+}
+function mapSession(raw: ApiQuizSession): QuizSession {
+  return { ...raw };
+}
+function mapLeaderboardEntry(raw: ApiLeaderboardEntry): QuizLeaderboardEntry {
+  return { ...raw };
+}
+@Injectable({ providedIn: 'root' })
+export class QuizService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _quizzes = signal<Quiz[]>([]);
+  private readonly _questions = signal<QuizQuestion[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _session = signal<QuizSession | null>(null);
+  private readonly _leaderboard = signal<QuizLeaderboardEntry[]>([]);
+  readonly quizzes = this._quizzes.asReadonly();
+  readonly questions = this._questions.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly session = this._session.asReadonly();
+  readonly leaderboard = this._leaderboard.asReadonly();
+  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
+  async loadQuizzes(clubId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
+      );
+      this._quizzes.set(raw.map(mapQuiz));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async createQuiz(data: {
+    clubId: string;
+    title: string;
+    description: string;
+  }): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
+          title: data.title,
+          description: data.description || null,
+        }),
+      );
+      const quiz = mapQuiz(raw);
+      this._quizzes.update(prev => [quiz, ...prev]);
+      return quiz;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async addQuestion(
+    quizId: string,
+    q: Omit<QuizQuestion, 'id' | 'quizId'>,
+  ): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
+          question: q.question,
+          options: q.options,
+          correctIndex: q.correctIndex,
+        }),
+      );
+      this._questions.update(prev => [...prev, mapQuestion(raw)]);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async loadQuestions(quizId: string): Promise<void> {
+    this._isLoading.set(true);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
+      );
+      this._questions.set(raw.map(mapQuestion));
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
+      );
+      return mapAttempt(raw);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { isActive }),
+      );
+      this._quizzes.update(prev =>
+        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getQuiz(quizId: string): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz>(`${this.api}/quizzes/${quizId}`),
+      );
+      return mapQuiz(raw);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getQuestions(quizId: string): Promise<QuizQuestion[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
+      );
+      return raw.map(mapQuestion);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async updateQuiz(
+    quizId: string,
+    data: { title: string; description: string },
+  ): Promise<Quiz> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.patch<ApiQuiz>(`${this.api}/quizzes/${quizId}`, data),
+      );
+      const quiz = mapQuiz(raw);
+      this._quizzes.update(prev => prev.map(q => (q.id === quizId ? quiz : q)));
+      return quiz;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async updateQuestion(
+    quizId: string,
+    questionId: string,
+    q: Partial<Omit<QuizQuestion, 'id' | 'quizId'>>,
+  ): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(
+          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
+          q,
+        ),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async deleteQuestion(quizId: string, questionId: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.delete(
+          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
+        ),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async reorderQuestions(quizId: string, orderedIds: string[]): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.put(`${this.api}/quizzes/${quizId}/questions/order`, {
+          order: orderedIds,
+        }),
+      );
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async startSession(quizId: string, eventId: string): Promise<QuizSession> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.post<ApiQuizSession>(
+          `${this.api}/quizzes/${quizId}/sessions`,
+          { eventId },
+        ),
+      );
+      const session = mapSession(raw);
+      this._session.set(session);
+      return session;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getActiveSession(quizId: string): Promise<QuizSession | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuizSession>(
+          `${this.api}/quizzes/${quizId}/sessions/active`,
+        ),
+      );
+      return mapSession(raw);
+    } catch {
+      return null;
+    }
+  }
+  async getLeaderboard(
+    quizId: string,
+    sessionId: string,
+  ): Promise<QuizLeaderboardEntry[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<{ entries: ApiLeaderboardEntry[] }>(
+          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/leaderboard`,
+        ),
+      );
+      return raw.entries.map(mapLeaderboardEntry);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async endSession(quizId: string, sessionId: string): Promise<void> {
+    try {
+      await firstValueFrom(
+        this.http.patch(
+          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/close`,
+          {},
+        ),
+      );
+      this._session.set(null);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async getClubQuizzes(clubId: string): Promise<Quiz[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
+      );
+      return raw.map(mapQuiz);
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
+  }
+  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ClubEvent[]>(`${this.api}/clubs/${clubId}/events`),
+      );
+      return raw;
+    } catch (err) {
+      throw new Error(extractApiError(err));
+    }
   }
 }
 ````
@@ -8325,6 +8770,145 @@ sonar.sourceEncoding=UTF-8
 }
 ````
 
+## File: src/app/core/auth/auth.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
+import { catchError, firstValueFrom, map, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
+import { TokenStore } from './token.store';
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: ApiUserProfile;
+}
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly tokenStore = inject(TokenStore);
+  private readonly _currentUser = signal<UserProfile | null>(null);
+  private readonly _isLoading = signal<boolean>(true);
+  readonly currentUser = this._currentUser.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly isAuthenticated = computed(() => this._currentUser() !== null);
+  readonly userRole = computed(() => this._currentUser()?.role ?? null);
+  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
+  private readonly _statsResource = rxResource<UserStats | null, string | null>({
+    params: () => this._currentUser()?.id ?? null,
+    stream: ({ params: userId }) => {
+      if (!userId) return of(null as UserStats | null);
+      return this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
+        map(raw => mapUserStats(raw)),
+        catchError(() => of(null)),
+      );
+    },
+  });
+  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
+  constructor() {
+    const token = this.tokenStore.snapshot();
+    if (token) {
+      firstValueFrom(
+        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
+          catchError(() => {
+            this.tokenStore.clear();
+            return of(null);
+          }),
+        ),
+      ).then(raw => {
+        this._currentUser.set(raw ? mapUserProfile(raw) : null);
+        this._isLoading.set(false);
+      });
+    } else {
+      this._isLoading.set(false);
+    }
+  }
+  async signUp(
+    email: string,
+    password: string,
+    displayName: string,
+    role: UserRole,
+  ): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
+          email,
+          password,
+          displayName,
+          role,
+        }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signIn(email: string, password: string): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefresh(resp.refreshToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signOut(): Promise<void> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
+    } catch {  }
+    this.tokenStore.clear();
+    this._currentUser.set(null);
+    this.router.navigate(['/login']);
+  }
+  async updateRole(role: UserRole): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
+    );
+    this._currentUser.set({ ...user, role });
+  }
+  async updateDisplayName(name: string): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
+    );
+    this._currentUser.set({ ...user, displayName: name });
+  }
+  async updateSocials(socials: UserSocials): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
+    );
+    this._currentUser.set({ ...user, socials });
+  }
+  async setSocialsPublic(value: boolean): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
+        socialsPublic: value,
+      }),
+    );
+    this._currentUser.set({ ...user, socialsPublic: value });
+  }
+}
+````
+
 ## File: src/app/core/interceptors/auth.interceptor.ts
 ````typescript
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
@@ -8359,343 +8943,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
     }),
   );
 };
-````
-
-## File: src/app/core/services/quiz.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, inject, signal, computed } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { Quiz, QuizAttempt, QuizQuestion, QuizStatus, QuizSession, QuizLeaderboardEntry } from '../models/quiz.model';
-import { ClubEvent } from '../models/event.model';
-interface ApiQuiz {
-  id: string;
-  clubId: string;
-  createdBy: string;
-  title: string;
-  description: string | null;
-  isActive: boolean;
-  status: string;
-}
-interface ApiQuizQuestion {
-  id: string;
-  quizId: string;
-  question: string;
-  options: string[];
-  correctIndex: number;
-}
-interface ApiAttemptResponse {
-  id: string;
-  quizId: string;
-  userId: string;
-  score: number;
-  total: number;
-  answers: number[];
-}
-interface ApiQuizSession {
-  id: string;
-  quizId: string;
-  eventId: string;
-  startedBy: string;
-  startedAt: string;
-  closedAt: string | null;
-  participantCount: number;
-}
-interface ApiLeaderboardEntry {
-  rank: number;
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  score: number;
-  totalQuestions: number;
-  hasAttempted: boolean;
-}
-function mapQuiz(raw: ApiQuiz): Quiz {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    createdBy: raw.createdBy,
-    title: raw.title,
-    description: raw.description,
-    status: (raw.status as QuizStatus) ?? 'draft',
-    isActive: raw.isActive,
-  };
-}
-function mapQuestion(raw: ApiQuizQuestion): QuizQuestion {
-  return {
-    id: raw.id,
-    quizId: raw.quizId,
-    question: raw.question,
-    options: raw.options,
-    correctIndex: raw.correctIndex,
-  };
-}
-function mapAttempt(raw: ApiAttemptResponse): QuizAttempt {
-  return {
-    id: raw.id,
-    quizId: raw.quizId,
-    userId: raw.userId,
-    score: raw.score,
-    total: raw.total,
-    answers: raw.answers,
-  };
-}
-function mapSession(raw: ApiQuizSession): QuizSession {
-  return { ...raw };
-}
-function mapLeaderboardEntry(raw: ApiLeaderboardEntry): QuizLeaderboardEntry {
-  return { ...raw };
-}
-@Injectable({ providedIn: 'root' })
-export class QuizService {
-  private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _quizzes = signal<Quiz[]>([]);
-  private readonly _questions = signal<QuizQuestion[]>([]);
-  private readonly _isLoading = signal(false);
-  private readonly _session = signal<QuizSession | null>(null);
-  private readonly _leaderboard = signal<QuizLeaderboardEntry[]>([]);
-  readonly quizzes = this._quizzes.asReadonly();
-  readonly questions = this._questions.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly session = this._session.asReadonly();
-  readonly leaderboard = this._leaderboard.asReadonly();
-  readonly activeQuiz = computed(() => this._quizzes().find(q => q.isActive) ?? null);
-  async loadQuizzes(clubId: string): Promise<void> {
-    this._isLoading.set(true);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
-      );
-      this._quizzes.set(raw.map(mapQuiz));
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async createQuiz(data: {
-    clubId: string;
-    title: string;
-    description: string;
-  }): Promise<Quiz> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuiz>(`${this.api}/clubs/${data.clubId}/quizzes`, {
-          title: data.title,
-          description: data.description || null,
-        }),
-      );
-      const quiz = mapQuiz(raw);
-      this._quizzes.update(prev => [quiz, ...prev]);
-      return quiz;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async addQuestion(
-    quizId: string,
-    q: Omit<QuizQuestion, 'id' | 'quizId'>,
-  ): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuizQuestion>(`${this.api}/quizzes/${quizId}/questions`, {
-          question: q.question,
-          options: q.options,
-          correctIndex: q.correctIndex,
-        }),
-      );
-      this._questions.update(prev => [...prev, mapQuestion(raw)]);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async loadQuestions(quizId: string): Promise<void> {
-    this._isLoading.set(true);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
-      );
-      this._questions.set(raw.map(mapQuestion));
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async submitAttempt(quizId: string, answers: number[]): Promise<QuizAttempt> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiAttemptResponse>(`${this.api}/quizzes/${quizId}/attempts`, { answers }),
-      );
-      return mapAttempt(raw);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async toggleActive(quizId: string, isActive: boolean): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.patch(`${this.api}/quizzes/${quizId}/active`, { isActive }),
-      );
-      this._quizzes.update(prev =>
-        prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async getQuiz(quizId: string): Promise<Quiz> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuiz>(`${this.api}/quizzes/${quizId}`),
-      );
-      return mapQuiz(raw);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async getQuestions(quizId: string): Promise<QuizQuestion[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuizQuestion[]>(`${this.api}/quizzes/${quizId}/questions`),
-      );
-      return raw.map(mapQuestion);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async updateQuiz(
-    quizId: string,
-    data: { title: string; description: string },
-  ): Promise<Quiz> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.patch<ApiQuiz>(`${this.api}/quizzes/${quizId}`, data),
-      );
-      const quiz = mapQuiz(raw);
-      this._quizzes.update(prev => prev.map(q => (q.id === quizId ? quiz : q)));
-      return quiz;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async updateQuestion(
-    quizId: string,
-    questionId: string,
-    q: Partial<Omit<QuizQuestion, 'id' | 'quizId'>>,
-  ): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.patch(
-          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
-          q,
-        ),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async deleteQuestion(quizId: string, questionId: string): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.delete(
-          `${this.api}/quizzes/${quizId}/questions/${questionId}`,
-        ),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async reorderQuestions(quizId: string, orderedIds: string[]): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.put(`${this.api}/quizzes/${quizId}/questions/order`, {
-          order: orderedIds,
-        }),
-      );
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async startSession(quizId: string, eventId: string): Promise<QuizSession> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.post<ApiQuizSession>(
-          `${this.api}/quizzes/${quizId}/sessions`,
-          { eventId },
-        ),
-      );
-      const session = mapSession(raw);
-      this._session.set(session);
-      return session;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async getActiveSession(quizId: string): Promise<QuizSession | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuizSession>(
-          `${this.api}/quizzes/${quizId}/sessions/active`,
-        ),
-      );
-      return mapSession(raw);
-    } catch {
-      return null;
-    }
-  }
-  async getLeaderboard(
-    quizId: string,
-    sessionId: string,
-  ): Promise<QuizLeaderboardEntry[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<{ entries: ApiLeaderboardEntry[] }>(
-          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/leaderboard`,
-        ),
-      );
-      return raw.entries.map(mapLeaderboardEntry);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async endSession(quizId: string, sessionId: string): Promise<void> {
-    try {
-      await firstValueFrom(
-        this.http.patch(
-          `${this.api}/quizzes/${quizId}/sessions/${sessionId}/close`,
-          {},
-        ),
-      );
-      this._session.set(null);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async getClubQuizzes(clubId: string): Promise<Quiz[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiQuiz[]>(`${this.api}/clubs/${clubId}/quizzes`),
-      );
-      return raw.map(mapQuiz);
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ClubEvent[]>(`${this.api}/clubs/${clubId}/events`),
-      );
-      return raw;
-    } catch (err) {
-      throw new Error(extractApiError(err));
-    }
-  }
-}
 ````
 
 ## File: src/app/features/auth/login/login.component.html
@@ -9343,10 +9590,7 @@ import {
 } from '@angular/core';
 import {
   AbstractControl,
-  FormControl,
-  FormGroup,
   ReactiveFormsModule,
-  Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -9356,18 +9600,13 @@ import { HlmFieldImports } from '../../../shared/spartan/field/src';
 import { HlmInput } from '../../../shared/spartan/input/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
-interface MetaForm {
-  title: FormControl<string>;
-  description: FormControl<string>;
-}
-interface QuestionForm {
-  question: FormControl<string>;
-  option0: FormControl<string>;
-  option1: FormControl<string>;
-  option2: FormControl<string>;
-  option3: FormControl<string>;
-  correctIndex: FormControl<number>;
-}
+import {
+  OPTION_INDICES,
+  buildMetaForm,
+  buildQuestionForm,
+  isInvalidTouched,
+  optionLabel,
+} from '../quiz-form.utils';
 type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
 @Component({
   selector: 'app-quiz-create',
@@ -9384,46 +9623,11 @@ export class QuizCreateComponent {
   protected readonly isSaving = signal(false);
   protected readonly errorMessage = signal('');
   readonly id = input<string>('');
-  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
-  protected readonly metaForm = new FormGroup<MetaForm>({
-    title: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-  });
-  protected readonly questionForm = new FormGroup<QuestionForm>({
-    question: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
-    }),
-    option0: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option1: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option2: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option3: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    correctIndex: new FormControl<number>(0, { nonNullable: true }),
-  });
-  protected isInvalidTouched(ctrl: AbstractControl): boolean {
-    return ctrl.invalid && ctrl.touched;
-  }
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
+  readonly optionIndices = OPTION_INDICES;
+  protected readonly metaForm = buildMetaForm();
+  protected readonly questionForm = buildQuestionForm();
+  protected readonly isInvalidTouched = isInvalidTouched;
+  protected readonly optionLabel = optionLabel;
   protected nextStep(): void {
     if (this.metaForm.invalid) {
       this.metaForm.markAllAsTouched();
@@ -9490,10 +9694,7 @@ import {
 import { inject } from '@angular/core';
 import {
   AbstractControl,
-  FormControl,
-  FormGroup,
   ReactiveFormsModule,
-  Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HlmFieldImports } from '../../../shared/spartan/field/src';
@@ -9501,18 +9702,13 @@ import { HlmInput } from '../../../shared/spartan/input/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
 import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
-interface MetaForm {
-  title: FormControl<string>;
-  description: FormControl<string>;
-}
-interface QuestionForm {
-  question: FormControl<string>;
-  option0: FormControl<string>;
-  option1: FormControl<string>;
-  option2: FormControl<string>;
-  option3: FormControl<string>;
-  correctIndex: FormControl<number>;
-}
+import {
+  OPTION_INDICES,
+  buildMetaForm,
+  buildQuestionForm,
+  isInvalidTouched,
+  optionLabel,
+} from '../quiz-form.utils';
 interface EditableQuestion {
   id?: string;
   question: string;
@@ -9545,40 +9741,9 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
   readonly canSave = computed(
     () => this.localQuestions().length > 0 && !this.isSaving() && this.isDraft(),
   );
-  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
-  readonly metaForm = new FormGroup<MetaForm>({
-    title: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-  });
-  readonly questionForm = new FormGroup<QuestionForm>({
-    question: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
-    }),
-    option0: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option1: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option2: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option3: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    correctIndex: new FormControl<number>(0, { nonNullable: true }),
-  });
+  readonly optionIndices = OPTION_INDICES;
+  readonly metaForm = buildMetaForm();
+  readonly questionForm = buildQuestionForm();
   private readonly _syncEffect = effect(() => {
     const quiz = this._quizResource.value();
     if (quiz) {
@@ -9591,12 +9756,8 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
       }
     }
   });
-  protected isInvalidTouched(ctrl: AbstractControl): boolean {
-    return ctrl.invalid && ctrl.touched;
-  }
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
+  protected readonly isInvalidTouched = isInvalidTouched;
+  protected readonly optionLabel = optionLabel;
   protected nextStep(): void {
     if (this.metaForm.invalid) {
       this.metaForm.markAllAsTouched();
@@ -9822,6 +9983,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
 import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
+import { OPTION_INDICES, optionLabel } from '../quiz-form.utils';
 @Component({
   selector: 'app-quiz-preview',
   standalone: true,
@@ -9839,10 +10001,8 @@ export class QuizPreviewComponent extends QuizDetailBaseComponent {
   );
   readonly isActivating = signal(false);
   readonly errorMessage = signal('');
-  protected readonly optionIndices: readonly number[] = [0, 1, 2, 3];
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
+  protected readonly optionIndices = OPTION_INDICES;
+  protected readonly optionLabel = optionLabel;
   protected prev(): void {
     if (!this.isFirstQuestion()) this.currentIndex.update(i => i - 1);
   }
@@ -9881,6 +10041,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { QuizService } from '../../../core/services/quiz.service';
 import { QuizAttempt } from '../../../core/models/quiz.model';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { optionLabel } from '../quiz-form.utils';
 type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
 @Component({
   selector: 'app-quiz-take',
@@ -9954,9 +10115,7 @@ export class QuizTakeComponent implements OnInit {
         this.state.set('error');
       });
   }
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
+  protected readonly optionLabel = optionLabel;
   protected selectOption(index: number): void {
     const current = this.currentIndex();
     this.selectedAnswers.update(answers => {
@@ -10431,145 +10590,6 @@ export class ChatWidgetComponent {
       "angular-eslint"
     ],
     "analytics": "8ad34ae9-0dc3-4f68-98df-e83bac937e51"
-  }
-}
-````
-
-## File: src/app/core/auth/auth.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
-import { catchError, firstValueFrom, map, of } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
-import { TokenStore } from './token.store';
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: ApiUserProfile;
-}
-@Injectable({ providedIn: 'root' })
-export class AuthService {
-  private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
-  private readonly tokenStore = inject(TokenStore);
-  private readonly _currentUser = signal<UserProfile | null>(null);
-  private readonly _isLoading = signal<boolean>(true);
-  readonly currentUser = this._currentUser.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly isAuthenticated = computed(() => this._currentUser() !== null);
-  readonly userRole = computed(() => this._currentUser()?.role ?? null);
-  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
-  private readonly _statsResource = rxResource<UserStats | null, string | null>({
-    params: () => this._currentUser()?.id ?? null,
-    stream: ({ params: userId }) => {
-      if (!userId) return of(null as UserStats | null);
-      return this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
-        map(raw => mapUserStats(raw)),
-        catchError(() => of(null)),
-      );
-    },
-  });
-  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
-  constructor() {
-    const token = this.tokenStore.snapshot();
-    if (token) {
-      firstValueFrom(
-        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
-          catchError(() => {
-            this.tokenStore.clear();
-            return of(null);
-          }),
-        ),
-      ).then(raw => {
-        this._currentUser.set(raw ? mapUserProfile(raw) : null);
-        this._isLoading.set(false);
-      });
-    } else {
-      this._isLoading.set(false);
-    }
-  }
-  async signUp(
-    email: string,
-    password: string,
-    displayName: string,
-    role: UserRole,
-  ): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
-          email,
-          password,
-          displayName,
-          role,
-        }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signIn(email: string, password: string): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signOut(): Promise<void> {
-    try {
-      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
-    } catch {  }
-    this.tokenStore.clear();
-    this._currentUser.set(null);
-    this.router.navigate(['/login']);
-  }
-  async updateRole(role: UserRole): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
-    );
-    this._currentUser.set({ ...user, role });
-  }
-  async updateDisplayName(name: string): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
-    );
-    this._currentUser.set({ ...user, displayName: name });
-  }
-  async updateSocials(socials: UserSocials): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
-    );
-    this._currentUser.set({ ...user, socials });
-  }
-  async setSocialsPublic(value: boolean): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
-        socialsPublic: value,
-      }),
-    );
-    this._currentUser.set({ ...user, socialsPublic: value });
   }
 }
 ````

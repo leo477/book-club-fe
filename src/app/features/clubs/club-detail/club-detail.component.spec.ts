@@ -8,20 +8,8 @@ import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { EventService } from '../../../core/services/event.service';
-import { ClubEvent } from '../../../core/models/event.model';
 import { ComponentFixture } from '@angular/core/testing';
-
-function makeClubEvent(overrides: Partial<ClubEvent> = {}): ClubEvent {
-  return {
-    id: 'e1', clubId: 'c1', clubName: 'Test Club', organizerId: 'u1',
-    title: 'Test Event', description: null,
-    date: '2025-06-01T10:00:00', city: 'Kyiv',
-    address: null, lat: null, lng: null, status: 'scheduled',
-    coverUrl: null, theme: null, tags: [],
-    durationMinutes: null, afterMeetingVenue: null,
-    attendeeCount: 5, isAttending: false, ...overrides,
-  };
-}
+import { makeClubEvent } from '../../../../testing/event-test.helpers';
 
 describe('ClubDetailComponent', () => {
   let component: ClubDetailComponent;

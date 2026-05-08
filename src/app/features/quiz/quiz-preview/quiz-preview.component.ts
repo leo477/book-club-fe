@@ -10,6 +10,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
 import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
+import { OPTION_INDICES, optionLabel } from '../quiz-form.utils';
 
 @Component({
   selector: 'app-quiz-preview',
@@ -30,11 +31,8 @@ export class QuizPreviewComponent extends QuizDetailBaseComponent {
   readonly isActivating = signal(false);
   readonly errorMessage = signal('');
 
-  protected readonly optionIndices: readonly number[] = [0, 1, 2, 3];
-
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
+  protected readonly optionIndices = OPTION_INDICES;
+  protected readonly optionLabel = optionLabel;
 
   protected prev(): void {
     if (!this.isFirstQuestion()) this.currentIndex.update(i => i - 1);

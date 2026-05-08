@@ -12,6 +12,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { QuizService } from '../../../core/services/quiz.service';
 import { QuizAttempt } from '../../../core/models/quiz.model';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { optionLabel } from '../quiz-form.utils';
 
 type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
 
@@ -94,9 +95,7 @@ export class QuizTakeComponent implements OnInit {
       });
   }
 
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
+  protected readonly optionLabel = optionLabel;
 
   protected selectOption(index: number): void {
     const current = this.currentIndex();

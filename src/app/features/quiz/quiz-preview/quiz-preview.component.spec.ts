@@ -1,13 +1,7 @@
-import { Component, NO_ERRORS_SCHEMA, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-
-@Component({ template: '', standalone: true })
-class StubComponent {}
 import { QuizPreviewComponent } from './quiz-preview.component';
-import { QuizService } from '../../../core/services/quiz.service';
 import { Quiz, QuizQuestion } from '../../../core/models/quiz.model';
+import { configureQuizTestBed } from '../../../../testing/quiz-spec.helpers';
 
 const mockQuiz: Quiz = { id: 'q1', clubId: 'c1', createdBy: 'u1', title: 'Quiz', description: null, isActive: false, status: 'draft' };
 const mockQuestion: QuizQuestion = { id: 'qq1', quizId: 'q1', question: 'Q?', options: ['A', 'B', 'C', 'D'], correctIndex: 0 };
@@ -23,15 +17,7 @@ function makeQuizService() {
 describe('QuizPreviewComponent', () => {
   async function setup() {
     const quizSvc = makeQuizService();
-    await TestBed.configureTestingModule({
-      imports: [QuizPreviewComponent, TranslateModule.forRoot()],
-      providers: [
-        provideZonelessChangeDetection(),
-        provideRouter([{ path: '**', component: StubComponent }]),
-        { provide: QuizService, useValue: quizSvc },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    await configureQuizTestBed(QuizPreviewComponent, quizSvc);
     const fixture = TestBed.createComponent(QuizPreviewComponent);
     fixture.componentRef.setInput('id', 'club-1');
     fixture.componentRef.setInput('quizId', 'q1');

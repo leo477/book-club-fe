@@ -7,20 +7,8 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CreateEventComponent } from './create-event.component';
 import { EventService } from '../../../core/services/event.service';
 import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
-import { ClubEvent } from '../../../core/models/event.model';
 import { of } from 'rxjs';
-
-function makeEvent(overrides: Partial<ClubEvent> = {}): ClubEvent {
-  return {
-    id: 'e1', clubId: 'c1', clubName: 'Test Club', organizerId: 'u1',
-    title: 'Test Event', description: null,
-    date: '2025-06-01T10:00:00', city: 'Kyiv',
-    address: null, lat: null, lng: null, status: 'scheduled',
-    coverUrl: null, theme: null, tags: [],
-    durationMinutes: null, afterMeetingVenue: null,
-    attendeeCount: 5, isAttending: false, ...overrides,
-  };
-}
+import { makeClubEvent as makeEvent } from '../../../../testing/event-test.helpers';
 
 describe('CreateEventComponent', () => {
   let fixture: ComponentFixture<CreateEventComponent>;

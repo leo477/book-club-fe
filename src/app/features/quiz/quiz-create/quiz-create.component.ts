@@ -7,10 +7,7 @@ import {
 } from '@angular/core';
 import {
   AbstractControl,
-  FormControl,
-  FormGroup,
   ReactiveFormsModule,
-  Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -20,20 +17,13 @@ import { HlmFieldImports } from '../../../shared/spartan/field/src';
 import { HlmInput } from '../../../shared/spartan/input/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
-
-interface MetaForm {
-  title: FormControl<string>;
-  description: FormControl<string>;
-}
-
-interface QuestionForm {
-  question: FormControl<string>;
-  option0: FormControl<string>;
-  option1: FormControl<string>;
-  option2: FormControl<string>;
-  option3: FormControl<string>;
-  correctIndex: FormControl<number>;
-}
+import {
+  OPTION_INDICES,
+  buildMetaForm,
+  buildQuestionForm,
+  isInvalidTouched,
+  optionLabel,
+} from '../quiz-form.utils';
 
 type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
 
@@ -55,50 +45,13 @@ export class QuizCreateComponent {
 
   readonly id = input<string>('');
 
-  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
+  readonly optionIndices = OPTION_INDICES;
 
-  protected readonly metaForm = new FormGroup<MetaForm>({
-    title: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-  });
+  protected readonly metaForm = buildMetaForm();
+  protected readonly questionForm = buildQuestionForm();
 
-  protected readonly questionForm = new FormGroup<QuestionForm>({
-    question: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
-    }),
-    option0: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option1: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option2: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option3: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    correctIndex: new FormControl<number>(0, { nonNullable: true }),
-  });
-
-  protected isInvalidTouched(ctrl: AbstractControl): boolean {
-    return ctrl.invalid && ctrl.touched;
-  }
-
-  protected optionLabel(index: number): string {
-    return String.fromCodePoint(65 + index);
-  }
+  protected readonly isInvalidTouched = isInvalidTouched;
+  protected readonly optionLabel = optionLabel;
 
   protected nextStep(): void {
     if (this.metaForm.invalid) {

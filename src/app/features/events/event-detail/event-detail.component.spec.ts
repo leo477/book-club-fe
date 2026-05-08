@@ -8,20 +8,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { EventDetailComponent } from './event-detail.component';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { ApiEvent } from '../../../core/api/api-mappers';
 import { environment } from '../../../../environments/environment';
-
-function makeApiEvent(overrides: Partial<ApiEvent> = {}): ApiEvent {
-  return {
-    id: 'e1', clubId: 'c1', clubName: 'Test Club', organizerId: 'u1',
-    title: 'Test Event', description: null,
-    date: '2025-06-01T10:00:00', city: 'Kyiv',
-    address: null, lat: null, lng: null, status: 'scheduled',
-    coverUrl: null, theme: null, tags: [],
-    durationMinutes: null, afterMeetingVenue: null,
-    attendeeCount: 5, isAttending: false, ...overrides,
-  };
-}
+import { makeApiEvent } from '../../../../testing/event-test.helpers';
 
 describe('EventDetailComponent', () => {
   let fixture: ComponentFixture<EventDetailComponent>;
