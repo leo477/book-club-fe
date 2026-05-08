@@ -6,6 +6,7 @@ import {
   resource,
 } from '@angular/core';
 import { QuizService } from '../../core/services/quiz.service';
+import { isInvalidTouched, optionLabel } from './quiz-form.utils';
 
 @Directive()
 export abstract class QuizDetailBaseComponent {
@@ -31,4 +32,7 @@ export abstract class QuizDetailBaseComponent {
   readonly isLoading = computed(
     () => this._quizResource.isLoading() || this._questionsResource.isLoading(),
   );
+
+  protected readonly isInvalidTouched = isInvalidTouched;
+  protected readonly optionLabel = optionLabel;
 }

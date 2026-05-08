@@ -1,12 +1,7 @@
-import { Component, NO_ERRORS_SCHEMA, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-
-@Component({ template: '', standalone: true })
-class StubComponent {}
 import { QuizSessionComponent } from './quiz-session.component';
-import { QuizService } from '../../../core/services/quiz.service';
 import { QuizSession } from '../../../core/models/quiz.model';
+import { configureQuizTestBed } from '../../../../testing/quiz-spec.helpers';
 
 const mockSession: QuizSession = {
   id: 's1', quizId: 'q1', eventId: 'e1', startedBy: 'u1',
@@ -26,15 +21,7 @@ function makeQuizService(session: QuizSession | null = null) {
 describe('QuizSessionComponent', () => {
   async function setup(session: QuizSession | null = null) {
     const quizSvc = makeQuizService(session);
-    await TestBed.configureTestingModule({
-      imports: [QuizSessionComponent],
-      providers: [
-        provideZonelessChangeDetection(),
-        provideRouter([{ path: '**', component: StubComponent }]),
-        { provide: QuizService, useValue: quizSvc },
-      ],
-      schemas: [NO_ERRORS_SCHEMA],
-    }).compileComponents();
+    await configureQuizTestBed(QuizSessionComponent, quizSvc);
     const fixture = TestBed.createComponent(QuizSessionComponent);
     fixture.componentRef.setInput('id', 'club-1');
     fixture.componentRef.setInput('quizId', 'q1');

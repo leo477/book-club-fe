@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { EventService } from '../../../core/services/event.service';
@@ -30,6 +30,7 @@ export class EventDetailComponent {
 
   private readonly http = inject(HttpClient);
   private readonly eventService = inject(EventService);
+  private readonly translate = inject(TranslateService);
   readonly auth = inject(AuthService);
 
   private readonly _eventResource = rxResource<ClubEvent | null, string>({
@@ -72,7 +73,7 @@ export class EventDetailComponent {
   }
 
   async onCancelEvent(): Promise<void> {
-    if (!confirm('Cancel this event?')) return;
+    if (!confirm(this.translate.instant('EVENTS.cancel_confirm'))) return;
     this.isActioning.set(true);
     try {
       await this.eventService.cancelEvent(this.id());

@@ -30,7 +30,7 @@ import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
   templateUrl: './create-event.component.html',
 })
 export class CreateEventComponent implements OnInit {
-  readonly clubId = input.required<string>();
+  readonly id = input.required<string>();
 
   private readonly fb = inject(FormBuilder);
   private readonly eventService = inject(EventService);
@@ -46,7 +46,10 @@ export class CreateEventComponent implements OnInit {
   readonly coverFetchFailed = signal(false);
 
   private readonly _quizzesResource = resource({
-    params: () => ({ clubId: this.clubId() }),
+    params: () => {
+      const clubId = this.id();
+      return clubId ? { clubId } : undefined;
+    },
     loader: ({ params }) => this.quizService.getClubQuizzes(params.clubId),
   });
   readonly activeQuizzes = computed(() =>
@@ -120,7 +123,7 @@ export class CreateEventComponent implements OnInit {
       : undefined;
 
     try {
-      const created = await this.eventService.createEvent(this.clubId(), {
+      const created = await this.eventService.createEvent(this.id(), {
         title: v.title,
         description: v.description || undefined,
         date: new Date(v.date).toISOString(),

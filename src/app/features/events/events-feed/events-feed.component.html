@@ -8,7 +8,7 @@
         {{ 'NAV.events' | translate }}
       </h1>
       <p class="text-[var(--color-ink-muted)] font-display text-lg mb-8">
-        Discover and join upcoming book club gatherings
+        {{ 'EVENTS.subtitle' | translate }}
       </p>
 
       <!-- City filter -->
@@ -69,7 +69,7 @@
               ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
               : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
           >
-            Upcoming
+            {{ 'EVENTS.tab_upcoming' | translate }}
           </button>
 
           <button
@@ -84,7 +84,7 @@
               ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
               : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
           >
-            My Events
+            {{ 'EVENTS.tab_my' | translate }}
             @if (eventService.myEvents().length > 0) {
               <span class="inline-flex items-center justify-center
                            h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
@@ -102,43 +102,7 @@
       <!-- Upcoming panel -->
       @if (activeTab() === 'upcoming') {
         <div class="pt-6" role="tabpanel">
-          @if (eventService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true">
-              <hlm-spinner />
-            </div>
-          } @else if (sortedDates().length === 0) {
-            <app-empty-state
-              icon="📅"
-              title="No upcoming events"
-              description="No events are scheduled yet. Check back soon!"
-            />
-          } @else {
-            @for (date of sortedDates(); track date) {
-              <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
-                <div class="date-section-divider mb-5" aria-hidden="true">
-                  <h2
-                    [id]="'date-' + date"
-                    class="date-badge font-fantasy tracking-wider uppercase"
-                  >
-                    ✦ {{ date }} ✦
-                  </h2>
-                </div>
-                <ul class="bento-grid-3">
-                  @for (event of eventService.groupedByDate()[date]; track event.id) {
-                    <li>
-                      <app-event-card
-                        [event]="event"
-                        [isAuthenticated]="auth.isAuthenticated()"
-                        [attending]="attendingEventId() === event.id"
-                        (attend)="onAttend(event)"
-                        (cancelAttend)="onCancelAttend(event)"
-                      />
-                    </li>
-                  }
-                </ul>
-              </section>
-            }
-          }
+          <ng-container [ngTemplateOutlet]="upcomingPanel" />
         </div>
       }
 
@@ -152,8 +116,8 @@
           } @else if (eventService.myEvents().length === 0) {
             <app-empty-state
               icon="📅"
-              title="No upcoming events"
-              description="Join clubs to see their events here."
+              [title]="'EVENTS.no_upcoming' | translate"
+              [description]="'EVENTS.no_my_events_desc' | translate"
             />
           } @else {
             <ul class="bento-grid-3">
@@ -175,44 +139,48 @@
 
     } @else {
       <!-- Non-authenticated: upcoming events without tabs -->
-      @if (eventService.isLoading()) {
-        <div class="py-16 flex justify-center" aria-busy="true">
-          <hlm-spinner />
-        </div>
-      } @else if (sortedDates().length === 0) {
-        <app-empty-state
-          icon="📅"
-          title="No upcoming events"
-          description="No events are scheduled yet. Check back soon!"
-        />
-      } @else {
-        @for (date of sortedDates(); track date) {
-          <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
-            <div class="date-section-divider mb-5" aria-hidden="true">
-              <h2
-                [id]="'date-' + date"
-                class="date-badge font-fantasy tracking-wider uppercase"
-              >
-                ✦ {{ date }} ✦
-              </h2>
-            </div>
-            <ul class="bento-grid-3">
-              @for (event of eventService.groupedByDate()[date]; track event.id) {
-                <li>
-                  <app-event-card
-                    [event]="event"
-                    [isAuthenticated]="false"
-                    [attending]="false"
-                    (attend)="onAttend(event)"
-                    (cancelAttend)="onCancelAttend(event)"
-                  />
-                </li>
-              }
-            </ul>
-          </section>
-        }
-      }
+      <ng-container [ngTemplateOutlet]="upcomingPanel" />
     }
 
   </div>
 </div>
+
+<ng-template #upcomingPanel>
+  @if (eventService.isLoading()) {
+    <div class="py-16 flex justify-center" aria-busy="true">
+      <hlm-spinner />
+    </div>
+  } @else if (sortedDates().length === 0) {
+    <app-empty-state
+      icon="📅"
+      [title]="'EVENTS.no_upcoming' | translate"
+      [description]="'EVENTS.no_upcoming_desc' | translate"
+    />
+  } @else {
+    @for (date of sortedDates(); track date) {
+      <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
+        <div class="date-section-divider mb-5" aria-hidden="true">
+          <h2
+            [id]="'date-' + date"
+            class="date-badge font-fantasy tracking-wider uppercase"
+          >
+            ✦ {{ date }} ✦
+          </h2>
+        </div>
+        <ul class="bento-grid-3">
+          @for (event of eventService.groupedByDate()[date]; track event.id) {
+            <li>
+              <app-event-card
+                [event]="event"
+                [isAuthenticated]="auth.isAuthenticated()"
+                [attending]="attendingEventId() === event.id"
+                (attend)="onAttend(event)"
+                (cancelAttend)="onCancelAttend(event)"
+              />
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</ng-template>

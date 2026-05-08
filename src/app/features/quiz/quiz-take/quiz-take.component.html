@@ -7,7 +7,7 @@
             class="inline-flex items-center text-gray-500 hover:text-gray-900
                    dark:hover:text-white text-sm transition-colors"
           >
-            ← Back to Quizzes
+            {{ 'QUIZ.back_to_quizzes' | translate }}
           </a>
         </nav>
 
@@ -15,7 +15,7 @@
         @if (state() === 'loading') {
           <div class="flex flex-col items-center py-20 gap-4">
             <app-loading-spinner size="lg" />
-            <p class="text-gray-500 dark:text-gray-400 text-sm">Loading quiz…</p>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">{{ 'QUIZ.loading' | translate }}</p>
           </div>
         }
 
@@ -32,7 +32,7 @@
               class="mt-4 inline-block text-primary-600 dark:text-primary-400
                      hover:underline text-sm"
             >
-              Return to quiz list
+              {{ 'QUIZ.error_return' | translate }}
             </a>
           </div>
         }
@@ -42,7 +42,7 @@
           <!-- Progress bar -->
           <div>
             <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
-              <span>Question {{ currentIndex() + 1 }} of {{ quizService.questions().length }}</span>
+              <span>{{ 'QUIZ.question_of' | translate: { current: currentIndex() + 1, total: quizService.questions().length } }}</span>
               <span>{{ progressPercent() }}%</span>
             </div>
             <div class="h-2 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
@@ -119,7 +119,7 @@
                        hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40
                        disabled:cursor-not-allowed transition-colors"
               >
-                ← Previous
+                {{ 'QUIZ.prev' | translate }}
               </button>
 
               @if (isLastQuestion()) {
@@ -130,7 +130,7 @@
                          hover:bg-accent-500 disabled:opacity-40 disabled:cursor-not-allowed
                          text-white transition-colors"
                 >
-                  {{ state() === 'submitting' ? '…Submitting' : 'Submit Quiz ✓' }}
+                  {{ (state() === 'submitting' ? 'QUIZ.submitting_quiz' : 'QUIZ.submit_quiz') | translate }}
                 </button>
               } @else {
                 <button
@@ -140,7 +140,7 @@
                          hover:bg-primary-500 disabled:opacity-40 disabled:cursor-not-allowed
                          text-white transition-colors"
                 >
-                  Next →
+                  {{ 'QUIZ.next' | translate }}
                 </button>
               }
             </div>
@@ -222,7 +222,7 @@
                 class="bg-primary-600 hover:bg-primary-500 text-white rounded-xl px-8
                        py-3 font-medium transition-colors text-sm"
               >
-                Back to Quizzes
+                {{ 'QUIZ.back_to_quizzes' | translate }}
               </a>
             </div>
           </div>
