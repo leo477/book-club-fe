@@ -102,43 +102,7 @@
       <!-- Upcoming panel -->
       @if (activeTab() === 'upcoming') {
         <div class="pt-6" role="tabpanel">
-          @if (eventService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true">
-              <hlm-spinner />
-            </div>
-          } @else if (sortedDates().length === 0) {
-            <app-empty-state
-              icon="📅"
-              [title]="'EVENTS.no_upcoming' | translate"
-              [description]="'EVENTS.no_upcoming_desc' | translate"
-            />
-          } @else {
-            @for (date of sortedDates(); track date) {
-              <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
-                <div class="date-section-divider mb-5" aria-hidden="true">
-                  <h2
-                    [id]="'date-' + date"
-                    class="date-badge font-fantasy tracking-wider uppercase"
-                  >
-                    ✦ {{ date }} ✦
-                  </h2>
-                </div>
-                <ul class="bento-grid-3">
-                  @for (event of eventService.groupedByDate()[date]; track event.id) {
-                    <li>
-                      <app-event-card
-                        [event]="event"
-                        [isAuthenticated]="auth.isAuthenticated()"
-                        [attending]="attendingEventId() === event.id"
-                        (attend)="onAttend(event)"
-                        (cancelAttend)="onCancelAttend(event)"
-                      />
-                    </li>
-                  }
-                </ul>
-              </section>
-            }
-          }
+          <ng-container [ngTemplateOutlet]="upcomingPanel" />
         </div>
       }
 
@@ -175,44 +139,48 @@
 
     } @else {
       <!-- Non-authenticated: upcoming events without tabs -->
-      @if (eventService.isLoading()) {
-        <div class="py-16 flex justify-center" aria-busy="true">
-          <hlm-spinner />
-        </div>
-      } @else if (sortedDates().length === 0) {
-        <app-empty-state
-          icon="📅"
-          [title]="'EVENTS.no_upcoming' | translate"
-          [description]="'EVENTS.no_upcoming_desc' | translate"
-        />
-      } @else {
-        @for (date of sortedDates(); track date) {
-          <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
-            <div class="date-section-divider mb-5" aria-hidden="true">
-              <h2
-                [id]="'date-' + date"
-                class="date-badge font-fantasy tracking-wider uppercase"
-              >
-                ✦ {{ date }} ✦
-              </h2>
-            </div>
-            <ul class="bento-grid-3">
-              @for (event of eventService.groupedByDate()[date]; track event.id) {
-                <li>
-                  <app-event-card
-                    [event]="event"
-                    [isAuthenticated]="false"
-                    [attending]="false"
-                    (attend)="onAttend(event)"
-                    (cancelAttend)="onCancelAttend(event)"
-                  />
-                </li>
-              }
-            </ul>
-          </section>
-        }
-      }
+      <ng-container [ngTemplateOutlet]="upcomingPanel" />
     }
 
   </div>
 </div>
+
+<ng-template #upcomingPanel>
+  @if (eventService.isLoading()) {
+    <div class="py-16 flex justify-center" aria-busy="true">
+      <hlm-spinner />
+    </div>
+  } @else if (sortedDates().length === 0) {
+    <app-empty-state
+      icon="📅"
+      [title]="'EVENTS.no_upcoming' | translate"
+      [description]="'EVENTS.no_upcoming_desc' | translate"
+    />
+  } @else {
+    @for (date of sortedDates(); track date) {
+      <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
+        <div class="date-section-divider mb-5" aria-hidden="true">
+          <h2
+            [id]="'date-' + date"
+            class="date-badge font-fantasy tracking-wider uppercase"
+          >
+            ✦ {{ date }} ✦
+          </h2>
+        </div>
+        <ul class="bento-grid-3">
+          @for (event of eventService.groupedByDate()[date]; track event.id) {
+            <li>
+              <app-event-card
+                [event]="event"
+                [isAuthenticated]="auth.isAuthenticated()"
+                [attending]="attendingEventId() === event.id"
+                (attend)="onAttend(event)"
+                (cancelAttend)="onCancelAttend(event)"
+              />
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</ng-template>

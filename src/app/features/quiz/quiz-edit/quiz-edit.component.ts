@@ -14,13 +14,7 @@ import { HlmInput } from '../../../shared/spartan/input/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
 import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
-import {
-  OPTION_INDICES,
-  buildMetaForm,
-  buildQuestionForm,
-  isInvalidTouched,
-  optionLabel,
-} from '../quiz-form.utils';
+import { OPTION_INDICES, buildMetaForm, buildQuestionForm } from '../quiz-form.utils';
 
 interface EditableQuestion {
   id?: string;
@@ -76,9 +70,6 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
       }
     }
   });
-
-  protected readonly isInvalidTouched = isInvalidTouched;
-  protected readonly optionLabel = optionLabel;
 
   protected nextStep(): void {
     if (this.metaForm.invalid) {
