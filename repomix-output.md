@@ -1225,67 +1225,6 @@ export class ProfileStatsComponent {
 
 ````
 
-## File: src/app/features/quiz/quiz-form.utils.ts
-````typescript
-import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
-export interface MetaForm {
-  title: FormControl<string>;
-  description: FormControl<string>;
-}
-export interface QuestionForm {
-  question: FormControl<string>;
-  option0: FormControl<string>;
-  option1: FormControl<string>;
-  option2: FormControl<string>;
-  option3: FormControl<string>;
-  correctIndex: FormControl<number>;
-}
-export const OPTION_INDICES: readonly number[] = [0, 1, 2, 3];
-export function buildMetaForm(): FormGroup<MetaForm> {
-  return new FormGroup<MetaForm>({
-    title: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-  });
-}
-export function buildQuestionForm(): FormGroup<QuestionForm> {
-  return new FormGroup<QuestionForm>({
-    question: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
-    }),
-    option0: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option1: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option2: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    option3: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.maxLength(200)],
-    }),
-    correctIndex: new FormControl<number>(0, { nonNullable: true }),
-  });
-}
-export function optionLabel(index: number): string {
-  return String.fromCodePoint(65 + index);
-}
-export function isInvalidTouched(ctrl: AbstractControl): boolean {
-  return ctrl.invalid && ctrl.touched;
-}
-````
-
 ## File: src/app/features/randomizer/.gitkeep
 ````
 
@@ -2018,49 +1957,6 @@ export const environment = {
   production: true,
   apiUrl: 'https://book-club-be.onrender.com/api/v1',
 };
-````
-
-## File: src/testing/event-test.helpers.ts
-````typescript
-import { ClubEvent } from '../app/core/models/event.model';
-import { ApiEvent } from '../app/core/api/api-mappers';
-const BASE_EVENT = {
-  id: 'e1', clubId: 'c1', clubName: 'Test Club', organizerId: 'u1',
-  title: 'Test Event', description: null,
-  date: '2025-06-01T10:00:00', city: 'Kyiv',
-  address: null, lat: null, lng: null, status: 'scheduled' as const,
-  coverUrl: null, theme: null, tags: [],
-  durationMinutes: null, afterMeetingVenue: null,
-  attendeeCount: 5, isAttending: false,
-};
-export function makeClubEvent(overrides: Partial<ClubEvent> = {}): ClubEvent {
-  return { ...BASE_EVENT, ...overrides };
-}
-export function makeApiEvent(overrides: Partial<ApiEvent> = {}): ApiEvent {
-  return { ...BASE_EVENT, ...overrides };
-}
-````
-
-## File: src/testing/quiz-spec.helpers.ts
-````typescript
-import { Component, NO_ERRORS_SCHEMA, Type, provideZonelessChangeDetection } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { QuizService } from '../app/core/services/quiz.service';
-@Component({ template: '', standalone: true })
-export class StubComponent {}
-export async function configureQuizTestBed(component: Type<unknown>, quizSvc: unknown): Promise<void> {
-  await TestBed.configureTestingModule({
-    imports: [component as Type<unknown>, TranslateModule.forRoot()],
-    providers: [
-      provideZonelessChangeDetection(),
-      provideRouter([{ path: '**', component: StubComponent }]),
-      { provide: QuizService, useValue: quizSvc },
-    ],
-    schemas: [NO_ERRORS_SCHEMA],
-  }).compileComponents();
-}
 ````
 
 ## File: src/index.html
@@ -3716,6 +3612,67 @@ export abstract class QuizDetailBaseComponent {
   readonly isLoading = computed(
     () => this._quizResource.isLoading() || this._questionsResource.isLoading(),
   );
+}
+````
+
+## File: src/app/features/quiz/quiz-form.utils.ts
+````typescript
+import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
+export interface MetaForm {
+  title: FormControl<string>;
+  description: FormControl<string>;
+}
+export interface QuestionForm {
+  question: FormControl<string>;
+  option0: FormControl<string>;
+  option1: FormControl<string>;
+  option2: FormControl<string>;
+  option3: FormControl<string>;
+  correctIndex: FormControl<number>;
+}
+export const OPTION_INDICES: readonly number[] = [0, 1, 2, 3];
+export function buildMetaForm(): FormGroup<MetaForm> {
+  return new FormGroup<MetaForm>({
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+  });
+}
+export function buildQuestionForm(): FormGroup<QuestionForm> {
+  return new FormGroup<QuestionForm>({
+    question: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
+    }),
+    option0: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option1: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option2: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option3: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    correctIndex: new FormControl<number>(0, { nonNullable: true }),
+  });
+}
+export function optionLabel(index: number): string {
+  return String.fromCodePoint(65 + index);
+}
+export function isInvalidTouched(ctrl: AbstractControl): boolean {
+  return ctrl.invalid && ctrl.touched;
 }
 ````
 
@@ -6177,6 +6134,49 @@ export const environment = {
   production: false,
   apiUrl: 'http://localhost:8000/api/v1',
 };
+````
+
+## File: src/testing/event-test.helpers.ts
+````typescript
+import { ClubEvent } from '../app/core/models/event.model';
+import { ApiEvent } from '../app/core/api/api-mappers';
+const BASE_EVENT = {
+  id: 'e1', clubId: 'c1', clubName: 'Test Club', organizerId: 'u1',
+  title: 'Test Event', description: null,
+  date: '2025-06-01T10:00:00', city: 'Kyiv',
+  address: null, lat: null, lng: null, status: 'scheduled' as const,
+  coverUrl: null, theme: null, tags: [],
+  durationMinutes: null, afterMeetingVenue: null,
+  attendeeCount: 5, isAttending: false,
+};
+export function makeClubEvent(overrides: Partial<ClubEvent> = {}): ClubEvent {
+  return { ...BASE_EVENT, ...overrides };
+}
+export function makeApiEvent(overrides: Partial<ApiEvent> = {}): ApiEvent {
+  return { ...BASE_EVENT, ...overrides };
+}
+````
+
+## File: src/testing/quiz-spec.helpers.ts
+````typescript
+import { Component, NO_ERRORS_SCHEMA, Type, provideZonelessChangeDetection } from '@angular/core';
+import { TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { QuizService } from '../app/core/services/quiz.service';
+@Component({ template: '', standalone: true })
+export class StubComponent {}
+export async function configureQuizTestBed(component: Type<unknown>, quizSvc: unknown): Promise<void> {
+  await TestBed.configureTestingModule({
+    imports: [component as Type<unknown>, TranslateModule.forRoot()],
+    providers: [
+      provideZonelessChangeDetection(),
+      provideRouter([{ path: '**', component: StubComponent }]),
+      { provide: QuizService, useValue: quizSvc },
+    ],
+    schemas: [NO_ERRORS_SCHEMA],
+  }).compileComponents();
+}
 ````
 
 ## File: supabase/migrations/006_events.sql
@@ -9579,260 +9579,6 @@ export class ProfileComponent {
 }
 ````
 
-## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  inject,
-  input,
-  signal,
-} from '@angular/core';
-import {
-  AbstractControl,
-  ReactiveFormsModule,
-} from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizQuestion } from '../../../core/models/quiz.model';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmCardImports } from '../../../shared/spartan/card/src';
-import {
-  OPTION_INDICES,
-  buildMetaForm,
-  buildQuestionForm,
-  isInvalidTouched,
-  optionLabel,
-} from '../quiz-form.utils';
-type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
-@Component({
-  selector: 'app-quiz-create',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, TranslateModule, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
-  templateUrl: './quiz-create.component.html',
-})
-export class QuizCreateComponent {
-  private readonly quizService = inject(QuizService);
-  private readonly router = inject(Router);
-  protected readonly currentStep = signal<1 | 2>(1);
-  protected readonly localQuestions = signal<LocalQuestion[]>([]);
-  protected readonly isSaving = signal(false);
-  protected readonly errorMessage = signal('');
-  readonly id = input<string>('');
-  readonly optionIndices = OPTION_INDICES;
-  protected readonly metaForm = buildMetaForm();
-  protected readonly questionForm = buildQuestionForm();
-  protected readonly isInvalidTouched = isInvalidTouched;
-  protected readonly optionLabel = optionLabel;
-  protected nextStep(): void {
-    if (this.metaForm.invalid) {
-      this.metaForm.markAllAsTouched();
-      return;
-    }
-    this.currentStep.set(2);
-  }
-  protected previousStep(): void {
-    this.currentStep.set(1);
-    this.errorMessage.set('');
-  }
-  protected addQuestion(): void {
-    if (this.questionForm.invalid) {
-      this.questionForm.markAllAsTouched();
-      return;
-    }
-    const { question, option0, option1, option2, option3, correctIndex } =
-      this.questionForm.getRawValue();
-    const newQuestion: LocalQuestion = {
-      question: question.trim(),
-      options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
-      correctIndex,
-    };
-    this.localQuestions.update(prev => [...prev, newQuestion]);
-    this.questionForm.reset({ correctIndex: 0 });
-  }
-  protected removeQuestion(index: number): void {
-    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
-  }
-  protected saveQuiz(): void {
-    const questions = this.localQuestions();
-    if (questions.length === 0) return;
-    this.isSaving.set(true);
-    this.errorMessage.set('');
-    const { title, description } = this.metaForm.getRawValue();
-    const clubId = this.id();
-    this.quizService
-      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
-      .then(async quiz => {
-        for (const q of questions) {
-          await this.quizService.addQuestion(quiz.id, q);
-        }
-        this.isSaving.set(false);
-        this.router.navigate(['/clubs', clubId, 'quizzes']);
-      })
-      .catch(err => {
-        this.isSaving.set(false);
-        this.errorMessage.set((err as Error).message);
-      });
-  }
-}
-````
-
-## File: src/app/features/quiz/quiz-edit/quiz-edit.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  linkedSignal,
-  signal,
-} from '@angular/core';
-import { inject } from '@angular/core';
-import {
-  AbstractControl,
-  ReactiveFormsModule,
-} from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmCardImports } from '../../../shared/spartan/card/src';
-import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
-import {
-  OPTION_INDICES,
-  buildMetaForm,
-  buildQuestionForm,
-  isInvalidTouched,
-  optionLabel,
-} from '../quiz-form.utils';
-interface EditableQuestion {
-  id?: string;
-  question: string;
-  options: string[];
-  correctIndex: number;
-}
-@Component({
-  selector: 'app-quiz-edit',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
-  templateUrl: './quiz-edit.component.html',
-})
-export class QuizEditComponent extends QuizDetailBaseComponent {
-  private readonly router = inject(Router);
-  readonly isDraft = computed(() => (this.quiz()?.status ?? 'draft') === 'draft');
-  readonly localQuestions = linkedSignal<EditableQuestion[]>(
-    () =>
-      (this._questionsResource.value() ?? []).map(q => ({
-        id: q.id,
-        question: q.question,
-        options: [...q.options],
-        correctIndex: q.correctIndex,
-      })),
-  );
-  private readonly _deletedIds = signal<string[]>([]);
-  readonly currentStep = signal<1 | 2>(1);
-  readonly isSaving = signal(false);
-  readonly errorMessage = signal('');
-  readonly canSave = computed(
-    () => this.localQuestions().length > 0 && !this.isSaving() && this.isDraft(),
-  );
-  readonly optionIndices = OPTION_INDICES;
-  readonly metaForm = buildMetaForm();
-  readonly questionForm = buildQuestionForm();
-  private readonly _syncEffect = effect(() => {
-    const quiz = this._quizResource.value();
-    if (quiz) {
-      this.metaForm.patchValue({
-        title: quiz.title,
-        description: quiz.description ?? '',
-      });
-      if (quiz.status !== 'draft') {
-        this.metaForm.disable();
-      }
-    }
-  });
-  protected readonly isInvalidTouched = isInvalidTouched;
-  protected readonly optionLabel = optionLabel;
-  protected nextStep(): void {
-    if (this.metaForm.invalid) {
-      this.metaForm.markAllAsTouched();
-      return;
-    }
-    this.currentStep.set(2);
-  }
-  protected previousStep(): void {
-    this.currentStep.set(1);
-    this.errorMessage.set('');
-  }
-  protected addQuestion(): void {
-    if (this.questionForm.invalid) {
-      this.questionForm.markAllAsTouched();
-      return;
-    }
-    const { question, option0, option1, option2, option3, correctIndex } =
-      this.questionForm.getRawValue();
-    this.localQuestions.update(prev => [
-      ...prev,
-      {
-        question: question.trim(),
-        options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
-        correctIndex,
-      },
-    ]);
-    this.questionForm.reset({ correctIndex: 0 });
-  }
-  protected removeQuestion(index: number): void {
-    const q = this.localQuestions()[index];
-    const qId = q.id;
-    if (qId) {
-      this._deletedIds.update(ids => [...ids, qId]);
-    }
-    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
-  }
-  protected saveChanges(): void {
-    if (!this.canSave()) return;
-    this.isSaving.set(true);
-    this.errorMessage.set('');
-    const qId = this.quizId();
-    const { title, description } = this.metaForm.getRawValue();
-    (async () => {
-      await this.quizService.updateQuiz(qId, {
-        title: title.trim(),
-        description: description.trim(),
-      });
-      for (const id of this._deletedIds()) {
-        await this.quizService.deleteQuestion(qId, id);
-      }
-      for (const q of this.localQuestions()) {
-        if (q.id) {
-          await this.quizService.updateQuestion(qId, q.id, {
-            question: q.question,
-            options: q.options,
-            correctIndex: q.correctIndex,
-          });
-        } else {
-          await this.quizService.addQuestion(qId, {
-            question: q.question,
-            options: q.options,
-            correctIndex: q.correctIndex,
-          });
-        }
-      }
-      this.isSaving.set(false);
-      this.router.navigate(['/clubs', this.id(), 'quizzes']);
-    })().catch(err => {
-      this.isSaving.set(false);
-      this.errorMessage.set((err as Error).message);
-    });
-  }
-}
-````
-
 ## File: src/app/features/quiz/quiz-leaderboard/quiz-leaderboard.component.html
 ````html
 <div class="min-h-screen p-4 sm:p-8">
@@ -9965,187 +9711,6 @@ export class QuizListComponent {
   }
   protected takeQuiz(quizId: string): void {
     this.router.navigate(['/clubs', this.id(), 'quizzes', quizId]);
-  }
-}
-````
-
-## File: src/app/features/quiz/quiz-preview/quiz-preview.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  signal,
-} from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { inject } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmCardImports } from '../../../shared/spartan/card/src';
-import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
-import { OPTION_INDICES, optionLabel } from '../quiz-form.utils';
-@Component({
-  selector: 'app-quiz-preview',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton],
-  templateUrl: './quiz-preview.component.html',
-})
-export class QuizPreviewComponent extends QuizDetailBaseComponent {
-  private readonly router = inject(Router);
-  readonly currentIndex = signal(0);
-  readonly currentQuestion = computed(() => this.questions()[this.currentIndex()] ?? null);
-  readonly isFirstQuestion = computed(() => this.currentIndex() === 0);
-  readonly isLastQuestion = computed(
-    () => this.currentIndex() === this.questions().length - 1,
-  );
-  readonly isActivating = signal(false);
-  readonly errorMessage = signal('');
-  protected readonly optionIndices = OPTION_INDICES;
-  protected readonly optionLabel = optionLabel;
-  protected prev(): void {
-    if (!this.isFirstQuestion()) this.currentIndex.update(i => i - 1);
-  }
-  protected next(): void {
-    if (!this.isLastQuestion()) this.currentIndex.update(i => i + 1);
-  }
-  protected activateQuiz(): void {
-    this.isActivating.set(true);
-    this.quizService
-      .toggleActive(this.quizId(), true)
-      .then(() => {
-        this.isActivating.set(false);
-        this.router.navigate(['/clubs', this.id(), 'quizzes']);
-      })
-      .catch(err => {
-        this.isActivating.set(false);
-        this.errorMessage.set((err as Error).message);
-      });
-  }
-}
-````
-
-## File: src/app/features/quiz/quiz-take/quiz-take.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-  linkedSignal,
-} from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizAttempt } from '../../../core/models/quiz.model';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-import { optionLabel } from '../quiz-form.utils';
-type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
-@Component({
-  selector: 'app-quiz-take',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, LoadingSpinnerComponent],
-  templateUrl: './quiz-take.component.html',
-})
-export class QuizTakeComponent implements OnInit {
-  protected readonly quizService = inject(QuizService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  protected readonly state = signal<QuizState>('loading');
-  protected readonly errorMessage = signal('');
-  protected readonly currentIndex = linkedSignal(() => {
-  this.quizService.questions(); // Реєструємо залежність: коли питання зміняться, індекс скинеться
-  return 0;
-});
-  protected readonly selectedAnswers = signal<number[]>([]);
-  protected readonly selectedOption = computed(
-    () => this.selectedAnswers()[this.currentIndex()] ?? -1,
-  );
-  protected readonly attempt = signal<QuizAttempt | null>(null);
-  protected clubId = '';
-  protected readonly currentQuestion = computed(
-    () => this.quizService.questions()[this.currentIndex()] ?? null,
-  );
-  protected readonly isLastQuestion = computed(
-    () => this.currentIndex() === this.quizService.questions().length - 1,
-  );
-  protected readonly progressPercent = computed(() => {
-    const total = this.quizService.questions().length;
-    return total === 0 ? 0 : Math.round(((this.currentIndex() + 1) / total) * 100);
-  });
-  protected readonly scorePercent = computed(() => {
-    const a = this.attempt();
-    if (!a || a.total === 0) return 0;
-    return Math.round((a.score / a.total) * 100);
-  });
-  protected readonly scoreMessage = computed(() => {
-    const pct = this.scorePercent();
-    if (pct === 100) return '🎉 Perfect score!';
-    if (pct >= 80) return '🌟 Great job!';
-    if (pct >= 60) return '👍 Good effort!';
-    if (pct >= 40) return '📖 Keep reading!';
-    return '💪 Better luck next time!';
-  });
-  ngOnInit(): void {
-    // Both :id (club) and :quizId are inherited via paramsInheritanceStrategy:'always'
-    this.clubId = this.route.snapshot.params['id'] as string;
-    const quizId = this.route.snapshot.params['quizId'] as string;
-    if (!quizId) {
-      this.errorMessage.set('Quiz not found.');
-      this.state.set('error');
-      return;
-    }
-    this.quizService
-      .loadQuestions(quizId)
-      .then(() => {
-        const count = this.quizService.questions().length;
-        if (count === 0) {
-          this.errorMessage.set('This quiz has no questions yet.');
-          this.state.set('error');
-          return;
-        }
-        this.selectedAnswers.set(new Array<number>(count).fill(-1));
-        this.state.set('taking');
-      })
-      .catch(err => {
-        this.errorMessage.set((err as Error).message);
-        this.state.set('error');
-      });
-  }
-  protected readonly optionLabel = optionLabel;
-  protected selectOption(index: number): void {
-    const current = this.currentIndex();
-    this.selectedAnswers.update(answers => {
-      const copy = [...answers];
-      copy[current] = index;
-      return copy;
-    });
-  }
-  protected next(): void {
-    if (this.selectedOption() === -1) return;
-    this.currentIndex.update(i => i + 1);
-  }
-  protected previous(): void {
-    if (this.currentIndex() === 0) return;
-    this.currentIndex.update(i => i - 1);
-  }
-  protected submit(): void {
-    if (this.selectedOption() === -1) return;
-    this.state.set('submitting');
-    const quizId = this.route.snapshot.params['quizId'] as string;
-    this.quizService
-      .submitAttempt(quizId, this.selectedAnswers())
-      .then(result => {
-        this.attempt.set(result);
-        this.state.set('results');
-      })
-      .catch(err => {
-        this.errorMessage.set((err as Error).message);
-        this.state.set('error');
-      });
   }
 }
 ````
@@ -11205,6 +10770,254 @@ export class EditClubComponent implements OnInit {
 }
 ````
 
+## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizQuestion } from '../../../core/models/quiz.model';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+import {
+  OPTION_INDICES,
+  buildMetaForm,
+  buildQuestionForm,
+  isInvalidTouched,
+  optionLabel,
+} from '../quiz-form.utils';
+type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
+@Component({
+  selector: 'app-quiz-create',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
+  templateUrl: './quiz-create.component.html',
+})
+export class QuizCreateComponent {
+  private readonly quizService = inject(QuizService);
+  private readonly router = inject(Router);
+  protected readonly currentStep = signal<1 | 2>(1);
+  protected readonly localQuestions = signal<LocalQuestion[]>([]);
+  protected readonly isSaving = signal(false);
+  protected readonly errorMessage = signal('');
+  readonly id = input<string>('');
+  readonly optionIndices = OPTION_INDICES;
+  protected readonly metaForm = buildMetaForm();
+  protected readonly questionForm = buildQuestionForm();
+  protected readonly isInvalidTouched = isInvalidTouched;
+  protected readonly optionLabel = optionLabel;
+  protected nextStep(): void {
+    if (this.metaForm.invalid) {
+      this.metaForm.markAllAsTouched();
+      return;
+    }
+    this.currentStep.set(2);
+  }
+  protected previousStep(): void {
+    this.currentStep.set(1);
+    this.errorMessage.set('');
+  }
+  protected addQuestion(): void {
+    if (this.questionForm.invalid) {
+      this.questionForm.markAllAsTouched();
+      return;
+    }
+    const { question, option0, option1, option2, option3, correctIndex } =
+      this.questionForm.getRawValue();
+    const newQuestion: LocalQuestion = {
+      question: question.trim(),
+      options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
+      correctIndex,
+    };
+    this.localQuestions.update(prev => [...prev, newQuestion]);
+    this.questionForm.reset({ correctIndex: 0 });
+  }
+  protected removeQuestion(index: number): void {
+    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
+  }
+  protected saveQuiz(): void {
+    const questions = this.localQuestions();
+    if (questions.length === 0) return;
+    this.isSaving.set(true);
+    this.errorMessage.set('');
+    const { title, description } = this.metaForm.getRawValue();
+    const clubId = this.id();
+    this.quizService
+      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
+      .then(async quiz => {
+        for (const q of questions) {
+          await this.quizService.addQuestion(quiz.id, q);
+        }
+        this.isSaving.set(false);
+        this.router.navigate(['/clubs', clubId, 'quizzes']);
+      })
+      .catch(err => {
+        this.isSaving.set(false);
+        this.errorMessage.set((err as Error).message);
+      });
+  }
+}
+````
+
+## File: src/app/features/quiz/quiz-edit/quiz-edit.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  linkedSignal,
+  signal,
+} from '@angular/core';
+import { inject } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
+import {
+  OPTION_INDICES,
+  buildMetaForm,
+  buildQuestionForm,
+  isInvalidTouched,
+  optionLabel,
+} from '../quiz-form.utils';
+interface EditableQuestion {
+  id?: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+}
+@Component({
+  selector: 'app-quiz-edit',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
+  templateUrl: './quiz-edit.component.html',
+})
+export class QuizEditComponent extends QuizDetailBaseComponent {
+  private readonly router = inject(Router);
+  readonly isDraft = computed(() => (this.quiz()?.status ?? 'draft') === 'draft');
+  readonly localQuestions = linkedSignal<EditableQuestion[]>(
+    () =>
+      (this._questionsResource.value() ?? []).map(q => ({
+        id: q.id,
+        question: q.question,
+        options: [...q.options],
+        correctIndex: q.correctIndex,
+      })),
+  );
+  private readonly _deletedIds = signal<string[]>([]);
+  readonly currentStep = signal<1 | 2>(1);
+  readonly isSaving = signal(false);
+  readonly errorMessage = signal('');
+  readonly canSave = computed(
+    () => this.localQuestions().length > 0 && !this.isSaving() && this.isDraft(),
+  );
+  readonly optionIndices = OPTION_INDICES;
+  readonly metaForm = buildMetaForm();
+  readonly questionForm = buildQuestionForm();
+  private readonly _syncEffect = effect(() => {
+    const quiz = this._quizResource.value();
+    if (quiz) {
+      this.metaForm.patchValue({
+        title: quiz.title,
+        description: quiz.description ?? '',
+      });
+      if (quiz.status !== 'draft') {
+        this.metaForm.disable();
+      }
+    }
+  });
+  protected readonly isInvalidTouched = isInvalidTouched;
+  protected readonly optionLabel = optionLabel;
+  protected nextStep(): void {
+    if (this.metaForm.invalid) {
+      this.metaForm.markAllAsTouched();
+      return;
+    }
+    this.currentStep.set(2);
+  }
+  protected previousStep(): void {
+    this.currentStep.set(1);
+    this.errorMessage.set('');
+  }
+  protected addQuestion(): void {
+    if (this.questionForm.invalid) {
+      this.questionForm.markAllAsTouched();
+      return;
+    }
+    const { question, option0, option1, option2, option3, correctIndex } =
+      this.questionForm.getRawValue();
+    this.localQuestions.update(prev => [
+      ...prev,
+      {
+        question: question.trim(),
+        options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
+        correctIndex,
+      },
+    ]);
+    this.questionForm.reset({ correctIndex: 0 });
+  }
+  protected removeQuestion(index: number): void {
+    const q = this.localQuestions()[index];
+    const qId = q.id;
+    if (qId) {
+      this._deletedIds.update(ids => [...ids, qId]);
+    }
+    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
+  }
+  protected saveChanges(): void {
+    if (!this.canSave()) return;
+    this.isSaving.set(true);
+    this.errorMessage.set('');
+    const qId = this.quizId();
+    const { title, description } = this.metaForm.getRawValue();
+    (async () => {
+      await this.quizService.updateQuiz(qId, {
+        title: title.trim(),
+        description: description.trim(),
+      });
+      for (const id of this._deletedIds()) {
+        await this.quizService.deleteQuestion(qId, id);
+      }
+      for (const q of this.localQuestions()) {
+        if (q.id) {
+          await this.quizService.updateQuestion(qId, q.id, {
+            question: q.question,
+            options: q.options,
+            correctIndex: q.correctIndex,
+          });
+        } else {
+          await this.quizService.addQuestion(qId, {
+            question: q.question,
+            options: q.options,
+            correctIndex: q.correctIndex,
+          });
+        }
+      }
+      this.isSaving.set(false);
+      this.router.navigate(['/clubs', this.id(), 'quizzes']);
+    })().catch(err => {
+      this.isSaving.set(false);
+      this.errorMessage.set((err as Error).message);
+    });
+  }
+}
+````
+
 ## File: src/app/features/quiz/quiz-list/quiz-list.component.html
 ````html
 <div class="min-h-screen p-4 sm:p-8">
@@ -11355,6 +11168,62 @@ export class EditClubComponent implements OnInit {
     }
   </div>
 </div>
+````
+
+## File: src/app/features/quiz/quiz-preview/quiz-preview.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  signal,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { inject } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
+import { OPTION_INDICES, optionLabel } from '../quiz-form.utils';
+@Component({
+  selector: 'app-quiz-preview',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton],
+  templateUrl: './quiz-preview.component.html',
+})
+export class QuizPreviewComponent extends QuizDetailBaseComponent {
+  private readonly router = inject(Router);
+  readonly currentIndex = signal(0);
+  readonly currentQuestion = computed(() => this.questions()[this.currentIndex()] ?? null);
+  readonly isFirstQuestion = computed(() => this.currentIndex() === 0);
+  readonly isLastQuestion = computed(
+    () => this.currentIndex() === this.questions().length - 1,
+  );
+  readonly isActivating = signal(false);
+  readonly errorMessage = signal('');
+  protected readonly optionIndices = OPTION_INDICES;
+  protected readonly optionLabel = optionLabel;
+  protected prev(): void {
+    if (!this.isFirstQuestion()) this.currentIndex.update(i => i - 1);
+  }
+  protected next(): void {
+    if (!this.isLastQuestion()) this.currentIndex.update(i => i + 1);
+  }
+  protected activateQuiz(): void {
+    this.isActivating.set(true);
+    this.quizService
+      .toggleActive(this.quizId(), true)
+      .then(() => {
+        this.isActivating.set(false);
+        this.router.navigate(['/clubs', this.id(), 'quizzes']);
+      })
+      .catch(err => {
+        this.isActivating.set(false);
+        this.errorMessage.set((err as Error).message);
+      });
+  }
+}
 ````
 
 ## File: src/app/features/quiz/quiz-session/quiz-session.component.html
@@ -11552,6 +11421,131 @@ export class QuizSessionComponent extends LeaderboardBaseComponent implements On
   }
   protected manualRefresh(): void {
     this._refreshTick.update(n => n + 1);
+  }
+}
+````
+
+## File: src/app/features/quiz/quiz-take/quiz-take.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
+  inject,
+  signal,
+  linkedSignal,
+} from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizAttempt } from '../../../core/models/quiz.model';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+import { optionLabel } from '../quiz-form.utils';
+type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
+@Component({
+  selector: 'app-quiz-take',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, LoadingSpinnerComponent],
+  templateUrl: './quiz-take.component.html',
+})
+export class QuizTakeComponent implements OnInit {
+  protected readonly quizService = inject(QuizService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  protected readonly state = signal<QuizState>('loading');
+  protected readonly errorMessage = signal('');
+  protected readonly currentIndex = linkedSignal(() => {
+  this.quizService.questions(); // Реєструємо залежність: коли питання зміняться, індекс скинеться
+  return 0;
+});
+  protected readonly selectedAnswers = signal<number[]>([]);
+  protected readonly selectedOption = computed(
+    () => this.selectedAnswers()[this.currentIndex()] ?? -1,
+  );
+  protected readonly attempt = signal<QuizAttempt | null>(null);
+  protected clubId = '';
+  protected readonly currentQuestion = computed(
+    () => this.quizService.questions()[this.currentIndex()] ?? null,
+  );
+  protected readonly isLastQuestion = computed(
+    () => this.currentIndex() === this.quizService.questions().length - 1,
+  );
+  protected readonly progressPercent = computed(() => {
+    const total = this.quizService.questions().length;
+    return total === 0 ? 0 : Math.round(((this.currentIndex() + 1) / total) * 100);
+  });
+  protected readonly scorePercent = computed(() => {
+    const a = this.attempt();
+    if (!a || a.total === 0) return 0;
+    return Math.round((a.score / a.total) * 100);
+  });
+  protected readonly scoreMessage = computed(() => {
+    const pct = this.scorePercent();
+    if (pct === 100) return '🎉 Perfect score!';
+    if (pct >= 80) return '🌟 Great job!';
+    if (pct >= 60) return '👍 Good effort!';
+    if (pct >= 40) return '📖 Keep reading!';
+    return '💪 Better luck next time!';
+  });
+  ngOnInit(): void {
+    // Both :id (club) and :quizId are inherited via paramsInheritanceStrategy:'always'
+    this.clubId = this.route.snapshot.params['id'] as string;
+    const quizId = this.route.snapshot.params['quizId'] as string;
+    if (!quizId) {
+      this.errorMessage.set('Quiz not found.');
+      this.state.set('error');
+      return;
+    }
+    this.quizService
+      .loadQuestions(quizId)
+      .then(() => {
+        const count = this.quizService.questions().length;
+        if (count === 0) {
+          this.errorMessage.set('This quiz has no questions yet.');
+          this.state.set('error');
+          return;
+        }
+        this.selectedAnswers.set(new Array<number>(count).fill(-1));
+        this.state.set('taking');
+      })
+      .catch(err => {
+        this.errorMessage.set((err as Error).message);
+        this.state.set('error');
+      });
+  }
+  protected readonly optionLabel = optionLabel;
+  protected selectOption(index: number): void {
+    const current = this.currentIndex();
+    this.selectedAnswers.update(answers => {
+      const copy = [...answers];
+      copy[current] = index;
+      return copy;
+    });
+  }
+  protected next(): void {
+    if (this.selectedOption() === -1) return;
+    this.currentIndex.update(i => i + 1);
+  }
+  protected previous(): void {
+    if (this.currentIndex() === 0) return;
+    this.currentIndex.update(i => i - 1);
+  }
+  protected submit(): void {
+    if (this.selectedOption() === -1) return;
+    this.state.set('submitting');
+    const quizId = this.route.snapshot.params['quizId'] as string;
+    this.quizService
+      .submitAttempt(quizId, this.selectedAnswers())
+      .then(result => {
+        this.attempt.set(result);
+        this.state.set('results');
+      })
+      .catch(err => {
+        this.errorMessage.set((err as Error).message);
+        this.state.set('error');
+      });
   }
 }
 ````

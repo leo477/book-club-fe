@@ -5,10 +5,7 @@ import {
   input,
   signal,
 } from '@angular/core';
-import {
-  AbstractControl,
-  ReactiveFormsModule,
-} from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { QuizService } from '../../../core/services/quiz.service';
