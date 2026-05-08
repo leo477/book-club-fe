@@ -4,19 +4,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ClubEventCardComponent } from './club-event-card.component';
-import { ClubEvent } from '../../../../core/models/event.model';
-
-function makeEvent(overrides: Partial<ClubEvent> = {}): ClubEvent {
-  return {
-    id: 'e1', clubId: 'c1', clubName: 'Test Club', organizerId: 'u1',
-    title: 'Test Event', description: null,
-    date: '2025-06-01T10:00:00', city: 'Kyiv',
-    address: null, lat: null, lng: null, status: 'scheduled',
-    coverUrl: null, theme: null, tags: [],
-    durationMinutes: null, afterMeetingVenue: null,
-    attendeeCount: 5, isAttending: false, ...overrides,
-  };
-}
+import { makeClubEvent as makeEvent } from '../../../../../testing/event-test.helpers';
 
 describe('ClubEventCardComponent', () => {
   let fixture: ComponentFixture<ClubEventCardComponent>;

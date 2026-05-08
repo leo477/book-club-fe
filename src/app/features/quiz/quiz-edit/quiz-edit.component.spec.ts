@@ -1,11 +1,9 @@
-import { Component, NO_ERRORS_SCHEMA, provideZonelessChangeDetection } from '@angular/core';
+import { NO_ERRORS_SCHEMA, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-
-@Component({ template: '', standalone: true })
-class StubComponent {}
 import { QuizEditComponent } from './quiz-edit.component';
 import { QuizService } from '../../../core/services/quiz.service';
+import { StubComponent } from '../../../../testing/quiz-spec.helpers';
 import { Quiz, QuizQuestion } from '../../../core/models/quiz.model';
 
 const mockQuiz: Quiz = { id: 'q1', clubId: 'c1', createdBy: 'u1', title: 'Quiz', description: 'Desc', isActive: false, status: 'draft' };
