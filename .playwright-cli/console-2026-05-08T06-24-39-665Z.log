@@ -1,9 +1,0 @@
-[     235ms] [WARNING] The `useDefaultLang` and `defaultLanguage` options are deprecated. Please use `fallbackLang` instead. @ http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-JKQKSC4T.js?v=77671496:1174
-[     284ms] [LOG] Angular is running in development mode. @ http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-U4E2ZLPZ.js?v=77671496:11183
-[    1199ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:4200/login:0
-[   64300ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://localhost:8000/api/v1/auth/login:0
-[  101028ms] [WARNING] The `useDefaultLang` and `defaultLanguage` options are deprecated. Please use `fallbackLang` instead. @ http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-JKQKSC4T.js?v=77671496:1174
-[  101094ms] [LOG] Angular is running in development mode. @ http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-U4E2ZLPZ.js?v=77671496:11183
-[  101919ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://localhost:4200/login:0
-[  106869ms] [ERROR] Access to fetch at 'http://localhost:8000/api/v1/auth/login' from origin 'http://localhost:4200' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource. @ http://localhost:4200/login:0
-[  106869ms] [ERROR] Failed to load resource: net::ERR_FAILED @ http://localhost:8000/api/v1/auth/login:0
