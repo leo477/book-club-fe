@@ -53,7 +53,7 @@ describe('CreateEventComponent', () => {
 
     fixture = TestBed.createComponent(CreateEventComponent);
     component = fixture.componentInstance;
-    fixture.componentRef.setInput('clubId', 'c1');
+    fixture.componentRef.setInput('id', 'c1');
     fixture.detectChanges();
   });
 

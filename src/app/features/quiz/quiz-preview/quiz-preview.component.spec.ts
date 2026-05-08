@@ -1,6 +1,7 @@
 import { Component, NO_ERRORS_SCHEMA, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({ template: '', standalone: true })
 class StubComponent {}
@@ -23,7 +24,7 @@ describe('QuizPreviewComponent', () => {
   async function setup() {
     const quizSvc = makeQuizService();
     await TestBed.configureTestingModule({
-      imports: [QuizPreviewComponent],
+      imports: [QuizPreviewComponent, TranslateModule.forRoot()],
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([{ path: '**', component: StubComponent }]),

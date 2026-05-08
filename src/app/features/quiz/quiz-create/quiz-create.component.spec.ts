@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { QuizCreateComponent } from './quiz-create.component';
 import { QuizService } from '../../../core/services/quiz.service';
 
@@ -30,7 +31,7 @@ describe('QuizCreateComponent', () => {
     quizSvc = makeQuizService();
 
     await TestBed.configureTestingModule({
-      imports: [QuizCreateComponent],
+      imports: [QuizCreateComponent, TranslateModule.forRoot()],
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),

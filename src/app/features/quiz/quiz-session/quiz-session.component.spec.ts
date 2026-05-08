@@ -1,6 +1,7 @@
 import { Component, NO_ERRORS_SCHEMA, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 
 @Component({ template: '', standalone: true })
 class StubComponent {}
@@ -27,7 +28,7 @@ describe('QuizSessionComponent', () => {
   async function setup(session: QuizSession | null = null) {
     const quizSvc = makeQuizService(session);
     await TestBed.configureTestingModule({
-      imports: [QuizSessionComponent],
+      imports: [QuizSessionComponent, TranslateModule.forRoot()],
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([{ path: '**', component: StubComponent }]),

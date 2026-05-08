@@ -1,6 +1,7 @@
 import { NO_ERRORS_SCHEMA, provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { ActivatedRoute } from '@angular/router';
 import { QuizTakeComponent } from './quiz-take.component';
 import { QuizService } from '../../../core/services/quiz.service';
@@ -32,7 +33,7 @@ describe('QuizTakeComponent', () => {
     quizSvc = makeQuizService(questions);
 
     await TestBed.configureTestingModule({
-      imports: [QuizTakeComponent],
+      imports: [QuizTakeComponent, TranslateModule.forRoot()],
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
