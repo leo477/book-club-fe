@@ -2,7 +2,7 @@
 
   <!-- Back navigation -->
   <nav>
-    <a [routerLink]="['/clubs', clubId()]"
+    <a [routerLink]="['/clubs', id()]"
        class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
       ← Back to Club
     </a>
@@ -153,7 +153,7 @@
 
       <!-- Submit -->
       <div class="flex justify-end gap-3 pt-2">
-        <a hlmBtn variant="outline" [routerLink]="['/clubs', clubId()]">Cancel</a>
+        <a hlmBtn variant="outline" [routerLink]="['/clubs', id()]">Cancel</a>
         <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
                 class="bg-primary-600 hover:bg-primary-700 text-white">
           @if (isSubmitting()) { Creating… } @else { Create Event }

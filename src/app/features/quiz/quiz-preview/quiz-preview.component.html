@@ -4,11 +4,11 @@
     <!-- ── Header ── -->
     <header class="flex items-center justify-between flex-wrap gap-4">
       <div>
-        <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">🔍 Quiz Preview</h1>
+        <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">{{ 'QUIZ.preview_heading' | translate }}</h1>
         <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">{{ quiz()?.title }}</p>
       </div>
       <a [routerLink]="['..']" class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-        ✕ Close
+        {{ 'QUIZ.close' | translate }}
       </a>
     </header>
 
@@ -24,22 +24,22 @@
       <!-- ── Live banner ── -->
       @if (quiz()?.status === 'live') {
         <div class="glass-card px-4 py-3 bg-green-50/80 dark:bg-green-900/20 border border-green-200 dark:border-green-700/60 text-green-800 dark:text-green-300 text-sm rounded-xl" role="status">
-          🟢 This quiz is currently live.
+          {{ 'QUIZ.preview_live_banner' | translate }}
         </div>
       }
 
       <!-- ── Preview mode banner ── -->
       <div class="glass-card px-4 py-3 bg-blue-50/80 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/60 text-blue-800 dark:text-blue-300 text-sm rounded-xl">
-        👁️ Preview Mode — correct answers are highlighted in green
+        {{ 'QUIZ.preview_banner' | translate }}
       </div>
 
       <!-- ── No questions state ── -->
       @if (questions().length === 0) {
         <div class="glass-card p-12 text-center">
           <p class="text-4xl mb-3">📝</p>
-          <p class="text-gray-500 dark:text-gray-400">No questions yet. Add some before activating.</p>
+          <p class="text-gray-500 dark:text-gray-400">{{ 'QUIZ.preview_no_questions' | translate }}</p>
           <a [routerLink]="['../edit']" class="inline-block mt-4 text-primary-600 dark:text-primary-400 text-sm hover:underline">
-            → Go to Edit
+            {{ 'QUIZ.preview_no_questions_link' | translate }}
           </a>
         </div>
       } @else {
@@ -47,7 +47,7 @@
         <!-- ── Progress ── -->
         <div class="space-y-2">
           <p class="text-sm text-gray-500 dark:text-gray-400 text-center">
-            Question {{ currentIndex() + 1 }} of {{ questions().length }}
+            {{ 'QUIZ.question_of' | translate: { current: currentIndex() + 1, total: questions().length } }}
           </p>
           <div class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div class="h-full bg-primary-500 rounded-full transition-all duration-300"
@@ -79,7 +79,7 @@
                 </span>
                 <span class="flex-1">{{ opt }}</span>
                 @if ($index === currentQuestion().correctIndex) {
-                  <span class="text-green-600 dark:text-green-400 text-xs font-semibold flex-shrink-0">✓ Correct</span>
+                  <span class="text-green-600 dark:text-green-400 text-xs font-semibold flex-shrink-0">{{ 'QUIZ.preview_correct_answer' | translate }}</span>
                 }
               </div>
             }
@@ -89,7 +89,7 @@
         <!-- ── Navigation ── -->
         <div class="flex justify-between items-center">
           <button hlmBtn type="button" variant="outline" (click)="prev()" [disabled]="isFirstQuestion()">
-            ← Previous
+            {{ 'QUIZ.prev' | translate }}
           </button>
 
           <div class="flex gap-2">
@@ -107,7 +107,7 @@
 
             @if (!isLastQuestion()) {
               <button hlmBtn type="button" (click)="next()">
-                Next →
+                {{ 'QUIZ.next' | translate }}
               </button>
             }
           </div>

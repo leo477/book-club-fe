@@ -60,6 +60,67 @@ The content is organized as follows:
   labeler.yml
 .husky/
   pre-commit
+.playwright-cli/
+  page-2026-05-08T06-24-40-036Z.yml
+  page-2026-05-08T06-25-45-974Z.yml
+  page-2026-05-08T06-26-20-766Z.yml
+  page-2026-05-08T06-26-27-655Z.yml
+  page-2026-05-08T06-29-22-592Z.yml
+  page-2026-05-08T06-29-27-452Z.yml
+  page-2026-05-08T06-29-39-978Z.yml
+  page-2026-05-08T06-29-48-866Z.yml
+  page-2026-05-08T06-29-58-600Z.yml
+  page-2026-05-08T06-30-07-262Z.yml
+  page-2026-05-08T06-30-10-486Z.yml
+  page-2026-05-08T06-30-13-747Z.yml
+  page-2026-05-08T06-30-22-698Z.yml
+  page-2026-05-08T06-30-31-560Z.yml
+  page-2026-05-08T06-36-46-564Z.yml
+  page-2026-05-08T06-36-55-134Z.yml
+  page-2026-05-08T06-37-32-228Z.yml
+  page-2026-05-08T06-39-46-861Z.yml
+  page-2026-05-08T06-39-50-207Z.yml
+  page-2026-05-08T06-41-52-606Z.yml
+  page-2026-05-08T06-42-06-772Z.yml
+  page-2026-05-08T06-42-10-309Z.yml
+  page-2026-05-08T06-50-10-963Z.yml
+  page-2026-05-08T06-50-13-162Z.yml
+  page-2026-05-08T06-50-20-397Z.yml
+  page-2026-05-08T06-50-27-131Z.yml
+  page-2026-05-08T06-50-33-259Z.yml
+  page-2026-05-08T06-50-41-153Z.yml
+  page-2026-05-08T06-50-46-553Z.yml
+  page-2026-05-08T06-50-49-095Z.yml
+  page-2026-05-08T06-50-53-292Z.yml
+  page-2026-05-08T06-50-55-569Z.yml
+  page-2026-05-08T06-50-57-906Z.yml
+  page-2026-05-08T06-51-00-556Z.yml
+  page-2026-05-08T06-51-02-924Z.yml
+  page-2026-05-08T06-51-08-960Z.yml
+  page-2026-05-08T06-51-15-448Z.yml
+  page-2026-05-08T06-51-19-068Z.yml
+  page-2026-05-08T06-51-28-845Z.yml
+  page-2026-05-08T06-51-32-298Z.yml
+  page-2026-05-08T06-51-43-603Z.yml
+  page-2026-05-08T06-51-46-032Z.yml
+  page-2026-05-08T06-59-51-404Z.yml
+  page-2026-05-08T07-00-01-515Z.yml
+  page-2026-05-08T07-02-51-191Z.yml
+  page-2026-05-08T07-03-05-085Z.yml
+  page-2026-05-08T07-03-10-555Z.yml
+  page-2026-05-08T07-03-19-431Z.yml
+  page-2026-05-08T07-03-28-276Z.yml
+  page-2026-05-08T07-04-03-780Z.yml
+  page-2026-05-08T07-04-03-939Z.yml
+  page-2026-05-08T07-04-04-093Z.yml
+  page-2026-05-08T07-04-04-249Z.yml
+  page-2026-05-08T07-04-04-404Z.yml
+  page-2026-05-08T07-04-09-237Z.yml
+  page-2026-05-08T07-21-53-661Z.yml
+  page-2026-05-08T07-22-03-987Z.yml
+  page-2026-05-08T07-22-20-319Z.yml
+  page-2026-05-08T07-22-23-635Z.yml
+  page-2026-05-08T07-24-04-882Z.yml
 Assistant:```<|endoftext|>Human: src/
   app/
     features/
@@ -405,12 +466,25 @@ supabase/
 .mcp.json
 angular.json
 CLAUDE.md
+club-detail.png
+clubs.png
 components.json
 eslint.config.js
+events.png
 karma.conf.js
+manage.png
 package.json
 postcss.config.json
 postcss.config.mjs
+preview-final.png
+preview-fixed.png
+preview-reloaded.png
+profile.png
+quiz-edit.png
+quiz-preview.png
+quiz-take.png
+quizzes-fixed.png
+quizzes.png
 README.md
 refactor_opus.md
 repomix.config.json
@@ -544,7 +618,31 @@ vercel.json
       "Bash(sed -n '126,144p' /home/dmytr/angular/book-club-fe/src/app/core/auth/auth.service.spec.ts)",
       "Bash(sed -n '357,375p' /home/dmytr/angular/book-club-fe/src/app/core/auth/auth.service.spec.ts)",
       "Bash(sed -n '397,415p' /home/dmytr/angular/book-club-fe/src/app/core/auth/auth.service.spec.ts)",
-      "Bash(sed -n '437,455p' /home/dmytr/angular/book-club-fe/src/app/core/auth/auth.service.spec.ts)"
+      "Bash(sed -n '437,455p' /home/dmytr/angular/book-club-fe/src/app/core/auth/auth.service.spec.ts)",
+      "Bash(npm start *)",
+      "Bash(echo \"PID: $!\")",
+      "Skill(playwright-cli)",
+      "Bash(playwright-cli fill *)",
+      "Bash(playwright-cli click *)",
+      "Bash(playwright-cli console *)",
+      "Bash(playwright-cli requests *)",
+      "Bash(playwright-cli snapshot *)",
+      "Bash(uv run *)",
+      "Bash(echo \"Backend PID: $!\")",
+      "Bash(playwright-cli reload *)",
+      "Bash(pg_isready)",
+      "Bash(pg_ctl status *)",
+      "Bash(docker --version)",
+      "Bash(echo \"Mock PID: $!\")",
+      "Bash(playwright-cli goto *)",
+      "Bash(playwright-cli screenshot *)",
+      "Bash(grep -rn \"quizzes/\\\\${\" /home/dmytr/angular/book-club-fe/src --include=\"*.ts\")",
+      "Bash(playwright-cli localstorage-list *)",
+      "Bash(playwright-cli eval *)",
+      "Bash(playwright-cli close *)",
+      "Bash(playwright-cli open *)",
+      "Bash(pkill -f \"node mock-server/index.js\")",
+      "Bash(echo \"Server PID: $!\")"
     ]
   },
   "enableAllProjectMcpServers": true,
@@ -839,6 +937,761 @@ build:
           - angular.json
           - "tsconfig*.json"
           - "package*.json"
+````
+
+## File: .playwright-cli/page-2026-05-08T06-24-40-036Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-25-45-974Z.yml
+````yaml
+- generic [ref=e4]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic: Book Club
+          - generic:
+            - generic:
+              - generic: ✦
+              - generic:
+                - text: Book
+                - text: Club
+              - generic: ✦
+  - main [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - heading "📚 Book Club" [level=1] [ref=e8]
+        - paragraph [ref=e9]: Ласкаво просимо назад
+      - generic [ref=e10]:
+        - heading "Увійти" [level=2] [ref=e11]
+        - generic [ref=e12]:
+          - group "Увійти" [ref=e13]:
+            - generic [ref=e14]: Увійти
+            - group [ref=e15]:
+              - generic [ref=e16]: Email
+              - textbox "Email" [ref=e17]:
+                - /placeholder: you@example.com
+                - text: dmytrozakharrchenko@gmail.com
+            - group [ref=e18]:
+              - generic [ref=e19]: Пароль
+              - textbox "Пароль" [ref=e20]:
+                - /placeholder: ••••••••
+                - text: qwertyqwerty1234
+          - alert [ref=e26]:
+            - generic [ref=e27]: ⚠️
+            - generic [ref=e28]: "Http failure response for http://localhost:8000/api/v1/auth/login: 0 undefined"
+          - button "Увійти" [ref=e21]
+        - paragraph [ref=e22]:
+          - text: Немає акаунту?
+          - link "Реєстрація" [ref=e23] [cursor=pointer]:
+            - /url: /register
+      - paragraph [ref=e24]:
+        - link "← На головну" [ref=e25] [cursor=pointer]:
+          - /url: /
+````
+
+## File: .playwright-cli/page-2026-05-08T06-26-20-766Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-26-27-655Z.yml
+````yaml
+- generic [ref=e4]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic: Book Club
+          - generic:
+            - generic:
+              - generic: ✦
+              - generic:
+                - text: Book
+                - text: Club
+              - generic: ✦
+  - main [ref=e5]:
+    - generic [ref=e6]:
+      - generic [ref=e7]:
+        - heading "📚 Book Club" [level=1] [ref=e8]
+        - paragraph [ref=e9]: Ласкаво просимо назад
+      - generic [ref=e10]:
+        - heading "Увійти" [level=2] [ref=e11]
+        - generic [ref=e12]:
+          - group "Увійти" [ref=e13]:
+            - generic [ref=e14]: Увійти
+            - group [ref=e15]:
+              - generic [ref=e16]: Email
+              - textbox "Email" [ref=e17]:
+                - /placeholder: you@example.com
+                - text: dmytrozakharrchenko@gmail.com
+            - group [ref=e18]:
+              - generic [ref=e19]: Пароль
+              - textbox "Пароль" [ref=e20]:
+                - /placeholder: ••••••••
+                - text: qwertyqwerty1234
+          - alert [ref=e26]:
+            - generic [ref=e27]: ⚠️
+            - generic [ref=e28]: "Http failure response for http://localhost:8000/api/v1/auth/login: 0 undefined"
+          - button "Увійти" [ref=e21]
+        - paragraph [ref=e22]:
+          - text: Немає акаунту?
+          - link "Реєстрація" [ref=e23] [cursor=pointer]:
+            - /url: /register
+      - paragraph [ref=e24]:
+        - link "← На головну" [ref=e25] [cursor=pointer]:
+          - /url: /
+````
+
+## File: .playwright-cli/page-2026-05-08T06-29-22-592Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-29-27-452Z.yml
+````yaml
+- generic [ref=e26]:
+  - banner [ref=e28]:
+    - generic [ref=e30]:
+      - link "BookClub home" [ref=e31] [cursor=pointer]:
+        - /url: /
+        - text: BookClub
+      - navigation "Main navigation" [ref=e32]:
+        - link "Огляд" [ref=e33] [cursor=pointer]:
+          - /url: /clubs
+        - link "Події" [ref=e34] [cursor=pointer]:
+          - /url: /events
+      - generic [ref=e35]:
+        - button "Темна тема" [ref=e36]:
+          - img:
+            - img
+        - button "Switch to English" [ref=e37]: EN
+        - button "User menu for Dev User" [ref=e38]:
+          - generic [ref=e39]: DU
+  - main [ref=e40]:
+    - generic [ref=e42]:
+      - region "Search clubs" [ref=e43]:
+        - generic [ref=e44]:
+          - heading "Книжкові клуби" [level=1] [ref=e45]
+          - paragraph [ref=e46]: Знайдіть спільноти читачів поруч
+          - generic [ref=e47]:
+            - generic [ref=e48]: Шукати клуби...
+            - searchbox "Шукати клуби..." [ref=e49]
+      - generic [ref=e50]:
+        - tablist "Club filter" [ref=e51]:
+          - generic [ref=e52]:
+            - tab "Всі клуби" [selected] [ref=e54]
+            - tab "Мої клуби" [ref=e55]
+        - tabpanel [ref=e56]:
+          - list [ref=e57]:
+            - listitem [ref=e58]:
+              - generic [ref=e63]:
+                - generic [ref=e64]:
+                  - heading "Книжковий Дракон Your club" [level=3] [ref=e65]:
+                    - text: Книжковий Дракон
+                    - generic "Your club" [ref=e66]: ✦
+                  - paragraph [ref=e67]: Клуб для любителів фентезі та пригодницької літератури.
+                - generic [ref=e68]:
+                  - button "Приєднатися Книжковий Дракон" [ref=e69]: Приєднатися
+                  - link "Переглянути Книжковий Дракон" [ref=e70] [cursor=pointer]:
+                    - /url: /clubs/club-001
+                    - text: Переглянути
+            - listitem [ref=e71]:
+              - generic [ref=e76]:
+                - generic [ref=e77]:
+                  - heading "Детектив Клуб" [level=3] [ref=e78]
+                  - paragraph [ref=e79]: Читаємо найкращі детективи та трилери.
+                - generic [ref=e80]:
+                  - button "Приєднатися Детектив Клуб" [ref=e81]: Приєднатися
+                  - link "Переглянути Детектив Клуб" [ref=e82] [cursor=pointer]:
+                    - /url: /clubs/club-002
+                    - text: Переглянути
+            - listitem [ref=e83]:
+              - generic [ref=e88]:
+                - generic [ref=e89]:
+                  - heading "Сучасна Проза" [level=3] [ref=e90]
+                  - paragraph [ref=e91]: Обговорюємо найактуальнішу сучасну літературу.
+                - generic [ref=e92]:
+                  - button "Приєднатися Сучасна Проза" [ref=e93]: Приєднатися
+                  - link "Переглянути Сучасна Проза" [ref=e94] [cursor=pointer]:
+                    - /url: /clubs/club-003
+                    - text: Переглянути
+      - link "Створити клуб" [ref=e95] [cursor=pointer]:
+        - /url: /clubs/create
+        - img [ref=e96]
+  - contentinfo [ref=e100]:
+    - generic [ref=e101]:
+      - paragraph [ref=e102]: 📚 BookClub © 2026 — Усі права захищені
+      - navigation "Footer navigation" [ref=e103]:
+        - list [ref=e104]:
+          - listitem [ref=e105]:
+            - link "Конфіденційність" [ref=e106] [cursor=pointer]:
+              - /url: /privacy
+          - listitem [ref=e107]:
+            - link "Умови" [ref=e108] [cursor=pointer]:
+              - /url: /terms
+````
+
+## File: .playwright-cli/page-2026-05-08T06-29-39-978Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-29-48-866Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-29-58-600Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-30-07-262Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-30-10-486Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-30-13-747Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-30-22-698Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-30-31-560Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-36-46-564Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-36-55-134Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-37-32-228Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-39-46-861Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-39-50-207Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-41-52-606Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-42-06-772Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-42-10-309Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-50-10-963Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-50-13-162Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-50-20-397Z.yml
+````yaml
+- generic [ref=e26]:
+  - banner [ref=e28]:
+    - generic [ref=e30]:
+      - link "BookClub home" [ref=e31] [cursor=pointer]:
+        - /url: /
+        - text: BookClub
+      - navigation "Main navigation" [ref=e32]:
+        - link "Огляд" [ref=e33] [cursor=pointer]:
+          - /url: /clubs
+        - link "Події" [ref=e34] [cursor=pointer]:
+          - /url: /events
+      - generic [ref=e35]:
+        - button "Темна тема" [ref=e36]:
+          - img:
+            - img
+        - button "Switch to English" [ref=e37]: EN
+        - button "User menu for Dev User" [ref=e38]:
+          - generic [ref=e39]: DU
+  - main [ref=e40]:
+    - generic [ref=e42]:
+      - region "Search clubs" [ref=e43]:
+        - generic [ref=e44]:
+          - heading "Книжкові клуби" [level=1] [ref=e45]
+          - paragraph [ref=e46]: Знайдіть спільноти читачів поруч
+          - generic [ref=e47]:
+            - generic [ref=e48]: Шукати клуби...
+            - searchbox "Шукати клуби..." [ref=e49]
+      - generic [ref=e50]:
+        - tablist "Club filter" [ref=e51]:
+          - generic [ref=e52]:
+            - tab "Всі клуби" [selected] [ref=e54]
+            - tab "Мої клуби 1" [ref=e55]:
+              - text: Мої клуби
+              - generic [ref=e56]: "1"
+        - tabpanel [ref=e57]:
+          - list [ref=e58]:
+            - listitem [ref=e59]:
+              - generic [ref=e64]:
+                - generic [ref=e65]:
+                  - heading "Книжковий Дракон Your club" [level=3] [ref=e66]:
+                    - text: Книжковий Дракон
+                    - generic "Your club" [ref=e67]: ✦
+                  - paragraph [ref=e68]: Клуб для любителів фентезі та пригодницької літератури.
+                - generic [ref=e69]:
+                  - link "Переглянути Книжковий Дракон" [ref=e70] [cursor=pointer]:
+                    - /url: /clubs/club-001
+                    - text: Переглянути
+                  - generic [ref=e71]: ✓ Учасник
+            - listitem [ref=e72]:
+              - generic [ref=e77]:
+                - generic [ref=e78]:
+                  - heading "Детектив Клуб" [level=3] [ref=e79]
+                  - paragraph [ref=e80]: Читаємо найкращі детективи та трилери.
+                - generic [ref=e81]:
+                  - button "Приєднатися Детектив Клуб" [ref=e82]: Приєднатися
+                  - link "Переглянути Детектив Клуб" [ref=e83] [cursor=pointer]:
+                    - /url: /clubs/club-002
+                    - text: Переглянути
+            - listitem [ref=e84]:
+              - generic [ref=e89]:
+                - generic [ref=e90]:
+                  - heading "Сучасна Проза" [level=3] [ref=e91]
+                  - paragraph [ref=e92]: Обговорюємо найактуальнішу сучасну літературу.
+                - generic [ref=e93]:
+                  - button "Приєднатися Сучасна Проза" [ref=e94]: Приєднатися
+                  - link "Переглянути Сучасна Проза" [ref=e95] [cursor=pointer]:
+                    - /url: /clubs/club-003
+                    - text: Переглянути
+      - link "Створити клуб" [ref=e96] [cursor=pointer]:
+        - /url: /clubs/create
+        - img [ref=e97]
+  - contentinfo [ref=e101]:
+    - generic [ref=e102]:
+      - paragraph [ref=e103]: 📚 BookClub © 2026 — Усі права захищені
+      - navigation "Footer navigation" [ref=e104]:
+        - list [ref=e105]:
+          - listitem [ref=e106]:
+            - link "Конфіденційність" [ref=e107] [cursor=pointer]:
+              - /url: /privacy
+          - listitem [ref=e108]:
+            - link "Умови" [ref=e109] [cursor=pointer]:
+              - /url: /terms
+````
+
+## File: .playwright-cli/page-2026-05-08T06-50-27-131Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-50-33-259Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-50-41-153Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-50-46-553Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-50-49-095Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-50-53-292Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-50-55-569Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-50-57-906Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-51-00-556Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-51-02-924Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-51-08-960Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-51-15-448Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-51-19-068Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-51-28-845Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-51-32-298Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-51-43-603Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-51-46-032Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T06-59-51-404Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T07-00-01-515Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T07-02-51-191Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T07-03-05-085Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T07-03-10-555Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T07-03-19-431Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T07-03-28-276Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T07-04-03-780Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T07-04-03-939Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T07-04-04-093Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T07-04-04-249Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T07-04-04-404Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T07-04-09-237Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T07-21-53-661Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T07-22-03-987Z.yml
+````yaml
+- generic [ref=e26]:
+  - banner [ref=e28]:
+    - generic [ref=e30]:
+      - link "BookClub home" [ref=e31] [cursor=pointer]:
+        - /url: /
+        - text: BookClub
+      - navigation "Main navigation" [ref=e32]:
+        - link "Огляд" [ref=e33] [cursor=pointer]:
+          - /url: /clubs
+        - link "Події" [ref=e34] [cursor=pointer]:
+          - /url: /events
+      - generic [ref=e35]:
+        - button "Темна тема" [ref=e36]:
+          - img:
+            - img
+        - button "Switch to English" [ref=e37]: EN
+        - button "User menu for Dev User" [ref=e38]:
+          - generic [ref=e39]: DU
+  - main [ref=e40]:
+    - generic [ref=e42]:
+      - region "Search clubs" [ref=e43]:
+        - generic [ref=e44]:
+          - heading "Книжкові клуби" [level=1] [ref=e45]
+          - paragraph [ref=e46]: Знайдіть спільноти читачів поруч
+          - generic [ref=e47]:
+            - generic [ref=e48]: Шукати клуби...
+            - searchbox "Шукати клуби..." [ref=e49]
+      - generic [ref=e50]:
+        - tablist "Club filter" [ref=e51]:
+          - generic [ref=e52]:
+            - tab "Всі клуби" [selected] [ref=e54]
+            - tab "Мої клуби 1" [ref=e55]:
+              - text: Мої клуби
+              - generic [ref=e56]: "1"
+        - tabpanel [ref=e57]:
+          - list [ref=e58]:
+            - listitem [ref=e59]:
+              - generic [ref=e64]:
+                - generic [ref=e65]:
+                  - heading "Книжковий Дракон Your club" [level=3] [ref=e66]:
+                    - text: Книжковий Дракон
+                    - generic "Your club" [ref=e67]: ✦
+                  - paragraph [ref=e68]: Клуб для любителів фентезі та пригодницької літератури.
+                - generic [ref=e69]:
+                  - link "Переглянути Книжковий Дракон" [ref=e70] [cursor=pointer]:
+                    - /url: /clubs/club-001
+                    - text: Переглянути
+                  - generic [ref=e71]: ✓ Учасник
+            - listitem [ref=e72]:
+              - generic [ref=e77]:
+                - generic [ref=e78]:
+                  - heading "Детектив Клуб" [level=3] [ref=e79]
+                  - paragraph [ref=e80]: Читаємо найкращі детективи та трилери.
+                - generic [ref=e81]:
+                  - button "Приєднатися Детектив Клуб" [ref=e82]: Приєднатися
+                  - link "Переглянути Детектив Клуб" [ref=e83] [cursor=pointer]:
+                    - /url: /clubs/club-002
+                    - text: Переглянути
+            - listitem [ref=e84]:
+              - generic [ref=e89]:
+                - generic [ref=e90]:
+                  - heading "Сучасна Проза" [level=3] [ref=e91]
+                  - paragraph [ref=e92]: Обговорюємо найактуальнішу сучасну літературу.
+                - generic [ref=e93]:
+                  - button "Приєднатися Сучасна Проза" [ref=e94]: Приєднатися
+                  - link "Переглянути Сучасна Проза" [ref=e95] [cursor=pointer]:
+                    - /url: /clubs/club-003
+                    - text: Переглянути
+      - link "Створити клуб" [ref=e96] [cursor=pointer]:
+        - /url: /clubs/create
+        - img [ref=e97]
+  - contentinfo [ref=e101]:
+    - generic [ref=e102]:
+      - paragraph [ref=e103]: 📚 BookClub © 2026 — Усі права захищені
+      - navigation "Footer navigation" [ref=e104]:
+        - list [ref=e105]:
+          - listitem [ref=e106]:
+            - link "Конфіденційність" [ref=e107] [cursor=pointer]:
+              - /url: /privacy
+          - listitem [ref=e108]:
+            - link "Умови" [ref=e109] [cursor=pointer]:
+              - /url: /terms
+````
+
+## File: .playwright-cli/page-2026-05-08T07-22-20-319Z.yml
+````yaml
+- generic [ref=e26]:
+  - banner [ref=e28]:
+    - generic [ref=e30]:
+      - link "BookClub home" [ref=e31] [cursor=pointer]:
+        - /url: /
+        - text: BookClub
+      - navigation "Main navigation" [ref=e32]:
+        - link "Огляд" [ref=e33] [cursor=pointer]:
+          - /url: /clubs
+        - link "Події" [ref=e34] [cursor=pointer]:
+          - /url: /events
+      - generic [ref=e35]:
+        - button "Темна тема" [ref=e36]:
+          - img:
+            - img
+        - button "Switch to English" [ref=e37]: EN
+        - button "User menu for Dev User" [ref=e38]:
+          - generic [ref=e39]: DU
+  - main [ref=e40]:
+    - main [ref=e114]:
+      - generic [ref=e115]:
+        - generic:
+          - heading "Книжковий Дракон" [level=1]
+        - navigation "Назад до клубів" [ref=e117]:
+          - link "Назад до клубів" [ref=e118] [cursor=pointer]:
+            - /url: /clubs
+            - text: ← Назад
+      - generic [ref=e120]:
+        - complementary [ref=e121]:
+          - generic [ref=e122]:
+            - heading "📖 Читаємо зараз" [level=3] [ref=e123]
+            - img "Майстер і Маргарита" [ref=e124]
+            - paragraph [ref=e125]: Майстер і Маргарита
+          - generic [ref=e127]:
+            - heading "Управління клубом" [level=2] [ref=e128]
+            - generic [ref=e129]:
+              - link "Квізи Створюйте та керуйте квізами" [ref=e130] [cursor=pointer]:
+                - /url: /clubs/club-001/quizzes
+                - generic [ref=e131]: 📝
+                - generic [ref=e132]:
+                  - paragraph [ref=e133]: Квізи
+                  - paragraph [ref=e134]: Створюйте та керуйте квізами
+              - link "Рандомайзер Обирайте наступну книгу" [ref=e135] [cursor=pointer]:
+                - /url: /clubs/club-001/randomizer
+                - generic [ref=e136]: 🎲
+                - generic [ref=e137]:
+                  - paragraph [ref=e138]: Рандомайзер
+                  - paragraph [ref=e139]: Обирайте наступну книгу
+              - link "Редагувати клуб Оновити назву, опис та налаштування" [ref=e140] [cursor=pointer]:
+                - /url: /clubs/club-001/edit
+                - generic [ref=e141]: ✏️
+                - generic [ref=e142]:
+                  - paragraph [ref=e143]: Редагувати клуб
+                  - paragraph [ref=e144]: Оновити назву, опис та налаштування
+              - link "Створити подію Запланувати нову подію клубу" [ref=e145] [cursor=pointer]:
+                - /url: /clubs/club-001/events/create
+                - generic [ref=e146]: 📅
+                - generic [ref=e147]:
+                  - paragraph [ref=e148]: Створити подію
+                  - paragraph [ref=e149]: Запланувати нову подію клубу
+        - generic [ref=e150]:
+          - generic [ref=e151]:
+            - heading "Про клуб" [level=2] [ref=e152]
+            - paragraph [ref=e153]: Клуб для любителів фентезі та пригодницької літератури.
+          - generic [ref=e155]:
+            - heading "📚 Голосування за наступну книгу" [level=2] [ref=e157]
+            - generic [ref=e158]:
+              - paragraph [ref=e159]: Запропонуйте учасникам клубу обрати наступну книгу
+              - button "Почати голосування" [ref=e160]
+          - generic [ref=e161]:
+            - generic [ref=e162]:
+              - heading "📅 Найближчі події" [level=2] [ref=e163]
+              - link "＋ Створити подію" [ref=e164] [cursor=pointer]:
+                - /url: /clubs/club-001/events/create
+            - paragraph [ref=e165]: Немає запланованих подій.
+          - region "Учасники" [ref=e167]:
+            - heading "Учасники (3)" [level=2] [ref=e168]
+            - list [ref=e169]:
+              - listitem [ref=e170]:
+                - generic [ref=e171]: DU
+                - generic [ref=e172]:
+                  - paragraph [ref=e173]: Dev User
+                  - generic [ref=e174]: Організатор
+              - listitem [ref=e175]:
+                - generic [ref=e176]: ОП
+                - generic [ref=e177]:
+                  - paragraph [ref=e178]: Оксана Петренко
+                  - generic [ref=e179]: Учасник
+                - generic [ref=e181]:
+                  - button "Виключити" [ref=e182]
+                  - button "Заблокувати ▾" [ref=e183]
+              - listitem [ref=e184]:
+                - generic [ref=e185]: ІК
+                - generic [ref=e186]:
+                  - paragraph [ref=e187]: Іван Коваль
+                  - generic [ref=e188]: Учасник
+                - generic [ref=e190]:
+                  - button "Виключити" [ref=e191]
+                  - button "Заблокувати ▾" [ref=e192]
+          - generic [ref=e193]: Створено 15 січня 2025 р.
+        - complementary [ref=e194]:
+          - generic [ref=e196]:
+            - generic [ref=e197]:
+              - heading "Організатор" [level=3] [ref=e198]
+              - generic [ref=e199]:
+                - generic [ref=e200]: DU
+                - generic [ref=e201]:
+                  - paragraph [ref=e202]: Dev User
+                  - text: ✨ Організатор
+            - generic [ref=e203]:
+              - heading "Після зустрічі" [level=3] [ref=e204]
+              - paragraph [ref=e205]: Кав'ярня "Книга і Кава"
+              - paragraph [ref=e206]: 📍 вул. Хрещатик, 12
+              - paragraph [ref=e207]: Затишне місце для обговорень
+  - button "Відкрити чат" [ref=e110]:
+    - img [ref=e111]
+  - contentinfo [ref=e101]:
+    - generic [ref=e102]:
+      - paragraph [ref=e103]: 📚 BookClub © 2026 — Усі права захищені
+      - navigation "Footer navigation" [ref=e104]:
+        - list [ref=e105]:
+          - listitem [ref=e106]:
+            - link "Конфіденційність" [ref=e107] [cursor=pointer]:
+              - /url: /privacy
+          - listitem [ref=e108]:
+            - link "Умови" [ref=e109] [cursor=pointer]:
+              - /url: /terms
+````
+
+## File: .playwright-cli/page-2026-05-08T07-22-23-635Z.yml
+````yaml
+
+````
+
+## File: .playwright-cli/page-2026-05-08T07-24-04-882Z.yml
+````yaml
+
 ````
 
 ## File: public/robots.txt
@@ -1261,13 +2114,13 @@ export class ProfileStatsComponent {
             class="inline-flex items-center text-gray-500 hover:text-gray-900
                    dark:hover:text-white text-sm transition-colors"
           >
-            ← Back to Quizzes
+            {{ 'QUIZ.back_to_quizzes' | translate }}
           </a>
         </nav>
         @if (state() === 'loading') {
           <div class="flex flex-col items-center py-20 gap-4">
             <app-loading-spinner size="lg" />
-            <p class="text-gray-500 dark:text-gray-400 text-sm">Loading quiz…</p>
+            <p class="text-gray-500 dark:text-gray-400 text-sm">{{ 'QUIZ.loading' | translate }}</p>
           </div>
         }
         @if (state() === 'error') {
@@ -1282,14 +2135,14 @@ export class ProfileStatsComponent {
               class="mt-4 inline-block text-primary-600 dark:text-primary-400
                      hover:underline text-sm"
             >
-              Return to quiz list
+              {{ 'QUIZ.error_return' | translate }}
             </a>
           </div>
         }
         @if (state() === 'taking' || state() === 'submitting') {
           <div>
             <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
-              <span>Question {{ currentIndex() + 1 }} of {{ quizService.questions().length }}</span>
+              <span>{{ 'QUIZ.question_of' | translate: { current: currentIndex() + 1, total: quizService.questions().length } }}</span>
               <span>{{ progressPercent() }}%</span>
             </div>
             <div class="h-2 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
@@ -1360,7 +2213,7 @@ export class ProfileStatsComponent {
                        hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40
                        disabled:cursor-not-allowed transition-colors"
               >
-                ← Previous
+                {{ 'QUIZ.prev' | translate }}
               </button>
               @if (isLastQuestion()) {
                 <button
@@ -1370,7 +2223,7 @@ export class ProfileStatsComponent {
                          hover:bg-accent-500 disabled:opacity-40 disabled:cursor-not-allowed
                          text-white transition-colors"
                 >
-                  {{ state() === 'submitting' ? '…Submitting' : 'Submit Quiz ✓' }}
+                  {{ (state() === 'submitting' ? 'QUIZ.submitting_quiz' : 'QUIZ.submit_quiz') | translate }}
                 </button>
               } @else {
                 <button
@@ -1380,7 +2233,7 @@ export class ProfileStatsComponent {
                          hover:bg-primary-500 disabled:opacity-40 disabled:cursor-not-allowed
                          text-white transition-colors"
                 >
-                  Next →
+                  {{ 'QUIZ.next' | translate }}
                 </button>
               }
             </div>
@@ -1456,7 +2309,7 @@ export class ProfileStatsComponent {
                 class="bg-primary-600 hover:bg-primary-500 text-white rounded-xl px-8
                        py-3 font-medium transition-colors text-sm"
               >
-                Back to Quizzes
+                {{ 'QUIZ.back_to_quizzes' | translate }}
               </a>
             </div>
           </div>
@@ -3328,6 +4181,7 @@ const quizzesByClub = {
       title: 'Квіз по Майстру і Маргариті',
       description: 'Перевір свої знання!',
       isActive: true,
+      status: 'active',
     },
   ],
 };
@@ -3522,6 +4376,58 @@ app.post(`${BASE}/quizzes/:id/attempts`, (req, res) => {
   const score = answers.reduce((acc, ans, i) => acc + (questions[i]?.correctIndex === ans ? 1 : 0), 0);
   res.json({ id: `attempt-${uid()}`, quizId: req.params.id, userId: MOCK_USER_ID, score, total: questions.length, answers });
 });
+app.get(`${BASE}/quizzes/:id`, (req, res) => {
+  for (const list of Object.values(quizzesByClub)) {
+    const quiz = list.find((q) => q.id === req.params.id);
+    if (quiz) return res.json(quiz);
+  }
+  res.status(404).json({ detail: 'Quiz not found' });
+});
+app.patch(`${BASE}/quizzes/:id`, (req, res) => {
+  for (const list of Object.values(quizzesByClub)) {
+    const quiz = list.find((q) => q.id === req.params.id);
+    if (quiz) { Object.assign(quiz, req.body); return res.json(quiz); }
+  }
+  res.status(404).json({ detail: 'Quiz not found' });
+});
+app.patch(`${BASE}/quizzes/:id/questions/:qid`, (req, res) => {
+  const questions = questionsByQuiz[req.params.id] ?? [];
+  const q = questions.find((x) => x.id === req.params.qid);
+  if (q) { Object.assign(q, req.body); return res.json(q); }
+  res.status(404).json({ detail: 'Question not found' });
+});
+app.delete(`${BASE}/quizzes/:id/questions/:qid`, (req, res) => {
+  if (questionsByQuiz[req.params.id]) {
+    questionsByQuiz[req.params.id] = questionsByQuiz[req.params.id].filter((q) => q.id !== req.params.qid);
+  }
+  res.status(204).send();
+});
+app.put(`${BASE}/quizzes/:id/questions/order`, (req, res) => res.status(204).send());
+const sessionsByQuiz = {};
+app.post(`${BASE}/quizzes/:id/sessions`, (req, res) => {
+  const session = { id: `session-${uid()}`, quizId: req.params.id, startedBy: MOCK_USER_ID, startedAt: new Date().toISOString(), closedAt: null, participantCount: 0, eventId: req.body.eventId ?? null };
+  sessionsByQuiz[req.params.id] = session;
+  for (const list of Object.values(quizzesByClub)) {
+    const quiz = list.find((q) => q.id === req.params.id);
+    if (quiz) quiz.status = 'live';
+  }
+  res.status(201).json(session);
+});
+app.get(`${BASE}/quizzes/:id/sessions/active`, (req, res) => {
+  const session = sessionsByQuiz[req.params.id];
+  if (session && !session.closedAt) return res.json(session);
+  res.status(404).json({ detail: 'No active session' });
+});
+app.get(`${BASE}/quizzes/:id/sessions/:sid/leaderboard`, (req, res) => res.json({ entries: [] }));
+app.patch(`${BASE}/quizzes/:id/sessions/:sid/close`, (req, res) => {
+  const session = sessionsByQuiz[req.params.id];
+  if (session) { session.closedAt = new Date().toISOString(); }
+  for (const list of Object.values(quizzesByClub)) {
+    const quiz = list.find((q) => q.id === req.params.id);
+    if (quiz) quiz.status = 'closed';
+  }
+  res.status(204).send();
+});
 app.patch(`${BASE}/quizzes/:id/active`, (req, res) => {
   for (const list of Object.values(quizzesByClub)) {
     const quiz = list.find((q) => q.id === req.params.id);
@@ -3541,6 +4447,22 @@ app.post(`${BASE}/chat/rooms/:id/messages`, (req, res) => {
   if (!messagesByRoom[req.params.id]) messagesByRoom[req.params.id] = [];
   messagesByRoom[req.params.id].push(msg);
   res.status(201).json(msg);
+});
+app.delete(`${BASE}/chat/rooms/:id/messages/:messageId`, (req, res) => {
+  const { id, messageId } = req.params;
+  if (messagesByRoom[id]) {
+    messagesByRoom[id] = messagesByRoom[id].filter(m => m.id !== messageId);
+  }
+  res.status(204).send();
+});
+app.post(`${BASE}/chat/rooms/:id/ban`, (req, res) => {
+  res.status(200).json({ ok: true });
+});
+app.post(`${BASE}/clubs/:id/chat/rooms`, (req, res) => {
+  const room = { id: `room-${uid()}`, name: req.body.name, clubId: req.params.id };
+  if (!roomsByClub[req.params.id]) roomsByClub[req.params.id] = [];
+  roomsByClub[req.params.id].push(room);
+  res.status(201).json(room);
 });
 app.post(`${BASE}/clubs/:id/randomizer/sessions`, (req, res) => {
   const session = { id: `sess-${uid()}`, clubId: req.params.id, createdBy: MOCK_USER_ID, createdAt: new Date().toISOString(), ...req.body };
@@ -4188,7 +5110,7 @@ export class ClubMembersListComponent {
     <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
     <a routerLink="/events"
        class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors">
-      ← Back to Events
+      {{ 'EVENTS.back_to_events' | translate }}
     </a>
   </main>
 } @else if (event()) {
@@ -4196,7 +5118,7 @@ export class ClubMembersListComponent {
     <nav>
       <a routerLink="/events"
          class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-        ← Back to Events
+        {{ 'EVENTS.back_to_events' | translate }}
       </a>
     </nav>
     <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6 space-y-3">
@@ -4221,9 +5143,9 @@ export class ClubMembersListComponent {
           <span>📍 {{ event()!.address || event()!.city }}</span>
         }
         @if (event()!.durationMinutes) {
-          <span>⏱ {{ event()!.durationMinutes }} min</span>
+          <span>⏱ {{ event()!.durationMinutes }} {{ 'EVENTS.minutes_abbr' | translate }}</span>
         }
-        <span>👤 {{ event()!.attendeeCount }} attending</span>
+        <span>👤 {{ event()!.attendeeCount }} {{ 'EVENTS.attending' | translate }}</span>
       </div>
       @if (auth.isAuthenticated() && event()!.status !== 'cancelled') {
         <div class="flex gap-3 pt-2">
@@ -4232,14 +5154,14 @@ export class ClubMembersListComponent {
                     [disabled]="isActioning()"
                     (click)="onCancelAttend()"
                     class="rounded-xl bg-green-600 hover:bg-green-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
-              @if (isActioning()) { ⏳ } @else { ✓ Going · Cancel RSVP }
+              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.going_cancel' | translate }} }
             </button>
           } @else {
             <button type="button"
                     [disabled]="isActioning()"
                     (click)="onAttend()"
                     class="rounded-xl bg-primary-600 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
-              @if (isActioning()) { ⏳ } @else { RSVP — I'm Going }
+              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.rsvp_going' | translate }} }
             </button>
           }
         </div>
@@ -4247,13 +5169,13 @@ export class ClubMembersListComponent {
     </div>
     @if (event()!.description) {
       <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">About</h2>
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.about' | translate }}</h2>
         <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ event()!.description }}</p>
       </section>
     }
     @if (event()!.theme || event()!.tags.length > 0) {
       <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Tags</h2>
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.tags' | translate }}</h2>
         <div class="flex flex-wrap gap-2">
           @if (event()!.theme) {
             <span class="rounded-full bg-accent-100 dark:bg-accent-900/30 px-3 py-1 text-xs font-medium text-accent-700 dark:text-accent-300">
@@ -4270,7 +5192,7 @@ export class ClubMembersListComponent {
     }
     @if (event()!.afterMeetingVenue) {
       <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">After-Meeting Venue</h2>
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.after_meeting_venue' | translate }}</h2>
         <p class="font-medium text-gray-900 dark:text-white">{{ event()!.afterMeetingVenue!.name }}</p>
         <p class="text-sm text-gray-500 dark:text-gray-400">{{ event()!.afterMeetingVenue!.address }}</p>
         @if (event()!.afterMeetingVenue!.description) {
@@ -4280,13 +5202,13 @@ export class ClubMembersListComponent {
     }
     @if (isOrganizer() && event()!.status !== 'cancelled') {
       <section class="rounded-2xl border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-6">
-        <h2 class="text-sm font-semibold text-yellow-800 dark:text-yellow-300 uppercase tracking-wide mb-3">Organizer Controls</h2>
+        <h2 class="text-sm font-semibold text-yellow-800 dark:text-yellow-300 uppercase tracking-wide mb-3">{{ 'EVENTS.organizer_controls' | translate }}</h2>
         <div class="flex gap-3">
           <button type="button"
                   [disabled]="isActioning()"
                   (click)="onCancelEvent()"
                   class="rounded-lg bg-red-600 hover:bg-red-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60 transition-colors">
-            Cancel Event
+            {{ 'EVENTS.cancel_event' | translate }}
           </button>
         </div>
       </section>
@@ -4349,130 +5271,6 @@ export const EVENTS_ROUTES: Routes = [
     {{ 'PROFILE.no_stats' | translate }}
   </p>
 }
-````
-
-## File: src/app/features/quiz/quiz-edit/quiz-edit.component.html
-````html
-<div class="min-h-screen p-4 sm:p-8">
-  <div class="max-w-2xl mx-auto space-y-6">
-    <header class="flex items-center justify-between flex-wrap gap-4">
-      <div>
-        <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
-          ✏️ Edit Quiz
-        </h1>
-        <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
-          Step {{ currentStep() }} of 2 —
-          {{ currentStep() === 1 ? 'Quiz details' : 'Edit questions' }}
-        </p>
-      </div>
-      <a [routerLink]="['..']" class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-        ✕ Cancel
-      </a>
-    </header>
-    @if (isLoading()) {
-      <div class="space-y-4">
-        @for (_ of [1, 2, 3]; track $index) {
-          <div class="h-20 glass-card animate-pulse"></div>
-        }
-      </div>
-    } @else {
-      @if (!isDraft()) {
-        <div class="glass-card px-4 py-3 bg-yellow-50/80 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/60 text-yellow-800 dark:text-yellow-300 text-sm rounded-xl" role="alert">
-          ⚠️ This quiz is live and cannot be edited. Questions and metadata are read-only.
-        </div>
-      }
-      <div class="flex items-center gap-3">
-        @for (step of [1, 2]; track step) {
-          <div class="flex-1 h-1.5 rounded-full transition-all duration-300"
-               [class]="currentStep() >= step ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'">
-          </div>
-        }
-      </div>
-      @if (currentStep() === 1) {
-        <form [formGroup]="metaForm" (ngSubmit)="nextStep()" novalidate class="glass-card p-6 space-y-5">
-          <hlm-field>
-            <label hlmFieldLabel for="quiz-title">Quiz title <span class="text-red-500">*</span></label>
-            <input hlmInput id="quiz-title" formControlName="title" class="w-full" placeholder="e.g. Mistborn: The Final Empire"/>
-            <hlm-field-error validator="required">Title is required.</hlm-field-error>
-            <hlm-field-error validator="minlength">Too short (min 3).</hlm-field-error>
-          </hlm-field>
-          <hlm-field>
-            <label hlmFieldLabel for="quiz-desc">Description</label>
-            <textarea hlmInput id="quiz-desc" formControlName="description" rows="3" class="w-full resize-none"></textarea>
-          </hlm-field>
-          <div class="flex justify-end">
-            <button hlmBtn type="submit" [disabled]="metaForm.invalid || !isDraft()" class="bg-primary-600 text-white">
-              Continue →
-            </button>
-          </div>
-        </form>
-      }
-      @if (currentStep() === 2) {
-        <div class="space-y-6">
-          @if (localQuestions().length > 0) {
-            <div class="space-y-3">
-              <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-widest">
-                Questions ({{ localQuestions().length }})
-              </h2>
-              @for (q of localQuestions(); track $index) {
-                <div hlmCard class="glass-card-subtle px-5 py-4 flex items-start gap-3 rounded-xl relative">
-                  <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-xs font-bold flex items-center justify-center">
-                    {{ $index + 1 }}
-                  </span>
-                  <div class="flex-1">
-                    <p class="text-sm font-medium">{{ q.question }}</p>
-                    <p class="text-green-600 dark:text-green-400 text-xs mt-1">✓ {{ q.options[q.correctIndex] }}</p>
-                    <p [class]="q.id ? 'text-gray-400' : 'text-blue-400'" class="text-[10px] uppercase font-bold mt-1">
-                      {{ q.id ? 'saved' : 'new' }}
-                    </p>
-                  </div>
-                  @if (isDraft()) {
-                    <button type="button" (click)="removeQuestion($index)" class="text-gray-400 hover:text-red-500 transition-colors">✕</button>
-                  }
-                </div>
-              }
-            </div>
-          }
-          @if (isDraft()) {
-            <form [formGroup]="questionForm" (ngSubmit)="addQuestion()" class="glass-card p-6 space-y-5">
-              <h2 class="font-semibold">{{ localQuestions().length === 0 ? 'Add your first question' : 'Add another' }}</h2>
-              <hlm-field>
-                <label hlmFieldLabel for="q-text">Question *</label>
-                <textarea hlmInput id="q-text" formControlName="question" rows="2" class="w-full resize-none"></textarea>
-              </hlm-field>
-              <div class="space-y-3">
-                <p class="text-sm font-medium">Answer options *</p>
-                @for (idx of optionIndices; track idx) {
-                  <div class="flex items-center gap-3">
-                    <input type="radio" formControlName="correctIndex" [value]="idx" class="w-4 h-4 text-accent-600" />
-                    <input hlmInput [formControlName]="'option' + idx" [placeholder]="'Option ' + optionLabel(idx)" class="flex-1"/>
-                  </div>
-                }
-              </div>
-              <button hlmBtn type="submit" variant="outline" [disabled]="questionForm.invalid" class="w-full border-dashed">
-                + Add Question
-              </button>
-            </form>
-          }
-          @if (errorMessage()) {
-            <div class="bg-red-50 dark:bg-red-900/20 text-red-700 p-4 rounded-xl text-sm border border-red-200">
-              ⚠️ {{ errorMessage() }}
-            </div>
-          }
-          <div class="flex justify-between items-center pb-8">
-            <button hlmBtn variant="ghost" (click)="previousStep()">← Back</button>
-            <button hlmBtn (click)="saveChanges()" [disabled]="!canSave()" class="bg-accent-600 text-white font-bold px-6">
-              {{ isSaving() ? '⏳ Saving…' : '💾 Save Changes' }}
-              @if (localQuestions().length > 0) {
-                 ({{ localQuestions().length }} {{ localQuestions().length === 1 ? 'question' : 'questions' }})
-              }
-            </button>
-          </div>
-        </div>
-      }
-    }
-  </div>
-</div>
 ````
 
 ## File: src/app/features/quiz/quiz-leaderboard/leaderboard-rest-table/leaderboard-rest-table.component.html
@@ -4599,11 +5397,11 @@ export abstract class LeaderboardBaseComponent implements OnDestroy {
   <div class="max-w-2xl mx-auto space-y-6">
     <header class="flex items-center justify-between flex-wrap gap-4">
       <div>
-        <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">🔍 Quiz Preview</h1>
+        <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">{{ 'QUIZ.preview_heading' | translate }}</h1>
         <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">{{ quiz()?.title }}</p>
       </div>
       <a [routerLink]="['..']" class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-        ✕ Close
+        {{ 'QUIZ.close' | translate }}
       </a>
     </header>
     @if (isLoading()) {
@@ -4615,24 +5413,24 @@ export abstract class LeaderboardBaseComponent implements OnDestroy {
     } @else {
       @if (quiz()?.status === 'live') {
         <div class="glass-card px-4 py-3 bg-green-50/80 dark:bg-green-900/20 border border-green-200 dark:border-green-700/60 text-green-800 dark:text-green-300 text-sm rounded-xl" role="status">
-          🟢 This quiz is currently live.
+          {{ 'QUIZ.preview_live_banner' | translate }}
         </div>
       }
       <div class="glass-card px-4 py-3 bg-blue-50/80 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700/60 text-blue-800 dark:text-blue-300 text-sm rounded-xl">
-        👁️ Preview Mode — correct answers are highlighted in green
+        {{ 'QUIZ.preview_banner' | translate }}
       </div>
       @if (questions().length === 0) {
         <div class="glass-card p-12 text-center">
           <p class="text-4xl mb-3">📝</p>
-          <p class="text-gray-500 dark:text-gray-400">No questions yet. Add some before activating.</p>
+          <p class="text-gray-500 dark:text-gray-400">{{ 'QUIZ.preview_no_questions' | translate }}</p>
           <a [routerLink]="['../edit']" class="inline-block mt-4 text-primary-600 dark:text-primary-400 text-sm hover:underline">
-            → Go to Edit
+            {{ 'QUIZ.preview_no_questions_link' | translate }}
           </a>
         </div>
       } @else {
         <div class="space-y-2">
           <p class="text-sm text-gray-500 dark:text-gray-400 text-center">
-            Question {{ currentIndex() + 1 }} of {{ questions().length }}
+            {{ 'QUIZ.question_of' | translate: { current: currentIndex() + 1, total: questions().length } }}
           </p>
           <div class="w-full h-1.5 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
             <div class="h-full bg-primary-500 rounded-full transition-all duration-300"
@@ -4661,7 +5459,7 @@ export abstract class LeaderboardBaseComponent implements OnDestroy {
                 </span>
                 <span class="flex-1">{{ opt }}</span>
                 @if ($index === currentQuestion().correctIndex) {
-                  <span class="text-green-600 dark:text-green-400 text-xs font-semibold flex-shrink-0">✓ Correct</span>
+                  <span class="text-green-600 dark:text-green-400 text-xs font-semibold flex-shrink-0">{{ 'QUIZ.preview_correct_answer' | translate }}</span>
                 }
               </div>
             }
@@ -4669,7 +5467,7 @@ export abstract class LeaderboardBaseComponent implements OnDestroy {
         </div>
         <div class="flex justify-between items-center">
           <button hlmBtn type="button" variant="outline" (click)="prev()" [disabled]="isFirstQuestion()">
-            ← Previous
+            {{ 'QUIZ.prev' | translate }}
           </button>
           <div class="flex gap-2">
             @if (isLastQuestion() && quiz()?.status === 'draft') {
@@ -4685,7 +5483,7 @@ export abstract class LeaderboardBaseComponent implements OnDestroy {
             }
             @if (!isLastQuestion()) {
               <button hlmBtn type="button" (click)="next()">
-                Next →
+                {{ 'QUIZ.next' | translate }}
               </button>
             }
           </div>
@@ -9166,6 +9964,213 @@ export class BookVoteService {
 }
 ````
 
+## File: src/app/core/services/chat.service.ts
+````typescript
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { ChatMessage, ChatRoom } from '../models/chat.model';
+import { environment } from '../../../environments/environment';
+interface ApiChatRoom {
+  id: string;
+  name: string;
+}
+interface ApiChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: string;
+}
+@Injectable({ providedIn: 'root' })
+export class ChatService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _rooms = signal<ChatRoom[]>([]);
+  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
+  private readonly _activeRoomId = signal<string | null>(null);
+  private readonly _unreadCount = signal<number>(0);
+  private readonly _isOpen = signal<boolean>(false);
+  private readonly _hasNewMessage = signal<boolean>(false);
+  private readonly _mutedUserIds = signal<Set<string>>(new Set());
+  private currentUserId: string | null = null;
+  readonly rooms = this._rooms.asReadonly();
+  readonly messages = this._messages.asReadonly();
+  readonly activeRoomId = this._activeRoomId.asReadonly();
+  readonly unreadCount = this._unreadCount.asReadonly();
+  readonly isOpen = this._isOpen.asReadonly();
+  readonly hasNewMessage = this._hasNewMessage.asReadonly();
+  readonly mutedUserIds = this._mutedUserIds.asReadonly();
+  readonly activeRoom = computed(() =>
+    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
+  );
+  readonly activeMessages = computed(() => {
+    const msgs = this._messages()[this._activeRoomId() ?? ''] ?? [];
+    const muted = this._mutedUserIds();
+    return msgs.map(m => ({ ...m, isMuted: muted.has(m.senderId) }));
+  });
+  // ── Public API ────────────────────────────────────────────────────────────
+  /** Fetch chat rooms for a given club and seed the rooms signal. */
+  loadRooms(clubId: string, userId?: string): void {
+    if (userId !== undefined) {
+      this.currentUserId = userId;
+    }
+    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
+      .then(raw => {
+        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId }));
+        this._rooms.set(rooms);
+        const currentId = this._activeRoomId();
+        if (!currentId || !rooms.some(r => r.id === currentId)) {
+          const first = rooms[0];
+          if (first) {
+            this._activeRoomId.set(first.id);
+            this.loadMessages(first.id);
+          }
+        }
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
+  }
+  loadAllClubRooms(clubs: { id: string; name: string }[], userId?: string): void {
+    if (userId !== undefined) this.currentUserId = userId;
+    const multipleClubs = clubs.length > 1;
+    const requests = clubs.map(club =>
+      firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${club.id}/chat/rooms`))
+        .then(raw => raw.map(r => ({
+          id: r.id,
+          name: multipleClubs ? `${club.name} · ${r.name}` : r.name,
+          clubId: club.id,
+        })))
+        .catch(() => [] as ChatRoom[]),
+    );
+    Promise.all(requests).then(results => {
+      const allRooms = results.flat();
+      this._rooms.set(allRooms);
+      const currentId = this._activeRoomId();
+      if (!currentId || !allRooms.some(r => r.id === currentId)) {
+        const first = allRooms[0];
+        if (first) {
+          this._activeRoomId.set(first.id);
+          this.loadMessages(first.id);
+        }
+      }
+    }).catch((err: unknown) => console.error('[ChatService] loadAllClubRooms error', err));
+  }
+  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
+    const query: Record<string, string> = {};
+    if (params?.before) query['before'] = params.before;
+    if (params?.limit != null) query['limit'] = String(params.limit);
+    firstValueFrom(
+      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
+        params: query,
+      }),
+    )
+      .then(raw => {
+        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
+        this._messages.update(map => ({ ...map, [roomId]: msgs }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
+  }
+  toggleOpen(): void {
+    this._isOpen.update(v => !v);
+    if (this._isOpen()) {
+      this.markAsRead();
+    }
+  }
+  openRoom(roomId: string): void {
+    this._activeRoomId.set(roomId);
+    this.loadMessages(roomId);
+    this.markAsRead();
+  }
+  markAsRead(): void {
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+  }
+  clearRooms(): void {
+    this._rooms.set([]);
+    this._messages.set({});
+    this._activeRoomId.set(null);
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+    this._isOpen.set(false);
+    this._mutedUserIds.set(new Set());
+    this.currentUserId = null;
+  }
+  muteUser(userId: string): void {
+    this._mutedUserIds.update(set => new Set([...set, userId]));
+  }
+  unmuteUser(userId: string): void {
+    this._mutedUserIds.update(set => {
+      const next = new Set(set);
+      next.delete(userId);
+      return next;
+    });
+  }
+  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    this.currentUserId = currentUser.id;
+    firstValueFrom(
+      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
+    )
+      .then(() => {
+        this.loadMessages(roomId);
+      })
+      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
+  }
+  deleteMessage(messageId: string): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    firstValueFrom(
+      this.http.delete(`${this.api}/chat/rooms/${roomId}/messages/${messageId}`),
+    )
+      .then(() => {
+        this._messages.update(map => ({
+          ...map,
+          [roomId]: (map[roomId] ?? []).filter(m => m.id !== messageId),
+        }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] deleteMessage error', err));
+  }
+  banUserFromChat(userId: string, durationSeconds: number): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    firstValueFrom(
+      this.http.post(`${this.api}/chat/rooms/${roomId}/ban`, {
+        user_id: userId,
+        duration_seconds: durationSeconds,
+      }),
+    )
+      .then(() => {
+        this._messages.update(map => ({
+          ...map,
+          [roomId]: (map[roomId] ?? []).filter(m => m.senderId !== userId),
+        }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
+  }
+  createRoom(clubId: string, name: string): void {
+    firstValueFrom(
+      this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),
+    )
+      .then(raw => {
+        const room: ChatRoom = { id: raw.id, name: raw.name, clubId };
+        this._rooms.update(rooms => [...rooms, room]);
+      })
+      .catch((err: unknown) => console.error('[ChatService] createRoom error', err));
+  }
+  private mapMessage(m: ApiChatMessage): ChatMessage {
+    return {
+      id: m.id,
+      senderId: m.senderId,
+      senderName: m.senderName,
+      text: m.text,
+      timestamp: new Date(m.timestamp),
+      isOwn: m.senderId === this.currentUserId,
+    };
+  }
+}
+````
+
 ## File: src/app/core/services/geocoding.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -9754,7 +10759,8 @@ export class ProfileComponent {
   protected readonly joinedDate = computed<string>(() => {
     const raw = this.auth.currentUser()?.createdAt;
     if (!raw) return '';
-    return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' }).format(
+    const locale = this.translate.currentLang === 'uk' ? 'uk-UA' : 'en-US';
+    return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long' }).format(
       new Date(raw),
     );
   });
@@ -9838,6 +10844,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { QuizService } from '../../../core/services/quiz.service';
 import { QuizQuestion } from '../../../core/models/quiz.model';
 import { HlmFieldImports } from '../../../shared/spartan/field/src';
@@ -9861,7 +10868,7 @@ type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
   selector: 'app-quiz-create',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
   templateUrl: './quiz-create.component.html',
 })
 export class QuizCreateComponent {
@@ -9965,6 +10972,130 @@ export class QuizCreateComponent {
 }
 ````
 
+## File: src/app/features/quiz/quiz-edit/quiz-edit.component.html
+````html
+<div class="min-h-screen p-4 sm:p-8">
+  <div class="max-w-2xl mx-auto space-y-6">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
+          ✏️ Edit Quiz
+        </h1>
+        <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
+          Step {{ currentStep() }} of 2 —
+          {{ currentStep() === 1 ? 'Quiz details' : 'Edit questions' }}
+        </p>
+      </div>
+      <a [routerLink]="['..']" class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
+        ✕ Cancel
+      </a>
+    </header>
+    @if (isLoading()) {
+      <div class="space-y-4">
+        @for (_ of [1, 2, 3]; track $index) {
+          <div class="h-20 glass-card animate-pulse"></div>
+        }
+      </div>
+    } @else {
+      @if (!isDraft()) {
+        <div class="glass-card px-4 py-3 bg-yellow-50/80 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700/60 text-yellow-800 dark:text-yellow-300 text-sm rounded-xl" role="alert">
+          ⚠️ This quiz is live and cannot be edited. Questions and metadata are read-only.
+        </div>
+      }
+      <div class="flex items-center gap-3">
+        @for (step of [1, 2]; track step) {
+          <div class="flex-1 h-1.5 rounded-full transition-all duration-300"
+               [class]="currentStep() >= step ? 'bg-primary-500' : 'bg-gray-200 dark:bg-gray-700'">
+          </div>
+        }
+      </div>
+      @if (currentStep() === 1) {
+        <form [formGroup]="metaForm" (ngSubmit)="nextStep()" novalidate class="glass-card p-6 space-y-5">
+          <hlm-field>
+            <label hlmFieldLabel for="quiz-title">Quiz title <span class="text-red-500">*</span></label>
+            <input hlmInput id="quiz-title" formControlName="title" class="w-full" placeholder="e.g. Mistborn: The Final Empire"/>
+            <hlm-field-error validator="required">Title is required.</hlm-field-error>
+            <hlm-field-error validator="minlength">Too short (min 3).</hlm-field-error>
+          </hlm-field>
+          <hlm-field>
+            <label hlmFieldLabel for="quiz-desc">Description</label>
+            <textarea hlmInput id="quiz-desc" formControlName="description" rows="3" class="w-full resize-none"></textarea>
+          </hlm-field>
+          <div class="flex justify-end">
+            <button hlmBtn type="submit" [disabled]="metaForm.invalid || !isDraft()" class="bg-primary-600 text-white">
+              Continue →
+            </button>
+          </div>
+        </form>
+      }
+      @if (currentStep() === 2) {
+        <div class="space-y-6">
+          @if (localQuestions().length > 0) {
+            <div class="space-y-3">
+              <h2 class="text-xs font-semibold text-gray-500 uppercase tracking-widest">
+                Questions ({{ localQuestions().length }})
+              </h2>
+              @for (q of localQuestions(); track $index) {
+                <div hlmCard class="glass-card-subtle px-5 py-4 flex items-start gap-3 rounded-xl relative">
+                  <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-xs font-bold flex items-center justify-center">
+                    {{ $index + 1 }}
+                  </span>
+                  <div class="flex-1">
+                    <p class="text-sm font-medium">{{ q.question }}</p>
+                    <p class="text-green-600 dark:text-green-400 text-xs mt-1">✓ {{ q.options[q.correctIndex] }}</p>
+                    <p [class]="q.id ? 'text-gray-400' : 'text-blue-400'" class="text-[10px] uppercase font-bold mt-1">
+                      {{ q.id ? 'saved' : 'new' }}
+                    </p>
+                  </div>
+                  @if (isDraft()) {
+                    <button type="button" (click)="removeQuestion($index)" class="text-gray-400 hover:text-red-500 transition-colors">✕</button>
+                  }
+                </div>
+              }
+            </div>
+          }
+          @if (isDraft()) {
+            <form [formGroup]="questionForm" (ngSubmit)="addQuestion()" class="glass-card p-6 space-y-5">
+              <h2 class="font-semibold">{{ localQuestions().length === 0 ? 'Add your first question' : 'Add another' }}</h2>
+              <hlm-field>
+                <label hlmFieldLabel for="q-text">Question *</label>
+                <textarea hlmInput id="q-text" formControlName="question" rows="2" class="w-full resize-none"></textarea>
+              </hlm-field>
+              <div class="space-y-3">
+                <p class="text-sm font-medium">Answer options *</p>
+                @for (idx of optionIndices; track idx) {
+                  <div class="flex items-center gap-3">
+                    <input type="radio" formControlName="correctIndex" [value]="idx" class="w-4 h-4 text-accent-600" />
+                    <input hlmInput [formControlName]="'option' + idx" [placeholder]="'Option ' + optionLabel(idx)" class="flex-1"/>
+                  </div>
+                }
+              </div>
+              <button hlmBtn type="submit" variant="outline" [disabled]="questionForm.invalid" class="w-full border-dashed">
+                + Add Question
+              </button>
+            </form>
+          }
+          @if (errorMessage()) {
+            <div class="bg-red-50 dark:bg-red-900/20 text-red-700 p-4 rounded-xl text-sm border border-red-200">
+              ⚠️ {{ errorMessage() }}
+            </div>
+          }
+          <div class="flex justify-between items-center pb-8">
+            <button hlmBtn variant="ghost" (click)="previousStep()">← Back</button>
+            <button hlmBtn (click)="saveChanges()" [disabled]="!canSave()" class="bg-accent-600 text-white font-bold px-6">
+              {{ isSaving() ? '⏳ Saving…' : '💾 Save Changes' }}
+              @if (localQuestions().length > 0) {
+                 ({{ localQuestions().length }} {{ localQuestions().length === 1 ? 'question' : 'questions' }})
+              }
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>
+````
+
 ## File: src/app/features/quiz/quiz-leaderboard/leaderboard-podium/leaderboard-podium.component.html
 ````html
 <div class="flex items-end justify-center gap-3 px-4 py-6">
@@ -10060,12 +11191,12 @@ export class LeaderboardPodiumComponent {
   <div class="max-w-3xl mx-auto space-y-6">
     <header class="flex items-center justify-between flex-wrap gap-4">
       <div>
-        <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🏆 Leaderboard</h1>
-        <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">Auto-refreshes every 30 seconds</p>
+        <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">{{ 'QUIZ.leaderboard_heading' | translate }}</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">{{ 'QUIZ.leaderboard_refresh_hint' | translate }}</p>
       </div>
       <a [routerLink]="['/clubs', id(), 'quizzes']"
          class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-        ← Back to Quizzes
+        {{ 'QUIZ.back_to_quizzes' | translate }}
       </a>
     </header>
     @if (isLoadingSession()) {
@@ -10077,16 +11208,16 @@ export class LeaderboardPodiumComponent {
       @if (!session()) {
         <div class="glass-card p-12 text-center">
           <p class="text-4xl mb-3">🎯</p>
-          <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">No active session</h2>
+          <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">{{ 'QUIZ.no_active_session' | translate }}</h2>
           <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-            The quiz session hasn't started yet.
+            {{ 'QUIZ.no_active_session_hint' | translate }}
           </p>
         </div>
       } @else {
         @if (leaderboard().length === 0 && !isLeaderboardLoading()) {
           <div class="glass-card p-12 text-center">
             <p class="text-4xl mb-3">⏳</p>
-            <p class="text-gray-500 dark:text-gray-400">No participants yet.</p>
+            <p class="text-gray-500 dark:text-gray-400">{{ 'QUIZ.leaderboard_empty' | translate }}</p>
           </div>
         } @else {
           <div class="glass-card overflow-hidden">
@@ -10110,6 +11241,7 @@ export class LeaderboardPodiumComponent {
 ````typescript
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
 import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
 import { LeaderboardPodiumComponent } from './leaderboard-podium/leaderboard-podium.component';
@@ -10119,7 +11251,7 @@ import { LeaderboardBaseComponent } from './leaderboard-base.component';
   selector: 'app-quiz-leaderboard',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ...HlmCardImports, InitialsPipe, LeaderboardPodiumComponent, LeaderboardRestTableComponent],
+  imports: [RouterLink, TranslateModule, ...HlmCardImports, InitialsPipe, LeaderboardPodiumComponent, LeaderboardRestTableComponent],
   templateUrl: './quiz-leaderboard.component.html',
 })
 export class QuizLeaderboardComponent extends LeaderboardBaseComponent implements OnInit {
@@ -10145,6 +11277,7 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { inject } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
 import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
@@ -10152,7 +11285,7 @@ import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
   selector: 'app-quiz-preview',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ...HlmCardImports, HlmButton],
+  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton],
   templateUrl: './quiz-preview.component.html',
 })
 export class QuizPreviewComponent extends QuizDetailBaseComponent {
@@ -10203,6 +11336,7 @@ import {
   linkedSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { QuizService } from '../../../core/services/quiz.service';
 import { QuizAttempt } from '../../../core/models/quiz.model';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
@@ -10211,7 +11345,7 @@ type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
   selector: 'app-quiz-take',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LoadingSpinnerComponent],
+  imports: [RouterLink, TranslateModule, LoadingSpinnerComponent],
   templateUrl: './quiz-take.component.html',
 })
 export class QuizTakeComponent implements OnInit {
@@ -10705,213 +11839,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
     }),
   );
 };
-````
-
-## File: src/app/core/services/chat.service.ts
-````typescript
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { ChatMessage, ChatRoom } from '../models/chat.model';
-import { environment } from '../../../environments/environment';
-interface ApiChatRoom {
-  id: string;
-  name: string;
-}
-interface ApiChatMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  text: string;
-  timestamp: string;
-}
-@Injectable({ providedIn: 'root' })
-export class ChatService {
-  private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _rooms = signal<ChatRoom[]>([]);
-  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
-  private readonly _activeRoomId = signal<string | null>(null);
-  private readonly _unreadCount = signal<number>(0);
-  private readonly _isOpen = signal<boolean>(false);
-  private readonly _hasNewMessage = signal<boolean>(false);
-  private readonly _mutedUserIds = signal<Set<string>>(new Set());
-  private currentUserId: string | null = null;
-  readonly rooms = this._rooms.asReadonly();
-  readonly messages = this._messages.asReadonly();
-  readonly activeRoomId = this._activeRoomId.asReadonly();
-  readonly unreadCount = this._unreadCount.asReadonly();
-  readonly isOpen = this._isOpen.asReadonly();
-  readonly hasNewMessage = this._hasNewMessage.asReadonly();
-  readonly mutedUserIds = this._mutedUserIds.asReadonly();
-  readonly activeRoom = computed(() =>
-    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
-  );
-  readonly activeMessages = computed(() => {
-    const msgs = this._messages()[this._activeRoomId() ?? ''] ?? [];
-    const muted = this._mutedUserIds();
-    return msgs.map(m => ({ ...m, isMuted: muted.has(m.senderId) }));
-  });
-  // ── Public API ────────────────────────────────────────────────────────────
-  /** Fetch chat rooms for a given club and seed the rooms signal. */
-  loadRooms(clubId: string, userId?: string): void {
-    if (userId !== undefined) {
-      this.currentUserId = userId;
-    }
-    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
-      .then(raw => {
-        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId }));
-        this._rooms.set(rooms);
-        const currentId = this._activeRoomId();
-        if (!currentId || !rooms.some(r => r.id === currentId)) {
-          const first = rooms[0];
-          if (first) {
-            this._activeRoomId.set(first.id);
-            this.loadMessages(first.id);
-          }
-        }
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
-  }
-  loadAllClubRooms(clubs: { id: string; name: string }[], userId?: string): void {
-    if (userId !== undefined) this.currentUserId = userId;
-    const multipleClubs = clubs.length > 1;
-    const requests = clubs.map(club =>
-      firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${club.id}/chat/rooms`))
-        .then(raw => raw.map(r => ({
-          id: r.id,
-          name: multipleClubs ? `${club.name} · ${r.name}` : r.name,
-          clubId: club.id,
-        })))
-        .catch(() => [] as ChatRoom[]),
-    );
-    Promise.all(requests).then(results => {
-      const allRooms = results.flat();
-      this._rooms.set(allRooms);
-      const currentId = this._activeRoomId();
-      if (!currentId || !allRooms.some(r => r.id === currentId)) {
-        const first = allRooms[0];
-        if (first) {
-          this._activeRoomId.set(first.id);
-          this.loadMessages(first.id);
-        }
-      }
-    }).catch((err: unknown) => console.error('[ChatService] loadAllClubRooms error', err));
-  }
-  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
-    const query: Record<string, string> = {};
-    if (params?.before) query['before'] = params.before;
-    if (params?.limit != null) query['limit'] = String(params.limit);
-    firstValueFrom(
-      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
-        params: query,
-      }),
-    )
-      .then(raw => {
-        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
-        this._messages.update(map => ({ ...map, [roomId]: msgs }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
-  }
-  toggleOpen(): void {
-    this._isOpen.update(v => !v);
-    if (this._isOpen()) {
-      this.markAsRead();
-    }
-  }
-  openRoom(roomId: string): void {
-    this._activeRoomId.set(roomId);
-    this.loadMessages(roomId);
-    this.markAsRead();
-  }
-  markAsRead(): void {
-    this._unreadCount.set(0);
-    this._hasNewMessage.set(false);
-  }
-  clearRooms(): void {
-    this._rooms.set([]);
-    this._messages.set({});
-    this._activeRoomId.set(null);
-    this._unreadCount.set(0);
-    this._hasNewMessage.set(false);
-    this._isOpen.set(false);
-    this._mutedUserIds.set(new Set());
-    this.currentUserId = null;
-  }
-  muteUser(userId: string): void {
-    this._mutedUserIds.update(set => new Set([...set, userId]));
-  }
-  unmuteUser(userId: string): void {
-    this._mutedUserIds.update(set => {
-      const next = new Set(set);
-      next.delete(userId);
-      return next;
-    });
-  }
-  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    this.currentUserId = currentUser.id;
-    firstValueFrom(
-      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
-    )
-      .then(() => {
-        this.loadMessages(roomId);
-      })
-      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
-  }
-  deleteMessage(messageId: string): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    firstValueFrom(
-      this.http.delete(`${this.api}/chat/rooms/${roomId}/messages/${messageId}`),
-    )
-      .then(() => {
-        this._messages.update(map => ({
-          ...map,
-          [roomId]: (map[roomId] ?? []).filter(m => m.id !== messageId),
-        }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] deleteMessage error', err));
-  }
-  banUserFromChat(userId: string, durationSeconds: number): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    firstValueFrom(
-      this.http.post(`${this.api}/chat/rooms/${roomId}/ban`, {
-        user_id: userId,
-        duration_seconds: durationSeconds,
-      }),
-    )
-      .then(() => {
-        this._messages.update(map => ({
-          ...map,
-          [roomId]: (map[roomId] ?? []).filter(m => m.senderId !== userId),
-        }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
-  }
-  createRoom(clubId: string, name: string): void {
-    firstValueFrom(
-      this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),
-    )
-      .then(raw => {
-        const room: ChatRoom = { id: raw.id, name: raw.name, clubId };
-        this._rooms.update(rooms => [...rooms, room]);
-      })
-      .catch((err: unknown) => console.error('[ChatService] createRoom error', err));
-  }
-  private mapMessage(m: ApiChatMessage): ChatMessage {
-    return {
-      id: m.id,
-      senderId: m.senderId,
-      senderName: m.senderName,
-      text: m.text,
-      timestamp: new Date(m.timestamp),
-      isOwn: m.senderId === this.currentUserId,
-    };
-  }
-}
 ````
 
 ## File: src/app/core/services/quiz.service.ts
@@ -11906,22 +12833,22 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
   <div class="max-w-3xl mx-auto space-y-6">
     <header class="flex items-center justify-between flex-wrap gap-4">
       <div>
-        <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🧠 Quizzes</h1>
+        <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🧠 {{ 'QUIZ.title' | translate }}</h1>
         <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-          Test your knowledge of the books you've read.
+          {{ 'QUIZ.list_subtitle' | translate }}
         </p>
       </div>
       <div class="flex items-center gap-3">
         @if (authService.isOrganizer()) {
           <a hlmBtn [routerLink]="['/clubs', id(), 'quizzes', 'create']"
              class="bg-gradient-brand text-white border-0 hover:opacity-90">
-            + Create Quiz
+            {{ 'QUIZ.create_btn' | translate }}
           </a>
         }
         <nav aria-label="Breadcrumb">
           <a [routerLink]="['/clubs', id()]"
              class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-            ← Club
+            {{ 'QUIZ.back_to_club_short' | translate }}
           </a>
         </nav>
       </div>
@@ -11936,14 +12863,14 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
       @if (quizService.quizzes().length === 0) {
         <div class="glass-card p-12 text-center">
           <p class="text-4xl mb-3">📝</p>
-          <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">No quizzes yet</h2>
+          <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">{{ 'QUIZ.no_quizzes' | translate }}</h2>
           @if (authService.isOrganizer()) {
             <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-              Create your first quiz to engage the club.
+              {{ 'QUIZ.no_quizzes_organizer' | translate }}
             </p>
           } @else {
             <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-              The organizer hasn't created any quizzes yet.
+              {{ 'QUIZ.no_quizzes_member' | translate }}
             </p>
           }
         </div>
@@ -11961,23 +12888,23 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
                       @case ('live') {
                         <span class="inline-flex items-center gap-1 rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
                           <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse"></span>
-                          Live
+                          {{ 'QUIZ.status_live' | translate }}
                         </span>
                       }
                       @case ('active') {
                         <span class="inline-flex items-center gap-1 rounded-full bg-blue-100/80 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700/60 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-400">
                           <span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span>
-                          Active
+                          {{ 'QUIZ.status_active' | translate }}
                         </span>
                       }
                       @case ('closed') {
                         <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-400 dark:text-gray-500">
-                          Closed
+                          {{ 'QUIZ.status_closed' | translate }}
                         </span>
                       }
                       @default {
                         <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-500 dark:text-gray-400">
-                          Draft
+                          {{ 'QUIZ.status_draft' | translate }}
                         </span>
                       }
                     }
@@ -12017,7 +12944,7 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
                       (click)="toggleActive(quiz.id, !quiz.isActive)"
                       [disabled]="togglingId() === quiz.id"
                     >
-                      {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
+                      {{ (quiz.isActive ? 'QUIZ.deactivate' : 'QUIZ.activate') | translate }}
                     </button>
                   }
                 } @else if (quiz.isActive || quiz.status === 'live' || quiz.status === 'active') {
@@ -12028,7 +12955,7 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
                     (click)="takeQuiz(quiz.id)"
                     class="w-full bg-gradient-brand text-white border-0 hover:opacity-90"
                   >
-                    Take Quiz →
+                    {{ 'QUIZ.take_btn' | translate }}
                   </button>
                 }
                 @if (quiz.status === 'live') {
@@ -12111,10 +13038,10 @@ export class QuizListComponent {
 <div class="min-h-screen p-4 sm:p-8">
   <div class="max-w-3xl mx-auto space-y-6">
     <header class="flex items-center justify-between flex-wrap gap-4">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🎮 Quiz Session</h1>
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">{{ 'QUIZ.session_heading' | translate }}</h1>
       <a [routerLink]="['/clubs', id(), 'quizzes']"
          class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-        ← Back to Quizzes
+        {{ 'QUIZ.back_to_quizzes' | translate }}
       </a>
     </header>
     @if (isLoadingSession()) {
@@ -12122,19 +13049,19 @@ export class QuizListComponent {
     } @else {
       @if (!session()) {
         <div class="glass-card p-6 space-y-5">
-          <h2 class="font-semibold text-gray-900 dark:text-white text-lg">Start a Session</h2>
+          <h2 class="font-semibold text-gray-900 dark:text-white text-lg">{{ 'QUIZ.session_start_heading' | translate }}</h2>
           <p class="text-gray-500 dark:text-gray-400 text-sm">
-            Select an event — attendees will be enrolled as participants automatically.
+            {{ 'QUIZ.session_start_hint' | translate }}
           </p>
           <div class="space-y-2">
-            <label for="event-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Event</label>
+            <label for="event-select" class="block text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'QUIZ.session_pick_event_label' | translate }}</label>
             <select
               id="event-select"
               class="w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 transition-colors"
               [value]="selectedEventId()"
               (change)="selectedEventId.set($any($event.target).value)"
             >
-              <option value="" disabled selected>Select event…</option>
+              <option value="" disabled selected>{{ 'QUIZ.session_pick_event_placeholder' | translate }}</option>
               @for (event of clubEvents(); track event.id) {
                 <option [value]="event.id">
                   {{ event.title }} — {{ event.date | date:'mediumDate' }}
@@ -12142,7 +13069,7 @@ export class QuizListComponent {
               }
             </select>
             @if (clubEvents().length === 0) {
-              <p class="text-xs text-yellow-600 dark:text-yellow-400">No events found for this club.</p>
+              <p class="text-xs text-yellow-600 dark:text-yellow-400">{{ 'QUIZ.session_no_events' | translate }}</p>
             }
           </div>
           <button
@@ -12152,7 +13079,7 @@ export class QuizListComponent {
             [disabled]="!selectedEventId() || isStarting()"
             class="bg-gradient-brand text-white border-0 hover:opacity-90"
           >
-            {{ isStarting() ? '⏳ Starting…' : '🚀 Start Session' }}
+            {{ isStarting() ? ('QUIZ.session_starting' | translate) : ('QUIZ.session_start' | translate) }}
           </button>
         </div>
       }
@@ -12161,18 +13088,18 @@ export class QuizListComponent {
           <div class="glass-card p-5 flex items-center gap-4 flex-wrap">
             <span class="inline-flex items-center gap-2 rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-3 py-1.5 text-sm font-semibold text-green-700 dark:text-green-400">
               <span class="w-2 h-2 rounded-full bg-green-500 inline-block animate-pulse"></span>
-              Live
+              {{ 'QUIZ.session_live' | translate }}
             </span>
             <span class="text-gray-500 dark:text-gray-400 text-sm">
-              Started {{ s.startedAt | date:'medium' }}
+              {{ 'QUIZ.session_started_at' | translate }} {{ s.startedAt | date:'medium' }}
             </span>
             <span class="text-gray-700 dark:text-gray-300 text-sm font-medium">
-              👥 {{ s.participantCount }} participants enrolled
+              👥 {{ s.participantCount }} {{ 'QUIZ.session_participants' | translate }}
             </span>
           </div>
           <div class="space-y-4">
             <div class="flex items-center justify-between">
-              <h2 class="font-semibold text-gray-900 dark:text-white text-lg">🏆 Live Leaderboard</h2>
+              <h2 class="font-semibold text-gray-900 dark:text-white text-lg">{{ 'QUIZ.session_live_leaderboard' | translate }}</h2>
               <button
                 hlmBtn
                 type="button"
@@ -12181,13 +13108,13 @@ export class QuizListComponent {
                 (click)="manualRefresh()"
                 [disabled]="isLeaderboardLoading()"
               >
-                {{ isLeaderboardLoading() ? '↻ Refreshing…' : '↻ Refresh' }}
+                {{ isLeaderboardLoading() ? ('QUIZ.session_refreshing' | translate) : ('QUIZ.session_refresh' | translate) }}
               </button>
             </div>
             @if (leaderboard().length === 0 && !isLeaderboardLoading()) {
               <div class="glass-card p-8 text-center">
                 <p class="text-2xl mb-2">⏳</p>
-                <p class="text-gray-500 dark:text-gray-400 text-sm">No participants yet. Waiting for responses…</p>
+                <p class="text-gray-500 dark:text-gray-400 text-sm">{{ 'QUIZ.session_no_participants' | translate }}</p>
               </div>
             } @else {
               <app-leaderboard-podium
@@ -12208,7 +13135,7 @@ export class QuizListComponent {
               [disabled]="isEnding()"
               class="bg-red-600 hover:bg-red-700 text-white border-0"
             >
-              {{ isEnding() ? '⏳ Ending…' : '🔴 End Session' }}
+              {{ isEnding() ? ('QUIZ.session_ending' | translate) : ('QUIZ.session_end' | translate) }}
             </button>
           </div>
         </div>
@@ -12234,6 +13161,7 @@ import {
 import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { inject } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { ClubEvent } from '../../../core/models/event.model';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
@@ -12244,7 +13172,7 @@ import { LeaderboardBaseComponent } from '../quiz-leaderboard/leaderboard-base.c
   selector: 'app-quiz-session',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, DatePipe, ...HlmCardImports, HlmButton, LeaderboardPodiumComponent, LeaderboardRestTableComponent],
+  imports: [RouterLink, DatePipe, TranslateModule, ...HlmCardImports, HlmButton, LeaderboardPodiumComponent, LeaderboardRestTableComponent],
   templateUrl: './quiz-session.component.html',
 })
 export class QuizSessionComponent extends LeaderboardBaseComponent implements OnInit {
@@ -13157,6 +14085,125 @@ export interface ClubEvent {
 </div>
 ````
 
+## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
+````html
+<div
+  class="flex flex-col overflow-hidden h-full"
+  [class]="variant() === 'featured'
+    ? 'parchment-card-raised'
+    : 'parchment-card hover:shadow-[var(--shadow-parchment-lg)] transition-shadow duration-200'"
+>
+  <div class="relative overflow-hidden flex-shrink-0"
+       [class]="variant() === 'featured' ? 'h-48' : 'h-32'">
+    @if (club().coverUrl) {
+      <img [src]="club().coverUrl" [alt]="''" class="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
+    } @else {
+      <div class="w-full h-full bg-gradient-fantasy" aria-hidden="true"></div>
+    }
+    @if (variant() === 'featured') {
+      <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none"></div>
+    }
+  </div>
+  <div class="flex flex-col flex-1 gap-3"
+       [class]="variant() === 'featured' ? 'p-5' : 'p-4'">
+    <div>
+      <h3
+        class="font-display font-semibold text-[var(--color-ink)] leading-snug flex items-center gap-1.5"
+        [class]="variant() === 'featured' ? 'text-lg line-clamp-2' : 'text-base line-clamp-1'"
+      >
+        {{ club().name }}
+        @if (isOwned()) {
+          <span class="text-xs font-bold text-[var(--color-primary-600)] dark:text-[#fbbf24] flex-shrink-0"
+                title="Your club" aria-label="Your club">✦</span>
+        }
+      </h3>
+      @if (club().description) {
+        <p
+          class="text-xs text-[var(--color-ink-muted)] mt-1.5"
+          [class]="variant() === 'featured' ? 'line-clamp-3' : 'line-clamp-2'"
+        >
+          {{ club().description }}
+        </p>
+      }
+    </div>
+    @if (club().memberPreviews.length > 0) {
+      <div class="flex items-center gap-1.5">
+        @for (url of club().memberPreviews.slice(0, 4); track url) {
+          <div
+            class="h-7 w-7 rounded-full avatar-gradient flex items-center justify-center
+                   text-white text-[10px] font-bold shrink-0 overflow-hidden"
+            aria-hidden="true"
+          >
+            @if (url) {
+              <img [src]="url" class="h-full w-full object-cover" alt="" />
+            } @else { ? }
+          </div>
+        }
+        @if (club().memberCount > 4) {
+          <span class="text-xs text-[var(--color-ink-muted)] ml-1">+{{ club().memberCount - 4 }}</span>
+        }
+        <span class="text-xs text-[var(--color-ink-muted)] ml-auto">
+          {{ club().memberCount }} {{ 'CLUBS.members' | translate }}
+        </span>
+      </div>
+    }
+    <hlm-separator />
+    <div class="flex items-center gap-2 mt-auto">
+      @if (isAuthenticated() && !isMember()) {
+        <button
+          hlmBtn
+          type="button"
+          size="sm"
+          (click)="join.emit()"
+          [disabled]="joining()"
+          class="flex-1"
+          [attr.aria-label]="('CLUBS.join' | translate) + ' ' + club().name"
+        >
+          @if (joining()) { <hlm-spinner size="xs" /> } @else { {{ 'CLUBS.join' | translate }} }
+        </button>
+        <a
+          hlmBtn
+          variant="outline"
+          size="sm"
+          [routerLink]="['/clubs', club().id]"
+          class="flex-shrink-0"
+          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
+        >
+          {{ 'CLUBS.view' | translate }}
+        </a>
+      } @else if (isAuthenticated() && isMember()) {
+        <a
+          hlmBtn
+          size="sm"
+          [routerLink]="['/clubs', club().id]"
+          class="flex-1 text-center"
+          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
+        >
+          {{ 'CLUBS.view' | translate }}
+        </a>
+        <span class="rounded-lg
+                     bg-[var(--color-accent-100)] dark:bg-[var(--color-accent-900)]/30
+                     border border-[var(--color-accent-300)] dark:border-[var(--color-accent-700)]/60
+                     px-3 py-1.5 text-xs font-semibold
+                     text-[var(--color-accent-700)] dark:text-[var(--color-accent-300)]">
+          {{ 'CLUBS.member_badge' | translate }}
+        </span>
+      } @else {
+        <a
+          hlmBtn
+          size="sm"
+          [routerLink]="['/clubs', club().id]"
+          class="flex-1 text-center"
+          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
+        >
+          {{ 'CLUBS.view' | translate }}
+        </a>
+      }
+    </div>
+  </div>
+</div>
+````
+
 ## File: src/app/features/clubs/edit-club/edit-club.component.html
 ````html
 <main class="min-h-screen flex items-center justify-center p-4">
@@ -13393,7 +14440,7 @@ export class EditClubComponent implements OnInit {
               [variant]="event().status === 'cancelled' ? 'destructive'
                        : event().status === 'active' ? 'default' : 'secondary'"
               class="rounded-full text-xs flex-shrink-0">
-          {{ event().status }}
+          {{ ('EVENTS.status_' + event().status) | translate }}
         </span>
       }
     </div>
@@ -13437,24 +14484,24 @@ export class EditClubComponent implements OnInit {
     <div class="flex items-center justify-between mt-auto pt-2
                 border-t border-[var(--color-sepia-mid)]">
       <span class="text-xs text-[var(--color-ink-muted)]">
-        {{ event().attendeeCount }} attending
+        {{ event().attendeeCount }} {{ 'EVENTS.attending' | translate }}
       </span>
       <div class="flex gap-2">
         <a hlmBtn variant="outline" size="sm" [routerLink]="['/events', event().id]">
-          View
+          {{ 'EVENTS.view' | translate }}
         </a>
         @if (isAuthenticated() && event().status !== 'cancelled') {
           @if (event().isAttending) {
             <button hlmBtn type="button" size="sm" [disabled]="attending()"
                     (click)="cancelAttend.emit()"
                     class="bg-[var(--color-accent-600)] hover:bg-[var(--color-accent-700)] text-white">
-              @if (attending()) { <hlm-spinner size="xs" /> } @else { ✓ Going }
+              @if (attending()) { <hlm-spinner size="xs" /> } @else { {{ 'EVENTS.going' | translate }} }
             </button>
           } @else {
             <button hlmBtn type="button" size="sm" [disabled]="attending()"
                     (click)="attend.emit()"
                     class="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white">
-              @if (attending()) { <hlm-spinner size="xs" /> } @else { RSVP }
+              @if (attending()) { <hlm-spinner size="xs" /> } @else { {{ 'EVENTS.rsvp' | translate }} }
             </button>
           }
         }
@@ -13474,7 +14521,7 @@ export class EditClubComponent implements OnInit {
         {{ 'NAV.events' | translate }}
       </h1>
       <p class="text-[var(--color-ink-muted)] font-display text-lg mb-8">
-        Discover and join upcoming book club gatherings
+        {{ 'EVENTS.subtitle' | translate }}
       </p>
       @if (eventService.availableCities().length > 0) {
         <div class="mx-auto max-w-sm">
@@ -13524,7 +14571,7 @@ export class EditClubComponent implements OnInit {
               ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
               : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
           >
-            Upcoming
+            {{ 'EVENTS.tab_upcoming' | translate }}
           </button>
           <button
             role="tab"
@@ -13538,7 +14585,7 @@ export class EditClubComponent implements OnInit {
               ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
               : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
           >
-            My Events
+            {{ 'EVENTS.tab_my' | translate }}
             @if (eventService.myEvents().length > 0) {
               <span class="inline-flex items-center justify-center
                            h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
@@ -13561,8 +14608,8 @@ export class EditClubComponent implements OnInit {
           } @else if (sortedDates().length === 0) {
             <app-empty-state
               icon="📅"
-              title="No upcoming events"
-              description="No events are scheduled yet. Check back soon!"
+              [title]="'EVENTS.no_upcoming' | translate"
+              [description]="'EVENTS.no_upcoming_desc' | translate"
             />
           } @else {
             @for (date of sortedDates(); track date) {
@@ -13602,8 +14649,8 @@ export class EditClubComponent implements OnInit {
           } @else if (eventService.myEvents().length === 0) {
             <app-empty-state
               icon="📅"
-              title="No upcoming events"
-              description="Join clubs to see their events here."
+              [title]="'EVENTS.no_upcoming' | translate"
+              [description]="'EVENTS.no_my_events_desc' | translate"
             />
           } @else {
             <ul class="bento-grid-3">
@@ -13630,8 +14677,8 @@ export class EditClubComponent implements OnInit {
       } @else if (sortedDates().length === 0) {
         <app-empty-state
           icon="📅"
-          title="No upcoming events"
-          description="No events are scheduled yet. Check back soon!"
+          [title]="'EVENTS.no_upcoming' | translate"
+          [description]="'EVENTS.no_upcoming_desc' | translate"
         />
       } @else {
         @for (date of sortedDates(); track date) {
@@ -13672,7 +14719,7 @@ export class EditClubComponent implements OnInit {
     <header class="flex items-center justify-between flex-wrap gap-4">
       <div>
         <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
-          📝 Create Quiz
+          {{ 'QUIZ.create_heading_full' | translate }}
         </h1>
         <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
           Step {{ currentStep() }} of 2 —
@@ -13867,6 +14914,71 @@ export class EditClubComponent implements OnInit {
     }
   </div>
 </div>
+````
+
+## File: src/app/layout/header/header.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  computed,
+} from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith, firstValueFrom } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideSun, lucideMoon } from '@ng-icons/lucide';
+import { AuthService } from '../../core/auth/auth.service';
+import { ThemeService } from '../../core/services/theme.service';
+import { HlmDropdownMenuImports } from '../../shared/spartan/dropdown-menu/src';
+import { HlmSheetImports } from '../../shared/spartan/sheet/src';
+import { HlmButton } from '../../shared/spartan/button/src';
+import { HlmIconImports } from '../../shared/spartan/icon/src';
+@Component({
+  selector: 'app-header',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideIcons({ lucideSun, lucideMoon })],
+  imports: [
+    RouterLink, RouterLinkActive, TranslateModule, NgIcon,
+    ...HlmIconImports,
+    ...HlmDropdownMenuImports, ...HlmSheetImports, HlmButton,
+  ],
+  templateUrl: './header.component.html',
+})
+export class HeaderComponent {
+  private readonly auth      = inject(AuthService);
+  private readonly translate = inject(TranslateService);
+  readonly themeService      = inject(ThemeService);
+  readonly isAuthenticated = this.auth.isAuthenticated;
+  readonly currentUser = this.auth.currentUser;
+  readonly currentLang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: 'uk' },
+  );
+  readonly userInitials = computed(() => {
+    const name = this.currentUser()?.displayName ?? '';
+    return (
+      name
+        .split(' ')
+        .slice(0, 2)
+        .map(w => w[0]?.toUpperCase() ?? '')
+        .join('') || '?'
+    );
+  });
+  async switchLang(): Promise<void> {
+  const next = this.currentLang() === 'uk' ? 'en' : 'uk';
+  await firstValueFrom(this.translate.use(next));
+}
+  async signOut(): Promise<void> {
+    await this.auth.signOut();
+  }
+}
 ````
 
 ## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.html
@@ -14157,125 +15269,6 @@ export class EventService {
 }
 ````
 
-## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
-````html
-<div
-  class="flex flex-col overflow-hidden h-full"
-  [class]="variant() === 'featured'
-    ? 'parchment-card-raised'
-    : 'parchment-card hover:shadow-[var(--shadow-parchment-lg)] transition-shadow duration-200'"
->
-  <div class="relative overflow-hidden flex-shrink-0"
-       [class]="variant() === 'featured' ? 'h-48' : 'h-32'">
-    @if (club().coverUrl) {
-      <img [src]="club().coverUrl" [alt]="''" class="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
-    } @else {
-      <div class="w-full h-full bg-gradient-fantasy" aria-hidden="true"></div>
-    }
-    @if (variant() === 'featured') {
-      <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none"></div>
-    }
-  </div>
-  <div class="flex flex-col flex-1 gap-3"
-       [class]="variant() === 'featured' ? 'p-5' : 'p-4'">
-    <div>
-      <h3
-        class="font-display font-semibold text-[var(--color-ink)] leading-snug flex items-center gap-1.5"
-        [class]="variant() === 'featured' ? 'text-lg line-clamp-2' : 'text-base line-clamp-1'"
-      >
-        {{ club().name }}
-        @if (isOwned()) {
-          <span class="text-xs font-bold text-[var(--color-primary-600)] dark:text-[#fbbf24] flex-shrink-0"
-                title="Your club" aria-label="Your club">✦</span>
-        }
-      </h3>
-      @if (club().description) {
-        <p
-          class="text-xs text-[var(--color-ink-muted)] mt-1.5"
-          [class]="variant() === 'featured' ? 'line-clamp-3' : 'line-clamp-2'"
-        >
-          {{ club().description }}
-        </p>
-      }
-    </div>
-    @if (club().memberPreviews.length > 0) {
-      <div class="flex items-center gap-1.5">
-        @for (url of club().memberPreviews.slice(0, 4); track url) {
-          <div
-            class="h-7 w-7 rounded-full avatar-gradient flex items-center justify-center
-                   text-white text-[10px] font-bold shrink-0 overflow-hidden"
-            aria-hidden="true"
-          >
-            @if (url) {
-              <img [src]="url" class="h-full w-full object-cover" alt="" />
-            } @else { ? }
-          </div>
-        }
-        @if (club().memberCount > 4) {
-          <span class="text-xs text-[var(--color-ink-muted)] ml-1">+{{ club().memberCount - 4 }}</span>
-        }
-        <span class="text-xs text-[var(--color-ink-muted)] ml-auto">
-          {{ club().memberCount }} {{ 'CLUBS.members' | translate }}
-        </span>
-      </div>
-    }
-    <hlm-separator />
-    <div class="flex items-center gap-2 mt-auto">
-      @if (isAuthenticated() && !isMember()) {
-        <button
-          hlmBtn
-          type="button"
-          size="sm"
-          (click)="join.emit()"
-          [disabled]="joining()"
-          class="flex-1"
-          [attr.aria-label]="('CLUBS.join' | translate) + ' ' + club().name"
-        >
-          @if (joining()) { <hlm-spinner size="xs" /> } @else { {{ 'CLUBS.join' | translate }} }
-        </button>
-        <a
-          hlmBtn
-          variant="outline"
-          size="sm"
-          [routerLink]="['/clubs', club().id]"
-          class="flex-shrink-0"
-          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
-        >
-          {{ 'CLUBS.view' | translate }}
-        </a>
-      } @else if (isAuthenticated() && isMember()) {
-        <a
-          hlmBtn
-          size="sm"
-          [routerLink]="['/clubs', club().id]"
-          class="flex-1 text-center"
-          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
-        >
-          {{ 'CLUBS.view' | translate }}
-        </a>
-        <span class="rounded-lg
-                     bg-[var(--color-accent-100)] dark:bg-[var(--color-accent-900)]/30
-                     border border-[var(--color-accent-300)] dark:border-[var(--color-accent-700)]/60
-                     px-3 py-1.5 text-xs font-semibold
-                     text-[var(--color-accent-700)] dark:text-[var(--color-accent-300)]">
-          {{ 'CLUBS.member_badge' | translate }}
-        </span>
-      } @else {
-        <a
-          hlmBtn
-          size="sm"
-          [routerLink]="['/clubs', club().id]"
-          class="flex-1 text-center"
-          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
-        >
-          {{ 'CLUBS.view' | translate }}
-        </a>
-      }
-    </div>
-  </div>
-</div>
-````
-
 ## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
 ````typescript
 import {
@@ -14326,7 +15319,7 @@ import {
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { EventService } from '../../../core/services/event.service';
@@ -14346,6 +15339,7 @@ export class EventDetailComponent {
   readonly id = input.required<string>();
   private readonly http = inject(HttpClient);
   private readonly eventService = inject(EventService);
+  private readonly translate = inject(TranslateService);
   readonly auth = inject(AuthService);
   private readonly _eventResource = rxResource<ClubEvent | null, string>({
     params: () => this.id(),
@@ -14382,7 +15376,7 @@ export class EventDetailComponent {
     }
   }
   async onCancelEvent(): Promise<void> {
-    if (!confirm('Cancel this event?')) return;
+    if (!confirm(this.translate.instant('EVENTS.cancel_confirm'))) return;
     this.isActioning.set(true);
     try {
       await this.eventService.cancelEvent(this.id());
@@ -14683,71 +15677,6 @@ export class EventsFeedComponent implements OnInit {
 </header>
 ````
 
-## File: src/app/layout/header/header.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  computed,
-} from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith, firstValueFrom } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideSun, lucideMoon } from '@ng-icons/lucide';
-import { AuthService } from '../../core/auth/auth.service';
-import { ThemeService } from '../../core/services/theme.service';
-import { HlmDropdownMenuImports } from '../../shared/spartan/dropdown-menu/src';
-import { HlmSheetImports } from '../../shared/spartan/sheet/src';
-import { HlmButton } from '../../shared/spartan/button/src';
-import { HlmIconImports } from '../../shared/spartan/icon/src';
-@Component({
-  selector: 'app-header',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [provideIcons({ lucideSun, lucideMoon })],
-  imports: [
-    RouterLink, RouterLinkActive, TranslateModule, NgIcon,
-    ...HlmIconImports,
-    ...HlmDropdownMenuImports, ...HlmSheetImports, HlmButton,
-  ],
-  templateUrl: './header.component.html',
-})
-export class HeaderComponent {
-  private readonly auth      = inject(AuthService);
-  private readonly translate = inject(TranslateService);
-  readonly themeService      = inject(ThemeService);
-  readonly isAuthenticated = this.auth.isAuthenticated;
-  readonly currentUser = this.auth.currentUser;
-  readonly currentLang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: 'uk' },
-  );
-  readonly userInitials = computed(() => {
-    const name = this.currentUser()?.displayName ?? '';
-    return (
-      name
-        .split(' ')
-        .slice(0, 2)
-        .map(w => w[0]?.toUpperCase() ?? '')
-        .join('') || '?'
-    );
-  });
-  async switchLang(): Promise<void> {
-  const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-  await firstValueFrom(this.translate.use(next));
-}
-  async signOut(): Promise<void> {
-    await this.auth.signOut();
-  }
-}
-````
-
 ## File: public/i18n/en.json
 ````json
 {
@@ -15026,8 +15955,56 @@ export class HeaderComponent {
     "error_min": "Select at least 2 members",
     "winner": "Winner"
   },
+  "EVENTS": {
+    "subtitle": "Discover and join upcoming book club gatherings",
+    "attending": "attending",
+    "view": "View",
+    "rsvp": "RSVP",
+    "going": "✓ Going",
+    "going_cancel": "✓ Going · Cancel RSVP",
+    "rsvp_going": "RSVP — I'm Going",
+    "back_to_events": "← Back to Events",
+    "about": "About",
+    "tags": "Tags",
+    "after_meeting_venue": "After-Meeting Venue",
+    "organizer_controls": "Organizer Controls",
+    "cancel_event": "Cancel Event",
+    "cancel_confirm": "Cancel this event?",
+    "minutes_abbr": "min",
+    "status_upcoming": "Upcoming",
+    "status_active": "Active",
+    "status_cancelled": "Cancelled",
+    "status_scheduled": "Scheduled",
+    "tab_upcoming": "Upcoming",
+    "tab_my": "My Events",
+    "no_upcoming": "No upcoming events",
+    "no_upcoming_desc": "No events are scheduled yet. Check back soon!",
+    "no_my_events_desc": "Join clubs to see their events here."
+  },
   "QUIZ": {
     "title": "Quizzes",
+    "list_subtitle": "Test your knowledge of the books you've read.",
+    "create_btn": "+ Create Quiz",
+    "create_heading": "📝 Create Quiz",
+    "back_to_quizzes": "← Back to Quizzes",
+    "back_to_club_short": "← Club",
+    "question_of": "Question {{ current }} of {{ total }}",
+    "prev": "← Previous",
+    "next": "Next →",
+    "preview_heading": "🔍 Quiz Preview",
+    "close": "✕ Close",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "take_btn": "Take Quiz →",
+    "submit_quiz": "Submit Quiz ✓",
+    "submitting_quiz": "…Submitting",
+    "no_quizzes": "No quizzes yet",
+    "no_quizzes_organizer": "Create your first quiz to engage the club.",
+    "no_quizzes_member": "The organizer hasn't created any quizzes yet.",
+    "status_live": "Live",
+    "status_active": "Active",
+    "status_closed": "Closed",
+    "status_draft": "Draft",
     "create": "Create quiz",
     "take": "Start",
     "results": "Results",
@@ -15068,7 +16045,32 @@ export class HeaderComponent {
     "leaderboard_empty": "No participants yet",
     "leaderboard_1st": "1st Place",
     "leaderboard_2nd": "2nd Place",
-    "leaderboard_3rd": "3rd Place"
+    "leaderboard_3rd": "3rd Place",
+    "leaderboard_heading": "🏆 Leaderboard",
+    "leaderboard_refresh_hint": "Auto-refreshes every 30 seconds",
+    "no_active_session": "No active session",
+    "no_active_session_hint": "The quiz session hasn't started yet.",
+    "session_heading": "🎮 Quiz Session",
+    "session_start_heading": "Start a Session",
+    "session_start_hint": "Select an event — attendees will be enrolled as participants automatically.",
+    "session_pick_event_label": "Event",
+    "session_pick_event_placeholder": "Select event…",
+    "session_no_events": "No events found for this club.",
+    "session_started_at": "Started",
+    "session_refreshing": "↻ Refreshing…",
+    "session_live_leaderboard": "🏆 Live Leaderboard",
+    "session_no_participants": "No participants yet. Waiting for responses…",
+    "create_heading_full": "📝 Create Quiz",
+    "create_step_of": "Step {{ step }} of 2",
+    "create_step_details": "Quiz details",
+    "create_step_questions": "Add questions",
+    "create_cancel": "✕ Cancel",
+    "create_back": "← Back",
+    "preview_live_banner": "🟢 This quiz is currently live.",
+    "preview_no_questions_link": "→ Go to Edit",
+    "preview_correct_answer": "✓ Correct",
+    "error_return": "Return to quiz list",
+    "loading": "Loading quiz…"
   },
   "CHAT": {
     "title": "Club Chat",
@@ -15389,8 +16391,56 @@ export class HeaderComponent {
     "error_min": "Оберіть щонайменше 2 учасників",
     "winner": "Переможець"
   },
+  "EVENTS": {
+    "subtitle": "Відкривайте та приєднуйтесь до майбутніх зустрічей",
+    "attending": "відвідують",
+    "view": "Переглянути",
+    "rsvp": "Участь",
+    "going": "✓ Іду",
+    "going_cancel": "✓ Іду · Скасувати",
+    "rsvp_going": "Записатись →",
+    "back_to_events": "← До подій",
+    "about": "Про подію",
+    "tags": "Теги",
+    "after_meeting_venue": "Місце після зустрічі",
+    "organizer_controls": "Управління організатора",
+    "cancel_event": "Скасувати подію",
+    "cancel_confirm": "Скасувати цю подію?",
+    "minutes_abbr": "хв",
+    "status_upcoming": "Майбутня",
+    "status_active": "Активна",
+    "status_cancelled": "Скасована",
+    "status_scheduled": "Заплановано",
+    "tab_upcoming": "Майбутні",
+    "tab_my": "Мої події",
+    "no_upcoming": "Немає майбутніх подій",
+    "no_upcoming_desc": "Поки що не заплановано жодної події. Заходьте пізніше!",
+    "no_my_events_desc": "Приєднуйтесь до клубів, щоб бачити їхні події тут."
+  },
   "QUIZ": {
     "title": "Квізи",
+    "list_subtitle": "Перевір свої знання з прочитаних книг.",
+    "create_btn": "+ Створити квіз",
+    "create_heading": "📝 Створити квіз",
+    "back_to_quizzes": "← До квізів",
+    "back_to_club_short": "← До клубу",
+    "question_of": "Питання {{ current }} з {{ total }}",
+    "prev": "← Назад",
+    "next": "Далі →",
+    "preview_heading": "🔍 Перегляд квізу",
+    "close": "✕ Закрити",
+    "activate": "Активувати",
+    "deactivate": "Деактивувати",
+    "take_btn": "Пройти квіз →",
+    "submit_quiz": "Відправити відповіді ✓",
+    "submitting_quiz": "…Надсилаємо",
+    "no_quizzes": "Квізів ще немає",
+    "no_quizzes_organizer": "Створіть перший квіз для клубу.",
+    "no_quizzes_member": "Організатор ще не створив жодного квізу.",
+    "status_live": "Наживо",
+    "status_active": "Активний",
+    "status_closed": "Закритий",
+    "status_draft": "Чернетка",
     "create": "Створити квіз",
     "take": "Почати",
     "results": "Результати",
@@ -15431,7 +16481,32 @@ export class HeaderComponent {
     "leaderboard_empty": "Учасників ще немає",
     "leaderboard_1st": "1-е місце",
     "leaderboard_2nd": "2-е місце",
-    "leaderboard_3rd": "3-є місце"
+    "leaderboard_3rd": "3-є місце",
+    "leaderboard_heading": "🏆 Таблиця лідерів",
+    "leaderboard_refresh_hint": "Оновлюється кожні 30 секунд",
+    "no_active_session": "Немає активної сесії",
+    "no_active_session_hint": "Сесія квізу ще не розпочалась.",
+    "session_heading": "🎮 Сесія квізу",
+    "session_start_heading": "Почати сесію",
+    "session_start_hint": "Оберіть подію — учасники будуть зараховані автоматично.",
+    "session_pick_event_label": "Подія",
+    "session_pick_event_placeholder": "Оберіть подію…",
+    "session_no_events": "Для цього клубу не знайдено подій.",
+    "session_started_at": "Розпочато",
+    "session_refreshing": "↻ Оновлення…",
+    "session_live_leaderboard": "🏆 Таблиця лідерів наживо",
+    "session_no_participants": "Учасників ще немає. Очікуємо відповідей…",
+    "create_heading_full": "📝 Створити квіз",
+    "create_step_of": "Крок {{ step }} з 2",
+    "create_step_details": "Деталі квізу",
+    "create_step_questions": "Додати питання",
+    "create_cancel": "✕ Скасувати",
+    "create_back": "← Назад",
+    "preview_live_banner": "🟢 Цей квіз зараз активний.",
+    "preview_no_questions_link": "→ Перейти до редагування",
+    "preview_correct_answer": "✓ Правильно",
+    "error_return": "Повернутись до списку квізів",
+    "loading": "Завантаження квізу…"
   },
   "CHAT": {
     "title": "Чат клубу",
@@ -15470,293 +16545,6 @@ export class HeaderComponent {
     "site_name": "Book Club",
     "site_url": "https://book-club-fe.vercel.app",
     "site_description": "Читацькі клуби України"
-  }
-}
-````
-
-## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  OnInit,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { Club } from '../../../core/models/club.model';
-import { SeoService } from '../../../core/services/seo.service';
-import { TranslateModule } from '@ngx-translate/core';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { ClubCardComponent } from './club-card/club-card.component';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-@Component({
-  selector: 'app-clubs-list',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, HlmSpinner],
-  templateUrl: './clubs-list.component.html',
-})
-export class ClubsListComponent implements OnInit {
-  readonly clubService = inject(ClubService);
-  readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  readonly joiningClubId = signal<string | null>(null);
-  readonly ownedClubIds = this.clubService.myOwnedClubIds;
-  readonly activeTab = signal<'all' | 'my'>('all');
-  async ngOnInit(): Promise<void> {
-    this.seo.setPageI18n('SEO.clubs_title', {
-      descriptionKey: 'SEO.clubs_description',
-      ogTitleKey: 'SEO.clubs_og_title',
-    });
-    this.seo.injectWebSiteJsonLd();
-    await this.clubService.loadPublicClubs();
-    if (this.auth.isAuthenticated()) {
-      await this.clubService.loadMyClubs();
-    }
-  }
-  async onJoin(club: Club): Promise<void> {
-    this.joiningClubId.set(club.id);
-    try {
-      await this.clubService.joinClub(club.id);
-    } catch {
-    } finally {
-      this.joiningClubId.set(null);
-    }
-  }
-}
-````
-
-## File: src/app/features/events/create-event/create-event.component.html
-````html
-<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
-  <nav>
-    <a [routerLink]="['/clubs', clubId()]"
-       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-      ← Back to Club
-    </a>
-  </nav>
-  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create Event</h1>
-    @if (errorMessage()) {
-      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-           role="alert">
-        {{ errorMessage() }}
-      </div>
-    }
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-      <div>
-        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Title <span class="text-red-500">*</span>
-        </label>
-        <input hlmInput id="title" type="text" formControlName="title" class="w-full"
-               placeholder="April Discussion" />
-        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Title is required.</p>
-        }
-      </div>
-      <div>
-        <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">📖 Book title</label>
-        <input hlmInput id="bookTitle" type="text" formControlName="bookTitle" class="w-full"
-               placeholder="The Master and Margarita" />
-        @if (isFetchingCover()) {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">🔍 Searching for book cover…</p>
-        } @else if (coverFetchFailed()) {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">No cover found — you can add one manually below.</p>
-        } @else {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">What book will you discuss at this event?</p>
-        }
-      </div>
-      <div>
-        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-        <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
-                  placeholder="What will you be reading or discussing?"></textarea>
-      </div>
-      <div>
-        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Date & Time <span class="text-red-500">*</span>
-        </label>
-        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
-        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Date is required.</p>
-        }
-      </div>
-      <div>
-        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Location <span class="text-red-500">*</span>
-        </p>
-        <app-address-autocomplete
-          [control]="form.controls.address"
-          placeholder="Start typing an address…"
-          (selected)="onAddressSelect($event)"
-        />
-        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Location is required.</p>
-        }
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
-          <input hlmInput id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
-                 class="w-full" placeholder="120" />
-        </div>
-        <div>
-          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
-          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
-        </div>
-      </div>
-      <div>
-        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
-        <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
-               placeholder="fiction, dystopia, classic (comma-separated)" />
-      </div>
-      <div>
-        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cover image</p>
-        <app-cover-upload [control]="form.controls.coverUrl" />
-      </div>
-      @if (activeQuizzes().length > 0) {
-        <div>
-          <label for="quizId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            🧠 Linked quiz
-          </label>
-          <select id="quizId" formControlName="quizId"
-                  class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
-            <option [ngValue]="null">— No quiz —</option>
-            @for (quiz of activeQuizzes(); track quiz.id) {
-              <option [value]="quiz.id">{{ quiz.title }}</option>
-            }
-          </select>
-        </div>
-      }
-      <div>
-        <button type="button" (click)="toggleAfterVenue()"
-                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
-          {{ showAfterVenue() ? '− Remove after-meeting venue' : '+ Add after-meeting venue' }}
-        </button>
-        @if (showAfterVenue()) {
-          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
-            <div>
-              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Venue name <span class="text-red-500">*</span>
-              </label>
-              <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
-                     class="w-full" placeholder="Cozy Cafe" />
-            </div>
-            <div>
-              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
-              <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
-                     class="w-full" placeholder="123 Main St" />
-            </div>
-            <div>
-              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-              <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
-                     class="w-full" placeholder="Optional notes" />
-            </div>
-          </div>
-        }
-      </div>
-      <div class="flex justify-end gap-3 pt-2">
-        <a hlmBtn variant="outline" [routerLink]="['/clubs', clubId()]">Cancel</a>
-        <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
-                class="bg-primary-600 hover:bg-primary-700 text-white">
-          @if (isSubmitting()) { Creating… } @else { Create Event }
-        </button>
-      </div>
-    </form>
-  </div>
-</main>
-````
-
-## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
-````typescript
-import {
-  Component, ChangeDetectionStrategy, input, output,
-  DestroyRef, signal, inject, ElementRef, HostListener, effect,
-} from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { switchMap, debounceTime, distinctUntilChanged, of } from 'rxjs';
-import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
-import { HlmInput } from '../../spartan/input/src';
-@Component({
-  selector: 'app-address-autocomplete',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, HlmInput],
-  templateUrl: './address-autocomplete.component.html',
-})
-export class AddressAutocompleteComponent {
-  readonly control = input.required<FormControl<string>>();
-  readonly placeholder = input<string>('');
-  readonly inputId = input<string>('');
-  readonly selected = output<GeocodeSuggestion>();
-  private readonly geocoding = inject(GeocodingService);
-  private readonly elRef = inject(ElementRef);
-  private readonly destroyRef = inject(DestroyRef);
-  readonly suggestions = signal<GeocodeSuggestion[]>([]);
-  readonly isLoading = signal(false);
-  readonly isOpen = signal(false);
-  readonly activeIndex = signal(-1);
-  constructor() {
-    effect(() => {
-      const ctrl = this.control();
-      ctrl.valueChanges.pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        switchMap(q => {
-          if (!q || q.length < 2) {
-            this.suggestions.set([]);
-            this.isOpen.set(false);
-            return of([]);
-          }
-          this.isLoading.set(true);
-          return this.geocoding.autocomplete$(q);
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      ).subscribe({
-        next: (results) => {
-          this.isLoading.set(false);
-          this.suggestions.set(results);
-          this.activeIndex.set(-1);
-          this.isOpen.set(results.length > 0);
-        },
-        error: () => {
-          this.isLoading.set(false);
-          this.suggestions.set([]);
-        },
-      });
-    });
-  }
-  select(s: GeocodeSuggestion): void {
-    this.control().setValue(s.label, { emitEvent: false });
-    this.suggestions.set([]);
-    this.isOpen.set(false);
-    this.selected.emit(s);
-  }
-  onKeydown(event: KeyboardEvent): void {
-    if (!this.isOpen()) return;
-    const len = this.suggestions().length;
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i + 1) % len);
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i - 1 + len) % len);
-    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
-      event.preventDefault();
-      this.select(this.suggestions()[this.activeIndex()]);
-    } else if (event.key === 'Escape') {
-      this.isOpen.set(false);
-    }
-  }
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (!this.elRef.nativeElement.contains(event.target)) {
-      this.isOpen.set(false);
-    }
   }
 }
 ````
@@ -15952,6 +16740,293 @@ export class AddressAutocompleteComponent {
     </a>
   }
 </div>
+````
+
+## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  OnInit,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { Club } from '../../../core/models/club.model';
+import { SeoService } from '../../../core/services/seo.service';
+import { TranslateModule } from '@ngx-translate/core';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { ClubCardComponent } from './club-card/club-card.component';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+@Component({
+  selector: 'app-clubs-list',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, HlmSpinner],
+  templateUrl: './clubs-list.component.html',
+})
+export class ClubsListComponent implements OnInit {
+  readonly clubService = inject(ClubService);
+  readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  readonly joiningClubId = signal<string | null>(null);
+  readonly ownedClubIds = this.clubService.myOwnedClubIds;
+  readonly activeTab = signal<'all' | 'my'>('all');
+  async ngOnInit(): Promise<void> {
+    this.seo.setPageI18n('SEO.clubs_title', {
+      descriptionKey: 'SEO.clubs_description',
+      ogTitleKey: 'SEO.clubs_og_title',
+    });
+    this.seo.injectWebSiteJsonLd();
+    await this.clubService.loadPublicClubs();
+    if (this.auth.isAuthenticated()) {
+      await this.clubService.loadMyClubs();
+    }
+  }
+  async onJoin(club: Club): Promise<void> {
+    this.joiningClubId.set(club.id);
+    try {
+      await this.clubService.joinClub(club.id);
+    } catch {
+    } finally {
+      this.joiningClubId.set(null);
+    }
+  }
+}
+````
+
+## File: src/app/features/events/create-event/create-event.component.html
+````html
+<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
+  <nav>
+    <a [routerLink]="['/clubs', id()]"
+       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+      ← Back to Club
+    </a>
+  </nav>
+  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create Event</h1>
+    @if (errorMessage()) {
+      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+           role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+      <div>
+        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Title <span class="text-red-500">*</span>
+        </label>
+        <input hlmInput id="title" type="text" formControlName="title" class="w-full"
+               placeholder="April Discussion" />
+        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Title is required.</p>
+        }
+      </div>
+      <div>
+        <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">📖 Book title</label>
+        <input hlmInput id="bookTitle" type="text" formControlName="bookTitle" class="w-full"
+               placeholder="The Master and Margarita" />
+        @if (isFetchingCover()) {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">🔍 Searching for book cover…</p>
+        } @else if (coverFetchFailed()) {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">No cover found — you can add one manually below.</p>
+        } @else {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">What book will you discuss at this event?</p>
+        }
+      </div>
+      <div>
+        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
+        <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
+                  placeholder="What will you be reading or discussing?"></textarea>
+      </div>
+      <div>
+        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Date & Time <span class="text-red-500">*</span>
+        </label>
+        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
+        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Date is required.</p>
+        }
+      </div>
+      <div>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Location <span class="text-red-500">*</span>
+        </p>
+        <app-address-autocomplete
+          [control]="form.controls.address"
+          placeholder="Start typing an address…"
+          (selected)="onAddressSelect($event)"
+        />
+        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Location is required.</p>
+        }
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
+          <input hlmInput id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
+                 class="w-full" placeholder="120" />
+        </div>
+        <div>
+          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
+          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
+        </div>
+      </div>
+      <div>
+        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
+        <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
+               placeholder="fiction, dystopia, classic (comma-separated)" />
+      </div>
+      <div>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cover image</p>
+        <app-cover-upload [control]="form.controls.coverUrl" />
+      </div>
+      @if (activeQuizzes().length > 0) {
+        <div>
+          <label for="quizId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            🧠 Linked quiz
+          </label>
+          <select id="quizId" formControlName="quizId"
+                  class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+            <option [ngValue]="null">— No quiz —</option>
+            @for (quiz of activeQuizzes(); track quiz.id) {
+              <option [value]="quiz.id">{{ quiz.title }}</option>
+            }
+          </select>
+        </div>
+      }
+      <div>
+        <button type="button" (click)="toggleAfterVenue()"
+                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
+          {{ showAfterVenue() ? '− Remove after-meeting venue' : '+ Add after-meeting venue' }}
+        </button>
+        @if (showAfterVenue()) {
+          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
+            <div>
+              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Venue name <span class="text-red-500">*</span>
+              </label>
+              <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
+                     class="w-full" placeholder="Cozy Cafe" />
+            </div>
+            <div>
+              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
+              <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
+                     class="w-full" placeholder="123 Main St" />
+            </div>
+            <div>
+              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+              <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
+                     class="w-full" placeholder="Optional notes" />
+            </div>
+          </div>
+        }
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <a hlmBtn variant="outline" [routerLink]="['/clubs', id()]">Cancel</a>
+        <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
+                class="bg-primary-600 hover:bg-primary-700 text-white">
+          @if (isSubmitting()) { Creating… } @else { Create Event }
+        </button>
+      </div>
+    </form>
+  </div>
+</main>
+````
+
+## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
+````typescript
+import {
+  Component, ChangeDetectionStrategy, input, output,
+  DestroyRef, signal, inject, ElementRef, HostListener, effect,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { switchMap, debounceTime, distinctUntilChanged, of } from 'rxjs';
+import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
+import { HlmInput } from '../../spartan/input/src';
+@Component({
+  selector: 'app-address-autocomplete',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, HlmInput],
+  templateUrl: './address-autocomplete.component.html',
+})
+export class AddressAutocompleteComponent {
+  readonly control = input.required<FormControl<string>>();
+  readonly placeholder = input<string>('');
+  readonly inputId = input<string>('');
+  readonly selected = output<GeocodeSuggestion>();
+  private readonly geocoding = inject(GeocodingService);
+  private readonly elRef = inject(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly suggestions = signal<GeocodeSuggestion[]>([]);
+  readonly isLoading = signal(false);
+  readonly isOpen = signal(false);
+  readonly activeIndex = signal(-1);
+  constructor() {
+    effect(() => {
+      const ctrl = this.control();
+      ctrl.valueChanges.pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(q => {
+          if (!q || q.length < 2) {
+            this.suggestions.set([]);
+            this.isOpen.set(false);
+            return of([]);
+          }
+          this.isLoading.set(true);
+          return this.geocoding.autocomplete$(q);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      ).subscribe({
+        next: (results) => {
+          this.isLoading.set(false);
+          this.suggestions.set(results);
+          this.activeIndex.set(-1);
+          this.isOpen.set(results.length > 0);
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.suggestions.set([]);
+        },
+      });
+    });
+  }
+  select(s: GeocodeSuggestion): void {
+    this.control().setValue(s.label, { emitEvent: false });
+    this.suggestions.set([]);
+    this.isOpen.set(false);
+    this.selected.emit(s);
+  }
+  onKeydown(event: KeyboardEvent): void {
+    if (!this.isOpen()) return;
+    const len = this.suggestions().length;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i + 1) % len);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i - 1 + len) % len);
+    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
+      event.preventDefault();
+      this.select(this.suggestions()[this.activeIndex()]);
+    } else if (event.key === 'Escape') {
+      this.isOpen.set(false);
+    }
+  }
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.elRef.nativeElement.contains(event.target)) {
+      this.isOpen.set(false);
+    }
+  }
+}
 ````
 
 ## File: src/app/features/clubs/create-club/create-club.component.html
@@ -16269,7 +17344,7 @@ import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
   templateUrl: './create-event.component.html',
 })
 export class CreateEventComponent implements OnInit {
-  readonly clubId = input.required<string>();
+  readonly id = input.required<string>();
   private readonly fb = inject(FormBuilder);
   private readonly eventService = inject(EventService);
   private readonly quizService = inject(QuizService);
@@ -16282,7 +17357,10 @@ export class CreateEventComponent implements OnInit {
   readonly isFetchingCover = signal(false);
   readonly coverFetchFailed = signal(false);
   private readonly _quizzesResource = resource({
-    params: () => ({ clubId: this.clubId() }),
+    params: () => {
+      const clubId = this.id();
+      return clubId ? { clubId } : undefined;
+    },
     loader: ({ params }) => this.quizService.getClubQuizzes(params.clubId),
   });
   readonly activeQuizzes = computed(() =>
@@ -16349,7 +17427,7 @@ export class CreateEventComponent implements OnInit {
       ? { name: v.afterVenueName, address: v.afterVenueAddress, description: v.afterVenueDescription || undefined }
       : undefined;
     try {
-      const created = await this.eventService.createEvent(this.clubId(), {
+      const created = await this.eventService.createEvent(this.id(), {
         title: v.title,
         description: v.description || undefined,
         date: new Date(v.date).toISOString(),

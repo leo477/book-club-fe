@@ -202,6 +202,7 @@ const quizzesByClub = {
       title: 'Квіз по Майстру і Маргариті',
       description: 'Перевір свої знання!',
       isActive: true,
+      status: 'active',
     },
   ],
 };
@@ -449,6 +450,68 @@ app.post(`${BASE}/quizzes/:id/attempts`, (req, res) => {
   res.json({ id: `attempt-${uid()}`, quizId: req.params.id, userId: MOCK_USER_ID, score, total: questions.length, answers });
 });
 
+app.get(`${BASE}/quizzes/:id`, (req, res) => {
+  for (const list of Object.values(quizzesByClub)) {
+    const quiz = list.find((q) => q.id === req.params.id);
+    if (quiz) return res.json(quiz);
+  }
+  res.status(404).json({ detail: 'Quiz not found' });
+});
+
+app.patch(`${BASE}/quizzes/:id`, (req, res) => {
+  for (const list of Object.values(quizzesByClub)) {
+    const quiz = list.find((q) => q.id === req.params.id);
+    if (quiz) { Object.assign(quiz, req.body); return res.json(quiz); }
+  }
+  res.status(404).json({ detail: 'Quiz not found' });
+});
+
+app.patch(`${BASE}/quizzes/:id/questions/:qid`, (req, res) => {
+  const questions = questionsByQuiz[req.params.id] ?? [];
+  const q = questions.find((x) => x.id === req.params.qid);
+  if (q) { Object.assign(q, req.body); return res.json(q); }
+  res.status(404).json({ detail: 'Question not found' });
+});
+
+app.delete(`${BASE}/quizzes/:id/questions/:qid`, (req, res) => {
+  if (questionsByQuiz[req.params.id]) {
+    questionsByQuiz[req.params.id] = questionsByQuiz[req.params.id].filter((q) => q.id !== req.params.qid);
+  }
+  res.status(204).send();
+});
+
+app.put(`${BASE}/quizzes/:id/questions/order`, (req, res) => res.status(204).send());
+
+const sessionsByQuiz = {};
+
+app.post(`${BASE}/quizzes/:id/sessions`, (req, res) => {
+  const session = { id: `session-${uid()}`, quizId: req.params.id, startedBy: MOCK_USER_ID, startedAt: new Date().toISOString(), closedAt: null, participantCount: 0, eventId: req.body.eventId ?? null };
+  sessionsByQuiz[req.params.id] = session;
+  for (const list of Object.values(quizzesByClub)) {
+    const quiz = list.find((q) => q.id === req.params.id);
+    if (quiz) quiz.status = 'live';
+  }
+  res.status(201).json(session);
+});
+
+app.get(`${BASE}/quizzes/:id/sessions/active`, (req, res) => {
+  const session = sessionsByQuiz[req.params.id];
+  if (session && !session.closedAt) return res.json(session);
+  res.status(404).json({ detail: 'No active session' });
+});
+
+app.get(`${BASE}/quizzes/:id/sessions/:sid/leaderboard`, (req, res) => res.json({ entries: [] }));
+
+app.patch(`${BASE}/quizzes/:id/sessions/:sid/close`, (req, res) => {
+  const session = sessionsByQuiz[req.params.id];
+  if (session) { session.closedAt = new Date().toISOString(); }
+  for (const list of Object.values(quizzesByClub)) {
+    const quiz = list.find((q) => q.id === req.params.id);
+    if (quiz) quiz.status = 'closed';
+  }
+  res.status(204).send();
+});
+
 app.patch(`${BASE}/quizzes/:id/active`, (req, res) => {
   for (const list of Object.values(quizzesByClub)) {
     const quiz = list.find((q) => q.id === req.params.id);
@@ -472,6 +535,25 @@ app.post(`${BASE}/chat/rooms/:id/messages`, (req, res) => {
   if (!messagesByRoom[req.params.id]) messagesByRoom[req.params.id] = [];
   messagesByRoom[req.params.id].push(msg);
   res.status(201).json(msg);
+});
+
+app.delete(`${BASE}/chat/rooms/:id/messages/:messageId`, (req, res) => {
+  const { id, messageId } = req.params;
+  if (messagesByRoom[id]) {
+    messagesByRoom[id] = messagesByRoom[id].filter(m => m.id !== messageId);
+  }
+  res.status(204).send();
+});
+
+app.post(`${BASE}/chat/rooms/:id/ban`, (req, res) => {
+  res.status(200).json({ ok: true });
+});
+
+app.post(`${BASE}/clubs/:id/chat/rooms`, (req, res) => {
+  const room = { id: `room-${uid()}`, name: req.body.name, clubId: req.params.id };
+  if (!roomsByClub[req.params.id]) roomsByClub[req.params.id] = [];
+  roomsByClub[req.params.id].push(room);
+  res.status(201).json(room);
 });
 
 // Randomizer

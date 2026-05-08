@@ -1,0 +1,127 @@
+- generic [ref=e26]:
+  - banner [ref=e28]:
+    - generic [ref=e30]:
+      - link "BookClub home" [ref=e31] [cursor=pointer]:
+        - /url: /
+        - text: BookClub
+      - navigation "Main navigation" [ref=e32]:
+        - link "Огляд" [ref=e33] [cursor=pointer]:
+          - /url: /clubs
+        - link "Події" [ref=e34] [cursor=pointer]:
+          - /url: /events
+      - generic [ref=e35]:
+        - button "Темна тема" [ref=e36]:
+          - img:
+            - img
+        - button "Switch to English" [ref=e37]: EN
+        - button "User menu for Dev User" [ref=e38]:
+          - generic [ref=e39]: DU
+  - main [ref=e40]:
+    - main [ref=e114]:
+      - generic [ref=e115]:
+        - generic:
+          - heading "Книжковий Дракон" [level=1]
+        - navigation "Назад до клубів" [ref=e117]:
+          - link "Назад до клубів" [ref=e118] [cursor=pointer]:
+            - /url: /clubs
+            - text: ← Назад
+      - generic [ref=e120]:
+        - complementary [ref=e121]:
+          - generic [ref=e122]:
+            - heading "📖 Читаємо зараз" [level=3] [ref=e123]
+            - img "Майстер і Маргарита" [ref=e124]
+            - paragraph [ref=e125]: Майстер і Маргарита
+          - generic [ref=e127]:
+            - heading "Управління клубом" [level=2] [ref=e128]
+            - generic [ref=e129]:
+              - link "Квізи Створюйте та керуйте квізами" [ref=e130] [cursor=pointer]:
+                - /url: /clubs/club-001/quizzes
+                - generic [ref=e131]: 📝
+                - generic [ref=e132]:
+                  - paragraph [ref=e133]: Квізи
+                  - paragraph [ref=e134]: Створюйте та керуйте квізами
+              - link "Рандомайзер Обирайте наступну книгу" [ref=e135] [cursor=pointer]:
+                - /url: /clubs/club-001/randomizer
+                - generic [ref=e136]: 🎲
+                - generic [ref=e137]:
+                  - paragraph [ref=e138]: Рандомайзер
+                  - paragraph [ref=e139]: Обирайте наступну книгу
+              - link "Редагувати клуб Оновити назву, опис та налаштування" [ref=e140] [cursor=pointer]:
+                - /url: /clubs/club-001/edit
+                - generic [ref=e141]: ✏️
+                - generic [ref=e142]:
+                  - paragraph [ref=e143]: Редагувати клуб
+                  - paragraph [ref=e144]: Оновити назву, опис та налаштування
+              - link "Створити подію Запланувати нову подію клубу" [ref=e145] [cursor=pointer]:
+                - /url: /clubs/club-001/events/create
+                - generic [ref=e146]: 📅
+                - generic [ref=e147]:
+                  - paragraph [ref=e148]: Створити подію
+                  - paragraph [ref=e149]: Запланувати нову подію клубу
+        - generic [ref=e150]:
+          - generic [ref=e151]:
+            - heading "Про клуб" [level=2] [ref=e152]
+            - paragraph [ref=e153]: Клуб для любителів фентезі та пригодницької літератури.
+          - generic [ref=e155]:
+            - heading "📚 Голосування за наступну книгу" [level=2] [ref=e157]
+            - generic [ref=e158]:
+              - paragraph [ref=e159]: Запропонуйте учасникам клубу обрати наступну книгу
+              - button "Почати голосування" [ref=e160]
+          - generic [ref=e161]:
+            - generic [ref=e162]:
+              - heading "📅 Найближчі події" [level=2] [ref=e163]
+              - link "＋ Створити подію" [ref=e164] [cursor=pointer]:
+                - /url: /clubs/club-001/events/create
+            - paragraph [ref=e165]: Немає запланованих подій.
+          - region "Учасники" [ref=e167]:
+            - heading "Учасники (3)" [level=2] [ref=e168]
+            - list [ref=e169]:
+              - listitem [ref=e170]:
+                - generic [ref=e171]: DU
+                - generic [ref=e172]:
+                  - paragraph [ref=e173]: Dev User
+                  - generic [ref=e174]: Організатор
+              - listitem [ref=e175]:
+                - generic [ref=e176]: ОП
+                - generic [ref=e177]:
+                  - paragraph [ref=e178]: Оксана Петренко
+                  - generic [ref=e179]: Учасник
+                - generic [ref=e181]:
+                  - button "Виключити" [ref=e182]
+                  - button "Заблокувати ▾" [ref=e183]
+              - listitem [ref=e184]:
+                - generic [ref=e185]: ІК
+                - generic [ref=e186]:
+                  - paragraph [ref=e187]: Іван Коваль
+                  - generic [ref=e188]: Учасник
+                - generic [ref=e190]:
+                  - button "Виключити" [ref=e191]
+                  - button "Заблокувати ▾" [ref=e192]
+          - generic [ref=e193]: Створено 15 січня 2025 р.
+        - complementary [ref=e194]:
+          - generic [ref=e196]:
+            - generic [ref=e197]:
+              - heading "Організатор" [level=3] [ref=e198]
+              - generic [ref=e199]:
+                - generic [ref=e200]: DU
+                - generic [ref=e201]:
+                  - paragraph [ref=e202]: Dev User
+                  - text: ✨ Організатор
+            - generic [ref=e203]:
+              - heading "Після зустрічі" [level=3] [ref=e204]
+              - paragraph [ref=e205]: Кав'ярня "Книга і Кава"
+              - paragraph [ref=e206]: 📍 вул. Хрещатик, 12
+              - paragraph [ref=e207]: Затишне місце для обговорень
+  - button "Відкрити чат" [ref=e110]:
+    - img [ref=e111]
+  - contentinfo [ref=e101]:
+    - generic [ref=e102]:
+      - paragraph [ref=e103]: 📚 BookClub © 2026 — Усі права захищені
+      - navigation "Footer navigation" [ref=e104]:
+        - list [ref=e105]:
+          - listitem [ref=e106]:
+            - link "Конфіденційність" [ref=e107] [cursor=pointer]:
+              - /url: /privacy
+          - listitem [ref=e108]:
+            - link "Умови" [ref=e109] [cursor=pointer]:
+              - /url: /terms

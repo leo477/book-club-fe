@@ -13,7 +13,7 @@
               [variant]="event().status === 'cancelled' ? 'destructive'
                        : event().status === 'active' ? 'default' : 'secondary'"
               class="rounded-full text-xs flex-shrink-0">
-          {{ event().status }}
+          {{ ('EVENTS.status_' + event().status) | translate }}
         </span>
       }
     </div>
@@ -67,24 +67,24 @@
     <div class="flex items-center justify-between mt-auto pt-2
                 border-t border-[var(--color-sepia-mid)]">
       <span class="text-xs text-[var(--color-ink-muted)]">
-        {{ event().attendeeCount }} attending
+        {{ event().attendeeCount }} {{ 'EVENTS.attending' | translate }}
       </span>
       <div class="flex gap-2">
         <a hlmBtn variant="outline" size="sm" [routerLink]="['/events', event().id]">
-          View
+          {{ 'EVENTS.view' | translate }}
         </a>
         @if (isAuthenticated() && event().status !== 'cancelled') {
           @if (event().isAttending) {
             <button hlmBtn type="button" size="sm" [disabled]="attending()"
                     (click)="cancelAttend.emit()"
                     class="bg-[var(--color-accent-600)] hover:bg-[var(--color-accent-700)] text-white">
-              @if (attending()) { <hlm-spinner size="xs" /> } @else { ✓ Going }
+              @if (attending()) { <hlm-spinner size="xs" /> } @else { {{ 'EVENTS.going' | translate }} }
             </button>
           } @else {
             <button hlmBtn type="button" size="sm" [disabled]="attending()"
                     (click)="attend.emit()"
                     class="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white">
-              @if (attending()) { <hlm-spinner size="xs" /> } @else { RSVP }
+              @if (attending()) { <hlm-spinner size="xs" /> } @else { {{ 'EVENTS.rsvp' | translate }} }
             </button>
           }
         }

@@ -119,7 +119,8 @@ export class ProfileComponent {
   protected readonly joinedDate = computed<string>(() => {
     const raw = this.auth.currentUser()?.createdAt;
     if (!raw) return '';
-    return new Intl.DateTimeFormat('en-US', { year: 'numeric', month: 'long' }).format(
+    const locale = this.translate.currentLang === 'uk' ? 'uk-UA' : 'en-US';
+    return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long' }).format(
       new Date(raw),
     );
   });

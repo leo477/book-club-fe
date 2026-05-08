@@ -7,6 +7,7 @@ import {
 import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { inject } from '@angular/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { ClubEvent } from '../../../core/models/event.model';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
@@ -18,7 +19,7 @@ import { LeaderboardBaseComponent } from '../quiz-leaderboard/leaderboard-base.c
   selector: 'app-quiz-session',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, DatePipe, ...HlmCardImports, HlmButton, LeaderboardPodiumComponent, LeaderboardRestTableComponent],
+  imports: [RouterLink, DatePipe, TranslateModule, ...HlmCardImports, HlmButton, LeaderboardPodiumComponent, LeaderboardRestTableComponent],
   templateUrl: './quiz-session.component.html',
 })
 export class QuizSessionComponent extends LeaderboardBaseComponent implements OnInit {

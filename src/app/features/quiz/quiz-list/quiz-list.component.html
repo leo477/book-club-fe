@@ -4,22 +4,22 @@
     <!-- ── Header ── -->
     <header class="flex items-center justify-between flex-wrap gap-4">
       <div>
-        <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🧠 Quizzes</h1>
+        <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🧠 {{ 'QUIZ.title' | translate }}</h1>
         <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-          Test your knowledge of the books you've read.
+          {{ 'QUIZ.list_subtitle' | translate }}
         </p>
       </div>
       <div class="flex items-center gap-3">
         @if (authService.isOrganizer()) {
           <a hlmBtn [routerLink]="['/clubs', id(), 'quizzes', 'create']"
              class="bg-gradient-brand text-white border-0 hover:opacity-90">
-            + Create Quiz
+            {{ 'QUIZ.create_btn' | translate }}
           </a>
         }
         <nav aria-label="Breadcrumb">
           <a [routerLink]="['/clubs', id()]"
              class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-            ← Club
+            {{ 'QUIZ.back_to_club_short' | translate }}
           </a>
         </nav>
       </div>
@@ -38,14 +38,14 @@
       @if (quizService.quizzes().length === 0) {
         <div class="glass-card p-12 text-center">
           <p class="text-4xl mb-3">📝</p>
-          <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">No quizzes yet</h2>
+          <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">{{ 'QUIZ.no_quizzes' | translate }}</h2>
           @if (authService.isOrganizer()) {
             <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-              Create your first quiz to engage the club.
+              {{ 'QUIZ.no_quizzes_organizer' | translate }}
             </p>
           } @else {
             <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-              The organizer hasn't created any quizzes yet.
+              {{ 'QUIZ.no_quizzes_member' | translate }}
             </p>
           }
         </div>
@@ -65,23 +65,23 @@
                       @case ('live') {
                         <span class="inline-flex items-center gap-1 rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
                           <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse"></span>
-                          Live
+                          {{ 'QUIZ.status_live' | translate }}
                         </span>
                       }
                       @case ('active') {
                         <span class="inline-flex items-center gap-1 rounded-full bg-blue-100/80 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700/60 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-400">
                           <span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span>
-                          Active
+                          {{ 'QUIZ.status_active' | translate }}
                         </span>
                       }
                       @case ('closed') {
                         <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-400 dark:text-gray-500">
-                          Closed
+                          {{ 'QUIZ.status_closed' | translate }}
                         </span>
                       }
                       @default {
                         <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-500 dark:text-gray-400">
-                          Draft
+                          {{ 'QUIZ.status_draft' | translate }}
                         </span>
                       }
                     }
@@ -130,7 +130,7 @@
                       (click)="toggleActive(quiz.id, !quiz.isActive)"
                       [disabled]="togglingId() === quiz.id"
                     >
-                      {{ quiz.isActive ? 'Deactivate' : 'Activate' }}
+                      {{ (quiz.isActive ? 'QUIZ.deactivate' : 'QUIZ.activate') | translate }}
                     </button>
                   }
                 } @else if (quiz.isActive || quiz.status === 'live' || quiz.status === 'active') {
@@ -142,7 +142,7 @@
                     (click)="takeQuiz(quiz.id)"
                     class="w-full bg-gradient-brand text-white border-0 hover:opacity-90"
                   >
-                    Take Quiz →
+                    {{ 'QUIZ.take_btn' | translate }}
                   </button>
                 }
 

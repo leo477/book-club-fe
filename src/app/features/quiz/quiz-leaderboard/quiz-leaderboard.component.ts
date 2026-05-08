@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
 import { InitialsPipe } from '../../../shared/pipes/initials.pipe';
 import { LeaderboardPodiumComponent } from './leaderboard-podium/leaderboard-podium.component';
@@ -10,7 +11,7 @@ import { LeaderboardBaseComponent } from './leaderboard-base.component';
   selector: 'app-quiz-leaderboard',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ...HlmCardImports, InitialsPipe, LeaderboardPodiumComponent, LeaderboardRestTableComponent],
+  imports: [RouterLink, TranslateModule, ...HlmCardImports, InitialsPipe, LeaderboardPodiumComponent, LeaderboardRestTableComponent],
   templateUrl: './quiz-leaderboard.component.html',
 })
 export class QuizLeaderboardComponent extends LeaderboardBaseComponent implements OnInit {

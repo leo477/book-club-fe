@@ -1,0 +1,15 @@
+[      60ms] [WARNING] The `useDefaultLang` and `defaultLanguage` options are deprecated. Please use `fallbackLang` instead. @ http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-JKQKSC4T.js?v=77671496:1174
+[      84ms] [LOG] Angular is running in development mode. @ http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-U4E2ZLPZ.js?v=77671496:11183
+[     156ms] [LOG] NG0751: Angular has detected that this application contains `@defer` blocks and the hot module replacement (HMR) mode is enabled. All `@defer` block dependencies will be loaded eagerly. Find more at https://v21.angular.dev/errors/NG0751 @ http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-U4E2ZLPZ.js?v=77671496:11183
+[     173ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:8000/api/v1/quizzes/quiz-001:0
+[     189ms] [ERROR] ERROR ResourceValueError: Resource is currently in an error state (see Error.cause for details): Not found
+    at ResourceImpl.__spreadValues.equal.equal [as computation] (http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-DKCVYCB6.js?v=77671496:3698:15)
+    at Object.producerRecomputeValue (http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-DKCVYCB6.js?v=77671496:307:25)
+    at producerUpdateValueVersion (http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-DKCVYCB6.js?v=77671496:108:8)
+    at consumerPollProducersForChange (http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-DKCVYCB6.js?v=77671496:176:5)
+    at producerUpdateValueVersion (http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-DKCVYCB6.js?v=77671496:104:45)
+    at consumerPollProducersForChange (http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-DKCVYCB6.js?v=77671496:176:5)
+    at detectChangesInView (http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-U4E2ZLPZ.js?v=77671496:6102:47)
+    at detectChangesInViewIfAttached (http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-U4E2ZLPZ.js?v=77671496:6092:3)
+    at detectChangesInComponent (http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-U4E2ZLPZ.js?v=77671496:6083:5)
+    at detectChangesInChildComponents (http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-U4E2ZLPZ.js?v=77671496:6131:5) @ http://localhost:4200/@fs/home/dmytr/angular/book-club-fe/.angular/cache/21.2.8/book-club-fe/vite/deps/chunk-DKCVYCB6.js?v=77671496:3171

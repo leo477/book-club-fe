@@ -1,0 +1,80 @@
+- generic [ref=e26]:
+  - banner [ref=e28]:
+    - generic [ref=e30]:
+      - link "BookClub home" [ref=e31] [cursor=pointer]:
+        - /url: /
+        - text: BookClub
+      - navigation "Main navigation" [ref=e32]:
+        - link "Огляд" [ref=e33] [cursor=pointer]:
+          - /url: /clubs
+        - link "Події" [ref=e34] [cursor=pointer]:
+          - /url: /events
+      - generic [ref=e35]:
+        - button "Темна тема" [ref=e36]:
+          - img:
+            - img
+        - button "Switch to English" [ref=e37]: EN
+        - button "User menu for Dev User" [ref=e38]:
+          - generic [ref=e39]: DU
+  - main [ref=e40]:
+    - generic [ref=e42]:
+      - region "Search clubs" [ref=e43]:
+        - generic [ref=e44]:
+          - heading "Книжкові клуби" [level=1] [ref=e45]
+          - paragraph [ref=e46]: Знайдіть спільноти читачів поруч
+          - generic [ref=e47]:
+            - generic [ref=e48]: Шукати клуби...
+            - searchbox "Шукати клуби..." [ref=e49]
+      - generic [ref=e50]:
+        - tablist "Club filter" [ref=e51]:
+          - generic [ref=e52]:
+            - tab "Всі клуби" [selected] [ref=e54]
+            - tab "Мої клуби" [ref=e55]
+        - tabpanel [ref=e56]:
+          - list [ref=e57]:
+            - listitem [ref=e58]:
+              - generic [ref=e63]:
+                - generic [ref=e64]:
+                  - heading "Книжковий Дракон Your club" [level=3] [ref=e65]:
+                    - text: Книжковий Дракон
+                    - generic "Your club" [ref=e66]: ✦
+                  - paragraph [ref=e67]: Клуб для любителів фентезі та пригодницької літератури.
+                - generic [ref=e68]:
+                  - button "Приєднатися Книжковий Дракон" [ref=e69]: Приєднатися
+                  - link "Переглянути Книжковий Дракон" [ref=e70] [cursor=pointer]:
+                    - /url: /clubs/club-001
+                    - text: Переглянути
+            - listitem [ref=e71]:
+              - generic [ref=e76]:
+                - generic [ref=e77]:
+                  - heading "Детектив Клуб" [level=3] [ref=e78]
+                  - paragraph [ref=e79]: Читаємо найкращі детективи та трилери.
+                - generic [ref=e80]:
+                  - button "Приєднатися Детектив Клуб" [ref=e81]: Приєднатися
+                  - link "Переглянути Детектив Клуб" [ref=e82] [cursor=pointer]:
+                    - /url: /clubs/club-002
+                    - text: Переглянути
+            - listitem [ref=e83]:
+              - generic [ref=e88]:
+                - generic [ref=e89]:
+                  - heading "Сучасна Проза" [level=3] [ref=e90]
+                  - paragraph [ref=e91]: Обговорюємо найактуальнішу сучасну літературу.
+                - generic [ref=e92]:
+                  - button "Приєднатися Сучасна Проза" [ref=e93]: Приєднатися
+                  - link "Переглянути Сучасна Проза" [ref=e94] [cursor=pointer]:
+                    - /url: /clubs/club-003
+                    - text: Переглянути
+      - link "Створити клуб" [ref=e95] [cursor=pointer]:
+        - /url: /clubs/create
+        - img [ref=e96]
+  - contentinfo [ref=e100]:
+    - generic [ref=e101]:
+      - paragraph [ref=e102]: 📚 BookClub © 2026 — Усі права захищені
+      - navigation "Footer navigation" [ref=e103]:
+        - list [ref=e104]:
+          - listitem [ref=e105]:
+            - link "Конфіденційність" [ref=e106] [cursor=pointer]:
+              - /url: /privacy
+          - listitem [ref=e107]:
+            - link "Умови" [ref=e108] [cursor=pointer]:
+              - /url: /terms
