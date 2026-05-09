@@ -66,7 +66,12 @@
         role="log"
         aria-live="polite"
       >
-        @if (chat.activeMessages().length === 0) {
+        @if (chat.rooms().length === 0) {
+          <div class="flex flex-col items-center justify-center h-full gap-2 text-center px-4">
+            <span class="text-2xl" aria-hidden="true">💬</span>
+            <p class="text-gray-500 text-sm">{{ 'CHAT.no_rooms_hint_member' | translate }}</p>
+          </div>
+        } @else if (chat.activeMessages().length === 0) {
           <div class="flex items-center justify-center h-full text-gray-400">
             {{ 'CHAT.no_messages' | translate }}
           </div>

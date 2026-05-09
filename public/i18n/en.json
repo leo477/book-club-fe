@@ -68,6 +68,7 @@
     "cover_url_label": "Cover image URL",
     "cover_url_placeholder": "https://example.com/cover.jpg",
     "cover_url_hint": "Paste a public image link (JPG, PNG, WebP)",
+    "cover_url_invalid": "Enter a valid URL (must start with https://)",
     "after_meeting_toggle": "▼ After-meeting venue",
     "after_meeting_hide": "▲ Hide after-meeting venue info",
     "venue_name_label": "Venue name",
@@ -286,7 +287,8 @@
     "new_message": "New message",
     "close": "Close chat",
     "open": "Open chat",
-    "rooms": "Rooms"
+    "rooms": "Rooms",
+    "no_rooms_hint_member": "The organizer hasn't set up a chat for this club yet."
   },
   "FORM_ERRORS": {
     "required": "This field is required.",

@@ -81,7 +81,11 @@
                    focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
                    transition-colors duration-150"
           />
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
+          @if (form.controls.coverUrl.touched && form.controls.coverUrl.errors?.['pattern']) {
+            <p class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ 'CREATE_CLUB.cover_url_invalid' | translate }}</p>
+          } @else {
+            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
+          }
         </div>
 
         <!-- Visibility -->
