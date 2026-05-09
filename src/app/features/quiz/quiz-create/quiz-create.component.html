@@ -5,11 +5,11 @@
         <header class="flex items-center justify-between flex-wrap gap-4">
           <div>
             <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
-              📝 Create Quiz
+              {{ 'QUIZ.create_heading' | translate }}
             </h1>
             <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
-              Step {{ currentStep() }} of 2 —
-              {{ currentStep() === 1 ? 'Quiz details' : 'Add questions' }}
+              {{ 'QUIZ.create_step_of' | translate: { step: currentStep() } }} —
+              {{ currentStep() === 1 ? ('QUIZ.create_step_details' | translate) : ('QUIZ.create_step_questions' | translate) }}
             </p>
           </div>
           <a
@@ -17,7 +17,7 @@
             class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm
                    transition-colors"
           >
-            ✕ Cancel
+            {{ 'QUIZ.create_cancel' | translate }}
           </a>
         </header>
 
@@ -53,12 +53,12 @@
                 for="quiz-title"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                Quiz title <span class="text-red-500">*</span>
+                {{ 'QUIZ.create_title_label' | translate }} <span class="text-red-500">*</span>
               </label>
               <input
                 id="quiz-title"
                 formControlName="title"
-                placeholder="e.g. The Midnight Library — Chapter 1 Quiz"
+                [placeholder]="'QUIZ.create_title_placeholder' | translate"
                 class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 dark:text-white
                        bg-white dark:bg-gray-800 placeholder-gray-400 focus:outline-none
                        focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
@@ -68,9 +68,9 @@
               />
               @if (isInvalidTouched(metaForm.controls.title)) {
                 <p class="text-red-500 text-xs">
-                  @if (metaForm.controls.title.errors?.['required']) { Title is required. }
-                  @else if (metaForm.controls.title.errors?.['minlength']) { Title must be at least 3 characters. }
-                  @else if (metaForm.controls.title.errors?.['maxlength']) { Title must not exceed 100 characters. }
+                  @if (metaForm.controls.title.errors?.['required']) { {{ 'QUIZ.create_title_required' | translate }} }
+                  @else if (metaForm.controls.title.errors?.['minlength']) { {{ 'QUIZ.create_title_min' | translate }} }
+                  @else if (metaForm.controls.title.errors?.['maxlength']) { {{ 'QUIZ.create_title_max' | translate }} }
                 </p>
               }
             </div>
@@ -81,13 +81,13 @@
                 for="quiz-desc"
                 class="block text-sm font-medium text-gray-700 dark:text-gray-300"
               >
-                Description
+                {{ 'QUIZ.create_desc_label' | translate }}
               </label>
               <textarea
                 id="quiz-desc"
                 formControlName="description"
                 rows="3"
-                placeholder="A brief description of the quiz…"
+                [placeholder]="'QUIZ.create_desc_placeholder' | translate"
                 class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5
                        text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
                        placeholder-gray-400 resize-none focus:outline-none focus:ring-2
@@ -96,7 +96,7 @@
               ></textarea>
               @if (isInvalidTouched(metaForm.controls.description)) {
                 <p class="text-red-500 text-xs">
-                  @if (metaForm.controls.description.errors?.['maxlength']) { Description must not exceed 500 characters. }
+                  @if (metaForm.controls.description.errors?.['maxlength']) { {{ 'QUIZ.create_desc_max' | translate }} }
                 </p>
               }
             </div>
@@ -109,7 +109,7 @@
                        disabled:cursor-not-allowed text-white rounded-xl px-6 py-2.5
                        font-medium transition-colors text-sm"
               >
-                Continue →
+                {{ 'QUIZ.create_continue' | translate }}
               </button>
             </div>
           </form>
@@ -170,7 +170,7 @@
                      dark:border-gray-800 shadow-sm space-y-5"
             >
               <h2 class="font-semibold text-gray-900 dark:text-white">
-                {{ localQuestions().length === 0 ? 'Add your first question' : 'Add another question' }}
+                {{ localQuestions().length === 0 ? ('QUIZ.create_first_question' | translate) : ('QUIZ.create_another_question' | translate) }}
               </h2>
 
               <!-- Question text -->
@@ -179,25 +179,31 @@
                   for="q-text"
                   class="block text-sm font-medium text-gray-700 dark:text-gray-300"
                 >
-                  Question <span class="text-red-500">*</span>
+                  {{ 'QUIZ.create_question_label' | translate }} <span class="text-red-500">*</span>
                 </label>
                 <textarea
                   id="q-text"
                   formControlName="question"
                   rows="2"
-                  placeholder="What is the main theme of chapter 3?"
+                  [placeholder]="'QUIZ.create_question_placeholder' | translate"
                   class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5
                          text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
                          placeholder-gray-400 resize-none focus:outline-none focus:ring-2
                          focus:ring-primary-500 focus:border-transparent transition-colors"
                   [class.border-red-400]="isInvalidTouched(questionForm.controls.question)"
                 ></textarea>
+                @if (isInvalidTouched(questionForm.controls.question)) {
+                  <p class="text-red-500 text-xs">
+                    @if (questionForm.controls.question.errors?.['required']) { {{ 'QUIZ.create_question_required' | translate }} }
+                    @else if (questionForm.controls.question.errors?.['minlength']) { {{ 'QUIZ.create_question_min' | translate }} }
+                  </p>
+                }
               </div>
 
               <!-- 4 option inputs -->
               <div class="space-y-1">
                 <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Answer options <span class="text-red-500">*</span>
+                  {{ 'QUIZ.create_answers_label' | translate }} <span class="text-red-500">*</span>
                 </p>
                 <div class="space-y-2">
                   @for (idx of optionIndices; track idx) {
@@ -236,7 +242,7 @@
                   }
                 </div>
                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  Select the radio button next to the correct answer.
+                  {{ 'QUIZ.create_answers_hint' | translate }}
                 </p>
               </div>
 
@@ -248,7 +254,7 @@
                        dark:hover:bg-primary-900/20 disabled:opacity-40 disabled:cursor-not-allowed
                        rounded-xl py-2.5 font-medium transition-colors text-sm"
               >
-                + Add Question
+                {{ 'QUIZ.create_add_question' | translate }}
               </button>
             </form>
 
@@ -270,7 +276,7 @@
                 class="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white
                        transition-colors"
               >
-                ← Back
+                {{ 'QUIZ.create_back' | translate }}
               </button>
 
               <button
@@ -281,10 +287,10 @@
                        disabled:cursor-not-allowed text-white rounded-xl px-8 py-2.5
                        font-bold transition-colors text-sm"
               >
-                {{ isPublishing() ? '…Publishing' : '🚀 Publish Quiz' }}
+                {{ isPublishing() ? ('QUIZ.create_saving' | translate) : ('QUIZ.create_save_draft' | translate) }}
                 @if (localQuestions().length > 0) {
                   ({{ localQuestions().length }}
-                  {{ localQuestions().length === 1 ? 'question' : 'questions' }})
+                  {{ localQuestions().length === 1 ? ('QUIZ.create_questions_count_one' | translate) : ('QUIZ.create_questions_count_many' | translate) }})
                 }
               </button>
             </div>
@@ -293,4 +299,4 @@
 
       </div>
     </div>
-  
+

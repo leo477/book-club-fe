@@ -13,6 +13,7 @@ import {
   Validators,
 } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
 import { QuizService } from '../../../core/services/quiz.service';
 import { QuizQuestion } from '../../../core/models/quiz.model';
 
@@ -36,7 +37,7 @@ type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
   selector: 'app-quiz-create',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule],
   templateUrl: './quiz-create.component.html',
 })
 export class QuizCreateComponent {

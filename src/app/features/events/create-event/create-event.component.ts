@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
 import { EventService } from '../../../core/services/event.service';
 import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
 import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
@@ -15,7 +16,7 @@ import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
   selector: 'app-create-event',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent],
+  imports: [RouterLink, ReactiveFormsModule, TranslateModule, AddressAutocompleteComponent],
   templateUrl: './create-event.component.html',
 })
 export class CreateEventComponent {
