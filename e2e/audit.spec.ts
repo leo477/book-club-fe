@@ -49,7 +49,11 @@ function attachMonitors(page: Page, route: string): () => void {
     }
   };
   const onRequestFailed = (req: Request) => {
-    networkIssues.push(`FAILED ${req.url()} — ${req.failure()?.errorText ?? 'unknown'}`);
+    const errorText = req.failure()?.errorText ?? 'unknown';
+    // ERR_ABORTED = request cancelled (SPA navigation, Vercel rewrites, prefetch) — not an app error
+    // Real server errors are caught via onResponse (HTTP 4xx/5xx)
+    if (errorText === 'net::ERR_ABORTED') return;
+    networkIssues.push(`FAILED ${req.url()} — ${errorText}`);
   };
 
   page.on('console', onConsole);
@@ -230,18 +234,16 @@ test.describe('Unauthenticated', () => {
     flush();
   });
 
-  test('GET /events (unauthenticated) — event cards or empty state', async ({ page }) => {
+  test('GET /events (unauthenticated) — redirects to login (protected route)', async ({ page }) => {
     const flush = attachMonitors(page, '/events (unauth)');
     await page.goto('/events');
     await waitForAngular(page);
 
-    const hasCards = await page.locator('app-event-card').count();
-    const hasEmpty = await page.locator('app-empty-state').count();
-    if (hasCards === 0 && hasEmpty === 0) {
-      addBug({ route: '/events (unauth)', severity: 'high', category: 'ui-missing', description: 'No event cards or empty state visible' });
+    const url = page.url();
+    if (!url.includes('/login')) {
+      addBug({ route: '/events (unauth)', severity: 'high', category: 'redirect', description: `Protected /events route did not redirect unauthenticated user to login — ended up at: ${url}` });
     }
 
-    await checkUndefinedText(page, '/events (unauth)');
     flush();
   });
 
@@ -478,16 +480,10 @@ test.describe('Authenticated — Quizzes', () => {
       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'high', category: 'ui-missing', description: 'Quiz title input not found on create quiz page' });
     }
 
-    // Test next step button with empty form
+    // Test next step button visibility (button is disabled on empty form — that is correct behaviour)
     const nextBtn = page.locator('button:has-text("Next"), button:has-text("Далі"), button:has-text("Continue")').first();
-    if (await nextBtn.isVisible().catch(() => false)) {
-      await nextBtn.click();
-      await page.waitForTimeout(500);
-      const hasValidation = await page.locator('[class*="error"], [class*="invalid"], [aria-invalid="true"]').count();
-      if (hasValidation === 0) {
-        addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'medium', category: 'form-error', description: 'Next step with empty form shows no validation errors' });
-      }
-    } else {
+    const nextVisible = await nextBtn.isVisible().catch(() => false);
+    if (!nextVisible) {
       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'medium', category: 'ui-missing', description: 'Next/Continue button not visible on create quiz step 1' });
     }
 
@@ -624,7 +620,7 @@ test.describe('Authenticated — Randomizer', () => {
       return;
     }
 
-    const spinBtn = page.locator('button:has-text("Spin"), button:has-text("Random"), button[class*="spin"]').first();
+    const spinBtn = page.locator('[data-testid="spin-button"]').first();
     if (!(await spinBtn.isVisible().catch(() => false))) {
       addBug({ route: `/clubs/${OWNED_CLUB_ID}/randomizer`, severity: 'medium', category: 'ui-missing', description: 'Spin button not found on randomizer page' });
     }
@@ -704,7 +700,7 @@ test.describe('Navigation & UI', () => {
     await page.goto('/clubs');
     await waitForAngular(page);
 
-    const themeBtn = page.locator('button[class*="theme"], button[aria-label*="theme" i], button[aria-label*="dark" i], button[aria-label*="light" i]').first();
+    const themeBtn = page.locator('[data-testid="theme-toggle"]').first();
     if (!(await themeBtn.isVisible().catch(() => false))) {
       addBug({ route: 'theme-toggle', severity: 'low', category: 'ui-missing', description: 'Theme toggle button not found in header' });
     }
@@ -736,7 +732,7 @@ test.afterAll(async () => {
     '# Bug Report — Book Club App Audit',
     '',
     `**Date:** ${new Date().toISOString().split('T')[0]}`,
-    `**URL:** https://book-club-nys9s6t1z-dmytros-projects-ad22eb22.vercel.app/`,
+    `**URL:** https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app/`,
     `**Test user:** test123@mail.com`,
     `**Club owner account:** terrtr`,
     '',
