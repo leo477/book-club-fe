@@ -124,6 +124,7 @@
           <button
             hlmBtn
             type="button"
+            data-testid="spin-button"
             (click)="spin()"
             [disabled]="randomizerService.isSpinning() || selectedCount() < 2"
             class="w-full rounded-2xl bg-gradient-to-r from-accent-500 to-primary-500 hover:from-accent-400 hover:to-primary-400 text-white font-bold py-4 text-lg shadow-lg"
