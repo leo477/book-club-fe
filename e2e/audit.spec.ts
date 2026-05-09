@@ -756,9 +756,10 @@ test.afterAll(async () => {
     lines.push('');
     lines.push('| # | Route | Type | Description |');
     lines.push('|---|-------|------|-------------|');
+    const mdEscape = (s: string) => s.replace(/\\/g, '\\\\').replace(/\|/g, '\\|');
     group.forEach((bug, i) => {
-      lines.push(`| ${i + 1} | \`${bug.route}\` | ${bug.category} | ${bug.description.replace(/\|/g, '\\|')} |`);
-      if (bug.detail) lines.push(`| | | | **Detail:** ${bug.detail.replace(/\|/g, '\\|')} |`);
+      lines.push(`| ${i + 1} | \`${bug.route.replace(/`/g, "'")}\` | ${mdEscape(bug.category)} | ${mdEscape(bug.description)} |`);
+      if (bug.detail) lines.push(`| | | | **Detail:** ${mdEscape(bug.detail)} |`);
     });
     lines.push('');
   }
