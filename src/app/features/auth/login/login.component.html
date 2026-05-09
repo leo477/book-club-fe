@@ -24,7 +24,7 @@
               <!-- Email -->
               <hlm-field>
                 <label hlmFieldLabel for="login-email">{{ 'AUTH.email' | translate }}</label>
-                <input hlmInput id="login-email" type="email" placeholder="you@example.com" [formControl]="form.controls.email" />
+                <input hlmInput id="login-email" type="email" placeholder="you@example.com" autocomplete="email" [formControl]="form.controls.email" />
                 <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
                 <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
               </hlm-field>
@@ -32,7 +32,7 @@
               <!-- Password -->
               <hlm-field>
                 <label hlmFieldLabel for="login-password">{{ 'AUTH.password' | translate }}</label>
-                <input hlmInput id="login-password" type="password" placeholder="••••••••" [formControl]="form.controls.password" />
+                <input hlmInput id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" [formControl]="form.controls.password" />
                 <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
                 <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
               </hlm-field>

@@ -4,6 +4,18 @@ import { roleGuard } from './core/auth/role.guard';
 import { ShellComponent } from './layout/shell/shell.component';
 
 export const routes: Routes = [
+  // ── Public static pages (no auth, no shell) ────────────────────────────
+  {
+    path: 'privacy',
+    loadComponent: () =>
+      import('./features/privacy/privacy.component').then(m => m.PrivacyComponent),
+  },
+  {
+    path: 'terms',
+    loadComponent: () =>
+      import('./features/terms/terms.component').then(m => m.TermsComponent),
+  },
+
   // ── Full-screen auth pages (no shell) ───────────────────────────────────
   {
     path: 'login',
