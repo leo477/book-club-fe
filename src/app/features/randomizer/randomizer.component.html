@@ -136,6 +136,10 @@
             }
           </button>
 
+          @if (selectedCount() < 2 && !randomizerService.isSpinning()) {
+            <p class="text-center text-white/50 text-xs">{{ 'RANDOMIZER.error_min' | translate }}</p>
+          }
+
           @if (randomizerService.result() && authService.isOrganizer()) {
             <button
               hlmBtn

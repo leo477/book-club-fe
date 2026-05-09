@@ -69,6 +69,7 @@
     "cover_url_label": "Cover image URL",
     "cover_url_placeholder": "https://example.com/cover.jpg",
     "cover_url_hint": "Paste a public image link (JPG, PNG, WebP)",
+    "cover_url_invalid": "Enter a valid URL (must start with https://)",
     "after_meeting_toggle": "▼ After-meeting venue",
     "after_meeting_hide": "▲ Hide after-meeting venue info",
     "venue_name_label": "Venue name",
@@ -469,6 +470,7 @@
     "close": "Close chat",
     "open": "Open chat",
     "rooms": "Rooms",
+<<<<<<< HEAD
     "mute": "Mute",
     "unmute": "Unmute",
     "muted_label": "[muted]",
@@ -478,6 +480,9 @@
     "add_room": "Add room",
     "room_name_placeholder": "Room name...",
     "create_room": "Create"
+=======
+    "no_rooms_hint_member": "The organizer hasn't set up a chat for this club yet."
+>>>>>>> worktree-agent-abfaf1a395decc804
   },
   "FORM_ERRORS": {
     "required": "This field is required.",

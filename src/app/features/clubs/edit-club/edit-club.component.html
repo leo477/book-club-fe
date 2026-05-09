@@ -66,8 +66,32 @@
           <div>
             <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {{ 'EDIT_CLUB.cover_url_label' | translate }}
+<<<<<<< HEAD
             </p>
             <app-cover-upload [control]="form.controls.coverUrl" />
+=======
+            </label>
+            @if (form.controls.coverUrl.value) {
+              <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
+                <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover" (error)="form.controls.coverUrl.setValue('')" />
+              </div>
+            }
+            <input
+              id="club-cover-url"
+              type="url"
+              formControlName="coverUrl"
+              [placeholder]="'EDIT_CLUB.cover_url_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+            />
+            @if (form.controls.coverUrl.touched && form.controls.coverUrl.errors?.['pattern']) {
+              <p class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ 'CREATE_CLUB.cover_url_invalid' | translate }}</p>
+            } @else {
+              <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'EDIT_CLUB.cover_url_hint' | translate }}</p>
+            }
+>>>>>>> worktree-agent-abfaf1a395decc804
           </div>
 
           <!-- Visibility toggle -->

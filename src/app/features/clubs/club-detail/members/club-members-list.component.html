@@ -17,7 +17,7 @@
           <!-- Name + role -->
           <div class="flex-1 min-w-0">
             <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
-              {{ member.displayName }}
+              {{ member.displayName.includes('@') ? member.displayName.split('@')[0] : member.displayName }}
             </p>
             @if (member.role === 'organizer') {
               <span class="inline-block text-xs font-medium text-accent-600 dark:text-accent-400">

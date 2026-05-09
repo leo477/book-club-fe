@@ -54,7 +54,7 @@ export class CreateClubComponent {
     }),
     isPublic: new FormControl(true, { nonNullable: true }),
     city: new FormControl('', { nonNullable: true }),
-    coverUrl: new FormControl('', { nonNullable: true }),
+    coverUrl: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^https?:\/\/.+\..+/)] }),
   });
 
   togglePublic(): void {
