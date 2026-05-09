@@ -2869,21 +2869,21 @@ const TOKEN_KEY = 'bc_access_token';
 const REFRESH_TOKEN_KEY = 'bc_refresh_token';
 @Injectable({ providedIn: 'root' })
 export class TokenStore {
-  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
-  private readonly _refreshToken = signal<string | null>(localStorage.getItem(REFRESH_TOKEN_KEY));
+  private readonly _token = signal<string | null>(sessionStorage.getItem(TOKEN_KEY));
+  private readonly _refreshToken = signal<string | null>(sessionStorage.getItem(REFRESH_TOKEN_KEY));
   readonly token = this._token.asReadonly();
   readonly refreshToken = this._refreshToken.asReadonly();
   set(token: string): void {
-    localStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(TOKEN_KEY, token);
     this._token.set(token);
   }
   setRefresh(token: string): void {
-    localStorage.setItem(REFRESH_TOKEN_KEY, token);
+    sessionStorage.setItem(REFRESH_TOKEN_KEY, token);
     this._refreshToken.set(token);
   }
   clear(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(REFRESH_TOKEN_KEY);
     this._token.set(null);
     this._refreshToken.set(null);
   }
@@ -4252,125 +4252,6 @@ trim_trailing_whitespace = false
 module.exports = {
   'src/**/*.{ts,py,html}': () => ['npx repomix', 'git add repomix-output.md'],
 };
-````
-
-## File: bugs.md
-````markdown
-# Bug Report — Book Club App Audit
-
-**Date:** 2026-05-09
-**URL:** https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app/
-**Test user:** test123@mail.com
-**Club owner account:** terrtr
-
-## Summary
-
-| Severity | Count |
-|----------|-------|
-| Critical | 0 |
-| High | 2 |
-| Medium | 4 |
-| Low | 1 |
-| **Total** | **7** |
-
-## HIGH (2)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/session` | console-error | Failed to load resource: the server responded with a status of 404 () |
-| 2 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/leaderboard` | console-error | Failed to load resource: the server responded with a status of 404 () |
-
-## MEDIUM (4)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `/events/:id` | ui-missing | Skipped: no event ID discovered (no events in API response) |
-| 2 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/session` | nav-404 | HTTP 404 — https://book-club-be.onrender.com/api/v1/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/sessions/active |
-| 3 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/leaderboard` | nav-404 | HTTP 404 — https://book-club-be.onrender.com/api/v1/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/sessions/active |
-| 4 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/randomizer` | ui-missing | Spin button not found on randomizer page |
-
-## LOW (1)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `theme-toggle` | ui-missing | Theme toggle button not found in header |
-````
-
-## File: playwright.md
-````markdown
-# Playwright Audit — Book Club App
-
-**Сайт:** https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app/  
-**Дата:** 2026-05-09  
-**Тести:** 24/24 pass  
-
----
-
-## Що було зроблено
-
-Проведено автоматизований Playwright-аудит всіх маршрутів (публічних та автентифікованих).
-Виявлено та виправлено помилки в тестовій інфраструктурі, додано `data-testid` атрибути до компонентів.
-
----
-
-## Виправлено в цій сесії
-
-| # | Файл | Зміна |
-|---|------|-------|
-| 1 | `playwright.vercel.config.ts` | Оновлено `baseURL` на актуальний Vercel деплой |
-| 2 | `e2e/audit.spec.ts` | Відфільтровано `net::ERR_ABORTED` false positives (SPA-навігація + Vercel JWE probes) |
-| 3 | `e2e/audit.spec.ts` | Виправлено тест `/events (unauth)` — route захищена `authGuard`, правильна поведінка — redirect to login |
-| 4 | `e2e/audit.spec.ts` | Виправлено quiz create тест — не намагатися клікнути disabled кнопку |
-| 5 | `e2e/audit.spec.ts` | Оновлено селектор spin button → `[data-testid="spin-button"]` |
-| 6 | `e2e/audit.spec.ts` | Оновлено селектор theme toggle → `[data-testid="theme-toggle"]` |
-| 7 | `randomizer.component.html` | Додано `data-testid="spin-button"` до кнопки Spin |
-| 8 | `header.component.html` | Додано `data-testid="theme-toggle"` до desktop та mobile кнопок теми |
-
----
-
-## Залишкові баги (потребують дій)
-
-### HIGH — Backend endpoint відсутній
-
-**Маршрути:** `/clubs/:id/quizzes/:quizId/session`, `/clubs/:id/quizzes/:quizId/leaderboard`  
-**Симптом:** Консольна помилка `Failed to load resource: 404` при завантаженні сторінки  
-**Причина:** `GET https://book-club-be.onrender.com/api/v1/quizzes/:id/sessions/active` → 404  
-**Дія:** Потрібно реалізувати endpoint на backend (FastAPI). Агент: **python-backend-dev**
-
-```
-GET /api/v1/quizzes/{quiz_id}/sessions/active
-→ Повертає поточну активну сесію квізу або 404 якщо немає
-```
-
-### MEDIUM — Spin button / Theme toggle (після деплою зникнуть)
-
-Ці баги показуються бо `data-testid` атрибути ще не задеплоєні на Vercel.
-Після `git push` + rebuild — зникнуть автоматично.
-
-### MEDIUM — `/events/:id` тест пропускається
-
-Тестовий акаунт `test123@mail.com` не має подій у API-відповіді.
-Потрібно або створити тестові події, або дістати `ANY_EVENT_ID` з іншого ендпоінту.
-
----
-
-## MCP-агенти для подальших дій
-
-| Агент | Задача |
-|-------|--------|
-| **python-backend-dev** | Реалізувати `GET /api/v1/quizzes/{quiz_id}/sessions/active` у FastAPI |
-| **dev** | (після деплою) Перевірити що `data-testid` атрибути видні в DOM |
-| **tester** | Додати тестові дані для акаунту `test123@mail.com` (хоча б одну подію) |
-
----
-
-## Запуск аудиту
-
-```bash
-npx playwright test --config=playwright.vercel.config.ts --reporter=list
-```
-
-Очікуваний результат після деплою: 24/24 pass, 0 high/critical bugs.
 ````
 
 ## File: README.md
@@ -5859,169 +5740,6 @@ export const QUIZ_ROUTES: Routes = [
       import('./quiz-take/quiz-take.component').then(m => m.QuizTakeComponent),
   },
 ];
-````
-
-## File: src/app/features/randomizer/randomizer.component.html
-````html
-<div class="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 p-4 sm:p-8">
-  <div class="max-w-4xl mx-auto space-y-8">
-    <header class="flex items-center justify-between flex-wrap gap-4">
-      <div>
-        <h1 class="font-display text-3xl font-bold text-white">🎲 {{ 'RANDOMIZER.title' | translate }}</h1>
-        <p class="text-primary-300 mt-1">{{ 'RANDOMIZER.subtitle' | translate }}</p>
-      </div>
-      <nav aria-label="Breadcrumb">
-        <a [routerLink]="['/clubs', clubId]" class="text-primary-300 hover:text-white transition-colors text-sm">
-          {{ 'RANDOMIZER.back_to_club' | translate }}
-        </a>
-      </nav>
-    </header>
-    <div class="bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/10">
-      <label for="purpose" class="block text-white font-medium text-sm mb-2">{{ 'RANDOMIZER.purpose_label' | translate }}</label>
-      <input
-        hlmInput
-        id="purpose"
-        type="text"
-        [formControl]="purposeControl"
-        [placeholder]="'RANDOMIZER.purpose_placeholder' | translate"
-        class="w-full rounded-xl bg-white/10 border-white/20 text-white placeholder-white/40 px-4 focus-visible:ring-primary-400"
-      />
-    </div>
-    <div class="grid lg:grid-cols-2 gap-8">
-      <section aria-labelledby="members-heading" class="space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 id="members-heading" class="text-white font-semibold text-lg">
-            👥 {{ 'RANDOMIZER.members_title' | translate }}
-            <span class="text-primary-300 text-sm font-normal ml-2">{{ selectedCount() }} / {{ randomizerService.candidates().length }} {{ 'RANDOMIZER.selected' | translate }}</span>
-          </h2>
-          <button
-            hlmBtn
-            variant="ghost"
-            size="sm"
-            type="button"
-            (click)="reset()"
-            class="text-xs text-primary-300 hover:text-white"
-          >
-            {{ 'RANDOMIZER.select_all' | translate }}
-          </button>
-        </div>
-        @if (randomizerService.candidates().length === 0) {
-          <div class="bg-white/10 rounded-2xl p-8 text-center text-white/60">
-            <p class="text-3xl mb-2">👤</p>
-            <p>{{ 'RANDOMIZER.no_members' | translate }}</p>
-          </div>
-        } @else {
-          <ul class="space-y-2">
-            @for (member of randomizerService.candidates(); track member.userId) {
-              <li>
-                <button
-                  type="button"
-                  (click)="randomizerService.toggleMember(member.userId)"
-                  class="w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                  [class]="randomizerService.selectedIds().has(member.userId)
-                    ? 'bg-white/20 border border-white/30'
-                    : 'bg-white/5 border border-white/10 opacity-50'"
-                  [attr.aria-pressed]="randomizerService.selectedIds().has(member.userId)"
-                  [attr.aria-label]="'Toggle ' + member.displayName"
-                >
-                  <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                    {{ member.displayName | initials }}
-                  </div>
-                  <span class="text-white font-medium text-sm flex-1 text-left">{{ member.displayName }}</span>
-                  @if (randomizerService.selectedIds().has(member.userId)) {
-                    <span class="text-green-400 text-lg" aria-hidden="true">✓</span>
-                  }
-                </button>
-              </li>
-            }
-          </ul>
-        }
-      </section>
-      <section aria-labelledby="spin-heading" class="space-y-6">
-        <h2 id="spin-heading" class="sr-only">{{ 'RANDOMIZER.title' | translate }}</h2>
-        <div class="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/10 text-center min-h-[200px] flex flex-col items-center justify-center">
-          @if (randomizerService.isSpinning()) {
-            <div class="space-y-4">
-              <div class="text-5xl animate-bounce">🎲</div>
-              <p class="text-white/70 text-sm animate-pulse">{{ 'RANDOMIZER.spinning' | translate }}</p>
-            </div>
-          } @else if (randomizerService.result()) {
-            <div class="space-y-3">
-              <div class="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl ring-4 ring-white/30">
-                {{ randomizerService.result()!.displayName | initials }}
-              </div>
-              <div>
-                <p class="text-white/60 text-xs uppercase tracking-wide mb-1">{{ randomizerService.purpose() }}</p>
-                <p class="text-white text-2xl font-bold">{{ randomizerService.result()!.displayName }}</p>
-              </div>
-              <span class="text-3xl">🏆</span>
-            </div>
-          } @else {
-            <div class="text-white/40 space-y-2">
-              <div class="text-4xl">🎯</div>
-              <p class="text-sm">{{ 'RANDOMIZER.spin_hint' | translate }}</p>
-            </div>
-          }
-        </div>
-        @if (errorMessage()) {
-          <div class="rounded-xl bg-red-500/20 border border-red-500/30 px-4 py-3 text-sm text-red-300" role="alert">
-            {{ errorMessage() }}
-          </div>
-        }
-        <div class="flex flex-col gap-3">
-          <button
-            hlmBtn
-            type="button"
-            data-testid="spin-button"
-            (click)="spin()"
-            [disabled]="randomizerService.isSpinning() || selectedCount() < 2"
-            class="w-full rounded-2xl bg-gradient-to-r from-accent-500 to-primary-500 hover:from-accent-400 hover:to-primary-400 text-white font-bold py-4 text-lg shadow-lg"
-          >
-            @if (randomizerService.isSpinning()) {
-              {{ 'RANDOMIZER.spinning_btn' | translate }}
-            } @else {
-              {{ 'RANDOMIZER.spin' | translate }}
-            }
-          </button>
-          @if (randomizerService.result() && authService.isOrganizer()) {
-            <button
-              hlmBtn
-              variant="outline"
-              type="button"
-              (click)="saveSession()"
-              [disabled]="isSaving()"
-              class="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3"
-            >
-              @if (isSaving()) {
-                {{ 'RANDOMIZER.saving' | translate }}
-              } @else {
-                {{ 'RANDOMIZER.save' | translate }}
-              }
-            </button>
-          }
-        </div>
-        @if (randomizerService.history().length > 0) {
-          <div class="space-y-3">
-            <h3 class="text-white/70 text-sm font-medium uppercase tracking-wide">{{ 'RANDOMIZER.history_title' | translate }}</h3>
-            <ul class="space-y-2">
-              @for (session of randomizerService.history().slice(0, 5); track session.id) {
-                <li class="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="text-white/60 text-xs truncate">{{ session.purpose }}</p>
-                    @if (session.result) {
-                      <p class="text-white text-sm font-medium">🏆 {{ session.result.displayName }}</p>
-                    }
-                  </div>
-                  <span class="text-white/40 text-xs shrink-0">{{ session.createdAt | date:'dd.MM HH:mm' }}</span>
-                </li>
-              }
-            </ul>
-          </div>
-        }
-      </section>
-    </div>
-  </div>
-</div>
 ````
 
 ## File: src/app/features/randomizer/randomizer.component.ts
@@ -8487,6 +8205,48 @@ ALTER TABLE events
   ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
 ````
 
+## File: bugs.md
+````markdown
+# Bug Report — Book Club App Audit
+
+**Date:** 2026-05-09
+**URL:** https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app/
+**Test user:** test123@mail.com
+**Club owner account:** terrtr
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 2 |
+| Medium | 4 |
+| Low | 1 |
+| **Total** | **7** |
+
+## HIGH (2)
+
+| # | Route | Type | Description |
+|---|-------|------|-------------|
+| 1 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/session` | console-error | Failed to load resource: the server responded with a status of 404 () |
+| 2 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/leaderboard` | console-error | Failed to load resource: the server responded with a status of 404 () |
+
+## MEDIUM (4)
+
+| # | Route | Type | Description |
+|---|-------|------|-------------|
+| 1 | `/events/:id` | ui-missing | Skipped: no event ID discovered (no events in API response) |
+| 2 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/session` | nav-404 | HTTP 404 — https://book-club-be.onrender.com/api/v1/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/sessions/active |
+| 3 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/leaderboard` | nav-404 | HTTP 404 — https://book-club-be.onrender.com/api/v1/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/sessions/active |
+| 4 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/randomizer` | ui-missing | Spin button not found on randomizer page |
+
+## LOW (1)
+
+| # | Route | Type | Description |
+|---|-------|------|-------------|
+| 1 | `theme-toggle` | ui-missing | Theme toggle button not found in header |
+````
+
 ## File: CLAUDE.md
 ````markdown
 # Project Context
@@ -8655,35 +8415,81 @@ module.exports = function (config) {
 };
 ````
 
-## File: playwright.vercel.config.ts
-````typescript
-import { defineConfig, devices } from '@playwright/test';
-export default defineConfig({
-  testDir: './e2e',
-  testMatch: '**/audit.spec.ts',
-  fullyParallel: false,
-  retries: 0,
-  workers: 1,
-  timeout: 60_000,
-  reporter: [
-    ['list'],
-    ['html', { open: 'never' }],
-    ['json', { outputFile: 'playwright-report/audit-results.json' }],
-  ],
-  use: {
-    baseURL: 'https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app',
-    trace: 'on',
-    screenshot: 'only-on-failure',
-    actionTimeout: 20_000,
-    navigationTimeout: 30_000,
-  },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-  ],
-});
+## File: playwright.md
+````markdown
+# Playwright Audit — Book Club App
+
+**Сайт:** https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app/  
+**Дата:** 2026-05-09  
+**Тести:** 24/24 pass  
+
+---
+
+## Що було зроблено
+
+Проведено автоматизований Playwright-аудит всіх маршрутів (публічних та автентифікованих).
+Виявлено та виправлено помилки в тестовій інфраструктурі, додано `data-testid` атрибути до компонентів.
+
+---
+
+## Виправлено в цій сесії
+
+| # | Файл | Зміна |
+|---|------|-------|
+| 1 | `playwright.vercel.config.ts` | Оновлено `baseURL` на актуальний Vercel деплой |
+| 2 | `e2e/audit.spec.ts` | Відфільтровано `net::ERR_ABORTED` false positives (SPA-навігація + Vercel JWE probes) |
+| 3 | `e2e/audit.spec.ts` | Виправлено тест `/events (unauth)` — route захищена `authGuard`, правильна поведінка — redirect to login |
+| 4 | `e2e/audit.spec.ts` | Виправлено quiz create тест — не намагатися клікнути disabled кнопку |
+| 5 | `e2e/audit.spec.ts` | Оновлено селектор spin button → `[data-testid="spin-button"]` |
+| 6 | `e2e/audit.spec.ts` | Оновлено селектор theme toggle → `[data-testid="theme-toggle"]` |
+| 7 | `randomizer.component.html` | Додано `data-testid="spin-button"` до кнопки Spin |
+| 8 | `header.component.html` | Додано `data-testid="theme-toggle"` до desktop та mobile кнопок теми |
+
+---
+
+## Залишкові баги (потребують дій)
+
+### HIGH — Backend endpoint відсутній
+
+**Маршрути:** `/clubs/:id/quizzes/:quizId/session`, `/clubs/:id/quizzes/:quizId/leaderboard`  
+**Симптом:** Консольна помилка `Failed to load resource: 404` при завантаженні сторінки  
+**Причина:** `GET https://book-club-be.onrender.com/api/v1/quizzes/:id/sessions/active` → 404  
+**Дія:** Потрібно реалізувати endpoint на backend (FastAPI). Агент: **python-backend-dev**
+
+```
+GET /api/v1/quizzes/{quiz_id}/sessions/active
+→ Повертає поточну активну сесію квізу або 404 якщо немає
+```
+
+### MEDIUM — Spin button / Theme toggle (після деплою зникнуть)
+
+Ці баги показуються бо `data-testid` атрибути ще не задеплоєні на Vercel.
+Після `git push` + rebuild — зникнуть автоматично.
+
+### MEDIUM — `/events/:id` тест пропускається
+
+Тестовий акаунт `test123@mail.com` не має подій у API-відповіді.
+Потрібно або створити тестові події, або дістати `ANY_EVENT_ID` з іншого ендпоінту.
+
+---
+
+## MCP-агенти для подальших дій
+
+| Агент | Задача |
+|-------|--------|
+| **python-backend-dev** | Реалізувати `GET /api/v1/quizzes/{quiz_id}/sessions/active` у FastAPI |
+| **dev** | (після деплою) Перевірити що `data-testid` атрибути видні в DOM |
+| **tester** | Додати тестові дані для акаунту `test123@mail.com` (хоча б одну подію) |
+
+---
+
+## Запуск аудиту
+
+```bash
+npx playwright test --config=playwright.vercel.config.ts --reporter=list
+```
+
+Очікуваний результат після деплою: 24/24 pass, 0 high/critical bugs.
 ````
 
 ## File: postcss.config.json
@@ -10808,6 +10614,169 @@ export abstract class QuizDetailBaseComponent {
 }
 ````
 
+## File: src/app/features/randomizer/randomizer.component.html
+````html
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 p-4 sm:p-8">
+  <div class="max-w-4xl mx-auto space-y-8">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-white">🎲 {{ 'RANDOMIZER.title' | translate }}</h1>
+        <p class="text-primary-300 mt-1">{{ 'RANDOMIZER.subtitle' | translate }}</p>
+      </div>
+      <nav aria-label="Breadcrumb">
+        <a [routerLink]="['/clubs', clubId]" class="text-primary-300 hover:text-white transition-colors text-sm">
+          {{ 'RANDOMIZER.back_to_club' | translate }}
+        </a>
+      </nav>
+    </header>
+    <div class="bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/10">
+      <label for="purpose" class="block text-white font-medium text-sm mb-2">{{ 'RANDOMIZER.purpose_label' | translate }}</label>
+      <input
+        hlmInput
+        id="purpose"
+        type="text"
+        [formControl]="purposeControl"
+        [placeholder]="'RANDOMIZER.purpose_placeholder' | translate"
+        class="w-full rounded-xl bg-white/10 border-white/20 text-white placeholder-white/40 px-4 focus-visible:ring-primary-400"
+      />
+    </div>
+    <div class="grid lg:grid-cols-2 gap-8">
+      <section aria-labelledby="members-heading" class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 id="members-heading" class="text-white font-semibold text-lg">
+            👥 {{ 'RANDOMIZER.members_title' | translate }}
+            <span class="text-primary-300 text-sm font-normal ml-2">{{ selectedCount() }} / {{ randomizerService.candidates().length }} {{ 'RANDOMIZER.selected' | translate }}</span>
+          </h2>
+          <button
+            hlmBtn
+            variant="ghost"
+            size="sm"
+            type="button"
+            (click)="reset()"
+            class="text-xs text-primary-300 hover:text-white"
+          >
+            {{ 'RANDOMIZER.select_all' | translate }}
+          </button>
+        </div>
+        @if (randomizerService.candidates().length === 0) {
+          <div class="bg-white/10 rounded-2xl p-8 text-center text-white/60">
+            <p class="text-3xl mb-2">👤</p>
+            <p>{{ 'RANDOMIZER.no_members' | translate }}</p>
+          </div>
+        } @else {
+          <ul class="space-y-2">
+            @for (member of randomizerService.candidates(); track member.userId) {
+              <li>
+                <button
+                  type="button"
+                  (click)="randomizerService.toggleMember(member.userId)"
+                  class="w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  [class]="randomizerService.selectedIds().has(member.userId)
+                    ? 'bg-white/20 border border-white/30'
+                    : 'bg-white/5 border border-white/10 opacity-50'"
+                  [attr.aria-pressed]="randomizerService.selectedIds().has(member.userId)"
+                  [attr.aria-label]="'Toggle ' + member.displayName"
+                >
+                  <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                    {{ member.displayName | initials }}
+                  </div>
+                  <span class="text-white font-medium text-sm flex-1 text-left">{{ member.displayName }}</span>
+                  @if (randomizerService.selectedIds().has(member.userId)) {
+                    <span class="text-green-400 text-lg" aria-hidden="true">✓</span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+      <section aria-labelledby="spin-heading" class="space-y-6">
+        <h2 id="spin-heading" class="sr-only">{{ 'RANDOMIZER.title' | translate }}</h2>
+        <div class="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/10 text-center min-h-[200px] flex flex-col items-center justify-center">
+          @if (randomizerService.isSpinning()) {
+            <div class="space-y-4">
+              <div class="text-5xl animate-bounce">🎲</div>
+              <p class="text-white/70 text-sm animate-pulse">{{ 'RANDOMIZER.spinning' | translate }}</p>
+            </div>
+          } @else if (randomizerService.result()) {
+            <div class="space-y-3">
+              <div class="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl ring-4 ring-white/30">
+                {{ randomizerService.result()!.displayName | initials }}
+              </div>
+              <div>
+                <p class="text-white/60 text-xs uppercase tracking-wide mb-1">{{ randomizerService.purpose() }}</p>
+                <p class="text-white text-2xl font-bold">{{ randomizerService.result()!.displayName }}</p>
+              </div>
+              <span class="text-3xl">🏆</span>
+            </div>
+          } @else {
+            <div class="text-white/40 space-y-2">
+              <div class="text-4xl">🎯</div>
+              <p class="text-sm">{{ 'RANDOMIZER.spin_hint' | translate }}</p>
+            </div>
+          }
+        </div>
+        @if (errorMessage()) {
+          <div class="rounded-xl bg-red-500/20 border border-red-500/30 px-4 py-3 text-sm text-red-300" role="alert">
+            {{ errorMessage() }}
+          </div>
+        }
+        <div class="flex flex-col gap-3">
+          <button
+            hlmBtn
+            type="button"
+            data-testid="spin-button"
+            (click)="spin()"
+            [disabled]="randomizerService.isSpinning() || selectedCount() < 2"
+            class="w-full rounded-2xl bg-gradient-to-r from-accent-500 to-primary-500 hover:from-accent-400 hover:to-primary-400 text-white font-bold py-4 text-lg shadow-lg"
+          >
+            @if (randomizerService.isSpinning()) {
+              {{ 'RANDOMIZER.spinning_btn' | translate }}
+            } @else {
+              {{ 'RANDOMIZER.spin' | translate }}
+            }
+          </button>
+          @if (randomizerService.result() && authService.isOrganizer()) {
+            <button
+              hlmBtn
+              variant="outline"
+              type="button"
+              (click)="saveSession()"
+              [disabled]="isSaving()"
+              class="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3"
+            >
+              @if (isSaving()) {
+                {{ 'RANDOMIZER.saving' | translate }}
+              } @else {
+                {{ 'RANDOMIZER.save' | translate }}
+              }
+            </button>
+          }
+        </div>
+        @if (randomizerService.history().length > 0) {
+          <div class="space-y-3">
+            <h3 class="text-white/70 text-sm font-medium uppercase tracking-wide">{{ 'RANDOMIZER.history_title' | translate }}</h3>
+            <ul class="space-y-2">
+              @for (session of randomizerService.history().slice(0, 5); track session.id) {
+                <li class="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-white/60 text-xs truncate">{{ session.purpose }}</p>
+                    @if (session.result) {
+                      <p class="text-white text-sm font-medium">🏆 {{ session.result.displayName }}</p>
+                    }
+                  </div>
+                  <span class="text-white/40 text-xs shrink-0">{{ session.createdAt | date:'dd.MM HH:mm' }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </section>
+    </div>
+  </div>
+</div>
+````
+
 ## File: src/app/layout/shell/shell.component.html
 ````html
 <app-header />
@@ -11040,6 +11009,37 @@ mock-server/
 /refactor_opus.md
 /spartan_plan.md
 /ui_changes.md
+````
+
+## File: playwright.vercel.config.ts
+````typescript
+import { defineConfig, devices } from '@playwright/test';
+export default defineConfig({
+  testDir: './e2e',
+  testMatch: '**/audit.spec.ts',
+  fullyParallel: false,
+  retries: 0,
+  workers: 1,
+  timeout: 60_000,
+  reporter: [
+    ['list'],
+    ['html', { open: 'never' }],
+    ['json', { outputFile: 'playwright-report/audit-results.json' }],
+  ],
+  use: {
+    baseURL: 'https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app',
+    trace: 'on',
+    screenshot: 'only-on-failure',
+    actionTimeout: 20_000,
+    navigationTimeout: 30_000,
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+});
 ````
 
 ## File: postcss.config.mjs
@@ -14369,237 +14369,6 @@ export class QuizPreviewComponent extends QuizDetailBaseComponent {
 }
 ````
 
-## File: src/app/layout/header/header.component.html
-````html
-<header
-  class="sticky top-0 z-50
-         bg-[var(--color-surface)]/90 dark:bg-[var(--color-surface)]/95
-         backdrop-blur-[10px]
-         border-b border-[var(--color-sepia)]
-         shadow-[0_2px_12px_rgba(92,45,10,0.10)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.40)]"
-  role="banner"
->
-  <div class="page-max-w px-6">
-    <div class="flex items-center justify-between h-16">
-      <a
-        routerLink="/"
-        class="font-fantasy text-xl font-bold tracking-widest
-               text-[var(--color-primary-600)] dark:text-[#fbbf24]
-               hover:text-[var(--color-primary-500)] dark:hover:text-[#fcd34d]
-               transition-colors duration-200
-               focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2 rounded"
-        aria-label="BookClub home"
-      >
-        BookClub
-      </a>
-      <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
-        <a
-          routerLink="/clubs"
-          routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
-          class="px-4 py-2 rounded-lg text-sm font-medium
-                 text-[var(--color-ink-muted)]
-                 hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                 transition-all duration-200
-                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-        >
-          {{ 'NAV.discover' | translate }}
-        </a>
-        @if (isAuthenticated()) {
-          <a
-            routerLink="/events"
-            routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
-            class="px-4 py-2 rounded-lg text-sm font-medium
-                   text-[var(--color-ink-muted)]
-                   hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                   transition-all duration-200
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-          >
-            {{ 'NAV.events' | translate }}
-          </a>
-        }
-      </nav>
-      <div class="hidden md:flex items-center gap-1">
-        <button
-          hlmBtn
-          variant="ghost"
-          size="icon"
-          type="button"
-          data-testid="theme-toggle"
-          (click)="themeService.toggle()"
-          [attr.aria-label]="themeService.isDark()
-            ? ('NAV.theme_toggle_light' | translate)
-            : ('NAV.theme_toggle_dark'  | translate)"
-          [attr.title]="themeService.isDark()
-            ? ('NAV.theme_toggle_light' | translate)
-            : ('NAV.theme_toggle_dark'  | translate)"
-        >
-          @if (themeService.isDark()) {
-            <ng-icon hlm name="lucideSun"  size="sm" />
-          } @else {
-            <ng-icon hlm name="lucideMoon" size="sm" />
-          }
-        </button>
-        <button
-          hlmBtn
-          variant="ghost"
-          size="sm"
-          type="button"
-          (click)="switchLang()"
-          [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-        >
-          {{ currentLang() === 'uk' ? 'EN' : 'UK' }}
-        </button>
-        @if (isAuthenticated()) {
-          <button
-            type="button"
-            [hlmDropdownMenuTrigger]="userMenu"
-            class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-            aria-haspopup="menu"
-            [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
-          >
-            <div
-              class="h-9 w-9 rounded-full avatar-gradient
-                     flex items-center justify-center text-white text-sm font-semibold select-none"
-              aria-hidden="true"
-            >
-              {{ userInitials() }}
-            </div>
-          </button>
-          <ng-template #userMenu>
-            <div hlmDropdownMenu>
-              <hlm-dropdown-menu-label>{{ currentUser()?.displayName }}</hlm-dropdown-menu-label>
-              <hlm-dropdown-menu-separator />
-              <a hlmDropdownMenuItem [routerLink]="['/profile']">
-                {{ 'NAV.profile' | translate }}
-              </a>
-              <hlm-dropdown-menu-separator />
-              <button hlmDropdownMenuItem variant="destructive" (click)="signOut()">
-                {{ 'NAV.logout' | translate }}
-              </button>
-            </div>
-          </ng-template>
-        } @else {
-          <a hlmBtn variant="outline" size="sm" routerLink="/login">
-            {{ 'NAV.login' | translate }}
-          </a>
-          <a hlmBtn size="sm" routerLink="/register"
-             class="bg-gradient-fantasy text-white border-0 hover:opacity-90">
-            {{ 'NAV.join_free' | translate }}
-          </a>
-        }
-      </div>
-      <hlm-sheet class="md:hidden">
-        <button
-          hlmSheetTrigger
-          type="button"
-          class="p-2 rounded-lg text-[var(--color-ink-muted)]
-                 hover:bg-[var(--color-surface-raised)] transition-all duration-200
-                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-          aria-label="Toggle navigation menu"
-        >
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        <ng-template hlmSheetPortal>
-          <hlm-sheet-content>
-            <hlm-sheet-header>
-              <h2 hlmSheetTitle
-                  class="font-fantasy font-bold tracking-widest text-[var(--color-primary-600)] dark:text-[#fbbf24]">
-                BookClub
-              </h2>
-            </hlm-sheet-header>
-            <nav class="flex flex-col gap-1 px-4 py-2" aria-label="Mobile navigation">
-              <button hlmSheetClose [routerLink]="['/clubs']"
-                      class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                             text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                             transition-all duration-200 w-full text-left">
-                {{ 'NAV.discover' | translate }}
-              </button>
-              @if (isAuthenticated()) {
-                <button hlmSheetClose [routerLink]="['/events']"
-                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                               text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                               transition-all duration-200 w-full text-left">
-                  {{ 'NAV.events' | translate }}
-                </button>
-              }
-              <button
-                type="button"
-                data-testid="theme-toggle"
-                (click)="themeService.toggle()"
-                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                       transition-all duration-200 w-full text-left"
-                [attr.aria-label]="themeService.isDark()
-                  ? ('NAV.theme_toggle_light' | translate)
-                  : ('NAV.theme_toggle_dark'  | translate)"
-              >
-                @if (themeService.isDark()) {
-                  <ng-icon hlm name="lucideSun"  size="sm" />
-                  <span>{{ 'NAV.theme_toggle_light' | translate }}</span>
-                } @else {
-                  <ng-icon hlm name="lucideMoon" size="sm" />
-                  <span>{{ 'NAV.theme_toggle_dark' | translate }}</span>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="switchLang()"
-                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                       transition-all duration-200 w-full text-left"
-                [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-              >
-                <span>{{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}</span>
-              </button>
-              <div class="pt-2 mt-2 border-t border-[var(--color-sepia)] flex flex-col gap-1">
-                @if (isAuthenticated()) {
-                  <div class="px-4 py-2">
-                    <p class="text-xs font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide">
-                      {{ 'NAV.signed_in_as' | translate }}
-                    </p>
-                    <p class="text-sm font-medium text-[var(--color-ink)] mt-0.5">
-                      {{ currentUser()?.displayName }}
-                    </p>
-                  </div>
-                  <button hlmSheetClose [routerLink]="['/profile']"
-                          class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                                 transition-all duration-200 w-full text-left">
-                    {{ 'NAV.profile' | translate }}
-                  </button>
-                  <button hlmSheetClose type="button" (click)="signOut()"
-                          class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                                 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
-                                 transition-all duration-200">
-                    {{ 'NAV.logout' | translate }}
-                  </button>
-                } @else {
-                  <button hlmSheetClose [routerLink]="['/login']"
-                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                                 transition-all duration-200 w-full text-left">
-                    {{ 'NAV.login' | translate }}
-                  </button>
-                  <button hlmSheetClose [routerLink]="['/register']"
-                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                                 bg-gradient-fantasy text-white hover:opacity-90
-                                 transition-all duration-200 w-full text-left">
-                    {{ 'NAV.join_free' | translate }}
-                  </button>
-                }
-              </div>
-            </nav>
-          </hlm-sheet-content>
-        </ng-template>
-      </hlm-sheet>
-    </div>
-  </div>
-</header>
-````
-
 ## File: public/i18n/en.json
 ````json
 {
@@ -16170,6 +15939,237 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
     });
   }
 }
+````
+
+## File: src/app/layout/header/header.component.html
+````html
+<header
+  class="sticky top-0 z-50
+         bg-[var(--color-surface)]/90 dark:bg-[var(--color-surface)]/95
+         backdrop-blur-[10px]
+         border-b border-[var(--color-sepia)]
+         shadow-[0_2px_12px_rgba(92,45,10,0.10)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.40)]"
+  role="banner"
+>
+  <div class="page-max-w px-6">
+    <div class="flex items-center justify-between h-16">
+      <a
+        routerLink="/"
+        class="font-fantasy text-xl font-bold tracking-widest
+               text-[var(--color-primary-600)] dark:text-[#fbbf24]
+               hover:text-[var(--color-primary-500)] dark:hover:text-[#fcd34d]
+               transition-colors duration-200
+               focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2 rounded"
+        aria-label="BookClub home"
+      >
+        BookClub
+      </a>
+      <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
+        <a
+          routerLink="/clubs"
+          routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
+          class="px-4 py-2 rounded-lg text-sm font-medium
+                 text-[var(--color-ink-muted)]
+                 hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                 transition-all duration-200
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+        >
+          {{ 'NAV.discover' | translate }}
+        </a>
+        @if (isAuthenticated()) {
+          <a
+            routerLink="/events"
+            routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
+            class="px-4 py-2 rounded-lg text-sm font-medium
+                   text-[var(--color-ink-muted)]
+                   hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                   transition-all duration-200
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+          >
+            {{ 'NAV.events' | translate }}
+          </a>
+        }
+      </nav>
+      <div class="hidden md:flex items-center gap-1">
+        <button
+          hlmBtn
+          variant="ghost"
+          size="icon"
+          type="button"
+          data-testid="theme-toggle"
+          (click)="themeService.toggle()"
+          [attr.aria-label]="themeService.isDark()
+            ? ('NAV.theme_toggle_light' | translate)
+            : ('NAV.theme_toggle_dark'  | translate)"
+          [attr.title]="themeService.isDark()
+            ? ('NAV.theme_toggle_light' | translate)
+            : ('NAV.theme_toggle_dark'  | translate)"
+        >
+          @if (themeService.isDark()) {
+            <ng-icon hlm name="lucideSun"  size="sm" />
+          } @else {
+            <ng-icon hlm name="lucideMoon" size="sm" />
+          }
+        </button>
+        <button
+          hlmBtn
+          variant="ghost"
+          size="sm"
+          type="button"
+          (click)="switchLang()"
+          [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+        >
+          {{ currentLang() === 'uk' ? 'EN' : 'UK' }}
+        </button>
+        @if (isAuthenticated()) {
+          <button
+            type="button"
+            [hlmDropdownMenuTrigger]="userMenu"
+            class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+            aria-haspopup="menu"
+            [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
+          >
+            <div
+              class="h-9 w-9 rounded-full avatar-gradient
+                     flex items-center justify-center text-white text-sm font-semibold select-none"
+              aria-hidden="true"
+            >
+              {{ userInitials() }}
+            </div>
+          </button>
+          <ng-template #userMenu>
+            <div hlmDropdownMenu>
+              <hlm-dropdown-menu-label>{{ currentUser()?.displayName }}</hlm-dropdown-menu-label>
+              <hlm-dropdown-menu-separator />
+              <a hlmDropdownMenuItem [routerLink]="['/profile']">
+                {{ 'NAV.profile' | translate }}
+              </a>
+              <hlm-dropdown-menu-separator />
+              <button hlmDropdownMenuItem variant="destructive" (click)="signOut()">
+                {{ 'NAV.logout' | translate }}
+              </button>
+            </div>
+          </ng-template>
+        } @else {
+          <a hlmBtn variant="outline" size="sm" routerLink="/login">
+            {{ 'NAV.login' | translate }}
+          </a>
+          <a hlmBtn size="sm" routerLink="/register"
+             class="bg-gradient-fantasy text-white border-0 hover:opacity-90">
+            {{ 'NAV.join_free' | translate }}
+          </a>
+        }
+      </div>
+      <hlm-sheet class="md:hidden">
+        <button
+          hlmSheetTrigger
+          type="button"
+          class="p-2 rounded-lg text-[var(--color-ink-muted)]
+                 hover:bg-[var(--color-surface-raised)] transition-all duration-200
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+          aria-label="Toggle navigation menu"
+        >
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <ng-template hlmSheetPortal>
+          <hlm-sheet-content>
+            <hlm-sheet-header>
+              <h2 hlmSheetTitle
+                  class="font-fantasy font-bold tracking-widest text-[var(--color-primary-600)] dark:text-[#fbbf24]">
+                BookClub
+              </h2>
+            </hlm-sheet-header>
+            <nav class="flex flex-col gap-1 px-4 py-2" aria-label="Mobile navigation">
+              <button hlmSheetClose [routerLink]="['/clubs']"
+                      class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                             text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                             transition-all duration-200 w-full text-left">
+                {{ 'NAV.discover' | translate }}
+              </button>
+              @if (isAuthenticated()) {
+                <button hlmSheetClose [routerLink]="['/events']"
+                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                               text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                               transition-all duration-200 w-full text-left">
+                  {{ 'NAV.events' | translate }}
+                </button>
+              }
+              <button
+                type="button"
+                data-testid="theme-toggle"
+                (click)="themeService.toggle()"
+                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                       transition-all duration-200 w-full text-left"
+                [attr.aria-label]="themeService.isDark()
+                  ? ('NAV.theme_toggle_light' | translate)
+                  : ('NAV.theme_toggle_dark'  | translate)"
+              >
+                @if (themeService.isDark()) {
+                  <ng-icon hlm name="lucideSun"  size="sm" />
+                  <span>{{ 'NAV.theme_toggle_light' | translate }}</span>
+                } @else {
+                  <ng-icon hlm name="lucideMoon" size="sm" />
+                  <span>{{ 'NAV.theme_toggle_dark' | translate }}</span>
+                }
+              </button>
+              <button
+                type="button"
+                (click)="switchLang()"
+                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                       transition-all duration-200 w-full text-left"
+                [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+              >
+                <span>{{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}</span>
+              </button>
+              <div class="pt-2 mt-2 border-t border-[var(--color-sepia)] flex flex-col gap-1">
+                @if (isAuthenticated()) {
+                  <div class="px-4 py-2">
+                    <p class="text-xs font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide">
+                      {{ 'NAV.signed_in_as' | translate }}
+                    </p>
+                    <p class="text-sm font-medium text-[var(--color-ink)] mt-0.5">
+                      {{ currentUser()?.displayName }}
+                    </p>
+                  </div>
+                  <button hlmSheetClose [routerLink]="['/profile']"
+                          class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                                 transition-all duration-200 w-full text-left">
+                    {{ 'NAV.profile' | translate }}
+                  </button>
+                  <button hlmSheetClose type="button" (click)="signOut()"
+                          class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                                 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
+                                 transition-all duration-200">
+                    {{ 'NAV.logout' | translate }}
+                  </button>
+                } @else {
+                  <button hlmSheetClose [routerLink]="['/login']"
+                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                                 transition-all duration-200 w-full text-left">
+                    {{ 'NAV.login' | translate }}
+                  </button>
+                  <button hlmSheetClose [routerLink]="['/register']"
+                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                                 bg-gradient-fantasy text-white hover:opacity-90
+                                 transition-all duration-200 w-full text-left">
+                    {{ 'NAV.join_free' | translate }}
+                  </button>
+                }
+              </div>
+            </nav>
+          </hlm-sheet-content>
+        </ng-template>
+      </hlm-sheet>
+    </div>
+  </div>
+</header>
 ````
 
 ## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
