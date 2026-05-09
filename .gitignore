@@ -21,11 +21,7 @@ yarn-error.log
 *.sublime-workspace
 
 # Visual Studio Code
-.vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode/
 .history/*
 
 # Miscellaneous
@@ -68,3 +64,18 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .aider*
+
+# Local dev tools
+.playwright-cli/
+mock-server/
+.mcp.json
+.claude/
+.claudignore
+
+# Root-level screenshots
+/*.png
+
+# Planning/temp notes
+/refactor_opus.md
+/spartan_plan.md
+/ui_changes.md
