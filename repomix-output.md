@@ -4538,32 +4538,20 @@ export const authGuard: CanActivateFn = () => {
 ````typescript
 import { Injectable, signal } from '@angular/core';
 const TOKEN_KEY = 'bc_access_token';
-const REFRESH_TOKEN_KEY = 'bc_refresh_token';
 @Injectable({ providedIn: 'root' })
 export class TokenStore {
   private readonly _token = signal<string | null>(sessionStorage.getItem(TOKEN_KEY));
-  private readonly _refreshToken = signal<string | null>(sessionStorage.getItem(REFRESH_TOKEN_KEY));
   readonly token = this._token.asReadonly();
-  readonly refreshToken = this._refreshToken.asReadonly();
   set(token: string): void {
     sessionStorage.setItem(TOKEN_KEY, token);
     this._token.set(token);
   }
-  setRefresh(token: string): void {
-    sessionStorage.setItem(REFRESH_TOKEN_KEY, token);
-    this._refreshToken.set(token);
-  }
   clear(): void {
     sessionStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem(REFRESH_TOKEN_KEY);
     this._token.set(null);
-    this._refreshToken.set(null);
   }
   snapshot(): string | null {
     return this._token();
-  }
-  snapshotRefresh(): string | null {
-    return this._refreshToken();
   }
 }
 ````
@@ -8815,7 +8803,6 @@ import { TokenStore } from './token.store';
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
 interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
   user: ApiUserProfile;
 }
 @Injectable({ providedIn: 'root' })
@@ -8875,7 +8862,6 @@ export class AuthService {
         }),
       );
       this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -8888,7 +8874,6 @@ export class AuthService {
         this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
       );
       this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -10401,172 +10386,6 @@ export abstract class QuizDetailBaseComponent {
 }
 ````
 
-## File: src/app/features/randomizer/randomizer.component.html
-````html
-<div class="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 p-4 sm:p-8">
-  <div class="max-w-4xl mx-auto space-y-8">
-    <header class="flex items-center justify-between flex-wrap gap-4">
-      <div>
-        <h1 class="font-display text-3xl font-bold text-white">🎲 {{ 'RANDOMIZER.title' | translate }}</h1>
-        <p class="text-primary-300 mt-1">{{ 'RANDOMIZER.subtitle' | translate }}</p>
-      </div>
-      <nav aria-label="Breadcrumb">
-        <a [routerLink]="['/clubs', clubId]" class="text-primary-300 hover:text-white transition-colors text-sm">
-          {{ 'RANDOMIZER.back_to_club' | translate }}
-        </a>
-      </nav>
-    </header>
-    <div class="bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/10">
-      <label for="purpose" class="block text-white font-medium text-sm mb-2">{{ 'RANDOMIZER.purpose_label' | translate }}</label>
-      <input
-        hlmInput
-        id="purpose"
-        type="text"
-        [formControl]="purposeControl"
-        [placeholder]="'RANDOMIZER.purpose_placeholder' | translate"
-        class="w-full rounded-xl bg-white/10 border-white/20 text-white placeholder-white/40 px-4 focus-visible:ring-primary-400"
-      />
-    </div>
-    <div class="grid lg:grid-cols-2 gap-8">
-      <section aria-labelledby="members-heading" class="space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 id="members-heading" class="text-white font-semibold text-lg">
-            👥 {{ 'RANDOMIZER.members_title' | translate }}
-            <span class="text-primary-300 text-sm font-normal ml-2">{{ selectedCount() }} / {{ randomizerService.candidates().length }} {{ 'RANDOMIZER.selected' | translate }}</span>
-          </h2>
-          <button
-            hlmBtn
-            variant="ghost"
-            size="sm"
-            type="button"
-            (click)="reset()"
-            class="text-xs text-primary-300 hover:text-white"
-          >
-            {{ 'RANDOMIZER.select_all' | translate }}
-          </button>
-        </div>
-        @if (randomizerService.candidates().length === 0) {
-          <div class="bg-white/10 rounded-2xl p-8 text-center text-white/60">
-            <p class="text-3xl mb-2">👤</p>
-            <p>{{ 'RANDOMIZER.no_members' | translate }}</p>
-          </div>
-        } @else {
-          <ul class="space-y-2">
-            @for (member of randomizerService.candidates(); track member.userId) {
-              <li>
-                <button
-                  type="button"
-                  (click)="randomizerService.toggleMember(member.userId)"
-                  class="w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                  [class]="randomizerService.selectedIds().has(member.userId)
-                    ? 'bg-white/20 border border-white/30'
-                    : 'bg-white/5 border border-white/10 opacity-50'"
-                  [attr.aria-pressed]="randomizerService.selectedIds().has(member.userId)"
-                  [attr.aria-label]="'Toggle ' + member.displayName"
-                >
-                  <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                    {{ member.displayName | initials }}
-                  </div>
-                  <span class="text-white font-medium text-sm flex-1 text-left">{{ member.displayName }}</span>
-                  @if (randomizerService.selectedIds().has(member.userId)) {
-                    <span class="text-green-400 text-lg" aria-hidden="true">✓</span>
-                  }
-                </button>
-              </li>
-            }
-          </ul>
-        }
-      </section>
-      <section aria-labelledby="spin-heading" class="space-y-6">
-        <h2 id="spin-heading" class="sr-only">{{ 'RANDOMIZER.title' | translate }}</h2>
-        <div class="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/10 text-center min-h-[200px] flex flex-col items-center justify-center">
-          @if (randomizerService.isSpinning()) {
-            <div class="space-y-4">
-              <div class="text-5xl animate-bounce">🎲</div>
-              <p class="text-white/70 text-sm animate-pulse">{{ 'RANDOMIZER.spinning' | translate }}</p>
-            </div>
-          } @else if (randomizerService.result()) {
-            <div class="space-y-3">
-              <div class="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl ring-4 ring-white/30">
-                {{ randomizerService.result()!.displayName | initials }}
-              </div>
-              <div>
-                <p class="text-white/60 text-xs uppercase tracking-wide mb-1">{{ randomizerService.purpose() }}</p>
-                <p class="text-white text-2xl font-bold">{{ randomizerService.result()!.displayName }}</p>
-              </div>
-              <span class="text-3xl">🏆</span>
-            </div>
-          } @else {
-            <div class="text-white/40 space-y-2">
-              <div class="text-4xl">🎯</div>
-              <p class="text-sm">{{ 'RANDOMIZER.spin_hint' | translate }}</p>
-            </div>
-          }
-        </div>
-        @if (errorMessage()) {
-          <div class="rounded-xl bg-red-500/20 border border-red-500/30 px-4 py-3 text-sm text-red-300" role="alert">
-            {{ errorMessage() }}
-          </div>
-        }
-        <div class="flex flex-col gap-3">
-          <button
-            hlmBtn
-            type="button"
-            data-testid="spin-button"
-            (click)="spin()"
-            [disabled]="randomizerService.isSpinning() || selectedCount() < 2"
-            class="w-full rounded-2xl bg-gradient-to-r from-accent-500 to-primary-500 hover:from-accent-400 hover:to-primary-400 text-white font-bold py-4 text-lg shadow-lg"
-          >
-            @if (randomizerService.isSpinning()) {
-              {{ 'RANDOMIZER.spinning_btn' | translate }}
-            } @else {
-              {{ 'RANDOMIZER.spin' | translate }}
-            }
-          </button>
-          @if (selectedCount() < 2 && !randomizerService.isSpinning()) {
-            <p class="text-center text-white/50 text-xs">{{ 'RANDOMIZER.error_min' | translate }}</p>
-          }
-          @if (randomizerService.result() && authService.isOrganizer()) {
-            <button
-              hlmBtn
-              variant="outline"
-              type="button"
-              (click)="saveSession()"
-              [disabled]="isSaving()"
-              class="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3"
-            >
-              @if (isSaving()) {
-                {{ 'RANDOMIZER.saving' | translate }}
-              } @else {
-                {{ 'RANDOMIZER.save' | translate }}
-              }
-            </button>
-          }
-        </div>
-        @if (randomizerService.history().length > 0) {
-          <div class="space-y-3">
-            <h3 class="text-white/70 text-sm font-medium uppercase tracking-wide">{{ 'RANDOMIZER.history_title' | translate }}</h3>
-            <ul class="space-y-2">
-              @for (session of randomizerService.history().slice(0, 5); track session.id) {
-                <li class="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="text-white/60 text-xs truncate">{{ session.purpose }}</p>
-                    @if (session.result) {
-                      <p class="text-white text-sm font-medium">🏆 {{ session.result.displayName }}</p>
-                    }
-                  </div>
-                  <span class="text-white/40 text-xs shrink-0">{{ session.createdAt | date:'dd.MM HH:mm' }}</span>
-                </li>
-              }
-            </ul>
-          </div>
-        }
-      </section>
-    </div>
-  </div>
-</div>
-````
-
 ## File: src/app/layout/shell/shell.component.html
 ````html
 <app-header />
@@ -10579,6 +10398,47 @@ export abstract class QuizDetailBaseComponent {
       <div class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-accent-500/30 animate-pulse" aria-hidden="true"></div>
     }
     <app-footer />
+````
+
+## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.html
+````html
+<div class="relative">
+  <input
+    hlmInput
+    [id]="inputId() || undefined"
+    [formControl]="control()"
+    [placeholder]="placeholder()"
+    autocomplete="off"
+    (keydown)="onKeydown($event)"
+    class="w-full"
+    [class.border-red-400]="control().invalid && control().touched"
+  />
+  @if (isLoading()) {
+    <div class="absolute right-3 top-3 flex items-center justify-center">
+      <svg class="h-4 w-4 animate-spin text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+    </div>
+  }
+  @if (isOpen() && suggestions().length > 0) {
+    <ul class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-48 overflow-y-auto">
+      @for (s of suggestions(); track s.label; let i = $index) {
+        <li
+          role="option"
+          tabindex="0"
+          [attr.aria-selected]="activeIndex() === i"
+          (click)="select(s)"
+          (keydown.enter)="select(s)"
+          (keydown.space)="$event.preventDefault(); select(s)"
+          [class.bg-primary-50]="activeIndex() === i"
+          [class.dark:bg-primary-900/20]="activeIndex() === i"
+          class="cursor-pointer px-4 py-2.5 text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >{{ s.label }}</li>
+      }
+    </ul>
+  }
+</div>
 ````
 
 ## File: src/app/shared/components/cover-upload/cover-upload.component.ts
@@ -11262,129 +11122,6 @@ export class RegisterComponent {
 </article>
 ````
 
-## File: src/app/features/clubs/club-detail/members/club-members-list.component.html
-````html
-<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="glass-card px-6 gap-4">
-  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
-    {{ 'MEMBERS.title' | translate }} ({{ members().length }})
-  </h2>
-  @if (members().length === 0) {
-    <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'MEMBERS.empty' | translate }}</p>
-  } @else {
-    <ul class="divide-y divide-gray-100 dark:divide-gray-700">
-      @for (member of members(); track member.userId) {
-        <li class="flex items-center gap-4 py-3 relative">
-          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0" aria-hidden="true">
-            {{ member.displayName | initials }}
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
-              {{ member.displayName.includes('@') ? member.displayName.split('@')[0] : member.displayName }}
-            </p>
-            @if (member.role === 'organizer') {
-              <span class="inline-block text-xs font-medium text-accent-600 dark:text-accent-400">
-                {{ 'MEMBERS.organizer' | translate }}
-              </span>
-            } @else {
-              <span class="inline-block text-xs text-gray-400 dark:text-gray-500">
-                {{ 'MEMBERS.member' | translate }}
-              </span>
-            }
-          </div>
-          <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-            @if (canSeeSocials(member)) {
-              @if (member.socials?.telegram) {
-                <a [href]="'https://t.me/' + member.socials!.telegram" target="_blank" rel="noopener noreferrer"
-                   class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram: @' + member.socials!.telegram" title="Telegram">
-                  ✈️
-                </a>
-              }
-              @if (member.socials?.instagram) {
-                <a [href]="'https://instagram.com/' + member.socials!.instagram" target="_blank" rel="noopener noreferrer"
-                   class="text-pink-500 hover:text-pink-600 text-lg" [attr.aria-label]="'Instagram: @' + member.socials!.instagram" title="Instagram">
-                  📸
-                </a>
-              }
-              @if (member.socials?.github) {
-                <a [href]="'https://github.com/' + member.socials!.github" target="_blank" rel="noopener noreferrer"
-                   class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" [attr.aria-label]="'GitHub: ' + member.socials!.github" title="GitHub">
-                  🐙
-                </a>
-              }
-              @if (member.socials?.goodreads) {
-                <a [href]="'https://goodreads.com/' + member.socials!.goodreads" target="_blank" rel="noopener noreferrer"
-                   class="text-amber-600 hover:text-amber-700 text-lg" title="Goodreads">
-                  📚
-                </a>
-              }
-              @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
-                <button
-                  hlmBtn
-                  variant="secondary"
-                  size="sm"
-                  type="button"
-                  (click)="toggleQr(member.userId)"
-                  class="ml-1 text-xs"
-                  [attr.aria-expanded]="showQrForUser() === member.userId"
-                  [attr.aria-label]="'MEMBERS.show_qr' | translate"
-                >
-                  <span aria-hidden="true">⊡</span> {{ 'MEMBERS.show_qr' | translate }}
-                </button>
-                @if (showQrForUser() === member.userId) {
-                  <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl glass-card-strong shadow-xl p-4 flex flex-col items-center gap-2"
-                       aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
-                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
-                    @defer (on idle) {
-                      <app-qr-code [value]="buildQrValue(member)" [size]="160" />
-                    } @placeholder {
-                      <div class="h-40 w-40 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" aria-hidden="true"></div>
-                    }
-                    <button hlmBtn variant="ghost" size="sm" type="button" (click)="toggleQr(member.userId)"
-                            class="mt-1 text-xs text-gray-400">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
-                  </dialog>
-                }
-              }
-            } @else {
-              <span class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
-                🔒 {{ 'MEMBERS.socials_hidden' | translate }}
-              </span>
-            }
-            @if (isOwner() && member.role !== 'organizer') {
-              <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">
-                <button hlmBtn variant="destructive" size="xs" type="button" (click)="kick.emit(member.userId)"
-                         [attr.aria-label]="'MEMBERS.kick' | translate">
-                  {{ 'MEMBERS.kick' | translate }}
-                </button>
-                <button hlmBtn variant="ghost" size="xs" type="button" (click)="toggleBanMenu(member.userId)"
-                        class="text-orange-600 hover:text-orange-700"
-                        [attr.aria-expanded]="showBanMenu() === member.userId">
-                  {{ 'MEMBERS.ban' | translate }}
-                </button>
-                @if (showBanMenu() === member.userId) {
-                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl glass-card-strong shadow-xl py-1 min-w-36">
-                    @for (duration of banDurations; track duration) {
-                      <li>
-                        <button hlmBtn variant="ghost" type="button" (click)="emitBan(member.userId, duration)"
-                                class="w-full justify-start px-4 text-sm">
-                          @if (duration === 1) { {{ 'MEMBERS.ban_1' | translate }} }
-                          @else if (duration === 3) { {{ 'MEMBERS.ban_3' | translate }} }
-                          @else if (duration === 5) { {{ 'MEMBERS.ban_5' | translate }} }
-                          @else { {{ 'MEMBERS.ban_permanent' | translate }} }
-                        </button>
-                      </li>
-                    }
-                  </menu>
-                }
-              </div>
-            }
-          </div>
-        </li>
-      }
-    </ul>
-  }
-</section>
-````
-
 ## File: src/app/features/events/event-card/event-card.component.ts
 ````typescript
 import {
@@ -11790,122 +11527,170 @@ export class QuizListComponent {
 }
 ````
 
-## File: src/app/shared/chat/chat-widget/chat-widget.component.html
+## File: src/app/features/randomizer/randomizer.component.html
 ````html
-@if (auth.isAuthenticated()) {
-  <button
-    [class]="'fixed z-50 w-14 h-14 rounded-full bg-accent-500 shadow-lg hover:shadow-xl transition-shadow duration-200 flex items-center justify-center text-white ' + fabPositionClass()"
-    [class.animate-bounce]="isBouncing()"
-    [attr.aria-label]="(chat.isOpen() ? 'CHAT.close' : 'CHAT.open') | translate"
-    (click)="chat.toggleOpen()"
-  >
-    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
-    </svg>
-    @if (chat.unreadCount() > 0) {
-      <div class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold">
-        {{ chat.unreadCount() > 9 ? '9+' : (chat.unreadCount() | number) }}
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 p-4 sm:p-8">
+  <div class="max-w-4xl mx-auto space-y-8">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-white">🎲 {{ 'RANDOMIZER.title' | translate }}</h1>
+        <p class="text-primary-300 mt-1">{{ 'RANDOMIZER.subtitle' | translate }}</p>
       </div>
-    }
-  </button>
-  @if (chat.isOpen()) {
-    <div
-      [class]="'fixed z-40 w-80 max-h-[480px] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-100 chat-panel ' + panelPositionClass()"
-    >
-      <div class="flex items-center justify-between p-4 border-b border-gray-100">
-        <h2 class="text-lg font-semibold text-gray-900">
-          {{ 'CHAT.title' | translate }}
-        </h2>
-        <button
-          class="text-gray-500 hover:text-gray-700 transition-colors"
-          [attr.aria-label]="'close'"
-          (click)="chat.toggleOpen()"
-        >
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
-          </svg>
-        </button>
-      </div>
-      @if (chat.rooms().length > 0) {
-        <div class="flex overflow-x-auto px-3 py-2 border-b border-gray-100 gap-2">
-          @for (room of chat.rooms(); track room.id) {
+      <nav aria-label="Breadcrumb">
+        <a [routerLink]="['/clubs', clubId]" class="text-primary-300 hover:text-white transition-colors text-sm">
+          {{ 'RANDOMIZER.back_to_club' | translate }}
+        </a>
+      </nav>
+    </header>
+    <div class="bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/10">
+      <label for="purpose" class="block text-white font-medium text-sm mb-2">{{ 'RANDOMIZER.purpose_label' | translate }}</label>
+      <input
+        hlmInput
+        id="purpose"
+        type="text"
+        [formControl]="purposeControl"
+        [placeholder]="'RANDOMIZER.purpose_placeholder' | translate"
+        class="w-full rounded-xl bg-white/10 border-white/20 text-white placeholder-white/40 px-4 focus-visible:ring-primary-400"
+      />
+    </div>
+    <div class="grid lg:grid-cols-2 gap-8">
+      <section aria-labelledby="members-heading" class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 id="members-heading" class="text-white font-semibold text-lg">
+            👥 {{ 'RANDOMIZER.members_title' | translate }}
+            <span class="text-primary-300 text-sm font-normal ml-2">{{ selectedCount() }} / {{ randomizerService.candidates().length }} {{ 'RANDOMIZER.selected' | translate }}</span>
+          </h2>
+          <button
+            hlmBtn
+            variant="ghost"
+            size="sm"
+            type="button"
+            (click)="reset()"
+            class="text-xs text-primary-300 hover:text-white"
+          >
+            {{ 'RANDOMIZER.select_all' | translate }}
+          </button>
+        </div>
+        @if (randomizerService.candidates().length === 0) {
+          <div class="bg-white/10 rounded-2xl p-8 text-center text-white/60">
+            <p class="text-3xl mb-2">👤</p>
+            <p>{{ 'RANDOMIZER.no_members' | translate }}</p>
+          </div>
+        } @else {
+          <ul class="space-y-2">
+            @for (member of randomizerService.candidates(); track member.userId) {
+              <li>
+                <button
+                  type="button"
+                  (click)="randomizerService.toggleMember(member.userId)"
+                  class="w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  [class]="randomizerService.selectedIds().has(member.userId)
+                    ? 'bg-white/20 border border-white/30'
+                    : 'bg-white/5 border border-white/10 opacity-50'"
+                  [attr.aria-pressed]="randomizerService.selectedIds().has(member.userId)"
+                  [attr.aria-label]="'Toggle ' + member.displayName"
+                >
+                  <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                    {{ member.displayName | initials }}
+                  </div>
+                  <span class="text-white font-medium text-sm flex-1 text-left">{{ member.displayName }}</span>
+                  @if (randomizerService.selectedIds().has(member.userId)) {
+                    <span class="text-green-400 text-lg" aria-hidden="true">✓</span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+      <section aria-labelledby="spin-heading" class="space-y-6">
+        <h2 id="spin-heading" class="sr-only">{{ 'RANDOMIZER.title' | translate }}</h2>
+        <div class="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/10 text-center min-h-[200px] flex flex-col items-center justify-center">
+          @if (randomizerService.isSpinning()) {
+            <div class="space-y-4">
+              <div class="text-5xl animate-bounce">🎲</div>
+              <p class="text-white/70 text-sm animate-pulse">{{ 'RANDOMIZER.spinning' | translate }}</p>
+            </div>
+          } @else if (randomizerService.result()) {
+            <div class="space-y-3">
+              <div class="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl ring-4 ring-white/30">
+                {{ randomizerService.result()!.displayName | initials }}
+              </div>
+              <div>
+                <p class="text-white/60 text-xs uppercase tracking-wide mb-1">{{ randomizerService.purpose() }}</p>
+                <p class="text-white text-2xl font-bold">{{ randomizerService.result()!.displayName }}</p>
+              </div>
+              <span class="text-3xl">🏆</span>
+            </div>
+          } @else {
+            <div class="text-white/40 space-y-2">
+              <div class="text-4xl">🎯</div>
+              <p class="text-sm">{{ 'RANDOMIZER.spin_hint' | translate }}</p>
+            </div>
+          }
+        </div>
+        @if (errorMessage()) {
+          <div class="rounded-xl bg-red-500/20 border border-red-500/30 px-4 py-3 text-sm text-red-300" role="alert">
+            {{ errorMessage() }}
+          </div>
+        }
+        <div class="flex flex-col gap-3">
+          <button
+            hlmBtn
+            type="button"
+            data-testid="spin-button"
+            (click)="spin()"
+            [disabled]="randomizerService.isSpinning() || selectedCount() < 2"
+            class="w-full rounded-2xl bg-gradient-to-r from-accent-500 to-primary-500 hover:from-accent-400 hover:to-primary-400 text-white font-bold py-4 text-lg shadow-lg"
+          >
+            @if (randomizerService.isSpinning()) {
+              {{ 'RANDOMIZER.spinning_btn' | translate }}
+            } @else {
+              {{ 'RANDOMIZER.spin' | translate }}
+            }
+          </button>
+          @if (selectedCount() < 2 && !randomizerService.isSpinning()) {
+            <p class="text-center text-white/50 text-xs">{{ 'RANDOMIZER.error_min' | translate }}</p>
+          }
+          @if (randomizerService.result() && authService.isOrganizer()) {
             <button
-              class="px-4 py-2 rounded-lg whitespace-nowrap font-medium transition-colors duration-200 flex-shrink-0"
-              [ngClass]="{
-                'bg-accent-500 text-white': chat.activeRoomId() === room.id,
-                'bg-gray-100 text-gray-700 hover:bg-gray-200': chat.activeRoomId() !== room.id
-              }"
-              role="tab"
-              [attr.aria-selected]="chat.activeRoomId() === room.id"
-              (click)="chat.openRoom(room.id)"
+              hlmBtn
+              variant="outline"
+              type="button"
+              (click)="saveSession()"
+              [disabled]="isSaving()"
+              class="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3"
             >
-              {{ room.name }}
+              @if (isSaving()) {
+                {{ 'RANDOMIZER.saving' | translate }}
+              } @else {
+                {{ 'RANDOMIZER.save' | translate }}
+              }
             </button>
           }
         </div>
-      }
-      <div
-        class="flex-1 overflow-y-auto p-3 space-y-2 messages-scroll"
-        role="log"
-        aria-live="polite"
-      >
-        @if (chat.rooms().length === 0) {
-          <div class="flex flex-col items-center justify-center h-full gap-2 text-center px-4">
-            <span class="text-2xl" aria-hidden="true">💬</span>
-            <p class="text-gray-500 text-sm">{{ 'CHAT.no_rooms_hint_member' | translate }}</p>
+        @if (randomizerService.history().length > 0) {
+          <div class="space-y-3">
+            <h3 class="text-white/70 text-sm font-medium uppercase tracking-wide">{{ 'RANDOMIZER.history_title' | translate }}</h3>
+            <ul class="space-y-2">
+              @for (session of randomizerService.history().slice(0, 5); track session.id) {
+                <li class="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-white/60 text-xs truncate">{{ session.purpose }}</p>
+                    @if (session.result) {
+                      <p class="text-white text-sm font-medium">🏆 {{ session.result.displayName }}</p>
+                    }
+                  </div>
+                  <span class="text-white/40 text-xs shrink-0">{{ session.createdAt | date:'dd.MM HH:mm' }}</span>
+                </li>
+              }
+            </ul>
           </div>
-        } @else if (chat.activeMessages().length === 0) {
-          <div class="flex items-center justify-center h-full text-gray-400">
-            {{ 'CHAT.no_messages' | translate }}
-          </div>
-        } @else {
-          @for (message of chat.activeMessages(); track message.id) {
-            <div [ngClass]="{ 'flex justify-end': message.isOwn, 'flex justify-start': !message.isOwn }">
-              <div class="flex flex-col max-w-[75%]">
-                @if (!message.isOwn) {
-                  <span class="text-xs text-gray-500 px-3 mb-1">{{ message.senderName }}</span>
-                }
-                <div
-                  class="px-4 py-2 rounded-2xl"
-                  [ngClass]="{
-                    'bg-accent-500 text-white rounded-br-sm': message.isOwn,
-                    'bg-gray-100 text-gray-800 rounded-bl-sm': !message.isOwn
-                  }"
-                >
-                  {{ message.text }}
-                </div>
-                <span class="text-xs text-gray-400 px-3 mt-1 text-right">
-                  {{ message.timestamp | date: 'HH:mm' }}
-                </span>
-              </div>
-            </div>
-          }
         }
-        <div #messagesEnd></div>
-      </div>
-      <div class="border-t border-gray-100 p-3 flex gap-2">
-        <input
-          type="text"
-          [(ngModel)]="messageText"
-          (keydown)="onKeydown($event)"
-          [placeholder]="'CHAT.placeholder' | translate"
-          [attr.aria-label]="'CHAT.placeholder' | translate"
-          class="flex-1 px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-        />
-        <button
-          class="w-10 h-10 rounded-full bg-accent-500 text-white flex items-center justify-center hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
-          [disabled]="!messageText().trim()"
-          (click)="sendMessage()"
-          [attr.aria-label]="'CHAT.send' | translate"
-        >
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M16.6915026,12.4744748 L3.50612381,13.2599618 C3.19218622,13.2599618 3.03521743,13.4170592 3.03521743,13.5741566 L1.15159189,20.0151496 C0.8376543,20.8006365 0.99,21.89 1.77946707,22.52 C2.41,22.99 3.50612381,23.1 4.13399899,22.8429026 L21.714504,14.0454487 C22.6563168,13.5741566 23.1272231,12.6315722 22.9702544,11.6889879 L4.13399899,1.16584166 C3.50612381,0.9087443 2.40999006,1.01484963 1.77946707,1.4861418 C0.994623095,2.11535496 0.837654326,3.20500913 1.15159189,3.9904961 L3.03521743,10.4314891 C3.03521743,10.5885864 3.19218622,10.7456838 3.50612381,10.7456838 L16.6915026,11.5311707 C16.6915026,11.5311707 17.1624089,11.5311707 17.1624089,12.0024628 C17.1624089,12.4744748 16.6915026,12.4744748 16.6915026,12.4744748 Z"/>
-          </svg>
-        </button>
-      </div>
+      </section>
     </div>
-  }
-}
+  </div>
+</div>
 ````
 
 ## File: src/app/shared/chat/chat-widget/chat-widget.component.ts
@@ -12017,47 +11802,6 @@ export class ChatWidgetComponent {
     if (event.key === 'Escape') { this.isCreatingRoom.set(false); }
   }
 }
-````
-
-## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.html
-````html
-<div class="relative">
-  <input
-    hlmInput
-    [id]="inputId() || undefined"
-    [formControl]="control()"
-    [placeholder]="placeholder()"
-    autocomplete="off"
-    (keydown)="onKeydown($event)"
-    class="w-full"
-    [class.border-red-400]="control().invalid && control().touched"
-  />
-  @if (isLoading()) {
-    <div class="absolute right-3 top-3 flex items-center justify-center">
-      <svg class="h-4 w-4 animate-spin text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-      </svg>
-    </div>
-  }
-  @if (isOpen() && suggestions().length > 0) {
-    <ul class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-48 overflow-y-auto">
-      @for (s of suggestions(); track s.label; let i = $index) {
-        <li
-          role="option"
-          tabindex="0"
-          [attr.aria-selected]="activeIndex() === i"
-          (click)="select(s)"
-          (keydown.enter)="select(s)"
-          (keydown.space)="$event.preventDefault(); select(s)"
-          [class.bg-primary-50]="activeIndex() === i"
-          [class.dark:bg-primary-900/20]="activeIndex() === i"
-          class="cursor-pointer px-4 py-2.5 text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        >{{ s.label }}</li>
-      }
-    </ul>
-  }
-</div>
 ````
 
 ## File: src/app/app.routes.ts
@@ -12585,6 +12329,129 @@ export interface ClubEvent {
 </div>
 ````
 
+## File: src/app/features/clubs/club-detail/members/club-members-list.component.html
+````html
+<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="glass-card px-6 gap-4">
+  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
+    {{ 'MEMBERS.title' | translate }} ({{ members().length }})
+  </h2>
+  @if (members().length === 0) {
+    <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'MEMBERS.empty' | translate }}</p>
+  } @else {
+    <ul class="divide-y divide-gray-100 dark:divide-gray-700">
+      @for (member of members(); track member.userId) {
+        <li class="flex items-center gap-4 py-3 relative">
+          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0" aria-hidden="true">
+            {{ member.displayName | initials }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+              {{ member.displayName.includes('@') ? member.displayName.split('@')[0] : member.displayName }}
+            </p>
+            @if (member.role === 'organizer') {
+              <span class="inline-block text-xs font-medium text-accent-600 dark:text-accent-400">
+                {{ 'MEMBERS.organizer' | translate }}
+              </span>
+            } @else {
+              <span class="inline-block text-xs text-gray-400 dark:text-gray-500">
+                {{ 'MEMBERS.member' | translate }}
+              </span>
+            }
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+            @if (canSeeSocials(member)) {
+              @if (member.socials?.telegram) {
+                <a [href]="'https://t.me/' + member.socials!.telegram" target="_blank" rel="noopener noreferrer"
+                   class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram: @' + member.socials!.telegram" title="Telegram">
+                  ✈️
+                </a>
+              }
+              @if (member.socials?.instagram) {
+                <a [href]="'https://instagram.com/' + member.socials!.instagram" target="_blank" rel="noopener noreferrer"
+                   class="text-pink-500 hover:text-pink-600 text-lg" [attr.aria-label]="'Instagram: @' + member.socials!.instagram" title="Instagram">
+                  📸
+                </a>
+              }
+              @if (member.socials?.github) {
+                <a [href]="'https://github.com/' + member.socials!.github" target="_blank" rel="noopener noreferrer"
+                   class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" [attr.aria-label]="'GitHub: ' + member.socials!.github" title="GitHub">
+                  🐙
+                </a>
+              }
+              @if (member.socials?.goodreads) {
+                <a [href]="'https://goodreads.com/' + member.socials!.goodreads" target="_blank" rel="noopener noreferrer"
+                   class="text-amber-600 hover:text-amber-700 text-lg" title="Goodreads">
+                  📚
+                </a>
+              }
+              @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
+                <button
+                  hlmBtn
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  (click)="toggleQr(member.userId)"
+                  class="ml-1 text-xs"
+                  [attr.aria-expanded]="showQrForUser() === member.userId"
+                  [attr.aria-label]="'MEMBERS.show_qr' | translate"
+                >
+                  <span aria-hidden="true">⊡</span> {{ 'MEMBERS.show_qr' | translate }}
+                </button>
+                @if (showQrForUser() === member.userId) {
+                  <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl glass-card-strong shadow-xl p-4 flex flex-col items-center gap-2"
+                       aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
+                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
+                    @defer (on idle) {
+                      <app-qr-code [value]="buildQrValue(member)" [size]="160" />
+                    } @placeholder {
+                      <div class="h-40 w-40 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" aria-hidden="true"></div>
+                    }
+                    <button hlmBtn variant="ghost" size="sm" type="button" (click)="toggleQr(member.userId)"
+                            class="mt-1 text-xs text-gray-400">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
+                  </dialog>
+                }
+              }
+            } @else {
+              <span class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                🔒 {{ 'MEMBERS.socials_hidden' | translate }}
+              </span>
+            }
+            @if (isOwner() && member.role !== 'organizer') {
+              <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">
+                <button hlmBtn variant="destructive" size="xs" type="button" (click)="kick.emit(member.userId)"
+                         [attr.aria-label]="'MEMBERS.kick' | translate">
+                  {{ 'MEMBERS.kick' | translate }}
+                </button>
+                <button hlmBtn variant="ghost" size="xs" type="button" (click)="toggleBanMenu(member.userId)"
+                        class="text-orange-600 hover:text-orange-700"
+                        [attr.aria-expanded]="showBanMenu() === member.userId">
+                  {{ 'MEMBERS.ban' | translate }}
+                </button>
+                @if (showBanMenu() === member.userId) {
+                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl glass-card-strong shadow-xl py-1 min-w-36">
+                    @for (duration of banDurations; track duration) {
+                      <li>
+                        <button hlmBtn variant="ghost" type="button" (click)="emitBan(member.userId, duration)"
+                                class="w-full justify-start px-4 text-sm">
+                          @if (duration === 1) { {{ 'MEMBERS.ban_1' | translate }} }
+                          @else if (duration === 3) { {{ 'MEMBERS.ban_3' | translate }} }
+                          @else if (duration === 5) { {{ 'MEMBERS.ban_5' | translate }} }
+                          @else { {{ 'MEMBERS.ban_permanent' | translate }} }
+                        </button>
+                      </li>
+                    }
+                  </menu>
+                }
+              </div>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>
+````
+
 ## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
 ````html
 <div
@@ -12702,336 +12569,6 @@ export interface ClubEvent {
     </div>
   </div>
 </div>
-````
-
-## File: src/app/features/clubs/create-club/create-club.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-} from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-interface CreateClubForm {
-  name: FormControl<string>;
-  description: FormControl<string>;
-  isPublic: FormControl<boolean>;
-  city: FormControl<string>;
-  coverUrl: FormControl<string>;
-}
-@Component({
-  selector: 'app-create-club',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './create-club.component.html',
-})
-export class CreateClubComponent {
-  private readonly clubService = inject(ClubService);
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly _errorMessage = signal<string | null>(null);
-  readonly errorMessage = this._errorMessage.asReadonly();
-  private readonly _isSubmitting = signal(false);
-  readonly isSubmitting = this._isSubmitting.asReadonly();
-  private readonly _showAfterMeeting = signal(false);
-  readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
-  readonly form = new FormGroup<CreateClubForm>({
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-    isPublic: new FormControl(true, { nonNullable: true }),
-    city: new FormControl('', { nonNullable: true }),
-    coverUrl: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^https?:\/\/.+\..+/)] }),
-  });
-  togglePublic(): void {
-    const current = this.form.controls.isPublic.value;
-    this.form.controls.isPublic.setValue(!current);
-  }
-  toggleAfterMeeting(): void {
-    this._showAfterMeeting.update(v => !v);
-  }
-  cancel(): void {
-    this.router.navigate(['/clubs']);
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this._isSubmitting.set(true);
-    this._errorMessage.set(null);
-    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
-    try {
-      const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
-      this.router.navigate(['/clubs', club.id]);
-    } catch (err) {
-      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
-    } finally {
-      this._isSubmitting.set(false);
-    }
-  }
-}
-````
-
-## File: src/app/features/clubs/edit-club/edit-club.component.html
-````html
-<main class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-lg">
-    <header class="text-center mb-8">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
-      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'EDIT_CLUB.subtitle' | translate }}</p>
-    </header>
-    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'EDIT_CLUB.title' | translate }}</h2>
-      @if (isLoadingClub()) {
-        <div class="flex justify-center py-12">
-          <hlm-spinner />
-        </div>
-      } @else {
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-          <hlm-field>
-            <label hlmFieldLabel for="club-name">
-              {{ 'EDIT_CLUB.name_label' | translate }}
-              <span class="text-red-500" aria-hidden="true">*</span>
-            </label>
-            <input
-              hlmInput
-              id="club-name"
-              type="text"
-              formControlName="name"
-              class="w-full"
-              [placeholder]="'EDIT_CLUB.name_placeholder' | translate"
-            />
-            <hlm-field-error validator="required">{{ 'EDIT_CLUB.name_required' | translate }}</hlm-field-error>
-            <hlm-field-error validator="minlength">{{ 'EDIT_CLUB.name_min' | translate }}</hlm-field-error>
-            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.name_max' | translate }}</hlm-field-error>
-          </hlm-field>
-          <hlm-field>
-            <label hlmFieldLabel for="club-description">{{ 'EDIT_CLUB.description_label' | translate }}</label>
-            <textarea
-              hlmInput
-              id="club-description"
-              formControlName="description"
-              rows="3"
-              class="w-full resize-none"
-              [placeholder]="'EDIT_CLUB.description_placeholder' | translate"
-            ></textarea>
-            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.description_max' | translate }}</hlm-field-error>
-          </hlm-field>
-          <hlm-field>
-            <label hlmFieldLabel for="club-city">{{ 'EDIT_CLUB.city_label' | translate }}</label>
-            <input
-              hlmInput
-              id="club-city"
-              type="text"
-              formControlName="city"
-              class="w-full"
-              [placeholder]="'EDIT_CLUB.city_placeholder' | translate"
-            />
-          </hlm-field>
-          <div>
-            <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{ 'EDIT_CLUB.cover_url_label' | translate }}
-<<<<<<< HEAD
-            </p>
-            <app-cover-upload [control]="form.controls.coverUrl" />
-=======
-            </label>
-            @if (form.controls.coverUrl.value) {
-              <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
-                <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover" (error)="form.controls.coverUrl.setValue('')" />
-              </div>
-            }
-            <input
-              id="club-cover-url"
-              type="url"
-              formControlName="coverUrl"
-              [placeholder]="'EDIT_CLUB.cover_url_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-            />
-            @if (form.controls.coverUrl.touched && form.controls.coverUrl.errors?.['pattern']) {
-              <p class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ 'CREATE_CLUB.cover_url_invalid' | translate }}</p>
-            } @else {
-              <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'EDIT_CLUB.cover_url_hint' | translate }}</p>
-            }
->>>>>>> worktree-agent-abfaf1a395decc804
-          </div>
-          <fieldset>
-            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'EDIT_CLUB.visibility_legend' | translate }}</legend>
-            <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-              <div>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'EDIT_CLUB.public_label' | translate }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'EDIT_CLUB.public_desc' | translate }}</p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                [attr.aria-checked]="form.controls.isPublic.value"
-                (click)="togglePublic()"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                [class.bg-primary-600]="form.controls.isPublic.value"
-                [class.bg-gray-300]="!form.controls.isPublic.value"
-                [class.dark:bg-gray-600]="!form.controls.isPublic.value"
-              >
-                <span
-                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                  [class.translate-x-6]="form.controls.isPublic.value"
-                  [class.translate-x-1]="!form.controls.isPublic.value"
-                ></span>
-              </button>
-            </div>
-          </fieldset>
-          @if (errorMessage()) {
-            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-                 role="alert">
-              <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
-              <span>{{ errorMessage() }}</span>
-            </div>
-          }
-          <div class="flex gap-3 pt-2">
-            <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
-              {{ 'EDIT_CLUB.cancel' | translate }}
-            </button>
-            <button hlmBtn type="submit" [disabled]="isSubmitting()"
-                    class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
-              @if (isSubmitting()) {
-                <hlm-spinner class="mr-2" />
-                {{ 'EDIT_CLUB.submitting' | translate }}
-              } @else {
-                {{ 'EDIT_CLUB.submit' | translate }}
-              }
-            </button>
-          </div>
-        </form>
-      }
-    </article>
-  </div>
-</main>
-````
-
-## File: src/app/features/clubs/edit-club/edit-club.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  input,
-  OnInit,
-} from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
-import { ClubService } from '../../../core/services/club.service';
-import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-interface EditClubForm {
-  name: FormControl<string>;
-  description: FormControl<string>;
-  isPublic: FormControl<boolean>;
-  city: FormControl<string>;
-  coverUrl: FormControl<string>;
-}
-@Component({
-  selector: 'app-edit-club',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, CoverUploadComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './edit-club.component.html',
-})
-export class EditClubComponent implements OnInit {
-  readonly id = input.required<string>();
-  private readonly clubService = inject(ClubService);
-  private readonly router = inject(Router);
-  private readonly translate = inject(TranslateService);
-  private readonly _isLoadingClub = signal(true);
-  readonly isLoadingClub = this._isLoadingClub.asReadonly();
-  private readonly _isSubmitting = signal(false);
-  readonly isSubmitting = this._isSubmitting.asReadonly();
-  private readonly _errorMessage = signal<string | null>(null);
-  readonly errorMessage = this._errorMessage.asReadonly();
-  readonly form = new FormGroup<EditClubForm>({
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-    isPublic: new FormControl(true, { nonNullable: true }),
-    city: new FormControl('', { nonNullable: true }),
-    coverUrl: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^https?:\/\/.+\..+/)] }),
-  });
-  async ngOnInit(): Promise<void> {
-    const club = await this.clubService.getClubById(this.id());
-    if (!club) {
-      this._errorMessage.set('Club not found.');
-      this._isLoadingClub.set(false);
-      return;
-    }
-    this.form.patchValue({
-      name: club.name,
-      description: club.description ?? '',
-      isPublic: club.isPublic,
-      city: club.city ?? '',
-      coverUrl: club.coverUrl ?? '',
-    });
-    this._isLoadingClub.set(false);
-  }
-  togglePublic(): void {
-    this.form.controls.isPublic.setValue(!this.form.controls.isPublic.value);
-  }
-  cancel(): void {
-    this.router.navigate(['/clubs', this.id()]);
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this._isSubmitting.set(true);
-    this._errorMessage.set(null);
-    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
-    try {
-      await this.clubService.updateClub(this.id(), {
-        name,
-        description,
-        isPublic,
-        city: city || undefined,
-        coverUrl: coverUrl || null,
-      });
-      toast.success(this.translate.instant('EDIT_CLUB.success'));
-      this.router.navigate(['/clubs', this.id()]);
-    } catch (err) {
-      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to update club');
-    } finally {
-      this._isSubmitting.set(false);
-    }
-  }
-}
 ````
 
 ## File: src/app/features/profile/profile.component.ts
@@ -13645,6 +13182,215 @@ export class HeaderComponent {
 }
 ````
 
+## File: src/app/shared/chat/chat-widget/chat-widget.component.html
+````html
+@if (auth.isAuthenticated()) {
+  <button
+    [class]="'fixed z-50 w-14 h-14 rounded-full bg-accent-500 shadow-lg hover:shadow-xl transition-shadow duration-200 flex items-center justify-center text-white ' + fabPositionClass()"
+    [class.animate-bounce]="isBouncing()"
+    [attr.aria-label]="(chat.isOpen() ? 'CHAT.close' : 'CHAT.open') | translate"
+    (click)="chat.toggleOpen()"
+  >
+    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+    </svg>
+    @if (chat.unreadCount() > 0) {
+      <div class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold">
+        {{ chat.unreadCount() > 9 ? '9+' : (chat.unreadCount() | number) }}
+      </div>
+    }
+  </button>
+  @if (chat.isOpen()) {
+    <div
+      [class]="'fixed z-40 w-80 max-h-[480px] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-100 chat-panel ' + panelPositionClass()"
+    >
+      <div class="flex items-center justify-between p-4 border-b border-gray-100">
+        <h2 class="text-lg font-semibold text-gray-900">
+          {{ 'CHAT.title' | translate }}
+        </h2>
+        <button
+          class="text-gray-500 hover:text-gray-700 transition-colors"
+          [attr.aria-label]="'close'"
+          (click)="chat.toggleOpen()"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+          </svg>
+        </button>
+      </div>
+      @if (chat.rooms().length > 0) {
+        <div class="flex overflow-x-auto px-3 py-2 border-b border-gray-100 gap-2">
+          @for (room of chat.rooms(); track room.id) {
+            <button
+              class="px-4 py-2 rounded-lg whitespace-nowrap font-medium transition-colors duration-200 flex-shrink-0"
+              [ngClass]="{
+                'bg-accent-500 text-white': chat.activeRoomId() === room.id,
+                'bg-gray-100 text-gray-700 hover:bg-gray-200': chat.activeRoomId() !== room.id
+              }"
+              role="tab"
+              [attr.aria-selected]="chat.activeRoomId() === room.id"
+              (click)="chat.openRoom(room.id)"
+            >
+              {{ room.name }}
+            </button>
+          }
+        </div>
+      }
+      <div
+        class="flex-1 overflow-y-auto p-3 space-y-2 messages-scroll"
+        role="log"
+        aria-live="polite"
+      >
+        @if (chat.rooms().length === 0) {
+          <div class="flex flex-col items-center justify-center h-full gap-2 text-center px-4">
+            <span class="text-2xl" aria-hidden="true">💬</span>
+            <p class="text-gray-500 text-sm">{{ 'CHAT.no_rooms_hint_member' | translate }}</p>
+          </div>
+        } @else if (chat.activeMessages().length === 0) {
+          <div class="flex items-center justify-center h-full text-gray-400">
+            {{ 'CHAT.no_messages' | translate }}
+          </div>
+        } @else {
+          @for (message of chat.activeMessages(); track message.id) {
+            <div [ngClass]="{ 'flex justify-end': message.isOwn, 'flex justify-start': !message.isOwn }">
+              <div class="flex flex-col max-w-[75%]">
+                @if (!message.isOwn) {
+                  <span class="text-xs text-gray-500 px-3 mb-1">{{ message.senderName }}</span>
+                }
+                <div
+                  class="px-4 py-2 rounded-2xl"
+                  [ngClass]="{
+                    'bg-accent-500 text-white rounded-br-sm': message.isOwn,
+                    'bg-gray-100 text-gray-800 rounded-bl-sm': !message.isOwn
+                  }"
+                >
+                  {{ message.text }}
+                </div>
+                <span class="text-xs text-gray-400 px-3 mt-1 text-right">
+                  {{ message.timestamp | date: 'HH:mm' }}
+                </span>
+              </div>
+            </div>
+          }
+        }
+        <div #messagesEnd></div>
+      </div>
+      <div class="border-t border-gray-100 p-3 flex gap-2">
+        <input
+          type="text"
+          [(ngModel)]="messageText"
+          (keydown)="onKeydown($event)"
+          [placeholder]="'CHAT.placeholder' | translate"
+          [attr.aria-label]="'CHAT.placeholder' | translate"
+          class="flex-1 px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+        />
+        <button
+          class="w-10 h-10 rounded-full bg-accent-500 text-white flex items-center justify-center hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="!messageText().trim()"
+          (click)="sendMessage()"
+          [attr.aria-label]="'CHAT.send' | translate"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M16.6915026,12.4744748 L3.50612381,13.2599618 C3.19218622,13.2599618 3.03521743,13.4170592 3.03521743,13.5741566 L1.15159189,20.0151496 C0.8376543,20.8006365 0.99,21.89 1.77946707,22.52 C2.41,22.99 3.50612381,23.1 4.13399899,22.8429026 L21.714504,14.0454487 C22.6563168,13.5741566 23.1272231,12.6315722 22.9702544,11.6889879 L4.13399899,1.16584166 C3.50612381,0.9087443 2.40999006,1.01484963 1.77946707,1.4861418 C0.994623095,2.11535496 0.837654326,3.20500913 1.15159189,3.9904961 L3.03521743,10.4314891 C3.03521743,10.5885864 3.19218622,10.7456838 3.50612381,10.7456838 L16.6915026,11.5311707 C16.6915026,11.5311707 17.1624089,11.5311707 17.1624089,12.0024628 C17.1624089,12.4744748 16.6915026,12.4744748 16.6915026,12.4744748 Z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  }
+}
+````
+
+## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
+````typescript
+import {
+  Component, ChangeDetectionStrategy, input, output,
+  DestroyRef, signal, inject, ElementRef, HostListener, effect,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { switchMap, debounceTime, distinctUntilChanged, of } from 'rxjs';
+import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
+import { HlmInput } from '../../spartan/input/src';
+@Component({
+  selector: 'app-address-autocomplete',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, HlmInput],
+  templateUrl: './address-autocomplete.component.html',
+})
+export class AddressAutocompleteComponent {
+  readonly control = input.required<FormControl<string>>();
+  readonly placeholder = input<string>('');
+  readonly inputId = input<string>('');
+  readonly selected = output<GeocodeSuggestion>();
+  private readonly geocoding = inject(GeocodingService);
+  private readonly elRef = inject(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly suggestions = signal<GeocodeSuggestion[]>([]);
+  readonly isLoading = signal(false);
+  readonly isOpen = signal(false);
+  readonly activeIndex = signal(-1);
+  constructor() {
+    effect(() => {
+      const ctrl = this.control();
+      ctrl.valueChanges.pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(q => {
+          if (!q || q.length < 2) {
+            this.suggestions.set([]);
+            this.isOpen.set(false);
+            return of([]);
+          }
+          this.isLoading.set(true);
+          return this.geocoding.autocomplete$(q);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      ).subscribe({
+        next: (results) => {
+          this.isLoading.set(false);
+          this.suggestions.set(results);
+          this.activeIndex.set(-1);
+          this.isOpen.set(results.length > 0);
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.suggestions.set([]);
+        },
+      });
+    });
+  }
+  select(s: GeocodeSuggestion): void {
+    this.control().setValue(s.label, { emitEvent: false });
+    this.suggestions.set([]);
+    this.isOpen.set(false);
+    this.selected.emit(s);
+  }
+  onKeydown(event: KeyboardEvent): void {
+    if (!this.isOpen()) return;
+    const len = this.suggestions().length;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i + 1) % len);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i - 1 + len) % len);
+    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
+      event.preventDefault();
+      this.select(this.suggestions()[this.activeIndex()]);
+    } else if (event.key === 'Escape') {
+      this.isOpen.set(false);
+    }
+  }
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.elRef.nativeElement.contains(event.target)) {
+      this.isOpen.set(false);
+    }
+  }
+}
+````
+
 ## File: src/app/shared/spartan/tabs/src/lib/hlm-tabs-paginated-list.ts
 ````typescript
 import { CdkObserveContent } from '@angular/cdk/observers';
@@ -14046,6 +13792,336 @@ export class ClubCardComponent {
 </main>
 ````
 
+## File: src/app/features/clubs/create-club/create-club.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+} from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+interface CreateClubForm {
+  name: FormControl<string>;
+  description: FormControl<string>;
+  isPublic: FormControl<boolean>;
+  city: FormControl<string>;
+  coverUrl: FormControl<string>;
+}
+@Component({
+  selector: 'app-create-club',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './create-club.component.html',
+})
+export class CreateClubComponent {
+  private readonly clubService = inject(ClubService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly _errorMessage = signal<string | null>(null);
+  readonly errorMessage = this._errorMessage.asReadonly();
+  private readonly _isSubmitting = signal(false);
+  readonly isSubmitting = this._isSubmitting.asReadonly();
+  private readonly _showAfterMeeting = signal(false);
+  readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
+  readonly form = new FormGroup<CreateClubForm>({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+    isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', { nonNullable: true }),
+    coverUrl: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^https?:\/\/.+\..+/)] }),
+  });
+  togglePublic(): void {
+    const current = this.form.controls.isPublic.value;
+    this.form.controls.isPublic.setValue(!current);
+  }
+  toggleAfterMeeting(): void {
+    this._showAfterMeeting.update(v => !v);
+  }
+  cancel(): void {
+    this.router.navigate(['/clubs']);
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this._isSubmitting.set(true);
+    this._errorMessage.set(null);
+    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
+    try {
+      const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
+      this.router.navigate(['/clubs', club.id]);
+    } catch (err) {
+      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
+    } finally {
+      this._isSubmitting.set(false);
+    }
+  }
+}
+````
+
+## File: src/app/features/clubs/edit-club/edit-club.component.html
+````html
+<main class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+    <header class="text-center mb-8">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'EDIT_CLUB.subtitle' | translate }}</p>
+    </header>
+    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'EDIT_CLUB.title' | translate }}</h2>
+      @if (isLoadingClub()) {
+        <div class="flex justify-center py-12">
+          <hlm-spinner />
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+          <hlm-field>
+            <label hlmFieldLabel for="club-name">
+              {{ 'EDIT_CLUB.name_label' | translate }}
+              <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <input
+              hlmInput
+              id="club-name"
+              type="text"
+              formControlName="name"
+              class="w-full"
+              [placeholder]="'EDIT_CLUB.name_placeholder' | translate"
+            />
+            <hlm-field-error validator="required">{{ 'EDIT_CLUB.name_required' | translate }}</hlm-field-error>
+            <hlm-field-error validator="minlength">{{ 'EDIT_CLUB.name_min' | translate }}</hlm-field-error>
+            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.name_max' | translate }}</hlm-field-error>
+          </hlm-field>
+          <hlm-field>
+            <label hlmFieldLabel for="club-description">{{ 'EDIT_CLUB.description_label' | translate }}</label>
+            <textarea
+              hlmInput
+              id="club-description"
+              formControlName="description"
+              rows="3"
+              class="w-full resize-none"
+              [placeholder]="'EDIT_CLUB.description_placeholder' | translate"
+            ></textarea>
+            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.description_max' | translate }}</hlm-field-error>
+          </hlm-field>
+          <hlm-field>
+            <label hlmFieldLabel for="club-city">{{ 'EDIT_CLUB.city_label' | translate }}</label>
+            <input
+              hlmInput
+              id="club-city"
+              type="text"
+              formControlName="city"
+              class="w-full"
+              [placeholder]="'EDIT_CLUB.city_placeholder' | translate"
+            />
+          </hlm-field>
+          <div>
+            <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {{ 'EDIT_CLUB.cover_url_label' | translate }}
+<<<<<<< HEAD
+            </p>
+            <app-cover-upload [control]="form.controls.coverUrl" />
+=======
+            </label>
+            @if (form.controls.coverUrl.value) {
+              <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
+                <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover" (error)="form.controls.coverUrl.setValue('')" />
+              </div>
+            }
+            <input
+              id="club-cover-url"
+              type="url"
+              formControlName="coverUrl"
+              [placeholder]="'EDIT_CLUB.cover_url_placeholder' | translate"
+              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
+                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
+                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+                     transition-colors duration-150"
+            />
+            @if (form.controls.coverUrl.touched && form.controls.coverUrl.errors?.['pattern']) {
+              <p class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ 'CREATE_CLUB.cover_url_invalid' | translate }}</p>
+            } @else {
+              <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'EDIT_CLUB.cover_url_hint' | translate }}</p>
+            }
+>>>>>>> worktree-agent-abfaf1a395decc804
+          </div>
+          <fieldset>
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'EDIT_CLUB.visibility_legend' | translate }}</legend>
+            <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
+              <div>
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'EDIT_CLUB.public_label' | translate }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'EDIT_CLUB.public_desc' | translate }}</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                [attr.aria-checked]="form.controls.isPublic.value"
+                (click)="togglePublic()"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                [class.bg-primary-600]="form.controls.isPublic.value"
+                [class.bg-gray-300]="!form.controls.isPublic.value"
+                [class.dark:bg-gray-600]="!form.controls.isPublic.value"
+              >
+                <span
+                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                  [class.translate-x-6]="form.controls.isPublic.value"
+                  [class.translate-x-1]="!form.controls.isPublic.value"
+                ></span>
+              </button>
+            </div>
+          </fieldset>
+          @if (errorMessage()) {
+            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+                 role="alert">
+              <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+          <div class="flex gap-3 pt-2">
+            <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
+              {{ 'EDIT_CLUB.cancel' | translate }}
+            </button>
+            <button hlmBtn type="submit" [disabled]="isSubmitting()"
+                    class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
+              @if (isSubmitting()) {
+                <hlm-spinner class="mr-2" />
+                {{ 'EDIT_CLUB.submitting' | translate }}
+              } @else {
+                {{ 'EDIT_CLUB.submit' | translate }}
+              }
+            </button>
+          </div>
+        </form>
+      }
+    </article>
+  </div>
+</main>
+````
+
+## File: src/app/features/clubs/edit-club/edit-club.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  input,
+  OnInit,
+} from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { toast } from '@spartan-ng/brain/sonner';
+import { ClubService } from '../../../core/services/club.service';
+import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+interface EditClubForm {
+  name: FormControl<string>;
+  description: FormControl<string>;
+  isPublic: FormControl<boolean>;
+  city: FormControl<string>;
+  coverUrl: FormControl<string>;
+}
+@Component({
+  selector: 'app-edit-club',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslatePipe, CoverUploadComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './edit-club.component.html',
+})
+export class EditClubComponent implements OnInit {
+  readonly id = input.required<string>();
+  private readonly clubService = inject(ClubService);
+  private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
+  private readonly _isLoadingClub = signal(true);
+  readonly isLoadingClub = this._isLoadingClub.asReadonly();
+  private readonly _isSubmitting = signal(false);
+  readonly isSubmitting = this._isSubmitting.asReadonly();
+  private readonly _errorMessage = signal<string | null>(null);
+  readonly errorMessage = this._errorMessage.asReadonly();
+  readonly form = new FormGroup<EditClubForm>({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+    isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', { nonNullable: true }),
+    coverUrl: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^https?:\/\/.+\..+/)] }),
+  });
+  async ngOnInit(): Promise<void> {
+    const club = await this.clubService.getClubById(this.id());
+    if (!club) {
+      this._errorMessage.set('Club not found.');
+      this._isLoadingClub.set(false);
+      return;
+    }
+    this.form.patchValue({
+      name: club.name,
+      description: club.description ?? '',
+      isPublic: club.isPublic,
+      city: club.city ?? '',
+      coverUrl: club.coverUrl ?? '',
+    });
+    this._isLoadingClub.set(false);
+  }
+  togglePublic(): void {
+    this.form.controls.isPublic.setValue(!this.form.controls.isPublic.value);
+  }
+  cancel(): void {
+    this.router.navigate(['/clubs', this.id()]);
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this._isSubmitting.set(true);
+    this._errorMessage.set(null);
+    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
+    try {
+      await this.clubService.updateClub(this.id(), {
+        name,
+        description,
+        isPublic,
+        city: city || undefined,
+        coverUrl: coverUrl || null,
+      });
+      toast.success(this.translate.instant('EDIT_CLUB.success'));
+      this.router.navigate(['/clubs', this.id()]);
+    } catch (err) {
+      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to update club');
+    } finally {
+      this._isSubmitting.set(false);
+    }
+  }
+}
+````
+
 ## File: src/app/features/events/event-card/event-card.component.html
 ````html
 <article class="parchment-card flex flex-col overflow-hidden h-full
@@ -14304,97 +14380,6 @@ export class QuizTakeComponent implements OnInit {
         this.errorMessage.set((err as Error).message);
         this.state.set('error');
       });
-  }
-}
-````
-
-## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
-````typescript
-import {
-  Component, ChangeDetectionStrategy, input, output,
-  DestroyRef, signal, inject, ElementRef, HostListener, effect,
-} from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { switchMap, debounceTime, distinctUntilChanged, of } from 'rxjs';
-import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
-import { HlmInput } from '../../spartan/input/src';
-@Component({
-  selector: 'app-address-autocomplete',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, HlmInput],
-  templateUrl: './address-autocomplete.component.html',
-})
-export class AddressAutocompleteComponent {
-  readonly control = input.required<FormControl<string>>();
-  readonly placeholder = input<string>('');
-  readonly inputId = input<string>('');
-  readonly selected = output<GeocodeSuggestion>();
-  private readonly geocoding = inject(GeocodingService);
-  private readonly elRef = inject(ElementRef);
-  private readonly destroyRef = inject(DestroyRef);
-  readonly suggestions = signal<GeocodeSuggestion[]>([]);
-  readonly isLoading = signal(false);
-  readonly isOpen = signal(false);
-  readonly activeIndex = signal(-1);
-  constructor() {
-    effect(() => {
-      const ctrl = this.control();
-      ctrl.valueChanges.pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        switchMap(q => {
-          if (!q || q.length < 2) {
-            this.suggestions.set([]);
-            this.isOpen.set(false);
-            return of([]);
-          }
-          this.isLoading.set(true);
-          return this.geocoding.autocomplete$(q);
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      ).subscribe({
-        next: (results) => {
-          this.isLoading.set(false);
-          this.suggestions.set(results);
-          this.activeIndex.set(-1);
-          this.isOpen.set(results.length > 0);
-        },
-        error: () => {
-          this.isLoading.set(false);
-          this.suggestions.set([]);
-        },
-      });
-    });
-  }
-  select(s: GeocodeSuggestion): void {
-    this.control().setValue(s.label, { emitEvent: false });
-    this.suggestions.set([]);
-    this.isOpen.set(false);
-    this.selected.emit(s);
-  }
-  onKeydown(event: KeyboardEvent): void {
-    if (!this.isOpen()) return;
-    const len = this.suggestions().length;
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i + 1) % len);
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i - 1 + len) % len);
-    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
-      event.preventDefault();
-      this.select(this.suggestions()[this.activeIndex()]);
-    } else if (event.key === 'Escape') {
-      this.isOpen.set(false);
-    }
-  }
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (!this.elRef.nativeElement.contains(event.target)) {
-      this.isOpen.set(false);
-    }
   }
 }
 ````
@@ -15944,6 +15929,229 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
 </header>
 ````
 
+## File: src/app/core/services/club.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
+import { AuthService } from '../auth/auth.service';
+import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
+import { ClubEvent } from '../models/event.model';
+@Injectable({ providedIn: 'root' })
+export class ClubService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly _clubs = signal<Club[]>([]);
+  private readonly _myClubs = signal<Club[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _error = signal<string | null>(null);
+  private readonly _searchQuery = signal('');
+  private readonly _cityFilter = signal<string | null>(null);
+  readonly clubs = this._clubs.asReadonly();
+  readonly myClubs = this._myClubs.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly searchQuery = this._searchQuery.asReadonly();
+  readonly myOwnedClubs = computed<Club[]>(() => {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return [];
+    return this._clubs().filter(c => c.organizerId === userId);
+  });
+  readonly myOwnedClubIds = computed<Set<string>>(() =>
+    new Set(this.myOwnedClubs().map(c => c.id)),
+  );
+  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
+  readonly availableCities = computed<string[]>(() => {
+    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
+    return cities.sort((a, b) => a.localeCompare(b));
+  });
+  readonly filteredClubs = computed(() => {
+    const q = this._searchQuery().toLowerCase().trim();
+    const city = this._cityFilter();
+    let clubs = this._clubs();
+    if (q) {
+      clubs = clubs.filter(
+        c =>
+          c.name.toLowerCase().includes(q) ||
+          (c.description?.toLowerCase().includes(q) ?? false),
+      );
+    }
+    if (city) {
+      clubs = clubs.filter(c => c.city === city);
+    }
+    return clubs;
+  });
+  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
+    const clubs = this.filteredClubs();
+    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
+      const city = club.city || '';
+      if (!acc[city]) acc[city] = [];
+      acc[city].push(club);
+      return acc;
+    }, {});
+  });
+  readonly myParticipatedClubs = computed<Club[]>(() => []);
+  readonly myMissedClubs = computed<Club[]>(() => []);
+  setSearchQuery(query: string): void {
+    this._searchQuery.set(query);
+  }
+  setCityFilter(city: string | null): void {
+    this._cityFilter.set(city);
+  }
+  async loadPublicClubs(): Promise<void> {
+    this._isLoading.set(true);
+    this._error.set(null);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
+      );
+      this._clubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load clubs');
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async loadMyClubs(): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
+      );
+      this._myClubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load my clubs');
+    }
+  }
+  async getClubById(id: string): Promise<Club | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
+      );
+      return mapClub(raw);
+    } catch {
+      return null;
+    }
+  }
+  async createClub(payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    coverUrl?: string | null;
+    city?: string;
+    tags?: string[];
+    meetingDurationMinutes?: number | null;
+    afterMeetingVenue?: { name: string; address: string; description: string } | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
+        name: payload.name,
+        description: payload.description,
+        isPublic: payload.isPublic,
+        coverUrl: payload.coverUrl ?? null,
+        city: payload.city,
+        tags: payload.tags,
+        meetingDurationMinutes: payload.meetingDurationMinutes,
+        afterMeetingVenue: payload.afterMeetingVenue,
+      }),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(existing => [club, ...existing]);
+    this._myClubs.update(existing => [club, ...existing]);
+    return club;
+  }
+  async updateClub(clubId: string, payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    city?: string;
+    coverUrl?: string | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    return club;
+  }
+  async joinClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
+    );
+    this._clubs.update(list =>
+      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
+    );
+    const club = this._clubs().find(c => c.id === clubId);
+    if (club && !this.myClubIds().has(clubId)) {
+      this._myClubs.update(list => [club, ...list]);
+    }
+  }
+  async leaveClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
+    );
+    this._clubs.update(list =>
+      list.map(c =>
+        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
+      ),
+    );
+    this._myClubs.update(list => list.filter(c => c.id !== clubId));
+  }
+  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
+    );
+    return raw.map(mapClubMember);
+  }
+  async kickMember(clubId: string, userId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
+    );
+  }
+  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
+    );
+  }
+  async getBans(clubId: string): Promise<BanRecord[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
+    );
+    return raw.map(mapBanRecord);
+  }
+  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
+    );
+    return raw.map(mapEvent);
+  }
+  async pauseClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'pause');
+  }
+  async cancelClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'cancel');
+  }
+  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
+  }
+  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+  msUntilDeletion(club: Club): number | null {
+    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
+    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
+    const remaining = deletionTime - Date.now();
+    return remaining > 0 ? remaining : null;
+  }
+}
+````
+
 ## File: public/i18n/en.json
 ````json
 {
@@ -16960,229 +17168,6 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
     "site_name": "Book Club",
     "site_url": "https://book-club-fe.vercel.app",
     "site_description": "Читацькі клуби України"
-  }
-}
-````
-
-## File: src/app/core/services/club.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
-import { AuthService } from '../auth/auth.service';
-import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
-import { ClubEvent } from '../models/event.model';
-@Injectable({ providedIn: 'root' })
-export class ClubService {
-  private readonly http = inject(HttpClient);
-  private readonly auth = inject(AuthService);
-  private readonly _clubs = signal<Club[]>([]);
-  private readonly _myClubs = signal<Club[]>([]);
-  private readonly _isLoading = signal(false);
-  private readonly _error = signal<string | null>(null);
-  private readonly _searchQuery = signal('');
-  private readonly _cityFilter = signal<string | null>(null);
-  readonly clubs = this._clubs.asReadonly();
-  readonly myClubs = this._myClubs.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly error = this._error.asReadonly();
-  readonly searchQuery = this._searchQuery.asReadonly();
-  readonly myOwnedClubs = computed<Club[]>(() => {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) return [];
-    return this._clubs().filter(c => c.organizerId === userId);
-  });
-  readonly myOwnedClubIds = computed<Set<string>>(() =>
-    new Set(this.myOwnedClubs().map(c => c.id)),
-  );
-  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
-  readonly availableCities = computed<string[]>(() => {
-    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
-    return cities.sort((a, b) => a.localeCompare(b));
-  });
-  readonly filteredClubs = computed(() => {
-    const q = this._searchQuery().toLowerCase().trim();
-    const city = this._cityFilter();
-    let clubs = this._clubs();
-    if (q) {
-      clubs = clubs.filter(
-        c =>
-          c.name.toLowerCase().includes(q) ||
-          (c.description?.toLowerCase().includes(q) ?? false),
-      );
-    }
-    if (city) {
-      clubs = clubs.filter(c => c.city === city);
-    }
-    return clubs;
-  });
-  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
-    const clubs = this.filteredClubs();
-    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
-      const city = club.city || '';
-      if (!acc[city]) acc[city] = [];
-      acc[city].push(club);
-      return acc;
-    }, {});
-  });
-  readonly myParticipatedClubs = computed<Club[]>(() => []);
-  readonly myMissedClubs = computed<Club[]>(() => []);
-  setSearchQuery(query: string): void {
-    this._searchQuery.set(query);
-  }
-  setCityFilter(city: string | null): void {
-    this._cityFilter.set(city);
-  }
-  async loadPublicClubs(): Promise<void> {
-    this._isLoading.set(true);
-    this._error.set(null);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
-      );
-      this._clubs.set(raw.map(mapClub));
-    } catch {
-      this._error.set('Failed to load clubs');
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async loadMyClubs(): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
-      );
-      this._myClubs.set(raw.map(mapClub));
-    } catch {
-      this._error.set('Failed to load my clubs');
-    }
-  }
-  async getClubById(id: string): Promise<Club | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
-      );
-      return mapClub(raw);
-    } catch {
-      return null;
-    }
-  }
-  async createClub(payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    coverUrl?: string | null;
-    city?: string;
-    tags?: string[];
-    meetingDurationMinutes?: number | null;
-    afterMeetingVenue?: { name: string; address: string; description: string } | null;
-  }): Promise<Club> {
-    const raw = await firstValueFrom(
-      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
-        name: payload.name,
-        description: payload.description,
-        isPublic: payload.isPublic,
-        coverUrl: payload.coverUrl ?? null,
-        city: payload.city,
-        tags: payload.tags,
-        meetingDurationMinutes: payload.meetingDurationMinutes,
-        afterMeetingVenue: payload.afterMeetingVenue,
-      }),
-    );
-    const club = mapClub(raw);
-    this._clubs.update(existing => [club, ...existing]);
-    this._myClubs.update(existing => [club, ...existing]);
-    return club;
-  }
-  async updateClub(clubId: string, payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    city?: string;
-    coverUrl?: string | null;
-  }): Promise<Club> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
-    );
-    const club = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    return club;
-  }
-  async joinClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
-    );
-    this._clubs.update(list =>
-      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
-    );
-    const club = this._clubs().find(c => c.id === clubId);
-    if (club && !this.myClubIds().has(clubId)) {
-      this._myClubs.update(list => [club, ...list]);
-    }
-  }
-  async leaveClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
-    );
-    this._clubs.update(list =>
-      list.map(c =>
-        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
-      ),
-    );
-    this._myClubs.update(list => list.filter(c => c.id !== clubId));
-  }
-  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
-    );
-    return raw.map(mapClubMember);
-  }
-  async kickMember(clubId: string, userId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
-    );
-  }
-  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
-    );
-  }
-  async getBans(clubId: string): Promise<BanRecord[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
-    );
-    return raw.map(mapBanRecord);
-  }
-  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
-    );
-    return raw.map(mapEvent);
-  }
-  async pauseClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'pause');
-  }
-  async cancelClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'cancel');
-  }
-  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
-  }
-  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
-    );
-    const updated = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
-  }
-  msUntilDeletion(club: Club): number | null {
-    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
-    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
-    const remaining = deletionTime - Date.now();
-    return remaining > 0 ? remaining : null;
   }
 }
 ````
