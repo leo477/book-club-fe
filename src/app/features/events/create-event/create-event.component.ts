@@ -11,8 +11,12 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+<<<<<<< HEAD
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs';
+=======
+import { TranslateModule } from '@ngx-translate/core';
+>>>>>>> worktree-agent-a60e2046e76e1424e
 import { EventService } from '../../../core/services/event.service';
 import { QuizService } from '../../../core/services/quiz.service';
 import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
@@ -26,7 +30,11 @@ import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
   selector: 'app-create-event',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+<<<<<<< HEAD
   imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton],
+=======
+  imports: [RouterLink, ReactiveFormsModule, TranslateModule, AddressAutocompleteComponent],
+>>>>>>> worktree-agent-a60e2046e76e1424e
   templateUrl: './create-event.component.html',
 })
 export class CreateEventComponent implements OnInit {

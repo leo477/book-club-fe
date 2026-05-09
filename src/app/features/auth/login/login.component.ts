@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
 import { SeoService } from '../../../core/services/seo.service';
@@ -27,6 +27,7 @@ export class LoginComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly seo = inject(SeoService);
+  private readonly translate = inject(TranslateService);
 
   readonly errorMessage = signal<string | null>(null);
   readonly isSubmitting = signal(false);
@@ -69,7 +70,10 @@ export class LoginComponent {
     this.isSubmitting.set(false);
 
     if (error) {
-      this.errorMessage.set(error);
+      const translatedError = error === 'Invalid credentials'
+        ? this.translate.instant('AUTH.error_invalid_credentials')
+        : error;
+      this.errorMessage.set(translatedError);
     } else {
       // Trigger book animation; navigate in onBookAnimationDone()
       this.bookOpen.set(true);

@@ -7,7 +7,10 @@ import {
 } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+<<<<<<< HEAD
 import { toast } from '@spartan-ng/brain/sonner';
+=======
+>>>>>>> worktree-agent-a60e2046e76e1424e
 import { AuthService } from '../../core/auth/auth.service';
 import { UserRole, UserSocials } from '../../core/models/user.model';
 import { SeoService } from '../../core/services/seo.service';
@@ -28,52 +31,60 @@ import { HlmInput } from '../../shared/spartan/input/src';
 export class ProfileComponent {
   protected readonly auth = inject(AuthService);
   private readonly seo = inject(SeoService);
+<<<<<<< HEAD
+=======
+  private readonly toast = inject(ToastService);
+>>>>>>> worktree-agent-a60e2046e76e1424e
   private readonly translate = inject(TranslateService);
 
-  protected readonly socialFields: SocialField[] = [
-    {
-      key: 'telegram',
-      label: 'Telegram',
-      labelClass: 'text-blue-600 dark:text-blue-400',
-      placeholder: 'username (без @)',
-      focusRingClass: 'focus:ring-blue-500',
-    },
-    {
-      key: 'instagram',
-      label: 'Instagram',
-      labelClass: 'bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500 bg-clip-text text-transparent',
-      placeholder: 'username (без @)',
-      focusRingClass: 'focus:ring-pink-500',
-    },
-    {
-      key: 'twitter',
-      label: 'Twitter / X',
-      labelClass: 'text-gray-900 dark:text-gray-100',
-      placeholder: 'username (без @)',
-      focusRingClass: 'focus:ring-gray-800',
-    },
-    {
-      key: 'linkedin',
-      label: 'LinkedIn',
-      labelClass: 'text-blue-700 dark:text-blue-400',
-      placeholder: 'username або повний URL',
-      focusRingClass: 'focus:ring-blue-600',
-    },
-    {
-      key: 'github',
-      label: 'GitHub',
-      labelClass: 'text-gray-800 dark:text-gray-200',
-      placeholder: 'username',
-      focusRingClass: 'focus:ring-gray-700',
-    },
-    {
-      key: 'goodreads',
-      label: 'Goodreads',
-      labelClass: 'text-amber-700 dark:text-amber-400',
-      placeholder: 'username або повний URL',
-      focusRingClass: 'focus:ring-amber-500',
-    },
-  ];
+  protected readonly socialFields = computed<SocialField[]>(() => {
+    const atPlaceholder = this.translate.instant('PROFILE.social_placeholder_at');
+    const urlPlaceholder = this.translate.instant('PROFILE.social_placeholder_url');
+    return [
+      {
+        key: 'telegram',
+        label: 'Telegram',
+        labelClass: 'text-blue-600 dark:text-blue-400',
+        placeholder: atPlaceholder,
+        focusRingClass: 'focus:ring-blue-500',
+      },
+      {
+        key: 'instagram',
+        label: 'Instagram',
+        labelClass: 'bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500 bg-clip-text text-transparent',
+        placeholder: atPlaceholder,
+        focusRingClass: 'focus:ring-pink-500',
+      },
+      {
+        key: 'twitter',
+        label: 'Twitter / X',
+        labelClass: 'text-gray-900 dark:text-gray-100',
+        placeholder: atPlaceholder,
+        focusRingClass: 'focus:ring-gray-800',
+      },
+      {
+        key: 'linkedin',
+        label: 'LinkedIn',
+        labelClass: 'text-blue-700 dark:text-blue-400',
+        placeholder: urlPlaceholder,
+        focusRingClass: 'focus:ring-blue-600',
+      },
+      {
+        key: 'github',
+        label: 'GitHub',
+        labelClass: 'text-gray-800 dark:text-gray-200',
+        placeholder: 'username',
+        focusRingClass: 'focus:ring-gray-700',
+      },
+      {
+        key: 'goodreads',
+        label: 'Goodreads',
+        labelClass: 'text-amber-700 dark:text-amber-400',
+        placeholder: urlPlaceholder,
+        focusRingClass: 'focus:ring-amber-500',
+      },
+    ];
+  });
 
   /** Typed reactive form for updating the display name. */
   protected readonly nameForm = new FormGroup({
@@ -158,7 +169,11 @@ export class ProfileComponent {
   protected async changeRole(role: UserRole): Promise<void> {
     try {
       await this.auth.updateRole(role);
+<<<<<<< HEAD
       toast.success(this.translate.instant('PROFILE.role_changed'));
+=======
+      this.toast.show(this.translate.instant('PROFILE.role_changed'), 'success');
+>>>>>>> worktree-agent-a60e2046e76e1424e
     } catch { /* error already handled by interceptor */ }
   }
 

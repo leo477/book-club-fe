@@ -32,7 +32,8 @@
     "submit_register": "Register",
     "password_strength": "Password strength",
     "account_created": "Account created successfully!",
-    "welcome_message": "Welcome,"
+    "welcome_message": "Welcome,",
+    "error_invalid_credentials": "Invalid email or password."
   },
   "CREATE_CLUB": {
     "subtitle": "Create a new reading community",
@@ -251,7 +252,10 @@
     "role_admin": "Administrator",
     "meetings_attended": "Meetings attended",
     "meetings_missed": "Meetings missed",
-    "randomizer_wins": "Randomizer wins"
+    "randomizer_wins": "Randomizer wins",
+    "role_changed": "Role updated successfully!",
+    "social_placeholder_at": "username (without @)",
+    "social_placeholder_url": "username or full URL"
   },
   "RANDOMIZER": {
     "back_to_club": "← Back to club",
@@ -274,6 +278,7 @@
     "error_min": "Select at least 2 members",
     "winner": "Winner"
   },
+<<<<<<< HEAD
   "EVENTS": {
     "subtitle": "Discover and join upcoming book club gatherings",
     "attending": "attending",
@@ -299,6 +304,38 @@
     "no_upcoming": "No upcoming events",
     "no_upcoming_desc": "No events are scheduled yet. Check back soon!",
     "no_my_events_desc": "Join clubs to see their events here."
+=======
+  "CREATE_EVENT": {
+    "back_to_club": "← Back to Club",
+    "heading": "Create Event",
+    "title_label": "Title",
+    "title_required": "Title is required.",
+    "book_title_label": "📖 Book title",
+    "book_title_hint": "What book will you discuss at this event?",
+    "book_cover_searching": "🔍 Searching for book cover…",
+    "book_cover_not_found": "No cover found — you can add one manually below.",
+    "description_label": "Description",
+    "description_placeholder": "What will you be reading or discussing?",
+    "date_label": "Date & Time",
+    "date_required": "Date is required.",
+    "location_label": "Location",
+    "location_required": "Location is required.",
+    "duration_label": "Duration (min)",
+    "theme_label": "Theme",
+    "tags_label": "Tags",
+    "tags_placeholder": "fiction, dystopia, classic (comma-separated)",
+    "cover_label": "Cover image",
+    "linked_quiz_label": "🧠 Linked quiz",
+    "no_quiz": "— No quiz —",
+    "after_venue_add": "+ Add after-meeting venue",
+    "after_venue_remove": "− Remove after-meeting venue",
+    "after_venue_name_label": "Venue name",
+    "after_venue_address_label": "Address",
+    "after_venue_notes_label": "Notes",
+    "cancel": "Cancel",
+    "submit": "Create Event",
+    "submitting": "Creating…"
+>>>>>>> worktree-agent-a60e2046e76e1424e
   },
   "QUIZ": {
     "title": "Quizzes",
@@ -328,6 +365,7 @@
     "take": "Start",
     "results": "Results",
     "score": "Score",
+<<<<<<< HEAD
     "edit": "Edit",
     "edit_title": "Edit Quiz",
     "edit_save": "Save Changes",
@@ -380,16 +418,47 @@
     "session_live_leaderboard": "🏆 Live Leaderboard",
     "session_no_participants": "No participants yet. Waiting for responses…",
     "create_heading_full": "📝 Create Quiz",
+=======
+>>>>>>> worktree-agent-a60e2046e76e1424e
     "create_step_of": "Step {{ step }} of 2",
     "create_step_details": "Quiz details",
     "create_step_questions": "Add questions",
     "create_cancel": "✕ Cancel",
     "create_back": "← Back",
+<<<<<<< HEAD
     "preview_live_banner": "🟢 This quiz is currently live.",
     "preview_no_questions_link": "→ Go to Edit",
     "preview_correct_answer": "✓ Correct",
     "error_return": "Return to quiz list",
     "loading": "Loading quiz…"
+=======
+    "create_heading": "📝 Create Quiz",
+    "create_title_label": "Quiz title",
+    "create_title_placeholder": "e.g. The Midnight Library — Chapter 1 Quiz",
+    "create_title_required": "Title is required.",
+    "create_title_min": "Title must be at least 3 characters.",
+    "create_title_max": "Must not exceed 100 characters.",
+    "create_desc_label": "Description",
+    "create_desc_placeholder": "A brief description of the quiz…",
+    "create_desc_max": "Must not exceed 500 characters.",
+    "create_continue": "Continue →",
+    "create_first_question": "Add your first question",
+    "create_another_question": "Add another question",
+    "create_question_label": "Question",
+    "create_question_placeholder": "What is the main theme of chapter 3?",
+    "create_question_required": "Question is required.",
+    "create_question_min": "Must be at least 5 characters.",
+    "create_answers_label": "Answer options",
+    "create_answers_hint": "Select the radio button next to the correct answer.",
+    "create_add_question": "+ Add Question",
+    "create_save_draft": "💾 Save as Draft",
+    "create_saving": "…Saving",
+    "create_questions_count_one": "question",
+    "create_questions_count_many": "questions",
+    "result_perfect": "🎉 Perfect score!",
+    "result_review_title": "Review Answers",
+    "result_correct": "Correct"
+>>>>>>> worktree-agent-a60e2046e76e1424e
   },
   "CHAT": {
     "title": "Club Chat",

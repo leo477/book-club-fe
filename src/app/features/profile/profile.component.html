@@ -158,8 +158,125 @@
             {{ 'PROFILE.save' | translate }}
           </button>
         </div>
+<<<<<<< HEAD
       </form>
     </section>
+=======
+      </div>
+    </form>
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- Section 3 — Change Role                                           -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <section
+    aria-labelledby="role-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="role-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2"
+    >
+      <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
+    </h2>
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+      {{ 'PROFILE.role_subtitle' | translate }}
+    </p>
+
+    <app-profile-role-selector
+      [currentRole]="auth.currentUser()?.role ?? 'user'"
+      (roleChange)="changeRole($event)"
+    />
+
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- Section 4 — Statistics                                            -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <section
+    aria-labelledby="stats-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="stats-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
+    >
+      <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
+    </h2>
+
+    <app-profile-stats [stats]="auth.userStats()" />
+  </section>
+
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <!-- Section 5 — Social Media Links                                    -->
+  <!-- ══════════════════════════════════════════════════════════════════ -->
+  <section
+    aria-labelledby="socials-heading"
+    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
+  >
+    <h2
+      id="socials-heading"
+      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
+    >
+      <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
+    </h2>
+
+    <!-- ── Privacy toggle ─────────────────────────────────────────────── -->
+    <div class="flex items-center gap-3 mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
+      <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
+        <input
+          type="checkbox"
+          [formControl]="socialsPublicControl"
+          (change)="onSocialsPublicChange(socialsPublicControl.value)"
+          class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+        />
+        {{ 'PROFILE.socials_public_label' | translate }}
+      </label>
+    </div>
+
+    <!-- ── Current social badges ───────────────────────────────────── -->
+    @if (
+      userSocials().telegram  ||
+      userSocials().instagram ||
+      userSocials().twitter   ||
+      userSocials().linkedin  ||
+      userSocials().github    ||
+      userSocials().goodreads
+    ) {
+      <div class="flex flex-wrap gap-2 mb-6">
+        <app-social-badges [socials]="userSocials()" />
+      </div>
+    }
+
+    <!-- ── Edit form ────────────────────────────────────────────────── -->
+    <form
+      [formGroup]="socialsForm"
+      (ngSubmit)="submitSocials()"
+      novalidate
+      class="space-y-4"
+    >
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        @for (social of socialFields(); track social.key) {
+          <app-social-link-field [config]="social" [form]="socialsForm" />
+        }
+      </div>
+
+      <!-- Submit row -->
+      <div class="flex items-center gap-3 pt-1">
+        <button
+          type="submit"
+          class="rounded-xl bg-primary-600 hover:bg-primary-700 text-white
+                 px-5 py-2.5 text-sm font-medium
+                 transition-all duration-200 focus:outline-none focus:ring-2
+                 focus:ring-primary-500 focus:ring-offset-2"
+        >
+          {{ 'PROFILE.save' | translate }}
+        </button>
+      </div>
+    </form>
+
+  </section>
+>>>>>>> worktree-agent-a60e2046e76e1424e
 
   </div>
 </div>

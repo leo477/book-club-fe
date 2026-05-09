@@ -5,22 +5,31 @@ import {
   input,
   signal,
 } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { QuizService } from '../../../core/services/quiz.service';
 import { QuizQuestion } from '../../../core/models/quiz.model';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmCardImports } from '../../../shared/spartan/card/src';
-import {
-  OPTION_INDICES,
-  buildMetaForm,
-  buildQuestionForm,
-  isInvalidTouched,
-  optionLabel,
-} from '../quiz-form.utils';
+
+interface MetaForm {
+  title: FormControl<string>;
+  description: FormControl<string>;
+}
+
+interface QuestionForm {
+  question: FormControl<string>;
+  option0: FormControl<string>;
+  option1: FormControl<string>;
+  option2: FormControl<string>;
+  option3: FormControl<string>;
+  correctIndex: FormControl<number>;
+}
 
 type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
 
@@ -28,7 +37,7 @@ type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
   selector: 'app-quiz-create',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, TranslateModule, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule],
   templateUrl: './quiz-create.component.html',
 })
 export class QuizCreateComponent {
@@ -37,18 +46,55 @@ export class QuizCreateComponent {
 
   protected readonly currentStep = signal<1 | 2>(1);
   protected readonly localQuestions = signal<LocalQuestion[]>([]);
-  protected readonly isSaving = signal(false);
+  protected readonly isPublishing = signal(false);
   protected readonly errorMessage = signal('');
 
   readonly id = input<string>('');
 
-  readonly optionIndices = OPTION_INDICES;
+  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
 
-  protected readonly metaForm = buildMetaForm();
-  protected readonly questionForm = buildQuestionForm();
+  protected readonly metaForm = new FormGroup<MetaForm>({
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+  });
 
-  protected readonly isInvalidTouched = isInvalidTouched;
-  protected readonly optionLabel = optionLabel;
+  protected readonly questionForm = new FormGroup<QuestionForm>({
+    question: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
+    }),
+    option0: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option1: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option2: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option3: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    correctIndex: new FormControl<number>(0, { nonNullable: true }),
+  });
+
+  protected isInvalidTouched(ctrl: AbstractControl): boolean {
+    return ctrl.invalid && ctrl.touched;
+  }
+
+  protected optionLabel(index: number): string {
+    return String.fromCodePoint(65 + index);
+  }
 
   protected nextStep(): void {
     if (this.metaForm.invalid) {
@@ -85,11 +131,11 @@ export class QuizCreateComponent {
     this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
   }
 
-  protected saveQuiz(): void {
+  protected publishQuiz(): void {
     const questions = this.localQuestions();
     if (questions.length === 0) return;
 
-    this.isSaving.set(true);
+    this.isPublishing.set(true);
     this.errorMessage.set('');
 
     const { title, description } = this.metaForm.getRawValue();
@@ -98,14 +144,17 @@ export class QuizCreateComponent {
     this.quizService
       .createQuiz({ clubId, title: title.trim(), description: description.trim() })
       .then(async quiz => {
+        // Add questions sequentially to preserve sort_order
         for (const q of questions) {
           await this.quizService.addQuestion(quiz.id, q);
         }
-        this.isSaving.set(false);
+        // Activate the quiz
+        await this.quizService.toggleActive(quiz.id, true);
+        this.isPublishing.set(false);
         this.router.navigate(['/clubs', clubId, 'quizzes']);
       })
       .catch(err => {
-        this.isSaving.set(false);
+        this.isPublishing.set(false);
         this.errorMessage.set((err as Error).message);
       });
   }

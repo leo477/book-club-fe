@@ -1,0 +1,1165 @@
+{
+  "config": {
+    "configFile": "/home/dmytr/angular/book-club-fe/playwright.vercel.config.ts",
+    "rootDir": "/home/dmytr/angular/book-club-fe/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": null,
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {
+      "actualWorkers": 1
+    },
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "/home/dmytr/angular/book-club-fe/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {
+          "actualWorkers": 1
+        },
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "/home/dmytr/angular/book-club-fe/e2e",
+        "testIgnore": [],
+        "testMatch": [
+          "**/audit.spec.ts"
+        ],
+        "timeout": 60000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "html",
+        {
+          "open": "never"
+        }
+      ],
+      [
+        "json",
+        {
+          "outputFile": "playwright-report/audit-results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "audit.spec.ts",
+      "file": "audit.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "Unauthenticated",
+          "file": "audit.spec.ts",
+          "line": 176,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /login — form renders and validates",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2729,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:04:41.155Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Unauthenticated-GET-login-—-form-renders-and-validates-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-f5246440050eb2d1b30f",
+              "file": "audit.spec.ts",
+              "line": 177,
+              "column": 7
+            },
+            {
+              "title": "GET /register — form renders and validates",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2104,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:04:48.456Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Unauthenticated-GET--6e3a8--form-renders-and-validates-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-bc30b90a70577aa59e02",
+              "file": "audit.spec.ts",
+              "line": 210,
+              "column": 7
+            },
+            {
+              "title": "GET /events (unauthenticated) — event cards or empty state",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1640,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:04:50.613Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Unauthenticated-GET--18545--event-cards-or-empty-state-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-a3123b11ec2435f46f3d",
+              "file": "audit.spec.ts",
+              "line": 233,
+              "column": 7
+            },
+            {
+              "title": "GET /clubs (unauthenticated) — redirects to login",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1594,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:04:52.300Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Unauthenticated-GET--6a540-icated-—-redirects-to-login-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-49e29292a22c3612fdf8",
+              "file": "audit.spec.ts",
+              "line": 248,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Login flow",
+          "file": "audit.spec.ts",
+          "line": 265,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Login with valid credentials redirects to app",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 4982,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:04:53.930Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Login-flow-Login-wit-ba01d-redentials-redirects-to-app-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-22da45e75733d1a79597",
+              "file": "audit.spec.ts",
+              "line": 266,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Authenticated — Events",
+          "file": "audit.spec.ts",
+          "line": 296,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /events — feed loads with tabs",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2363,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:04:59.006Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Even-be87f-ents-—-feed-loads-with-tabs-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-d46db9bc60fe9a0ee667",
+              "file": "audit.spec.ts",
+              "line": 297,
+              "column": 7
+            },
+            {
+              "title": "GET /events/:id — event detail",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 79,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:05:01.410Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Events-GET-events-id-—-event-detail-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-76af7e3d1ce1b59ef351",
+              "file": "audit.spec.ts",
+              "line": 318,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Authenticated — Clubs",
+          "file": "audit.spec.ts",
+          "line": 338,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /clubs — clubs list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2435,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:05:01.504Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Clubs-GET-clubs-—-clubs-list-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-2ce67c659045f92d789a",
+              "file": "audit.spec.ts",
+              "line": 339,
+              "column": 7
+            },
+            {
+              "title": "GET /clubs/:id — club detail",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3129,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:05:03.982Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Clubs-GET-clubs-id-—-club-detail-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-68219b921b1d8e3be4c1",
+              "file": "audit.spec.ts",
+              "line": 355,
+              "column": 7
+            },
+            {
+              "title": "GET /clubs/:id/edit — edit form for owner",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2240,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:05:07.155Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Club-98654--edit-—-edit-form-for-owner-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-cb15362a6b87f51ad9c8",
+              "file": "audit.spec.ts",
+              "line": 374,
+              "column": 7
+            },
+            {
+              "title": "GET /clubs/:id/events/create — create event form",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2243,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:05:09.433Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Club-09337--create-—-create-event-form-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-0a0de066d87ad95845c9",
+              "file": "audit.spec.ts",
+              "line": 405,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Authenticated — Quizzes",
+          "file": "audit.spec.ts",
+          "line": 437,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /clubs/:id/quizzes — quiz list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2301,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:05:11.713Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-05b4d-lubs-id-quizzes-—-quiz-list-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-9302ee7aba33d1706f73",
+              "file": "audit.spec.ts",
+              "line": 438,
+              "column": 7
+            },
+            {
+              "title": "GET /clubs/:id/quizzes/create — create quiz step 1",
+              "ok": false,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "failed",
+                      "duration": 22397,
+                      "error": {
+                        "message": "TimeoutError: locator.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Next\"), button:has-text(\"Далі\"), button:has-text(\"Continue\")').first()\u001b[22m\n\u001b[2m    - locator resolved to <button hlmbtn=\"\" type=\"submit\" tabindex=\"-1\" disabled=\"true\" data-slot=\"button\" data-disabled=\"true\" class=\"focus-visible:border-ring focus-visible:ring-ring/50 data-[matches-spartan-invalid=true]:ring-destructive/20 dark:data-[matches-spartan-invalid=true]:ring-destructive/40 data-[matches-spartan-invalid=true]:border-destructive dark:data-[matches-spartan-invalid=true]:border-destructive/50 rounded-md border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-3 data-[matches-s…> Continue → </button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    39 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
+                        "stack": "TimeoutError: locator.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Next\"), button:has-text(\"Далі\"), button:has-text(\"Continue\")').first()\u001b[22m\n\u001b[2m    - locator resolved to <button hlmbtn=\"\" type=\"submit\" tabindex=\"-1\" disabled=\"true\" data-slot=\"button\" data-disabled=\"true\" class=\"focus-visible:border-ring focus-visible:ring-ring/50 data-[matches-spartan-invalid=true]:ring-destructive/20 dark:data-[matches-spartan-invalid=true]:ring-destructive/40 data-[matches-spartan-invalid=true]:border-destructive dark:data-[matches-spartan-invalid=true]:border-destructive/50 rounded-md border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-3 data-[matches-s…> Continue → </button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    39 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /home/dmytr/angular/book-club-fe/e2e/audit.spec.ts:484:21",
+                        "location": {
+                          "file": "/home/dmytr/angular/book-club-fe/e2e/audit.spec.ts",
+                          "column": 21,
+                          "line": 484
+                        },
+                        "snippet": "  482 |     const nextBtn = page.locator('button:has-text(\"Next\"), button:has-text(\"Далі\"), button:has-text(\"Continue\")').first();\n  483 |     if (await nextBtn.isVisible().catch(() => false)) {\n> 484 |       await nextBtn.click();\n      |                     ^\n  485 |       await page.waitForTimeout(500);\n  486 |       const hasValidation = await page.locator('[class*=\"error\"], [class*=\"invalid\"], [aria-invalid=\"true\"]').count();\n  487 |       if (hasValidation === 0) {"
+                      },
+                      "errors": [
+                        {
+                          "location": {
+                            "file": "/home/dmytr/angular/book-club-fe/e2e/audit.spec.ts",
+                            "column": 21,
+                            "line": 484
+                          },
+                          "message": "TimeoutError: locator.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Next\"), button:has-text(\"Далі\"), button:has-text(\"Continue\")').first()\u001b[22m\n\u001b[2m    - locator resolved to <button hlmbtn=\"\" type=\"submit\" tabindex=\"-1\" disabled=\"true\" data-slot=\"button\" data-disabled=\"true\" class=\"focus-visible:border-ring focus-visible:ring-ring/50 data-[matches-spartan-invalid=true]:ring-destructive/20 dark:data-[matches-spartan-invalid=true]:ring-destructive/40 data-[matches-spartan-invalid=true]:border-destructive dark:data-[matches-spartan-invalid=true]:border-destructive/50 rounded-md border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-3 data-[matches-s…> Continue → </button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    39 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n\n  482 |     const nextBtn = page.locator('button:has-text(\"Next\"), button:has-text(\"Далі\"), button:has-text(\"Continue\")').first();\n  483 |     if (await nextBtn.isVisible().catch(() => false)) {\n> 484 |       await nextBtn.click();\n      |                     ^\n  485 |       await page.waitForTimeout(500);\n  486 |       const hasValidation = await page.locator('[class*=\"error\"], [class*=\"invalid\"], [aria-invalid=\"true\"]').count();\n  487 |       if (hasValidation === 0) {\n    at /home/dmytr/angular/book-club-fe/e2e/audit.spec.ts:484:21"
+                        }
+                      ],
+                      "stdout": [
+                        {
+                          "text": "\n✅ bugs.md written — 24 issue(s) found\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:05:14.055Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "screenshot",
+                          "contentType": "image/png",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-9b0a3-create-—-create-quiz-step-1-chromium/test-failed-1.png"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-9b0a3-create-—-create-quiz-step-1-chromium/error-context.md"
+                        },
+                        {
+                          "name": "error-context",
+                          "contentType": "text/markdown",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-9b0a3-create-—-create-quiz-step-1-chromium/error-context.md"
+                        },
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-9b0a3-create-—-create-quiz-step-1-chromium/trace.zip"
+                        }
+                      ],
+                      "errorLocation": {
+                        "file": "/home/dmytr/angular/book-club-fe/e2e/audit.spec.ts",
+                        "column": 21,
+                        "line": 484
+                      }
+                    }
+                  ],
+                  "status": "unexpected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-b38f358edfddb5fa7fd7",
+              "file": "audit.spec.ts",
+              "line": 459,
+              "column": 7
+            },
+            {
+              "title": "GET /clubs/:id/quizzes/:quizId — take quiz",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2423,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:05:40.039Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-d446f--quizzes-quizId-—-take-quiz-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-029b5be3cb4067b9b4e0",
+              "file": "audit.spec.ts",
+              "line": 498,
+              "column": 7
+            },
+            {
+              "title": "GET /clubs/:id/quizzes/:quizId/preview — quiz preview",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2337,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:05:44.036Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-f4c0d-izId-preview-—-quiz-preview-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-06e2578b47fcd2080524",
+              "file": "audit.spec.ts",
+              "line": 519,
+              "column": 7
+            },
+            {
+              "title": "GET /clubs/:id/quizzes/:quizId/edit — quiz edit",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2851,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:05:46.429Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-e9c57-zes-quizId-edit-—-quiz-edit-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-7cf2a7f666c21eaf11e5",
+              "file": "audit.spec.ts",
+              "line": 540,
+              "column": 7
+            },
+            {
+              "title": "GET /clubs/:id/quizzes/:quizId/session — quiz session",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2422,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:05:49.325Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-c9d57-izId-session-—-quiz-session-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-312af12f04276abe0ee3",
+              "file": "audit.spec.ts",
+              "line": 566,
+              "column": 7
+            },
+            {
+              "title": "GET /clubs/:id/quizzes/:quizId/leaderboard — leaderboard",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2323,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:05:51.794Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-8d3f3-d-leaderboard-—-leaderboard-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-0ce7de78bab32fab9ce3",
+              "file": "audit.spec.ts",
+              "line": 587,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Authenticated — Randomizer",
+          "file": "audit.spec.ts",
+          "line": 609,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /clubs/:id/randomizer — renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2316,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:05:54.170Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Rand-96cee-ubs-id-randomizer-—-renders-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-6b2c2683cb59fc280d9c",
+              "file": "audit.spec.ts",
+              "line": 610,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Authenticated — Profile",
+          "file": "audit.spec.ts",
+          "line": 637,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /profile — profile page renders",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2207,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:05:56.540Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Prof-5f435-file-—-profile-page-renders-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-f0fa88c1ca5ce74aeaf1",
+              "file": "audit.spec.ts",
+              "line": 638,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Authenticated — Manage",
+          "file": "audit.spec.ts",
+          "line": 661,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /manage — accessible as organizer",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2529,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:05:58.789Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Mana-c4c9d-e-—-accessible-as-organizer-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-29850844fb383cafed54",
+              "file": "audit.spec.ts",
+              "line": 662,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Navigation & UI",
+          "file": "audit.spec.ts",
+          "line": 680,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Header navigation links work",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2418,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:06:01.367Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Navigation-UI-Header-navigation-links-work-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-01a9c5e7b844c5aafd45",
+              "file": "audit.spec.ts",
+              "line": 681,
+              "column": 7
+            },
+            {
+              "title": "Theme toggle button exists",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2521,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:06:03.832Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Navigation-UI-Theme-toggle-button-exists-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-ff9c27d83ece6c30097a",
+              "file": "audit.spec.ts",
+              "line": 701,
+              "column": 7
+            },
+            {
+              "title": "404 unknown route redirects gracefully",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 1,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 1556,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n✅ bugs.md written — 28 issue(s) found\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-09T14:06:06.402Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Navigation-UI-404-unknown-route-redirects-gracefully-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-3017867c3036115faae5",
+              "file": "audit.spec.ts",
+              "line": 715,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-05-09T14:04:40.617Z",
+    "duration": 81595.974,
+    "expected": 23,
+    "skipped": 0,
+    "unexpected": 1,
+    "flaky": 0
+  }
+}

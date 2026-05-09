@@ -5,14 +5,12 @@ import {
   computed,
   inject,
   signal,
-  linkedSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { QuizService } from '../../../core/services/quiz.service';
 import { QuizAttempt } from '../../../core/models/quiz.model';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-import { optionLabel } from '../quiz-form.utils';
 
 type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
 
@@ -20,20 +18,18 @@ type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
   selector: 'app-quiz-take',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, LoadingSpinnerComponent],
+  imports: [RouterLink, LoadingSpinnerComponent, TranslateModule],
   templateUrl: './quiz-take.component.html',
 })
 export class QuizTakeComponent implements OnInit {
   protected readonly quizService = inject(QuizService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
 
   protected readonly state = signal<QuizState>('loading');
   protected readonly errorMessage = signal('');
-  protected readonly currentIndex = linkedSignal(() => {
-  this.quizService.questions(); // Реєструємо залежність: коли питання зміняться, індекс скинеться
-  return 0; 
-});
+  protected readonly currentIndex = signal(0);
   protected readonly selectedAnswers = signal<number[]>([]);
   protected readonly selectedOption = computed(
     () => this.selectedAnswers()[this.currentIndex()] ?? -1,
@@ -59,7 +55,7 @@ export class QuizTakeComponent implements OnInit {
   });
   protected readonly scoreMessage = computed(() => {
     const pct = this.scorePercent();
-    if (pct === 100) return '🎉 Perfect score!';
+    if (pct === 100) return this.translate.instant('QUIZ.result_perfect');
     if (pct >= 80) return '🌟 Great job!';
     if (pct >= 60) return '👍 Good effort!';
     if (pct >= 40) return '📖 Keep reading!';
@@ -95,7 +91,9 @@ export class QuizTakeComponent implements OnInit {
       });
   }
 
-  protected readonly optionLabel = optionLabel;
+  protected optionLabel(index: number): string {
+    return String.fromCodePoint(65 + index);
+  }
 
   protected selectOption(index: number): void {
     const current = this.currentIndex();
