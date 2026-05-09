@@ -50,6 +50,7 @@ export class RegisterComponent {
   readonly isSubmitting = signal(false);
   readonly successMessage = signal(false);
   readonly registeredEmail = signal('');
+  readonly registeredName = signal('');
   readonly selectedRole = signal<UserRole>('user');
   /** Triggers book opening animation on successful registration. */
   readonly bookOpen = signal(false);
@@ -131,6 +132,7 @@ export class RegisterComponent {
       this.errorMessage.set(error);
     } else {
       this.registeredEmail.set(email);
+      this.registeredName.set(displayName);
       this.successMessage.set(true);
       // Trigger book opening animation on success
       this.bookOpen.set(true);

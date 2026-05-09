@@ -7,6 +7,7 @@ import {
   effect,
   input,
   linkedSignal,
+  untracked,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -166,7 +167,7 @@ export class ClubDetailComponent {
     this.errorMessage.set(null);
 
     try {
-      if (this.auth.isAuthenticated() && this.clubService.myClubs().length === 0) {
+      if (this.auth.isAuthenticated() && untracked(() => this.clubService.myClubs().length === 0)) {
         await this.clubService.loadMyClubs();
       }
       if (isCancelled()) return;
