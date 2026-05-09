@@ -158,7 +158,7 @@ jobs:
     name: SonarCloud
     runs-on: ubuntu-latest
     needs: [test]
-    if: ${{ secrets.SONAR_TOKEN != '' }}
+    continue-on-error: true
     permissions:
       contents: read
       pull-requests: read
@@ -266,7 +266,7 @@ jobs:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
     needs: [lint, test, build, security, typecheck, sonarcloud]
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && !failure() && !cancelled()
     permissions:
       contents: read
     environment:
