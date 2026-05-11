@@ -13,7 +13,7 @@ export default defineConfig({
     ['json', { outputFile: 'playwright-report/audit-results.json' }],
   ],
   use: {
-    baseURL: 'https://book-club-dyxne04jy-dmytros-projects-ad22eb22.vercel.app',
+    baseURL: 'https://book-club-l7xs8u371-dmytros-projects-ad22eb22.vercel.app',
     trace: 'on',
     screenshot: 'only-on-failure',
     actionTimeout: 20_000,

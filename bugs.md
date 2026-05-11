@@ -1,7 +1,7 @@
 # Bug Report — Book Club App Audit
 
 **Date:** 2026-05-11
-**URL:** https://book-club-dyxne04jy-dmytros-projects-ad22eb22.vercel.app/
+**URL:** https://book-club-l7xs8u371-dmytros-projects-ad22eb22.vercel.app/
 **Test user:** test123@mail.com
 **Club owner account:** terrtr
 
@@ -11,12 +11,10 @@
 |----------|-------|
 | Critical | 0 |
 | High | 0 |
-| Medium | 1 |
+| Medium | 0 |
 | Low | 0 |
-| **Total** | **1** |
+| **Total** | **0** |
 
-## MEDIUM (1)
+## No bugs found
 
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `/events/:id` | ui-missing | Skipped: no event ID discovered (no events in API response) |
+All checked routes loaded without console errors, network failures, or missing UI elements.

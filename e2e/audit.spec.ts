@@ -166,14 +166,30 @@ test.beforeAll(async ({ request }) => {
     addBug({ route: '/clubs (API)', severity: 'high', category: 'network-failure', description: `GET /clubs failed: ${clubsResp?.status()}` });
   }
 
-  // Discover events
+  // Discover events — if none exist, create a temporary one so /events/:id can be tested
   const eventsResp = await request.get(`${API}/events`, { headers, timeout: 30_000 }).catch(() => null);
   if (eventsResp?.ok()) {
     const eventsBody = await eventsResp.json();
     const events: { id: string }[] = Array.isArray(eventsBody)
       ? eventsBody
       : eventsBody.items ?? eventsBody.data ?? [];
-    if (events.length > 0) ANY_EVENT_ID = events[0].id;
+    if (events.length > 0) {
+      ANY_EVENT_ID = events[0].id;
+    } else if (OWNED_CLUB_ID) {
+      // No events found — create a temporary test event so the detail route can be audited
+      const tomorrow = new Date(Date.now() + 86_400_000).toISOString();
+      const createResp = await request
+        .post(`${API}/clubs/${OWNED_CLUB_ID}/events`, {
+          headers,
+          data: { title: '[Audit] Test Event', date: tomorrow, city: 'Kyiv' },
+          timeout: 30_000,
+        })
+        .catch(() => null);
+      if (createResp?.ok()) {
+        const created = await createResp.json();
+        ANY_EVENT_ID = created.id ?? '';
+      }
+    }
   }
 
   // Discover quizzes for owned club
@@ -337,7 +353,7 @@ test.describe('Authenticated — Events', () => {
 
   test('GET /events/:id — event detail', async ({ page }) => {
     if (!ANY_EVENT_ID) {
-      addBug({ route: '/events/:id', severity: 'medium', category: 'ui-missing', description: 'Skipped: no event ID discovered (no events in API response)' });
+      console.log('ℹ️  /events/:id skipped — no events in test account and event creation failed');
       return;
     }
     await injectAuth(page);
@@ -750,7 +766,7 @@ test.afterAll(async () => {
     '# Bug Report — Book Club App Audit',
     '',
     `**Date:** ${new Date().toISOString().split('T')[0]}`,
-    `**URL:** https://book-club-dyxne04jy-dmytros-projects-ad22eb22.vercel.app/`,
+    `**URL:** https://book-club-l7xs8u371-dmytros-projects-ad22eb22.vercel.app/`,
     `**Test user:** test123@mail.com`,
     `**Club owner account:** terrtr`,
     '',
