@@ -1,20 +1,20 @@
 <div class="min-h-screen p-4 sm:p-8">
   <div class="max-w-2xl mx-auto space-y-6">
 
-<<<<<<< HEAD
     <!-- ── Header ── -->
     <header class="flex items-center justify-between flex-wrap gap-4">
       <div>
         <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
-          {{ 'QUIZ.create_heading_full' | translate }}
+          {{ 'QUIZ.create_heading' | translate }}
         </h1>
         <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
-          Step {{ currentStep() }} of 2 —
-          {{ currentStep() === 1 ? 'Quiz details' : 'Add questions' }}
+          {{ 'QUIZ.create_step_of' | translate: { step: currentStep() } }} —
+          {{ currentStep() === 1 ? ('QUIZ.create_step_details' | translate) : ('QUIZ.create_step_questions' | translate) }}
         </p>
       </div>
+
       <a [routerLink]="['..']" class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-        ✕ Cancel
+        {{ 'QUIZ.create_cancel' | translate }}
       </a>
     </header>
 
@@ -39,43 +39,72 @@
         [formGroup]="metaForm"
         (ngSubmit)="nextStep()"
         novalidate
-        class="glass-card p-6 space-y-5"
+        class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200
+               dark:border-gray-800 shadow-sm space-y-5"
       >
         <!-- Title -->
-        <hlm-field>
-          <label hlmFieldLabel for="quiz-title">
-            Quiz title <span class="text-red-500">*</span>
+        <div class="space-y-1">
+          <label
+            for="quiz-title"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {{ 'QUIZ.create_title_label' | translate }} <span class="text-red-500">*</span>
           </label>
           <input
-            hlmInput
             id="quiz-title"
             formControlName="title"
-            class="w-full"
-            placeholder="e.g. The Midnight Library — Chapter 1 Quiz"
+            [placeholder]="'QUIZ.create_title_placeholder' | translate"
+            class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 dark:text-white
+                   bg-white dark:bg-gray-800 placeholder-gray-400 focus:outline-none
+                   focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+            [class.border-red-400]="isInvalidTouched(metaForm.controls.title)"
+            [class.border-gray-300]="!isInvalidTouched(metaForm.controls.title)"
+            [class.dark:border-gray-600]="!isInvalidTouched(metaForm.controls.title)"
           />
-          <hlm-field-error validator="required">Title is required.</hlm-field-error>
-          <hlm-field-error validator="minlength">Title must be at least 3 characters.</hlm-field-error>
-          <hlm-field-error validator="maxlength">Title must not exceed 100 characters.</hlm-field-error>
-        </hlm-field>
+          @if (isInvalidTouched(metaForm.controls.title)) {
+            <p class="text-red-500 text-xs">
+              @if (metaForm.controls.title.errors?.['required']) { {{ 'QUIZ.create_title_required' | translate }} }
+              @else if (metaForm.controls.title.errors?.['minlength']) { {{ 'QUIZ.create_title_min' | translate }} }
+              @else if (metaForm.controls.title.errors?.['maxlength']) { {{ 'QUIZ.create_title_max' | translate }} }
+            </p>
+          }
+        </div>
 
         <!-- Description -->
-        <hlm-field>
-          <label hlmFieldLabel for="quiz-desc">Description</label>
+        <div class="space-y-1">
+          <label
+            for="quiz-desc"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {{ 'QUIZ.create_desc_label' | translate }}
+          </label>
           <textarea
-            hlmInput
             id="quiz-desc"
             formControlName="description"
             rows="3"
-            class="w-full resize-none"
-            placeholder="A brief description of the quiz…"
+            [placeholder]="'QUIZ.create_desc_placeholder' | translate"
+            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5
+                   text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
+                   placeholder-gray-400 resize-none focus:outline-none focus:ring-2
+                   focus:ring-primary-500 focus:border-transparent transition-colors"
+            [class.border-red-400]="isInvalidTouched(metaForm.controls.description)"
           ></textarea>
-          <hlm-field-error validator="maxlength">Description must not exceed 500 characters.</hlm-field-error>
-        </hlm-field>
+          @if (isInvalidTouched(metaForm.controls.description)) {
+            <p class="text-red-500 text-xs">
+              @if (metaForm.controls.description.errors?.['maxlength']) { {{ 'QUIZ.create_desc_max' | translate }} }
+            </p>
+          }
+        </div>
 
         <div class="flex justify-end">
-          <button hlmBtn type="submit" [disabled]="metaForm.invalid"
-                  class="bg-primary-600 hover:bg-primary-700 text-white">
-            Continue →
+          <button
+            type="submit"
+            [disabled]="metaForm.invalid"
+            class="bg-primary-600 hover:bg-primary-500 disabled:opacity-40
+                   disabled:cursor-not-allowed text-white rounded-xl px-6 py-2.5
+                   font-medium transition-colors text-sm"
+          >
+            {{ 'QUIZ.create_continue' | translate }}
           </button>
         </div>
       </form>
@@ -88,25 +117,35 @@
         <!-- Existing questions list -->
         @if (localQuestions().length > 0) {
           <div class="space-y-3">
-            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-widest">
+            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase
+                       tracking-widest">
               Questions ({{ localQuestions().length }})
             </h2>
             @for (q of localQuestions(); track $index) {
-              <div hlmCard class="glass-card-subtle px-5 py-4 flex items-start gap-3 rounded-xl">
-                <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
-                             text-primary-700 dark:text-primary-300 text-xs font-bold flex
-                             items-center justify-center flex-shrink-0">
+              <div
+                class="bg-white dark:bg-gray-900 rounded-xl px-5 py-4 border border-gray-200
+                       dark:border-gray-800 shadow-sm flex items-start gap-3"
+              >
+                <span
+                  class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
+                         text-primary-700 dark:text-primary-300 text-xs font-bold flex
+                         items-center justify-center flex-shrink-0"
+                >
                   {{ $index + 1 }}
                 </span>
-                <div class="min-w-0 flex-1">
-                  <p class="text-gray-900 dark:text-white text-sm font-medium">{{ q.question }}</p>
-                  <p class="text-green-600 dark:text-green-400 text-xs mt-1">✓ {{ q.options[q.correctIndex] }}</p>
+                <div class="min-w-0">
+                  <p class="text-gray-900 dark:text-white text-sm font-medium">
+                    {{ q.question }}
+                  </p>
+                  <p class="text-green-600 dark:text-green-400 text-xs mt-1">
+                    ✓ {{ q.options[q.correctIndex] }}
+                  </p>
                 </div>
                 <button
-                  type="button"
                   (click)="removeQuestion($index)"
-                  class="text-gray-400 hover:text-red-500 transition-colors text-lg flex-shrink-0 ml-auto leading-none"
-                  [attr.aria-label]="'Remove question ' + ($index + 1)"
+                  class="text-gray-400 hover:text-red-500 transition-colors text-lg
+                         flex-shrink-0 ml-auto leading-none"
+                  aria-label="Remove question {{ $index + 1 }}"
                 >
                   ✕
                 </button>
@@ -120,45 +159,59 @@
           [formGroup]="questionForm"
           (ngSubmit)="addQuestion()"
           novalidate
-          class="glass-card p-6 space-y-5"
+          class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200
+                 dark:border-gray-800 shadow-sm space-y-5"
         >
           <h2 class="font-semibold text-gray-900 dark:text-white">
-            {{ localQuestions().length === 0 ? 'Add your first question' : 'Add another question' }}
+            {{ localQuestions().length === 0 ? ('QUIZ.create_first_question' | translate) : ('QUIZ.create_another_question' | translate) }}
           </h2>
 
           <!-- Question text -->
-          <hlm-field>
-            <label hlmFieldLabel for="q-text">Question <span class="text-red-500">*</span></label>
+          <div class="space-y-1">
+            <label
+              for="q-text"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              {{ 'QUIZ.create_question_label' | translate }} <span class="text-red-500">*</span>
+            </label>
             <textarea
-              hlmInput
               id="q-text"
               formControlName="question"
               rows="2"
-              class="w-full resize-none"
-              placeholder="What is the main theme of chapter 3?"
+              [placeholder]="'QUIZ.create_question_placeholder' | translate"
+              class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5
+                     text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
+                     placeholder-gray-400 resize-none focus:outline-none focus:ring-2
+                     focus:ring-primary-500 focus:border-transparent transition-colors"
+              [class.border-red-400]="isInvalidTouched(questionForm.controls.question)"
             ></textarea>
-            <hlm-field-error validator="required">Question is required.</hlm-field-error>
-            <hlm-field-error validator="minlength">Question must be at least 5 characters.</hlm-field-error>
-          </hlm-field>
+            @if (isInvalidTouched(questionForm.controls.question)) {
+              <p class="text-red-500 text-xs">
+                @if (questionForm.controls.question.errors?.['required']) { {{ 'QUIZ.create_question_required' | translate }} }
+                @else if (questionForm.controls.question.errors?.['minlength']) { {{ 'QUIZ.create_question_min' | translate }} }
+              </p>
+            }
+          </div>
 
           <!-- 4 option inputs -->
           <div class="space-y-1">
             <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Answer options <span class="text-red-500">*</span>
+              {{ 'QUIZ.create_answers_label' | translate }} <span class="text-red-500">*</span>
             </p>
             <div class="space-y-2">
               @for (idx of optionIndices; track idx) {
                 <div class="flex items-center gap-3">
-                  <!-- Correct-answer radio -->
                   <label class="flex items-center cursor-pointer">
                     <input
                       type="radio"
                       formControlName="correctIndex"
                       [value]="idx"
-                      class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300 dark:border-gray-600 cursor-pointer"
+                      class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300
+                             dark:border-gray-600 cursor-pointer"
                     />
                     <span
-                      class="ml-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                      class="ml-2 w-6 h-6 rounded-full flex items-center justify-center
+                             text-xs font-bold"
                       [class.bg-accent-500]="questionForm.controls.correctIndex.value === idx"
                       [class.text-white]="questionForm.controls.correctIndex.value === idx"
                       [class.bg-gray-100]="questionForm.controls.correctIndex.value !== idx"
@@ -170,356 +223,72 @@
                     </span>
                   </label>
                   <input
-                    hlmInput
                     [formControlName]="'option' + idx"
                     [placeholder]="'Option ' + optionLabel(idx)"
-                    class="flex-1"
+                    class="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-4
+                           py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
+                           placeholder-gray-400 focus:outline-none focus:ring-2
+                           focus:ring-primary-500 focus:border-transparent transition-colors"
                   />
                 </div>
               }
             </div>
             <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              Select the radio button next to the correct answer.
-=======
-        <!-- ── Header ── -->
-        <header class="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
-              {{ 'QUIZ.create_heading' | translate }}
-            </h1>
-            <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
-              {{ 'QUIZ.create_step_of' | translate: { step: currentStep() } }} —
-              {{ currentStep() === 1 ? ('QUIZ.create_step_details' | translate) : ('QUIZ.create_step_questions' | translate) }}
->>>>>>> worktree-agent-a60e2046e76e1424e
+              {{ 'QUIZ.create_answers_hint' | translate }}
             </p>
           </div>
 
           <button
-            hlmBtn
             type="submit"
-            variant="outline"
             [disabled]="questionForm.invalid"
-            class="w-full border-dashed border-primary-400 dark:border-primary-600
-                   text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+            class="w-full border-2 border-dashed border-primary-400 dark:border-primary-600
+                   text-primary-600 dark:text-primary-400 hover:bg-primary-50
+                   dark:hover:bg-primary-900/20 disabled:opacity-40 disabled:cursor-not-allowed
+                   rounded-xl py-2.5 font-medium transition-colors text-sm"
           >
-<<<<<<< HEAD
-            + Add Question
+            {{ 'QUIZ.create_add_question' | translate }}
           </button>
         </form>
 
         <!-- Error -->
         @if (errorMessage()) {
-          <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-700 dark:text-red-400 text-sm">
-            ⚠️ {{ errorMessage() }}
-=======
-            {{ 'QUIZ.create_cancel' | translate }}
-          </a>
-        </header>
-
-        <!-- ── Step indicator ── -->
-        <div class="flex items-center gap-0">
-          @for (step of [1, 2]; track step) {
-            <div
-              class="flex-1 h-1.5 rounded-full transition-all duration-300"
-              [class.bg-primary-500]="currentStep() >= step"
-              [class.bg-gray-200]="currentStep() < step"
-              [class.dark:bg-gray-700]="currentStep() < step"
-            ></div>
-            @if (step < 2) {
-              <div class="w-3"></div>
-            }
-          }
-        </div>
-
-        <!-- ──────────────────────────────────────────
-             Step 1: Quiz metadata
-        ─────────────────────────────────────────── -->
-        @if (currentStep() === 1) {
-          <form
-            [formGroup]="metaForm"
-            (ngSubmit)="nextStep()"
-            novalidate
-            class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200
-                   dark:border-gray-800 shadow-sm space-y-5"
+          <div
+            class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800
+                   rounded-xl p-4 text-red-700 dark:text-red-400 text-sm"
           >
-            <!-- Title -->
-            <div class="space-y-1">
-              <label
-                for="quiz-title"
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                {{ 'QUIZ.create_title_label' | translate }} <span class="text-red-500">*</span>
-              </label>
-              <input
-                id="quiz-title"
-                formControlName="title"
-                [placeholder]="'QUIZ.create_title_placeholder' | translate"
-                class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 dark:text-white
-                       bg-white dark:bg-gray-800 placeholder-gray-400 focus:outline-none
-                       focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
-                [class.border-red-400]="isInvalidTouched(metaForm.controls.title)"
-                [class.border-gray-300]="!isInvalidTouched(metaForm.controls.title)"
-                [class.dark:border-gray-600]="!isInvalidTouched(metaForm.controls.title)"
-              />
-              @if (isInvalidTouched(metaForm.controls.title)) {
-                <p class="text-red-500 text-xs">
-                  @if (metaForm.controls.title.errors?.['required']) { {{ 'QUIZ.create_title_required' | translate }} }
-                  @else if (metaForm.controls.title.errors?.['minlength']) { {{ 'QUIZ.create_title_min' | translate }} }
-                  @else if (metaForm.controls.title.errors?.['maxlength']) { {{ 'QUIZ.create_title_max' | translate }} }
-                </p>
-              }
-            </div>
-
-            <!-- Description -->
-            <div class="space-y-1">
-              <label
-                for="quiz-desc"
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                {{ 'QUIZ.create_desc_label' | translate }}
-              </label>
-              <textarea
-                id="quiz-desc"
-                formControlName="description"
-                rows="3"
-                [placeholder]="'QUIZ.create_desc_placeholder' | translate"
-                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5
-                       text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
-                       placeholder-gray-400 resize-none focus:outline-none focus:ring-2
-                       focus:ring-primary-500 focus:border-transparent transition-colors"
-                [class.border-red-400]="isInvalidTouched(metaForm.controls.description)"
-              ></textarea>
-              @if (isInvalidTouched(metaForm.controls.description)) {
-                <p class="text-red-500 text-xs">
-                  @if (metaForm.controls.description.errors?.['maxlength']) { {{ 'QUIZ.create_desc_max' | translate }} }
-                </p>
-              }
-            </div>
-
-            <div class="flex justify-end">
-              <button
-                type="submit"
-                [disabled]="metaForm.invalid"
-                class="bg-primary-600 hover:bg-primary-500 disabled:opacity-40
-                       disabled:cursor-not-allowed text-white rounded-xl px-6 py-2.5
-                       font-medium transition-colors text-sm"
-              >
-                {{ 'QUIZ.create_continue' | translate }}
-              </button>
-            </div>
-          </form>
-        }
-
-        <!-- ──────────────────────────────────────────
-             Step 2: Add questions
-        ─────────────────────────────────────────── -->
-        @if (currentStep() === 2) {
-          <div class="space-y-6">
-
-            <!-- Existing questions list -->
-            @if (localQuestions().length > 0) {
-              <div class="space-y-3">
-                <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase
-                           tracking-widest">
-                  Questions ({{ localQuestions().length }})
-                </h2>
-                @for (q of localQuestions(); track $index) {
-                  <div
-                    class="bg-white dark:bg-gray-900 rounded-xl px-5 py-4 border border-gray-200
-                           dark:border-gray-800 shadow-sm flex items-start gap-3"
-                  >
-                    <span
-                      class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
-                             text-primary-700 dark:text-primary-300 text-xs font-bold flex
-                             items-center justify-center flex-shrink-0"
-                    >
-                      {{ $index + 1 }}
-                    </span>
-                    <div class="min-w-0">
-                      <p class="text-gray-900 dark:text-white text-sm font-medium">
-                        {{ q.question }}
-                      </p>
-                      <p class="text-green-600 dark:text-green-400 text-xs mt-1">
-                        ✓ {{ q.options[q.correctIndex] }}
-                      </p>
-                    </div>
-                    <button
-                      (click)="removeQuestion($index)"
-                      class="text-gray-400 hover:text-red-500 transition-colors text-lg
-                             flex-shrink-0 ml-auto leading-none"
-                      aria-label="Remove question {{ $index + 1 }}"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                }
-              </div>
-            }
-
-            <!-- Add question form -->
-            <form
-              [formGroup]="questionForm"
-              (ngSubmit)="addQuestion()"
-              novalidate
-              class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200
-                     dark:border-gray-800 shadow-sm space-y-5"
-            >
-              <h2 class="font-semibold text-gray-900 dark:text-white">
-                {{ localQuestions().length === 0 ? ('QUIZ.create_first_question' | translate) : ('QUIZ.create_another_question' | translate) }}
-              </h2>
-
-              <!-- Question text -->
-              <div class="space-y-1">
-                <label
-                  for="q-text"
-                  class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  {{ 'QUIZ.create_question_label' | translate }} <span class="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="q-text"
-                  formControlName="question"
-                  rows="2"
-                  [placeholder]="'QUIZ.create_question_placeholder' | translate"
-                  class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5
-                         text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
-                         placeholder-gray-400 resize-none focus:outline-none focus:ring-2
-                         focus:ring-primary-500 focus:border-transparent transition-colors"
-                  [class.border-red-400]="isInvalidTouched(questionForm.controls.question)"
-                ></textarea>
-                @if (isInvalidTouched(questionForm.controls.question)) {
-                  <p class="text-red-500 text-xs">
-                    @if (questionForm.controls.question.errors?.['required']) { {{ 'QUIZ.create_question_required' | translate }} }
-                    @else if (questionForm.controls.question.errors?.['minlength']) { {{ 'QUIZ.create_question_min' | translate }} }
-                  </p>
-                }
-              </div>
-
-              <!-- 4 option inputs -->
-              <div class="space-y-1">
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {{ 'QUIZ.create_answers_label' | translate }} <span class="text-red-500">*</span>
-                </p>
-                <div class="space-y-2">
-                  @for (idx of optionIndices; track idx) {
-                    <div class="flex items-center gap-3">
-                      <!-- Correct-answer radio -->
-                      <label class="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          formControlName="correctIndex"
-                          [value]="idx"
-                          class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300
-                                 dark:border-gray-600 cursor-pointer"
-                        />
-                        <span
-                          class="ml-2 w-6 h-6 rounded-full flex items-center justify-center
-                                 text-xs font-bold"
-                          [class.bg-accent-500]="questionForm.controls.correctIndex.value === idx"
-                          [class.text-white]="questionForm.controls.correctIndex.value === idx"
-                          [class.bg-gray-100]="questionForm.controls.correctIndex.value !== idx"
-                          [class.dark:bg-gray-700]="questionForm.controls.correctIndex.value !== idx"
-                          [class.text-gray-600]="questionForm.controls.correctIndex.value !== idx"
-                          [class.dark:text-gray-400]="questionForm.controls.correctIndex.value !== idx"
-                        >
-                          {{ optionLabel(idx) }}
-                        </span>
-                      </label>
-                      <input
-                        [formControlName]="'option' + idx"
-                        [placeholder]="'Option ' + optionLabel(idx)"
-                        class="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-4
-                               py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
-                               placeholder-gray-400 focus:outline-none focus:ring-2
-                               focus:ring-primary-500 focus:border-transparent transition-colors"
-                      />
-                    </div>
-                  }
-                </div>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  {{ 'QUIZ.create_answers_hint' | translate }}
-                </p>
-              </div>
-
-              <button
-                type="submit"
-                [disabled]="questionForm.invalid"
-                class="w-full border-2 border-dashed border-primary-400 dark:border-primary-600
-                       text-primary-600 dark:text-primary-400 hover:bg-primary-50
-                       dark:hover:bg-primary-900/20 disabled:opacity-40 disabled:cursor-not-allowed
-                       rounded-xl py-2.5 font-medium transition-colors text-sm"
-              >
-                {{ 'QUIZ.create_add_question' | translate }}
-              </button>
-            </form>
-
-            <!-- Error -->
-            @if (errorMessage()) {
-              <div
-                class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800
-                       rounded-xl p-4 text-red-700 dark:text-red-400 text-sm"
-              >
-                ⚠️ {{ errorMessage() }}
-              </div>
-            }
-
-            <!-- Publish / back actions -->
-            <div class="flex justify-between items-center pb-8">
-              <button
-                type="button"
-                (click)="previousStep()"
-                class="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white
-                       transition-colors"
-              >
-                {{ 'QUIZ.create_back' | translate }}
-              </button>
-
-              <button
-                type="button"
-                (click)="publishQuiz()"
-                [disabled]="localQuestions().length === 0 || isPublishing()"
-                class="bg-accent-600 hover:bg-accent-500 disabled:opacity-40
-                       disabled:cursor-not-allowed text-white rounded-xl px-8 py-2.5
-                       font-bold transition-colors text-sm"
-              >
-                {{ isPublishing() ? ('QUIZ.create_saving' | translate) : ('QUIZ.create_save_draft' | translate) }}
-                @if (localQuestions().length > 0) {
-                  ({{ localQuestions().length }}
-                  {{ localQuestions().length === 1 ? ('QUIZ.create_questions_count_one' | translate) : ('QUIZ.create_questions_count_many' | translate) }})
-                }
-              </button>
-            </div>
->>>>>>> worktree-agent-a60e2046e76e1424e
+            ⚠️ {{ errorMessage() }}
           </div>
         }
 
         <!-- Publish / back actions -->
         <div class="flex justify-between items-center pb-8">
-          <button hlmBtn type="button" variant="ghost" (click)="previousStep()">
-            ← Back
-          </button>
           <button
-            hlmBtn
             type="button"
-            (click)="saveQuiz()"
-            [disabled]="localQuestions().length === 0 || isSaving()"
-            class="bg-accent-600 hover:bg-accent-700 text-white font-bold"
+            (click)="previousStep()"
+            class="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white
+                   transition-colors"
           >
-            {{ isSaving() ? '…Saving' : '💾 Save as Draft' }}
+            {{ 'QUIZ.create_back' | translate }}
+          </button>
+
+          <button
+            type="button"
+            (click)="publishQuiz()"
+            [disabled]="localQuestions().length === 0 || isPublishing()"
+            class="bg-accent-600 hover:bg-accent-500 disabled:opacity-40
+                   disabled:cursor-not-allowed text-white rounded-xl px-8 py-2.5
+                   font-bold transition-colors text-sm"
+          >
+            {{ isPublishing() ? ('QUIZ.create_saving' | translate) : ('QUIZ.create_save_draft' | translate) }}
             @if (localQuestions().length > 0) {
               ({{ localQuestions().length }}
-              {{ localQuestions().length === 1 ? 'question' : 'questions' }})
+              {{ localQuestions().length === 1 ? ('QUIZ.create_questions_count_one' | translate) : ('QUIZ.create_questions_count_many' | translate) }})
             }
           </button>
         </div>
 
       </div>
-<<<<<<< HEAD
     }
 
   </div>
 </div>
-=======
-    </div>
-
->>>>>>> worktree-agent-a60e2046e76e1424e

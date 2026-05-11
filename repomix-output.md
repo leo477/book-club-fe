@@ -4534,28 +4534,6 @@ export const authGuard: CanActivateFn = () => {
 };
 ````
 
-## File: src/app/core/auth/token.store.ts
-````typescript
-import { Injectable, signal } from '@angular/core';
-const TOKEN_KEY = 'bc_access_token';
-@Injectable({ providedIn: 'root' })
-export class TokenStore {
-  private readonly _token = signal<string | null>(sessionStorage.getItem(TOKEN_KEY));
-  readonly token = this._token.asReadonly();
-  set(token: string): void {
-    sessionStorage.setItem(TOKEN_KEY, token);
-    this._token.set(token);
-  }
-  clear(): void {
-    sessionStorage.removeItem(TOKEN_KEY);
-    this._token.set(null);
-  }
-  snapshot(): string | null {
-    return this._token();
-  }
-}
-````
-
 ## File: src/app/core/models/book-vote.model.ts
 ````typescript
 export interface BookOption {
@@ -8789,138 +8767,24 @@ jobs:
           comment-tag: pr-review-gate
 ````
 
-## File: src/app/core/auth/auth.service.ts
+## File: src/app/core/auth/token.store.ts
 ````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
-import { catchError, firstValueFrom, map, of } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
-import { TokenStore } from './token.store';
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-interface AuthResponse {
-  accessToken: string;
-  user: ApiUserProfile;
-}
+import { Injectable, signal } from '@angular/core';
+const TOKEN_KEY = 'bc_access_token';
 @Injectable({ providedIn: 'root' })
-export class AuthService {
-  private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
-  private readonly tokenStore = inject(TokenStore);
-  private readonly _currentUser = signal<UserProfile | null>(null);
-  private readonly _isLoading = signal<boolean>(true);
-  readonly currentUser = this._currentUser.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly isAuthenticated = computed(() => this._currentUser() !== null);
-  readonly userRole = computed(() => this._currentUser()?.role ?? null);
-  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
-  private readonly _statsResource = rxResource<UserStats | null, string | null>({
-    params: () => this._currentUser()?.id ?? null,
-    stream: ({ params: userId }) => {
-      if (!userId) return of(null as UserStats | null);
-      return this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
-        map(raw => mapUserStats(raw)),
-        catchError(() => of(null)),
-      );
-    },
-  });
-  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
-  constructor() {
-    const token = this.tokenStore.snapshot();
-    if (token) {
-      firstValueFrom(
-        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
-          catchError(() => {
-            this.tokenStore.clear();
-            return of(null);
-          }),
-        ),
-      ).then(raw => {
-        this._currentUser.set(raw ? mapUserProfile(raw) : null);
-        this._isLoading.set(false);
-      });
-    } else {
-      this._isLoading.set(false);
-    }
+export class TokenStore {
+  private readonly _token = signal<string | null>(sessionStorage.getItem(TOKEN_KEY));
+  readonly token = this._token.asReadonly();
+  set(token: string): void {
+    sessionStorage.setItem(TOKEN_KEY, token);
+    this._token.set(token);
   }
-  async signUp(
-    email: string,
-    password: string,
-    displayName: string,
-    role: UserRole,
-  ): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
-          email,
-          password,
-          displayName,
-          role,
-        }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
+  clear(): void {
+    sessionStorage.removeItem(TOKEN_KEY);
+    this._token.set(null);
   }
-  async signIn(email: string, password: string): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signOut(): Promise<void> {
-    try {
-      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
-    } catch {  }
-    this.tokenStore.clear();
-    this._currentUser.set(null);
-    this.router.navigate(['/login']);
-  }
-  async updateRole(role: UserRole): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
-    );
-    this._currentUser.set({ ...user, role });
-  }
-  async updateDisplayName(name: string): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
-    );
-    this._currentUser.set({ ...user, displayName: name });
-  }
-  async updateSocials(socials: UserSocials): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
-    );
-    this._currentUser.set({ ...user, socials });
-  }
-  async setSocialsPublic(value: boolean): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
-        socialsPublic: value,
-      }),
-    );
-    this._currentUser.set({ ...user, socialsPublic: value });
+  snapshot(): string | null {
+    return this._token();
   }
 }
 ````
@@ -10818,6 +10682,142 @@ sonar.sourceEncoding=UTF-8
 }
 ````
 
+## File: src/app/core/auth/auth.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
+import { catchError, firstValueFrom, map, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
+import { TokenStore } from './token.store';
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+interface AuthResponse {
+  accessToken: string;
+  user: ApiUserProfile;
+}
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly tokenStore = inject(TokenStore);
+  private readonly _currentUser = signal<UserProfile | null>(null);
+  private readonly _isLoading = signal<boolean>(true);
+  readonly currentUser = this._currentUser.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly isAuthenticated = computed(() => this._currentUser() !== null);
+  readonly userRole = computed(() => this._currentUser()?.role ?? null);
+  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
+  private readonly _statsResource = rxResource<UserStats | null, string | null>({
+    params: () => this._currentUser()?.id ?? null,
+    stream: ({ params: userId }) => {
+      if (!userId) return of(null as UserStats | null);
+      return this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
+        map(raw => mapUserStats(raw)),
+        catchError(() => of(null)),
+      );
+    },
+  });
+  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
+  constructor() {
+    const token = this.tokenStore.snapshot();
+    if (token) {
+      firstValueFrom(
+        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
+          catchError(() => {
+            this.tokenStore.clear();
+            return of(null);
+          }),
+        ),
+      ).then(raw => {
+        this._currentUser.set(raw ? mapUserProfile(raw) : null);
+        this._isLoading.set(false);
+      });
+    } else {
+      this._isLoading.set(false);
+    }
+  }
+  async signUp(
+    email: string,
+    password: string,
+    displayName: string,
+    role: UserRole,
+  ): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
+          email,
+          password,
+          displayName,
+          role,
+        }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signIn(email: string, password: string): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signOut(): Promise<void> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
+    } catch {  }
+    this.tokenStore.clear();
+    this._currentUser.set(null);
+    this.router.navigate(['/login']);
+  }
+  async updateRole(role: UserRole): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
+    );
+    this._currentUser.set({ ...user, role });
+  }
+  async updateDisplayName(name: string): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
+    );
+    this._currentUser.set({ ...user, displayName: name });
+  }
+  async updateSocials(socials: UserSocials): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
+    );
+    this._currentUser.set({ ...user, socials });
+  }
+  async setSocialsPublic(value: boolean): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
+        socialsPublic: value,
+      }),
+    );
+    this._currentUser.set({ ...user, socialsPublic: value });
+  }
+}
+````
+
 ## File: src/app/features/auth/login/login.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
@@ -11283,7 +11283,7 @@ export class EventCardComponent {
       }
       <form [formGroup]="socialsForm" (ngSubmit)="submitSocials()" novalidate class="space-y-4">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          @for (social of socialFields; track social.key) {
+          @for (social of socialFields(); track social.key) {
             <app-social-link-field [config]="social" [form]="socialsForm" />
           }
         </div>
@@ -11292,101 +11292,8 @@ export class EventCardComponent {
             {{ 'PROFILE.save' | translate }}
           </button>
         </div>
-<<<<<<< HEAD
       </form>
     </section>
-=======
-      </div>
-    </form>
-  </section>
-  <section
-    aria-labelledby="role-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="role-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2"
-    >
-      <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
-    </h2>
-    <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-      {{ 'PROFILE.role_subtitle' | translate }}
-    </p>
-    <app-profile-role-selector
-      [currentRole]="auth.currentUser()?.role ?? 'user'"
-      (roleChange)="changeRole($event)"
-    />
-  </section>
-  <section
-    aria-labelledby="stats-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="stats-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
-    >
-      <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
-    </h2>
-    <app-profile-stats [stats]="auth.userStats()" />
-  </section>
-  <section
-    aria-labelledby="socials-heading"
-    class="rounded-2xl bg-white dark:bg-gray-800 shadow p-6"
-  >
-    <h2
-      id="socials-heading"
-      class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2"
-    >
-      <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
-    </h2>
-    <div class="flex items-center gap-3 mb-4 p-3 rounded-xl bg-gray-50 dark:bg-gray-700/50">
-      <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
-        <input
-          type="checkbox"
-          [formControl]="socialsPublicControl"
-          (change)="onSocialsPublicChange(socialsPublicControl.value)"
-          class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-        />
-        {{ 'PROFILE.socials_public_label' | translate }}
-      </label>
-    </div>
-    @if (
-      userSocials().telegram  ||
-      userSocials().instagram ||
-      userSocials().twitter   ||
-      userSocials().linkedin  ||
-      userSocials().github    ||
-      userSocials().goodreads
-    ) {
-      <div class="flex flex-wrap gap-2 mb-6">
-        <app-social-badges [socials]="userSocials()" />
-      </div>
-    }
-    <form
-      [formGroup]="socialsForm"
-      (ngSubmit)="submitSocials()"
-      novalidate
-      class="space-y-4"
-    >
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        @for (social of socialFields(); track social.key) {
-          <app-social-link-field [config]="social" [form]="socialsForm" />
-        }
-      </div>
-      <div class="flex items-center gap-3 pt-1">
-        <button
-          type="submit"
-          class="rounded-xl bg-primary-600 hover:bg-primary-700 text-white
-                 px-5 py-2.5 text-sm font-medium
-                 transition-all duration-200 focus:outline-none focus:ring-2
-                 focus:ring-primary-500 focus:ring-offset-2"
-        >
-          {{ 'PROFILE.save' | translate }}
-        </button>
-      </div>
-    </form>
-  </section>
->>>>>>> worktree-agent-a60e2046e76e1424e
   </div>
 </div>
 ````
@@ -12582,10 +12489,7 @@ import {
 } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-<<<<<<< HEAD
 import { toast } from '@spartan-ng/brain/sonner';
-=======
->>>>>>> worktree-agent-a60e2046e76e1424e
 import { AuthService } from '../../core/auth/auth.service';
 import { UserRole, UserSocials } from '../../core/models/user.model';
 import { SeoService } from '../../core/services/seo.service';
@@ -12605,10 +12509,6 @@ import { HlmInput } from '../../shared/spartan/input/src';
 export class ProfileComponent {
   protected readonly auth = inject(AuthService);
   private readonly seo = inject(SeoService);
-<<<<<<< HEAD
-=======
-  private readonly toast = inject(ToastService);
->>>>>>> worktree-agent-a60e2046e76e1424e
   private readonly translate = inject(TranslateService);
   protected readonly socialFields = computed<SocialField[]>(() => {
     const atPlaceholder = this.translate.instant('PROFILE.social_placeholder_at');
@@ -12724,11 +12624,7 @@ export class ProfileComponent {
   protected async changeRole(role: UserRole): Promise<void> {
     try {
       await this.auth.updateRole(role);
-<<<<<<< HEAD
       toast.success(this.translate.instant('PROFILE.role_changed'));
-=======
-      this.toast.show(this.translate.instant('PROFILE.role_changed'), 'success');
->>>>>>> worktree-agent-a60e2046e76e1424e
     } catch {  }
   }
   protected async saveName(): Promise<void> {
@@ -13935,32 +13831,8 @@ export class CreateClubComponent {
           <div>
             <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               {{ 'EDIT_CLUB.cover_url_label' | translate }}
-<<<<<<< HEAD
             </p>
             <app-cover-upload [control]="form.controls.coverUrl" />
-=======
-            </label>
-            @if (form.controls.coverUrl.value) {
-              <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
-                <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover" (error)="form.controls.coverUrl.setValue('')" />
-              </div>
-            }
-            <input
-              id="club-cover-url"
-              type="url"
-              formControlName="coverUrl"
-              [placeholder]="'EDIT_CLUB.cover_url_placeholder' | translate"
-              class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800
-                     px-4 py-2.5 text-sm text-gray-900 dark:text-white placeholder-gray-400
-                     focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
-                     transition-colors duration-150"
-            />
-            @if (form.controls.coverUrl.touched && form.controls.coverUrl.errors?.['pattern']) {
-              <p class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ 'CREATE_CLUB.cover_url_invalid' | translate }}</p>
-            } @else {
-              <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'EDIT_CLUB.cover_url_hint' | translate }}</p>
-            }
->>>>>>> worktree-agent-abfaf1a395decc804
           </div>
           <fieldset>
             <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'EDIT_CLUB.visibility_legend' | translate }}</legend>
@@ -14947,19 +14819,18 @@ export class EventsFeedComponent implements OnInit {
 ````html
 <div class="min-h-screen p-4 sm:p-8">
   <div class="max-w-2xl mx-auto space-y-6">
-<<<<<<< HEAD
     <header class="flex items-center justify-between flex-wrap gap-4">
       <div>
         <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
-          {{ 'QUIZ.create_heading_full' | translate }}
+          {{ 'QUIZ.create_heading' | translate }}
         </h1>
         <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
-          Step {{ currentStep() }} of 2 —
-          {{ currentStep() === 1 ? 'Quiz details' : 'Add questions' }}
+          {{ 'QUIZ.create_step_of' | translate: { step: currentStep() } }} —
+          {{ currentStep() === 1 ? ('QUIZ.create_step_details' | translate) : ('QUIZ.create_step_questions' | translate) }}
         </p>
       </div>
       <a [routerLink]="['..']" class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-        ✕ Cancel
+        {{ 'QUIZ.create_cancel' | translate }}
       </a>
     </header>
     <div class="flex items-center gap-0">
@@ -14980,39 +14851,68 @@ export class EventsFeedComponent implements OnInit {
         [formGroup]="metaForm"
         (ngSubmit)="nextStep()"
         novalidate
-        class="glass-card p-6 space-y-5"
+        class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200
+               dark:border-gray-800 shadow-sm space-y-5"
       >
-        <hlm-field>
-          <label hlmFieldLabel for="quiz-title">
-            Quiz title <span class="text-red-500">*</span>
+        <div class="space-y-1">
+          <label
+            for="quiz-title"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {{ 'QUIZ.create_title_label' | translate }} <span class="text-red-500">*</span>
           </label>
           <input
-            hlmInput
             id="quiz-title"
             formControlName="title"
-            class="w-full"
-            placeholder="e.g. The Midnight Library — Chapter 1 Quiz"
+            [placeholder]="'QUIZ.create_title_placeholder' | translate"
+            class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 dark:text-white
+                   bg-white dark:bg-gray-800 placeholder-gray-400 focus:outline-none
+                   focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+            [class.border-red-400]="isInvalidTouched(metaForm.controls.title)"
+            [class.border-gray-300]="!isInvalidTouched(metaForm.controls.title)"
+            [class.dark:border-gray-600]="!isInvalidTouched(metaForm.controls.title)"
           />
-          <hlm-field-error validator="required">Title is required.</hlm-field-error>
-          <hlm-field-error validator="minlength">Title must be at least 3 characters.</hlm-field-error>
-          <hlm-field-error validator="maxlength">Title must not exceed 100 characters.</hlm-field-error>
-        </hlm-field>
-        <hlm-field>
-          <label hlmFieldLabel for="quiz-desc">Description</label>
+          @if (isInvalidTouched(metaForm.controls.title)) {
+            <p class="text-red-500 text-xs">
+              @if (metaForm.controls.title.errors?.['required']) { {{ 'QUIZ.create_title_required' | translate }} }
+              @else if (metaForm.controls.title.errors?.['minlength']) { {{ 'QUIZ.create_title_min' | translate }} }
+              @else if (metaForm.controls.title.errors?.['maxlength']) { {{ 'QUIZ.create_title_max' | translate }} }
+            </p>
+          }
+        </div>
+        <div class="space-y-1">
+          <label
+            for="quiz-desc"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {{ 'QUIZ.create_desc_label' | translate }}
+          </label>
           <textarea
-            hlmInput
             id="quiz-desc"
             formControlName="description"
             rows="3"
-            class="w-full resize-none"
-            placeholder="A brief description of the quiz…"
+            [placeholder]="'QUIZ.create_desc_placeholder' | translate"
+            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5
+                   text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
+                   placeholder-gray-400 resize-none focus:outline-none focus:ring-2
+                   focus:ring-primary-500 focus:border-transparent transition-colors"
+            [class.border-red-400]="isInvalidTouched(metaForm.controls.description)"
           ></textarea>
-          <hlm-field-error validator="maxlength">Description must not exceed 500 characters.</hlm-field-error>
-        </hlm-field>
+          @if (isInvalidTouched(metaForm.controls.description)) {
+            <p class="text-red-500 text-xs">
+              @if (metaForm.controls.description.errors?.['maxlength']) { {{ 'QUIZ.create_desc_max' | translate }} }
+            </p>
+          }
+        </div>
         <div class="flex justify-end">
-          <button hlmBtn type="submit" [disabled]="metaForm.invalid"
-                  class="bg-primary-600 hover:bg-primary-700 text-white">
-            Continue →
+          <button
+            type="submit"
+            [disabled]="metaForm.invalid"
+            class="bg-primary-600 hover:bg-primary-500 disabled:opacity-40
+                   disabled:cursor-not-allowed text-white rounded-xl px-6 py-2.5
+                   font-medium transition-colors text-sm"
+          >
+            {{ 'QUIZ.create_continue' | translate }}
           </button>
         </div>
       </form>
@@ -15021,25 +14921,35 @@ export class EventsFeedComponent implements OnInit {
       <div class="space-y-6">
         @if (localQuestions().length > 0) {
           <div class="space-y-3">
-            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-widest">
+            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase
+                       tracking-widest">
               Questions ({{ localQuestions().length }})
             </h2>
             @for (q of localQuestions(); track $index) {
-              <div hlmCard class="glass-card-subtle px-5 py-4 flex items-start gap-3 rounded-xl">
-                <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
-                             text-primary-700 dark:text-primary-300 text-xs font-bold flex
-                             items-center justify-center flex-shrink-0">
+              <div
+                class="bg-white dark:bg-gray-900 rounded-xl px-5 py-4 border border-gray-200
+                       dark:border-gray-800 shadow-sm flex items-start gap-3"
+              >
+                <span
+                  class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
+                         text-primary-700 dark:text-primary-300 text-xs font-bold flex
+                         items-center justify-center flex-shrink-0"
+                >
                   {{ $index + 1 }}
                 </span>
-                <div class="min-w-0 flex-1">
-                  <p class="text-gray-900 dark:text-white text-sm font-medium">{{ q.question }}</p>
-                  <p class="text-green-600 dark:text-green-400 text-xs mt-1">✓ {{ q.options[q.correctIndex] }}</p>
+                <div class="min-w-0">
+                  <p class="text-gray-900 dark:text-white text-sm font-medium">
+                    {{ q.question }}
+                  </p>
+                  <p class="text-green-600 dark:text-green-400 text-xs mt-1">
+                    ✓ {{ q.options[q.correctIndex] }}
+                  </p>
                 </div>
                 <button
-                  type="button"
                   (click)="removeQuestion($index)"
-                  class="text-gray-400 hover:text-red-500 transition-colors text-lg flex-shrink-0 ml-auto leading-none"
-                  [attr.aria-label]="'Remove question ' + ($index + 1)"
+                  class="text-gray-400 hover:text-red-500 transition-colors text-lg
+                         flex-shrink-0 ml-auto leading-none"
+                  aria-label="Remove question {{ $index + 1 }}"
                 >
                   ✕
                 </button>
@@ -15051,27 +14961,40 @@ export class EventsFeedComponent implements OnInit {
           [formGroup]="questionForm"
           (ngSubmit)="addQuestion()"
           novalidate
-          class="glass-card p-6 space-y-5"
+          class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200
+                 dark:border-gray-800 shadow-sm space-y-5"
         >
           <h2 class="font-semibold text-gray-900 dark:text-white">
-            {{ localQuestions().length === 0 ? 'Add your first question' : 'Add another question' }}
+            {{ localQuestions().length === 0 ? ('QUIZ.create_first_question' | translate) : ('QUIZ.create_another_question' | translate) }}
           </h2>
-          <hlm-field>
-            <label hlmFieldLabel for="q-text">Question <span class="text-red-500">*</span></label>
+          <div class="space-y-1">
+            <label
+              for="q-text"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              {{ 'QUIZ.create_question_label' | translate }} <span class="text-red-500">*</span>
+            </label>
             <textarea
-              hlmInput
               id="q-text"
               formControlName="question"
               rows="2"
-              class="w-full resize-none"
-              placeholder="What is the main theme of chapter 3?"
+              [placeholder]="'QUIZ.create_question_placeholder' | translate"
+              class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5
+                     text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
+                     placeholder-gray-400 resize-none focus:outline-none focus:ring-2
+                     focus:ring-primary-500 focus:border-transparent transition-colors"
+              [class.border-red-400]="isInvalidTouched(questionForm.controls.question)"
             ></textarea>
-            <hlm-field-error validator="required">Question is required.</hlm-field-error>
-            <hlm-field-error validator="minlength">Question must be at least 5 characters.</hlm-field-error>
-          </hlm-field>
+            @if (isInvalidTouched(questionForm.controls.question)) {
+              <p class="text-red-500 text-xs">
+                @if (questionForm.controls.question.errors?.['required']) { {{ 'QUIZ.create_question_required' | translate }} }
+                @else if (questionForm.controls.question.errors?.['minlength']) { {{ 'QUIZ.create_question_min' | translate }} }
+              </p>
+            }
+          </div>
           <div class="space-y-1">
             <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Answer options <span class="text-red-500">*</span>
+              {{ 'QUIZ.create_answers_label' | translate }} <span class="text-red-500">*</span>
             </p>
             <div class="space-y-2">
               @for (idx of optionIndices; track idx) {
@@ -15081,10 +15004,12 @@ export class EventsFeedComponent implements OnInit {
                       type="radio"
                       formControlName="correctIndex"
                       [value]="idx"
-                      class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300 dark:border-gray-600 cursor-pointer"
+                      class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300
+                             dark:border-gray-600 cursor-pointer"
                     />
                     <span
-                      class="ml-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
+                      class="ml-2 w-6 h-6 rounded-full flex items-center justify-center
+                             text-xs font-bold"
                       [class.bg-accent-500]="questionForm.controls.correctIndex.value === idx"
                       [class.text-white]="questionForm.controls.correctIndex.value === idx"
                       [class.bg-gray-100]="questionForm.controls.correctIndex.value !== idx"
@@ -15096,321 +15021,67 @@ export class EventsFeedComponent implements OnInit {
                     </span>
                   </label>
                   <input
-                    hlmInput
                     [formControlName]="'option' + idx"
                     [placeholder]="'Option ' + optionLabel(idx)"
-                    class="flex-1"
+                    class="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-4
+                           py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
+                           placeholder-gray-400 focus:outline-none focus:ring-2
+                           focus:ring-primary-500 focus:border-transparent transition-colors"
                   />
                 </div>
               }
             </div>
             <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              Select the radio button next to the correct answer.
-=======
-        <header class="flex items-center justify-between flex-wrap gap-4">
-          <div>
-            <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
-              {{ 'QUIZ.create_heading' | translate }}
-            </h1>
-            <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
-              {{ 'QUIZ.create_step_of' | translate: { step: currentStep() } }} —
-              {{ currentStep() === 1 ? ('QUIZ.create_step_details' | translate) : ('QUIZ.create_step_questions' | translate) }}
->>>>>>> worktree-agent-a60e2046e76e1424e
+              {{ 'QUIZ.create_answers_hint' | translate }}
             </p>
           </div>
           <button
-            hlmBtn
             type="submit"
-            variant="outline"
             [disabled]="questionForm.invalid"
-            class="w-full border-dashed border-primary-400 dark:border-primary-600
-                   text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
+            class="w-full border-2 border-dashed border-primary-400 dark:border-primary-600
+                   text-primary-600 dark:text-primary-400 hover:bg-primary-50
+                   dark:hover:bg-primary-900/20 disabled:opacity-40 disabled:cursor-not-allowed
+                   rounded-xl py-2.5 font-medium transition-colors text-sm"
           >
-<<<<<<< HEAD
-            + Add Question
+            {{ 'QUIZ.create_add_question' | translate }}
           </button>
         </form>
         @if (errorMessage()) {
-          <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-700 dark:text-red-400 text-sm">
-            ⚠️ {{ errorMessage() }}
-=======
-            {{ 'QUIZ.create_cancel' | translate }}
-          </a>
-        </header>
-        <div class="flex items-center gap-0">
-          @for (step of [1, 2]; track step) {
-            <div
-              class="flex-1 h-1.5 rounded-full transition-all duration-300"
-              [class.bg-primary-500]="currentStep() >= step"
-              [class.bg-gray-200]="currentStep() < step"
-              [class.dark:bg-gray-700]="currentStep() < step"
-            ></div>
-            @if (step < 2) {
-              <div class="w-3"></div>
-            }
-          }
-        </div>
-        @if (currentStep() === 1) {
-          <form
-            [formGroup]="metaForm"
-            (ngSubmit)="nextStep()"
-            novalidate
-            class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200
-                   dark:border-gray-800 shadow-sm space-y-5"
+          <div
+            class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800
+                   rounded-xl p-4 text-red-700 dark:text-red-400 text-sm"
           >
-            <div class="space-y-1">
-              <label
-                for="quiz-title"
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                {{ 'QUIZ.create_title_label' | translate }} <span class="text-red-500">*</span>
-              </label>
-              <input
-                id="quiz-title"
-                formControlName="title"
-                [placeholder]="'QUIZ.create_title_placeholder' | translate"
-                class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 dark:text-white
-                       bg-white dark:bg-gray-800 placeholder-gray-400 focus:outline-none
-                       focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
-                [class.border-red-400]="isInvalidTouched(metaForm.controls.title)"
-                [class.border-gray-300]="!isInvalidTouched(metaForm.controls.title)"
-                [class.dark:border-gray-600]="!isInvalidTouched(metaForm.controls.title)"
-              />
-              @if (isInvalidTouched(metaForm.controls.title)) {
-                <p class="text-red-500 text-xs">
-                  @if (metaForm.controls.title.errors?.['required']) { {{ 'QUIZ.create_title_required' | translate }} }
-                  @else if (metaForm.controls.title.errors?.['minlength']) { {{ 'QUIZ.create_title_min' | translate }} }
-                  @else if (metaForm.controls.title.errors?.['maxlength']) { {{ 'QUIZ.create_title_max' | translate }} }
-                </p>
-              }
-            </div>
-            <div class="space-y-1">
-              <label
-                for="quiz-desc"
-                class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                {{ 'QUIZ.create_desc_label' | translate }}
-              </label>
-              <textarea
-                id="quiz-desc"
-                formControlName="description"
-                rows="3"
-                [placeholder]="'QUIZ.create_desc_placeholder' | translate"
-                class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5
-                       text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
-                       placeholder-gray-400 resize-none focus:outline-none focus:ring-2
-                       focus:ring-primary-500 focus:border-transparent transition-colors"
-                [class.border-red-400]="isInvalidTouched(metaForm.controls.description)"
-              ></textarea>
-              @if (isInvalidTouched(metaForm.controls.description)) {
-                <p class="text-red-500 text-xs">
-                  @if (metaForm.controls.description.errors?.['maxlength']) { {{ 'QUIZ.create_desc_max' | translate }} }
-                </p>
-              }
-            </div>
-            <div class="flex justify-end">
-              <button
-                type="submit"
-                [disabled]="metaForm.invalid"
-                class="bg-primary-600 hover:bg-primary-500 disabled:opacity-40
-                       disabled:cursor-not-allowed text-white rounded-xl px-6 py-2.5
-                       font-medium transition-colors text-sm"
-              >
-                {{ 'QUIZ.create_continue' | translate }}
-              </button>
-            </div>
-          </form>
-        }
-        @if (currentStep() === 2) {
-          <div class="space-y-6">
-            @if (localQuestions().length > 0) {
-              <div class="space-y-3">
-                <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase
-                           tracking-widest">
-                  Questions ({{ localQuestions().length }})
-                </h2>
-                @for (q of localQuestions(); track $index) {
-                  <div
-                    class="bg-white dark:bg-gray-900 rounded-xl px-5 py-4 border border-gray-200
-                           dark:border-gray-800 shadow-sm flex items-start gap-3"
-                  >
-                    <span
-                      class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
-                             text-primary-700 dark:text-primary-300 text-xs font-bold flex
-                             items-center justify-center flex-shrink-0"
-                    >
-                      {{ $index + 1 }}
-                    </span>
-                    <div class="min-w-0">
-                      <p class="text-gray-900 dark:text-white text-sm font-medium">
-                        {{ q.question }}
-                      </p>
-                      <p class="text-green-600 dark:text-green-400 text-xs mt-1">
-                        ✓ {{ q.options[q.correctIndex] }}
-                      </p>
-                    </div>
-                    <button
-                      (click)="removeQuestion($index)"
-                      class="text-gray-400 hover:text-red-500 transition-colors text-lg
-                             flex-shrink-0 ml-auto leading-none"
-                      aria-label="Remove question {{ $index + 1 }}"
-                    >
-                      ✕
-                    </button>
-                  </div>
-                }
-              </div>
-            }
-            <form
-              [formGroup]="questionForm"
-              (ngSubmit)="addQuestion()"
-              novalidate
-              class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200
-                     dark:border-gray-800 shadow-sm space-y-5"
-            >
-              <h2 class="font-semibold text-gray-900 dark:text-white">
-                {{ localQuestions().length === 0 ? ('QUIZ.create_first_question' | translate) : ('QUIZ.create_another_question' | translate) }}
-              </h2>
-              <div class="space-y-1">
-                <label
-                  for="q-text"
-                  class="block text-sm font-medium text-gray-700 dark:text-gray-300"
-                >
-                  {{ 'QUIZ.create_question_label' | translate }} <span class="text-red-500">*</span>
-                </label>
-                <textarea
-                  id="q-text"
-                  formControlName="question"
-                  rows="2"
-                  [placeholder]="'QUIZ.create_question_placeholder' | translate"
-                  class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5
-                         text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
-                         placeholder-gray-400 resize-none focus:outline-none focus:ring-2
-                         focus:ring-primary-500 focus:border-transparent transition-colors"
-                  [class.border-red-400]="isInvalidTouched(questionForm.controls.question)"
-                ></textarea>
-                @if (isInvalidTouched(questionForm.controls.question)) {
-                  <p class="text-red-500 text-xs">
-                    @if (questionForm.controls.question.errors?.['required']) { {{ 'QUIZ.create_question_required' | translate }} }
-                    @else if (questionForm.controls.question.errors?.['minlength']) { {{ 'QUIZ.create_question_min' | translate }} }
-                  </p>
-                }
-              </div>
-              <div class="space-y-1">
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {{ 'QUIZ.create_answers_label' | translate }} <span class="text-red-500">*</span>
-                </p>
-                <div class="space-y-2">
-                  @for (idx of optionIndices; track idx) {
-                    <div class="flex items-center gap-3">
-                      <label class="flex items-center cursor-pointer">
-                        <input
-                          type="radio"
-                          formControlName="correctIndex"
-                          [value]="idx"
-                          class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300
-                                 dark:border-gray-600 cursor-pointer"
-                        />
-                        <span
-                          class="ml-2 w-6 h-6 rounded-full flex items-center justify-center
-                                 text-xs font-bold"
-                          [class.bg-accent-500]="questionForm.controls.correctIndex.value === idx"
-                          [class.text-white]="questionForm.controls.correctIndex.value === idx"
-                          [class.bg-gray-100]="questionForm.controls.correctIndex.value !== idx"
-                          [class.dark:bg-gray-700]="questionForm.controls.correctIndex.value !== idx"
-                          [class.text-gray-600]="questionForm.controls.correctIndex.value !== idx"
-                          [class.dark:text-gray-400]="questionForm.controls.correctIndex.value !== idx"
-                        >
-                          {{ optionLabel(idx) }}
-                        </span>
-                      </label>
-                      <input
-                        [formControlName]="'option' + idx"
-                        [placeholder]="'Option ' + optionLabel(idx)"
-                        class="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-4
-                               py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
-                               placeholder-gray-400 focus:outline-none focus:ring-2
-                               focus:ring-primary-500 focus:border-transparent transition-colors"
-                      />
-                    </div>
-                  }
-                </div>
-                <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-                  {{ 'QUIZ.create_answers_hint' | translate }}
-                </p>
-              </div>
-              <button
-                type="submit"
-                [disabled]="questionForm.invalid"
-                class="w-full border-2 border-dashed border-primary-400 dark:border-primary-600
-                       text-primary-600 dark:text-primary-400 hover:bg-primary-50
-                       dark:hover:bg-primary-900/20 disabled:opacity-40 disabled:cursor-not-allowed
-                       rounded-xl py-2.5 font-medium transition-colors text-sm"
-              >
-                {{ 'QUIZ.create_add_question' | translate }}
-              </button>
-            </form>
-            @if (errorMessage()) {
-              <div
-                class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800
-                       rounded-xl p-4 text-red-700 dark:text-red-400 text-sm"
-              >
-                ⚠️ {{ errorMessage() }}
-              </div>
-            }
-            <div class="flex justify-between items-center pb-8">
-              <button
-                type="button"
-                (click)="previousStep()"
-                class="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white
-                       transition-colors"
-              >
-                {{ 'QUIZ.create_back' | translate }}
-              </button>
-              <button
-                type="button"
-                (click)="publishQuiz()"
-                [disabled]="localQuestions().length === 0 || isPublishing()"
-                class="bg-accent-600 hover:bg-accent-500 disabled:opacity-40
-                       disabled:cursor-not-allowed text-white rounded-xl px-8 py-2.5
-                       font-bold transition-colors text-sm"
-              >
-                {{ isPublishing() ? ('QUIZ.create_saving' | translate) : ('QUIZ.create_save_draft' | translate) }}
-                @if (localQuestions().length > 0) {
-                  ({{ localQuestions().length }}
-                  {{ localQuestions().length === 1 ? ('QUIZ.create_questions_count_one' | translate) : ('QUIZ.create_questions_count_many' | translate) }})
-                }
-              </button>
-            </div>
->>>>>>> worktree-agent-a60e2046e76e1424e
+            ⚠️ {{ errorMessage() }}
           </div>
         }
         <div class="flex justify-between items-center pb-8">
-          <button hlmBtn type="button" variant="ghost" (click)="previousStep()">
-            ← Back
+          <button
+            type="button"
+            (click)="previousStep()"
+            class="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white
+                   transition-colors"
+          >
+            {{ 'QUIZ.create_back' | translate }}
           </button>
           <button
-            hlmBtn
             type="button"
-            (click)="saveQuiz()"
-            [disabled]="localQuestions().length === 0 || isSaving()"
-            class="bg-accent-600 hover:bg-accent-700 text-white font-bold"
+            (click)="publishQuiz()"
+            [disabled]="localQuestions().length === 0 || isPublishing()"
+            class="bg-accent-600 hover:bg-accent-500 disabled:opacity-40
+                   disabled:cursor-not-allowed text-white rounded-xl px-8 py-2.5
+                   font-bold transition-colors text-sm"
           >
-            {{ isSaving() ? '…Saving' : '💾 Save as Draft' }}
+            {{ isPublishing() ? ('QUIZ.create_saving' | translate) : ('QUIZ.create_save_draft' | translate) }}
             @if (localQuestions().length > 0) {
               ({{ localQuestions().length }}
-              {{ localQuestions().length === 1 ? 'question' : 'questions' }})
+              {{ localQuestions().length === 1 ? ('QUIZ.create_questions_count_one' | translate) : ('QUIZ.create_questions_count_many' | translate) }})
             }
           </button>
         </div>
       </div>
-<<<<<<< HEAD
     }
   </div>
 </div>
-=======
-    </div>
->>>>>>> worktree-agent-a60e2046e76e1424e
 ````
 
 ## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
@@ -16152,6 +15823,418 @@ export class ClubService {
 }
 ````
 
+## File: src/app/core/api/api-mappers.ts
+````typescript
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
+import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
+export interface ApiUserProfile {
+  id: string;
+  email: string;
+  role: UserRole;
+  displayName: string;
+  avatarUrl: string | null;
+  createdAt: string;
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export type ApiUserSocials = { [K in keyof UserSocials]?: string | null };
+export interface ApiUserStats {
+  clubsJoined: number;
+  quizzesTaken: number;
+  quizWins: number;
+  likesReceived: number;
+  booksRead: number;
+}
+export interface ApiClub {
+  id: string;
+  name: string;
+  description: string | null;
+  coverUrl: string | null;
+  organizerId: string;
+  isPublic: boolean;
+  memberCount: number;
+  memberPreviews: string[];
+  createdAt: string;
+  city: string | null;
+  nextMeetingDate: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  theme: string | null;
+  currentBook: string | null;
+  status: ClubStatus;
+  tags: string[];
+  meetingDurationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  cancelledAt?: string | null;
+}
+export interface ApiClubMember {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: 'organizer' | 'member';
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export interface ApiBanRecord {
+  userId: string;
+  clubId: string;
+  bannedAt: string;
+  duration: BanDuration;
+  bannedBy: string;
+}
+export interface ApiEvent {
+  id: string;
+  clubId: string;
+  clubName: string;
+  organizerId: string;
+  title: string;
+  description: string | null;
+  date: string;
+  city: string;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  status: EventStatus;
+  cancelledAt?: string | null;
+  coverUrl?: string | null;
+  theme: string | null;
+  tags: string[];
+  durationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  attendeeCount: number;
+  isAttending: boolean;
+  bookTitle?: string | null;
+  quizId?: string | null;
+}
+export function mapUserProfile(raw: ApiUserProfile): UserProfile {
+  return {
+    id: raw.id,
+    role: raw.role,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    createdAt: raw.createdAt,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
+}
+export function mapUserStats(raw: ApiUserStats): UserStats {
+  return {
+    clubsJoined: raw.clubsJoined,
+    quizzesTaken: raw.quizzesTaken,
+    quizWins: raw.quizWins,
+    likesReceived: raw.likesReceived,
+    booksRead: raw.booksRead,
+  };
+}
+export function mapClub(raw: ApiClub): Club {
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description,
+    coverUrl: raw.coverUrl,
+    organizerId: raw.organizerId,
+    isPublic: raw.isPublic,
+    memberCount: raw.memberCount,
+    memberPreviews: raw.memberPreviews ?? [],
+    createdAt: raw.createdAt,
+    city: raw.city ?? '',
+    nextMeetingDate: raw.nextMeetingDate,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    theme: raw.theme,
+    currentBook: raw.currentBook ? { title: raw.currentBook, author: '', description: '' } : null,
+    status: raw.status,
+    tags: raw.tags ?? [],
+    meetingDurationMinutes: raw.meetingDurationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    cancelledAt: raw.cancelledAt ?? undefined,
+  };
+}
+export function mapEvent(raw: ApiEvent): ClubEvent {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    clubName: raw.clubName,
+    organizerId: raw.organizerId,
+    title: raw.title,
+    description: raw.description,
+    date: raw.date,
+    city: raw.city,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    status: raw.status,
+    cancelledAt: raw.cancelledAt ?? undefined,
+    coverUrl: raw.coverUrl ?? null,
+    theme: raw.theme,
+    tags: raw.tags ?? [],
+    durationMinutes: raw.durationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    attendeeCount: raw.attendeeCount,
+    isAttending: raw.isAttending,
+    bookTitle: raw.bookTitle ?? null,
+    quizId: raw.quizId ?? null,
+  };
+}
+export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
+  return {
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    role: raw.role,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
+}
+export function mapBanRecord(raw: ApiBanRecord): BanRecord {
+  return {
+    userId: raw.userId,
+    clubId: raw.clubId,
+    bannedAt: raw.bannedAt,
+    duration: raw.duration,
+    bannedBy: raw.bannedBy,
+  };
+}
+function mapSocials(raw: ApiUserSocials): UserSocials {
+  return {
+    telegram: raw.telegram ?? undefined,
+    instagram: raw.instagram ?? undefined,
+    twitter: raw.twitter ?? undefined,
+    linkedin: raw.linkedin ?? undefined,
+    github: raw.github ?? undefined,
+    goodreads: raw.goodreads ?? undefined,
+  };
+}
+````
+
+## File: src/app/features/events/create-event/create-event.component.html
+````html
+<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
+  <nav>
+    <a [routerLink]="['/clubs', id()]"
+       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+      {{ 'CREATE_EVENT.back_to_club' | translate }}
+    </a>
+  </nav>
+  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{{ 'CREATE_EVENT.heading' | translate }}</h1>
+    @if (errorMessage()) {
+      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+           role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+      <div>
+        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {{ 'CREATE_EVENT.title_label' | translate }} <span class="text-red-500">*</span>
+        </label>
+        <input hlmInput id="title" type="text" formControlName="title" class="w-full"
+               placeholder="April Discussion" />
+        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.title_required' | translate }}</p>
+        }
+      </div>
+      <div>
+        <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">📖 Book title</label>
+        <input hlmInput id="bookTitle" type="text" formControlName="bookTitle" class="w-full"
+               placeholder="The Master and Margarita" />
+        @if (isFetchingCover()) {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">🔍 Searching for book cover…</p>
+        } @else if (coverFetchFailed()) {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">No cover found — you can add one manually below.</p>
+        } @else {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">What book will you discuss at this event?</p>
+        }
+      </div>
+      <div>
+        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.description_label' | translate }}</label>
+        <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
+                  [placeholder]="'CREATE_EVENT.description_placeholder' | translate"></textarea>
+      </div>
+      <div>
+        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {{ 'CREATE_EVENT.date_label' | translate }} <span class="text-red-500">*</span>
+        </label>
+        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
+        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.date_required' | translate }}</p>
+        }
+      </div>
+      <div>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {{ 'CREATE_EVENT.location_label' | translate }} <span class="text-red-500">*</span>
+        </p>
+        <app-address-autocomplete
+          [control]="form.controls.address"
+          placeholder="Start typing an address…"
+          (selected)="onAddressSelect($event)"
+        />
+        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.location_required' | translate }}</p>
+        }
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.duration_label' | translate }}</label>
+          <input hlmInput id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
+                 class="w-full" placeholder="120" />
+        </div>
+        <div>
+          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.theme_label' | translate }}</label>
+          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
+        </div>
+      </div>
+      <div>
+        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.tags_label' | translate }}</label>
+        <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
+               [placeholder]="'CREATE_EVENT.tags_placeholder' | translate" />
+      </div>
+      <div>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ 'CREATE_EVENT.cover_label' | translate }}</p>
+        <app-cover-upload [control]="form.controls.coverUrl" />
+      </div>
+      @if (activeQuizzes().length > 0) {
+        <div>
+          <label for="quizId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            🧠 Linked quiz
+          </label>
+          <select id="quizId" formControlName="quizId"
+                  class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+            <option [ngValue]="null">— No quiz —</option>
+            @for (quiz of activeQuizzes(); track quiz.id) {
+              <option [value]="quiz.id">{{ quiz.title }}</option>
+            }
+          </select>
+        </div>
+      }
+      <div>
+        <button type="button" (click)="toggleAfterVenue()"
+                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
+          {{ showAfterVenue() ? ('CREATE_EVENT.after_venue_remove' | translate) : ('CREATE_EVENT.after_venue_add' | translate) }}
+        </button>
+        @if (showAfterVenue()) {
+          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
+            <div>
+              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_name_label' | translate }} <span class="text-red-500">*</span></label>
+              <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
+                     class="w-full" placeholder="Cozy Cafe" />
+            </div>
+            <div>
+              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_address_label' | translate }}</label>
+              <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
+                     class="w-full" placeholder="123 Main St" />
+            </div>
+            <div>
+              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_notes_label' | translate }}</label>
+              <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
+                     class="w-full" placeholder="Optional notes" />
+            </div>
+          </div>
+        }
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <a hlmBtn variant="outline" [routerLink]="['/clubs', id()]">{{ 'CREATE_EVENT.cancel' | translate }}</a>
+        <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
+                class="bg-primary-600 hover:bg-primary-700 text-white">
+          @if (isSubmitting()) { {{ 'CREATE_EVENT.submitting' | translate }} } @else { {{ 'CREATE_EVENT.submit' | translate }} }
+        </button>
+      </div>
+    </form>
+  </div>
+</main>
+````
+
+## File: package.json
+````json
+{
+  "name": "book-club-fe",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
+    "extract-i18n": "node scripts/extract-i18n.mjs",
+    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
+    "lint": "ng lint",
+    "build-ctx": "npx repomix --no-files",
+    "prepare": "husky install",
+    "mock": "node mock-server/index.js",
+    "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\""
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "overrides": {
+    "picomatch": "^4.0.4",
+    "axios": "1.15.2"
+  },
+  "dependencies": {
+    "@angular/cdk": "^21.2.8",
+    "@angular/common": "^21.2.10",
+    "@angular/compiler": "^21.2.10",
+    "@angular/core": "^21.2.10",
+    "@angular/forms": "^21.2.10",
+    "@angular/platform-browser": "^21.2.10",
+    "@angular/router": "^21.2.10",
+    "@ng-icons/core": ">=32.0.0 <34.0.0",
+    "@ng-icons/lucide": ">=32.0.0 <34.0.0",
+    "@ngx-translate/core": "^17.0.0",
+    "@ngx-translate/http-loader": "^17.0.0",
+    "@spartan-ng/brain": "^0.0.1-alpha.678",
+    "@spartan-ng/cli": "^0.0.1-alpha.678",
+    "@tailwindcss/postcss": "^4.2.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "qrcode": "^1.5.4",
+    "rxjs": "~7.8.0",
+    "tailwind-merge": "^3.5.0",
+    "tslib": "^2.3.0",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.2.8",
+    "@angular/cli": "^21.2.8",
+    "@angular/compiler-cli": "^21.2.10",
+    "@playwright/test": "^1.59.1",
+    "@types/jasmine": "~5.1.0",
+    "@types/qrcode": "^1.5.6",
+    "angular-eslint": "21.0.1",
+    "autoprefixer": "^10.4.27",
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.6",
+    "eslint": "^9.39.1",
+    "eslint-plugin-rxjs-x": "^0.9.5",
+    "express": "^5.2.1",
+    "husky": "^8.0.0",
+    "jasmine-core": "~5.8.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "postcss": "^8.5.9",
+    "tailwindcss": "^4.2.4",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "8.46.4"
+  }
+}
+````
+
 ## File: public/i18n/en.json
 ````json
 {
@@ -16435,7 +16518,6 @@ export class ClubService {
     "error_min": "Select at least 2 members",
     "winner": "Winner"
   },
-<<<<<<< HEAD
   "EVENTS": {
     "subtitle": "Discover and join upcoming book club gatherings",
     "attending": "attending",
@@ -16461,7 +16543,7 @@ export class ClubService {
     "no_upcoming": "No upcoming events",
     "no_upcoming_desc": "No events are scheduled yet. Check back soon!",
     "no_my_events_desc": "Join clubs to see their events here."
-=======
+  },
   "CREATE_EVENT": {
     "back_to_club": "← Back to Club",
     "heading": "Create Event",
@@ -16492,7 +16574,6 @@ export class ClubService {
     "cancel": "Cancel",
     "submit": "Create Event",
     "submitting": "Creating…"
->>>>>>> worktree-agent-a60e2046e76e1424e
   },
   "QUIZ": {
     "title": "Quizzes",
@@ -16522,7 +16603,6 @@ export class ClubService {
     "take": "Start",
     "results": "Results",
     "score": "Score",
-<<<<<<< HEAD
     "edit": "Edit",
     "edit_title": "Edit Quiz",
     "edit_save": "Save Changes",
@@ -16575,21 +16655,16 @@ export class ClubService {
     "session_live_leaderboard": "🏆 Live Leaderboard",
     "session_no_participants": "No participants yet. Waiting for responses…",
     "create_heading_full": "📝 Create Quiz",
-=======
->>>>>>> worktree-agent-a60e2046e76e1424e
     "create_step_of": "Step {{ step }} of 2",
     "create_step_details": "Quiz details",
     "create_step_questions": "Add questions",
     "create_cancel": "✕ Cancel",
     "create_back": "← Back",
-<<<<<<< HEAD
     "preview_live_banner": "🟢 This quiz is currently live.",
     "preview_no_questions_link": "→ Go to Edit",
     "preview_correct_answer": "✓ Correct",
     "error_return": "Return to quiz list",
-    "loading": "Loading quiz…"
-=======
-    "create_heading": "📝 Create Quiz",
+    "loading": "Loading quiz…",
     "create_title_label": "Quiz title",
     "create_title_placeholder": "e.g. The Midnight Library — Chapter 1 Quiz",
     "create_title_required": "Title is required.",
@@ -16615,7 +16690,6 @@ export class ClubService {
     "result_perfect": "🎉 Perfect score!",
     "result_review_title": "Review Answers",
     "result_correct": "Correct"
->>>>>>> worktree-agent-a60e2046e76e1424e
   },
   "CHAT": {
     "title": "Club Chat",
@@ -16626,19 +16700,16 @@ export class ClubService {
     "close": "Close chat",
     "open": "Open chat",
     "rooms": "Rooms",
-<<<<<<< HEAD
     "mute": "Mute",
     "unmute": "Unmute",
     "muted_label": "[muted]",
     "no_rooms": "No chat rooms available",
+    "no_rooms_hint_member": "The organizer hasn't set up a chat for this club yet.",
     "ban_600s": "Ban 600s",
     "delete_message": "Delete message",
     "add_room": "Add room",
     "room_name_placeholder": "Room name...",
     "create_room": "Create"
-=======
-    "no_rooms_hint_member": "The organizer hasn't set up a chat for this club yet."
->>>>>>> worktree-agent-abfaf1a395decc804
   },
   "FORM_ERRORS": {
     "required": "This field is required.",
@@ -16945,7 +17016,6 @@ export class ClubService {
     "error_min": "Оберіть щонайменше 2 учасників",
     "winner": "Переможець"
   },
-<<<<<<< HEAD
   "EVENTS": {
     "subtitle": "Відкривайте та приєднуйтесь до майбутніх зустрічей",
     "attending": "відвідують",
@@ -16971,7 +17041,7 @@ export class ClubService {
     "no_upcoming": "Немає майбутніх подій",
     "no_upcoming_desc": "Поки що не заплановано жодної події. Заходьте пізніше!",
     "no_my_events_desc": "Приєднуйтесь до клубів, щоб бачити їхні події тут."
-=======
+  },
   "CREATE_EVENT": {
     "back_to_club": "← Назад до клубу",
     "heading": "Створити подію",
@@ -17002,7 +17072,6 @@ export class ClubService {
     "cancel": "Скасувати",
     "submit": "Створити подію",
     "submitting": "Створення…"
->>>>>>> worktree-agent-a60e2046e76e1424e
   },
   "QUIZ": {
     "title": "Квізи",
@@ -17032,7 +17101,6 @@ export class ClubService {
     "take": "Почати",
     "results": "Результати",
     "score": "Рахунок",
-<<<<<<< HEAD
     "edit": "Редагувати",
     "edit_title": "Редагувати квіз",
     "edit_save": "Зберегти зміни",
@@ -17085,21 +17153,16 @@ export class ClubService {
     "session_live_leaderboard": "🏆 Таблиця лідерів наживо",
     "session_no_participants": "Учасників ще немає. Очікуємо відповідей…",
     "create_heading_full": "📝 Створити квіз",
-=======
->>>>>>> worktree-agent-a60e2046e76e1424e
     "create_step_of": "Крок {{ step }} з 2",
     "create_step_details": "Деталі квізу",
     "create_step_questions": "Додати питання",
     "create_cancel": "✕ Скасувати",
     "create_back": "← Назад",
-<<<<<<< HEAD
     "preview_live_banner": "🟢 Цей квіз зараз активний.",
     "preview_no_questions_link": "→ Перейти до редагування",
     "preview_correct_answer": "✓ Правильно",
     "error_return": "Повернутись до списку квізів",
-    "loading": "Завантаження квізу…"
-=======
-    "create_heading": "📝 Створити квіз",
+    "loading": "Завантаження квізу…",
     "create_title_label": "Назва квізу",
     "create_title_placeholder": "напр. «Північ» — Розділ 1",
     "create_title_required": "Назва є обов'язковою.",
@@ -17125,7 +17188,6 @@ export class ClubService {
     "result_perfect": "🎉 Чудово! Всі відповіді правильні!",
     "result_review_title": "Перегляд відповідей",
     "result_correct": "Правильно"
->>>>>>> worktree-agent-a60e2046e76e1424e
   },
   "CHAT": {
     "title": "Чат клубу",
@@ -17136,19 +17198,16 @@ export class ClubService {
     "close": "Закрити чат",
     "open": "Відкрити чат",
     "rooms": "Кімнати",
-<<<<<<< HEAD
     "mute": "Заглушити",
     "unmute": "Зняти мут",
     "muted_label": "[заглушено]",
     "no_rooms": "Кімнати чату недоступні",
+    "no_rooms_hint_member": "Організатор ще не налаштував чат для цього клубу.",
     "ban_600s": "Бан 600 сек",
     "delete_message": "Видалити повідомлення",
     "add_room": "Додати кімнату",
     "room_name_placeholder": "Назва кімнати...",
     "create_room": "Створити"
-=======
-    "no_rooms_hint_member": "Організатор ще не налаштував чат для цього клубу."
->>>>>>> worktree-agent-abfaf1a395decc804
   },
   "FORM_ERRORS": {
     "required": "Це поле є обов'язковим.",
@@ -17168,489 +17227,6 @@ export class ClubService {
     "site_name": "Book Club",
     "site_url": "https://book-club-fe.vercel.app",
     "site_description": "Читацькі клуби України"
-  }
-}
-````
-
-## File: src/app/core/api/api-mappers.ts
-````typescript
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
-import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
-export interface ApiUserProfile {
-  id: string;
-  email: string;
-  role: UserRole;
-  displayName: string;
-  avatarUrl: string | null;
-  createdAt: string;
-  socials?: ApiUserSocials | null;
-  socialsPublic?: boolean;
-}
-export type ApiUserSocials = { [K in keyof UserSocials]?: string | null };
-export interface ApiUserStats {
-  clubsJoined: number;
-  quizzesTaken: number;
-  quizWins: number;
-  likesReceived: number;
-  booksRead: number;
-}
-export interface ApiClub {
-  id: string;
-  name: string;
-  description: string | null;
-  coverUrl: string | null;
-  organizerId: string;
-  isPublic: boolean;
-  memberCount: number;
-  memberPreviews: string[];
-  createdAt: string;
-  city: string | null;
-  nextMeetingDate: string | null;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  theme: string | null;
-  currentBook: string | null;
-  status: ClubStatus;
-  tags: string[];
-  meetingDurationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  cancelledAt?: string | null;
-}
-export interface ApiClubMember {
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  role: 'organizer' | 'member';
-  socials?: ApiUserSocials | null;
-  socialsPublic?: boolean;
-}
-export interface ApiBanRecord {
-  userId: string;
-  clubId: string;
-  bannedAt: string;
-  duration: BanDuration;
-  bannedBy: string;
-}
-export interface ApiEvent {
-  id: string;
-  clubId: string;
-  clubName: string;
-  organizerId: string;
-  title: string;
-  description: string | null;
-  date: string;
-  city: string;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  status: EventStatus;
-  cancelledAt?: string | null;
-  coverUrl?: string | null;
-  theme: string | null;
-  tags: string[];
-  durationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  attendeeCount: number;
-  isAttending: boolean;
-  bookTitle?: string | null;
-  quizId?: string | null;
-}
-export function mapUserProfile(raw: ApiUserProfile): UserProfile {
-  return {
-    id: raw.id,
-    role: raw.role,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-    createdAt: raw.createdAt,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socialsPublic ?? false,
-  };
-}
-export function mapUserStats(raw: ApiUserStats): UserStats {
-  return {
-    clubsJoined: raw.clubsJoined,
-    quizzesTaken: raw.quizzesTaken,
-    quizWins: raw.quizWins,
-    likesReceived: raw.likesReceived,
-    booksRead: raw.booksRead,
-  };
-}
-export function mapClub(raw: ApiClub): Club {
-  return {
-    id: raw.id,
-    name: raw.name,
-    description: raw.description,
-    coverUrl: raw.coverUrl,
-    organizerId: raw.organizerId,
-    isPublic: raw.isPublic,
-    memberCount: raw.memberCount,
-    memberPreviews: raw.memberPreviews ?? [],
-    createdAt: raw.createdAt,
-    city: raw.city ?? '',
-    nextMeetingDate: raw.nextMeetingDate,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    theme: raw.theme,
-    currentBook: raw.currentBook ? { title: raw.currentBook, author: '', description: '' } : null,
-    status: raw.status,
-    tags: raw.tags ?? [],
-    meetingDurationMinutes: raw.meetingDurationMinutes,
-    afterMeetingVenue: raw.afterMeetingVenue,
-    cancelledAt: raw.cancelledAt ?? undefined,
-  };
-}
-export function mapEvent(raw: ApiEvent): ClubEvent {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    clubName: raw.clubName,
-    organizerId: raw.organizerId,
-    title: raw.title,
-    description: raw.description,
-    date: raw.date,
-    city: raw.city,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    status: raw.status,
-    cancelledAt: raw.cancelledAt ?? undefined,
-    coverUrl: raw.coverUrl ?? null,
-    theme: raw.theme,
-    tags: raw.tags ?? [],
-    durationMinutes: raw.durationMinutes,
-    afterMeetingVenue: raw.afterMeetingVenue,
-    attendeeCount: raw.attendeeCount,
-    isAttending: raw.isAttending,
-    bookTitle: raw.bookTitle ?? null,
-    quizId: raw.quizId ?? null,
-  };
-}
-export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
-  return {
-    userId: raw.userId,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-    role: raw.role,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socialsPublic ?? false,
-  };
-}
-export function mapBanRecord(raw: ApiBanRecord): BanRecord {
-  return {
-    userId: raw.userId,
-    clubId: raw.clubId,
-    bannedAt: raw.bannedAt,
-    duration: raw.duration,
-    bannedBy: raw.bannedBy,
-  };
-}
-function mapSocials(raw: ApiUserSocials): UserSocials {
-  return {
-    telegram: raw.telegram ?? undefined,
-    instagram: raw.instagram ?? undefined,
-    twitter: raw.twitter ?? undefined,
-    linkedin: raw.linkedin ?? undefined,
-    github: raw.github ?? undefined,
-    goodreads: raw.goodreads ?? undefined,
-  };
-}
-````
-
-## File: src/app/features/events/create-event/create-event.component.html
-````html
-<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
-  <nav>
-    <a [routerLink]="['/clubs', id()]"
-       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-      {{ 'CREATE_EVENT.back_to_club' | translate }}
-    </a>
-  </nav>
-  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{{ 'CREATE_EVENT.heading' | translate }}</h1>
-    @if (errorMessage()) {
-      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-           role="alert">
-        {{ errorMessage() }}
-      </div>
-    }
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-      <div>
-        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          {{ 'CREATE_EVENT.title_label' | translate }} <span class="text-red-500">*</span>
-        </label>
-        <input hlmInput id="title" type="text" formControlName="title" class="w-full"
-               placeholder="April Discussion" />
-        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.title_required' | translate }}</p>
-        }
-      </div>
-      <div>
-        <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">📖 Book title</label>
-        <input hlmInput id="bookTitle" type="text" formControlName="bookTitle" class="w-full"
-               placeholder="The Master and Margarita" />
-        @if (isFetchingCover()) {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">🔍 Searching for book cover…</p>
-        } @else if (coverFetchFailed()) {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">No cover found — you can add one manually below.</p>
-        } @else {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">What book will you discuss at this event?</p>
-        }
-      </div>
-      <div>
-<<<<<<< HEAD
-        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-        <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
-                  placeholder="What will you be reading or discussing?"></textarea>
-=======
-        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.description_label' | translate }}</label>
-        <textarea id="description" formControlName="description" rows="3"
-                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
-                  [placeholder]="'CREATE_EVENT.description_placeholder' | translate"></textarea>
->>>>>>> worktree-agent-a60e2046e76e1424e
-      </div>
-      <div>
-        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          {{ 'CREATE_EVENT.date_label' | translate }} <span class="text-red-500">*</span>
-        </label>
-        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
-        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.date_required' | translate }}</p>
-        }
-      </div>
-      <div>
-        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          {{ 'CREATE_EVENT.location_label' | translate }} <span class="text-red-500">*</span>
-        </p>
-        <app-address-autocomplete
-          [control]="form.controls.address"
-          placeholder="Start typing an address…"
-          (selected)="onAddressSelect($event)"
-        />
-        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.location_required' | translate }}</p>
-        }
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-<<<<<<< HEAD
-          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
-          <input hlmInput id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
-                 class="w-full" placeholder="120" />
-        </div>
-        <div>
-          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
-          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
-=======
-          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.duration_label' | translate }}</label>
-          <input id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
-                 class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                 placeholder="120" />
-        </div>
-        <div>
-          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.theme_label' | translate }}</label>
-          <input id="theme" type="text" formControlName="theme"
-                 class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                 placeholder="sci-fi" />
->>>>>>> worktree-agent-a60e2046e76e1424e
-        </div>
-      </div>
-      <div>
-<<<<<<< HEAD
-        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
-        <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
-               placeholder="fiction, dystopia, classic (comma-separated)" />
-=======
-        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.tags_label' | translate }}</label>
-        <input id="tags" type="text" formControlName="tagsRaw"
-               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-               [placeholder]="'CREATE_EVENT.tags_placeholder' | translate" />
->>>>>>> worktree-agent-a60e2046e76e1424e
-      </div>
-      <div>
-<<<<<<< HEAD
-        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cover image</p>
-        <app-cover-upload [control]="form.controls.coverUrl" />
-=======
-        <label for="cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.cover_label' | translate }}</label>
-        @if (form.controls.coverUrl.value) {
-          <div class="mb-2 rounded-xl overflow-hidden h-24 bg-gray-100 dark:bg-gray-700">
-            <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover" />
-          </div>
-        }
-        <input id="cover-url" type="url" formControlName="coverUrl"
-               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-               placeholder="https://example.com/cover.jpg" />
-        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Paste a public image link (JPG, PNG, WebP)</p>
->>>>>>> worktree-agent-a60e2046e76e1424e
-      </div>
-      @if (activeQuizzes().length > 0) {
-        <div>
-          <label for="quizId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            🧠 Linked quiz
-          </label>
-          <select id="quizId" formControlName="quizId"
-                  class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
-            <option [ngValue]="null">— No quiz —</option>
-            @for (quiz of activeQuizzes(); track quiz.id) {
-              <option [value]="quiz.id">{{ quiz.title }}</option>
-            }
-          </select>
-        </div>
-      }
-      <div>
-        <button type="button" (click)="toggleAfterVenue()"
-                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
-          {{ showAfterVenue() ? ('CREATE_EVENT.after_venue_remove' | translate) : ('CREATE_EVENT.after_venue_add' | translate) }}
-        </button>
-        @if (showAfterVenue()) {
-          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
-            <div>
-<<<<<<< HEAD
-              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Venue name <span class="text-red-500">*</span>
-              </label>
-              <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
-                     class="w-full" placeholder="Cozy Cafe" />
-            </div>
-            <div>
-              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
-              <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
-                     class="w-full" placeholder="123 Main St" />
-            </div>
-            <div>
-              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-              <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
-                     class="w-full" placeholder="Optional notes" />
-=======
-              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_name_label' | translate }} <span class="text-red-500">*</span></label>
-              <input id="afterVenueName" type="text" formControlName="afterVenueName"
-                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="Cozy Cafe" />
-            </div>
-            <div>
-              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_address_label' | translate }}</label>
-              <input id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
-                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="123 Main St" />
-            </div>
-            <div>
-              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_notes_label' | translate }}</label>
-              <input id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
-                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="Optional notes" />
->>>>>>> worktree-agent-a60e2046e76e1424e
-            </div>
-          </div>
-        }
-      </div>
-      <div class="flex justify-end gap-3 pt-2">
-<<<<<<< HEAD
-        <a hlmBtn variant="outline" [routerLink]="['/clubs', id()]">Cancel</a>
-        <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
-                class="bg-primary-600 hover:bg-primary-700 text-white">
-          @if (isSubmitting()) { Creating… } @else { Create Event }
-=======
-        <a [routerLink]="['/clubs', clubId()]"
-           class="rounded-xl border border-gray-300 dark:border-gray-600 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-          {{ 'CREATE_EVENT.cancel' | translate }}
-        </a>
-        <button type="submit" [disabled]="form.invalid || isSubmitting()"
-                class="rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
-          @if (isSubmitting()) { {{ 'CREATE_EVENT.submitting' | translate }} } @else { {{ 'CREATE_EVENT.submit' | translate }} }
->>>>>>> worktree-agent-a60e2046e76e1424e
-        </button>
-      </div>
-    </form>
-  </div>
-</main>
-````
-
-## File: package.json
-````json
-{
-  "name": "book-club-fe",
-  "version": "0.0.0",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
-    "extract-i18n": "node scripts/extract-i18n.mjs",
-    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
-    "lint": "ng lint",
-    "build-ctx": "npx repomix --no-files",
-    "prepare": "husky install",
-    "mock": "node mock-server/index.js",
-    "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\""
-  },
-  "prettier": {
-    "overrides": [
-      {
-        "files": "*.html",
-        "options": {
-          "parser": "angular"
-        }
-      }
-    ]
-  },
-  "private": true,
-  "overrides": {
-    "picomatch": "^4.0.4",
-    "axios": "1.15.2"
-  },
-  "dependencies": {
-    "@angular/cdk": "^21.2.8",
-    "@angular/common": "^21.2.10",
-    "@angular/compiler": "^21.2.10",
-    "@angular/core": "^21.2.10",
-    "@angular/forms": "^21.2.10",
-    "@angular/platform-browser": "^21.2.10",
-    "@angular/router": "^21.2.10",
-    "@ng-icons/core": ">=32.0.0 <34.0.0",
-    "@ng-icons/lucide": ">=32.0.0 <34.0.0",
-    "@ngx-translate/core": "^17.0.0",
-    "@ngx-translate/http-loader": "^17.0.0",
-    "@spartan-ng/brain": "^0.0.1-alpha.678",
-    "@spartan-ng/cli": "^0.0.1-alpha.678",
-    "@tailwindcss/postcss": "^4.2.4",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "qrcode": "^1.5.4",
-    "rxjs": "~7.8.0",
-    "tailwind-merge": "^3.5.0",
-    "tslib": "^2.3.0",
-    "tw-animate-css": "^1.4.0"
-  },
-  "devDependencies": {
-    "@angular/build": "^21.2.8",
-    "@angular/cli": "^21.2.8",
-    "@angular/compiler-cli": "^21.2.10",
-    "@playwright/test": "^1.59.1",
-    "@types/jasmine": "~5.1.0",
-    "@types/qrcode": "^1.5.6",
-    "angular-eslint": "21.0.1",
-    "autoprefixer": "^10.4.27",
-    "concurrently": "^9.2.1",
-    "cors": "^2.8.6",
-    "eslint": "^9.39.1",
-    "eslint-plugin-rxjs-x": "^0.9.5",
-    "express": "^5.2.1",
-    "husky": "^8.0.0",
-    "jasmine-core": "~5.8.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
-    "postcss": "^8.5.9",
-    "tailwindcss": "^4.2.4",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "8.46.4"
   }
 }
 ````
@@ -17865,12 +17441,9 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-<<<<<<< HEAD
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs';
-=======
 import { TranslateModule } from '@ngx-translate/core';
->>>>>>> worktree-agent-a60e2046e76e1424e
 import { EventService } from '../../../core/services/event.service';
 import { QuizService } from '../../../core/services/quiz.service';
 import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
@@ -17883,11 +17456,7 @@ import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
   selector: 'app-create-event',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-<<<<<<< HEAD
-  imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton],
-=======
-  imports: [RouterLink, ReactiveFormsModule, TranslateModule, AddressAutocompleteComponent],
->>>>>>> worktree-agent-a60e2046e76e1424e
+  imports: [RouterLink, ReactiveFormsModule, TranslateModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton],
   templateUrl: './create-event.component.html',
 })
 export class CreateEventComponent implements OnInit {

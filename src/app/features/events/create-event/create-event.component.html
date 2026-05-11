@@ -48,16 +48,9 @@
 
       <!-- Description -->
       <div>
-<<<<<<< HEAD
-        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-        <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
-                  placeholder="What will you be reading or discussing?"></textarea>
-=======
         <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.description_label' | translate }}</label>
-        <textarea id="description" formControlName="description" rows="3"
-                  class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+        <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
                   [placeholder]="'CREATE_EVENT.description_placeholder' | translate"></textarea>
->>>>>>> worktree-agent-a60e2046e76e1424e
       </div>
 
       <!-- Date -->
@@ -89,60 +82,27 @@
       <!-- Duration + Theme row -->
       <div class="grid grid-cols-2 gap-4">
         <div>
-<<<<<<< HEAD
-          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
+          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.duration_label' | translate }}</label>
           <input hlmInput id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
                  class="w-full" placeholder="120" />
         </div>
         <div>
-          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
-          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
-=======
-          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.duration_label' | translate }}</label>
-          <input id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
-                 class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                 placeholder="120" />
-        </div>
-        <div>
           <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.theme_label' | translate }}</label>
-          <input id="theme" type="text" formControlName="theme"
-                 class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                 placeholder="sci-fi" />
->>>>>>> worktree-agent-a60e2046e76e1424e
+          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
         </div>
       </div>
 
       <!-- Tags -->
       <div>
-<<<<<<< HEAD
-        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
-        <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
-               placeholder="fiction, dystopia, classic (comma-separated)" />
-=======
         <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.tags_label' | translate }}</label>
-        <input id="tags" type="text" formControlName="tagsRaw"
-               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
                [placeholder]="'CREATE_EVENT.tags_placeholder' | translate" />
->>>>>>> worktree-agent-a60e2046e76e1424e
       </div>
 
       <!-- Cover image -->
       <div>
-<<<<<<< HEAD
-        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cover image</p>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ 'CREATE_EVENT.cover_label' | translate }}</p>
         <app-cover-upload [control]="form.controls.coverUrl" />
-=======
-        <label for="cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.cover_label' | translate }}</label>
-        @if (form.controls.coverUrl.value) {
-          <div class="mb-2 rounded-xl overflow-hidden h-24 bg-gray-100 dark:bg-gray-700">
-            <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover" />
-          </div>
-        }
-        <input id="cover-url" type="url" formControlName="coverUrl"
-               class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-               placeholder="https://example.com/cover.jpg" />
-        <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">Paste a public image link (JPG, PNG, WebP)</p>
->>>>>>> worktree-agent-a60e2046e76e1424e
       </div>
 
       <!-- Linked quiz -->
@@ -171,40 +131,19 @@
         @if (showAfterVenue()) {
           <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
             <div>
-<<<<<<< HEAD
-              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Venue name <span class="text-red-500">*</span>
-              </label>
+              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_name_label' | translate }} <span class="text-red-500">*</span></label>
               <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
                      class="w-full" placeholder="Cozy Cafe" />
             </div>
             <div>
-              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
+              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_address_label' | translate }}</label>
               <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
                      class="w-full" placeholder="123 Main St" />
             </div>
             <div>
-              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_notes_label' | translate }}</label>
               <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
                      class="w-full" placeholder="Optional notes" />
-=======
-              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_name_label' | translate }} <span class="text-red-500">*</span></label>
-              <input id="afterVenueName" type="text" formControlName="afterVenueName"
-                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="Cozy Cafe" />
-            </div>
-            <div>
-              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_address_label' | translate }}</label>
-              <input id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
-                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="123 Main St" />
-            </div>
-            <div>
-              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_notes_label' | translate }}</label>
-              <input id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
-                     class="w-full rounded-xl border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
-                     placeholder="Optional notes" />
->>>>>>> worktree-agent-a60e2046e76e1424e
             </div>
           </div>
         }
@@ -212,20 +151,10 @@
 
       <!-- Submit -->
       <div class="flex justify-end gap-3 pt-2">
-<<<<<<< HEAD
-        <a hlmBtn variant="outline" [routerLink]="['/clubs', id()]">Cancel</a>
+        <a hlmBtn variant="outline" [routerLink]="['/clubs', id()]">{{ 'CREATE_EVENT.cancel' | translate }}</a>
         <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
                 class="bg-primary-600 hover:bg-primary-700 text-white">
-          @if (isSubmitting()) { Creating… } @else { Create Event }
-=======
-        <a [routerLink]="['/clubs', clubId()]"
-           class="rounded-xl border border-gray-300 dark:border-gray-600 px-5 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
-          {{ 'CREATE_EVENT.cancel' | translate }}
-        </a>
-        <button type="submit" [disabled]="form.invalid || isSubmitting()"
-                class="rounded-xl bg-primary-600 hover:bg-primary-700 px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
           @if (isSubmitting()) { {{ 'CREATE_EVENT.submitting' | translate }} } @else { {{ 'CREATE_EVENT.submit' | translate }} }
->>>>>>> worktree-agent-a60e2046e76e1424e
         </button>
       </div>
 

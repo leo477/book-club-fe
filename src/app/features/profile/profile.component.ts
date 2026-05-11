@@ -7,10 +7,7 @@ import {
 } from '@angular/core';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-<<<<<<< HEAD
 import { toast } from '@spartan-ng/brain/sonner';
-=======
->>>>>>> worktree-agent-a60e2046e76e1424e
 import { AuthService } from '../../core/auth/auth.service';
 import { UserRole, UserSocials } from '../../core/models/user.model';
 import { SeoService } from '../../core/services/seo.service';
@@ -31,10 +28,6 @@ import { HlmInput } from '../../shared/spartan/input/src';
 export class ProfileComponent {
   protected readonly auth = inject(AuthService);
   private readonly seo = inject(SeoService);
-<<<<<<< HEAD
-=======
-  private readonly toast = inject(ToastService);
->>>>>>> worktree-agent-a60e2046e76e1424e
   private readonly translate = inject(TranslateService);
 
   protected readonly socialFields = computed<SocialField[]>(() => {
@@ -169,11 +162,7 @@ export class ProfileComponent {
   protected async changeRole(role: UserRole): Promise<void> {
     try {
       await this.auth.updateRole(role);
-<<<<<<< HEAD
       toast.success(this.translate.instant('PROFILE.role_changed'));
-=======
-      this.toast.show(this.translate.instant('PROFILE.role_changed'), 'success');
->>>>>>> worktree-agent-a60e2046e76e1424e
     } catch { /* error already handled by interceptor */ }
   }
 
