@@ -1,0 +1,4 @@
+paths-ignore:
+  - playwright-report
+  - test-results
+  - repomix-output.md
