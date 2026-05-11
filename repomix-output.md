@@ -2862,40 +2862,6 @@ export const roleGuard =
   };
 ````
 
-## File: src/app/core/auth/token.store.ts
-````typescript
-import { Injectable, signal } from '@angular/core';
-const TOKEN_KEY = 'bc_access_token';
-const REFRESH_TOKEN_KEY = 'bc_refresh_token';
-@Injectable({ providedIn: 'root' })
-export class TokenStore {
-  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
-  private readonly _refreshToken = signal<string | null>(localStorage.getItem(REFRESH_TOKEN_KEY));
-  readonly token = this._token.asReadonly();
-  readonly refreshToken = this._refreshToken.asReadonly();
-  set(token: string): void {
-    localStorage.setItem(TOKEN_KEY, token);
-    this._token.set(token);
-  }
-  setRefresh(token: string): void {
-    localStorage.setItem(REFRESH_TOKEN_KEY, token);
-    this._refreshToken.set(token);
-  }
-  clear(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(REFRESH_TOKEN_KEY);
-    this._token.set(null);
-    this._refreshToken.set(null);
-  }
-  snapshot(): string | null {
-    return this._token();
-  }
-  snapshotRefresh(): string | null {
-    return this._refreshToken();
-  }
-}
-````
-
 ## File: src/app/core/models/randomizer.model.ts
 ````typescript
 export interface MemberCandidate {
@@ -4254,125 +4220,6 @@ module.exports = {
 };
 ````
 
-## File: bugs.md
-````markdown
-# Bug Report — Book Club App Audit
-
-**Date:** 2026-05-09
-**URL:** https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app/
-**Test user:** test123@mail.com
-**Club owner account:** terrtr
-
-## Summary
-
-| Severity | Count |
-|----------|-------|
-| Critical | 0 |
-| High | 2 |
-| Medium | 4 |
-| Low | 1 |
-| **Total** | **7** |
-
-## HIGH (2)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/session` | console-error | Failed to load resource: the server responded with a status of 404 () |
-| 2 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/leaderboard` | console-error | Failed to load resource: the server responded with a status of 404 () |
-
-## MEDIUM (4)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `/events/:id` | ui-missing | Skipped: no event ID discovered (no events in API response) |
-| 2 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/session` | nav-404 | HTTP 404 — https://book-club-be.onrender.com/api/v1/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/sessions/active |
-| 3 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/leaderboard` | nav-404 | HTTP 404 — https://book-club-be.onrender.com/api/v1/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/sessions/active |
-| 4 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/randomizer` | ui-missing | Spin button not found on randomizer page |
-
-## LOW (1)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `theme-toggle` | ui-missing | Theme toggle button not found in header |
-````
-
-## File: playwright.md
-````markdown
-# Playwright Audit — Book Club App
-
-**Сайт:** https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app/  
-**Дата:** 2026-05-09  
-**Тести:** 24/24 pass  
-
----
-
-## Що було зроблено
-
-Проведено автоматизований Playwright-аудит всіх маршрутів (публічних та автентифікованих).
-Виявлено та виправлено помилки в тестовій інфраструктурі, додано `data-testid` атрибути до компонентів.
-
----
-
-## Виправлено в цій сесії
-
-| # | Файл | Зміна |
-|---|------|-------|
-| 1 | `playwright.vercel.config.ts` | Оновлено `baseURL` на актуальний Vercel деплой |
-| 2 | `e2e/audit.spec.ts` | Відфільтровано `net::ERR_ABORTED` false positives (SPA-навігація + Vercel JWE probes) |
-| 3 | `e2e/audit.spec.ts` | Виправлено тест `/events (unauth)` — route захищена `authGuard`, правильна поведінка — redirect to login |
-| 4 | `e2e/audit.spec.ts` | Виправлено quiz create тест — не намагатися клікнути disabled кнопку |
-| 5 | `e2e/audit.spec.ts` | Оновлено селектор spin button → `[data-testid="spin-button"]` |
-| 6 | `e2e/audit.spec.ts` | Оновлено селектор theme toggle → `[data-testid="theme-toggle"]` |
-| 7 | `randomizer.component.html` | Додано `data-testid="spin-button"` до кнопки Spin |
-| 8 | `header.component.html` | Додано `data-testid="theme-toggle"` до desktop та mobile кнопок теми |
-
----
-
-## Залишкові баги (потребують дій)
-
-### HIGH — Backend endpoint відсутній
-
-**Маршрути:** `/clubs/:id/quizzes/:quizId/session`, `/clubs/:id/quizzes/:quizId/leaderboard`  
-**Симптом:** Консольна помилка `Failed to load resource: 404` при завантаженні сторінки  
-**Причина:** `GET https://book-club-be.onrender.com/api/v1/quizzes/:id/sessions/active` → 404  
-**Дія:** Потрібно реалізувати endpoint на backend (FastAPI). Агент: **python-backend-dev**
-
-```
-GET /api/v1/quizzes/{quiz_id}/sessions/active
-→ Повертає поточну активну сесію квізу або 404 якщо немає
-```
-
-### MEDIUM — Spin button / Theme toggle (після деплою зникнуть)
-
-Ці баги показуються бо `data-testid` атрибути ще не задеплоєні на Vercel.
-Після `git push` + rebuild — зникнуть автоматично.
-
-### MEDIUM — `/events/:id` тест пропускається
-
-Тестовий акаунт `test123@mail.com` не має подій у API-відповіді.
-Потрібно або створити тестові події, або дістати `ANY_EVENT_ID` з іншого ендпоінту.
-
----
-
-## MCP-агенти для подальших дій
-
-| Агент | Задача |
-|-------|--------|
-| **python-backend-dev** | Реалізувати `GET /api/v1/quizzes/{quiz_id}/sessions/active` у FastAPI |
-| **dev** | (після деплою) Перевірити що `data-testid` атрибути видні в DOM |
-| **tester** | Додати тестові дані для акаунту `test123@mail.com` (хоча б одну подію) |
-
----
-
-## Запуск аудиту
-
-```bash
-npx playwright test --config=playwright.vercel.config.ts --reporter=list
-```
-
-Очікуваний результат після деплою: 24/24 pass, 0 high/critical bugs.
-````
-
 ## File: README.md
 ````markdown
 # BookClubFe
@@ -4978,6 +4825,30 @@ export class ChatService {
 }
 ````
 
+## File: src/app/core/services/geocoding.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+export interface GeocodeSuggestion {
+  label: string;
+  city: string | null;
+  country: string | null;
+  lat: number;
+  lng: number;
+}
+@Injectable({ providedIn: 'root' })
+export class GeocodingService {
+  private readonly http = inject(HttpClient);
+  autocomplete$(q: string, lang = 'uk', limit = 5): Observable<GeocodeSuggestion[]> {
+    return this.http.get<GeocodeSuggestion[]>(`${environment.apiUrl}/geocode/autocomplete`, {
+      params: { q, lang, limit: String(limit) },
+    });
+  }
+}
+````
+
 ## File: src/app/core/services/theme.service.ts
 ````typescript
 import { Injectable, signal, computed, effect } from '@angular/core';
@@ -5535,220 +5406,6 @@ export abstract class LeaderboardBaseComponent implements OnDestroy {
 }
 ````
 
-## File: src/app/features/quiz/quiz-take/quiz-take.component.html
-````html
-<div class="min-h-screen flex flex-col items-center p-4 sm:p-8">
-      <div class="w-full max-w-2xl space-y-6">
-        <nav aria-label="Breadcrumb">
-          <a
-            [routerLink]="['/clubs', clubId, 'quizzes']"
-            class="inline-flex items-center text-gray-500 hover:text-gray-900
-                   dark:hover:text-white text-sm transition-colors"
-          >
-            {{ 'QUIZ.back_to_quizzes' | translate }}
-          </a>
-        </nav>
-        @if (state() === 'loading') {
-          <div class="flex flex-col items-center py-20 gap-4">
-            <app-loading-spinner size="lg" />
-            <p class="text-gray-500 dark:text-gray-400 text-sm">{{ 'QUIZ.loading' | translate }}</p>
-          </div>
-        }
-        @if (state() === 'error') {
-          <div
-            class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800
-                   rounded-2xl p-8 text-center"
-          >
-            <p class="text-4xl mb-3">😞</p>
-            <p class="text-red-700 dark:text-red-400 font-medium">{{ errorMessage() }}</p>
-            <a
-              [routerLink]="['/clubs', clubId, 'quizzes']"
-              class="mt-4 inline-block text-primary-600 dark:text-primary-400
-                     hover:underline text-sm"
-            >
-              {{ 'QUIZ.error_return' | translate }}
-            </a>
-          </div>
-        }
-        @if (state() === 'taking' || state() === 'submitting') {
-          <div>
-            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
-              <span>{{ 'QUIZ.question_of' | translate: { current: currentIndex() + 1, total: quizService.questions().length } }}</span>
-              <span>{{ progressPercent() }}%</span>
-            </div>
-            <div class="h-2 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
-              <div
-                class="h-full bg-gradient-to-r from-primary-500 to-accent-500 rounded-full
-                       transition-all duration-500"
-                [style.width.%]="progressPercent()"
-              ></div>
-            </div>
-          </div>
-          @if (currentQuestion(); as q) {
-            <div
-              class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200
-                     dark:border-gray-800 shadow-sm"
-            >
-              <p class="text-gray-900 dark:text-white font-semibold text-lg leading-snug mb-6">
-                {{ q.question }}
-              </p>
-              <div class="space-y-3">
-                @for (option of q.options; track $index) {
-                  <button
-                    (click)="selectOption($index)"
-                    class="w-full text-left rounded-xl px-5 py-4 text-sm font-medium
-                           transition-all duration-150 border-2 focus:outline-none"
-                    [class.border-accent-500]="selectedOption() === $index"
-                    [class.ring-2]="selectedOption() === $index"
-                    [class.ring-accent-500]="selectedOption() === $index"
-                    [class.bg-accent-50]="selectedOption() === $index"
-                    [class.dark:bg-accent-900\/20]="selectedOption() === $index"
-                    [class.text-accent-700]="selectedOption() === $index"
-                    [class.dark:text-accent-300]="selectedOption() === $index"
-                    [class.border-gray-200]="selectedOption() !== $index"
-                    [class.dark:border-gray-700]="selectedOption() !== $index"
-                    [class.bg-white]="selectedOption() !== $index"
-                    [class.dark:bg-gray-800]="selectedOption() !== $index"
-                    [class.text-gray-700]="selectedOption() !== $index"
-                    [class.dark:text-gray-300]="selectedOption() !== $index"
-                    [class.hover:border-primary-400]="selectedOption() !== $index"
-                    [class.hover:bg-primary-50]="selectedOption() !== $index"
-                    [class.dark:hover:bg-primary-900\/20]="selectedOption() !== $index"
-                    [disabled]="state() === 'submitting'"
-                  >
-                    <span class="flex items-center gap-3">
-                      <span
-                        class="w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center
-                               justify-center text-xs font-bold"
-                        [class.border-accent-500]="selectedOption() === $index"
-                        [class.bg-accent-500]="selectedOption() === $index"
-                        [class.text-white]="selectedOption() === $index"
-                        [class.border-gray-300]="selectedOption() !== $index"
-                        [class.dark:border-gray-600]="selectedOption() !== $index"
-                        [class.text-gray-500]="selectedOption() !== $index"
-                      >
-                        {{ optionLabel($index) }}
-                      </span>
-                      {{ option }}
-                    </span>
-                  </button>
-                }
-              </div>
-            </div>
-            <div class="flex justify-between items-center">
-              <button
-                (click)="previous()"
-                [disabled]="currentIndex() === 0"
-                class="px-5 py-2.5 rounded-xl text-sm font-medium border border-gray-300
-                       dark:border-gray-700 text-gray-600 dark:text-gray-400
-                       hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40
-                       disabled:cursor-not-allowed transition-colors"
-              >
-                {{ 'QUIZ.prev' | translate }}
-              </button>
-              @if (isLastQuestion()) {
-                <button
-                  (click)="submit()"
-                  [disabled]="selectedOption() === -1 || state() === 'submitting'"
-                  class="px-8 py-2.5 rounded-xl text-sm font-bold bg-accent-600
-                         hover:bg-accent-500 disabled:opacity-40 disabled:cursor-not-allowed
-                         text-white transition-colors"
-                >
-                  {{ (state() === 'submitting' ? 'QUIZ.submitting_quiz' : 'QUIZ.submit_quiz') | translate }}
-                </button>
-              } @else {
-                <button
-                  (click)="next()"
-                  [disabled]="selectedOption() === -1"
-                  class="px-8 py-2.5 rounded-xl text-sm font-bold bg-primary-600
-                         hover:bg-primary-500 disabled:opacity-40 disabled:cursor-not-allowed
-                         text-white transition-colors"
-                >
-                  {{ 'QUIZ.next' | translate }}
-                </button>
-              }
-            </div>
-          }
-        }
-        @if (state() === 'results' && attempt()) {
-          <div class="space-y-6">
-            <div
-              class="bg-gradient-to-br from-primary-600 to-accent-600 rounded-2xl p-8
-                     text-center text-white shadow-2xl"
-            >
-              <p class="text-6xl font-display font-bold">
-                {{ attempt()!.score }}/{{ attempt()!.total }}
-              </p>
-              <p class="text-white/80 mt-2 text-lg">{{ scoreMessage() }}</p>
-              <p class="text-white/60 text-sm mt-1">
-                {{ scorePercent() }}% correct
-              </p>
-            </div>
-            <div class="space-y-4">
-              <h2 class="text-gray-900 dark:text-white font-semibold text-lg">
-                Review Answers
-              </h2>
-              @for (q of quizService.questions(); track q.id; let i = $index) {
-                <div
-                  class="bg-white dark:bg-gray-900 rounded-2xl p-5 border shadow-sm"
-                  [class.border-green-200]="attempt()!.answers[i] === q.correctIndex"
-                  [class.dark:border-green-800]="attempt()!.answers[i] === q.correctIndex"
-                  [class.border-red-200]="attempt()!.answers[i] !== q.correctIndex"
-                  [class.dark:border-red-900]="attempt()!.answers[i] !== q.correctIndex"
-                >
-                  <div class="flex items-start gap-2 mb-4">
-                    <span class="text-xl leading-none mt-0.5">
-                      {{ attempt()!.answers[i] === q.correctIndex ? '✅' : '❌' }}
-                    </span>
-                    <p class="text-gray-900 dark:text-white font-medium text-sm">
-                      {{ q.question }}
-                    </p>
-                  </div>
-                  <div class="space-y-2 ml-8">
-                    @for (option of q.options; track $index) {
-                      <div
-                        class="rounded-lg px-3 py-2 text-sm flex items-center gap-2"
-                        [class.bg-green-100]="$index === q.correctIndex"
-                        [class.dark:bg-green-900\/30]="$index === q.correctIndex"
-                        [class.text-green-800]="$index === q.correctIndex"
-                        [class.dark:text-green-300]="$index === q.correctIndex"
-                        [class.font-semibold]="$index === q.correctIndex"
-                        [class.bg-red-100]="$index !== q.correctIndex && $index === attempt()!.answers[i]"
-                        [class.dark:bg-red-900\/30]="$index !== q.correctIndex && $index === attempt()!.answers[i]"
-                        [class.text-red-700]="$index !== q.correctIndex && $index === attempt()!.answers[i]"
-                        [class.dark:text-red-400]="$index !== q.correctIndex && $index === attempt()!.answers[i]"
-                        [class.text-gray-500]="$index !== q.correctIndex && $index !== attempt()!.answers[i]"
-                        [class.dark:text-gray-500]="$index !== q.correctIndex && $index !== attempt()!.answers[i]"
-                      >
-                        <span class="font-bold">{{ optionLabel($index) }}.</span>
-                        {{ option }}
-                        @if ($index === q.correctIndex) {
-                          <span class="ml-auto text-xs">Correct</span>
-                        }
-                        @if ($index !== q.correctIndex && $index === attempt()!.answers[i]) {
-                          <span class="ml-auto text-xs">Your answer</span>
-                        }
-                      </div>
-                    }
-                  </div>
-                </div>
-              }
-            </div>
-            <div class="flex justify-center">
-              <a
-                [routerLink]="['/clubs', clubId, 'quizzes']"
-                class="bg-primary-600 hover:bg-primary-500 text-white rounded-xl px-8
-                       py-3 font-medium transition-colors text-sm"
-              >
-                {{ 'QUIZ.back_to_quizzes' | translate }}
-              </a>
-            </div>
-          </div>
-        }
-      </div>
-    </div>
-````
-
 ## File: src/app/features/quiz/quiz-form.utils.ts
 ````typescript
 import { AbstractControl, FormControl, FormGroup, Validators } from '@angular/forms';
@@ -5859,169 +5516,6 @@ export const QUIZ_ROUTES: Routes = [
       import('./quiz-take/quiz-take.component').then(m => m.QuizTakeComponent),
   },
 ];
-````
-
-## File: src/app/features/randomizer/randomizer.component.html
-````html
-<div class="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 p-4 sm:p-8">
-  <div class="max-w-4xl mx-auto space-y-8">
-    <header class="flex items-center justify-between flex-wrap gap-4">
-      <div>
-        <h1 class="font-display text-3xl font-bold text-white">🎲 {{ 'RANDOMIZER.title' | translate }}</h1>
-        <p class="text-primary-300 mt-1">{{ 'RANDOMIZER.subtitle' | translate }}</p>
-      </div>
-      <nav aria-label="Breadcrumb">
-        <a [routerLink]="['/clubs', clubId]" class="text-primary-300 hover:text-white transition-colors text-sm">
-          {{ 'RANDOMIZER.back_to_club' | translate }}
-        </a>
-      </nav>
-    </header>
-    <div class="bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/10">
-      <label for="purpose" class="block text-white font-medium text-sm mb-2">{{ 'RANDOMIZER.purpose_label' | translate }}</label>
-      <input
-        hlmInput
-        id="purpose"
-        type="text"
-        [formControl]="purposeControl"
-        [placeholder]="'RANDOMIZER.purpose_placeholder' | translate"
-        class="w-full rounded-xl bg-white/10 border-white/20 text-white placeholder-white/40 px-4 focus-visible:ring-primary-400"
-      />
-    </div>
-    <div class="grid lg:grid-cols-2 gap-8">
-      <section aria-labelledby="members-heading" class="space-y-4">
-        <div class="flex items-center justify-between">
-          <h2 id="members-heading" class="text-white font-semibold text-lg">
-            👥 {{ 'RANDOMIZER.members_title' | translate }}
-            <span class="text-primary-300 text-sm font-normal ml-2">{{ selectedCount() }} / {{ randomizerService.candidates().length }} {{ 'RANDOMIZER.selected' | translate }}</span>
-          </h2>
-          <button
-            hlmBtn
-            variant="ghost"
-            size="sm"
-            type="button"
-            (click)="reset()"
-            class="text-xs text-primary-300 hover:text-white"
-          >
-            {{ 'RANDOMIZER.select_all' | translate }}
-          </button>
-        </div>
-        @if (randomizerService.candidates().length === 0) {
-          <div class="bg-white/10 rounded-2xl p-8 text-center text-white/60">
-            <p class="text-3xl mb-2">👤</p>
-            <p>{{ 'RANDOMIZER.no_members' | translate }}</p>
-          </div>
-        } @else {
-          <ul class="space-y-2">
-            @for (member of randomizerService.candidates(); track member.userId) {
-              <li>
-                <button
-                  type="button"
-                  (click)="randomizerService.toggleMember(member.userId)"
-                  class="w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
-                  [class]="randomizerService.selectedIds().has(member.userId)
-                    ? 'bg-white/20 border border-white/30'
-                    : 'bg-white/5 border border-white/10 opacity-50'"
-                  [attr.aria-pressed]="randomizerService.selectedIds().has(member.userId)"
-                  [attr.aria-label]="'Toggle ' + member.displayName"
-                >
-                  <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
-                    {{ member.displayName | initials }}
-                  </div>
-                  <span class="text-white font-medium text-sm flex-1 text-left">{{ member.displayName }}</span>
-                  @if (randomizerService.selectedIds().has(member.userId)) {
-                    <span class="text-green-400 text-lg" aria-hidden="true">✓</span>
-                  }
-                </button>
-              </li>
-            }
-          </ul>
-        }
-      </section>
-      <section aria-labelledby="spin-heading" class="space-y-6">
-        <h2 id="spin-heading" class="sr-only">{{ 'RANDOMIZER.title' | translate }}</h2>
-        <div class="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/10 text-center min-h-[200px] flex flex-col items-center justify-center">
-          @if (randomizerService.isSpinning()) {
-            <div class="space-y-4">
-              <div class="text-5xl animate-bounce">🎲</div>
-              <p class="text-white/70 text-sm animate-pulse">{{ 'RANDOMIZER.spinning' | translate }}</p>
-            </div>
-          } @else if (randomizerService.result()) {
-            <div class="space-y-3">
-              <div class="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl ring-4 ring-white/30">
-                {{ randomizerService.result()!.displayName | initials }}
-              </div>
-              <div>
-                <p class="text-white/60 text-xs uppercase tracking-wide mb-1">{{ randomizerService.purpose() }}</p>
-                <p class="text-white text-2xl font-bold">{{ randomizerService.result()!.displayName }}</p>
-              </div>
-              <span class="text-3xl">🏆</span>
-            </div>
-          } @else {
-            <div class="text-white/40 space-y-2">
-              <div class="text-4xl">🎯</div>
-              <p class="text-sm">{{ 'RANDOMIZER.spin_hint' | translate }}</p>
-            </div>
-          }
-        </div>
-        @if (errorMessage()) {
-          <div class="rounded-xl bg-red-500/20 border border-red-500/30 px-4 py-3 text-sm text-red-300" role="alert">
-            {{ errorMessage() }}
-          </div>
-        }
-        <div class="flex flex-col gap-3">
-          <button
-            hlmBtn
-            type="button"
-            data-testid="spin-button"
-            (click)="spin()"
-            [disabled]="randomizerService.isSpinning() || selectedCount() < 2"
-            class="w-full rounded-2xl bg-gradient-to-r from-accent-500 to-primary-500 hover:from-accent-400 hover:to-primary-400 text-white font-bold py-4 text-lg shadow-lg"
-          >
-            @if (randomizerService.isSpinning()) {
-              {{ 'RANDOMIZER.spinning_btn' | translate }}
-            } @else {
-              {{ 'RANDOMIZER.spin' | translate }}
-            }
-          </button>
-          @if (randomizerService.result() && authService.isOrganizer()) {
-            <button
-              hlmBtn
-              variant="outline"
-              type="button"
-              (click)="saveSession()"
-              [disabled]="isSaving()"
-              class="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3"
-            >
-              @if (isSaving()) {
-                {{ 'RANDOMIZER.saving' | translate }}
-              } @else {
-                {{ 'RANDOMIZER.save' | translate }}
-              }
-            </button>
-          }
-        </div>
-        @if (randomizerService.history().length > 0) {
-          <div class="space-y-3">
-            <h3 class="text-white/70 text-sm font-medium uppercase tracking-wide">{{ 'RANDOMIZER.history_title' | translate }}</h3>
-            <ul class="space-y-2">
-              @for (session of randomizerService.history().slice(0, 5); track session.id) {
-                <li class="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
-                  <div class="min-w-0">
-                    <p class="text-white/60 text-xs truncate">{{ session.purpose }}</p>
-                    @if (session.result) {
-                      <p class="text-white text-sm font-medium">🏆 {{ session.result.displayName }}</p>
-                    }
-                  </div>
-                  <span class="text-white/40 text-xs shrink-0">{{ session.createdAt | date:'dd.MM HH:mm' }}</span>
-                </li>
-              }
-            </ul>
-          </div>
-        }
-      </section>
-    </div>
-  </div>
-</div>
 ````
 
 ## File: src/app/features/randomizer/randomizer.component.ts
@@ -8487,6 +7981,48 @@ ALTER TABLE events
   ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
 ````
 
+## File: bugs.md
+````markdown
+# Bug Report — Book Club App Audit
+
+**Date:** 2026-05-09
+**URL:** https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app/
+**Test user:** test123@mail.com
+**Club owner account:** terrtr
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 2 |
+| Medium | 4 |
+| Low | 1 |
+| **Total** | **7** |
+
+## HIGH (2)
+
+| # | Route | Type | Description |
+|---|-------|------|-------------|
+| 1 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/session` | console-error | Failed to load resource: the server responded with a status of 404 () |
+| 2 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/leaderboard` | console-error | Failed to load resource: the server responded with a status of 404 () |
+
+## MEDIUM (4)
+
+| # | Route | Type | Description |
+|---|-------|------|-------------|
+| 1 | `/events/:id` | ui-missing | Skipped: no event ID discovered (no events in API response) |
+| 2 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/session` | nav-404 | HTTP 404 — https://book-club-be.onrender.com/api/v1/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/sessions/active |
+| 3 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/leaderboard` | nav-404 | HTTP 404 — https://book-club-be.onrender.com/api/v1/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/sessions/active |
+| 4 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/randomizer` | ui-missing | Spin button not found on randomizer page |
+
+## LOW (1)
+
+| # | Route | Type | Description |
+|---|-------|------|-------------|
+| 1 | `theme-toggle` | ui-missing | Theme toggle button not found in header |
+````
+
 ## File: CLAUDE.md
 ````markdown
 # Project Context
@@ -8655,35 +8191,81 @@ module.exports = function (config) {
 };
 ````
 
-## File: playwright.vercel.config.ts
-````typescript
-import { defineConfig, devices } from '@playwright/test';
-export default defineConfig({
-  testDir: './e2e',
-  testMatch: '**/audit.spec.ts',
-  fullyParallel: false,
-  retries: 0,
-  workers: 1,
-  timeout: 60_000,
-  reporter: [
-    ['list'],
-    ['html', { open: 'never' }],
-    ['json', { outputFile: 'playwright-report/audit-results.json' }],
-  ],
-  use: {
-    baseURL: 'https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app',
-    trace: 'on',
-    screenshot: 'only-on-failure',
-    actionTimeout: 20_000,
-    navigationTimeout: 30_000,
-  },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-  ],
-});
+## File: playwright.md
+````markdown
+# Playwright Audit — Book Club App
+
+**Сайт:** https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app/  
+**Дата:** 2026-05-09  
+**Тести:** 24/24 pass  
+
+---
+
+## Що було зроблено
+
+Проведено автоматизований Playwright-аудит всіх маршрутів (публічних та автентифікованих).
+Виявлено та виправлено помилки в тестовій інфраструктурі, додано `data-testid` атрибути до компонентів.
+
+---
+
+## Виправлено в цій сесії
+
+| # | Файл | Зміна |
+|---|------|-------|
+| 1 | `playwright.vercel.config.ts` | Оновлено `baseURL` на актуальний Vercel деплой |
+| 2 | `e2e/audit.spec.ts` | Відфільтровано `net::ERR_ABORTED` false positives (SPA-навігація + Vercel JWE probes) |
+| 3 | `e2e/audit.spec.ts` | Виправлено тест `/events (unauth)` — route захищена `authGuard`, правильна поведінка — redirect to login |
+| 4 | `e2e/audit.spec.ts` | Виправлено quiz create тест — не намагатися клікнути disabled кнопку |
+| 5 | `e2e/audit.spec.ts` | Оновлено селектор spin button → `[data-testid="spin-button"]` |
+| 6 | `e2e/audit.spec.ts` | Оновлено селектор theme toggle → `[data-testid="theme-toggle"]` |
+| 7 | `randomizer.component.html` | Додано `data-testid="spin-button"` до кнопки Spin |
+| 8 | `header.component.html` | Додано `data-testid="theme-toggle"` до desktop та mobile кнопок теми |
+
+---
+
+## Залишкові баги (потребують дій)
+
+### HIGH — Backend endpoint відсутній
+
+**Маршрути:** `/clubs/:id/quizzes/:quizId/session`, `/clubs/:id/quizzes/:quizId/leaderboard`  
+**Симптом:** Консольна помилка `Failed to load resource: 404` при завантаженні сторінки  
+**Причина:** `GET https://book-club-be.onrender.com/api/v1/quizzes/:id/sessions/active` → 404  
+**Дія:** Потрібно реалізувати endpoint на backend (FastAPI). Агент: **python-backend-dev**
+
+```
+GET /api/v1/quizzes/{quiz_id}/sessions/active
+→ Повертає поточну активну сесію квізу або 404 якщо немає
+```
+
+### MEDIUM — Spin button / Theme toggle (після деплою зникнуть)
+
+Ці баги показуються бо `data-testid` атрибути ще не задеплоєні на Vercel.
+Після `git push` + rebuild — зникнуть автоматично.
+
+### MEDIUM — `/events/:id` тест пропускається
+
+Тестовий акаунт `test123@mail.com` не має подій у API-відповіді.
+Потрібно або створити тестові події, або дістати `ANY_EVENT_ID` з іншого ендпоінту.
+
+---
+
+## MCP-агенти для подальших дій
+
+| Агент | Задача |
+|-------|--------|
+| **python-backend-dev** | Реалізувати `GET /api/v1/quizzes/{quiz_id}/sessions/active` у FastAPI |
+| **dev** | (після деплою) Перевірити що `data-testid` атрибути видні в DOM |
+| **tester** | Додати тестові дані для акаунту `test123@mail.com` (хоча б одну подію) |
+
+---
+
+## Запуск аудиту
+
+```bash
+npx playwright test --config=playwright.vercel.config.ts --reporter=list
+```
+
+Очікуваний результат після деплою: 24/24 pass, 0 high/critical bugs.
 ````
 
 ## File: postcss.config.json
@@ -9185,141 +8767,24 @@ jobs:
           comment-tag: pr-review-gate
 ````
 
-## File: src/app/core/auth/auth.service.ts
+## File: src/app/core/auth/token.store.ts
 ````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
-import { catchError, firstValueFrom, map, of } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
-import { TokenStore } from './token.store';
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
-  user: ApiUserProfile;
-}
+import { Injectable, signal } from '@angular/core';
+const TOKEN_KEY = 'bc_access_token';
 @Injectable({ providedIn: 'root' })
-export class AuthService {
-  private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
-  private readonly tokenStore = inject(TokenStore);
-  private readonly _currentUser = signal<UserProfile | null>(null);
-  private readonly _isLoading = signal<boolean>(true);
-  readonly currentUser = this._currentUser.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly isAuthenticated = computed(() => this._currentUser() !== null);
-  readonly userRole = computed(() => this._currentUser()?.role ?? null);
-  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
-  private readonly _statsResource = rxResource<UserStats | null, string | null>({
-    params: () => this._currentUser()?.id ?? null,
-    stream: ({ params: userId }) => {
-      if (!userId) return of(null as UserStats | null);
-      return this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
-        map(raw => mapUserStats(raw)),
-        catchError(() => of(null)),
-      );
-    },
-  });
-  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
-  constructor() {
-    const token = this.tokenStore.snapshot();
-    if (token) {
-      firstValueFrom(
-        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
-          catchError(() => {
-            this.tokenStore.clear();
-            return of(null);
-          }),
-        ),
-      ).then(raw => {
-        this._currentUser.set(raw ? mapUserProfile(raw) : null);
-        this._isLoading.set(false);
-      });
-    } else {
-      this._isLoading.set(false);
-    }
+export class TokenStore {
+  private readonly _token = signal<string | null>(sessionStorage.getItem(TOKEN_KEY));
+  readonly token = this._token.asReadonly();
+  set(token: string): void {
+    sessionStorage.setItem(TOKEN_KEY, token);
+    this._token.set(token);
   }
-  async signUp(
-    email: string,
-    password: string,
-    displayName: string,
-    role: UserRole,
-  ): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
-          email,
-          password,
-          displayName,
-          role,
-        }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
+  clear(): void {
+    sessionStorage.removeItem(TOKEN_KEY);
+    this._token.set(null);
   }
-  async signIn(email: string, password: string): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signOut(): Promise<void> {
-    try {
-      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
-    } catch {  }
-    this.tokenStore.clear();
-    this._currentUser.set(null);
-    this.router.navigate(['/login']);
-  }
-  async updateRole(role: UserRole): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
-    );
-    this._currentUser.set({ ...user, role });
-  }
-  async updateDisplayName(name: string): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
-    );
-    this._currentUser.set({ ...user, displayName: name });
-  }
-  async updateSocials(socials: UserSocials): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
-    );
-    this._currentUser.set({ ...user, socials });
-  }
-  async setSocialsPublic(value: boolean): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
-        socialsPublic: value,
-      }),
-    );
-    this._currentUser.set({ ...user, socialsPublic: value });
+  snapshot(): string | null {
+    return this._token();
   }
 }
 ````
@@ -9512,30 +8977,6 @@ export class BookVoteService {
     const current = this._rounds()[clubId];
     if (!current) return;
     this._rounds.update(r => ({ ...r, [clubId]: fn(current) }));
-  }
-}
-````
-
-## File: src/app/core/services/geocoding.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
-import { environment } from '../../../environments/environment';
-export interface GeocodeSuggestion {
-  label: string;
-  city: string | null;
-  country: string | null;
-  lat: number;
-  lng: number;
-}
-@Injectable({ providedIn: 'root' })
-export class GeocodingService {
-  private readonly http = inject(HttpClient);
-  autocomplete$(q: string, lang = 'uk', limit = 5): Observable<GeocodeSuggestion[]> {
-    return this.http.get<GeocodeSuggestion[]>(`${environment.apiUrl}/geocode/autocomplete`, {
-      params: { q, lang, limit: String(limit) },
-    });
   }
 }
 ````
@@ -9896,75 +9337,6 @@ export class UploadService {
 }
 ````
 
-## File: src/app/features/auth/login/login.component.ts
-````typescript
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../../core/auth/auth.service';
-import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
-import { SeoService } from '../../../core/services/seo.service';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-interface LoginForm {
-  email: FormControl<string>;
-  password: FormControl<string>;
-}
-@Component({
-  selector: 'app-login',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.scss',
-})
-export class LoginComponent {
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly seo = inject(SeoService);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isSubmitting = signal(false);
-  readonly bookOpen = signal(false);
-  readonly formVisible = signal(false);
-  constructor() {
-    this.seo.setPageI18n('SEO.login_title');
-    setTimeout(() => this.formVisible.set(true), 700);
-  }
-  onBookAnimationDone(): void {
-    this.router.navigate(['/clubs']);
-  }
-  readonly form = new FormGroup<LoginForm>({
-    email: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.email],
-    }),
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(8)],
-    }),
-  });
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.isSubmitting.set(true);
-    this.errorMessage.set(null);
-    const { email, password } = this.form.getRawValue();
-    const { error } = await this.auth.signIn(email, password);
-    this.isSubmitting.set(false);
-    if (error) {
-      this.errorMessage.set(error);
-    } else {
-      this.bookOpen.set(true);
-    }
-  }
-}
-````
-
 ## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.ts
 ````typescript
 import {
@@ -10307,150 +9679,6 @@ export const CLUBS_ROUTES: Routes = [
 }
 ````
 
-## File: src/app/features/profile/profile.component.html
-````html
-<div class="min-h-screen bg-gradient-to-br from-primary-950/30 via-transparent to-accent-950/20">
-  <div class="max-w-2xl mx-auto space-y-5 py-8 px-4">
-    <section
-      aria-labelledby="profile-heading"
-      class="glass-card-strong p-8 text-center"
-    >
-      <div
-        class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-brand
-               flex items-center justify-center text-white text-3xl font-bold select-none
-               shadow-lg ring-4 ring-white/20"
-        aria-hidden="true"
-      >
-        {{ userInitials() }}
-      </div>
-      <h1 id="profile-heading" class="text-2xl font-bold text-gray-900 dark:text-white">
-        {{ auth.currentUser()?.displayName }}
-      </h1>
-      <span
-        class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
-        [class]="auth.currentUser()?.role === 'organizer'
-          ? 'bg-accent-100/80 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
-          : 'bg-primary-100/80 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
-      >
-        {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
-        {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
-      </span>
-      @if (joinedDate()) {
-        <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
-          {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
-        </p>
-      }
-    </section>
-    <section aria-labelledby="edit-name-heading" class="glass-card p-6">
-      <h2 id="edit-name-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
-        <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
-      </h2>
-      <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
-        <div class="space-y-4">
-          <div>
-            <label for="displayName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              {{ 'PROFILE.display_name_label' | translate }}
-            </label>
-            <input
-              hlmInput
-              id="displayName"
-              type="text"
-              formControlName="displayName"
-              autocomplete="nickname"
-              class="w-full"
-              [placeholder]="'PROFILE.display_name_placeholder' | translate"
-              [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
-              aria-describedby="displayName-error"
-            />
-            @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
-              <p id="displayName-error" role="alert" class="mt-1.5 text-xs text-red-600 dark:text-red-400">
-                @if (nameForm.controls.displayName.hasError('required')) {
-                  {{ 'PROFILE.display_name_required' | translate }}
-                } @else if (nameForm.controls.displayName.hasError('minlength')) {
-                  {{ 'PROFILE.display_name_min' | translate }}
-                }
-              </p>
-            }
-          </div>
-          <div class="flex items-center gap-3">
-            <button
-              hlmBtn
-              type="submit"
-              [disabled]="nameForm.invalid || isSavingName()"
-              class="bg-gradient-brand text-white border-0 hover:opacity-90"
-            >
-              @if (isSavingName()) {
-                {{ 'PROFILE.saving' | translate }}
-              } @else {
-                {{ 'PROFILE.save_name' | translate }}
-              }
-            </button>
-          </div>
-        </div>
-      </form>
-    </section>
-    <section aria-labelledby="role-heading" class="glass-card p-6">
-      <h2 id="role-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
-        <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
-      </h2>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-        {{ 'PROFILE.role_subtitle' | translate }}
-      </p>
-      <app-profile-role-selector
-        [currentRole]="auth.currentUser()?.role ?? 'user'"
-        (roleChange)="changeRole($event)"
-      />
-    </section>
-    <section aria-labelledby="stats-heading" class="glass-card p-6">
-      <h2 id="stats-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
-        <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
-      </h2>
-      <app-profile-stats [stats]="auth.userStats()" />
-    </section>
-    <section aria-labelledby="socials-heading" class="glass-card p-6">
-      <h2 id="socials-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
-        <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
-      </h2>
-      <div class="flex items-center gap-3 mb-4 p-3 rounded-[var(--bento-radius)] glass-card-subtle">
-        <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
-          <input
-            type="checkbox"
-            [formControl]="socialsPublicControl"
-            (change)="onSocialsPublicChange(socialsPublicControl.value)"
-            class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-          />
-          {{ 'PROFILE.socials_public_label' | translate }}
-        </label>
-      </div>
-      @if (
-        userSocials().telegram  ||
-        userSocials().instagram ||
-        userSocials().twitter   ||
-        userSocials().linkedin  ||
-        userSocials().github    ||
-        userSocials().goodreads
-      ) {
-        <div class="flex flex-wrap gap-2 mb-6">
-          <app-social-badges [socials]="userSocials()" />
-        </div>
-      }
-      <form [formGroup]="socialsForm" (ngSubmit)="submitSocials()" novalidate class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          @for (social of socialFields; track social.key) {
-            <app-social-link-field [config]="social" [form]="socialsForm" />
-          }
-        </div>
-        <div class="flex items-center gap-3 pt-1">
-          <button hlmBtn type="submit" class="bg-gradient-brand text-white border-0 hover:opacity-90">
-            {{ 'PROFILE.save' | translate }}
-          </button>
-        </div>
-      </form>
-    </section>
-  </div>
-</div>
-````
-
 ## File: src/app/features/quiz/quiz-edit/quiz-edit.component.html
 ````html
 <div class="min-h-screen p-4 sm:p-8">
@@ -10772,6 +10000,220 @@ export class LeaderboardPodiumComponent {
 </div>
 ````
 
+## File: src/app/features/quiz/quiz-take/quiz-take.component.html
+````html
+<div class="min-h-screen flex flex-col items-center p-4 sm:p-8">
+      <div class="w-full max-w-2xl space-y-6">
+        <nav aria-label="Breadcrumb">
+          <a
+            [routerLink]="['/clubs', clubId, 'quizzes']"
+            class="inline-flex items-center text-gray-500 hover:text-gray-900
+                   dark:hover:text-white text-sm transition-colors"
+          >
+            {{ 'QUIZ.back_to_quizzes' | translate }}
+          </a>
+        </nav>
+        @if (state() === 'loading') {
+          <div class="flex flex-col items-center py-20 gap-4">
+            <app-loading-spinner size="lg" />
+            <p class="text-gray-500 dark:text-gray-400 text-sm">{{ 'QUIZ.loading' | translate }}</p>
+          </div>
+        }
+        @if (state() === 'error') {
+          <div
+            class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800
+                   rounded-2xl p-8 text-center"
+          >
+            <p class="text-4xl mb-3">😞</p>
+            <p class="text-red-700 dark:text-red-400 font-medium">{{ errorMessage() }}</p>
+            <a
+              [routerLink]="['/clubs', clubId, 'quizzes']"
+              class="mt-4 inline-block text-primary-600 dark:text-primary-400
+                     hover:underline text-sm"
+            >
+              {{ 'QUIZ.error_return' | translate }}
+            </a>
+          </div>
+        }
+        @if (state() === 'taking' || state() === 'submitting') {
+          <div>
+            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
+              <span>{{ 'QUIZ.question_of' | translate: { current: currentIndex() + 1, total: quizService.questions().length } }}</span>
+              <span>{{ progressPercent() }}%</span>
+            </div>
+            <div class="h-2 rounded-full bg-gray-200 dark:bg-gray-800 overflow-hidden">
+              <div
+                class="h-full bg-gradient-to-r from-primary-500 to-accent-500 rounded-full
+                       transition-all duration-500"
+                [style.width.%]="progressPercent()"
+              ></div>
+            </div>
+          </div>
+          @if (currentQuestion(); as q) {
+            <div
+              class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200
+                     dark:border-gray-800 shadow-sm"
+            >
+              <p class="text-gray-900 dark:text-white font-semibold text-lg leading-snug mb-6">
+                {{ q.question }}
+              </p>
+              <div class="space-y-3">
+                @for (option of q.options; track $index) {
+                  <button
+                    (click)="selectOption($index)"
+                    class="w-full text-left rounded-xl px-5 py-4 text-sm font-medium
+                           transition-all duration-150 border-2 focus:outline-none"
+                    [class.border-accent-500]="selectedOption() === $index"
+                    [class.ring-2]="selectedOption() === $index"
+                    [class.ring-accent-500]="selectedOption() === $index"
+                    [class.bg-accent-50]="selectedOption() === $index"
+                    [class.dark:bg-accent-900\/20]="selectedOption() === $index"
+                    [class.text-accent-700]="selectedOption() === $index"
+                    [class.dark:text-accent-300]="selectedOption() === $index"
+                    [class.border-gray-200]="selectedOption() !== $index"
+                    [class.dark:border-gray-700]="selectedOption() !== $index"
+                    [class.bg-white]="selectedOption() !== $index"
+                    [class.dark:bg-gray-800]="selectedOption() !== $index"
+                    [class.text-gray-700]="selectedOption() !== $index"
+                    [class.dark:text-gray-300]="selectedOption() !== $index"
+                    [class.hover:border-primary-400]="selectedOption() !== $index"
+                    [class.hover:bg-primary-50]="selectedOption() !== $index"
+                    [class.dark:hover:bg-primary-900\/20]="selectedOption() !== $index"
+                    [disabled]="state() === 'submitting'"
+                  >
+                    <span class="flex items-center gap-3">
+                      <span
+                        class="w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center
+                               justify-center text-xs font-bold"
+                        [class.border-accent-500]="selectedOption() === $index"
+                        [class.bg-accent-500]="selectedOption() === $index"
+                        [class.text-white]="selectedOption() === $index"
+                        [class.border-gray-300]="selectedOption() !== $index"
+                        [class.dark:border-gray-600]="selectedOption() !== $index"
+                        [class.text-gray-500]="selectedOption() !== $index"
+                      >
+                        {{ optionLabel($index) }}
+                      </span>
+                      {{ option }}
+                    </span>
+                  </button>
+                }
+              </div>
+            </div>
+            <div class="flex justify-between items-center">
+              <button
+                (click)="previous()"
+                [disabled]="currentIndex() === 0"
+                class="px-5 py-2.5 rounded-xl text-sm font-medium border border-gray-300
+                       dark:border-gray-700 text-gray-600 dark:text-gray-400
+                       hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-40
+                       disabled:cursor-not-allowed transition-colors"
+              >
+                {{ 'QUIZ.prev' | translate }}
+              </button>
+              @if (isLastQuestion()) {
+                <button
+                  (click)="submit()"
+                  [disabled]="selectedOption() === -1 || state() === 'submitting'"
+                  class="px-8 py-2.5 rounded-xl text-sm font-bold bg-accent-600
+                         hover:bg-accent-500 disabled:opacity-40 disabled:cursor-not-allowed
+                         text-white transition-colors"
+                >
+                  {{ (state() === 'submitting' ? 'QUIZ.submitting_quiz' : 'QUIZ.submit_quiz') | translate }}
+                </button>
+              } @else {
+                <button
+                  (click)="next()"
+                  [disabled]="selectedOption() === -1"
+                  class="px-8 py-2.5 rounded-xl text-sm font-bold bg-primary-600
+                         hover:bg-primary-500 disabled:opacity-40 disabled:cursor-not-allowed
+                         text-white transition-colors"
+                >
+                  {{ 'QUIZ.next' | translate }}
+                </button>
+              }
+            </div>
+          }
+        }
+        @if (state() === 'results' && attempt()) {
+          <div class="space-y-6">
+            <div
+              class="bg-gradient-to-br from-primary-600 to-accent-600 rounded-2xl p-8
+                     text-center text-white shadow-2xl"
+            >
+              <p class="text-6xl font-display font-bold">
+                {{ attempt()!.score }}/{{ attempt()!.total }}
+              </p>
+              <p class="text-white/80 mt-2 text-lg">{{ scoreMessage() }}</p>
+              <p class="text-white/60 text-sm mt-1">
+                {{ scorePercent() }}% correct
+              </p>
+            </div>
+            <div class="space-y-4">
+              <h2 class="text-gray-900 dark:text-white font-semibold text-lg">
+                {{ 'QUIZ.result_review_title' | translate }}
+              </h2>
+              @for (q of quizService.questions(); track q.id; let i = $index) {
+                <div
+                  class="bg-white dark:bg-gray-900 rounded-2xl p-5 border shadow-sm"
+                  [class.border-green-200]="attempt()!.answers[i] === q.correctIndex"
+                  [class.dark:border-green-800]="attempt()!.answers[i] === q.correctIndex"
+                  [class.border-red-200]="attempt()!.answers[i] !== q.correctIndex"
+                  [class.dark:border-red-900]="attempt()!.answers[i] !== q.correctIndex"
+                >
+                  <div class="flex items-start gap-2 mb-4">
+                    <span class="text-xl leading-none mt-0.5">
+                      {{ attempt()!.answers[i] === q.correctIndex ? '✅' : '❌' }}
+                    </span>
+                    <p class="text-gray-900 dark:text-white font-medium text-sm">
+                      {{ q.question }}
+                    </p>
+                  </div>
+                  <div class="space-y-2 ml-8">
+                    @for (option of q.options; track $index) {
+                      <div
+                        class="rounded-lg px-3 py-2 text-sm flex items-center gap-2"
+                        [class.bg-green-100]="$index === q.correctIndex"
+                        [class.dark:bg-green-900\/30]="$index === q.correctIndex"
+                        [class.text-green-800]="$index === q.correctIndex"
+                        [class.dark:text-green-300]="$index === q.correctIndex"
+                        [class.font-semibold]="$index === q.correctIndex"
+                        [class.bg-red-100]="$index !== q.correctIndex && $index === attempt()!.answers[i]"
+                        [class.dark:bg-red-900\/30]="$index !== q.correctIndex && $index === attempt()!.answers[i]"
+                        [class.text-red-700]="$index !== q.correctIndex && $index === attempt()!.answers[i]"
+                        [class.dark:text-red-400]="$index !== q.correctIndex && $index === attempt()!.answers[i]"
+                        [class.text-gray-500]="$index !== q.correctIndex && $index !== attempt()!.answers[i]"
+                        [class.dark:text-gray-500]="$index !== q.correctIndex && $index !== attempt()!.answers[i]"
+                      >
+                        <span class="font-bold">{{ optionLabel($index) }}.</span>
+                        {{ option }}
+                        @if ($index === q.correctIndex) {
+                          <span class="ml-auto text-xs">{{ 'QUIZ.result_correct' | translate }}</span>
+                        }
+                        @if ($index !== q.correctIndex && $index === attempt()!.answers[i]) {
+                          <span class="ml-auto text-xs">Your answer</span>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+            <div class="flex justify-center">
+              <a
+                [routerLink]="['/clubs', clubId, 'quizzes']"
+                class="bg-primary-600 hover:bg-primary-500 text-white rounded-xl px-8
+                       py-3 font-medium transition-colors text-sm"
+              >
+                {{ 'QUIZ.back_to_quizzes' | translate }}
+              </a>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+````
+
 ## File: src/app/features/quiz/quiz-detail-base.component.ts
 ````typescript
 import {
@@ -10820,6 +10262,47 @@ export abstract class QuizDetailBaseComponent {
       <div class="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-accent-500/30 animate-pulse" aria-hidden="true"></div>
     }
     <app-footer />
+````
+
+## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.html
+````html
+<div class="relative">
+  <input
+    hlmInput
+    [id]="inputId() || undefined"
+    [formControl]="control()"
+    [placeholder]="placeholder()"
+    autocomplete="off"
+    (keydown)="onKeydown($event)"
+    class="w-full"
+    [class.border-red-400]="control().invalid && control().touched"
+  />
+  @if (isLoading()) {
+    <div class="absolute right-3 top-3 flex items-center justify-center">
+      <svg class="h-4 w-4 animate-spin text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+    </div>
+  }
+  @if (isOpen() && suggestions().length > 0) {
+    <ul class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-48 overflow-y-auto">
+      @for (s of suggestions(); track s.label; let i = $index) {
+        <li
+          role="option"
+          tabindex="0"
+          [attr.aria-selected]="activeIndex() === i"
+          (click)="select(s)"
+          (keydown.enter)="select(s)"
+          (keydown.space)="$event.preventDefault(); select(s)"
+          [class.bg-primary-50]="activeIndex() === i"
+          [class.dark:bg-primary-900/20]="activeIndex() === i"
+          class="cursor-pointer px-4 py-2.5 text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >{{ s.label }}</li>
+      }
+    </ul>
+  }
+</div>
 ````
 
 ## File: src/app/shared/components/cover-upload/cover-upload.component.ts
@@ -11042,6 +10525,37 @@ mock-server/
 /ui_changes.md
 ````
 
+## File: playwright.vercel.config.ts
+````typescript
+import { defineConfig, devices } from '@playwright/test';
+export default defineConfig({
+  testDir: './e2e',
+  testMatch: '**/audit.spec.ts',
+  fullyParallel: false,
+  retries: 0,
+  workers: 1,
+  timeout: 60_000,
+  reporter: [
+    ['list'],
+    ['html', { open: 'never' }],
+    ['json', { outputFile: 'playwright-report/audit-results.json' }],
+  ],
+  use: {
+    baseURL: 'https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app',
+    trace: 'on',
+    screenshot: 'only-on-failure',
+    actionTimeout: 20_000,
+    navigationTimeout: 30_000,
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+});
+````
+
 ## File: postcss.config.mjs
 ````javascript
 import tailwindcss from '@tailwindcss/postcss';
@@ -11086,6 +10600,11 @@ sonar.coverage.exclusions=\
   src/app/shared/spartan/**
 
 sonar.sourceEncoding=UTF-8
+
+# Exclude vendored/boilerplate-heavy files from duplication detection
+sonar.cpd.exclusions=\
+  src/app/shared/spartan/**,\
+  src/testing/**
 ````
 
 ## File: tsconfig.json
@@ -11165,6 +10684,215 @@ sonar.sourceEncoding=UTF-8
       "path": "./tsconfig.spec.json"
     }
   ]
+}
+````
+
+## File: src/app/core/auth/auth.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
+import { catchError, firstValueFrom, map, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
+import { TokenStore } from './token.store';
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+interface AuthResponse {
+  accessToken: string;
+  user: ApiUserProfile;
+}
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly tokenStore = inject(TokenStore);
+  private readonly _currentUser = signal<UserProfile | null>(null);
+  private readonly _isLoading = signal<boolean>(true);
+  readonly currentUser = this._currentUser.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly isAuthenticated = computed(() => this._currentUser() !== null);
+  readonly userRole = computed(() => this._currentUser()?.role ?? null);
+  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
+  private readonly _statsResource = rxResource<UserStats | null, string | null>({
+    params: () => this._currentUser()?.id ?? null,
+    stream: ({ params: userId }) => {
+      if (!userId) return of(null as UserStats | null);
+      return this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
+        map(raw => mapUserStats(raw)),
+        catchError(() => of(null)),
+      );
+    },
+  });
+  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
+  constructor() {
+    const token = this.tokenStore.snapshot();
+    if (token) {
+      firstValueFrom(
+        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
+          catchError(() => {
+            this.tokenStore.clear();
+            return of(null);
+          }),
+        ),
+      ).then(raw => {
+        this._currentUser.set(raw ? mapUserProfile(raw) : null);
+        this._isLoading.set(false);
+      });
+    } else {
+      this._isLoading.set(false);
+    }
+  }
+  async signUp(
+    email: string,
+    password: string,
+    displayName: string,
+    role: UserRole,
+  ): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
+          email,
+          password,
+          displayName,
+          role,
+        }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signIn(email: string, password: string): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signOut(): Promise<void> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
+    } catch {  }
+    this.tokenStore.clear();
+    this._currentUser.set(null);
+    this.router.navigate(['/login']);
+  }
+  async updateRole(role: UserRole): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
+    );
+    this._currentUser.set({ ...user, role });
+  }
+  async updateDisplayName(name: string): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
+    );
+    this._currentUser.set({ ...user, displayName: name });
+  }
+  async updateSocials(socials: UserSocials): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
+    );
+    this._currentUser.set({ ...user, socials });
+  }
+  async setSocialsPublic(value: boolean): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
+        socialsPublic: value,
+      }),
+    );
+    this._currentUser.set({ ...user, socialsPublic: value });
+  }
+}
+````
+
+## File: src/app/features/auth/login/login.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { AuthService } from '../../../core/auth/auth.service';
+import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
+import { SeoService } from '../../../core/services/seo.service';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+interface LoginForm {
+  email: FormControl<string>;
+  password: FormControl<string>;
+}
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.scss',
+})
+export class LoginComponent {
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly seo = inject(SeoService);
+  private readonly translate = inject(TranslateService);
+  readonly errorMessage = signal<string | null>(null);
+  readonly isSubmitting = signal(false);
+  readonly bookOpen = signal(false);
+  readonly formVisible = signal(false);
+  constructor() {
+    this.seo.setPageI18n('SEO.login_title');
+    setTimeout(() => this.formVisible.set(true), 700);
+  }
+  onBookAnimationDone(): void {
+    this.router.navigate(['/clubs']);
+  }
+  readonly form = new FormGroup<LoginForm>({
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email],
+    }),
+    password: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(8)],
+    }),
+  });
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+    const { email, password } = this.form.getRawValue();
+    const { error } = await this.auth.signIn(email, password);
+    this.isSubmitting.set(false);
+    if (error) {
+      const translatedError = error === 'Invalid credentials'
+        ? this.translate.instant('AUTH.error_invalid_credentials')
+        : error;
+      this.errorMessage.set(translatedError);
+    } else {
+      this.bookOpen.set(true);
+    }
+  }
 }
 ````
 
@@ -11399,129 +11127,6 @@ export class RegisterComponent {
 </article>
 ````
 
-## File: src/app/features/clubs/club-detail/members/club-members-list.component.html
-````html
-<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="glass-card px-6 gap-4">
-  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
-    {{ 'MEMBERS.title' | translate }} ({{ members().length }})
-  </h2>
-  @if (members().length === 0) {
-    <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'MEMBERS.empty' | translate }}</p>
-  } @else {
-    <ul class="divide-y divide-gray-100 dark:divide-gray-700">
-      @for (member of members(); track member.userId) {
-        <li class="flex items-center gap-4 py-3 relative">
-          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0" aria-hidden="true">
-            {{ member.displayName | initials }}
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
-              {{ member.displayName }}
-            </p>
-            @if (member.role === 'organizer') {
-              <span class="inline-block text-xs font-medium text-accent-600 dark:text-accent-400">
-                {{ 'MEMBERS.organizer' | translate }}
-              </span>
-            } @else {
-              <span class="inline-block text-xs text-gray-400 dark:text-gray-500">
-                {{ 'MEMBERS.member' | translate }}
-              </span>
-            }
-          </div>
-          <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-            @if (canSeeSocials(member)) {
-              @if (member.socials?.telegram) {
-                <a [href]="'https://t.me/' + member.socials!.telegram" target="_blank" rel="noopener noreferrer"
-                   class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram: @' + member.socials!.telegram" title="Telegram">
-                  ✈️
-                </a>
-              }
-              @if (member.socials?.instagram) {
-                <a [href]="'https://instagram.com/' + member.socials!.instagram" target="_blank" rel="noopener noreferrer"
-                   class="text-pink-500 hover:text-pink-600 text-lg" [attr.aria-label]="'Instagram: @' + member.socials!.instagram" title="Instagram">
-                  📸
-                </a>
-              }
-              @if (member.socials?.github) {
-                <a [href]="'https://github.com/' + member.socials!.github" target="_blank" rel="noopener noreferrer"
-                   class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" [attr.aria-label]="'GitHub: ' + member.socials!.github" title="GitHub">
-                  🐙
-                </a>
-              }
-              @if (member.socials?.goodreads) {
-                <a [href]="'https://goodreads.com/' + member.socials!.goodreads" target="_blank" rel="noopener noreferrer"
-                   class="text-amber-600 hover:text-amber-700 text-lg" title="Goodreads">
-                  📚
-                </a>
-              }
-              @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
-                <button
-                  hlmBtn
-                  variant="secondary"
-                  size="sm"
-                  type="button"
-                  (click)="toggleQr(member.userId)"
-                  class="ml-1 text-xs"
-                  [attr.aria-expanded]="showQrForUser() === member.userId"
-                  [attr.aria-label]="'MEMBERS.show_qr' | translate"
-                >
-                  <span aria-hidden="true">⊡</span> {{ 'MEMBERS.show_qr' | translate }}
-                </button>
-                @if (showQrForUser() === member.userId) {
-                  <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl glass-card-strong shadow-xl p-4 flex flex-col items-center gap-2"
-                       aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
-                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
-                    @defer (on idle) {
-                      <app-qr-code [value]="buildQrValue(member)" [size]="160" />
-                    } @placeholder {
-                      <div class="h-40 w-40 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" aria-hidden="true"></div>
-                    }
-                    <button hlmBtn variant="ghost" size="sm" type="button" (click)="toggleQr(member.userId)"
-                            class="mt-1 text-xs text-gray-400">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
-                  </dialog>
-                }
-              }
-            } @else {
-              <span class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
-                🔒 {{ 'MEMBERS.socials_hidden' | translate }}
-              </span>
-            }
-            @if (isOwner() && member.role !== 'organizer') {
-              <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">
-                <button hlmBtn variant="destructive" size="xs" type="button" (click)="kick.emit(member.userId)"
-                         [attr.aria-label]="'MEMBERS.kick' | translate">
-                  {{ 'MEMBERS.kick' | translate }}
-                </button>
-                <button hlmBtn variant="ghost" size="xs" type="button" (click)="toggleBanMenu(member.userId)"
-                        class="text-orange-600 hover:text-orange-700"
-                        [attr.aria-expanded]="showBanMenu() === member.userId">
-                  {{ 'MEMBERS.ban' | translate }}
-                </button>
-                @if (showBanMenu() === member.userId) {
-                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl glass-card-strong shadow-xl py-1 min-w-36">
-                    @for (duration of banDurations; track duration) {
-                      <li>
-                        <button hlmBtn variant="ghost" type="button" (click)="emitBan(member.userId, duration)"
-                                class="w-full justify-start px-4 text-sm">
-                          @if (duration === 1) { {{ 'MEMBERS.ban_1' | translate }} }
-                          @else if (duration === 3) { {{ 'MEMBERS.ban_3' | translate }} }
-                          @else if (duration === 5) { {{ 'MEMBERS.ban_5' | translate }} }
-                          @else { {{ 'MEMBERS.ban_permanent' | translate }} }
-                        </button>
-                      </li>
-                    }
-                  </menu>
-                }
-              </div>
-            }
-          </div>
-        </li>
-      }
-    </ul>
-  }
-</section>
-````
-
 ## File: src/app/features/events/event-card/event-card.component.ts
 ````typescript
 import {
@@ -11551,186 +11156,6 @@ export class EventCardComponent {
   readonly attending = input<boolean>(false);
   readonly attend = output<void>();
   readonly cancelAttend = output<void>();
-}
-````
-
-## File: src/app/features/profile/profile.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-} from '@angular/core';
-import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
-import { AuthService } from '../../core/auth/auth.service';
-import { UserRole, UserSocials } from '../../core/models/user.model';
-import { SeoService } from '../../core/services/seo.service';
-import { SocialLinkFieldComponent, SocialField } from '../../shared/components/social-link-field/social-link-field.component';
-import { SocialBadgesComponent } from '../../shared/components/social-badges/social-badges.component';
-import { ProfileStatsComponent } from './stats/profile-stats.component';
-import { ProfileRoleSelectorComponent } from './role-selector/profile-role-selector.component';
-import { HlmButton } from '../../shared/spartan/button/src';
-import { HlmInput } from '../../shared/spartan/input/src';
-@Component({
-  selector: 'app-profile',
-  standalone: true,
-  imports: [ReactiveFormsModule, TranslateModule, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent, HlmButton, HlmInput],
-  templateUrl: './profile.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush,
-})
-export class ProfileComponent {
-  protected readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  private readonly translate = inject(TranslateService);
-  protected readonly socialFields: SocialField[] = [
-    {
-      key: 'telegram',
-      label: 'Telegram',
-      labelClass: 'text-blue-600 dark:text-blue-400',
-      placeholder: 'username (без @)',
-      focusRingClass: 'focus:ring-blue-500',
-    },
-    {
-      key: 'instagram',
-      label: 'Instagram',
-      labelClass: 'bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500 bg-clip-text text-transparent',
-      placeholder: 'username (без @)',
-      focusRingClass: 'focus:ring-pink-500',
-    },
-    {
-      key: 'twitter',
-      label: 'Twitter / X',
-      labelClass: 'text-gray-900 dark:text-gray-100',
-      placeholder: 'username (без @)',
-      focusRingClass: 'focus:ring-gray-800',
-    },
-    {
-      key: 'linkedin',
-      label: 'LinkedIn',
-      labelClass: 'text-blue-700 dark:text-blue-400',
-      placeholder: 'username або повний URL',
-      focusRingClass: 'focus:ring-blue-600',
-    },
-    {
-      key: 'github',
-      label: 'GitHub',
-      labelClass: 'text-gray-800 dark:text-gray-200',
-      placeholder: 'username',
-      focusRingClass: 'focus:ring-gray-700',
-    },
-    {
-      key: 'goodreads',
-      label: 'Goodreads',
-      labelClass: 'text-amber-700 dark:text-amber-400',
-      placeholder: 'username або повний URL',
-      focusRingClass: 'focus:ring-amber-500',
-    },
-  ];
-  protected readonly nameForm = new FormGroup({
-    displayName: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(2)],
-    }),
-  });
-  /** Typed reactive form for updating social media links. */
-  protected readonly socialsForm = new FormGroup({
-    telegram:  new FormControl('', { nonNullable: true }),
-    instagram: new FormControl('', { nonNullable: true }),
-    twitter:   new FormControl('', { nonNullable: true }),
-    linkedin:  new FormControl('', { nonNullable: true }),
-    github:    new FormControl('', { nonNullable: true }),
-    goodreads: new FormControl('', { nonNullable: true }),
-  });
-  /** Controls whether socials are visible to all club members. */
-  protected readonly socialsPublicControl = new FormControl<boolean>(false, { nonNullable: true });
-  /** Tracks the in-flight save state (synchronous here, but keeps the pattern extensible). */
-  protected readonly isSavingName = signal(false);
-  /** Two-letter initials derived from the current user's display name. */
-  protected readonly userInitials = computed<string>(() => {
-    const name = this.auth.currentUser()?.displayName ?? '';
-    return name
-      .split(' ')
-      .map(w => w[0])
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
-  });
-  /** Human-readable role label shown in the hero badge. */
-  protected readonly roleLabel = computed<string>(() =>
-    this.auth.currentUser()?.role === 'organizer' ? 'Organizer' : 'Reader',
-  );
-  protected readonly joinedDate = computed<string>(() => {
-    const raw = this.auth.currentUser()?.createdAt;
-    if (!raw) return '';
-    const locale = this.translate.currentLang === 'uk' ? 'uk-UA' : 'en-US';
-    return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long' }).format(
-      new Date(raw),
-    );
-  });
-  protected readonly userSocials = computed<UserSocials>(
-    () => this.auth.currentUser()?.socials ?? {},
-  );
-  constructor() {
-    this.seo.setPageI18n('SEO.profile_title');
-    const user = this.auth.currentUser();
-    if (user) {
-      this.nameForm.patchValue({ displayName: user.displayName });
-      this.socialsPublicControl.setValue(user.socialsPublic ?? false);
-      if (user.socials) {
-        this.socialsForm.patchValue({
-          telegram:  user.socials.telegram  ?? '',
-          instagram: user.socials.instagram ?? '',
-          twitter:   user.socials.twitter   ?? '',
-          linkedin:  user.socials.linkedin  ?? '',
-          github:    user.socials.github    ?? '',
-          goodreads: user.socials.goodreads ?? '',
-        });
-      }
-    }
-  }
-  /** Switch the user's role and show a transient success toast. */
-  protected async changeRole(role: UserRole): Promise<void> {
-    try {
-      await this.auth.updateRole(role);
-      toast.success(this.translate.instant('PROFILE.role_changed'));
-    } catch {  }
-  }
-  protected async saveName(): Promise<void> {
-    if (this.nameForm.invalid) return;
-    this.isSavingName.set(true);
-    const { displayName } = this.nameForm.getRawValue();
-    try {
-      await this.auth.updateDisplayName(displayName);
-      toast.success(this.translate.instant('PROFILE.name_updated'));
-    } catch {  }
-    finally {
-      this.isSavingName.set(false);
-    }
-  }
-  protected async submitSocials(): Promise<void> {
-    const raw = this.socialsForm.getRawValue();
-    const socials: UserSocials = {
-      ...(raw.telegram  ? { telegram:  raw.telegram  } : {}),
-      ...(raw.instagram ? { instagram: raw.instagram } : {}),
-      ...(raw.twitter   ? { twitter:   raw.twitter   } : {}),
-      ...(raw.linkedin  ? { linkedin:  raw.linkedin  } : {}),
-      ...(raw.github    ? { github:    raw.github    } : {}),
-      ...(raw.goodreads ? { goodreads: raw.goodreads } : {}),
-    };
-    try {
-      await this.auth.updateSocials(socials);
-      toast.success(this.translate.instant('PROFILE.socials_saved'));
-    } catch {  }
-  }
-  protected async onSocialsPublicChange(value: boolean): Promise<void> {
-    try {
-      await this.auth.setSocialsPublic(value);
-    } catch {  }
-  }
 }
 ````
 
@@ -11870,216 +11295,170 @@ export class QuizListComponent {
 }
 ````
 
-## File: src/app/shared/chat/chat-widget/chat-widget.component.html
+## File: src/app/features/randomizer/randomizer.component.html
 ````html
-@if (auth.isAuthenticated()) {
-  <button
-    hlmBtn
-    type="button"
-    [class]="'fixed z-50 w-14 h-14 rounded-full bg-accent-500 text-white shadow-lg hover:shadow-xl ' + fabPositionClass()"
-    [class.animate-bounce]="isBouncing()"
-    [attr.aria-label]="(chat.isOpen() ? 'CHAT.close' : 'CHAT.open') | translate"
-    (click)="chat.toggleOpen()"
-  >
-    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
-    </svg>
-    @if (chat.unreadCount() > 0) {
-      <div class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold">
-        {{ chat.unreadCount() > 9 ? '9+' : (chat.unreadCount() | number) }}
+<div class="min-h-screen bg-gradient-to-br from-slate-900 via-primary-900 to-slate-900 p-4 sm:p-8">
+  <div class="max-w-4xl mx-auto space-y-8">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-white">🎲 {{ 'RANDOMIZER.title' | translate }}</h1>
+        <p class="text-primary-300 mt-1">{{ 'RANDOMIZER.subtitle' | translate }}</p>
       </div>
-    }
-  </button>
-  @if (chat.isOpen()) {
-    <div
-      [class]="'fixed z-40 w-80 max-h-[480px] flex flex-col bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-100 dark:border-gray-700 chat-panel ' + panelPositionClass()"
-    >
-      <div class="flex items-center justify-between p-4 border-b border-gray-100 dark:border-gray-700">
-        <h2 class="text-lg font-semibold text-gray-900 dark:text-white">
-          {{ 'CHAT.title' | translate }}
-        </h2>
-        <button
-          hlmBtn
-          variant="ghost"
-          size="icon"
-          type="button"
-          [attr.aria-label]="'CHAT.close' | translate"
-          (click)="chat.toggleOpen()"
-        >
-          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
-          </svg>
-        </button>
-      </div>
-      @if (chat.rooms().length > 1 || auth.isOrganizer()) {
-        <div class="flex items-center border-b border-gray-100 dark:border-gray-700 px-3 py-2 gap-2">
-          <div class="flex overflow-x-auto gap-2 flex-1 min-w-0">
-            @for (room of chat.rooms(); track room.id) {
-              <button
-                class="px-3 py-1.5 rounded-lg whitespace-nowrap font-medium text-sm transition-colors duration-200 flex-shrink-0"
-                [ngClass]="{
-                  'bg-accent-500 text-white': chat.activeRoomId() === room.id,
-                  'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700': chat.activeRoomId() !== room.id
-                }"
-                role="tab"
-                [attr.aria-selected]="chat.activeRoomId() === room.id"
-                (click)="chat.openRoom(room.id)"
-              >
-                {{ room.name }}
-              </button>
-            }
-          </div>
-          @if (auth.isOrganizer()) {
-            <button
-              type="button"
-              class="flex-shrink-0 w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-accent-100 hover:text-accent-600 flex items-center justify-center transition-colors text-lg leading-none"
-              [attr.aria-label]="'CHAT.add_room' | translate"
-              (click)="toggleCreateRoom()"
-            >+</button>
-          }
-        </div>
-      }
-      @if (isCreatingRoom()) {
-        <div class="flex items-center gap-2 px-3 py-2 border-b border-gray-100 dark:border-gray-700">
-          <input
-            hlmInput
-            type="text"
-            [ngModel]="newRoomName()"
-            (ngModelChange)="newRoomName.set($event)"
-            (keydown)="onRoomNameKeydown($event)"
-            [placeholder]="'CHAT.room_name_placeholder' | translate"
-            class="flex-1 text-sm rounded-lg h-8 px-3"
-          />
+      <nav aria-label="Breadcrumb">
+        <a [routerLink]="['/clubs', clubId]" class="text-primary-300 hover:text-white transition-colors text-sm">
+          {{ 'RANDOMIZER.back_to_club' | translate }}
+        </a>
+      </nav>
+    </header>
+    <div class="bg-white/10 backdrop-blur rounded-2xl p-5 border border-white/10">
+      <label for="purpose" class="block text-white font-medium text-sm mb-2">{{ 'RANDOMIZER.purpose_label' | translate }}</label>
+      <input
+        hlmInput
+        id="purpose"
+        type="text"
+        [formControl]="purposeControl"
+        [placeholder]="'RANDOMIZER.purpose_placeholder' | translate"
+        class="w-full rounded-xl bg-white/10 border-white/20 text-white placeholder-white/40 px-4 focus-visible:ring-primary-400"
+      />
+    </div>
+    <div class="grid lg:grid-cols-2 gap-8">
+      <section aria-labelledby="members-heading" class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h2 id="members-heading" class="text-white font-semibold text-lg">
+            👥 {{ 'RANDOMIZER.members_title' | translate }}
+            <span class="text-primary-300 text-sm font-normal ml-2">{{ selectedCount() }} / {{ randomizerService.candidates().length }} {{ 'RANDOMIZER.selected' | translate }}</span>
+          </h2>
           <button
             hlmBtn
+            variant="ghost"
             size="sm"
             type="button"
-            class="bg-accent-500 text-white text-xs px-2 h-8"
-            [disabled]="!newRoomName().trim()"
-            (click)="submitCreateRoom()"
-          >{{ 'CHAT.create_room' | translate }}</button>
+            (click)="reset()"
+            class="text-xs text-primary-300 hover:text-white"
+          >
+            {{ 'RANDOMIZER.select_all' | translate }}
+          </button>
         </div>
-      }
-      @if (chat.rooms().length === 0) {
-        <div class="flex items-center justify-center flex-1 text-gray-400 dark:text-gray-500 text-sm px-4">
-          {{ 'CHAT.no_rooms' | translate }}
-        </div>
-      } @else {
-        <div
-          class="flex-1 overflow-y-auto p-3 space-y-2 messages-scroll"
-          role="log"
-          aria-live="polite"
-        >
-          @if (chat.activeMessages().length === 0) {
-            <div class="flex items-center justify-center h-full text-gray-400 dark:text-gray-500">
-              {{ 'CHAT.no_messages' | translate }}
+        @if (randomizerService.candidates().length === 0) {
+          <div class="bg-white/10 rounded-2xl p-8 text-center text-white/60">
+            <p class="text-3xl mb-2">👤</p>
+            <p>{{ 'RANDOMIZER.no_members' | translate }}</p>
+          </div>
+        } @else {
+          <ul class="space-y-2">
+            @for (member of randomizerService.candidates(); track member.userId) {
+              <li>
+                <button
+                  type="button"
+                  (click)="randomizerService.toggleMember(member.userId)"
+                  class="w-full flex items-center gap-3 rounded-xl p-3 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-400"
+                  [class]="randomizerService.selectedIds().has(member.userId)
+                    ? 'bg-white/20 border border-white/30'
+                    : 'bg-white/5 border border-white/10 opacity-50'"
+                  [attr.aria-pressed]="randomizerService.selectedIds().has(member.userId)"
+                  [attr.aria-label]="'Toggle ' + member.displayName"
+                >
+                  <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                    {{ member.displayName | initials }}
+                  </div>
+                  <span class="text-white font-medium text-sm flex-1 text-left">{{ member.displayName }}</span>
+                  @if (randomizerService.selectedIds().has(member.userId)) {
+                    <span class="text-green-400 text-lg" aria-hidden="true">✓</span>
+                  }
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </section>
+      <section aria-labelledby="spin-heading" class="space-y-6">
+        <h2 id="spin-heading" class="sr-only">{{ 'RANDOMIZER.title' | translate }}</h2>
+        <div class="bg-white/10 backdrop-blur rounded-2xl p-8 border border-white/10 text-center min-h-[200px] flex flex-col items-center justify-center">
+          @if (randomizerService.isSpinning()) {
+            <div class="space-y-4">
+              <div class="text-5xl animate-bounce">🎲</div>
+              <p class="text-white/70 text-sm animate-pulse">{{ 'RANDOMIZER.spinning' | translate }}</p>
+            </div>
+          } @else if (randomizerService.result()) {
+            <div class="space-y-3">
+              <div class="h-20 w-20 mx-auto rounded-full bg-gradient-to-br from-accent-400 to-primary-500 flex items-center justify-center text-white text-2xl font-bold shadow-xl ring-4 ring-white/30">
+                {{ randomizerService.result()!.displayName | initials }}
+              </div>
+              <div>
+                <p class="text-white/60 text-xs uppercase tracking-wide mb-1">{{ randomizerService.purpose() }}</p>
+                <p class="text-white text-2xl font-bold">{{ randomizerService.result()!.displayName }}</p>
+              </div>
+              <span class="text-3xl">🏆</span>
             </div>
           } @else {
-            @for (message of chat.activeMessages(); track message.id) {
-              @if (!message.isMuted || auth.isOrganizer()) {
-                <div
-                  class="relative group"
-                  [ngClass]="{ 'flex justify-end': message.isOwn, 'flex justify-start': !message.isOwn }"
-                >
-                  <div class="flex flex-col max-w-[75%]">
-                    @if (!message.isOwn) {
-                      <div class="flex items-center gap-1 px-3 mb-1">
-                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ message.senderName }}</span>
-                        @if (message.isMuted) {
-                          <span class="text-xs text-red-400 italic">{{ 'CHAT.muted_label' | translate }}</span>
-                        }
-                      </div>
-                    }
-                    <div
-                      class="px-4 py-2 rounded-2xl transition-opacity"
-                      [class.opacity-40]="message.isMuted"
-                      [ngClass]="{
-                        'bg-accent-500 text-white rounded-br-sm': message.isOwn,
-                        'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-sm': !message.isOwn
-                      }"
-                    >
-                      {{ message.text }}
-                    </div>
-                    <span class="text-xs text-gray-400 px-3 mt-1"
-                          [class.text-right]="message.isOwn">
-                      {{ message.timestamp | date: 'HH:mm' }}
-                    </span>
-                  </div>
-                  @if (auth.isOrganizer() && !message.isOwn) {
-                    <div class="relative self-center ml-1">
-                      <button
-                        type="button"
-                        class="opacity-0 group-hover:opacity-100 transition-opacity w-6 h-6 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
-                        [attr.aria-label]="'moderation'"
-                        (click)="toggleMenu(message.id)"
-                      >
-                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z"/>
-                        </svg>
-                      </button>
-                      @if (openMenuId() === message.id) {
-                        <div class="absolute left-full top-0 ml-1 z-50 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg py-1 min-w-[130px]">
-                          @if (!message.isMuted) {
-                            <button
-                              type="button"
-                              class="w-full text-left px-3 py-1.5 text-xs text-orange-600 dark:text-orange-400 hover:bg-orange-50 dark:hover:bg-orange-900/20"
-                              (click)="muteUser(message.senderId)"
-                            >{{ 'CHAT.mute' | translate }}</button>
-                          } @else {
-                            <button
-                              type="button"
-                              class="w-full text-left px-3 py-1.5 text-xs text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
-                              (click)="unmuteUser(message.senderId)"
-                            >{{ 'CHAT.unmute' | translate }}</button>
-                          }
-                          <button
-                            type="button"
-                            class="w-full text-left px-3 py-1.5 text-xs text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
-                            (click)="banUser(message.senderId, 600)"
-                          >{{ 'CHAT.ban_600s' | translate }}</button>
-                          <div class="my-0.5 border-t border-gray-100 dark:border-gray-700"></div>
-                          <button
-                            type="button"
-                            class="w-full text-left px-3 py-1.5 text-xs text-red-700 dark:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 font-medium"
-                            (click)="deleteMessage(message.id)"
-                          >{{ 'CHAT.delete_message' | translate }}</button>
-                        </div>
-                      }
-                    </div>
-                  }
-                </div>
-              }
-            }
+            <div class="text-white/40 space-y-2">
+              <div class="text-4xl">🎯</div>
+              <p class="text-sm">{{ 'RANDOMIZER.spin_hint' | translate }}</p>
+            </div>
           }
-          <div #messagesEnd></div>
         </div>
-        <div class="border-t border-gray-100 dark:border-gray-700 p-3 flex gap-2">
-          <input
-            hlmInput
-            type="text"
-            [(ngModel)]="messageText"
-            (keydown)="onKeydown($event)"
-            [placeholder]="'CHAT.placeholder' | translate"
-            [attr.aria-label]="'CHAT.placeholder' | translate"
-            class="flex-1 rounded-full px-4"
-          />
+        @if (errorMessage()) {
+          <div class="rounded-xl bg-red-500/20 border border-red-500/30 px-4 py-3 text-sm text-red-300" role="alert">
+            {{ errorMessage() }}
+          </div>
+        }
+        <div class="flex flex-col gap-3">
           <button
             hlmBtn
             type="button"
-            class="w-10 h-10 rounded-full bg-accent-500 text-white"
-            [disabled]="!messageText().trim()"
-            (click)="sendMessage()"
-            [attr.aria-label]="'CHAT.send' | translate"
+            data-testid="spin-button"
+            (click)="spin()"
+            [disabled]="randomizerService.isSpinning() || selectedCount() < 2"
+            class="w-full rounded-2xl bg-gradient-to-r from-accent-500 to-primary-500 hover:from-accent-400 hover:to-primary-400 text-white font-bold py-4 text-lg shadow-lg"
           >
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M16.6915026,12.4744748 L3.50612381,13.2599618 C3.19218622,13.2599618 3.03521743,13.4170592 3.03521743,13.5741566 L1.15159189,20.0151496 C0.8376543,20.8006365 0.99,21.89 1.77946707,22.52 C2.41,22.99 3.50612381,23.1 4.13399899,22.8429026 L21.714504,14.0454487 C22.6563168,13.5741566 23.1272231,12.6315722 22.9702544,11.6889879 L4.13399899,1.16584166 C3.50612381,0.9087443 2.40999006,1.01484963 1.77946707,1.4861418 C0.994623095,2.11535496 0.837654326,3.20500913 1.15159189,3.9904961 L3.03521743,10.4314891 C3.03521743,10.5885864 3.19218622,10.7456838 3.50612381,10.7456838 L16.6915026,11.5311707 C16.6915026,11.5311707 17.1624089,11.5311707 17.1624089,12.0024628 C17.1624089,12.4744748 16.6915026,12.4744748 16.6915026,12.4744748 Z"/>
-            </svg>
+            @if (randomizerService.isSpinning()) {
+              {{ 'RANDOMIZER.spinning_btn' | translate }}
+            } @else {
+              {{ 'RANDOMIZER.spin' | translate }}
+            }
           </button>
+          @if (selectedCount() < 2 && !randomizerService.isSpinning()) {
+            <p class="text-center text-white/50 text-xs">{{ 'RANDOMIZER.error_min' | translate }}</p>
+          }
+          @if (randomizerService.result() && authService.isOrganizer()) {
+            <button
+              hlmBtn
+              variant="outline"
+              type="button"
+              (click)="saveSession()"
+              [disabled]="isSaving()"
+              class="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3"
+            >
+              @if (isSaving()) {
+                {{ 'RANDOMIZER.saving' | translate }}
+              } @else {
+                {{ 'RANDOMIZER.save' | translate }}
+              }
+            </button>
+          }
         </div>
-      }
+        @if (randomizerService.history().length > 0) {
+          <div class="space-y-3">
+            <h3 class="text-white/70 text-sm font-medium uppercase tracking-wide">{{ 'RANDOMIZER.history_title' | translate }}</h3>
+            <ul class="space-y-2">
+              @for (session of randomizerService.history().slice(0, 5); track session.id) {
+                <li class="bg-white/5 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
+                  <div class="min-w-0">
+                    <p class="text-white/60 text-xs truncate">{{ session.purpose }}</p>
+                    @if (session.result) {
+                      <p class="text-white text-sm font-medium">🏆 {{ session.result.displayName }}</p>
+                    }
+                  </div>
+                  <span class="text-white/40 text-xs shrink-0">{{ session.createdAt | date:'dd.MM HH:mm' }}</span>
+                </li>
+              }
+            </ul>
+          </div>
+        }
+      </section>
     </div>
-  }
-}
+  </div>
+</div>
 ````
 
 ## File: src/app/shared/chat/chat-widget/chat-widget.component.ts
@@ -12718,6 +12097,129 @@ export interface ClubEvent {
 </div>
 ````
 
+## File: src/app/features/clubs/club-detail/members/club-members-list.component.html
+````html
+<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="glass-card px-6 gap-4">
+  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
+    {{ 'MEMBERS.title' | translate }} ({{ members().length }})
+  </h2>
+  @if (members().length === 0) {
+    <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'MEMBERS.empty' | translate }}</p>
+  } @else {
+    <ul class="divide-y divide-gray-100 dark:divide-gray-700">
+      @for (member of members(); track member.userId) {
+        <li class="flex items-center gap-4 py-3 relative">
+          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0" aria-hidden="true">
+            {{ member.displayName | initials }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+              {{ member.displayName.includes('@') ? member.displayName.split('@')[0] : member.displayName }}
+            </p>
+            @if (member.role === 'organizer') {
+              <span class="inline-block text-xs font-medium text-accent-600 dark:text-accent-400">
+                {{ 'MEMBERS.organizer' | translate }}
+              </span>
+            } @else {
+              <span class="inline-block text-xs text-gray-400 dark:text-gray-500">
+                {{ 'MEMBERS.member' | translate }}
+              </span>
+            }
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+            @if (canSeeSocials(member)) {
+              @if (member.socials?.telegram) {
+                <a [href]="'https://t.me/' + member.socials!.telegram" target="_blank" rel="noopener noreferrer"
+                   class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram: @' + member.socials!.telegram" title="Telegram">
+                  ✈️
+                </a>
+              }
+              @if (member.socials?.instagram) {
+                <a [href]="'https://instagram.com/' + member.socials!.instagram" target="_blank" rel="noopener noreferrer"
+                   class="text-pink-500 hover:text-pink-600 text-lg" [attr.aria-label]="'Instagram: @' + member.socials!.instagram" title="Instagram">
+                  📸
+                </a>
+              }
+              @if (member.socials?.github) {
+                <a [href]="'https://github.com/' + member.socials!.github" target="_blank" rel="noopener noreferrer"
+                   class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" [attr.aria-label]="'GitHub: ' + member.socials!.github" title="GitHub">
+                  🐙
+                </a>
+              }
+              @if (member.socials?.goodreads) {
+                <a [href]="'https://goodreads.com/' + member.socials!.goodreads" target="_blank" rel="noopener noreferrer"
+                   class="text-amber-600 hover:text-amber-700 text-lg" title="Goodreads">
+                  📚
+                </a>
+              }
+              @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
+                <button
+                  hlmBtn
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  (click)="toggleQr(member.userId)"
+                  class="ml-1 text-xs"
+                  [attr.aria-expanded]="showQrForUser() === member.userId"
+                  [attr.aria-label]="'MEMBERS.show_qr' | translate"
+                >
+                  <span aria-hidden="true">⊡</span> {{ 'MEMBERS.show_qr' | translate }}
+                </button>
+                @if (showQrForUser() === member.userId) {
+                  <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl glass-card-strong shadow-xl p-4 flex flex-col items-center gap-2"
+                       aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
+                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
+                    @defer (on idle) {
+                      <app-qr-code [value]="buildQrValue(member)" [size]="160" />
+                    } @placeholder {
+                      <div class="h-40 w-40 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" aria-hidden="true"></div>
+                    }
+                    <button hlmBtn variant="ghost" size="sm" type="button" (click)="toggleQr(member.userId)"
+                            class="mt-1 text-xs text-gray-400">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
+                  </dialog>
+                }
+              }
+            } @else {
+              <span class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                🔒 {{ 'MEMBERS.socials_hidden' | translate }}
+              </span>
+            }
+            @if (isOwner() && member.role !== 'organizer') {
+              <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">
+                <button hlmBtn variant="destructive" size="xs" type="button" (click)="kick.emit(member.userId)"
+                         [attr.aria-label]="'MEMBERS.kick' | translate">
+                  {{ 'MEMBERS.kick' | translate }}
+                </button>
+                <button hlmBtn variant="ghost" size="xs" type="button" (click)="toggleBanMenu(member.userId)"
+                        class="text-orange-600 hover:text-orange-700"
+                        [attr.aria-expanded]="showBanMenu() === member.userId">
+                  {{ 'MEMBERS.ban' | translate }}
+                </button>
+                @if (showBanMenu() === member.userId) {
+                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl glass-card-strong shadow-xl py-1 min-w-36">
+                    @for (duration of banDurations; track duration) {
+                      <li>
+                        <button hlmBtn variant="ghost" type="button" (click)="emitBan(member.userId, duration)"
+                                class="w-full justify-start px-4 text-sm">
+                          @if (duration === 1) { {{ 'MEMBERS.ban_1' | translate }} }
+                          @else if (duration === 3) { {{ 'MEMBERS.ban_3' | translate }} }
+                          @else if (duration === 5) { {{ 'MEMBERS.ban_5' | translate }} }
+                          @else { {{ 'MEMBERS.ban_permanent' | translate }} }
+                        </button>
+                      </li>
+                    }
+                  </menu>
+                }
+              </div>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>
+````
+
 ## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
 ````html
 <div
@@ -12837,226 +12339,397 @@ export interface ClubEvent {
 </div>
 ````
 
-## File: src/app/features/clubs/edit-club/edit-club.component.html
+## File: src/app/features/clubs/clubs-list/clubs-list.component.html
 ````html
-<main class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-lg">
-    <header class="text-center mb-8">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
-      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'EDIT_CLUB.subtitle' | translate }}</p>
-    </header>
-    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'EDIT_CLUB.title' | translate }}</h2>
-      @if (isLoadingClub()) {
-        <div class="flex justify-center py-12">
+<div class="min-h-screen">
+  <section aria-label="Search clubs" class="parchment-hero px-4 py-14 text-center">
+    <div class="relative z-10">
+      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
+                 text-[var(--color-ink)] mb-3 drop-shadow-sm">
+        {{ 'CLUBS.title' | translate }}
+      </h1>
+      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-12">
+        {{ 'CLUBS.subtitle' | translate }}
+      </p>
+      <div class="mx-auto max-w-xl lg:max-w-2xl relative">
+        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
+        <input
+          id="club-search"
+          type="search"
+          [ngModel]="clubService.searchQuery()"
+          (ngModelChange)="clubService.setSearchQuery($event)"
+          [placeholder]="'CLUBS.search_placeholder_full' | translate"
+          class="w-full parchment-input rounded-full px-5 py-3 text-sm"
+          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
+        />
+      </div>
+    </div>
+  </section>
+  <div class="page-container py-8 space-y-8">
+    @if (clubService.error()) {
+      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+        <span aria-hidden="true">⚠️</span>
+        <span>{{ clubService.error() }}</span>
+      </div>
+    }
+    @if (auth.isAuthenticated()) {
+      <div class="flex justify-center" role="tablist" aria-label="Club filter">
+        <div class="relative flex rounded-full p-1
+                    bg-[var(--color-surface-sunken)]
+                    border border-[var(--color-sepia)]
+                    shadow-inner">
+          <div class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full
+                      bg-[var(--color-surface-raised)]
+                      shadow-[var(--shadow-parchment)]
+                      transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+               [style.left]="activeTab() === 'all' ? '4px' : '50%'"
+               aria-hidden="true">
+          </div>
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'all'"
+            (click)="activeTab.set('all')"
+            class="relative z-10 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'all'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            {{ 'CLUBS.all' | translate }}
+          </button>
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'my'"
+            (click)="activeTab.set('my')"
+            class="relative z-10 flex items-center gap-1.5 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'my'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            {{ 'CLUBS.my_clubs' | translate }}
+            @if (clubService.myClubs().length > 0) {
+              <span class="inline-flex items-center justify-center
+                           h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
+                           transition-colors duration-300"
+                    [class]="activeTab() === 'my'
+                      ? 'bg-[var(--color-primary-600)] text-white'
+                      : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]'">
+                {{ clubService.myClubs().length }}
+              </span>
+            }
+          </button>
+        </div>
+      </div>
+      @if (activeTab() === 'all') {
+        <div class="pt-6" role="tabpanel">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.filteredClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              title="No clubs yet"
+              description="No clubs have been created yet. Check back soon!"
+            />
+          } @else {
+            <ul class="bento-grid">
+              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                  <app-club-card
+                    [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+      @if (activeTab() === 'my') {
+        <div class="pt-6" role="tabpanel">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.myClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              [title]="'CLUBS.no_clubs' | translate"
+              description="Join a club to see it here."
+            />
+          } @else {
+            <ul class="bento-grid">
+              @for (club of clubService.myClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                  <app-club-card
+                    [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    } @else {
+      @if (clubService.isLoading()) {
+        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
           <hlm-spinner />
         </div>
+      } @else if (clubService.filteredClubs().length === 0) {
+        <app-empty-state
+          icon="📚"
+          title="No clubs yet"
+          description="No clubs have been created yet. Check back soon!"
+        />
       } @else {
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-          <hlm-field>
-            <label hlmFieldLabel for="club-name">
-              {{ 'EDIT_CLUB.name_label' | translate }}
-              <span class="text-red-500" aria-hidden="true">*</span>
-            </label>
-            <input
-              hlmInput
-              id="club-name"
-              type="text"
-              formControlName="name"
-              class="w-full"
-              [placeholder]="'EDIT_CLUB.name_placeholder' | translate"
-            />
-            <hlm-field-error validator="required">{{ 'EDIT_CLUB.name_required' | translate }}</hlm-field-error>
-            <hlm-field-error validator="minlength">{{ 'EDIT_CLUB.name_min' | translate }}</hlm-field-error>
-            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.name_max' | translate }}</hlm-field-error>
-          </hlm-field>
-          <hlm-field>
-            <label hlmFieldLabel for="club-description">{{ 'EDIT_CLUB.description_label' | translate }}</label>
-            <textarea
-              hlmInput
-              id="club-description"
-              formControlName="description"
-              rows="3"
-              class="w-full resize-none"
-              [placeholder]="'EDIT_CLUB.description_placeholder' | translate"
-            ></textarea>
-            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.description_max' | translate }}</hlm-field-error>
-          </hlm-field>
-          <hlm-field>
-            <label hlmFieldLabel for="club-city">{{ 'EDIT_CLUB.city_label' | translate }}</label>
-            <input
-              hlmInput
-              id="club-city"
-              type="text"
-              formControlName="city"
-              class="w-full"
-              [placeholder]="'EDIT_CLUB.city_placeholder' | translate"
-            />
-          </hlm-field>
-          <div>
-            <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{ 'EDIT_CLUB.cover_url_label' | translate }}
-            </p>
-            <app-cover-upload [control]="form.controls.coverUrl" />
-          </div>
-          <fieldset>
-            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'EDIT_CLUB.visibility_legend' | translate }}</legend>
-            <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-              <div>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'EDIT_CLUB.public_label' | translate }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'EDIT_CLUB.public_desc' | translate }}</p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                [attr.aria-checked]="form.controls.isPublic.value"
-                (click)="togglePublic()"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                [class.bg-primary-600]="form.controls.isPublic.value"
-                [class.bg-gray-300]="!form.controls.isPublic.value"
-                [class.dark:bg-gray-600]="!form.controls.isPublic.value"
-              >
-                <span
-                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                  [class.translate-x-6]="form.controls.isPublic.value"
-                  [class.translate-x-1]="!form.controls.isPublic.value"
-                ></span>
-              </button>
-            </div>
-          </fieldset>
-          @if (errorMessage()) {
-            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-                 role="alert">
-              <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
-              <span>{{ errorMessage() }}</span>
-            </div>
+        <ul class="bento-grid">
+          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+              <app-club-card
+                [club]="club"
+                [variant]="i === 0 ? 'featured' : 'default'"
+                [isMember]="false"
+                [isOwned]="false"
+                [isAuthenticated]="false"
+                [joining]="false"
+                (join)="onJoin(club)"
+              />
+            </li>
           }
-          <div class="flex gap-3 pt-2">
-            <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
-              {{ 'EDIT_CLUB.cancel' | translate }}
-            </button>
-            <button hlmBtn type="submit" [disabled]="isSubmitting()"
-                    class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
-              @if (isSubmitting()) {
-                <hlm-spinner class="mr-2" />
-                {{ 'EDIT_CLUB.submitting' | translate }}
-              } @else {
-                {{ 'EDIT_CLUB.submit' | translate }}
-              }
-            </button>
-          </div>
-        </form>
+        </ul>
       }
-    </article>
+    }
   </div>
-</main>
+  @if (auth.isOrganizer()) {
+    <a
+      routerLink="/clubs/create"
+      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full fab-fantasy focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] focus:ring-offset-2 transition-all duration-200"
+      [attr.aria-label]="'CLUBS.create' | translate"
+      [title]="'CLUBS.create' | translate"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+      </svg>
+    </a>
+  }
+</div>
 ````
 
-## File: src/app/features/clubs/edit-club/edit-club.component.ts
+## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
 ````typescript
 import {
   Component,
   ChangeDetectionStrategy,
   inject,
   signal,
-  input,
   OnInit,
 } from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
+import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import { ClubService } from '../../../core/services/club.service';
-import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
+import { AuthService } from '../../../core/auth/auth.service';
+import { Club } from '../../../core/models/club.model';
+import { SeoService } from '../../../core/services/seo.service';
+import { TranslateModule } from '@ngx-translate/core';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { ClubCardComponent } from './club-card/club-card.component';
 import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-interface EditClubForm {
-  name: FormControl<string>;
-  description: FormControl<string>;
-  isPublic: FormControl<boolean>;
-  city: FormControl<string>;
-  coverUrl: FormControl<string>;
-}
 @Component({
-  selector: 'app-edit-club',
+  selector: 'app-clubs-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, CoverUploadComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './edit-club.component.html',
+  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, HlmSpinner],
+  templateUrl: './clubs-list.component.html',
 })
-export class EditClubComponent implements OnInit {
-  readonly id = input.required<string>();
-  private readonly clubService = inject(ClubService);
-  private readonly router = inject(Router);
-  private readonly translate = inject(TranslateService);
-  private readonly _isLoadingClub = signal(true);
-  readonly isLoadingClub = this._isLoadingClub.asReadonly();
-  private readonly _isSubmitting = signal(false);
-  readonly isSubmitting = this._isSubmitting.asReadonly();
-  private readonly _errorMessage = signal<string | null>(null);
-  readonly errorMessage = this._errorMessage.asReadonly();
-  readonly form = new FormGroup<EditClubForm>({
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-    isPublic: new FormControl(true, { nonNullable: true }),
-    city: new FormControl('', { nonNullable: true }),
-    coverUrl: new FormControl('', { nonNullable: true }),
-  });
+export class ClubsListComponent implements OnInit {
+  readonly clubService = inject(ClubService);
+  readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  readonly joiningClubId = signal<string | null>(null);
+  readonly ownedClubIds = this.clubService.myOwnedClubIds;
+  readonly activeTab = signal<'all' | 'my'>('all');
   async ngOnInit(): Promise<void> {
-    const club = await this.clubService.getClubById(this.id());
-    if (!club) {
-      this._errorMessage.set('Club not found.');
-      this._isLoadingClub.set(false);
-      return;
-    }
-    this.form.patchValue({
-      name: club.name,
-      description: club.description ?? '',
-      isPublic: club.isPublic,
-      city: club.city ?? '',
-      coverUrl: club.coverUrl ?? '',
+    this.seo.setPageI18n('SEO.clubs_title', {
+      descriptionKey: 'SEO.clubs_description',
+      ogTitleKey: 'SEO.clubs_og_title',
     });
-    this._isLoadingClub.set(false);
-  }
-  togglePublic(): void {
-    this.form.controls.isPublic.setValue(!this.form.controls.isPublic.value);
-  }
-  cancel(): void {
-    this.router.navigate(['/clubs', this.id()]);
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
+    this.seo.injectWebSiteJsonLd();
+    await this.clubService.loadPublicClubs();
+    if (this.auth.isAuthenticated()) {
+      await this.clubService.loadMyClubs();
     }
-    this._isSubmitting.set(true);
-    this._errorMessage.set(null);
-    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
+  }
+  async onJoin(club: Club): Promise<void> {
+    this.joiningClubId.set(club.id);
     try {
-      await this.clubService.updateClub(this.id(), {
-        name,
-        description,
-        isPublic,
-        city: city || undefined,
-        coverUrl: coverUrl || null,
-      });
-      toast.success(this.translate.instant('EDIT_CLUB.success'));
-      this.router.navigate(['/clubs', this.id()]);
-    } catch (err) {
-      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to update club');
+      await this.clubService.joinClub(club.id);
+    } catch {
     } finally {
-      this._isSubmitting.set(false);
+      this.joiningClubId.set(null);
     }
   }
 }
+````
+
+## File: src/app/features/profile/profile.component.html
+````html
+<div class="min-h-screen bg-gradient-to-br from-primary-950/30 via-transparent to-accent-950/20">
+  <div class="max-w-2xl mx-auto space-y-5 py-8 px-4">
+    <section
+      aria-labelledby="profile-heading"
+      class="glass-card-strong p-8 text-center"
+    >
+      <div
+        class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-brand
+               flex items-center justify-center text-white text-3xl font-bold select-none
+               shadow-lg ring-4 ring-white/20"
+        aria-hidden="true"
+      >
+        {{ userInitials() }}
+      </div>
+      <h1 id="profile-heading" class="text-2xl font-bold text-gray-900 dark:text-white">
+        {{ auth.currentUser()?.displayName }}
+      </h1>
+      <span
+        class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
+        [class]="auth.currentUser()?.role === 'organizer'
+          ? 'bg-accent-100/80 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
+          : 'bg-primary-100/80 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
+      >
+        {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
+        {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
+      </span>
+      @if (joinedDate()) {
+        <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
+          {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
+        </p>
+      }
+    </section>
+    <section aria-labelledby="edit-name-heading" class="glass-card p-6">
+      <h2 id="edit-name-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+        <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
+      </h2>
+      <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
+        <div class="space-y-4">
+          <div>
+            <label for="displayName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              {{ 'PROFILE.display_name_label' | translate }}
+            </label>
+            <input
+              hlmInput
+              id="displayName"
+              type="text"
+              formControlName="displayName"
+              autocomplete="nickname"
+              class="w-full"
+              [placeholder]="'PROFILE.display_name_placeholder' | translate"
+              [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
+              aria-describedby="displayName-error"
+            />
+            @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
+              <p id="displayName-error" role="alert" class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                @if (nameForm.controls.displayName.hasError('required')) {
+                  {{ 'PROFILE.display_name_required' | translate }}
+                } @else if (nameForm.controls.displayName.hasError('minlength')) {
+                  {{ 'PROFILE.display_name_min' | translate }}
+                }
+              </p>
+            }
+          </div>
+          <div class="flex items-center gap-3">
+            <button
+              hlmBtn
+              type="submit"
+              [disabled]="nameForm.invalid || isSavingName()"
+              class="bg-gradient-brand text-white border-0 hover:opacity-90"
+            >
+              @if (isSavingName()) {
+                {{ 'PROFILE.saving' | translate }}
+              } @else {
+                {{ 'PROFILE.save_name' | translate }}
+              }
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+    <section aria-labelledby="role-heading" class="glass-card p-6">
+      <h2 id="role-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+        <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
+      </h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+        {{ 'PROFILE.role_subtitle' | translate }}
+      </p>
+      <app-profile-role-selector
+        [currentRole]="auth.currentUser()?.role ?? 'user'"
+        (roleChange)="changeRole($event)"
+      />
+    </section>
+    <section aria-labelledby="stats-heading" class="glass-card p-6">
+      <h2 id="stats-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+        <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
+      </h2>
+      <app-profile-stats [stats]="auth.userStats()" />
+    </section>
+    <section aria-labelledby="socials-heading" class="glass-card p-6">
+      <h2 id="socials-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+        <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
+      </h2>
+      <div class="flex items-center gap-3 mb-4 p-3 rounded-[var(--bento-radius)] glass-card-subtle">
+        <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
+          <input
+            type="checkbox"
+            [formControl]="socialsPublicControl"
+            (change)="onSocialsPublicChange(socialsPublicControl.value)"
+            class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+          />
+          {{ 'PROFILE.socials_public_label' | translate }}
+        </label>
+      </div>
+      @if (
+        userSocials().telegram  ||
+        userSocials().instagram ||
+        userSocials().twitter   ||
+        userSocials().linkedin  ||
+        userSocials().github    ||
+        userSocials().goodreads
+      ) {
+        <div class="flex flex-wrap gap-2 mb-6">
+          <app-social-badges [socials]="userSocials()" />
+        </div>
+      }
+      <form [formGroup]="socialsForm" (ngSubmit)="submitSocials()" novalidate class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          @for (social of socialFields(); track social.key) {
+            <app-social-link-field [config]="social" [form]="socialsForm" />
+          }
+        </div>
+        <div class="flex items-center gap-3 pt-1">
+          <button hlmBtn type="submit" class="bg-gradient-brand text-white border-0 hover:opacity-90">
+            {{ 'PROFILE.save' | translate }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
 ````
 
 ## File: src/app/features/quiz/quiz-list/quiz-list.component.html
@@ -13410,131 +13083,6 @@ export class QuizSessionComponent extends LeaderboardBaseComponent implements On
 }
 ````
 
-## File: src/app/features/quiz/quiz-take/quiz-take.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-  linkedSignal,
-} from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizAttempt } from '../../../core/models/quiz.model';
-import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
-import { optionLabel } from '../quiz-form.utils';
-type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
-@Component({
-  selector: 'app-quiz-take',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, LoadingSpinnerComponent],
-  templateUrl: './quiz-take.component.html',
-})
-export class QuizTakeComponent implements OnInit {
-  protected readonly quizService = inject(QuizService);
-  private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
-  protected readonly state = signal<QuizState>('loading');
-  protected readonly errorMessage = signal('');
-  protected readonly currentIndex = linkedSignal(() => {
-  this.quizService.questions(); // Реєструємо залежність: коли питання зміняться, індекс скинеться
-  return 0;
-});
-  protected readonly selectedAnswers = signal<number[]>([]);
-  protected readonly selectedOption = computed(
-    () => this.selectedAnswers()[this.currentIndex()] ?? -1,
-  );
-  protected readonly attempt = signal<QuizAttempt | null>(null);
-  protected clubId = '';
-  protected readonly currentQuestion = computed(
-    () => this.quizService.questions()[this.currentIndex()] ?? null,
-  );
-  protected readonly isLastQuestion = computed(
-    () => this.currentIndex() === this.quizService.questions().length - 1,
-  );
-  protected readonly progressPercent = computed(() => {
-    const total = this.quizService.questions().length;
-    return total === 0 ? 0 : Math.round(((this.currentIndex() + 1) / total) * 100);
-  });
-  protected readonly scorePercent = computed(() => {
-    const a = this.attempt();
-    if (!a || a.total === 0) return 0;
-    return Math.round((a.score / a.total) * 100);
-  });
-  protected readonly scoreMessage = computed(() => {
-    const pct = this.scorePercent();
-    if (pct === 100) return '🎉 Perfect score!';
-    if (pct >= 80) return '🌟 Great job!';
-    if (pct >= 60) return '👍 Good effort!';
-    if (pct >= 40) return '📖 Keep reading!';
-    return '💪 Better luck next time!';
-  });
-  ngOnInit(): void {
-    // Both :id (club) and :quizId are inherited via paramsInheritanceStrategy:'always'
-    this.clubId = this.route.snapshot.params['id'] as string;
-    const quizId = this.route.snapshot.params['quizId'] as string;
-    if (!quizId) {
-      this.errorMessage.set('Quiz not found.');
-      this.state.set('error');
-      return;
-    }
-    this.quizService
-      .loadQuestions(quizId)
-      .then(() => {
-        const count = this.quizService.questions().length;
-        if (count === 0) {
-          this.errorMessage.set('This quiz has no questions yet.');
-          this.state.set('error');
-          return;
-        }
-        this.selectedAnswers.set(new Array<number>(count).fill(-1));
-        this.state.set('taking');
-      })
-      .catch(err => {
-        this.errorMessage.set((err as Error).message);
-        this.state.set('error');
-      });
-  }
-  protected readonly optionLabel = optionLabel;
-  protected selectOption(index: number): void {
-    const current = this.currentIndex();
-    this.selectedAnswers.update(answers => {
-      const copy = [...answers];
-      copy[current] = index;
-      return copy;
-    });
-  }
-  protected next(): void {
-    if (this.selectedOption() === -1) return;
-    this.currentIndex.update(i => i + 1);
-  }
-  protected previous(): void {
-    if (this.currentIndex() === 0) return;
-    this.currentIndex.update(i => i - 1);
-  }
-  protected submit(): void {
-    if (this.selectedOption() === -1) return;
-    this.state.set('submitting');
-    const quizId = this.route.snapshot.params['quizId'] as string;
-    this.quizService
-      .submitAttempt(quizId, this.selectedAnswers())
-      .then(result => {
-        this.attempt.set(result);
-        this.state.set('results');
-      })
-      .catch(err => {
-        this.errorMessage.set((err as Error).message);
-        this.state.set('error');
-      });
-  }
-}
-````
-
 ## File: src/app/layout/header/header.component.ts
 ````typescript
 import {
@@ -13600,45 +13148,213 @@ export class HeaderComponent {
 }
 ````
 
-## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.html
+## File: src/app/shared/chat/chat-widget/chat-widget.component.html
 ````html
-<div class="relative">
-  <input
-    hlmInput
-    [id]="inputId() || undefined"
-    [formControl]="control()"
-    [placeholder]="placeholder()"
-    autocomplete="off"
-    (keydown)="onKeydown($event)"
-    class="w-full"
-    [class.border-red-400]="control().invalid && control().touched"
-  />
-  @if (isLoading()) {
-    <div class="absolute right-3 top-3 flex items-center justify-center">
-      <svg class="h-4 w-4 animate-spin text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-      </svg>
+@if (auth.isAuthenticated()) {
+  <button
+    [class]="'fixed z-50 w-14 h-14 rounded-full bg-accent-500 shadow-lg hover:shadow-xl transition-shadow duration-200 flex items-center justify-center text-white ' + fabPositionClass()"
+    [class.animate-bounce]="isBouncing()"
+    [attr.aria-label]="(chat.isOpen() ? 'CHAT.close' : 'CHAT.open') | translate"
+    (click)="chat.toggleOpen()"
+  >
+    <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+    </svg>
+    @if (chat.unreadCount() > 0) {
+      <div class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold">
+        {{ chat.unreadCount() > 9 ? '9+' : (chat.unreadCount() | number) }}
+      </div>
+    }
+  </button>
+  @if (chat.isOpen()) {
+    <div
+      [class]="'fixed z-40 w-80 max-h-[480px] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-100 chat-panel ' + panelPositionClass()"
+    >
+      <div class="flex items-center justify-between p-4 border-b border-gray-100">
+        <h2 class="text-lg font-semibold text-gray-900">
+          {{ 'CHAT.title' | translate }}
+        </h2>
+        <button
+          class="text-gray-500 hover:text-gray-700 transition-colors"
+          [attr.aria-label]="'close'"
+          (click)="chat.toggleOpen()"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
+          </svg>
+        </button>
+      </div>
+      @if (chat.rooms().length > 0) {
+        <div class="flex overflow-x-auto px-3 py-2 border-b border-gray-100 gap-2">
+          @for (room of chat.rooms(); track room.id) {
+            <button
+              class="px-4 py-2 rounded-lg whitespace-nowrap font-medium transition-colors duration-200 flex-shrink-0"
+              [ngClass]="{
+                'bg-accent-500 text-white': chat.activeRoomId() === room.id,
+                'bg-gray-100 text-gray-700 hover:bg-gray-200': chat.activeRoomId() !== room.id
+              }"
+              role="tab"
+              [attr.aria-selected]="chat.activeRoomId() === room.id"
+              (click)="chat.openRoom(room.id)"
+            >
+              {{ room.name }}
+            </button>
+          }
+        </div>
+      }
+      <div
+        class="flex-1 overflow-y-auto p-3 space-y-2 messages-scroll"
+        role="log"
+        aria-live="polite"
+      >
+        @if (chat.rooms().length === 0) {
+          <div class="flex flex-col items-center justify-center h-full gap-2 text-center px-4">
+            <span class="text-2xl" aria-hidden="true">💬</span>
+            <p class="text-gray-500 text-sm">{{ 'CHAT.no_rooms_hint_member' | translate }}</p>
+          </div>
+        } @else if (chat.activeMessages().length === 0) {
+          <div class="flex items-center justify-center h-full text-gray-400">
+            {{ 'CHAT.no_messages' | translate }}
+          </div>
+        } @else {
+          @for (message of chat.activeMessages(); track message.id) {
+            <div [ngClass]="{ 'flex justify-end': message.isOwn, 'flex justify-start': !message.isOwn }">
+              <div class="flex flex-col max-w-[75%]">
+                @if (!message.isOwn) {
+                  <span class="text-xs text-gray-500 px-3 mb-1">{{ message.senderName }}</span>
+                }
+                <div
+                  class="px-4 py-2 rounded-2xl"
+                  [ngClass]="{
+                    'bg-accent-500 text-white rounded-br-sm': message.isOwn,
+                    'bg-gray-100 text-gray-800 rounded-bl-sm': !message.isOwn
+                  }"
+                >
+                  {{ message.text }}
+                </div>
+                <span class="text-xs text-gray-400 px-3 mt-1 text-right">
+                  {{ message.timestamp | date: 'HH:mm' }}
+                </span>
+              </div>
+            </div>
+          }
+        }
+        <div #messagesEnd></div>
+      </div>
+      <div class="border-t border-gray-100 p-3 flex gap-2">
+        <input
+          type="text"
+          [(ngModel)]="messageText"
+          (keydown)="onKeydown($event)"
+          [placeholder]="'CHAT.placeholder' | translate"
+          [attr.aria-label]="'CHAT.placeholder' | translate"
+          class="flex-1 px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+        />
+        <button
+          class="w-10 h-10 rounded-full bg-accent-500 text-white flex items-center justify-center hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
+          [disabled]="!messageText().trim()"
+          (click)="sendMessage()"
+          [attr.aria-label]="'CHAT.send' | translate"
+        >
+          <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M16.6915026,12.4744748 L3.50612381,13.2599618 C3.19218622,13.2599618 3.03521743,13.4170592 3.03521743,13.5741566 L1.15159189,20.0151496 C0.8376543,20.8006365 0.99,21.89 1.77946707,22.52 C2.41,22.99 3.50612381,23.1 4.13399899,22.8429026 L21.714504,14.0454487 C22.6563168,13.5741566 23.1272231,12.6315722 22.9702544,11.6889879 L4.13399899,1.16584166 C3.50612381,0.9087443 2.40999006,1.01484963 1.77946707,1.4861418 C0.994623095,2.11535496 0.837654326,3.20500913 1.15159189,3.9904961 L3.03521743,10.4314891 C3.03521743,10.5885864 3.19218622,10.7456838 3.50612381,10.7456838 L16.6915026,11.5311707 C16.6915026,11.5311707 17.1624089,11.5311707 17.1624089,12.0024628 C17.1624089,12.4744748 16.6915026,12.4744748 16.6915026,12.4744748 Z"/>
+          </svg>
+        </button>
+      </div>
     </div>
   }
-  @if (isOpen() && suggestions().length > 0) {
-    <ul class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-48 overflow-y-auto">
-      @for (s of suggestions(); track s.label; let i = $index) {
-        <li
-          role="option"
-          tabindex="0"
-          [attr.aria-selected]="activeIndex() === i"
-          (click)="select(s)"
-          (keydown.enter)="select(s)"
-          (keydown.space)="$event.preventDefault(); select(s)"
-          [class.bg-primary-50]="activeIndex() === i"
-          [class.dark:bg-primary-900/20]="activeIndex() === i"
-          class="cursor-pointer px-4 py-2.5 text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        >{{ s.label }}</li>
-      }
-    </ul>
+}
+````
+
+## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
+````typescript
+import {
+  Component, ChangeDetectionStrategy, input, output,
+  DestroyRef, signal, inject, ElementRef, HostListener, effect,
+} from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { switchMap, debounceTime, distinctUntilChanged, of } from 'rxjs';
+import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
+import { HlmInput } from '../../spartan/input/src';
+@Component({
+  selector: 'app-address-autocomplete',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, HlmInput],
+  templateUrl: './address-autocomplete.component.html',
+})
+export class AddressAutocompleteComponent {
+  readonly control = input.required<FormControl<string>>();
+  readonly placeholder = input<string>('');
+  readonly inputId = input<string>('');
+  readonly selected = output<GeocodeSuggestion>();
+  private readonly geocoding = inject(GeocodingService);
+  private readonly elRef = inject(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly suggestions = signal<GeocodeSuggestion[]>([]);
+  readonly isLoading = signal(false);
+  readonly isOpen = signal(false);
+  readonly activeIndex = signal(-1);
+  constructor() {
+    effect(() => {
+      const ctrl = this.control();
+      ctrl.valueChanges.pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(q => {
+          if (!q || q.length < 2) {
+            this.suggestions.set([]);
+            this.isOpen.set(false);
+            return of([]);
+          }
+          this.isLoading.set(true);
+          return this.geocoding.autocomplete$(q);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      ).subscribe({
+        next: (results) => {
+          this.isLoading.set(false);
+          this.suggestions.set(results);
+          this.activeIndex.set(-1);
+          this.isOpen.set(results.length > 0);
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.suggestions.set([]);
+        },
+      });
+    });
   }
-</div>
+  select(s: GeocodeSuggestion): void {
+    this.control().setValue(s.label, { emitEvent: false });
+    this.suggestions.set([]);
+    this.isOpen.set(false);
+    this.selected.emit(s);
+  }
+  onKeydown(event: KeyboardEvent): void {
+    if (!this.isOpen()) return;
+    const len = this.suggestions().length;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i + 1) % len);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i - 1 + len) % len);
+    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
+      event.preventDefault();
+      this.select(this.suggestions()[this.activeIndex()]);
+    } else if (event.key === 'Escape') {
+      this.isOpen.set(false);
+    }
+  }
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.elRef.nativeElement.contains(event.target)) {
+      this.isOpen.set(false);
+    }
+  }
+}
 ````
 
 ## File: src/app/shared/spartan/tabs/src/lib/hlm-tabs-paginated-list.ts
@@ -13926,6 +13642,313 @@ export class ClubCardComponent {
 }
 ````
 
+## File: src/app/features/clubs/create-club/create-club.component.html
+````html
+<main class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+    <header class="text-center mb-8">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
+    </header>
+    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+        <hlm-field>
+          <label hlmFieldLabel for="club-name">
+            {{ 'CREATE_CLUB.name_label' | translate }}
+            <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <input
+            hlmInput
+            id="club-name"
+            type="text"
+            formControlName="name"
+            class="w-full"
+            [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
+          />
+          <hlm-field-error validator="required">{{ 'CREATE_CLUB.name_required' | translate }}</hlm-field-error>
+          <hlm-field-error validator="minlength">{{ 'CREATE_CLUB.name_min' | translate }}</hlm-field-error>
+          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.name_max' | translate }}</hlm-field-error>
+        </hlm-field>
+        <hlm-field>
+          <label hlmFieldLabel for="club-description">{{ 'CREATE_CLUB.description_label' | translate }}</label>
+          <textarea
+            hlmInput
+            id="club-description"
+            formControlName="description"
+            rows="3"
+            class="w-full resize-none"
+            [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
+          ></textarea>
+          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.description_max' | translate }}</hlm-field-error>
+        </hlm-field>
+        <div>
+          <label for="club-cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'CREATE_CLUB.cover_url_label' | translate }}
+          </label>
+          @if (form.controls.coverUrl.value) {
+            <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
+              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover"
+                   (error)="form.controls.coverUrl.setValue('')" />
+            </div>
+          }
+          <input
+            hlmInput
+            id="club-cover-url"
+            type="url"
+            formControlName="coverUrl"
+            class="w-full"
+            [placeholder]="'CREATE_CLUB.cover_url_placeholder' | translate"
+          />
+          @if (form.controls.coverUrl.touched && form.controls.coverUrl.errors?.['pattern']) {
+            <p class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ 'CREATE_CLUB.cover_url_invalid' | translate }}</p>
+          } @else {
+            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
+          }
+        </div>
+        <fieldset>
+          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
+          <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
+            <div>
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'CREATE_CLUB.public_label' | translate }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'CREATE_CLUB.public_desc' | translate }}</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              [attr.aria-checked]="form.controls.isPublic.value"
+              (click)="togglePublic()"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              [class.bg-primary-600]="form.controls.isPublic.value"
+              [class.bg-gray-300]="!form.controls.isPublic.value"
+              [class.dark:bg-gray-600]="!form.controls.isPublic.value"
+            >
+              <span
+                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                [class.translate-x-6]="form.controls.isPublic.value"
+                [class.translate-x-1]="!form.controls.isPublic.value"
+              ></span>
+            </button>
+          </div>
+        </fieldset>
+        @if (errorMessage()) {
+          <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+               role="alert">
+            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+        <div class="flex gap-3 pt-2">
+          <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
+            {{ 'CREATE_CLUB.cancel' | translate }}
+          </button>
+          <button hlmBtn type="submit" [disabled]="isSubmitting()"
+                  class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
+            @if (isSubmitting()) {
+              <hlm-spinner class="mr-2" />
+              {{ 'CREATE_CLUB.submitting' | translate }}
+            } @else {
+              {{ 'CREATE_CLUB.submit' | translate }}
+            }
+          </button>
+        </div>
+      </form>
+    </article>
+  </div>
+</main>
+````
+
+## File: src/app/features/clubs/create-club/create-club.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+} from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+interface CreateClubForm {
+  name: FormControl<string>;
+  description: FormControl<string>;
+  isPublic: FormControl<boolean>;
+  city: FormControl<string>;
+  coverUrl: FormControl<string>;
+}
+@Component({
+  selector: 'app-create-club',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './create-club.component.html',
+})
+export class CreateClubComponent {
+  private readonly clubService = inject(ClubService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly _errorMessage = signal<string | null>(null);
+  readonly errorMessage = this._errorMessage.asReadonly();
+  private readonly _isSubmitting = signal(false);
+  readonly isSubmitting = this._isSubmitting.asReadonly();
+  private readonly _showAfterMeeting = signal(false);
+  readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
+  readonly form = new FormGroup<CreateClubForm>({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+    isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', { nonNullable: true }),
+    coverUrl: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^https?:\/\/.+\..+/)] }),
+  });
+  togglePublic(): void {
+    const current = this.form.controls.isPublic.value;
+    this.form.controls.isPublic.setValue(!current);
+  }
+  toggleAfterMeeting(): void {
+    this._showAfterMeeting.update(v => !v);
+  }
+  cancel(): void {
+    this.router.navigate(['/clubs']);
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this._isSubmitting.set(true);
+    this._errorMessage.set(null);
+    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
+    try {
+      const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
+      this.router.navigate(['/clubs', club.id]);
+    } catch (err) {
+      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
+    } finally {
+      this._isSubmitting.set(false);
+    }
+  }
+}
+````
+
+## File: src/app/features/clubs/edit-club/edit-club.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  input,
+  OnInit,
+} from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { toast } from '@spartan-ng/brain/sonner';
+import { ClubService } from '../../../core/services/club.service';
+import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+interface EditClubForm {
+  name: FormControl<string>;
+  description: FormControl<string>;
+  isPublic: FormControl<boolean>;
+  city: FormControl<string>;
+  coverUrl: FormControl<string>;
+}
+@Component({
+  selector: 'app-edit-club',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslatePipe, CoverUploadComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './edit-club.component.html',
+})
+export class EditClubComponent implements OnInit {
+  readonly id = input.required<string>();
+  private readonly clubService = inject(ClubService);
+  private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
+  private readonly _isLoadingClub = signal(true);
+  readonly isLoadingClub = this._isLoadingClub.asReadonly();
+  private readonly _isSubmitting = signal(false);
+  readonly isSubmitting = this._isSubmitting.asReadonly();
+  private readonly _errorMessage = signal<string | null>(null);
+  readonly errorMessage = this._errorMessage.asReadonly();
+  readonly form = new FormGroup<EditClubForm>({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+    isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', { nonNullable: true }),
+    coverUrl: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^https?:\/\/.+\..+/)] }),
+  });
+  async ngOnInit(): Promise<void> {
+    const club = await this.clubService.getClubById(this.id());
+    if (!club) {
+      this._errorMessage.set('Club not found.');
+      this._isLoadingClub.set(false);
+      return;
+    }
+    this.form.patchValue({
+      name: club.name,
+      description: club.description ?? '',
+      isPublic: club.isPublic,
+      city: club.city ?? '',
+      coverUrl: club.coverUrl ?? '',
+    });
+    this._isLoadingClub.set(false);
+  }
+  togglePublic(): void {
+    this.form.controls.isPublic.setValue(!this.form.controls.isPublic.value);
+  }
+  cancel(): void {
+    this.router.navigate(['/clubs', this.id()]);
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this._isSubmitting.set(true);
+    this._errorMessage.set(null);
+    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
+    try {
+      await this.clubService.updateClub(this.id(), {
+        name,
+        description,
+        isPublic,
+        city: city || undefined,
+        coverUrl: coverUrl || null,
+      });
+      toast.success(this.translate.instant('EDIT_CLUB.success'));
+      this.router.navigate(['/clubs', this.id()]);
+    } catch (err) {
+      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to update club');
+    } finally {
+      this._isSubmitting.set(false);
+    }
+  }
+}
+````
+
 ## File: src/app/features/events/event-card/event-card.component.html
 ````html
 <article class="parchment-card flex flex-col overflow-hidden h-full
@@ -14011,305 +14034,186 @@ export class ClubCardComponent {
 </article>
 ````
 
-## File: src/app/features/quiz/quiz-create/quiz-create.component.html
-````html
-<div class="min-h-screen p-4 sm:p-8">
-  <div class="max-w-2xl mx-auto space-y-6">
-    <header class="flex items-center justify-between flex-wrap gap-4">
-      <div>
-        <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
-          {{ 'QUIZ.create_heading_full' | translate }}
-        </h1>
-        <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
-          Step {{ currentStep() }} of 2 —
-          {{ currentStep() === 1 ? 'Quiz details' : 'Add questions' }}
-        </p>
-      </div>
-      <a [routerLink]="['..']" class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-        ✕ Cancel
-      </a>
-    </header>
-    <div class="flex items-center gap-0">
-      @for (step of [1, 2]; track step) {
-        <div
-          class="flex-1 h-1.5 rounded-full transition-all duration-300"
-          [class.bg-primary-500]="currentStep() >= step"
-          [class.bg-gray-200]="currentStep() < step"
-          [class.dark:bg-gray-700]="currentStep() < step"
-        ></div>
-        @if (step < 2) {
-          <div class="w-3"></div>
-        }
-      }
-    </div>
-    @if (currentStep() === 1) {
-      <form
-        [formGroup]="metaForm"
-        (ngSubmit)="nextStep()"
-        novalidate
-        class="glass-card p-6 space-y-5"
-      >
-        <hlm-field>
-          <label hlmFieldLabel for="quiz-title">
-            Quiz title <span class="text-red-500">*</span>
-          </label>
-          <input
-            hlmInput
-            id="quiz-title"
-            formControlName="title"
-            class="w-full"
-            placeholder="e.g. The Midnight Library — Chapter 1 Quiz"
-          />
-          <hlm-field-error validator="required">Title is required.</hlm-field-error>
-          <hlm-field-error validator="minlength">Title must be at least 3 characters.</hlm-field-error>
-          <hlm-field-error validator="maxlength">Title must not exceed 100 characters.</hlm-field-error>
-        </hlm-field>
-        <hlm-field>
-          <label hlmFieldLabel for="quiz-desc">Description</label>
-          <textarea
-            hlmInput
-            id="quiz-desc"
-            formControlName="description"
-            rows="3"
-            class="w-full resize-none"
-            placeholder="A brief description of the quiz…"
-          ></textarea>
-          <hlm-field-error validator="maxlength">Description must not exceed 500 characters.</hlm-field-error>
-        </hlm-field>
-        <div class="flex justify-end">
-          <button hlmBtn type="submit" [disabled]="metaForm.invalid"
-                  class="bg-primary-600 hover:bg-primary-700 text-white">
-            Continue →
-          </button>
-        </div>
-      </form>
-    }
-    @if (currentStep() === 2) {
-      <div class="space-y-6">
-        @if (localQuestions().length > 0) {
-          <div class="space-y-3">
-            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase tracking-widest">
-              Questions ({{ localQuestions().length }})
-            </h2>
-            @for (q of localQuestions(); track $index) {
-              <div hlmCard class="glass-card-subtle px-5 py-4 flex items-start gap-3 rounded-xl">
-                <span class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
-                             text-primary-700 dark:text-primary-300 text-xs font-bold flex
-                             items-center justify-center flex-shrink-0">
-                  {{ $index + 1 }}
-                </span>
-                <div class="min-w-0 flex-1">
-                  <p class="text-gray-900 dark:text-white text-sm font-medium">{{ q.question }}</p>
-                  <p class="text-green-600 dark:text-green-400 text-xs mt-1">✓ {{ q.options[q.correctIndex] }}</p>
-                </div>
-                <button
-                  type="button"
-                  (click)="removeQuestion($index)"
-                  class="text-gray-400 hover:text-red-500 transition-colors text-lg flex-shrink-0 ml-auto leading-none"
-                  [attr.aria-label]="'Remove question ' + ($index + 1)"
-                >
-                  ✕
-                </button>
-              </div>
-            }
-          </div>
-        }
-        <form
-          [formGroup]="questionForm"
-          (ngSubmit)="addQuestion()"
-          novalidate
-          class="glass-card p-6 space-y-5"
-        >
-          <h2 class="font-semibold text-gray-900 dark:text-white">
-            {{ localQuestions().length === 0 ? 'Add your first question' : 'Add another question' }}
-          </h2>
-          <hlm-field>
-            <label hlmFieldLabel for="q-text">Question <span class="text-red-500">*</span></label>
-            <textarea
-              hlmInput
-              id="q-text"
-              formControlName="question"
-              rows="2"
-              class="w-full resize-none"
-              placeholder="What is the main theme of chapter 3?"
-            ></textarea>
-            <hlm-field-error validator="required">Question is required.</hlm-field-error>
-            <hlm-field-error validator="minlength">Question must be at least 5 characters.</hlm-field-error>
-          </hlm-field>
-          <div class="space-y-1">
-            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Answer options <span class="text-red-500">*</span>
-            </p>
-            <div class="space-y-2">
-              @for (idx of optionIndices; track idx) {
-                <div class="flex items-center gap-3">
-                  <label class="flex items-center cursor-pointer">
-                    <input
-                      type="radio"
-                      formControlName="correctIndex"
-                      [value]="idx"
-                      class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300 dark:border-gray-600 cursor-pointer"
-                    />
-                    <span
-                      class="ml-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
-                      [class.bg-accent-500]="questionForm.controls.correctIndex.value === idx"
-                      [class.text-white]="questionForm.controls.correctIndex.value === idx"
-                      [class.bg-gray-100]="questionForm.controls.correctIndex.value !== idx"
-                      [class.dark:bg-gray-700]="questionForm.controls.correctIndex.value !== idx"
-                      [class.text-gray-600]="questionForm.controls.correctIndex.value !== idx"
-                      [class.dark:text-gray-400]="questionForm.controls.correctIndex.value !== idx"
-                    >
-                      {{ optionLabel(idx) }}
-                    </span>
-                  </label>
-                  <input
-                    hlmInput
-                    [formControlName]="'option' + idx"
-                    [placeholder]="'Option ' + optionLabel(idx)"
-                    class="flex-1"
-                  />
-                </div>
-              }
-            </div>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
-              Select the radio button next to the correct answer.
-            </p>
-          </div>
-          <button
-            hlmBtn
-            type="submit"
-            variant="outline"
-            [disabled]="questionForm.invalid"
-            class="w-full border-dashed border-primary-400 dark:border-primary-600
-                   text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20"
-          >
-            + Add Question
-          </button>
-        </form>
-        @if (errorMessage()) {
-          <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 text-red-700 dark:text-red-400 text-sm">
-            ⚠️ {{ errorMessage() }}
-          </div>
-        }
-        <div class="flex justify-between items-center pb-8">
-          <button hlmBtn type="button" variant="ghost" (click)="previousStep()">
-            ← Back
-          </button>
-          <button
-            hlmBtn
-            type="button"
-            (click)="saveQuiz()"
-            [disabled]="localQuestions().length === 0 || isSaving()"
-            class="bg-accent-600 hover:bg-accent-700 text-white font-bold"
-          >
-            {{ isSaving() ? '…Saving' : '💾 Save as Draft' }}
-            @if (localQuestions().length > 0) {
-              ({{ localQuestions().length }}
-              {{ localQuestions().length === 1 ? 'question' : 'questions' }})
-            }
-          </button>
-        </div>
-      </div>
-    }
-  </div>
-</div>
-````
-
-## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
+## File: src/app/features/profile/profile.component.ts
 ````typescript
 import {
-  ChangeDetectionStrategy,
   Component,
+  ChangeDetectionStrategy,
   inject,
-  input,
   signal,
+  computed,
 } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { QuizService } from '../../../core/services/quiz.service';
-import { QuizQuestion } from '../../../core/models/quiz.model';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmCardImports } from '../../../shared/spartan/card/src';
-import {
-  OPTION_INDICES,
-  buildMetaForm,
-  buildQuestionForm,
-  isInvalidTouched,
-  optionLabel,
-} from '../quiz-form.utils';
-type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
+import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { toast } from '@spartan-ng/brain/sonner';
+import { AuthService } from '../../core/auth/auth.service';
+import { UserRole, UserSocials } from '../../core/models/user.model';
+import { SeoService } from '../../core/services/seo.service';
+import { SocialLinkFieldComponent, SocialField } from '../../shared/components/social-link-field/social-link-field.component';
+import { SocialBadgesComponent } from '../../shared/components/social-badges/social-badges.component';
+import { ProfileStatsComponent } from './stats/profile-stats.component';
+import { ProfileRoleSelectorComponent } from './role-selector/profile-role-selector.component';
+import { HlmButton } from '../../shared/spartan/button/src';
+import { HlmInput } from '../../shared/spartan/input/src';
 @Component({
-  selector: 'app-quiz-create',
+  selector: 'app-profile',
   standalone: true,
+  imports: [ReactiveFormsModule, TranslateModule, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent, HlmButton, HlmInput],
+  templateUrl: './profile.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, TranslateModule, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
-  templateUrl: './quiz-create.component.html',
 })
-export class QuizCreateComponent {
-  private readonly quizService = inject(QuizService);
-  private readonly router = inject(Router);
-  protected readonly currentStep = signal<1 | 2>(1);
-  protected readonly localQuestions = signal<LocalQuestion[]>([]);
-  protected readonly isSaving = signal(false);
-  protected readonly errorMessage = signal('');
-  readonly id = input<string>('');
-  readonly optionIndices = OPTION_INDICES;
-  protected readonly metaForm = buildMetaForm();
-  protected readonly questionForm = buildQuestionForm();
-  protected readonly isInvalidTouched = isInvalidTouched;
-  protected readonly optionLabel = optionLabel;
-  protected nextStep(): void {
-    if (this.metaForm.invalid) {
-      this.metaForm.markAllAsTouched();
-      return;
+export class ProfileComponent {
+  protected readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  private readonly translate = inject(TranslateService);
+  protected readonly socialFields = computed<SocialField[]>(() => {
+    const atPlaceholder = this.translate.instant('PROFILE.social_placeholder_at');
+    const urlPlaceholder = this.translate.instant('PROFILE.social_placeholder_url');
+    return [
+      {
+        key: 'telegram',
+        label: 'Telegram',
+        labelClass: 'text-blue-600 dark:text-blue-400',
+        placeholder: atPlaceholder,
+        focusRingClass: 'focus:ring-blue-500',
+      },
+      {
+        key: 'instagram',
+        label: 'Instagram',
+        labelClass: 'bg-gradient-to-r from-pink-600 via-purple-600 to-orange-500 bg-clip-text text-transparent',
+        placeholder: atPlaceholder,
+        focusRingClass: 'focus:ring-pink-500',
+      },
+      {
+        key: 'twitter',
+        label: 'Twitter / X',
+        labelClass: 'text-gray-900 dark:text-gray-100',
+        placeholder: atPlaceholder,
+        focusRingClass: 'focus:ring-gray-800',
+      },
+      {
+        key: 'linkedin',
+        label: 'LinkedIn',
+        labelClass: 'text-blue-700 dark:text-blue-400',
+        placeholder: urlPlaceholder,
+        focusRingClass: 'focus:ring-blue-600',
+      },
+      {
+        key: 'github',
+        label: 'GitHub',
+        labelClass: 'text-gray-800 dark:text-gray-200',
+        placeholder: 'username',
+        focusRingClass: 'focus:ring-gray-700',
+      },
+      {
+        key: 'goodreads',
+        label: 'Goodreads',
+        labelClass: 'text-amber-700 dark:text-amber-400',
+        placeholder: urlPlaceholder,
+        focusRingClass: 'focus:ring-amber-500',
+      },
+    ];
+  });
+  protected readonly nameForm = new FormGroup({
+    displayName: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(2)],
+    }),
+  });
+  /** Typed reactive form for updating social media links. */
+  protected readonly socialsForm = new FormGroup({
+    telegram:  new FormControl('', { nonNullable: true }),
+    instagram: new FormControl('', { nonNullable: true }),
+    twitter:   new FormControl('', { nonNullable: true }),
+    linkedin:  new FormControl('', { nonNullable: true }),
+    github:    new FormControl('', { nonNullable: true }),
+    goodreads: new FormControl('', { nonNullable: true }),
+  });
+  /** Controls whether socials are visible to all club members. */
+  protected readonly socialsPublicControl = new FormControl<boolean>(false, { nonNullable: true });
+  /** Tracks the in-flight save state (synchronous here, but keeps the pattern extensible). */
+  protected readonly isSavingName = signal(false);
+  /** Two-letter initials derived from the current user's display name. */
+  protected readonly userInitials = computed<string>(() => {
+    const name = this.auth.currentUser()?.displayName ?? '';
+    return name
+      .split(' ')
+      .map(w => w[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  });
+  /** Human-readable role label shown in the hero badge. */
+  protected readonly roleLabel = computed<string>(() =>
+    this.auth.currentUser()?.role === 'organizer' ? 'Organizer' : 'Reader',
+  );
+  protected readonly joinedDate = computed<string>(() => {
+    const raw = this.auth.currentUser()?.createdAt;
+    if (!raw) return '';
+    const locale = this.translate.currentLang === 'uk' ? 'uk-UA' : 'en-US';
+    return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long' }).format(
+      new Date(raw),
+    );
+  });
+  protected readonly userSocials = computed<UserSocials>(
+    () => this.auth.currentUser()?.socials ?? {},
+  );
+  constructor() {
+    this.seo.setPageI18n('SEO.profile_title');
+    const user = this.auth.currentUser();
+    if (user) {
+      this.nameForm.patchValue({ displayName: user.displayName });
+      this.socialsPublicControl.setValue(user.socialsPublic ?? false);
+      if (user.socials) {
+        this.socialsForm.patchValue({
+          telegram:  user.socials.telegram  ?? '',
+          instagram: user.socials.instagram ?? '',
+          twitter:   user.socials.twitter   ?? '',
+          linkedin:  user.socials.linkedin  ?? '',
+          github:    user.socials.github    ?? '',
+          goodreads: user.socials.goodreads ?? '',
+        });
+      }
     }
-    this.currentStep.set(2);
   }
-  protected previousStep(): void {
-    this.currentStep.set(1);
-    this.errorMessage.set('');
+  /** Switch the user's role and show a transient success toast. */
+  protected async changeRole(role: UserRole): Promise<void> {
+    try {
+      await this.auth.updateRole(role);
+      toast.success(this.translate.instant('PROFILE.role_changed'));
+    } catch {  }
   }
-  protected addQuestion(): void {
-    if (this.questionForm.invalid) {
-      this.questionForm.markAllAsTouched();
-      return;
+  protected async saveName(): Promise<void> {
+    if (this.nameForm.invalid) return;
+    this.isSavingName.set(true);
+    const { displayName } = this.nameForm.getRawValue();
+    try {
+      await this.auth.updateDisplayName(displayName);
+      toast.success(this.translate.instant('PROFILE.name_updated'));
+    } catch {  }
+    finally {
+      this.isSavingName.set(false);
     }
-    const { question, option0, option1, option2, option3, correctIndex } =
-      this.questionForm.getRawValue();
-    const newQuestion: LocalQuestion = {
-      question: question.trim(),
-      options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
-      correctIndex,
+  }
+  protected async submitSocials(): Promise<void> {
+    const raw = this.socialsForm.getRawValue();
+    const socials: UserSocials = {
+      ...(raw.telegram  ? { telegram:  raw.telegram  } : {}),
+      ...(raw.instagram ? { instagram: raw.instagram } : {}),
+      ...(raw.twitter   ? { twitter:   raw.twitter   } : {}),
+      ...(raw.linkedin  ? { linkedin:  raw.linkedin  } : {}),
+      ...(raw.github    ? { github:    raw.github    } : {}),
+      ...(raw.goodreads ? { goodreads: raw.goodreads } : {}),
     };
-    this.localQuestions.update(prev => [...prev, newQuestion]);
-    this.questionForm.reset({ correctIndex: 0 });
+    try {
+      await this.auth.updateSocials(socials);
+      toast.success(this.translate.instant('PROFILE.socials_saved'));
+    } catch {  }
   }
-  protected removeQuestion(index: number): void {
-    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
-  }
-  protected saveQuiz(): void {
-    const questions = this.localQuestions();
-    if (questions.length === 0) return;
-    this.isSaving.set(true);
-    this.errorMessage.set('');
-    const { title, description } = this.metaForm.getRawValue();
-    const clubId = this.id();
-    this.quizService
-      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
-      .then(async quiz => {
-        for (const q of questions) {
-          await this.quizService.addQuestion(quiz.id, q);
-        }
-        this.isSaving.set(false);
-        this.router.navigate(['/clubs', clubId, 'quizzes']);
-      })
-      .catch(err => {
-        this.isSaving.set(false);
-        this.errorMessage.set((err as Error).message);
-      });
+  protected async onSocialsPublicChange(value: boolean): Promise<void> {
+    try {
+      await this.auth.setSocialsPublic(value);
+    } catch {  }
   }
 }
 ````
@@ -14369,1356 +14273,464 @@ export class QuizPreviewComponent extends QuizDetailBaseComponent {
 }
 ````
 
-## File: src/app/layout/header/header.component.html
-````html
-<header
-  class="sticky top-0 z-50
-         bg-[var(--color-surface)]/90 dark:bg-[var(--color-surface)]/95
-         backdrop-blur-[10px]
-         border-b border-[var(--color-sepia)]
-         shadow-[0_2px_12px_rgba(92,45,10,0.10)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.40)]"
-  role="banner"
->
-  <div class="page-max-w px-6">
-    <div class="flex items-center justify-between h-16">
-      <a
-        routerLink="/"
-        class="font-fantasy text-xl font-bold tracking-widest
-               text-[var(--color-primary-600)] dark:text-[#fbbf24]
-               hover:text-[var(--color-primary-500)] dark:hover:text-[#fcd34d]
-               transition-colors duration-200
-               focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2 rounded"
-        aria-label="BookClub home"
-      >
-        BookClub
-      </a>
-      <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
-        <a
-          routerLink="/clubs"
-          routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
-          class="px-4 py-2 rounded-lg text-sm font-medium
-                 text-[var(--color-ink-muted)]
-                 hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                 transition-all duration-200
-                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-        >
-          {{ 'NAV.discover' | translate }}
-        </a>
-        @if (isAuthenticated()) {
-          <a
-            routerLink="/events"
-            routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
-            class="px-4 py-2 rounded-lg text-sm font-medium
-                   text-[var(--color-ink-muted)]
-                   hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                   transition-all duration-200
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-          >
-            {{ 'NAV.events' | translate }}
-          </a>
-        }
-      </nav>
-      <div class="hidden md:flex items-center gap-1">
-        <button
-          hlmBtn
-          variant="ghost"
-          size="icon"
-          type="button"
-          data-testid="theme-toggle"
-          (click)="themeService.toggle()"
-          [attr.aria-label]="themeService.isDark()
-            ? ('NAV.theme_toggle_light' | translate)
-            : ('NAV.theme_toggle_dark'  | translate)"
-          [attr.title]="themeService.isDark()
-            ? ('NAV.theme_toggle_light' | translate)
-            : ('NAV.theme_toggle_dark'  | translate)"
-        >
-          @if (themeService.isDark()) {
-            <ng-icon hlm name="lucideSun"  size="sm" />
-          } @else {
-            <ng-icon hlm name="lucideMoon" size="sm" />
-          }
-        </button>
-        <button
-          hlmBtn
-          variant="ghost"
-          size="sm"
-          type="button"
-          (click)="switchLang()"
-          [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-        >
-          {{ currentLang() === 'uk' ? 'EN' : 'UK' }}
-        </button>
-        @if (isAuthenticated()) {
-          <button
-            type="button"
-            [hlmDropdownMenuTrigger]="userMenu"
-            class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-            aria-haspopup="menu"
-            [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
-          >
-            <div
-              class="h-9 w-9 rounded-full avatar-gradient
-                     flex items-center justify-center text-white text-sm font-semibold select-none"
-              aria-hidden="true"
-            >
-              {{ userInitials() }}
-            </div>
-          </button>
-          <ng-template #userMenu>
-            <div hlmDropdownMenu>
-              <hlm-dropdown-menu-label>{{ currentUser()?.displayName }}</hlm-dropdown-menu-label>
-              <hlm-dropdown-menu-separator />
-              <a hlmDropdownMenuItem [routerLink]="['/profile']">
-                {{ 'NAV.profile' | translate }}
-              </a>
-              <hlm-dropdown-menu-separator />
-              <button hlmDropdownMenuItem variant="destructive" (click)="signOut()">
-                {{ 'NAV.logout' | translate }}
-              </button>
-            </div>
-          </ng-template>
-        } @else {
-          <a hlmBtn variant="outline" size="sm" routerLink="/login">
-            {{ 'NAV.login' | translate }}
-          </a>
-          <a hlmBtn size="sm" routerLink="/register"
-             class="bg-gradient-fantasy text-white border-0 hover:opacity-90">
-            {{ 'NAV.join_free' | translate }}
-          </a>
-        }
-      </div>
-      <hlm-sheet class="md:hidden">
-        <button
-          hlmSheetTrigger
-          type="button"
-          class="p-2 rounded-lg text-[var(--color-ink-muted)]
-                 hover:bg-[var(--color-surface-raised)] transition-all duration-200
-                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-          aria-label="Toggle navigation menu"
-        >
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        <ng-template hlmSheetPortal>
-          <hlm-sheet-content>
-            <hlm-sheet-header>
-              <h2 hlmSheetTitle
-                  class="font-fantasy font-bold tracking-widest text-[var(--color-primary-600)] dark:text-[#fbbf24]">
-                BookClub
-              </h2>
-            </hlm-sheet-header>
-            <nav class="flex flex-col gap-1 px-4 py-2" aria-label="Mobile navigation">
-              <button hlmSheetClose [routerLink]="['/clubs']"
-                      class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                             text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                             transition-all duration-200 w-full text-left">
-                {{ 'NAV.discover' | translate }}
-              </button>
-              @if (isAuthenticated()) {
-                <button hlmSheetClose [routerLink]="['/events']"
-                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                               text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                               transition-all duration-200 w-full text-left">
-                  {{ 'NAV.events' | translate }}
-                </button>
-              }
-              <button
-                type="button"
-                data-testid="theme-toggle"
-                (click)="themeService.toggle()"
-                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                       transition-all duration-200 w-full text-left"
-                [attr.aria-label]="themeService.isDark()
-                  ? ('NAV.theme_toggle_light' | translate)
-                  : ('NAV.theme_toggle_dark'  | translate)"
-              >
-                @if (themeService.isDark()) {
-                  <ng-icon hlm name="lucideSun"  size="sm" />
-                  <span>{{ 'NAV.theme_toggle_light' | translate }}</span>
-                } @else {
-                  <ng-icon hlm name="lucideMoon" size="sm" />
-                  <span>{{ 'NAV.theme_toggle_dark' | translate }}</span>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="switchLang()"
-                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                       transition-all duration-200 w-full text-left"
-                [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-              >
-                <span>{{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}</span>
-              </button>
-              <div class="pt-2 mt-2 border-t border-[var(--color-sepia)] flex flex-col gap-1">
-                @if (isAuthenticated()) {
-                  <div class="px-4 py-2">
-                    <p class="text-xs font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide">
-                      {{ 'NAV.signed_in_as' | translate }}
-                    </p>
-                    <p class="text-sm font-medium text-[var(--color-ink)] mt-0.5">
-                      {{ currentUser()?.displayName }}
-                    </p>
-                  </div>
-                  <button hlmSheetClose [routerLink]="['/profile']"
-                          class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                                 transition-all duration-200 w-full text-left">
-                    {{ 'NAV.profile' | translate }}
-                  </button>
-                  <button hlmSheetClose type="button" (click)="signOut()"
-                          class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                                 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
-                                 transition-all duration-200">
-                    {{ 'NAV.logout' | translate }}
-                  </button>
-                } @else {
-                  <button hlmSheetClose [routerLink]="['/login']"
-                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                                 transition-all duration-200 w-full text-left">
-                    {{ 'NAV.login' | translate }}
-                  </button>
-                  <button hlmSheetClose [routerLink]="['/register']"
-                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                                 bg-gradient-fantasy text-white hover:opacity-90
-                                 transition-all duration-200 w-full text-left">
-                    {{ 'NAV.join_free' | translate }}
-                  </button>
-                }
-              </div>
-            </nav>
-          </hlm-sheet-content>
-        </ng-template>
-      </hlm-sheet>
-    </div>
-  </div>
-</header>
-````
-
-## File: public/i18n/en.json
-````json
-{
-  "AUTH": {
-    "activate_account": "Click it to activate your account.",
-    "back_to_login": "Back to sign in",
-    "check_email": "Check your email",
-    "confirm_password": "Confirm password",
-    "confirmation_sent": "We sent a confirmation link to",
-    "create_account_h2": "Create account",
-    "create_account_subtitle": "Create your account",
-    "creating_account": "Creating account…",
-    "display_name": "Display name",
-    "email": "Email",
-    "have_account": "Already have an account?",
-    "no_account": "Don't have an account?",
-    "password": "Password",
-    "password_medium": "Medium",
-    "password_strong": "Strong",
-    "password_weak": "Weak",
-    "passwords_no_match": "Passwords do not match",
-    "register_title": "Register",
-    "role_organizer_desc": "Create clubs & build quizzes",
-    "role_organizer_label": "Organizer",
-    "role_reader_desc": "Join clubs & take quizzes",
-    "role_reader_label": "Reader",
-    "select_role_error": "Please select a role.",
-    "sign_in_h2": "Sign in",
-    "signing_in": "Signing in…",
-    "submit_login": "Log in",
-    "want_to": "I want to…",
-    "welcome_back": "Welcome back",
-    "login_title": "Log In",
-    "submit_register": "Register",
-    "password_strength": "Password strength",
-    "account_created": "Account created successfully!",
-    "welcome_message": "Welcome,"
-  },
-  "CREATE_CLUB": {
-    "subtitle": "Create a new reading community",
-    "title": "Create a Club",
-    "basic_info_legend": "Basic information",
-    "name_label": "Club name",
-    "name_placeholder": "e.g. Northern Readers",
-    "name_required": "Club name is required.",
-    "name_min": "Name must be at least 3 characters.",
-    "name_max": "Name must not exceed 100 characters.",
-    "description_label": "Description",
-    "description_placeholder": "What books will your club read? Who is it for?",
-    "description_max": "Description must not exceed 500 characters.",
-    "city_label": "City",
-    "city_placeholder": "Kyiv",
-    "city_required": "City is required.",
-    "city_max": "City must not exceed 100 characters.",
-    "address_label": "Address",
-    "address_placeholder": "1 Khreshchatyk St.",
-    "address_max": "Address must not exceed 200 characters.",
-    "tags_duration_legend": "Tags & duration",
-    "tags_label": "Tags / Genres",
-    "tags_placeholder": "Classics, Romance, Fantasy",
-    "tags_hint": "Enter genres separated by commas",
-    "tags_max": "Tags must not exceed 300 characters.",
-    "duration_label": "Meeting duration (min)",
-    "duration_placeholder": "90",
-    "duration_min": "Duration must be at least 15 minutes.",
-    "duration_max": "Duration must not exceed 480 minutes.",
-    "visibility_legend": "Visibility",
-    "public_label": "Public club",
-    "public_desc": "Anyone can discover and join",
-    "cover_url_label": "Cover image URL",
-    "cover_url_placeholder": "https://example.com/cover.jpg",
-    "cover_url_hint": "Paste a public image link (JPG, PNG, WebP)",
-    "after_meeting_toggle": "▼ After-meeting venue",
-    "after_meeting_hide": "▲ Hide after-meeting venue info",
-    "venue_name_label": "Venue name",
-    "venue_name_placeholder": "Café Pushkin",
-    "venue_name_max": "Name must not exceed 150 characters.",
-    "venue_address_label": "Venue address",
-    "venue_address_placeholder": "2 Khreshchatyk St.",
-    "venue_address_max": "Address must not exceed 200 characters.",
-    "venue_notes_label": "Notes",
-    "venue_notes_placeholder": "Reservation at 8 pm",
-    "venue_notes_max": "Notes must not exceed 300 characters.",
-    "cancel": "Cancel",
-    "submit": "Create club",
-    "submitting": "Creating…"
-  },
-  "CLUBS": {
-    "active": "Active",
-    "all": "All Clubs",
-    "all_cities": "All cities",
-    "cancelled": "Cancelled",
-    "create": "Create club",
-    "join": "Join",
-    "member_badge": "✓ Member",
-    "member_singular": "member",
-    "members": "members",
-    "missed": "Missed",
-    "my_clubs": "My Clubs",
-    "participated": "Attended",
-    "paused": "Paused",
-    "search_placeholder": "Search clubs...",
-    "search_placeholder_full": "Search by name or description…",
-    "subtitle": "Discover communities of readers near you",
-    "title": "Book Clubs",
-    "view": "View",
-    "upcoming": "Upcoming meetings",
-    "joined": "You're a member",
-    "no_clubs": "No clubs found",
-    "book_current": "Current book",
-    "days_until": "in {{ days }} days"
-  },
-  "CLUB_DETAIL": {
-    "about": "About",
-    "back": "Back to clubs",
-    "back_short": "Back",
-    "cancel": "Cancel",
-    "created": "Created",
-    "join": "Join Club",
-    "leave": "Leave Club",
-    "manage_title": "Club management",
-    "new_date": "New meeting date",
-    "not_found": "Club not found",
-    "organizer_badge": "✨ Organizer",
-    "pause": "Pause",
-    "private": "Private",
-    "quizzes_desc": "Create & manage reading quizzes",
-    "quizzes_title": "Quizzes",
-    "randomizer_desc": "Pick the next book to read",
-    "randomizer_title": "Randomizer",
-    "reschedule": "Reschedule",
-    "reschedule_submit": "Confirm date",
-    "members_title": "Members",
-    "tags_title": "Tags",
-    "organizer_title": "Organizer",
-    "meeting_info_title": "Meeting place & time",
-    "duration_label": "Duration",
-    "address_label": "Address",
-    "view_on_map": "View on map →",
-    "after_meeting_title": "After the meeting",
-    "deletion_countdown_prefix": "This club has been cancelled —",
-    "deletion_countdown_hours": "will be deleted in {{ hours }} h. {{ minutes }} min.",
-    "deletion_countdown_minutes": "will be deleted in {{ minutes }} min.",
-    "close_qr": "✕ Close",
-    "events_title": "Upcoming Events",
-    "events_empty": "No upcoming events scheduled.",
-    "create_event": "＋ Create Event",
-    "sort_nearest": "Nearest",
-    "sort_popular": "Most popular",
-    "sort_status": "By status",
-    "join_cta_title": "Want to join this club?",
-    "join_cta_desc": "Join to attend events and meet fellow readers.",
-    "rsvp_going": "✓ Going",
-    "rsvp_join": "RSVP",
-    "rsvp_view": "View",
-    "rsvp_attending": "attending",
-    "edit_club_title": "Edit Club",
-    "edit_club_desc": "Update name, description & settings",
-    "create_event_title": "Create Event",
-    "create_event_desc": "Schedule a new club event",
-    "now_reading": "Now reading"
-  },
-  "EDIT_CLUB": {
-    "title": "Edit Club",
-    "subtitle": "Update your reading community's details",
-    "submit": "Save changes",
-    "submitting": "Saving…",
-    "cancel": "Cancel",
-    "success": "Club updated successfully!",
-    "name_label": "Club name",
-    "name_placeholder": "e.g. Northern Readers",
-    "name_required": "Club name is required.",
-    "name_min": "Name must be at least 3 characters.",
-    "name_max": "Name must not exceed 100 characters.",
-    "description_label": "Description",
-    "description_placeholder": "What books will your club read? Who is it for?",
-    "description_max": "Description must not exceed 500 characters.",
-    "city_label": "City",
-    "city_placeholder": "Kyiv",
-    "visibility_legend": "Visibility",
-    "public_label": "Public club",
-    "public_desc": "Anyone can discover and join",
-    "cover_url_label": "Cover image URL",
-    "cover_url_placeholder": "https://example.com/cover.jpg",
-    "cover_url_hint": "Paste a public image link (JPG, PNG, WebP)"
-  },
-  "FOOTER": {
-    "privacy": "Privacy",
-    "rights": "All rights reserved",
-    "terms": "Terms"
-  },
-  "MEMBERS": {
-    "empty": "No members yet",
-    "member": "Member",
-    "organizer": "Organizer",
-    "show_qr": "QR",
-    "socials_hidden": "Hidden",
-    "title": "Members",
-    "kick": "Kick",
-    "ban": "Ban ▾",
-    "ban_1": "1 meeting",
-    "ban_3": "3 meetings",
-    "ban_5": "5 meetings",
-    "ban_permanent": "Permanently"
-  },
-  "NAV": {
-    "back_home": "← Back to home",
-    "discover": "Discover",
-    "join_free": "Join Free",
-    "login": "Log in",
-    "logout": "Log out",
-    "profile": "Profile",
-    "signed_in_as": "Signed in as",
-    "clubs": "Clubs",
-    "my_clubs": "My Clubs",
-    "register": "Register",
-    "events": "Events",
-    "theme_toggle_dark": "Switch to dark mode",
-    "theme_toggle_light": "Switch to light mode"
-  },
-  "PROFILE": {
-    "active_badge": "✓ Active",
-    "books_read": "Books read",
-    "clubs_joined": "Clubs joined",
-    "display_name_label": "Display Name",
-    "display_name_min": "Must be at least 2 characters.",
-    "display_name_placeholder": "Your display name",
-    "display_name_required": "Display name is required.",
-    "edit_profile": "Edit Profile",
-    "likes_received": "Likes Received",
-    "member_since": "Member since",
-    "name_updated": "Name updated!",
-    "no_stats": "No statistics yet — start joining clubs and taking quizzes!",
-    "quizzes_taken": "Quizzes taken",
-    "quizzes_won": "Quizzes won",
-    "role_changed_prefix": "Role updated to",
-    "role_organizer": "Organizer",
-    "role_organizer_desc": "Create clubs, run quizzes, and manage members.",
-    "role_reader": "Reader",
-    "role_reader_desc": "Discover clubs, join discussions, take quizzes.",
-    "role_subtitle": "Choose how you participate in book clubs.",
-    "role_title": "Your Role",
-    "save": "Save",
-    "save_name": "Save Name",
-    "saving": "Saving…",
-    "socials_public_label": "Show social media to all club members",
-    "socials_saved": "Social media saved!",
-    "socials_title": "Social media",
-    "stats_title": "Statistics",
-    "title": "My Profile",
-    "saved": "Saved!",
-    "role": "Role",
-    "role_admin": "Administrator",
-    "meetings_attended": "Meetings attended",
-    "meetings_missed": "Meetings missed",
-    "randomizer_wins": "Randomizer wins"
-  },
-  "RANDOMIZER": {
-    "back_to_club": "← Back to club",
-    "history_title": "Previous results",
-    "members_title": "Members",
-    "no_members": "No members in this club yet",
-    "purpose_label": "Randomizer purpose",
-    "purpose_placeholder": "e.g. Who presents the book?",
-    "save": "💾 Save result",
-    "saving": "⏳ Saving…",
-    "select_all": "Select all",
-    "selected": "selected",
-    "spin": "🎲 Spin!",
-    "spin_hint": "Press 'Spin' to select a member",
-    "spinning": "Selecting winner…",
-    "spinning_btn": "⏳ Selecting…",
-    "subtitle": "Who's next? Let fate decide.",
-    "title": "Randomizer",
-    "no_history": "No results yet",
-    "error_min": "Select at least 2 members",
-    "winner": "Winner"
-  },
-  "EVENTS": {
-    "subtitle": "Discover and join upcoming book club gatherings",
-    "attending": "attending",
-    "view": "View",
-    "rsvp": "RSVP",
-    "going": "✓ Going",
-    "going_cancel": "✓ Going · Cancel RSVP",
-    "rsvp_going": "RSVP — I'm Going",
-    "back_to_events": "← Back to Events",
-    "about": "About",
-    "tags": "Tags",
-    "after_meeting_venue": "After-Meeting Venue",
-    "organizer_controls": "Organizer Controls",
-    "cancel_event": "Cancel Event",
-    "cancel_confirm": "Cancel this event?",
-    "minutes_abbr": "min",
-    "status_upcoming": "Upcoming",
-    "status_active": "Active",
-    "status_cancelled": "Cancelled",
-    "status_scheduled": "Scheduled",
-    "tab_upcoming": "Upcoming",
-    "tab_my": "My Events",
-    "no_upcoming": "No upcoming events",
-    "no_upcoming_desc": "No events are scheduled yet. Check back soon!",
-    "no_my_events_desc": "Join clubs to see their events here."
-  },
-  "QUIZ": {
-    "title": "Quizzes",
-    "list_subtitle": "Test your knowledge of the books you've read.",
-    "create_btn": "+ Create Quiz",
-    "create_heading": "📝 Create Quiz",
-    "back_to_quizzes": "← Back to Quizzes",
-    "back_to_club_short": "← Club",
-    "question_of": "Question {{ current }} of {{ total }}",
-    "prev": "← Previous",
-    "next": "Next →",
-    "preview_heading": "🔍 Quiz Preview",
-    "close": "✕ Close",
-    "activate": "Activate",
-    "deactivate": "Deactivate",
-    "take_btn": "Take Quiz →",
-    "submit_quiz": "Submit Quiz ✓",
-    "submitting_quiz": "…Submitting",
-    "no_quizzes": "No quizzes yet",
-    "no_quizzes_organizer": "Create your first quiz to engage the club.",
-    "no_quizzes_member": "The organizer hasn't created any quizzes yet.",
-    "status_live": "Live",
-    "status_active": "Active",
-    "status_closed": "Closed",
-    "status_draft": "Draft",
-    "create": "Create quiz",
-    "take": "Start",
-    "results": "Results",
-    "score": "Score",
-    "edit": "Edit",
-    "edit_title": "Edit Quiz",
-    "edit_save": "Save Changes",
-    "edit_saving": "Saving…",
-    "edit_success": "Quiz updated",
-    "edit_active_warning": "This quiz is live and cannot be edited.",
-    "question_remove": "Remove",
-    "preview": "Preview",
-    "preview_title": "Quiz Preview",
-    "preview_banner": "Preview Mode — correct answers are shown",
-    "preview_correct": "Correct answer",
-    "preview_activate": "Activate Quiz",
-    "preview_activating": "Activating…",
-    "preview_live": "This quiz is currently live",
-    "preview_no_questions": "No questions yet. Add some before activating.",
-    "manage_session": "Manage Session",
-    "session_title": "Quiz Session",
-    "session_start": "Start Session",
-    "session_starting": "Starting…",
-    "session_pick_event": "Select event",
-    "session_live": "Live",
-    "session_participants": "Participants enrolled",
-    "session_completed": "Completed",
-    "session_end": "End Session",
-    "session_ending": "Ending…",
-    "session_refresh": "Refresh",
-    "leaderboard": "Leaderboard",
-    "leaderboard_title": "Leaderboard",
-    "leaderboard_rank": "Rank",
-    "leaderboard_player": "Player",
-    "leaderboard_score": "Score",
-    "leaderboard_completed": "Completed",
-    "leaderboard_pending": "Not yet attempted",
-    "leaderboard_empty": "No participants yet",
-    "leaderboard_1st": "1st Place",
-    "leaderboard_2nd": "2nd Place",
-    "leaderboard_3rd": "3rd Place",
-    "leaderboard_heading": "🏆 Leaderboard",
-    "leaderboard_refresh_hint": "Auto-refreshes every 30 seconds",
-    "no_active_session": "No active session",
-    "no_active_session_hint": "The quiz session hasn't started yet.",
-    "session_heading": "🎮 Quiz Session",
-    "session_start_heading": "Start a Session",
-    "session_start_hint": "Select an event — attendees will be enrolled as participants automatically.",
-    "session_pick_event_label": "Event",
-    "session_pick_event_placeholder": "Select event…",
-    "session_no_events": "No events found for this club.",
-    "session_started_at": "Started",
-    "session_refreshing": "↻ Refreshing…",
-    "session_live_leaderboard": "🏆 Live Leaderboard",
-    "session_no_participants": "No participants yet. Waiting for responses…",
-    "create_heading_full": "📝 Create Quiz",
-    "create_step_of": "Step {{ step }} of 2",
-    "create_step_details": "Quiz details",
-    "create_step_questions": "Add questions",
-    "create_cancel": "✕ Cancel",
-    "create_back": "← Back",
-    "preview_live_banner": "🟢 This quiz is currently live.",
-    "preview_no_questions_link": "→ Go to Edit",
-    "preview_correct_answer": "✓ Correct",
-    "error_return": "Return to quiz list",
-    "loading": "Loading quiz…"
-  },
-  "CHAT": {
-    "title": "Club Chat",
-    "placeholder": "Type a message...",
-    "send": "Send",
-    "no_messages": "No messages yet",
-    "new_message": "New message",
-    "close": "Close chat",
-    "open": "Open chat",
-    "rooms": "Rooms",
-    "mute": "Mute",
-    "unmute": "Unmute",
-    "muted_label": "[muted]",
-    "no_rooms": "No chat rooms available",
-    "ban_600s": "Ban 600s",
-    "delete_message": "Delete message",
-    "add_room": "Add room",
-    "room_name_placeholder": "Room name...",
-    "create_room": "Create"
-  },
-  "FORM_ERRORS": {
-    "required": "This field is required.",
-    "email": "Please enter a valid email address.",
-    "minlength": "Minimum {{ requiredLength }} characters required.",
-    "invalid": "Invalid value."
-  },
-  "SEO": {
-    "clubs_title": "Book Clubs | Book Club",
-    "clubs_description": "Find a book club in your city. Book discussions, reader meetups, interest communities.",
-    "clubs_og_title": "Book Clubs",
-    "login_title": "Sign In | Book Club",
-    "register_title": "Register | Book Club",
-    "profile_title": "Profile | Book Club",
-    "club_detail_title": "{{ name }} | Book Club",
-    "club_detail_og_title": "{{ name }}",
-    "site_name": "Book Club",
-    "site_url": "https://book-club-fe.vercel.app",
-    "site_description": "Book Clubs of Ukraine"
-  }
-}
-````
-
-## File: public/i18n/uk.json
-````json
-{
-  "AUTH": {
-    "activate_account": "Натисніть, щоб активувати акаунт.",
-    "back_to_login": "Назад до входу",
-    "check_email": "Перевірте пошту",
-    "confirm_password": "Підтвердіть пароль",
-    "confirmation_sent": "Ми надіслали посилання підтвердження на",
-    "create_account_h2": "Створити акаунт",
-    "create_account_subtitle": "Створіть акаунт",
-    "creating_account": "Створюємо акаунт…",
-    "display_name": "Ім'я користувача",
-    "email": "Email",
-    "have_account": "Вже є акаунт?",
-    "no_account": "Немає акаунту?",
-    "password": "Пароль",
-    "password_medium": "Середній",
-    "password_strong": "Надійний",
-    "password_weak": "Слабкий",
-    "passwords_no_match": "Паролі не збігаються",
-    "register_title": "Реєстрація",
-    "role_organizer_desc": "Створювати клуби та проводити квізи",
-    "role_organizer_label": "Організатор",
-    "role_reader_desc": "Приєднуватись до клубів та проходити квізи",
-    "role_reader_label": "Читач",
-    "select_role_error": "Будь ласка, оберіть роль.",
-    "sign_in_h2": "Увійти",
-    "signing_in": "Входимо…",
-    "submit_login": "Увійти",
-    "want_to": "Я хочу…",
-    "welcome_back": "Ласкаво просимо назад",
-    "login_title": "Вхід",
-    "submit_register": "Зареєструватися",
-    "password_strength": "Надійність паролю",
-    "account_created": "Акаунт успішно створено!",
-    "welcome_message": "Ласкаво просимо,"
-  },
-  "CREATE_CLUB": {
-    "subtitle": "Створіть нову спільноту читачів",
-    "title": "Створити клуб",
-    "basic_info_legend": "Основна інформація",
-    "name_label": "Назва клубу",
-    "name_placeholder": "Напр. Північ читачів",
-    "name_required": "Назва клубу є обов'язковою.",
-    "name_min": "Назва повинна містити щонайменше 3 символи.",
-    "name_max": "Назва не повинна перевищувати 100 символів.",
-    "description_label": "Опис",
-    "description_placeholder": "Які книги буде читати ваш клуб? Для кого він?",
-    "description_max": "Опис не повинен перевищувати 500 символів.",
-    "city_label": "Місто",
-    "city_placeholder": "Київ",
-    "city_required": "Місто є обов'язковим.",
-    "city_max": "Місто не повинно перевищувати 100 символів.",
-    "address_label": "Адреса",
-    "address_placeholder": "вул. Хрещатик, 1",
-    "address_max": "Адреса не повинна перевищувати 200 символів.",
-    "tags_duration_legend": "Теги та тривалість",
-    "tags_label": "Теги / Жанри",
-    "tags_placeholder": "Класика, Романтика, Фентезі",
-    "tags_hint": "Введіть жанри через кому",
-    "tags_max": "Теги не повинні перевищувати 300 символів.",
-    "duration_label": "Тривалість зустрічі (хв)",
-    "duration_placeholder": "90",
-    "duration_min": "Тривалість не може бути менше 15 хвилин.",
-    "duration_max": "Тривалість не може перевищувати 480 хвилин.",
-    "visibility_legend": "Видимість",
-    "public_label": "Публічний клуб",
-    "public_desc": "Хто завгодно може виявити та приєднатися",
-    "cover_url_label": "URL обкладинки",
-    "cover_url_placeholder": "https://example.com/cover.jpg",
-    "cover_url_hint": "Вставте публічне посилання на зображення (JPG, PNG, WebP)",
-    "after_meeting_toggle": "▼ Після зустрічі",
-    "after_meeting_hide": "▲ Приховати інформацію про місце після зустрічі",
-    "venue_name_label": "Назва місця",
-    "venue_name_placeholder": "Кав'ярня «Пушкін»",
-    "venue_name_max": "Назва не повинна перевищувати 150 символів.",
-    "venue_address_label": "Адреса місця",
-    "venue_address_placeholder": "вул. Хрещатик, 2",
-    "venue_address_max": "Адреса не повинна перевищувати 200 символів.",
-    "venue_notes_label": "Примітки",
-    "venue_notes_placeholder": "Бронювання на 20:00",
-    "venue_notes_max": "Примітки не повинні перевищувати 300 символів.",
-    "cancel": "Скасувати",
-    "submit": "Створити клуб",
-    "submitting": "Створення…"
-  },
-  "CLUBS": {
-    "active": "Активний",
-    "all": "Всі клуби",
-    "all_cities": "Всі міста",
-    "cancelled": "Скасовано",
-    "create": "Створити клуб",
-    "join": "Приєднатися",
-    "member_badge": "✓ Учасник",
-    "member_singular": "учасник",
-    "members": "учасників",
-    "missed": "Пропущені",
-    "my_clubs": "Мої клуби",
-    "participated": "Відвідані",
-    "paused": "Призупинено",
-    "search_placeholder": "Шукати клуби...",
-    "search_placeholder_full": "Шукати за назвою або описом…",
-    "subtitle": "Знайдіть спільноти читачів поруч",
-    "title": "Книжкові клуби",
-    "view": "Переглянути",
-    "upcoming": "Найближчі зустрічі",
-    "joined": "Ви учасник",
-    "no_clubs": "Клубів не знайдено",
-    "book_current": "Поточна книга",
-    "days_until": "за {{ days }} дн."
-  },
-  "CLUB_DETAIL": {
-    "about": "Про клуб",
-    "back": "Назад до клубів",
-    "back_short": "Назад",
-    "cancel": "Скасувати",
-    "created": "Створено",
-    "join": "Приєднатись до клубу",
-    "leave": "Покинути клуб",
-    "manage_title": "Управління клубом",
-    "new_date": "Нова дата зустрічі",
-    "not_found": "Клуб не знайдено",
-    "organizer_badge": "✨ Організатор",
-    "pause": "Призупинити",
-    "private": "Приватний",
-    "quizzes_desc": "Створюйте та керуйте квізами",
-    "quizzes_title": "Квізи",
-    "randomizer_desc": "Обирайте наступну книгу",
-    "randomizer_title": "Рандомайзер",
-    "reschedule": "Перепланувати",
-    "reschedule_submit": "Перенести зустріч",
-    "members_title": "Учасники",
-    "tags_title": "Теги",
-    "organizer_title": "Організатор",
-    "meeting_info_title": "Місце та час зустрічі",
-    "duration_label": "Тривалість",
-    "address_label": "Адреса",
-    "view_on_map": "Переглянути на карті →",
-    "after_meeting_title": "Після зустрічі",
-    "deletion_countdown_prefix": "Цей клуб скасовано —",
-    "deletion_countdown_hours": "буде видалено через {{ hours }} год. {{ minutes }} хв.",
-    "deletion_countdown_minutes": "буде видалено через {{ minutes }} хв.",
-    "close_qr": "✕ Закрити",
-    "events_title": "Найближчі події",
-    "events_empty": "Немає запланованих подій.",
-    "create_event": "＋ Створити подію",
-    "sort_nearest": "Найближчі",
-    "sort_popular": "Популярні",
-    "sort_status": "За статусом",
-    "join_cta_title": "Хочеш приєднатись до клубу?",
-    "join_cta_desc": "Вступи, щоб відвідувати зустрічі та знайомитись з читачами.",
-    "rsvp_going": "✓ Йду",
-    "rsvp_join": "Зареєструватись",
-    "rsvp_view": "Детальніше",
-    "rsvp_attending": "учасників",
-    "edit_club_title": "Редагувати клуб",
-    "edit_club_desc": "Оновити назву, опис та налаштування",
-    "create_event_title": "Створити подію",
-    "create_event_desc": "Запланувати нову подію клубу",
-    "now_reading": "Читаємо зараз"
-  },
-  "EDIT_CLUB": {
-    "title": "Редагувати клуб",
-    "subtitle": "Оновіть дані своєї читацької спільноти",
-    "submit": "Зберегти зміни",
-    "submitting": "Збереження…",
-    "cancel": "Скасувати",
-    "success": "Клуб успішно оновлено!",
-    "name_label": "Назва клубу",
-    "name_placeholder": "Напр. Північ читачів",
-    "name_required": "Назва клубу є обов'язковою.",
-    "name_min": "Назва повинна містити щонайменше 3 символи.",
-    "name_max": "Назва не повинна перевищувати 100 символів.",
-    "description_label": "Опис",
-    "description_placeholder": "Які книги буде читати ваш клуб? Для кого він?",
-    "description_max": "Опис не повинен перевищувати 500 символів.",
-    "city_label": "Місто",
-    "city_placeholder": "Київ",
-    "visibility_legend": "Видимість",
-    "public_label": "Публічний клуб",
-    "public_desc": "Хто завгодно може виявити та приєднатися",
-    "cover_url_label": "URL обкладинки",
-    "cover_url_placeholder": "https://example.com/cover.jpg",
-    "cover_url_hint": "Вставте публічне посилання на зображення (JPG, PNG, WebP)"
-  },
-  "FOOTER": {
-    "privacy": "Конфіденційність",
-    "rights": "Усі права захищені",
-    "terms": "Умови"
-  },
-  "MEMBERS": {
-    "empty": "Немає учасників",
-    "member": "Учасник",
-    "organizer": "Організатор",
-    "show_qr": "QR",
-    "socials_hidden": "Приховано",
-    "title": "Учасники",
-    "kick": "Виключити",
-    "ban": "Заблокувати ▾",
-    "ban_1": "1 зустріч",
-    "ban_3": "3 зустрічі",
-    "ban_5": "5 зустрічей",
-    "ban_permanent": "Назавжди"
-  },
-  "NAV": {
-    "back_home": "← На головну",
-    "discover": "Огляд",
-    "join_free": "Приєднатись",
-    "login": "Увійти",
-    "logout": "Вийти",
-    "profile": "Профіль",
-    "signed_in_as": "Увійшли як",
-    "clubs": "Клуби",
-    "my_clubs": "Мої клуби",
-    "register": "Приєднатись",
-    "events": "Події",
-    "theme_toggle_dark": "Темна тема",
-    "theme_toggle_light": "Світла тема"
-  },
-  "PROFILE": {
-    "active_badge": "✓ Активний",
-    "books_read": "Книг прочитано",
-    "clubs_joined": "Клубів приєднано",
-    "display_name_label": "Ім'я в додатку",
-    "display_name_min": "Мінімум 2 символи.",
-    "display_name_placeholder": "Ваше ім'я",
-    "display_name_required": "Ім'я є обов'язковим.",
-    "edit_profile": "Редагувати профіль",
-    "likes_received": "Отримано вподобань",
-    "member_since": "Учасник з",
-    "name_updated": "Ім'я оновлено!",
-    "no_stats": "Статистики ще немає — починайте приєднуватись до клубів і проходити квізи!",
-    "quizzes_taken": "Квізів пройдено",
-    "quizzes_won": "Квізів виграно",
-    "role_changed_prefix": "Роль змінено на",
-    "role_organizer": "Організатор",
-    "role_organizer_desc": "Створюйте клуби, проводьте квізи та керуйте учасниками.",
-    "role_reader": "Читач",
-    "role_reader_desc": "Відкривайте клуби, беріть участь у дискусіях і проходьте квізи.",
-    "role_subtitle": "Оберіть, як ви берете участь у книжкових клубах.",
-    "role_title": "Ваша роль",
-    "save": "Зберегти",
-    "save_name": "Зберегти ім'я",
-    "saving": "Збереження…",
-    "socials_public_label": "Показувати соціальні мережі всім учасникам клубів",
-    "socials_saved": "Соціальні мережі збережено!",
-    "socials_title": "Соціальні мережі",
-    "stats_title": "Статистика",
-    "title": "Особистий кабінет",
-    "saved": "Збережено!",
-    "role": "Роль",
-    "role_admin": "Адміністратор",
-    "meetings_attended": "Зустрічей відвідано",
-    "meetings_missed": "Зустрічей пропущено",
-    "randomizer_wins": "Перемог в рандомайзері"
-  },
-  "RANDOMIZER": {
-    "back_to_club": "← До клубу",
-    "history_title": "Попередні результати",
-    "members_title": "Учасники",
-    "no_members": "У цьому клубі поки немає учасників",
-    "purpose_label": "Питання / Мета рандомайзера",
-    "purpose_placeholder": "Наприклад: Хто представляє книгу?",
-    "save": "💾 Зберегти результат",
-    "saving": "⏳ Збереження…",
-    "select_all": "Обрати всіх",
-    "selected": "обрано",
-    "spin": "🎲 Крутити",
-    "spin_hint": "Натисніть «Крутити» щоб обрати учасника",
-    "spinning": "Вибираємо переможця…",
-    "spinning_btn": "⏳ Вибираємо…",
-    "subtitle": "Хто наступний? Нехай доля вирішує.",
-    "title": "Рандомайзер",
-    "no_history": "Немає результатів",
-    "error_min": "Оберіть щонайменше 2 учасників",
-    "winner": "Переможець"
-  },
-  "EVENTS": {
-    "subtitle": "Відкривайте та приєднуйтесь до майбутніх зустрічей",
-    "attending": "відвідують",
-    "view": "Переглянути",
-    "rsvp": "Участь",
-    "going": "✓ Іду",
-    "going_cancel": "✓ Іду · Скасувати",
-    "rsvp_going": "Записатись →",
-    "back_to_events": "← До подій",
-    "about": "Про подію",
-    "tags": "Теги",
-    "after_meeting_venue": "Місце після зустрічі",
-    "organizer_controls": "Управління організатора",
-    "cancel_event": "Скасувати подію",
-    "cancel_confirm": "Скасувати цю подію?",
-    "minutes_abbr": "хв",
-    "status_upcoming": "Майбутня",
-    "status_active": "Активна",
-    "status_cancelled": "Скасована",
-    "status_scheduled": "Заплановано",
-    "tab_upcoming": "Майбутні",
-    "tab_my": "Мої події",
-    "no_upcoming": "Немає майбутніх подій",
-    "no_upcoming_desc": "Поки що не заплановано жодної події. Заходьте пізніше!",
-    "no_my_events_desc": "Приєднуйтесь до клубів, щоб бачити їхні події тут."
-  },
-  "QUIZ": {
-    "title": "Квізи",
-    "list_subtitle": "Перевір свої знання з прочитаних книг.",
-    "create_btn": "+ Створити квіз",
-    "create_heading": "📝 Створити квіз",
-    "back_to_quizzes": "← До квізів",
-    "back_to_club_short": "← До клубу",
-    "question_of": "Питання {{ current }} з {{ total }}",
-    "prev": "← Назад",
-    "next": "Далі →",
-    "preview_heading": "🔍 Перегляд квізу",
-    "close": "✕ Закрити",
-    "activate": "Активувати",
-    "deactivate": "Деактивувати",
-    "take_btn": "Пройти квіз →",
-    "submit_quiz": "Відправити відповіді ✓",
-    "submitting_quiz": "…Надсилаємо",
-    "no_quizzes": "Квізів ще немає",
-    "no_quizzes_organizer": "Створіть перший квіз для клубу.",
-    "no_quizzes_member": "Організатор ще не створив жодного квізу.",
-    "status_live": "Наживо",
-    "status_active": "Активний",
-    "status_closed": "Закритий",
-    "status_draft": "Чернетка",
-    "create": "Створити квіз",
-    "take": "Почати",
-    "results": "Результати",
-    "score": "Рахунок",
-    "edit": "Редагувати",
-    "edit_title": "Редагувати квіз",
-    "edit_save": "Зберегти зміни",
-    "edit_saving": "Збереження…",
-    "edit_success": "Квіз оновлено",
-    "edit_active_warning": "Цей квіз активний і не може бути відредагований.",
-    "question_remove": "Видалити",
-    "preview": "Перегляд",
-    "preview_title": "Перегляд квізу",
-    "preview_banner": "Режим перегляду — правильні відповіді показані",
-    "preview_correct": "Правильна відповідь",
-    "preview_activate": "Активувати квіз",
-    "preview_activating": "Активація…",
-    "preview_live": "Цей квіз зараз активний",
-    "preview_no_questions": "Питань ще немає. Додайте їх перед активацією.",
-    "manage_session": "Керувати сесією",
-    "session_title": "Сесія квізу",
-    "session_start": "Почати сесію",
-    "session_starting": "Запуск…",
-    "session_pick_event": "Оберіть подію",
-    "session_live": "Наживо",
-    "session_participants": "Учасників зареєстровано",
-    "session_completed": "Завершено",
-    "session_end": "Завершити сесію",
-    "session_ending": "Завершення…",
-    "session_refresh": "Оновити",
-    "leaderboard": "Таблиця лідерів",
-    "leaderboard_title": "Таблиця лідерів",
-    "leaderboard_rank": "Місце",
-    "leaderboard_player": "Гравець",
-    "leaderboard_score": "Рахунок",
-    "leaderboard_completed": "Завершено",
-    "leaderboard_pending": "Ще не пройдено",
-    "leaderboard_empty": "Учасників ще немає",
-    "leaderboard_1st": "1-е місце",
-    "leaderboard_2nd": "2-е місце",
-    "leaderboard_3rd": "3-є місце",
-    "leaderboard_heading": "🏆 Таблиця лідерів",
-    "leaderboard_refresh_hint": "Оновлюється кожні 30 секунд",
-    "no_active_session": "Немає активної сесії",
-    "no_active_session_hint": "Сесія квізу ще не розпочалась.",
-    "session_heading": "🎮 Сесія квізу",
-    "session_start_heading": "Почати сесію",
-    "session_start_hint": "Оберіть подію — учасники будуть зараховані автоматично.",
-    "session_pick_event_label": "Подія",
-    "session_pick_event_placeholder": "Оберіть подію…",
-    "session_no_events": "Для цього клубу не знайдено подій.",
-    "session_started_at": "Розпочато",
-    "session_refreshing": "↻ Оновлення…",
-    "session_live_leaderboard": "🏆 Таблиця лідерів наживо",
-    "session_no_participants": "Учасників ще немає. Очікуємо відповідей…",
-    "create_heading_full": "📝 Створити квіз",
-    "create_step_of": "Крок {{ step }} з 2",
-    "create_step_details": "Деталі квізу",
-    "create_step_questions": "Додати питання",
-    "create_cancel": "✕ Скасувати",
-    "create_back": "← Назад",
-    "preview_live_banner": "🟢 Цей квіз зараз активний.",
-    "preview_no_questions_link": "→ Перейти до редагування",
-    "preview_correct_answer": "✓ Правильно",
-    "error_return": "Повернутись до списку квізів",
-    "loading": "Завантаження квізу…"
-  },
-  "CHAT": {
-    "title": "Чат клубу",
-    "placeholder": "Написати повідомлення...",
-    "send": "Надіслати",
-    "no_messages": "Поки немає повідомлень",
-    "new_message": "Нове повідомлення",
-    "close": "Закрити чат",
-    "open": "Відкрити чат",
-    "rooms": "Кімнати",
-    "mute": "Заглушити",
-    "unmute": "Зняти мут",
-    "muted_label": "[заглушено]",
-    "no_rooms": "Кімнати чату недоступні",
-    "ban_600s": "Бан 600 сек",
-    "delete_message": "Видалити повідомлення",
-    "add_room": "Додати кімнату",
-    "room_name_placeholder": "Назва кімнати...",
-    "create_room": "Створити"
-  },
-  "FORM_ERRORS": {
-    "required": "Це поле є обов'язковим.",
-    "email": "Введіть коректну адресу електронної пошти.",
-    "minlength": "Мінімум {{ requiredLength }} символів.",
-    "invalid": "Некоректне значення."
-  },
-  "SEO": {
-    "clubs_title": "Книжкові клуби | Book Club",
-    "clubs_description": "Знайдіть книжковий клуб у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
-    "clubs_og_title": "Книжкові клуби",
-    "login_title": "Вхід | Book Club",
-    "register_title": "Реєстрація | Book Club",
-    "profile_title": "Профіль | Book Club",
-    "club_detail_title": "{{ name }} | Book Club",
-    "club_detail_og_title": "{{ name }}",
-    "site_name": "Book Club",
-    "site_url": "https://book-club-fe.vercel.app",
-    "site_description": "Читацькі клуби України"
-  }
-}
-````
-
-## File: src/app/features/clubs/clubs-list/clubs-list.component.html
-````html
-<div class="min-h-screen">
-  <section aria-label="Search clubs" class="parchment-hero px-4 py-14 text-center">
-    <div class="relative z-10">
-      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
-                 text-[var(--color-ink)] mb-3 drop-shadow-sm">
-        {{ 'CLUBS.title' | translate }}
-      </h1>
-      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-12">
-        {{ 'CLUBS.subtitle' | translate }}
-      </p>
-      <div class="mx-auto max-w-xl lg:max-w-2xl relative">
-        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
-        <input
-          id="club-search"
-          type="search"
-          [ngModel]="clubService.searchQuery()"
-          (ngModelChange)="clubService.setSearchQuery($event)"
-          [placeholder]="'CLUBS.search_placeholder_full' | translate"
-          class="w-full parchment-input rounded-full px-5 py-3 text-sm"
-          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
-        />
-      </div>
-    </div>
-  </section>
-  <div class="page-container py-8 space-y-8">
-    @if (clubService.error()) {
-      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-        <span aria-hidden="true">⚠️</span>
-        <span>{{ clubService.error() }}</span>
-      </div>
-    }
-    @if (auth.isAuthenticated()) {
-      <div class="flex justify-center" role="tablist" aria-label="Club filter">
-        <div class="relative flex rounded-full p-1
-                    bg-[var(--color-surface-sunken)]
-                    border border-[var(--color-sepia)]
-                    shadow-inner">
-          <div class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full
-                      bg-[var(--color-surface-raised)]
-                      shadow-[var(--shadow-parchment)]
-                      transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-               [style.left]="activeTab() === 'all' ? '4px' : '50%'"
-               aria-hidden="true">
-          </div>
-          <button
-            role="tab"
-            type="button"
-            [attr.aria-selected]="activeTab() === 'all'"
-            (click)="activeTab.set('all')"
-            class="relative z-10 px-7 py-2 rounded-full text-sm font-medium
-                   transition-colors duration-300 select-none focus:outline-none
-                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
-            [class]="activeTab() === 'all'
-              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
-              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
-          >
-            {{ 'CLUBS.all' | translate }}
-          </button>
-          <button
-            role="tab"
-            type="button"
-            [attr.aria-selected]="activeTab() === 'my'"
-            (click)="activeTab.set('my')"
-            class="relative z-10 flex items-center gap-1.5 px-7 py-2 rounded-full text-sm font-medium
-                   transition-colors duration-300 select-none focus:outline-none
-                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
-            [class]="activeTab() === 'my'
-              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
-              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
-          >
-            {{ 'CLUBS.my_clubs' | translate }}
-            @if (clubService.myClubs().length > 0) {
-              <span class="inline-flex items-center justify-center
-                           h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
-                           transition-colors duration-300"
-                    [class]="activeTab() === 'my'
-                      ? 'bg-[var(--color-primary-600)] text-white'
-                      : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]'">
-                {{ clubService.myClubs().length }}
-              </span>
-            }
-          </button>
-        </div>
-      </div>
-      @if (activeTab() === 'all') {
-        <div class="pt-6" role="tabpanel">
-          @if (clubService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
-              <hlm-spinner />
-            </div>
-          } @else if (clubService.filteredClubs().length === 0) {
-            <app-empty-state
-              icon="📚"
-              title="No clubs yet"
-              description="No clubs have been created yet. Check back soon!"
-            />
-          } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-                  <app-club-card
-                    [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
-                    [isMember]="clubService.myClubIds().has(club.id)"
-                    [isOwned]="ownedClubIds().has(club.id)"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [joining]="joiningClubId() === club.id"
-                    (join)="onJoin(club)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      }
-      @if (activeTab() === 'my') {
-        <div class="pt-6" role="tabpanel">
-          @if (clubService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true">
-              <hlm-spinner />
-            </div>
-          } @else if (clubService.myClubs().length === 0) {
-            <app-empty-state
-              icon="📚"
-              [title]="'CLUBS.no_clubs' | translate"
-              description="Join a club to see it here."
-            />
-          } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.myClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-                  <app-club-card
-                    [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
-                    [isMember]="clubService.myClubIds().has(club.id)"
-                    [isOwned]="ownedClubIds().has(club.id)"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [joining]="joiningClubId() === club.id"
-                    (join)="onJoin(club)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      }
-    } @else {
-      @if (clubService.isLoading()) {
-        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
-          <hlm-spinner />
-        </div>
-      } @else if (clubService.filteredClubs().length === 0) {
-        <app-empty-state
-          icon="📚"
-          title="No clubs yet"
-          description="No clubs have been created yet. Check back soon!"
-        />
-      } @else {
-        <ul class="bento-grid">
-          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-              <app-club-card
-                [club]="club"
-                [variant]="i === 0 ? 'featured' : 'default'"
-                [isMember]="false"
-                [isOwned]="false"
-                [isAuthenticated]="false"
-                [joining]="false"
-                (join)="onJoin(club)"
-              />
-            </li>
-          }
-        </ul>
-      }
-    }
-  </div>
-  @if (auth.isOrganizer()) {
-    <a
-      routerLink="/clubs/create"
-      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full fab-fantasy focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] focus:ring-offset-2 transition-all duration-200"
-      [attr.aria-label]="'CLUBS.create' | translate"
-      [title]="'CLUBS.create' | translate"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-      </svg>
-    </a>
-  }
-</div>
-````
-
-## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
+## File: src/app/features/quiz/quiz-take/quiz-take.component.ts
 ````typescript
 import {
-  Component,
   ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  computed,
   inject,
   signal,
-  OnInit,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { Club } from '../../../core/models/club.model';
-import { SeoService } from '../../../core/services/seo.service';
-import { TranslateModule } from '@ngx-translate/core';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { ClubCardComponent } from './club-card/club-card.component';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizAttempt } from '../../../core/models/quiz.model';
+import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
+type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
 @Component({
-  selector: 'app-clubs-list',
+  selector: 'app-quiz-take',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, HlmSpinner],
-  templateUrl: './clubs-list.component.html',
+  imports: [RouterLink, LoadingSpinnerComponent, TranslateModule],
+  templateUrl: './quiz-take.component.html',
 })
-export class ClubsListComponent implements OnInit {
-  readonly clubService = inject(ClubService);
-  readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  readonly joiningClubId = signal<string | null>(null);
-  readonly ownedClubIds = this.clubService.myOwnedClubIds;
-  readonly activeTab = signal<'all' | 'my'>('all');
-  async ngOnInit(): Promise<void> {
-    this.seo.setPageI18n('SEO.clubs_title', {
-      descriptionKey: 'SEO.clubs_description',
-      ogTitleKey: 'SEO.clubs_og_title',
-    });
-    this.seo.injectWebSiteJsonLd();
-    await this.clubService.loadPublicClubs();
-    if (this.auth.isAuthenticated()) {
-      await this.clubService.loadMyClubs();
+export class QuizTakeComponent implements OnInit {
+  protected readonly quizService = inject(QuizService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
+  protected readonly state = signal<QuizState>('loading');
+  protected readonly errorMessage = signal('');
+  protected readonly currentIndex = signal(0);
+  protected readonly selectedAnswers = signal<number[]>([]);
+  protected readonly selectedOption = computed(
+    () => this.selectedAnswers()[this.currentIndex()] ?? -1,
+  );
+  protected readonly attempt = signal<QuizAttempt | null>(null);
+  protected clubId = '';
+  protected readonly currentQuestion = computed(
+    () => this.quizService.questions()[this.currentIndex()] ?? null,
+  );
+  protected readonly isLastQuestion = computed(
+    () => this.currentIndex() === this.quizService.questions().length - 1,
+  );
+  protected readonly progressPercent = computed(() => {
+    const total = this.quizService.questions().length;
+    return total === 0 ? 0 : Math.round(((this.currentIndex() + 1) / total) * 100);
+  });
+  protected readonly scorePercent = computed(() => {
+    const a = this.attempt();
+    if (!a || a.total === 0) return 0;
+    return Math.round((a.score / a.total) * 100);
+  });
+  protected readonly scoreMessage = computed(() => {
+    const pct = this.scorePercent();
+    if (pct === 100) return this.translate.instant('QUIZ.result_perfect');
+    if (pct >= 80) return '🌟 Great job!';
+    if (pct >= 60) return '👍 Good effort!';
+    if (pct >= 40) return '📖 Keep reading!';
+    return '💪 Better luck next time!';
+  });
+  ngOnInit(): void {
+    this.clubId = this.route.snapshot.params['id'] as string;
+    const quizId = this.route.snapshot.params['quizId'] as string;
+    if (!quizId) {
+      this.errorMessage.set('Quiz not found.');
+      this.state.set('error');
+      return;
     }
+    this.quizService
+      .loadQuestions(quizId)
+      .then(() => {
+        const count = this.quizService.questions().length;
+        if (count === 0) {
+          this.errorMessage.set('This quiz has no questions yet.');
+          this.state.set('error');
+          return;
+        }
+        this.selectedAnswers.set(new Array<number>(count).fill(-1));
+        this.state.set('taking');
+      })
+      .catch(err => {
+        this.errorMessage.set((err as Error).message);
+        this.state.set('error');
+      });
   }
-  async onJoin(club: Club): Promise<void> {
-    this.joiningClubId.set(club.id);
-    try {
-      await this.clubService.joinClub(club.id);
-    } catch {
-    } finally {
-      this.joiningClubId.set(null);
-    }
+  protected optionLabel(index: number): string {
+    return String.fromCodePoint(65 + index);
+  }
+  protected selectOption(index: number): void {
+    const current = this.currentIndex();
+    this.selectedAnswers.update(answers => {
+      const copy = [...answers];
+      copy[current] = index;
+      return copy;
+    });
+  }
+  protected next(): void {
+    if (this.selectedOption() === -1) return;
+    this.currentIndex.update(i => i + 1);
+  }
+  protected previous(): void {
+    if (this.currentIndex() === 0) return;
+    this.currentIndex.update(i => i - 1);
+  }
+  protected submit(): void {
+    if (this.selectedOption() === -1) return;
+    this.state.set('submitting');
+    const quizId = this.route.snapshot.params['quizId'] as string;
+    this.quizService
+      .submitAttempt(quizId, this.selectedAnswers())
+      .then(result => {
+        this.attempt.set(result);
+        this.state.set('results');
+      })
+      .catch(err => {
+        this.errorMessage.set((err as Error).message);
+        this.state.set('error');
+      });
   }
 }
+````
+
+## File: src/app/core/services/club.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
+import { AuthService } from '../auth/auth.service';
+import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
+import { ClubEvent } from '../models/event.model';
+@Injectable({ providedIn: 'root' })
+export class ClubService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly _clubs = signal<Club[]>([]);
+  private readonly _myClubs = signal<Club[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _error = signal<string | null>(null);
+  private readonly _searchQuery = signal('');
+  private readonly _cityFilter = signal<string | null>(null);
+  readonly clubs = this._clubs.asReadonly();
+  readonly myClubs = this._myClubs.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly searchQuery = this._searchQuery.asReadonly();
+  readonly myOwnedClubs = computed<Club[]>(() => {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return [];
+    return this._clubs().filter(c => c.organizerId === userId);
+  });
+  readonly myOwnedClubIds = computed<Set<string>>(() =>
+    new Set(this.myOwnedClubs().map(c => c.id)),
+  );
+  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
+  readonly availableCities = computed<string[]>(() => {
+    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
+    return cities.sort((a, b) => a.localeCompare(b));
+  });
+  readonly filteredClubs = computed(() => {
+    const q = this._searchQuery().toLowerCase().trim();
+    const city = this._cityFilter();
+    let clubs = this._clubs();
+    if (q) {
+      clubs = clubs.filter(
+        c =>
+          c.name.toLowerCase().includes(q) ||
+          (c.description?.toLowerCase().includes(q) ?? false),
+      );
+    }
+    if (city) {
+      clubs = clubs.filter(c => c.city === city);
+    }
+    return clubs;
+  });
+  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
+    const clubs = this.filteredClubs();
+    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
+      const city = club.city || '';
+      if (!acc[city]) acc[city] = [];
+      acc[city].push(club);
+      return acc;
+    }, {});
+  });
+  readonly myParticipatedClubs = computed<Club[]>(() => []);
+  readonly myMissedClubs = computed<Club[]>(() => []);
+  setSearchQuery(query: string): void {
+    this._searchQuery.set(query);
+  }
+  setCityFilter(city: string | null): void {
+    this._cityFilter.set(city);
+  }
+  async loadPublicClubs(): Promise<void> {
+    this._isLoading.set(true);
+    this._error.set(null);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
+      );
+      this._clubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load clubs');
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async loadMyClubs(): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
+      );
+      this._myClubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load my clubs');
+    }
+  }
+  async getClubById(id: string): Promise<Club | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
+      );
+      return mapClub(raw);
+    } catch {
+      return null;
+    }
+  }
+  async createClub(payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    coverUrl?: string | null;
+    city?: string;
+    tags?: string[];
+    meetingDurationMinutes?: number | null;
+    afterMeetingVenue?: { name: string; address: string; description: string } | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
+        name: payload.name,
+        description: payload.description,
+        isPublic: payload.isPublic,
+        coverUrl: payload.coverUrl ?? null,
+        city: payload.city,
+        tags: payload.tags,
+        meetingDurationMinutes: payload.meetingDurationMinutes,
+        afterMeetingVenue: payload.afterMeetingVenue,
+      }),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(existing => [club, ...existing]);
+    this._myClubs.update(existing => [club, ...existing]);
+    return club;
+  }
+  async updateClub(clubId: string, payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    city?: string;
+    coverUrl?: string | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    return club;
+  }
+  async joinClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
+    );
+    this._clubs.update(list =>
+      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
+    );
+    const club = this._clubs().find(c => c.id === clubId);
+    if (club && !this.myClubIds().has(clubId)) {
+      this._myClubs.update(list => [club, ...list]);
+    }
+  }
+  async leaveClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
+    );
+    this._clubs.update(list =>
+      list.map(c =>
+        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
+      ),
+    );
+    this._myClubs.update(list => list.filter(c => c.id !== clubId));
+  }
+  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
+    );
+    return raw.map(mapClubMember);
+  }
+  async kickMember(clubId: string, userId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
+    );
+  }
+  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
+    );
+  }
+  async getBans(clubId: string): Promise<BanRecord[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
+    );
+    return raw.map(mapBanRecord);
+  }
+  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
+    );
+    return raw.map(mapEvent);
+  }
+  async pauseClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'pause');
+  }
+  async cancelClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'cancel');
+  }
+  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
+  }
+  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+  msUntilDeletion(club: Club): number | null {
+    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
+    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
+    const remaining = deletionTime - Date.now();
+    return remaining > 0 ? remaining : null;
+  }
+}
+````
+
+## File: src/app/features/clubs/edit-club/edit-club.component.html
+````html
+<main class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+    <header class="text-center mb-8">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'EDIT_CLUB.subtitle' | translate }}</p>
+    </header>
+    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'EDIT_CLUB.title' | translate }}</h2>
+      @if (isLoadingClub()) {
+        <div class="flex justify-center py-12">
+          <hlm-spinner />
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+          <hlm-field>
+            <label hlmFieldLabel for="club-name">
+              {{ 'EDIT_CLUB.name_label' | translate }}
+              <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <input
+              hlmInput
+              id="club-name"
+              type="text"
+              formControlName="name"
+              class="w-full"
+              [placeholder]="'EDIT_CLUB.name_placeholder' | translate"
+            />
+            <hlm-field-error validator="required">{{ 'EDIT_CLUB.name_required' | translate }}</hlm-field-error>
+            <hlm-field-error validator="minlength">{{ 'EDIT_CLUB.name_min' | translate }}</hlm-field-error>
+            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.name_max' | translate }}</hlm-field-error>
+          </hlm-field>
+          <hlm-field>
+            <label hlmFieldLabel for="club-description">{{ 'EDIT_CLUB.description_label' | translate }}</label>
+            <textarea
+              hlmInput
+              id="club-description"
+              formControlName="description"
+              rows="3"
+              class="w-full resize-none"
+              [placeholder]="'EDIT_CLUB.description_placeholder' | translate"
+            ></textarea>
+            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.description_max' | translate }}</hlm-field-error>
+          </hlm-field>
+          <hlm-field>
+            <label hlmFieldLabel for="club-city">{{ 'EDIT_CLUB.city_label' | translate }}</label>
+            <input
+              hlmInput
+              id="club-city"
+              type="text"
+              formControlName="city"
+              class="w-full"
+              [placeholder]="'EDIT_CLUB.city_placeholder' | translate"
+            />
+          </hlm-field>
+          <div>
+            <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {{ 'EDIT_CLUB.cover_url_label' | translate }}
+            </p>
+            <app-cover-upload [control]="form.controls.coverUrl" />
+          </div>
+          <fieldset>
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'EDIT_CLUB.visibility_legend' | translate }}</legend>
+            <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
+              <div>
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'EDIT_CLUB.public_label' | translate }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'EDIT_CLUB.public_desc' | translate }}</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                [attr.aria-checked]="form.controls.isPublic.value"
+                (click)="togglePublic()"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                [class.bg-primary-600]="form.controls.isPublic.value"
+                [class.bg-gray-300]="!form.controls.isPublic.value"
+                [class.dark:bg-gray-600]="!form.controls.isPublic.value"
+              >
+                <span
+                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                  [class.translate-x-6]="form.controls.isPublic.value"
+                  [class.translate-x-1]="!form.controls.isPublic.value"
+                ></span>
+              </button>
+            </div>
+          </fieldset>
+          @if (errorMessage()) {
+            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+                 role="alert">
+              <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+          <div class="flex gap-3 pt-2">
+            <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
+              {{ 'EDIT_CLUB.cancel' | translate }}
+            </button>
+            <button hlmBtn type="submit" [disabled]="isSubmitting()"
+                    class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
+              @if (isSubmitting()) {
+                <hlm-spinner class="mr-2" />
+                {{ 'EDIT_CLUB.submitting' | translate }}
+              } @else {
+                {{ 'EDIT_CLUB.submit' | translate }}
+              }
+            </button>
+          </div>
+        </form>
+      }
+    </article>
+  </div>
+</main>
 ````
 
 ## File: src/app/features/events/event-detail/event-detail.component.ts
@@ -16031,6 +15043,150 @@ export class EventsFeedComponent implements OnInit {
 }
 ````
 
+## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { QuizService } from '../../../core/services/quiz.service';
+import { QuizQuestion } from '../../../core/models/quiz.model';
+interface MetaForm {
+  title: FormControl<string>;
+  description: FormControl<string>;
+}
+interface QuestionForm {
+  question: FormControl<string>;
+  option0: FormControl<string>;
+  option1: FormControl<string>;
+  option2: FormControl<string>;
+  option3: FormControl<string>;
+  correctIndex: FormControl<number>;
+}
+type LocalQuestion = Omit<QuizQuestion, 'id' | 'quizId'>;
+@Component({
+  selector: 'app-quiz-create',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule],
+  templateUrl: './quiz-create.component.html',
+})
+export class QuizCreateComponent {
+  private readonly quizService = inject(QuizService);
+  private readonly router = inject(Router);
+  protected readonly currentStep = signal<1 | 2>(1);
+  protected readonly localQuestions = signal<LocalQuestion[]>([]);
+  protected readonly isPublishing = signal(false);
+  protected readonly errorMessage = signal('');
+  readonly id = input<string>('');
+  readonly optionIndices: readonly number[] = [0, 1, 2, 3];
+  protected readonly metaForm = new FormGroup<MetaForm>({
+    title: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+  });
+  protected readonly questionForm = new FormGroup<QuestionForm>({
+    question: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(5), Validators.maxLength(500)],
+    }),
+    option0: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option1: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option2: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    option3: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.maxLength(200)],
+    }),
+    correctIndex: new FormControl<number>(0, { nonNullable: true }),
+  });
+  protected isInvalidTouched(ctrl: AbstractControl): boolean {
+    return ctrl.invalid && ctrl.touched;
+  }
+  protected optionLabel(index: number): string {
+    return String.fromCodePoint(65 + index);
+  }
+  protected nextStep(): void {
+    if (this.metaForm.invalid) {
+      this.metaForm.markAllAsTouched();
+      return;
+    }
+    this.currentStep.set(2);
+  }
+  protected previousStep(): void {
+    this.currentStep.set(1);
+    this.errorMessage.set('');
+  }
+  protected addQuestion(): void {
+    if (this.questionForm.invalid) {
+      this.questionForm.markAllAsTouched();
+      return;
+    }
+    const { question, option0, option1, option2, option3, correctIndex } =
+      this.questionForm.getRawValue();
+    const newQuestion: LocalQuestion = {
+      question: question.trim(),
+      options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
+      correctIndex,
+    };
+    this.localQuestions.update(prev => [...prev, newQuestion]);
+    this.questionForm.reset({ correctIndex: 0 });
+  }
+  protected removeQuestion(index: number): void {
+    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
+  }
+  protected publishQuiz(): void {
+    const questions = this.localQuestions();
+    if (questions.length === 0) return;
+    this.isPublishing.set(true);
+    this.errorMessage.set('');
+    const { title, description } = this.metaForm.getRawValue();
+    const clubId = this.id();
+    this.quizService
+      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
+      .then(async quiz => {
+        // Add questions sequentially to preserve sort_order
+        for (const q of questions) {
+          await this.quizService.addQuestion(quiz.id, q);
+        }
+        // Activate the quiz
+        await this.quizService.toggleActive(quiz.id, true);
+        this.isPublishing.set(false);
+        this.router.navigate(['/clubs', clubId, 'quizzes']);
+      })
+      .catch(err => {
+        this.isPublishing.set(false);
+        this.errorMessage.set((err as Error).message);
+      });
+  }
+}
+````
+
 ## File: src/app/features/quiz/quiz-edit/quiz-edit.component.ts
 ````typescript
 import {
@@ -16172,431 +15328,1500 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
 }
 ````
 
-## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
-````typescript
-import {
-  Component, ChangeDetectionStrategy, input, output,
-  DestroyRef, signal, inject, ElementRef, HostListener, effect,
-} from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { switchMap, debounceTime, distinctUntilChanged, of } from 'rxjs';
-import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
-import { HlmInput } from '../../spartan/input/src';
-@Component({
-  selector: 'app-address-autocomplete',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, HlmInput],
-  templateUrl: './address-autocomplete.component.html',
-})
-export class AddressAutocompleteComponent {
-  readonly control = input.required<FormControl<string>>();
-  readonly placeholder = input<string>('');
-  readonly inputId = input<string>('');
-  readonly selected = output<GeocodeSuggestion>();
-  private readonly geocoding = inject(GeocodingService);
-  private readonly elRef = inject(ElementRef);
-  private readonly destroyRef = inject(DestroyRef);
-  readonly suggestions = signal<GeocodeSuggestion[]>([]);
-  readonly isLoading = signal(false);
-  readonly isOpen = signal(false);
-  readonly activeIndex = signal(-1);
-  constructor() {
-    effect(() => {
-      const ctrl = this.control();
-      ctrl.valueChanges.pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        switchMap(q => {
-          if (!q || q.length < 2) {
-            this.suggestions.set([]);
-            this.isOpen.set(false);
-            return of([]);
+## File: src/app/layout/header/header.component.html
+````html
+<header
+  class="sticky top-0 z-50
+         bg-[var(--color-surface)]/90 dark:bg-[var(--color-surface)]/95
+         backdrop-blur-[10px]
+         border-b border-[var(--color-sepia)]
+         shadow-[0_2px_12px_rgba(92,45,10,0.10)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.40)]"
+  role="banner"
+>
+  <div class="page-max-w px-6">
+    <div class="flex items-center justify-between h-16">
+      <a
+        routerLink="/"
+        class="font-fantasy text-xl font-bold tracking-widest
+               text-[var(--color-primary-600)] dark:text-[#fbbf24]
+               hover:text-[var(--color-primary-500)] dark:hover:text-[#fcd34d]
+               transition-colors duration-200
+               focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2 rounded"
+        aria-label="BookClub home"
+      >
+        BookClub
+      </a>
+      <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
+        <a
+          routerLink="/clubs"
+          routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
+          class="px-4 py-2 rounded-lg text-sm font-medium
+                 text-[var(--color-ink-muted)]
+                 hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                 transition-all duration-200
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+        >
+          {{ 'NAV.discover' | translate }}
+        </a>
+        @if (isAuthenticated()) {
+          <a
+            routerLink="/events"
+            routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
+            class="px-4 py-2 rounded-lg text-sm font-medium
+                   text-[var(--color-ink-muted)]
+                   hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                   transition-all duration-200
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+          >
+            {{ 'NAV.events' | translate }}
+          </a>
+        }
+      </nav>
+      <div class="hidden md:flex items-center gap-1">
+        <button
+          hlmBtn
+          variant="ghost"
+          size="icon"
+          type="button"
+          data-testid="theme-toggle"
+          (click)="themeService.toggle()"
+          [attr.aria-label]="themeService.isDark()
+            ? ('NAV.theme_toggle_light' | translate)
+            : ('NAV.theme_toggle_dark'  | translate)"
+          [attr.title]="themeService.isDark()
+            ? ('NAV.theme_toggle_light' | translate)
+            : ('NAV.theme_toggle_dark'  | translate)"
+        >
+          @if (themeService.isDark()) {
+            <ng-icon hlm name="lucideSun"  size="sm" />
+          } @else {
+            <ng-icon hlm name="lucideMoon" size="sm" />
           }
-          this.isLoading.set(true);
-          return this.geocoding.autocomplete$(q);
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      ).subscribe({
-        next: (results) => {
-          this.isLoading.set(false);
-          this.suggestions.set(results);
-          this.activeIndex.set(-1);
-          this.isOpen.set(results.length > 0);
-        },
-        error: () => {
-          this.isLoading.set(false);
-          this.suggestions.set([]);
-        },
-      });
-    });
-  }
-  select(s: GeocodeSuggestion): void {
-    this.control().setValue(s.label, { emitEvent: false });
-    this.suggestions.set([]);
-    this.isOpen.set(false);
-    this.selected.emit(s);
-  }
-  onKeydown(event: KeyboardEvent): void {
-    if (!this.isOpen()) return;
-    const len = this.suggestions().length;
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i + 1) % len);
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i - 1 + len) % len);
-    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
-      event.preventDefault();
-      this.select(this.suggestions()[this.activeIndex()]);
-    } else if (event.key === 'Escape') {
-      this.isOpen.set(false);
-    }
-  }
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (!this.elRef.nativeElement.contains(event.target)) {
-      this.isOpen.set(false);
-    }
-  }
-}
+        </button>
+        <button
+          hlmBtn
+          variant="ghost"
+          size="sm"
+          type="button"
+          (click)="switchLang()"
+          [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+        >
+          {{ currentLang() === 'uk' ? 'EN' : 'UK' }}
+        </button>
+        @if (isAuthenticated()) {
+          <button
+            type="button"
+            [hlmDropdownMenuTrigger]="userMenu"
+            class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+            aria-haspopup="menu"
+            [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
+          >
+            <div
+              class="h-9 w-9 rounded-full avatar-gradient
+                     flex items-center justify-center text-white text-sm font-semibold select-none"
+              aria-hidden="true"
+            >
+              {{ userInitials() }}
+            </div>
+          </button>
+          <ng-template #userMenu>
+            <div hlmDropdownMenu>
+              <hlm-dropdown-menu-label>{{ currentUser()?.displayName }}</hlm-dropdown-menu-label>
+              <hlm-dropdown-menu-separator />
+              <a hlmDropdownMenuItem [routerLink]="['/profile']">
+                {{ 'NAV.profile' | translate }}
+              </a>
+              <hlm-dropdown-menu-separator />
+              <button hlmDropdownMenuItem variant="destructive" (click)="signOut()">
+                {{ 'NAV.logout' | translate }}
+              </button>
+            </div>
+          </ng-template>
+        } @else {
+          <a hlmBtn variant="outline" size="sm" routerLink="/login">
+            {{ 'NAV.login' | translate }}
+          </a>
+          <a hlmBtn size="sm" routerLink="/register"
+             class="bg-gradient-fantasy text-white border-0 hover:opacity-90">
+            {{ 'NAV.join_free' | translate }}
+          </a>
+        }
+      </div>
+      <hlm-sheet class="md:hidden">
+        <button
+          hlmSheetTrigger
+          type="button"
+          class="p-2 rounded-lg text-[var(--color-ink-muted)]
+                 hover:bg-[var(--color-surface-raised)] transition-all duration-200
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+          aria-label="Toggle navigation menu"
+        >
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <ng-template hlmSheetPortal>
+          <hlm-sheet-content>
+            <hlm-sheet-header>
+              <h2 hlmSheetTitle
+                  class="font-fantasy font-bold tracking-widest text-[var(--color-primary-600)] dark:text-[#fbbf24]">
+                BookClub
+              </h2>
+            </hlm-sheet-header>
+            <nav class="flex flex-col gap-1 px-4 py-2" aria-label="Mobile navigation">
+              <button hlmSheetClose [routerLink]="['/clubs']"
+                      class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                             text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                             transition-all duration-200 w-full text-left">
+                {{ 'NAV.discover' | translate }}
+              </button>
+              @if (isAuthenticated()) {
+                <button hlmSheetClose [routerLink]="['/events']"
+                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                               text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                               transition-all duration-200 w-full text-left">
+                  {{ 'NAV.events' | translate }}
+                </button>
+              }
+              <button
+                type="button"
+                data-testid="theme-toggle"
+                (click)="themeService.toggle()"
+                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                       transition-all duration-200 w-full text-left"
+                [attr.aria-label]="themeService.isDark()
+                  ? ('NAV.theme_toggle_light' | translate)
+                  : ('NAV.theme_toggle_dark'  | translate)"
+              >
+                @if (themeService.isDark()) {
+                  <ng-icon hlm name="lucideSun"  size="sm" />
+                  <span>{{ 'NAV.theme_toggle_light' | translate }}</span>
+                } @else {
+                  <ng-icon hlm name="lucideMoon" size="sm" />
+                  <span>{{ 'NAV.theme_toggle_dark' | translate }}</span>
+                }
+              </button>
+              <button
+                type="button"
+                (click)="switchLang()"
+                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                       transition-all duration-200 w-full text-left"
+                [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+              >
+                <span>{{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}</span>
+              </button>
+              <div class="pt-2 mt-2 border-t border-[var(--color-sepia)] flex flex-col gap-1">
+                @if (isAuthenticated()) {
+                  <div class="px-4 py-2">
+                    <p class="text-xs font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide">
+                      {{ 'NAV.signed_in_as' | translate }}
+                    </p>
+                    <p class="text-sm font-medium text-[var(--color-ink)] mt-0.5">
+                      {{ currentUser()?.displayName }}
+                    </p>
+                  </div>
+                  <button hlmSheetClose [routerLink]="['/profile']"
+                          class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                                 transition-all duration-200 w-full text-left">
+                    {{ 'NAV.profile' | translate }}
+                  </button>
+                  <button hlmSheetClose type="button" (click)="signOut()"
+                          class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                                 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
+                                 transition-all duration-200">
+                    {{ 'NAV.logout' | translate }}
+                  </button>
+                } @else {
+                  <button hlmSheetClose [routerLink]="['/login']"
+                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                                 transition-all duration-200 w-full text-left">
+                    {{ 'NAV.login' | translate }}
+                  </button>
+                  <button hlmSheetClose [routerLink]="['/register']"
+                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                                 bg-gradient-fantasy text-white hover:opacity-90
+                                 transition-all duration-200 w-full text-left">
+                    {{ 'NAV.join_free' | translate }}
+                  </button>
+                }
+              </div>
+            </nav>
+          </hlm-sheet-content>
+        </ng-template>
+      </hlm-sheet>
+    </div>
+  </div>
+</header>
 ````
 
-## File: src/app/features/clubs/create-club/create-club.component.html
+## File: src/app/features/quiz/quiz-create/quiz-create.component.html
 ````html
-<main class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-lg">
-    <header class="text-center mb-8">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
-      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
+<div class="min-h-screen p-4 sm:p-8">
+  <div class="max-w-2xl mx-auto space-y-6">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-2xl font-bold text-gray-900 dark:text-white">
+          {{ 'QUIZ.create_heading' | translate }}
+        </h1>
+        <p class="text-gray-500 dark:text-gray-400 text-sm mt-0.5">
+          {{ 'QUIZ.create_step_of' | translate: { step: currentStep() } }} —
+          {{ currentStep() === 1 ? ('QUIZ.create_step_details' | translate) : ('QUIZ.create_step_questions' | translate) }}
+        </p>
+      </div>
+      <a [routerLink]="['..']" class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
+        {{ 'QUIZ.create_cancel' | translate }}
+      </a>
     </header>
-    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
-      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-        <hlm-field>
-          <label hlmFieldLabel for="club-name">
-            {{ 'CREATE_CLUB.name_label' | translate }}
-            <span class="text-red-500" aria-hidden="true">*</span>
+    <div class="flex items-center gap-0">
+      @for (step of [1, 2]; track step) {
+        <div
+          class="flex-1 h-1.5 rounded-full transition-all duration-300"
+          [class.bg-primary-500]="currentStep() >= step"
+          [class.bg-gray-200]="currentStep() < step"
+          [class.dark:bg-gray-700]="currentStep() < step"
+        ></div>
+        @if (step < 2) {
+          <div class="w-3"></div>
+        }
+      }
+    </div>
+    @if (currentStep() === 1) {
+      <form
+        [formGroup]="metaForm"
+        (ngSubmit)="nextStep()"
+        novalidate
+        class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200
+               dark:border-gray-800 shadow-sm space-y-5"
+      >
+        <div class="space-y-1">
+          <label
+            for="quiz-title"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {{ 'QUIZ.create_title_label' | translate }} <span class="text-red-500">*</span>
           </label>
           <input
-            hlmInput
-            id="club-name"
-            type="text"
-            formControlName="name"
-            class="w-full"
-            [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
+            id="quiz-title"
+            formControlName="title"
+            [placeholder]="'QUIZ.create_title_placeholder' | translate"
+            class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 dark:text-white
+                   bg-white dark:bg-gray-800 placeholder-gray-400 focus:outline-none
+                   focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors"
+            [class.border-red-400]="isInvalidTouched(metaForm.controls.title)"
+            [class.border-gray-300]="!isInvalidTouched(metaForm.controls.title)"
+            [class.dark:border-gray-600]="!isInvalidTouched(metaForm.controls.title)"
           />
-          <hlm-field-error validator="required">{{ 'CREATE_CLUB.name_required' | translate }}</hlm-field-error>
-          <hlm-field-error validator="minlength">{{ 'CREATE_CLUB.name_min' | translate }}</hlm-field-error>
-          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.name_max' | translate }}</hlm-field-error>
-        </hlm-field>
-        <hlm-field>
-          <label hlmFieldLabel for="club-description">{{ 'CREATE_CLUB.description_label' | translate }}</label>
+          @if (isInvalidTouched(metaForm.controls.title)) {
+            <p class="text-red-500 text-xs">
+              @if (metaForm.controls.title.errors?.['required']) { {{ 'QUIZ.create_title_required' | translate }} }
+              @else if (metaForm.controls.title.errors?.['minlength']) { {{ 'QUIZ.create_title_min' | translate }} }
+              @else if (metaForm.controls.title.errors?.['maxlength']) { {{ 'QUIZ.create_title_max' | translate }} }
+            </p>
+          }
+        </div>
+        <div class="space-y-1">
+          <label
+            for="quiz-desc"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+          >
+            {{ 'QUIZ.create_desc_label' | translate }}
+          </label>
           <textarea
-            hlmInput
-            id="club-description"
+            id="quiz-desc"
             formControlName="description"
             rows="3"
-            class="w-full resize-none"
-            [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
+            [placeholder]="'QUIZ.create_desc_placeholder' | translate"
+            class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5
+                   text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
+                   placeholder-gray-400 resize-none focus:outline-none focus:ring-2
+                   focus:ring-primary-500 focus:border-transparent transition-colors"
+            [class.border-red-400]="isInvalidTouched(metaForm.controls.description)"
           ></textarea>
-          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.description_max' | translate }}</hlm-field-error>
-        </hlm-field>
-        <div>
-          <label for="club-cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ 'CREATE_CLUB.cover_url_label' | translate }}
-          </label>
-          @if (form.controls.coverUrl.value) {
-            <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
-              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover"
-                   (error)="form.controls.coverUrl.setValue('')" />
-            </div>
+          @if (isInvalidTouched(metaForm.controls.description)) {
+            <p class="text-red-500 text-xs">
+              @if (metaForm.controls.description.errors?.['maxlength']) { {{ 'QUIZ.create_desc_max' | translate }} }
+            </p>
           }
-          <input
-            hlmInput
-            id="club-cover-url"
-            type="url"
-            formControlName="coverUrl"
-            class="w-full"
-            [placeholder]="'CREATE_CLUB.cover_url_placeholder' | translate"
-          />
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
         </div>
-        <fieldset>
-          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
-          <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-            <div>
-              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'CREATE_CLUB.public_label' | translate }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'CREATE_CLUB.public_desc' | translate }}</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              [attr.aria-checked]="form.controls.isPublic.value"
-              (click)="togglePublic()"
-              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              [class.bg-primary-600]="form.controls.isPublic.value"
-              [class.bg-gray-300]="!form.controls.isPublic.value"
-              [class.dark:bg-gray-600]="!form.controls.isPublic.value"
-            >
-              <span
-                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                [class.translate-x-6]="form.controls.isPublic.value"
-                [class.translate-x-1]="!form.controls.isPublic.value"
-              ></span>
-            </button>
-          </div>
-        </fieldset>
-        @if (errorMessage()) {
-          <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-               role="alert">
-            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
-            <span>{{ errorMessage() }}</span>
-          </div>
-        }
-        <div class="flex gap-3 pt-2">
-          <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
-            {{ 'CREATE_CLUB.cancel' | translate }}
-          </button>
-          <button hlmBtn type="submit" [disabled]="isSubmitting()"
-                  class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
-            @if (isSubmitting()) {
-              <hlm-spinner class="mr-2" />
-              {{ 'CREATE_CLUB.submitting' | translate }}
-            } @else {
-              {{ 'CREATE_CLUB.submit' | translate }}
-            }
+        <div class="flex justify-end">
+          <button
+            type="submit"
+            [disabled]="metaForm.invalid"
+            class="bg-primary-600 hover:bg-primary-500 disabled:opacity-40
+                   disabled:cursor-not-allowed text-white rounded-xl px-6 py-2.5
+                   font-medium transition-colors text-sm"
+          >
+            {{ 'QUIZ.create_continue' | translate }}
           </button>
         </div>
       </form>
-    </article>
-  </div>
-</main>
-````
-
-## File: src/app/features/clubs/create-club/create-club.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-} from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-interface CreateClubForm {
-  name: FormControl<string>;
-  description: FormControl<string>;
-  isPublic: FormControl<boolean>;
-  city: FormControl<string>;
-  coverUrl: FormControl<string>;
-}
-@Component({
-  selector: 'app-create-club',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './create-club.component.html',
-})
-export class CreateClubComponent {
-  private readonly clubService = inject(ClubService);
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly _errorMessage = signal<string | null>(null);
-  readonly errorMessage = this._errorMessage.asReadonly();
-  private readonly _isSubmitting = signal(false);
-  readonly isSubmitting = this._isSubmitting.asReadonly();
-  private readonly _showAfterMeeting = signal(false);
-  readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
-  readonly form = new FormGroup<CreateClubForm>({
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-    isPublic: new FormControl(true, { nonNullable: true }),
-    city: new FormControl('', { nonNullable: true }),
-    coverUrl: new FormControl('', { nonNullable: true }),
-  });
-  togglePublic(): void {
-    const current = this.form.controls.isPublic.value;
-    this.form.controls.isPublic.setValue(!current);
-  }
-  toggleAfterMeeting(): void {
-    this._showAfterMeeting.update(v => !v);
-  }
-  cancel(): void {
-    this.router.navigate(['/clubs']);
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
     }
-    this._isSubmitting.set(true);
-    this._errorMessage.set(null);
-    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
-    try {
-      const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
-      this.router.navigate(['/clubs', club.id]);
-    } catch (err) {
-      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
-    } finally {
-      this._isSubmitting.set(false);
-    }
-  }
-}
-````
-
-## File: src/app/features/events/create-event/create-event.component.html
-````html
-<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
-  <nav>
-    <a [routerLink]="['/clubs', id()]"
-       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-      ← Back to Club
-    </a>
-  </nav>
-  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">Create Event</h1>
-    @if (errorMessage()) {
-      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-           role="alert">
-        {{ errorMessage() }}
-      </div>
-    }
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-      <div>
-        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Title <span class="text-red-500">*</span>
-        </label>
-        <input hlmInput id="title" type="text" formControlName="title" class="w-full"
-               placeholder="April Discussion" />
-        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Title is required.</p>
-        }
-      </div>
-      <div>
-        <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">📖 Book title</label>
-        <input hlmInput id="bookTitle" type="text" formControlName="bookTitle" class="w-full"
-               placeholder="The Master and Margarita" />
-        @if (isFetchingCover()) {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">🔍 Searching for book cover…</p>
-        } @else if (coverFetchFailed()) {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">No cover found — you can add one manually below.</p>
-        } @else {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">What book will you discuss at this event?</p>
-        }
-      </div>
-      <div>
-        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-        <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
-                  placeholder="What will you be reading or discussing?"></textarea>
-      </div>
-      <div>
-        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Date & Time <span class="text-red-500">*</span>
-        </label>
-        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
-        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Date is required.</p>
-        }
-      </div>
-      <div>
-        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          Location <span class="text-red-500">*</span>
-        </p>
-        <app-address-autocomplete
-          [control]="form.controls.address"
-          placeholder="Start typing an address…"
-          (selected)="onAddressSelect($event)"
-        />
-        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">Location is required.</p>
-        }
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Duration (min)</label>
-          <input hlmInput id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
-                 class="w-full" placeholder="120" />
-        </div>
-        <div>
-          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Theme</label>
-          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
-        </div>
-      </div>
-      <div>
-        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags</label>
-        <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
-               placeholder="fiction, dystopia, classic (comma-separated)" />
-      </div>
-      <div>
-        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cover image</p>
-        <app-cover-upload [control]="form.controls.coverUrl" />
-      </div>
-      @if (activeQuizzes().length > 0) {
-        <div>
-          <label for="quizId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            🧠 Linked quiz
-          </label>
-          <select id="quizId" formControlName="quizId"
-                  class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
-            <option [ngValue]="null">— No quiz —</option>
-            @for (quiz of activeQuizzes(); track quiz.id) {
-              <option [value]="quiz.id">{{ quiz.title }}</option>
+    @if (currentStep() === 2) {
+      <div class="space-y-6">
+        @if (localQuestions().length > 0) {
+          <div class="space-y-3">
+            <h2 class="text-sm font-semibold text-gray-700 dark:text-gray-300 uppercase
+                       tracking-widest">
+              Questions ({{ localQuestions().length }})
+            </h2>
+            @for (q of localQuestions(); track $index) {
+              <div
+                class="bg-white dark:bg-gray-900 rounded-xl px-5 py-4 border border-gray-200
+                       dark:border-gray-800 shadow-sm flex items-start gap-3"
+              >
+                <span
+                  class="w-7 h-7 rounded-full bg-primary-100 dark:bg-primary-900/40
+                         text-primary-700 dark:text-primary-300 text-xs font-bold flex
+                         items-center justify-center flex-shrink-0"
+                >
+                  {{ $index + 1 }}
+                </span>
+                <div class="min-w-0">
+                  <p class="text-gray-900 dark:text-white text-sm font-medium">
+                    {{ q.question }}
+                  </p>
+                  <p class="text-green-600 dark:text-green-400 text-xs mt-1">
+                    ✓ {{ q.options[q.correctIndex] }}
+                  </p>
+                </div>
+                <button
+                  (click)="removeQuestion($index)"
+                  class="text-gray-400 hover:text-red-500 transition-colors text-lg
+                         flex-shrink-0 ml-auto leading-none"
+                  aria-label="Remove question {{ $index + 1 }}"
+                >
+                  ✕
+                </button>
+              </div>
             }
-          </select>
-        </div>
-      }
-      <div>
-        <button type="button" (click)="toggleAfterVenue()"
-                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
-          {{ showAfterVenue() ? '− Remove after-meeting venue' : '+ Add after-meeting venue' }}
-        </button>
-        @if (showAfterVenue()) {
-          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
-            <div>
-              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Venue name <span class="text-red-500">*</span>
-              </label>
-              <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
-                     class="w-full" placeholder="Cozy Cafe" />
-            </div>
-            <div>
-              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Address</label>
-              <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
-                     class="w-full" placeholder="123 Main St" />
-            </div>
-            <div>
-              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
-              <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
-                     class="w-full" placeholder="Optional notes" />
-            </div>
           </div>
         }
+        <form
+          [formGroup]="questionForm"
+          (ngSubmit)="addQuestion()"
+          novalidate
+          class="bg-white dark:bg-gray-900 rounded-2xl p-6 border border-gray-200
+                 dark:border-gray-800 shadow-sm space-y-5"
+        >
+          <h2 class="font-semibold text-gray-900 dark:text-white">
+            {{ localQuestions().length === 0 ? ('QUIZ.create_first_question' | translate) : ('QUIZ.create_another_question' | translate) }}
+          </h2>
+          <div class="space-y-1">
+            <label
+              for="q-text"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
+              {{ 'QUIZ.create_question_label' | translate }} <span class="text-red-500">*</span>
+            </label>
+            <textarea
+              id="q-text"
+              formControlName="question"
+              rows="2"
+              [placeholder]="'QUIZ.create_question_placeholder' | translate"
+              class="w-full rounded-lg border border-gray-300 dark:border-gray-600 px-4 py-2.5
+                     text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
+                     placeholder-gray-400 resize-none focus:outline-none focus:ring-2
+                     focus:ring-primary-500 focus:border-transparent transition-colors"
+              [class.border-red-400]="isInvalidTouched(questionForm.controls.question)"
+            ></textarea>
+            @if (isInvalidTouched(questionForm.controls.question)) {
+              <p class="text-red-500 text-xs">
+                @if (questionForm.controls.question.errors?.['required']) { {{ 'QUIZ.create_question_required' | translate }} }
+                @else if (questionForm.controls.question.errors?.['minlength']) { {{ 'QUIZ.create_question_min' | translate }} }
+              </p>
+            }
+          </div>
+          <div class="space-y-1">
+            <p class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {{ 'QUIZ.create_answers_label' | translate }} <span class="text-red-500">*</span>
+            </p>
+            <div class="space-y-2">
+              @for (idx of optionIndices; track idx) {
+                <div class="flex items-center gap-3">
+                  <label class="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      formControlName="correctIndex"
+                      [value]="idx"
+                      class="w-4 h-4 text-accent-600 focus:ring-accent-500 border-gray-300
+                             dark:border-gray-600 cursor-pointer"
+                    />
+                    <span
+                      class="ml-2 w-6 h-6 rounded-full flex items-center justify-center
+                             text-xs font-bold"
+                      [class.bg-accent-500]="questionForm.controls.correctIndex.value === idx"
+                      [class.text-white]="questionForm.controls.correctIndex.value === idx"
+                      [class.bg-gray-100]="questionForm.controls.correctIndex.value !== idx"
+                      [class.dark:bg-gray-700]="questionForm.controls.correctIndex.value !== idx"
+                      [class.text-gray-600]="questionForm.controls.correctIndex.value !== idx"
+                      [class.dark:text-gray-400]="questionForm.controls.correctIndex.value !== idx"
+                    >
+                      {{ optionLabel(idx) }}
+                    </span>
+                  </label>
+                  <input
+                    [formControlName]="'option' + idx"
+                    [placeholder]="'Option ' + optionLabel(idx)"
+                    class="flex-1 rounded-lg border border-gray-300 dark:border-gray-600 px-4
+                           py-2 text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-800
+                           placeholder-gray-400 focus:outline-none focus:ring-2
+                           focus:ring-primary-500 focus:border-transparent transition-colors"
+                  />
+                </div>
+              }
+            </div>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">
+              {{ 'QUIZ.create_answers_hint' | translate }}
+            </p>
+          </div>
+          <button
+            type="submit"
+            [disabled]="questionForm.invalid"
+            class="w-full border-2 border-dashed border-primary-400 dark:border-primary-600
+                   text-primary-600 dark:text-primary-400 hover:bg-primary-50
+                   dark:hover:bg-primary-900/20 disabled:opacity-40 disabled:cursor-not-allowed
+                   rounded-xl py-2.5 font-medium transition-colors text-sm"
+          >
+            {{ 'QUIZ.create_add_question' | translate }}
+          </button>
+        </form>
+        @if (errorMessage()) {
+          <div
+            class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800
+                   rounded-xl p-4 text-red-700 dark:text-red-400 text-sm"
+          >
+            ⚠️ {{ errorMessage() }}
+          </div>
+        }
+        <div class="flex justify-between items-center pb-8">
+          <button
+            type="button"
+            (click)="previousStep()"
+            class="text-sm text-gray-500 hover:text-gray-900 dark:hover:text-white
+                   transition-colors"
+          >
+            {{ 'QUIZ.create_back' | translate }}
+          </button>
+          <button
+            type="button"
+            (click)="publishQuiz()"
+            [disabled]="localQuestions().length === 0 || isPublishing()"
+            class="bg-accent-600 hover:bg-accent-500 disabled:opacity-40
+                   disabled:cursor-not-allowed text-white rounded-xl px-8 py-2.5
+                   font-bold transition-colors text-sm"
+          >
+            {{ isPublishing() ? ('QUIZ.create_saving' | translate) : ('QUIZ.create_save_draft' | translate) }}
+            @if (localQuestions().length > 0) {
+              ({{ localQuestions().length }}
+              {{ localQuestions().length === 1 ? ('QUIZ.create_questions_count_one' | translate) : ('QUIZ.create_questions_count_many' | translate) }})
+            }
+          </button>
+        </div>
       </div>
-      <div class="flex justify-end gap-3 pt-2">
-        <a hlmBtn variant="outline" [routerLink]="['/clubs', id()]">Cancel</a>
-        <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
-                class="bg-primary-600 hover:bg-primary-700 text-white">
-          @if (isSubmitting()) { Creating… } @else { Create Event }
-        </button>
-      </div>
-    </form>
+    }
   </div>
-</main>
+</div>
+````
+
+## File: public/i18n/en.json
+````json
+{
+  "AUTH": {
+    "activate_account": "Click it to activate your account.",
+    "back_to_login": "Back to sign in",
+    "check_email": "Check your email",
+    "confirm_password": "Confirm password",
+    "confirmation_sent": "We sent a confirmation link to",
+    "create_account_h2": "Create account",
+    "create_account_subtitle": "Create your account",
+    "creating_account": "Creating account…",
+    "display_name": "Display name",
+    "email": "Email",
+    "have_account": "Already have an account?",
+    "no_account": "Don't have an account?",
+    "password": "Password",
+    "password_medium": "Medium",
+    "password_strong": "Strong",
+    "password_weak": "Weak",
+    "passwords_no_match": "Passwords do not match",
+    "register_title": "Register",
+    "role_organizer_desc": "Create clubs & build quizzes",
+    "role_organizer_label": "Organizer",
+    "role_reader_desc": "Join clubs & take quizzes",
+    "role_reader_label": "Reader",
+    "select_role_error": "Please select a role.",
+    "sign_in_h2": "Sign in",
+    "signing_in": "Signing in…",
+    "submit_login": "Log in",
+    "want_to": "I want to…",
+    "welcome_back": "Welcome back",
+    "login_title": "Log In",
+    "submit_register": "Register",
+    "password_strength": "Password strength",
+    "account_created": "Account created successfully!",
+    "welcome_message": "Welcome,",
+    "error_invalid_credentials": "Invalid email or password."
+  },
+  "CREATE_CLUB": {
+    "subtitle": "Create a new reading community",
+    "title": "Create a Club",
+    "basic_info_legend": "Basic information",
+    "name_label": "Club name",
+    "name_placeholder": "e.g. Northern Readers",
+    "name_required": "Club name is required.",
+    "name_min": "Name must be at least 3 characters.",
+    "name_max": "Name must not exceed 100 characters.",
+    "description_label": "Description",
+    "description_placeholder": "What books will your club read? Who is it for?",
+    "description_max": "Description must not exceed 500 characters.",
+    "city_label": "City",
+    "city_placeholder": "Kyiv",
+    "city_required": "City is required.",
+    "city_max": "City must not exceed 100 characters.",
+    "address_label": "Address",
+    "address_placeholder": "1 Khreshchatyk St.",
+    "address_max": "Address must not exceed 200 characters.",
+    "tags_duration_legend": "Tags & duration",
+    "tags_label": "Tags / Genres",
+    "tags_placeholder": "Classics, Romance, Fantasy",
+    "tags_hint": "Enter genres separated by commas",
+    "tags_max": "Tags must not exceed 300 characters.",
+    "duration_label": "Meeting duration (min)",
+    "duration_placeholder": "90",
+    "duration_min": "Duration must be at least 15 minutes.",
+    "duration_max": "Duration must not exceed 480 minutes.",
+    "visibility_legend": "Visibility",
+    "public_label": "Public club",
+    "public_desc": "Anyone can discover and join",
+    "cover_url_label": "Cover image URL",
+    "cover_url_placeholder": "https://example.com/cover.jpg",
+    "cover_url_hint": "Paste a public image link (JPG, PNG, WebP)",
+    "cover_url_invalid": "Enter a valid URL (must start with https://)",
+    "after_meeting_toggle": "▼ After-meeting venue",
+    "after_meeting_hide": "▲ Hide after-meeting venue info",
+    "venue_name_label": "Venue name",
+    "venue_name_placeholder": "Café Pushkin",
+    "venue_name_max": "Name must not exceed 150 characters.",
+    "venue_address_label": "Venue address",
+    "venue_address_placeholder": "2 Khreshchatyk St.",
+    "venue_address_max": "Address must not exceed 200 characters.",
+    "venue_notes_label": "Notes",
+    "venue_notes_placeholder": "Reservation at 8 pm",
+    "venue_notes_max": "Notes must not exceed 300 characters.",
+    "cancel": "Cancel",
+    "submit": "Create club",
+    "submitting": "Creating…"
+  },
+  "CLUBS": {
+    "active": "Active",
+    "all": "All Clubs",
+    "all_cities": "All cities",
+    "cancelled": "Cancelled",
+    "create": "Create club",
+    "join": "Join",
+    "member_badge": "✓ Member",
+    "member_singular": "member",
+    "members": "members",
+    "missed": "Missed",
+    "my_clubs": "My Clubs",
+    "participated": "Attended",
+    "paused": "Paused",
+    "search_placeholder": "Search clubs...",
+    "search_placeholder_full": "Search by name or description…",
+    "subtitle": "Discover communities of readers near you",
+    "title": "Book Clubs",
+    "view": "View",
+    "upcoming": "Upcoming meetings",
+    "joined": "You're a member",
+    "no_clubs": "No clubs found",
+    "book_current": "Current book",
+    "days_until": "in {{ days }} days"
+  },
+  "CLUB_DETAIL": {
+    "about": "About",
+    "back": "Back to clubs",
+    "back_short": "Back",
+    "cancel": "Cancel",
+    "created": "Created",
+    "join": "Join Club",
+    "leave": "Leave Club",
+    "manage_title": "Club management",
+    "new_date": "New meeting date",
+    "not_found": "Club not found",
+    "organizer_badge": "✨ Organizer",
+    "pause": "Pause",
+    "private": "Private",
+    "quizzes_desc": "Create & manage reading quizzes",
+    "quizzes_title": "Quizzes",
+    "randomizer_desc": "Pick the next book to read",
+    "randomizer_title": "Randomizer",
+    "reschedule": "Reschedule",
+    "reschedule_submit": "Confirm date",
+    "members_title": "Members",
+    "tags_title": "Tags",
+    "organizer_title": "Organizer",
+    "meeting_info_title": "Meeting place & time",
+    "duration_label": "Duration",
+    "address_label": "Address",
+    "view_on_map": "View on map →",
+    "after_meeting_title": "After the meeting",
+    "deletion_countdown_prefix": "This club has been cancelled —",
+    "deletion_countdown_hours": "will be deleted in {{ hours }} h. {{ minutes }} min.",
+    "deletion_countdown_minutes": "will be deleted in {{ minutes }} min.",
+    "close_qr": "✕ Close",
+    "events_title": "Upcoming Events",
+    "events_empty": "No upcoming events scheduled.",
+    "create_event": "＋ Create Event",
+    "sort_nearest": "Nearest",
+    "sort_popular": "Most popular",
+    "sort_status": "By status",
+    "join_cta_title": "Want to join this club?",
+    "join_cta_desc": "Join to attend events and meet fellow readers.",
+    "rsvp_going": "✓ Going",
+    "rsvp_join": "RSVP",
+    "rsvp_view": "View",
+    "rsvp_attending": "attending",
+    "edit_club_title": "Edit Club",
+    "edit_club_desc": "Update name, description & settings",
+    "create_event_title": "Create Event",
+    "create_event_desc": "Schedule a new club event",
+    "now_reading": "Now reading"
+  },
+  "EDIT_CLUB": {
+    "title": "Edit Club",
+    "subtitle": "Update your reading community's details",
+    "submit": "Save changes",
+    "submitting": "Saving…",
+    "cancel": "Cancel",
+    "success": "Club updated successfully!",
+    "name_label": "Club name",
+    "name_placeholder": "e.g. Northern Readers",
+    "name_required": "Club name is required.",
+    "name_min": "Name must be at least 3 characters.",
+    "name_max": "Name must not exceed 100 characters.",
+    "description_label": "Description",
+    "description_placeholder": "What books will your club read? Who is it for?",
+    "description_max": "Description must not exceed 500 characters.",
+    "city_label": "City",
+    "city_placeholder": "Kyiv",
+    "visibility_legend": "Visibility",
+    "public_label": "Public club",
+    "public_desc": "Anyone can discover and join",
+    "cover_url_label": "Cover image URL",
+    "cover_url_placeholder": "https://example.com/cover.jpg",
+    "cover_url_hint": "Paste a public image link (JPG, PNG, WebP)"
+  },
+  "FOOTER": {
+    "privacy": "Privacy",
+    "rights": "All rights reserved",
+    "terms": "Terms"
+  },
+  "MEMBERS": {
+    "empty": "No members yet",
+    "member": "Member",
+    "organizer": "Organizer",
+    "show_qr": "QR",
+    "socials_hidden": "Hidden",
+    "title": "Members",
+    "kick": "Kick",
+    "ban": "Ban ▾",
+    "ban_1": "1 meeting",
+    "ban_3": "3 meetings",
+    "ban_5": "5 meetings",
+    "ban_permanent": "Permanently"
+  },
+  "NAV": {
+    "back_home": "← Back to home",
+    "discover": "Discover",
+    "join_free": "Join Free",
+    "login": "Log in",
+    "logout": "Log out",
+    "profile": "Profile",
+    "signed_in_as": "Signed in as",
+    "clubs": "Clubs",
+    "my_clubs": "My Clubs",
+    "register": "Register",
+    "events": "Events",
+    "theme_toggle_dark": "Switch to dark mode",
+    "theme_toggle_light": "Switch to light mode"
+  },
+  "PROFILE": {
+    "active_badge": "✓ Active",
+    "books_read": "Books read",
+    "clubs_joined": "Clubs joined",
+    "display_name_label": "Display Name",
+    "display_name_min": "Must be at least 2 characters.",
+    "display_name_placeholder": "Your display name",
+    "display_name_required": "Display name is required.",
+    "edit_profile": "Edit Profile",
+    "likes_received": "Likes Received",
+    "member_since": "Member since",
+    "name_updated": "Name updated!",
+    "no_stats": "No statistics yet — start joining clubs and taking quizzes!",
+    "quizzes_taken": "Quizzes taken",
+    "quizzes_won": "Quizzes won",
+    "role_changed_prefix": "Role updated to",
+    "role_organizer": "Organizer",
+    "role_organizer_desc": "Create clubs, run quizzes, and manage members.",
+    "role_reader": "Reader",
+    "role_reader_desc": "Discover clubs, join discussions, take quizzes.",
+    "role_subtitle": "Choose how you participate in book clubs.",
+    "role_title": "Your Role",
+    "save": "Save",
+    "save_name": "Save Name",
+    "saving": "Saving…",
+    "socials_public_label": "Show social media to all club members",
+    "socials_saved": "Social media saved!",
+    "socials_title": "Social media",
+    "stats_title": "Statistics",
+    "title": "My Profile",
+    "saved": "Saved!",
+    "role": "Role",
+    "role_admin": "Administrator",
+    "meetings_attended": "Meetings attended",
+    "meetings_missed": "Meetings missed",
+    "randomizer_wins": "Randomizer wins",
+    "role_changed": "Role updated successfully!",
+    "social_placeholder_at": "username (without @)",
+    "social_placeholder_url": "username or full URL"
+  },
+  "RANDOMIZER": {
+    "back_to_club": "← Back to club",
+    "history_title": "Previous results",
+    "members_title": "Members",
+    "no_members": "No members in this club yet",
+    "purpose_label": "Randomizer purpose",
+    "purpose_placeholder": "e.g. Who presents the book?",
+    "save": "💾 Save result",
+    "saving": "⏳ Saving…",
+    "select_all": "Select all",
+    "selected": "selected",
+    "spin": "🎲 Spin!",
+    "spin_hint": "Press 'Spin' to select a member",
+    "spinning": "Selecting winner…",
+    "spinning_btn": "⏳ Selecting…",
+    "subtitle": "Who's next? Let fate decide.",
+    "title": "Randomizer",
+    "no_history": "No results yet",
+    "error_min": "Select at least 2 members",
+    "winner": "Winner"
+  },
+  "EVENTS": {
+    "subtitle": "Discover and join upcoming book club gatherings",
+    "attending": "attending",
+    "view": "View",
+    "rsvp": "RSVP",
+    "going": "✓ Going",
+    "going_cancel": "✓ Going · Cancel RSVP",
+    "rsvp_going": "RSVP — I'm Going",
+    "back_to_events": "← Back to Events",
+    "about": "About",
+    "tags": "Tags",
+    "after_meeting_venue": "After-Meeting Venue",
+    "organizer_controls": "Organizer Controls",
+    "cancel_event": "Cancel Event",
+    "cancel_confirm": "Cancel this event?",
+    "minutes_abbr": "min",
+    "status_upcoming": "Upcoming",
+    "status_active": "Active",
+    "status_cancelled": "Cancelled",
+    "status_scheduled": "Scheduled",
+    "tab_upcoming": "Upcoming",
+    "tab_my": "My Events",
+    "no_upcoming": "No upcoming events",
+    "no_upcoming_desc": "No events are scheduled yet. Check back soon!",
+    "no_my_events_desc": "Join clubs to see their events here."
+  },
+  "CREATE_EVENT": {
+    "back_to_club": "← Back to Club",
+    "heading": "Create Event",
+    "title_label": "Title",
+    "title_required": "Title is required.",
+    "book_title_label": "📖 Book title",
+    "book_title_hint": "What book will you discuss at this event?",
+    "book_cover_searching": "🔍 Searching for book cover…",
+    "book_cover_not_found": "No cover found — you can add one manually below.",
+    "description_label": "Description",
+    "description_placeholder": "What will you be reading or discussing?",
+    "date_label": "Date & Time",
+    "date_required": "Date is required.",
+    "location_label": "Location",
+    "location_required": "Location is required.",
+    "duration_label": "Duration (min)",
+    "theme_label": "Theme",
+    "tags_label": "Tags",
+    "tags_placeholder": "fiction, dystopia, classic (comma-separated)",
+    "cover_label": "Cover image",
+    "linked_quiz_label": "🧠 Linked quiz",
+    "no_quiz": "— No quiz —",
+    "after_venue_add": "+ Add after-meeting venue",
+    "after_venue_remove": "− Remove after-meeting venue",
+    "after_venue_name_label": "Venue name",
+    "after_venue_address_label": "Address",
+    "after_venue_notes_label": "Notes",
+    "cancel": "Cancel",
+    "submit": "Create Event",
+    "submitting": "Creating…"
+  },
+  "QUIZ": {
+    "title": "Quizzes",
+    "list_subtitle": "Test your knowledge of the books you've read.",
+    "create_btn": "+ Create Quiz",
+    "create_heading": "📝 Create Quiz",
+    "back_to_quizzes": "← Back to Quizzes",
+    "back_to_club_short": "← Club",
+    "question_of": "Question {{ current }} of {{ total }}",
+    "prev": "← Previous",
+    "next": "Next →",
+    "preview_heading": "🔍 Quiz Preview",
+    "close": "✕ Close",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "take_btn": "Take Quiz →",
+    "submit_quiz": "Submit Quiz ✓",
+    "submitting_quiz": "…Submitting",
+    "no_quizzes": "No quizzes yet",
+    "no_quizzes_organizer": "Create your first quiz to engage the club.",
+    "no_quizzes_member": "The organizer hasn't created any quizzes yet.",
+    "status_live": "Live",
+    "status_active": "Active",
+    "status_closed": "Closed",
+    "status_draft": "Draft",
+    "create": "Create quiz",
+    "take": "Start",
+    "results": "Results",
+    "score": "Score",
+    "edit": "Edit",
+    "edit_title": "Edit Quiz",
+    "edit_save": "Save Changes",
+    "edit_saving": "Saving…",
+    "edit_success": "Quiz updated",
+    "edit_active_warning": "This quiz is live and cannot be edited.",
+    "question_remove": "Remove",
+    "preview": "Preview",
+    "preview_title": "Quiz Preview",
+    "preview_banner": "Preview Mode — correct answers are shown",
+    "preview_correct": "Correct answer",
+    "preview_activate": "Activate Quiz",
+    "preview_activating": "Activating…",
+    "preview_live": "This quiz is currently live",
+    "preview_no_questions": "No questions yet. Add some before activating.",
+    "manage_session": "Manage Session",
+    "session_title": "Quiz Session",
+    "session_start": "Start Session",
+    "session_starting": "Starting…",
+    "session_pick_event": "Select event",
+    "session_live": "Live",
+    "session_participants": "Participants enrolled",
+    "session_completed": "Completed",
+    "session_end": "End Session",
+    "session_ending": "Ending…",
+    "session_refresh": "Refresh",
+    "leaderboard": "Leaderboard",
+    "leaderboard_title": "Leaderboard",
+    "leaderboard_rank": "Rank",
+    "leaderboard_player": "Player",
+    "leaderboard_score": "Score",
+    "leaderboard_completed": "Completed",
+    "leaderboard_pending": "Not yet attempted",
+    "leaderboard_empty": "No participants yet",
+    "leaderboard_1st": "1st Place",
+    "leaderboard_2nd": "2nd Place",
+    "leaderboard_3rd": "3rd Place",
+    "leaderboard_heading": "🏆 Leaderboard",
+    "leaderboard_refresh_hint": "Auto-refreshes every 30 seconds",
+    "no_active_session": "No active session",
+    "no_active_session_hint": "The quiz session hasn't started yet.",
+    "session_heading": "🎮 Quiz Session",
+    "session_start_heading": "Start a Session",
+    "session_start_hint": "Select an event — attendees will be enrolled as participants automatically.",
+    "session_pick_event_label": "Event",
+    "session_pick_event_placeholder": "Select event…",
+    "session_no_events": "No events found for this club.",
+    "session_started_at": "Started",
+    "session_refreshing": "↻ Refreshing…",
+    "session_live_leaderboard": "🏆 Live Leaderboard",
+    "session_no_participants": "No participants yet. Waiting for responses…",
+    "create_heading_full": "📝 Create Quiz",
+    "create_step_of": "Step {{ step }} of 2",
+    "create_step_details": "Quiz details",
+    "create_step_questions": "Add questions",
+    "create_cancel": "✕ Cancel",
+    "create_back": "← Back",
+    "preview_live_banner": "🟢 This quiz is currently live.",
+    "preview_no_questions_link": "→ Go to Edit",
+    "preview_correct_answer": "✓ Correct",
+    "error_return": "Return to quiz list",
+    "loading": "Loading quiz…",
+    "create_title_label": "Quiz title",
+    "create_title_placeholder": "e.g. The Midnight Library — Chapter 1 Quiz",
+    "create_title_required": "Title is required.",
+    "create_title_min": "Title must be at least 3 characters.",
+    "create_title_max": "Must not exceed 100 characters.",
+    "create_desc_label": "Description",
+    "create_desc_placeholder": "A brief description of the quiz…",
+    "create_desc_max": "Must not exceed 500 characters.",
+    "create_continue": "Continue →",
+    "create_first_question": "Add your first question",
+    "create_another_question": "Add another question",
+    "create_question_label": "Question",
+    "create_question_placeholder": "What is the main theme of chapter 3?",
+    "create_question_required": "Question is required.",
+    "create_question_min": "Must be at least 5 characters.",
+    "create_answers_label": "Answer options",
+    "create_answers_hint": "Select the radio button next to the correct answer.",
+    "create_add_question": "+ Add Question",
+    "create_save_draft": "💾 Save as Draft",
+    "create_saving": "…Saving",
+    "create_questions_count_one": "question",
+    "create_questions_count_many": "questions",
+    "result_perfect": "🎉 Perfect score!",
+    "result_review_title": "Review Answers",
+    "result_correct": "Correct"
+  },
+  "CHAT": {
+    "title": "Club Chat",
+    "placeholder": "Type a message...",
+    "send": "Send",
+    "no_messages": "No messages yet",
+    "new_message": "New message",
+    "close": "Close chat",
+    "open": "Open chat",
+    "rooms": "Rooms",
+    "mute": "Mute",
+    "unmute": "Unmute",
+    "muted_label": "[muted]",
+    "no_rooms": "No chat rooms available",
+    "no_rooms_hint_member": "The organizer hasn't set up a chat for this club yet.",
+    "ban_600s": "Ban 600s",
+    "delete_message": "Delete message",
+    "add_room": "Add room",
+    "room_name_placeholder": "Room name...",
+    "create_room": "Create"
+  },
+  "FORM_ERRORS": {
+    "required": "This field is required.",
+    "email": "Please enter a valid email address.",
+    "minlength": "Minimum {{ requiredLength }} characters required.",
+    "invalid": "Invalid value."
+  },
+  "SEO": {
+    "clubs_title": "Book Clubs | Book Club",
+    "clubs_description": "Find a book club in your city. Book discussions, reader meetups, interest communities.",
+    "clubs_og_title": "Book Clubs",
+    "login_title": "Sign In | Book Club",
+    "register_title": "Register | Book Club",
+    "profile_title": "Profile | Book Club",
+    "club_detail_title": "{{ name }} | Book Club",
+    "club_detail_og_title": "{{ name }}",
+    "site_name": "Book Club",
+    "site_url": "https://book-club-fe.vercel.app",
+    "site_description": "Book Clubs of Ukraine"
+  }
+}
+````
+
+## File: public/i18n/uk.json
+````json
+{
+  "AUTH": {
+    "activate_account": "Натисніть, щоб активувати акаунт.",
+    "back_to_login": "Назад до входу",
+    "check_email": "Перевірте пошту",
+    "confirm_password": "Підтвердіть пароль",
+    "confirmation_sent": "Ми надіслали посилання підтвердження на",
+    "create_account_h2": "Створити акаунт",
+    "create_account_subtitle": "Створіть акаунт",
+    "creating_account": "Створюємо акаунт…",
+    "display_name": "Ім'я користувача",
+    "email": "Email",
+    "have_account": "Вже є акаунт?",
+    "no_account": "Немає акаунту?",
+    "password": "Пароль",
+    "password_medium": "Середній",
+    "password_strong": "Надійний",
+    "password_weak": "Слабкий",
+    "passwords_no_match": "Паролі не збігаються",
+    "register_title": "Реєстрація",
+    "role_organizer_desc": "Створювати клуби та проводити квізи",
+    "role_organizer_label": "Організатор",
+    "role_reader_desc": "Приєднуватись до клубів та проходити квізи",
+    "role_reader_label": "Читач",
+    "select_role_error": "Будь ласка, оберіть роль.",
+    "sign_in_h2": "Увійти",
+    "signing_in": "Входимо…",
+    "submit_login": "Увійти",
+    "want_to": "Я хочу…",
+    "welcome_back": "Ласкаво просимо назад",
+    "login_title": "Вхід",
+    "submit_register": "Зареєструватися",
+    "password_strength": "Надійність паролю",
+    "account_created": "Акаунт успішно створено!",
+    "welcome_message": "Ласкаво просимо,",
+    "error_invalid_credentials": "Невірний email або пароль."
+  },
+  "CREATE_CLUB": {
+    "subtitle": "Створіть нову спільноту читачів",
+    "title": "Створити клуб",
+    "basic_info_legend": "Основна інформація",
+    "name_label": "Назва клубу",
+    "name_placeholder": "Напр. Північ читачів",
+    "name_required": "Назва клубу є обов'язковою.",
+    "name_min": "Назва повинна містити щонайменше 3 символи.",
+    "name_max": "Назва не повинна перевищувати 100 символів.",
+    "description_label": "Опис",
+    "description_placeholder": "Які книги буде читати ваш клуб? Для кого він?",
+    "description_max": "Опис не повинен перевищувати 500 символів.",
+    "city_label": "Місто",
+    "city_placeholder": "Київ",
+    "city_required": "Місто є обов'язковим.",
+    "city_max": "Місто не повинно перевищувати 100 символів.",
+    "address_label": "Адреса",
+    "address_placeholder": "вул. Хрещатик, 1",
+    "address_max": "Адреса не повинна перевищувати 200 символів.",
+    "tags_duration_legend": "Теги та тривалість",
+    "tags_label": "Теги / Жанри",
+    "tags_placeholder": "Класика, Романтика, Фентезі",
+    "tags_hint": "Введіть жанри через кому",
+    "tags_max": "Теги не повинні перевищувати 300 символів.",
+    "duration_label": "Тривалість зустрічі (хв)",
+    "duration_placeholder": "90",
+    "duration_min": "Тривалість не може бути менше 15 хвилин.",
+    "duration_max": "Тривалість не може перевищувати 480 хвилин.",
+    "visibility_legend": "Видимість",
+    "public_label": "Публічний клуб",
+    "public_desc": "Хто завгодно може виявити та приєднатися",
+    "cover_url_label": "URL обкладинки",
+    "cover_url_placeholder": "https://example.com/cover.jpg",
+    "cover_url_hint": "Вставте публічне посилання на зображення (JPG, PNG, WebP)",
+    "cover_url_invalid": "Введіть коректний URL (починається з https://)",
+    "after_meeting_toggle": "▼ Після зустрічі",
+    "after_meeting_hide": "▲ Приховати інформацію про місце після зустрічі",
+    "venue_name_label": "Назва місця",
+    "venue_name_placeholder": "Кав'ярня «Пушкін»",
+    "venue_name_max": "Назва не повинна перевищувати 150 символів.",
+    "venue_address_label": "Адреса місця",
+    "venue_address_placeholder": "вул. Хрещатик, 2",
+    "venue_address_max": "Адреса не повинна перевищувати 200 символів.",
+    "venue_notes_label": "Примітки",
+    "venue_notes_placeholder": "Бронювання на 20:00",
+    "venue_notes_max": "Примітки не повинні перевищувати 300 символів.",
+    "cancel": "Скасувати",
+    "submit": "Створити клуб",
+    "submitting": "Створення…"
+  },
+  "CLUBS": {
+    "active": "Активний",
+    "all": "Всі клуби",
+    "all_cities": "Всі міста",
+    "cancelled": "Скасовано",
+    "create": "Створити клуб",
+    "join": "Приєднатися",
+    "member_badge": "✓ Учасник",
+    "member_singular": "учасник",
+    "members": "учасників",
+    "missed": "Пропущені",
+    "my_clubs": "Мої клуби",
+    "participated": "Відвідані",
+    "paused": "Призупинено",
+    "search_placeholder": "Шукати клуби...",
+    "search_placeholder_full": "Шукати за назвою або описом…",
+    "subtitle": "Знайдіть спільноти читачів поруч",
+    "title": "Книжкові клуби",
+    "view": "Переглянути",
+    "upcoming": "Найближчі зустрічі",
+    "joined": "Ви учасник",
+    "no_clubs": "Клубів не знайдено",
+    "book_current": "Поточна книга",
+    "days_until": "за {{ days }} дн."
+  },
+  "CLUB_DETAIL": {
+    "about": "Про клуб",
+    "back": "Назад до клубів",
+    "back_short": "Назад",
+    "cancel": "Скасувати",
+    "created": "Створено",
+    "join": "Приєднатись до клубу",
+    "leave": "Покинути клуб",
+    "manage_title": "Управління клубом",
+    "new_date": "Нова дата зустрічі",
+    "not_found": "Клуб не знайдено",
+    "organizer_badge": "✨ Організатор",
+    "pause": "Призупинити",
+    "private": "Приватний",
+    "quizzes_desc": "Створюйте та керуйте квізами",
+    "quizzes_title": "Квізи",
+    "randomizer_desc": "Обирайте наступну книгу",
+    "randomizer_title": "Рандомайзер",
+    "reschedule": "Перепланувати",
+    "reschedule_submit": "Перенести зустріч",
+    "members_title": "Учасники",
+    "tags_title": "Теги",
+    "organizer_title": "Організатор",
+    "meeting_info_title": "Місце та час зустрічі",
+    "duration_label": "Тривалість",
+    "address_label": "Адреса",
+    "view_on_map": "Переглянути на карті →",
+    "after_meeting_title": "Після зустрічі",
+    "deletion_countdown_prefix": "Цей клуб скасовано —",
+    "deletion_countdown_hours": "буде видалено через {{ hours }} год. {{ minutes }} хв.",
+    "deletion_countdown_minutes": "буде видалено через {{ minutes }} хв.",
+    "close_qr": "✕ Закрити",
+    "events_title": "Найближчі події",
+    "events_empty": "Немає запланованих подій.",
+    "create_event": "＋ Створити подію",
+    "sort_nearest": "Найближчі",
+    "sort_popular": "Популярні",
+    "sort_status": "За статусом",
+    "join_cta_title": "Хочеш приєднатись до клубу?",
+    "join_cta_desc": "Вступи, щоб відвідувати зустрічі та знайомитись з читачами.",
+    "rsvp_going": "✓ Йду",
+    "rsvp_join": "Зареєструватись",
+    "rsvp_view": "Детальніше",
+    "rsvp_attending": "учасників",
+    "edit_club_title": "Редагувати клуб",
+    "edit_club_desc": "Оновити назву, опис та налаштування",
+    "create_event_title": "Створити подію",
+    "create_event_desc": "Запланувати нову подію клубу",
+    "now_reading": "Читаємо зараз"
+  },
+  "EDIT_CLUB": {
+    "title": "Редагувати клуб",
+    "subtitle": "Оновіть дані своєї читацької спільноти",
+    "submit": "Зберегти зміни",
+    "submitting": "Збереження…",
+    "cancel": "Скасувати",
+    "success": "Клуб успішно оновлено!",
+    "name_label": "Назва клубу",
+    "name_placeholder": "Напр. Північ читачів",
+    "name_required": "Назва клубу є обов'язковою.",
+    "name_min": "Назва повинна містити щонайменше 3 символи.",
+    "name_max": "Назва не повинна перевищувати 100 символів.",
+    "description_label": "Опис",
+    "description_placeholder": "Які книги буде читати ваш клуб? Для кого він?",
+    "description_max": "Опис не повинен перевищувати 500 символів.",
+    "city_label": "Місто",
+    "city_placeholder": "Київ",
+    "visibility_legend": "Видимість",
+    "public_label": "Публічний клуб",
+    "public_desc": "Хто завгодно може виявити та приєднатися",
+    "cover_url_label": "URL обкладинки",
+    "cover_url_placeholder": "https://example.com/cover.jpg",
+    "cover_url_hint": "Вставте публічне посилання на зображення (JPG, PNG, WebP)"
+  },
+  "FOOTER": {
+    "privacy": "Конфіденційність",
+    "rights": "Усі права захищені",
+    "terms": "Умови"
+  },
+  "MEMBERS": {
+    "empty": "Немає учасників",
+    "member": "Учасник",
+    "organizer": "Організатор",
+    "show_qr": "QR",
+    "socials_hidden": "Приховано",
+    "title": "Учасники",
+    "kick": "Виключити",
+    "ban": "Заблокувати ▾",
+    "ban_1": "1 зустріч",
+    "ban_3": "3 зустрічі",
+    "ban_5": "5 зустрічей",
+    "ban_permanent": "Назавжди"
+  },
+  "NAV": {
+    "back_home": "← На головну",
+    "discover": "Огляд",
+    "join_free": "Приєднатись",
+    "login": "Увійти",
+    "logout": "Вийти",
+    "profile": "Профіль",
+    "signed_in_as": "Увійшли як",
+    "clubs": "Клуби",
+    "my_clubs": "Мої клуби",
+    "register": "Приєднатись",
+    "events": "Події",
+    "theme_toggle_dark": "Темна тема",
+    "theme_toggle_light": "Світла тема"
+  },
+  "PROFILE": {
+    "active_badge": "✓ Активний",
+    "books_read": "Книг прочитано",
+    "clubs_joined": "Клубів приєднано",
+    "display_name_label": "Ім'я в додатку",
+    "display_name_min": "Мінімум 2 символи.",
+    "display_name_placeholder": "Ваше ім'я",
+    "display_name_required": "Ім'я є обов'язковим.",
+    "edit_profile": "Редагувати профіль",
+    "likes_received": "Отримано вподобань",
+    "member_since": "Учасник з",
+    "name_updated": "Ім'я оновлено!",
+    "no_stats": "Статистики ще немає — починайте приєднуватись до клубів і проходити квізи!",
+    "quizzes_taken": "Квізів пройдено",
+    "quizzes_won": "Квізів виграно",
+    "role_changed_prefix": "Роль змінено на",
+    "role_organizer": "Організатор",
+    "role_organizer_desc": "Створюйте клуби, проводьте квізи та керуйте учасниками.",
+    "role_reader": "Читач",
+    "role_reader_desc": "Відкривайте клуби, беріть участь у дискусіях і проходьте квізи.",
+    "role_subtitle": "Оберіть, як ви берете участь у книжкових клубах.",
+    "role_title": "Ваша роль",
+    "save": "Зберегти",
+    "save_name": "Зберегти ім'я",
+    "saving": "Збереження…",
+    "socials_public_label": "Показувати соціальні мережі всім учасникам клубів",
+    "socials_saved": "Соціальні мережі збережено!",
+    "socials_title": "Соціальні мережі",
+    "stats_title": "Статистика",
+    "title": "Особистий кабінет",
+    "saved": "Збережено!",
+    "role": "Роль",
+    "role_admin": "Адміністратор",
+    "meetings_attended": "Зустрічей відвідано",
+    "meetings_missed": "Зустрічей пропущено",
+    "randomizer_wins": "Перемог в рандомайзері",
+    "role_changed": "Роль успішно змінено!",
+    "social_placeholder_at": "username (без @)",
+    "social_placeholder_url": "username або повний URL"
+  },
+  "RANDOMIZER": {
+    "back_to_club": "← До клубу",
+    "history_title": "Попередні результати",
+    "members_title": "Учасники",
+    "no_members": "У цьому клубі поки немає учасників",
+    "purpose_label": "Питання / Мета рандомайзера",
+    "purpose_placeholder": "Наприклад: Хто представляє книгу?",
+    "save": "💾 Зберегти результат",
+    "saving": "⏳ Збереження…",
+    "select_all": "Обрати всіх",
+    "selected": "обрано",
+    "spin": "🎲 Крутити",
+    "spin_hint": "Натисніть «Крутити» щоб обрати учасника",
+    "spinning": "Вибираємо переможця…",
+    "spinning_btn": "⏳ Вибираємо…",
+    "subtitle": "Хто наступний? Нехай доля вирішує.",
+    "title": "Рандомайзер",
+    "no_history": "Немає результатів",
+    "error_min": "Оберіть щонайменше 2 учасників",
+    "winner": "Переможець"
+  },
+  "EVENTS": {
+    "subtitle": "Відкривайте та приєднуйтесь до майбутніх зустрічей",
+    "attending": "відвідують",
+    "view": "Переглянути",
+    "rsvp": "Участь",
+    "going": "✓ Іду",
+    "going_cancel": "✓ Іду · Скасувати",
+    "rsvp_going": "Записатись →",
+    "back_to_events": "← До подій",
+    "about": "Про подію",
+    "tags": "Теги",
+    "after_meeting_venue": "Місце після зустрічі",
+    "organizer_controls": "Управління організатора",
+    "cancel_event": "Скасувати подію",
+    "cancel_confirm": "Скасувати цю подію?",
+    "minutes_abbr": "хв",
+    "status_upcoming": "Майбутня",
+    "status_active": "Активна",
+    "status_cancelled": "Скасована",
+    "status_scheduled": "Заплановано",
+    "tab_upcoming": "Майбутні",
+    "tab_my": "Мої події",
+    "no_upcoming": "Немає майбутніх подій",
+    "no_upcoming_desc": "Поки що не заплановано жодної події. Заходьте пізніше!",
+    "no_my_events_desc": "Приєднуйтесь до клубів, щоб бачити їхні події тут."
+  },
+  "CREATE_EVENT": {
+    "back_to_club": "← Назад до клубу",
+    "heading": "Створити подію",
+    "title_label": "Назва",
+    "title_required": "Назва є обов'язковою.",
+    "book_title_label": "📖 Назва книги",
+    "book_title_hint": "Яку книгу обговорюватиметесь на події?",
+    "book_cover_searching": "🔍 Шукаємо обкладинку…",
+    "book_cover_not_found": "Обкладинку не знайдено — можна додати вручну.",
+    "description_label": "Опис",
+    "description_placeholder": "Що будете читати або обговорювати?",
+    "date_label": "Дата та час",
+    "date_required": "Дата є обов'язковою.",
+    "location_label": "Місце",
+    "location_required": "Місце є обов'язковим.",
+    "duration_label": "Тривалість (хв)",
+    "theme_label": "Тема",
+    "tags_label": "Теги",
+    "tags_placeholder": "фентезі, класика, антиутопія (через кому)",
+    "cover_label": "Обкладинка",
+    "linked_quiz_label": "🧠 Прив'язати квіз",
+    "no_quiz": "— Без квізу —",
+    "after_venue_add": "+ Додати місце після зустрічі",
+    "after_venue_remove": "− Прибрати місце після зустрічі",
+    "after_venue_name_label": "Назва місця",
+    "after_venue_address_label": "Адреса місця",
+    "after_venue_notes_label": "Примітки",
+    "cancel": "Скасувати",
+    "submit": "Створити подію",
+    "submitting": "Створення…"
+  },
+  "QUIZ": {
+    "title": "Квізи",
+    "list_subtitle": "Перевір свої знання з прочитаних книг.",
+    "create_btn": "+ Створити квіз",
+    "create_heading": "📝 Створити квіз",
+    "back_to_quizzes": "← До квізів",
+    "back_to_club_short": "← До клубу",
+    "question_of": "Питання {{ current }} з {{ total }}",
+    "prev": "← Назад",
+    "next": "Далі →",
+    "preview_heading": "🔍 Перегляд квізу",
+    "close": "✕ Закрити",
+    "activate": "Активувати",
+    "deactivate": "Деактивувати",
+    "take_btn": "Пройти квіз →",
+    "submit_quiz": "Відправити відповіді ✓",
+    "submitting_quiz": "…Надсилаємо",
+    "no_quizzes": "Квізів ще немає",
+    "no_quizzes_organizer": "Створіть перший квіз для клубу.",
+    "no_quizzes_member": "Організатор ще не створив жодного квізу.",
+    "status_live": "Наживо",
+    "status_active": "Активний",
+    "status_closed": "Закритий",
+    "status_draft": "Чернетка",
+    "create": "Створити квіз",
+    "take": "Почати",
+    "results": "Результати",
+    "score": "Рахунок",
+    "edit": "Редагувати",
+    "edit_title": "Редагувати квіз",
+    "edit_save": "Зберегти зміни",
+    "edit_saving": "Збереження…",
+    "edit_success": "Квіз оновлено",
+    "edit_active_warning": "Цей квіз активний і не може бути відредагований.",
+    "question_remove": "Видалити",
+    "preview": "Перегляд",
+    "preview_title": "Перегляд квізу",
+    "preview_banner": "Режим перегляду — правильні відповіді показані",
+    "preview_correct": "Правильна відповідь",
+    "preview_activate": "Активувати квіз",
+    "preview_activating": "Активація…",
+    "preview_live": "Цей квіз зараз активний",
+    "preview_no_questions": "Питань ще немає. Додайте їх перед активацією.",
+    "manage_session": "Керувати сесією",
+    "session_title": "Сесія квізу",
+    "session_start": "Почати сесію",
+    "session_starting": "Запуск…",
+    "session_pick_event": "Оберіть подію",
+    "session_live": "Наживо",
+    "session_participants": "Учасників зареєстровано",
+    "session_completed": "Завершено",
+    "session_end": "Завершити сесію",
+    "session_ending": "Завершення…",
+    "session_refresh": "Оновити",
+    "leaderboard": "Таблиця лідерів",
+    "leaderboard_title": "Таблиця лідерів",
+    "leaderboard_rank": "Місце",
+    "leaderboard_player": "Гравець",
+    "leaderboard_score": "Рахунок",
+    "leaderboard_completed": "Завершено",
+    "leaderboard_pending": "Ще не пройдено",
+    "leaderboard_empty": "Учасників ще немає",
+    "leaderboard_1st": "1-е місце",
+    "leaderboard_2nd": "2-е місце",
+    "leaderboard_3rd": "3-є місце",
+    "leaderboard_heading": "🏆 Таблиця лідерів",
+    "leaderboard_refresh_hint": "Оновлюється кожні 30 секунд",
+    "no_active_session": "Немає активної сесії",
+    "no_active_session_hint": "Сесія квізу ще не розпочалась.",
+    "session_heading": "🎮 Сесія квізу",
+    "session_start_heading": "Почати сесію",
+    "session_start_hint": "Оберіть подію — учасники будуть зараховані автоматично.",
+    "session_pick_event_label": "Подія",
+    "session_pick_event_placeholder": "Оберіть подію…",
+    "session_no_events": "Для цього клубу не знайдено подій.",
+    "session_started_at": "Розпочато",
+    "session_refreshing": "↻ Оновлення…",
+    "session_live_leaderboard": "🏆 Таблиця лідерів наживо",
+    "session_no_participants": "Учасників ще немає. Очікуємо відповідей…",
+    "create_heading_full": "📝 Створити квіз",
+    "create_step_of": "Крок {{ step }} з 2",
+    "create_step_details": "Деталі квізу",
+    "create_step_questions": "Додати питання",
+    "create_cancel": "✕ Скасувати",
+    "create_back": "← Назад",
+    "preview_live_banner": "🟢 Цей квіз зараз активний.",
+    "preview_no_questions_link": "→ Перейти до редагування",
+    "preview_correct_answer": "✓ Правильно",
+    "error_return": "Повернутись до списку квізів",
+    "loading": "Завантаження квізу…",
+    "create_title_label": "Назва квізу",
+    "create_title_placeholder": "напр. «Північ» — Розділ 1",
+    "create_title_required": "Назва є обов'язковою.",
+    "create_title_min": "Мінімум 3 символи.",
+    "create_title_max": "Не більше 100 символів.",
+    "create_desc_label": "Опис",
+    "create_desc_placeholder": "Короткий опис квізу…",
+    "create_desc_max": "Не більше 500 символів.",
+    "create_continue": "Далі →",
+    "create_first_question": "Додайте перше запитання",
+    "create_another_question": "Додати ще одне запитання",
+    "create_question_label": "Запитання",
+    "create_question_placeholder": "Яка головна тема розділу 3?",
+    "create_question_required": "Запитання є обов'язковим.",
+    "create_question_min": "Мінімум 5 символів.",
+    "create_answers_label": "Варіанти відповіді",
+    "create_answers_hint": "Оберіть радіокнопку біля правильної відповіді.",
+    "create_add_question": "+ Додати запитання",
+    "create_save_draft": "💾 Зберегти чернетку",
+    "create_saving": "…Збереження",
+    "create_questions_count_one": "запитання",
+    "create_questions_count_many": "запитань",
+    "result_perfect": "🎉 Чудово! Всі відповіді правильні!",
+    "result_review_title": "Перегляд відповідей",
+    "result_correct": "Правильно"
+  },
+  "CHAT": {
+    "title": "Чат клубу",
+    "placeholder": "Написати повідомлення...",
+    "send": "Надіслати",
+    "no_messages": "Поки немає повідомлень",
+    "new_message": "Нове повідомлення",
+    "close": "Закрити чат",
+    "open": "Відкрити чат",
+    "rooms": "Кімнати",
+    "mute": "Заглушити",
+    "unmute": "Зняти мут",
+    "muted_label": "[заглушено]",
+    "no_rooms": "Кімнати чату недоступні",
+    "no_rooms_hint_member": "Організатор ще не налаштував чат для цього клубу.",
+    "ban_600s": "Бан 600 сек",
+    "delete_message": "Видалити повідомлення",
+    "add_room": "Додати кімнату",
+    "room_name_placeholder": "Назва кімнати...",
+    "create_room": "Створити"
+  },
+  "FORM_ERRORS": {
+    "required": "Це поле є обов'язковим.",
+    "email": "Введіть коректну адресу електронної пошти.",
+    "minlength": "Мінімум {{ requiredLength }} символів.",
+    "invalid": "Некоректне значення."
+  },
+  "SEO": {
+    "clubs_title": "Книжкові клуби | Book Club",
+    "clubs_description": "Знайдіть книжковий клуб у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+    "clubs_og_title": "Книжкові клуби",
+    "login_title": "Вхід | Book Club",
+    "register_title": "Реєстрація | Book Club",
+    "profile_title": "Профіль | Book Club",
+    "club_detail_title": "{{ name }} | Book Club",
+    "club_detail_og_title": "{{ name }}",
+    "site_name": "Book Club",
+    "site_url": "https://book-club-fe.vercel.app",
+    "site_description": "Читацькі клуби України"
+  }
+}
 ````
 
 ## File: src/app/core/api/api-mappers.ts
@@ -16786,229 +17011,6 @@ function mapSocials(raw: ApiUserSocials): UserSocials {
 }
 ````
 
-## File: src/app/core/services/club.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
-import { AuthService } from '../auth/auth.service';
-import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
-import { ClubEvent } from '../models/event.model';
-@Injectable({ providedIn: 'root' })
-export class ClubService {
-  private readonly http = inject(HttpClient);
-  private readonly auth = inject(AuthService);
-  private readonly _clubs = signal<Club[]>([]);
-  private readonly _myClubs = signal<Club[]>([]);
-  private readonly _isLoading = signal(false);
-  private readonly _error = signal<string | null>(null);
-  private readonly _searchQuery = signal('');
-  private readonly _cityFilter = signal<string | null>(null);
-  readonly clubs = this._clubs.asReadonly();
-  readonly myClubs = this._myClubs.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly error = this._error.asReadonly();
-  readonly searchQuery = this._searchQuery.asReadonly();
-  readonly myOwnedClubs = computed<Club[]>(() => {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) return [];
-    return this._clubs().filter(c => c.organizerId === userId);
-  });
-  readonly myOwnedClubIds = computed<Set<string>>(() =>
-    new Set(this.myOwnedClubs().map(c => c.id)),
-  );
-  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
-  readonly availableCities = computed<string[]>(() => {
-    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
-    return cities.sort((a, b) => a.localeCompare(b));
-  });
-  readonly filteredClubs = computed(() => {
-    const q = this._searchQuery().toLowerCase().trim();
-    const city = this._cityFilter();
-    let clubs = this._clubs();
-    if (q) {
-      clubs = clubs.filter(
-        c =>
-          c.name.toLowerCase().includes(q) ||
-          (c.description?.toLowerCase().includes(q) ?? false),
-      );
-    }
-    if (city) {
-      clubs = clubs.filter(c => c.city === city);
-    }
-    return clubs;
-  });
-  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
-    const clubs = this.filteredClubs();
-    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
-      const city = club.city || '';
-      if (!acc[city]) acc[city] = [];
-      acc[city].push(club);
-      return acc;
-    }, {});
-  });
-  readonly myParticipatedClubs = computed<Club[]>(() => []);
-  readonly myMissedClubs = computed<Club[]>(() => []);
-  setSearchQuery(query: string): void {
-    this._searchQuery.set(query);
-  }
-  setCityFilter(city: string | null): void {
-    this._cityFilter.set(city);
-  }
-  async loadPublicClubs(): Promise<void> {
-    this._isLoading.set(true);
-    this._error.set(null);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
-      );
-      this._clubs.set(raw.map(mapClub));
-    } catch {
-      this._error.set('Failed to load clubs');
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async loadMyClubs(): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
-      );
-      this._myClubs.set(raw.map(mapClub));
-    } catch {
-      this._error.set('Failed to load my clubs');
-    }
-  }
-  async getClubById(id: string): Promise<Club | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
-      );
-      return mapClub(raw);
-    } catch {
-      return null;
-    }
-  }
-  async createClub(payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    coverUrl?: string | null;
-    city?: string;
-    tags?: string[];
-    meetingDurationMinutes?: number | null;
-    afterMeetingVenue?: { name: string; address: string; description: string } | null;
-  }): Promise<Club> {
-    const raw = await firstValueFrom(
-      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
-        name: payload.name,
-        description: payload.description,
-        isPublic: payload.isPublic,
-        coverUrl: payload.coverUrl ?? null,
-        city: payload.city,
-        tags: payload.tags,
-        meetingDurationMinutes: payload.meetingDurationMinutes,
-        afterMeetingVenue: payload.afterMeetingVenue,
-      }),
-    );
-    const club = mapClub(raw);
-    this._clubs.update(existing => [club, ...existing]);
-    this._myClubs.update(existing => [club, ...existing]);
-    return club;
-  }
-  async updateClub(clubId: string, payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    city?: string;
-    coverUrl?: string | null;
-  }): Promise<Club> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
-    );
-    const club = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    return club;
-  }
-  async joinClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
-    );
-    this._clubs.update(list =>
-      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
-    );
-    const club = this._clubs().find(c => c.id === clubId);
-    if (club && !this.myClubIds().has(clubId)) {
-      this._myClubs.update(list => [club, ...list]);
-    }
-  }
-  async leaveClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
-    );
-    this._clubs.update(list =>
-      list.map(c =>
-        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
-      ),
-    );
-    this._myClubs.update(list => list.filter(c => c.id !== clubId));
-  }
-  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
-    );
-    return raw.map(mapClubMember);
-  }
-  async kickMember(clubId: string, userId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
-    );
-  }
-  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
-    );
-  }
-  async getBans(clubId: string): Promise<BanRecord[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
-    );
-    return raw.map(mapBanRecord);
-  }
-  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
-    );
-    return raw.map(mapEvent);
-  }
-  async pauseClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'pause');
-  }
-  async cancelClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'cancel');
-  }
-  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
-  }
-  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
-    );
-    const updated = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
-  }
-  msUntilDeletion(club: Club): number | null {
-    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
-    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
-    const remaining = deletionTime - Date.now();
-    return remaining > 0 ? remaining : null;
-  }
-}
-````
-
 ## File: package.json
 ````json
 {
@@ -17096,146 +17098,142 @@ export class ClubService {
 }
 ````
 
-## File: src/app/features/events/create-event/create-event.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  computed,
-  inject,
-  signal,
-  input,
-  resource,
-  OnInit,
-  DestroyRef,
-} from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs';
-import { EventService } from '../../../core/services/event.service';
-import { QuizService } from '../../../core/services/quiz.service';
-import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
-import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { BookCoverService } from '../../../core/services/book-cover.service';
-import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
-@Component({
-  selector: 'app-create-event',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton],
-  templateUrl: './create-event.component.html',
-})
-export class CreateEventComponent implements OnInit {
-  readonly id = input.required<string>();
-  private readonly fb = inject(FormBuilder);
-  private readonly eventService = inject(EventService);
-  private readonly quizService = inject(QuizService);
-  private readonly router = inject(Router);
-  private readonly bookCoverService = inject(BookCoverService);
-  private readonly destroyRef = inject(DestroyRef);
-  readonly isSubmitting = signal(false);
-  readonly errorMessage = signal<string | null>(null);
-  readonly showAfterVenue = signal(false);
-  readonly isFetchingCover = signal(false);
-  readonly coverFetchFailed = signal(false);
-  private readonly _quizzesResource = resource({
-    params: () => {
-      const clubId = this.id();
-      return clubId ? { clubId } : undefined;
-    },
-    loader: ({ params }) => this.quizService.getClubQuizzes(params.clubId),
-  });
-  readonly activeQuizzes = computed(() =>
-    (this._quizzesResource.value() ?? []).filter(
-      q => q.status === 'active' || q.status === 'live',
-    ),
-  );
-  readonly form = this.fb.nonNullable.group({
-    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
-    description: [''],
-    date: ['', Validators.required],
-    city: ['', Validators.required],
-    address: [''],
-    lat: [null as number | null],
-    lng: [null as number | null],
-    theme: [''],
-    tagsRaw: [''],
-    durationMinutes: [null as number | null, [Validators.min(15), Validators.max(480)]],
-    afterVenueName: [''],
-    afterVenueAddress: [''],
-    afterVenueDescription: [''],
-    coverUrl: [''],
-    bookTitle: [''],
-    quizId: [null as string | null],
-  });
-  ngOnInit(): void {
-    this.form.controls.bookTitle.valueChanges.pipe(
-      debounceTime(600),
-      distinctUntilChanged(),
-      filter(v => v.length > 2),
-      tap(() => { this.isFetchingCover.set(true); this.coverFetchFailed.set(false); }),
-      switchMap(title => this.bookCoverService.fetchCover$(title)),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe(url => {
-      this.isFetchingCover.set(false);
-      if (url && !this.form.controls.coverUrl.value) {
-        this.form.controls.coverUrl.setValue(url);
-      } else if (!url) {
-        this.coverFetchFailed.set(true);
+## File: src/app/features/events/create-event/create-event.component.html
+````html
+<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
+  <nav>
+    <a [routerLink]="['/clubs', id()]"
+       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+      {{ 'CREATE_EVENT.back_to_club' | translate }}
+    </a>
+  </nav>
+  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{{ 'CREATE_EVENT.heading' | translate }}</h1>
+    @if (errorMessage()) {
+      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+           role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+      <div>
+        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {{ 'CREATE_EVENT.title_label' | translate }} <span class="text-red-500">*</span>
+        </label>
+        <input hlmInput id="title" type="text" formControlName="title" class="w-full"
+               placeholder="April Discussion" />
+        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.title_required' | translate }}</p>
+        }
+      </div>
+      <div>
+        <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">📖 Book title</label>
+        <input hlmInput id="bookTitle" type="text" formControlName="bookTitle" class="w-full"
+               placeholder="The Master and Margarita" />
+        @if (isFetchingCover()) {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">🔍 Searching for book cover…</p>
+        } @else if (coverFetchFailed()) {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">No cover found — you can add one manually below.</p>
+        } @else {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">What book will you discuss at this event?</p>
+        }
+      </div>
+      <div>
+        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.description_label' | translate }}</label>
+        <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
+                  [placeholder]="'CREATE_EVENT.description_placeholder' | translate"></textarea>
+      </div>
+      <div>
+        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {{ 'CREATE_EVENT.date_label' | translate }} <span class="text-red-500">*</span>
+        </label>
+        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
+        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.date_required' | translate }}</p>
+        }
+      </div>
+      <div>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {{ 'CREATE_EVENT.location_label' | translate }} <span class="text-red-500">*</span>
+        </p>
+        <app-address-autocomplete
+          [control]="form.controls.address"
+          placeholder="Start typing an address…"
+          (selected)="onAddressSelect($event)"
+        />
+        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.location_required' | translate }}</p>
+        }
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.duration_label' | translate }}</label>
+          <input hlmInput id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
+                 class="w-full" placeholder="120" />
+        </div>
+        <div>
+          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.theme_label' | translate }}</label>
+          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
+        </div>
+      </div>
+      <div>
+        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.tags_label' | translate }}</label>
+        <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
+               [placeholder]="'CREATE_EVENT.tags_placeholder' | translate" />
+      </div>
+      <div>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ 'CREATE_EVENT.cover_label' | translate }}</p>
+        <app-cover-upload [control]="form.controls.coverUrl" />
+      </div>
+      @if (activeQuizzes().length > 0) {
+        <div>
+          <label for="quizId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            🧠 Linked quiz
+          </label>
+          <select id="quizId" formControlName="quizId"
+                  class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+            <option [ngValue]="null">— No quiz —</option>
+            @for (quiz of activeQuizzes(); track quiz.id) {
+              <option [value]="quiz.id">{{ quiz.title }}</option>
+            }
+          </select>
+        </div>
       }
-    });
-  }
-  onAddressSelect(suggestion: GeocodeSuggestion): void {
-    this.form.patchValue({
-      city: suggestion.city ?? suggestion.label,
-      address: suggestion.label,
-      lat: suggestion.lat,
-      lng: suggestion.lng,
-    });
-  }
-  toggleAfterVenue(): void {
-    this.showAfterVenue.update(v => !v);
-    if (!this.showAfterVenue()) {
-      this.form.patchValue({ afterVenueName: '', afterVenueAddress: '', afterVenueDescription: '' });
-    }
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid || this.isSubmitting()) return;
-    this.isSubmitting.set(true);
-    this.errorMessage.set(null);
-    const v = this.form.getRawValue();
-    const tags = v.tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
-    const afterMeetingVenue = this.showAfterVenue() && v.afterVenueName
-      ? { name: v.afterVenueName, address: v.afterVenueAddress, description: v.afterVenueDescription || undefined }
-      : undefined;
-    try {
-      const created = await this.eventService.createEvent(this.id(), {
-        title: v.title,
-        description: v.description || undefined,
-        date: new Date(v.date).toISOString(),
-        city: v.city,
-        address: v.address || undefined,
-        lat: v.lat ?? undefined,
-        lng: v.lng ?? undefined,
-        theme: v.theme || undefined,
-        tags,
-        durationMinutes: v.durationMinutes ?? undefined,
-        afterMeetingVenue,
-        coverUrl: v.coverUrl || null,
-        bookTitle: v.bookTitle || null,
-        quizId: v.quizId ?? null,
-      });
-      await this.router.navigate(['/events', created.id]);
-    } catch {
-      this.errorMessage.set('Failed to create event. Please try again.');
-    } finally {
-      this.isSubmitting.set(false);
-    }
-  }
-}
+      <div>
+        <button type="button" (click)="toggleAfterVenue()"
+                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
+          {{ showAfterVenue() ? ('CREATE_EVENT.after_venue_remove' | translate) : ('CREATE_EVENT.after_venue_add' | translate) }}
+        </button>
+        @if (showAfterVenue()) {
+          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
+            <div>
+              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_name_label' | translate }} <span class="text-red-500">*</span></label>
+              <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
+                     class="w-full" placeholder="Cozy Cafe" />
+            </div>
+            <div>
+              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_address_label' | translate }}</label>
+              <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
+                     class="w-full" placeholder="123 Main St" />
+            </div>
+            <div>
+              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_notes_label' | translate }}</label>
+              <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
+                     class="w-full" placeholder="Optional notes" />
+            </div>
+          </div>
+        }
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <a hlmBtn variant="outline" [routerLink]="['/clubs', id()]">{{ 'CREATE_EVENT.cancel' | translate }}</a>
+        <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
+                class="bg-primary-600 hover:bg-primary-700 text-white">
+          @if (isSubmitting()) { {{ 'CREATE_EVENT.submitting' | translate }} } @else { {{ 'CREATE_EVENT.submit' | translate }} }
+        </button>
+      </div>
+    </form>
+  </div>
+</main>
 ````
 
 ## File: src/app/features/clubs/club-detail/club-detail.component.html
@@ -17668,6 +17666,149 @@ export class ClubDetailComponent {
       );
     } finally {
       this.attendingEventId.set(null);
+    }
+  }
+}
+````
+
+## File: src/app/features/events/create-event/create-event.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  computed,
+  inject,
+  signal,
+  input,
+  resource,
+  OnInit,
+  DestroyRef,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs';
+import { TranslateModule } from '@ngx-translate/core';
+import { EventService } from '../../../core/services/event.service';
+import { QuizService } from '../../../core/services/quiz.service';
+import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
+import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { BookCoverService } from '../../../core/services/book-cover.service';
+import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
+@Component({
+  selector: 'app-create-event',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, ReactiveFormsModule, TranslateModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton],
+  templateUrl: './create-event.component.html',
+})
+export class CreateEventComponent implements OnInit {
+  readonly id = input.required<string>();
+  private readonly fb = inject(FormBuilder);
+  private readonly eventService = inject(EventService);
+  private readonly quizService = inject(QuizService);
+  private readonly router = inject(Router);
+  private readonly bookCoverService = inject(BookCoverService);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly isSubmitting = signal(false);
+  readonly errorMessage = signal<string | null>(null);
+  readonly showAfterVenue = signal(false);
+  readonly isFetchingCover = signal(false);
+  readonly coverFetchFailed = signal(false);
+  private readonly _quizzesResource = resource({
+    params: () => {
+      const clubId = this.id();
+      return clubId ? { clubId } : undefined;
+    },
+    loader: ({ params }) => this.quizService.getClubQuizzes(params.clubId),
+  });
+  readonly activeQuizzes = computed(() =>
+    (this._quizzesResource.value() ?? []).filter(
+      q => q.status === 'active' || q.status === 'live',
+    ),
+  );
+  readonly form = this.fb.nonNullable.group({
+    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
+    description: [''],
+    date: ['', Validators.required],
+    city: ['', Validators.required],
+    address: [''],
+    lat: [null as number | null],
+    lng: [null as number | null],
+    theme: [''],
+    tagsRaw: [''],
+    durationMinutes: [null as number | null, [Validators.min(15), Validators.max(480)]],
+    afterVenueName: [''],
+    afterVenueAddress: [''],
+    afterVenueDescription: [''],
+    coverUrl: [''],
+    bookTitle: [''],
+    quizId: [null as string | null],
+  });
+  ngOnInit(): void {
+    this.form.controls.bookTitle.valueChanges.pipe(
+      debounceTime(600),
+      distinctUntilChanged(),
+      filter(v => v.length > 2),
+      tap(() => { this.isFetchingCover.set(true); this.coverFetchFailed.set(false); }),
+      switchMap(title => this.bookCoverService.fetchCover$(title)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(url => {
+      this.isFetchingCover.set(false);
+      if (url && !this.form.controls.coverUrl.value) {
+        this.form.controls.coverUrl.setValue(url);
+      } else if (!url) {
+        this.coverFetchFailed.set(true);
+      }
+    });
+  }
+  onAddressSelect(suggestion: GeocodeSuggestion): void {
+    this.form.patchValue({
+      city: suggestion.city ?? suggestion.label,
+      address: suggestion.label,
+      lat: suggestion.lat,
+      lng: suggestion.lng,
+    });
+  }
+  toggleAfterVenue(): void {
+    this.showAfterVenue.update(v => !v);
+    if (!this.showAfterVenue()) {
+      this.form.patchValue({ afterVenueName: '', afterVenueAddress: '', afterVenueDescription: '' });
+    }
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid || this.isSubmitting()) return;
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+    const v = this.form.getRawValue();
+    const tags = v.tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+    const afterMeetingVenue = this.showAfterVenue() && v.afterVenueName
+      ? { name: v.afterVenueName, address: v.afterVenueAddress, description: v.afterVenueDescription || undefined }
+      : undefined;
+    try {
+      const created = await this.eventService.createEvent(this.id(), {
+        title: v.title,
+        description: v.description || undefined,
+        date: new Date(v.date).toISOString(),
+        city: v.city,
+        address: v.address || undefined,
+        lat: v.lat ?? undefined,
+        lng: v.lng ?? undefined,
+        theme: v.theme || undefined,
+        tags,
+        durationMinutes: v.durationMinutes ?? undefined,
+        afterMeetingVenue,
+        coverUrl: v.coverUrl || null,
+        bookTitle: v.bookTitle || null,
+        quizId: v.quizId ?? null,
+      });
+      await this.router.navigate(['/events', created.id]);
+    } catch {
+      this.errorMessage.set('Failed to create event. Please try again.');
+    } finally {
+      this.isSubmitting.set(false);
     }
   }
 }

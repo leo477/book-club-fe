@@ -30,12 +30,12 @@ describe('AuthService', () => {
 
   afterEach(() => {
     httpMock?.verify();
-    localStorage.clear();
+    sessionStorage.clear();
   });
 
   function setupTestbed(tokenValue: string | null = null) {
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-    tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'setRefresh', 'clear'], {
+    tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'clear'], {
       token: jasmine.createSpy().and.returnValue(tokenValue),
     });
     tokenStoreSpy.snapshot.and.returnValue(tokenValue);
@@ -117,7 +117,6 @@ describe('AuthService', () => {
       const result = await p;
       expect(result.error).toBeNull();
       expect(tokenStoreSpy.set).toHaveBeenCalledWith('new-token');
-      expect(tokenStoreSpy.setRefresh).toHaveBeenCalledWith('refresh-token');
       expect(service.currentUser()?.id).toBe('u1');
     });
 
@@ -161,7 +160,6 @@ describe('AuthService', () => {
       const result = await p;
       expect(result.error).toBeNull();
       expect(tokenStoreSpy.set).toHaveBeenCalledWith('new-token');
-      expect(tokenStoreSpy.setRefresh).toHaveBeenCalledWith('refresh-token');
     });
 
     it('returns error on failure', async () => {

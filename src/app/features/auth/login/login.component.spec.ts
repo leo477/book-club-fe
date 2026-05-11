@@ -78,7 +78,7 @@ describe('LoginComponent', () => {
       authSpy.signIn.and.returnValue(Promise.resolve({ error: 'Invalid credentials' }));
       component.form.setValue({ email: 'test@test.com', password: 'password123' });
       await component.onSubmit();
-      expect(component.errorMessage()).toBe('Invalid credentials');
+      expect(component.errorMessage()).toBe('AUTH.error_invalid_credentials');
       expect(component.bookOpen()).toBeFalse();
     });
 

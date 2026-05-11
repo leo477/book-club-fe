@@ -200,7 +200,7 @@ describe('QuizTakeComponent', () => {
     };
 
     comp.attempt.set({ score: 5, total: 5, answers: [] });
-    expect(comp.scoreMessage()).toBe('🎉 Perfect score!');
+    expect(comp.scoreMessage()).toBe('QUIZ.result_perfect');
 
     comp.attempt.set({ score: 4, total: 5, answers: [] }); // 80%
     expect(comp.scoreMessage()).toBe('🌟 Great job!');

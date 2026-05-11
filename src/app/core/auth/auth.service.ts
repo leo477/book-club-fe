@@ -11,7 +11,6 @@ import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.mo
 
 interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
   user: ApiUserProfile;
 }
 
@@ -77,7 +76,6 @@ export class AuthService {
         }),
       );
       this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -91,7 +89,6 @@ export class AuthService {
         this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
       );
       this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefresh(resp.refreshToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {

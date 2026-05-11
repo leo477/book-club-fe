@@ -6,7 +6,7 @@ describe('TokenStore', () => {
   let store: TokenStore;
 
   beforeEach(() => {
-    localStorage.clear();
+    sessionStorage.clear();
     TestBed.configureTestingModule({
       providers: [provideZonelessChangeDetection(), TokenStore],
     });
@@ -14,7 +14,7 @@ describe('TokenStore', () => {
   });
 
   afterEach(() => {
-    localStorage.clear();
+    sessionStorage.clear();
   });
 
   it('initializes token as null when localStorage is empty', () => {
@@ -22,17 +22,17 @@ describe('TokenStore', () => {
     expect(store.snapshot()).toBeNull();
   });
 
-  it('set() stores token in localStorage and updates signal', () => {
+  it('set() stores token in sessionStorage and updates signal', () => {
     store.set('my-token');
-    expect(localStorage.getItem('bc_access_token')).toBe('my-token');
+    expect(sessionStorage.getItem('bc_access_token')).toBe('my-token');
     expect(store.token()).toBe('my-token');
     expect(store.snapshot()).toBe('my-token');
   });
 
-  it('clear() removes token from localStorage and clears signal', () => {
+  it('clear() removes token from sessionStorage and clears signal', () => {
     store.set('my-token');
     store.clear();
-    expect(localStorage.getItem('bc_access_token')).toBeNull();
+    expect(sessionStorage.getItem('bc_access_token')).toBeNull();
     expect(store.token()).toBeNull();
     expect(store.snapshot()).toBeNull();
   });
@@ -41,48 +41,16 @@ describe('TokenStore', () => {
     store.set('token-1');
     store.set('token-2');
     expect(store.token()).toBe('token-2');
-    expect(localStorage.getItem('bc_access_token')).toBe('token-2');
+    expect(sessionStorage.getItem('bc_access_token')).toBe('token-2');
   });
 
-  it('reads initial token from localStorage', () => {
-    localStorage.setItem('bc_access_token', 'pre-existing');
+  it('reads initial token from sessionStorage', () => {
+    sessionStorage.setItem('bc_access_token', 'pre-existing');
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [provideZonelessChangeDetection(), TokenStore],
     });
     const newStore = TestBed.inject(TokenStore);
     expect(newStore.snapshot()).toBe('pre-existing');
-  });
-
-  it('setRefresh() stores token in localStorage and updates signal', () => {
-    store.setRefresh('refresh-token');
-    expect(localStorage.getItem('bc_refresh_token')).toBe('refresh-token');
-    expect(store.refreshToken()).toBe('refresh-token');
-    expect(store.snapshotRefresh()).toBe('refresh-token');
-  });
-
-  it('clear() removes both access and refresh tokens', () => {
-    store.set('access');
-    store.setRefresh('refresh');
-    store.clear();
-    expect(localStorage.getItem('bc_access_token')).toBeNull();
-    expect(localStorage.getItem('bc_refresh_token')).toBeNull();
-    expect(store.token()).toBeNull();
-    expect(store.refreshToken()).toBeNull();
-  });
-
-  it('reads initial refresh token from localStorage', () => {
-    localStorage.setItem('bc_refresh_token', 'pre-existing-refresh');
-    TestBed.resetTestingModule();
-    TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), TokenStore],
-    });
-    const newStore = TestBed.inject(TokenStore);
-    expect(newStore.snapshotRefresh()).toBe('pre-existing-refresh');
-  });
-
-  it('refreshToken signal is null initially', () => {
-    expect(store.refreshToken()).toBeNull();
-    expect(store.snapshotRefresh()).toBeNull();
   });
 });

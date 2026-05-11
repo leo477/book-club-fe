@@ -167,7 +167,7 @@
             <!-- Question review -->
             <div class="space-y-4">
               <h2 class="text-gray-900 dark:text-white font-semibold text-lg">
-                Review Answers
+                {{ 'QUIZ.result_review_title' | translate }}
               </h2>
               @for (q of quizService.questions(); track q.id; let i = $index) {
                 <div
@@ -204,7 +204,7 @@
                         <span class="font-bold">{{ optionLabel($index) }}.</span>
                         {{ option }}
                         @if ($index === q.correctIndex) {
-                          <span class="ml-auto text-xs">Correct</span>
+                          <span class="ml-auto text-xs">{{ 'QUIZ.result_correct' | translate }}</span>
                         }
                         @if ($index !== q.correctIndex && $index === attempt()!.answers[i]) {
                           <span class="ml-auto text-xs">Your answer</span>
