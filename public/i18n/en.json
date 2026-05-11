@@ -279,7 +279,6 @@
     "error_min": "Select at least 2 members",
     "winner": "Winner"
   },
-<<<<<<< HEAD
   "EVENTS": {
     "subtitle": "Discover and join upcoming book club gatherings",
     "attending": "attending",
@@ -305,7 +304,7 @@
     "no_upcoming": "No upcoming events",
     "no_upcoming_desc": "No events are scheduled yet. Check back soon!",
     "no_my_events_desc": "Join clubs to see their events here."
-=======
+  },
   "CREATE_EVENT": {
     "back_to_club": "← Back to Club",
     "heading": "Create Event",
@@ -336,7 +335,6 @@
     "cancel": "Cancel",
     "submit": "Create Event",
     "submitting": "Creating…"
->>>>>>> worktree-agent-a60e2046e76e1424e
   },
   "QUIZ": {
     "title": "Quizzes",
@@ -366,7 +364,6 @@
     "take": "Start",
     "results": "Results",
     "score": "Score",
-<<<<<<< HEAD
     "edit": "Edit",
     "edit_title": "Edit Quiz",
     "edit_save": "Save Changes",
@@ -419,21 +416,16 @@
     "session_live_leaderboard": "🏆 Live Leaderboard",
     "session_no_participants": "No participants yet. Waiting for responses…",
     "create_heading_full": "📝 Create Quiz",
-=======
->>>>>>> worktree-agent-a60e2046e76e1424e
     "create_step_of": "Step {{ step }} of 2",
     "create_step_details": "Quiz details",
     "create_step_questions": "Add questions",
     "create_cancel": "✕ Cancel",
     "create_back": "← Back",
-<<<<<<< HEAD
     "preview_live_banner": "🟢 This quiz is currently live.",
     "preview_no_questions_link": "→ Go to Edit",
     "preview_correct_answer": "✓ Correct",
     "error_return": "Return to quiz list",
-    "loading": "Loading quiz…"
-=======
-    "create_heading": "📝 Create Quiz",
+    "loading": "Loading quiz…",
     "create_title_label": "Quiz title",
     "create_title_placeholder": "e.g. The Midnight Library — Chapter 1 Quiz",
     "create_title_required": "Title is required.",
@@ -459,7 +451,6 @@
     "result_perfect": "🎉 Perfect score!",
     "result_review_title": "Review Answers",
     "result_correct": "Correct"
->>>>>>> worktree-agent-a60e2046e76e1424e
   },
   "CHAT": {
     "title": "Club Chat",
@@ -470,19 +461,16 @@
     "close": "Close chat",
     "open": "Open chat",
     "rooms": "Rooms",
-<<<<<<< HEAD
     "mute": "Mute",
     "unmute": "Unmute",
     "muted_label": "[muted]",
     "no_rooms": "No chat rooms available",
+    "no_rooms_hint_member": "The organizer hasn't set up a chat for this club yet.",
     "ban_600s": "Ban 600s",
     "delete_message": "Delete message",
     "add_room": "Add room",
     "room_name_placeholder": "Room name...",
     "create_room": "Create"
-=======
-    "no_rooms_hint_member": "The organizer hasn't set up a chat for this club yet."
->>>>>>> worktree-agent-abfaf1a395decc804
   },
   "FORM_ERRORS": {
     "required": "This field is required.",

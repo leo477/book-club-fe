@@ -279,7 +279,6 @@
     "error_min": "Оберіть щонайменше 2 учасників",
     "winner": "Переможець"
   },
-<<<<<<< HEAD
   "EVENTS": {
     "subtitle": "Відкривайте та приєднуйтесь до майбутніх зустрічей",
     "attending": "відвідують",
@@ -305,7 +304,7 @@
     "no_upcoming": "Немає майбутніх подій",
     "no_upcoming_desc": "Поки що не заплановано жодної події. Заходьте пізніше!",
     "no_my_events_desc": "Приєднуйтесь до клубів, щоб бачити їхні події тут."
-=======
+  },
   "CREATE_EVENT": {
     "back_to_club": "← Назад до клубу",
     "heading": "Створити подію",
@@ -336,7 +335,6 @@
     "cancel": "Скасувати",
     "submit": "Створити подію",
     "submitting": "Створення…"
->>>>>>> worktree-agent-a60e2046e76e1424e
   },
   "QUIZ": {
     "title": "Квізи",
@@ -366,7 +364,6 @@
     "take": "Почати",
     "results": "Результати",
     "score": "Рахунок",
-<<<<<<< HEAD
     "edit": "Редагувати",
     "edit_title": "Редагувати квіз",
     "edit_save": "Зберегти зміни",
@@ -419,21 +416,16 @@
     "session_live_leaderboard": "🏆 Таблиця лідерів наживо",
     "session_no_participants": "Учасників ще немає. Очікуємо відповідей…",
     "create_heading_full": "📝 Створити квіз",
-=======
->>>>>>> worktree-agent-a60e2046e76e1424e
     "create_step_of": "Крок {{ step }} з 2",
     "create_step_details": "Деталі квізу",
     "create_step_questions": "Додати питання",
     "create_cancel": "✕ Скасувати",
     "create_back": "← Назад",
-<<<<<<< HEAD
     "preview_live_banner": "🟢 Цей квіз зараз активний.",
     "preview_no_questions_link": "→ Перейти до редагування",
     "preview_correct_answer": "✓ Правильно",
     "error_return": "Повернутись до списку квізів",
-    "loading": "Завантаження квізу…"
-=======
-    "create_heading": "📝 Створити квіз",
+    "loading": "Завантаження квізу…",
     "create_title_label": "Назва квізу",
     "create_title_placeholder": "напр. «Північ» — Розділ 1",
     "create_title_required": "Назва є обов'язковою.",
@@ -459,7 +451,6 @@
     "result_perfect": "🎉 Чудово! Всі відповіді правильні!",
     "result_review_title": "Перегляд відповідей",
     "result_correct": "Правильно"
->>>>>>> worktree-agent-a60e2046e76e1424e
   },
   "CHAT": {
     "title": "Чат клубу",
@@ -470,19 +461,16 @@
     "close": "Закрити чат",
     "open": "Відкрити чат",
     "rooms": "Кімнати",
-<<<<<<< HEAD
     "mute": "Заглушити",
     "unmute": "Зняти мут",
     "muted_label": "[заглушено]",
     "no_rooms": "Кімнати чату недоступні",
+    "no_rooms_hint_member": "Організатор ще не налаштував чат для цього клубу.",
     "ban_600s": "Бан 600 сек",
     "delete_message": "Видалити повідомлення",
     "add_room": "Додати кімнату",
     "room_name_placeholder": "Назва кімнати...",
     "create_room": "Створити"
-=======
-    "no_rooms_hint_member": "Організатор ще не налаштував чат для цього клубу."
->>>>>>> worktree-agent-abfaf1a395decc804
   },
   "FORM_ERRORS": {
     "required": "Це поле є обов'язковим.",
