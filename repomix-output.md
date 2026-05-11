@@ -7941,32 +7941,6 @@ ALTER TABLE events
   ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
 ````
 
-## File: bugs.md
-````markdown
-# Bug Report — Book Club App Audit
-
-**Date:** 2026-05-11
-**URL:** https://book-club-dyxne04jy-dmytros-projects-ad22eb22.vercel.app/
-**Test user:** test123@mail.com
-**Club owner account:** terrtr
-
-## Summary
-
-| Severity | Count |
-|----------|-------|
-| Critical | 0 |
-| High | 0 |
-| Medium | 1 |
-| Low | 0 |
-| **Total** | **1** |
-
-## MEDIUM (1)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `/events/:id` | ui-missing | Skipped: no event ID discovered (no events in API response) |
-````
-
 ## File: CLAUDE.md
 ````markdown
 # Project Context
@@ -8709,28 +8683,6 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ steps.gate.outputs.body }}
           comment-tag: pr-review-gate
-````
-
-## File: src/app/core/auth/token.store.ts
-````typescript
-import { Injectable, signal } from '@angular/core';
-const TOKEN_KEY = 'bc_access_token';
-@Injectable({ providedIn: 'root' })
-export class TokenStore {
-  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
-  readonly token = this._token.asReadonly();
-  set(token: string): void {
-    localStorage.setItem(TOKEN_KEY, token);
-    this._token.set(token);
-  }
-  clear(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    this._token.set(null);
-  }
-  snapshot(): string | null {
-    return this._token();
-  }
-}
 ````
 
 ## File: src/app/core/interceptors/auth.interceptor.ts
@@ -10327,35 +10279,30 @@ mock-server/
 /ui_changes.md
 ````
 
-## File: playwright.vercel.config.ts
-````typescript
-import { defineConfig, devices } from '@playwright/test';
-export default defineConfig({
-  testDir: './e2e',
-  testMatch: '**/audit.spec.ts',
-  fullyParallel: false,
-  retries: 0,
-  workers: 1,
-  timeout: 60_000,
-  reporter: [
-    ['list'],
-    ['html', { open: 'never' }],
-    ['json', { outputFile: 'playwright-report/audit-results.json' }],
-  ],
-  use: {
-    baseURL: 'https://book-club-dyxne04jy-dmytros-projects-ad22eb22.vercel.app',
-    trace: 'on',
-    screenshot: 'only-on-failure',
-    actionTimeout: 20_000,
-    navigationTimeout: 30_000,
-  },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-  ],
-});
+## File: bugs.md
+````markdown
+# Bug Report — Book Club App Audit
+
+**Date:** 2026-05-11
+**URL:** https://book-club-dyxne04jy-dmytros-projects-ad22eb22.vercel.app/
+**Test user:** test123@mail.com
+**Club owner account:** terrtr
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 0 |
+| Medium | 1 |
+| Low | 0 |
+| **Total** | **1** |
+
+## MEDIUM (1)
+
+| # | Route | Type | Description |
+|---|-------|------|-------------|
+| 1 | `/events/:id` | ui-missing | Skipped: no event ID discovered (no events in API response) |
 ````
 
 ## File: postcss.config.mjs
@@ -10589,6 +10536,28 @@ export class AuthService {
 }
 ````
 
+## File: src/app/core/auth/token.store.ts
+````typescript
+import { Injectable, signal } from '@angular/core';
+const TOKEN_KEY = 'bc_access_token';
+@Injectable({ providedIn: 'root' })
+export class TokenStore {
+  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
+  readonly token = this._token.asReadonly();
+  set(token: string): void {
+    localStorage.setItem(TOKEN_KEY, token);
+    this._token.set(token);
+  }
+  clear(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    this._token.set(null);
+  }
+  snapshot(): string | null {
+    return this._token();
+  }
+}
+````
+
 ## File: src/app/core/models/event.model.ts
 ````typescript
 export type EventStatus = 'scheduled' | 'active' | 'held' | 'cancelled' | 'rescheduled' | 'upcoming';
@@ -10622,6 +10591,229 @@ export interface ClubEvent {
   isAttending: boolean;
   bookTitle?: string | null;
   quizId?: string | null;
+}
+````
+
+## File: src/app/core/services/club.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
+import { AuthService } from '../auth/auth.service';
+import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
+import { ClubEvent } from '../models/event.model';
+@Injectable({ providedIn: 'root' })
+export class ClubService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly _clubs = signal<Club[]>([]);
+  private readonly _myClubs = signal<Club[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _error = signal<string | null>(null);
+  private readonly _searchQuery = signal('');
+  private readonly _cityFilter = signal<string | null>(null);
+  readonly clubs = this._clubs.asReadonly();
+  readonly myClubs = this._myClubs.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly searchQuery = this._searchQuery.asReadonly();
+  readonly myOwnedClubs = computed<Club[]>(() => {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return [];
+    return this._clubs().filter(c => c.organizerId === userId);
+  });
+  readonly myOwnedClubIds = computed<Set<string>>(() =>
+    new Set(this.myOwnedClubs().map(c => c.id)),
+  );
+  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
+  readonly availableCities = computed<string[]>(() => {
+    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
+    return cities.sort((a, b) => a.localeCompare(b));
+  });
+  readonly filteredClubs = computed(() => {
+    const q = this._searchQuery().toLowerCase().trim();
+    const city = this._cityFilter();
+    let clubs = this._clubs();
+    if (q) {
+      clubs = clubs.filter(
+        c =>
+          c.name.toLowerCase().includes(q) ||
+          (c.description?.toLowerCase().includes(q) ?? false),
+      );
+    }
+    if (city) {
+      clubs = clubs.filter(c => c.city === city);
+    }
+    return clubs;
+  });
+  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
+    const clubs = this.filteredClubs();
+    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
+      const city = club.city || '';
+      if (!acc[city]) acc[city] = [];
+      acc[city].push(club);
+      return acc;
+    }, {});
+  });
+  readonly myParticipatedClubs = computed<Club[]>(() => []);
+  readonly myMissedClubs = computed<Club[]>(() => []);
+  setSearchQuery(query: string): void {
+    this._searchQuery.set(query);
+  }
+  setCityFilter(city: string | null): void {
+    this._cityFilter.set(city);
+  }
+  async loadPublicClubs(): Promise<void> {
+    this._isLoading.set(true);
+    this._error.set(null);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
+      );
+      this._clubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load clubs');
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async loadMyClubs(): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
+      );
+      this._myClubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load my clubs');
+    }
+  }
+  async getClubById(id: string): Promise<Club | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
+      );
+      return mapClub(raw);
+    } catch {
+      return null;
+    }
+  }
+  async createClub(payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    coverUrl?: string | null;
+    city?: string;
+    tags?: string[];
+    meetingDurationMinutes?: number | null;
+    afterMeetingVenue?: { name: string; address: string; description: string } | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
+        name: payload.name,
+        description: payload.description,
+        isPublic: payload.isPublic,
+        coverUrl: payload.coverUrl ?? null,
+        city: payload.city,
+        tags: payload.tags,
+        meetingDurationMinutes: payload.meetingDurationMinutes,
+        afterMeetingVenue: payload.afterMeetingVenue,
+      }),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(existing => [club, ...existing]);
+    this._myClubs.update(existing => [club, ...existing]);
+    return club;
+  }
+  async updateClub(clubId: string, payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    city?: string;
+    coverUrl?: string | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    return club;
+  }
+  async joinClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
+    );
+    this._clubs.update(list =>
+      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
+    );
+    const club = this._clubs().find(c => c.id === clubId);
+    if (club && !this.myClubIds().has(clubId)) {
+      this._myClubs.update(list => [club, ...list]);
+    }
+  }
+  async leaveClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
+    );
+    this._clubs.update(list =>
+      list.map(c =>
+        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
+      ),
+    );
+    this._myClubs.update(list => list.filter(c => c.id !== clubId));
+  }
+  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
+    );
+    return raw.map(mapClubMember);
+  }
+  async kickMember(clubId: string, userId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
+    );
+  }
+  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
+    );
+  }
+  async getBans(clubId: string): Promise<BanRecord[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
+    );
+    return raw.map(mapBanRecord);
+  }
+  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
+    );
+    return raw.map(mapEvent);
+  }
+  async pauseClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'pause');
+  }
+  async cancelClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'cancel');
+  }
+  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
+  }
+  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+  msUntilDeletion(club: Club): number | null {
+    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
+    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
+    const remaining = deletionTime - Date.now();
+    return remaining > 0 ? remaining : null;
+  }
 }
 ````
 
@@ -11331,6 +11523,90 @@ export class ClubsListComponent implements OnInit {
 }
 ````
 
+## File: src/app/features/clubs/create-club/create-club.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+} from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+interface CreateClubForm {
+  name: FormControl<string>;
+  description: FormControl<string>;
+  isPublic: FormControl<boolean>;
+  city: FormControl<string>;
+  coverUrl: FormControl<string>;
+}
+@Component({
+  selector: 'app-create-club',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './create-club.component.html',
+})
+export class CreateClubComponent {
+  private readonly clubService = inject(ClubService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly _errorMessage = signal<string | null>(null);
+  readonly errorMessage = this._errorMessage.asReadonly();
+  private readonly _isSubmitting = signal(false);
+  readonly isSubmitting = this._isSubmitting.asReadonly();
+  private readonly _showAfterMeeting = signal(false);
+  readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
+  readonly form = new FormGroup<CreateClubForm>({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+    isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', { nonNullable: true }),
+    coverUrl: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^https?:\/\/.+\..+/)] }),
+  });
+  togglePublic(): void {
+    const current = this.form.controls.isPublic.value;
+    this.form.controls.isPublic.setValue(!current);
+  }
+  toggleAfterMeeting(): void {
+    this._showAfterMeeting.update(v => !v);
+  }
+  cancel(): void {
+    this.router.navigate(['/clubs']);
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this._isSubmitting.set(true);
+    this._errorMessage.set(null);
+    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
+    try {
+      const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
+      this.router.navigate(['/clubs', club.id]);
+    } catch (err) {
+      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
+    } finally {
+      this._isSubmitting.set(false);
+    }
+  }
+}
+````
+
 ## File: src/app/features/quiz/quiz-leaderboard/quiz-leaderboard.component.html
 ````html
 <div class="min-h-screen p-4 sm:p-8">
@@ -11865,227 +12141,35 @@ export class ChatWidgetComponent {
 }
 ````
 
-## File: src/app/core/services/club.service.ts
+## File: playwright.vercel.config.ts
 ````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
-import { AuthService } from '../auth/auth.service';
-import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
-import { ClubEvent } from '../models/event.model';
-@Injectable({ providedIn: 'root' })
-export class ClubService {
-  private readonly http = inject(HttpClient);
-  private readonly auth = inject(AuthService);
-  private readonly _clubs = signal<Club[]>([]);
-  private readonly _myClubs = signal<Club[]>([]);
-  private readonly _isLoading = signal(false);
-  private readonly _error = signal<string | null>(null);
-  private readonly _searchQuery = signal('');
-  private readonly _cityFilter = signal<string | null>(null);
-  readonly clubs = this._clubs.asReadonly();
-  readonly myClubs = this._myClubs.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly error = this._error.asReadonly();
-  readonly searchQuery = this._searchQuery.asReadonly();
-  readonly myOwnedClubs = computed<Club[]>(() => {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) return [];
-    return this._clubs().filter(c => c.organizerId === userId);
-  });
-  readonly myOwnedClubIds = computed<Set<string>>(() =>
-    new Set(this.myOwnedClubs().map(c => c.id)),
-  );
-  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
-  readonly availableCities = computed<string[]>(() => {
-    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
-    return cities.sort((a, b) => a.localeCompare(b));
-  });
-  readonly filteredClubs = computed(() => {
-    const q = this._searchQuery().toLowerCase().trim();
-    const city = this._cityFilter();
-    let clubs = this._clubs();
-    if (q) {
-      clubs = clubs.filter(
-        c =>
-          c.name.toLowerCase().includes(q) ||
-          (c.description?.toLowerCase().includes(q) ?? false),
-      );
-    }
-    if (city) {
-      clubs = clubs.filter(c => c.city === city);
-    }
-    return clubs;
-  });
-  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
-    const clubs = this.filteredClubs();
-    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
-      const city = club.city || '';
-      if (!acc[city]) acc[city] = [];
-      acc[city].push(club);
-      return acc;
-    }, {});
-  });
-  readonly myParticipatedClubs = computed<Club[]>(() => []);
-  readonly myMissedClubs = computed<Club[]>(() => []);
-  setSearchQuery(query: string): void {
-    this._searchQuery.set(query);
-  }
-  setCityFilter(city: string | null): void {
-    this._cityFilter.set(city);
-  }
-  async loadPublicClubs(): Promise<void> {
-    this._isLoading.set(true);
-    this._error.set(null);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
-      );
-      this._clubs.set(raw.map(mapClub));
-    } catch {
-      this._error.set('Failed to load clubs');
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async loadMyClubs(): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
-      );
-      this._myClubs.set(raw.map(mapClub));
-    } catch {
-      this._error.set('Failed to load my clubs');
-    }
-  }
-  async getClubById(id: string): Promise<Club | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
-      );
-      return mapClub(raw);
-    } catch {
-      return null;
-    }
-  }
-  async createClub(payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    coverUrl?: string | null;
-    city?: string;
-    tags?: string[];
-    meetingDurationMinutes?: number | null;
-    afterMeetingVenue?: { name: string; address: string; description: string } | null;
-  }): Promise<Club> {
-    const raw = await firstValueFrom(
-      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
-        name: payload.name,
-        description: payload.description,
-        isPublic: payload.isPublic,
-        coverUrl: payload.coverUrl ?? null,
-        city: payload.city,
-        tags: payload.tags,
-        meetingDurationMinutes: payload.meetingDurationMinutes,
-        afterMeetingVenue: payload.afterMeetingVenue,
-      }),
-    );
-    const club = mapClub(raw);
-    this._clubs.update(existing => [club, ...existing]);
-    this._myClubs.update(existing => [club, ...existing]);
-    return club;
-  }
-  async updateClub(clubId: string, payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    city?: string;
-    coverUrl?: string | null;
-  }): Promise<Club> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
-    );
-    const club = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    return club;
-  }
-  async joinClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
-    );
-    this._clubs.update(list =>
-      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
-    );
-    const club = this._clubs().find(c => c.id === clubId);
-    if (club && !this.myClubIds().has(clubId)) {
-      this._myClubs.update(list => [club, ...list]);
-    }
-  }
-  async leaveClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
-    );
-    this._clubs.update(list =>
-      list.map(c =>
-        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
-      ),
-    );
-    this._myClubs.update(list => list.filter(c => c.id !== clubId));
-  }
-  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
-    );
-    return raw.map(mapClubMember);
-  }
-  async kickMember(clubId: string, userId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
-    );
-  }
-  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
-    );
-  }
-  async getBans(clubId: string): Promise<BanRecord[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
-    );
-    return raw.map(mapBanRecord);
-  }
-  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
-    );
-    return raw.map(mapEvent);
-  }
-  async pauseClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'pause');
-  }
-  async cancelClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'cancel');
-  }
-  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
-  }
-  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
-    );
-    const updated = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
-  }
-  msUntilDeletion(club: Club): number | null {
-    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
-    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
-    const remaining = deletionTime - Date.now();
-    return remaining > 0 ? remaining : null;
-  }
-}
+import { defineConfig, devices } from '@playwright/test';
+export default defineConfig({
+  testDir: './e2e',
+  testMatch: '**/audit.spec.ts',
+  fullyParallel: false,
+  retries: 0,
+  workers: 1,
+  timeout: 60_000,
+  reporter: [
+    ['list'],
+    ['html', { open: 'never' }],
+    ['json', { outputFile: 'playwright-report/audit-results.json' }],
+  ],
+  use: {
+    baseURL: 'https://book-club-dyxne04jy-dmytros-projects-ad22eb22.vercel.app',
+    trace: 'on',
+    screenshot: 'only-on-failure',
+    actionTimeout: 20_000,
+    navigationTimeout: 30_000,
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+});
 ````
 
 ## File: src/app/core/services/event.service.ts
@@ -12780,90 +12864,6 @@ export class ClubCardComponent {
     </article>
   </div>
 </main>
-````
-
-## File: src/app/features/clubs/create-club/create-club.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-} from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-interface CreateClubForm {
-  name: FormControl<string>;
-  description: FormControl<string>;
-  isPublic: FormControl<boolean>;
-  city: FormControl<string>;
-  coverUrl: FormControl<string>;
-}
-@Component({
-  selector: 'app-create-club',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './create-club.component.html',
-})
-export class CreateClubComponent {
-  private readonly clubService = inject(ClubService);
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly _errorMessage = signal<string | null>(null);
-  readonly errorMessage = this._errorMessage.asReadonly();
-  private readonly _isSubmitting = signal(false);
-  readonly isSubmitting = this._isSubmitting.asReadonly();
-  private readonly _showAfterMeeting = signal(false);
-  readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
-  readonly form = new FormGroup<CreateClubForm>({
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-    isPublic: new FormControl(true, { nonNullable: true }),
-    city: new FormControl('', { nonNullable: true }),
-    coverUrl: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^https?:\/\/.+\..+/)] }),
-  });
-  togglePublic(): void {
-    const current = this.form.controls.isPublic.value;
-    this.form.controls.isPublic.setValue(!current);
-  }
-  toggleAfterMeeting(): void {
-    this._showAfterMeeting.update(v => !v);
-  }
-  cancel(): void {
-    this.router.navigate(['/clubs']);
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this._isSubmitting.set(true);
-    this._errorMessage.set(null);
-    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
-    try {
-      const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
-      this.router.navigate(['/clubs', club.id]);
-    } catch (err) {
-      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
-    } finally {
-      this._isSubmitting.set(false);
-    }
-  }
-}
 ````
 
 ## File: src/app/features/events/event-card/event-card.component.html
@@ -16857,6 +16857,246 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
 }
 ````
 
+## File: src/app/features/clubs/club-detail/club-detail.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  effect,
+  input,
+  linkedSignal,
+  untracked,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
+import { ClubEvent } from '../../../core/models/event.model';
+import { UserProfile } from '../../../core/models/user.model';
+import { EventService } from '../../../core/services/event.service';
+import { SeoService } from '../../../core/services/seo.service';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { ClubMembersListComponent } from './members/club-members-list.component';
+import { ClubHeaderComponent } from './header/club-header.component';
+import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
+import { ClubEventCardComponent } from './club-event-card/club-event-card.component';
+import { ClubSidebarRightComponent } from './club-sidebar-right/club-sidebar-right.component';
+import { BookVoteSectionComponent } from './book-vote/book-vote-section.component';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCard } from '../../../shared/spartan/card/src';
+@Component({
+  selector: 'app-club-detail',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    RouterLink,
+    TranslateModule,
+    FormatDatePipe,
+    ClubMembersListComponent,
+    ClubHeaderComponent,
+    ClubManagePanelComponent,
+    ClubEventCardComponent,
+    ClubSidebarRightComponent,
+    BookVoteSectionComponent,
+    HlmButton,
+    HlmCard,
+  ],
+  templateUrl: './club-detail.component.html',
+})
+export class ClubDetailComponent {
+  readonly id = input.required<string>();
+  private readonly clubService = inject(ClubService);
+  private readonly eventService = inject(EventService);
+  private readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  private readonly translate = inject(TranslateService);
+  private readonly _lang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: this.translate.currentLang ?? 'uk' },
+  );
+  readonly currentUser = this.auth.currentUser;
+  readonly club = signal<Club | null>(null);
+  readonly members = signal<ClubMemberDetail[]>([]);
+  readonly clubBans = signal<BanRecord[]>([]);
+  readonly events = signal<ClubEvent[]>([]);
+  readonly isLoading = signal(true);
+  readonly errorMessage = signal<string | null>(null);
+  readonly isActionLoading = signal(false);
+  readonly actionError = signal<string | null>(null);
+  readonly attendingEventId = signal<string | null>(null);
+  readonly sortKey = linkedSignal<'date' | 'popular' | 'status'>(() => {
+    this.id();
+    return 'date';
+    });
+  readonly sortOptions = [
+    { key: 'date' as const,    labelKey: 'CLUB_DETAIL.sort_nearest' },
+    { key: 'popular' as const, labelKey: 'CLUB_DETAIL.sort_popular' },
+    { key: 'status' as const,  labelKey: 'CLUB_DETAIL.sort_status'  },
+  ];
+  readonly isMember = computed(() => this.clubService.myClubIds().has(this.id()));
+  readonly isClubOwner = computed(
+    () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
+  );
+  readonly currentUserId = computed(() => this.auth.currentUser()?.id ?? null);
+  readonly organizerProfile = computed<UserProfile | null>(() => {
+    const organizerId = this.club()?.organizerId;
+    if (!organizerId) return null;
+    const organizer = this.members().find(m => m.role === 'organizer');
+    if (!organizer) return null;
+    return {
+      id: organizerId,
+      displayName: organizer.displayName,
+      avatarUrl: organizer.avatarUrl,
+      role: 'user',
+      createdAt: '',
+      socials: organizer.socials,
+      socialsPublic: organizer.socialsPublic,
+    } satisfies UserProfile;
+  });
+  readonly upcomingEvents = computed(() =>
+    this.events().filter(e => e.status === 'scheduled' || e.status === 'active'),
+  );
+  readonly sortedUpcomingEvents = computed(() => {
+    const events = this.upcomingEvents();
+    const key = this.sortKey();
+    if (key === 'popular') {
+      return [...events].sort((a, b) => b.attendeeCount - a.attendeeCount);
+    }
+    if (key === 'status') {
+      const order: Record<string, number> = { active: 0, scheduled: 1, rescheduled: 2 };
+      return [...events].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
+    }
+    return [...events].sort((a, b) => a.date.localeCompare(b.date));
+  });
+  readonly nearestEventBook = computed<{ title: string; author: string; description: string; coverUrl: string | null } | null>(() => {
+    const nearest = [...this.events()]
+      .filter(e => e.status === 'upcoming' || e.status === 'scheduled' || e.status === 'active')
+      .sort((a, b) => a.date.localeCompare(b.date))[0];
+    const title = nearest?.bookTitle;
+    if (title) return { title, author: '', description: '', coverUrl: nearest.coverUrl ?? null };
+    const cb = this.club()?.currentBook;
+    return cb ? { ...cb, coverUrl: null } : null;
+  });
+  readonly deleteCountdown = computed<string | null>(() => {
+    const club = this.club();
+    if (!club) return null;
+    const ms = this.clubService.msUntilDeletion(club);
+    if (ms === null) return null;
+    const totalMinutes = Math.floor(ms / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) {
+      return minutes > 0 ? `${hours} год ${minutes} хв` : `${hours} год`;
+    }
+    return `${totalMinutes} хв`;
+  });
+  constructor() {
+    effect((onCleanup) => {
+      const clubId = this.id();
+      let cancelled = false;
+      onCleanup(() => { cancelled = true; });
+      this.loadClub(clubId, () => cancelled).catch((_err: unknown) => { /* swallow */ });
+    });
+  }
+  private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    try {
+      if (this.auth.isAuthenticated() && untracked(() => this.clubService.myClubs().length === 0)) {
+        await this.clubService.loadMyClubs();
+      }
+      if (isCancelled()) return;
+      const found = await this.clubService.getClubById(clubId);
+      if (isCancelled()) return;
+      if (found) {
+        this.club.set(found);
+        const [members, events] = await Promise.all([
+          this.clubService.getClubMembers(clubId),
+          this.clubService.loadClubEvents(clubId),
+        ]);
+        if (isCancelled()) return;
+        this.members.set(members);
+        this.events.set(events);
+        if (this.auth.currentUser()?.id === found.organizerId) {
+          this.clubBans.set(await this.clubService.getBans(clubId));
+        }
+        this.seo.setPageI18n('SEO.club_detail_title', {
+          ogTitleKey: 'SEO.club_detail_og_title',
+          params: { name: found.name },
+        });
+      } else {
+        this.errorMessage.set('This club could not be found.');
+      }
+    } catch {
+      if (!isCancelled()) this.errorMessage.set('Failed to load club details.');
+    } finally {
+      if (!isCancelled()) this.isLoading.set(false);
+    }
+  }
+  async onJoin(): Promise<void> {
+    await this.performMembershipAction(() => this.clubService.joinClub(this.id()), 'Failed to join club');
+  }
+  async onLeave(): Promise<void> {
+    await this.performMembershipAction(() => this.clubService.leaveClub(this.id()), 'Failed to leave club');
+  }
+  async handleKick(userId: string): Promise<void> {
+    await this.clubService.kickMember(this.id(), userId);
+    this.members.update(list => list.filter(m => m.userId !== userId));
+  }
+  async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
+    await this.clubService.banMember(this.id(), event.userId, event.duration);
+    this.members.update(list => list.filter(m => m.userId !== event.userId));
+  }
+  async onAttend(eventId: string): Promise<void> {
+    await this.performAttendanceAction(eventId, true);
+  }
+  async onCancelAttend(eventId: string): Promise<void> {
+    await this.performAttendanceAction(eventId, false);
+  }
+  private async performMembershipAction(action: () => Promise<void>, errorFallback: string): Promise<void> {
+    this.isActionLoading.set(true);
+    this.actionError.set(null);
+    try {
+      await action();
+      const updated = await this.clubService.getClubById(this.id());
+      if (updated) this.club.set(updated);
+    } catch (err) {
+      this.actionError.set(err instanceof Error ? err.message : errorFallback);
+    } finally {
+      this.isActionLoading.set(false);
+    }
+  }
+  private async performAttendanceAction(eventId: string, attending: boolean): Promise<void> {
+    this.attendingEventId.set(eventId);
+    try {
+      if (attending) {
+        await this.eventService.attendEvent(eventId);
+      } else {
+        await this.eventService.cancelAttendance(eventId);
+      }
+      this.events.update(list =>
+        list.map(e =>
+          e.id === eventId
+            ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
+            : e,
+        ),
+      );
+    } finally {
+      this.attendingEventId.set(null);
+    }
+  }
+}
+````
+
 ## File: package.json
 ````json
 {
@@ -17136,246 +17376,6 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
       </div>
     </div>
   </main>
-}
-````
-
-## File: src/app/features/clubs/club-detail/club-detail.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  effect,
-  input,
-  linkedSignal,
-  untracked,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
-import { ClubEvent } from '../../../core/models/event.model';
-import { UserProfile } from '../../../core/models/user.model';
-import { EventService } from '../../../core/services/event.service';
-import { SeoService } from '../../../core/services/seo.service';
-import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-import { ClubMembersListComponent } from './members/club-members-list.component';
-import { ClubHeaderComponent } from './header/club-header.component';
-import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
-import { ClubEventCardComponent } from './club-event-card/club-event-card.component';
-import { ClubSidebarRightComponent } from './club-sidebar-right/club-sidebar-right.component';
-import { BookVoteSectionComponent } from './book-vote/book-vote-section.component';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmCard } from '../../../shared/spartan/card/src';
-@Component({
-  selector: 'app-club-detail',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    RouterLink,
-    TranslateModule,
-    FormatDatePipe,
-    ClubMembersListComponent,
-    ClubHeaderComponent,
-    ClubManagePanelComponent,
-    ClubEventCardComponent,
-    ClubSidebarRightComponent,
-    BookVoteSectionComponent,
-    HlmButton,
-    HlmCard,
-  ],
-  templateUrl: './club-detail.component.html',
-})
-export class ClubDetailComponent {
-  readonly id = input.required<string>();
-  private readonly clubService = inject(ClubService);
-  private readonly eventService = inject(EventService);
-  private readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  private readonly translate = inject(TranslateService);
-  private readonly _lang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: this.translate.currentLang ?? 'uk' },
-  );
-  readonly currentUser = this.auth.currentUser;
-  readonly club = signal<Club | null>(null);
-  readonly members = signal<ClubMemberDetail[]>([]);
-  readonly clubBans = signal<BanRecord[]>([]);
-  readonly events = signal<ClubEvent[]>([]);
-  readonly isLoading = signal(true);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isActionLoading = signal(false);
-  readonly actionError = signal<string | null>(null);
-  readonly attendingEventId = signal<string | null>(null);
-  readonly sortKey = linkedSignal<'date' | 'popular' | 'status'>(() => {
-    this.id();
-    return 'date';
-    });
-  readonly sortOptions = [
-    { key: 'date' as const,    labelKey: 'CLUB_DETAIL.sort_nearest' },
-    { key: 'popular' as const, labelKey: 'CLUB_DETAIL.sort_popular' },
-    { key: 'status' as const,  labelKey: 'CLUB_DETAIL.sort_status'  },
-  ];
-  readonly isMember = computed(() => this.clubService.myClubIds().has(this.id()));
-  readonly isClubOwner = computed(
-    () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
-  );
-  readonly currentUserId = computed(() => this.auth.currentUser()?.id ?? null);
-  readonly organizerProfile = computed<UserProfile | null>(() => {
-    const organizerId = this.club()?.organizerId;
-    if (!organizerId) return null;
-    const organizer = this.members().find(m => m.role === 'organizer');
-    if (!organizer) return null;
-    return {
-      id: organizerId,
-      displayName: organizer.displayName,
-      avatarUrl: organizer.avatarUrl,
-      role: 'user',
-      createdAt: '',
-      socials: organizer.socials,
-      socialsPublic: organizer.socialsPublic,
-    } satisfies UserProfile;
-  });
-  readonly upcomingEvents = computed(() =>
-    this.events().filter(e => e.status === 'scheduled' || e.status === 'active'),
-  );
-  readonly sortedUpcomingEvents = computed(() => {
-    const events = this.upcomingEvents();
-    const key = this.sortKey();
-    if (key === 'popular') {
-      return [...events].sort((a, b) => b.attendeeCount - a.attendeeCount);
-    }
-    if (key === 'status') {
-      const order: Record<string, number> = { active: 0, scheduled: 1, rescheduled: 2 };
-      return [...events].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
-    }
-    return [...events].sort((a, b) => a.date.localeCompare(b.date));
-  });
-  readonly nearestEventBook = computed<{ title: string; author: string; description: string; coverUrl: string | null } | null>(() => {
-    const nearest = [...this.events()]
-      .filter(e => e.status === 'upcoming' || e.status === 'scheduled' || e.status === 'active')
-      .sort((a, b) => a.date.localeCompare(b.date))[0];
-    const title = nearest?.bookTitle;
-    if (title) return { title, author: '', description: '', coverUrl: nearest.coverUrl ?? null };
-    const cb = this.club()?.currentBook;
-    return cb ? { ...cb, coverUrl: null } : null;
-  });
-  readonly deleteCountdown = computed<string | null>(() => {
-    const club = this.club();
-    if (!club) return null;
-    const ms = this.clubService.msUntilDeletion(club);
-    if (ms === null) return null;
-    const totalMinutes = Math.floor(ms / 60000);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    if (hours > 0) {
-      return minutes > 0 ? `${hours} год ${minutes} хв` : `${hours} год`;
-    }
-    return `${totalMinutes} хв`;
-  });
-  constructor() {
-    effect((onCleanup) => {
-      const clubId = this.id();
-      let cancelled = false;
-      onCleanup(() => { cancelled = true; });
-      this.loadClub(clubId, () => cancelled).catch((_err: unknown) => { /* swallow */ });
-    });
-  }
-  private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-    try {
-      if (this.auth.isAuthenticated() && untracked(() => this.clubService.myClubs().length === 0)) {
-        await this.clubService.loadMyClubs();
-      }
-      if (isCancelled()) return;
-      const found = await this.clubService.getClubById(clubId);
-      if (isCancelled()) return;
-      if (found) {
-        this.club.set(found);
-        const [members, events] = await Promise.all([
-          this.clubService.getClubMembers(clubId),
-          this.clubService.loadClubEvents(clubId),
-        ]);
-        if (isCancelled()) return;
-        this.members.set(members);
-        this.events.set(events);
-        if (this.auth.currentUser()?.id === found.organizerId) {
-          this.clubBans.set(await this.clubService.getBans(clubId));
-        }
-        this.seo.setPageI18n('SEO.club_detail_title', {
-          ogTitleKey: 'SEO.club_detail_og_title',
-          params: { name: found.name },
-        });
-      } else {
-        this.errorMessage.set('This club could not be found.');
-      }
-    } catch {
-      if (!isCancelled()) this.errorMessage.set('Failed to load club details.');
-    } finally {
-      if (!isCancelled()) this.isLoading.set(false);
-    }
-  }
-  async onJoin(): Promise<void> {
-    await this.performMembershipAction(() => this.clubService.joinClub(this.id()), 'Failed to join club');
-  }
-  async onLeave(): Promise<void> {
-    await this.performMembershipAction(() => this.clubService.leaveClub(this.id()), 'Failed to leave club');
-  }
-  async handleKick(userId: string): Promise<void> {
-    await this.clubService.kickMember(this.id(), userId);
-    this.members.update(list => list.filter(m => m.userId !== userId));
-  }
-  async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
-    await this.clubService.banMember(this.id(), event.userId, event.duration);
-    this.members.update(list => list.filter(m => m.userId !== event.userId));
-  }
-  async onAttend(eventId: string): Promise<void> {
-    await this.performAttendanceAction(eventId, true);
-  }
-  async onCancelAttend(eventId: string): Promise<void> {
-    await this.performAttendanceAction(eventId, false);
-  }
-  private async performMembershipAction(action: () => Promise<void>, errorFallback: string): Promise<void> {
-    this.isActionLoading.set(true);
-    this.actionError.set(null);
-    try {
-      await action();
-      const updated = await this.clubService.getClubById(this.id());
-      if (updated) this.club.set(updated);
-    } catch (err) {
-      this.actionError.set(err instanceof Error ? err.message : errorFallback);
-    } finally {
-      this.isActionLoading.set(false);
-    }
-  }
-  private async performAttendanceAction(eventId: string, attending: boolean): Promise<void> {
-    this.attendingEventId.set(eventId);
-    try {
-      if (attending) {
-        await this.eventService.attendEvent(eventId);
-      } else {
-        await this.eventService.cancelAttendance(eventId);
-      }
-      this.events.update(list =>
-        list.map(e =>
-          e.id === eventId
-            ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
-            : e,
-        ),
-      );
-    } finally {
-      this.attendingEventId.set(null);
-    }
-  }
 }
 ````
 

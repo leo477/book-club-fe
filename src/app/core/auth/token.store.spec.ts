@@ -6,7 +6,7 @@ describe('TokenStore', () => {
   let store: TokenStore;
 
   beforeEach(() => {
-    sessionStorage.clear();
+    localStorage.clear();
     TestBed.configureTestingModule({
       providers: [provideZonelessChangeDetection(), TokenStore],
     });
@@ -14,7 +14,7 @@ describe('TokenStore', () => {
   });
 
   afterEach(() => {
-    sessionStorage.clear();
+    localStorage.clear();
   });
 
   it('initializes token as null when localStorage is empty', () => {
@@ -22,17 +22,17 @@ describe('TokenStore', () => {
     expect(store.snapshot()).toBeNull();
   });
 
-  it('set() stores token in sessionStorage and updates signal', () => {
+  it('set() stores token in localStorage and updates signal', () => {
     store.set('my-token');
-    expect(sessionStorage.getItem('bc_access_token')).toBe('my-token');
+    expect(localStorage.getItem('bc_access_token')).toBe('my-token');
     expect(store.token()).toBe('my-token');
     expect(store.snapshot()).toBe('my-token');
   });
 
-  it('clear() removes token from sessionStorage and clears signal', () => {
+  it('clear() removes token from localStorage and clears signal', () => {
     store.set('my-token');
     store.clear();
-    expect(sessionStorage.getItem('bc_access_token')).toBeNull();
+    expect(localStorage.getItem('bc_access_token')).toBeNull();
     expect(store.token()).toBeNull();
     expect(store.snapshot()).toBeNull();
   });
@@ -41,11 +41,11 @@ describe('TokenStore', () => {
     store.set('token-1');
     store.set('token-2');
     expect(store.token()).toBe('token-2');
-    expect(sessionStorage.getItem('bc_access_token')).toBe('token-2');
+    expect(localStorage.getItem('bc_access_token')).toBe('token-2');
   });
 
-  it('reads initial token from sessionStorage', () => {
-    sessionStorage.setItem('bc_access_token', 'pre-existing');
+  it('reads initial token from localStorage', () => {
+    localStorage.setItem('bc_access_token', 'pre-existing');
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [provideZonelessChangeDetection(), TokenStore],
