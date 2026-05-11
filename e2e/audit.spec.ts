@@ -34,18 +34,33 @@ function addBug(bug: Bug): void {
 function attachMonitors(page: Page, route: string): () => void {
   const consoleErrors: string[] = [];
   const networkIssues: string[] = [];
+  // Counts expected 404s so we can suppress the matching generic browser console errors
+  let suppressedNotFoundCount = 0;
 
   const onConsole = (msg: ConsoleMessage) => {
     if (msg.type() === 'error') {
       const text = msg.text();
-      if (!text.includes('favicon') && !text.includes('ResizeObserver')) {
-        consoleErrors.push(text);
+      const isKnownNoise =
+        text.includes('favicon') ||
+        text.includes('ResizeObserver');
+      if (isKnownNoise) return;
+      // Browser logs a generic "Failed to load resource: 404" for every expected sessions/active miss
+      if (text.includes('Failed to load resource') && text.includes('404') && suppressedNotFoundCount > 0) {
+        suppressedNotFoundCount--;
+        return;
       }
+      consoleErrors.push(text);
     }
   };
   const onResponse = (resp: Response) => {
     if (resp.status() >= 400) {
-      networkIssues.push(`HTTP ${resp.status()} — ${resp.url()}`);
+      const url = resp.url();
+      // 404 on sessions/active is expected when no quiz session is running — app handles it gracefully
+      if (resp.status() === 404 && url.includes('/sessions/active')) {
+        suppressedNotFoundCount++;
+        return;
+      }
+      networkIssues.push(`HTTP ${resp.status()} — ${url}`);
     }
   };
   const onRequestFailed = (req: Request) => {
@@ -92,8 +107,10 @@ async function checkUndefinedText(page: Page, route: string): Promise<void> {
 async function injectAuth(page: Page): Promise<void> {
   await page.addInitScript(
     ({ at, rt }) => {
+      // Inject into both storages: localStorage (after fix) and sessionStorage (pre-fix compat)
       localStorage.setItem('bc_access_token', at);
       localStorage.setItem('bc_refresh_token', rt);
+      sessionStorage.setItem('bc_access_token', at);
     },
     { at: ACCESS_TOKEN, rt: REFRESH_TOKEN },
   );
@@ -182,6 +199,8 @@ test.describe('Unauthenticated', () => {
     const flush = attachMonitors(page, '/login');
     await page.goto('/login');
     await waitForAngular(page);
+    // Form is gated by a 700ms entrance animation — wait for it to render
+    await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
 
     const emailInput = page.locator('input[type="email"], input[name="email"]');
     const passwordInput = page.locator('input[type="password"]');
@@ -215,6 +234,8 @@ test.describe('Unauthenticated', () => {
     const flush = attachMonitors(page, '/register');
     await page.goto('/register');
     await waitForAngular(page);
+    // Form is gated by a 700ms entrance animation — wait for it to render
+    await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
 
     const emailInput = page.locator('input[type="email"], input[name="email"]');
     const passwordInput = page.locator('input[type="password"]').first();
@@ -732,7 +753,7 @@ test.afterAll(async () => {
     '# Bug Report — Book Club App Audit',
     '',
     `**Date:** ${new Date().toISOString().split('T')[0]}`,
-    `**URL:** https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app/`,
+    `**URL:** https://book-club-dyxne04jy-dmytros-projects-ad22eb22.vercel.app/`,
     `**Test user:** test123@mail.com`,
     `**Club owner account:** terrtr`,
     '',
