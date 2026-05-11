@@ -59,30 +59,30 @@ The content is organized as follows:
   pre-commit
 playwright-report/
   data/
-    0369b74b6a3cc75e268acd38a769ceb17dd6af05.zip
-    088ac0912d8fc7a869706e249785e1b169b7d83b.zip
-    1b6a05102cd4c2e1dc67c890a6d762bde29d5414.zip
-    252229ec4a7795adcca5f126a121bf208192e7f9.zip
-    31f4048feb25744fd26da9ad19a05dd0d265c020.zip
-    333e12d852b9cdd7fc4f7e2d0add4162fb6f7cfb.zip
-    38e8da95e0ebba9627cf5786a8580ad9d13ebe1d.zip
-    3c958020538105d177d81e69b443ed02e7259dd2.zip
-    59f8db09b4cf23a378014cbc62eb502a7a62dfa4.zip
-    5cdf93a46d310de14d71771ae23924dcfe55170b.zip
-    62e176f9f19fa83df129ebae787b92365a77b135.zip
-    6769da1a04b8ccbc7dcfaf1e8598c3aa2f39a2d7.zip
-    76bddcaa045c8534f404af6d0c6b55315d7380c8.zip
-    92197c201d61fb7c1f7af29aa9c8f240803427a8.zip
-    a0a50a60ae5f70f2e14854f3b0fa4c6b997a7edd.zip
-    ab429ba4645894055ea15970201c124b6e184c35.zip
-    c22515b8290a7820e23a997a906d839175739cd3.zip
-    d14bccfa04702ba0a4c5ab30ece0298b977711df.zip
-    d2922acd3f7d4f4f7dd6d22b06b8e99a137e6d9b.zip
-    d2ab647c044455728598c2ce010e24c90f914b70.zip
-    e06f2ffaedb2dc815fabc0b678470dd3a3658b25.zip
-    e422f3ea0a8bccf0e8019a3541161f91f10b8167.zip
-    f8d6f98d77c24c68915a9360b0e5148f53749dec.zip
-    fa216a66e3bef38b46b5f0e937929f249ce72c90.zip
+    165f0d18828a353f71af165a18f45d63f92b831c.zip
+    1b0aa1859c02b796e9352c2f62df373d8f1452d4.zip
+    2f812a0c9896592bb5e1c2eacecf7838bc0e6646.zip
+    354d0cf7a3df2d7f11ec7b590a1c91d3d50b97e4.zip
+    36294e4b3eb7948c5ba0a332d0cecb2247583499.zip
+    3cd0a76377843f672d67a50a5c3f281eb67a7cee.zip
+    4817963d363a5172bdb84679fd6138e72556c515.zip
+    4fc6b79abd80b2f2709c88ab00449d789f82cde8.zip
+    5cc7ae52e110e6ab227431c8560dfe0134ff46ee.zip
+    6397879cc2979cecc75375d550832e4b87642fb1.zip
+    7281629fab1a52c5f4eb33dcc66d5527caee710c.zip
+    731d3e9f357c801aeac1775612d8190c8d1b9f04.zip
+    93c365516dad2c0aef2729548760788a67ea15c4.zip
+    9517790abf57b79170d4cd4e297c3749ea5f8a36.zip
+    af5bdc9305f46654be77b787331e0791c2e513b3.zip
+    b278463624d95dc3659263249e205a3c1f194756.zip
+    bacfbf63ad7b5b3fa406cf5cc735d2cc42ff2cc3.zip
+    c069800ebf322812a3f004ad38fbfdd62d061afd.zip
+    c8ffc21abafd3f1f2ef4e16fcd49362d561e9b06.zip
+    de0b58ffaa4723eec1900d004411a8aee0907020.zip
+    ed6488634f35603ee2a8ba0260272a1228b04b85.zip
+    f4c736b3eb22b8f66c90fc269606869a11e875f4.zip
+    f6c40ea237a632c3bc009ceabc0f823fc062ad14.zip
+    fca728f04cd49c60e6ff2b10994d63a7f957ebf0.zip
   trace/
     assets/
       codeMirrorModule-DS0FLvoc.js
@@ -1219,7 +1219,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Unauthenticated",
           "file": "audit.spec.ts",
-          "line": 197,
+          "line": 194,
           "column": 6,
           "specs": [
             {
@@ -1238,12 +1238,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3138,
+                      "duration": 2946,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:07.662Z",
+                      "startTime": "2026-05-11T11:52:01.081Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1259,7 +1259,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-f5246440050eb2d1b30f",
               "file": "audit.spec.ts",
-              "line": 198,
+              "line": 195,
               "column": 7
             },
             {
@@ -1278,12 +1278,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2366,
+                      "duration": 2069,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:12.596Z",
+                      "startTime": "2026-05-11T11:52:06.285Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1299,7 +1299,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-bc30b90a70577aa59e02",
               "file": "audit.spec.ts",
-              "line": 233,
+              "line": 230,
               "column": 7
             },
             {
@@ -1318,12 +1318,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1537,
+                      "duration": 1577,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:15.012Z",
+                      "startTime": "2026-05-11T11:52:08.407Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1339,7 +1339,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-9949923f57d1840a308c",
               "file": "audit.spec.ts",
-              "line": 258,
+              "line": 255,
               "column": 7
             },
             {
@@ -1358,12 +1358,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1546,
+                      "duration": 1508,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:16.584Z",
+                      "startTime": "2026-05-11T11:52:13.606Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1379,7 +1379,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-49e29292a22c3612fdf8",
               "file": "audit.spec.ts",
-              "line": 271,
+              "line": 268,
               "column": 7
             }
           ]
@@ -1387,7 +1387,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Login flow",
           "file": "audit.spec.ts",
-          "line": 288,
+          "line": 285,
           "column": 6,
           "specs": [
             {
@@ -1406,12 +1406,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5056,
+                      "duration": 5320,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:18.174Z",
+                      "startTime": "2026-05-11T11:52:15.151Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1427,7 +1427,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-22da45e75733d1a79597",
               "file": "audit.spec.ts",
-              "line": 289,
+              "line": 286,
               "column": 7
             }
           ]
@@ -1435,7 +1435,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Events",
           "file": "audit.spec.ts",
-          "line": 319,
+          "line": 316,
           "column": 6,
           "specs": [
             {
@@ -1454,12 +1454,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2299,
+                      "duration": 2232,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:23.317Z",
+                      "startTime": "2026-05-11T11:52:20.582Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1475,7 +1475,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-d46db9bc60fe9a0ee667",
               "file": "audit.spec.ts",
-              "line": 320,
+              "line": 317,
               "column": 7
             },
             {
@@ -1494,12 +1494,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 86,
+                      "duration": 81,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:25.656Z",
+                      "startTime": "2026-05-11T11:52:22.864Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1515,7 +1515,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-76af7e3d1ce1b59ef351",
               "file": "audit.spec.ts",
-              "line": 341,
+              "line": 338,
               "column": 7
             }
           ]
@@ -1523,7 +1523,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Clubs",
           "file": "audit.spec.ts",
-          "line": 361,
+          "line": 358,
           "column": 6,
           "specs": [
             {
@@ -1542,12 +1542,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2554,
+                      "duration": 2534,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:25.757Z",
+                      "startTime": "2026-05-11T11:52:22.959Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1563,7 +1563,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-2ce67c659045f92d789a",
               "file": "audit.spec.ts",
-              "line": 362,
+              "line": 359,
               "column": 7
             },
             {
@@ -1582,12 +1582,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2498,
+                      "duration": 2388,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:28.356Z",
+                      "startTime": "2026-05-11T11:52:25.539Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1603,7 +1603,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-68219b921b1d8e3be4c1",
               "file": "audit.spec.ts",
-              "line": 378,
+              "line": 375,
               "column": 7
             },
             {
@@ -1622,12 +1622,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2306,
+                      "duration": 2343,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:30.896Z",
+                      "startTime": "2026-05-11T11:52:27.970Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1643,7 +1643,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-cb15362a6b87f51ad9c8",
               "file": "audit.spec.ts",
-              "line": 397,
+              "line": 394,
               "column": 7
             },
             {
@@ -1662,12 +1662,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2283,
+                      "duration": 2252,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:36.179Z",
+                      "startTime": "2026-05-11T11:52:30.350Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1683,7 +1683,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-0a0de066d87ad95845c9",
               "file": "audit.spec.ts",
-              "line": 428,
+              "line": 425,
               "column": 7
             }
           ]
@@ -1691,7 +1691,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Quizzes",
           "file": "audit.spec.ts",
-          "line": 460,
+          "line": 457,
           "column": 6,
           "specs": [
             {
@@ -1710,12 +1710,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2348,
+                      "duration": 2273,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:38.503Z",
+                      "startTime": "2026-05-11T11:52:32.644Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1731,7 +1731,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-9302ee7aba33d1706f73",
               "file": "audit.spec.ts",
-              "line": 461,
+              "line": 458,
               "column": 7
             },
             {
@@ -1750,12 +1750,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2308,
+                      "duration": 2322,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:40.890Z",
+                      "startTime": "2026-05-11T11:52:34.955Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1771,7 +1771,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-b38f358edfddb5fa7fd7",
               "file": "audit.spec.ts",
-              "line": 482,
+              "line": 479,
               "column": 7
             },
             {
@@ -1790,12 +1790,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2238,
+                      "duration": 2337,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:43.237Z",
+                      "startTime": "2026-05-11T11:52:37.318Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1811,7 +1811,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-029b5be3cb4067b9b4e0",
               "file": "audit.spec.ts",
-              "line": 515,
+              "line": 512,
               "column": 7
             },
             {
@@ -1830,12 +1830,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2361,
+                      "duration": 2342,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:45.515Z",
+                      "startTime": "2026-05-11T11:52:39.692Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1851,7 +1851,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-06e2578b47fcd2080524",
               "file": "audit.spec.ts",
-              "line": 536,
+              "line": 533,
               "column": 7
             },
             {
@@ -1870,12 +1870,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2344,
+                      "duration": 2496,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:47.916Z",
+                      "startTime": "2026-05-11T11:52:42.079Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1891,7 +1891,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-7cf2a7f666c21eaf11e5",
               "file": "audit.spec.ts",
-              "line": 557,
+              "line": 554,
               "column": 7
             },
             {
@@ -1910,12 +1910,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2286,
+                      "duration": 2638,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:50.304Z",
+                      "startTime": "2026-05-11T11:52:48.206Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1931,7 +1931,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-312af12f04276abe0ee3",
               "file": "audit.spec.ts",
-              "line": 583,
+              "line": 580,
               "column": 7
             },
             {
@@ -1950,12 +1950,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2284,
+                      "duration": 2287,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:52.633Z",
+                      "startTime": "2026-05-11T11:52:50.892Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1971,7 +1971,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-0ce7de78bab32fab9ce3",
               "file": "audit.spec.ts",
-              "line": 604,
+              "line": 601,
               "column": 7
             }
           ]
@@ -1979,7 +1979,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Randomizer",
           "file": "audit.spec.ts",
-          "line": 626,
+          "line": 623,
           "column": 6,
           "specs": [
             {
@@ -1998,12 +1998,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2389,
+                      "duration": 2227,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:54.958Z",
+                      "startTime": "2026-05-11T11:52:53.219Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2019,7 +2019,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-6b2c2683cb59fc280d9c",
               "file": "audit.spec.ts",
-              "line": 627,
+              "line": 624,
               "column": 7
             }
           ]
@@ -2027,7 +2027,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Profile",
           "file": "audit.spec.ts",
-          "line": 654,
+          "line": 651,
           "column": 6,
           "specs": [
             {
@@ -2046,12 +2046,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2274,
+                      "duration": 2386,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:57.389Z",
+                      "startTime": "2026-05-11T11:52:55.496Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2067,7 +2067,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-f0fa88c1ca5ce74aeaf1",
               "file": "audit.spec.ts",
-              "line": 655,
+              "line": 652,
               "column": 7
             }
           ]
@@ -2075,7 +2075,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Manage",
           "file": "audit.spec.ts",
-          "line": 678,
+          "line": 675,
           "column": 6,
           "specs": [
             {
@@ -2094,12 +2094,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2511,
+                      "duration": 2481,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:26:59.699Z",
+                      "startTime": "2026-05-11T11:52:57.924Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2115,7 +2115,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-29850844fb383cafed54",
               "file": "audit.spec.ts",
-              "line": 679,
+              "line": 676,
               "column": 7
             }
           ]
@@ -2123,7 +2123,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Navigation & UI",
           "file": "audit.spec.ts",
-          "line": 697,
+          "line": 694,
           "column": 6,
           "specs": [
             {
@@ -2142,12 +2142,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2619,
+                      "duration": 2655,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:27:02.255Z",
+                      "startTime": "2026-05-11T11:53:00.449Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2163,7 +2163,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-01a9c5e7b844c5aafd45",
               "file": "audit.spec.ts",
-              "line": 698,
+              "line": 695,
               "column": 7
             },
             {
@@ -2182,12 +2182,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2742,
+                      "duration": 2443,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:27:04.917Z",
+                      "startTime": "2026-05-11T11:53:03.149Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2203,7 +2203,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-ff9c27d83ece6c30097a",
               "file": "audit.spec.ts",
-              "line": 718,
+              "line": 715,
               "column": 7
             },
             {
@@ -2222,7 +2222,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1507,
+                      "duration": 1647,
                       "errors": [],
                       "stdout": [
                         {
@@ -2231,7 +2231,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:27:07.707Z",
+                      "startTime": "2026-05-11T11:53:05.644Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2247,7 +2247,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-3017867c3036115faae5",
               "file": "audit.spec.ts",
-              "line": 732,
+              "line": 729,
               "column": 7
             }
           ]
@@ -2257,8 +2257,8 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-05-11T11:26:06.939Z",
-    "duration": 59478.619999999995,
+    "startTime": "2026-05-11T11:52:00.325Z",
+    "duration": 59943.422,
     "expected": 24,
     "skipped": 0,
     "unexpected": 0,
@@ -2350,7 +2350,7 @@ Error generating stack: `+l.message+`
     <div id='root'></div>
   </body>
 </html>
-<template id="playwrightReportBase64">data:application/zip;base64,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</template>
+<template id="playwrightReportBase64">data:application/zip;base64,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</template>
 ````
 
 ## File: public/robots.txt
@@ -10542,14 +10542,14 @@ import { Injectable, signal } from '@angular/core';
 const TOKEN_KEY = 'bc_access_token';
 @Injectable({ providedIn: 'root' })
 export class TokenStore {
-  private readonly _token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
+  private readonly _token = signal<string | null>(sessionStorage.getItem(TOKEN_KEY));
   readonly token = this._token.asReadonly();
   set(token: string): void {
-    localStorage.setItem(TOKEN_KEY, token);
+    sessionStorage.setItem(TOKEN_KEY, token);
     this._token.set(token);
   }
   clear(): void {
-    localStorage.removeItem(TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
     this._token.set(null);
   }
   snapshot(): string | null {
@@ -11272,6 +11272,44 @@ export class RegisterComponent {
     </div>
   </div>
 </div>
+````
+
+## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { Club } from '../../../../core/models/club.model';
+import { TranslateModule } from '@ngx-translate/core';
+import { HlmCardImports } from '../../../../shared/spartan/card/src';
+import { HlmButton } from '../../../../shared/spartan/button/src';
+import { HlmSeparator } from '../../../../shared/spartan/separator/src';
+import { HlmSpinner } from '../../../../shared/spartan/spinner/src';
+@Component({
+  selector: 'app-club-card',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton, HlmSeparator, HlmSpinner],
+  templateUrl: './club-card.component.html',
+})
+export class ClubCardComponent {
+  readonly club = input.required<Club>();
+  readonly isMember = input.required<boolean>();
+  readonly isOwned = input<boolean>(false);
+  readonly isAuthenticated = input<boolean>(false);
+  readonly joining = input<boolean>(false);
+  readonly variant = input<'default' | 'featured'>('default');
+  readonly join = output<void>();
+  protected daysUntil(dateStr: string): number {
+    const target = new Date(dateStr).getTime();
+    const now = Date.now();
+    return Math.round((target - now) / 86400000);
+  }
+}
 ````
 
 ## File: src/app/features/clubs/clubs-list/clubs-list.component.html
@@ -12710,44 +12748,6 @@ export class EventService {
     </ul>
   }
 </section>
-````
-
-## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { Club } from '../../../../core/models/club.model';
-import { TranslateModule } from '@ngx-translate/core';
-import { HlmCardImports } from '../../../../shared/spartan/card/src';
-import { HlmButton } from '../../../../shared/spartan/button/src';
-import { HlmSeparator } from '../../../../shared/spartan/separator/src';
-import { HlmSpinner } from '../../../../shared/spartan/spinner/src';
-@Component({
-  selector: 'app-club-card',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton, HlmSeparator, HlmSpinner],
-  templateUrl: './club-card.component.html',
-})
-export class ClubCardComponent {
-  readonly club = input.required<Club>();
-  readonly isMember = input.required<boolean>();
-  readonly isOwned = input<boolean>(false);
-  readonly isAuthenticated = input<boolean>(false);
-  readonly joining = input<boolean>(false);
-  readonly variant = input<'default' | 'featured'>('default');
-  readonly join = output<void>();
-  protected daysUntil(dateStr: string): number {
-    const target = new Date(dateStr).getTime();
-    const now = Date.now();
-    return Math.round((target - now) / 86400000);
-  }
-}
 ````
 
 ## File: src/app/features/clubs/create-club/create-club.component.html

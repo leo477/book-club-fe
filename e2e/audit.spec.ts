@@ -106,13 +106,10 @@ async function checkUndefinedText(page: Page, route: string): Promise<void> {
 
 async function injectAuth(page: Page): Promise<void> {
   await page.addInitScript(
-    ({ at, rt }) => {
-      // Inject into both storages: localStorage (after fix) and sessionStorage (pre-fix compat)
-      localStorage.setItem('bc_access_token', at);
-      localStorage.setItem('bc_refresh_token', rt);
+    ({ at }) => {
       sessionStorage.setItem('bc_access_token', at);
     },
-    { at: ACCESS_TOKEN, rt: REFRESH_TOKEN },
+    { at: ACCESS_TOKEN },
   );
 }
 
