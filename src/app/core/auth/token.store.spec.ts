@@ -17,7 +17,7 @@ describe('TokenStore', () => {
     sessionStorage.clear();
   });
 
-  it('initializes token as null when localStorage is empty', () => {
+  it('initializes token as null when sessionStorage is empty', () => {
     expect(store.token()).toBeNull();
     expect(store.snapshot()).toBeNull();
   });

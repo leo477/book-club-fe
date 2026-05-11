@@ -39,6 +39,8 @@ The content is organized as follows:
 # Directory Structure
 ```
 .github/
+  codeql/
+    codeql-config.yml
   workflows/
     auto-labeler.yml
     bundle-size.yml
@@ -57,32 +59,30 @@ The content is organized as follows:
   pre-commit
 playwright-report/
   data/
-    0987bb162eeacc764ab02c05f63080bf1fee7978.zip
-    0fde8e705a96f38f63657ab076077f7c5b4ef3d4.zip
-    11f5afb9c540f9c91418e35f1780fe8b82640860.zip
-    1b8a86914dbec29b582383c16f07d1e9964a888a.zip
-    2f2a67f6ee36b5c960b096e0f6b6d3b5cb85d1e4.zip
-    392a6c9f778e0fc3edc35c0fe31a012e71328614.zip
-    3e5903dd57c14fe19a4c2d2576980be33dcbac67.zip
-    401b2e196718488cfe9bcf973ca0a14f61555219.zip
-    52c291b0ddf234788e7765f4352d1207714b195a.zip
-    58c91edd768897a64e700dba02221ff7be746d7a.zip
-    5ab3b9617d759dbc32261e78f8df5a0b014bf4c9.zip
-    5dc6fc67d7ceab7ec80250c68a77421a3e0610da.zip
-    6af800b6db48d5e2587cf73dbe6082a3d71631f4.zip
-    6d83bad55e250a01d267e3f7baa033a0cf77f67a.png
-    79f2fab91e539020ab76bf5e6cb4293d3b8e0dd5.zip
-    84c06bfc1c53efc73fceb195a5993970bc8956c5.md
-    9f96ec61f106b818b2b613e34034e3c2ffae09c1.zip
-    a982d002c03601fb1fbf3f1dcee39b5c1f3f79ed.zip
-    b8654d78bdba9c03961ea8fddc25bd6cd926e04c.zip
-    d0144fd28a3b0aa59b9b3a952446e9d192cc4a21.zip
-    d4f8104ef0e267d67f9959c3701059ced28a0c00.zip
-    d6997bbbc3390456f54cf5d9af2e3be7a144b795.zip
-    d85f28a3aab37701ca5558a0c731d25a91f117ce.zip
-    e57280e6c16c910b7671861bf0b398233510d1bf.zip
-    f2882f23cd449a6bca04eb5b16d3b4a575abeb3d.zip
-    f5abdc75d80ce0f595f5998b80d45e7b6d2720be.zip
+    165f0d18828a353f71af165a18f45d63f92b831c.zip
+    1b0aa1859c02b796e9352c2f62df373d8f1452d4.zip
+    2f812a0c9896592bb5e1c2eacecf7838bc0e6646.zip
+    354d0cf7a3df2d7f11ec7b590a1c91d3d50b97e4.zip
+    36294e4b3eb7948c5ba0a332d0cecb2247583499.zip
+    3cd0a76377843f672d67a50a5c3f281eb67a7cee.zip
+    4817963d363a5172bdb84679fd6138e72556c515.zip
+    4fc6b79abd80b2f2709c88ab00449d789f82cde8.zip
+    5cc7ae52e110e6ab227431c8560dfe0134ff46ee.zip
+    6397879cc2979cecc75375d550832e4b87642fb1.zip
+    7281629fab1a52c5f4eb33dcc66d5527caee710c.zip
+    731d3e9f357c801aeac1775612d8190c8d1b9f04.zip
+    93c365516dad2c0aef2729548760788a67ea15c4.zip
+    9517790abf57b79170d4cd4e297c3749ea5f8a36.zip
+    af5bdc9305f46654be77b787331e0791c2e513b3.zip
+    b278463624d95dc3659263249e205a3c1f194756.zip
+    bacfbf63ad7b5b3fa406cf5cc735d2cc42ff2cc3.zip
+    c069800ebf322812a3f004ad38fbfdd62d061afd.zip
+    c8ffc21abafd3f1f2ef4e16fcd49362d561e9b06.zip
+    de0b58ffaa4723eec1900d004411a8aee0907020.zip
+    ed6488634f35603ee2a8ba0260272a1228b04b85.zip
+    f4c736b3eb22b8f66c90fc269606869a11e875f4.zip
+    f6c40ea237a632c3bc009ceabc0f823fc062ad14.zip
+    fca728f04cd49c60e6ff2b10994d63a7f957ebf0.zip
   trace/
     assets/
       codeMirrorModule-DS0FLvoc.js
@@ -533,45 +533,6 @@ jobs:
           configuration-path: .github/labeler.yml
 ````
 
-## File: .github/workflows/codeql.yml
-````yaml
-name: CodeQL
-on:
-  push:
-    branches: [main, develop]
-  pull_request:
-    branches: [main, develop]
-  schedule:
-    - cron: '0 0 * * 0'
-permissions:
-  contents: read
-  security-events: write
-  actions: read
-concurrency:
-  group: codeql-${{ github.ref }}
-  cancel-in-progress: true
-jobs:
-  analyze:
-    name: Analyze (javascript-typescript)
-    runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: javascript-typescript
-          queries: security-extended
-      - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: '/language:javascript-typescript'
-        continue-on-error: true
-````
-
 ## File: .github/workflows/dependency-review.yml
 ````yaml
 name: Dependency Review
@@ -774,250 +735,6 @@ build:
           - angular.json
           - "tsconfig*.json"
           - "package*.json"
-````
-
-## File: playwright-report/data/84c06bfc1c53efc73fceb195a5993970bc8956c5.md
-````markdown
-# Instructions
-
-- Following Playwright test failed.
-- Explain why, be concise, respect Playwright best practices.
-- Provide a snippet of code with the fix, if possible.
-
-# Test info
-
-- Name: audit.spec.ts >> Authenticated — Quizzes >> GET /clubs/:id/quizzes/create — create quiz step 1
-- Location: e2e/audit.spec.ts:459:7
-
-# Error details
-
-```
-TimeoutError: locator.click: Timeout 20000ms exceeded.
-Call log:
-  - waiting for locator('button:has-text("Next"), button:has-text("Далі"), button:has-text("Continue")').first()
-    - locator resolved to <button hlmbtn="" type="submit" tabindex="-1" disabled="true" data-slot="button" data-disabled="true" class="focus-visible:border-ring focus-visible:ring-ring/50 data-[matches-spartan-invalid=true]:ring-destructive/20 dark:data-[matches-spartan-invalid=true]:ring-destructive/40 data-[matches-spartan-invalid=true]:border-destructive dark:data-[matches-spartan-invalid=true]:border-destructive/50 rounded-md border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-3 data-[matches-s…> Continue → </button>
-  - attempting click action
-    2 × waiting for element to be visible, enabled and stable
-      - element is not enabled
-    - retrying click action
-    - waiting 20ms
-    2 × waiting for element to be visible, enabled and stable
-      - element is not enabled
-    - retrying click action
-      - waiting 100ms
-    39 × waiting for element to be visible, enabled and stable
-       - element is not enabled
-     - retrying click action
-       - waiting 500ms
-
-```
-
-# Test source
-
-```ts
-  384 |     const url = page.url();
-  385 |     if (url.includes('/login')) {
-  386 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'critical', category: 'redirect', description: 'Club edit redirected to login — auth or role guard issue' });
-  387 |       flush();
-  388 |       return;
-  389 |     }
-  390 | 
-  391 |     const nameInput = page.locator('input[name="name"], input[formcontrolname="name"], input[placeholder*="name" i]').first();
-  392 |     const saveBtn = page.locator('button[type="submit"], button:has-text("Save"), button:has-text("Зберегти")').first();
-  393 | 
-  394 |     if (!(await nameInput.isVisible().catch(() => false))) {
-  395 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Club name input not found on edit page' });
-  396 |     }
-  397 |     if (!(await saveBtn.isVisible().catch(() => false))) {
-  398 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Save button not found on club edit page' });
-  399 |     }
-  400 | 
-  401 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/edit`);
-  402 |     flush();
-  403 |   });
-  404 | 
-  405 |   test('GET /clubs/:id/events/create — create event form', async ({ page }) => {
-  406 |     if (!OWNED_CLUB_ID) {
-  407 |       addBug({ route: '/clubs/:id/events/create', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID discovered' });
-  408 |       return;
-  409 |     }
-  410 |     await injectAuth(page);
-  411 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/events/create`);
-  412 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/events/create`);
-  413 |     await waitForAngular(page);
-  414 | 
-  415 |     const url = page.url();
-  416 |     if (url.includes('/login')) {
-  417 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'critical', category: 'redirect', description: 'Create event redirected to login — auth/role guard issue' });
-  418 |       flush();
-  419 |       return;
-  420 |     }
-  421 | 
-  422 |     const titleInput = page.locator('input[formcontrolname="title"], input[name="title"], input[placeholder*="title" i], input[placeholder*="назва" i]').first();
-  423 |     if (!(await titleInput.isVisible().catch(() => false))) {
-  424 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'high', category: 'ui-missing', description: 'Event title input not found on create event page' });
-  425 |     }
-  426 | 
-  427 |     const dateField = page.locator('input[type="date"], input[formcontrolname="date"], [class*="date"]').first();
-  428 |     if (!(await dateField.isVisible().catch(() => false))) {
-  429 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'medium', category: 'ui-missing', description: 'Date field not found on create event page' });
-  430 |     }
-  431 | 
-  432 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/events/create`);
-  433 |     flush();
-  434 |   });
-  435 | });
-  436 | 
-  437 | test.describe('Authenticated — Quizzes', () => {
-  438 |   test('GET /clubs/:id/quizzes — quiz list', async ({ page }) => {
-  439 |     if (!OWNED_CLUB_ID) {
-  440 |       addBug({ route: '/clubs/:id/quizzes', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID' });
-  441 |       return;
-  442 |     }
-  443 |     await injectAuth(page);
-  444 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes`);
-  445 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes`);
-  446 |     await waitForAngular(page);
-  447 | 
-  448 |     const url = page.url();
-  449 |     if (url.includes('/login')) {
-  450 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes`, severity: 'critical', category: 'redirect', description: 'Quiz list redirected to login' });
-  451 |       flush();
-  452 |       return;
-  453 |     }
-  454 | 
-  455 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes`);
-  456 |     flush();
-  457 |   });
-  458 | 
-  459 |   test('GET /clubs/:id/quizzes/create — create quiz step 1', async ({ page }) => {
-  460 |     if (!OWNED_CLUB_ID) {
-  461 |       addBug({ route: '/clubs/:id/quizzes/create', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID' });
-  462 |       return;
-  463 |     }
-  464 |     await injectAuth(page);
-  465 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/create`);
-  466 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/create`);
-  467 |     await waitForAngular(page);
-  468 | 
-  469 |     const url = page.url();
-  470 |     if (url.includes('/login')) {
-  471 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'critical', category: 'redirect', description: 'Create quiz redirected to login' });
-  472 |       flush();
-  473 |       return;
-  474 |     }
-  475 | 
-  476 |     const titleInput = page.locator('input[formcontrolname="title"], input[name="title"], input[placeholder*="title" i]').first();
-  477 |     if (!(await titleInput.isVisible().catch(() => false))) {
-  478 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'high', category: 'ui-missing', description: 'Quiz title input not found on create quiz page' });
-  479 |     }
-  480 | 
-  481 |     // Test next step button with empty form
-  482 |     const nextBtn = page.locator('button:has-text("Next"), button:has-text("Далі"), button:has-text("Continue")').first();
-  483 |     if (await nextBtn.isVisible().catch(() => false)) {
-> 484 |       await nextBtn.click();
-      |                     ^ TimeoutError: locator.click: Timeout 20000ms exceeded.
-  485 |       await page.waitForTimeout(500);
-  486 |       const hasValidation = await page.locator('[class*="error"], [class*="invalid"], [aria-invalid="true"]').count();
-  487 |       if (hasValidation === 0) {
-  488 |         addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'medium', category: 'form-error', description: 'Next step with empty form shows no validation errors' });
-  489 |       }
-  490 |     } else {
-  491 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'medium', category: 'ui-missing', description: 'Next/Continue button not visible on create quiz step 1' });
-  492 |     }
-  493 | 
-  494 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/create`);
-  495 |     flush();
-  496 |   });
-  497 | 
-  498 |   test('GET /clubs/:id/quizzes/:quizId — take quiz', async ({ page }) => {
-  499 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
-  500 |       addBug({ route: '/clubs/:id/quizzes/:quizId', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID discovered (no quizzes in owned club)' });
-  501 |       return;
-  502 |     }
-  503 |     await injectAuth(page);
-  504 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`);
-  505 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`);
-  506 |     await waitForAngular(page);
-  507 | 
-  508 |     const url = page.url();
-  509 |     if (url.includes('/login')) {
-  510 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`, severity: 'critical', category: 'redirect', description: 'Quiz take redirected to login' });
-  511 |       flush();
-  512 |       return;
-  513 |     }
-  514 | 
-  515 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`);
-  516 |     flush();
-  517 |   });
-  518 | 
-  519 |   test('GET /clubs/:id/quizzes/:quizId/preview — quiz preview', async ({ page }) => {
-  520 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
-  521 |       addBug({ route: '/clubs/:id/quizzes/:quizId/preview', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID' });
-  522 |       return;
-  523 |     }
-  524 |     await injectAuth(page);
-  525 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`);
-  526 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`);
-  527 |     await waitForAngular(page);
-  528 | 
-  529 |     const url = page.url();
-  530 |     if (url.includes('/login')) {
-  531 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`, severity: 'critical', category: 'redirect', description: 'Quiz preview redirected to login' });
-  532 |       flush();
-  533 |       return;
-  534 |     }
-  535 | 
-  536 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`);
-  537 |     flush();
-  538 |   });
-  539 | 
-  540 |   test('GET /clubs/:id/quizzes/:quizId/edit — quiz edit', async ({ page }) => {
-  541 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
-  542 |       addBug({ route: '/clubs/:id/quizzes/:quizId/edit', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID' });
-  543 |       return;
-  544 |     }
-  545 |     await injectAuth(page);
-  546 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`);
-  547 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`);
-  548 |     await waitForAngular(page);
-  549 | 
-  550 |     const url = page.url();
-  551 |     if (url.includes('/login')) {
-  552 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`, severity: 'critical', category: 'redirect', description: 'Quiz edit redirected to login' });
-  553 |       flush();
-  554 |       return;
-  555 |     }
-  556 | 
-  557 |     const titleInput = page.locator('input[formcontrolname="title"]').first();
-  558 |     if (!(await titleInput.isVisible().catch(() => false))) {
-  559 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Quiz title input not pre-populated on edit page' });
-  560 |     }
-  561 | 
-  562 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`);
-  563 |     flush();
-  564 |   });
-  565 | 
-  566 |   test('GET /clubs/:id/quizzes/:quizId/session — quiz session', async ({ page }) => {
-  567 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
-  568 |       addBug({ route: '/clubs/:id/quizzes/:quizId/session', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID' });
-  569 |       return;
-  570 |     }
-  571 |     await injectAuth(page);
-  572 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/session`);
-  573 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/session`);
-  574 |     await waitForAngular(page);
-  575 | 
-  576 |     const url = page.url();
-  577 |     if (url.includes('/login')) {
-  578 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/session`, severity: 'critical', category: 'redirect', description: 'Quiz session redirected to login' });
-  579 |       flush();
-  580 |       return;
-  581 |     }
-  582 | 
-  583 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/session`);
-  584 |     flush();
-```
 ````
 
 ## File: playwright-report/trace/assets/codeMirrorModule-DS0FLvoc.js
@@ -1502,7 +1219,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Unauthenticated",
           "file": "audit.spec.ts",
-          "line": 176,
+          "line": 194,
           "column": 6,
           "specs": [
             {
@@ -1521,12 +1238,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2729,
+                      "duration": 2946,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:04:41.155Z",
+                      "startTime": "2026-05-11T11:52:01.081Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1542,7 +1259,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-f5246440050eb2d1b30f",
               "file": "audit.spec.ts",
-              "line": 177,
+              "line": 195,
               "column": 7
             },
             {
@@ -1561,12 +1278,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2104,
+                      "duration": 2069,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:04:48.456Z",
+                      "startTime": "2026-05-11T11:52:06.285Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1582,11 +1299,11 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-bc30b90a70577aa59e02",
               "file": "audit.spec.ts",
-              "line": 210,
+              "line": 230,
               "column": 7
             },
             {
-              "title": "GET /events (unauthenticated) — event cards or empty state",
+              "title": "GET /events (unauthenticated) — redirects to login (protected route)",
               "ok": true,
               "tags": [],
               "tests": [
@@ -1601,18 +1318,18 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1640,
+                      "duration": 1577,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:04:50.613Z",
+                      "startTime": "2026-05-11T11:52:08.407Z",
                       "annotations": [],
                       "attachments": [
                         {
                           "name": "trace",
                           "contentType": "application/zip",
-                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Unauthenticated-GET--18545--event-cards-or-empty-state-chromium/trace.zip"
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Unauthenticated-GET--51090-s-to-login-protected-route--chromium/trace.zip"
                         }
                       ]
                     }
@@ -1620,9 +1337,9 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                   "status": "expected"
                 }
               ],
-              "id": "45efdff6a4d2e1f7e786-a3123b11ec2435f46f3d",
+              "id": "45efdff6a4d2e1f7e786-9949923f57d1840a308c",
               "file": "audit.spec.ts",
-              "line": 233,
+              "line": 255,
               "column": 7
             },
             {
@@ -1641,12 +1358,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1594,
+                      "duration": 1508,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:04:52.300Z",
+                      "startTime": "2026-05-11T11:52:13.606Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1662,7 +1379,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-49e29292a22c3612fdf8",
               "file": "audit.spec.ts",
-              "line": 248,
+              "line": 268,
               "column": 7
             }
           ]
@@ -1670,7 +1387,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Login flow",
           "file": "audit.spec.ts",
-          "line": 265,
+          "line": 285,
           "column": 6,
           "specs": [
             {
@@ -1689,12 +1406,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 4982,
+                      "duration": 5320,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:04:53.930Z",
+                      "startTime": "2026-05-11T11:52:15.151Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1710,7 +1427,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-22da45e75733d1a79597",
               "file": "audit.spec.ts",
-              "line": 266,
+              "line": 286,
               "column": 7
             }
           ]
@@ -1718,7 +1435,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Events",
           "file": "audit.spec.ts",
-          "line": 296,
+          "line": 316,
           "column": 6,
           "specs": [
             {
@@ -1737,12 +1454,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2363,
+                      "duration": 2232,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:04:59.006Z",
+                      "startTime": "2026-05-11T11:52:20.582Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1758,7 +1475,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-d46db9bc60fe9a0ee667",
               "file": "audit.spec.ts",
-              "line": 297,
+              "line": 317,
               "column": 7
             },
             {
@@ -1777,12 +1494,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 79,
+                      "duration": 81,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:05:01.410Z",
+                      "startTime": "2026-05-11T11:52:22.864Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1798,7 +1515,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-76af7e3d1ce1b59ef351",
               "file": "audit.spec.ts",
-              "line": 318,
+              "line": 338,
               "column": 7
             }
           ]
@@ -1806,7 +1523,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Clubs",
           "file": "audit.spec.ts",
-          "line": 338,
+          "line": 358,
           "column": 6,
           "specs": [
             {
@@ -1825,12 +1542,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2435,
+                      "duration": 2534,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:05:01.504Z",
+                      "startTime": "2026-05-11T11:52:22.959Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1846,7 +1563,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-2ce67c659045f92d789a",
               "file": "audit.spec.ts",
-              "line": 339,
+              "line": 359,
               "column": 7
             },
             {
@@ -1865,12 +1582,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3129,
+                      "duration": 2388,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:05:03.982Z",
+                      "startTime": "2026-05-11T11:52:25.539Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1886,7 +1603,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-68219b921b1d8e3be4c1",
               "file": "audit.spec.ts",
-              "line": 355,
+              "line": 375,
               "column": 7
             },
             {
@@ -1905,12 +1622,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2240,
+                      "duration": 2343,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:05:07.155Z",
+                      "startTime": "2026-05-11T11:52:27.970Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1926,7 +1643,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-cb15362a6b87f51ad9c8",
               "file": "audit.spec.ts",
-              "line": 374,
+              "line": 394,
               "column": 7
             },
             {
@@ -1945,12 +1662,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2243,
+                      "duration": 2252,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:05:09.433Z",
+                      "startTime": "2026-05-11T11:52:30.350Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1966,7 +1683,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-0a0de066d87ad95845c9",
               "file": "audit.spec.ts",
-              "line": 405,
+              "line": 425,
               "column": 7
             }
           ]
@@ -1974,7 +1691,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Quizzes",
           "file": "audit.spec.ts",
-          "line": 437,
+          "line": 457,
           "column": 6,
           "specs": [
             {
@@ -1993,12 +1710,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2301,
+                      "duration": 2273,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:05:11.713Z",
+                      "startTime": "2026-05-11T11:52:32.644Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2014,12 +1731,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-9302ee7aba33d1706f73",
               "file": "audit.spec.ts",
-              "line": 438,
+              "line": 458,
               "column": 7
             },
             {
               "title": "GET /clubs/:id/quizzes/create — create quiz step 1",
-              "ok": false,
+              "ok": true,
               "tags": [],
               "tests": [
                 {
@@ -2032,72 +1749,29 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                     {
                       "workerIndex": 0,
                       "parallelIndex": 0,
-                      "status": "failed",
-                      "duration": 22397,
-                      "error": {
-                        "message": "TimeoutError: locator.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Next\"), button:has-text(\"Далі\"), button:has-text(\"Continue\")').first()\u001b[22m\n\u001b[2m    - locator resolved to <button hlmbtn=\"\" type=\"submit\" tabindex=\"-1\" disabled=\"true\" data-slot=\"button\" data-disabled=\"true\" class=\"focus-visible:border-ring focus-visible:ring-ring/50 data-[matches-spartan-invalid=true]:ring-destructive/20 dark:data-[matches-spartan-invalid=true]:ring-destructive/40 data-[matches-spartan-invalid=true]:border-destructive dark:data-[matches-spartan-invalid=true]:border-destructive/50 rounded-md border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-3 data-[matches-s…> Continue → </button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    39 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n",
-                        "stack": "TimeoutError: locator.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Next\"), button:has-text(\"Далі\"), button:has-text(\"Continue\")').first()\u001b[22m\n\u001b[2m    - locator resolved to <button hlmbtn=\"\" type=\"submit\" tabindex=\"-1\" disabled=\"true\" data-slot=\"button\" data-disabled=\"true\" class=\"focus-visible:border-ring focus-visible:ring-ring/50 data-[matches-spartan-invalid=true]:ring-destructive/20 dark:data-[matches-spartan-invalid=true]:ring-destructive/40 data-[matches-spartan-invalid=true]:border-destructive dark:data-[matches-spartan-invalid=true]:border-destructive/50 rounded-md border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-3 data-[matches-s…> Continue → </button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    39 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n    at /home/dmytr/angular/book-club-fe/e2e/audit.spec.ts:484:21",
-                        "location": {
-                          "file": "/home/dmytr/angular/book-club-fe/e2e/audit.spec.ts",
-                          "column": 21,
-                          "line": 484
-                        },
-                        "snippet": "  482 |     const nextBtn = page.locator('button:has-text(\"Next\"), button:has-text(\"Далі\"), button:has-text(\"Continue\")').first();\n  483 |     if (await nextBtn.isVisible().catch(() => false)) {\n> 484 |       await nextBtn.click();\n      |                     ^\n  485 |       await page.waitForTimeout(500);\n  486 |       const hasValidation = await page.locator('[class*=\"error\"], [class*=\"invalid\"], [aria-invalid=\"true\"]').count();\n  487 |       if (hasValidation === 0) {"
-                      },
-                      "errors": [
-                        {
-                          "location": {
-                            "file": "/home/dmytr/angular/book-club-fe/e2e/audit.spec.ts",
-                            "column": 21,
-                            "line": 484
-                          },
-                          "message": "TimeoutError: locator.click: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('button:has-text(\"Next\"), button:has-text(\"Далі\"), button:has-text(\"Continue\")').first()\u001b[22m\n\u001b[2m    - locator resolved to <button hlmbtn=\"\" type=\"submit\" tabindex=\"-1\" disabled=\"true\" data-slot=\"button\" data-disabled=\"true\" class=\"focus-visible:border-ring focus-visible:ring-ring/50 data-[matches-spartan-invalid=true]:ring-destructive/20 dark:data-[matches-spartan-invalid=true]:ring-destructive/40 data-[matches-spartan-invalid=true]:border-destructive dark:data-[matches-spartan-invalid=true]:border-destructive/50 rounded-md border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-3 data-[matches-s…> Continue → </button>\u001b[22m\n\u001b[2m  - attempting click action\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m    - waiting 20ms\u001b[22m\n\u001b[2m    2 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m      - element is not enabled\u001b[22m\n\u001b[2m    - retrying click action\u001b[22m\n\u001b[2m      - waiting 100ms\u001b[22m\n\u001b[2m    39 × waiting for element to be visible, enabled and stable\u001b[22m\n\u001b[2m       - element is not enabled\u001b[22m\n\u001b[2m     - retrying click action\u001b[22m\n\u001b[2m       - waiting 500ms\u001b[22m\n\n\n  482 |     const nextBtn = page.locator('button:has-text(\"Next\"), button:has-text(\"Далі\"), button:has-text(\"Continue\")').first();\n  483 |     if (await nextBtn.isVisible().catch(() => false)) {\n> 484 |       await nextBtn.click();\n      |                     ^\n  485 |       await page.waitForTimeout(500);\n  486 |       const hasValidation = await page.locator('[class*=\"error\"], [class*=\"invalid\"], [aria-invalid=\"true\"]').count();\n  487 |       if (hasValidation === 0) {\n    at /home/dmytr/angular/book-club-fe/e2e/audit.spec.ts:484:21"
-                        }
-                      ],
-                      "stdout": [
-                        {
-                          "text": "\n✅ bugs.md written — 24 issue(s) found\n"
-                        }
-                      ],
+                      "status": "passed",
+                      "duration": 2322,
+                      "errors": [],
+                      "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:05:14.055Z",
+                      "startTime": "2026-05-11T11:52:34.955Z",
                       "annotations": [],
                       "attachments": [
-                        {
-                          "name": "screenshot",
-                          "contentType": "image/png",
-                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-9b0a3-create-—-create-quiz-step-1-chromium/test-failed-1.png"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-9b0a3-create-—-create-quiz-step-1-chromium/error-context.md"
-                        },
-                        {
-                          "name": "error-context",
-                          "contentType": "text/markdown",
-                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-9b0a3-create-—-create-quiz-step-1-chromium/error-context.md"
-                        },
                         {
                           "name": "trace",
                           "contentType": "application/zip",
                           "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-9b0a3-create-—-create-quiz-step-1-chromium/trace.zip"
                         }
-                      ],
-                      "errorLocation": {
-                        "file": "/home/dmytr/angular/book-club-fe/e2e/audit.spec.ts",
-                        "column": 21,
-                        "line": 484
-                      }
+                      ]
                     }
                   ],
-                  "status": "unexpected"
+                  "status": "expected"
                 }
               ],
               "id": "45efdff6a4d2e1f7e786-b38f358edfddb5fa7fd7",
               "file": "audit.spec.ts",
-              "line": 459,
+              "line": 479,
               "column": 7
             },
             {
@@ -2113,15 +1787,15 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2423,
+                      "duration": 2337,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:05:40.039Z",
+                      "startTime": "2026-05-11T11:52:37.318Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2137,7 +1811,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-029b5be3cb4067b9b4e0",
               "file": "audit.spec.ts",
-              "line": 498,
+              "line": 512,
               "column": 7
             },
             {
@@ -2153,15 +1827,15 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2337,
+                      "duration": 2342,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:05:44.036Z",
+                      "startTime": "2026-05-11T11:52:39.692Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2177,7 +1851,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-06e2578b47fcd2080524",
               "file": "audit.spec.ts",
-              "line": 519,
+              "line": 533,
               "column": 7
             },
             {
@@ -2193,15 +1867,15 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2851,
+                      "duration": 2496,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:05:46.429Z",
+                      "startTime": "2026-05-11T11:52:42.079Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2217,7 +1891,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-7cf2a7f666c21eaf11e5",
               "file": "audit.spec.ts",
-              "line": 540,
+              "line": 554,
               "column": 7
             },
             {
@@ -2233,15 +1907,15 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2422,
+                      "duration": 2638,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:05:49.325Z",
+                      "startTime": "2026-05-11T11:52:48.206Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2257,7 +1931,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-312af12f04276abe0ee3",
               "file": "audit.spec.ts",
-              "line": 566,
+              "line": 580,
               "column": 7
             },
             {
@@ -2273,15 +1947,15 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2323,
+                      "duration": 2287,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:05:51.794Z",
+                      "startTime": "2026-05-11T11:52:50.892Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2297,7 +1971,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-0ce7de78bab32fab9ce3",
               "file": "audit.spec.ts",
-              "line": 587,
+              "line": 601,
               "column": 7
             }
           ]
@@ -2305,7 +1979,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Randomizer",
           "file": "audit.spec.ts",
-          "line": 609,
+          "line": 623,
           "column": 6,
           "specs": [
             {
@@ -2321,15 +1995,15 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2316,
+                      "duration": 2227,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:05:54.170Z",
+                      "startTime": "2026-05-11T11:52:53.219Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2345,7 +2019,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-6b2c2683cb59fc280d9c",
               "file": "audit.spec.ts",
-              "line": 610,
+              "line": 624,
               "column": 7
             }
           ]
@@ -2353,7 +2027,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Profile",
           "file": "audit.spec.ts",
-          "line": 637,
+          "line": 651,
           "column": 6,
           "specs": [
             {
@@ -2369,15 +2043,15 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2207,
+                      "duration": 2386,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:05:56.540Z",
+                      "startTime": "2026-05-11T11:52:55.496Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2393,7 +2067,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-f0fa88c1ca5ce74aeaf1",
               "file": "audit.spec.ts",
-              "line": 638,
+              "line": 652,
               "column": 7
             }
           ]
@@ -2401,7 +2075,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Manage",
           "file": "audit.spec.ts",
-          "line": 661,
+          "line": 675,
           "column": 6,
           "specs": [
             {
@@ -2417,15 +2091,15 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2529,
+                      "duration": 2481,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:05:58.789Z",
+                      "startTime": "2026-05-11T11:52:57.924Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2441,7 +2115,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-29850844fb383cafed54",
               "file": "audit.spec.ts",
-              "line": 662,
+              "line": 676,
               "column": 7
             }
           ]
@@ -2449,7 +2123,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Navigation & UI",
           "file": "audit.spec.ts",
-          "line": 680,
+          "line": 694,
           "column": 6,
           "specs": [
             {
@@ -2465,15 +2139,15 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2418,
+                      "duration": 2655,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:06:01.367Z",
+                      "startTime": "2026-05-11T11:53:00.449Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2489,7 +2163,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-01a9c5e7b844c5aafd45",
               "file": "audit.spec.ts",
-              "line": 681,
+              "line": 695,
               "column": 7
             },
             {
@@ -2505,15 +2179,15 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2521,
+                      "duration": 2443,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:06:03.832Z",
+                      "startTime": "2026-05-11T11:53:03.149Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2529,7 +2203,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-ff9c27d83ece6c30097a",
               "file": "audit.spec.ts",
-              "line": 701,
+              "line": 715,
               "column": 7
             },
             {
@@ -2545,19 +2219,19 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                   "projectName": "chromium",
                   "results": [
                     {
-                      "workerIndex": 1,
+                      "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1556,
+                      "duration": 1647,
                       "errors": [],
                       "stdout": [
                         {
-                          "text": "\n✅ bugs.md written — 28 issue(s) found\n"
+                          "text": "\n✅ bugs.md written — 1 issue(s) found\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-09T14:06:06.402Z",
+                      "startTime": "2026-05-11T11:53:05.644Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2573,7 +2247,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-3017867c3036115faae5",
               "file": "audit.spec.ts",
-              "line": 715,
+              "line": 729,
               "column": 7
             }
           ]
@@ -2583,11 +2257,11 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-05-09T14:04:40.617Z",
-    "duration": 81595.974,
-    "expected": 23,
+    "startTime": "2026-05-11T11:52:00.325Z",
+    "duration": 59943.422,
+    "expected": 24,
     "skipped": 0,
-    "unexpected": 1,
+    "unexpected": 0,
     "flaky": 0
   }
 }
@@ -2676,7 +2350,7 @@ Error generating stack: `+l.message+`
     <div id='root'></div>
   </body>
 </html>
-<template id="playwrightReportBase64">data:application/zip;base64,UEsDBBQAAAgIAMSIqVxqhuoBHCkAABZoAQAZAAAANDVlZmRmZjZhNGQyZTFmN2U3ODYuanNvbu19647jyJXmq3AEw5llpJhxv8guz7S77Z0C2u22XW1jp7PsDpLBTE4pyTRJVXV1dQHGAjMPMBjs/Jnf+9u7i8EusNhf+wLlV/CTLIKkbiFSIqXIlKqdZcCdqaQOI+JEnPOdS5zzdhQnU/0sGk1GhOo4imOmSIQ0jLnmgo0uqr9/pm71aDJSsygp/eJOh35ZjC5GpS7KYjT58m31UyeRcUwRYYQAQIEOUAQDDGLz9aScGrL/6afPvctpdp2k3l/++K9enOW3Xq7TSOeFp9LIe6WmSaRKbV55l2f/qMOyGVB4k2e3yex2dDGaZqEqkywdTd5WQ24Z7jRJ9WgCOb8Yhdl0dpuOJvzdxSia5c03EUfyYqTSNCurT8zcXlyMSnXd/JTNyjCr3qy/vtNhqSMzJFXejCZfjr5I1ay80WmZhMr85cXFKNfFbNoskf2aolR5+TypqCGA2BjQMZDPIZkAMiHQh5T+w8iQKPM3owkwX9B3zWo3C/cTHWe59v4+y16a+e2mKAzF5UAglaKNblDR/Wg69W6y7OVelAmnbZR/lnxdznLtXY1y/YeZLsqrUR/yTK6Tbx31x7lWpfYawl6YpaX+uuxDnqN18mhJ/sXFSJWlCm9udVo2H4TZLC1HE3gxKl4md3c6Gk1iNS30u0EPXyxH/vkvfv3cuxpdqrvk8hW8NNuoPg/9Vodbq0Ml3T6B/mcFiOVZwfRd93QuRkVqfi9Hk5HnQcC9bz3Pu7z0Pq3O9atEeR99/swrM+9al16ZvdRpcZWaJ0X1ZJilRelVk/6VLu68p556rZJyzk3/LivK86++9/ajz5+9W1mgry68t4aM+fett/vf7+p3yubhSJVq4r319K1KphPvzIgxiPDfmV/9MLs9u/DuVFG8zvKo7a/eu4vRKh+NIFuyMZzOgqIXBzln6xwkSLjiIGb7cRDTOQc/SYowe6Vzr56QWUDMVphWfdzKtGu95Fn1lGGXd6OVEe0XXpnc6mxWTjwMfg8A8N498UNVhjfn50+8pz/20tl0+uSHw7mL672XxN75Ymh/62cvz5888d5u4Zd+Zda3B8OQj4DFMCihK4ZRtMIw1p9hFG4wrJmRWRSKVjhWf76TZfVj98yzhmkUL5i2HF0frlUsvtRxyJTCwRgSzcdEMT0OFNJjoYTGWmkahfLyD7Pkm290Pw4TAGwOOzuSjCw5LPozmOFmQWsmNrNp42K1oows1n/zIF5+7+0vfvvZTz/5/ceffvGT3z/75N18cXZxe4O1NfsYXb5scz+ssW8fCIB8ZvMDuVTSAxTiijgdcDgB9b6tVY+RnEaR+AuQda6KN2nonb9dQJd31drZiq3RXX00a8eCB3n2utB5vwUncH3BOWoDXZ+qWRreeA3lXnSxRRc8MNparkcDEXutB4fWuOUWDNoXexqy1AJvR1uNO3Wt+y0FspYC4y1rYcj2Ikosog+Cwvddts/Uq+TaTK/MjDLqi9aRz21Tie6a6ADLVi6FExwgnbhY0yzxdFbcGJ1SjeTnWZqUWV6cG0ZeeGf1XM9qLQ/5HErXCsg8419nZXa+/lwrGqgFmgBrFMz//SzLP0qvZ1OVVy+1FMhvzWNxlnvTTEVeURouXI1SXb7O8pdJNO2zibGPJNzA3MQRI+QqH0hvPnjS8KHWBvEsDc272tZj4n1uVmXifW68H4X+0assieb6QtYMWWFHQ+HTTEW/Not1frayVmfr+O3t5Q+85Do1XoVG93s/uHzXycNGJRkOvlvj0cfTJHzpVQuW5ednwawss/TL8s2dfno1KmbBbVJejV6cPdnJKO4zZFvnrthUQbo5nxDuf14kbxbCwNV6pes5/aRM/aT4TVIkwVRXyLVaICkWC2c/HZqFOt8NmeuVltIitMrg5zXDzikAXSem4WmfVSeWhUOBu2VfPR4DAHDPZRywSltWvVpwBMDib7VsvFHFb2p3pDmcT1dfsNjtX4ZTVRQ/eHo10nme5VejFxfe8rMkrfyZ9acqT9S4+eTp1ajMZ7o6F361JOcWH3850/kbr/qT5/JtO/eD8CG1xaWj3YAAWNkNEA7YDoPYfHxWDrKKHf5rdjJcvNhILWvyT596wLazP4pLnfd0LgsfMmuDINiKkAfjTUPa0gD7WgwHGgEtI0Gw1Sr6eJoV/a0A4WMOBp2uI2DfFxf1EWieM7BrVowmI+MfrcIgG2GTddpvR2kdsylzFRqDoFqdtHz+5q4SDnd306QWGZffJHeLsMrIuGgvNeVIAM1CyEIJQcAZh4LBIAYBlgJhTCGIYBD75qtmqAbe6PxZGumvRxNgPslejibmTFabYGu0KggxCCRQHFDOlaJSA2RHq3J9nRTmeDxAwArBFQlpBayg0cr3H7CCtfLfvokJZU4DVoYit2xCvl2kDDnLhOHOM7e3Qd9CFp+6QW/GbK0zal3nIQa9IWoZuoidnFDrNujnB7zf+kk7fsN2zHXA4Ud72fQIwiE2/Xy6jbmOIOo0661HWxFNDTkgPoJlL3xpn0CId/kYHy373pb9AFRIgY8FtMMorYphqNBqI30cVNg6SdEuP4egQgp8ysgjKtyCCoEUPAggQ1qrMOSMqACgENCYYSBAEMNYay65cIIKFYYIBxDqEBFMY8JiHNmosI5ceuezdWD1pEKJ1R+9UOVR4WW5p2/vyje1jHODEo0Tvh0lQkbAA6DE+jW7NjWr4yiuUGJFcUvk4NCzzaANQQ9HiW1kHzrlaA+By5Bt4bemeA1AibuInoiQ60aJfVNGzESJ2Ig3uMKImO6HETEZghHXpduTOVTEtBMq1t/YDRSbdKIHBYoU+sBOu5LQVSjuESe2+qrV3d242hRjowd3O54p9KWwzg125nnGK+EfKgccG14ncyC8Hje9UcXHlXpv9yXbk3fqGG4OkrQH9NMKZmwZkPn7uDpBg6IOG9/dyUrkAztvgDvj5MpxY2AAJ90x0NnaOwkT1NuBgJU45XJyxtnvff/7K0M80P1veIutJGSEWpHSYNzRQvpIhh7yAbGT0GB7JvogQw/5iD4aetsMPaoCHEgGecSpjIIQI8Sg5iIWUUwVCAAkQUxC6cTQI1IjiSRSCIWYQRRHsbANvSqHssPOy3WU5DosC4MRqxwYN/YdEZ32HZUPEQWoX7NrL+M6UdOZfWcowm4EcOiRxqD76O1t37WQPfUoQDVm22F/aBRgF9ETkW3d9l3PKxxmntgOAQhn6IaC/cw7IoeYd2sybWHdUdBp3VVf2G3cUXgE4w75ws4nFWTHGXw07u4lCIB9thEJ3CXBe8osQ/o0sGHLSBBqzxAfhA2xLyQ9gib5cLAhiCMtNAdUSRZjETPMKFcB4AxwHvOQBkTHOCJOsCFCkSJUc8oxjqDikkq+gg3rGxmvk/KmTgHxwlxHBlmpabGOC9XdnRtUyFgXKiRSoP1RYT2VeJq97gaE9Rt2bWCJ3QJCQ9EGhDtMzSHnWOJu5LY3IGwhe/IOfzPmLRkc+wHCHURPRKAdfM/DzJNZcpswV85lxMR+gJDxIYCwrshwXidZLwAhE52AsN+FD8TkEQAh8QmyaxRg5urS7iMi/FkynXpXI/uK/NVo6TJO0rtZOb8DUt24rxKn648NAlj5+OyJHyd5UZ7v9itTX0ArKxc6CxGIFdMLof4nzVyLqja7dbupmt8zM2M/TqbT882aAjsdwPUhEtA6hnWVgh2kD2LZ/B2D2YPsy/LOBKGAK+zpX9xgX67sueq7PfoNT9eT7jZvt+x1xWoIp2xPO3GWxihW0hhR/0seB6z47uXczpeGJ9j7tl0ZpTUyMLPvsbKC2W4w7KpICxKr4f/+96mQmIf/y/xNrUyQWN7j31QoX/zq0/PLq6vLuqzGt3V0/9u7PDPDe3JpKgcsCgagecGA3XesxDz6/86rNNMBcSixeVsQAzcJhy2kj+RraBkJku1u60G+BuFLW5E+xqHWfA2BYJREXARRoGQIsGRQKxFHUYhoELEwkohpQEInvoaIsCiQQchArKUCWjPGOxIOq0soWkcVQC5qB0SpAkfXT2R3vTTM8P4uho9Ww07VHH5aTWfLPZTqfdt3sfQBcHoPpaJoJwE6czhIH8Duu197OxwMWTux7tQdDmbMtpPkYIeDIWoZ4t/NDEPpA2KtHgWuIAYGe4ag5KAQ1DzDcDUChUF3BKpnfiEGxwhBSZ9Su4YUI66Cgo8eBwcJhnQCoA+l7ZB05RXCYCUlf0CCIQao9h5gsF7y6+gJhhgQe0AnkmBYsRJBuxKmM06ulGwbkGDokoHO1t5dgiEG1B7ScxV0ze7LPJsa30SpgsrxV3ssJjeqGBtMc341+uIuzG6T9Ppq9KTtzz9/0yDEq9GTYSUy3L65z05Ew8p6DdiJq8Y+7O/zcrp9ToPxxyqosbL/meUd6u2sqHcJ5rbjGh7urGgnfQxnRTOSzbjLgc6Kii5mlkvt9BLLjuqsiJiUPAiCEGMJCGUxJWFMI6lipHGguYKEBFxSJ84KzlTMNY5gqGFApY4xhe3OistJEq3ch4x0qZKpE0cFhp0ZsvyAsu7D3RR8e3X3avcS6DAroqF4P1kRDXHXWRHtZE/bSdGM2W1WxG6iJyLN9lZzZMMx4SD9r6FMT0TLbYyEHJr9V5O1q1Q+Zv+tKbkYCYFihMOIEKlYECpAdEADyCIcEEU5VYEOcOQm+y/UjIeMGnUaSxRxIVX7zRCjJeqfpklRutFuq3fcLDc8MbFEd/rtYzPyLV54Uocut+9cWt+AcKjgKLAzYR0qOGrfU3Cj4DbIfgAKjtpRQBcKbivRE5FkB94Dqedpl00n2FUOBSb7lYLCZFApqNVrHZh014Hqd/0DkwcvAlXxQXLbtOaPvvf7972bTVE5L1fLpC4+7FFslk4A9rntPdvV7GHAGVpxn4kBjlxCGpc82fB87fLo9liT+3dpNYeRna77Hvt8o0SKM66z/dz3989sZyxx6NUnq+XN761sQM1yakVsoGi9UT8YxrSQPpJt2DrJQ9O1KrpyI13z5CDVccsGRCGLQ8YjHmoVcB0KgCgImVCcEwQV1oBBECknxiETCMpAIhjASBgHKwk3PKB166W5A9T85tT/SWmXhYjhIY0tB1uI9et2bl+BnFqIC4r3YSEa4raHx4GFaMjamcGnbiGaMdt3XQ+2ELEvpV1c5UPK06qPttKUUwCCMZMiGBMa6bGKQDSmOOBIBkxIFPRYYeID2x/MqLMIMtvTjGQDzMivFm3mPvrsPy+azH3VYB7WZVVu/VoruqkRCzuGkUl8xu3wBWLy0ch86CIDdAKYL+0mvpC0CqXB4q6F9JGQZOsk2/2Ug5Ak96EdO3xEkuuxdAAJiSMkFA6AaQkRyAArSREhTMsIShSGRCHoBEmGAaSYIcUCwWMKVSTD9gJUBkle6igp63h6VIu020quZa/Tqh2jA1jJSResROiQwsLDAw9oR4Hhei+77JveULQgmqMCww1x6T7w0EL25GElb+muczCsNETxBw8re3U3Nue/3zJvdD50F6JYvZA7BFsuLuQOwpZWC2OzAnOIuXFvdBNidn97C9K0LpU+DNI0TRDtJDoGXDHtEWkOQZrSR3alJ7jLzdBTAkof2X3AjoQ0W0YCDy5nVdHFtvDZUQT9rw1pchmjWAUSaoolQEAFnAUx1SwMCJI4woHQIIrcZG0CBSINGIsEV5GkgtBQbkGadf5mWKvfyoNZ/1hnchro6QRwEtDpx0SIOL1wuhtwbr9vWm1pgh12tFileB+A0xC30awDwNlC9uQBpxmzcz+m9MlGkejvKuBclQf91tsuBEmQK3cZ2bNPGhnSJ60bO64uRQMiSWcPtUFkurEoefj+ahUXhX1hEjJntUwesegALAqhT+0TBaETr2cb6eNg0fZJHtp1t6LL7P4vj17PNSyqpEARMC3VMAMwDmAcxDiGUag1lgENYYxjLrWb5GqJAdKaq0CZ0qocsJjjbiz6h1nyzTe6TrQ2P7vLsya48xYRwgC6RJ+/rCexrd4JgLu3MXfZUa2haBfF31FDachp5nZos72FxiD8WZHt9qOeJP40Y0Zu++7uJnoiYs0J/mxkQL+VtjtJE+AqG5iQ/bqvETKg+1onZGwWYY45SVcztp4EtqBN8uBN2ugEIh/adXQh449o8xhoE/tio7PyagXdA0ShIU1OAm22jATSw++rQ5PS84g2t6FNGUumQwZjCFggoAhQwCDWmABMNA5RHCsNZOgmxh5gEWMqdBRHUUBjxeNoo7jeBtpscX1W2NNw0YNu0CftvuWHsKnE1wt+zlJHALR+586t7TbkvqR4Dx7Qirj7u35tZE/dA2rGzOwqgYd6QCuidhz/O+oBXZcL/RbcTp1lwNXdJrLaC2QIEGXUHRC1fKCM7YlHeztBFz0NHhKWEp9JOxOP8sf+Uq5gaWtt89WKUJ9Vsr61WNT7f33/p/f/58//tePPH2dpmaQzXZeS6lUbnU4g85G084iQxM6iF2Ilx64qj17hsNFk9Lxexp+aXyfzFakrmE+85o8eAgCA28LTX4daRzryr9KP1XRquk9OrtKrGQAw+BLdet642g9Jet0cgIda3/kQ0O3acMyAmkF4uS6y6SsdGSn8o5qsdzO9Dcr06dXoauRZhe1NfePEQL+nV6MxvBp5UVKoYKojU2csN6/3DKocF9OsfHo1qgnOP9x8trqq9/RqFGfhrBi/SookmOpJkOWRzsd5vWCrfzEfVZ9fUlDT/PLWnANdjIs7lZcqHSdp1QPqqXnDi/oLkS7KfBaWySt9icz38peTvb5M+r20Gf/KN/u/c/O7Zqp5NksjHY1vI69+oPnPuMxVagiZTIDgehxOk7vxnYois3RmZ4wLk5ealuNbHSWz27blxPac/vLH//Zjb76fvL/88794P7qsGfnjjg01NkrL3I80r60OiacqOdi5AZH3//5t7VDoqTYn2GzDQHvNAC88nVY7xlNppTOCqe4kaYYxp5IUXpqV829vOQYVdu496uU5RuC2+I5NbnV6EGybH5b3McHhM9xjiitzpPYcR72Rm8ArN3VrnZ3qr6smF0nxm3r25+squiLz5Emt7smiBcRc5c+/PqBHBtnaNKLRUecUAAuIDfA9YekjOycGcgeNHSrS2K5QeBzfU9tIaOscB7meDFlhrd2D2GMrq6EMqz+aTr2bLHvZZ8A22II7WNIbaXG8kqHc30biGNT1Hzg2+SLGueTPJ3VeQ+4GAVsH5nf1l+pUkNq+KvQrnSflm19U+vOp9+VZmCfGLTM9u/DObpLrG/PfWk+an6bZ67MXnirqr/9wtMkF0JMNv608Zt7HU63S2V0PPhBgJ6LtqNwW5NnrQue9NjvZ6JG9o/C2eyfn29GtLgrj1XhE2o9I+xFpPyLtR6T914S0zf8MgEVrDtAGA3tPreI79y68a5/pYaD+xw8O6uvH2eLxRSGj3xghV+n2rsLwiwpJlUauisMvP2ukZP2pyhO1kJtzZWIXUyKCL0bR1C5aHUNTrsjaIar0Lm+yW30Z3b4p80tVe0ovgyx7WVdzivWlRvpyDU8aj90EweVeqmy2SMd5HfszN8XW0ztm+XS+oWb5dF79abHKZrizfOonaTidRbpYttNtTDW8ssIqin4yuz5/a5REqSc7bsRdLBDnxFuFmiYOeJ3l5tN5b/KzCy/SRZgnd2bFJt6ZuSBR3yyeP1Ljhro3sIkhml49nkEV2VR71zOVR15SFDN9Nu/9h1eYUoUWFnMXi89zXc7ytPl43jLoXfWrbIA3luuJ2ibSXHWB3Dimaw1lzX9W2syaSyrGbsqzafsDd1MV6ptsGun8B4u/eskL65BiuS4yCvVKd4uMja6cbRLh1+qV7pIl//b+v7//jz//8f1/vP+ff/4v7//3ptDAEs+XiazsqL+Zy4/5Yu2SIPPNJqmLzdbYMisbbZaMb5OiSNLr9q1mBlpzolIHsQFBXpbWW9As7XJbSba+T3jLvBu29J61ePBZG643HF+fcbg4eda0144HAc3xIFaPq/BGhy+/SCMdJ6mOnpt91P/2LAHz3b16YEnTzObd/Fcyf3W9WYxRfH42/NLY2UUTtDp/W83Ve7e0pAlgq2xdG/LchwV4J9fOukZytsaxha3dk2e1QTnx0qyqsxDVzHr2iTGNwuyVznV0tlymVjFHwDof4XqXsyQ1iSQmY6MJYdYPnfhdlV43UuoH53sH0t1akkDWV0sS2L0Zek7lIHW5ure3aczLTnVJoGhVlwTK1n2EwNo+QrBZWLSuoCpXzTZ9uakZq69stmi3P7Y0ZvNnL+l64P3/ff+n9//r/f94/6c2xUoQbpHjy9H3FOUEEaf7YJBMr/qD1GNu02VrAnBNuBNE15nJ5szka8yMVKl/luhp1MHLBm5EVVLKFuyzeGAJupuPNrgiWriyGEZvpkinTBkotj8xqx5Xy9aXH3j9cOH54cLoUGXbJj0xbtO6mKxpXWy2yOKX+QbBfO6Vrucc6POzzny/s4tVZzXBolt9t96z2aqwsdypsAnopbD/sBjtPajqJY8X1dHX5eqi8nnNequMebt+PsWM/l55+/WDvNlMRPTQyUT21sm0m987J3GINv7lfMO2qeLlBqCwXeFS1LoxKF7bGHSOZCg9UCZYfKOsTRpQviYNqJi/Xe48xNvTl7ceagZ2HmoGhxzqe4XhS9aydhaydRYy0uNsn36SZK9UyPrB+a5hssdJ56D3Sefdm6DvXBzA72pXbz3yHLUfeY5b9wsna/uF02b5+Hrt9iNgbBun8TYvyHD0zPdwhGzj4yD4XIntXei54vE6WOPrFrWYe0YWpcAuL73nuvHv11Kvcby8TsobryqrXzkkHmMCG/9+5+0bHv+OhxLMk2Jl0ZwclzZFaDbmuJrbxoH5bLGfrY3sFTfZaxNY814tx14nPyyPjVgaZfXBkQujx9PTQjezlI5F+0Blb+Z4uYhQrzhMm8ijLRoaULOYpVyH83N3OZHrun9v1Gap4oX/fE29NC7rxZjmgFvutsAuJ+aHZ7UdV6qX9TS3gjbZbYl5337r/Y0psf3LL579wxLEUTDIMpuPaR3FmXSlfSBcxbY1H6p33nxsLNAkXQF5TxaMpaDVfKNgjd8U9DDfKHBovjUlzJv1nZcwp2Bfa66LXk/jjoJmr1HQw7ijoLdxR+H+xp09p4NtvepcbAN+FLbbehS2GgoUrhkKdO61ptCRrdfBVdhm+lG4ZvpRKOaD6WH6NSf18i7XrxL9eunPaT7YJkgo6rb+ugQJGmYNWsNzKlCWzEftTEbrTEY9rEGKXFqD65tgvgjzzYD2tg530O1pLVI032ioh7VIcW9rkeIDIEXH3A4WIfMDslWK4HbzkeJW85HiNfOR4sZ8pJjdixSxGY15mzRpvL6LKclmUI1ztpc0WdSer46a+W2rHFl4WvvLEYL2kiPNUO5DiJB2HpN1Hlte23YhYrV+cypEVqL5lHBHEmSNqOgpPsh8Z1HQQ3xQ2Ft80O69sdfEDpYdXXlSy81DcbvgoKR1U9G1cCClbL6S6+HAA/xOlp+B0rY432D/EaV7BPp6s+ZwZ9Jdrsd32d1sWkXGWtOLKFsL/VHWhP4oOzT01+NssbZAIGVrgUDK5mqkcR/3ktiFLgrjBFgI7eaDrXKb8cFym3U7ELfJ7eVo7kN0s9YMCsrXOc1hD9HN0f2J7mYR5puBY0fS26ZLegrwububWu7udgG+5oHeLsAP8TJ3zO1gGT4/IFvFOJftYlyA1g22cEDXG8x4lusf8P2IEovRC9fvfKzVDbJFcadYJdNBxZ2KMNc6LW6ycqPCU3KrrvXlXXpt1XZikcCBiijViAIFYIQY1zjmgVIAYwXCmPOYceWbr5oba82rKl/leHnRcf1t5sPLW5W/jLLXqfVGQULAgjiEIcU6DjmOQx1ASRWVEksOglBIykLq30ZHfeE+lbIgjKmKAxlSAmIZSkig0JjGkAsQaxEIxAgQDNSVspbvKsoom3XM6m6qEjOlIIvejCajq/Qv//5PXjC7LvzbyHudJ2Wpa62BSJ2wdl48qYMyV+mWalzLK4jbGxEgGdBA4zAggPFABkSD3eW4Wl2ibspwye4isAQ5bUGwuwZX9cKtlykJ8EFdyt5VCS5DkWxUuKGtRbiCim7f270VZft2L8GtzUWW90pz/YeZLnpcojbkqUV+W1HVhnDfy9QVebs5/QNfpv78F79+bgpVqbvk8hW8rNJJKwXVb3XsGo5UuqpbBMHKqcG09+Vq2GRwX156n1ZZsq8S5X30+TOjea+1uWL2UqfFVVUrqIYMNQCpJv0rXdwtYoINN/27rCjPv/re248+f/ZuZYG+uti4n731X1OfaK7tjfCdeG89fauS6cQ7MzINIvx35lc/zEwwy1RKfJ3lUdtfvXcXa/UPjFRbsrESb704yOzWbgTsuDjdn4OY7cdBTOcc/KQJ33j1hMwCNn6ummnVx61Mu9ZLnlVPGXZ5N1pFOi8u5gWlJh4GvwcAeO/WLdB0Np3uimK3cbfxjhm0uhja3/rZy/Mndmf7dX7VGZw9GAY36+GtNbk/jGF0pe0F7l/PADZ+llWGNTMyi0JX6xXUn+9kWf3YPfOsYVrjRzFMW46uD9fuo7w0gT6yVQ6UrrqzQbZSGkz0Z/DCh1AzsZlNGxerFWVLD9TmQdyWnrmV2xusrdnHlgkhLfth1F5HpT8EgD6hdg8el9XgByhEtk+xEQgaixtW4d0qrXsBss4Xfpo5dHnXXXikn2btWPDetTzMgm+UtWytI/qpmqXhjddQ7kPXbgrPHrp0zR6FfAj0qd0ydhsG7Ys9DVl+3EI+Q6srmTHb9bQ7Ggn2LzFbEbVB+On1EXRaYpZrACGIxTjAEo8JRmCsEJdjRFQc4igSUIle7GDA7v5KXIERCvbrhPABJt604pXf9U7JcV2QliAf2CoPcu7KLHgsSDugVh3BviB2wyrc2uRmsDRtIX2cWnXtk2xtBjGoWB3BvuSWaH/sk7Dm/aUilFBHEWdCSK4Y0RyAKFAAIQTjmAeaExZx1d4nAQ7sEMs0olwEhMdhhIAAFJHejtnObDMnPloKu1slYNy3U4KrRl14V5sEQnxQt0h15qM1FC08uEvO9D/gZNMB3Fr7byCGJZve31Nvk1CN2W5uezCGNUTtRl2PGFbMZUY/tnDbE+qsTihF+zVT+A5khm7Btn1yRp1jW7LpBYAcu/KvPWLbIdiW+WjDzthVE7anlG0hfSRs2zrJwwsxE+bjx46zW7EtU7EAIGBRQERkkkUED2OOo0AzIJDCEYcMw5g4wbY8jJHiMWMsRFCrGEJN+2PbzdxnN6jWtFrtQLWCPnD72eqFu/Y0QW4zDxYU7wPVMp/YdeRdoNoWsqfefrYas209tAu5AajWELW7oO1okvNXgWqNfOjHE267Z5158Sjh+0HaD/mewhYw2+cGg3Mwy3xpm9WoCvE+gtkHB7PSh8Q6bZC4cdQa0ugkwGzLSCBpb3g5CMxKHwlbVJ2coD8qmI0EjZFQWKkAcw5gqCilQoGQYxghqiSMIeShdgJmMUQqhigGBHGmAg20xv3BbNe1EDeQdrUv5UYyLXroZFq0e2dj5LSfbUXRMvwwdQVpDXHbDeYA0ppmRHYSzalDWjNm27ncKs+HQFpD1M5g4Ccn6R4e0jYioh9b7HQNgpw5ak3b1X1Q7Yd/hWsLtu1zucs5tpU+F8x21IrHrrhHwLYU+lTavGBOGua1kT4Otq1GYrkwIG1VrIOwLYU+t4OUp+fEOCq2xRIpFsqYc6FBHGIdhZiGINYYKgCR5hAjwaAbRy0INY80F4EKMIpVIMMh2HZapScHmSm1bjDiyu9u4K3gnfAWP/RdMbzzrpjZ3JK4hLcVRUu/41YLc78zzqVwDm8rsvLDgrcU+gLYvqPWNOsB8LYiamPmB8kqPnF4uyIm+rEG29kyZMeG6i9hJNkP4kp8fxB3ZX3mMNeqpbg/zN2kvQXqSvrwUJciH9lpipCJx3zbY0Bd7Ethh+vJjvvEPSVuC+kjQV0zkg1f9eH5tpT4EB7jTsmHA3VRjBTjMdMas4CGkoEASKZBzAIW4YCGgaAR1G6gLgtQiJjAYUBlHCIBIhl2Q91cpVF2m3yj8woe5jo1F/GcoFoGu/MQMGQuUe2vFrPYBmwh67GVOXAKbA1F69DtSnbqf6INcRs1OwC2LWRPHtiaMdtg/GBgu4PoiYg2J8B2KQd6LTYCtkEFXHljGdwvx4BBFzkGy3VoYCODg1MKNmh0Q08Gj5BBQInPgLShJ9kRkXiEnvcCPZmP7IvPCLRe9R0sE5mP7KznI0HPlpEg4AB6Mp8I0akAT0Q+HxV6xlQFUchpJECoQUwljamUIhAgIlTzgEWIIxC4ySCIQayECE2aQqg5USYj1oaed3lmpEcF2+Y/V+UinUJP3F18qzpd7qDn5/UctuDO5jhv38eUuMWdhqKNO12lwFbEu29Y7o07W8ieegpsNWY71fjQFFhDdKP6yOlFj7pxZ3Ou+y2fsJOpncX1mfFu7IMkCeiPJM/msz1r8CKBHXjRfnILKiToCKiQ+wAQGxU6g/WPqHAIKhQ+w7ZzGLWWThwssQzp04i9t4wEwnajfRAqFD7fkMknJz2PG3vXVAIcRZSHkMQaSkVCFCHKmRQg0BhHYaBCxp2gQiQFBYKQOMAChyrWEd0oAHCrUoMBq97mYWhSlExDLlV4WX6t0sqx5wQXMtSJC6lRse5w4c+rGW2BhbRW6Ts2snB6M8pQtA0xZ2mkFXH3N6Mqsnb25KnDQjPmLVfz94OFYjOP4YNyR9aHvNfqCWT7F52Fwhnbr8QUYwNKTJ01k52DQtZVO8p6cAsmZEcoCkWlj+zwBRTk8a7Rg2NCNgHQh9j22koH+ZjtpI+BCTsmKdq1SH9MWNHFyFZ8Jyc6j4oJYSCUYBKSKNChKaYvkMFrkMWAR1BLyYgSQjgqCgWVDI3/URASUqXiiKxenP/7KnvHS2v9YY73NElfFp55pRsgKGAnECRQ7A8EP1sO+fveF8+2XSOCosemZdwd/mso2prVDf6riXO7iHGrzToEADZ0LQD4IN6wvQFgPWZhx9C3FXDdDQAbojaqPL1Umx3x6F6LR6Bd5QQ4w39iv1RIJgakQp7VFa3HqXo1h4CiK7Wx6Wa1GwGKB09TrHghoK2QOXXFjEcEOAQBYp/Z2dtQOiid1E76SAiwdZKHlk6q6HI7Vvx423z9tjmJBQREx0AjxiPGYympDDEHEFAZ6giZq+cAuIkVxzJEPBJYh5qFGADJ1QoCfH6jb43auL6eai+YlaVpsfh1UpRuAsQcdOM/ig6okdQf/1Wv2bVlmysBzvCfoWhXGXKG/wxxS22336QbBv9ayJ52WLgesx1+Pxz+GaJbLu+ciAg7HP5hX2yUMII7cO6Ak78f/ONgCPwrjfga1+KrAXYcHAoAOTgGACQ+so0OKNhj7cxjAEDmQ26XTBc77kn2lFgtpI8EAFsn6QAAMh9T8ugC3AIACYAB0lAyDgURIoy1DMJYchwqoCCJGaSUIijdlBsCkAvGQwwwg5DGSq3VziSAeLP0ZZq9TuuOvot+uoV3beYWz6bTN27AIKRdYBBSesBFld5gsH7Nru1LgFswaCjaYNDNpeuGuOscwYasXUj91MGgGbOd4n0wGGQ+gXaO4IcEBsubpBhXB3scZboYp1k5rgy8fgtq1x11CBD3vH/Ch9w/Oeue/xwudt472f3dLRDy4e+bVPwS1DJcBHfVMuoRQQ5BkNzn2DZM22s5DhZzLaR33Ga/LwRpRmIbygdXX6/oSnoMF+LKcijD636NsusBM0tbujp2HK940AZISQzqxpQcw3ljyvmc5n0pu5tRcrzaVbbQr3SelG9+kZtg8VPvy7MwT0wO3vTMRGCS6xvz31sdJTPTWPlsmr0+e2GSCquv/3D0ASFzikIkYQCiKEaYcCE054zGBFMUQQQ4hySAkjbB+YvFu4oyymblxsvMbr+8m6rElOcMsujNaDK6Sv/y7//kBbPrwr+NvNd5Upa6LueJhJcUxUyfF0+8OJul0VW6C/2/ePf/AVBLAwQUAAAICADEiKlc2Bmoq2cJAABAMQAACwAAAHJlcG9ydC5qc29u1Zrdjtu6EYBfxdBF0QKOd4Z/Q/quKA7aAG3RFjko0INcDMnhrrq25EpyfrFAH6JP2CdpZe9JNtl1juro7DZ3tGSJGn6cf76vtjJw5oGr9fuK07DnzV/b7lq6vlrjzbLqB+6GF/VWqjUSea2t8eCQllXedzzUbVOtPdpgV4HMsir1Rvpq/cP7w+h5rtaVsVJyKY5NVoKFhLyrjv/8I4/vrXif62HV7ySthr5aVoP0w/El4+jkS55F7Yu2XnLJOdrCVDKNj9fDZnztb797sbhIm33sL9Z1vvjHvn73TvqL1AkPsvj3P/+1uB2Odxb9ILsFVstq17V/lzTcflu66tptvd9Wy2rTpluBj9I98OWbupFqbWxYVqnd7LdNtaabu0ullA60rLhp2uFwaZTz5bIa+PJ21O6H1B6m3jfyZidpkDx+FQ9X1fqH6tf74UqaoU48SD4I8eejXNX47HW1LrzpZVl10u83t6vIw8DpaivN7e/mKFqfOpGmv2qHavzcZpBmePF2N96qt3wpF7vm8sPM1bhHLlz2OnK2VpQFBszKkehCkRm0ZkiFqDji1fjozfLDVNJ1bffsMMeb+7ONFy+23F3n9nXz2YzeJHCxJExWS0mkS5KIwbINQQeCmHywLtnVNj/phEPHSe5NxLvdpj7umot39e6zqRCL5RJDsgZKSAENetG2IHko4qNXzoB3sBofvTNXP+R2f0Kq3Ybrprp5+YnmVgqUewb2GYQXaNZg12hWYO3fqmX1+qDtz5ssb6o13Lwc5/my2hWrjDMGwIJElTFqKJ+r3aa9rJvD9ixtt1100mTp+gU3efGKN3XmQfpZdA2JTuoaqTBR1R5QtO8bvqtqP6rX0O2nadc5G0IsKQ/iEroUECI5Qu8wFog6eKW1RcgYy3FDfJmxWRtc4bmMY9IQAzCBJWK2QUB9zriTy7ofpHsMzArhJGYE821hhuApRnRKhFMiZziCSmCL0+AhFiwiFMhPxOxXxrrzMLNGpSOiJGW0LcYVnT/HLK9GmRe/3H+6Ur86YD/cXCTucr9ou4Vsd8PbRT/wIPNg1/oUdnQGvi3slqOOwSFlsiHHpJVyKOSLz8UyREATi0lhGnYLK4f6POwmiAoqKFYqaYeq5OIfDJxOUO8k152koV8M7eJg6uehbfxJ2jZ8a0pesnghsBxc0b447SxxBHJAVCjZaKTobCbSVisNcB5tpTIbK2RJ64xMwYa7YfLvD676dT1cHW32GBXnca14039Kmne7eTg7d4qzCV6dz/koStm0rx8FcfTOmkw+5sghgQ4OhX3JOSkbs0s5KCdg0kTEehX0mYizcTmGmBwUCQwizt3LhG7t+MFZi+TFpuXcH7kPHGdy0+F0NKadPp/s/bTnu4M4j8I5uxAoxpi0DmCsK9akYnPgokRHIUZjIgU7kXNYAZzpr8lxIdEZk2C0QYq2+DDnMeW946GzDFxvZmGs8aSVpq+It5+UcFHeq6J0ysYEdjExGIk2oss6GrZkOUrUeQphuwZcGTzXWCdxlJwdN1oJKpMP/LBrPhQwDqNN3Q/zoNWnCxdG2znh/mb88scJu3JyJTnKlIQjSfKgLCTnmcgoZC3gEDJPZmvBnMfWeYUhBoURsx8th0n3tPdDveoD31l119pTgDV+Tbb8lIAzoDElK886wpirxhA1B6uMcRIyBpWSYYUTAetV8Oo8wCmi1U6xi56KRc4hPRxXHwqSkuvhaKLHwSGBLm23aF830s1De6zInqpDfk329JS0KRRVOAYUqwMo4EguFisuRaOCzjp6gZwnOWO7Bjq/RgIMWcC57IlzsN7YFL5A++iW71efjw56xD9P8RlOqrhSZtYQ7PGgc/Aqw1gk0Q6wRCyx6II5iegQbcKiCwWZ6p/DyugzU+egQYkQRx6TKQJXSP9kz+GwWocuw2yu2uiTUZjSgHNi/qzB8LOCDiU4SQ4LgosefVTRoRZtQBvRSZXCAiFNtOWIKzq3RgIqRBtFp2jAUQzRCPx0c2k9Dp4f123g62NvaR7g4TRwo2bV68cEbn0KKDmT8z4QOyMEkCODUgpLoShkXKaJ0ZmBFehwDzhOAu5EWfLRUElZgQerzGTgF7tOXtXy+qOm316Yhb3F03G51lP7if937B0XDxBdjsbnsaXoKRXSOYoDr1hnQqexTCqR2bUxK9D38+pJ7CkVxVScc0mhcEEUO539h0DuAH78NQ91c7rn4e03a+Kzt2WM1ZmjJgJMbK31DIk0ZmU5YEGkJBOpu5VRZ2q8RsUFVQGjyHEUEPlpX/6Bei99X7fNR/C3F+Zhf7pEqoz6ihLp07LXQbFLoRB5gZK05KRtgiIaGVAJoVbe4VSNDyut7gfv06x9EspCPnLUh3wi/S/sN8JZuthyd1zDO7/nwe+/UEf9dp29KoodFSeiXbQpOIgQnEBxcSy02RS9zSgT8VtcUbhfipmE30WVlPM6RRtKUh5ySKfxd9zkdlu/u+1137a5ZyHtvtDY1ujmJP2XD1I8Tk3VcsyJbPaQBIoNttgQfPSQx25UdFmRgjjRzluzQrpfU50Eu0Bh79PoaZKQ4dHBfw5717Ujp8NC/Tje8aXMC/sLSZuCWeO4Px1leByrLjaAztlSQlMEA5uksrLkgocoWucUOTmaSNqtrDmTtAregjemRO114iLZ3ovht9yMXMdF4pRGnx03suDx/MIlNwf1mIW1UydZ23lLrX84SPQoqDF69i6gyVHSmCF7Na40ugKUUUJwhr33E9M161fkz03XkEMa7Yg3Jlnmks3dkP13B4+8aPhVfXkQZrGpm+t+MU40D1+PpyO0sUV2Lt8/fvzkXyy+f/44MbkpHsFIAVGOsqMSgg1JEyDYkGQsrkMCmILVjT0S7ehMW11CUpS9liQuaYBAd/tfL65kK4uhvbz8r62O+2Fom4W8qfthHgNNcBqqVV+Rcj0FVAMYlWAYDxEa71OREFMJpBMDoykOrbUKJ503cmNfxOv7fZFpiRYgeUdJg3aItjB/kl4bMIt9c920r5tF1+4HuXPs5HIUvOw3m7fzAMaT1XG09ivCracAbFVSASPkXJQ25L0QOVuMtiqjAiI0h5PLs58fdmtwKwMP74bjo6N076uhHXgzGsTlxzVbj/nLnbPta1xWZcPXb6s1LKv+ut7txqtw5zj7zfjSO/DHlfuI/+eYcHk8Qf4j+d3thnh/s6y2nK7q5vANL2/+A1BLAQI/AxQAAAgIAMSIqVxqhuoBHCkAABZoAQAZAAAAAAAAAAAAAAC0gQAAAAA0NWVmZGZmNmE0ZDJlMWY3ZTc4Ni5qc29uUEsBAj8DFAAACAgAxIipXNgZqKtnCQAAQDEAAAsAAAAAAAAAAAAAALSBUykAAHJlcG9ydC5qc29uUEsFBgAAAAACAAIAgAAAAOMyAAAAAA==</template>
+<template id="playwrightReportBase64">data:application/zip;base64,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</template>
 ````
 
 ## File: public/robots.txt
@@ -2860,6 +2534,63 @@ export const roleGuard =
       map(() => evaluate()),
     );
   };
+````
+
+## File: src/app/core/models/club.model.ts
+````typescript
+import { UserSocials } from './user.model';
+import { AfterMeetingVenue } from './event.model';
+export type BanDuration = 1 | 3 | 5 | 'permanent';
+export type ClubStatus = 'active' | 'paused' | 'cancelled';
+export interface CurrentBook {
+  title: string;
+  author: string;
+  description: string;
+}
+export interface BanRecord {
+  userId: string;
+  clubId: string;
+  bannedAt: string;
+  duration: BanDuration;
+  bannedBy: string;
+}
+export interface Club {
+  id: string;
+  name: string;
+  description: string | null;
+  coverUrl: string | null;
+  organizerId: string;
+  isPublic: boolean;
+  memberCount: number;
+  memberPreviews: string[];
+  createdAt: string;
+  city: string;
+  nextMeetingDate: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  theme: string | null;
+  currentBook: CurrentBook | null;
+  status: ClubStatus;
+  tags: string[];
+  meetingDurationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  cancelledAt?: string;
+}
+export interface ClubMember {
+  clubId: string;
+  userId: string;
+  role: 'member' | 'organizer';
+  joinedAt: string;
+}
+export interface ClubMemberDetail {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: 'member' | 'organizer';
+  socials?: UserSocials;
+  socialsPublic: boolean;
+}
 ````
 
 ## File: src/app/core/models/randomizer.model.ts
@@ -3128,6 +2859,11 @@ export class SeoService {
 }
 ````
 
+## File: src/app/features/clubs/club-detail/info/club-info.component.html
+````html
+
+````
+
 ## File: src/app/features/clubs/club-detail/info/club-info.component.ts
 ````typescript
 import {
@@ -3147,6 +2883,26 @@ import { Club } from '../../../../core/models/club.model';
 export class ClubInfoComponent {
   readonly club = input.required<Club>();
 }
+````
+
+## File: src/app/features/events/events.routes.ts
+````typescript
+import { Routes } from '@angular/router';
+import { authGuard } from '../../core/auth/auth.guard';
+export const EVENTS_ROUTES: Routes = [
+  {
+    path: '',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./events-feed/events-feed.component').then(m => m.EventsFeedComponent),
+  },
+  {
+    path: ':id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./event-detail/event-detail.component').then(m => m.EventDetailComponent),
+  },
+];
 ````
 
 ## File: src/app/features/profile/role-selector/profile-role-selector.component.html
@@ -4152,6 +3908,72 @@ CREATE POLICY "Organizers can manage randomizer sessions"
   );
 ````
 
+## File: supabase/migrations/006_events.sql
+````sql
+CREATE TABLE IF NOT EXISTS events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
+  title TEXT NOT NULL,
+  description TEXT,
+  date TIMESTAMPTZ NOT NULL,
+  city TEXT NOT NULL,
+  address TEXT,
+  lat FLOAT,
+  lng FLOAT,
+  status TEXT NOT NULL DEFAULT 'scheduled'
+    CHECK (status IN ('scheduled','active','held','cancelled','rescheduled')),
+  cancelled_at TIMESTAMPTZ,
+  theme TEXT,
+  tags TEXT[] NOT NULL DEFAULT '{}',
+  duration_minutes INT,
+  after_meeting_venue JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX idx_events_club_id ON events(club_id);
+CREATE INDEX idx_events_date ON events(date);
+CREATE TABLE IF NOT EXISTS event_attendees (
+  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+  PRIMARY KEY (event_id, user_id)
+);
+CREATE INDEX idx_event_attendees_event ON event_attendees(event_id);
+CREATE INDEX idx_event_attendees_user ON event_attendees(user_id);
+ALTER TABLE events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Public events visible to all"
+  ON events FOR SELECT USING (
+    EXISTS (SELECT 1 FROM clubs WHERE clubs.id = events.club_id AND clubs.is_public = true)
+  );
+CREATE POLICY "Members can see private club events"
+  ON events FOR SELECT USING (
+    EXISTS (SELECT 1 FROM club_members WHERE club_id = events.club_id AND user_id = auth.uid())
+  );
+CREATE POLICY "Club organizers can create events"
+  ON events FOR INSERT WITH CHECK (
+    EXISTS (SELECT 1 FROM clubs WHERE clubs.id = events.club_id AND clubs.organizer_id = auth.uid())
+  );
+CREATE POLICY "Club organizers can update events"
+  ON events FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM clubs WHERE clubs.id = events.club_id AND clubs.organizer_id = auth.uid())
+  );
+CREATE POLICY "Club organizers can delete events"
+  ON events FOR DELETE USING (
+    EXISTS (SELECT 1 FROM clubs WHERE clubs.id = events.club_id AND clubs.organizer_id = auth.uid())
+  );
+ALTER TABLE event_attendees ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Attendees visible to club members"
+  ON event_attendees FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM club_members
+      WHERE club_id = (SELECT club_id FROM events WHERE id = event_attendees.event_id)
+        AND user_id = auth.uid()
+    )
+  );
+CREATE POLICY "Users can RSVP to events"
+  ON event_attendees FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Users can cancel own RSVP"
+  ON event_attendees FOR DELETE USING (auth.uid() = user_id);
+````
+
 ## File: test-results/.last-run.json
 ````json
 {
@@ -4394,6 +4216,54 @@ declined, etc.
     }
   ]
 }
+````
+
+## File: .github/codeql/codeql-config.yml
+````yaml
+paths-ignore:
+  - playwright-report
+  - test-results
+  - repomix-output.md
+````
+
+## File: .github/workflows/codeql.yml
+````yaml
+name: CodeQL
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    - cron: '0 0 * * 0'
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  analyze:
+    name: Analyze (javascript-typescript)
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-extended
+          config-file: .github/codeql/codeql-config.yml
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:javascript-typescript'
+        continue-on-error: true
 ````
 
 ## File: .github/copilot-instructions.md
@@ -5113,11 +4983,6 @@ export class BookVoteSectionComponent {
 }
 ````
 
-## File: src/app/features/clubs/club-detail/info/club-info.component.html
-````html
-
-````
-
 ## File: src/app/features/clubs/club-detail/members/club-members-list.component.ts
 ````typescript
 import {
@@ -5178,24 +5043,185 @@ export class ClubMembersListComponent {
 }
 ````
 
-## File: src/app/features/events/events.routes.ts
+## File: src/app/features/clubs/clubs.routes.ts
 ````typescript
 import { Routes } from '@angular/router';
 import { authGuard } from '../../core/auth/auth.guard';
-export const EVENTS_ROUTES: Routes = [
+import { roleGuard } from '../../core/auth/role.guard';
+import { ClubsListComponent } from './clubs-list/clubs-list.component';
+import { ClubDetailComponent } from './club-detail/club-detail.component';
+import { CreateClubComponent } from './create-club/create-club.component';
+export const CLUBS_ROUTES: Routes = [
   {
     path: '',
+    component: ClubsListComponent,
     canActivate: [authGuard],
-    loadComponent: () =>
-      import('./events-feed/events-feed.component').then(m => m.EventsFeedComponent),
+  },
+  {
+    path: 'create',
+    component: CreateClubComponent,
+    canActivate: [authGuard, roleGuard('organizer')],
   },
   {
     path: ':id',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./event-detail/event-detail.component').then(m => m.EventDetailComponent),
+    children: [
+      {
+        path: '',
+        component: ClubDetailComponent,
+        canActivate: [authGuard],
+      },
+      {
+        path: 'randomizer',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('../randomizer/randomizer.component').then(
+            m => m.RandomizerComponent,
+          ),
+      },
+      {
+        path: 'quizzes',
+        loadChildren: () =>
+          import('../quiz/quiz.routes').then(m => m.QUIZ_ROUTES),
+      },
+      {
+        path: 'events/create',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('../events/create-event/create-event.component').then(
+            m => m.CreateEventComponent,
+          ),
+      },
+      {
+        path: 'edit',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('./edit-club/edit-club.component').then(m => m.EditClubComponent),
+      },
+    ],
   },
 ];
+````
+
+## File: src/app/features/events/event-detail/event-detail.component.html
+````html
+@if (isLoading()) {
+  <main class="max-w-3xl mx-auto px-4 py-8" aria-busy="true">
+    <div class="animate-pulse space-y-4">
+      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+    </div>
+  </main>
+} @else if (errorMessage()) {
+  <main class="max-w-3xl mx-auto px-4 py-8 text-center" role="alert">
+    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
+    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
+    <a routerLink="/events"
+       class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors">
+      {{ 'EVENTS.back_to_events' | translate }}
+    </a>
+  </main>
+} @else if (event()) {
+  <main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <nav>
+      <a routerLink="/events"
+         class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+        {{ 'EVENTS.back_to_events' | translate }}
+      </a>
+    </nav>
+    <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6 space-y-3">
+      <div class="flex items-start justify-between gap-4">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ event()!.title }}</h1>
+        @if (event()!.status !== 'scheduled') {
+          <span class="text-xs rounded-full px-2.5 py-1 shrink-0"
+                [class]="event()!.status === 'cancelled'
+                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                  : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'">
+            {{ event()!.status }}
+          </span>
+        }
+      </div>
+      <a [routerLink]="['/clubs', event()!.clubId]"
+         class="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+        📚 {{ event()!.clubName }}
+      </a>
+      <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+        <span>📅 {{ event()!.date | formatDate }}</span>
+        @if (event()!.city) {
+          <span>📍 {{ event()!.address || event()!.city }}</span>
+        }
+        @if (event()!.durationMinutes) {
+          <span>⏱ {{ event()!.durationMinutes }} {{ 'EVENTS.minutes_abbr' | translate }}</span>
+        }
+        <span>👤 {{ event()!.attendeeCount }} {{ 'EVENTS.attending' | translate }}</span>
+      </div>
+      @if (auth.isAuthenticated() && event()!.status !== 'cancelled') {
+        <div class="flex gap-3 pt-2">
+          @if (event()!.isAttending) {
+            <button type="button"
+                    [disabled]="isActioning()"
+                    (click)="onCancelAttend()"
+                    class="rounded-xl bg-green-600 hover:bg-green-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
+              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.going_cancel' | translate }} }
+            </button>
+          } @else {
+            <button type="button"
+                    [disabled]="isActioning()"
+                    (click)="onAttend()"
+                    class="rounded-xl bg-primary-600 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
+              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.rsvp_going' | translate }} }
+            </button>
+          }
+        </div>
+      }
+    </div>
+    @if (event()!.description) {
+      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.about' | translate }}</h2>
+        <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ event()!.description }}</p>
+      </section>
+    }
+    @if (event()!.theme || event()!.tags.length > 0) {
+      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.tags' | translate }}</h2>
+        <div class="flex flex-wrap gap-2">
+          @if (event()!.theme) {
+            <span class="rounded-full bg-accent-100 dark:bg-accent-900/30 px-3 py-1 text-xs font-medium text-accent-700 dark:text-accent-300">
+              {{ event()!.theme }}
+            </span>
+          }
+          @for (tag of event()!.tags; track tag) {
+            <span class="rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1 text-xs text-gray-600 dark:text-gray-400">
+              {{ tag }}
+            </span>
+          }
+        </div>
+      </section>
+    }
+    @if (event()!.afterMeetingVenue) {
+      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.after_meeting_venue' | translate }}</h2>
+        <p class="font-medium text-gray-900 dark:text-white">{{ event()!.afterMeetingVenue!.name }}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ event()!.afterMeetingVenue!.address }}</p>
+        @if (event()!.afterMeetingVenue!.description) {
+          <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">{{ event()!.afterMeetingVenue!.description }}</p>
+        }
+      </section>
+    }
+    @if (isOrganizer() && event()!.status !== 'cancelled') {
+      <section class="rounded-2xl border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-6">
+        <h2 class="text-sm font-semibold text-yellow-800 dark:text-yellow-300 uppercase tracking-wide mb-3">{{ 'EVENTS.organizer_controls' | translate }}</h2>
+        <div class="flex gap-3">
+          <button type="button"
+                  [disabled]="isActioning()"
+                  (click)="onCancelEvent()"
+                  class="rounded-lg bg-red-600 hover:bg-red-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60 transition-colors">
+            {{ 'EVENTS.cancel_event' | translate }}
+          </button>
+        </div>
+      </section>
+    }
+  </main>
+}
 ````
 
 ## File: src/app/features/privacy/privacy.component.ts
@@ -7909,118 +7935,10 @@ export async function configureQuizTestBed(component: Type<unknown>, quizSvc: un
 }
 ````
 
-## File: supabase/migrations/006_events.sql
-````sql
-CREATE TABLE IF NOT EXISTS events (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  club_id UUID NOT NULL REFERENCES clubs(id) ON DELETE CASCADE,
-  title TEXT NOT NULL,
-  description TEXT,
-  date TIMESTAMPTZ NOT NULL,
-  city TEXT NOT NULL,
-  address TEXT,
-  lat FLOAT,
-  lng FLOAT,
-  status TEXT NOT NULL DEFAULT 'scheduled'
-    CHECK (status IN ('scheduled','active','held','cancelled','rescheduled')),
-  cancelled_at TIMESTAMPTZ,
-  theme TEXT,
-  tags TEXT[] NOT NULL DEFAULT '{}',
-  duration_minutes INT,
-  after_meeting_venue JSONB,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-CREATE INDEX idx_events_club_id ON events(club_id);
-CREATE INDEX idx_events_date ON events(date);
-CREATE TABLE IF NOT EXISTS event_attendees (
-  event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  PRIMARY KEY (event_id, user_id)
-);
-CREATE INDEX idx_event_attendees_event ON event_attendees(event_id);
-CREATE INDEX idx_event_attendees_user ON event_attendees(user_id);
-ALTER TABLE events ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Public events visible to all"
-  ON events FOR SELECT USING (
-    EXISTS (SELECT 1 FROM clubs WHERE clubs.id = events.club_id AND clubs.is_public = true)
-  );
-CREATE POLICY "Members can see private club events"
-  ON events FOR SELECT USING (
-    EXISTS (SELECT 1 FROM club_members WHERE club_id = events.club_id AND user_id = auth.uid())
-  );
-CREATE POLICY "Club organizers can create events"
-  ON events FOR INSERT WITH CHECK (
-    EXISTS (SELECT 1 FROM clubs WHERE clubs.id = events.club_id AND clubs.organizer_id = auth.uid())
-  );
-CREATE POLICY "Club organizers can update events"
-  ON events FOR UPDATE USING (
-    EXISTS (SELECT 1 FROM clubs WHERE clubs.id = events.club_id AND clubs.organizer_id = auth.uid())
-  );
-CREATE POLICY "Club organizers can delete events"
-  ON events FOR DELETE USING (
-    EXISTS (SELECT 1 FROM clubs WHERE clubs.id = events.club_id AND clubs.organizer_id = auth.uid())
-  );
-ALTER TABLE event_attendees ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "Attendees visible to club members"
-  ON event_attendees FOR SELECT USING (
-    EXISTS (
-      SELECT 1 FROM club_members
-      WHERE club_id = (SELECT club_id FROM events WHERE id = event_attendees.event_id)
-        AND user_id = auth.uid()
-    )
-  );
-CREATE POLICY "Users can RSVP to events"
-  ON event_attendees FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Users can cancel own RSVP"
-  ON event_attendees FOR DELETE USING (auth.uid() = user_id);
-````
-
 ## File: supabase/migrations/007_events_cover_image.sql
 ````sql
 ALTER TABLE events
   ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
-````
-
-## File: bugs.md
-````markdown
-# Bug Report — Book Club App Audit
-
-**Date:** 2026-05-09
-**URL:** https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app/
-**Test user:** test123@mail.com
-**Club owner account:** terrtr
-
-## Summary
-
-| Severity | Count |
-|----------|-------|
-| Critical | 0 |
-| High | 2 |
-| Medium | 4 |
-| Low | 1 |
-| **Total** | **7** |
-
-## HIGH (2)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/session` | console-error | Failed to load resource: the server responded with a status of 404 () |
-| 2 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/leaderboard` | console-error | Failed to load resource: the server responded with a status of 404 () |
-
-## MEDIUM (4)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `/events/:id` | ui-missing | Skipped: no event ID discovered (no events in API response) |
-| 2 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/session` | nav-404 | HTTP 404 — https://book-club-be.onrender.com/api/v1/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/sessions/active |
-| 3 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/leaderboard` | nav-404 | HTTP 404 — https://book-club-be.onrender.com/api/v1/quizzes/7e0110f8-b393-4320-a279-24afc3dd81a8/sessions/active |
-| 4 | `/clubs/efc6aa3b-14e7-4a6e-ba2e-8a8e3eae5dc9/randomizer` | ui-missing | Spin button not found on randomizer page |
-
-## LOW (1)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `theme-toggle` | ui-missing | Theme toggle button not found in header |
 ````
 
 ## File: CLAUDE.md
@@ -8767,28 +8685,6 @@ jobs:
           comment-tag: pr-review-gate
 ````
 
-## File: src/app/core/auth/token.store.ts
-````typescript
-import { Injectable, signal } from '@angular/core';
-const TOKEN_KEY = 'bc_access_token';
-@Injectable({ providedIn: 'root' })
-export class TokenStore {
-  private readonly _token = signal<string | null>(sessionStorage.getItem(TOKEN_KEY));
-  readonly token = this._token.asReadonly();
-  set(token: string): void {
-    sessionStorage.setItem(TOKEN_KEY, token);
-    this._token.set(token);
-  }
-  clear(): void {
-    sessionStorage.removeItem(TOKEN_KEY);
-    this._token.set(null);
-  }
-  snapshot(): string | null {
-    return this._token();
-  }
-}
-````
-
 ## File: src/app/core/interceptors/auth.interceptor.ts
 ````typescript
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
@@ -8823,63 +8719,6 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
     }),
   );
 };
-````
-
-## File: src/app/core/models/club.model.ts
-````typescript
-import { UserSocials } from './user.model';
-import { AfterMeetingVenue } from './event.model';
-export type BanDuration = 1 | 3 | 5 | 'permanent';
-export type ClubStatus = 'active' | 'paused' | 'cancelled';
-export interface CurrentBook {
-  title: string;
-  author: string;
-  description: string;
-}
-export interface BanRecord {
-  userId: string;
-  clubId: string;
-  bannedAt: string;
-  duration: BanDuration;
-  bannedBy: string;
-}
-export interface Club {
-  id: string;
-  name: string;
-  description: string | null;
-  coverUrl: string | null;
-  organizerId: string;
-  isPublic: boolean;
-  memberCount: number;
-  memberPreviews: string[];
-  createdAt: string;
-  city: string;
-  nextMeetingDate: string | null;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  theme: string | null;
-  currentBook: CurrentBook | null;
-  status: ClubStatus;
-  tags: string[];
-  meetingDurationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  cancelledAt?: string;
-}
-export interface ClubMember {
-  clubId: string;
-  userId: string;
-  role: 'member' | 'organizer';
-  joinedAt: string;
-}
-export interface ClubMemberDetail {
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  role: 'member' | 'organizer';
-  socials?: UserSocials;
-  socialsPublic: boolean;
-}
 ````
 
 ## File: src/app/core/services/book-cover.service.ts
@@ -9498,184 +9337,35 @@ export class ClubManagePanelComponent {
 }
 ````
 
-## File: src/app/features/clubs/clubs.routes.ts
+## File: src/app/features/events/event-card/event-card.component.ts
 ````typescript
-import { Routes } from '@angular/router';
-import { authGuard } from '../../core/auth/auth.guard';
-import { roleGuard } from '../../core/auth/role.guard';
-import { ClubsListComponent } from './clubs-list/clubs-list.component';
-import { ClubDetailComponent } from './club-detail/club-detail.component';
-import { CreateClubComponent } from './create-club/create-club.component';
-export const CLUBS_ROUTES: Routes = [
-  {
-    path: '',
-    component: ClubsListComponent,
-    canActivate: [authGuard],
-  },
-  {
-    path: 'create',
-    component: CreateClubComponent,
-    canActivate: [authGuard, roleGuard('organizer')],
-  },
-  {
-    path: ':id',
-    children: [
-      {
-        path: '',
-        component: ClubDetailComponent,
-        canActivate: [authGuard],
-      },
-      {
-        path: 'randomizer',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('../randomizer/randomizer.component').then(
-            m => m.RandomizerComponent,
-          ),
-      },
-      {
-        path: 'quizzes',
-        loadChildren: () =>
-          import('../quiz/quiz.routes').then(m => m.QUIZ_ROUTES),
-      },
-      {
-        path: 'events/create',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('../events/create-event/create-event.component').then(
-            m => m.CreateEventComponent,
-          ),
-      },
-      {
-        path: 'edit',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('./edit-club/edit-club.component').then(m => m.EditClubComponent),
-      },
-    ],
-  },
-];
-````
-
-## File: src/app/features/events/event-detail/event-detail.component.html
-````html
-@if (isLoading()) {
-  <main class="max-w-3xl mx-auto px-4 py-8" aria-busy="true">
-    <div class="animate-pulse space-y-4">
-      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-    </div>
-  </main>
-} @else if (errorMessage()) {
-  <main class="max-w-3xl mx-auto px-4 py-8 text-center" role="alert">
-    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
-    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
-    <a routerLink="/events"
-       class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors">
-      {{ 'EVENTS.back_to_events' | translate }}
-    </a>
-  </main>
-} @else if (event()) {
-  <main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
-    <nav>
-      <a routerLink="/events"
-         class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-        {{ 'EVENTS.back_to_events' | translate }}
-      </a>
-    </nav>
-    <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6 space-y-3">
-      <div class="flex items-start justify-between gap-4">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ event()!.title }}</h1>
-        @if (event()!.status !== 'scheduled') {
-          <span class="text-xs rounded-full px-2.5 py-1 shrink-0"
-                [class]="event()!.status === 'cancelled'
-                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                  : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'">
-            {{ event()!.status }}
-          </span>
-        }
-      </div>
-      <a [routerLink]="['/clubs', event()!.clubId]"
-         class="text-sm text-primary-600 dark:text-primary-400 hover:underline">
-        📚 {{ event()!.clubName }}
-      </a>
-      <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-        <span>📅 {{ event()!.date | formatDate }}</span>
-        @if (event()!.city) {
-          <span>📍 {{ event()!.address || event()!.city }}</span>
-        }
-        @if (event()!.durationMinutes) {
-          <span>⏱ {{ event()!.durationMinutes }} {{ 'EVENTS.minutes_abbr' | translate }}</span>
-        }
-        <span>👤 {{ event()!.attendeeCount }} {{ 'EVENTS.attending' | translate }}</span>
-      </div>
-      @if (auth.isAuthenticated() && event()!.status !== 'cancelled') {
-        <div class="flex gap-3 pt-2">
-          @if (event()!.isAttending) {
-            <button type="button"
-                    [disabled]="isActioning()"
-                    (click)="onCancelAttend()"
-                    class="rounded-xl bg-green-600 hover:bg-green-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
-              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.going_cancel' | translate }} }
-            </button>
-          } @else {
-            <button type="button"
-                    [disabled]="isActioning()"
-                    (click)="onAttend()"
-                    class="rounded-xl bg-primary-600 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
-              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.rsvp_going' | translate }} }
-            </button>
-          }
-        </div>
-      }
-    </div>
-    @if (event()!.description) {
-      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.about' | translate }}</h2>
-        <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ event()!.description }}</p>
-      </section>
-    }
-    @if (event()!.theme || event()!.tags.length > 0) {
-      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.tags' | translate }}</h2>
-        <div class="flex flex-wrap gap-2">
-          @if (event()!.theme) {
-            <span class="rounded-full bg-accent-100 dark:bg-accent-900/30 px-3 py-1 text-xs font-medium text-accent-700 dark:text-accent-300">
-              {{ event()!.theme }}
-            </span>
-          }
-          @for (tag of event()!.tags; track tag) {
-            <span class="rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1 text-xs text-gray-600 dark:text-gray-400">
-              {{ tag }}
-            </span>
-          }
-        </div>
-      </section>
-    }
-    @if (event()!.afterMeetingVenue) {
-      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.after_meeting_venue' | translate }}</h2>
-        <p class="font-medium text-gray-900 dark:text-white">{{ event()!.afterMeetingVenue!.name }}</p>
-        <p class="text-sm text-gray-500 dark:text-gray-400">{{ event()!.afterMeetingVenue!.address }}</p>
-        @if (event()!.afterMeetingVenue!.description) {
-          <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">{{ event()!.afterMeetingVenue!.description }}</p>
-        }
-      </section>
-    }
-    @if (isOrganizer() && event()!.status !== 'cancelled') {
-      <section class="rounded-2xl border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-6">
-        <h2 class="text-sm font-semibold text-yellow-800 dark:text-yellow-300 uppercase tracking-wide mb-3">{{ 'EVENTS.organizer_controls' | translate }}</h2>
-        <div class="flex gap-3">
-          <button type="button"
-                  [disabled]="isActioning()"
-                  (click)="onCancelEvent()"
-                  class="rounded-lg bg-red-600 hover:bg-red-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60 transition-colors">
-            {{ 'EVENTS.cancel_event' | translate }}
-          </button>
-        </div>
-      </section>
-    }
-  </main>
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { ClubEvent } from '../../../core/models/event.model';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmBadge } from '../../../shared/spartan/badge/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+@Component({
+  selector: 'app-event-card',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, FormatDatePipe, ...HlmCardImports, HlmButton, HlmBadge, HlmSpinner],
+  templateUrl: './event-card.component.html',
+})
+export class EventCardComponent {
+  readonly event = input.required<ClubEvent>();
+  readonly isAuthenticated = input<boolean>(false);
+  readonly attending = input<boolean>(false);
+  readonly attend = output<void>();
+  readonly cancelAttend = output<void>();
 }
 ````
 
@@ -10440,6 +10130,70 @@ export * from './tabs/src';
 export * from './utils/src';
 ````
 
+## File: src/app/app.routes.ts
+````typescript
+import { Routes } from '@angular/router';
+import { authGuard } from './core/auth/auth.guard';
+import { roleGuard } from './core/auth/role.guard';
+import { ShellComponent } from './layout/shell/shell.component';
+export const routes: Routes = [
+  {
+    path: 'privacy',
+    loadComponent: () =>
+      import('./features/privacy/privacy.component').then(m => m.PrivacyComponent),
+  },
+  {
+    path: 'terms',
+    loadComponent: () =>
+      import('./features/terms/terms.component').then(m => m.TermsComponent),
+  },
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/login/login.component').then(m => m.LoginComponent),
+  },
+  {
+    path: 'register',
+    loadComponent: () =>
+      import('./features/auth/register/register.component').then(m => m.RegisterComponent),
+  },
+  {
+    path: '',
+    component: ShellComponent,
+    canActivate: [authGuard],
+    children: [
+      // Protected: any authenticated user
+      {
+        path: 'clubs',
+        canActivate: [authGuard],
+        loadChildren: () => import('./features/clubs/clubs.routes').then(m => m.CLUBS_ROUTES),
+      },
+      {
+        path: 'events',
+        canActivate: [authGuard],
+        loadChildren: () => import('./features/events/events.routes').then(m => m.EVENTS_ROUTES),
+      },
+      {
+        path: 'manage',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('./features/clubs/clubs-list/clubs-list.component').then(
+            m => m.ClubsListComponent,
+          ),
+      },
+      { path: '', redirectTo: 'clubs', pathMatch: 'full' },
+      {
+        path: 'profile',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/profile/profile.component').then(m => m.ProfileComponent),
+      },
+      { path: '**', redirectTo: 'clubs' },
+    ],
+  },
+];
+````
+
 ## File: .gitignore
 ````
 # See https://docs.github.com/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
@@ -10525,35 +10279,30 @@ mock-server/
 /ui_changes.md
 ````
 
-## File: playwright.vercel.config.ts
-````typescript
-import { defineConfig, devices } from '@playwright/test';
-export default defineConfig({
-  testDir: './e2e',
-  testMatch: '**/audit.spec.ts',
-  fullyParallel: false,
-  retries: 0,
-  workers: 1,
-  timeout: 60_000,
-  reporter: [
-    ['list'],
-    ['html', { open: 'never' }],
-    ['json', { outputFile: 'playwright-report/audit-results.json' }],
-  ],
-  use: {
-    baseURL: 'https://book-club-ad4f6eoiq-dmytros-projects-ad22eb22.vercel.app',
-    trace: 'on',
-    screenshot: 'only-on-failure',
-    actionTimeout: 20_000,
-    navigationTimeout: 30_000,
-  },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-  ],
-});
+## File: bugs.md
+````markdown
+# Bug Report — Book Club App Audit
+
+**Date:** 2026-05-11
+**URL:** https://book-club-dyxne04jy-dmytros-projects-ad22eb22.vercel.app/
+**Test user:** test123@mail.com
+**Club owner account:** terrtr
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 0 |
+| Medium | 1 |
+| Low | 0 |
+| **Total** | **1** |
+
+## MEDIUM (1)
+
+| # | Route | Type | Description |
+|---|-------|------|-------------|
+| 1 | `/events/:id` | ui-missing | Skipped: no event ID discovered (no events in API response) |
 ````
 
 ## File: postcss.config.mjs
@@ -10569,42 +10318,6 @@ export default {
     tailwindcss({ base: __dirname }),
   ],
 };
-````
-
-## File: sonar-project.properties
-````
-# Replace YOUR_ORG with your actual SonarCloud organization slug
-sonar.projectKey=leo477_book-club-fe
-sonar.organization=leo477
-sonar.projectName=Book Club Frontend
-sonar.projectVersion=1.0
-
-sonar.sources=src
-sonar.tests=src
-sonar.test.inclusions=**/*.spec.ts
-sonar.exclusions=**/node_modules/**,**/*.spec.ts,src/assets/**,src/environments/**
-
-sonar.typescript.lcov.reportPaths=coverage/book-club-fe/lcov.info
-
-# Exclude non-testable and currently untested files from coverage requirements
-sonar.coverage.exclusions=\
-  **/*.html,\
-  **/*.spec.ts,\
-  **/mocks/**,\
-  **/*.model.ts,\
-  **/*.interface.ts,\
-  **/*.config.ts,\
-  **/environments/**,\
-  src/app/features/**,\
-  src/app/layout/**,\
-  src/app/shared/spartan/**
-
-sonar.sourceEncoding=UTF-8
-
-# Exclude vendored/boilerplate-heavy files from duplication detection
-sonar.cpd.exclusions=\
-  src/app/shared/spartan/**,\
-  src/testing/**
 ````
 
 ## File: tsconfig.json
@@ -10819,6 +10532,287 @@ export class AuthService {
       }),
     );
     this._currentUser.set({ ...user, socialsPublic: value });
+  }
+}
+````
+
+## File: src/app/core/auth/token.store.ts
+````typescript
+import { Injectable, signal } from '@angular/core';
+const TOKEN_KEY = 'bc_access_token';
+@Injectable({ providedIn: 'root' })
+export class TokenStore {
+  private readonly _token = signal<string | null>(sessionStorage.getItem(TOKEN_KEY));
+  readonly token = this._token.asReadonly();
+  set(token: string): void {
+    sessionStorage.setItem(TOKEN_KEY, token);
+    this._token.set(token);
+  }
+  clear(): void {
+    sessionStorage.removeItem(TOKEN_KEY);
+    this._token.set(null);
+  }
+  snapshot(): string | null {
+    return this._token();
+  }
+}
+````
+
+## File: src/app/core/models/event.model.ts
+````typescript
+export type EventStatus = 'scheduled' | 'active' | 'held' | 'cancelled' | 'rescheduled' | 'upcoming';
+export interface AfterMeetingVenue {
+  name: string;
+  address: string;
+  description?: string;
+  lat?: number;
+  lng?: number;
+}
+export interface ClubEvent {
+  id: string;
+  clubId: string;
+  clubName: string;
+  organizerId: string;
+  title: string;
+  description: string | null;
+  date: string;
+  city: string;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  status: EventStatus;
+  cancelledAt?: string;
+  coverUrl: string | null;
+  theme: string | null;
+  tags: string[];
+  durationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  attendeeCount: number;
+  isAttending: boolean;
+  bookTitle?: string | null;
+  quizId?: string | null;
+}
+````
+
+## File: src/app/core/services/club.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
+import { AuthService } from '../auth/auth.service';
+import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
+import { ClubEvent } from '../models/event.model';
+@Injectable({ providedIn: 'root' })
+export class ClubService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly _clubs = signal<Club[]>([]);
+  private readonly _myClubs = signal<Club[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _error = signal<string | null>(null);
+  private readonly _searchQuery = signal('');
+  private readonly _cityFilter = signal<string | null>(null);
+  readonly clubs = this._clubs.asReadonly();
+  readonly myClubs = this._myClubs.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly searchQuery = this._searchQuery.asReadonly();
+  readonly myOwnedClubs = computed<Club[]>(() => {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return [];
+    return this._clubs().filter(c => c.organizerId === userId);
+  });
+  readonly myOwnedClubIds = computed<Set<string>>(() =>
+    new Set(this.myOwnedClubs().map(c => c.id)),
+  );
+  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
+  readonly availableCities = computed<string[]>(() => {
+    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
+    return cities.sort((a, b) => a.localeCompare(b));
+  });
+  readonly filteredClubs = computed(() => {
+    const q = this._searchQuery().toLowerCase().trim();
+    const city = this._cityFilter();
+    let clubs = this._clubs();
+    if (q) {
+      clubs = clubs.filter(
+        c =>
+          c.name.toLowerCase().includes(q) ||
+          (c.description?.toLowerCase().includes(q) ?? false),
+      );
+    }
+    if (city) {
+      clubs = clubs.filter(c => c.city === city);
+    }
+    return clubs;
+  });
+  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
+    const clubs = this.filteredClubs();
+    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
+      const city = club.city || '';
+      if (!acc[city]) acc[city] = [];
+      acc[city].push(club);
+      return acc;
+    }, {});
+  });
+  readonly myParticipatedClubs = computed<Club[]>(() => []);
+  readonly myMissedClubs = computed<Club[]>(() => []);
+  setSearchQuery(query: string): void {
+    this._searchQuery.set(query);
+  }
+  setCityFilter(city: string | null): void {
+    this._cityFilter.set(city);
+  }
+  async loadPublicClubs(): Promise<void> {
+    this._isLoading.set(true);
+    this._error.set(null);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
+      );
+      this._clubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load clubs');
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async loadMyClubs(): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
+      );
+      this._myClubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load my clubs');
+    }
+  }
+  async getClubById(id: string): Promise<Club | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
+      );
+      return mapClub(raw);
+    } catch {
+      return null;
+    }
+  }
+  async createClub(payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    coverUrl?: string | null;
+    city?: string;
+    tags?: string[];
+    meetingDurationMinutes?: number | null;
+    afterMeetingVenue?: { name: string; address: string; description: string } | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
+        name: payload.name,
+        description: payload.description,
+        isPublic: payload.isPublic,
+        coverUrl: payload.coverUrl ?? null,
+        city: payload.city,
+        tags: payload.tags,
+        meetingDurationMinutes: payload.meetingDurationMinutes,
+        afterMeetingVenue: payload.afterMeetingVenue,
+      }),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(existing => [club, ...existing]);
+    this._myClubs.update(existing => [club, ...existing]);
+    return club;
+  }
+  async updateClub(clubId: string, payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    city?: string;
+    coverUrl?: string | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    return club;
+  }
+  async joinClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
+    );
+    this._clubs.update(list =>
+      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
+    );
+    const club = this._clubs().find(c => c.id === clubId);
+    if (club && !this.myClubIds().has(clubId)) {
+      this._myClubs.update(list => [club, ...list]);
+    }
+  }
+  async leaveClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
+    );
+    this._clubs.update(list =>
+      list.map(c =>
+        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
+      ),
+    );
+    this._myClubs.update(list => list.filter(c => c.id !== clubId));
+  }
+  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
+    );
+    return raw.map(mapClubMember);
+  }
+  async kickMember(clubId: string, userId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
+    );
+  }
+  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
+    );
+  }
+  async getBans(clubId: string): Promise<BanRecord[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
+    );
+    return raw.map(mapBanRecord);
+  }
+  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
+    );
+    return raw.map(mapEvent);
+  }
+  async pauseClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'pause');
+  }
+  async cancelClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'cancel');
+  }
+  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
+  }
+  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+  msUntilDeletion(club: Club): number | null {
+    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
+    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
+    const remaining = deletionTime - Date.now();
+    return remaining > 0 ? remaining : null;
   }
 }
 ````
@@ -11127,7 +11121,160 @@ export class RegisterComponent {
 </article>
 ````
 
-## File: src/app/features/events/event-card/event-card.component.ts
+## File: src/app/features/clubs/club-detail/header/club-header.component.html
+````html
+<header class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+  <div>
+    <div class="flex items-center gap-3 flex-wrap">
+@if (!club().isPublic) {
+        <span class="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">
+          🔒 {{ 'CLUB_DETAIL.private' | translate }}
+        </span>
+      }
+    </div>
+  </div>
+  @if (isAuthenticated()) {
+    @if (!isOwner()) {
+      @if (isMember()) {
+        <button
+          hlmBtn
+          variant="outline"
+          type="button"
+          (click)="leave.emit()"
+          [disabled]="isActionLoading()"
+          [attr.aria-label]="'CLUB_DETAIL.leave' | translate"
+        >
+          @if (isActionLoading()) {
+            <app-loading-spinner size="sm" />
+          }
+          {{ 'CLUB_DETAIL.leave' | translate }}
+        </button>
+      }
+    }
+  }
+</header>
+````
+
+## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
+````html
+<div
+  class="flex flex-col overflow-hidden h-full"
+  [class]="variant() === 'featured'
+    ? 'parchment-card-raised'
+    : 'parchment-card hover:shadow-[var(--shadow-parchment-lg)] transition-shadow duration-200'"
+>
+  <div class="relative overflow-hidden flex-shrink-0"
+       [class]="variant() === 'featured' ? 'h-48' : 'h-32'">
+    @if (club().coverUrl) {
+      <img [src]="club().coverUrl" [alt]="''" class="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
+    } @else {
+      <div class="w-full h-full bg-gradient-fantasy" aria-hidden="true"></div>
+    }
+    @if (variant() === 'featured') {
+      <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none"></div>
+    }
+  </div>
+  <div class="flex flex-col flex-1 gap-3"
+       [class]="variant() === 'featured' ? 'p-5' : 'p-4'">
+    <div>
+      <h3
+        class="font-display font-semibold text-[var(--color-ink)] leading-snug flex items-center gap-1.5"
+        [class]="variant() === 'featured' ? 'text-lg line-clamp-2' : 'text-base line-clamp-1'"
+      >
+        {{ club().name }}
+        @if (isOwned()) {
+          <span class="text-xs font-bold text-[var(--color-primary-600)] dark:text-[#fbbf24] flex-shrink-0"
+                title="Your club" aria-label="Your club">✦</span>
+        }
+      </h3>
+      @if (club().description) {
+        <p
+          class="text-xs text-[var(--color-ink-muted)] mt-1.5"
+          [class]="variant() === 'featured' ? 'line-clamp-3' : 'line-clamp-2'"
+        >
+          {{ club().description }}
+        </p>
+      }
+    </div>
+    @if (club().memberPreviews.length > 0) {
+      <div class="flex items-center gap-1.5">
+        @for (url of club().memberPreviews.slice(0, 4); track url) {
+          <div
+            class="h-7 w-7 rounded-full avatar-gradient flex items-center justify-center
+                   text-white text-[10px] font-bold shrink-0 overflow-hidden"
+            aria-hidden="true"
+          >
+            @if (url) {
+              <img [src]="url" class="h-full w-full object-cover" alt="" />
+            } @else { ? }
+          </div>
+        }
+        @if (club().memberCount > 4) {
+          <span class="text-xs text-[var(--color-ink-muted)] ml-1">+{{ club().memberCount - 4 }}</span>
+        }
+        <span class="text-xs text-[var(--color-ink-muted)] ml-auto">
+          {{ club().memberCount }} {{ 'CLUBS.members' | translate }}
+        </span>
+      </div>
+    }
+    <hlm-separator />
+    <div class="flex items-center gap-2 mt-auto">
+      @if (isAuthenticated() && !isMember()) {
+        <button
+          hlmBtn
+          type="button"
+          size="sm"
+          (click)="join.emit()"
+          [disabled]="joining()"
+          class="flex-1"
+          [attr.aria-label]="('CLUBS.join' | translate) + ' ' + club().name"
+        >
+          @if (joining()) { <hlm-spinner size="xs" /> } @else { {{ 'CLUBS.join' | translate }} }
+        </button>
+        <a
+          hlmBtn
+          variant="outline"
+          size="sm"
+          [routerLink]="['/clubs', club().id]"
+          class="flex-shrink-0"
+          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
+        >
+          {{ 'CLUBS.view' | translate }}
+        </a>
+      } @else if (isAuthenticated() && isMember()) {
+        <a
+          hlmBtn
+          size="sm"
+          [routerLink]="['/clubs', club().id]"
+          class="flex-1 text-center"
+          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
+        >
+          {{ 'CLUBS.view' | translate }}
+        </a>
+        <span class="rounded-lg
+                     bg-[var(--color-accent-100)] dark:bg-[var(--color-accent-900)]/30
+                     border border-[var(--color-accent-300)] dark:border-[var(--color-accent-700)]/60
+                     px-3 py-1.5 text-xs font-semibold
+                     text-[var(--color-accent-700)] dark:text-[var(--color-accent-300)]">
+          {{ 'CLUBS.member_badge' | translate }}
+        </span>
+      } @else {
+        <a
+          hlmBtn
+          size="sm"
+          [routerLink]="['/clubs', club().id]"
+          class="flex-1 text-center"
+          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
+        >
+          {{ 'CLUBS.view' | translate }}
+        </a>
+      }
+    </div>
+  </div>
+</div>
+````
+
+## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
 ````typescript
 import {
   Component,
@@ -11136,26 +11283,365 @@ import {
   output,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { Club } from '../../../../core/models/club.model';
 import { TranslateModule } from '@ngx-translate/core';
-import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-import { ClubEvent } from '../../../core/models/event.model';
-import { HlmCardImports } from '../../../shared/spartan/card/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmBadge } from '../../../shared/spartan/badge/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+import { HlmCardImports } from '../../../../shared/spartan/card/src';
+import { HlmButton } from '../../../../shared/spartan/button/src';
+import { HlmSeparator } from '../../../../shared/spartan/separator/src';
+import { HlmSpinner } from '../../../../shared/spartan/spinner/src';
 @Component({
-  selector: 'app-event-card',
+  selector: 'app-club-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe, ...HlmCardImports, HlmButton, HlmBadge, HlmSpinner],
-  templateUrl: './event-card.component.html',
+  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton, HlmSeparator, HlmSpinner],
+  templateUrl: './club-card.component.html',
 })
-export class EventCardComponent {
-  readonly event = input.required<ClubEvent>();
+export class ClubCardComponent {
+  readonly club = input.required<Club>();
+  readonly isMember = input.required<boolean>();
+  readonly isOwned = input<boolean>(false);
   readonly isAuthenticated = input<boolean>(false);
-  readonly attending = input<boolean>(false);
-  readonly attend = output<void>();
-  readonly cancelAttend = output<void>();
+  readonly joining = input<boolean>(false);
+  readonly variant = input<'default' | 'featured'>('default');
+  readonly join = output<void>();
+  protected daysUntil(dateStr: string): number {
+    const target = new Date(dateStr).getTime();
+    const now = Date.now();
+    return Math.round((target - now) / 86400000);
+  }
+}
+````
+
+## File: src/app/features/clubs/clubs-list/clubs-list.component.html
+````html
+<div class="min-h-screen">
+  <section aria-label="Search clubs" class="parchment-hero px-4 py-14 text-center">
+    <div class="relative z-10">
+      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
+                 text-[var(--color-ink)] mb-3 drop-shadow-sm">
+        {{ 'CLUBS.title' | translate }}
+      </h1>
+      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-12">
+        {{ 'CLUBS.subtitle' | translate }}
+      </p>
+      <div class="mx-auto max-w-xl lg:max-w-2xl relative">
+        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
+        <input
+          id="club-search"
+          type="search"
+          [ngModel]="clubService.searchQuery()"
+          (ngModelChange)="clubService.setSearchQuery($event)"
+          [placeholder]="'CLUBS.search_placeholder_full' | translate"
+          class="w-full parchment-input rounded-full px-5 py-3 text-sm"
+          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
+        />
+      </div>
+    </div>
+  </section>
+  <div class="page-container py-8 space-y-8">
+    @if (clubService.error()) {
+      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+        <span aria-hidden="true">⚠️</span>
+        <span>{{ clubService.error() }}</span>
+      </div>
+    }
+    @if (auth.isAuthenticated()) {
+      <div class="flex justify-center" role="tablist" aria-label="Club filter">
+        <div class="relative flex rounded-full p-1
+                    bg-[var(--color-surface-sunken)]
+                    border border-[var(--color-sepia)]
+                    shadow-inner">
+          <div class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full
+                      bg-[var(--color-surface-raised)]
+                      shadow-[var(--shadow-parchment)]
+                      transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+               [style.left]="activeTab() === 'all' ? '4px' : '50%'"
+               aria-hidden="true">
+          </div>
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'all'"
+            (click)="activeTab.set('all')"
+            class="relative z-10 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'all'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            {{ 'CLUBS.all' | translate }}
+          </button>
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'my'"
+            (click)="activeTab.set('my')"
+            class="relative z-10 flex items-center gap-1.5 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'my'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            {{ 'CLUBS.my_clubs' | translate }}
+            @if (clubService.myClubs().length > 0) {
+              <span class="inline-flex items-center justify-center
+                           h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
+                           transition-colors duration-300"
+                    [class]="activeTab() === 'my'
+                      ? 'bg-[var(--color-primary-600)] text-white'
+                      : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]'">
+                {{ clubService.myClubs().length }}
+              </span>
+            }
+          </button>
+        </div>
+      </div>
+      @if (activeTab() === 'all') {
+        <div class="pt-6" role="tabpanel">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.filteredClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              title="No clubs yet"
+              description="No clubs have been created yet. Check back soon!"
+            />
+          } @else {
+            <ul class="bento-grid">
+              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                  <app-club-card
+                    [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+      @if (activeTab() === 'my') {
+        <div class="pt-6" role="tabpanel">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.myClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              [title]="'CLUBS.no_clubs' | translate"
+              description="Join a club to see it here."
+            />
+          } @else {
+            <ul class="bento-grid">
+              @for (club of clubService.myClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                  <app-club-card
+                    [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    } @else {
+      @if (clubService.isLoading()) {
+        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+          <hlm-spinner />
+        </div>
+      } @else if (clubService.filteredClubs().length === 0) {
+        <app-empty-state
+          icon="📚"
+          title="No clubs yet"
+          description="No clubs have been created yet. Check back soon!"
+        />
+      } @else {
+        <ul class="bento-grid">
+          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+              <app-club-card
+                [club]="club"
+                [variant]="i === 0 ? 'featured' : 'default'"
+                [isMember]="false"
+                [isOwned]="false"
+                [isAuthenticated]="false"
+                [joining]="false"
+                (join)="onJoin(club)"
+              />
+            </li>
+          }
+        </ul>
+      }
+    }
+  </div>
+  @if (auth.isOrganizer()) {
+    <a
+      routerLink="/clubs/create"
+      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full fab-fantasy focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] focus:ring-offset-2 transition-all duration-200"
+      [attr.aria-label]="'CLUBS.create' | translate"
+      [title]="'CLUBS.create' | translate"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+      </svg>
+    </a>
+  }
+</div>
+````
+
+## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  OnInit,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { Club } from '../../../core/models/club.model';
+import { SeoService } from '../../../core/services/seo.service';
+import { TranslateModule } from '@ngx-translate/core';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { ClubCardComponent } from './club-card/club-card.component';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+@Component({
+  selector: 'app-clubs-list',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, HlmSpinner],
+  templateUrl: './clubs-list.component.html',
+})
+export class ClubsListComponent implements OnInit {
+  readonly clubService = inject(ClubService);
+  readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  readonly joiningClubId = signal<string | null>(null);
+  readonly ownedClubIds = this.clubService.myOwnedClubIds;
+  readonly activeTab = signal<'all' | 'my'>('all');
+  async ngOnInit(): Promise<void> {
+    this.seo.setPageI18n('SEO.clubs_title', {
+      descriptionKey: 'SEO.clubs_description',
+      ogTitleKey: 'SEO.clubs_og_title',
+    });
+    this.seo.injectWebSiteJsonLd();
+    await this.clubService.loadPublicClubs();
+    if (this.auth.isAuthenticated()) {
+      await this.clubService.loadMyClubs();
+    }
+  }
+  async onJoin(club: Club): Promise<void> {
+    this.joiningClubId.set(club.id);
+    try {
+      await this.clubService.joinClub(club.id);
+    } catch {
+    } finally {
+      this.joiningClubId.set(null);
+    }
+  }
+}
+````
+
+## File: src/app/features/clubs/create-club/create-club.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+} from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslatePipe } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+interface CreateClubForm {
+  name: FormControl<string>;
+  description: FormControl<string>;
+  isPublic: FormControl<boolean>;
+  city: FormControl<string>;
+  coverUrl: FormControl<string>;
+}
+@Component({
+  selector: 'app-create-club',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './create-club.component.html',
+})
+export class CreateClubComponent {
+  private readonly clubService = inject(ClubService);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly _errorMessage = signal<string | null>(null);
+  readonly errorMessage = this._errorMessage.asReadonly();
+  private readonly _isSubmitting = signal(false);
+  readonly isSubmitting = this._isSubmitting.asReadonly();
+  private readonly _showAfterMeeting = signal(false);
+  readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
+  readonly form = new FormGroup<CreateClubForm>({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+    isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', { nonNullable: true }),
+    coverUrl: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^https?:\/\/.+\..+/)] }),
+  });
+  togglePublic(): void {
+    const current = this.form.controls.isPublic.value;
+    this.form.controls.isPublic.setValue(!current);
+  }
+  toggleAfterMeeting(): void {
+    this._showAfterMeeting.update(v => !v);
+  }
+  cancel(): void {
+    this.router.navigate(['/clubs']);
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this._isSubmitting.set(true);
+    this._errorMessage.set(null);
+    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
+    try {
+      const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
+      this.router.navigate(['/clubs', club.id]);
+    } catch (err) {
+      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
+    } finally {
+      this._isSubmitting.set(false);
+    }
+  }
 }
 ````
 
@@ -11572,70 +12058,6 @@ export class ChatWidgetComponent {
 }
 ````
 
-## File: src/app/app.routes.ts
-````typescript
-import { Routes } from '@angular/router';
-import { authGuard } from './core/auth/auth.guard';
-import { roleGuard } from './core/auth/role.guard';
-import { ShellComponent } from './layout/shell/shell.component';
-export const routes: Routes = [
-  {
-    path: 'privacy',
-    loadComponent: () =>
-      import('./features/privacy/privacy.component').then(m => m.PrivacyComponent),
-  },
-  {
-    path: 'terms',
-    loadComponent: () =>
-      import('./features/terms/terms.component').then(m => m.TermsComponent),
-  },
-  {
-    path: 'login',
-    loadComponent: () =>
-      import('./features/auth/login/login.component').then(m => m.LoginComponent),
-  },
-  {
-    path: 'register',
-    loadComponent: () =>
-      import('./features/auth/register/register.component').then(m => m.RegisterComponent),
-  },
-  {
-    path: '',
-    component: ShellComponent,
-    canActivate: [authGuard],
-    children: [
-      // Protected: any authenticated user
-      {
-        path: 'clubs',
-        canActivate: [authGuard],
-        loadChildren: () => import('./features/clubs/clubs.routes').then(m => m.CLUBS_ROUTES),
-      },
-      {
-        path: 'events',
-        canActivate: [authGuard],
-        loadChildren: () => import('./features/events/events.routes').then(m => m.EVENTS_ROUTES),
-      },
-      {
-        path: 'manage',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('./features/clubs/clubs-list/clubs-list.component').then(
-            m => m.ClubsListComponent,
-          ),
-      },
-      { path: '', redirectTo: 'clubs', pathMatch: 'full' },
-      {
-        path: 'profile',
-        canActivate: [authGuard],
-        loadComponent: () =>
-          import('./features/profile/profile.component').then(m => m.ProfileComponent),
-      },
-      { path: '**', redirectTo: 'clubs' },
-    ],
-  },
-];
-````
-
 ## File: angular.json
 ````json
 {
@@ -11757,39 +12179,181 @@ export const routes: Routes = [
 }
 ````
 
-## File: src/app/core/models/event.model.ts
+## File: playwright.vercel.config.ts
 ````typescript
-export type EventStatus = 'scheduled' | 'active' | 'held' | 'cancelled' | 'rescheduled' | 'upcoming';
-export interface AfterMeetingVenue {
-  name: string;
-  address: string;
-  description?: string;
-  lat?: number;
-  lng?: number;
-}
-export interface ClubEvent {
-  id: string;
-  clubId: string;
-  clubName: string;
-  organizerId: string;
+import { defineConfig, devices } from '@playwright/test';
+export default defineConfig({
+  testDir: './e2e',
+  testMatch: '**/audit.spec.ts',
+  fullyParallel: false,
+  retries: 0,
+  workers: 1,
+  timeout: 60_000,
+  reporter: [
+    ['list'],
+    ['html', { open: 'never' }],
+    ['json', { outputFile: 'playwright-report/audit-results.json' }],
+  ],
+  use: {
+    baseURL: 'https://book-club-dyxne04jy-dmytros-projects-ad22eb22.vercel.app',
+    trace: 'on',
+    screenshot: 'only-on-failure',
+    actionTimeout: 20_000,
+    navigationTimeout: 30_000,
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+});
+````
+
+## File: src/app/core/services/event.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiEvent, mapEvent } from '../api/api-mappers';
+import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
+export interface CreateEventPayload {
   title: string;
-  description: string | null;
+  description?: string | null;
   date: string;
   city: string;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  status: EventStatus;
-  cancelledAt?: string;
-  coverUrl: string | null;
-  theme: string | null;
-  tags: string[];
-  durationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  attendeeCount: number;
-  isAttending: boolean;
+  address?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  theme?: string | null;
+  tags?: string[];
+  durationMinutes?: number | null;
+  afterMeetingVenue?: AfterMeetingVenue | null;
+  coverUrl?: string | null;
   bookTitle?: string | null;
   quizId?: string | null;
+}
+@Injectable({ providedIn: 'root' })
+export class EventService {
+  private readonly http = inject(HttpClient);
+  private readonly _allEvents = signal<ClubEvent[]>([]);
+  private readonly _myEvents = signal<ClubEvent[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _error = signal<string | null>(null);
+  private readonly _cityFilter = signal<string | null>(null);
+  readonly allEvents = this._allEvents.asReadonly();
+  readonly myEvents = this._myEvents.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly cityFilter = this._cityFilter.asReadonly();
+  readonly filteredAllEvents = computed(() => {
+    const city = this._cityFilter();
+    const events = this._allEvents();
+    return city ? events.filter(e => e.city === city) : events;
+  });
+  readonly availableCities = computed<string[]>(() => {
+    const seen = new Set<string>();
+    for (const e of this._allEvents()) seen.add(e.city);
+    return [...seen].sort((a, b) => a.localeCompare(b));
+  });
+  readonly groupedByDate = computed<Record<string, ClubEvent[]>>(() => {
+    return this.filteredAllEvents().reduce<Record<string, ClubEvent[]>>((acc, e) => {
+      const day = e.date.slice(0, 10);
+      if (!acc[day]) acc[day] = [];
+      acc[day].push(e);
+      return acc;
+    }, {});
+  });
+  setCityFilter(city: string | null): void {
+    this._cityFilter.set(city);
+  }
+  async loadAllEvents(skip = 0, limit = 50): Promise<void> {
+    this._isLoading.set(true);
+    this._error.set(null);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events`, {
+          params: { skip: String(skip), limit: String(limit) },
+        }),
+      );
+      this._allEvents.set(raw.map(mapEvent));
+    } catch {
+      this._error.set('Failed to load events');
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async loadMyEvents(): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events/my`),
+      );
+      this._myEvents.set(raw.map(mapEvent));
+    } catch {
+      this._error.set('Failed to load my events');
+    }
+  }
+  async getEventById(id: string): Promise<ClubEvent | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`),
+      );
+      return mapEvent(raw);
+    } catch {
+      return null;
+    }
+  }
+  async attendEvent(eventId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/events/${eventId}/attend`, {}),
+    );
+    this._patchEventAttending(eventId, true);
+  }
+  async cancelAttendance(eventId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/events/${eventId}/attend`),
+    );
+    this._patchEventAttending(eventId, false);
+  }
+  async createEvent(clubId: string, payload: CreateEventPayload): Promise<ClubEvent> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiEvent>(`${environment.apiUrl}/clubs/${clubId}/events`, payload),
+    );
+    return mapEvent(raw);
+  }
+  async rescheduleEvent(eventId: string, newDate: string, newCity?: string, newAddress?: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/reschedule`, {
+        newDate,
+        newCity: newCity ?? null,
+        newAddress: newAddress ?? null,
+      }),
+    );
+    const updated = mapEvent(raw);
+    this._updateEvent(updated);
+  }
+  async cancelEvent(eventId: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/cancel`, {}),
+    );
+    const updated = mapEvent(raw);
+    this._updateEvent(updated);
+  }
+  private _patchEventAttending(eventId: string, attending: boolean): void {
+    const patch = (list: ClubEvent[]) =>
+      list.map(e =>
+        e.id === eventId
+          ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
+          : e,
+      );
+    this._allEvents.update(patch);
+    this._myEvents.update(patch);
+  }
+  private _updateEvent(updated: ClubEvent): void {
+    this._allEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
+    this._myEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
+  }
 }
 ````
 
@@ -12014,40 +12578,6 @@ export interface ClubEvent {
 </div>
 ````
 
-## File: src/app/features/clubs/club-detail/header/club-header.component.html
-````html
-<header class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-  <div>
-    <div class="flex items-center gap-3 flex-wrap">
-@if (!club().isPublic) {
-        <span class="rounded-full bg-gray-100 dark:bg-gray-800 px-2.5 py-0.5 text-xs font-medium text-gray-600 dark:text-gray-400">
-          🔒 {{ 'CLUB_DETAIL.private' | translate }}
-        </span>
-      }
-    </div>
-  </div>
-  @if (isAuthenticated()) {
-    @if (!isOwner()) {
-      @if (isMember()) {
-        <button
-          hlmBtn
-          variant="outline"
-          type="button"
-          (click)="leave.emit()"
-          [disabled]="isActionLoading()"
-          [attr.aria-label]="'CLUB_DETAIL.leave' | translate"
-        >
-          @if (isActionLoading()) {
-            <app-loading-spinner size="sm" />
-          }
-          {{ 'CLUB_DETAIL.leave' | translate }}
-        </button>
-      }
-    }
-  }
-</header>
-````
-
 ## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.html
 ````html
 <div hlmCard class="glass-card-subtle p-4 gap-3">
@@ -12220,372 +12750,205 @@ export interface ClubEvent {
 </section>
 ````
 
-## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
+## File: src/app/features/clubs/create-club/create-club.component.html
 ````html
-<div
-  class="flex flex-col overflow-hidden h-full"
-  [class]="variant() === 'featured'
-    ? 'parchment-card-raised'
-    : 'parchment-card hover:shadow-[var(--shadow-parchment-lg)] transition-shadow duration-200'"
->
-  <div class="relative overflow-hidden flex-shrink-0"
-       [class]="variant() === 'featured' ? 'h-48' : 'h-32'">
-    @if (club().coverUrl) {
-      <img [src]="club().coverUrl" [alt]="''" class="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
-    } @else {
-      <div class="w-full h-full bg-gradient-fantasy" aria-hidden="true"></div>
-    }
-    @if (variant() === 'featured') {
-      <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none"></div>
-    }
-  </div>
-  <div class="flex flex-col flex-1 gap-3"
-       [class]="variant() === 'featured' ? 'p-5' : 'p-4'">
-    <div>
-      <h3
-        class="font-display font-semibold text-[var(--color-ink)] leading-snug flex items-center gap-1.5"
-        [class]="variant() === 'featured' ? 'text-lg line-clamp-2' : 'text-base line-clamp-1'"
-      >
-        {{ club().name }}
-        @if (isOwned()) {
-          <span class="text-xs font-bold text-[var(--color-primary-600)] dark:text-[#fbbf24] flex-shrink-0"
-                title="Your club" aria-label="Your club">✦</span>
-        }
-      </h3>
-      @if (club().description) {
-        <p
-          class="text-xs text-[var(--color-ink-muted)] mt-1.5"
-          [class]="variant() === 'featured' ? 'line-clamp-3' : 'line-clamp-2'"
-        >
-          {{ club().description }}
-        </p>
-      }
-    </div>
-    @if (club().memberPreviews.length > 0) {
-      <div class="flex items-center gap-1.5">
-        @for (url of club().memberPreviews.slice(0, 4); track url) {
-          <div
-            class="h-7 w-7 rounded-full avatar-gradient flex items-center justify-center
-                   text-white text-[10px] font-bold shrink-0 overflow-hidden"
-            aria-hidden="true"
-          >
-            @if (url) {
-              <img [src]="url" class="h-full w-full object-cover" alt="" />
-            } @else { ? }
+<main class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+    <header class="text-center mb-8">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
+    </header>
+    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+        <hlm-field>
+          <label hlmFieldLabel for="club-name">
+            {{ 'CREATE_CLUB.name_label' | translate }}
+            <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <input
+            hlmInput
+            id="club-name"
+            type="text"
+            formControlName="name"
+            class="w-full"
+            [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
+          />
+          <hlm-field-error validator="required">{{ 'CREATE_CLUB.name_required' | translate }}</hlm-field-error>
+          <hlm-field-error validator="minlength">{{ 'CREATE_CLUB.name_min' | translate }}</hlm-field-error>
+          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.name_max' | translate }}</hlm-field-error>
+        </hlm-field>
+        <hlm-field>
+          <label hlmFieldLabel for="club-description">{{ 'CREATE_CLUB.description_label' | translate }}</label>
+          <textarea
+            hlmInput
+            id="club-description"
+            formControlName="description"
+            rows="3"
+            class="w-full resize-none"
+            [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
+          ></textarea>
+          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.description_max' | translate }}</hlm-field-error>
+        </hlm-field>
+        <div>
+          <label for="club-cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'CREATE_CLUB.cover_url_label' | translate }}
+          </label>
+          @if (form.controls.coverUrl.value) {
+            <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
+              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover"
+                   (error)="form.controls.coverUrl.setValue('')" />
+            </div>
+          }
+          <input
+            hlmInput
+            id="club-cover-url"
+            type="url"
+            formControlName="coverUrl"
+            class="w-full"
+            [placeholder]="'CREATE_CLUB.cover_url_placeholder' | translate"
+          />
+          @if (form.controls.coverUrl.touched && form.controls.coverUrl.errors?.['pattern']) {
+            <p class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ 'CREATE_CLUB.cover_url_invalid' | translate }}</p>
+          } @else {
+            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
+          }
+        </div>
+        <fieldset>
+          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
+          <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
+            <div>
+              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'CREATE_CLUB.public_label' | translate }}</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'CREATE_CLUB.public_desc' | translate }}</p>
+            </div>
+            <button
+              type="button"
+              role="switch"
+              [attr.aria-checked]="form.controls.isPublic.value"
+              (click)="togglePublic()"
+              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              [class.bg-primary-600]="form.controls.isPublic.value"
+              [class.bg-gray-300]="!form.controls.isPublic.value"
+              [class.dark:bg-gray-600]="!form.controls.isPublic.value"
+            >
+              <span
+                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                [class.translate-x-6]="form.controls.isPublic.value"
+                [class.translate-x-1]="!form.controls.isPublic.value"
+              ></span>
+            </button>
+          </div>
+        </fieldset>
+        @if (errorMessage()) {
+          <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+               role="alert">
+            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
+            <span>{{ errorMessage() }}</span>
           </div>
         }
-        @if (club().memberCount > 4) {
-          <span class="text-xs text-[var(--color-ink-muted)] ml-1">+{{ club().memberCount - 4 }}</span>
-        }
-        <span class="text-xs text-[var(--color-ink-muted)] ml-auto">
-          {{ club().memberCount }} {{ 'CLUBS.members' | translate }}
-        </span>
-      </div>
-    }
-    <hlm-separator />
-    <div class="flex items-center gap-2 mt-auto">
-      @if (isAuthenticated() && !isMember()) {
-        <button
-          hlmBtn
-          type="button"
-          size="sm"
-          (click)="join.emit()"
-          [disabled]="joining()"
-          class="flex-1"
-          [attr.aria-label]="('CLUBS.join' | translate) + ' ' + club().name"
-        >
-          @if (joining()) { <hlm-spinner size="xs" /> } @else { {{ 'CLUBS.join' | translate }} }
-        </button>
-        <a
-          hlmBtn
-          variant="outline"
-          size="sm"
-          [routerLink]="['/clubs', club().id]"
-          class="flex-shrink-0"
-          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
-        >
-          {{ 'CLUBS.view' | translate }}
-        </a>
-      } @else if (isAuthenticated() && isMember()) {
-        <a
-          hlmBtn
-          size="sm"
-          [routerLink]="['/clubs', club().id]"
-          class="flex-1 text-center"
-          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
-        >
-          {{ 'CLUBS.view' | translate }}
-        </a>
-        <span class="rounded-lg
-                     bg-[var(--color-accent-100)] dark:bg-[var(--color-accent-900)]/30
-                     border border-[var(--color-accent-300)] dark:border-[var(--color-accent-700)]/60
-                     px-3 py-1.5 text-xs font-semibold
-                     text-[var(--color-accent-700)] dark:text-[var(--color-accent-300)]">
-          {{ 'CLUBS.member_badge' | translate }}
-        </span>
-      } @else {
-        <a
-          hlmBtn
-          size="sm"
-          [routerLink]="['/clubs', club().id]"
-          class="flex-1 text-center"
-          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
-        >
-          {{ 'CLUBS.view' | translate }}
-        </a>
-      }
-    </div>
-  </div>
-</div>
-````
-
-## File: src/app/features/clubs/clubs-list/clubs-list.component.html
-````html
-<div class="min-h-screen">
-  <section aria-label="Search clubs" class="parchment-hero px-4 py-14 text-center">
-    <div class="relative z-10">
-      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
-                 text-[var(--color-ink)] mb-3 drop-shadow-sm">
-        {{ 'CLUBS.title' | translate }}
-      </h1>
-      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-12">
-        {{ 'CLUBS.subtitle' | translate }}
-      </p>
-      <div class="mx-auto max-w-xl lg:max-w-2xl relative">
-        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
-        <input
-          id="club-search"
-          type="search"
-          [ngModel]="clubService.searchQuery()"
-          (ngModelChange)="clubService.setSearchQuery($event)"
-          [placeholder]="'CLUBS.search_placeholder_full' | translate"
-          class="w-full parchment-input rounded-full px-5 py-3 text-sm"
-          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
-        />
-      </div>
-    </div>
-  </section>
-  <div class="page-container py-8 space-y-8">
-    @if (clubService.error()) {
-      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-        <span aria-hidden="true">⚠️</span>
-        <span>{{ clubService.error() }}</span>
-      </div>
-    }
-    @if (auth.isAuthenticated()) {
-      <div class="flex justify-center" role="tablist" aria-label="Club filter">
-        <div class="relative flex rounded-full p-1
-                    bg-[var(--color-surface-sunken)]
-                    border border-[var(--color-sepia)]
-                    shadow-inner">
-          <div class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full
-                      bg-[var(--color-surface-raised)]
-                      shadow-[var(--shadow-parchment)]
-                      transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-               [style.left]="activeTab() === 'all' ? '4px' : '50%'"
-               aria-hidden="true">
-          </div>
-          <button
-            role="tab"
-            type="button"
-            [attr.aria-selected]="activeTab() === 'all'"
-            (click)="activeTab.set('all')"
-            class="relative z-10 px-7 py-2 rounded-full text-sm font-medium
-                   transition-colors duration-300 select-none focus:outline-none
-                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
-            [class]="activeTab() === 'all'
-              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
-              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
-          >
-            {{ 'CLUBS.all' | translate }}
+        <div class="flex gap-3 pt-2">
+          <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
+            {{ 'CREATE_CLUB.cancel' | translate }}
           </button>
-          <button
-            role="tab"
-            type="button"
-            [attr.aria-selected]="activeTab() === 'my'"
-            (click)="activeTab.set('my')"
-            class="relative z-10 flex items-center gap-1.5 px-7 py-2 rounded-full text-sm font-medium
-                   transition-colors duration-300 select-none focus:outline-none
-                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
-            [class]="activeTab() === 'my'
-              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
-              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
-          >
-            {{ 'CLUBS.my_clubs' | translate }}
-            @if (clubService.myClubs().length > 0) {
-              <span class="inline-flex items-center justify-center
-                           h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
-                           transition-colors duration-300"
-                    [class]="activeTab() === 'my'
-                      ? 'bg-[var(--color-primary-600)] text-white'
-                      : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]'">
-                {{ clubService.myClubs().length }}
-              </span>
+          <button hlmBtn type="submit" [disabled]="isSubmitting()"
+                  class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
+            @if (isSubmitting()) {
+              <hlm-spinner class="mr-2" />
+              {{ 'CREATE_CLUB.submitting' | translate }}
+            } @else {
+              {{ 'CREATE_CLUB.submit' | translate }}
             }
           </button>
         </div>
-      </div>
-      @if (activeTab() === 'all') {
-        <div class="pt-6" role="tabpanel">
-          @if (clubService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
-              <hlm-spinner />
-            </div>
-          } @else if (clubService.filteredClubs().length === 0) {
-            <app-empty-state
-              icon="📚"
-              title="No clubs yet"
-              description="No clubs have been created yet. Check back soon!"
-            />
-          } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-                  <app-club-card
-                    [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
-                    [isMember]="clubService.myClubIds().has(club.id)"
-                    [isOwned]="ownedClubIds().has(club.id)"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [joining]="joiningClubId() === club.id"
-                    (join)="onJoin(club)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      }
-      @if (activeTab() === 'my') {
-        <div class="pt-6" role="tabpanel">
-          @if (clubService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true">
-              <hlm-spinner />
-            </div>
-          } @else if (clubService.myClubs().length === 0) {
-            <app-empty-state
-              icon="📚"
-              [title]="'CLUBS.no_clubs' | translate"
-              description="Join a club to see it here."
-            />
-          } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.myClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-                  <app-club-card
-                    [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
-                    [isMember]="clubService.myClubIds().has(club.id)"
-                    [isOwned]="ownedClubIds().has(club.id)"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [joining]="joiningClubId() === club.id"
-                    (join)="onJoin(club)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      }
-    } @else {
-      @if (clubService.isLoading()) {
-        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
-          <hlm-spinner />
-        </div>
-      } @else if (clubService.filteredClubs().length === 0) {
-        <app-empty-state
-          icon="📚"
-          title="No clubs yet"
-          description="No clubs have been created yet. Check back soon!"
-        />
-      } @else {
-        <ul class="bento-grid">
-          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-              <app-club-card
-                [club]="club"
-                [variant]="i === 0 ? 'featured' : 'default'"
-                [isMember]="false"
-                [isOwned]="false"
-                [isAuthenticated]="false"
-                [joining]="false"
-                (join)="onJoin(club)"
-              />
-            </li>
-          }
-        </ul>
-      }
-    }
+      </form>
+    </article>
   </div>
-  @if (auth.isOrganizer()) {
-    <a
-      routerLink="/clubs/create"
-      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full fab-fantasy focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] focus:ring-offset-2 transition-all duration-200"
-      [attr.aria-label]="'CLUBS.create' | translate"
-      [title]="'CLUBS.create' | translate"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-      </svg>
-    </a>
-  }
-</div>
+</main>
 ````
 
-## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  OnInit,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { Club } from '../../../core/models/club.model';
-import { SeoService } from '../../../core/services/seo.service';
-import { TranslateModule } from '@ngx-translate/core';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { ClubCardComponent } from './club-card/club-card.component';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-@Component({
-  selector: 'app-clubs-list',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, HlmSpinner],
-  templateUrl: './clubs-list.component.html',
-})
-export class ClubsListComponent implements OnInit {
-  readonly clubService = inject(ClubService);
-  readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  readonly joiningClubId = signal<string | null>(null);
-  readonly ownedClubIds = this.clubService.myOwnedClubIds;
-  readonly activeTab = signal<'all' | 'my'>('all');
-  async ngOnInit(): Promise<void> {
-    this.seo.setPageI18n('SEO.clubs_title', {
-      descriptionKey: 'SEO.clubs_description',
-      ogTitleKey: 'SEO.clubs_og_title',
-    });
-    this.seo.injectWebSiteJsonLd();
-    await this.clubService.loadPublicClubs();
-    if (this.auth.isAuthenticated()) {
-      await this.clubService.loadMyClubs();
+## File: src/app/features/events/event-card/event-card.component.html
+````html
+<article class="parchment-card flex flex-col overflow-hidden h-full
+                hover:shadow-[var(--shadow-parchment-lg)] transition-shadow duration-200">
+  <div class="flex flex-col flex-1 p-4 gap-3">
+    <div class="flex items-start justify-between gap-2">
+      <span class="date-badge">
+        {{ event().date | formatDate }}
+      </span>
+      @if (event().status !== 'scheduled') {
+        <span hlmBadge
+              [variant]="event().status === 'cancelled' ? 'destructive'
+                       : event().status === 'active' ? 'default' : 'secondary'"
+              class="rounded-full text-xs flex-shrink-0">
+          {{ ('EVENTS.status_' + event().status) | translate }}
+        </span>
+      }
+    </div>
+    <h3 class="font-display font-semibold text-[var(--color-ink)] leading-snug line-clamp-2">
+      {{ event().title }}
+    </h3>
+    <a
+      [routerLink]="['/clubs', event().clubId]"
+      class="text-xs text-[var(--color-primary-600)] dark:text-[#fbbf24] hover:underline font-medium"
+      (click)="$event.stopPropagation()"
+    >
+      {{ event().clubName }}
+    </a>
+    @if (event().city) {
+      <p class="text-xs text-[var(--color-ink-muted)] flex items-center gap-1">
+        <span aria-hidden="true">📍</span>
+        <span>{{ event().address || event().city }}</span>
+      </p>
     }
-  }
-  async onJoin(club: Club): Promise<void> {
-    this.joiningClubId.set(club.id);
-    try {
-      await this.clubService.joinClub(club.id);
-    } catch {
-    } finally {
-      this.joiningClubId.set(null);
+    @if (event().theme || event().tags.length > 0) {
+      <div class="flex flex-wrap gap-1.5">
+        @if (event().theme) {
+          <span class="rounded-full
+                       bg-[var(--color-accent-100)]/80 dark:bg-[var(--color-accent-900)]/40
+                       border border-[var(--color-accent-300)] dark:border-[var(--color-accent-700)]/60
+                       px-2.5 py-0.5 text-xs font-medium
+                       text-[var(--color-accent-700)] dark:text-[var(--color-accent-300)]">
+            {{ event().theme }}
+          </span>
+        }
+        @for (tag of event().tags.slice(0, 2); track tag) {
+          <span class="rounded-full
+                       bg-[var(--color-surface-raised)]
+                       border border-[var(--color-sepia-mid)]
+                       px-2.5 py-0.5 text-xs text-[var(--color-ink-muted)]">
+            {{ tag }}
+          </span>
+        }
+      </div>
     }
-  }
-}
+    <div class="flex items-center justify-between mt-auto pt-2
+                border-t border-[var(--color-sepia-mid)]">
+      <span class="text-xs text-[var(--color-ink-muted)]">
+        {{ event().attendeeCount }} {{ 'EVENTS.attending' | translate }}
+      </span>
+      <div class="flex gap-2">
+        <a hlmBtn variant="outline" size="sm" [routerLink]="['/events', event().id]">
+          {{ 'EVENTS.view' | translate }}
+        </a>
+        @if (isAuthenticated() && event().status !== 'cancelled') {
+          @if (event().isAttending) {
+            <button hlmBtn type="button" size="sm" [disabled]="attending()"
+                    (click)="cancelAttend.emit()"
+                    class="bg-[var(--color-accent-600)] hover:bg-[var(--color-accent-700)] text-white">
+              @if (attending()) { <hlm-spinner size="xs" /> } @else { {{ 'EVENTS.going' | translate }} }
+            </button>
+          } @else {
+            <button hlmBtn type="button" size="sm" [disabled]="attending()"
+                    (click)="attend.emit()"
+                    class="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white">
+              @if (attending()) { <hlm-spinner size="xs" /> } @else { {{ 'EVENTS.rsvp' | translate }} }
+            </button>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</article>
 ````
 
 ## File: src/app/features/profile/profile.component.html
@@ -13457,388 +13820,228 @@ export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
 }
 ````
 
-## File: src/app/core/services/event.service.ts
+## File: sonar-project.properties
+````
+# Replace YOUR_ORG with your actual SonarCloud organization slug
+sonar.projectKey=leo477_book-club-fe
+sonar.organization=leo477
+sonar.projectName=Book Club Frontend
+sonar.projectVersion=1.0
+
+sonar.sources=src
+sonar.tests=src
+sonar.test.inclusions=**/*.spec.ts
+sonar.exclusions=**/node_modules/**,**/*.spec.ts,src/assets/**,src/environments/**
+
+sonar.typescript.lcov.reportPaths=coverage/book-club-fe/lcov.info
+
+# Exclude non-testable and currently untested files from coverage requirements
+sonar.coverage.exclusions=\
+  **/*.html,\
+  **/*.spec.ts,\
+  **/mocks/**,\
+  **/*.model.ts,\
+  **/*.interface.ts,\
+  **/*.config.ts,\
+  **/environments/**,\
+  src/app/features/**,\
+  src/app/layout/**,\
+  src/app/shared/spartan/**
+
+sonar.sourceEncoding=UTF-8
+
+# Exclude vendored/boilerplate-heavy files and CRUD form components from duplication detection
+# CRUD forms (create/edit pairs) inherently share FormGroup structure by design
+sonar.cpd.exclusions=\
+  src/app/shared/spartan/**,\
+  src/app/features/**,\
+  src/testing/**
+````
+
+## File: src/app/core/api/api-mappers.ts
 ````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { ApiEvent, mapEvent } from '../api/api-mappers';
-import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
-export interface CreateEventPayload {
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
+import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
+export interface ApiUserProfile {
+  id: string;
+  email: string;
+  role: UserRole;
+  displayName: string;
+  avatarUrl: string | null;
+  createdAt: string;
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export type ApiUserSocials = { [K in keyof UserSocials]?: string | null };
+export interface ApiUserStats {
+  clubsJoined: number;
+  quizzesTaken: number;
+  quizWins: number;
+  likesReceived: number;
+  booksRead: number;
+}
+export interface ApiClub {
+  id: string;
+  name: string;
+  description: string | null;
+  coverUrl: string | null;
+  organizerId: string;
+  isPublic: boolean;
+  memberCount: number;
+  memberPreviews: string[];
+  createdAt: string;
+  city: string | null;
+  nextMeetingDate: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  theme: string | null;
+  currentBook: string | null;
+  status: ClubStatus;
+  tags: string[];
+  meetingDurationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  cancelledAt?: string | null;
+}
+export interface ApiClubMember {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: 'organizer' | 'member';
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export interface ApiBanRecord {
+  userId: string;
+  clubId: string;
+  bannedAt: string;
+  duration: BanDuration;
+  bannedBy: string;
+}
+export interface ApiEvent {
+  id: string;
+  clubId: string;
+  clubName: string;
+  organizerId: string;
   title: string;
-  description?: string | null;
+  description: string | null;
   date: string;
   city: string;
-  address?: string | null;
-  lat?: number | null;
-  lng?: number | null;
-  theme?: string | null;
-  tags?: string[];
-  durationMinutes?: number | null;
-  afterMeetingVenue?: AfterMeetingVenue | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  status: EventStatus;
+  cancelledAt?: string | null;
   coverUrl?: string | null;
+  theme: string | null;
+  tags: string[];
+  durationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  attendeeCount: number;
+  isAttending: boolean;
   bookTitle?: string | null;
   quizId?: string | null;
 }
-@Injectable({ providedIn: 'root' })
-export class EventService {
-  private readonly http = inject(HttpClient);
-  private readonly _allEvents = signal<ClubEvent[]>([]);
-  private readonly _myEvents = signal<ClubEvent[]>([]);
-  private readonly _isLoading = signal(false);
-  private readonly _error = signal<string | null>(null);
-  private readonly _cityFilter = signal<string | null>(null);
-  readonly allEvents = this._allEvents.asReadonly();
-  readonly myEvents = this._myEvents.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly error = this._error.asReadonly();
-  readonly cityFilter = this._cityFilter.asReadonly();
-  readonly filteredAllEvents = computed(() => {
-    const city = this._cityFilter();
-    const events = this._allEvents();
-    return city ? events.filter(e => e.city === city) : events;
-  });
-  readonly availableCities = computed<string[]>(() => {
-    const seen = new Set<string>();
-    for (const e of this._allEvents()) seen.add(e.city);
-    return [...seen].sort((a, b) => a.localeCompare(b));
-  });
-  readonly groupedByDate = computed<Record<string, ClubEvent[]>>(() => {
-    return this.filteredAllEvents().reduce<Record<string, ClubEvent[]>>((acc, e) => {
-      const day = e.date.slice(0, 10);
-      if (!acc[day]) acc[day] = [];
-      acc[day].push(e);
-      return acc;
-    }, {});
-  });
-  setCityFilter(city: string | null): void {
-    this._cityFilter.set(city);
-  }
-  async loadAllEvents(skip = 0, limit = 50): Promise<void> {
-    this._isLoading.set(true);
-    this._error.set(null);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events`, {
-          params: { skip: String(skip), limit: String(limit) },
-        }),
-      );
-      this._allEvents.set(raw.map(mapEvent));
-    } catch {
-      this._error.set('Failed to load events');
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async loadMyEvents(): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events/my`),
-      );
-      this._myEvents.set(raw.map(mapEvent));
-    } catch {
-      this._error.set('Failed to load my events');
-    }
-  }
-  async getEventById(id: string): Promise<ClubEvent | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`),
-      );
-      return mapEvent(raw);
-    } catch {
-      return null;
-    }
-  }
-  async attendEvent(eventId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/events/${eventId}/attend`, {}),
-    );
-    this._patchEventAttending(eventId, true);
-  }
-  async cancelAttendance(eventId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/events/${eventId}/attend`),
-    );
-    this._patchEventAttending(eventId, false);
-  }
-  async createEvent(clubId: string, payload: CreateEventPayload): Promise<ClubEvent> {
-    const raw = await firstValueFrom(
-      this.http.post<ApiEvent>(`${environment.apiUrl}/clubs/${clubId}/events`, payload),
-    );
-    return mapEvent(raw);
-  }
-  async rescheduleEvent(eventId: string, newDate: string, newCity?: string, newAddress?: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/reschedule`, {
-        newDate,
-        newCity: newCity ?? null,
-        newAddress: newAddress ?? null,
-      }),
-    );
-    const updated = mapEvent(raw);
-    this._updateEvent(updated);
-  }
-  async cancelEvent(eventId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/cancel`, {}),
-    );
-    const updated = mapEvent(raw);
-    this._updateEvent(updated);
-  }
-  private _patchEventAttending(eventId: string, attending: boolean): void {
-    const patch = (list: ClubEvent[]) =>
-      list.map(e =>
-        e.id === eventId
-          ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
-          : e,
-      );
-    this._allEvents.update(patch);
-    this._myEvents.update(patch);
-  }
-  private _updateEvent(updated: ClubEvent): void {
-    this._allEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
-    this._myEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
-  }
+export function mapUserProfile(raw: ApiUserProfile): UserProfile {
+  return {
+    id: raw.id,
+    role: raw.role,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    createdAt: raw.createdAt,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
 }
-````
-
-## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { Club } from '../../../../core/models/club.model';
-import { TranslateModule } from '@ngx-translate/core';
-import { HlmCardImports } from '../../../../shared/spartan/card/src';
-import { HlmButton } from '../../../../shared/spartan/button/src';
-import { HlmSeparator } from '../../../../shared/spartan/separator/src';
-import { HlmSpinner } from '../../../../shared/spartan/spinner/src';
-@Component({
-  selector: 'app-club-card',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton, HlmSeparator, HlmSpinner],
-  templateUrl: './club-card.component.html',
-})
-export class ClubCardComponent {
-  readonly club = input.required<Club>();
-  readonly isMember = input.required<boolean>();
-  readonly isOwned = input<boolean>(false);
-  readonly isAuthenticated = input<boolean>(false);
-  readonly joining = input<boolean>(false);
-  readonly variant = input<'default' | 'featured'>('default');
-  readonly join = output<void>();
-  protected daysUntil(dateStr: string): number {
-    const target = new Date(dateStr).getTime();
-    const now = Date.now();
-    return Math.round((target - now) / 86400000);
-  }
+export function mapUserStats(raw: ApiUserStats): UserStats {
+  return {
+    clubsJoined: raw.clubsJoined,
+    quizzesTaken: raw.quizzesTaken,
+    quizWins: raw.quizWins,
+    likesReceived: raw.likesReceived,
+    booksRead: raw.booksRead,
+  };
 }
-````
-
-## File: src/app/features/clubs/create-club/create-club.component.html
-````html
-<main class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-lg">
-    <header class="text-center mb-8">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
-      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
-    </header>
-    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
-      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-        <hlm-field>
-          <label hlmFieldLabel for="club-name">
-            {{ 'CREATE_CLUB.name_label' | translate }}
-            <span class="text-red-500" aria-hidden="true">*</span>
-          </label>
-          <input
-            hlmInput
-            id="club-name"
-            type="text"
-            formControlName="name"
-            class="w-full"
-            [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
-          />
-          <hlm-field-error validator="required">{{ 'CREATE_CLUB.name_required' | translate }}</hlm-field-error>
-          <hlm-field-error validator="minlength">{{ 'CREATE_CLUB.name_min' | translate }}</hlm-field-error>
-          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.name_max' | translate }}</hlm-field-error>
-        </hlm-field>
-        <hlm-field>
-          <label hlmFieldLabel for="club-description">{{ 'CREATE_CLUB.description_label' | translate }}</label>
-          <textarea
-            hlmInput
-            id="club-description"
-            formControlName="description"
-            rows="3"
-            class="w-full resize-none"
-            [placeholder]="'CREATE_CLUB.description_placeholder' | translate"
-          ></textarea>
-          <hlm-field-error validator="maxlength">{{ 'CREATE_CLUB.description_max' | translate }}</hlm-field-error>
-        </hlm-field>
-        <div>
-          <label for="club-cover-url" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ 'CREATE_CLUB.cover_url_label' | translate }}
-          </label>
-          @if (form.controls.coverUrl.value) {
-            <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
-              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover"
-                   (error)="form.controls.coverUrl.setValue('')" />
-            </div>
-          }
-          <input
-            hlmInput
-            id="club-cover-url"
-            type="url"
-            formControlName="coverUrl"
-            class="w-full"
-            [placeholder]="'CREATE_CLUB.cover_url_placeholder' | translate"
-          />
-          @if (form.controls.coverUrl.touched && form.controls.coverUrl.errors?.['pattern']) {
-            <p class="mt-1 text-xs text-red-600 dark:text-red-400" role="alert">{{ 'CREATE_CLUB.cover_url_invalid' | translate }}</p>
-          } @else {
-            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_CLUB.cover_url_hint' | translate }}</p>
-          }
-        </div>
-        <fieldset>
-          <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'CREATE_CLUB.visibility_legend' | translate }}</legend>
-          <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-            <div>
-              <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'CREATE_CLUB.public_label' | translate }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'CREATE_CLUB.public_desc' | translate }}</p>
-            </div>
-            <button
-              type="button"
-              role="switch"
-              [attr.aria-checked]="form.controls.isPublic.value"
-              (click)="togglePublic()"
-              class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-              [class.bg-primary-600]="form.controls.isPublic.value"
-              [class.bg-gray-300]="!form.controls.isPublic.value"
-              [class.dark:bg-gray-600]="!form.controls.isPublic.value"
-            >
-              <span
-                class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                [class.translate-x-6]="form.controls.isPublic.value"
-                [class.translate-x-1]="!form.controls.isPublic.value"
-              ></span>
-            </button>
-          </div>
-        </fieldset>
-        @if (errorMessage()) {
-          <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-               role="alert">
-            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
-            <span>{{ errorMessage() }}</span>
-          </div>
-        }
-        <div class="flex gap-3 pt-2">
-          <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
-            {{ 'CREATE_CLUB.cancel' | translate }}
-          </button>
-          <button hlmBtn type="submit" [disabled]="isSubmitting()"
-                  class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
-            @if (isSubmitting()) {
-              <hlm-spinner class="mr-2" />
-              {{ 'CREATE_CLUB.submitting' | translate }}
-            } @else {
-              {{ 'CREATE_CLUB.submit' | translate }}
-            }
-          </button>
-        </div>
-      </form>
-    </article>
-  </div>
-</main>
-````
-
-## File: src/app/features/clubs/create-club/create-club.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-} from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TranslatePipe } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-interface CreateClubForm {
-  name: FormControl<string>;
-  description: FormControl<string>;
-  isPublic: FormControl<boolean>;
-  city: FormControl<string>;
-  coverUrl: FormControl<string>;
+export function mapClub(raw: ApiClub): Club {
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description,
+    coverUrl: raw.coverUrl,
+    organizerId: raw.organizerId,
+    isPublic: raw.isPublic,
+    memberCount: raw.memberCount,
+    memberPreviews: raw.memberPreviews ?? [],
+    createdAt: raw.createdAt,
+    city: raw.city ?? '',
+    nextMeetingDate: raw.nextMeetingDate,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    theme: raw.theme,
+    currentBook: raw.currentBook ? { title: raw.currentBook, author: '', description: '' } : null,
+    status: raw.status,
+    tags: raw.tags ?? [],
+    meetingDurationMinutes: raw.meetingDurationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    cancelledAt: raw.cancelledAt ?? undefined,
+  };
 }
-@Component({
-  selector: 'app-create-club',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './create-club.component.html',
-})
-export class CreateClubComponent {
-  private readonly clubService = inject(ClubService);
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly _errorMessage = signal<string | null>(null);
-  readonly errorMessage = this._errorMessage.asReadonly();
-  private readonly _isSubmitting = signal(false);
-  readonly isSubmitting = this._isSubmitting.asReadonly();
-  private readonly _showAfterMeeting = signal(false);
-  readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
-  readonly form = new FormGroup<CreateClubForm>({
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-    isPublic: new FormControl(true, { nonNullable: true }),
-    city: new FormControl('', { nonNullable: true }),
-    coverUrl: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^https?:\/\/.+\..+/)] }),
-  });
-  togglePublic(): void {
-    const current = this.form.controls.isPublic.value;
-    this.form.controls.isPublic.setValue(!current);
-  }
-  toggleAfterMeeting(): void {
-    this._showAfterMeeting.update(v => !v);
-  }
-  cancel(): void {
-    this.router.navigate(['/clubs']);
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this._isSubmitting.set(true);
-    this._errorMessage.set(null);
-    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
-    try {
-      const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
-      this.router.navigate(['/clubs', club.id]);
-    } catch (err) {
-      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
-    } finally {
-      this._isSubmitting.set(false);
-    }
-  }
+export function mapEvent(raw: ApiEvent): ClubEvent {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    clubName: raw.clubName,
+    organizerId: raw.organizerId,
+    title: raw.title,
+    description: raw.description,
+    date: raw.date,
+    city: raw.city,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    status: raw.status,
+    cancelledAt: raw.cancelledAt ?? undefined,
+    coverUrl: raw.coverUrl ?? null,
+    theme: raw.theme,
+    tags: raw.tags ?? [],
+    durationMinutes: raw.durationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    attendeeCount: raw.attendeeCount,
+    isAttending: raw.isAttending,
+    bookTitle: raw.bookTitle ?? null,
+    quizId: raw.quizId ?? null,
+  };
+}
+export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
+  return {
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    role: raw.role,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
+}
+export function mapBanRecord(raw: ApiBanRecord): BanRecord {
+  return {
+    userId: raw.userId,
+    clubId: raw.clubId,
+    bannedAt: raw.bannedAt,
+    duration: raw.duration,
+    bannedBy: raw.bannedBy,
+  };
+}
+function mapSocials(raw: ApiUserSocials): UserSocials {
+  return {
+    telegram: raw.telegram ?? undefined,
+    instagram: raw.instagram ?? undefined,
+    twitter: raw.twitter ?? undefined,
+    linkedin: raw.linkedin ?? undefined,
+    github: raw.github ?? undefined,
+    goodreads: raw.goodreads ?? undefined,
+  };
 }
 ````
 
@@ -13949,89 +14152,314 @@ export class EditClubComponent implements OnInit {
 }
 ````
 
-## File: src/app/features/events/event-card/event-card.component.html
+## File: src/app/features/events/event-detail/event-detail.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  input,
+} from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
+import { EventService } from '../../../core/services/event.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
+import { ClubEvent } from '../../../core/models/event.model';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { environment } from '../../../../environments/environment';
+@Component({
+  selector: 'app-event-detail',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, FormatDatePipe],
+  templateUrl: './event-detail.component.html',
+})
+export class EventDetailComponent {
+  readonly id = input.required<string>();
+  private readonly http = inject(HttpClient);
+  private readonly eventService = inject(EventService);
+  private readonly translate = inject(TranslateService);
+  readonly auth = inject(AuthService);
+  private readonly _eventResource = rxResource<ClubEvent | null, string>({
+    params: () => this.id(),
+    stream: ({ params: id }) =>
+      this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(
+        map(mapEvent),
+      ),
+  });
+  readonly event = computed(() => this._eventResource.value() ?? null);
+  readonly isLoading = this._eventResource.isLoading;
+  readonly errorMessage = computed(() =>
+    !this._eventResource.isLoading() && this._eventResource.error() ? 'EVENT.LOAD_ERROR' : null,
+  );
+  readonly isActioning = signal(false);
+  readonly isOrganizer = computed(
+    () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,
+  );
+  async onAttend(): Promise<void> {
+    this.isActioning.set(true);
+    try {
+      await this.eventService.attendEvent(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+  async onCancelAttend(): Promise<void> {
+    this.isActioning.set(true);
+    try {
+      await this.eventService.cancelAttendance(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+  async onCancelEvent(): Promise<void> {
+    if (!confirm(this.translate.instant('EVENTS.cancel_confirm'))) return;
+    this.isActioning.set(true);
+    try {
+      await this.eventService.cancelEvent(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+}
+````
+
+## File: src/app/features/events/events-feed/events-feed.component.html
 ````html
-<article class="parchment-card flex flex-col overflow-hidden h-full
-                hover:shadow-[var(--shadow-parchment-lg)] transition-shadow duration-200">
-  <div class="flex flex-col flex-1 p-4 gap-3">
-    <div class="flex items-start justify-between gap-2">
-      <span class="date-badge">
-        {{ event().date | formatDate }}
-      </span>
-      @if (event().status !== 'scheduled') {
-        <span hlmBadge
-              [variant]="event().status === 'cancelled' ? 'destructive'
-                       : event().status === 'active' ? 'default' : 'secondary'"
-              class="rounded-full text-xs flex-shrink-0">
-          {{ ('EVENTS.status_' + event().status) | translate }}
-        </span>
+<div class="min-h-screen">
+  <section class="parchment-hero px-4 py-14 text-center">
+    <div class="relative z-10">
+      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
+                 text-[var(--color-ink)] mb-2 drop-shadow-sm">
+        {{ 'NAV.events' | translate }}
+      </h1>
+      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-8">
+        {{ 'EVENTS.subtitle' | translate }}
+      </p>
+      @if (eventService.availableCities().length > 0) {
+        <div class="mx-auto max-w-sm">
+          <select
+            [ngModel]="eventService.cityFilter()"
+            (ngModelChange)="eventService.setCityFilter($event || null)"
+            class="w-full parchment-input rounded-full px-4 py-2.5 text-sm appearance-none cursor-pointer"
+          >
+            <option value="">All cities</option>
+            @for (city of eventService.availableCities(); track city) {
+              <option [value]="city">{{ city }}</option>
+            }
+          </select>
+        </div>
       }
     </div>
-    <h3 class="font-display font-semibold text-[var(--color-ink)] leading-snug line-clamp-2">
-      {{ event().title }}
-    </h3>
-    <a
-      [routerLink]="['/clubs', event().clubId]"
-      class="text-xs text-[var(--color-primary-600)] dark:text-[#fbbf24] hover:underline font-medium"
-      (click)="$event.stopPropagation()"
-    >
-      {{ event().clubName }}
-    </a>
-    @if (event().city) {
-      <p class="text-xs text-[var(--color-ink-muted)] flex items-center gap-1">
-        <span aria-hidden="true">📍</span>
-        <span>{{ event().address || event().city }}</span>
-      </p>
-    }
-    @if (event().theme || event().tags.length > 0) {
-      <div class="flex flex-wrap gap-1.5">
-        @if (event().theme) {
-          <span class="rounded-full
-                       bg-[var(--color-accent-100)]/80 dark:bg-[var(--color-accent-900)]/40
-                       border border-[var(--color-accent-300)] dark:border-[var(--color-accent-700)]/60
-                       px-2.5 py-0.5 text-xs font-medium
-                       text-[var(--color-accent-700)] dark:text-[var(--color-accent-300)]">
-            {{ event().theme }}
-          </span>
-        }
-        @for (tag of event().tags.slice(0, 2); track tag) {
-          <span class="rounded-full
-                       bg-[var(--color-surface-raised)]
-                       border border-[var(--color-sepia-mid)]
-                       px-2.5 py-0.5 text-xs text-[var(--color-ink-muted)]">
-            {{ tag }}
-          </span>
-        }
+  </section>
+  <div class="page-container py-8 space-y-8">
+    @if (eventService.error()) {
+      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+        <span aria-hidden="true">⚠️</span>
+        <span>{{ eventService.error() }}</span>
       </div>
     }
-    <div class="flex items-center justify-between mt-auto pt-2
-                border-t border-[var(--color-sepia-mid)]">
-      <span class="text-xs text-[var(--color-ink-muted)]">
-        {{ event().attendeeCount }} {{ 'EVENTS.attending' | translate }}
-      </span>
-      <div class="flex gap-2">
-        <a hlmBtn variant="outline" size="sm" [routerLink]="['/events', event().id]">
-          {{ 'EVENTS.view' | translate }}
-        </a>
-        @if (isAuthenticated() && event().status !== 'cancelled') {
-          @if (event().isAttending) {
-            <button hlmBtn type="button" size="sm" [disabled]="attending()"
-                    (click)="cancelAttend.emit()"
-                    class="bg-[var(--color-accent-600)] hover:bg-[var(--color-accent-700)] text-white">
-              @if (attending()) { <hlm-spinner size="xs" /> } @else { {{ 'EVENTS.going' | translate }} }
-            </button>
+    @if (auth.isAuthenticated()) {
+      <div class="flex justify-center" role="tablist" aria-label="Event filter">
+        <div class="relative flex rounded-full p-1
+                    bg-[var(--color-surface-sunken)]
+                    border border-[var(--color-sepia)]
+                    shadow-inner">
+          <div class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full
+                      bg-[var(--color-surface-raised)]
+                      shadow-[var(--shadow-parchment)]
+                      transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+               [style.left]="activeTab() === 'upcoming' ? '4px' : '50%'"
+               aria-hidden="true">
+          </div>
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'upcoming'"
+            (click)="activeTab.set('upcoming')"
+            class="relative z-10 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'upcoming'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            {{ 'EVENTS.tab_upcoming' | translate }}
+          </button>
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'my'"
+            (click)="activeTab.set('my')"
+            class="relative z-10 flex items-center gap-1.5 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'my'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            {{ 'EVENTS.tab_my' | translate }}
+            @if (eventService.myEvents().length > 0) {
+              <span class="inline-flex items-center justify-center
+                           h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
+                           transition-colors duration-300"
+                    [class]="activeTab() === 'my'
+                      ? 'bg-[var(--color-primary-600)] text-white'
+                      : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]'">
+                {{ eventService.myEvents().length }}
+              </span>
+            }
+          </button>
+        </div>
+      </div>
+      @if (activeTab() === 'upcoming') {
+        <div class="pt-6" role="tabpanel">
+          <ng-container [ngTemplateOutlet]="upcomingPanel" />
+        </div>
+      }
+      @if (activeTab() === 'my') {
+        <div class="pt-6" role="tabpanel">
+          @if (eventService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (eventService.myEvents().length === 0) {
+            <app-empty-state
+              icon="📅"
+              [title]="'EVENTS.no_upcoming' | translate"
+              [description]="'EVENTS.no_my_events_desc' | translate"
+            />
           } @else {
-            <button hlmBtn type="button" size="sm" [disabled]="attending()"
-                    (click)="attend.emit()"
-                    class="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white">
-              @if (attending()) { <hlm-spinner size="xs" /> } @else { {{ 'EVENTS.rsvp' | translate }} }
-            </button>
+            <ul class="bento-grid-3">
+              @for (event of eventService.myEvents(); track event.id) {
+                <li>
+                  <app-event-card
+                    [event]="event"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [attending]="attendingEventId() === event.id"
+                    (attend)="onAttend(event)"
+                    (cancelAttend)="onCancelAttend(event)"
+                  />
+                </li>
+              }
+            </ul>
           }
-        }
-      </div>
-    </div>
+        </div>
+      }
+    } @else {
+      <ng-container [ngTemplateOutlet]="upcomingPanel" />
+    }
   </div>
-</article>
+</div>
+<ng-template #upcomingPanel>
+  @if (eventService.isLoading()) {
+    <div class="py-16 flex justify-center" aria-busy="true">
+      <hlm-spinner />
+    </div>
+  } @else if (sortedDates().length === 0) {
+    <app-empty-state
+      icon="📅"
+      [title]="'EVENTS.no_upcoming' | translate"
+      [description]="'EVENTS.no_upcoming_desc' | translate"
+    />
+  } @else {
+    @for (date of sortedDates(); track date) {
+      <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
+        <div class="date-section-divider mb-5" aria-hidden="true">
+          <h2
+            [id]="'date-' + date"
+            class="date-badge font-fantasy tracking-wider uppercase"
+          >
+            ✦ {{ date }} ✦
+          </h2>
+        </div>
+        <ul class="bento-grid-3">
+          @for (event of eventService.groupedByDate()[date]; track event.id) {
+            <li>
+              <app-event-card
+                [event]="event"
+                [isAuthenticated]="auth.isAuthenticated()"
+                [attending]="attendingEventId() === event.id"
+                (attend)="onAttend(event)"
+                (cancelAttend)="onCancelAttend(event)"
+              />
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</ng-template>
+````
+
+## File: src/app/features/events/events-feed/events-feed.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  OnInit,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { NgTemplateOutlet } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
+import { EventService } from '../../../core/services/event.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { ClubEvent } from '../../../core/models/event.model';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { EventCardComponent } from '../event-card/event-card.component';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+@Component({
+  selector: 'app-events-feed',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule, TranslateModule, EmptyStateComponent, EventCardComponent, HlmSpinner, NgTemplateOutlet],
+  templateUrl: './events-feed.component.html',
+})
+export class EventsFeedComponent implements OnInit {
+  readonly eventService = inject(EventService);
+  readonly auth = inject(AuthService);
+  readonly attendingEventId = signal<string | null>(null);
+  readonly activeTab = signal<'upcoming' | 'my'>('upcoming');
+  readonly sortedDates = computed(() =>
+    Object.keys(this.eventService.groupedByDate()).sort((a, b) => a.localeCompare(b)),
+  );
+  async ngOnInit(): Promise<void> {
+    await this.eventService.loadAllEvents();
+    if (this.auth.isAuthenticated()) {
+      await this.eventService.loadMyEvents();
+    }
+  }
+  async onAttend(event: ClubEvent): Promise<void> {
+    this.attendingEventId.set(event.id);
+    try {
+      await this.eventService.attendEvent(event.id);
+    } catch {
+    } finally {
+      this.attendingEventId.set(null);
+    }
+  }
+  async onCancelAttend(event: ClubEvent): Promise<void> {
+    this.attendingEventId.set(event.id);
+    try {
+      await this.eventService.cancelAttendance(event.id);
+    } catch {
+    } finally {
+      this.attendingEventId.set(null);
+    }
+  }
+}
 ````
 
 ## File: src/app/features/profile/profile.component.ts
@@ -14395,227 +14823,235 @@ export class QuizTakeComponent implements OnInit {
 }
 ````
 
-## File: src/app/core/services/club.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
-import { AuthService } from '../auth/auth.service';
-import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
-import { ClubEvent } from '../models/event.model';
-@Injectable({ providedIn: 'root' })
-export class ClubService {
-  private readonly http = inject(HttpClient);
-  private readonly auth = inject(AuthService);
-  private readonly _clubs = signal<Club[]>([]);
-  private readonly _myClubs = signal<Club[]>([]);
-  private readonly _isLoading = signal(false);
-  private readonly _error = signal<string | null>(null);
-  private readonly _searchQuery = signal('');
-  private readonly _cityFilter = signal<string | null>(null);
-  readonly clubs = this._clubs.asReadonly();
-  readonly myClubs = this._myClubs.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly error = this._error.asReadonly();
-  readonly searchQuery = this._searchQuery.asReadonly();
-  readonly myOwnedClubs = computed<Club[]>(() => {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) return [];
-    return this._clubs().filter(c => c.organizerId === userId);
-  });
-  readonly myOwnedClubIds = computed<Set<string>>(() =>
-    new Set(this.myOwnedClubs().map(c => c.id)),
-  );
-  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
-  readonly availableCities = computed<string[]>(() => {
-    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
-    return cities.sort((a, b) => a.localeCompare(b));
-  });
-  readonly filteredClubs = computed(() => {
-    const q = this._searchQuery().toLowerCase().trim();
-    const city = this._cityFilter();
-    let clubs = this._clubs();
-    if (q) {
-      clubs = clubs.filter(
-        c =>
-          c.name.toLowerCase().includes(q) ||
-          (c.description?.toLowerCase().includes(q) ?? false),
-      );
-    }
-    if (city) {
-      clubs = clubs.filter(c => c.city === city);
-    }
-    return clubs;
-  });
-  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
-    const clubs = this.filteredClubs();
-    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
-      const city = club.city || '';
-      if (!acc[city]) acc[city] = [];
-      acc[city].push(club);
-      return acc;
-    }, {});
-  });
-  readonly myParticipatedClubs = computed<Club[]>(() => []);
-  readonly myMissedClubs = computed<Club[]>(() => []);
-  setSearchQuery(query: string): void {
-    this._searchQuery.set(query);
-  }
-  setCityFilter(city: string | null): void {
-    this._cityFilter.set(city);
-  }
-  async loadPublicClubs(): Promise<void> {
-    this._isLoading.set(true);
-    this._error.set(null);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
-      );
-      this._clubs.set(raw.map(mapClub));
-    } catch {
-      this._error.set('Failed to load clubs');
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async loadMyClubs(): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
-      );
-      this._myClubs.set(raw.map(mapClub));
-    } catch {
-      this._error.set('Failed to load my clubs');
-    }
-  }
-  async getClubById(id: string): Promise<Club | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
-      );
-      return mapClub(raw);
-    } catch {
-      return null;
-    }
-  }
-  async createClub(payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    coverUrl?: string | null;
-    city?: string;
-    tags?: string[];
-    meetingDurationMinutes?: number | null;
-    afterMeetingVenue?: { name: string; address: string; description: string } | null;
-  }): Promise<Club> {
-    const raw = await firstValueFrom(
-      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
-        name: payload.name,
-        description: payload.description,
-        isPublic: payload.isPublic,
-        coverUrl: payload.coverUrl ?? null,
-        city: payload.city,
-        tags: payload.tags,
-        meetingDurationMinutes: payload.meetingDurationMinutes,
-        afterMeetingVenue: payload.afterMeetingVenue,
-      }),
-    );
-    const club = mapClub(raw);
-    this._clubs.update(existing => [club, ...existing]);
-    this._myClubs.update(existing => [club, ...existing]);
-    return club;
-  }
-  async updateClub(clubId: string, payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    city?: string;
-    coverUrl?: string | null;
-  }): Promise<Club> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
-    );
-    const club = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    return club;
-  }
-  async joinClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
-    );
-    this._clubs.update(list =>
-      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
-    );
-    const club = this._clubs().find(c => c.id === clubId);
-    if (club && !this.myClubIds().has(clubId)) {
-      this._myClubs.update(list => [club, ...list]);
-    }
-  }
-  async leaveClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
-    );
-    this._clubs.update(list =>
-      list.map(c =>
-        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
-      ),
-    );
-    this._myClubs.update(list => list.filter(c => c.id !== clubId));
-  }
-  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
-    );
-    return raw.map(mapClubMember);
-  }
-  async kickMember(clubId: string, userId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
-    );
-  }
-  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
-    );
-  }
-  async getBans(clubId: string): Promise<BanRecord[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
-    );
-    return raw.map(mapBanRecord);
-  }
-  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
-    );
-    return raw.map(mapEvent);
-  }
-  async pauseClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'pause');
-  }
-  async cancelClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'cancel');
-  }
-  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
-  }
-  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
-    );
-    const updated = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
-  }
-  msUntilDeletion(club: Club): number | null {
-    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
-    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
-    const remaining = deletionTime - Date.now();
-    return remaining > 0 ? remaining : null;
-  }
-}
+## File: src/app/layout/header/header.component.html
+````html
+<header
+  class="sticky top-0 z-50
+         bg-[var(--color-surface)]/90 dark:bg-[var(--color-surface)]/95
+         backdrop-blur-[10px]
+         border-b border-[var(--color-sepia)]
+         shadow-[0_2px_12px_rgba(92,45,10,0.10)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.40)]"
+  role="banner"
+>
+  <div class="page-max-w px-6">
+    <div class="flex items-center justify-between h-16">
+      <a
+        routerLink="/"
+        class="font-fantasy text-xl font-bold tracking-widest
+               text-[var(--color-primary-600)] dark:text-[#fbbf24]
+               hover:text-[var(--color-primary-500)] dark:hover:text-[#fcd34d]
+               transition-colors duration-200
+               focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2 rounded"
+        aria-label="BookClub home"
+      >
+        BookClub
+      </a>
+      <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
+        <a
+          routerLink="/clubs"
+          routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
+          class="px-4 py-2 rounded-lg text-sm font-medium
+                 text-[var(--color-ink-muted)]
+                 hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                 transition-all duration-200
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+        >
+          {{ 'NAV.discover' | translate }}
+        </a>
+        @if (isAuthenticated()) {
+          <a
+            routerLink="/events"
+            routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
+            class="px-4 py-2 rounded-lg text-sm font-medium
+                   text-[var(--color-ink-muted)]
+                   hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                   transition-all duration-200
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+          >
+            {{ 'NAV.events' | translate }}
+          </a>
+        }
+      </nav>
+      <div class="hidden md:flex items-center gap-1">
+        <button
+          hlmBtn
+          variant="ghost"
+          size="icon"
+          type="button"
+          data-testid="theme-toggle"
+          (click)="themeService.toggle()"
+          [attr.aria-label]="themeService.isDark()
+            ? ('NAV.theme_toggle_light' | translate)
+            : ('NAV.theme_toggle_dark'  | translate)"
+          [attr.title]="themeService.isDark()
+            ? ('NAV.theme_toggle_light' | translate)
+            : ('NAV.theme_toggle_dark'  | translate)"
+        >
+          @if (themeService.isDark()) {
+            <ng-icon hlm name="lucideSun"  size="sm" />
+          } @else {
+            <ng-icon hlm name="lucideMoon" size="sm" />
+          }
+        </button>
+        <button
+          hlmBtn
+          variant="ghost"
+          size="sm"
+          type="button"
+          (click)="switchLang()"
+          [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+        >
+          {{ currentLang() === 'uk' ? 'EN' : 'UK' }}
+        </button>
+        @if (isAuthenticated()) {
+          <button
+            type="button"
+            [hlmDropdownMenuTrigger]="userMenu"
+            class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+            aria-haspopup="menu"
+            [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
+          >
+            <div
+              class="h-9 w-9 rounded-full avatar-gradient
+                     flex items-center justify-center text-white text-sm font-semibold select-none"
+              aria-hidden="true"
+            >
+              {{ userInitials() }}
+            </div>
+          </button>
+          <ng-template #userMenu>
+            <div hlmDropdownMenu>
+              <hlm-dropdown-menu-label>{{ currentUser()?.displayName }}</hlm-dropdown-menu-label>
+              <hlm-dropdown-menu-separator />
+              <a hlmDropdownMenuItem [routerLink]="['/profile']">
+                {{ 'NAV.profile' | translate }}
+              </a>
+              <hlm-dropdown-menu-separator />
+              <button hlmDropdownMenuItem variant="destructive" (click)="signOut()">
+                {{ 'NAV.logout' | translate }}
+              </button>
+            </div>
+          </ng-template>
+        } @else {
+          <a hlmBtn variant="outline" size="sm" routerLink="/login">
+            {{ 'NAV.login' | translate }}
+          </a>
+          <a hlmBtn size="sm" routerLink="/register"
+             class="bg-gradient-fantasy text-white border-0 hover:opacity-90">
+            {{ 'NAV.join_free' | translate }}
+          </a>
+        }
+      </div>
+      <hlm-sheet class="md:hidden">
+        <button
+          hlmSheetTrigger
+          type="button"
+          class="p-2 rounded-lg text-[var(--color-ink-muted)]
+                 hover:bg-[var(--color-surface-raised)] transition-all duration-200
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+          aria-label="Toggle navigation menu"
+        >
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <ng-template hlmSheetPortal>
+          <hlm-sheet-content>
+            <hlm-sheet-header>
+              <h2 hlmSheetTitle
+                  class="font-fantasy font-bold tracking-widest text-[var(--color-primary-600)] dark:text-[#fbbf24]">
+                BookClub
+              </h2>
+            </hlm-sheet-header>
+            <nav class="flex flex-col gap-1 px-4 py-2" aria-label="Mobile navigation">
+              <button hlmSheetClose [routerLink]="['/clubs']"
+                      class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                             text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                             transition-all duration-200 w-full text-left">
+                {{ 'NAV.discover' | translate }}
+              </button>
+              @if (isAuthenticated()) {
+                <button hlmSheetClose [routerLink]="['/events']"
+                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                               text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                               transition-all duration-200 w-full text-left">
+                  {{ 'NAV.events' | translate }}
+                </button>
+              }
+              <button
+                type="button"
+                data-testid="theme-toggle"
+                (click)="themeService.toggle()"
+                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                       transition-all duration-200 w-full text-left"
+                [attr.aria-label]="themeService.isDark()
+                  ? ('NAV.theme_toggle_light' | translate)
+                  : ('NAV.theme_toggle_dark'  | translate)"
+              >
+                @if (themeService.isDark()) {
+                  <ng-icon hlm name="lucideSun"  size="sm" />
+                  <span>{{ 'NAV.theme_toggle_light' | translate }}</span>
+                } @else {
+                  <ng-icon hlm name="lucideMoon" size="sm" />
+                  <span>{{ 'NAV.theme_toggle_dark' | translate }}</span>
+                }
+              </button>
+              <button
+                type="button"
+                (click)="switchLang()"
+                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                       transition-all duration-200 w-full text-left"
+                [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+              >
+                <span>{{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}</span>
+              </button>
+              <div class="pt-2 mt-2 border-t border-[var(--color-sepia)] flex flex-col gap-1">
+                @if (isAuthenticated()) {
+                  <div class="px-4 py-2">
+                    <p class="text-xs font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide">
+                      {{ 'NAV.signed_in_as' | translate }}
+                    </p>
+                    <p class="text-sm font-medium text-[var(--color-ink)] mt-0.5">
+                      {{ currentUser()?.displayName }}
+                    </p>
+                  </div>
+                  <button hlmSheetClose [routerLink]="['/profile']"
+                          class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                                 transition-all duration-200 w-full text-left">
+                    {{ 'NAV.profile' | translate }}
+                  </button>
+                  <button hlmSheetClose type="button" (click)="signOut()"
+                          class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                                 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
+                                 transition-all duration-200">
+                    {{ 'NAV.logout' | translate }}
+                  </button>
+                } @else {
+                  <button hlmSheetClose [routerLink]="['/login']"
+                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                                 transition-all duration-200 w-full text-left">
+                    {{ 'NAV.login' | translate }}
+                  </button>
+                  <button hlmSheetClose [routerLink]="['/register']"
+                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                                 bg-gradient-fantasy text-white hover:opacity-90
+                                 transition-all duration-200 w-full text-left">
+                    {{ 'NAV.join_free' | translate }}
+                  </button>
+                }
+              </div>
+            </nav>
+          </hlm-sheet-content>
+        </ng-template>
+      </hlm-sheet>
+    </div>
+  </div>
+</header>
 ````
 
 ## File: src/app/features/clubs/edit-club/edit-club.component.html
@@ -14731,316 +15167,6 @@ export class ClubService {
     </article>
   </div>
 </main>
-````
-
-## File: src/app/features/events/event-detail/event-detail.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  input,
-} from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
-import { EventService } from '../../../core/services/event.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
-import { ClubEvent } from '../../../core/models/event.model';
-import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-import { environment } from '../../../../environments/environment';
-@Component({
-  selector: 'app-event-detail',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe],
-  templateUrl: './event-detail.component.html',
-})
-export class EventDetailComponent {
-  readonly id = input.required<string>();
-  private readonly http = inject(HttpClient);
-  private readonly eventService = inject(EventService);
-  private readonly translate = inject(TranslateService);
-  readonly auth = inject(AuthService);
-  private readonly _eventResource = rxResource<ClubEvent | null, string>({
-    params: () => this.id(),
-    stream: ({ params: id }) =>
-      this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(
-        map(mapEvent),
-      ),
-  });
-  readonly event = computed(() => this._eventResource.value() ?? null);
-  readonly isLoading = this._eventResource.isLoading;
-  readonly errorMessage = computed(() =>
-    !this._eventResource.isLoading() && this._eventResource.error() ? 'EVENT.LOAD_ERROR' : null,
-  );
-  readonly isActioning = signal(false);
-  readonly isOrganizer = computed(
-    () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,
-  );
-  async onAttend(): Promise<void> {
-    this.isActioning.set(true);
-    try {
-      await this.eventService.attendEvent(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
-    }
-  }
-  async onCancelAttend(): Promise<void> {
-    this.isActioning.set(true);
-    try {
-      await this.eventService.cancelAttendance(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
-    }
-  }
-  async onCancelEvent(): Promise<void> {
-    if (!confirm(this.translate.instant('EVENTS.cancel_confirm'))) return;
-    this.isActioning.set(true);
-    try {
-      await this.eventService.cancelEvent(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
-    }
-  }
-}
-````
-
-## File: src/app/features/events/events-feed/events-feed.component.html
-````html
-<div class="min-h-screen">
-  <section class="parchment-hero px-4 py-14 text-center">
-    <div class="relative z-10">
-      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
-                 text-[var(--color-ink)] mb-2 drop-shadow-sm">
-        {{ 'NAV.events' | translate }}
-      </h1>
-      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-8">
-        {{ 'EVENTS.subtitle' | translate }}
-      </p>
-      @if (eventService.availableCities().length > 0) {
-        <div class="mx-auto max-w-sm">
-          <select
-            [ngModel]="eventService.cityFilter()"
-            (ngModelChange)="eventService.setCityFilter($event || null)"
-            class="w-full parchment-input rounded-full px-4 py-2.5 text-sm appearance-none cursor-pointer"
-          >
-            <option value="">All cities</option>
-            @for (city of eventService.availableCities(); track city) {
-              <option [value]="city">{{ city }}</option>
-            }
-          </select>
-        </div>
-      }
-    </div>
-  </section>
-  <div class="page-container py-8 space-y-8">
-    @if (eventService.error()) {
-      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-        <span aria-hidden="true">⚠️</span>
-        <span>{{ eventService.error() }}</span>
-      </div>
-    }
-    @if (auth.isAuthenticated()) {
-      <div class="flex justify-center" role="tablist" aria-label="Event filter">
-        <div class="relative flex rounded-full p-1
-                    bg-[var(--color-surface-sunken)]
-                    border border-[var(--color-sepia)]
-                    shadow-inner">
-          <div class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full
-                      bg-[var(--color-surface-raised)]
-                      shadow-[var(--shadow-parchment)]
-                      transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-               [style.left]="activeTab() === 'upcoming' ? '4px' : '50%'"
-               aria-hidden="true">
-          </div>
-          <button
-            role="tab"
-            type="button"
-            [attr.aria-selected]="activeTab() === 'upcoming'"
-            (click)="activeTab.set('upcoming')"
-            class="relative z-10 px-7 py-2 rounded-full text-sm font-medium
-                   transition-colors duration-300 select-none focus:outline-none
-                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
-            [class]="activeTab() === 'upcoming'
-              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
-              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
-          >
-            {{ 'EVENTS.tab_upcoming' | translate }}
-          </button>
-          <button
-            role="tab"
-            type="button"
-            [attr.aria-selected]="activeTab() === 'my'"
-            (click)="activeTab.set('my')"
-            class="relative z-10 flex items-center gap-1.5 px-7 py-2 rounded-full text-sm font-medium
-                   transition-colors duration-300 select-none focus:outline-none
-                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
-            [class]="activeTab() === 'my'
-              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
-              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
-          >
-            {{ 'EVENTS.tab_my' | translate }}
-            @if (eventService.myEvents().length > 0) {
-              <span class="inline-flex items-center justify-center
-                           h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
-                           transition-colors duration-300"
-                    [class]="activeTab() === 'my'
-                      ? 'bg-[var(--color-primary-600)] text-white'
-                      : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]'">
-                {{ eventService.myEvents().length }}
-              </span>
-            }
-          </button>
-        </div>
-      </div>
-      @if (activeTab() === 'upcoming') {
-        <div class="pt-6" role="tabpanel">
-          <ng-container [ngTemplateOutlet]="upcomingPanel" />
-        </div>
-      }
-      @if (activeTab() === 'my') {
-        <div class="pt-6" role="tabpanel">
-          @if (eventService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true">
-              <hlm-spinner />
-            </div>
-          } @else if (eventService.myEvents().length === 0) {
-            <app-empty-state
-              icon="📅"
-              [title]="'EVENTS.no_upcoming' | translate"
-              [description]="'EVENTS.no_my_events_desc' | translate"
-            />
-          } @else {
-            <ul class="bento-grid-3">
-              @for (event of eventService.myEvents(); track event.id) {
-                <li>
-                  <app-event-card
-                    [event]="event"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [attending]="attendingEventId() === event.id"
-                    (attend)="onAttend(event)"
-                    (cancelAttend)="onCancelAttend(event)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      }
-    } @else {
-      <ng-container [ngTemplateOutlet]="upcomingPanel" />
-    }
-  </div>
-</div>
-<ng-template #upcomingPanel>
-  @if (eventService.isLoading()) {
-    <div class="py-16 flex justify-center" aria-busy="true">
-      <hlm-spinner />
-    </div>
-  } @else if (sortedDates().length === 0) {
-    <app-empty-state
-      icon="📅"
-      [title]="'EVENTS.no_upcoming' | translate"
-      [description]="'EVENTS.no_upcoming_desc' | translate"
-    />
-  } @else {
-    @for (date of sortedDates(); track date) {
-      <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
-        <div class="date-section-divider mb-5" aria-hidden="true">
-          <h2
-            [id]="'date-' + date"
-            class="date-badge font-fantasy tracking-wider uppercase"
-          >
-            ✦ {{ date }} ✦
-          </h2>
-        </div>
-        <ul class="bento-grid-3">
-          @for (event of eventService.groupedByDate()[date]; track event.id) {
-            <li>
-              <app-event-card
-                [event]="event"
-                [isAuthenticated]="auth.isAuthenticated()"
-                [attending]="attendingEventId() === event.id"
-                (attend)="onAttend(event)"
-                (cancelAttend)="onCancelAttend(event)"
-              />
-            </li>
-          }
-        </ul>
-      </section>
-    }
-  }
-</ng-template>
-````
-
-## File: src/app/features/events/events-feed/events-feed.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  OnInit,
-} from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { NgTemplateOutlet } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
-import { EventService } from '../../../core/services/event.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { ClubEvent } from '../../../core/models/event.model';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { EventCardComponent } from '../event-card/event-card.component';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-@Component({
-  selector: 'app-events-feed',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, TranslateModule, EmptyStateComponent, EventCardComponent, HlmSpinner, NgTemplateOutlet],
-  templateUrl: './events-feed.component.html',
-})
-export class EventsFeedComponent implements OnInit {
-  readonly eventService = inject(EventService);
-  readonly auth = inject(AuthService);
-  readonly attendingEventId = signal<string | null>(null);
-  readonly activeTab = signal<'upcoming' | 'my'>('upcoming');
-  readonly sortedDates = computed(() =>
-    Object.keys(this.eventService.groupedByDate()).sort((a, b) => a.localeCompare(b)),
-  );
-  async ngOnInit(): Promise<void> {
-    await this.eventService.loadAllEvents();
-    if (this.auth.isAuthenticated()) {
-      await this.eventService.loadMyEvents();
-    }
-  }
-  async onAttend(event: ClubEvent): Promise<void> {
-    this.attendingEventId.set(event.id);
-    try {
-      await this.eventService.attendEvent(event.id);
-    } catch {
-    } finally {
-      this.attendingEventId.set(null);
-    }
-  }
-  async onCancelAttend(event: ClubEvent): Promise<void> {
-    this.attendingEventId.set(event.id);
-    try {
-      await this.eventService.cancelAttendance(event.id);
-    } catch {
-    } finally {
-      this.attendingEventId.set(null);
-    }
-  }
-}
 ````
 
 ## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
@@ -15328,235 +15454,142 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
 }
 ````
 
-## File: src/app/layout/header/header.component.html
+## File: src/app/features/events/create-event/create-event.component.html
 ````html
-<header
-  class="sticky top-0 z-50
-         bg-[var(--color-surface)]/90 dark:bg-[var(--color-surface)]/95
-         backdrop-blur-[10px]
-         border-b border-[var(--color-sepia)]
-         shadow-[0_2px_12px_rgba(92,45,10,0.10)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.40)]"
-  role="banner"
->
-  <div class="page-max-w px-6">
-    <div class="flex items-center justify-between h-16">
-      <a
-        routerLink="/"
-        class="font-fantasy text-xl font-bold tracking-widest
-               text-[var(--color-primary-600)] dark:text-[#fbbf24]
-               hover:text-[var(--color-primary-500)] dark:hover:text-[#fcd34d]
-               transition-colors duration-200
-               focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2 rounded"
-        aria-label="BookClub home"
-      >
-        BookClub
-      </a>
-      <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
-        <a
-          routerLink="/clubs"
-          routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
-          class="px-4 py-2 rounded-lg text-sm font-medium
-                 text-[var(--color-ink-muted)]
-                 hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                 transition-all duration-200
-                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-        >
-          {{ 'NAV.discover' | translate }}
-        </a>
-        @if (isAuthenticated()) {
-          <a
-            routerLink="/events"
-            routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
-            class="px-4 py-2 rounded-lg text-sm font-medium
-                   text-[var(--color-ink-muted)]
-                   hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                   transition-all duration-200
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-          >
-            {{ 'NAV.events' | translate }}
-          </a>
-        }
-      </nav>
-      <div class="hidden md:flex items-center gap-1">
-        <button
-          hlmBtn
-          variant="ghost"
-          size="icon"
-          type="button"
-          data-testid="theme-toggle"
-          (click)="themeService.toggle()"
-          [attr.aria-label]="themeService.isDark()
-            ? ('NAV.theme_toggle_light' | translate)
-            : ('NAV.theme_toggle_dark'  | translate)"
-          [attr.title]="themeService.isDark()
-            ? ('NAV.theme_toggle_light' | translate)
-            : ('NAV.theme_toggle_dark'  | translate)"
-        >
-          @if (themeService.isDark()) {
-            <ng-icon hlm name="lucideSun"  size="sm" />
-          } @else {
-            <ng-icon hlm name="lucideMoon" size="sm" />
-          }
-        </button>
-        <button
-          hlmBtn
-          variant="ghost"
-          size="sm"
-          type="button"
-          (click)="switchLang()"
-          [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-        >
-          {{ currentLang() === 'uk' ? 'EN' : 'UK' }}
-        </button>
-        @if (isAuthenticated()) {
-          <button
-            type="button"
-            [hlmDropdownMenuTrigger]="userMenu"
-            class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-            aria-haspopup="menu"
-            [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
-          >
-            <div
-              class="h-9 w-9 rounded-full avatar-gradient
-                     flex items-center justify-center text-white text-sm font-semibold select-none"
-              aria-hidden="true"
-            >
-              {{ userInitials() }}
-            </div>
-          </button>
-          <ng-template #userMenu>
-            <div hlmDropdownMenu>
-              <hlm-dropdown-menu-label>{{ currentUser()?.displayName }}</hlm-dropdown-menu-label>
-              <hlm-dropdown-menu-separator />
-              <a hlmDropdownMenuItem [routerLink]="['/profile']">
-                {{ 'NAV.profile' | translate }}
-              </a>
-              <hlm-dropdown-menu-separator />
-              <button hlmDropdownMenuItem variant="destructive" (click)="signOut()">
-                {{ 'NAV.logout' | translate }}
-              </button>
-            </div>
-          </ng-template>
-        } @else {
-          <a hlmBtn variant="outline" size="sm" routerLink="/login">
-            {{ 'NAV.login' | translate }}
-          </a>
-          <a hlmBtn size="sm" routerLink="/register"
-             class="bg-gradient-fantasy text-white border-0 hover:opacity-90">
-            {{ 'NAV.join_free' | translate }}
-          </a>
+<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
+  <nav>
+    <a [routerLink]="['/clubs', id()]"
+       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+      {{ 'CREATE_EVENT.back_to_club' | translate }}
+    </a>
+  </nav>
+  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{{ 'CREATE_EVENT.heading' | translate }}</h1>
+    @if (errorMessage()) {
+      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+           role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+      <div>
+        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {{ 'CREATE_EVENT.title_label' | translate }} <span class="text-red-500">*</span>
+        </label>
+        <input hlmInput id="title" type="text" formControlName="title" class="w-full"
+               placeholder="April Discussion" />
+        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.title_required' | translate }}</p>
         }
       </div>
-      <hlm-sheet class="md:hidden">
-        <button
-          hlmSheetTrigger
-          type="button"
-          class="p-2 rounded-lg text-[var(--color-ink-muted)]
-                 hover:bg-[var(--color-surface-raised)] transition-all duration-200
-                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-          aria-label="Toggle navigation menu"
-        >
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
+      <div>
+        <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">📖 Book title</label>
+        <input hlmInput id="bookTitle" type="text" formControlName="bookTitle" class="w-full"
+               placeholder="The Master and Margarita" />
+        @if (isFetchingCover()) {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">🔍 Searching for book cover…</p>
+        } @else if (coverFetchFailed()) {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">No cover found — you can add one manually below.</p>
+        } @else {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">What book will you discuss at this event?</p>
+        }
+      </div>
+      <div>
+        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.description_label' | translate }}</label>
+        <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
+                  [placeholder]="'CREATE_EVENT.description_placeholder' | translate"></textarea>
+      </div>
+      <div>
+        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {{ 'CREATE_EVENT.date_label' | translate }} <span class="text-red-500">*</span>
+        </label>
+        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
+        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.date_required' | translate }}</p>
+        }
+      </div>
+      <div>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {{ 'CREATE_EVENT.location_label' | translate }} <span class="text-red-500">*</span>
+        </p>
+        <app-address-autocomplete
+          [control]="form.controls.address"
+          placeholder="Start typing an address…"
+          (selected)="onAddressSelect($event)"
+        />
+        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.location_required' | translate }}</p>
+        }
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.duration_label' | translate }}</label>
+          <input hlmInput id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
+                 class="w-full" placeholder="120" />
+        </div>
+        <div>
+          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.theme_label' | translate }}</label>
+          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
+        </div>
+      </div>
+      <div>
+        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.tags_label' | translate }}</label>
+        <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
+               [placeholder]="'CREATE_EVENT.tags_placeholder' | translate" />
+      </div>
+      <div>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ 'CREATE_EVENT.cover_label' | translate }}</p>
+        <app-cover-upload [control]="form.controls.coverUrl" />
+      </div>
+      @if (activeQuizzes().length > 0) {
+        <div>
+          <label for="quizId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            🧠 Linked quiz
+          </label>
+          <select id="quizId" formControlName="quizId"
+                  class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+            <option [ngValue]="null">— No quiz —</option>
+            @for (quiz of activeQuizzes(); track quiz.id) {
+              <option [value]="quiz.id">{{ quiz.title }}</option>
+            }
+          </select>
+        </div>
+      }
+      <div>
+        <button type="button" (click)="toggleAfterVenue()"
+                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
+          {{ showAfterVenue() ? ('CREATE_EVENT.after_venue_remove' | translate) : ('CREATE_EVENT.after_venue_add' | translate) }}
         </button>
-        <ng-template hlmSheetPortal>
-          <hlm-sheet-content>
-            <hlm-sheet-header>
-              <h2 hlmSheetTitle
-                  class="font-fantasy font-bold tracking-widest text-[var(--color-primary-600)] dark:text-[#fbbf24]">
-                BookClub
-              </h2>
-            </hlm-sheet-header>
-            <nav class="flex flex-col gap-1 px-4 py-2" aria-label="Mobile navigation">
-              <button hlmSheetClose [routerLink]="['/clubs']"
-                      class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                             text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                             transition-all duration-200 w-full text-left">
-                {{ 'NAV.discover' | translate }}
-              </button>
-              @if (isAuthenticated()) {
-                <button hlmSheetClose [routerLink]="['/events']"
-                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                               text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                               transition-all duration-200 w-full text-left">
-                  {{ 'NAV.events' | translate }}
-                </button>
-              }
-              <button
-                type="button"
-                data-testid="theme-toggle"
-                (click)="themeService.toggle()"
-                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                       transition-all duration-200 w-full text-left"
-                [attr.aria-label]="themeService.isDark()
-                  ? ('NAV.theme_toggle_light' | translate)
-                  : ('NAV.theme_toggle_dark'  | translate)"
-              >
-                @if (themeService.isDark()) {
-                  <ng-icon hlm name="lucideSun"  size="sm" />
-                  <span>{{ 'NAV.theme_toggle_light' | translate }}</span>
-                } @else {
-                  <ng-icon hlm name="lucideMoon" size="sm" />
-                  <span>{{ 'NAV.theme_toggle_dark' | translate }}</span>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="switchLang()"
-                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                       transition-all duration-200 w-full text-left"
-                [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-              >
-                <span>{{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}</span>
-              </button>
-              <div class="pt-2 mt-2 border-t border-[var(--color-sepia)] flex flex-col gap-1">
-                @if (isAuthenticated()) {
-                  <div class="px-4 py-2">
-                    <p class="text-xs font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide">
-                      {{ 'NAV.signed_in_as' | translate }}
-                    </p>
-                    <p class="text-sm font-medium text-[var(--color-ink)] mt-0.5">
-                      {{ currentUser()?.displayName }}
-                    </p>
-                  </div>
-                  <button hlmSheetClose [routerLink]="['/profile']"
-                          class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                                 transition-all duration-200 w-full text-left">
-                    {{ 'NAV.profile' | translate }}
-                  </button>
-                  <button hlmSheetClose type="button" (click)="signOut()"
-                          class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                                 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
-                                 transition-all duration-200">
-                    {{ 'NAV.logout' | translate }}
-                  </button>
-                } @else {
-                  <button hlmSheetClose [routerLink]="['/login']"
-                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                                 transition-all duration-200 w-full text-left">
-                    {{ 'NAV.login' | translate }}
-                  </button>
-                  <button hlmSheetClose [routerLink]="['/register']"
-                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                                 bg-gradient-fantasy text-white hover:opacity-90
-                                 transition-all duration-200 w-full text-left">
-                    {{ 'NAV.join_free' | translate }}
-                  </button>
-                }
-              </div>
-            </nav>
-          </hlm-sheet-content>
-        </ng-template>
-      </hlm-sheet>
-    </div>
+        @if (showAfterVenue()) {
+          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
+            <div>
+              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_name_label' | translate }} <span class="text-red-500">*</span></label>
+              <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
+                     class="w-full" placeholder="Cozy Cafe" />
+            </div>
+            <div>
+              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_address_label' | translate }}</label>
+              <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
+                     class="w-full" placeholder="123 Main St" />
+            </div>
+            <div>
+              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_notes_label' | translate }}</label>
+              <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
+                     class="w-full" placeholder="Optional notes" />
+            </div>
+          </div>
+        }
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <a hlmBtn variant="outline" [routerLink]="['/clubs', id()]">{{ 'CREATE_EVENT.cancel' | translate }}</a>
+        <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
+                class="bg-primary-600 hover:bg-primary-700 text-white">
+          @if (isSubmitting()) { {{ 'CREATE_EVENT.submitting' | translate }} } @else { {{ 'CREATE_EVENT.submit' | translate }} }
+        </button>
+      </div>
+    </form>
   </div>
-</header>
+</main>
 ````
 
 ## File: src/app/features/quiz/quiz-create/quiz-create.component.html
@@ -16824,613 +16857,6 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
 }
 ````
 
-## File: src/app/core/api/api-mappers.ts
-````typescript
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
-import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
-export interface ApiUserProfile {
-  id: string;
-  email: string;
-  role: UserRole;
-  displayName: string;
-  avatarUrl: string | null;
-  createdAt: string;
-  socials?: ApiUserSocials | null;
-  socialsPublic?: boolean;
-}
-export type ApiUserSocials = { [K in keyof UserSocials]?: string | null };
-export interface ApiUserStats {
-  clubsJoined: number;
-  quizzesTaken: number;
-  quizWins: number;
-  likesReceived: number;
-  booksRead: number;
-}
-export interface ApiClub {
-  id: string;
-  name: string;
-  description: string | null;
-  coverUrl: string | null;
-  organizerId: string;
-  isPublic: boolean;
-  memberCount: number;
-  memberPreviews: string[];
-  createdAt: string;
-  city: string | null;
-  nextMeetingDate: string | null;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  theme: string | null;
-  currentBook: string | null;
-  status: ClubStatus;
-  tags: string[];
-  meetingDurationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  cancelledAt?: string | null;
-}
-export interface ApiClubMember {
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  role: 'organizer' | 'member';
-  socials?: ApiUserSocials | null;
-  socialsPublic?: boolean;
-}
-export interface ApiBanRecord {
-  userId: string;
-  clubId: string;
-  bannedAt: string;
-  duration: BanDuration;
-  bannedBy: string;
-}
-export interface ApiEvent {
-  id: string;
-  clubId: string;
-  clubName: string;
-  organizerId: string;
-  title: string;
-  description: string | null;
-  date: string;
-  city: string;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  status: EventStatus;
-  cancelledAt?: string | null;
-  coverUrl?: string | null;
-  theme: string | null;
-  tags: string[];
-  durationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  attendeeCount: number;
-  isAttending: boolean;
-  bookTitle?: string | null;
-  quizId?: string | null;
-}
-export function mapUserProfile(raw: ApiUserProfile): UserProfile {
-  return {
-    id: raw.id,
-    role: raw.role,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-    createdAt: raw.createdAt,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socialsPublic ?? false,
-  };
-}
-export function mapUserStats(raw: ApiUserStats): UserStats {
-  return {
-    clubsJoined: raw.clubsJoined,
-    quizzesTaken: raw.quizzesTaken,
-    quizWins: raw.quizWins,
-    likesReceived: raw.likesReceived,
-    booksRead: raw.booksRead,
-  };
-}
-export function mapClub(raw: ApiClub): Club {
-  return {
-    id: raw.id,
-    name: raw.name,
-    description: raw.description,
-    coverUrl: raw.coverUrl,
-    organizerId: raw.organizerId,
-    isPublic: raw.isPublic,
-    memberCount: raw.memberCount,
-    memberPreviews: raw.memberPreviews ?? [],
-    createdAt: raw.createdAt,
-    city: raw.city ?? '',
-    nextMeetingDate: raw.nextMeetingDate,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    theme: raw.theme,
-    currentBook: raw.currentBook ? { title: raw.currentBook, author: '', description: '' } : null,
-    status: raw.status,
-    tags: raw.tags ?? [],
-    meetingDurationMinutes: raw.meetingDurationMinutes,
-    afterMeetingVenue: raw.afterMeetingVenue,
-    cancelledAt: raw.cancelledAt ?? undefined,
-  };
-}
-export function mapEvent(raw: ApiEvent): ClubEvent {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    clubName: raw.clubName,
-    organizerId: raw.organizerId,
-    title: raw.title,
-    description: raw.description,
-    date: raw.date,
-    city: raw.city,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    status: raw.status,
-    cancelledAt: raw.cancelledAt ?? undefined,
-    coverUrl: raw.coverUrl ?? null,
-    theme: raw.theme,
-    tags: raw.tags ?? [],
-    durationMinutes: raw.durationMinutes,
-    afterMeetingVenue: raw.afterMeetingVenue,
-    attendeeCount: raw.attendeeCount,
-    isAttending: raw.isAttending,
-    bookTitle: raw.bookTitle ?? null,
-    quizId: raw.quizId ?? null,
-  };
-}
-export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
-  return {
-    userId: raw.userId,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-    role: raw.role,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socialsPublic ?? false,
-  };
-}
-export function mapBanRecord(raw: ApiBanRecord): BanRecord {
-  return {
-    userId: raw.userId,
-    clubId: raw.clubId,
-    bannedAt: raw.bannedAt,
-    duration: raw.duration,
-    bannedBy: raw.bannedBy,
-  };
-}
-function mapSocials(raw: ApiUserSocials): UserSocials {
-  return {
-    telegram: raw.telegram ?? undefined,
-    instagram: raw.instagram ?? undefined,
-    twitter: raw.twitter ?? undefined,
-    linkedin: raw.linkedin ?? undefined,
-    github: raw.github ?? undefined,
-    goodreads: raw.goodreads ?? undefined,
-  };
-}
-````
-
-## File: package.json
-````json
-{
-  "name": "book-club-fe",
-  "version": "0.0.0",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
-    "extract-i18n": "node scripts/extract-i18n.mjs",
-    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
-    "lint": "ng lint",
-    "build-ctx": "npx repomix --no-files",
-    "prepare": "husky install",
-    "mock": "node mock-server/index.js",
-    "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\""
-  },
-  "prettier": {
-    "overrides": [
-      {
-        "files": "*.html",
-        "options": {
-          "parser": "angular"
-        }
-      }
-    ]
-  },
-  "private": true,
-  "overrides": {
-    "picomatch": "^4.0.4",
-    "axios": "1.15.2"
-  },
-  "dependencies": {
-    "@angular/cdk": "^21.2.8",
-    "@angular/common": "^21.2.10",
-    "@angular/compiler": "^21.2.10",
-    "@angular/core": "^21.2.10",
-    "@angular/forms": "^21.2.10",
-    "@angular/platform-browser": "^21.2.10",
-    "@angular/router": "^21.2.10",
-    "@ng-icons/core": ">=32.0.0 <34.0.0",
-    "@ng-icons/lucide": ">=32.0.0 <34.0.0",
-    "@ngx-translate/core": "^17.0.0",
-    "@ngx-translate/http-loader": "^17.0.0",
-    "@spartan-ng/brain": "^0.0.1-alpha.678",
-    "@spartan-ng/cli": "^0.0.1-alpha.678",
-    "@tailwindcss/postcss": "^4.2.4",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "qrcode": "^1.5.4",
-    "rxjs": "~7.8.0",
-    "tailwind-merge": "^3.5.0",
-    "tslib": "^2.3.0",
-    "tw-animate-css": "^1.4.0"
-  },
-  "devDependencies": {
-    "@angular/build": "^21.2.8",
-    "@angular/cli": "^21.2.8",
-    "@angular/compiler-cli": "^21.2.10",
-    "@playwright/test": "^1.59.1",
-    "@types/jasmine": "~5.1.0",
-    "@types/qrcode": "^1.5.6",
-    "angular-eslint": "21.0.1",
-    "autoprefixer": "^10.4.27",
-    "concurrently": "^9.2.1",
-    "cors": "^2.8.6",
-    "eslint": "^9.39.1",
-    "eslint-plugin-rxjs-x": "^0.9.5",
-    "express": "^5.2.1",
-    "husky": "^8.0.0",
-    "jasmine-core": "~5.8.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
-    "postcss": "^8.5.9",
-    "tailwindcss": "^4.2.4",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "8.46.4"
-  }
-}
-````
-
-## File: src/app/features/events/create-event/create-event.component.html
-````html
-<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
-  <nav>
-    <a [routerLink]="['/clubs', id()]"
-       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-      {{ 'CREATE_EVENT.back_to_club' | translate }}
-    </a>
-  </nav>
-  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{{ 'CREATE_EVENT.heading' | translate }}</h1>
-    @if (errorMessage()) {
-      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-           role="alert">
-        {{ errorMessage() }}
-      </div>
-    }
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-      <div>
-        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          {{ 'CREATE_EVENT.title_label' | translate }} <span class="text-red-500">*</span>
-        </label>
-        <input hlmInput id="title" type="text" formControlName="title" class="w-full"
-               placeholder="April Discussion" />
-        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.title_required' | translate }}</p>
-        }
-      </div>
-      <div>
-        <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">📖 Book title</label>
-        <input hlmInput id="bookTitle" type="text" formControlName="bookTitle" class="w-full"
-               placeholder="The Master and Margarita" />
-        @if (isFetchingCover()) {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">🔍 Searching for book cover…</p>
-        } @else if (coverFetchFailed()) {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">No cover found — you can add one manually below.</p>
-        } @else {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">What book will you discuss at this event?</p>
-        }
-      </div>
-      <div>
-        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.description_label' | translate }}</label>
-        <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
-                  [placeholder]="'CREATE_EVENT.description_placeholder' | translate"></textarea>
-      </div>
-      <div>
-        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          {{ 'CREATE_EVENT.date_label' | translate }} <span class="text-red-500">*</span>
-        </label>
-        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
-        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.date_required' | translate }}</p>
-        }
-      </div>
-      <div>
-        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          {{ 'CREATE_EVENT.location_label' | translate }} <span class="text-red-500">*</span>
-        </p>
-        <app-address-autocomplete
-          [control]="form.controls.address"
-          placeholder="Start typing an address…"
-          (selected)="onAddressSelect($event)"
-        />
-        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.location_required' | translate }}</p>
-        }
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.duration_label' | translate }}</label>
-          <input hlmInput id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
-                 class="w-full" placeholder="120" />
-        </div>
-        <div>
-          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.theme_label' | translate }}</label>
-          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
-        </div>
-      </div>
-      <div>
-        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.tags_label' | translate }}</label>
-        <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
-               [placeholder]="'CREATE_EVENT.tags_placeholder' | translate" />
-      </div>
-      <div>
-        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ 'CREATE_EVENT.cover_label' | translate }}</p>
-        <app-cover-upload [control]="form.controls.coverUrl" />
-      </div>
-      @if (activeQuizzes().length > 0) {
-        <div>
-          <label for="quizId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            🧠 Linked quiz
-          </label>
-          <select id="quizId" formControlName="quizId"
-                  class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
-            <option [ngValue]="null">— No quiz —</option>
-            @for (quiz of activeQuizzes(); track quiz.id) {
-              <option [value]="quiz.id">{{ quiz.title }}</option>
-            }
-          </select>
-        </div>
-      }
-      <div>
-        <button type="button" (click)="toggleAfterVenue()"
-                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
-          {{ showAfterVenue() ? ('CREATE_EVENT.after_venue_remove' | translate) : ('CREATE_EVENT.after_venue_add' | translate) }}
-        </button>
-        @if (showAfterVenue()) {
-          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
-            <div>
-              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_name_label' | translate }} <span class="text-red-500">*</span></label>
-              <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
-                     class="w-full" placeholder="Cozy Cafe" />
-            </div>
-            <div>
-              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_address_label' | translate }}</label>
-              <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
-                     class="w-full" placeholder="123 Main St" />
-            </div>
-            <div>
-              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_notes_label' | translate }}</label>
-              <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
-                     class="w-full" placeholder="Optional notes" />
-            </div>
-          </div>
-        }
-      </div>
-      <div class="flex justify-end gap-3 pt-2">
-        <a hlmBtn variant="outline" [routerLink]="['/clubs', id()]">{{ 'CREATE_EVENT.cancel' | translate }}</a>
-        <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
-                class="bg-primary-600 hover:bg-primary-700 text-white">
-          @if (isSubmitting()) { {{ 'CREATE_EVENT.submitting' | translate }} } @else { {{ 'CREATE_EVENT.submit' | translate }} }
-        </button>
-      </div>
-    </form>
-  </div>
-</main>
-````
-
-## File: src/app/features/clubs/club-detail/club-detail.component.html
-````html
-@if (isLoading()) {
-  <main class="page-max-w px-6 py-8" aria-busy="true" aria-label="Loading club details">
-    <div class="animate-pulse space-y-4">
-      <div class="h-56 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-      <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-    </div>
-  </main>
-} @else if (errorMessage()) {
-  <main class="page-max-w px-6 py-8 text-center" role="alert">
-    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
-    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
-    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
-    <a
-      hlmBtn
-      routerLink="/clubs"
-      class="bg-primary-600 hover:bg-primary-700 text-white"
-    >
-      ← {{ 'CLUB_DETAIL.back' | translate }}
-    </a>
-  </main>
-} @else if (club()) {
-  <main class="min-h-screen">
-    <div class="relative parchment-hero">
-      @if (club()!.coverUrl) {
-        <img
-          [src]="club()!.coverUrl"
-          [alt]="club()!.name + ' cover'"
-          class="w-full h-64 object-cover"
-          loading="lazy"
-        />
-      } @else {
-        <div class="bg-gradient-fantasy h-64" aria-hidden="true"></div>
-      }
-      <div class="absolute inset-0 flex items-end justify-center pointer-events-none px-6 pb-8">
-        <h1 class="font-fantasy font-bold text-white uppercase tracking-widest text-4xl sm:text-5xl lg:text-6xl text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
-          {{ club()!.name }}
-        </h1>
-      </div>
-      <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
-        <a
-          routerLink="/clubs"
-          class="inline-flex items-center gap-1.5 rounded-full parchment-card px-3 py-1.5 text-sm font-medium text-[var(--color-ink)] hover:scale-105 transition-all duration-200"
-          [attr.aria-label]="'CLUB_DETAIL.back' | translate"
-        >
-          ← {{ 'CLUB_DETAIL.back_short' | translate }}
-        </a>
-      </nav>
-    </div>
-    <div class="page-max-w px-6 py-8">
-      <div class="flex flex-col lg:flex-row gap-6 items-start">
-        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-2 lg:order-1">
-          @if (nearestEventBook()) {
-            <div hlmCard class="parchment-card-sunken p-4 gap-3">
-              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 {{ 'CLUB_DETAIL.now_reading' | translate }}</h3>
-              @if (nearestEventBook()!.coverUrl) {
-                <img
-                  [src]="nearestEventBook()!.coverUrl!"
-                  [alt]="nearestEventBook()!.title"
-                  class="w-full rounded-xl object-cover mb-3 max-h-40"
-                />
-              }
-              <p class="font-serif italic text-sm font-semibold text-gray-900 dark:text-white leading-snug">
-                {{ nearestEventBook()!.title }}
-              </p>
-              @if (nearestEventBook()!.author) {
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ nearestEventBook()!.author }}</p>
-              }
-            </div>
-          }
-          @if (isClubOwner()) {
-            <app-club-manage-panel [clubId]="id()" />
-          }
-        </aside>
-        <div class="flex-1 min-w-0 flex flex-col gap-8 order-1 lg:order-2">
-          <app-club-header
-            [club]="club()!"
-            [isMember]="isMember()"
-            [isOwner]="isClubOwner()"
-            [isAuthenticated]="!!currentUser()"
-            [isActionLoading]="isActionLoading()"
-            (leave)="onLeave()" />
-          @if (actionError()) {
-            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-              <span aria-hidden="true">⚠️</span>
-              <span>{{ actionError() }}</span>
-            </div>
-          }
-          @if (club()!.description) {
-            <section hlmCard class="parchment-card-sunken px-6 gap-3">
-              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
-              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
-            </section>
-          }
-          @if (isMember() || isClubOwner()) {
-            <app-book-vote-section
-              [clubId]="id()"
-              [isOwner]="isClubOwner()"
-              [isMember]="isMember()"
-            />
-          }
-          @if (!!currentUser() && !isMember() && !isClubOwner()) {
-            <div class="rounded-2xl border-2 border-dashed border-[var(--color-sepia)] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[var(--color-surface-raised)]">
-              <div>
-                <p class="font-semibold text-[var(--color-ink)]">{{ 'CLUB_DETAIL.join_cta_title' | translate }}</p>
-                <p class="text-sm text-[var(--color-ink-muted)] mt-0.5">{{ 'CLUB_DETAIL.join_cta_desc' | translate }}</p>
-              </div>
-              <button
-                hlmBtn
-                type="button"
-                (click)="onJoin()"
-                [disabled]="isActionLoading()"
-                class="flex-shrink-0 bg-primary-600 hover:bg-primary-700 text-white"
-              >
-                {{ 'CLUB_DETAIL.join' | translate }}
-              </button>
-            </div>
-          }
-          <section hlmCard class="parchment-card px-6 gap-4">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                📅 {{ 'CLUB_DETAIL.events_title' | translate }}
-              </h2>
-              @if (isClubOwner()) {
-                <a
-                  hlmBtn
-                  size="sm"
-                  [routerLink]="['/clubs', id(), 'events', 'create']"
-                  class="bg-primary-600 hover:bg-primary-700 text-white"
-                >
-                  {{ 'CLUB_DETAIL.create_event' | translate }}
-                </a>
-              }
-            </div>
-            @if (upcomingEvents().length > 1) {
-              <div class="flex flex-wrap gap-2 mb-5">
-                @for (opt of sortOptions; track opt.key) {
-                  <button
-                    type="button"
-                    (click)="sortKey.set(opt.key)"
-                    class="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
-                    [class]="sortKey() === opt.key
-                      ? 'bg-[var(--color-primary-600)] text-white border-[var(--color-primary-600)] shadow-sm'
-                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600'"
-                  >
-                    {{ opt.labelKey | translate }}
-                  </button>
-                }
-              </div>
-            }
-            @if (upcomingEvents().length === 0) {
-              <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                {{ 'CLUB_DETAIL.events_empty' | translate }}
-              </p>
-            } @else {
-              <div class="grid gap-5 sm:grid-cols-2">
-                @for (event of sortedUpcomingEvents(); track event.id; let i = $index) {
-                  <app-club-event-card
-                    [event]="event"
-                    [isAuthenticated]="!!currentUser()"
-                    [attending]="attendingEventId() === event.id"
-                    [index]="i"
-                    (attend)="onAttend(event.id)"
-                    (cancelAttend)="onCancelAttend(event.id)"
-                  />
-                }
-              </div>
-            }
-          </section>
-          <app-club-members-list
-            [members]="members()"
-            [clubBans]="clubBans()"
-            [isOwner]="isClubOwner()"
-            [currentUserId]="currentUserId()"
-            (kick)="handleKick($event)"
-            (ban)="handleBan($event)" />
-          <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">
-            {{ 'CLUB_DETAIL.created' | translate }} {{ club()!.createdAt | formatDate }}
-          </footer>
-        </div>
-        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-3 lg:order-3">
-          <app-club-sidebar-right
-            [club]="club()!"
-            [organizerProfile]="organizerProfile()"
-          />
-        </aside>
-      </div>
-    </div>
-  </main>
-}
-````
-
 ## File: src/app/features/clubs/club-detail/club-detail.component.ts
 ````typescript
 import {
@@ -17668,6 +17094,288 @@ export class ClubDetailComponent {
       this.attendingEventId.set(null);
     }
   }
+}
+````
+
+## File: package.json
+````json
+{
+  "name": "book-club-fe",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
+    "extract-i18n": "node scripts/extract-i18n.mjs",
+    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
+    "lint": "ng lint",
+    "build-ctx": "npx repomix --no-files",
+    "prepare": "husky install",
+    "mock": "node mock-server/index.js",
+    "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\""
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "overrides": {
+    "picomatch": "^4.0.4",
+    "axios": "1.15.2"
+  },
+  "dependencies": {
+    "@angular/cdk": "^21.2.8",
+    "@angular/common": "^21.2.10",
+    "@angular/compiler": "^21.2.10",
+    "@angular/core": "^21.2.10",
+    "@angular/forms": "^21.2.10",
+    "@angular/platform-browser": "^21.2.10",
+    "@angular/router": "^21.2.10",
+    "@ng-icons/core": ">=32.0.0 <34.0.0",
+    "@ng-icons/lucide": ">=32.0.0 <34.0.0",
+    "@ngx-translate/core": "^17.0.0",
+    "@ngx-translate/http-loader": "^17.0.0",
+    "@spartan-ng/brain": "^0.0.1-alpha.678",
+    "@spartan-ng/cli": "^0.0.1-alpha.678",
+    "@tailwindcss/postcss": "^4.2.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "qrcode": "^1.5.4",
+    "rxjs": "~7.8.0",
+    "tailwind-merge": "^3.5.0",
+    "tslib": "^2.3.0",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.2.8",
+    "@angular/cli": "^21.2.8",
+    "@angular/compiler-cli": "^21.2.10",
+    "@playwright/test": "^1.59.1",
+    "@types/jasmine": "~5.1.0",
+    "@types/qrcode": "^1.5.6",
+    "angular-eslint": "21.0.1",
+    "autoprefixer": "^10.4.27",
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.6",
+    "eslint": "^9.39.1",
+    "eslint-plugin-rxjs-x": "^0.9.5",
+    "express": "^5.2.1",
+    "husky": "^8.0.0",
+    "jasmine-core": "~5.8.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "postcss": "^8.5.9",
+    "tailwindcss": "^4.2.4",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "8.46.4"
+  }
+}
+````
+
+## File: src/app/features/clubs/club-detail/club-detail.component.html
+````html
+@if (isLoading()) {
+  <main class="page-max-w px-6 py-8" aria-busy="true" aria-label="Loading club details">
+    <div class="animate-pulse space-y-4">
+      <div class="h-56 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+    </div>
+  </main>
+} @else if (errorMessage()) {
+  <main class="page-max-w px-6 py-8 text-center" role="alert">
+    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
+    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
+    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
+    <a
+      hlmBtn
+      routerLink="/clubs"
+      class="bg-primary-600 hover:bg-primary-700 text-white"
+    >
+      ← {{ 'CLUB_DETAIL.back' | translate }}
+    </a>
+  </main>
+} @else if (club()) {
+  <main class="min-h-screen">
+    <div class="relative parchment-hero">
+      @if (club()!.coverUrl) {
+        <img
+          [src]="club()!.coverUrl"
+          [alt]="club()!.name + ' cover'"
+          class="w-full h-64 object-cover"
+          loading="lazy"
+        />
+      } @else {
+        <div class="bg-gradient-fantasy h-64" aria-hidden="true"></div>
+      }
+      <div class="absolute inset-0 flex items-end justify-center pointer-events-none px-6 pb-8">
+        <h1 class="font-fantasy font-bold text-white uppercase tracking-widest text-4xl sm:text-5xl lg:text-6xl text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
+          {{ club()!.name }}
+        </h1>
+      </div>
+      <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
+        <a
+          routerLink="/clubs"
+          class="inline-flex items-center gap-1.5 rounded-full parchment-card px-3 py-1.5 text-sm font-medium text-[var(--color-ink)] hover:scale-105 transition-all duration-200"
+          [attr.aria-label]="'CLUB_DETAIL.back' | translate"
+        >
+          ← {{ 'CLUB_DETAIL.back_short' | translate }}
+        </a>
+      </nav>
+    </div>
+    <div class="page-max-w px-6 py-8">
+      <div class="flex flex-col lg:flex-row gap-6 items-start">
+        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-2 lg:order-1">
+          @if (nearestEventBook()) {
+            <div hlmCard class="parchment-card-sunken p-4 gap-3">
+              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 {{ 'CLUB_DETAIL.now_reading' | translate }}</h3>
+              @if (nearestEventBook()!.coverUrl) {
+                <img
+                  [src]="nearestEventBook()!.coverUrl!"
+                  [alt]="nearestEventBook()!.title"
+                  class="w-full rounded-xl object-cover mb-3 max-h-40"
+                />
+              }
+              <p class="font-serif italic text-sm font-semibold text-gray-900 dark:text-white leading-snug">
+                {{ nearestEventBook()!.title }}
+              </p>
+              @if (nearestEventBook()!.author) {
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ nearestEventBook()!.author }}</p>
+              }
+            </div>
+          }
+          @if (isClubOwner()) {
+            <app-club-manage-panel [clubId]="id()" />
+          }
+        </aside>
+        <div class="flex-1 min-w-0 flex flex-col gap-8 order-1 lg:order-2">
+          <app-club-header
+            [club]="club()!"
+            [isMember]="isMember()"
+            [isOwner]="isClubOwner()"
+            [isAuthenticated]="!!currentUser()"
+            [isActionLoading]="isActionLoading()"
+            (leave)="onLeave()" />
+          @if (actionError()) {
+            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+              <span aria-hidden="true">⚠️</span>
+              <span>{{ actionError() }}</span>
+            </div>
+          }
+          @if (club()!.description) {
+            <section hlmCard class="parchment-card-sunken px-6 gap-3">
+              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
+              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
+            </section>
+          }
+          @if (isMember() || isClubOwner()) {
+            <app-book-vote-section
+              [clubId]="id()"
+              [isOwner]="isClubOwner()"
+              [isMember]="isMember()"
+            />
+          }
+          @if (!!currentUser() && !isMember() && !isClubOwner()) {
+            <div class="rounded-2xl border-2 border-dashed border-[var(--color-sepia)] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[var(--color-surface-raised)]">
+              <div>
+                <p class="font-semibold text-[var(--color-ink)]">{{ 'CLUB_DETAIL.join_cta_title' | translate }}</p>
+                <p class="text-sm text-[var(--color-ink-muted)] mt-0.5">{{ 'CLUB_DETAIL.join_cta_desc' | translate }}</p>
+              </div>
+              <button
+                hlmBtn
+                type="button"
+                (click)="onJoin()"
+                [disabled]="isActionLoading()"
+                class="flex-shrink-0 bg-primary-600 hover:bg-primary-700 text-white"
+              >
+                {{ 'CLUB_DETAIL.join' | translate }}
+              </button>
+            </div>
+          }
+          <section hlmCard class="parchment-card px-6 gap-4">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                📅 {{ 'CLUB_DETAIL.events_title' | translate }}
+              </h2>
+              @if (isClubOwner()) {
+                <a
+                  hlmBtn
+                  size="sm"
+                  [routerLink]="['/clubs', id(), 'events', 'create']"
+                  class="bg-primary-600 hover:bg-primary-700 text-white"
+                >
+                  {{ 'CLUB_DETAIL.create_event' | translate }}
+                </a>
+              }
+            </div>
+            @if (upcomingEvents().length > 1) {
+              <div class="flex flex-wrap gap-2 mb-5">
+                @for (opt of sortOptions; track opt.key) {
+                  <button
+                    type="button"
+                    (click)="sortKey.set(opt.key)"
+                    class="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
+                    [class]="sortKey() === opt.key
+                      ? 'bg-[var(--color-primary-600)] text-white border-[var(--color-primary-600)] shadow-sm'
+                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600'"
+                  >
+                    {{ opt.labelKey | translate }}
+                  </button>
+                }
+              </div>
+            }
+            @if (upcomingEvents().length === 0) {
+              <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                {{ 'CLUB_DETAIL.events_empty' | translate }}
+              </p>
+            } @else {
+              <div class="grid gap-5 sm:grid-cols-2">
+                @for (event of sortedUpcomingEvents(); track event.id; let i = $index) {
+                  <app-club-event-card
+                    [event]="event"
+                    [isAuthenticated]="!!currentUser()"
+                    [attending]="attendingEventId() === event.id"
+                    [index]="i"
+                    (attend)="onAttend(event.id)"
+                    (cancelAttend)="onCancelAttend(event.id)"
+                  />
+                }
+              </div>
+            }
+          </section>
+          <app-club-members-list
+            [members]="members()"
+            [clubBans]="clubBans()"
+            [isOwner]="isClubOwner()"
+            [currentUserId]="currentUserId()"
+            (kick)="handleKick($event)"
+            (ban)="handleBan($event)" />
+          <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">
+            {{ 'CLUB_DETAIL.created' | translate }} {{ club()!.createdAt | formatDate }}
+          </footer>
+        </div>
+        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-3 lg:order-3">
+          <app-club-sidebar-right
+            [club]="club()!"
+            [organizerProfile]="organizerProfile()"
+          />
+        </aside>
+      </div>
+    </div>
+  </main>
 }
 ````
 
