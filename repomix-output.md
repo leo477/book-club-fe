@@ -10600,6 +10600,11 @@ sonar.coverage.exclusions=\
   src/app/shared/spartan/**
 
 sonar.sourceEncoding=UTF-8
+
+# Exclude vendored/boilerplate-heavy files from duplication detection
+sonar.cpd.exclusions=\
+  src/app/shared/spartan/**,\
+  src/testing/**
 ````
 
 ## File: tsconfig.json
@@ -12334,6 +12339,255 @@ export interface ClubEvent {
 </div>
 ````
 
+## File: src/app/features/clubs/clubs-list/clubs-list.component.html
+````html
+<div class="min-h-screen">
+  <section aria-label="Search clubs" class="parchment-hero px-4 py-14 text-center">
+    <div class="relative z-10">
+      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
+                 text-[var(--color-ink)] mb-3 drop-shadow-sm">
+        {{ 'CLUBS.title' | translate }}
+      </h1>
+      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-12">
+        {{ 'CLUBS.subtitle' | translate }}
+      </p>
+      <div class="mx-auto max-w-xl lg:max-w-2xl relative">
+        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
+        <input
+          id="club-search"
+          type="search"
+          [ngModel]="clubService.searchQuery()"
+          (ngModelChange)="clubService.setSearchQuery($event)"
+          [placeholder]="'CLUBS.search_placeholder_full' | translate"
+          class="w-full parchment-input rounded-full px-5 py-3 text-sm"
+          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
+        />
+      </div>
+    </div>
+  </section>
+  <div class="page-container py-8 space-y-8">
+    @if (clubService.error()) {
+      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+        <span aria-hidden="true">⚠️</span>
+        <span>{{ clubService.error() }}</span>
+      </div>
+    }
+    @if (auth.isAuthenticated()) {
+      <div class="flex justify-center" role="tablist" aria-label="Club filter">
+        <div class="relative flex rounded-full p-1
+                    bg-[var(--color-surface-sunken)]
+                    border border-[var(--color-sepia)]
+                    shadow-inner">
+          <div class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full
+                      bg-[var(--color-surface-raised)]
+                      shadow-[var(--shadow-parchment)]
+                      transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+               [style.left]="activeTab() === 'all' ? '4px' : '50%'"
+               aria-hidden="true">
+          </div>
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'all'"
+            (click)="activeTab.set('all')"
+            class="relative z-10 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'all'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            {{ 'CLUBS.all' | translate }}
+          </button>
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'my'"
+            (click)="activeTab.set('my')"
+            class="relative z-10 flex items-center gap-1.5 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'my'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            {{ 'CLUBS.my_clubs' | translate }}
+            @if (clubService.myClubs().length > 0) {
+              <span class="inline-flex items-center justify-center
+                           h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
+                           transition-colors duration-300"
+                    [class]="activeTab() === 'my'
+                      ? 'bg-[var(--color-primary-600)] text-white'
+                      : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]'">
+                {{ clubService.myClubs().length }}
+              </span>
+            }
+          </button>
+        </div>
+      </div>
+      @if (activeTab() === 'all') {
+        <div class="pt-6" role="tabpanel">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.filteredClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              title="No clubs yet"
+              description="No clubs have been created yet. Check back soon!"
+            />
+          } @else {
+            <ul class="bento-grid">
+              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                  <app-club-card
+                    [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+      @if (activeTab() === 'my') {
+        <div class="pt-6" role="tabpanel">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.myClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              [title]="'CLUBS.no_clubs' | translate"
+              description="Join a club to see it here."
+            />
+          } @else {
+            <ul class="bento-grid">
+              @for (club of clubService.myClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                  <app-club-card
+                    [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    } @else {
+      @if (clubService.isLoading()) {
+        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+          <hlm-spinner />
+        </div>
+      } @else if (clubService.filteredClubs().length === 0) {
+        <app-empty-state
+          icon="📚"
+          title="No clubs yet"
+          description="No clubs have been created yet. Check back soon!"
+        />
+      } @else {
+        <ul class="bento-grid">
+          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+              <app-club-card
+                [club]="club"
+                [variant]="i === 0 ? 'featured' : 'default'"
+                [isMember]="false"
+                [isOwned]="false"
+                [isAuthenticated]="false"
+                [joining]="false"
+                (join)="onJoin(club)"
+              />
+            </li>
+          }
+        </ul>
+      }
+    }
+  </div>
+  @if (auth.isOrganizer()) {
+    <a
+      routerLink="/clubs/create"
+      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full fab-fantasy focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] focus:ring-offset-2 transition-all duration-200"
+      [attr.aria-label]="'CLUBS.create' | translate"
+      [title]="'CLUBS.create' | translate"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+      </svg>
+    </a>
+  }
+</div>
+````
+
+## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  OnInit,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { Club } from '../../../core/models/club.model';
+import { SeoService } from '../../../core/services/seo.service';
+import { TranslateModule } from '@ngx-translate/core';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { ClubCardComponent } from './club-card/club-card.component';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+@Component({
+  selector: 'app-clubs-list',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, HlmSpinner],
+  templateUrl: './clubs-list.component.html',
+})
+export class ClubsListComponent implements OnInit {
+  readonly clubService = inject(ClubService);
+  readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  readonly joiningClubId = signal<string | null>(null);
+  readonly ownedClubIds = this.clubService.myOwnedClubIds;
+  readonly activeTab = signal<'all' | 'my'>('all');
+  async ngOnInit(): Promise<void> {
+    this.seo.setPageI18n('SEO.clubs_title', {
+      descriptionKey: 'SEO.clubs_description',
+      ogTitleKey: 'SEO.clubs_og_title',
+    });
+    this.seo.injectWebSiteJsonLd();
+    await this.clubService.loadPublicClubs();
+    if (this.auth.isAuthenticated()) {
+      await this.clubService.loadMyClubs();
+    }
+  }
+  async onJoin(club: Club): Promise<void> {
+    this.joiningClubId.set(club.id);
+    try {
+      await this.clubService.joinClub(club.id);
+    } catch {
+    } finally {
+      this.joiningClubId.set(null);
+    }
+  }
+}
+````
+
 ## File: src/app/features/profile/profile.component.html
 ````html
 <div class="min-h-screen bg-gradient-to-br from-primary-950/30 via-transparent to-accent-950/20">
@@ -13384,255 +13638,6 @@ export class ClubCardComponent {
     const target = new Date(dateStr).getTime();
     const now = Date.now();
     return Math.round((target - now) / 86400000);
-  }
-}
-````
-
-## File: src/app/features/clubs/clubs-list/clubs-list.component.html
-````html
-<div class="min-h-screen">
-  <section aria-label="Search clubs" class="parchment-hero px-4 py-14 text-center">
-    <div class="relative z-10">
-      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
-                 text-[var(--color-ink)] mb-3 drop-shadow-sm">
-        {{ 'CLUBS.title' | translate }}
-      </h1>
-      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-12">
-        {{ 'CLUBS.subtitle' | translate }}
-      </p>
-      <div class="mx-auto max-w-xl lg:max-w-2xl relative">
-        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
-        <input
-          id="club-search"
-          type="search"
-          [ngModel]="clubService.searchQuery()"
-          (ngModelChange)="clubService.setSearchQuery($event)"
-          [placeholder]="'CLUBS.search_placeholder_full' | translate"
-          class="w-full parchment-input rounded-full px-5 py-3 text-sm"
-          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
-        />
-      </div>
-    </div>
-  </section>
-  <div class="page-container py-8 space-y-8">
-    @if (clubService.error()) {
-      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-        <span aria-hidden="true">⚠️</span>
-        <span>{{ clubService.error() }}</span>
-      </div>
-    }
-    @if (auth.isAuthenticated()) {
-      <div class="flex justify-center" role="tablist" aria-label="Club filter">
-        <div class="relative flex rounded-full p-1
-                    bg-[var(--color-surface-sunken)]
-                    border border-[var(--color-sepia)]
-                    shadow-inner">
-          <div class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full
-                      bg-[var(--color-surface-raised)]
-                      shadow-[var(--shadow-parchment)]
-                      transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-               [style.left]="activeTab() === 'all' ? '4px' : '50%'"
-               aria-hidden="true">
-          </div>
-          <button
-            role="tab"
-            type="button"
-            [attr.aria-selected]="activeTab() === 'all'"
-            (click)="activeTab.set('all')"
-            class="relative z-10 px-7 py-2 rounded-full text-sm font-medium
-                   transition-colors duration-300 select-none focus:outline-none
-                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
-            [class]="activeTab() === 'all'
-              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
-              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
-          >
-            {{ 'CLUBS.all' | translate }}
-          </button>
-          <button
-            role="tab"
-            type="button"
-            [attr.aria-selected]="activeTab() === 'my'"
-            (click)="activeTab.set('my')"
-            class="relative z-10 flex items-center gap-1.5 px-7 py-2 rounded-full text-sm font-medium
-                   transition-colors duration-300 select-none focus:outline-none
-                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
-            [class]="activeTab() === 'my'
-              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
-              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
-          >
-            {{ 'CLUBS.my_clubs' | translate }}
-            @if (clubService.myClubs().length > 0) {
-              <span class="inline-flex items-center justify-center
-                           h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
-                           transition-colors duration-300"
-                    [class]="activeTab() === 'my'
-                      ? 'bg-[var(--color-primary-600)] text-white'
-                      : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]'">
-                {{ clubService.myClubs().length }}
-              </span>
-            }
-          </button>
-        </div>
-      </div>
-      @if (activeTab() === 'all') {
-        <div class="pt-6" role="tabpanel">
-          @if (clubService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
-              <hlm-spinner />
-            </div>
-          } @else if (clubService.filteredClubs().length === 0) {
-            <app-empty-state
-              icon="📚"
-              title="No clubs yet"
-              description="No clubs have been created yet. Check back soon!"
-            />
-          } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-                  <app-club-card
-                    [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
-                    [isMember]="clubService.myClubIds().has(club.id)"
-                    [isOwned]="ownedClubIds().has(club.id)"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [joining]="joiningClubId() === club.id"
-                    (join)="onJoin(club)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      }
-      @if (activeTab() === 'my') {
-        <div class="pt-6" role="tabpanel">
-          @if (clubService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true">
-              <hlm-spinner />
-            </div>
-          } @else if (clubService.myClubs().length === 0) {
-            <app-empty-state
-              icon="📚"
-              [title]="'CLUBS.no_clubs' | translate"
-              description="Join a club to see it here."
-            />
-          } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.myClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-                  <app-club-card
-                    [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
-                    [isMember]="clubService.myClubIds().has(club.id)"
-                    [isOwned]="ownedClubIds().has(club.id)"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [joining]="joiningClubId() === club.id"
-                    (join)="onJoin(club)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      }
-    } @else {
-      @if (clubService.isLoading()) {
-        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
-          <hlm-spinner />
-        </div>
-      } @else if (clubService.filteredClubs().length === 0) {
-        <app-empty-state
-          icon="📚"
-          title="No clubs yet"
-          description="No clubs have been created yet. Check back soon!"
-        />
-      } @else {
-        <ul class="bento-grid">
-          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-              <app-club-card
-                [club]="club"
-                [variant]="i === 0 ? 'featured' : 'default'"
-                [isMember]="false"
-                [isOwned]="false"
-                [isAuthenticated]="false"
-                [joining]="false"
-                (join)="onJoin(club)"
-              />
-            </li>
-          }
-        </ul>
-      }
-    }
-  </div>
-  @if (auth.isOrganizer()) {
-    <a
-      routerLink="/clubs/create"
-      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full fab-fantasy focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] focus:ring-offset-2 transition-all duration-200"
-      [attr.aria-label]="'CLUBS.create' | translate"
-      [title]="'CLUBS.create' | translate"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-      </svg>
-    </a>
-  }
-</div>
-````
-
-## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  OnInit,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { FormsModule } from '@angular/forms';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { Club } from '../../../core/models/club.model';
-import { SeoService } from '../../../core/services/seo.service';
-import { TranslateModule } from '@ngx-translate/core';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { ClubCardComponent } from './club-card/club-card.component';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-@Component({
-  selector: 'app-clubs-list',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, HlmSpinner],
-  templateUrl: './clubs-list.component.html',
-})
-export class ClubsListComponent implements OnInit {
-  readonly clubService = inject(ClubService);
-  readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  readonly joiningClubId = signal<string | null>(null);
-  readonly ownedClubIds = this.clubService.myOwnedClubIds;
-  readonly activeTab = signal<'all' | 'my'>('all');
-  async ngOnInit(): Promise<void> {
-    this.seo.setPageI18n('SEO.clubs_title', {
-      descriptionKey: 'SEO.clubs_description',
-      ogTitleKey: 'SEO.clubs_og_title',
-    });
-    this.seo.injectWebSiteJsonLd();
-    await this.clubService.loadPublicClubs();
-    if (this.auth.isAuthenticated()) {
-      await this.clubService.loadMyClubs();
-    }
-  }
-  async onJoin(club: Club): Promise<void> {
-    this.joiningClubId.set(club.id);
-    try {
-      await this.clubService.joinClub(club.id);
-    } catch {
-    } finally {
-      this.joiningClubId.set(null);
-    }
   }
 }
 ````
