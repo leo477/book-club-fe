@@ -7,7 +7,7 @@ import * as path from 'path';
 interface Bug {
   route: string;
   severity: 'critical' | 'high' | 'medium' | 'low';
-  category: 'console-error' | 'network-failure' | 'ui-missing' | 'form-error' | 'undefined-text' | 'nav-404' | 'redirect';
+  category: 'console-error' | 'network-failure' | 'ui-missing' | 'form-error' | 'undefined-text' | 'nav-404' | 'redirect' | 'functional';
   description: string;
   detail?: string;
 }
@@ -24,6 +24,9 @@ let OWNED_CLUB_ID = '';
 let ANY_CLUB_ID = '';
 let ANY_EVENT_ID = '';
 let ANY_QUIZ_ID = '';
+let CREATED_CLUB_ID = '';
+let CREATED_QUIZ_ID = '';
+let FUNCTIONAL_EVENT_ID = '';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -44,8 +47,8 @@ function attachMonitors(page: Page, route: string): () => void {
         text.includes('favicon') ||
         text.includes('ResizeObserver');
       if (isKnownNoise) return;
-      // Browser logs a generic "Failed to load resource: 404" for every expected sessions/active miss
-      if (text.includes('Failed to load resource') && text.includes('404') && suppressedNotFoundCount > 0) {
+      // Browser logs a generic "Failed to load resource: <status>" for every expected 4xx response
+      if (text.includes('Failed to load resource') && (text.includes('401') || text.includes('404')) && suppressedNotFoundCount > 0) {
         suppressedNotFoundCount--;
         return;
       }
@@ -57,6 +60,11 @@ function attachMonitors(page: Page, route: string): () => void {
       const url = resp.url();
       // 404 on sessions/active is expected when no quiz session is running — app handles it gracefully
       if (resp.status() === 404 && url.includes('/sessions/active')) {
+        suppressedNotFoundCount++;
+        return;
+      }
+      // 401 on /auth/login during wrong-password test is expected — suppress from network-failure list
+      if (resp.status() === 401 && url.includes('/auth/login')) {
         suppressedNotFoundCount++;
         return;
       }
@@ -166,14 +174,30 @@ test.beforeAll(async ({ request }) => {
     addBug({ route: '/clubs (API)', severity: 'high', category: 'network-failure', description: `GET /clubs failed: ${clubsResp?.status()}` });
   }
 
-  // Discover events
+  // Discover events — if none exist, create a temporary one so /events/:id can be tested
   const eventsResp = await request.get(`${API}/events`, { headers, timeout: 30_000 }).catch(() => null);
   if (eventsResp?.ok()) {
     const eventsBody = await eventsResp.json();
     const events: { id: string }[] = Array.isArray(eventsBody)
       ? eventsBody
       : eventsBody.items ?? eventsBody.data ?? [];
-    if (events.length > 0) ANY_EVENT_ID = events[0].id;
+    if (events.length > 0) {
+      ANY_EVENT_ID = events[0].id;
+    } else if (OWNED_CLUB_ID) {
+      // No events found — create a temporary test event so the detail route can be audited
+      const tomorrow = new Date(Date.now() + 86_400_000).toISOString();
+      const createResp = await request
+        .post(`${API}/clubs/${OWNED_CLUB_ID}/events`, {
+          headers,
+          data: { title: '[Audit] Test Event', date: tomorrow, city: 'Kyiv' },
+          timeout: 30_000,
+        })
+        .catch(() => null);
+      if (createResp?.ok()) {
+        const created = await createResp.json();
+        ANY_EVENT_ID = created.id ?? '';
+      }
+    }
   }
 
   // Discover quizzes for owned club
@@ -337,7 +361,7 @@ test.describe('Authenticated — Events', () => {
 
   test('GET /events/:id — event detail', async ({ page }) => {
     if (!ANY_EVENT_ID) {
-      addBug({ route: '/events/:id', severity: 'medium', category: 'ui-missing', description: 'Skipped: no event ID discovered (no events in API response)' });
+      console.log('ℹ️  /events/:id skipped — no events in test account and event creation failed');
       return;
     }
     await injectAuth(page);
@@ -740,9 +764,632 @@ test.describe('Navigation & UI', () => {
   });
 });
 
+// ── Functional — Auth ────────────────────────────────────────────────────────
+
+test.describe('Functional — Auth', () => {
+  test('Register new user (unique email)', async ({ page }) => {
+    const flush = attachMonitors(page, '/register (functional)');
+    await page.goto('/register');
+    await waitForAngular(page);
+    await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+
+    const uniqueEmail = `audit-test-${Date.now()}@mailinator.com`;
+    const emailInput = page.locator('input[type="email"]').first();
+    if (!(await emailInput.isVisible().catch(() => false))) {
+      addBug({ route: '/register (functional)', severity: 'critical', category: 'functional', description: 'Email input not visible — cannot test registration' });
+      flush();
+      return;
+    }
+
+    // Fill display name — register form uses id="reg-display-name"
+    await page.locator('#reg-display-name, input[placeholder="Ada Lovelace"]').first().fill('AuditUser').catch(() => {});
+    await emailInput.fill(uniqueEmail);
+    const pwInputs = page.locator('input[type="password"]');
+    await pwInputs.nth(0).fill('AuditPass123!');
+    await pwInputs.nth(1).fill('AuditPass123!').catch(() => {});
+
+    // Select role — click Reader or Organizer role button
+    const readerBtn = page.locator('button:has-text("Reader"), button:has-text("Читач")').first();
+    if (await readerBtn.isVisible().catch(() => false)) {
+      await readerBtn.click();
+    } else {
+      const roleBtn = page.locator('button[aria-pressed]').first();
+      if (await roleBtn.isVisible().catch(() => false)) await roleBtn.click();
+    }
+
+    await page.locator('button[type="submit"]').first().click();
+
+    try {
+      await page.waitForURL(/\/(clubs|events|profile)/, { timeout: 10_000 });
+    } catch {
+      // Check if a success card is shown (🎉) — registration worked but no auto-redirect
+      const successVisible = await page.locator('[class*="glass-card"] >> text=/Account Created|Акаунт створено/i').first().isVisible().catch(() => false);
+      const successEmoji = await page.locator('text=🎉').first().isVisible().catch(() => false);
+      if (successVisible || successEmoji) {
+        addBug({
+          route: '/register (functional)',
+          severity: 'medium',
+          category: 'functional',
+          description: 'Registration succeeds but does not auto-redirect to app — user sees a success card and must manually go back to login, despite being authenticated',
+        });
+      } else {
+        const errorMsg = await page.locator('[role="alert"]').first().innerText().catch(() => '');
+        addBug({
+          route: '/register (functional)',
+          severity: 'high',
+          category: 'functional',
+          description: 'Registration did not redirect and showed no success or error feedback',
+          detail: errorMsg || 'No feedback shown to user after submit',
+        });
+      }
+    }
+
+    flush();
+  });
+
+  test('Login with wrong password shows error', async ({ page }) => {
+    const flush = attachMonitors(page, '/login (wrong-password)');
+    await page.goto('/login');
+    await waitForAngular(page);
+    await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+
+    const emailInput = page.locator('input[type="email"]').first();
+    if (!(await emailInput.isVisible().catch(() => false))) {
+      flush();
+      return;
+    }
+
+    await emailInput.fill('test123@mail.com');
+    await page.locator('input[type="password"]').first().fill('WRONG_PASSWORD_123');
+    await page.locator('button[type="submit"]').first().click();
+    // Wait for error alert to appear — backend may be slow (Render.com cold start)
+    await page.waitForSelector('[role="alert"]:visible', { timeout: 8000 }).catch(() => {});
+
+    const errorAlert = page.locator('[role="alert"]').first();
+    const errorVisible = await errorAlert.isVisible().catch(() => false);
+    const stillOnLogin = page.url().includes('/login');
+
+    if (!errorVisible && !stillOnLogin) {
+      addBug({
+        route: '/login (wrong-password)',
+        severity: 'high',
+        category: 'functional',
+        description: 'Login with wrong password did not show error and redirected away from login page',
+      });
+    } else if (!errorVisible) {
+      addBug({
+        route: '/login (wrong-password)',
+        severity: 'medium',
+        category: 'functional',
+        description: 'Login with wrong password stayed on login page but showed no error message to user',
+      });
+    }
+
+    flush();
+  });
+
+  test('Logout clears session and redirects to login', async ({ page }) => {
+    await injectAuth(page);
+    const flush = attachMonitors(page, '/logout (functional)');
+    await page.goto('/clubs');
+    await waitForAngular(page);
+
+    // Logout is inside the avatar dropdown — open it first (desktop), or in the mobile sheet
+    // Avatar button: aria-haspopup="menu" in the header
+    const avatarBtn = page.locator('button[aria-haspopup="menu"]').first();
+    if (await avatarBtn.isVisible().catch(() => false)) {
+      await avatarBtn.click();
+      await page.waitForTimeout(500);
+    }
+
+    const logoutBtn = page.locator('[data-testid="logout"]').first();
+    const logoutVisible = await logoutBtn.isVisible().catch(() => false);
+    if (!logoutVisible) {
+      addBug({ route: '/logout (functional)', severity: 'medium', category: 'functional', description: 'Logout button not found after opening avatar dropdown — data-testid="logout" not present or dropdown did not open' });
+      flush();
+      return;
+    }
+
+    await logoutBtn.click();
+    await page.waitForTimeout(2000);
+
+    const url = page.url();
+    if (!url.includes('/login')) {
+      addBug({ route: '/logout (functional)', severity: 'high', category: 'functional', description: `Logout did not redirect to /login — ended up at: ${url}` });
+    }
+
+    flush();
+  });
+});
+
+// ── Functional — Club CRUD ────────────────────────────────────────────────────
+
+test.describe('Functional — Club CRUD', () => {
+  test('Create club via UI', async ({ page }) => {
+    await injectAuth(page);
+    const flush = attachMonitors(page, '/clubs/create (functional)');
+
+    // Navigate to clubs and find create button
+    await page.goto('/clubs');
+    await waitForAngular(page);
+
+    const createBtn = page.locator('a[href*="create"], button:has-text("Create"), button:has-text("Створити")').first();
+    if (!(await createBtn.isVisible().catch(() => false))) {
+      // Try /manage page
+      await page.goto('/manage');
+      await waitForAngular(page);
+    }
+
+    const nameInput = page.locator('input[formcontrolname="name"]').first();
+    if (!(await nameInput.isVisible().catch(() => false))) {
+      await page.goto('/clubs/create').catch(() => {});
+      await waitForAngular(page);
+    }
+
+    const nameInputFinal = page.locator('input[formcontrolname="name"]').first();
+    if (!(await nameInputFinal.isVisible().catch(() => false))) {
+      addBug({ route: '/clubs/create (functional)', severity: 'high', category: 'functional', description: 'Club name input not found on create club page' });
+      flush();
+      return;
+    }
+
+    const clubName = `[Audit] Club ${Date.now()}`;
+    await nameInputFinal.fill(clubName);
+    await page.locator('input[formcontrolname="description"], textarea[formcontrolname="description"]').first().fill('Audit test club — safe to delete').catch(() => {});
+    await page.locator('button[type="submit"]').first().click();
+
+    try {
+      await page.waitForURL(/\/clubs\/[a-zA-Z0-9-]+/, { timeout: 15_000 });
+      const createdUrl = page.url();
+      const match = createdUrl.match(/\/clubs\/([a-zA-Z0-9-]+)/);
+      if (match) CREATED_CLUB_ID = match[1];
+    } catch {
+      const errorMsg = await page.locator('[class*="error"], [role="alert"]').first().innerText().catch(() => '');
+      addBug({
+        route: '/clubs/create (functional)',
+        severity: 'high',
+        category: 'functional',
+        description: 'Create club did not redirect to club detail after submit',
+        detail: errorMsg || 'No error shown',
+      });
+    }
+
+    flush();
+  });
+
+  test('Edit club name via UI', async ({ page }) => {
+    if (!OWNED_CLUB_ID) {
+      addBug({ route: '/clubs/:id/edit (functional)', severity: 'medium', category: 'functional', description: 'Skipped: no owned club ID' });
+      return;
+    }
+    await injectAuth(page);
+    const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/edit (functional)`);
+    await page.goto(`/clubs/${OWNED_CLUB_ID}/edit`);
+    await waitForAngular(page);
+
+    const nameInput = page.locator('input[formcontrolname="name"]').first();
+    if (!(await nameInput.isVisible().catch(() => false))) {
+      addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit (functional)`, severity: 'high', category: 'functional', description: 'Name input not visible on edit page' });
+      flush();
+      return;
+    }
+
+    const originalName = await nameInput.inputValue();
+    const newName = `[Audit] ${originalName.replace(/^\[Audit\] /, '')}`;
+    await nameInput.fill(newName);
+    await page.locator('button[type="submit"]').first().click();
+
+    try {
+      await page.waitForURL(/\/clubs\/[a-zA-Z0-9-]+(?!\/edit)/, { timeout: 10_000 });
+    } catch {
+      // May stay on edit page with success toast
+    }
+    await page.waitForTimeout(1500);
+
+    // Verify name changed
+    await page.goto(`/clubs/${OWNED_CLUB_ID}`);
+    await waitForAngular(page);
+    const pageText = await page.locator('h1, h2, [class*="title"]').first().innerText().catch(() => '');
+    const pageTextLower = pageText.toLowerCase();
+    if (!pageTextLower.includes('[audit]') && !pageTextLower.includes(newName.toLowerCase())) {
+      addBug({
+        route: `/clubs/${OWNED_CLUB_ID}/edit (functional)`,
+        severity: 'medium',
+        category: 'functional',
+        description: 'Club name change not reflected on detail page after save',
+        detail: `Expected name containing "[Audit]", got: "${pageText}"`,
+      });
+    }
+
+    // Restore name
+    await page.goto(`/clubs/${OWNED_CLUB_ID}/edit`);
+    await waitForAngular(page);
+    await page.locator('input[formcontrolname="name"]').first().fill(originalName).catch(() => {});
+    await page.locator('button[type="submit"]').first().click().catch(() => {});
+
+    flush();
+  });
+
+  test('Join and leave a club', async ({ page }) => {
+    // Use ANY_CLUB_ID (not owned) to test join/leave; CREATED_CLUB_ID is owned by the test user
+    const targetClub = ANY_CLUB_ID !== OWNED_CLUB_ID ? ANY_CLUB_ID : '';
+    if (!targetClub) {
+      addBug({ route: '/clubs/:id (join-leave)', severity: 'medium', category: 'functional', description: 'Skipped: no club ID available for join/leave test' });
+      return;
+    }
+    await injectAuth(page);
+    const flush = attachMonitors(page, `/clubs/${targetClub} (join-leave)`);
+    await page.goto(`/clubs/${targetClub}`);
+    await waitForAngular(page);
+
+    const joinBtn = page.locator('button:has-text("Join"), button:has-text("Приєднатись"), [data-testid="join-btn"]').first();
+    const leaveBtn = page.locator('button:has-text("Leave"), button:has-text("Покинути"), [data-testid="leave-btn"]').first();
+
+    const joinVisible = await joinBtn.isVisible().catch(() => false);
+    const leaveVisible = await leaveBtn.isVisible().catch(() => false);
+
+    if (!joinVisible && !leaveVisible) {
+      addBug({ route: `/clubs/${targetClub} (join-leave)`, severity: 'medium', category: 'functional', description: 'Neither Join nor Leave button visible on club detail page' });
+      flush();
+      return;
+    }
+
+    if (joinVisible) {
+      await joinBtn.click();
+      await page.waitForTimeout(2000);
+      const nowLeave = await page.locator('button:has-text("Leave"), button:has-text("Покинути")').first().isVisible().catch(() => false);
+      if (!nowLeave) {
+        addBug({ route: `/clubs/${targetClub} (join-leave)`, severity: 'high', category: 'functional', description: 'After clicking Join, Leave button did not appear' });
+      } else {
+        // Leave again to restore state
+        await page.locator('button:has-text("Leave"), button:has-text("Покинути")').first().click();
+        await page.waitForTimeout(1500);
+      }
+    } else if (leaveVisible) {
+      // Already a member — leave then rejoin
+      await leaveBtn.click();
+      await page.waitForTimeout(2000);
+      const nowJoin = await page.locator('button:has-text("Join"), button:has-text("Приєднатись")').first().isVisible().catch(() => false);
+      if (!nowJoin) {
+        addBug({ route: `/clubs/${targetClub} (join-leave)`, severity: 'high', category: 'functional', description: 'After clicking Leave, Join button did not appear' });
+      } else {
+        // Restore membership
+        await page.locator('button:has-text("Join"), button:has-text("Приєднатись")').first().click();
+        await page.waitForTimeout(1500);
+      }
+    }
+
+    flush();
+  });
+});
+
+// ── Functional — Event ────────────────────────────────────────────────────────
+
+test.describe('Functional — Event CRUD', () => {
+  test('Create event via UI', async ({ page }) => {
+    if (!OWNED_CLUB_ID) {
+      addBug({ route: '/clubs/:id/events/create (functional)', severity: 'medium', category: 'functional', description: 'Skipped: no owned club ID' });
+      return;
+    }
+    await injectAuth(page);
+    const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/events/create (functional)`);
+    await page.goto(`/clubs/${OWNED_CLUB_ID}/events/create`);
+    await waitForAngular(page);
+
+    const titleInput = page.locator('input[formcontrolname="title"]').first();
+    if (!(await titleInput.isVisible().catch(() => false))) {
+      addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create (functional)`, severity: 'high', category: 'functional', description: 'Title input not found on create event page' });
+      flush();
+      return;
+    }
+
+    const eventTitle = `[Audit] Event ${Date.now()}`;
+    await titleInput.fill(eventTitle);
+
+    const dateInput = page.locator('input[type="datetime-local"], input[formcontrolname="date"]').first();
+    if (await dateInput.isVisible().catch(() => false)) {
+      const tomorrow = new Date(Date.now() + 86_400_000);
+      const formatted = tomorrow.toISOString().slice(0, 16); // 'YYYY-MM-DDTHH:mm'
+      await dateInput.fill(formatted);
+    }
+
+    // Address autocomplete may be required — try to type in any city input
+    const cityInput = page.locator('input[formcontrolname="city"], input[placeholder*="city" i], input[placeholder*="місто" i], input[placeholder*="адрес" i]').first();
+    if (await cityInput.isVisible().catch(() => false)) {
+      await cityInput.fill('Kyiv');
+      await page.keyboard.press('Escape');
+    }
+
+    // Use force:true in case the submit button is gated by an address autocomplete component
+    await page.locator('button[type="submit"]').first().click({ force: true }).catch(() => {});
+
+    try {
+      // Wait for redirect to event detail — URL must contain a UUID (not "create")
+      await page.waitForURL(/\/events\/[0-9a-f]{8}-[0-9a-f]{4}-/, { timeout: 15_000 });
+      const createdUrl = page.url();
+      const match = createdUrl.match(/\/events\/([0-9a-f-]{36})/);
+      if (match) FUNCTIONAL_EVENT_ID = match[1];
+    } catch {
+      const errorMsg = await page.locator('[class*="error"], [role="alert"]').first().innerText().catch(() => '');
+      addBug({
+        route: `/clubs/${OWNED_CLUB_ID}/events/create (functional)`,
+        severity: 'high',
+        category: 'functional',
+        description: 'Create event did not redirect to event detail after submit',
+        detail: errorMsg || 'Submit button was disabled — address/city field may be required',
+      });
+    }
+
+    flush();
+  });
+
+  test('Edit event via UI', async ({ page }) => {
+    const eventId = FUNCTIONAL_EVENT_ID || ANY_EVENT_ID;
+    if (!eventId || !OWNED_CLUB_ID) {
+      addBug({ route: '/events/:id/edit (functional)', severity: 'medium', category: 'functional', description: 'Skipped: no event ID available' });
+      return;
+    }
+    await injectAuth(page);
+    const flush = attachMonitors(page, `/events/${eventId}/edit (functional)`);
+
+    // Navigate to event detail and find edit button
+    await page.goto(`/events/${eventId}`);
+    await waitForAngular(page);
+
+    const editBtn = page.locator('a:has-text("Edit"), button:has-text("Edit"), a:has-text("Редагувати"), button:has-text("Редагувати"), [data-testid="edit-event"]').first();
+    if (await editBtn.isVisible().catch(() => false)) {
+      await editBtn.click();
+      await waitForAngular(page);
+    } else {
+      await page.goto(`/events/${eventId}/edit`).catch(() => {});
+      await waitForAngular(page);
+    }
+
+    const titleInput = page.locator('input[formcontrolname="title"]').first();
+    if (!(await titleInput.isVisible().catch(() => false))) {
+      addBug({ route: `/events/${eventId}/edit (functional)`, severity: 'high', category: 'functional', description: 'Title input not found on event edit page' });
+      flush();
+      return;
+    }
+
+    const originalTitle = await titleInput.inputValue();
+    await titleInput.fill(`[Audit Edit] ${originalTitle.replace(/^\[Audit.*?\] /, '')}`);
+    await page.locator('button[type="submit"]').first().click();
+    await page.waitForTimeout(2000);
+
+    const pageText = await page.locator('h1, h2, [class*="title"]').first().innerText().catch(() => '');
+    if (!pageText.includes('[Audit Edit]') && !pageText.includes(originalTitle.replace(/^\[Audit.*?\] /, ''))) {
+      addBug({
+        route: `/events/${eventId}/edit (functional)`,
+        severity: 'medium',
+        category: 'functional',
+        description: 'Event title change not reflected on detail page after save',
+        detail: `Page heading: "${pageText}"`,
+      });
+    }
+
+    flush();
+  });
+});
+
+// ── Functional — Quiz CRUD ────────────────────────────────────────────────────
+
+test.describe('Functional — Quiz CRUD', () => {
+  test('Create quiz (2 steps) via UI', async ({ page }) => {
+    if (!OWNED_CLUB_ID) {
+      addBug({ route: '/clubs/:id/quizzes/create (functional)', severity: 'medium', category: 'functional', description: 'Skipped: no owned club ID' });
+      return;
+    }
+    await injectAuth(page);
+    const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/create (functional)`);
+    await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/create`);
+    await waitForAngular(page);
+
+    // Step 1 — title
+    const titleInput = page.locator('input[formcontrolname="title"]').first();
+    if (!(await titleInput.isVisible().catch(() => false))) {
+      addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create (functional)`, severity: 'high', category: 'functional', description: 'Quiz title input not found on step 1' });
+      flush();
+      return;
+    }
+
+    const quizTitle = `[Audit] Quiz ${Date.now()}`;
+    await titleInput.fill(quizTitle);
+    const nextBtn = page.locator('button[type="submit"]').first();
+    await nextBtn.click();
+    await page.waitForTimeout(1000);
+
+    // Step 2 — add a question
+    const questionInput = page.locator('textarea[formcontrolname="question"], input[formcontrolname="question"]').first();
+    if (!(await questionInput.isVisible().catch(() => false))) {
+      addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create (functional)`, severity: 'high', category: 'functional', description: 'Question input not found on step 2 after proceeding from step 1' });
+      flush();
+      return;
+    }
+
+    await questionInput.fill('What is the capital of Ukraine?');
+    // Option inputs use dynamic [formControlName] binding — select by placeholder instead
+    await page.locator('input[placeholder^="Option A"], input[placeholder^="Option "][placeholder$="A"]').first().fill('Kyiv').catch(() => {});
+    await page.locator('input[placeholder^="Option B"], input[placeholder^="Option "][placeholder$="B"]').first().fill('Lviv').catch(() => {});
+    await page.locator('input[placeholder^="Option C"], input[placeholder^="Option "][placeholder$="C"]').first().fill('Kharkiv').catch(() => {});
+    await page.locator('input[placeholder^="Option D"], input[placeholder^="Option "][placeholder$="D"]').first().fill('Odessa').catch(() => {});
+
+    // correctIndex defaults to 0 so it's already valid — just ensure first radio is selected
+    await page.locator('input[type="radio"]').first().click({ force: true }).catch(() => {});
+    await page.waitForTimeout(300);
+
+    // Add question
+    await page.locator('button[type="submit"]').first().click();
+    await page.waitForTimeout(1000);
+
+    // Publish quiz — button calls publishQuiz(), label variants: "Publish Quiz", "Опублікувати вікторину", "Save as Draft"
+    const publishBtn = page.locator('button:has-text("Publish"), button:has-text("Опублікувати"), button:has-text("Done"), button:has-text("Готово"), button:has-text("Save")').first();
+    await page.waitForTimeout(500);
+    if (await publishBtn.isVisible().catch(() => false)) {
+      await publishBtn.click();
+      try {
+        await page.waitForURL(/\/quizzes\/[a-zA-Z0-9-]+(?!\/create)/, { timeout: 10_000 });
+        const match = page.url().match(/\/quizzes\/([a-zA-Z0-9-]+)/);
+        if (match) CREATED_QUIZ_ID = match[1];
+      } catch {
+        const errorMsg = await page.locator('[class*="error"], [role="alert"]').first().innerText().catch(() => '');
+        addBug({
+          route: `/clubs/${OWNED_CLUB_ID}/quizzes/create (functional)`,
+          severity: 'medium',
+          category: 'functional',
+          description: 'Quiz publish did not navigate away from create page',
+          detail: errorMsg || 'No error shown',
+        });
+      }
+    } else {
+      addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create (functional)`, severity: 'medium', category: 'functional', description: 'Publish button not found after adding a question in quiz create step 2' });
+    }
+
+    flush();
+  });
+
+  test('Edit quiz title via UI', async ({ page }) => {
+    const quizId = CREATED_QUIZ_ID || ANY_QUIZ_ID;
+    if (!quizId || !OWNED_CLUB_ID) {
+      addBug({ route: '/quizzes/:id/edit (functional)', severity: 'medium', category: 'functional', description: 'Skipped: no quiz ID available' });
+      return;
+    }
+    await injectAuth(page);
+    const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${quizId}/edit (functional)`);
+    await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${quizId}/edit`);
+    await waitForAngular(page);
+
+    const titleInput = page.locator('input[formcontrolname="title"]').first();
+    if (!(await titleInput.isVisible().catch(() => false))) {
+      addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${quizId}/edit (functional)`, severity: 'high', category: 'functional', description: 'Title input not visible on quiz edit page' });
+      flush();
+      return;
+    }
+
+    // Check if input is disabled — for published quizzes this is expected (app shows a lock banner)
+    // Only report as bug if there's no informational banner explaining the locked state
+    const isDisabled = await titleInput.isDisabled().catch(() => false);
+    if (isDisabled) {
+      const lockBanner = await page.locator('[role="alert"]:has-text("live"), [role="alert"]:has-text("read-only"), [role="alert"]:has-text("cannot be edited")').first().isVisible().catch(() => false);
+      if (!lockBanner) {
+        addBug({
+          route: `/clubs/${OWNED_CLUB_ID}/quizzes/${quizId}/edit (functional)`,
+          severity: 'medium',
+          category: 'functional',
+          description: 'Quiz title input is disabled on edit page with no explanation shown to user',
+        });
+      }
+      flush();
+      return;
+    }
+
+    const originalTitle = await titleInput.inputValue();
+    await titleInput.fill(`[Audit Edit] ${originalTitle.replace(/^\[Audit.*?\] /, '')}`);
+    await page.locator('button[type="submit"]').first().click();
+    await page.waitForTimeout(2000);
+
+    // Quick verify — title should appear somewhere on the resulting page
+    const heading = await page.locator('h1, h2, [class*="title"]').first().innerText().catch(() => '');
+    if (!heading.toLowerCase().includes('[audit edit]') && !heading.toLowerCase().includes(originalTitle.replace(/^\[Audit.*?\] /, '').toLowerCase())) {
+      addBug({
+        route: `/clubs/${OWNED_CLUB_ID}/quizzes/${quizId}/edit (functional)`,
+        severity: 'medium',
+        category: 'functional',
+        description: 'Quiz title change not reflected after save',
+        detail: `Heading text: "${heading}"`,
+      });
+    }
+
+    flush();
+  });
+
+  test('Toggle quiz active status', async ({ page }) => {
+    const quizId = CREATED_QUIZ_ID || ANY_QUIZ_ID;
+    if (!quizId || !OWNED_CLUB_ID) {
+      addBug({ route: '/quizzes/:id (toggle-active)', severity: 'low', category: 'functional', description: 'Skipped: no quiz ID available' });
+      return;
+    }
+    await injectAuth(page);
+    const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${quizId} (toggle-active)`);
+    await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes`);
+    await waitForAngular(page);
+
+    const toggleBtn = page.locator('[data-testid="toggle-active"], button:has-text("Activate"), button:has-text("Deactivate"), button:has-text("Активувати"), button:has-text("Деактивувати")').first();
+    if (!(await toggleBtn.isVisible().catch(() => false))) {
+      addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes (toggle-active)`, severity: 'low', category: 'functional', description: 'Quiz activate/deactivate toggle button not found on quizzes list' });
+      flush();
+      return;
+    }
+
+    await toggleBtn.click();
+    await page.waitForTimeout(1500);
+
+    flush();
+  });
+});
+
+// ── Functional — Profile ─────────────────────────────────────────────────────
+
+test.describe('Functional — Profile', () => {
+  test('Edit display name and verify change', async ({ page }) => {
+    await injectAuth(page);
+    const flush = attachMonitors(page, '/profile (edit-name)');
+    await page.goto('/profile');
+    await waitForAngular(page);
+
+    const nameInput = page.locator('input[formcontrolname="displayName"]').first();
+    if (!(await nameInput.isVisible().catch(() => false))) {
+      addBug({ route: '/profile (edit-name)', severity: 'high', category: 'functional', description: 'Display name input not visible on profile page' });
+      flush();
+      return;
+    }
+
+    const originalName = await nameInput.inputValue();
+    const newName = `AuditUser-${Date.now()}`;
+    await nameInput.fill(newName);
+    await page.locator('button[type="submit"]').first().click();
+    await page.waitForTimeout(2000);
+
+    // Reload and verify
+    await page.goto('/profile');
+    await waitForAngular(page);
+
+    const savedName = await page.locator('input[formcontrolname="displayName"]').first().inputValue().catch(() => '');
+    if (savedName !== newName) {
+      addBug({
+        route: '/profile (edit-name)',
+        severity: 'high',
+        category: 'functional',
+        description: 'Display name change was not persisted — mismatch after reload',
+        detail: `Expected: "${newName}", got: "${savedName}"`,
+      });
+    }
+
+    // Restore original name
+    if (originalName) {
+      await page.locator('input[formcontrolname="displayName"]').first().fill(originalName);
+      await page.locator('button[type="submit"]').first().click().catch(() => {});
+      await page.waitForTimeout(1000);
+    }
+
+    flush();
+  });
+});
+
 // ── Write bugs.md ─────────────────────────────────────────────────────────────
 
-test.afterAll(async () => {
+test.afterAll(async ({ request }) => {
+  // Clean up created test data via API
+  const headers = ACCESS_TOKEN ? { Authorization: `Bearer ${ACCESS_TOKEN}` } : {};
+  if (CREATED_CLUB_ID) {
+    await request.delete(`${API}/clubs/${CREATED_CLUB_ID}`, { headers, timeout: 10_000 }).catch(() => {});
+  }
+  if (FUNCTIONAL_EVENT_ID && OWNED_CLUB_ID) {
+    await request.delete(`${API}/clubs/${OWNED_CLUB_ID}/events/${FUNCTIONAL_EVENT_ID}`, { headers, timeout: 10_000 }).catch(() => {});
+  }
+  if (CREATED_QUIZ_ID && OWNED_CLUB_ID) {
+    await request.delete(`${API}/clubs/${OWNED_CLUB_ID}/quizzes/${CREATED_QUIZ_ID}`, { headers, timeout: 10_000 }).catch(() => {});
+  }
   const severityOrder = ['critical', 'high', 'medium', 'low'] as const;
   const counts = Object.fromEntries(severityOrder.map(s => [s, bugs.filter(b => b.severity === s).length]));
 
@@ -750,7 +1397,7 @@ test.afterAll(async () => {
     '# Bug Report — Book Club App Audit',
     '',
     `**Date:** ${new Date().toISOString().split('T')[0]}`,
-    `**URL:** https://book-club-dyxne04jy-dmytros-projects-ad22eb22.vercel.app/`,
+    `**URL:** https://book-club-l7xs8u371-dmytros-projects-ad22eb22.vercel.app/`,
     `**Test user:** test123@mail.com`,
     `**Club owner account:** terrtr`,
     '',

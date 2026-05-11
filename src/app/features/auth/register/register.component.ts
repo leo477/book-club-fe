@@ -8,7 +8,7 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -44,6 +44,7 @@ interface RegisterForm {
 })
 export class RegisterComponent {
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly seo = inject(SeoService);
 
   readonly errorMessage = signal<string | null>(null);
@@ -63,7 +64,7 @@ export class RegisterComponent {
   }
 
   onBookAnimationDone(): void {
-    // Book animation done; success message is already visible
+    this.router.navigate(['/clubs']);
   }
 
   readonly form = new FormGroup<RegisterForm>(

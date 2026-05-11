@@ -59,30 +59,42 @@ The content is organized as follows:
   pre-commit
 playwright-report/
   data/
-    165f0d18828a353f71af165a18f45d63f92b831c.zip
-    1b0aa1859c02b796e9352c2f62df373d8f1452d4.zip
-    2f812a0c9896592bb5e1c2eacecf7838bc0e6646.zip
-    354d0cf7a3df2d7f11ec7b590a1c91d3d50b97e4.zip
-    36294e4b3eb7948c5ba0a332d0cecb2247583499.zip
-    3cd0a76377843f672d67a50a5c3f281eb67a7cee.zip
-    4817963d363a5172bdb84679fd6138e72556c515.zip
-    4fc6b79abd80b2f2709c88ab00449d789f82cde8.zip
-    5cc7ae52e110e6ab227431c8560dfe0134ff46ee.zip
-    6397879cc2979cecc75375d550832e4b87642fb1.zip
-    7281629fab1a52c5f4eb33dcc66d5527caee710c.zip
-    731d3e9f357c801aeac1775612d8190c8d1b9f04.zip
-    93c365516dad2c0aef2729548760788a67ea15c4.zip
-    9517790abf57b79170d4cd4e297c3749ea5f8a36.zip
-    af5bdc9305f46654be77b787331e0791c2e513b3.zip
-    b278463624d95dc3659263249e205a3c1f194756.zip
-    bacfbf63ad7b5b3fa406cf5cc735d2cc42ff2cc3.zip
-    c069800ebf322812a3f004ad38fbfdd62d061afd.zip
-    c8ffc21abafd3f1f2ef4e16fcd49362d561e9b06.zip
-    de0b58ffaa4723eec1900d004411a8aee0907020.zip
-    ed6488634f35603ee2a8ba0260272a1228b04b85.zip
-    f4c736b3eb22b8f66c90fc269606869a11e875f4.zip
-    f6c40ea237a632c3bc009ceabc0f823fc062ad14.zip
-    fca728f04cd49c60e6ff2b10994d63a7f957ebf0.zip
+    059d3db88d4457829105edbf607b61fb91711a9d.zip
+    140b4fd0a687c266a032954ce66827d07fa1bec6.zip
+    1c962034c538a8446a1e04901bb895fb4fb5a592.zip
+    1fbbdb71cda4998d2bba044e799b645d5d53d154.zip
+    217b8f4b3c8640a71e6ba649d8b1cd5af8fd84a2.zip
+    2652cf42a08e9798c6b15f04c9ff230e2e42f347.zip
+    2c5a7ccb58d1db69b81f9dcc6144d54024b4e636.zip
+    30c0bdce36f021cdffe77268a2a859a06f878c1c.zip
+    349d4beafab34f31b0a789d480650ed364e19662.zip
+    39e18ddd9a651f787503bd64b49fe90185be49a3.zip
+    3b409d5abcda56420b9c26b096a44d2d6910d0b6.zip
+    4c4b5f9f2efd8dcc87fecf6f62fb48a031ae81d5.zip
+    58b6e3d3ed4208fc0284e0ee6158585e544b22e5.zip
+    5bae5206f61927cc605918b495dd1c6e39da166f.zip
+    60837488cebadc018aecd81db29c0f7eb1d7925c.zip
+    617938c75aad31252f844c5a6fcdd88c03024f91.zip
+    6af2b0a3ae14a0956b377fc1837b8e951f63ebff.zip
+    7dff402ceded99af4568a25ae50a714c8b9148de.zip
+    7f511c8fe286ae4bc2fed1af2025790a10fe46af.zip
+    8830949b47c112ae9472abaee337b9b3cf2106c7.zip
+    8f6a6c946bb802e38ba3c1a6d7b05f1fd3ad2bc5.zip
+    9220a24e82ee622154941761cdeee24359cb7058.zip
+    94dad87ffc29741488f8228c1d3a04a017d9787d.zip
+    9ab20f20a6f50dffa12ca66d3a35c91ecdb05f23.zip
+    9b86e41aedb09d8705fde260e18458e65c53462e.zip
+    adcb1a39977513bedbeaa14a4959560550c05a0a.zip
+    b05875e0ec3d26510eb901a7e750ce4886eaa97b.zip
+    b15b76f9f58928d35f831587d14bc4e31b8666e8.zip
+    d6cbd3f19e148ac648fae9218a21f13391e4a650.zip
+    df7326dba1a89d5d62b245e5e8db8bcef22ae0b9.zip
+    e28e4c14e8ff5352a0b5a2f102920063400172cc.zip
+    e62ceb3d2432e082364583d694fc8e09fd20a48a.zip
+    efaf7405b7886bda1a429e13bc69f80054282592.zip
+    f75ee5f45e0c051609f79794cfed08b4dac8ec9f.zip
+    f90a2afd0c2b1d36d052354d8a00d654687982e0.zip
+    f9f93720b8a8795ceddda6237cf50de15d634d57.zip
   trace/
     assets/
       codeMirrorModule-DS0FLvoc.js
@@ -466,6 +478,30 @@ test-results/
   audit-Authenticated-—-Quiz-f4c0d-izId-preview-—-quiz-preview-chromium/
     trace.zip
   audit-Authenticated-—-Rand-96cee-ubs-id-randomizer-—-renders-chromium/
+    trace.zip
+  audit-Functional-—-Auth-Lo-58ee2--wrong-password-shows-error-chromium/
+    trace.zip
+  audit-Functional-—-Auth-Lo-e6c97-sion-and-redirects-to-login-chromium/
+    trace.zip
+  audit-Functional-—-Auth-Register-new-user-unique-email--chromium/
+    trace.zip
+  audit-Functional-—-Club-CRUD-Create-club-via-UI-chromium/
+    trace.zip
+  audit-Functional-—-Club-CRUD-Edit-club-name-via-UI-chromium/
+    trace.zip
+  audit-Functional-—-Club-CRUD-Join-and-leave-a-club-chromium/
+    trace.zip
+  audit-Functional-—-Event-CRUD-Create-event-via-UI-chromium/
+    trace.zip
+  audit-Functional-—-Event-CRUD-Edit-event-via-UI-chromium/
+    trace.zip
+  audit-Functional-—-Profile-d7163-play-name-and-verify-change-chromium/
+    trace.zip
+  audit-Functional-—-Quiz-CRUD-Create-quiz-2-steps-via-UI-chromium/
+    trace.zip
+  audit-Functional-—-Quiz-CRUD-Edit-quiz-title-via-UI-chromium/
+    trace.zip
+  audit-Functional-—-Quiz-CRUD-Toggle-quiz-active-status-chromium/
     trace.zip
   audit-Login-flow-Login-wit-ba01d-redentials-redirects-to-app-chromium/
     trace.zip
@@ -1219,7 +1255,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Unauthenticated",
           "file": "audit.spec.ts",
-          "line": 194,
+          "line": 218,
           "column": 6,
           "specs": [
             {
@@ -1238,12 +1274,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2946,
+                      "duration": 2752,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:01.081Z",
+                      "startTime": "2026-05-11T12:49:49.558Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1259,7 +1295,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-f5246440050eb2d1b30f",
               "file": "audit.spec.ts",
-              "line": 195,
+              "line": 219,
               "column": 7
             },
             {
@@ -1278,12 +1314,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2069,
+                      "duration": 2083,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:06.285Z",
+                      "startTime": "2026-05-11T12:49:54.643Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1299,7 +1335,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-bc30b90a70577aa59e02",
               "file": "audit.spec.ts",
-              "line": 230,
+              "line": 254,
               "column": 7
             },
             {
@@ -1318,12 +1354,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1577,
+                      "duration": 2075,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:08.407Z",
+                      "startTime": "2026-05-11T12:49:56.790Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1339,7 +1375,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-9949923f57d1840a308c",
               "file": "audit.spec.ts",
-              "line": 255,
+              "line": 279,
               "column": 7
             },
             {
@@ -1358,12 +1394,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1508,
+                      "duration": 1511,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:13.606Z",
+                      "startTime": "2026-05-11T12:49:58.914Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1379,7 +1415,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-49e29292a22c3612fdf8",
               "file": "audit.spec.ts",
-              "line": 268,
+              "line": 292,
               "column": 7
             }
           ]
@@ -1387,7 +1423,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Login flow",
           "file": "audit.spec.ts",
-          "line": 285,
+          "line": 309,
           "column": 6,
           "specs": [
             {
@@ -1406,12 +1442,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5320,
+                      "duration": 5032,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:15.151Z",
+                      "startTime": "2026-05-11T12:50:00.464Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1427,7 +1463,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-22da45e75733d1a79597",
               "file": "audit.spec.ts",
-              "line": 286,
+              "line": 310,
               "column": 7
             }
           ]
@@ -1435,7 +1471,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Events",
           "file": "audit.spec.ts",
-          "line": 316,
+          "line": 340,
           "column": 6,
           "specs": [
             {
@@ -1454,12 +1490,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2232,
+                      "duration": 2693,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:20.582Z",
+                      "startTime": "2026-05-11T12:50:09.176Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1475,7 +1511,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-d46db9bc60fe9a0ee667",
               "file": "audit.spec.ts",
-              "line": 317,
+              "line": 341,
               "column": 7
             },
             {
@@ -1494,12 +1530,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 81,
+                      "duration": 2421,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:22.864Z",
+                      "startTime": "2026-05-11T12:50:11.916Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1515,7 +1551,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-76af7e3d1ce1b59ef351",
               "file": "audit.spec.ts",
-              "line": 338,
+              "line": 362,
               "column": 7
             }
           ]
@@ -1523,11 +1559,219 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Clubs",
           "file": "audit.spec.ts",
-          "line": 358,
+          "line": 382,
           "column": 6,
           "specs": [
             {
               "title": "GET /clubs — clubs list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3015,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:50:14.378Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Clubs-GET-clubs-—-clubs-list-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-2ce67c659045f92d789a",
+              "file": "audit.spec.ts",
+              "line": 383,
+              "column": 7
+            },
+            {
+              "title": "GET /clubs/:id — club detail",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2871,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:50:17.445Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Clubs-GET-clubs-id-—-club-detail-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-68219b921b1d8e3be4c1",
+              "file": "audit.spec.ts",
+              "line": 399,
+              "column": 7
+            },
+            {
+              "title": "GET /clubs/:id/edit — edit form for owner",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2483,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:50:20.359Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Club-98654--edit-—-edit-form-for-owner-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-cb15362a6b87f51ad9c8",
+              "file": "audit.spec.ts",
+              "line": 418,
+              "column": 7
+            },
+            {
+              "title": "GET /clubs/:id/events/create — create event form",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2562,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:50:22.884Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Club-09337--create-—-create-event-form-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-0a0de066d87ad95845c9",
+              "file": "audit.spec.ts",
+              "line": 449,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Authenticated — Quizzes",
+          "file": "audit.spec.ts",
+          "line": 481,
+          "column": 6,
+          "specs": [
+            {
+              "title": "GET /clubs/:id/quizzes — quiz list",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 2645,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:50:25.484Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-05b4d-lubs-id-quizzes-—-quiz-list-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-9302ee7aba33d1706f73",
+              "file": "audit.spec.ts",
+              "line": 482,
+              "column": 7
+            },
+            {
+              "title": "GET /clubs/:id/quizzes/create — create quiz step 1",
               "ok": true,
               "tags": [],
               "tests": [
@@ -1547,215 +1791,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:22.959Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Clubs-GET-clubs-—-clubs-list-chromium/trace.zip"
-                        }
-                      ]
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "45efdff6a4d2e1f7e786-2ce67c659045f92d789a",
-              "file": "audit.spec.ts",
-              "line": 359,
-              "column": 7
-            },
-            {
-              "title": "GET /clubs/:id — club detail",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 120000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2388,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-05-11T11:52:25.539Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Clubs-GET-clubs-id-—-club-detail-chromium/trace.zip"
-                        }
-                      ]
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "45efdff6a4d2e1f7e786-68219b921b1d8e3be4c1",
-              "file": "audit.spec.ts",
-              "line": 375,
-              "column": 7
-            },
-            {
-              "title": "GET /clubs/:id/edit — edit form for owner",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 120000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2343,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-05-11T11:52:27.970Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Club-98654--edit-—-edit-form-for-owner-chromium/trace.zip"
-                        }
-                      ]
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "45efdff6a4d2e1f7e786-cb15362a6b87f51ad9c8",
-              "file": "audit.spec.ts",
-              "line": 394,
-              "column": 7
-            },
-            {
-              "title": "GET /clubs/:id/events/create — create event form",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 120000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2252,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-05-11T11:52:30.350Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Club-09337--create-—-create-event-form-chromium/trace.zip"
-                        }
-                      ]
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "45efdff6a4d2e1f7e786-0a0de066d87ad95845c9",
-              "file": "audit.spec.ts",
-              "line": 425,
-              "column": 7
-            }
-          ]
-        },
-        {
-          "title": "Authenticated — Quizzes",
-          "file": "audit.spec.ts",
-          "line": 457,
-          "column": 6,
-          "specs": [
-            {
-              "title": "GET /clubs/:id/quizzes — quiz list",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 120000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2273,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-05-11T11:52:32.644Z",
-                      "annotations": [],
-                      "attachments": [
-                        {
-                          "name": "trace",
-                          "contentType": "application/zip",
-                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Authenticated-—-Quiz-05b4d-lubs-id-quizzes-—-quiz-list-chromium/trace.zip"
-                        }
-                      ]
-                    }
-                  ],
-                  "status": "expected"
-                }
-              ],
-              "id": "45efdff6a4d2e1f7e786-9302ee7aba33d1706f73",
-              "file": "audit.spec.ts",
-              "line": 458,
-              "column": 7
-            },
-            {
-              "title": "GET /clubs/:id/quizzes/create — create quiz step 1",
-              "ok": true,
-              "tags": [],
-              "tests": [
-                {
-                  "timeout": 120000,
-                  "annotations": [],
-                  "expectedStatus": "passed",
-                  "projectId": "chromium",
-                  "projectName": "chromium",
-                  "results": [
-                    {
-                      "workerIndex": 0,
-                      "parallelIndex": 0,
-                      "status": "passed",
-                      "duration": 2322,
-                      "errors": [],
-                      "stdout": [],
-                      "stderr": [],
-                      "retry": 0,
-                      "startTime": "2026-05-11T11:52:34.955Z",
+                      "startTime": "2026-05-11T12:50:28.167Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1771,7 +1807,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-b38f358edfddb5fa7fd7",
               "file": "audit.spec.ts",
-              "line": 479,
+              "line": 503,
               "column": 7
             },
             {
@@ -1790,12 +1826,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2337,
+                      "duration": 79,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:37.318Z",
+                      "startTime": "2026-05-11T12:50:30.740Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1811,7 +1847,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-029b5be3cb4067b9b4e0",
               "file": "audit.spec.ts",
-              "line": 512,
+              "line": 536,
               "column": 7
             },
             {
@@ -1830,12 +1866,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2342,
+                      "duration": 87,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:39.692Z",
+                      "startTime": "2026-05-11T12:50:30.832Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1851,7 +1887,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-06e2578b47fcd2080524",
               "file": "audit.spec.ts",
-              "line": 533,
+              "line": 557,
               "column": 7
             },
             {
@@ -1870,12 +1906,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2496,
+                      "duration": 86,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:42.079Z",
+                      "startTime": "2026-05-11T12:50:30.933Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1891,7 +1927,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-7cf2a7f666c21eaf11e5",
               "file": "audit.spec.ts",
-              "line": 554,
+              "line": 578,
               "column": 7
             },
             {
@@ -1910,12 +1946,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2638,
+                      "duration": 87,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:48.206Z",
+                      "startTime": "2026-05-11T12:50:31.033Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1931,7 +1967,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-312af12f04276abe0ee3",
               "file": "audit.spec.ts",
-              "line": 580,
+              "line": 604,
               "column": 7
             },
             {
@@ -1950,12 +1986,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2287,
+                      "duration": 87,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:50.892Z",
+                      "startTime": "2026-05-11T12:50:31.133Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1971,7 +2007,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-0ce7de78bab32fab9ce3",
               "file": "audit.spec.ts",
-              "line": 601,
+              "line": 625,
               "column": 7
             }
           ]
@@ -1979,7 +2015,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Randomizer",
           "file": "audit.spec.ts",
-          "line": 623,
+          "line": 647,
           "column": 6,
           "specs": [
             {
@@ -1998,12 +2034,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2227,
+                      "duration": 2942,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:53.219Z",
+                      "startTime": "2026-05-11T12:50:31.233Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2019,7 +2055,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-6b2c2683cb59fc280d9c",
               "file": "audit.spec.ts",
-              "line": 624,
+              "line": 648,
               "column": 7
             }
           ]
@@ -2027,7 +2063,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Profile",
           "file": "audit.spec.ts",
-          "line": 651,
+          "line": 675,
           "column": 6,
           "specs": [
             {
@@ -2046,12 +2082,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2386,
+                      "duration": 2758,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:55.496Z",
+                      "startTime": "2026-05-11T12:50:34.216Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2067,7 +2103,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-f0fa88c1ca5ce74aeaf1",
               "file": "audit.spec.ts",
-              "line": 652,
+              "line": 676,
               "column": 7
             }
           ]
@@ -2075,7 +2111,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Manage",
           "file": "audit.spec.ts",
-          "line": 675,
+          "line": 699,
           "column": 6,
           "specs": [
             {
@@ -2094,12 +2130,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2481,
+                      "duration": 3856,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:52:57.924Z",
+                      "startTime": "2026-05-11T12:50:37.011Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2115,7 +2151,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-29850844fb383cafed54",
               "file": "audit.spec.ts",
-              "line": 676,
+              "line": 700,
               "column": 7
             }
           ]
@@ -2123,7 +2159,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Navigation & UI",
           "file": "audit.spec.ts",
-          "line": 694,
+          "line": 718,
           "column": 6,
           "specs": [
             {
@@ -2142,12 +2178,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2655,
+                      "duration": 2953,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:53:00.449Z",
+                      "startTime": "2026-05-11T12:50:44.499Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2163,7 +2199,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-01a9c5e7b844c5aafd45",
               "file": "audit.spec.ts",
-              "line": 695,
+              "line": 719,
               "column": 7
             },
             {
@@ -2182,12 +2218,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2443,
+                      "duration": 2978,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:53:03.149Z",
+                      "startTime": "2026-05-11T12:50:47.501Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2203,7 +2239,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-ff9c27d83ece6c30097a",
               "file": "audit.spec.ts",
-              "line": 715,
+              "line": 739,
               "column": 7
             },
             {
@@ -2222,16 +2258,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1647,
+                      "duration": 1509,
                       "errors": [],
-                      "stdout": [
-                        {
-                          "text": "\n✅ bugs.md written — 1 issue(s) found\n"
-                        }
-                      ],
+                      "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T11:53:05.644Z",
+                      "startTime": "2026-05-11T12:50:50.525Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2247,7 +2279,531 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-3017867c3036115faae5",
               "file": "audit.spec.ts",
-              "line": 729,
+              "line": 753,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Functional — Auth",
+          "file": "audit.spec.ts",
+          "line": 769,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Register new user (unique email)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 12544,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:50:52.071Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Functional-—-Auth-Register-new-user-unique-email--chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-b59848cd26158ce105f3",
+              "file": "audit.spec.ts",
+              "line": 770,
+              "column": 7
+            },
+            {
+              "title": "Login with wrong password shows error",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5177,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:51:04.737Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Functional-—-Auth-Lo-58ee2--wrong-password-shows-error-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-32f4571aa3275392f4f1",
+              "file": "audit.spec.ts",
+              "line": 830,
+              "column": 7
+            },
+            {
+              "title": "Logout clears session and redirects to login",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 3528,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:51:09.990Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Functional-—-Auth-Lo-e6c97-sion-and-redirects-to-login-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-b378913539f919161018",
+              "file": "audit.spec.ts",
+              "line": 871,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Functional — Club CRUD",
+          "file": "audit.spec.ts",
+          "line": 907,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Create club via UI",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5229,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:51:13.574Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Functional-—-Club-CRUD-Create-club-via-UI-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-2c43cd04339c4285f567",
+              "file": "audit.spec.ts",
+              "line": 908,
+              "column": 7
+            },
+            {
+              "title": "Edit club name via UI",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 9079,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:51:22.446Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Functional-—-Club-CRUD-Edit-club-name-via-UI-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-c43358467ea4603f73c6",
+              "file": "audit.spec.ts",
+              "line": 960,
+              "column": 7
+            },
+            {
+              "title": "Join and leave a club",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 6512,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:51:31.636Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Functional-—-Club-CRUD-Join-and-leave-a-club-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-eeca321329cb385b4e95",
+              "file": "audit.spec.ts",
+              "line": 1013,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Functional — Event CRUD",
+          "file": "audit.spec.ts",
+          "line": 1068,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Create event via UI",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 37646,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:51:38.246Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Functional-—-Event-CRUD-Create-event-via-UI-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-7b15bf397dd50a5523d2",
+              "file": "audit.spec.ts",
+              "line": 1069,
+              "column": 7
+            },
+            {
+              "title": "Edit event via UI",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5287,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:52:19.530Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Functional-—-Event-CRUD-Edit-event-via-UI-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-ce6cbde9dbfb5bdeb4d1",
+              "file": "audit.spec.ts",
+              "line": 1126,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Functional — Quiz CRUD",
+          "file": "audit.spec.ts",
+          "line": 1177,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Create quiz (2 steps) via UI",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 5701,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:52:24.889Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Functional-—-Quiz-CRUD-Create-quiz-2-steps-via-UI-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-8bb6ea3c3d499979cd1e",
+              "file": "audit.spec.ts",
+              "line": 1178,
+              "column": 7
+            },
+            {
+              "title": "Edit quiz title via UI",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 87,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:52:34.261Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Functional-—-Quiz-CRUD-Edit-quiz-title-via-UI-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-afff53c7e73a162832ac",
+              "file": "audit.spec.ts",
+              "line": 1251,
+              "column": 7
+            },
+            {
+              "title": "Toggle quiz active status",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 85,
+                      "errors": [],
+                      "stdout": [],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:52:34.363Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Functional-—-Quiz-CRUD-Toggle-quiz-active-status-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-30a88597c3947ea44a02",
+              "file": "audit.spec.ts",
+              "line": 1306,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "Functional — Profile",
+          "file": "audit.spec.ts",
+          "line": 1333,
+          "column": 6,
+          "specs": [
+            {
+              "title": "Edit display name and verify change",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 120000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [
+                    {
+                      "workerIndex": 0,
+                      "parallelIndex": 0,
+                      "status": "passed",
+                      "duration": 7953,
+                      "errors": [],
+                      "stdout": [
+                        {
+                          "text": "\n✅ bugs.md written — 13 issue(s) found\n"
+                        }
+                      ],
+                      "stderr": [],
+                      "retry": 0,
+                      "startTime": "2026-05-11T12:52:34.461Z",
+                      "annotations": [],
+                      "attachments": [
+                        {
+                          "name": "trace",
+                          "contentType": "application/zip",
+                          "path": "/home/dmytr/angular/book-club-fe/test-results/audit-Functional-—-Profile-d7163-play-name-and-verify-change-chromium/trace.zip"
+                        }
+                      ]
+                    }
+                  ],
+                  "status": "expected"
+                }
+              ],
+              "id": "45efdff6a4d2e1f7e786-8e29f82489f3b8b0ab93",
+              "file": "audit.spec.ts",
+              "line": 1334,
               "column": 7
             }
           ]
@@ -2257,9 +2813,9 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-05-11T11:52:00.325Z",
-    "duration": 59943.422,
-    "expected": 24,
+    "startTime": "2026-05-11T12:49:48.705Z",
+    "duration": 156116.63700000002,
+    "expected": 36,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0
@@ -2350,7 +2906,7 @@ Error generating stack: `+l.message+`
     <div id='root'></div>
   </body>
 </html>
-<template id="playwrightReportBase64">data:application/zip;base64,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</template>
+<template id="playwrightReportBase64">data:application/zip;base64,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</template>
 ````
 
 ## File: public/robots.txt
@@ -8820,6 +9376,229 @@ export class BookVoteService {
 }
 ````
 
+## File: src/app/core/services/club.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
+import { AuthService } from '../auth/auth.service';
+import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
+import { ClubEvent } from '../models/event.model';
+@Injectable({ providedIn: 'root' })
+export class ClubService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly _clubs = signal<Club[]>([]);
+  private readonly _myClubs = signal<Club[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _error = signal<string | null>(null);
+  private readonly _searchQuery = signal('');
+  private readonly _cityFilter = signal<string | null>(null);
+  readonly clubs = this._clubs.asReadonly();
+  readonly myClubs = this._myClubs.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly searchQuery = this._searchQuery.asReadonly();
+  readonly myOwnedClubs = computed<Club[]>(() => {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return [];
+    return this._clubs().filter(c => c.organizerId === userId);
+  });
+  readonly myOwnedClubIds = computed<Set<string>>(() =>
+    new Set(this.myOwnedClubs().map(c => c.id)),
+  );
+  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
+  readonly availableCities = computed<string[]>(() => {
+    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
+    return cities.sort((a, b) => a.localeCompare(b));
+  });
+  readonly filteredClubs = computed(() => {
+    const q = this._searchQuery().toLowerCase().trim();
+    const city = this._cityFilter();
+    let clubs = this._clubs();
+    if (q) {
+      clubs = clubs.filter(
+        c =>
+          c.name.toLowerCase().includes(q) ||
+          (c.description?.toLowerCase().includes(q) ?? false),
+      );
+    }
+    if (city) {
+      clubs = clubs.filter(c => c.city === city);
+    }
+    return clubs;
+  });
+  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
+    const clubs = this.filteredClubs();
+    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
+      const city = club.city || '';
+      if (!acc[city]) acc[city] = [];
+      acc[city].push(club);
+      return acc;
+    }, {});
+  });
+  readonly myParticipatedClubs = computed<Club[]>(() => []);
+  readonly myMissedClubs = computed<Club[]>(() => []);
+  setSearchQuery(query: string): void {
+    this._searchQuery.set(query);
+  }
+  setCityFilter(city: string | null): void {
+    this._cityFilter.set(city);
+  }
+  async loadPublicClubs(): Promise<void> {
+    this._isLoading.set(true);
+    this._error.set(null);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
+      );
+      this._clubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load clubs');
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async loadMyClubs(): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
+      );
+      this._myClubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load my clubs');
+    }
+  }
+  async getClubById(id: string): Promise<Club | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
+      );
+      return mapClub(raw);
+    } catch {
+      return null;
+    }
+  }
+  async createClub(payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    coverUrl?: string | null;
+    city?: string;
+    tags?: string[];
+    meetingDurationMinutes?: number | null;
+    afterMeetingVenue?: { name: string; address: string; description: string } | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
+        name: payload.name,
+        description: payload.description,
+        isPublic: payload.isPublic,
+        coverUrl: payload.coverUrl ?? null,
+        city: payload.city,
+        tags: payload.tags,
+        meetingDurationMinutes: payload.meetingDurationMinutes,
+        afterMeetingVenue: payload.afterMeetingVenue,
+      }),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(existing => [club, ...existing]);
+    this._myClubs.update(existing => [club, ...existing]);
+    return club;
+  }
+  async updateClub(clubId: string, payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    city?: string;
+    coverUrl?: string | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    return club;
+  }
+  async joinClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
+    );
+    this._clubs.update(list =>
+      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
+    );
+    const club = this._clubs().find(c => c.id === clubId);
+    if (club && !this.myClubIds().has(clubId)) {
+      this._myClubs.update(list => [club, ...list]);
+    }
+  }
+  async leaveClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
+    );
+    this._clubs.update(list =>
+      list.map(c =>
+        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
+      ),
+    );
+    this._myClubs.update(list => list.filter(c => c.id !== clubId));
+  }
+  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
+    );
+    return raw.map(mapClubMember);
+  }
+  async kickMember(clubId: string, userId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
+    );
+  }
+  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
+    );
+  }
+  async getBans(clubId: string): Promise<BanRecord[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
+    );
+    return raw.map(mapBanRecord);
+  }
+  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
+    );
+    return raw.map(mapEvent);
+  }
+  async pauseClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'pause');
+  }
+  async cancelClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'cancel');
+  }
+  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
+  }
+  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+  msUntilDeletion(club: Club): number | null {
+    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
+    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
+    const remaining = deletionTime - Date.now();
+    return remaining > 0 ? remaining : null;
+  }
+}
+````
+
 ## File: src/app/core/services/quiz.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -10279,32 +11058,6 @@ mock-server/
 /ui_changes.md
 ````
 
-## File: bugs.md
-````markdown
-# Bug Report — Book Club App Audit
-
-**Date:** 2026-05-11
-**URL:** https://book-club-dyxne04jy-dmytros-projects-ad22eb22.vercel.app/
-**Test user:** test123@mail.com
-**Club owner account:** terrtr
-
-## Summary
-
-| Severity | Count |
-|----------|-------|
-| Critical | 0 |
-| High | 0 |
-| Medium | 1 |
-| Low | 0 |
-| **Total** | **1** |
-
-## MEDIUM (1)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `/events/:id` | ui-missing | Skipped: no event ID discovered (no events in API response) |
-````
-
 ## File: postcss.config.mjs
 ````javascript
 import tailwindcss from '@tailwindcss/postcss';
@@ -10536,28 +11289,6 @@ export class AuthService {
 }
 ````
 
-## File: src/app/core/auth/token.store.ts
-````typescript
-import { Injectable, signal } from '@angular/core';
-const TOKEN_KEY = 'bc_access_token';
-@Injectable({ providedIn: 'root' })
-export class TokenStore {
-  private readonly _token = signal<string | null>(sessionStorage.getItem(TOKEN_KEY));
-  readonly token = this._token.asReadonly();
-  set(token: string): void {
-    sessionStorage.setItem(TOKEN_KEY, token);
-    this._token.set(token);
-  }
-  clear(): void {
-    sessionStorage.removeItem(TOKEN_KEY);
-    this._token.set(null);
-  }
-  snapshot(): string | null {
-    return this._token();
-  }
-}
-````
-
 ## File: src/app/core/models/event.model.ts
 ````typescript
 export type EventStatus = 'scheduled' | 'active' | 'held' | 'cancelled' | 'rescheduled' | 'upcoming';
@@ -10594,225 +11325,149 @@ export interface ClubEvent {
 }
 ````
 
-## File: src/app/core/services/club.service.ts
+## File: src/app/core/services/event.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
-import { AuthService } from '../auth/auth.service';
-import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
-import { ClubEvent } from '../models/event.model';
+import { ApiEvent, mapEvent } from '../api/api-mappers';
+import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
+export interface CreateEventPayload {
+  title: string;
+  description?: string | null;
+  date: string;
+  city: string;
+  address?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  theme?: string | null;
+  tags?: string[];
+  durationMinutes?: number | null;
+  afterMeetingVenue?: AfterMeetingVenue | null;
+  coverUrl?: string | null;
+  bookTitle?: string | null;
+  quizId?: string | null;
+}
 @Injectable({ providedIn: 'root' })
-export class ClubService {
+export class EventService {
   private readonly http = inject(HttpClient);
-  private readonly auth = inject(AuthService);
-  private readonly _clubs = signal<Club[]>([]);
-  private readonly _myClubs = signal<Club[]>([]);
+  private readonly _allEvents = signal<ClubEvent[]>([]);
+  private readonly _myEvents = signal<ClubEvent[]>([]);
   private readonly _isLoading = signal(false);
   private readonly _error = signal<string | null>(null);
-  private readonly _searchQuery = signal('');
   private readonly _cityFilter = signal<string | null>(null);
-  readonly clubs = this._clubs.asReadonly();
-  readonly myClubs = this._myClubs.asReadonly();
+  readonly allEvents = this._allEvents.asReadonly();
+  readonly myEvents = this._myEvents.asReadonly();
   readonly isLoading = this._isLoading.asReadonly();
   readonly error = this._error.asReadonly();
-  readonly searchQuery = this._searchQuery.asReadonly();
-  readonly myOwnedClubs = computed<Club[]>(() => {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) return [];
-    return this._clubs().filter(c => c.organizerId === userId);
-  });
-  readonly myOwnedClubIds = computed<Set<string>>(() =>
-    new Set(this.myOwnedClubs().map(c => c.id)),
-  );
-  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
-  readonly availableCities = computed<string[]>(() => {
-    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
-    return cities.sort((a, b) => a.localeCompare(b));
-  });
-  readonly filteredClubs = computed(() => {
-    const q = this._searchQuery().toLowerCase().trim();
+  readonly cityFilter = this._cityFilter.asReadonly();
+  readonly filteredAllEvents = computed(() => {
     const city = this._cityFilter();
-    let clubs = this._clubs();
-    if (q) {
-      clubs = clubs.filter(
-        c =>
-          c.name.toLowerCase().includes(q) ||
-          (c.description?.toLowerCase().includes(q) ?? false),
-      );
-    }
-    if (city) {
-      clubs = clubs.filter(c => c.city === city);
-    }
-    return clubs;
+    const events = this._allEvents();
+    return city ? events.filter(e => e.city === city) : events;
   });
-  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
-    const clubs = this.filteredClubs();
-    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
-      const city = club.city || '';
-      if (!acc[city]) acc[city] = [];
-      acc[city].push(club);
+  readonly availableCities = computed<string[]>(() => {
+    const seen = new Set<string>();
+    for (const e of this._allEvents()) seen.add(e.city);
+    return [...seen].sort((a, b) => a.localeCompare(b));
+  });
+  readonly groupedByDate = computed<Record<string, ClubEvent[]>>(() => {
+    return this.filteredAllEvents().reduce<Record<string, ClubEvent[]>>((acc, e) => {
+      const day = e.date.slice(0, 10);
+      if (!acc[day]) acc[day] = [];
+      acc[day].push(e);
       return acc;
     }, {});
   });
-  readonly myParticipatedClubs = computed<Club[]>(() => []);
-  readonly myMissedClubs = computed<Club[]>(() => []);
-  setSearchQuery(query: string): void {
-    this._searchQuery.set(query);
-  }
   setCityFilter(city: string | null): void {
     this._cityFilter.set(city);
   }
-  async loadPublicClubs(): Promise<void> {
+  async loadAllEvents(skip = 0, limit = 50): Promise<void> {
     this._isLoading.set(true);
     this._error.set(null);
     try {
       const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
+        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events`, {
+          params: { skip: String(skip), limit: String(limit) },
+        }),
       );
-      this._clubs.set(raw.map(mapClub));
+      this._allEvents.set(raw.map(mapEvent));
     } catch {
-      this._error.set('Failed to load clubs');
+      this._error.set('Failed to load events');
     } finally {
       this._isLoading.set(false);
     }
   }
-  async loadMyClubs(): Promise<void> {
+  async loadMyEvents(): Promise<void> {
     try {
       const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
+        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events/my`),
       );
-      this._myClubs.set(raw.map(mapClub));
+      this._myEvents.set(raw.map(mapEvent));
     } catch {
-      this._error.set('Failed to load my clubs');
+      this._error.set('Failed to load my events');
     }
   }
-  async getClubById(id: string): Promise<Club | null> {
+  async getEventById(id: string): Promise<ClubEvent | null> {
     try {
       const raw = await firstValueFrom(
-        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
+        this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`),
       );
-      return mapClub(raw);
+      return mapEvent(raw);
     } catch {
       return null;
     }
   }
-  async createClub(payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    coverUrl?: string | null;
-    city?: string;
-    tags?: string[];
-    meetingDurationMinutes?: number | null;
-    afterMeetingVenue?: { name: string; address: string; description: string } | null;
-  }): Promise<Club> {
+  async attendEvent(eventId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/events/${eventId}/attend`, {}),
+    );
+    this._patchEventAttending(eventId, true);
+  }
+  async cancelAttendance(eventId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/events/${eventId}/attend`),
+    );
+    this._patchEventAttending(eventId, false);
+  }
+  async createEvent(clubId: string, payload: CreateEventPayload): Promise<ClubEvent> {
     const raw = await firstValueFrom(
-      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
-        name: payload.name,
-        description: payload.description,
-        isPublic: payload.isPublic,
-        coverUrl: payload.coverUrl ?? null,
-        city: payload.city,
-        tags: payload.tags,
-        meetingDurationMinutes: payload.meetingDurationMinutes,
-        afterMeetingVenue: payload.afterMeetingVenue,
+      this.http.post<ApiEvent>(`${environment.apiUrl}/clubs/${clubId}/events`, payload),
+    );
+    return mapEvent(raw);
+  }
+  async rescheduleEvent(eventId: string, newDate: string, newCity?: string, newAddress?: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/reschedule`, {
+        newDate,
+        newCity: newCity ?? null,
+        newAddress: newAddress ?? null,
       }),
     );
-    const club = mapClub(raw);
-    this._clubs.update(existing => [club, ...existing]);
-    this._myClubs.update(existing => [club, ...existing]);
-    return club;
+    const updated = mapEvent(raw);
+    this._updateEvent(updated);
   }
-  async updateClub(clubId: string, payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    city?: string;
-    coverUrl?: string | null;
-  }): Promise<Club> {
+  async cancelEvent(eventId: string): Promise<void> {
     const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
+      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/cancel`, {}),
     );
-    const club = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    return club;
+    const updated = mapEvent(raw);
+    this._updateEvent(updated);
   }
-  async joinClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
-    );
-    this._clubs.update(list =>
-      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
-    );
-    const club = this._clubs().find(c => c.id === clubId);
-    if (club && !this.myClubIds().has(clubId)) {
-      this._myClubs.update(list => [club, ...list]);
-    }
+  private _patchEventAttending(eventId: string, attending: boolean): void {
+    const patch = (list: ClubEvent[]) =>
+      list.map(e =>
+        e.id === eventId
+          ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
+          : e,
+      );
+    this._allEvents.update(patch);
+    this._myEvents.update(patch);
   }
-  async leaveClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
-    );
-    this._clubs.update(list =>
-      list.map(c =>
-        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
-      ),
-    );
-    this._myClubs.update(list => list.filter(c => c.id !== clubId));
-  }
-  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
-    );
-    return raw.map(mapClubMember);
-  }
-  async kickMember(clubId: string, userId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
-    );
-  }
-  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
-    );
-  }
-  async getBans(clubId: string): Promise<BanRecord[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
-    );
-    return raw.map(mapBanRecord);
-  }
-  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
-    );
-    return raw.map(mapEvent);
-  }
-  async pauseClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'pause');
-  }
-  async cancelClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'cancel');
-  }
-  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
-  }
-  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
-    );
-    const updated = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
-  }
-  msUntilDeletion(club: Club): number | null {
-    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
-    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
-    const remaining = deletionTime - Date.now();
-    return remaining > 0 ? remaining : null;
+  private _updateEvent(updated: ClubEvent): void {
+    this._allEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
+    this._myEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
   }
 }
 ````
@@ -10902,7 +11557,7 @@ import {
   ValidatorFn,
   Validators,
 } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -10935,6 +11590,7 @@ interface RegisterForm {
 })
 export class RegisterComponent {
   private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly seo = inject(SeoService);
   readonly errorMessage = signal<string | null>(null);
   readonly isSubmitting = signal(false);
@@ -10949,6 +11605,7 @@ export class RegisterComponent {
     setTimeout(() => this.formVisible.set(true), 700);
   }
   onBookAnimationDone(): void {
+    this.router.navigate(['/clubs']);
   }
   readonly form = new FormGroup<RegisterForm>(
     {
@@ -12179,180 +12836,73 @@ export class ChatWidgetComponent {
 }
 ````
 
-## File: playwright.vercel.config.ts
-````typescript
-import { defineConfig, devices } from '@playwright/test';
-export default defineConfig({
-  testDir: './e2e',
-  testMatch: '**/audit.spec.ts',
-  fullyParallel: false,
-  retries: 0,
-  workers: 1,
-  timeout: 60_000,
-  reporter: [
-    ['list'],
-    ['html', { open: 'never' }],
-    ['json', { outputFile: 'playwright-report/audit-results.json' }],
-  ],
-  use: {
-    baseURL: 'https://book-club-dyxne04jy-dmytros-projects-ad22eb22.vercel.app',
-    trace: 'on',
-    screenshot: 'only-on-failure',
-    actionTimeout: 20_000,
-    navigationTimeout: 30_000,
-  },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-  ],
-});
+## File: bugs.md
+````markdown
+# Bug Report — Book Club App Audit
+
+**Date:** 2026-05-11
+**URL:** https://book-club-l7xs8u371-dmytros-projects-ad22eb22.vercel.app/
+**Test user:** test123@mail.com
+**Club owner account:** terrtr
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 2 |
+| Medium | 5 |
+| Low | 6 |
+| **Total** | **13** |
+
+## HIGH (2)
+
+| # | Route | Type | Description |
+|---|-------|------|-------------|
+| 1 | `/clubs/2affc525-02bb-4fc6-a2c3-99baad3c5773/events/create (functional)` | functional | Create event did not redirect to event detail after submit |
+| | | | **Detail:** Submit button was disabled — address/city field may be required |
+| 2 | `/events/6b51cbf4-cb77-4a16-a41f-e10648aa6055/edit (functional)` | functional | Title input not found on event edit page |
+
+## MEDIUM (5)
+
+| # | Route | Type | Description |
+|---|-------|------|-------------|
+| 1 | `/register (functional)` | functional | Registration succeeds but does not auto-redirect to app — user sees a success card and must manually go back to login, despite being authenticated |
+| 2 | `/login (wrong-password)` | functional | Login with wrong password stayed on login page but showed no error message to user |
+| 3 | `/logout (functional)` | functional | Logout button not found after opening avatar dropdown — data-testid="logout" not present or dropdown did not open |
+| 4 | `/clubs/2affc525-02bb-4fc6-a2c3-99baad3c5773/quizzes/create (functional)` | functional | Publish button not found after adding a question in quiz create step 2 |
+| 5 | `/quizzes/:id/edit (functional)` | functional | Skipped: no quiz ID available |
+
+## LOW (6)
+
+| # | Route | Type | Description |
+|---|-------|------|-------------|
+| 1 | `/clubs/:id/quizzes/:quizId` | ui-missing | Skipped: no quiz ID discovered (no quizzes in owned club) |
+| 2 | `/clubs/:id/quizzes/:quizId/preview` | ui-missing | Skipped: no quiz ID |
+| 3 | `/clubs/:id/quizzes/:quizId/edit` | ui-missing | Skipped: no quiz ID |
+| 4 | `/clubs/:id/quizzes/:quizId/session` | ui-missing | Skipped: no quiz ID |
+| 5 | `/clubs/:id/quizzes/:quizId/leaderboard` | ui-missing | Skipped: no quiz ID |
+| 6 | `/quizzes/:id (toggle-active)` | functional | Skipped: no quiz ID available |
 ````
 
-## File: src/app/core/services/event.service.ts
+## File: src/app/core/auth/token.store.ts
 ````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { ApiEvent, mapEvent } from '../api/api-mappers';
-import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
-export interface CreateEventPayload {
-  title: string;
-  description?: string | null;
-  date: string;
-  city: string;
-  address?: string | null;
-  lat?: number | null;
-  lng?: number | null;
-  theme?: string | null;
-  tags?: string[];
-  durationMinutes?: number | null;
-  afterMeetingVenue?: AfterMeetingVenue | null;
-  coverUrl?: string | null;
-  bookTitle?: string | null;
-  quizId?: string | null;
-}
+import { Injectable, signal } from '@angular/core';
+const TOKEN_KEY = 'bc_access_token';
 @Injectable({ providedIn: 'root' })
-export class EventService {
-  private readonly http = inject(HttpClient);
-  private readonly _allEvents = signal<ClubEvent[]>([]);
-  private readonly _myEvents = signal<ClubEvent[]>([]);
-  private readonly _isLoading = signal(false);
-  private readonly _error = signal<string | null>(null);
-  private readonly _cityFilter = signal<string | null>(null);
-  readonly allEvents = this._allEvents.asReadonly();
-  readonly myEvents = this._myEvents.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly error = this._error.asReadonly();
-  readonly cityFilter = this._cityFilter.asReadonly();
-  readonly filteredAllEvents = computed(() => {
-    const city = this._cityFilter();
-    const events = this._allEvents();
-    return city ? events.filter(e => e.city === city) : events;
-  });
-  readonly availableCities = computed<string[]>(() => {
-    const seen = new Set<string>();
-    for (const e of this._allEvents()) seen.add(e.city);
-    return [...seen].sort((a, b) => a.localeCompare(b));
-  });
-  readonly groupedByDate = computed<Record<string, ClubEvent[]>>(() => {
-    return this.filteredAllEvents().reduce<Record<string, ClubEvent[]>>((acc, e) => {
-      const day = e.date.slice(0, 10);
-      if (!acc[day]) acc[day] = [];
-      acc[day].push(e);
-      return acc;
-    }, {});
-  });
-  setCityFilter(city: string | null): void {
-    this._cityFilter.set(city);
+export class TokenStore {
+  private readonly _token = signal<string | null>(sessionStorage.getItem(TOKEN_KEY));
+  readonly token = this._token.asReadonly();
+  set(token: string): void {
+    sessionStorage.setItem(TOKEN_KEY, token);
+    this._token.set(token);
   }
-  async loadAllEvents(skip = 0, limit = 50): Promise<void> {
-    this._isLoading.set(true);
-    this._error.set(null);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events`, {
-          params: { skip: String(skip), limit: String(limit) },
-        }),
-      );
-      this._allEvents.set(raw.map(mapEvent));
-    } catch {
-      this._error.set('Failed to load events');
-    } finally {
-      this._isLoading.set(false);
-    }
+  clear(): void {
+    sessionStorage.removeItem(TOKEN_KEY);
+    this._token.set(null);
   }
-  async loadMyEvents(): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events/my`),
-      );
-      this._myEvents.set(raw.map(mapEvent));
-    } catch {
-      this._error.set('Failed to load my events');
-    }
-  }
-  async getEventById(id: string): Promise<ClubEvent | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`),
-      );
-      return mapEvent(raw);
-    } catch {
-      return null;
-    }
-  }
-  async attendEvent(eventId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/events/${eventId}/attend`, {}),
-    );
-    this._patchEventAttending(eventId, true);
-  }
-  async cancelAttendance(eventId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/events/${eventId}/attend`),
-    );
-    this._patchEventAttending(eventId, false);
-  }
-  async createEvent(clubId: string, payload: CreateEventPayload): Promise<ClubEvent> {
-    const raw = await firstValueFrom(
-      this.http.post<ApiEvent>(`${environment.apiUrl}/clubs/${clubId}/events`, payload),
-    );
-    return mapEvent(raw);
-  }
-  async rescheduleEvent(eventId: string, newDate: string, newCity?: string, newAddress?: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/reschedule`, {
-        newDate,
-        newCity: newCity ?? null,
-        newAddress: newAddress ?? null,
-      }),
-    );
-    const updated = mapEvent(raw);
-    this._updateEvent(updated);
-  }
-  async cancelEvent(eventId: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/cancel`, {}),
-    );
-    const updated = mapEvent(raw);
-    this._updateEvent(updated);
-  }
-  private _patchEventAttending(eventId: string, attending: boolean): void {
-    const patch = (list: ClubEvent[]) =>
-      list.map(e =>
-        e.id === eventId
-          ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
-          : e,
-      );
-    this._allEvents.update(patch);
-    this._myEvents.update(patch);
-  }
-  private _updateEvent(updated: ClubEvent): void {
-    this._allEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
-    this._myEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
+  snapshot(): string | null {
+    return this._token();
   }
 }
 ````
@@ -12949,6 +13499,67 @@ export class EventService {
     </div>
   </div>
 </article>
+````
+
+## File: src/app/features/events/events-feed/events-feed.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  OnInit,
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { NgTemplateOutlet } from '@angular/common';
+import { TranslateModule } from '@ngx-translate/core';
+import { EventService } from '../../../core/services/event.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { ClubEvent } from '../../../core/models/event.model';
+import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
+import { EventCardComponent } from '../event-card/event-card.component';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+@Component({
+  selector: 'app-events-feed',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [FormsModule, TranslateModule, EmptyStateComponent, EventCardComponent, HlmSpinner, NgTemplateOutlet],
+  templateUrl: './events-feed.component.html',
+})
+export class EventsFeedComponent implements OnInit {
+  readonly eventService = inject(EventService);
+  readonly auth = inject(AuthService);
+  readonly attendingEventId = signal<string | null>(null);
+  readonly activeTab = signal<'upcoming' | 'my'>('upcoming');
+  readonly sortedDates = computed(() =>
+    Object.keys(this.eventService.groupedByDate()).sort((a, b) => a.localeCompare(b)),
+  );
+  async ngOnInit(): Promise<void> {
+    await this.eventService.loadAllEvents();
+    if (this.auth.isAuthenticated()) {
+      await this.eventService.loadMyEvents();
+    }
+  }
+  async onAttend(event: ClubEvent): Promise<void> {
+    this.attendingEventId.set(event.id);
+    try {
+      await this.eventService.attendEvent(event.id);
+    } catch {
+    } finally {
+      this.attendingEventId.set(null);
+    }
+  }
+  async onCancelAttend(event: ClubEvent): Promise<void> {
+    this.attendingEventId.set(event.id);
+    try {
+      await this.eventService.cancelAttendance(event.id);
+    } catch {
+    } finally {
+      this.attendingEventId.set(null);
+    }
+  }
+}
 ````
 
 ## File: src/app/features/profile/profile.component.html
@@ -13820,6 +14431,37 @@ export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
 }
 ````
 
+## File: playwright.vercel.config.ts
+````typescript
+import { defineConfig, devices } from '@playwright/test';
+export default defineConfig({
+  testDir: './e2e',
+  testMatch: '**/audit.spec.ts',
+  fullyParallel: false,
+  retries: 0,
+  workers: 1,
+  timeout: 60_000,
+  reporter: [
+    ['list'],
+    ['html', { open: 'never' }],
+    ['json', { outputFile: 'playwright-report/audit-results.json' }],
+  ],
+  use: {
+    baseURL: 'https://book-club-l7xs8u371-dmytros-projects-ad22eb22.vercel.app',
+    trace: 'on',
+    screenshot: 'only-on-failure',
+    actionTimeout: 20_000,
+    navigationTimeout: 30_000,
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+});
+````
+
 ## File: sonar-project.properties
 ````
 # Replace YOUR_ORG with your actual SonarCloud organization slug
@@ -14401,67 +15043,6 @@ export class EventDetailComponent {
 </ng-template>
 ````
 
-## File: src/app/features/events/events-feed/events-feed.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  OnInit,
-} from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { NgTemplateOutlet } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
-import { EventService } from '../../../core/services/event.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { ClubEvent } from '../../../core/models/event.model';
-import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
-import { EventCardComponent } from '../event-card/event-card.component';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-@Component({
-  selector: 'app-events-feed',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, TranslateModule, EmptyStateComponent, EventCardComponent, HlmSpinner, NgTemplateOutlet],
-  templateUrl: './events-feed.component.html',
-})
-export class EventsFeedComponent implements OnInit {
-  readonly eventService = inject(EventService);
-  readonly auth = inject(AuthService);
-  readonly attendingEventId = signal<string | null>(null);
-  readonly activeTab = signal<'upcoming' | 'my'>('upcoming');
-  readonly sortedDates = computed(() =>
-    Object.keys(this.eventService.groupedByDate()).sort((a, b) => a.localeCompare(b)),
-  );
-  async ngOnInit(): Promise<void> {
-    await this.eventService.loadAllEvents();
-    if (this.auth.isAuthenticated()) {
-      await this.eventService.loadMyEvents();
-    }
-  }
-  async onAttend(event: ClubEvent): Promise<void> {
-    this.attendingEventId.set(event.id);
-    try {
-      await this.eventService.attendEvent(event.id);
-    } catch {
-    } finally {
-      this.attendingEventId.set(null);
-    }
-  }
-  async onCancelAttend(event: ClubEvent): Promise<void> {
-    this.attendingEventId.set(event.id);
-    try {
-      await this.eventService.cancelAttendance(event.id);
-    } catch {
-    } finally {
-      this.attendingEventId.set(null);
-    }
-  }
-}
-````
-
 ## File: src/app/features/profile/profile.component.ts
 ````typescript
 import {
@@ -14928,7 +15509,7 @@ export class QuizTakeComponent implements OnInit {
                 {{ 'NAV.profile' | translate }}
               </a>
               <hlm-dropdown-menu-separator />
-              <button hlmDropdownMenuItem variant="destructive" (click)="signOut()">
+              <button hlmDropdownMenuItem variant="destructive" data-testid="logout" (click)="signOut()">
                 {{ 'NAV.logout' | translate }}
               </button>
             </div>
@@ -15024,7 +15605,7 @@ export class QuizTakeComponent implements OnInit {
                                  transition-all duration-200 w-full text-left">
                     {{ 'NAV.profile' | translate }}
                   </button>
-                  <button hlmSheetClose type="button" (click)="signOut()"
+                  <button hlmSheetClose type="button" data-testid="logout" (click)="signOut()"
                           class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
                                  text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
                                  transition-all duration-200">
@@ -16309,8 +16890,8 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
     "create_answers_label": "Answer options",
     "create_answers_hint": "Select the radio button next to the correct answer.",
     "create_add_question": "+ Add Question",
-    "create_save_draft": "💾 Save as Draft",
-    "create_saving": "…Saving",
+    "create_save_draft": "🚀 Publish Quiz",
+    "create_saving": "…Publishing",
     "create_questions_count_one": "question",
     "create_questions_count_many": "questions",
     "result_perfect": "🎉 Perfect score!",
@@ -16807,8 +17388,8 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
     "create_answers_label": "Варіанти відповіді",
     "create_answers_hint": "Оберіть радіокнопку біля правильної відповіді.",
     "create_add_question": "+ Додати запитання",
-    "create_save_draft": "💾 Зберегти чернетку",
-    "create_saving": "…Збереження",
+    "create_save_draft": "🚀 Опублікувати вікторину",
+    "create_saving": "…Публікація",
     "create_questions_count_one": "запитання",
     "create_questions_count_many": "запитань",
     "result_perfect": "🎉 Чудово! Всі відповіді правильні!",
