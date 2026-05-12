@@ -212,11 +212,21 @@ export class ClubService {
     return raw.map(mapBanRecord);
   }
 
-  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
+  async loadClubEvents(clubId: string, includePast = false): Promise<ClubEvent[]> {
     const raw = await firstValueFrom(
-      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
+      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`, {
+        params: { include_past: String(includePast) },
+      }),
     );
     return raw.map(mapEvent);
+  }
+
+  async deleteClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}`),
+    );
+    this._clubs.update(list => list.filter(c => c.id !== clubId));
+    this._myClubs.update(list => list.filter(c => c.id !== clubId));
   }
 
   async pauseClub(clubId: string): Promise<void> {

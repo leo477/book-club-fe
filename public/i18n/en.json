@@ -158,7 +158,17 @@
     "edit_club_desc": "Update name, description & settings",
     "create_event_title": "Create Event",
     "create_event_desc": "Schedule a new club event",
-    "now_reading": "Now reading"
+    "now_reading": "Now reading",
+    "events_tab_upcoming": "Upcoming",
+    "events_tab_history": "Archive",
+    "events_loading": "Loading...",
+    "events_history_empty": "No past events.",
+    "chat_create_title": "New Chat Room",
+    "chat_room_placeholder": "Room name",
+    "chat_create_btn": "Create",
+    "delete_club_btn": "Delete Club",
+    "delete_club_confirm": "Delete club and all data? This is irreversible.",
+    "delete_club_yes": "Yes, delete"
   },
   "EDIT_CLUB": {
     "title": "Edit Club",

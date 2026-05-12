@@ -220,15 +220,20 @@ export class ChatService {
       .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
   }
 
-  createRoom(clubId: string, name: string): void {
-    firstValueFrom(
+  async createRoom(clubId: string, name: string): Promise<ChatRoom> {
+    const raw = await firstValueFrom(
       this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),
-    )
-      .then(raw => {
-        const room: ChatRoom = { id: raw.id, name: raw.name, clubId };
-        this._rooms.update(rooms => [...rooms, room]);
-      })
-      .catch((err: unknown) => console.error('[ChatService] createRoom error', err));
+    );
+    const room: ChatRoom = { id: raw.id, name: raw.name, clubId };
+    this._rooms.update(rooms => [...rooms, room]);
+    return room;
+  }
+
+  openAndFocusRoom(room: ChatRoom): void {
+    this._activeRoomId.set(room.id);
+    this.loadMessages(room.id);
+    this._isOpen.set(true);
+    this.markAsRead();
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
