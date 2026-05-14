@@ -345,6 +345,47 @@ describe('ClubService – computed signals and additional methods', () => {
     });
   });
 
+  describe('deleteClub', () => {
+    it('sends DELETE and removes club from clubs and myClubs signals', async () => {
+      const allP = service.loadPublicClubs();
+      httpMock.expectOne(`${API}/clubs`).flush([makeApiClub({ id: 'c1' })]);
+      await allP;
+
+      const myP = service.loadMyClubs();
+      httpMock.expectOne(`${API}/clubs/my`).flush([makeApiClub({ id: 'c1' })]);
+      await myP;
+
+      expect(service.myClubs().some(c => c.id === 'c1')).toBeTrue();
+
+      const deleteP = service.deleteClub('c1');
+      const req = httpMock.expectOne(`${API}/clubs/c1`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+      await deleteP;
+
+      expect(service.clubs().some(c => c.id === 'c1')).toBeFalse();
+      expect(service.myClubs().some(c => c.id === 'c1')).toBeFalse();
+    });
+  });
+
+  describe('loadClubEvents', () => {
+    it('sends GET with include_past=false by default', async () => {
+      const p = service.loadClubEvents('c1');
+      const req = httpMock.expectOne(r => r.url === `${API}/clubs/c1/events`);
+      expect(req.request.params.get('include_past')).toBe('false');
+      req.flush([]);
+      await p;
+    });
+
+    it('sends GET with include_past=true when requested', async () => {
+      const p = service.loadClubEvents('c1', true);
+      const req = httpMock.expectOne(r => r.url === `${API}/clubs/c1/events`);
+      expect(req.request.params.get('include_past')).toBe('true');
+      req.flush([]);
+      await p;
+    });
+  });
+
   describe('joinClub branch: already in myClubs', () => {
     it('does not add duplicate to myClubs when already joined', async () => {
       const allP = service.loadPublicClubs();
