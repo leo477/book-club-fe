@@ -124,6 +124,11 @@
             />
           }
 
+          <!-- Club Chat button for members -->
+          @if (isMember()) {
+            <button hlmBtn variant="outline" (click)="openClubChat()">Club Chat</button>
+          }
+
           <!-- Join CTA for authenticated non-members -->
           @if (!!currentUser() && !isMember() && !isClubOwner()) {
             <div class="rounded-2xl border-2 border-dashed border-[var(--color-sepia)] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[var(--color-surface-raised)]">

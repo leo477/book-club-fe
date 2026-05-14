@@ -97,6 +97,50 @@
           </div>
         </fieldset>
 
+        <!-- First meeting toggle -->
+        <div class="space-y-3">
+          <button type="button" hlmBtn variant="ghost" (click)="toggleFirstEvent()">
+            {{ showFirstEvent() ? 'Remove first meeting' : 'Add first meeting' }}
+          </button>
+
+          @if (showFirstEvent()) {
+            <hlm-field>
+              <label hlmFieldLabel for="event-title">Event title</label>
+              <input
+                hlmInput
+                id="event-title"
+                type="text"
+                [formControl]="eventTitleCtrl"
+                class="w-full"
+                placeholder="e.g. Kick-off meeting"
+              />
+            </hlm-field>
+
+            <hlm-field>
+              <label hlmFieldLabel for="event-date">Event date</label>
+              <input
+                hlmInput
+                id="event-date"
+                type="datetime-local"
+                [formControl]="eventDateCtrl"
+                class="w-full"
+              />
+            </hlm-field>
+
+            <hlm-field>
+              <label hlmFieldLabel for="event-city">Event city</label>
+              <input
+                hlmInput
+                id="event-city"
+                type="text"
+                [formControl]="eventCityCtrl"
+                class="w-full"
+                placeholder="e.g. Kyiv"
+              />
+            </hlm-field>
+          }
+        </div>
+
         <!-- Error alert -->
         @if (errorMessage()) {
           <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"

@@ -19,6 +19,7 @@ import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/mo
 import { ClubEvent } from '../../../core/models/event.model';
 import { UserProfile } from '../../../core/models/user.model';
 import { EventService } from '../../../core/services/event.service';
+import { ChatService } from '../../../core/services/chat.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 import { ClubMembersListComponent } from './members/club-members-list.component';
@@ -56,6 +57,7 @@ export class ClubDetailComponent {
 
   private readonly clubService = inject(ClubService);
   private readonly eventService = inject(EventService);
+  private readonly chatService = inject(ChatService);
   private readonly auth = inject(AuthService);
   private readonly seo = inject(SeoService);
   private readonly translate = inject(TranslateService);
@@ -216,6 +218,14 @@ export class ClubDetailComponent {
 
   async onLeave(): Promise<void> {
     await this.performMembershipAction(() => this.clubService.leaveClub(this.id()), 'Failed to leave club');
+  }
+
+  openClubChat(): void {
+    const user = this.currentUser();
+    this.chatService.loadRooms(this.id(), user?.id);
+    if (!this.chatService.isOpen()) {
+      this.chatService.toggleOpen();
+    }
   }
 
   async handleKick(userId: string): Promise<void> {
