@@ -12,4 +12,5 @@ export interface ChatRoom {
   id: string;
   name: string;
   clubId: string;
+  eventId?: string;
 }

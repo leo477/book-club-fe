@@ -3,12 +3,14 @@ import {
   ChangeDetectionStrategy,
   inject,
   signal,
+  effect,
 } from '@angular/core';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { EventService } from '../../../core/services/event.service';
 import { HlmFieldImports } from '../../../shared/spartan/field/src';
 import { HlmInput } from '../../../shared/spartan/input/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
@@ -33,6 +35,7 @@ export class CreateClubComponent {
   private readonly clubService = inject(ClubService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly eventService = inject(EventService);
 
   private readonly _errorMessage = signal<string | null>(null);
   readonly errorMessage = this._errorMessage.asReadonly();
@@ -42,6 +45,25 @@ export class CreateClubComponent {
 
   private readonly _showAfterMeeting = signal(false);
   readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
+
+  private readonly _showFirstEvent = signal(false);
+  readonly showFirstEvent = this._showFirstEvent.asReadonly();
+
+  readonly eventTitleCtrl = new FormControl('', { nonNullable: true });
+  readonly eventDateCtrl  = new FormControl('', { nonNullable: true });
+  readonly eventCityCtrl  = new FormControl('', { nonNullable: true });
+
+  constructor() {
+    effect(() => {
+      if (this.clubService.myOwnedClubs().length >= 1) {
+        this.router.navigate(['/clubs']);
+      }
+    });
+  }
+
+  toggleFirstEvent(): void {
+    this._showFirstEvent.update(v => !v);
+  }
 
   readonly form = new FormGroup<CreateClubForm>({
     name: new FormControl('', {
@@ -83,6 +105,20 @@ export class CreateClubComponent {
 
     try {
       const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
+      if (this.showFirstEvent()) {
+        const eventTitle = this.eventTitleCtrl.value.trim();
+        const eventDate  = this.eventDateCtrl.value;
+        const eventCity  = this.eventCityCtrl.value.trim();
+        if (eventTitle && eventDate && eventCity) {
+          try {
+            await this.eventService.createEvent(club.id, {
+              title: eventTitle,
+              date: new Date(eventDate).toISOString(),
+              city: eventCity,
+            });
+          } catch { /* non-blocking — club already created */ }
+        }
+      }
       this.router.navigate(['/clubs', club.id]);
     } catch (err) {
       this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');

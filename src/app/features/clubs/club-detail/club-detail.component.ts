@@ -19,6 +19,7 @@ import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/mo
 import { ClubEvent } from '../../../core/models/event.model';
 import { UserProfile } from '../../../core/models/user.model';
 import { EventService } from '../../../core/services/event.service';
+import { ChatService } from '../../../core/services/chat.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 import { ClubMembersListComponent } from './members/club-members-list.component';
@@ -29,6 +30,7 @@ import { ClubSidebarRightComponent } from './club-sidebar-right/club-sidebar-rig
 import { BookVoteSectionComponent } from './book-vote/book-vote-section.component';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCard } from '../../../shared/spartan/card/src';
+import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
 
 @Component({
   selector: 'app-club-detail',
@@ -46,6 +48,7 @@ import { HlmCard } from '../../../shared/spartan/card/src';
     BookVoteSectionComponent,
     HlmButton,
     HlmCard,
+    ...HlmTabsImports,
   ],
   templateUrl: './club-detail.component.html',
 })
@@ -54,6 +57,7 @@ export class ClubDetailComponent {
 
   private readonly clubService = inject(ClubService);
   private readonly eventService = inject(EventService);
+  private readonly chatService = inject(ChatService);
   private readonly auth = inject(AuthService);
   private readonly seo = inject(SeoService);
   private readonly translate = inject(TranslateService);
@@ -72,6 +76,10 @@ export class ClubDetailComponent {
   readonly members = signal<ClubMemberDetail[]>([]);
   readonly clubBans = signal<BanRecord[]>([]);
   readonly events = signal<ClubEvent[]>([]);
+  readonly pastEvents = signal<ClubEvent[]>([]);
+  readonly isPastEventsLoading = signal(false);
+  readonly isPastEventsLoaded = signal(false);
+  readonly activeEventsTab = signal<'upcoming' | 'history'>('upcoming');
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
   readonly isActionLoading = signal(false);
@@ -79,9 +87,9 @@ export class ClubDetailComponent {
   readonly attendingEventId = signal<string | null>(null);
 
   readonly sortKey = linkedSignal<'date' | 'popular' | 'status'>(() => {
-    this.id(); 
-    return 'date'; 
-    });
+    this.id();
+    return 'date';
+  });
 
   readonly sortOptions = [
     { key: 'date' as const,    labelKey: 'CLUB_DETAIL.sort_nearest' },
@@ -156,6 +164,9 @@ export class ClubDetailComponent {
   constructor() {
     effect((onCleanup) => {
       const clubId = this.id();
+      this.activeEventsTab.set('upcoming');
+      this.pastEvents.set([]);
+      this.isPastEventsLoaded.set(false);
       let cancelled = false;
       onCleanup(() => { cancelled = true; });
       this.loadClub(clubId, () => cancelled).catch((_err: unknown) => { /* swallow */ });
@@ -209,6 +220,14 @@ export class ClubDetailComponent {
     await this.performMembershipAction(() => this.clubService.leaveClub(this.id()), 'Failed to leave club');
   }
 
+  openClubChat(): void {
+    const user = this.currentUser();
+    this.chatService.loadRooms(this.id(), user?.id);
+    if (!this.chatService.isOpen()) {
+      this.chatService.toggleOpen();
+    }
+  }
+
   async handleKick(userId: string): Promise<void> {
     await this.clubService.kickMember(this.id(), userId);
     this.members.update(list => list.filter(m => m.userId !== userId));
@@ -238,6 +257,27 @@ export class ClubDetailComponent {
       this.actionError.set(err instanceof Error ? err.message : errorFallback);
     } finally {
       this.isActionLoading.set(false);
+    }
+  }
+
+  async onEventsTabChange(tab: 'upcoming' | 'history'): Promise<void> {
+    this.activeEventsTab.set(tab);
+    if (tab === 'history' && !this.isPastEventsLoaded()) {
+      await this.loadPastEvents();
+    }
+  }
+
+  private async loadPastEvents(): Promise<void> {
+    this.isPastEventsLoading.set(true);
+    try {
+      const past = await this.clubService.loadClubEvents(this.id(), true);
+      const now = new Date().toISOString();
+      this.pastEvents.set(
+        past.filter(e => e.date < now).sort((a, b) => b.date.localeCompare(a.date)),
+      );
+      this.isPastEventsLoaded.set(true);
+    } finally {
+      this.isPastEventsLoading.set(false);
     }
   }
 

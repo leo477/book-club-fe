@@ -158,7 +158,18 @@
     "edit_club_desc": "Оновити назву, опис та налаштування",
     "create_event_title": "Створити подію",
     "create_event_desc": "Запланувати нову подію клубу",
-    "now_reading": "Читаємо зараз"
+    "now_reading": "Читаємо зараз",
+    "events_tab_upcoming": "Майбутні",
+    "events_tab_history": "Архів",
+    "events_loading": "Завантаження...",
+    "events_history_empty": "Минулих подій немає.",
+    "chat_create_title": "Новий чат-рум",
+    "chat_room_placeholder": "Назва кімнати",
+    "chat_create_btn": "Створити",
+    "delete_club_btn": "Видалити клуб",
+    "delete_club_confirm": "Видалити клуб і всі дані? Це незворотно.",
+    "delete_club_yes": "Так, видалити",
+    "delete_club_error": "Не вдалося видалити клуб. Спробуйте ще раз."
   },
   "EDIT_CLUB": {
     "title": "Редагувати клуб",
@@ -304,6 +315,10 @@
     "no_upcoming": "Немає майбутніх подій",
     "no_upcoming_desc": "Поки що не заплановано жодної події. Заходьте пізніше!",
     "no_my_events_desc": "Приєднуйтесь до клубів, щоб бачити їхні події тут."
+  },
+  "EVENT": {
+    "event_chat_btn": "Чат події",
+    "event_chat_start_btn": "Розпочати чат події"
   },
   "CREATE_EVENT": {
     "back_to_club": "← Назад до клубу",

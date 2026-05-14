@@ -124,6 +124,11 @@
             />
           }
 
+          <!-- Club Chat button for members -->
+          @if (isMember()) {
+            <button hlmBtn variant="outline" (click)="openClubChat()">Club Chat</button>
+          }
+
           <!-- Join CTA for authenticated non-members -->
           @if (!!currentUser() && !isMember() && !isClubOwner()) {
             <div class="rounded-2xl border-2 border-dashed border-[var(--color-sepia)] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[var(--color-surface-raised)]">
@@ -143,7 +148,7 @@
             </div>
           }
 
-          <!-- Upcoming Events section -->
+          <!-- Events section with Upcoming / History tabs -->
           <section hlmCard class="parchment-card px-6 gap-4">
             <div class="flex items-center justify-between mb-4">
               <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
@@ -161,42 +166,76 @@
               }
             </div>
 
-            <!-- Sort tabs -->
-            @if (upcomingEvents().length > 1) {
-              <div class="flex flex-wrap gap-2 mb-5">
-                @for (opt of sortOptions; track opt.key) {
-                  <button
-                    type="button"
-                    (click)="sortKey.set(opt.key)"
-                    class="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
-                    [class]="sortKey() === opt.key
-                      ? 'bg-[var(--color-primary-600)] text-white border-[var(--color-primary-600)] shadow-sm'
-                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600'"
-                  >
-                    {{ opt.labelKey | translate }}
-                  </button>
-                }
-              </div>
-            }
+            <hlm-tabs [tab]="activeEventsTab()" (tabActivated)="onEventsTabChange($any($event))">
+              <hlm-tabs-list class="mb-4">
+                <button [hlmTabsTrigger]="'upcoming'">{{ 'CLUB_DETAIL.events_tab_upcoming' | translate }}</button>
+                <button [hlmTabsTrigger]="'history'">{{ 'CLUB_DETAIL.events_tab_history' | translate }}</button>
+              </hlm-tabs-list>
 
-            @if (upcomingEvents().length === 0) {
-              <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                {{ 'CLUB_DETAIL.events_empty' | translate }}
-              </p>
-            } @else {
-              <div class="grid gap-5 sm:grid-cols-2">
-                @for (event of sortedUpcomingEvents(); track event.id; let i = $index) {
-                  <app-club-event-card
-                    [event]="event"
-                    [isAuthenticated]="!!currentUser()"
-                    [attending]="attendingEventId() === event.id"
-                    [index]="i"
-                    (attend)="onAttend(event.id)"
-                    (cancelAttend)="onCancelAttend(event.id)"
-                  />
+              <div [hlmTabsContent]="'upcoming'">
+                <!-- Sort buttons -->
+                @if (upcomingEvents().length > 1) {
+                  <div class="flex flex-wrap gap-2 mb-5">
+                    @for (opt of sortOptions; track opt.key) {
+                      <button
+                        type="button"
+                        (click)="sortKey.set(opt.key)"
+                        class="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
+                        [class]="sortKey() === opt.key
+                          ? 'bg-[var(--color-primary-600)] text-white border-[var(--color-primary-600)] shadow-sm'
+                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600'"
+                      >
+                        {{ opt.labelKey | translate }}
+                      </button>
+                    }
+                  </div>
+                }
+
+                @if (upcomingEvents().length === 0) {
+                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                    {{ 'CLUB_DETAIL.events_empty' | translate }}
+                  </p>
+                } @else {
+                  <div class="grid gap-5 sm:grid-cols-2">
+                    @for (event of sortedUpcomingEvents(); track event.id; let i = $index) {
+                      <app-club-event-card
+                        [event]="event"
+                        [isAuthenticated]="!!currentUser()"
+                        [attending]="attendingEventId() === event.id"
+                        [index]="i"
+                        (attend)="onAttend(event.id)"
+                        (cancelAttend)="onCancelAttend(event.id)"
+                      />
+                    }
+                  </div>
                 }
               </div>
-            }
+
+              <div [hlmTabsContent]="'history'">
+                @if (isPastEventsLoading()) {
+                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                    {{ 'CLUB_DETAIL.events_loading' | translate }}
+                  </p>
+                } @else if (pastEvents().length === 0) {
+                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                    {{ 'CLUB_DETAIL.events_history_empty' | translate }}
+                  </p>
+                } @else {
+                  <div class="grid gap-5 sm:grid-cols-2">
+                    @for (event of pastEvents(); track event.id; let i = $index) {
+                      <app-club-event-card
+                        [event]="event"
+                        [isAuthenticated]="!!currentUser()"
+                        [attending]="false"
+                        [index]="i"
+                        (attend)="onAttend(event.id)"
+                        (cancelAttend)="onCancelAttend(event.id)"
+                      />
+                    }
+                  </div>
+                }
+              </div>
+            </hlm-tabs>
           </section>
 
           <!-- Members list -->

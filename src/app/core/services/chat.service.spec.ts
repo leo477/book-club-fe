@@ -470,4 +470,51 @@ describe('ChatService', () => {
       expect(getRooms(service)[0].clubId).toBe('club-1');
     });
   });
+
+  describe('openAndFocusRoom()', () => {
+    it('sets activeRoomId, opens chat, marks as read, and loads messages', () => {
+      const room: ChatRoom = { id: 'room-1', name: 'General', clubId: 'club-1' };
+      service.openAndFocusRoom(room);
+
+      expect(getActiveRoomId(service)).toBe('room-1');
+      expect(getIsOpen(service)).toBeTrue();
+      expect(getUnreadCount(service)).toBe(0);
+
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([]);
+    });
+  });
+
+  describe('getEventRoom()', () => {
+    it('returns a ChatRoom on success', async () => {
+      const promise = service.getEventRoom('event-1');
+      httpMock.expectOne(`${API}/events/event-1/chat/room`).flush({ id: 'room-1', name: 'Event Chat' });
+      const room = await promise;
+      expect(room?.id).toBe('room-1');
+      expect(room?.eventId).toBeUndefined();
+    });
+
+    it('returns null when the request fails', async () => {
+      const promise = service.getEventRoom('event-1');
+      httpMock.expectOne(`${API}/events/event-1/chat/room`).flush(
+        { detail: 'Not Found' },
+        { status: 404, statusText: 'Not Found' },
+      );
+      const room = await promise;
+      expect(room).toBeNull();
+    });
+  });
+
+  describe('createEventChatRoom()', () => {
+    it('sends POST and appends room to rooms signal', async () => {
+      const promise = service.createEventChatRoom('event-1');
+      const req = httpMock.expectOne(`${API}/events/event-1/chat/room`);
+      expect(req.request.method).toBe('POST');
+      req.flush({ id: 'room-e1', name: 'Event Chat', eventId: 'event-1' });
+
+      const room = await promise;
+      expect(room.id).toBe('room-e1');
+      expect(room.eventId).toBe('event-1');
+      expect(getRooms(service).some(r => r.id === 'room-e1')).toBeTrue();
+    });
+  });
 });

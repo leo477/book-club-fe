@@ -4530,6 +4530,12 @@ CREATE POLICY "Users can cancel own RSVP"
   ON event_attendees FOR DELETE USING (auth.uid() = user_id);
 ````
 
+## File: supabase/migrations/007_events_cover_image.sql
+````sql
+ALTER TABLE events
+  ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
+````
+
 ## File: test-results/.last-run.json
 ````json
 {
@@ -4979,24 +4985,6 @@ export interface BookVoteRound {
 }
 ````
 
-## File: src/app/core/models/chat.model.ts
-````typescript
-export interface ChatMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  text: string;
-  timestamp: Date;
-  isOwn: boolean;
-  isMuted?: boolean;
-}
-export interface ChatRoom {
-  id: string;
-  name: string;
-  clubId: string;
-}
-````
-
 ## File: src/app/core/models/quiz.model.ts
 ````typescript
 export type QuizStatus = 'draft' | 'active' | 'live' | 'closed';
@@ -5041,213 +5029,6 @@ export interface QuizLeaderboardEntry {
   score: number;
   totalQuestions: number;
   hasAttempted: boolean;
-}
-````
-
-## File: src/app/core/services/chat.service.ts
-````typescript
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { ChatMessage, ChatRoom } from '../models/chat.model';
-import { environment } from '../../../environments/environment';
-interface ApiChatRoom {
-  id: string;
-  name: string;
-}
-interface ApiChatMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  text: string;
-  timestamp: string;
-}
-@Injectable({ providedIn: 'root' })
-export class ChatService {
-  private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _rooms = signal<ChatRoom[]>([]);
-  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
-  private readonly _activeRoomId = signal<string | null>(null);
-  private readonly _unreadCount = signal<number>(0);
-  private readonly _isOpen = signal<boolean>(false);
-  private readonly _hasNewMessage = signal<boolean>(false);
-  private readonly _mutedUserIds = signal<Set<string>>(new Set());
-  private currentUserId: string | null = null;
-  readonly rooms = this._rooms.asReadonly();
-  readonly messages = this._messages.asReadonly();
-  readonly activeRoomId = this._activeRoomId.asReadonly();
-  readonly unreadCount = this._unreadCount.asReadonly();
-  readonly isOpen = this._isOpen.asReadonly();
-  readonly hasNewMessage = this._hasNewMessage.asReadonly();
-  readonly mutedUserIds = this._mutedUserIds.asReadonly();
-  readonly activeRoom = computed(() =>
-    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
-  );
-  readonly activeMessages = computed(() => {
-    const msgs = this._messages()[this._activeRoomId() ?? ''] ?? [];
-    const muted = this._mutedUserIds();
-    return msgs.map(m => ({ ...m, isMuted: muted.has(m.senderId) }));
-  });
-  // ── Public API ────────────────────────────────────────────────────────────
-  /** Fetch chat rooms for a given club and seed the rooms signal. */
-  loadRooms(clubId: string, userId?: string): void {
-    if (userId !== undefined) {
-      this.currentUserId = userId;
-    }
-    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
-      .then(raw => {
-        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId }));
-        this._rooms.set(rooms);
-        const currentId = this._activeRoomId();
-        if (!currentId || !rooms.some(r => r.id === currentId)) {
-          const first = rooms[0];
-          if (first) {
-            this._activeRoomId.set(first.id);
-            this.loadMessages(first.id);
-          }
-        }
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
-  }
-  loadAllClubRooms(clubs: { id: string; name: string }[], userId?: string): void {
-    if (userId !== undefined) this.currentUserId = userId;
-    const multipleClubs = clubs.length > 1;
-    const requests = clubs.map(club =>
-      firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${club.id}/chat/rooms`))
-        .then(raw => raw.map(r => ({
-          id: r.id,
-          name: multipleClubs ? `${club.name} · ${r.name}` : r.name,
-          clubId: club.id,
-        })))
-        .catch(() => [] as ChatRoom[]),
-    );
-    Promise.all(requests).then(results => {
-      const allRooms = results.flat();
-      this._rooms.set(allRooms);
-      const currentId = this._activeRoomId();
-      if (!currentId || !allRooms.some(r => r.id === currentId)) {
-        const first = allRooms[0];
-        if (first) {
-          this._activeRoomId.set(first.id);
-          this.loadMessages(first.id);
-        }
-      }
-    }).catch((err: unknown) => console.error('[ChatService] loadAllClubRooms error', err));
-  }
-  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
-    const query: Record<string, string> = {};
-    if (params?.before) query['before'] = params.before;
-    if (params?.limit != null) query['limit'] = String(params.limit);
-    firstValueFrom(
-      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
-        params: query,
-      }),
-    )
-      .then(raw => {
-        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
-        this._messages.update(map => ({ ...map, [roomId]: msgs }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
-  }
-  toggleOpen(): void {
-    this._isOpen.update(v => !v);
-    if (this._isOpen()) {
-      this.markAsRead();
-    }
-  }
-  openRoom(roomId: string): void {
-    this._activeRoomId.set(roomId);
-    this.loadMessages(roomId);
-    this.markAsRead();
-  }
-  markAsRead(): void {
-    this._unreadCount.set(0);
-    this._hasNewMessage.set(false);
-  }
-  clearRooms(): void {
-    this._rooms.set([]);
-    this._messages.set({});
-    this._activeRoomId.set(null);
-    this._unreadCount.set(0);
-    this._hasNewMessage.set(false);
-    this._isOpen.set(false);
-    this._mutedUserIds.set(new Set());
-    this.currentUserId = null;
-  }
-  muteUser(userId: string): void {
-    this._mutedUserIds.update(set => new Set([...set, userId]));
-  }
-  unmuteUser(userId: string): void {
-    this._mutedUserIds.update(set => {
-      const next = new Set(set);
-      next.delete(userId);
-      return next;
-    });
-  }
-  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    this.currentUserId = currentUser.id;
-    firstValueFrom(
-      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
-    )
-      .then(() => {
-        this.loadMessages(roomId);
-      })
-      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
-  }
-  deleteMessage(messageId: string): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    firstValueFrom(
-      this.http.delete(`${this.api}/chat/rooms/${roomId}/messages/${messageId}`),
-    )
-      .then(() => {
-        this._messages.update(map => ({
-          ...map,
-          [roomId]: (map[roomId] ?? []).filter(m => m.id !== messageId),
-        }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] deleteMessage error', err));
-  }
-  banUserFromChat(userId: string, durationSeconds: number): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    firstValueFrom(
-      this.http.post(`${this.api}/chat/rooms/${roomId}/ban`, {
-        user_id: userId,
-        duration_seconds: durationSeconds,
-      }),
-    )
-      .then(() => {
-        this._messages.update(map => ({
-          ...map,
-          [roomId]: (map[roomId] ?? []).filter(m => m.senderId !== userId),
-        }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
-  }
-  createRoom(clubId: string, name: string): void {
-    firstValueFrom(
-      this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),
-    )
-      .then(raw => {
-        const room: ChatRoom = { id: raw.id, name: raw.name, clubId };
-        this._rooms.update(rooms => [...rooms, room]);
-      })
-      .catch((err: unknown) => console.error('[ChatService] createRoom error', err));
-  }
-  private mapMessage(m: ApiChatMessage): ChatMessage {
-    return {
-      id: m.id,
-      senderId: m.senderId,
-      senderName: m.senderName,
-      text: m.text,
-      timestamp: new Date(m.timestamp),
-      isOwn: m.senderId === this.currentUserId,
-    };
-  }
 }
 ````
 
@@ -5539,6 +5320,37 @@ export class BookVoteSectionComponent {
 }
 ````
 
+## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { TranslateModule } from '@ngx-translate/core';
+import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
+import { ClubEvent } from '../../../../core/models/event.model';
+import { HlmButton } from '../../../../shared/spartan/button/src';
+@Component({
+  selector: 'app-club-event-card',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton],
+  templateUrl: './club-event-card.component.html',
+  styleUrl: './club-event-card.component.scss',
+})
+export class ClubEventCardComponent {
+  readonly event = input.required<ClubEvent>();
+  readonly isAuthenticated = input<boolean>(false);
+  readonly attending = input<boolean>(false);
+  readonly index = input<number>(0);
+  readonly attend = output<void>();
+  readonly cancelAttend = output<void>();
+}
+````
+
 ## File: src/app/features/clubs/club-detail/members/club-members-list.component.ts
 ````typescript
 import {
@@ -5656,128 +5468,6 @@ export const CLUBS_ROUTES: Routes = [
     ],
   },
 ];
-````
-
-## File: src/app/features/events/event-detail/event-detail.component.html
-````html
-@if (isLoading()) {
-  <main class="max-w-3xl mx-auto px-4 py-8" aria-busy="true">
-    <div class="animate-pulse space-y-4">
-      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-    </div>
-  </main>
-} @else if (errorMessage()) {
-  <main class="max-w-3xl mx-auto px-4 py-8 text-center" role="alert">
-    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
-    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
-    <a routerLink="/events"
-       class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors">
-      {{ 'EVENTS.back_to_events' | translate }}
-    </a>
-  </main>
-} @else if (event()) {
-  <main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
-    <nav>
-      <a routerLink="/events"
-         class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-        {{ 'EVENTS.back_to_events' | translate }}
-      </a>
-    </nav>
-    <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6 space-y-3">
-      <div class="flex items-start justify-between gap-4">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ event()!.title }}</h1>
-        @if (event()!.status !== 'scheduled') {
-          <span class="text-xs rounded-full px-2.5 py-1 shrink-0"
-                [class]="event()!.status === 'cancelled'
-                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                  : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'">
-            {{ event()!.status }}
-          </span>
-        }
-      </div>
-      <a [routerLink]="['/clubs', event()!.clubId]"
-         class="text-sm text-primary-600 dark:text-primary-400 hover:underline">
-        📚 {{ event()!.clubName }}
-      </a>
-      <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-        <span>📅 {{ event()!.date | formatDate }}</span>
-        @if (event()!.city) {
-          <span>📍 {{ event()!.address || event()!.city }}</span>
-        }
-        @if (event()!.durationMinutes) {
-          <span>⏱ {{ event()!.durationMinutes }} {{ 'EVENTS.minutes_abbr' | translate }}</span>
-        }
-        <span>👤 {{ event()!.attendeeCount }} {{ 'EVENTS.attending' | translate }}</span>
-      </div>
-      @if (auth.isAuthenticated() && event()!.status !== 'cancelled') {
-        <div class="flex gap-3 pt-2">
-          @if (event()!.isAttending) {
-            <button type="button"
-                    [disabled]="isActioning()"
-                    (click)="onCancelAttend()"
-                    class="rounded-xl bg-green-600 hover:bg-green-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
-              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.going_cancel' | translate }} }
-            </button>
-          } @else {
-            <button type="button"
-                    [disabled]="isActioning()"
-                    (click)="onAttend()"
-                    class="rounded-xl bg-primary-600 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
-              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.rsvp_going' | translate }} }
-            </button>
-          }
-        </div>
-      }
-    </div>
-    @if (event()!.description) {
-      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.about' | translate }}</h2>
-        <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ event()!.description }}</p>
-      </section>
-    }
-    @if (event()!.theme || event()!.tags.length > 0) {
-      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.tags' | translate }}</h2>
-        <div class="flex flex-wrap gap-2">
-          @if (event()!.theme) {
-            <span class="rounded-full bg-accent-100 dark:bg-accent-900/30 px-3 py-1 text-xs font-medium text-accent-700 dark:text-accent-300">
-              {{ event()!.theme }}
-            </span>
-          }
-          @for (tag of event()!.tags; track tag) {
-            <span class="rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1 text-xs text-gray-600 dark:text-gray-400">
-              {{ tag }}
-            </span>
-          }
-        </div>
-      </section>
-    }
-    @if (event()!.afterMeetingVenue) {
-      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.after_meeting_venue' | translate }}</h2>
-        <p class="font-medium text-gray-900 dark:text-white">{{ event()!.afterMeetingVenue!.name }}</p>
-        <p class="text-sm text-gray-500 dark:text-gray-400">{{ event()!.afterMeetingVenue!.address }}</p>
-        @if (event()!.afterMeetingVenue!.description) {
-          <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">{{ event()!.afterMeetingVenue!.description }}</p>
-        }
-      </section>
-    }
-    @if (isOrganizer() && event()!.status !== 'cancelled') {
-      <section class="rounded-2xl border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-6">
-        <h2 class="text-sm font-semibold text-yellow-800 dark:text-yellow-300 uppercase tracking-wide mb-3">{{ 'EVENTS.organizer_controls' | translate }}</h2>
-        <div class="flex gap-3">
-          <button type="button"
-                  [disabled]="isActioning()"
-                  (click)="onCancelEvent()"
-                  class="rounded-lg bg-red-600 hover:bg-red-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60 transition-colors">
-            {{ 'EVENTS.cancel_event' | translate }}
-          </button>
-        </div>
-      </section>
-    }
-  </main>
-}
 ````
 
 ## File: src/app/features/privacy/privacy.component.ts
@@ -8491,12 +8181,6 @@ export async function configureQuizTestBed(component: Type<unknown>, quizSvc: un
 }
 ````
 
-## File: supabase/migrations/007_events_cover_image.sql
-````sql
-ALTER TABLE events
-  ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
-````
-
 ## File: CLAUDE.md
 ````markdown
 # Project Context
@@ -9277,6 +8961,61 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
 };
 ````
 
+## File: src/app/core/models/chat.model.ts
+````typescript
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: Date;
+  isOwn: boolean;
+  isMuted?: boolean;
+}
+export interface ChatRoom {
+  id: string;
+  name: string;
+  clubId: string;
+  eventId?: string;
+}
+````
+
+## File: src/app/core/models/event.model.ts
+````typescript
+export type EventStatus = 'scheduled' | 'active' | 'held' | 'cancelled' | 'rescheduled' | 'upcoming';
+export interface AfterMeetingVenue {
+  name: string;
+  address: string;
+  description?: string;
+  lat?: number;
+  lng?: number;
+}
+export interface ClubEvent {
+  id: string;
+  clubId: string;
+  clubName: string;
+  organizerId: string;
+  title: string;
+  description: string | null;
+  date: string;
+  city: string;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  status: EventStatus;
+  cancelledAt?: string;
+  coverUrl: string | null;
+  theme: string | null;
+  tags: string[];
+  durationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  attendeeCount: number;
+  isAttending: boolean;
+  bookTitle?: string | null;
+  quizId?: string | null;
+}
+````
+
 ## File: src/app/core/services/book-cover.service.ts
 ````typescript
 import { Injectable, inject } from '@angular/core';
@@ -9376,225 +9115,149 @@ export class BookVoteService {
 }
 ````
 
-## File: src/app/core/services/club.service.ts
+## File: src/app/core/services/event.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
-import { AuthService } from '../auth/auth.service';
-import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
-import { ClubEvent } from '../models/event.model';
+import { ApiEvent, mapEvent } from '../api/api-mappers';
+import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
+export interface CreateEventPayload {
+  title: string;
+  description?: string | null;
+  date: string;
+  city: string;
+  address?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  theme?: string | null;
+  tags?: string[];
+  durationMinutes?: number | null;
+  afterMeetingVenue?: AfterMeetingVenue | null;
+  coverUrl?: string | null;
+  bookTitle?: string | null;
+  quizId?: string | null;
+}
 @Injectable({ providedIn: 'root' })
-export class ClubService {
+export class EventService {
   private readonly http = inject(HttpClient);
-  private readonly auth = inject(AuthService);
-  private readonly _clubs = signal<Club[]>([]);
-  private readonly _myClubs = signal<Club[]>([]);
+  private readonly _allEvents = signal<ClubEvent[]>([]);
+  private readonly _myEvents = signal<ClubEvent[]>([]);
   private readonly _isLoading = signal(false);
   private readonly _error = signal<string | null>(null);
-  private readonly _searchQuery = signal('');
   private readonly _cityFilter = signal<string | null>(null);
-  readonly clubs = this._clubs.asReadonly();
-  readonly myClubs = this._myClubs.asReadonly();
+  readonly allEvents = this._allEvents.asReadonly();
+  readonly myEvents = this._myEvents.asReadonly();
   readonly isLoading = this._isLoading.asReadonly();
   readonly error = this._error.asReadonly();
-  readonly searchQuery = this._searchQuery.asReadonly();
-  readonly myOwnedClubs = computed<Club[]>(() => {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) return [];
-    return this._clubs().filter(c => c.organizerId === userId);
-  });
-  readonly myOwnedClubIds = computed<Set<string>>(() =>
-    new Set(this.myOwnedClubs().map(c => c.id)),
-  );
-  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
-  readonly availableCities = computed<string[]>(() => {
-    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
-    return cities.sort((a, b) => a.localeCompare(b));
-  });
-  readonly filteredClubs = computed(() => {
-    const q = this._searchQuery().toLowerCase().trim();
+  readonly cityFilter = this._cityFilter.asReadonly();
+  readonly filteredAllEvents = computed(() => {
     const city = this._cityFilter();
-    let clubs = this._clubs();
-    if (q) {
-      clubs = clubs.filter(
-        c =>
-          c.name.toLowerCase().includes(q) ||
-          (c.description?.toLowerCase().includes(q) ?? false),
-      );
-    }
-    if (city) {
-      clubs = clubs.filter(c => c.city === city);
-    }
-    return clubs;
+    const events = this._allEvents();
+    return city ? events.filter(e => e.city === city) : events;
   });
-  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
-    const clubs = this.filteredClubs();
-    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
-      const city = club.city || '';
-      if (!acc[city]) acc[city] = [];
-      acc[city].push(club);
+  readonly availableCities = computed<string[]>(() => {
+    const seen = new Set<string>();
+    for (const e of this._allEvents()) seen.add(e.city);
+    return [...seen].sort((a, b) => a.localeCompare(b));
+  });
+  readonly groupedByDate = computed<Record<string, ClubEvent[]>>(() => {
+    return this.filteredAllEvents().reduce<Record<string, ClubEvent[]>>((acc, e) => {
+      const day = e.date.slice(0, 10);
+      if (!acc[day]) acc[day] = [];
+      acc[day].push(e);
       return acc;
     }, {});
   });
-  readonly myParticipatedClubs = computed<Club[]>(() => []);
-  readonly myMissedClubs = computed<Club[]>(() => []);
-  setSearchQuery(query: string): void {
-    this._searchQuery.set(query);
-  }
   setCityFilter(city: string | null): void {
     this._cityFilter.set(city);
   }
-  async loadPublicClubs(): Promise<void> {
+  async loadAllEvents(skip = 0, limit = 50): Promise<void> {
     this._isLoading.set(true);
     this._error.set(null);
     try {
       const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
+        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events`, {
+          params: { skip: String(skip), limit: String(limit) },
+        }),
       );
-      this._clubs.set(raw.map(mapClub));
+      this._allEvents.set(raw.map(mapEvent));
     } catch {
-      this._error.set('Failed to load clubs');
+      this._error.set('Failed to load events');
     } finally {
       this._isLoading.set(false);
     }
   }
-  async loadMyClubs(): Promise<void> {
+  async loadMyEvents(): Promise<void> {
     try {
       const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
+        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events/my`),
       );
-      this._myClubs.set(raw.map(mapClub));
+      this._myEvents.set(raw.map(mapEvent));
     } catch {
-      this._error.set('Failed to load my clubs');
+      this._error.set('Failed to load my events');
     }
   }
-  async getClubById(id: string): Promise<Club | null> {
+  async getEventById(id: string): Promise<ClubEvent | null> {
     try {
       const raw = await firstValueFrom(
-        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
+        this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`),
       );
-      return mapClub(raw);
+      return mapEvent(raw);
     } catch {
       return null;
     }
   }
-  async createClub(payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    coverUrl?: string | null;
-    city?: string;
-    tags?: string[];
-    meetingDurationMinutes?: number | null;
-    afterMeetingVenue?: { name: string; address: string; description: string } | null;
-  }): Promise<Club> {
+  async attendEvent(eventId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/events/${eventId}/attend`, {}),
+    );
+    this._patchEventAttending(eventId, true);
+  }
+  async cancelAttendance(eventId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/events/${eventId}/attend`),
+    );
+    this._patchEventAttending(eventId, false);
+  }
+  async createEvent(clubId: string, payload: CreateEventPayload): Promise<ClubEvent> {
     const raw = await firstValueFrom(
-      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
-        name: payload.name,
-        description: payload.description,
-        isPublic: payload.isPublic,
-        coverUrl: payload.coverUrl ?? null,
-        city: payload.city,
-        tags: payload.tags,
-        meetingDurationMinutes: payload.meetingDurationMinutes,
-        afterMeetingVenue: payload.afterMeetingVenue,
+      this.http.post<ApiEvent>(`${environment.apiUrl}/clubs/${clubId}/events`, payload),
+    );
+    return mapEvent(raw);
+  }
+  async rescheduleEvent(eventId: string, newDate: string, newCity?: string, newAddress?: string): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/reschedule`, {
+        newDate,
+        newCity: newCity ?? null,
+        newAddress: newAddress ?? null,
       }),
     );
-    const club = mapClub(raw);
-    this._clubs.update(existing => [club, ...existing]);
-    this._myClubs.update(existing => [club, ...existing]);
-    return club;
+    const updated = mapEvent(raw);
+    this._updateEvent(updated);
   }
-  async updateClub(clubId: string, payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    city?: string;
-    coverUrl?: string | null;
-  }): Promise<Club> {
+  async cancelEvent(eventId: string): Promise<void> {
     const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
+      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/cancel`, {}),
     );
-    const club = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    return club;
+    const updated = mapEvent(raw);
+    this._updateEvent(updated);
   }
-  async joinClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
-    );
-    this._clubs.update(list =>
-      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
-    );
-    const club = this._clubs().find(c => c.id === clubId);
-    if (club && !this.myClubIds().has(clubId)) {
-      this._myClubs.update(list => [club, ...list]);
-    }
+  private _patchEventAttending(eventId: string, attending: boolean): void {
+    const patch = (list: ClubEvent[]) =>
+      list.map(e =>
+        e.id === eventId
+          ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
+          : e,
+      );
+    this._allEvents.update(patch);
+    this._myEvents.update(patch);
   }
-  async leaveClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
-    );
-    this._clubs.update(list =>
-      list.map(c =>
-        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
-      ),
-    );
-    this._myClubs.update(list => list.filter(c => c.id !== clubId));
-  }
-  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
-    );
-    return raw.map(mapClubMember);
-  }
-  async kickMember(clubId: string, userId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
-    );
-  }
-  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
-    );
-  }
-  async getBans(clubId: string): Promise<BanRecord[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
-    );
-    return raw.map(mapBanRecord);
-  }
-  async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`),
-    );
-    return raw.map(mapEvent);
-  }
-  async pauseClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'pause');
-  }
-  async cancelClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'cancel');
-  }
-  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
-  }
-  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
-    );
-    const updated = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
-  }
-  msUntilDeletion(club: Club): number | null {
-    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
-    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
-    const remaining = deletionTime - Date.now();
-    return remaining > 0 ? remaining : null;
+  private _updateEvent(updated: ClubEvent): void {
+    this._allEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
+    this._myEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
   }
 }
 ````
@@ -9955,35 +9618,108 @@ export class UploadService {
 }
 ````
 
-## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
-import { ClubEvent } from '../../../../core/models/event.model';
-import { HlmButton } from '../../../../shared/spartan/button/src';
-@Component({
-  selector: 'app-club-event-card',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton],
-  templateUrl: './club-event-card.component.html',
-  styleUrl: './club-event-card.component.scss',
-})
-export class ClubEventCardComponent {
-  readonly event = input.required<ClubEvent>();
-  readonly isAuthenticated = input<boolean>(false);
-  readonly attending = input<boolean>(false);
-  readonly index = input<number>(0);
-  readonly attend = output<void>();
-  readonly cancelAttend = output<void>();
-}
+## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html
+````html
+<article
+  class="parchment-card glass-card flex flex-col overflow-hidden h-full"
+  [style.animation-delay]="index() * 80 + 'ms'"
+>
+  @if (event().coverUrl) {
+    <div class="h-28 overflow-hidden flex-shrink-0">
+      <img [src]="event().coverUrl" [alt]="event().title" class="w-full h-full object-cover" loading="lazy" />
+    </div>
+  } @else {
+    <div class="h-1 w-full bg-gradient-to-r from-primary-500 via-accent-500 to-primary-400 flex-shrink-0"></div>
+  }
+  @if (event().status !== 'scheduled') {
+    <div
+      class="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center text-sm shadow-sm border z-10"
+      [class]="event().status === 'active'
+        ? 'bg-green-100/80 border-green-400 dark:bg-green-900/50 dark:border-green-600'
+        : event().status === 'cancelled'
+          ? 'bg-red-100/80 border-red-400 dark:bg-red-900/50 dark:border-red-600'
+          : 'bg-yellow-100/80 border-yellow-400 dark:bg-yellow-900/50 dark:border-yellow-600'"
+      [attr.title]="event().status"
+    >
+      {{ event().status === 'active' ? '🟢' : event().status === 'cancelled' ? '🔴' : '🟡' }}
+    </div>
+  }
+  <div class="flex flex-col flex-1 p-4 gap-3">
+    <div>
+      <span class="inline-flex items-center gap-1.5 rounded-full bg-primary-100/80 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/60 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
+        📅 {{ event().date | formatDate }}
+      </span>
+    </div>
+    <a
+      [routerLink]="['/events', event().id]"
+      class="block font-display text-base font-semibold leading-snug text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors line-clamp-2"
+    >
+      {{ event().title }}
+    </a>
+    @if (event().city) {
+      <p class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+        <span aria-hidden="true">📍</span>
+        <span>{{ event().address || event().city }}</span>
+      </p>
+    }
+    @if (event().theme || event().tags.length > 0) {
+      <div class="flex flex-wrap gap-1.5">
+        @if (event().theme) {
+          <span class="rune-pill rounded-full bg-accent-100/80 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700/60 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
+            ✨ {{ event().theme }}
+          </span>
+        }
+        @for (tag of event().tags.slice(0, 2); track tag) {
+          <span class="rune-pill rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-600 dark:text-gray-400">
+            🏷 {{ tag }}
+          </span>
+        }
+      </div>
+    }
+    <div class="flex items-center justify-between mt-auto pt-2 border-t border-white/20 dark:border-white/10">
+      <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+        👥 {{ event().attendeeCount }} {{ 'CLUB_DETAIL.rsvp_attending' | translate }}
+      </span>
+      <div class="flex items-center gap-2">
+        @if (isAuthenticated() && event().status !== 'cancelled') {
+          @if (event().isAttending) {
+            <button
+              hlmBtn
+              size="sm"
+              type="button"
+              [disabled]="attending()"
+              (click)="cancelAttend.emit()"
+              class="bg-green-600 hover:bg-green-700 text-white text-xs"
+            >
+              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_going' | translate }} }
+            </button>
+          } @else {
+            <button
+              hlmBtn
+              size="sm"
+              type="button"
+              [disabled]="attending()"
+              (click)="attend.emit()"
+              class="bg-primary-600 hover:bg-primary-700 text-white text-xs"
+            >
+              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_join' | translate }} }
+            </button>
+          }
+        } @else {
+          <a
+            hlmBtn
+            variant="outline"
+            size="sm"
+            [routerLink]="['/events', event().id]"
+            class="text-xs"
+          >
+            {{ 'CLUB_DETAIL.rsvp_view' | translate }} →
+          </a>
+        }
+      </div>
+    </div>
+  </div>
+</article>
 ````
 
 ## File: src/app/features/clubs/club-detail/club-sidebar-right/club-sidebar-right.component.html
@@ -10090,29 +9826,6 @@ export class ClubHeaderComponent {
   readonly isAuthenticated = input.required<boolean>();
   readonly isActionLoading = input.required<boolean>();
   readonly leave = output<void>();
-}
-````
-
-## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { HlmCard } from '../../../../shared/spartan/card/src';
-@Component({
-  selector: 'app-club-manage-panel',
-  host: { class: 'block' },
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, HlmCard],
-  templateUrl: './club-manage-panel.component.html',
-})
-export class ClubManagePanelComponent {
-  readonly clubId = input.required<string>();
 }
 ````
 
@@ -11289,185 +11002,465 @@ export class AuthService {
 }
 ````
 
-## File: src/app/core/models/event.model.ts
+## File: src/app/core/services/chat.service.ts
 ````typescript
-export type EventStatus = 'scheduled' | 'active' | 'held' | 'cancelled' | 'rescheduled' | 'upcoming';
-export interface AfterMeetingVenue {
-  name: string;
-  address: string;
-  description?: string;
-  lat?: number;
-  lng?: number;
-}
-export interface ClubEvent {
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { ChatMessage, ChatRoom } from '../models/chat.model';
+import { environment } from '../../../environments/environment';
+interface ApiChatRoom {
   id: string;
-  clubId: string;
-  clubName: string;
-  organizerId: string;
-  title: string;
-  description: string | null;
-  date: string;
-  city: string;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  status: EventStatus;
-  cancelledAt?: string;
-  coverUrl: string | null;
-  theme: string | null;
-  tags: string[];
-  durationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  attendeeCount: number;
-  isAttending: boolean;
-  bookTitle?: string | null;
-  quizId?: string | null;
+  name: string;
+  eventId?: string;
+}
+interface ApiChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: string;
+}
+@Injectable({ providedIn: 'root' })
+export class ChatService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _rooms = signal<ChatRoom[]>([]);
+  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
+  private readonly _activeRoomId = signal<string | null>(null);
+  private readonly _unreadCount = signal<number>(0);
+  private readonly _isOpen = signal<boolean>(false);
+  private readonly _hasNewMessage = signal<boolean>(false);
+  private readonly _mutedUserIds = signal<Set<string>>(new Set());
+  private currentUserId: string | null = null;
+  readonly rooms = this._rooms.asReadonly();
+  readonly messages = this._messages.asReadonly();
+  readonly activeRoomId = this._activeRoomId.asReadonly();
+  readonly unreadCount = this._unreadCount.asReadonly();
+  readonly isOpen = this._isOpen.asReadonly();
+  readonly hasNewMessage = this._hasNewMessage.asReadonly();
+  readonly mutedUserIds = this._mutedUserIds.asReadonly();
+  readonly activeRoom = computed(() =>
+    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
+  );
+  readonly activeMessages = computed(() => {
+    const msgs = this._messages()[this._activeRoomId() ?? ''] ?? [];
+    const muted = this._mutedUserIds();
+    return msgs.map(m => ({ ...m, isMuted: muted.has(m.senderId) }));
+  });
+  // ── Public API ────────────────────────────────────────────────────────────
+  /** Fetch chat rooms for a given club and seed the rooms signal. */
+  loadRooms(clubId: string, userId?: string): void {
+    if (userId !== undefined) {
+      this.currentUserId = userId;
+    }
+    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
+      .then(raw => {
+        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId, eventId: r.eventId }));
+        this._rooms.set(rooms);
+        const currentId = this._activeRoomId();
+        if (!currentId || !rooms.some(r => r.id === currentId)) {
+          const first = rooms[0];
+          if (first) {
+            this._activeRoomId.set(first.id);
+            this.loadMessages(first.id);
+          }
+        }
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
+  }
+  loadAllClubRooms(clubs: { id: string; name: string }[], userId?: string): void {
+    if (userId !== undefined) this.currentUserId = userId;
+    const multipleClubs = clubs.length > 1;
+    const requests = clubs.map(club =>
+      firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${club.id}/chat/rooms`))
+        .then(raw => raw.map(r => ({
+          id: r.id,
+          name: multipleClubs ? `${club.name} · ${r.name}` : r.name,
+          clubId: club.id,
+          eventId: r.eventId,
+        })))
+        .catch(() => [] as ChatRoom[]),
+    );
+    Promise.all(requests).then(results => {
+      const allRooms = results.flat();
+      this._rooms.set(allRooms);
+      const currentId = this._activeRoomId();
+      if (!currentId || !allRooms.some(r => r.id === currentId)) {
+        const first = allRooms[0];
+        if (first) {
+          this._activeRoomId.set(first.id);
+          this.loadMessages(first.id);
+        }
+      }
+    }).catch((err: unknown) => console.error('[ChatService] loadAllClubRooms error', err));
+  }
+  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
+    const query: Record<string, string> = {};
+    if (params?.before) query['before'] = params.before;
+    if (params?.limit != null) query['limit'] = String(params.limit);
+    firstValueFrom(
+      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
+        params: query,
+      }),
+    )
+      .then(raw => {
+        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
+        this._messages.update(map => ({ ...map, [roomId]: msgs }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
+  }
+  toggleOpen(): void {
+    this._isOpen.update(v => !v);
+    if (this._isOpen()) {
+      this.markAsRead();
+    }
+  }
+  openRoom(roomId: string): void {
+    this._activeRoomId.set(roomId);
+    this.loadMessages(roomId);
+    this.markAsRead();
+  }
+  markAsRead(): void {
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+  }
+  clearRooms(): void {
+    this._rooms.set([]);
+    this._messages.set({});
+    this._activeRoomId.set(null);
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+    this._isOpen.set(false);
+    this._mutedUserIds.set(new Set());
+    this.currentUserId = null;
+  }
+  muteUser(userId: string): void {
+    this._mutedUserIds.update(set => new Set([...set, userId]));
+  }
+  unmuteUser(userId: string): void {
+    this._mutedUserIds.update(set => {
+      const next = new Set(set);
+      next.delete(userId);
+      return next;
+    });
+  }
+  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    this.currentUserId = currentUser.id;
+    firstValueFrom(
+      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
+    )
+      .then(() => {
+        this.loadMessages(roomId);
+      })
+      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
+  }
+  deleteMessage(messageId: string): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    firstValueFrom(
+      this.http.delete(`${this.api}/chat/rooms/${roomId}/messages/${messageId}`),
+    )
+      .then(() => {
+        this._messages.update(map => ({
+          ...map,
+          [roomId]: (map[roomId] ?? []).filter(m => m.id !== messageId),
+        }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] deleteMessage error', err));
+  }
+  banUserFromChat(userId: string, durationSeconds: number): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    firstValueFrom(
+      this.http.post(`${this.api}/chat/rooms/${roomId}/ban`, {
+        user_id: userId,
+        duration_seconds: durationSeconds,
+      }),
+    )
+      .then(() => {
+        this._messages.update(map => ({
+          ...map,
+          [roomId]: (map[roomId] ?? []).filter(m => m.senderId !== userId),
+        }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
+  }
+  async createRoom(clubId: string, name: string): Promise<ChatRoom> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),
+    );
+    const room: ChatRoom = { id: raw.id, name: raw.name, clubId, eventId: raw.eventId };
+    this._rooms.update(rooms => [...rooms, room]);
+    return room;
+  }
+  openAndFocusRoom(room: ChatRoom): void {
+    this._activeRoomId.set(room.id);
+    this.loadMessages(room.id);
+    this._isOpen.set(true);
+    this.markAsRead();
+  }
+  async getEventRoom(eventId: string): Promise<ChatRoom | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`),
+      );
+      return { id: raw.id, name: raw.name, clubId: '', eventId: raw.eventId };
+    } catch {
+      return null;
+    }
+  }
+  async createEventChatRoom(eventId: string): Promise<ChatRoom> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`, {}),
+    );
+    const room: ChatRoom = { id: raw.id, name: raw.name, clubId: '', eventId: raw.eventId };
+    this._rooms.update(rooms => [...rooms, room]);
+    return room;
+  }
+  private mapMessage(m: ApiChatMessage): ChatMessage {
+    return {
+      id: m.id,
+      senderId: m.senderId,
+      senderName: m.senderName,
+      text: m.text,
+      timestamp: new Date(m.timestamp),
+      isOwn: m.senderId === this.currentUserId,
+    };
+  }
 }
 ````
 
-## File: src/app/core/services/event.service.ts
+## File: src/app/core/services/club.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { ApiEvent, mapEvent } from '../api/api-mappers';
-import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
-export interface CreateEventPayload {
-  title: string;
-  description?: string | null;
-  date: string;
-  city: string;
-  address?: string | null;
-  lat?: number | null;
-  lng?: number | null;
-  theme?: string | null;
-  tags?: string[];
-  durationMinutes?: number | null;
-  afterMeetingVenue?: AfterMeetingVenue | null;
-  coverUrl?: string | null;
-  bookTitle?: string | null;
-  quizId?: string | null;
-}
+import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
+import { AuthService } from '../auth/auth.service';
+import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
+import { ClubEvent } from '../models/event.model';
 @Injectable({ providedIn: 'root' })
-export class EventService {
+export class ClubService {
   private readonly http = inject(HttpClient);
-  private readonly _allEvents = signal<ClubEvent[]>([]);
-  private readonly _myEvents = signal<ClubEvent[]>([]);
+  private readonly auth = inject(AuthService);
+  private readonly _clubs = signal<Club[]>([]);
+  private readonly _myClubs = signal<Club[]>([]);
   private readonly _isLoading = signal(false);
   private readonly _error = signal<string | null>(null);
+  private readonly _searchQuery = signal('');
   private readonly _cityFilter = signal<string | null>(null);
-  readonly allEvents = this._allEvents.asReadonly();
-  readonly myEvents = this._myEvents.asReadonly();
+  readonly clubs = this._clubs.asReadonly();
+  readonly myClubs = this._myClubs.asReadonly();
   readonly isLoading = this._isLoading.asReadonly();
   readonly error = this._error.asReadonly();
-  readonly cityFilter = this._cityFilter.asReadonly();
-  readonly filteredAllEvents = computed(() => {
-    const city = this._cityFilter();
-    const events = this._allEvents();
-    return city ? events.filter(e => e.city === city) : events;
+  readonly searchQuery = this._searchQuery.asReadonly();
+  readonly myOwnedClubs = computed<Club[]>(() => {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return [];
+    return this._clubs().filter(c => c.organizerId === userId);
   });
+  readonly myOwnedClubIds = computed<Set<string>>(() =>
+    new Set(this.myOwnedClubs().map(c => c.id)),
+  );
+  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
   readonly availableCities = computed<string[]>(() => {
-    const seen = new Set<string>();
-    for (const e of this._allEvents()) seen.add(e.city);
-    return [...seen].sort((a, b) => a.localeCompare(b));
+    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
+    return cities.sort((a, b) => a.localeCompare(b));
   });
-  readonly groupedByDate = computed<Record<string, ClubEvent[]>>(() => {
-    return this.filteredAllEvents().reduce<Record<string, ClubEvent[]>>((acc, e) => {
-      const day = e.date.slice(0, 10);
-      if (!acc[day]) acc[day] = [];
-      acc[day].push(e);
+  readonly filteredClubs = computed(() => {
+    const q = this._searchQuery().toLowerCase().trim();
+    const city = this._cityFilter();
+    let clubs = this._clubs();
+    if (q) {
+      clubs = clubs.filter(
+        c =>
+          c.name.toLowerCase().includes(q) ||
+          (c.description?.toLowerCase().includes(q) ?? false),
+      );
+    }
+    if (city) {
+      clubs = clubs.filter(c => c.city === city);
+    }
+    return clubs;
+  });
+  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
+    const clubs = this.filteredClubs();
+    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
+      const city = club.city || '';
+      if (!acc[city]) acc[city] = [];
+      acc[city].push(club);
       return acc;
     }, {});
   });
+  readonly myParticipatedClubs = computed<Club[]>(() => []);
+  readonly myMissedClubs = computed<Club[]>(() => []);
+  setSearchQuery(query: string): void {
+    this._searchQuery.set(query);
+  }
   setCityFilter(city: string | null): void {
     this._cityFilter.set(city);
   }
-  async loadAllEvents(skip = 0, limit = 50): Promise<void> {
+  async loadPublicClubs(): Promise<void> {
     this._isLoading.set(true);
     this._error.set(null);
     try {
       const raw = await firstValueFrom(
-        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events`, {
-          params: { skip: String(skip), limit: String(limit) },
-        }),
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
       );
-      this._allEvents.set(raw.map(mapEvent));
+      this._clubs.set(raw.map(mapClub));
     } catch {
-      this._error.set('Failed to load events');
+      this._error.set('Failed to load clubs');
     } finally {
       this._isLoading.set(false);
     }
   }
-  async loadMyEvents(): Promise<void> {
+  async loadMyClubs(): Promise<void> {
     try {
       const raw = await firstValueFrom(
-        this.http.get<ApiEvent[]>(`${environment.apiUrl}/events/my`),
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
       );
-      this._myEvents.set(raw.map(mapEvent));
+      this._myClubs.set(raw.map(mapClub));
     } catch {
-      this._error.set('Failed to load my events');
+      this._error.set('Failed to load my clubs');
     }
   }
-  async getEventById(id: string): Promise<ClubEvent | null> {
+  async getClubById(id: string): Promise<Club | null> {
     try {
       const raw = await firstValueFrom(
-        this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`),
+        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
       );
-      return mapEvent(raw);
+      return mapClub(raw);
     } catch {
       return null;
     }
   }
-  async attendEvent(eventId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/events/${eventId}/attend`, {}),
-    );
-    this._patchEventAttending(eventId, true);
-  }
-  async cancelAttendance(eventId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/events/${eventId}/attend`),
-    );
-    this._patchEventAttending(eventId, false);
-  }
-  async createEvent(clubId: string, payload: CreateEventPayload): Promise<ClubEvent> {
+  async createClub(payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    coverUrl?: string | null;
+    city?: string;
+    tags?: string[];
+    meetingDurationMinutes?: number | null;
+    afterMeetingVenue?: { name: string; address: string; description: string } | null;
+  }): Promise<Club> {
     const raw = await firstValueFrom(
-      this.http.post<ApiEvent>(`${environment.apiUrl}/clubs/${clubId}/events`, payload),
-    );
-    return mapEvent(raw);
-  }
-  async rescheduleEvent(eventId: string, newDate: string, newCity?: string, newAddress?: string): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/reschedule`, {
-        newDate,
-        newCity: newCity ?? null,
-        newAddress: newAddress ?? null,
+      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
+        name: payload.name,
+        description: payload.description,
+        isPublic: payload.isPublic,
+        coverUrl: payload.coverUrl ?? null,
+        city: payload.city,
+        tags: payload.tags,
+        meetingDurationMinutes: payload.meetingDurationMinutes,
+        afterMeetingVenue: payload.afterMeetingVenue,
       }),
     );
-    const updated = mapEvent(raw);
-    this._updateEvent(updated);
+    const club = mapClub(raw);
+    this._clubs.update(existing => [club, ...existing]);
+    this._myClubs.update(existing => [club, ...existing]);
+    return club;
   }
-  async cancelEvent(eventId: string): Promise<void> {
+  async updateClub(clubId: string, payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    city?: string;
+    coverUrl?: string | null;
+  }): Promise<Club> {
     const raw = await firstValueFrom(
-      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}/cancel`, {}),
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
     );
-    const updated = mapEvent(raw);
-    this._updateEvent(updated);
+    const club = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    return club;
   }
-  private _patchEventAttending(eventId: string, attending: boolean): void {
-    const patch = (list: ClubEvent[]) =>
-      list.map(e =>
-        e.id === eventId
-          ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
-          : e,
-      );
-    this._allEvents.update(patch);
-    this._myEvents.update(patch);
+  async joinClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
+    );
+    this._clubs.update(list =>
+      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
+    );
+    const club = this._clubs().find(c => c.id === clubId);
+    if (club && !this.myClubIds().has(clubId)) {
+      this._myClubs.update(list => [club, ...list]);
+    }
   }
-  private _updateEvent(updated: ClubEvent): void {
-    this._allEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
-    this._myEvents.update(list => list.map(e => (e.id === updated.id ? updated : e)));
+  async leaveClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
+    );
+    this._clubs.update(list =>
+      list.map(c =>
+        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
+      ),
+    );
+    this._myClubs.update(list => list.filter(c => c.id !== clubId));
+  }
+  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
+    );
+    return raw.map(mapClubMember);
+  }
+  async kickMember(clubId: string, userId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
+    );
+  }
+  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
+    );
+  }
+  async getBans(clubId: string): Promise<BanRecord[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
+    );
+    return raw.map(mapBanRecord);
+  }
+  async loadClubEvents(clubId: string, includePast = false): Promise<ClubEvent[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`, {
+        params: { include_past: String(includePast) },
+      }),
+    );
+    return raw.map(mapEvent);
+  }
+  async deleteClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}`),
+    );
+    this._clubs.update(list => list.filter(c => c.id !== clubId));
+    this._myClubs.update(list => list.filter(c => c.id !== clubId));
+  }
+  async pauseClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'pause');
+  }
+  async cancelClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'cancel');
+  }
+  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
+  }
+  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+  msUntilDeletion(club: Club): number | null {
+    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
+    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
+    const remaining = deletionTime - Date.now();
+    return remaining > 0 ? remaining : null;
   }
 }
 ````
@@ -11543,239 +11536,6 @@ export class LoginComponent {
     }
   }
 }
-````
-
-## File: src/app/features/auth/register/register.component.ts
-````typescript
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators,
-} from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../../core/auth/auth.service';
-import { UserRole } from '../../../core/models/user.model';
-import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
-import { SeoService } from '../../../core/services/seo.service';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
-  const password = group.get('password')?.value as string;
-  const confirmPassword = group.get('confirmPassword')?.value as string;
-  return password === confirmPassword ? null : { passwordMismatch: true };
-};
-interface RegisterForm {
-  displayName: FormControl<string>;
-  email: FormControl<string>;
-  password: FormControl<string>;
-  confirmPassword: FormControl<string>;
-  role: FormControl<UserRole>;
-}
-@Component({
-  selector: 'app-register',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './register.component.html',
-  styleUrl: './register.component.scss',
-})
-export class RegisterComponent {
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly seo = inject(SeoService);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isSubmitting = signal(false);
-  readonly successMessage = signal(false);
-  readonly registeredEmail = signal('');
-  readonly registeredName = signal('');
-  readonly selectedRole = signal<UserRole>('user');
-  readonly bookOpen = signal(false);
-  readonly formVisible = signal(false);
-  constructor() {
-    this.seo.setPageI18n('SEO.register_title');
-    setTimeout(() => this.formVisible.set(true), 700);
-  }
-  onBookAnimationDone(): void {
-    this.router.navigate(['/clubs']);
-  }
-  readonly form = new FormGroup<RegisterForm>(
-    {
-      displayName: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.minLength(2)],
-      }),
-      email: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.email],
-      }),
-      password: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.minLength(8)],
-      }),
-      confirmPassword: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-      role: new FormControl<UserRole>('user', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-    },
-    { validators: passwordMatchValidator },
-  );
-  private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
-    initialValue: '',
-  });
-  readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
-    const pw = this._passwordValue();
-    if (!pw || pw.length === 0) return null;
-    if (pw.length < 8) return 'weak';
-    const hasUpper = /[A-Z]/.test(pw);
-    const hasNumber = /\d/.test(pw);
-    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
-    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
-    if (score >= 2) return 'strong';
-    if (score === 1) return 'medium';
-    return 'weak';
-  });
-  setRole(role: UserRole): void {
-    this.selectedRole.set(role);
-    this.form.controls.role.setValue(role);
-    this.form.controls.role.markAsTouched();
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.isSubmitting.set(true);
-    this.errorMessage.set(null);
-    const { displayName, email, password, role } = this.form.getRawValue();
-    const { error } = await this.auth.signUp(email, password, displayName, role);
-    this.isSubmitting.set(false);
-    if (error) {
-      this.errorMessage.set(error);
-    } else {
-      this.registeredEmail.set(email);
-      this.registeredName.set(displayName);
-      this.successMessage.set(true);
-      this.bookOpen.set(true);
-    }
-  }
-}
-````
-
-## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html
-````html
-<article
-  class="parchment-card glass-card flex flex-col overflow-hidden h-full"
-  [style.animation-delay]="index() * 80 + 'ms'"
->
-  @if (event().coverUrl) {
-    <div class="h-28 overflow-hidden flex-shrink-0">
-      <img [src]="event().coverUrl" [alt]="event().title" class="w-full h-full object-cover" loading="lazy" />
-    </div>
-  } @else {
-    <div class="h-1 w-full bg-gradient-to-r from-primary-500 via-accent-500 to-primary-400 flex-shrink-0"></div>
-  }
-  @if (event().status !== 'scheduled') {
-    <div
-      class="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center text-sm shadow-sm border z-10"
-      [class]="event().status === 'active'
-        ? 'bg-green-100/80 border-green-400 dark:bg-green-900/50 dark:border-green-600'
-        : event().status === 'cancelled'
-          ? 'bg-red-100/80 border-red-400 dark:bg-red-900/50 dark:border-red-600'
-          : 'bg-yellow-100/80 border-yellow-400 dark:bg-yellow-900/50 dark:border-yellow-600'"
-      [attr.title]="event().status"
-    >
-      {{ event().status === 'active' ? '🟢' : event().status === 'cancelled' ? '🔴' : '🟡' }}
-    </div>
-  }
-  <div class="flex flex-col flex-1 p-4 gap-3">
-    <div>
-      <span class="inline-flex items-center gap-1.5 rounded-full bg-primary-100/80 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/60 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
-        📅 {{ event().date | formatDate }}
-      </span>
-    </div>
-    <a
-      [routerLink]="['/events', event().id]"
-      class="block font-display text-base font-semibold leading-snug text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors line-clamp-2"
-    >
-      {{ event().title }}
-    </a>
-    @if (event().city) {
-      <p class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-        <span aria-hidden="true">📍</span>
-        <span>{{ event().address || event().city }}</span>
-      </p>
-    }
-    @if (event().theme || event().tags.length > 0) {
-      <div class="flex flex-wrap gap-1.5">
-        @if (event().theme) {
-          <span class="rune-pill rounded-full bg-accent-100/80 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700/60 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
-            ✨ {{ event().theme }}
-          </span>
-        }
-        @for (tag of event().tags.slice(0, 2); track tag) {
-          <span class="rune-pill rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-600 dark:text-gray-400">
-            🏷 {{ tag }}
-          </span>
-        }
-      </div>
-    }
-    <div class="flex items-center justify-between mt-auto pt-2 border-t border-white/20 dark:border-white/10">
-      <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-        👥 {{ event().attendeeCount }} {{ 'CLUB_DETAIL.rsvp_attending' | translate }}
-      </span>
-      <div class="flex items-center gap-2">
-        @if (isAuthenticated() && event().status !== 'cancelled') {
-          @if (event().isAttending) {
-            <button
-              hlmBtn
-              size="sm"
-              type="button"
-              [disabled]="attending()"
-              (click)="cancelAttend.emit()"
-              class="bg-green-600 hover:bg-green-700 text-white text-xs"
-            >
-              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_going' | translate }} }
-            </button>
-          } @else {
-            <button
-              hlmBtn
-              size="sm"
-              type="button"
-              [disabled]="attending()"
-              (click)="attend.emit()"
-              class="bg-primary-600 hover:bg-primary-700 text-white text-xs"
-            >
-              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_join' | translate }} }
-            </button>
-          }
-        } @else {
-          <a
-            hlmBtn
-            variant="outline"
-            size="sm"
-            [routerLink]="['/events', event().id]"
-            class="text-xs"
-          >
-            {{ 'CLUB_DETAIL.rsvp_view' | translate }} →
-          </a>
-        }
-      </div>
-    </div>
-  </div>
-</article>
 ````
 
 ## File: src/app/features/clubs/club-detail/header/club-header.component.html
@@ -11969,199 +11729,6 @@ export class ClubCardComponent {
 }
 ````
 
-## File: src/app/features/clubs/clubs-list/clubs-list.component.html
-````html
-<div class="min-h-screen">
-  <section aria-label="Search clubs" class="parchment-hero px-4 py-14 text-center">
-    <div class="relative z-10">
-      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
-                 text-[var(--color-ink)] mb-3 drop-shadow-sm">
-        {{ 'CLUBS.title' | translate }}
-      </h1>
-      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-12">
-        {{ 'CLUBS.subtitle' | translate }}
-      </p>
-      <div class="mx-auto max-w-xl lg:max-w-2xl relative">
-        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
-        <input
-          id="club-search"
-          type="search"
-          [ngModel]="clubService.searchQuery()"
-          (ngModelChange)="clubService.setSearchQuery($event)"
-          [placeholder]="'CLUBS.search_placeholder_full' | translate"
-          class="w-full parchment-input rounded-full px-5 py-3 text-sm"
-          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
-        />
-      </div>
-    </div>
-  </section>
-  <div class="page-container py-8 space-y-8">
-    @if (clubService.error()) {
-      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-        <span aria-hidden="true">⚠️</span>
-        <span>{{ clubService.error() }}</span>
-      </div>
-    }
-    @if (auth.isAuthenticated()) {
-      <div class="flex justify-center" role="tablist" aria-label="Club filter">
-        <div class="relative flex rounded-full p-1
-                    bg-[var(--color-surface-sunken)]
-                    border border-[var(--color-sepia)]
-                    shadow-inner">
-          <div class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full
-                      bg-[var(--color-surface-raised)]
-                      shadow-[var(--shadow-parchment)]
-                      transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-               [style.left]="activeTab() === 'all' ? '4px' : '50%'"
-               aria-hidden="true">
-          </div>
-          <button
-            role="tab"
-            type="button"
-            [attr.aria-selected]="activeTab() === 'all'"
-            (click)="activeTab.set('all')"
-            class="relative z-10 px-7 py-2 rounded-full text-sm font-medium
-                   transition-colors duration-300 select-none focus:outline-none
-                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
-            [class]="activeTab() === 'all'
-              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
-              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
-          >
-            {{ 'CLUBS.all' | translate }}
-          </button>
-          <button
-            role="tab"
-            type="button"
-            [attr.aria-selected]="activeTab() === 'my'"
-            (click)="activeTab.set('my')"
-            class="relative z-10 flex items-center gap-1.5 px-7 py-2 rounded-full text-sm font-medium
-                   transition-colors duration-300 select-none focus:outline-none
-                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
-            [class]="activeTab() === 'my'
-              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
-              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
-          >
-            {{ 'CLUBS.my_clubs' | translate }}
-            @if (clubService.myClubs().length > 0) {
-              <span class="inline-flex items-center justify-center
-                           h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
-                           transition-colors duration-300"
-                    [class]="activeTab() === 'my'
-                      ? 'bg-[var(--color-primary-600)] text-white'
-                      : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]'">
-                {{ clubService.myClubs().length }}
-              </span>
-            }
-          </button>
-        </div>
-      </div>
-      @if (activeTab() === 'all') {
-        <div class="pt-6" role="tabpanel">
-          @if (clubService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
-              <hlm-spinner />
-            </div>
-          } @else if (clubService.filteredClubs().length === 0) {
-            <app-empty-state
-              icon="📚"
-              title="No clubs yet"
-              description="No clubs have been created yet. Check back soon!"
-            />
-          } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-                  <app-club-card
-                    [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
-                    [isMember]="clubService.myClubIds().has(club.id)"
-                    [isOwned]="ownedClubIds().has(club.id)"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [joining]="joiningClubId() === club.id"
-                    (join)="onJoin(club)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      }
-      @if (activeTab() === 'my') {
-        <div class="pt-6" role="tabpanel">
-          @if (clubService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true">
-              <hlm-spinner />
-            </div>
-          } @else if (clubService.myClubs().length === 0) {
-            <app-empty-state
-              icon="📚"
-              [title]="'CLUBS.no_clubs' | translate"
-              description="Join a club to see it here."
-            />
-          } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.myClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-                  <app-club-card
-                    [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
-                    [isMember]="clubService.myClubIds().has(club.id)"
-                    [isOwned]="ownedClubIds().has(club.id)"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [joining]="joiningClubId() === club.id"
-                    (join)="onJoin(club)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      }
-    } @else {
-      @if (clubService.isLoading()) {
-        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
-          <hlm-spinner />
-        </div>
-      } @else if (clubService.filteredClubs().length === 0) {
-        <app-empty-state
-          icon="📚"
-          title="No clubs yet"
-          description="No clubs have been created yet. Check back soon!"
-        />
-      } @else {
-        <ul class="bento-grid">
-          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-              <app-club-card
-                [club]="club"
-                [variant]="i === 0 ? 'featured' : 'default'"
-                [isMember]="false"
-                [isOwned]="false"
-                [isAuthenticated]="false"
-                [joining]="false"
-                (join)="onJoin(club)"
-              />
-            </li>
-          }
-        </ul>
-      }
-    }
-  </div>
-  @if (auth.isOrganizer()) {
-    <a
-      routerLink="/clubs/create"
-      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full fab-fantasy focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] focus:ring-offset-2 transition-all duration-200"
-      [attr.aria-label]="'CLUBS.create' | translate"
-      [title]="'CLUBS.create' | translate"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-      </svg>
-    </a>
-  }
-</div>
-````
-
 ## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
 ````typescript
 import {
@@ -12225,12 +11792,14 @@ import {
   ChangeDetectionStrategy,
   inject,
   signal,
+  effect,
 } from '@angular/core';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { EventService } from '../../../core/services/event.service';
 import { HlmFieldImports } from '../../../shared/spartan/field/src';
 import { HlmInput } from '../../../shared/spartan/input/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
@@ -12253,12 +11822,28 @@ export class CreateClubComponent {
   private readonly clubService = inject(ClubService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly eventService = inject(EventService);
   private readonly _errorMessage = signal<string | null>(null);
   readonly errorMessage = this._errorMessage.asReadonly();
   private readonly _isSubmitting = signal(false);
   readonly isSubmitting = this._isSubmitting.asReadonly();
   private readonly _showAfterMeeting = signal(false);
   readonly showAfterMeeting = this._showAfterMeeting.asReadonly();
+  private readonly _showFirstEvent = signal(false);
+  readonly showFirstEvent = this._showFirstEvent.asReadonly();
+  readonly eventTitleCtrl = new FormControl('', { nonNullable: true });
+  readonly eventDateCtrl  = new FormControl('', { nonNullable: true });
+  readonly eventCityCtrl  = new FormControl('', { nonNullable: true });
+  constructor() {
+    effect(() => {
+      if (this.clubService.myOwnedClubs().length >= 1) {
+        this.router.navigate(['/clubs']);
+      }
+    });
+  }
+  toggleFirstEvent(): void {
+    this._showFirstEvent.update(v => !v);
+  }
   readonly form = new FormGroup<CreateClubForm>({
     name: new FormControl('', {
       nonNullable: true,
@@ -12292,6 +11877,20 @@ export class CreateClubComponent {
     const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
     try {
       const club = await this.clubService.createClub({ name, description, isPublic, city, coverUrl: coverUrl || null });
+      if (this.showFirstEvent()) {
+        const eventTitle = this.eventTitleCtrl.value.trim();
+        const eventDate  = this.eventDateCtrl.value;
+        const eventCity  = this.eventCityCtrl.value.trim();
+        if (eventTitle && eventDate && eventCity) {
+          try {
+            await this.eventService.createEvent(club.id, {
+              title: eventTitle,
+              date: new Date(eventDate).toISOString(),
+              city: eventCity,
+            });
+          } catch {  }
+        }
+      }
       this.router.navigate(['/clubs', club.id]);
     } catch (err) {
       this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
@@ -12299,6 +11898,135 @@ export class CreateClubComponent {
       this._isSubmitting.set(false);
     }
   }
+}
+````
+
+## File: src/app/features/events/event-detail/event-detail.component.html
+````html
+@if (isLoading()) {
+  <main class="max-w-3xl mx-auto px-4 py-8" aria-busy="true">
+    <div class="animate-pulse space-y-4">
+      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+    </div>
+  </main>
+} @else if (errorMessage()) {
+  <main class="max-w-3xl mx-auto px-4 py-8 text-center" role="alert">
+    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
+    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
+    <a routerLink="/events"
+       class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors">
+      {{ 'EVENTS.back_to_events' | translate }}
+    </a>
+  </main>
+} @else if (event()) {
+  <main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <nav>
+      <a routerLink="/events"
+         class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+        {{ 'EVENTS.back_to_events' | translate }}
+      </a>
+    </nav>
+    <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6 space-y-3">
+      <div class="flex items-start justify-between gap-4">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ event()!.title }}</h1>
+        @if (event()!.status !== 'scheduled') {
+          <span class="text-xs rounded-full px-2.5 py-1 shrink-0"
+                [class]="event()!.status === 'cancelled'
+                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                  : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'">
+            {{ event()!.status }}
+          </span>
+        }
+      </div>
+      <a [routerLink]="['/clubs', event()!.clubId]"
+         class="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+        📚 {{ event()!.clubName }}
+      </a>
+      <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+        <span>📅 {{ event()!.date | formatDate }}</span>
+        @if (event()!.city) {
+          <span>📍 {{ event()!.address || event()!.city }}</span>
+        }
+        @if (event()!.durationMinutes) {
+          <span>⏱ {{ event()!.durationMinutes }} {{ 'EVENTS.minutes_abbr' | translate }}</span>
+        }
+        <span>👤 {{ event()!.attendeeCount }} {{ 'EVENTS.attending' | translate }}</span>
+      </div>
+      @if (auth.isAuthenticated() && event()!.status !== 'cancelled') {
+        <div class="flex gap-3 pt-2">
+          @if (event()!.isAttending) {
+            <button type="button"
+                    [disabled]="isActioning()"
+                    (click)="onCancelAttend()"
+                    class="rounded-xl bg-green-600 hover:bg-green-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
+              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.going_cancel' | translate }} }
+            </button>
+          } @else {
+            <button type="button"
+                    [disabled]="isActioning()"
+                    (click)="onAttend()"
+                    class="rounded-xl bg-primary-600 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
+              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.rsvp_going' | translate }} }
+            </button>
+          }
+          @if (event()?.isAttending || isOrganizer()) {
+            @if (eventRoom()) {
+              <button hlmBtn variant="outline" (click)="openEventChat()">{{ 'EVENT.event_chat_btn' | translate }}</button>
+            } @else if (isOrganizer()) {
+              <button hlmBtn variant="outline" (click)="openEventChat()">{{ 'EVENT.event_chat_start_btn' | translate }}</button>
+            }
+          }
+        </div>
+      }
+    </div>
+    @if (event()!.description) {
+      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.about' | translate }}</h2>
+        <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ event()!.description }}</p>
+      </section>
+    }
+    @if (event()!.theme || event()!.tags.length > 0) {
+      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.tags' | translate }}</h2>
+        <div class="flex flex-wrap gap-2">
+          @if (event()!.theme) {
+            <span class="rounded-full bg-accent-100 dark:bg-accent-900/30 px-3 py-1 text-xs font-medium text-accent-700 dark:text-accent-300">
+              {{ event()!.theme }}
+            </span>
+          }
+          @for (tag of event()!.tags; track tag) {
+            <span class="rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1 text-xs text-gray-600 dark:text-gray-400">
+              {{ tag }}
+            </span>
+          }
+        </div>
+      </section>
+    }
+    @if (event()!.afterMeetingVenue) {
+      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.after_meeting_venue' | translate }}</h2>
+        <p class="font-medium text-gray-900 dark:text-white">{{ event()!.afterMeetingVenue!.name }}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ event()!.afterMeetingVenue!.address }}</p>
+        @if (event()!.afterMeetingVenue!.description) {
+          <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">{{ event()!.afterMeetingVenue!.description }}</p>
+        }
+      </section>
+    }
+    @if (isOrganizer() && event()!.status !== 'cancelled') {
+      <section class="rounded-2xl border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-6">
+        <h2 class="text-sm font-semibold text-yellow-800 dark:text-yellow-300 uppercase tracking-wide mb-3">{{ 'EVENTS.organizer_controls' | translate }}</h2>
+        <div class="flex gap-3">
+          <button type="button"
+                  [disabled]="isActioning()"
+                  (click)="onCancelEvent()"
+                  class="rounded-lg bg-red-600 hover:bg-red-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60 transition-colors">
+            {{ 'EVENTS.cancel_event' | translate }}
+          </button>
+        </div>
+      </section>
+    }
+  </main>
 }
 ````
 
@@ -12836,53 +12564,191 @@ export class ChatWidgetComponent {
 }
 ````
 
-## File: bugs.md
-````markdown
-# Bug Report — Book Club App Audit
-
-**Date:** 2026-05-11
-**URL:** https://book-club-l7xs8u371-dmytros-projects-ad22eb22.vercel.app/
-**Test user:** test123@mail.com
-**Club owner account:** terrtr
-
-## Summary
-
-| Severity | Count |
-|----------|-------|
-| Critical | 0 |
-| High | 2 |
-| Medium | 5 |
-| Low | 6 |
-| **Total** | **13** |
-
-## HIGH (2)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `/clubs/2affc525-02bb-4fc6-a2c3-99baad3c5773/events/create (functional)` | functional | Create event did not redirect to event detail after submit |
-| | | | **Detail:** Submit button was disabled — address/city field may be required |
-| 2 | `/events/6b51cbf4-cb77-4a16-a41f-e10648aa6055/edit (functional)` | functional | Title input not found on event edit page |
-
-## MEDIUM (5)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `/register (functional)` | functional | Registration succeeds but does not auto-redirect to app — user sees a success card and must manually go back to login, despite being authenticated |
-| 2 | `/login (wrong-password)` | functional | Login with wrong password stayed on login page but showed no error message to user |
-| 3 | `/logout (functional)` | functional | Logout button not found after opening avatar dropdown — data-testid="logout" not present or dropdown did not open |
-| 4 | `/clubs/2affc525-02bb-4fc6-a2c3-99baad3c5773/quizzes/create (functional)` | functional | Publish button not found after adding a question in quiz create step 2 |
-| 5 | `/quizzes/:id/edit (functional)` | functional | Skipped: no quiz ID available |
-
-## LOW (6)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `/clubs/:id/quizzes/:quizId` | ui-missing | Skipped: no quiz ID discovered (no quizzes in owned club) |
-| 2 | `/clubs/:id/quizzes/:quizId/preview` | ui-missing | Skipped: no quiz ID |
-| 3 | `/clubs/:id/quizzes/:quizId/edit` | ui-missing | Skipped: no quiz ID |
-| 4 | `/clubs/:id/quizzes/:quizId/session` | ui-missing | Skipped: no quiz ID |
-| 5 | `/clubs/:id/quizzes/:quizId/leaderboard` | ui-missing | Skipped: no quiz ID |
-| 6 | `/quizzes/:id (toggle-active)` | functional | Skipped: no quiz ID available |
+## File: src/app/core/api/api-mappers.ts
+````typescript
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
+import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
+export interface ApiUserProfile {
+  id: string;
+  email: string;
+  role: UserRole;
+  displayName: string;
+  avatarUrl: string | null;
+  createdAt: string;
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export type ApiUserSocials = { [K in keyof UserSocials]?: string | null };
+export interface ApiUserStats {
+  clubsJoined: number;
+  quizzesTaken: number;
+  quizWins: number;
+  likesReceived: number;
+  booksRead: number;
+}
+export interface ApiClub {
+  id: string;
+  name: string;
+  description: string | null;
+  coverUrl: string | null;
+  organizerId: string;
+  isPublic: boolean;
+  memberCount: number;
+  memberPreviews: string[];
+  createdAt: string;
+  city: string | null;
+  nextMeetingDate: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  theme: string | null;
+  currentBook: string | null;
+  status: ClubStatus;
+  tags: string[];
+  meetingDurationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  cancelledAt?: string | null;
+}
+export interface ApiClubMember {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: 'organizer' | 'member';
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export interface ApiBanRecord {
+  userId: string;
+  clubId: string;
+  bannedAt: string;
+  duration: BanDuration;
+  bannedBy: string;
+}
+export interface ApiEvent {
+  id: string;
+  clubId: string;
+  clubName: string;
+  organizerId: string;
+  title: string;
+  description: string | null;
+  date: string;
+  city: string;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  status: EventStatus;
+  cancelledAt?: string | null;
+  coverUrl?: string | null;
+  theme: string | null;
+  tags: string[];
+  durationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  attendeeCount: number;
+  isAttending: boolean;
+  bookTitle?: string | null;
+  quizId?: string | null;
+}
+export function mapUserProfile(raw: ApiUserProfile): UserProfile {
+  return {
+    id: raw.id,
+    role: raw.role,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    createdAt: raw.createdAt,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
+}
+export function mapUserStats(raw: ApiUserStats): UserStats {
+  return {
+    clubsJoined: raw.clubsJoined,
+    quizzesTaken: raw.quizzesTaken,
+    quizWins: raw.quizWins,
+    likesReceived: raw.likesReceived,
+    booksRead: raw.booksRead,
+  };
+}
+export function mapClub(raw: ApiClub): Club {
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description,
+    coverUrl: raw.coverUrl,
+    organizerId: raw.organizerId,
+    isPublic: raw.isPublic,
+    memberCount: raw.memberCount,
+    memberPreviews: raw.memberPreviews ?? [],
+    createdAt: raw.createdAt,
+    city: raw.city ?? '',
+    nextMeetingDate: raw.nextMeetingDate,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    theme: raw.theme,
+    currentBook: raw.currentBook ? { title: raw.currentBook, author: '', description: '' } : null,
+    status: raw.status,
+    tags: raw.tags ?? [],
+    meetingDurationMinutes: raw.meetingDurationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    cancelledAt: raw.cancelledAt ?? undefined,
+  };
+}
+export function mapEvent(raw: ApiEvent): ClubEvent {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    clubName: raw.clubName,
+    organizerId: raw.organizerId,
+    title: raw.title,
+    description: raw.description,
+    date: raw.date,
+    city: raw.city,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    status: raw.status,
+    cancelledAt: raw.cancelledAt ?? undefined,
+    coverUrl: raw.coverUrl ?? null,
+    theme: raw.theme,
+    tags: raw.tags ?? [],
+    durationMinutes: raw.durationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    attendeeCount: raw.attendeeCount,
+    isAttending: raw.isAttending,
+    bookTitle: raw.bookTitle ?? null,
+    quizId: raw.quizId ?? null,
+  };
+}
+export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
+  return {
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    role: raw.role,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
+}
+export function mapBanRecord(raw: ApiBanRecord): BanRecord {
+  return {
+    userId: raw.userId,
+    clubId: raw.clubId,
+    bannedAt: raw.bannedAt,
+    duration: raw.duration,
+    bannedBy: raw.bannedBy,
+  };
+}
+function mapSocials(raw: ApiUserSocials): UserSocials {
+  return {
+    telegram: raw.telegram ?? undefined,
+    instagram: raw.instagram ?? undefined,
+    twitter: raw.twitter ?? undefined,
+    linkedin: raw.linkedin ?? undefined,
+    github: raw.github ?? undefined,
+    goodreads: raw.goodreads ?? undefined,
+  };
+}
 ````
 
 ## File: src/app/core/auth/token.store.ts
@@ -13128,53 +12994,201 @@ export class TokenStore {
 </div>
 ````
 
-## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.html
-````html
-<div hlmCard class="glass-card-subtle p-4 gap-3">
-  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
-  <div class="grid grid-cols-1 gap-2">
-    <a
-      [routerLink]="['/clubs', clubId(), 'quizzes']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">📝</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
-      </div>
-    </a>
-    <a
-      [routerLink]="['/clubs', clubId(), 'randomizer']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">🎲</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
-      </div>
-    </a>
-    <a
-      [routerLink]="['/clubs', clubId(), 'edit']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">✏️</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.edit_club_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.edit_club_desc' | translate }}</p>
-      </div>
-    </a>
-    <a
-      [routerLink]="['/clubs', clubId(), 'events', 'create']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">📅</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.create_event_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.create_event_desc' | translate }}</p>
-      </div>
-    </a>
-  </div>
-</div>
+## File: src/app/features/auth/register/register.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateModule } from '@ngx-translate/core';
+import { AuthService } from '../../../core/auth/auth.service';
+import { UserRole } from '../../../core/models/user.model';
+import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
+import { SeoService } from '../../../core/services/seo.service';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
+  const password = group.get('password')?.value as string;
+  const confirmPassword = group.get('confirmPassword')?.value as string;
+  return password === confirmPassword ? null : { passwordMismatch: true };
+};
+interface RegisterForm {
+  displayName: FormControl<string>;
+  email: FormControl<string>;
+  password: FormControl<string>;
+  confirmPassword: FormControl<string>;
+  role: FormControl<UserRole>;
+}
+@Component({
+  selector: 'app-register',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './register.component.html',
+  styleUrl: './register.component.scss',
+})
+export class RegisterComponent {
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly seo = inject(SeoService);
+  readonly errorMessage = signal<string | null>(null);
+  readonly isSubmitting = signal(false);
+  readonly successMessage = signal(false);
+  readonly registeredEmail = signal('');
+  readonly registeredName = signal('');
+  readonly selectedRole = signal<UserRole>('user');
+  readonly bookOpen = signal(false);
+  readonly formVisible = signal(false);
+  constructor() {
+    this.seo.setPageI18n('SEO.register_title');
+    setTimeout(() => this.formVisible.set(true), 700);
+  }
+  onBookAnimationDone(): void {
+    this.router.navigate(['/clubs']);
+  }
+  readonly form = new FormGroup<RegisterForm>(
+    {
+      displayName: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(2)],
+      }),
+      email: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.email],
+      }),
+      password: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(8)],
+      }),
+      confirmPassword: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+      role: new FormControl<UserRole>('user', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+    },
+    { validators: passwordMatchValidator },
+  );
+  private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
+    initialValue: '',
+  });
+  readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
+    const pw = this._passwordValue();
+    if (!pw || pw.length === 0) return null;
+    if (pw.length < 8) return 'weak';
+    const hasUpper = /[A-Z]/.test(pw);
+    const hasNumber = /\d/.test(pw);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
+    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
+    if (score >= 2) return 'strong';
+    if (score === 1) return 'medium';
+    return 'weak';
+  });
+  setRole(role: UserRole): void {
+    this.selectedRole.set(role);
+    this.form.controls.role.setValue(role);
+    this.form.controls.role.markAsTouched();
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+    const { displayName, email, password, role } = this.form.getRawValue();
+    const { error } = await this.auth.signUp(email, password, displayName, role);
+    this.isSubmitting.set(false);
+    if (error) {
+      this.errorMessage.set(error);
+    } else {
+      this.registeredEmail.set(email);
+      this.registeredName.set(displayName);
+      this.successMessage.set(true);
+      this.bookOpen.set(true);
+    }
+  }
+}
+````
+
+## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  input,
+  signal,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { TranslateModule } from '@ngx-translate/core';
+import { HlmCard } from '../../../../shared/spartan/card/src';
+import { HlmButton } from '../../../../shared/spartan/button/src';
+import { ChatService } from '../../../../core/services/chat.service';
+import { ClubService } from '../../../../core/services/club.service';
+@Component({
+  selector: 'app-club-manage-panel',
+  host: { class: 'block' },
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, FormsModule, TranslateModule, HlmCard, HlmButton],
+  templateUrl: './club-manage-panel.component.html',
+})
+export class ClubManagePanelComponent {
+  readonly clubId = input.required<string>();
+  private readonly chatService = inject(ChatService);
+  private readonly clubService = inject(ClubService);
+  private readonly router = inject(Router);
+  readonly newRoomName = signal('');
+  readonly isCreatingRoom = signal(false);
+  readonly roomError = signal<string | null>(null);
+  readonly isDeleting = signal(false);
+  readonly showDeleteConfirm = signal(false);
+  readonly deleteError = signal<string | null>(null);
+  async createChatRoom(): Promise<void> {
+    const name = this.newRoomName().trim();
+    if (!name) return;
+    this.isCreatingRoom.set(true);
+    this.roomError.set(null);
+    try {
+      const room = await this.chatService.createRoom(this.clubId(), name);
+      this.newRoomName.set('');
+      this.chatService.openAndFocusRoom(room);
+    } catch {
+      this.roomError.set('Failed to create chat room');
+    } finally {
+      this.isCreatingRoom.set(false);
+    }
+  }
+  cancelDelete(): void {
+    this.showDeleteConfirm.set(false);
+    this.deleteError.set(null);
+  }
+  async confirmDelete(): Promise<void> {
+    this.isDeleting.set(true);
+    this.deleteError.set(null);
+    try {
+      await this.clubService.deleteClub(this.clubId());
+      await this.router.navigate(['/clubs']);
+    } catch {
+      this.isDeleting.set(false);
+      this.deleteError.set('CLUB_DETAIL.delete_club_error');
+    }
+  }
+}
 ````
 
 ## File: src/app/features/clubs/club-detail/members/club-members-list.component.html
@@ -13300,6 +13314,199 @@ export class TokenStore {
 </section>
 ````
 
+## File: src/app/features/clubs/clubs-list/clubs-list.component.html
+````html
+<div class="min-h-screen">
+  <section aria-label="Search clubs" class="parchment-hero px-4 py-14 text-center">
+    <div class="relative z-10">
+      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
+                 text-[var(--color-ink)] mb-3 drop-shadow-sm">
+        {{ 'CLUBS.title' | translate }}
+      </h1>
+      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-12">
+        {{ 'CLUBS.subtitle' | translate }}
+      </p>
+      <div class="mx-auto max-w-xl lg:max-w-2xl relative">
+        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
+        <input
+          id="club-search"
+          type="search"
+          [ngModel]="clubService.searchQuery()"
+          (ngModelChange)="clubService.setSearchQuery($event)"
+          [placeholder]="'CLUBS.search_placeholder_full' | translate"
+          class="w-full parchment-input rounded-full px-5 py-3 text-sm"
+          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
+        />
+      </div>
+    </div>
+  </section>
+  <div class="page-container py-8 space-y-8">
+    @if (clubService.error()) {
+      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+        <span aria-hidden="true">⚠️</span>
+        <span>{{ clubService.error() }}</span>
+      </div>
+    }
+    @if (auth.isAuthenticated()) {
+      <div class="flex justify-center" role="tablist" aria-label="Club filter">
+        <div class="relative flex rounded-full p-1
+                    bg-[var(--color-surface-sunken)]
+                    border border-[var(--color-sepia)]
+                    shadow-inner">
+          <div class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full
+                      bg-[var(--color-surface-raised)]
+                      shadow-[var(--shadow-parchment)]
+                      transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+               [style.left]="activeTab() === 'all' ? '4px' : '50%'"
+               aria-hidden="true">
+          </div>
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'all'"
+            (click)="activeTab.set('all')"
+            class="relative z-10 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'all'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            {{ 'CLUBS.all' | translate }}
+          </button>
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'my'"
+            (click)="activeTab.set('my')"
+            class="relative z-10 flex items-center gap-1.5 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'my'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            {{ 'CLUBS.my_clubs' | translate }}
+            @if (clubService.myClubs().length > 0) {
+              <span class="inline-flex items-center justify-center
+                           h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
+                           transition-colors duration-300"
+                    [class]="activeTab() === 'my'
+                      ? 'bg-[var(--color-primary-600)] text-white'
+                      : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]'">
+                {{ clubService.myClubs().length }}
+              </span>
+            }
+          </button>
+        </div>
+      </div>
+      @if (activeTab() === 'all') {
+        <div class="pt-6" role="tabpanel">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.filteredClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              title="No clubs yet"
+              description="No clubs have been created yet. Check back soon!"
+            />
+          } @else {
+            <ul class="bento-grid">
+              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                  <app-club-card
+                    [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+      @if (activeTab() === 'my') {
+        <div class="pt-6" role="tabpanel">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.myClubs().length === 0) {
+            <app-empty-state
+              icon="📚"
+              [title]="'CLUBS.no_clubs' | translate"
+              description="Join a club to see it here."
+            />
+          } @else {
+            <ul class="bento-grid">
+              @for (club of clubService.myClubs(); track club.id; let i = $index) {
+                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                  <app-club-card
+                    [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    } @else {
+      @if (clubService.isLoading()) {
+        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+          <hlm-spinner />
+        </div>
+      } @else if (clubService.filteredClubs().length === 0) {
+        <app-empty-state
+          icon="📚"
+          title="No clubs yet"
+          description="No clubs have been created yet. Check back soon!"
+        />
+      } @else {
+        <ul class="bento-grid">
+          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+              <app-club-card
+                [club]="club"
+                [variant]="i === 0 ? 'featured' : 'default'"
+                [isMember]="false"
+                [isOwned]="false"
+                [isAuthenticated]="false"
+                [joining]="false"
+                (join)="onJoin(club)"
+              />
+            </li>
+          }
+        </ul>
+      }
+    }
+  </div>
+  @if (auth.isOrganizer() && clubService.myOwnedClubs().length === 0) {
+    <a
+      routerLink="/clubs/create"
+      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full fab-fantasy focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] focus:ring-offset-2 transition-all duration-200"
+      [attr.aria-label]="'CLUBS.create' | translate"
+      [title]="'CLUBS.create' | translate"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+      </svg>
+    </a>
+  }
+</div>
+````
+
 ## File: src/app/features/clubs/create-club/create-club.component.html
 ````html
 <main class="min-h-screen flex items-center justify-center p-4">
@@ -13389,6 +13596,45 @@ export class TokenStore {
             </button>
           </div>
         </fieldset>
+        <div class="space-y-3">
+          <button type="button" hlmBtn variant="ghost" (click)="toggleFirstEvent()">
+            {{ showFirstEvent() ? 'Remove first meeting' : 'Add first meeting' }}
+          </button>
+          @if (showFirstEvent()) {
+            <hlm-field>
+              <label hlmFieldLabel for="event-title">Event title</label>
+              <input
+                hlmInput
+                id="event-title"
+                type="text"
+                [formControl]="eventTitleCtrl"
+                class="w-full"
+                placeholder="e.g. Kick-off meeting"
+              />
+            </hlm-field>
+            <hlm-field>
+              <label hlmFieldLabel for="event-date">Event date</label>
+              <input
+                hlmInput
+                id="event-date"
+                type="datetime-local"
+                [formControl]="eventDateCtrl"
+                class="w-full"
+              />
+            </hlm-field>
+            <hlm-field>
+              <label hlmFieldLabel for="event-city">Event city</label>
+              <input
+                hlmInput
+                id="event-city"
+                type="text"
+                [formControl]="eventCityCtrl"
+                class="w-full"
+                placeholder="e.g. Kyiv"
+              />
+            </hlm-field>
+          }
+        </div>
         @if (errorMessage()) {
           <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
                role="alert">
@@ -14431,6 +14677,55 @@ export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
 }
 ````
 
+## File: bugs.md
+````markdown
+# Bug Report — Book Club App Audit
+
+**Date:** 2026-05-11
+**URL:** https://book-club-l7xs8u371-dmytros-projects-ad22eb22.vercel.app/
+**Test user:** test123@mail.com
+**Club owner account:** terrtr
+
+## Summary
+
+| Severity | Count |
+|----------|-------|
+| Critical | 0 |
+| High | 2 |
+| Medium | 5 |
+| Low | 6 |
+| **Total** | **13** |
+
+## HIGH (2)
+
+| # | Route | Type | Description |
+|---|-------|------|-------------|
+| 1 | `/clubs/2affc525-02bb-4fc6-a2c3-99baad3c5773/events/create (functional)` | functional | Create event did not redirect to event detail after submit |
+| | | | **Detail:** Submit button was disabled — address/city field may be required |
+| 2 | `/events/6b51cbf4-cb77-4a16-a41f-e10648aa6055/edit (functional)` | functional | Title input not found on event edit page |
+
+## MEDIUM (5)
+
+| # | Route | Type | Description |
+|---|-------|------|-------------|
+| 1 | `/register (functional)` | functional | Registration succeeds but does not auto-redirect to app — user sees a success card and must manually go back to login, despite being authenticated |
+| 2 | `/login (wrong-password)` | functional | Login with wrong password stayed on login page but showed no error message to user |
+| 3 | `/logout (functional)` | functional | Logout button not found after opening avatar dropdown — data-testid="logout" not present or dropdown did not open |
+| 4 | `/clubs/2affc525-02bb-4fc6-a2c3-99baad3c5773/quizzes/create (functional)` | functional | Publish button not found after adding a question in quiz create step 2 |
+| 5 | `/quizzes/:id/edit (functional)` | functional | Skipped: no quiz ID available |
+
+## LOW (6)
+
+| # | Route | Type | Description |
+|---|-------|------|-------------|
+| 1 | `/clubs/:id/quizzes/:quizId` | ui-missing | Skipped: no quiz ID discovered (no quizzes in owned club) |
+| 2 | `/clubs/:id/quizzes/:quizId/preview` | ui-missing | Skipped: no quiz ID |
+| 3 | `/clubs/:id/quizzes/:quizId/edit` | ui-missing | Skipped: no quiz ID |
+| 4 | `/clubs/:id/quizzes/:quizId/session` | ui-missing | Skipped: no quiz ID |
+| 5 | `/clubs/:id/quizzes/:quizId/leaderboard` | ui-missing | Skipped: no quiz ID |
+| 6 | `/quizzes/:id (toggle-active)` | functional | Skipped: no quiz ID available |
+````
+
 ## File: playwright.vercel.config.ts
 ````typescript
 import { defineConfig, devices } from '@playwright/test';
@@ -14498,193 +14793,6 @@ sonar.cpd.exclusions=\
   src/app/shared/spartan/**,\
   src/app/features/**,\
   src/testing/**
-````
-
-## File: src/app/core/api/api-mappers.ts
-````typescript
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
-import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
-export interface ApiUserProfile {
-  id: string;
-  email: string;
-  role: UserRole;
-  displayName: string;
-  avatarUrl: string | null;
-  createdAt: string;
-  socials?: ApiUserSocials | null;
-  socialsPublic?: boolean;
-}
-export type ApiUserSocials = { [K in keyof UserSocials]?: string | null };
-export interface ApiUserStats {
-  clubsJoined: number;
-  quizzesTaken: number;
-  quizWins: number;
-  likesReceived: number;
-  booksRead: number;
-}
-export interface ApiClub {
-  id: string;
-  name: string;
-  description: string | null;
-  coverUrl: string | null;
-  organizerId: string;
-  isPublic: boolean;
-  memberCount: number;
-  memberPreviews: string[];
-  createdAt: string;
-  city: string | null;
-  nextMeetingDate: string | null;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  theme: string | null;
-  currentBook: string | null;
-  status: ClubStatus;
-  tags: string[];
-  meetingDurationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  cancelledAt?: string | null;
-}
-export interface ApiClubMember {
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  role: 'organizer' | 'member';
-  socials?: ApiUserSocials | null;
-  socialsPublic?: boolean;
-}
-export interface ApiBanRecord {
-  userId: string;
-  clubId: string;
-  bannedAt: string;
-  duration: BanDuration;
-  bannedBy: string;
-}
-export interface ApiEvent {
-  id: string;
-  clubId: string;
-  clubName: string;
-  organizerId: string;
-  title: string;
-  description: string | null;
-  date: string;
-  city: string;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  status: EventStatus;
-  cancelledAt?: string | null;
-  coverUrl?: string | null;
-  theme: string | null;
-  tags: string[];
-  durationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  attendeeCount: number;
-  isAttending: boolean;
-  bookTitle?: string | null;
-  quizId?: string | null;
-}
-export function mapUserProfile(raw: ApiUserProfile): UserProfile {
-  return {
-    id: raw.id,
-    role: raw.role,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-    createdAt: raw.createdAt,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socialsPublic ?? false,
-  };
-}
-export function mapUserStats(raw: ApiUserStats): UserStats {
-  return {
-    clubsJoined: raw.clubsJoined,
-    quizzesTaken: raw.quizzesTaken,
-    quizWins: raw.quizWins,
-    likesReceived: raw.likesReceived,
-    booksRead: raw.booksRead,
-  };
-}
-export function mapClub(raw: ApiClub): Club {
-  return {
-    id: raw.id,
-    name: raw.name,
-    description: raw.description,
-    coverUrl: raw.coverUrl,
-    organizerId: raw.organizerId,
-    isPublic: raw.isPublic,
-    memberCount: raw.memberCount,
-    memberPreviews: raw.memberPreviews ?? [],
-    createdAt: raw.createdAt,
-    city: raw.city ?? '',
-    nextMeetingDate: raw.nextMeetingDate,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    theme: raw.theme,
-    currentBook: raw.currentBook ? { title: raw.currentBook, author: '', description: '' } : null,
-    status: raw.status,
-    tags: raw.tags ?? [],
-    meetingDurationMinutes: raw.meetingDurationMinutes,
-    afterMeetingVenue: raw.afterMeetingVenue,
-    cancelledAt: raw.cancelledAt ?? undefined,
-  };
-}
-export function mapEvent(raw: ApiEvent): ClubEvent {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    clubName: raw.clubName,
-    organizerId: raw.organizerId,
-    title: raw.title,
-    description: raw.description,
-    date: raw.date,
-    city: raw.city,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    status: raw.status,
-    cancelledAt: raw.cancelledAt ?? undefined,
-    coverUrl: raw.coverUrl ?? null,
-    theme: raw.theme,
-    tags: raw.tags ?? [],
-    durationMinutes: raw.durationMinutes,
-    afterMeetingVenue: raw.afterMeetingVenue,
-    attendeeCount: raw.attendeeCount,
-    isAttending: raw.isAttending,
-    bookTitle: raw.bookTitle ?? null,
-    quizId: raw.quizId ?? null,
-  };
-}
-export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
-  return {
-    userId: raw.userId,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-    role: raw.role,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socialsPublic ?? false,
-  };
-}
-export function mapBanRecord(raw: ApiBanRecord): BanRecord {
-  return {
-    userId: raw.userId,
-    clubId: raw.clubId,
-    bannedAt: raw.bannedAt,
-    duration: raw.duration,
-    bannedBy: raw.bannedBy,
-  };
-}
-function mapSocials(raw: ApiUserSocials): UserSocials {
-  return {
-    telegram: raw.telegram ?? undefined,
-    instagram: raw.instagram ?? undefined,
-    twitter: raw.twitter ?? undefined,
-    linkedin: raw.linkedin ?? undefined,
-    github: raw.github ?? undefined,
-    goodreads: raw.goodreads ?? undefined,
-  };
-}
 ````
 
 ## File: src/app/features/clubs/edit-club/edit-club.component.ts
@@ -14789,87 +14897,6 @@ export class EditClubComponent implements OnInit {
       this._errorMessage.set(err instanceof Error ? err.message : 'Failed to update club');
     } finally {
       this._isSubmitting.set(false);
-    }
-  }
-}
-````
-
-## File: src/app/features/events/event-detail/event-detail.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  input,
-} from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
-import { EventService } from '../../../core/services/event.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
-import { ClubEvent } from '../../../core/models/event.model';
-import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-import { environment } from '../../../../environments/environment';
-@Component({
-  selector: 'app-event-detail',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe],
-  templateUrl: './event-detail.component.html',
-})
-export class EventDetailComponent {
-  readonly id = input.required<string>();
-  private readonly http = inject(HttpClient);
-  private readonly eventService = inject(EventService);
-  private readonly translate = inject(TranslateService);
-  readonly auth = inject(AuthService);
-  private readonly _eventResource = rxResource<ClubEvent | null, string>({
-    params: () => this.id(),
-    stream: ({ params: id }) =>
-      this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(
-        map(mapEvent),
-      ),
-  });
-  readonly event = computed(() => this._eventResource.value() ?? null);
-  readonly isLoading = this._eventResource.isLoading;
-  readonly errorMessage = computed(() =>
-    !this._eventResource.isLoading() && this._eventResource.error() ? 'EVENT.LOAD_ERROR' : null,
-  );
-  readonly isActioning = signal(false);
-  readonly isOrganizer = computed(
-    () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,
-  );
-  async onAttend(): Promise<void> {
-    this.isActioning.set(true);
-    try {
-      await this.eventService.attendEvent(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
-    }
-  }
-  async onCancelAttend(): Promise<void> {
-    this.isActioning.set(true);
-    try {
-      await this.eventService.cancelAttendance(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
-    }
-  }
-  async onCancelEvent(): Promise<void> {
-    if (!confirm(this.translate.instant('EVENTS.cancel_confirm'))) return;
-    this.isActioning.set(true);
-    try {
-      await this.eventService.cancelEvent(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
     }
   }
 }
@@ -15635,6 +15662,128 @@ export class QuizTakeComponent implements OnInit {
 </header>
 ````
 
+## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.html
+````html
+<div hlmCard class="glass-card-subtle p-4 gap-3">
+  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
+  <div class="grid grid-cols-1 gap-2">
+    <a
+      [routerLink]="['/clubs', clubId(), 'quizzes']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">📝</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
+      </div>
+    </a>
+    <a
+      [routerLink]="['/clubs', clubId(), 'randomizer']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">🎲</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
+      </div>
+    </a>
+    <a
+      [routerLink]="['/clubs', clubId(), 'edit']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">✏️</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.edit_club_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.edit_club_desc' | translate }}</p>
+      </div>
+    </a>
+    <a
+      [routerLink]="['/clubs', clubId(), 'events', 'create']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">📅</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.create_event_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.create_event_desc' | translate }}</p>
+      </div>
+    </a>
+  </div>
+  <div class="mt-4 border-t border-white/10 pt-4">
+    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+      💬 {{ 'CLUB_DETAIL.chat_create_title' | translate }}
+    </p>
+    <div class="flex gap-2">
+      <input
+        type="text"
+        [ngModel]="newRoomName()"
+        (ngModelChange)="newRoomName.set($event)"
+        [placeholder]="'CLUB_DETAIL.chat_room_placeholder' | translate"
+        maxlength="50"
+        class="flex-1 rounded-lg border border-white/20 bg-white/10 dark:bg-white/5 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        (keyup.enter)="createChatRoom()"
+      />
+      <button
+        hlmBtn
+        size="sm"
+        type="button"
+        (click)="createChatRoom()"
+        [disabled]="isCreatingRoom() || !newRoomName().trim()"
+        class="bg-primary-600 hover:bg-primary-700 text-white"
+      >
+        {{ 'CLUB_DETAIL.chat_create_btn' | translate }}
+      </button>
+    </div>
+    @if (roomError()) {
+      <p class="mt-1 text-xs text-red-500">{{ roomError() }}</p>
+    }
+  </div>
+  <div class="mt-4 border-t border-white/10 pt-4">
+    @if (!showDeleteConfirm()) {
+      <button
+        hlmBtn
+        size="sm"
+        variant="destructive"
+        type="button"
+        (click)="showDeleteConfirm.set(true)"
+        class="w-full"
+      >
+        🗑 {{ 'CLUB_DETAIL.delete_club_btn' | translate }}
+      </button>
+    } @else {
+      <div class="rounded-xl border border-red-500/30 bg-red-50/10 dark:bg-red-900/10 p-3 space-y-2">
+        <p class="text-xs text-red-600 dark:text-red-400 font-semibold">{{ 'CLUB_DETAIL.delete_club_confirm' | translate }}</p>
+        <div class="flex gap-2">
+          <button
+            hlmBtn
+            size="sm"
+            variant="destructive"
+            type="button"
+            (click)="confirmDelete()"
+            [disabled]="isDeleting()"
+            class="flex-1"
+          >
+            {{ 'CLUB_DETAIL.delete_club_yes' | translate }}
+          </button>
+          <button
+            hlmBtn
+            size="sm"
+            variant="outline"
+            type="button"
+            (click)="cancelDelete()"
+            class="flex-1"
+          >
+            {{ 'CLUB_DETAIL.cancel' | translate }}
+          </button>
+        </div>
+        @if (deleteError()) {
+          <p class="mt-1 text-xs text-red-500">{{ deleteError() | translate }}</p>
+        }
+      </div>
+    }
+  </div>
+</div>
+````
+
 ## File: src/app/features/clubs/edit-club/edit-club.component.html
 ````html
 <main class="min-h-screen flex items-center justify-center p-4">
@@ -15746,6 +15895,144 @@ export class QuizTakeComponent implements OnInit {
         </form>
       }
     </article>
+  </div>
+</main>
+````
+
+## File: src/app/features/events/create-event/create-event.component.html
+````html
+<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
+  <nav>
+    <a [routerLink]="['/clubs', id()]"
+       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+      {{ 'CREATE_EVENT.back_to_club' | translate }}
+    </a>
+  </nav>
+  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{{ 'CREATE_EVENT.heading' | translate }}</h1>
+    @if (errorMessage()) {
+      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+           role="alert">
+        {{ errorMessage() }}
+      </div>
+    }
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+      <div>
+        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {{ 'CREATE_EVENT.title_label' | translate }} <span class="text-red-500">*</span>
+        </label>
+        <input hlmInput id="title" type="text" formControlName="title" class="w-full"
+               placeholder="April Discussion" />
+        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.title_required' | translate }}</p>
+        }
+      </div>
+      <div>
+        <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">📖 Book title</label>
+        <input hlmInput id="bookTitle" type="text" formControlName="bookTitle" class="w-full"
+               placeholder="The Master and Margarita" />
+        @if (isFetchingCover()) {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">🔍 Searching for book cover…</p>
+        } @else if (coverFetchFailed()) {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">No cover found — you can add one manually below.</p>
+        } @else {
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">What book will you discuss at this event?</p>
+        }
+      </div>
+      <div>
+        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.description_label' | translate }}</label>
+        <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
+                  [placeholder]="'CREATE_EVENT.description_placeholder' | translate"></textarea>
+      </div>
+      <div>
+        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {{ 'CREATE_EVENT.date_label' | translate }} <span class="text-red-500">*</span>
+        </label>
+        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
+        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.date_required' | translate }}</p>
+        }
+      </div>
+      <div>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          {{ 'CREATE_EVENT.location_label' | translate }} <span class="text-red-500">*</span>
+        </p>
+        <app-address-autocomplete
+          [control]="form.controls.address"
+          placeholder="Start typing an address…"
+          (selected)="onAddressSelect($event)"
+        />
+        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
+          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.location_required' | translate }}</p>
+        }
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.duration_label' | translate }}</label>
+          <input hlmInput id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
+                 class="w-full" placeholder="120" />
+        </div>
+        <div>
+          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.theme_label' | translate }}</label>
+          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
+        </div>
+      </div>
+      <div>
+        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.tags_label' | translate }}</label>
+        <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
+               [placeholder]="'CREATE_EVENT.tags_placeholder' | translate" />
+      </div>
+      <div>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ 'CREATE_EVENT.cover_label' | translate }}</p>
+        <app-cover-upload [control]="form.controls.coverUrl" />
+      </div>
+      @if (activeQuizzes().length > 0) {
+        <div>
+          <label for="quizId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            🧠 Linked quiz
+          </label>
+          <select id="quizId" formControlName="quizId"
+                  class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+            <option [ngValue]="null">— No quiz —</option>
+            @for (quiz of activeQuizzes(); track quiz.id) {
+              <option [value]="quiz.id">{{ quiz.title }}</option>
+            }
+          </select>
+        </div>
+      }
+      <div>
+        <button type="button" (click)="toggleAfterVenue()"
+                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
+          {{ showAfterVenue() ? ('CREATE_EVENT.after_venue_remove' | translate) : ('CREATE_EVENT.after_venue_add' | translate) }}
+        </button>
+        @if (showAfterVenue()) {
+          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
+            <div>
+              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_name_label' | translate }} <span class="text-red-500">*</span></label>
+              <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
+                     class="w-full" placeholder="Cozy Cafe" />
+            </div>
+            <div>
+              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_address_label' | translate }}</label>
+              <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
+                     class="w-full" placeholder="123 Main St" />
+            </div>
+            <div>
+              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_notes_label' | translate }}</label>
+              <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
+                     class="w-full" placeholder="Optional notes" />
+            </div>
+          </div>
+        }
+      </div>
+      <div class="flex justify-end gap-3 pt-2">
+        <a hlmBtn variant="outline" [routerLink]="['/clubs', id()]">{{ 'CREATE_EVENT.cancel' | translate }}</a>
+        <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
+                class="bg-primary-600 hover:bg-primary-700 text-white">
+          @if (isSubmitting()) { {{ 'CREATE_EVENT.submitting' | translate }} } @else { {{ 'CREATE_EVENT.submit' | translate }} }
+        </button>
+      </div>
+    </form>
   </div>
 </main>
 ````
@@ -16035,142 +16322,111 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
 }
 ````
 
-## File: src/app/features/events/create-event/create-event.component.html
-````html
-<main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
-  <nav>
-    <a [routerLink]="['/clubs', id()]"
-       class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-      {{ 'CREATE_EVENT.back_to_club' | translate }}
-    </a>
-  </nav>
-  <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-    <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{{ 'CREATE_EVENT.heading' | translate }}</h1>
-    @if (errorMessage()) {
-      <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-           role="alert">
-        {{ errorMessage() }}
-      </div>
-    }
-    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-      <div>
-        <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          {{ 'CREATE_EVENT.title_label' | translate }} <span class="text-red-500">*</span>
-        </label>
-        <input hlmInput id="title" type="text" formControlName="title" class="w-full"
-               placeholder="April Discussion" />
-        @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.title_required' | translate }}</p>
-        }
-      </div>
-      <div>
-        <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">📖 Book title</label>
-        <input hlmInput id="bookTitle" type="text" formControlName="bookTitle" class="w-full"
-               placeholder="The Master and Margarita" />
-        @if (isFetchingCover()) {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">🔍 Searching for book cover…</p>
-        } @else if (coverFetchFailed()) {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">No cover found — you can add one manually below.</p>
-        } @else {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">What book will you discuss at this event?</p>
-        }
-      </div>
-      <div>
-        <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.description_label' | translate }}</label>
-        <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
-                  [placeholder]="'CREATE_EVENT.description_placeholder' | translate"></textarea>
-      </div>
-      <div>
-        <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          {{ 'CREATE_EVENT.date_label' | translate }} <span class="text-red-500">*</span>
-        </label>
-        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
-        @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.date_required' | translate }}</p>
-        }
-      </div>
-      <div>
-        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-          {{ 'CREATE_EVENT.location_label' | translate }} <span class="text-red-500">*</span>
-        </p>
-        <app-address-autocomplete
-          [control]="form.controls.address"
-          placeholder="Start typing an address…"
-          (selected)="onAddressSelect($event)"
-        />
-        @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
-          <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.location_required' | translate }}</p>
-        }
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.duration_label' | translate }}</label>
-          <input hlmInput id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
-                 class="w-full" placeholder="120" />
-        </div>
-        <div>
-          <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.theme_label' | translate }}</label>
-          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
-        </div>
-      </div>
-      <div>
-        <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.tags_label' | translate }}</label>
-        <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
-               [placeholder]="'CREATE_EVENT.tags_placeholder' | translate" />
-      </div>
-      <div>
-        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ 'CREATE_EVENT.cover_label' | translate }}</p>
-        <app-cover-upload [control]="form.controls.coverUrl" />
-      </div>
-      @if (activeQuizzes().length > 0) {
-        <div>
-          <label for="quizId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            🧠 Linked quiz
-          </label>
-          <select id="quizId" formControlName="quizId"
-                  class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
-            <option [ngValue]="null">— No quiz —</option>
-            @for (quiz of activeQuizzes(); track quiz.id) {
-              <option [value]="quiz.id">{{ quiz.title }}</option>
-            }
-          </select>
-        </div>
+## File: src/app/features/events/event-detail/event-detail.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  input,
+  effect,
+} from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
+import { EventService } from '../../../core/services/event.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
+import { ClubEvent } from '../../../core/models/event.model';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { environment } from '../../../../environments/environment';
+import { ChatService } from '../../../core/services/chat.service';
+import { ChatRoom } from '../../../core/models/chat.model';
+import { HlmButton } from '../../../shared/spartan/button/src';
+@Component({
+  selector: 'app-event-detail',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton],
+  templateUrl: './event-detail.component.html',
+})
+export class EventDetailComponent {
+  readonly id = input.required<string>();
+  private readonly http = inject(HttpClient);
+  private readonly eventService = inject(EventService);
+  private readonly translate = inject(TranslateService);
+  readonly auth = inject(AuthService);
+  private readonly chatService = inject(ChatService);
+  private readonly _eventResource = rxResource<ClubEvent | null, string>({
+    params: () => this.id(),
+    stream: ({ params: id }) =>
+      this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(
+        map(mapEvent),
+      ),
+  });
+  readonly event = computed(() => this._eventResource.value() ?? null);
+  readonly isLoading = this._eventResource.isLoading;
+  readonly errorMessage = computed(() =>
+    !this._eventResource.isLoading() && this._eventResource.error() ? 'EVENT.LOAD_ERROR' : null,
+  );
+  readonly isActioning = signal(false);
+  readonly isOrganizer = computed(
+    () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,
+  );
+  private readonly _eventRoom = signal<ChatRoom | null>(null);
+  readonly eventRoom = this._eventRoom.asReadonly();
+  constructor() {
+    effect(() => {
+      if (!this._eventResource.hasValue()) return;
+      const ev = this.event();
+      if (ev && this.auth.currentUser()) {
+        this.chatService.getEventRoom(ev.id).then(room => this._eventRoom.set(room));
       }
-      <div>
-        <button type="button" (click)="toggleAfterVenue()"
-                class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
-          {{ showAfterVenue() ? ('CREATE_EVENT.after_venue_remove' | translate) : ('CREATE_EVENT.after_venue_add' | translate) }}
-        </button>
-        @if (showAfterVenue()) {
-          <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
-            <div>
-              <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_name_label' | translate }} <span class="text-red-500">*</span></label>
-              <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
-                     class="w-full" placeholder="Cozy Cafe" />
-            </div>
-            <div>
-              <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_address_label' | translate }}</label>
-              <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
-                     class="w-full" placeholder="123 Main St" />
-            </div>
-            <div>
-              <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_notes_label' | translate }}</label>
-              <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
-                     class="w-full" placeholder="Optional notes" />
-            </div>
-          </div>
-        }
-      </div>
-      <div class="flex justify-end gap-3 pt-2">
-        <a hlmBtn variant="outline" [routerLink]="['/clubs', id()]">{{ 'CREATE_EVENT.cancel' | translate }}</a>
-        <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
-                class="bg-primary-600 hover:bg-primary-700 text-white">
-          @if (isSubmitting()) { {{ 'CREATE_EVENT.submitting' | translate }} } @else { {{ 'CREATE_EVENT.submit' | translate }} }
-        </button>
-      </div>
-    </form>
-  </div>
-</main>
+    });
+  }
+  async openEventChat(): Promise<void> {
+    const ev = this.event();
+    if (!ev) return;
+    let room = this._eventRoom();
+    if (!room && this.isOrganizer()) {
+      room = await this.chatService.createEventChatRoom(ev.id);
+      this._eventRoom.set(room);
+    }
+    if (room) this.chatService.openAndFocusRoom(room);
+  }
+  async onAttend(): Promise<void> {
+    this.isActioning.set(true);
+    try {
+      await this.eventService.attendEvent(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+  async onCancelAttend(): Promise<void> {
+    this.isActioning.set(true);
+    try {
+      await this.eventService.cancelAttendance(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+  async onCancelEvent(): Promise<void> {
+    if (!confirm(this.translate.instant('EVENTS.cancel_confirm'))) return;
+    this.isActioning.set(true);
+    try {
+      await this.eventService.cancelEvent(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+}
 ````
 
 ## File: src/app/features/quiz/quiz-create/quiz-create.component.html
@@ -16442,6 +16698,513 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
 </div>
 ````
 
+## File: src/app/features/events/create-event/create-event.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  computed,
+  inject,
+  signal,
+  input,
+  resource,
+  OnInit,
+  DestroyRef,
+} from '@angular/core';
+import { Router, RouterLink } from '@angular/router';
+import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs';
+import { TranslateModule } from '@ngx-translate/core';
+import { EventService } from '../../../core/services/event.service';
+import { QuizService } from '../../../core/services/quiz.service';
+import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
+import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { BookCoverService } from '../../../core/services/book-cover.service';
+import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
+@Component({
+  selector: 'app-create-event',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, ReactiveFormsModule, TranslateModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton],
+  templateUrl: './create-event.component.html',
+})
+export class CreateEventComponent implements OnInit {
+  readonly id = input.required<string>();
+  private readonly fb = inject(FormBuilder);
+  private readonly eventService = inject(EventService);
+  private readonly quizService = inject(QuizService);
+  private readonly router = inject(Router);
+  private readonly bookCoverService = inject(BookCoverService);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly isSubmitting = signal(false);
+  readonly errorMessage = signal<string | null>(null);
+  readonly showAfterVenue = signal(false);
+  readonly isFetchingCover = signal(false);
+  readonly coverFetchFailed = signal(false);
+  private readonly _quizzesResource = resource({
+    params: () => {
+      const clubId = this.id();
+      return clubId ? { clubId } : undefined;
+    },
+    loader: ({ params }) => this.quizService.getClubQuizzes(params.clubId),
+  });
+  readonly activeQuizzes = computed(() =>
+    (this._quizzesResource.value() ?? []).filter(
+      q => q.status === 'active' || q.status === 'live',
+    ),
+  );
+  readonly form = this.fb.nonNullable.group({
+    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
+    description: [''],
+    date: ['', Validators.required],
+    city: ['', Validators.required],
+    address: [''],
+    lat: [null as number | null],
+    lng: [null as number | null],
+    theme: [''],
+    tagsRaw: [''],
+    durationMinutes: [null as number | null, [Validators.min(15), Validators.max(480)]],
+    afterVenueName: [''],
+    afterVenueAddress: [''],
+    afterVenueDescription: [''],
+    coverUrl: [''],
+    bookTitle: [''],
+    quizId: [null as string | null],
+  });
+  ngOnInit(): void {
+    this.form.controls.bookTitle.valueChanges.pipe(
+      debounceTime(600),
+      distinctUntilChanged(),
+      filter(v => v.length > 2),
+      tap(() => { this.isFetchingCover.set(true); this.coverFetchFailed.set(false); }),
+      switchMap(title => this.bookCoverService.fetchCover$(title)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(url => {
+      this.isFetchingCover.set(false);
+      if (url && !this.form.controls.coverUrl.value) {
+        this.form.controls.coverUrl.setValue(url);
+      } else if (!url) {
+        this.coverFetchFailed.set(true);
+      }
+    });
+  }
+  onAddressSelect(suggestion: GeocodeSuggestion): void {
+    this.form.patchValue({
+      city: suggestion.city ?? suggestion.label,
+      address: suggestion.label,
+      lat: suggestion.lat,
+      lng: suggestion.lng,
+    });
+  }
+  toggleAfterVenue(): void {
+    this.showAfterVenue.update(v => !v);
+    if (!this.showAfterVenue()) {
+      this.form.patchValue({ afterVenueName: '', afterVenueAddress: '', afterVenueDescription: '' });
+    }
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid || this.isSubmitting()) return;
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+    const v = this.form.getRawValue();
+    const tags = v.tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+    const afterMeetingVenue = this.showAfterVenue() && v.afterVenueName
+      ? { name: v.afterVenueName, address: v.afterVenueAddress, description: v.afterVenueDescription || undefined }
+      : undefined;
+    try {
+      const created = await this.eventService.createEvent(this.id(), {
+        title: v.title,
+        description: v.description || undefined,
+        date: new Date(v.date).toISOString(),
+        city: v.city,
+        address: v.address || undefined,
+        lat: v.lat ?? undefined,
+        lng: v.lng ?? undefined,
+        theme: v.theme || undefined,
+        tags,
+        durationMinutes: v.durationMinutes ?? undefined,
+        afterMeetingVenue,
+        coverUrl: v.coverUrl || null,
+        bookTitle: v.bookTitle || null,
+        quizId: v.quizId ?? null,
+      });
+      await this.router.navigate(['/events', created.id]);
+    } catch {
+      this.errorMessage.set('Failed to create event. Please try again.');
+    } finally {
+      this.isSubmitting.set(false);
+    }
+  }
+}
+````
+
+## File: package.json
+````json
+{
+  "name": "book-club-fe",
+  "version": "0.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
+    "extract-i18n": "node scripts/extract-i18n.mjs",
+    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
+    "lint": "ng lint",
+    "build-ctx": "npx repomix --no-files",
+    "prepare": "husky install",
+    "mock": "node mock-server/index.js",
+    "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\""
+  },
+  "prettier": {
+    "overrides": [
+      {
+        "files": "*.html",
+        "options": {
+          "parser": "angular"
+        }
+      }
+    ]
+  },
+  "private": true,
+  "overrides": {
+    "picomatch": "^4.0.4",
+    "axios": "1.15.2"
+  },
+  "dependencies": {
+    "@angular/cdk": "^21.2.8",
+    "@angular/common": "^21.2.10",
+    "@angular/compiler": "^21.2.10",
+    "@angular/core": "^21.2.10",
+    "@angular/forms": "^21.2.10",
+    "@angular/platform-browser": "^21.2.10",
+    "@angular/router": "^21.2.10",
+    "@ng-icons/core": ">=32.0.0 <34.0.0",
+    "@ng-icons/lucide": ">=32.0.0 <34.0.0",
+    "@ngx-translate/core": "^17.0.0",
+    "@ngx-translate/http-loader": "^17.0.0",
+    "@spartan-ng/brain": "^0.0.1-alpha.678",
+    "@spartan-ng/cli": "^0.0.1-alpha.678",
+    "@tailwindcss/postcss": "^4.2.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "qrcode": "^1.5.4",
+    "rxjs": "~7.8.0",
+    "tailwind-merge": "^3.5.0",
+    "tslib": "^2.3.0",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@angular/build": "^21.2.8",
+    "@angular/cli": "^21.2.8",
+    "@angular/compiler-cli": "^21.2.10",
+    "@playwright/test": "^1.59.1",
+    "@types/jasmine": "~5.1.0",
+    "@types/qrcode": "^1.5.6",
+    "angular-eslint": "21.0.1",
+    "autoprefixer": "^10.4.27",
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.6",
+    "eslint": "^9.39.1",
+    "eslint-plugin-rxjs-x": "^0.9.5",
+    "express": "^5.2.1",
+    "husky": "^8.0.0",
+    "jasmine-core": "~5.8.0",
+    "karma": "~6.4.0",
+    "karma-chrome-launcher": "~3.2.0",
+    "karma-coverage": "~2.2.0",
+    "karma-jasmine": "~5.1.0",
+    "karma-jasmine-html-reporter": "~2.1.0",
+    "postcss": "^8.5.9",
+    "tailwindcss": "^4.2.4",
+    "typescript": "~5.9.3",
+    "typescript-eslint": "8.46.4"
+  }
+}
+````
+
+## File: src/app/features/clubs/club-detail/club-detail.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  effect,
+  input,
+  linkedSignal,
+  untracked,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
+import { ClubEvent } from '../../../core/models/event.model';
+import { UserProfile } from '../../../core/models/user.model';
+import { EventService } from '../../../core/services/event.service';
+import { ChatService } from '../../../core/services/chat.service';
+import { SeoService } from '../../../core/services/seo.service';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { ClubMembersListComponent } from './members/club-members-list.component';
+import { ClubHeaderComponent } from './header/club-header.component';
+import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
+import { ClubEventCardComponent } from './club-event-card/club-event-card.component';
+import { ClubSidebarRightComponent } from './club-sidebar-right/club-sidebar-right.component';
+import { BookVoteSectionComponent } from './book-vote/book-vote-section.component';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCard } from '../../../shared/spartan/card/src';
+import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
+@Component({
+  selector: 'app-club-detail',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    RouterLink,
+    TranslateModule,
+    FormatDatePipe,
+    ClubMembersListComponent,
+    ClubHeaderComponent,
+    ClubManagePanelComponent,
+    ClubEventCardComponent,
+    ClubSidebarRightComponent,
+    BookVoteSectionComponent,
+    HlmButton,
+    HlmCard,
+    ...HlmTabsImports,
+  ],
+  templateUrl: './club-detail.component.html',
+})
+export class ClubDetailComponent {
+  readonly id = input.required<string>();
+  private readonly clubService = inject(ClubService);
+  private readonly eventService = inject(EventService);
+  private readonly chatService = inject(ChatService);
+  private readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  private readonly translate = inject(TranslateService);
+  private readonly _lang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: this.translate.currentLang ?? 'uk' },
+  );
+  readonly currentUser = this.auth.currentUser;
+  readonly club = signal<Club | null>(null);
+  readonly members = signal<ClubMemberDetail[]>([]);
+  readonly clubBans = signal<BanRecord[]>([]);
+  readonly events = signal<ClubEvent[]>([]);
+  readonly pastEvents = signal<ClubEvent[]>([]);
+  readonly isPastEventsLoading = signal(false);
+  readonly isPastEventsLoaded = signal(false);
+  readonly activeEventsTab = signal<'upcoming' | 'history'>('upcoming');
+  readonly isLoading = signal(true);
+  readonly errorMessage = signal<string | null>(null);
+  readonly isActionLoading = signal(false);
+  readonly actionError = signal<string | null>(null);
+  readonly attendingEventId = signal<string | null>(null);
+  readonly sortKey = linkedSignal<'date' | 'popular' | 'status'>(() => {
+    this.id();
+    return 'date';
+  });
+  readonly sortOptions = [
+    { key: 'date' as const,    labelKey: 'CLUB_DETAIL.sort_nearest' },
+    { key: 'popular' as const, labelKey: 'CLUB_DETAIL.sort_popular' },
+    { key: 'status' as const,  labelKey: 'CLUB_DETAIL.sort_status'  },
+  ];
+  readonly isMember = computed(() => this.clubService.myClubIds().has(this.id()));
+  readonly isClubOwner = computed(
+    () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
+  );
+  readonly currentUserId = computed(() => this.auth.currentUser()?.id ?? null);
+  readonly organizerProfile = computed<UserProfile | null>(() => {
+    const organizerId = this.club()?.organizerId;
+    if (!organizerId) return null;
+    const organizer = this.members().find(m => m.role === 'organizer');
+    if (!organizer) return null;
+    return {
+      id: organizerId,
+      displayName: organizer.displayName,
+      avatarUrl: organizer.avatarUrl,
+      role: 'user',
+      createdAt: '',
+      socials: organizer.socials,
+      socialsPublic: organizer.socialsPublic,
+    } satisfies UserProfile;
+  });
+  readonly upcomingEvents = computed(() =>
+    this.events().filter(e => e.status === 'scheduled' || e.status === 'active'),
+  );
+  readonly sortedUpcomingEvents = computed(() => {
+    const events = this.upcomingEvents();
+    const key = this.sortKey();
+    if (key === 'popular') {
+      return [...events].sort((a, b) => b.attendeeCount - a.attendeeCount);
+    }
+    if (key === 'status') {
+      const order: Record<string, number> = { active: 0, scheduled: 1, rescheduled: 2 };
+      return [...events].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
+    }
+    return [...events].sort((a, b) => a.date.localeCompare(b.date));
+  });
+  readonly nearestEventBook = computed<{ title: string; author: string; description: string; coverUrl: string | null } | null>(() => {
+    const nearest = [...this.events()]
+      .filter(e => e.status === 'upcoming' || e.status === 'scheduled' || e.status === 'active')
+      .sort((a, b) => a.date.localeCompare(b.date))[0];
+    const title = nearest?.bookTitle;
+    if (title) return { title, author: '', description: '', coverUrl: nearest.coverUrl ?? null };
+    const cb = this.club()?.currentBook;
+    return cb ? { ...cb, coverUrl: null } : null;
+  });
+  readonly deleteCountdown = computed<string | null>(() => {
+    const club = this.club();
+    if (!club) return null;
+    const ms = this.clubService.msUntilDeletion(club);
+    if (ms === null) return null;
+    const totalMinutes = Math.floor(ms / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) {
+      return minutes > 0 ? `${hours} год ${minutes} хв` : `${hours} год`;
+    }
+    return `${totalMinutes} хв`;
+  });
+  constructor() {
+    effect((onCleanup) => {
+      const clubId = this.id();
+      this.activeEventsTab.set('upcoming');
+      this.pastEvents.set([]);
+      this.isPastEventsLoaded.set(false);
+      let cancelled = false;
+      onCleanup(() => { cancelled = true; });
+      this.loadClub(clubId, () => cancelled).catch((_err: unknown) => {  });
+    });
+  }
+  private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    try {
+      if (this.auth.isAuthenticated() && untracked(() => this.clubService.myClubs().length === 0)) {
+        await this.clubService.loadMyClubs();
+      }
+      if (isCancelled()) return;
+      const found = await this.clubService.getClubById(clubId);
+      if (isCancelled()) return;
+      if (found) {
+        this.club.set(found);
+        const [members, events] = await Promise.all([
+          this.clubService.getClubMembers(clubId),
+          this.clubService.loadClubEvents(clubId),
+        ]);
+        if (isCancelled()) return;
+        this.members.set(members);
+        this.events.set(events);
+        if (this.auth.currentUser()?.id === found.organizerId) {
+          this.clubBans.set(await this.clubService.getBans(clubId));
+        }
+        this.seo.setPageI18n('SEO.club_detail_title', {
+          ogTitleKey: 'SEO.club_detail_og_title',
+          params: { name: found.name },
+        });
+      } else {
+        this.errorMessage.set('This club could not be found.');
+      }
+    } catch {
+      if (!isCancelled()) this.errorMessage.set('Failed to load club details.');
+    } finally {
+      if (!isCancelled()) this.isLoading.set(false);
+    }
+  }
+  async onJoin(): Promise<void> {
+    await this.performMembershipAction(() => this.clubService.joinClub(this.id()), 'Failed to join club');
+  }
+  async onLeave(): Promise<void> {
+    await this.performMembershipAction(() => this.clubService.leaveClub(this.id()), 'Failed to leave club');
+  }
+  openClubChat(): void {
+    const user = this.currentUser();
+    this.chatService.loadRooms(this.id(), user?.id);
+    if (!this.chatService.isOpen()) {
+      this.chatService.toggleOpen();
+    }
+  }
+  async handleKick(userId: string): Promise<void> {
+    await this.clubService.kickMember(this.id(), userId);
+    this.members.update(list => list.filter(m => m.userId !== userId));
+  }
+  async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
+    await this.clubService.banMember(this.id(), event.userId, event.duration);
+    this.members.update(list => list.filter(m => m.userId !== event.userId));
+  }
+  async onAttend(eventId: string): Promise<void> {
+    await this.performAttendanceAction(eventId, true);
+  }
+  async onCancelAttend(eventId: string): Promise<void> {
+    await this.performAttendanceAction(eventId, false);
+  }
+  private async performMembershipAction(action: () => Promise<void>, errorFallback: string): Promise<void> {
+    this.isActionLoading.set(true);
+    this.actionError.set(null);
+    try {
+      await action();
+      const updated = await this.clubService.getClubById(this.id());
+      if (updated) this.club.set(updated);
+    } catch (err) {
+      this.actionError.set(err instanceof Error ? err.message : errorFallback);
+    } finally {
+      this.isActionLoading.set(false);
+    }
+  }
+  async onEventsTabChange(tab: 'upcoming' | 'history'): Promise<void> {
+    this.activeEventsTab.set(tab);
+    if (tab === 'history' && !this.isPastEventsLoaded()) {
+      await this.loadPastEvents();
+    }
+  }
+  private async loadPastEvents(): Promise<void> {
+    this.isPastEventsLoading.set(true);
+    try {
+      const past = await this.clubService.loadClubEvents(this.id(), true);
+      const now = new Date().toISOString();
+      this.pastEvents.set(
+        past.filter(e => e.date < now).sort((a, b) => b.date.localeCompare(a.date)),
+      );
+      this.isPastEventsLoaded.set(true);
+    } finally {
+      this.isPastEventsLoading.set(false);
+    }
+  }
+  private async performAttendanceAction(eventId: string, attending: boolean): Promise<void> {
+    this.attendingEventId.set(eventId);
+    try {
+      if (attending) {
+        await this.eventService.attendEvent(eventId);
+      } else {
+        await this.eventService.cancelAttendance(eventId);
+      }
+      this.events.update(list =>
+        list.map(e =>
+          e.id === eventId
+            ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
+            : e,
+        ),
+      );
+    } finally {
+      this.attendingEventId.set(null);
+    }
+  }
+}
+````
+
 ## File: public/i18n/en.json
 ````json
 {
@@ -16604,7 +17367,18 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
     "edit_club_desc": "Update name, description & settings",
     "create_event_title": "Create Event",
     "create_event_desc": "Schedule a new club event",
-    "now_reading": "Now reading"
+    "now_reading": "Now reading",
+    "events_tab_upcoming": "Upcoming",
+    "events_tab_history": "Archive",
+    "events_loading": "Loading...",
+    "events_history_empty": "No past events.",
+    "chat_create_title": "New Chat Room",
+    "chat_room_placeholder": "Room name",
+    "chat_create_btn": "Create",
+    "delete_club_btn": "Delete Club",
+    "delete_club_confirm": "Delete club and all data? This is irreversible.",
+    "delete_club_yes": "Yes, delete",
+    "delete_club_error": "Failed to delete club. Please try again."
   },
   "EDIT_CLUB": {
     "title": "Edit Club",
@@ -16750,6 +17524,10 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
     "no_upcoming": "No upcoming events",
     "no_upcoming_desc": "No events are scheduled yet. Check back soon!",
     "no_my_events_desc": "Join clubs to see their events here."
+  },
+  "EVENT": {
+    "event_chat_btn": "Event Chat",
+    "event_chat_start_btn": "Start Event Chat"
   },
   "CREATE_EVENT": {
     "back_to_club": "← Back to Club",
@@ -17102,7 +17880,18 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
     "edit_club_desc": "Оновити назву, опис та налаштування",
     "create_event_title": "Створити подію",
     "create_event_desc": "Запланувати нову подію клубу",
-    "now_reading": "Читаємо зараз"
+    "now_reading": "Читаємо зараз",
+    "events_tab_upcoming": "Майбутні",
+    "events_tab_history": "Архів",
+    "events_loading": "Завантаження...",
+    "events_history_empty": "Минулих подій немає.",
+    "chat_create_title": "Новий чат-рум",
+    "chat_room_placeholder": "Назва кімнати",
+    "chat_create_btn": "Створити",
+    "delete_club_btn": "Видалити клуб",
+    "delete_club_confirm": "Видалити клуб і всі дані? Це незворотно.",
+    "delete_club_yes": "Так, видалити",
+    "delete_club_error": "Не вдалося видалити клуб. Спробуйте ще раз."
   },
   "EDIT_CLUB": {
     "title": "Редагувати клуб",
@@ -17248,6 +18037,10 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
     "no_upcoming": "Немає майбутніх подій",
     "no_upcoming_desc": "Поки що не заплановано жодної події. Заходьте пізніше!",
     "no_my_events_desc": "Приєднуйтесь до клубів, щоб бачити їхні події тут."
+  },
+  "EVENT": {
+    "event_chat_btn": "Чат події",
+    "event_chat_start_btn": "Розпочати чат події"
   },
   "CREATE_EVENT": {
     "back_to_club": "← Назад до клубу",
@@ -17438,333 +18231,6 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
 }
 ````
 
-## File: src/app/features/clubs/club-detail/club-detail.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  effect,
-  input,
-  linkedSignal,
-  untracked,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
-import { ClubEvent } from '../../../core/models/event.model';
-import { UserProfile } from '../../../core/models/user.model';
-import { EventService } from '../../../core/services/event.service';
-import { SeoService } from '../../../core/services/seo.service';
-import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-import { ClubMembersListComponent } from './members/club-members-list.component';
-import { ClubHeaderComponent } from './header/club-header.component';
-import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
-import { ClubEventCardComponent } from './club-event-card/club-event-card.component';
-import { ClubSidebarRightComponent } from './club-sidebar-right/club-sidebar-right.component';
-import { BookVoteSectionComponent } from './book-vote/book-vote-section.component';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmCard } from '../../../shared/spartan/card/src';
-@Component({
-  selector: 'app-club-detail',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    RouterLink,
-    TranslateModule,
-    FormatDatePipe,
-    ClubMembersListComponent,
-    ClubHeaderComponent,
-    ClubManagePanelComponent,
-    ClubEventCardComponent,
-    ClubSidebarRightComponent,
-    BookVoteSectionComponent,
-    HlmButton,
-    HlmCard,
-  ],
-  templateUrl: './club-detail.component.html',
-})
-export class ClubDetailComponent {
-  readonly id = input.required<string>();
-  private readonly clubService = inject(ClubService);
-  private readonly eventService = inject(EventService);
-  private readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  private readonly translate = inject(TranslateService);
-  private readonly _lang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: this.translate.currentLang ?? 'uk' },
-  );
-  readonly currentUser = this.auth.currentUser;
-  readonly club = signal<Club | null>(null);
-  readonly members = signal<ClubMemberDetail[]>([]);
-  readonly clubBans = signal<BanRecord[]>([]);
-  readonly events = signal<ClubEvent[]>([]);
-  readonly isLoading = signal(true);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isActionLoading = signal(false);
-  readonly actionError = signal<string | null>(null);
-  readonly attendingEventId = signal<string | null>(null);
-  readonly sortKey = linkedSignal<'date' | 'popular' | 'status'>(() => {
-    this.id();
-    return 'date';
-    });
-  readonly sortOptions = [
-    { key: 'date' as const,    labelKey: 'CLUB_DETAIL.sort_nearest' },
-    { key: 'popular' as const, labelKey: 'CLUB_DETAIL.sort_popular' },
-    { key: 'status' as const,  labelKey: 'CLUB_DETAIL.sort_status'  },
-  ];
-  readonly isMember = computed(() => this.clubService.myClubIds().has(this.id()));
-  readonly isClubOwner = computed(
-    () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
-  );
-  readonly currentUserId = computed(() => this.auth.currentUser()?.id ?? null);
-  readonly organizerProfile = computed<UserProfile | null>(() => {
-    const organizerId = this.club()?.organizerId;
-    if (!organizerId) return null;
-    const organizer = this.members().find(m => m.role === 'organizer');
-    if (!organizer) return null;
-    return {
-      id: organizerId,
-      displayName: organizer.displayName,
-      avatarUrl: organizer.avatarUrl,
-      role: 'user',
-      createdAt: '',
-      socials: organizer.socials,
-      socialsPublic: organizer.socialsPublic,
-    } satisfies UserProfile;
-  });
-  readonly upcomingEvents = computed(() =>
-    this.events().filter(e => e.status === 'scheduled' || e.status === 'active'),
-  );
-  readonly sortedUpcomingEvents = computed(() => {
-    const events = this.upcomingEvents();
-    const key = this.sortKey();
-    if (key === 'popular') {
-      return [...events].sort((a, b) => b.attendeeCount - a.attendeeCount);
-    }
-    if (key === 'status') {
-      const order: Record<string, number> = { active: 0, scheduled: 1, rescheduled: 2 };
-      return [...events].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
-    }
-    return [...events].sort((a, b) => a.date.localeCompare(b.date));
-  });
-  readonly nearestEventBook = computed<{ title: string; author: string; description: string; coverUrl: string | null } | null>(() => {
-    const nearest = [...this.events()]
-      .filter(e => e.status === 'upcoming' || e.status === 'scheduled' || e.status === 'active')
-      .sort((a, b) => a.date.localeCompare(b.date))[0];
-    const title = nearest?.bookTitle;
-    if (title) return { title, author: '', description: '', coverUrl: nearest.coverUrl ?? null };
-    const cb = this.club()?.currentBook;
-    return cb ? { ...cb, coverUrl: null } : null;
-  });
-  readonly deleteCountdown = computed<string | null>(() => {
-    const club = this.club();
-    if (!club) return null;
-    const ms = this.clubService.msUntilDeletion(club);
-    if (ms === null) return null;
-    const totalMinutes = Math.floor(ms / 60000);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    if (hours > 0) {
-      return minutes > 0 ? `${hours} год ${minutes} хв` : `${hours} год`;
-    }
-    return `${totalMinutes} хв`;
-  });
-  constructor() {
-    effect((onCleanup) => {
-      const clubId = this.id();
-      let cancelled = false;
-      onCleanup(() => { cancelled = true; });
-      this.loadClub(clubId, () => cancelled).catch((_err: unknown) => { /* swallow */ });
-    });
-  }
-  private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-    try {
-      if (this.auth.isAuthenticated() && untracked(() => this.clubService.myClubs().length === 0)) {
-        await this.clubService.loadMyClubs();
-      }
-      if (isCancelled()) return;
-      const found = await this.clubService.getClubById(clubId);
-      if (isCancelled()) return;
-      if (found) {
-        this.club.set(found);
-        const [members, events] = await Promise.all([
-          this.clubService.getClubMembers(clubId),
-          this.clubService.loadClubEvents(clubId),
-        ]);
-        if (isCancelled()) return;
-        this.members.set(members);
-        this.events.set(events);
-        if (this.auth.currentUser()?.id === found.organizerId) {
-          this.clubBans.set(await this.clubService.getBans(clubId));
-        }
-        this.seo.setPageI18n('SEO.club_detail_title', {
-          ogTitleKey: 'SEO.club_detail_og_title',
-          params: { name: found.name },
-        });
-      } else {
-        this.errorMessage.set('This club could not be found.');
-      }
-    } catch {
-      if (!isCancelled()) this.errorMessage.set('Failed to load club details.');
-    } finally {
-      if (!isCancelled()) this.isLoading.set(false);
-    }
-  }
-  async onJoin(): Promise<void> {
-    await this.performMembershipAction(() => this.clubService.joinClub(this.id()), 'Failed to join club');
-  }
-  async onLeave(): Promise<void> {
-    await this.performMembershipAction(() => this.clubService.leaveClub(this.id()), 'Failed to leave club');
-  }
-  async handleKick(userId: string): Promise<void> {
-    await this.clubService.kickMember(this.id(), userId);
-    this.members.update(list => list.filter(m => m.userId !== userId));
-  }
-  async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
-    await this.clubService.banMember(this.id(), event.userId, event.duration);
-    this.members.update(list => list.filter(m => m.userId !== event.userId));
-  }
-  async onAttend(eventId: string): Promise<void> {
-    await this.performAttendanceAction(eventId, true);
-  }
-  async onCancelAttend(eventId: string): Promise<void> {
-    await this.performAttendanceAction(eventId, false);
-  }
-  private async performMembershipAction(action: () => Promise<void>, errorFallback: string): Promise<void> {
-    this.isActionLoading.set(true);
-    this.actionError.set(null);
-    try {
-      await action();
-      const updated = await this.clubService.getClubById(this.id());
-      if (updated) this.club.set(updated);
-    } catch (err) {
-      this.actionError.set(err instanceof Error ? err.message : errorFallback);
-    } finally {
-      this.isActionLoading.set(false);
-    }
-  }
-  private async performAttendanceAction(eventId: string, attending: boolean): Promise<void> {
-    this.attendingEventId.set(eventId);
-    try {
-      if (attending) {
-        await this.eventService.attendEvent(eventId);
-      } else {
-        await this.eventService.cancelAttendance(eventId);
-      }
-      this.events.update(list =>
-        list.map(e =>
-          e.id === eventId
-            ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
-            : e,
-        ),
-      );
-    } finally {
-      this.attendingEventId.set(null);
-    }
-  }
-}
-````
-
-## File: package.json
-````json
-{
-  "name": "book-club-fe",
-  "version": "0.0.0",
-  "scripts": {
-    "ng": "ng",
-    "start": "ng serve",
-    "build": "ng build",
-    "watch": "ng build --watch --configuration development",
-    "test": "ng test",
-    "test:ci": "ng test --no-watch --no-progress --browsers=ChromeHeadlessCI",
-    "extract-i18n": "node scripts/extract-i18n.mjs",
-    "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
-    "lint": "ng lint",
-    "build-ctx": "npx repomix --no-files",
-    "prepare": "husky install",
-    "mock": "node mock-server/index.js",
-    "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\""
-  },
-  "prettier": {
-    "overrides": [
-      {
-        "files": "*.html",
-        "options": {
-          "parser": "angular"
-        }
-      }
-    ]
-  },
-  "private": true,
-  "overrides": {
-    "picomatch": "^4.0.4",
-    "axios": "1.15.2"
-  },
-  "dependencies": {
-    "@angular/cdk": "^21.2.8",
-    "@angular/common": "^21.2.10",
-    "@angular/compiler": "^21.2.10",
-    "@angular/core": "^21.2.10",
-    "@angular/forms": "^21.2.10",
-    "@angular/platform-browser": "^21.2.10",
-    "@angular/router": "^21.2.10",
-    "@ng-icons/core": ">=32.0.0 <34.0.0",
-    "@ng-icons/lucide": ">=32.0.0 <34.0.0",
-    "@ngx-translate/core": "^17.0.0",
-    "@ngx-translate/http-loader": "^17.0.0",
-    "@spartan-ng/brain": "^0.0.1-alpha.678",
-    "@spartan-ng/cli": "^0.0.1-alpha.678",
-    "@tailwindcss/postcss": "^4.2.4",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "qrcode": "^1.5.4",
-    "rxjs": "~7.8.0",
-    "tailwind-merge": "^3.5.0",
-    "tslib": "^2.3.0",
-    "tw-animate-css": "^1.4.0"
-  },
-  "devDependencies": {
-    "@angular/build": "^21.2.8",
-    "@angular/cli": "^21.2.8",
-    "@angular/compiler-cli": "^21.2.10",
-    "@playwright/test": "^1.59.1",
-    "@types/jasmine": "~5.1.0",
-    "@types/qrcode": "^1.5.6",
-    "angular-eslint": "21.0.1",
-    "autoprefixer": "^10.4.27",
-    "concurrently": "^9.2.1",
-    "cors": "^2.8.6",
-    "eslint": "^9.39.1",
-    "eslint-plugin-rxjs-x": "^0.9.5",
-    "express": "^5.2.1",
-    "husky": "^8.0.0",
-    "jasmine-core": "~5.8.0",
-    "karma": "~6.4.0",
-    "karma-chrome-launcher": "~3.2.0",
-    "karma-coverage": "~2.2.0",
-    "karma-jasmine": "~5.1.0",
-    "karma-jasmine-html-reporter": "~2.1.0",
-    "postcss": "^8.5.9",
-    "tailwindcss": "^4.2.4",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "8.46.4"
-  }
-}
-````
-
 ## File: src/app/features/clubs/club-detail/club-detail.component.html
 ````html
 @if (isLoading()) {
@@ -17869,6 +18335,9 @@ export class ClubDetailComponent {
               [isMember]="isMember()"
             />
           }
+          @if (isMember()) {
+            <button hlmBtn variant="outline" (click)="openClubChat()">Club Chat</button>
+          }
           @if (!!currentUser() && !isMember() && !isClubOwner()) {
             <div class="rounded-2xl border-2 border-dashed border-[var(--color-sepia)] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[var(--color-surface-raised)]">
               <div>
@@ -17902,40 +18371,72 @@ export class ClubDetailComponent {
                 </a>
               }
             </div>
-            @if (upcomingEvents().length > 1) {
-              <div class="flex flex-wrap gap-2 mb-5">
-                @for (opt of sortOptions; track opt.key) {
-                  <button
-                    type="button"
-                    (click)="sortKey.set(opt.key)"
-                    class="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
-                    [class]="sortKey() === opt.key
-                      ? 'bg-[var(--color-primary-600)] text-white border-[var(--color-primary-600)] shadow-sm'
-                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600'"
-                  >
-                    {{ opt.labelKey | translate }}
-                  </button>
+            <hlm-tabs [tab]="activeEventsTab()" (tabActivated)="onEventsTabChange($any($event))">
+              <hlm-tabs-list class="mb-4">
+                <button [hlmTabsTrigger]="'upcoming'">{{ 'CLUB_DETAIL.events_tab_upcoming' | translate }}</button>
+                <button [hlmTabsTrigger]="'history'">{{ 'CLUB_DETAIL.events_tab_history' | translate }}</button>
+              </hlm-tabs-list>
+              <div [hlmTabsContent]="'upcoming'">
+                @if (upcomingEvents().length > 1) {
+                  <div class="flex flex-wrap gap-2 mb-5">
+                    @for (opt of sortOptions; track opt.key) {
+                      <button
+                        type="button"
+                        (click)="sortKey.set(opt.key)"
+                        class="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
+                        [class]="sortKey() === opt.key
+                          ? 'bg-[var(--color-primary-600)] text-white border-[var(--color-primary-600)] shadow-sm'
+                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600'"
+                      >
+                        {{ opt.labelKey | translate }}
+                      </button>
+                    }
+                  </div>
+                }
+                @if (upcomingEvents().length === 0) {
+                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                    {{ 'CLUB_DETAIL.events_empty' | translate }}
+                  </p>
+                } @else {
+                  <div class="grid gap-5 sm:grid-cols-2">
+                    @for (event of sortedUpcomingEvents(); track event.id; let i = $index) {
+                      <app-club-event-card
+                        [event]="event"
+                        [isAuthenticated]="!!currentUser()"
+                        [attending]="attendingEventId() === event.id"
+                        [index]="i"
+                        (attend)="onAttend(event.id)"
+                        (cancelAttend)="onCancelAttend(event.id)"
+                      />
+                    }
+                  </div>
                 }
               </div>
-            }
-            @if (upcomingEvents().length === 0) {
-              <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                {{ 'CLUB_DETAIL.events_empty' | translate }}
-              </p>
-            } @else {
-              <div class="grid gap-5 sm:grid-cols-2">
-                @for (event of sortedUpcomingEvents(); track event.id; let i = $index) {
-                  <app-club-event-card
-                    [event]="event"
-                    [isAuthenticated]="!!currentUser()"
-                    [attending]="attendingEventId() === event.id"
-                    [index]="i"
-                    (attend)="onAttend(event.id)"
-                    (cancelAttend)="onCancelAttend(event.id)"
-                  />
+              <div [hlmTabsContent]="'history'">
+                @if (isPastEventsLoading()) {
+                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                    {{ 'CLUB_DETAIL.events_loading' | translate }}
+                  </p>
+                } @else if (pastEvents().length === 0) {
+                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                    {{ 'CLUB_DETAIL.events_history_empty' | translate }}
+                  </p>
+                } @else {
+                  <div class="grid gap-5 sm:grid-cols-2">
+                    @for (event of pastEvents(); track event.id; let i = $index) {
+                      <app-club-event-card
+                        [event]="event"
+                        [isAuthenticated]="!!currentUser()"
+                        [attending]="false"
+                        [index]="i"
+                        (attend)="onAttend(event.id)"
+                        (cancelAttend)="onCancelAttend(event.id)"
+                      />
+                    }
+                  </div>
                 }
               </div>
-            }
+            </hlm-tabs>
           </section>
           <app-club-members-list
             [members]="members()"
@@ -17957,148 +18458,5 @@ export class ClubDetailComponent {
       </div>
     </div>
   </main>
-}
-````
-
-## File: src/app/features/events/create-event/create-event.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  computed,
-  inject,
-  signal,
-  input,
-  resource,
-  OnInit,
-  DestroyRef,
-} from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { debounceTime, distinctUntilChanged, filter, switchMap, tap } from 'rxjs';
-import { TranslateModule } from '@ngx-translate/core';
-import { EventService } from '../../../core/services/event.service';
-import { QuizService } from '../../../core/services/quiz.service';
-import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
-import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { BookCoverService } from '../../../core/services/book-cover.service';
-import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
-@Component({
-  selector: 'app-create-event',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, TranslateModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton],
-  templateUrl: './create-event.component.html',
-})
-export class CreateEventComponent implements OnInit {
-  readonly id = input.required<string>();
-  private readonly fb = inject(FormBuilder);
-  private readonly eventService = inject(EventService);
-  private readonly quizService = inject(QuizService);
-  private readonly router = inject(Router);
-  private readonly bookCoverService = inject(BookCoverService);
-  private readonly destroyRef = inject(DestroyRef);
-  readonly isSubmitting = signal(false);
-  readonly errorMessage = signal<string | null>(null);
-  readonly showAfterVenue = signal(false);
-  readonly isFetchingCover = signal(false);
-  readonly coverFetchFailed = signal(false);
-  private readonly _quizzesResource = resource({
-    params: () => {
-      const clubId = this.id();
-      return clubId ? { clubId } : undefined;
-    },
-    loader: ({ params }) => this.quizService.getClubQuizzes(params.clubId),
-  });
-  readonly activeQuizzes = computed(() =>
-    (this._quizzesResource.value() ?? []).filter(
-      q => q.status === 'active' || q.status === 'live',
-    ),
-  );
-  readonly form = this.fb.nonNullable.group({
-    title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
-    description: [''],
-    date: ['', Validators.required],
-    city: ['', Validators.required],
-    address: [''],
-    lat: [null as number | null],
-    lng: [null as number | null],
-    theme: [''],
-    tagsRaw: [''],
-    durationMinutes: [null as number | null, [Validators.min(15), Validators.max(480)]],
-    afterVenueName: [''],
-    afterVenueAddress: [''],
-    afterVenueDescription: [''],
-    coverUrl: [''],
-    bookTitle: [''],
-    quizId: [null as string | null],
-  });
-  ngOnInit(): void {
-    this.form.controls.bookTitle.valueChanges.pipe(
-      debounceTime(600),
-      distinctUntilChanged(),
-      filter(v => v.length > 2),
-      tap(() => { this.isFetchingCover.set(true); this.coverFetchFailed.set(false); }),
-      switchMap(title => this.bookCoverService.fetchCover$(title)),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe(url => {
-      this.isFetchingCover.set(false);
-      if (url && !this.form.controls.coverUrl.value) {
-        this.form.controls.coverUrl.setValue(url);
-      } else if (!url) {
-        this.coverFetchFailed.set(true);
-      }
-    });
-  }
-  onAddressSelect(suggestion: GeocodeSuggestion): void {
-    this.form.patchValue({
-      city: suggestion.city ?? suggestion.label,
-      address: suggestion.label,
-      lat: suggestion.lat,
-      lng: suggestion.lng,
-    });
-  }
-  toggleAfterVenue(): void {
-    this.showAfterVenue.update(v => !v);
-    if (!this.showAfterVenue()) {
-      this.form.patchValue({ afterVenueName: '', afterVenueAddress: '', afterVenueDescription: '' });
-    }
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid || this.isSubmitting()) return;
-    this.isSubmitting.set(true);
-    this.errorMessage.set(null);
-    const v = this.form.getRawValue();
-    const tags = v.tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
-    const afterMeetingVenue = this.showAfterVenue() && v.afterVenueName
-      ? { name: v.afterVenueName, address: v.afterVenueAddress, description: v.afterVenueDescription || undefined }
-      : undefined;
-    try {
-      const created = await this.eventService.createEvent(this.id(), {
-        title: v.title,
-        description: v.description || undefined,
-        date: new Date(v.date).toISOString(),
-        city: v.city,
-        address: v.address || undefined,
-        lat: v.lat ?? undefined,
-        lng: v.lng ?? undefined,
-        theme: v.theme || undefined,
-        tags,
-        durationMinutes: v.durationMinutes ?? undefined,
-        afterMeetingVenue,
-        coverUrl: v.coverUrl || null,
-        bookTitle: v.bookTitle || null,
-        quizId: v.quizId ?? null,
-      });
-      await this.router.navigate(['/events', created.id]);
-    } catch {
-      this.errorMessage.set('Failed to create event. Please try again.');
-    } finally {
-      this.isSubmitting.set(false);
-    }
-  }
 }
 ````

@@ -9,6 +9,7 @@ import { environment } from '../../../environments/environment';
 interface ApiChatRoom {
   id: string;
   name: string;
+  eventId?: string;
 }
 
 interface ApiChatMessage {
@@ -68,7 +69,7 @@ export class ChatService {
     }
     firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
       .then(raw => {
-        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId }));
+        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId, eventId: r.eventId }));
         this._rooms.set(rooms);
         const currentId = this._activeRoomId();
         if (!currentId || !rooms.some(r => r.id === currentId)) {
@@ -93,6 +94,7 @@ export class ChatService {
           id: r.id,
           name: multipleClubs ? `${club.name} · ${r.name}` : r.name,
           clubId: club.id,
+          eventId: r.eventId,
         })))
         .catch(() => [] as ChatRoom[]),
     );
@@ -220,15 +222,40 @@ export class ChatService {
       .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
   }
 
-  createRoom(clubId: string, name: string): void {
-    firstValueFrom(
+  async createRoom(clubId: string, name: string): Promise<ChatRoom> {
+    const raw = await firstValueFrom(
       this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),
-    )
-      .then(raw => {
-        const room: ChatRoom = { id: raw.id, name: raw.name, clubId };
-        this._rooms.update(rooms => [...rooms, room]);
-      })
-      .catch((err: unknown) => console.error('[ChatService] createRoom error', err));
+    );
+    const room: ChatRoom = { id: raw.id, name: raw.name, clubId, eventId: raw.eventId };
+    this._rooms.update(rooms => [...rooms, room]);
+    return room;
+  }
+
+  openAndFocusRoom(room: ChatRoom): void {
+    this._activeRoomId.set(room.id);
+    this.loadMessages(room.id);
+    this._isOpen.set(true);
+    this.markAsRead();
+  }
+
+  async getEventRoom(eventId: string): Promise<ChatRoom | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`),
+      );
+      return { id: raw.id, name: raw.name, clubId: '', eventId: raw.eventId };
+    } catch {
+      return null;
+    }
+  }
+
+  async createEventChatRoom(eventId: string): Promise<ChatRoom> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`, {}),
+    );
+    const room: ChatRoom = { id: raw.id, name: raw.name, clubId: '', eventId: raw.eventId };
+    this._rooms.update(rooms => [...rooms, room]);
+    return room;
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
