@@ -168,7 +168,8 @@
     "chat_create_btn": "Create",
     "delete_club_btn": "Delete Club",
     "delete_club_confirm": "Delete club and all data? This is irreversible.",
-    "delete_club_yes": "Yes, delete"
+    "delete_club_yes": "Yes, delete",
+    "delete_club_error": "Failed to delete club. Please try again."
   },
   "EDIT_CLUB": {
     "title": "Edit Club",
@@ -314,6 +315,10 @@
     "no_upcoming": "No upcoming events",
     "no_upcoming_desc": "No events are scheduled yet. Check back soon!",
     "no_my_events_desc": "Join clubs to see their events here."
+  },
+  "EVENT": {
+    "event_chat_btn": "Event Chat",
+    "event_chat_start_btn": "Start Event Chat"
   },
   "CREATE_EVENT": {
     "back_to_club": "← Back to Club",

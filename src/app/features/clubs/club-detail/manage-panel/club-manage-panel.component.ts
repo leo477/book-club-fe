@@ -33,6 +33,7 @@ export class ClubManagePanelComponent {
   readonly roomError = signal<string | null>(null);
   readonly isDeleting = signal(false);
   readonly showDeleteConfirm = signal(false);
+  readonly deleteError = signal<string | null>(null);
 
   async createChatRoom(): Promise<void> {
     const name = this.newRoomName().trim();
@@ -50,14 +51,20 @@ export class ClubManagePanelComponent {
     }
   }
 
+  cancelDelete(): void {
+    this.showDeleteConfirm.set(false);
+    this.deleteError.set(null);
+  }
+
   async confirmDelete(): Promise<void> {
     this.isDeleting.set(true);
+    this.deleteError.set(null);
     try {
       await this.clubService.deleteClub(this.clubId());
       await this.router.navigate(['/clubs']);
     } catch {
       this.isDeleting.set(false);
-      this.showDeleteConfirm.set(false);
+      this.deleteError.set('CLUB_DETAIL.delete_club_error');
     }
   }
 }

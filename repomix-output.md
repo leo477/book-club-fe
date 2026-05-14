@@ -4979,25 +4979,6 @@ export interface BookVoteRound {
 }
 ````
 
-## File: src/app/core/models/chat.model.ts
-````typescript
-export interface ChatMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  text: string;
-  timestamp: Date;
-  isOwn: boolean;
-  isMuted?: boolean;
-}
-export interface ChatRoom {
-  id: string;
-  name: string;
-  clubId: string;
-  eventId?: string;
-}
-````
-
 ## File: src/app/core/models/quiz.model.ts
 ````typescript
 export type QuizStatus = 'draft' | 'active' | 'live' | 'closed';
@@ -5450,135 +5431,6 @@ export const CLUBS_ROUTES: Routes = [
     ],
   },
 ];
-````
-
-## File: src/app/features/events/event-detail/event-detail.component.html
-````html
-@if (isLoading()) {
-  <main class="max-w-3xl mx-auto px-4 py-8" aria-busy="true">
-    <div class="animate-pulse space-y-4">
-      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-    </div>
-  </main>
-} @else if (errorMessage()) {
-  <main class="max-w-3xl mx-auto px-4 py-8 text-center" role="alert">
-    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
-    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
-    <a routerLink="/events"
-       class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors">
-      {{ 'EVENTS.back_to_events' | translate }}
-    </a>
-  </main>
-} @else if (event()) {
-  <main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
-    <nav>
-      <a routerLink="/events"
-         class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
-        {{ 'EVENTS.back_to_events' | translate }}
-      </a>
-    </nav>
-    <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6 space-y-3">
-      <div class="flex items-start justify-between gap-4">
-        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ event()!.title }}</h1>
-        @if (event()!.status !== 'scheduled') {
-          <span class="text-xs rounded-full px-2.5 py-1 shrink-0"
-                [class]="event()!.status === 'cancelled'
-                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                  : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'">
-            {{ event()!.status }}
-          </span>
-        }
-      </div>
-      <a [routerLink]="['/clubs', event()!.clubId]"
-         class="text-sm text-primary-600 dark:text-primary-400 hover:underline">
-        📚 {{ event()!.clubName }}
-      </a>
-      <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
-        <span>📅 {{ event()!.date | formatDate }}</span>
-        @if (event()!.city) {
-          <span>📍 {{ event()!.address || event()!.city }}</span>
-        }
-        @if (event()!.durationMinutes) {
-          <span>⏱ {{ event()!.durationMinutes }} {{ 'EVENTS.minutes_abbr' | translate }}</span>
-        }
-        <span>👤 {{ event()!.attendeeCount }} {{ 'EVENTS.attending' | translate }}</span>
-      </div>
-      @if (auth.isAuthenticated() && event()!.status !== 'cancelled') {
-        <div class="flex gap-3 pt-2">
-          @if (event()!.isAttending) {
-            <button type="button"
-                    [disabled]="isActioning()"
-                    (click)="onCancelAttend()"
-                    class="rounded-xl bg-green-600 hover:bg-green-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
-              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.going_cancel' | translate }} }
-            </button>
-          } @else {
-            <button type="button"
-                    [disabled]="isActioning()"
-                    (click)="onAttend()"
-                    class="rounded-xl bg-primary-600 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
-              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.rsvp_going' | translate }} }
-            </button>
-          }
-          @if (event()?.isAttending || isOrganizer()) {
-            @if (eventRoom()) {
-              <button hlmBtn variant="outline" (click)="openEventChat()">Event Chat</button>
-            } @else if (isOrganizer()) {
-              <button hlmBtn variant="outline" (click)="openEventChat()">Start Event Chat</button>
-            }
-          }
-        </div>
-      }
-    </div>
-    @if (event()!.description) {
-      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.about' | translate }}</h2>
-        <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ event()!.description }}</p>
-      </section>
-    }
-    @if (event()!.theme || event()!.tags.length > 0) {
-      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.tags' | translate }}</h2>
-        <div class="flex flex-wrap gap-2">
-          @if (event()!.theme) {
-            <span class="rounded-full bg-accent-100 dark:bg-accent-900/30 px-3 py-1 text-xs font-medium text-accent-700 dark:text-accent-300">
-              {{ event()!.theme }}
-            </span>
-          }
-          @for (tag of event()!.tags; track tag) {
-            <span class="rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1 text-xs text-gray-600 dark:text-gray-400">
-              {{ tag }}
-            </span>
-          }
-        </div>
-      </section>
-    }
-    @if (event()!.afterMeetingVenue) {
-      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
-        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.after_meeting_venue' | translate }}</h2>
-        <p class="font-medium text-gray-900 dark:text-white">{{ event()!.afterMeetingVenue!.name }}</p>
-        <p class="text-sm text-gray-500 dark:text-gray-400">{{ event()!.afterMeetingVenue!.address }}</p>
-        @if (event()!.afterMeetingVenue!.description) {
-          <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">{{ event()!.afterMeetingVenue!.description }}</p>
-        }
-      </section>
-    }
-    @if (isOrganizer() && event()!.status !== 'cancelled') {
-      <section class="rounded-2xl border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-6">
-        <h2 class="text-sm font-semibold text-yellow-800 dark:text-yellow-300 uppercase tracking-wide mb-3">{{ 'EVENTS.organizer_controls' | translate }}</h2>
-        <div class="flex gap-3">
-          <button type="button"
-                  [disabled]="isActioning()"
-                  (click)="onCancelEvent()"
-                  class="rounded-lg bg-red-600 hover:bg-red-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60 transition-colors">
-            {{ 'EVENTS.cancel_event' | translate }}
-          </button>
-        </div>
-      </section>
-    }
-  </main>
-}
 ````
 
 ## File: src/app/features/privacy/privacy.component.ts
@@ -9078,6 +8930,25 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
 };
 ````
 
+## File: src/app/core/models/chat.model.ts
+````typescript
+export interface ChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: Date;
+  isOwn: boolean;
+  isMuted?: boolean;
+}
+export interface ChatRoom {
+  id: string;
+  name: string;
+  clubId: string;
+  eventId?: string;
+}
+````
+
 ## File: src/app/core/services/book-cover.service.ts
 ````typescript
 import { Injectable, inject } from '@angular/core';
@@ -9173,237 +9044,6 @@ export class BookVoteService {
     const current = this._rounds()[clubId];
     if (!current) return;
     this._rounds.update(r => ({ ...r, [clubId]: fn(current) }));
-  }
-}
-````
-
-## File: src/app/core/services/chat.service.ts
-````typescript
-import { Injectable, signal, computed, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { firstValueFrom } from 'rxjs';
-import { ChatMessage, ChatRoom } from '../models/chat.model';
-import { environment } from '../../../environments/environment';
-interface ApiChatRoom {
-  id: string;
-  name: string;
-  eventId?: string;
-}
-interface ApiChatMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  text: string;
-  timestamp: string;
-}
-@Injectable({ providedIn: 'root' })
-export class ChatService {
-  private readonly http = inject(HttpClient);
-  private readonly api = environment.apiUrl;
-  private readonly _rooms = signal<ChatRoom[]>([]);
-  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
-  private readonly _activeRoomId = signal<string | null>(null);
-  private readonly _unreadCount = signal<number>(0);
-  private readonly _isOpen = signal<boolean>(false);
-  private readonly _hasNewMessage = signal<boolean>(false);
-  private readonly _mutedUserIds = signal<Set<string>>(new Set());
-  private currentUserId: string | null = null;
-  readonly rooms = this._rooms.asReadonly();
-  readonly messages = this._messages.asReadonly();
-  readonly activeRoomId = this._activeRoomId.asReadonly();
-  readonly unreadCount = this._unreadCount.asReadonly();
-  readonly isOpen = this._isOpen.asReadonly();
-  readonly hasNewMessage = this._hasNewMessage.asReadonly();
-  readonly mutedUserIds = this._mutedUserIds.asReadonly();
-  readonly activeRoom = computed(() =>
-    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
-  );
-  readonly activeMessages = computed(() => {
-    const msgs = this._messages()[this._activeRoomId() ?? ''] ?? [];
-    const muted = this._mutedUserIds();
-    return msgs.map(m => ({ ...m, isMuted: muted.has(m.senderId) }));
-  });
-  // ── Public API ────────────────────────────────────────────────────────────
-  /** Fetch chat rooms for a given club and seed the rooms signal. */
-  loadRooms(clubId: string, userId?: string): void {
-    if (userId !== undefined) {
-      this.currentUserId = userId;
-    }
-    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
-      .then(raw => {
-        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId, eventId: r.eventId }));
-        this._rooms.set(rooms);
-        const currentId = this._activeRoomId();
-        if (!currentId || !rooms.some(r => r.id === currentId)) {
-          const first = rooms[0];
-          if (first) {
-            this._activeRoomId.set(first.id);
-            this.loadMessages(first.id);
-          }
-        }
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
-  }
-  loadAllClubRooms(clubs: { id: string; name: string }[], userId?: string): void {
-    if (userId !== undefined) this.currentUserId = userId;
-    const multipleClubs = clubs.length > 1;
-    const requests = clubs.map(club =>
-      firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${club.id}/chat/rooms`))
-        .then(raw => raw.map(r => ({
-          id: r.id,
-          name: multipleClubs ? `${club.name} · ${r.name}` : r.name,
-          clubId: club.id,
-          eventId: r.eventId,
-        })))
-        .catch(() => [] as ChatRoom[]),
-    );
-    Promise.all(requests).then(results => {
-      const allRooms = results.flat();
-      this._rooms.set(allRooms);
-      const currentId = this._activeRoomId();
-      if (!currentId || !allRooms.some(r => r.id === currentId)) {
-        const first = allRooms[0];
-        if (first) {
-          this._activeRoomId.set(first.id);
-          this.loadMessages(first.id);
-        }
-      }
-    }).catch((err: unknown) => console.error('[ChatService] loadAllClubRooms error', err));
-  }
-  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
-    const query: Record<string, string> = {};
-    if (params?.before) query['before'] = params.before;
-    if (params?.limit != null) query['limit'] = String(params.limit);
-    firstValueFrom(
-      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
-        params: query,
-      }),
-    )
-      .then(raw => {
-        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
-        this._messages.update(map => ({ ...map, [roomId]: msgs }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
-  }
-  toggleOpen(): void {
-    this._isOpen.update(v => !v);
-    if (this._isOpen()) {
-      this.markAsRead();
-    }
-  }
-  openRoom(roomId: string): void {
-    this._activeRoomId.set(roomId);
-    this.loadMessages(roomId);
-    this.markAsRead();
-  }
-  markAsRead(): void {
-    this._unreadCount.set(0);
-    this._hasNewMessage.set(false);
-  }
-  clearRooms(): void {
-    this._rooms.set([]);
-    this._messages.set({});
-    this._activeRoomId.set(null);
-    this._unreadCount.set(0);
-    this._hasNewMessage.set(false);
-    this._isOpen.set(false);
-    this._mutedUserIds.set(new Set());
-    this.currentUserId = null;
-  }
-  muteUser(userId: string): void {
-    this._mutedUserIds.update(set => new Set([...set, userId]));
-  }
-  unmuteUser(userId: string): void {
-    this._mutedUserIds.update(set => {
-      const next = new Set(set);
-      next.delete(userId);
-      return next;
-    });
-  }
-  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    this.currentUserId = currentUser.id;
-    firstValueFrom(
-      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
-    )
-      .then(() => {
-        this.loadMessages(roomId);
-      })
-      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
-  }
-  deleteMessage(messageId: string): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    firstValueFrom(
-      this.http.delete(`${this.api}/chat/rooms/${roomId}/messages/${messageId}`),
-    )
-      .then(() => {
-        this._messages.update(map => ({
-          ...map,
-          [roomId]: (map[roomId] ?? []).filter(m => m.id !== messageId),
-        }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] deleteMessage error', err));
-  }
-  banUserFromChat(userId: string, durationSeconds: number): void {
-    const roomId = this._activeRoomId();
-    if (!roomId) return;
-    firstValueFrom(
-      this.http.post(`${this.api}/chat/rooms/${roomId}/ban`, {
-        user_id: userId,
-        duration_seconds: durationSeconds,
-      }),
-    )
-      .then(() => {
-        this._messages.update(map => ({
-          ...map,
-          [roomId]: (map[roomId] ?? []).filter(m => m.senderId !== userId),
-        }));
-      })
-      .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
-  }
-  async createRoom(clubId: string, name: string): Promise<ChatRoom> {
-    const raw = await firstValueFrom(
-      this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),
-    );
-    const room: ChatRoom = { id: raw.id, name: raw.name, clubId, eventId: raw.eventId };
-    this._rooms.update(rooms => [...rooms, room]);
-    return room;
-  }
-  openAndFocusRoom(room: ChatRoom): void {
-    this._activeRoomId.set(room.id);
-    this.loadMessages(room.id);
-    this._isOpen.set(true);
-    this.markAsRead();
-  }
-  async getEventRoom(eventId: string): Promise<ChatRoom | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`),
-      );
-      return { id: raw.id, name: raw.name, clubId: '', eventId: raw.eventId };
-    } catch {
-      return null;
-    }
-  }
-  async createEventChatRoom(eventId: string): Promise<ChatRoom> {
-    const raw = await firstValueFrom(
-      this.http.post<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`, {}),
-    );
-    const room: ChatRoom = { id: raw.id, name: raw.name, clubId: '', eventId: raw.eventId };
-    this._rooms.update(rooms => [...rooms, room]);
-    return room;
-  }
-  private mapMessage(m: ApiChatMessage): ChatMessage {
-    return {
-      id: m.id,
-      senderId: m.senderId,
-      senderName: m.senderName,
-      text: m.text,
-      timestamp: new Date(m.timestamp),
-      isOwn: m.senderId === this.currentUserId,
-    };
   }
 }
 ````
@@ -9931,6 +9571,135 @@ export class EventCardComponent {
   readonly attending = input<boolean>(false);
   readonly attend = output<void>();
   readonly cancelAttend = output<void>();
+}
+````
+
+## File: src/app/features/events/event-detail/event-detail.component.html
+````html
+@if (isLoading()) {
+  <main class="max-w-3xl mx-auto px-4 py-8" aria-busy="true">
+    <div class="animate-pulse space-y-4">
+      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+    </div>
+  </main>
+} @else if (errorMessage()) {
+  <main class="max-w-3xl mx-auto px-4 py-8 text-center" role="alert">
+    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
+    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
+    <a routerLink="/events"
+       class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors">
+      {{ 'EVENTS.back_to_events' | translate }}
+    </a>
+  </main>
+} @else if (event()) {
+  <main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+    <nav>
+      <a routerLink="/events"
+         class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+        {{ 'EVENTS.back_to_events' | translate }}
+      </a>
+    </nav>
+    <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6 space-y-3">
+      <div class="flex items-start justify-between gap-4">
+        <h1 class="text-2xl font-bold text-gray-900 dark:text-white">{{ event()!.title }}</h1>
+        @if (event()!.status !== 'scheduled') {
+          <span class="text-xs rounded-full px-2.5 py-1 shrink-0"
+                [class]="event()!.status === 'cancelled'
+                  ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                  : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'">
+            {{ event()!.status }}
+          </span>
+        }
+      </div>
+      <a [routerLink]="['/clubs', event()!.clubId]"
+         class="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+        📚 {{ event()!.clubName }}
+      </a>
+      <div class="flex flex-wrap gap-4 text-sm text-gray-600 dark:text-gray-400">
+        <span>📅 {{ event()!.date | formatDate }}</span>
+        @if (event()!.city) {
+          <span>📍 {{ event()!.address || event()!.city }}</span>
+        }
+        @if (event()!.durationMinutes) {
+          <span>⏱ {{ event()!.durationMinutes }} {{ 'EVENTS.minutes_abbr' | translate }}</span>
+        }
+        <span>👤 {{ event()!.attendeeCount }} {{ 'EVENTS.attending' | translate }}</span>
+      </div>
+      @if (auth.isAuthenticated() && event()!.status !== 'cancelled') {
+        <div class="flex gap-3 pt-2">
+          @if (event()!.isAttending) {
+            <button type="button"
+                    [disabled]="isActioning()"
+                    (click)="onCancelAttend()"
+                    class="rounded-xl bg-green-600 hover:bg-green-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
+              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.going_cancel' | translate }} }
+            </button>
+          } @else {
+            <button type="button"
+                    [disabled]="isActioning()"
+                    (click)="onAttend()"
+                    class="rounded-xl bg-primary-600 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
+              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.rsvp_going' | translate }} }
+            </button>
+          }
+          @if (event()?.isAttending || isOrganizer()) {
+            @if (eventRoom()) {
+              <button hlmBtn variant="outline" (click)="openEventChat()">{{ 'EVENT.event_chat_btn' | translate }}</button>
+            } @else if (isOrganizer()) {
+              <button hlmBtn variant="outline" (click)="openEventChat()">{{ 'EVENT.event_chat_start_btn' | translate }}</button>
+            }
+          }
+        </div>
+      }
+    </div>
+    @if (event()!.description) {
+      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.about' | translate }}</h2>
+        <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ event()!.description }}</p>
+      </section>
+    }
+    @if (event()!.theme || event()!.tags.length > 0) {
+      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.tags' | translate }}</h2>
+        <div class="flex flex-wrap gap-2">
+          @if (event()!.theme) {
+            <span class="rounded-full bg-accent-100 dark:bg-accent-900/30 px-3 py-1 text-xs font-medium text-accent-700 dark:text-accent-300">
+              {{ event()!.theme }}
+            </span>
+          }
+          @for (tag of event()!.tags; track tag) {
+            <span class="rounded-full bg-gray-100 dark:bg-gray-700 px-3 py-1 text-xs text-gray-600 dark:text-gray-400">
+              {{ tag }}
+            </span>
+          }
+        </div>
+      </section>
+    }
+    @if (event()!.afterMeetingVenue) {
+      <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+        <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'EVENTS.after_meeting_venue' | translate }}</h2>
+        <p class="font-medium text-gray-900 dark:text-white">{{ event()!.afterMeetingVenue!.name }}</p>
+        <p class="text-sm text-gray-500 dark:text-gray-400">{{ event()!.afterMeetingVenue!.address }}</p>
+        @if (event()!.afterMeetingVenue!.description) {
+          <p class="text-sm text-gray-600 dark:text-gray-300 mt-2">{{ event()!.afterMeetingVenue!.description }}</p>
+        }
+      </section>
+    }
+    @if (isOrganizer() && event()!.status !== 'cancelled') {
+      <section class="rounded-2xl border border-yellow-200 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-900/20 p-6">
+        <h2 class="text-sm font-semibold text-yellow-800 dark:text-yellow-300 uppercase tracking-wide mb-3">{{ 'EVENTS.organizer_controls' | translate }}</h2>
+        <div class="flex gap-3">
+          <button type="button"
+                  [disabled]="isActioning()"
+                  (click)="onCancelEvent()"
+                  class="rounded-lg bg-red-600 hover:bg-red-700 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60 transition-colors">
+            {{ 'EVENTS.cancel_event' | translate }}
+          </button>
+        </div>
+      </section>
+    }
+  </main>
 }
 ````
 
@@ -11111,6 +10880,237 @@ export interface ClubEvent {
 }
 ````
 
+## File: src/app/core/services/chat.service.ts
+````typescript
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
+import { ChatMessage, ChatRoom } from '../models/chat.model';
+import { environment } from '../../../environments/environment';
+interface ApiChatRoom {
+  id: string;
+  name: string;
+  eventId?: string;
+}
+interface ApiChatMessage {
+  id: string;
+  senderId: string;
+  senderName: string;
+  text: string;
+  timestamp: string;
+}
+@Injectable({ providedIn: 'root' })
+export class ChatService {
+  private readonly http = inject(HttpClient);
+  private readonly api = environment.apiUrl;
+  private readonly _rooms = signal<ChatRoom[]>([]);
+  private readonly _messages = signal<Record<string, ChatMessage[]>>({});
+  private readonly _activeRoomId = signal<string | null>(null);
+  private readonly _unreadCount = signal<number>(0);
+  private readonly _isOpen = signal<boolean>(false);
+  private readonly _hasNewMessage = signal<boolean>(false);
+  private readonly _mutedUserIds = signal<Set<string>>(new Set());
+  private currentUserId: string | null = null;
+  readonly rooms = this._rooms.asReadonly();
+  readonly messages = this._messages.asReadonly();
+  readonly activeRoomId = this._activeRoomId.asReadonly();
+  readonly unreadCount = this._unreadCount.asReadonly();
+  readonly isOpen = this._isOpen.asReadonly();
+  readonly hasNewMessage = this._hasNewMessage.asReadonly();
+  readonly mutedUserIds = this._mutedUserIds.asReadonly();
+  readonly activeRoom = computed(() =>
+    this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
+  );
+  readonly activeMessages = computed(() => {
+    const msgs = this._messages()[this._activeRoomId() ?? ''] ?? [];
+    const muted = this._mutedUserIds();
+    return msgs.map(m => ({ ...m, isMuted: muted.has(m.senderId) }));
+  });
+  // ── Public API ────────────────────────────────────────────────────────────
+  /** Fetch chat rooms for a given club and seed the rooms signal. */
+  loadRooms(clubId: string, userId?: string): void {
+    if (userId !== undefined) {
+      this.currentUserId = userId;
+    }
+    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
+      .then(raw => {
+        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId, eventId: r.eventId }));
+        this._rooms.set(rooms);
+        const currentId = this._activeRoomId();
+        if (!currentId || !rooms.some(r => r.id === currentId)) {
+          const first = rooms[0];
+          if (first) {
+            this._activeRoomId.set(first.id);
+            this.loadMessages(first.id);
+          }
+        }
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
+  }
+  loadAllClubRooms(clubs: { id: string; name: string }[], userId?: string): void {
+    if (userId !== undefined) this.currentUserId = userId;
+    const multipleClubs = clubs.length > 1;
+    const requests = clubs.map(club =>
+      firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${club.id}/chat/rooms`))
+        .then(raw => raw.map(r => ({
+          id: r.id,
+          name: multipleClubs ? `${club.name} · ${r.name}` : r.name,
+          clubId: club.id,
+          eventId: r.eventId,
+        })))
+        .catch(() => [] as ChatRoom[]),
+    );
+    Promise.all(requests).then(results => {
+      const allRooms = results.flat();
+      this._rooms.set(allRooms);
+      const currentId = this._activeRoomId();
+      if (!currentId || !allRooms.some(r => r.id === currentId)) {
+        const first = allRooms[0];
+        if (first) {
+          this._activeRoomId.set(first.id);
+          this.loadMessages(first.id);
+        }
+      }
+    }).catch((err: unknown) => console.error('[ChatService] loadAllClubRooms error', err));
+  }
+  loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
+    const query: Record<string, string> = {};
+    if (params?.before) query['before'] = params.before;
+    if (params?.limit != null) query['limit'] = String(params.limit);
+    firstValueFrom(
+      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
+        params: query,
+      }),
+    )
+      .then(raw => {
+        const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
+        this._messages.update(map => ({ ...map, [roomId]: msgs }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
+  }
+  toggleOpen(): void {
+    this._isOpen.update(v => !v);
+    if (this._isOpen()) {
+      this.markAsRead();
+    }
+  }
+  openRoom(roomId: string): void {
+    this._activeRoomId.set(roomId);
+    this.loadMessages(roomId);
+    this.markAsRead();
+  }
+  markAsRead(): void {
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+  }
+  clearRooms(): void {
+    this._rooms.set([]);
+    this._messages.set({});
+    this._activeRoomId.set(null);
+    this._unreadCount.set(0);
+    this._hasNewMessage.set(false);
+    this._isOpen.set(false);
+    this._mutedUserIds.set(new Set());
+    this.currentUserId = null;
+  }
+  muteUser(userId: string): void {
+    this._mutedUserIds.update(set => new Set([...set, userId]));
+  }
+  unmuteUser(userId: string): void {
+    this._mutedUserIds.update(set => {
+      const next = new Set(set);
+      next.delete(userId);
+      return next;
+    });
+  }
+  sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    this.currentUserId = currentUser.id;
+    firstValueFrom(
+      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
+    )
+      .then(() => {
+        this.loadMessages(roomId);
+      })
+      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
+  }
+  deleteMessage(messageId: string): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    firstValueFrom(
+      this.http.delete(`${this.api}/chat/rooms/${roomId}/messages/${messageId}`),
+    )
+      .then(() => {
+        this._messages.update(map => ({
+          ...map,
+          [roomId]: (map[roomId] ?? []).filter(m => m.id !== messageId),
+        }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] deleteMessage error', err));
+  }
+  banUserFromChat(userId: string, durationSeconds: number): void {
+    const roomId = this._activeRoomId();
+    if (!roomId) return;
+    firstValueFrom(
+      this.http.post(`${this.api}/chat/rooms/${roomId}/ban`, {
+        user_id: userId,
+        duration_seconds: durationSeconds,
+      }),
+    )
+      .then(() => {
+        this._messages.update(map => ({
+          ...map,
+          [roomId]: (map[roomId] ?? []).filter(m => m.senderId !== userId),
+        }));
+      })
+      .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
+  }
+  async createRoom(clubId: string, name: string): Promise<ChatRoom> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),
+    );
+    const room: ChatRoom = { id: raw.id, name: raw.name, clubId, eventId: raw.eventId };
+    this._rooms.update(rooms => [...rooms, room]);
+    return room;
+  }
+  openAndFocusRoom(room: ChatRoom): void {
+    this._activeRoomId.set(room.id);
+    this.loadMessages(room.id);
+    this._isOpen.set(true);
+    this.markAsRead();
+  }
+  async getEventRoom(eventId: string): Promise<ChatRoom | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`),
+      );
+      return { id: raw.id, name: raw.name, clubId: '', eventId: raw.eventId };
+    } catch {
+      return null;
+    }
+  }
+  async createEventChatRoom(eventId: string): Promise<ChatRoom> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`, {}),
+    );
+    const room: ChatRoom = { id: raw.id, name: raw.name, clubId: '', eventId: raw.eventId };
+    this._rooms.update(rooms => [...rooms, room]);
+    return room;
+  }
+  private mapMessage(m: ApiChatMessage): ChatMessage {
+    return {
+      id: m.id,
+      senderId: m.senderId,
+      senderName: m.senderName,
+      text: m.text,
+      timestamp: new Date(m.timestamp),
+      isOwn: m.senderId === this.currentUserId,
+    };
+  }
+}
+````
+
 ## File: src/app/core/services/club.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -11735,6 +11735,7 @@ export class ClubManagePanelComponent {
   readonly roomError = signal<string | null>(null);
   readonly isDeleting = signal(false);
   readonly showDeleteConfirm = signal(false);
+  readonly deleteError = signal<string | null>(null);
   async createChatRoom(): Promise<void> {
     const name = this.newRoomName().trim();
     if (!name) return;
@@ -11750,14 +11751,19 @@ export class ClubManagePanelComponent {
       this.isCreatingRoom.set(false);
     }
   }
+  cancelDelete(): void {
+    this.showDeleteConfirm.set(false);
+    this.deleteError.set(null);
+  }
   async confirmDelete(): Promise<void> {
     this.isDeleting.set(true);
+    this.deleteError.set(null);
     try {
       await this.clubService.deleteClub(this.clubId());
       await this.router.navigate(['/clubs']);
     } catch {
       this.isDeleting.set(false);
-      this.showDeleteConfirm.set(false);
+      this.deleteError.set('CLUB_DETAIL.delete_club_error');
     }
   }
 }
@@ -14741,12 +14747,15 @@ function mapSocials(raw: ApiUserSocials): UserSocials {
             size="sm"
             variant="outline"
             type="button"
-            (click)="showDeleteConfirm.set(false)"
+            (click)="cancelDelete()"
             class="flex-1"
           >
             {{ 'CLUB_DETAIL.cancel' | translate }}
           </button>
         </div>
+        @if (deleteError()) {
+          <p class="mt-1 text-xs text-red-500">{{ deleteError() | translate }}</p>
+        }
       </div>
     }
   </div>
@@ -15010,112 +15019,6 @@ export class EditClubComponent implements OnInit {
       this._errorMessage.set(err instanceof Error ? err.message : 'Failed to update club');
     } finally {
       this._isSubmitting.set(false);
-    }
-  }
-}
-````
-
-## File: src/app/features/events/event-detail/event-detail.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  input,
-  effect,
-} from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
-import { EventService } from '../../../core/services/event.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
-import { ClubEvent } from '../../../core/models/event.model';
-import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-import { environment } from '../../../../environments/environment';
-import { ChatService } from '../../../core/services/chat.service';
-import { ChatRoom } from '../../../core/models/chat.model';
-import { HlmButton } from '../../../shared/spartan/button/src';
-@Component({
-  selector: 'app-event-detail',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton],
-  templateUrl: './event-detail.component.html',
-})
-export class EventDetailComponent {
-  readonly id = input.required<string>();
-  private readonly http = inject(HttpClient);
-  private readonly eventService = inject(EventService);
-  private readonly translate = inject(TranslateService);
-  readonly auth = inject(AuthService);
-  private readonly chatService = inject(ChatService);
-  private readonly _eventResource = rxResource<ClubEvent | null, string>({
-    params: () => this.id(),
-    stream: ({ params: id }) =>
-      this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(
-        map(mapEvent),
-      ),
-  });
-  readonly event = computed(() => this._eventResource.value() ?? null);
-  readonly isLoading = this._eventResource.isLoading;
-  readonly errorMessage = computed(() =>
-    !this._eventResource.isLoading() && this._eventResource.error() ? 'EVENT.LOAD_ERROR' : null,
-  );
-  readonly isActioning = signal(false);
-  readonly isOrganizer = computed(
-    () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,
-  );
-  private readonly _eventRoom = signal<ChatRoom | null>(null);
-  readonly eventRoom = this._eventRoom.asReadonly();
-  constructor() {
-    effect(() => {
-      const ev = this.event();
-      if (ev && this.auth.currentUser()) {
-        this.chatService.getEventRoom(ev.id).then(room => this._eventRoom.set(room));
-      }
-    });
-  }
-  async openEventChat(): Promise<void> {
-    const ev = this.event();
-    if (!ev) return;
-    let room = this._eventRoom();
-    if (!room && this.isOrganizer()) {
-      room = await this.chatService.createEventChatRoom(ev.id);
-      this._eventRoom.set(room);
-    }
-    if (room) this.chatService.openAndFocusRoom(room);
-  }
-  async onAttend(): Promise<void> {
-    this.isActioning.set(true);
-    try {
-      await this.eventService.attendEvent(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
-    }
-  }
-  async onCancelAttend(): Promise<void> {
-    this.isActioning.set(true);
-    try {
-      await this.eventService.cancelAttendance(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
-    }
-  }
-  async onCancelEvent(): Promise<void> {
-    if (!confirm(this.translate.instant('EVENTS.cancel_confirm'))) return;
-    this.isActioning.set(true);
-    try {
-      await this.eventService.cancelEvent(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
     }
   }
 }
@@ -15994,6 +15897,112 @@ export class QuizTakeComponent implements OnInit {
     </article>
   </div>
 </main>
+````
+
+## File: src/app/features/events/event-detail/event-detail.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  input,
+  effect,
+} from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
+import { EventService } from '../../../core/services/event.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
+import { ClubEvent } from '../../../core/models/event.model';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { environment } from '../../../../environments/environment';
+import { ChatService } from '../../../core/services/chat.service';
+import { ChatRoom } from '../../../core/models/chat.model';
+import { HlmButton } from '../../../shared/spartan/button/src';
+@Component({
+  selector: 'app-event-detail',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton],
+  templateUrl: './event-detail.component.html',
+})
+export class EventDetailComponent {
+  readonly id = input.required<string>();
+  private readonly http = inject(HttpClient);
+  private readonly eventService = inject(EventService);
+  private readonly translate = inject(TranslateService);
+  readonly auth = inject(AuthService);
+  private readonly chatService = inject(ChatService);
+  private readonly _eventResource = rxResource<ClubEvent | null, string>({
+    params: () => this.id(),
+    stream: ({ params: id }) =>
+      this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(
+        map(mapEvent),
+      ),
+  });
+  readonly event = computed(() => this._eventResource.value() ?? null);
+  readonly isLoading = this._eventResource.isLoading;
+  readonly errorMessage = computed(() =>
+    !this._eventResource.isLoading() && this._eventResource.error() ? 'EVENT.LOAD_ERROR' : null,
+  );
+  readonly isActioning = signal(false);
+  readonly isOrganizer = computed(
+    () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,
+  );
+  private readonly _eventRoom = signal<ChatRoom | null>(null);
+  readonly eventRoom = this._eventRoom.asReadonly();
+  constructor() {
+    effect(() => {
+      const ev = this.event();
+      if (ev && this.auth.currentUser()) {
+        this.chatService.getEventRoom(ev.id).then(room => this._eventRoom.set(room));
+      }
+    });
+  }
+  async openEventChat(): Promise<void> {
+    const ev = this.event();
+    if (!ev) return;
+    let room = this._eventRoom();
+    if (!room && this.isOrganizer()) {
+      room = await this.chatService.createEventChatRoom(ev.id);
+      this._eventRoom.set(room);
+    }
+    if (room) this.chatService.openAndFocusRoom(room);
+  }
+  async onAttend(): Promise<void> {
+    this.isActioning.set(true);
+    try {
+      await this.eventService.attendEvent(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+  async onCancelAttend(): Promise<void> {
+    this.isActioning.set(true);
+    try {
+      await this.eventService.cancelAttendance(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+  async onCancelEvent(): Promise<void> {
+    if (!confirm(this.translate.instant('EVENTS.cancel_confirm'))) return;
+    this.isActioning.set(true);
+    try {
+      await this.eventService.cancelEvent(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+}
 ````
 
 ## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
@@ -17090,7 +17099,8 @@ export class CreateEventComponent implements OnInit {
     "chat_create_btn": "Create",
     "delete_club_btn": "Delete Club",
     "delete_club_confirm": "Delete club and all data? This is irreversible.",
-    "delete_club_yes": "Yes, delete"
+    "delete_club_yes": "Yes, delete",
+    "delete_club_error": "Failed to delete club. Please try again."
   },
   "EDIT_CLUB": {
     "title": "Edit Club",
@@ -17236,6 +17246,10 @@ export class CreateEventComponent implements OnInit {
     "no_upcoming": "No upcoming events",
     "no_upcoming_desc": "No events are scheduled yet. Check back soon!",
     "no_my_events_desc": "Join clubs to see their events here."
+  },
+  "EVENT": {
+    "event_chat_btn": "Event Chat",
+    "event_chat_start_btn": "Start Event Chat"
   },
   "CREATE_EVENT": {
     "back_to_club": "← Back to Club",
@@ -17598,7 +17612,8 @@ export class CreateEventComponent implements OnInit {
     "chat_create_btn": "Створити",
     "delete_club_btn": "Видалити клуб",
     "delete_club_confirm": "Видалити клуб і всі дані? Це незворотно.",
-    "delete_club_yes": "Так, видалити"
+    "delete_club_yes": "Так, видалити",
+    "delete_club_error": "Не вдалося видалити клуб. Спробуйте ще раз."
   },
   "EDIT_CLUB": {
     "title": "Редагувати клуб",
@@ -17744,6 +17759,10 @@ export class CreateEventComponent implements OnInit {
     "no_upcoming": "Немає майбутніх подій",
     "no_upcoming_desc": "Поки що не заплановано жодної події. Заходьте пізніше!",
     "no_my_events_desc": "Приєднуйтесь до клубів, щоб бачити їхні події тут."
+  },
+  "EVENT": {
+    "event_chat_btn": "Чат події",
+    "event_chat_start_btn": "Розпочати чат події"
   },
   "CREATE_EVENT": {
     "back_to_club": "← Назад до клубу",

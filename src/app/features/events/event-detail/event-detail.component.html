@@ -75,9 +75,9 @@
           }
           @if (event()?.isAttending || isOrganizer()) {
             @if (eventRoom()) {
-              <button hlmBtn variant="outline" (click)="openEventChat()">Event Chat</button>
+              <button hlmBtn variant="outline" (click)="openEventChat()">{{ 'EVENT.event_chat_btn' | translate }}</button>
             } @else if (isOrganizer()) {
-              <button hlmBtn variant="outline" (click)="openEventChat()">Start Event Chat</button>
+              <button hlmBtn variant="outline" (click)="openEventChat()">{{ 'EVENT.event_chat_start_btn' | translate }}</button>
             }
           }
         </div>
