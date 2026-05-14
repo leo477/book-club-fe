@@ -8,6 +8,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { EventDetailComponent } from './event-detail.component';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ChatService } from '../../../core/services/chat.service';
 import { environment } from '../../../../environments/environment';
 import { makeApiEvent } from '../../../../testing/event-test.helpers';
 
@@ -16,6 +17,7 @@ describe('EventDetailComponent', () => {
   let component: EventDetailComponent;
   let eventServiceSpy: jasmine.SpyObj<EventService>;
   let authSpy: jasmine.SpyObj<AuthService>;
+  let chatServiceSpy: jasmine.SpyObj<ChatService>;
   let httpMock: HttpTestingController;
 
   const eventUrl = `${environment.apiUrl}/events/e1`;
@@ -27,6 +29,9 @@ describe('EventDetailComponent', () => {
     eventServiceSpy.attendEvent.and.returnValue(Promise.resolve());
     eventServiceSpy.cancelAttendance.and.returnValue(Promise.resolve());
     eventServiceSpy.cancelEvent.and.returnValue(Promise.resolve());
+
+    chatServiceSpy = jasmine.createSpyObj('ChatService', ['getEventRoom', 'createEventChatRoom', 'openAndFocusRoom']);
+    chatServiceSpy.getEventRoom.and.returnValue(Promise.resolve(null));
 
     authSpy = jasmine.createSpyObj('AuthService', [], {
       currentUser: jasmine.createSpy().and.returnValue(currentUser),
@@ -42,6 +47,7 @@ describe('EventDetailComponent', () => {
         provideHttpClientTesting(),
         { provide: EventService, useValue: eventServiceSpy },
         { provide: AuthService, useValue: authSpy },
+        { provide: ChatService, useValue: chatServiceSpy },
       ],
     });
 

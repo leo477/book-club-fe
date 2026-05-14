@@ -62,6 +62,7 @@ export class EventDetailComponent {
 
   constructor() {
     effect(() => {
+      if (!this._eventResource.hasValue()) return;
       const ev = this.event();
       if (ev && this.auth.currentUser()) {
         this.chatService.getEventRoom(ev.id).then(room => this._eventRoom.set(room));
