@@ -73,6 +73,13 @@
               @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.rsvp_going' | translate }} }
             </button>
           }
+          @if (event()?.isAttending || isOrganizer()) {
+            @if (eventRoom()) {
+              <button hlmBtn variant="outline" (click)="openEventChat()">Event Chat</button>
+            } @else if (isOrganizer()) {
+              <button hlmBtn variant="outline" (click)="openEventChat()">Start Event Chat</button>
+            }
+          }
         </div>
       }
     </div>

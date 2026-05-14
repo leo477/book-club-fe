@@ -9,6 +9,7 @@ import { environment } from '../../../environments/environment';
 interface ApiChatRoom {
   id: string;
   name: string;
+  eventId?: string;
 }
 
 interface ApiChatMessage {
@@ -68,7 +69,7 @@ export class ChatService {
     }
     firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
       .then(raw => {
-        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId }));
+        const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId, eventId: r.eventId }));
         this._rooms.set(rooms);
         const currentId = this._activeRoomId();
         if (!currentId || !rooms.some(r => r.id === currentId)) {
@@ -93,6 +94,7 @@ export class ChatService {
           id: r.id,
           name: multipleClubs ? `${club.name} · ${r.name}` : r.name,
           clubId: club.id,
+          eventId: r.eventId,
         })))
         .catch(() => [] as ChatRoom[]),
     );
@@ -224,7 +226,7 @@ export class ChatService {
     const raw = await firstValueFrom(
       this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),
     );
-    const room: ChatRoom = { id: raw.id, name: raw.name, clubId };
+    const room: ChatRoom = { id: raw.id, name: raw.name, clubId, eventId: raw.eventId };
     this._rooms.update(rooms => [...rooms, room]);
     return room;
   }
@@ -234,6 +236,26 @@ export class ChatService {
     this.loadMessages(room.id);
     this._isOpen.set(true);
     this.markAsRead();
+  }
+
+  async getEventRoom(eventId: string): Promise<ChatRoom | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`),
+      );
+      return { id: raw.id, name: raw.name, clubId: '', eventId: raw.eventId };
+    } catch {
+      return null;
+    }
+  }
+
+  async createEventChatRoom(eventId: string): Promise<ChatRoom> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`, {}),
+    );
+    const room: ChatRoom = { id: raw.id, name: raw.name, clubId: '', eventId: raw.eventId };
+    this._rooms.update(rooms => [...rooms, room]);
+    return room;
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
