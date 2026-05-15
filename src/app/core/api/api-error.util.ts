@@ -1,6 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { TimeoutError } from 'rxjs';
 
 export function extractApiError(err: unknown): string {
+  if (err instanceof TimeoutError) {
+    return 'Сервер не відповідає. Спробуйте ще раз.';
+  }
   if (err instanceof HttpErrorResponse) {
     const body = err.error as { error?: unknown; detail?: unknown } | null;
     if (typeof body?.error === 'string') return body.error;

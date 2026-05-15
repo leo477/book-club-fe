@@ -2,9 +2,11 @@ import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { toast } from '@spartan-ng/brain/sonner';
-import { catchError, throwError } from 'rxjs';
+import { TimeoutError, catchError, throwError, timeout } from 'rxjs';
 import { TokenStore } from '../auth/token.store';
 import { environment } from '../../../environments/environment';
+
+const REQUEST_TIMEOUT_MS = 15_000;
 
 /**
  * Global HTTP error interceptor.
@@ -31,7 +33,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
     : req;
 
   return next$(authedReq).pipe(
+    timeout(REQUEST_TIMEOUT_MS),
     catchError((error: unknown) => {
+      if (error instanceof TimeoutError) {
+        toast.error('Сервер не відповідає. Перевірте підключення та спробуйте ще раз.');
+        return throwError(() => error);
+      }
       const httpError = error instanceof HttpErrorResponse ? error : null;
       if (httpError?.status === 401 && token) {
         tokenStore.clear();
