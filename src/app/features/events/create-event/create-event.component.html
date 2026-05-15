@@ -26,7 +26,7 @@
           {{ 'CREATE_EVENT.title_label' | translate }} <span class="text-red-500">*</span>
         </label>
         <input hlmInput id="title" type="text" formControlName="title" class="w-full"
-               placeholder="April Discussion" />
+               data-testid="event-title-input" placeholder="April Discussion" />
         @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
           <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.title_required' | translate }}</p>
         }
@@ -58,7 +58,7 @@
         <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           {{ 'CREATE_EVENT.date_label' | translate }} <span class="text-red-500">*</span>
         </label>
-        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
+        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" data-testid="date-input" />
         @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
           <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.date_required' | translate }}</p>
         }

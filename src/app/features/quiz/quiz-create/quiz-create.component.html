@@ -53,6 +53,7 @@
           <input
             id="quiz-title"
             formControlName="title"
+            data-testid="quiz-title-input"
             [placeholder]="'QUIZ.create_title_placeholder' | translate"
             class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 dark:text-white
                    bg-white dark:bg-gray-800 placeholder-gray-400 focus:outline-none
@@ -99,6 +100,7 @@
         <div class="flex justify-end">
           <button
             type="submit"
+            data-testid="next-button"
             [disabled]="metaForm.invalid"
             class="bg-primary-600 hover:bg-primary-500 disabled:opacity-40
                    disabled:cursor-not-allowed text-white rounded-xl px-6 py-2.5

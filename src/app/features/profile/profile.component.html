@@ -57,6 +57,7 @@
               formControlName="displayName"
               autocomplete="nickname"
               class="w-full"
+              data-testid="display-name-input"
               [placeholder]="'PROFILE.display_name_placeholder' | translate"
               [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
               aria-describedby="displayName-error"

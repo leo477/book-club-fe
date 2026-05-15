@@ -18,6 +18,7 @@
           hlmBtn
           variant="outline"
           type="button"
+          data-testid="leave-button"
           (click)="leave.emit()"
           [disabled]="isActionLoading()"
           [attr.aria-label]="'CLUB_DETAIL.leave' | translate"

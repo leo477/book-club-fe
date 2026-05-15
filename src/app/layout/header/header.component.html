@@ -26,6 +26,7 @@
       <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
         <a
           routerLink="/clubs"
+          data-testid="nav-clubs"
           routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
           class="px-4 py-2 rounded-lg text-sm font-medium
                  text-[var(--color-ink-muted)]
@@ -38,6 +39,7 @@
         @if (isAuthenticated()) {
           <a
             routerLink="/events"
+            data-testid="nav-events"
             routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
             class="px-4 py-2 rounded-lg text-sm font-medium
                    text-[var(--color-ink-muted)]
@@ -89,36 +91,56 @@
 
         @if (isAuthenticated()) {
           <!-- User avatar + dropdown -->
-          <button
-            type="button"
-            [hlmDropdownMenuTrigger]="userMenu"
-            class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-            aria-haspopup="menu"
-            [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
-          >
-            <div
-              class="h-9 w-9 rounded-full avatar-gradient
-                     flex items-center justify-center text-white text-sm font-semibold select-none"
-              aria-hidden="true"
+          <div class="relative">
+            <button
+              type="button"
+              (click)="showUserMenu.set(!showUserMenu())"
+              class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
+                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+              aria-haspopup="menu"
+              [attr.aria-expanded]="showUserMenu()"
+              [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
             >
-              {{ userInitials() }}
-            </div>
-          </button>
+              <div
+                class="h-9 w-9 rounded-full avatar-gradient
+                       flex items-center justify-center text-white text-sm font-semibold select-none"
+                aria-hidden="true"
+              >
+                {{ userInitials() }}
+              </div>
+            </button>
 
-          <ng-template #userMenu>
-            <div hlmDropdownMenu>
-              <hlm-dropdown-menu-label>{{ currentUser()?.displayName }}</hlm-dropdown-menu-label>
-              <hlm-dropdown-menu-separator />
-              <a hlmDropdownMenuItem [routerLink]="['/profile']">
-                {{ 'NAV.profile' | translate }}
-              </a>
-              <hlm-dropdown-menu-separator />
-              <button hlmDropdownMenuItem variant="destructive" data-testid="logout" (click)="signOut()">
-                {{ 'NAV.logout' | translate }}
-              </button>
-            </div>
-          </ng-template>
+            @if (showUserMenu()) {
+              <div
+                class="absolute right-0 mt-2 w-48 rounded-md border border-[var(--color-sepia)]
+                       bg-[var(--color-surface)] shadow-lg z-50 py-1"
+                role="menu"
+              >
+                <div class="px-3 py-2 text-sm font-semibold text-[var(--color-ink)]">
+                  {{ currentUser()?.displayName }}
+                </div>
+                <hr class="border-[var(--color-sepia)] my-1" />
+                <a
+                  [routerLink]="['/profile']"
+                  (click)="showUserMenu.set(false)"
+                  class="block px-3 py-2 text-sm text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)] transition-colors"
+                  role="menuitem"
+                >
+                  {{ 'NAV.profile' | translate }}
+                </a>
+                <hr class="border-[var(--color-sepia)] my-1" />
+                <button
+                  type="button"
+                  data-testid="logout"
+                  (click)="signOut()"
+                  class="w-full text-left px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  role="menuitem"
+                >
+                  {{ 'NAV.logout' | translate }}
+                </button>
+              </div>
+            }
+          </div>
 
         } @else {
           <a hlmBtn variant="outline" size="sm" routerLink="/login">

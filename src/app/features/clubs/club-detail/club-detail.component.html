@@ -37,7 +37,7 @@
       }
 
       <div class="absolute inset-0 flex items-end justify-center pointer-events-none px-6 pb-8">
-        <h1 class="font-fantasy font-bold text-white uppercase tracking-widest text-4xl sm:text-5xl lg:text-6xl text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
+        <h1 data-testid="club-name" class="font-fantasy font-bold text-white uppercase tracking-widest text-4xl sm:text-5xl lg:text-6xl text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
           {{ club()!.name }}
         </h1>
       </div>
@@ -139,6 +139,7 @@
               <button
                 hlmBtn
                 type="button"
+                data-testid="join-button"
                 (click)="onJoin()"
                 [disabled]="isActionLoading()"
                 class="flex-shrink-0 bg-primary-600 hover:bg-primary-700 text-white"

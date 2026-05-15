@@ -40,7 +40,7 @@
 
             <!-- Error alert -->
             @if (errorMessage()) {
-              <div class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+              <div data-testid="login-error" class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
                 <span class="mt-0.5 shrink-0">⚠️</span>
                 <span>{{ errorMessage() }}</span>
               </div>
