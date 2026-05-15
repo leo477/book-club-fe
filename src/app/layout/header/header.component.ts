@@ -3,6 +3,7 @@ import {
   ChangeDetectionStrategy,
   inject,
   computed,
+  signal,
 } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -12,7 +13,6 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideSun, lucideMoon } from '@ng-icons/lucide';
 import { AuthService } from '../../core/auth/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
-import { HlmDropdownMenuImports } from '../../shared/spartan/dropdown-menu/src';
 import { HlmSheetImports } from '../../shared/spartan/sheet/src';
 import { HlmButton } from '../../shared/spartan/button/src';
 import { HlmIconImports } from '../../shared/spartan/icon/src';
@@ -25,7 +25,7 @@ import { HlmIconImports } from '../../shared/spartan/icon/src';
   imports: [
     RouterLink, RouterLinkActive, TranslateModule, NgIcon,
     ...HlmIconImports,
-    ...HlmDropdownMenuImports, ...HlmSheetImports, HlmButton,
+    ...HlmSheetImports, HlmButton,
   ],
   templateUrl: './header.component.html',
 })
@@ -44,6 +44,8 @@ export class HeaderComponent {
     ),
     { initialValue: 'uk' },
   );
+
+  readonly showUserMenu = signal(false);
 
   readonly userInitials = computed(() => {
     const name = this.currentUser()?.displayName ?? '';

@@ -15,7 +15,7 @@
 
         @if (successMessage()) {
           <!-- Success state -->
-          <div class="glass-card-strong p-8 text-center">
+          <div data-testid="register-feedback" class="glass-card-strong p-8 text-center">
             <div class="text-5xl mb-4">🎉</div>
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'AUTH.account_created' | translate }}</h2>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
@@ -131,7 +131,7 @@
 
                 <!-- Error alert -->
                 @if (errorMessage()) {
-                  <div class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+                  <div data-testid="register-feedback" class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
                     <span class="mt-0.5 shrink-0">⚠️</span>
                     <span>{{ errorMessage() }}</span>
                   </div>

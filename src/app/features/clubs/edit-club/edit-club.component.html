@@ -28,6 +28,7 @@
               type="text"
               formControlName="name"
               class="w-full"
+              data-testid="club-name-input"
               [placeholder]="'EDIT_CLUB.name_placeholder' | translate"
             />
             <hlm-field-error validator="required">{{ 'EDIT_CLUB.name_required' | translate }}</hlm-field-error>
@@ -112,6 +113,7 @@
               {{ 'EDIT_CLUB.cancel' | translate }}
             </button>
             <button hlmBtn type="submit" [disabled]="isSubmitting()"
+                    data-testid="save-button"
                     class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
               @if (isSubmitting()) {
                 <hlm-spinner class="mr-2" />

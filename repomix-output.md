@@ -59,42 +59,42 @@ The content is organized as follows:
   pre-commit
 playwright-report/
   data/
-    059d3db88d4457829105edbf607b61fb91711a9d.zip
-    140b4fd0a687c266a032954ce66827d07fa1bec6.zip
-    1c962034c538a8446a1e04901bb895fb4fb5a592.zip
-    1fbbdb71cda4998d2bba044e799b645d5d53d154.zip
-    217b8f4b3c8640a71e6ba649d8b1cd5af8fd84a2.zip
-    2652cf42a08e9798c6b15f04c9ff230e2e42f347.zip
-    2c5a7ccb58d1db69b81f9dcc6144d54024b4e636.zip
-    30c0bdce36f021cdffe77268a2a859a06f878c1c.zip
-    349d4beafab34f31b0a789d480650ed364e19662.zip
-    39e18ddd9a651f787503bd64b49fe90185be49a3.zip
-    3b409d5abcda56420b9c26b096a44d2d6910d0b6.zip
-    4c4b5f9f2efd8dcc87fecf6f62fb48a031ae81d5.zip
-    58b6e3d3ed4208fc0284e0ee6158585e544b22e5.zip
-    5bae5206f61927cc605918b495dd1c6e39da166f.zip
-    60837488cebadc018aecd81db29c0f7eb1d7925c.zip
-    617938c75aad31252f844c5a6fcdd88c03024f91.zip
-    6af2b0a3ae14a0956b377fc1837b8e951f63ebff.zip
-    7dff402ceded99af4568a25ae50a714c8b9148de.zip
-    7f511c8fe286ae4bc2fed1af2025790a10fe46af.zip
-    8830949b47c112ae9472abaee337b9b3cf2106c7.zip
-    8f6a6c946bb802e38ba3c1a6d7b05f1fd3ad2bc5.zip
-    9220a24e82ee622154941761cdeee24359cb7058.zip
-    94dad87ffc29741488f8228c1d3a04a017d9787d.zip
-    9ab20f20a6f50dffa12ca66d3a35c91ecdb05f23.zip
-    9b86e41aedb09d8705fde260e18458e65c53462e.zip
-    adcb1a39977513bedbeaa14a4959560550c05a0a.zip
-    b05875e0ec3d26510eb901a7e750ce4886eaa97b.zip
-    b15b76f9f58928d35f831587d14bc4e31b8666e8.zip
-    d6cbd3f19e148ac648fae9218a21f13391e4a650.zip
-    df7326dba1a89d5d62b245e5e8db8bcef22ae0b9.zip
-    e28e4c14e8ff5352a0b5a2f102920063400172cc.zip
-    e62ceb3d2432e082364583d694fc8e09fd20a48a.zip
-    efaf7405b7886bda1a429e13bc69f80054282592.zip
-    f75ee5f45e0c051609f79794cfed08b4dac8ec9f.zip
-    f90a2afd0c2b1d36d052354d8a00d654687982e0.zip
-    f9f93720b8a8795ceddda6237cf50de15d634d57.zip
+    0081afac5c47110d3fc59ea629f76df7dbd467c7.zip
+    14104ab47789977469b0d5bffa377a4a80ef3d18.zip
+    1addff1bc25f28c796cf02ba8a814449586dd3f4.zip
+    229576e0398e86701130cf5721bfe1d9cb74f44a.zip
+    24d4a40503e4e72926b8f693ec69688afdf8b343.zip
+    40e50f0631ed96fcec7a0f883ab164b73267041f.zip
+    4a6048b2150bdbe6dfd10afca89e15b178f8cac9.zip
+    4fde2d7e743d1650bd5c268ede0928d05f8aba70.zip
+    5196e8e4191c680d4ecfe3615623bb4451f41211.zip
+    565183746330f1fba3ddbb750c7f3e36528398c2.zip
+    595832a340381af19933080934e091c109fcb6ea.zip
+    5cbb8b830fc5e3f4c861c2fa9d6e8939a701b859.zip
+    63b35bb8479144e26f17c7003af3690d22f4c572.zip
+    6e61342e1b86480221bf7d1bbf79ed591b78df2e.zip
+    76d9c0db1fdf16b0d957ee463454a20daeb8df97.zip
+    7bf11f901300beb4f9300c22182af8364ee2ad35.zip
+    7c7b6b49f01ca8e1b520774cd8234f89046764dd.zip
+    7eeddacc05231cf3623f890f20217c9203099088.zip
+    8f3e02684c5e10d47b02698b0c32174ff5e73443.zip
+    99b597c9b791d97690f4e52895e39b4ebf1dc4cf.zip
+    9e91f2f362db5c2ea8e70cf369b98a07aab177af.zip
+    a15755406ac1fcfa86377cb6ae9a4193ffeed158.zip
+    a1ce9b5c35adafb721d8a4dccd28622501a1c9ff.zip
+    ae73b6a6752a3a36457e2f483505f1a9aaf49926.zip
+    af185e3d6f3208d484b63b55dabf8a546689df2e.zip
+    b9b23c8e254b7ef8ee3fac01c381caeaf27fb712.zip
+    c94ef03dac52ac622a88dbc173f1fbbe09f9a3eb.zip
+    ccd606ee4924045485752822b0afc4b65b8901be.zip
+    cfb20475852e293827a2dc0a73069e91405a1cff.zip
+    d2df63c7a2c8b50f22b1543408a02fb6f6c4eb02.zip
+    d341c8190ce2db1dcc0ff1762eaa7197256be120.zip
+    d994d04a0419ca7244d4bf27a93a692bd6a515e1.zip
+    e3bfa8977a47a8d615c256854b8aabc119d2669f.zip
+    f5c061f792235e960b66896e2a5671b02382131e.zip
+    f7b01d5677e68d83b78671c2d261e5018308cdd1.zip
+    f931418f23aa6db42f5b32897d4fa6418a98c707.zip
   trace/
     assets/
       codeMirrorModule-DS0FLvoc.js
@@ -447,79 +447,34 @@ supabase/
     006_events.sql
     007_events_cover_image.sql
 test-results/
-  audit-Authenticated-—-Club-09337--create-—-create-event-form-chromium/
-    trace.zip
-  audit-Authenticated-—-Club-98654--edit-—-edit-form-for-owner-chromium/
-    trace.zip
-  audit-Authenticated-—-Clubs-GET-clubs-—-clubs-list-chromium/
-    trace.zip
-  audit-Authenticated-—-Clubs-GET-clubs-id-—-club-detail-chromium/
-    trace.zip
-  audit-Authenticated-—-Even-be87f-ents-—-feed-loads-with-tabs-chromium/
-    trace.zip
-  audit-Authenticated-—-Events-GET-events-id-—-event-detail-chromium/
-    trace.zip
-  audit-Authenticated-—-Mana-c4c9d-e-—-accessible-as-organizer-chromium/
-    trace.zip
-  audit-Authenticated-—-Prof-5f435-file-—-profile-page-renders-chromium/
-    trace.zip
-  audit-Authenticated-—-Quiz-05b4d-lubs-id-quizzes-—-quiz-list-chromium/
-    trace.zip
-  audit-Authenticated-—-Quiz-8d3f3-d-leaderboard-—-leaderboard-chromium/
-    trace.zip
-  audit-Authenticated-—-Quiz-9b0a3-create-—-create-quiz-step-1-chromium/
-    trace.zip
-  audit-Authenticated-—-Quiz-c9d57-izId-session-—-quiz-session-chromium/
-    trace.zip
-  audit-Authenticated-—-Quiz-d446f--quizzes-quizId-—-take-quiz-chromium/
-    trace.zip
-  audit-Authenticated-—-Quiz-e9c57-zes-quizId-edit-—-quiz-edit-chromium/
-    trace.zip
-  audit-Authenticated-—-Quiz-f4c0d-izId-preview-—-quiz-preview-chromium/
-    trace.zip
-  audit-Authenticated-—-Rand-96cee-ubs-id-randomizer-—-renders-chromium/
-    trace.zip
-  audit-Functional-—-Auth-Lo-58ee2--wrong-password-shows-error-chromium/
-    trace.zip
-  audit-Functional-—-Auth-Lo-e6c97-sion-and-redirects-to-login-chromium/
-    trace.zip
-  audit-Functional-—-Auth-Register-new-user-unique-email--chromium/
-    trace.zip
-  audit-Functional-—-Club-CRUD-Create-club-via-UI-chromium/
-    trace.zip
-  audit-Functional-—-Club-CRUD-Edit-club-name-via-UI-chromium/
-    trace.zip
-  audit-Functional-—-Club-CRUD-Join-and-leave-a-club-chromium/
-    trace.zip
-  audit-Functional-—-Event-CRUD-Create-event-via-UI-chromium/
-    trace.zip
-  audit-Functional-—-Event-CRUD-Edit-event-via-UI-chromium/
-    trace.zip
-  audit-Functional-—-Profile-d7163-play-name-and-verify-change-chromium/
-    trace.zip
-  audit-Functional-—-Quiz-CRUD-Create-quiz-2-steps-via-UI-chromium/
-    trace.zip
-  audit-Functional-—-Quiz-CRUD-Edit-quiz-title-via-UI-chromium/
-    trace.zip
-  audit-Functional-—-Quiz-CRUD-Toggle-quiz-active-status-chromium/
-    trace.zip
-  audit-Login-flow-Login-wit-ba01d-redentials-redirects-to-app-chromium/
-    trace.zip
-  audit-Navigation-UI-404-unknown-route-redirects-gracefully-chromium/
-    trace.zip
-  audit-Navigation-UI-Header-navigation-links-work-chromium/
-    trace.zip
-  audit-Navigation-UI-Theme-toggle-button-exists-chromium/
-    trace.zip
-  audit-Unauthenticated-GET--51090-s-to-login-protected-route--chromium/
-    trace.zip
-  audit-Unauthenticated-GET--6a540-icated-—-redirects-to-login-chromium/
-    trace.zip
-  audit-Unauthenticated-GET--6e3a8--form-renders-and-validates-chromium/
-    trace.zip
-  audit-Unauthenticated-GET-login-—-form-renders-and-validates-chromium/
-    trace.zip
-  .last-run.json
+  e2e-audit-Authenticated-—--17a97-ents-—-feed-loads-with-tabs/
+    error-context.md
+  e2e-audit-Authenticated-—--3a8ec--create-—-create-event-form/
+    error-context.md
+  e2e-audit-Authenticated-—--4f392-file-—-profile-page-renders/
+    error-context.md
+  e2e-audit-Authenticated-—--64ff6-lubs-id-quizzes-—-quiz-list/
+    error-context.md
+  e2e-audit-Authenticated-—--8c70a--edit-—-edit-form-for-owner/
+    error-context.md
+  e2e-audit-Authenticated-—--d5167-ubs-id-randomizer-—-renders/
+    error-context.md
+  e2e-audit-Authenticated-—--dea2a-create-—-create-quiz-step-1/
+    error-context.md
+  e2e-audit-Authenticated-—-Clubs-GET-clubs-—-clubs-list/
+    error-context.md
+  e2e-audit-Authenticated-—-Clubs-GET-clubs-id-—-club-detail/
+    error-context.md
+  e2e-audit-Login-flow-Login-0f51c-redentials-redirects-to-app/
+    error-context.md
+  e2e-audit-Unauthenticated--19d54-s-to-login-protected-route-/
+    error-context.md
+  e2e-audit-Unauthenticated--89871--form-renders-and-validates/
+    error-context.md
+  e2e-audit-Unauthenticated--a722f--form-renders-and-validates/
+    error-context.md
+  e2e-audit-Unauthenticated--f7dba-icated-—-redirects-to-login/
+    error-context.md
 .editorconfig
 .gitignore
 .gitleaks.toml
@@ -1255,7 +1210,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Unauthenticated",
           "file": "audit.spec.ts",
-          "line": 218,
+          "line": 219,
           "column": 6,
           "specs": [
             {
@@ -1274,12 +1229,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2752,
+                      "duration": 3094,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:49:49.558Z",
+                      "startTime": "2026-05-15T12:44:47.275Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1295,7 +1250,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-f5246440050eb2d1b30f",
               "file": "audit.spec.ts",
-              "line": 219,
+              "line": 220,
               "column": 7
             },
             {
@@ -1314,12 +1269,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2083,
+                      "duration": 1574,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:49:54.643Z",
+                      "startTime": "2026-05-15T12:45:15.840Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1335,7 +1290,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-bc30b90a70577aa59e02",
               "file": "audit.spec.ts",
-              "line": 254,
+              "line": 255,
               "column": 7
             },
             {
@@ -1354,12 +1309,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2075,
+                      "duration": 1294,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:49:56.790Z",
+                      "startTime": "2026-05-15T12:45:17.471Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1375,7 +1330,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-9949923f57d1840a308c",
               "file": "audit.spec.ts",
-              "line": 279,
+              "line": 280,
               "column": 7
             },
             {
@@ -1394,12 +1349,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1511,
+                      "duration": 1348,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:49:58.914Z",
+                      "startTime": "2026-05-15T12:45:18.802Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1415,7 +1370,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-49e29292a22c3612fdf8",
               "file": "audit.spec.ts",
-              "line": 292,
+              "line": 293,
               "column": 7
             }
           ]
@@ -1423,7 +1378,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Login flow",
           "file": "audit.spec.ts",
-          "line": 309,
+          "line": 310,
           "column": 6,
           "specs": [
             {
@@ -1442,12 +1397,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5032,
+                      "duration": 1303,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:00.464Z",
+                      "startTime": "2026-05-15T12:45:20.194Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1463,7 +1418,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-22da45e75733d1a79597",
               "file": "audit.spec.ts",
-              "line": 310,
+              "line": 311,
               "column": 7
             }
           ]
@@ -1471,7 +1426,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Events",
           "file": "audit.spec.ts",
-          "line": 340,
+          "line": 341,
           "column": 6,
           "specs": [
             {
@@ -1490,12 +1445,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2693,
+                      "duration": 1401,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:09.176Z",
+                      "startTime": "2026-05-15T12:45:21.538Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1511,7 +1466,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-d46db9bc60fe9a0ee667",
               "file": "audit.spec.ts",
-              "line": 341,
+              "line": 342,
               "column": 7
             },
             {
@@ -1530,12 +1485,16 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2421,
+                      "duration": 88,
                       "errors": [],
-                      "stdout": [],
+                      "stdout": [
+                        {
+                          "text": "ℹ️  /events/:id skipped — no events in test account and event creation failed\n"
+                        }
+                      ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:11.916Z",
+                      "startTime": "2026-05-15T12:45:22.977Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1551,7 +1510,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-76af7e3d1ce1b59ef351",
               "file": "audit.spec.ts",
-              "line": 362,
+              "line": 363,
               "column": 7
             }
           ]
@@ -1559,7 +1518,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Clubs",
           "file": "audit.spec.ts",
-          "line": 382,
+          "line": 383,
           "column": 6,
           "specs": [
             {
@@ -1578,12 +1537,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3015,
+                      "duration": 1335,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:14.378Z",
+                      "startTime": "2026-05-15T12:45:23.079Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1599,7 +1558,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-2ce67c659045f92d789a",
               "file": "audit.spec.ts",
-              "line": 383,
+              "line": 384,
               "column": 7
             },
             {
@@ -1618,12 +1577,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2871,
+                      "duration": 1315,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:17.445Z",
+                      "startTime": "2026-05-15T12:45:24.462Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1639,7 +1598,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-68219b921b1d8e3be4c1",
               "file": "audit.spec.ts",
-              "line": 399,
+              "line": 400,
               "column": 7
             },
             {
@@ -1658,12 +1617,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2483,
+                      "duration": 1233,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:20.359Z",
+                      "startTime": "2026-05-15T12:45:29.392Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1679,7 +1638,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-cb15362a6b87f51ad9c8",
               "file": "audit.spec.ts",
-              "line": 418,
+              "line": 419,
               "column": 7
             },
             {
@@ -1698,12 +1657,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2562,
+                      "duration": 1207,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:22.884Z",
+                      "startTime": "2026-05-15T12:45:30.661Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1719,7 +1678,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-0a0de066d87ad95845c9",
               "file": "audit.spec.ts",
-              "line": 449,
+              "line": 450,
               "column": 7
             }
           ]
@@ -1727,7 +1686,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Quizzes",
           "file": "audit.spec.ts",
-          "line": 481,
+          "line": 482,
           "column": 6,
           "specs": [
             {
@@ -1746,12 +1705,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2645,
+                      "duration": 1186,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:25.484Z",
+                      "startTime": "2026-05-15T12:45:31.898Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1767,7 +1726,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-9302ee7aba33d1706f73",
               "file": "audit.spec.ts",
-              "line": 482,
+              "line": 483,
               "column": 7
             },
             {
@@ -1786,12 +1745,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2534,
+                      "duration": 1220,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:28.167Z",
+                      "startTime": "2026-05-15T12:45:33.115Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1807,7 +1766,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-b38f358edfddb5fa7fd7",
               "file": "audit.spec.ts",
-              "line": 503,
+              "line": 504,
               "column": 7
             },
             {
@@ -1826,12 +1785,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 79,
+                      "duration": 77,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:30.740Z",
+                      "startTime": "2026-05-15T12:45:34.371Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1847,7 +1806,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-029b5be3cb4067b9b4e0",
               "file": "audit.spec.ts",
-              "line": 536,
+              "line": 537,
               "column": 7
             },
             {
@@ -1871,7 +1830,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:30.832Z",
+                      "startTime": "2026-05-15T12:45:34.461Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1887,7 +1846,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-06e2578b47fcd2080524",
               "file": "audit.spec.ts",
-              "line": 557,
+              "line": 558,
               "column": 7
             },
             {
@@ -1906,12 +1865,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 86,
+                      "duration": 87,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:30.933Z",
+                      "startTime": "2026-05-15T12:45:34.561Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1927,7 +1886,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-7cf2a7f666c21eaf11e5",
               "file": "audit.spec.ts",
-              "line": 578,
+              "line": 579,
               "column": 7
             },
             {
@@ -1946,12 +1905,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 87,
+                      "duration": 83,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:31.033Z",
+                      "startTime": "2026-05-15T12:45:34.664Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -1967,7 +1926,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-312af12f04276abe0ee3",
               "file": "audit.spec.ts",
-              "line": 604,
+              "line": 605,
               "column": 7
             },
             {
@@ -1986,12 +1945,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 87,
+                      "duration": 82,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:31.133Z",
+                      "startTime": "2026-05-15T12:45:34.764Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2007,7 +1966,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-0ce7de78bab32fab9ce3",
               "file": "audit.spec.ts",
-              "line": 625,
+              "line": 626,
               "column": 7
             }
           ]
@@ -2015,7 +1974,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Randomizer",
           "file": "audit.spec.ts",
-          "line": 647,
+          "line": 648,
           "column": 6,
           "specs": [
             {
@@ -2034,12 +1993,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2942,
+                      "duration": 1269,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:31.233Z",
+                      "startTime": "2026-05-15T12:45:34.864Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2055,7 +2014,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-6b2c2683cb59fc280d9c",
               "file": "audit.spec.ts",
-              "line": 648,
+              "line": 649,
               "column": 7
             }
           ]
@@ -2063,7 +2022,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Profile",
           "file": "audit.spec.ts",
-          "line": 675,
+          "line": 676,
           "column": 6,
           "specs": [
             {
@@ -2082,12 +2041,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2758,
+                      "duration": 1220,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:34.216Z",
+                      "startTime": "2026-05-15T12:45:36.164Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2103,7 +2062,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-f0fa88c1ca5ce74aeaf1",
               "file": "audit.spec.ts",
-              "line": 676,
+              "line": 677,
               "column": 7
             }
           ]
@@ -2111,7 +2070,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Authenticated — Manage",
           "file": "audit.spec.ts",
-          "line": 699,
+          "line": 700,
           "column": 6,
           "specs": [
             {
@@ -2130,12 +2089,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3856,
+                      "duration": 1163,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:37.011Z",
+                      "startTime": "2026-05-15T12:45:37.415Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2151,7 +2110,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-29850844fb383cafed54",
               "file": "audit.spec.ts",
-              "line": 700,
+              "line": 701,
               "column": 7
             }
           ]
@@ -2159,7 +2118,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Navigation & UI",
           "file": "audit.spec.ts",
-          "line": 718,
+          "line": 719,
           "column": 6,
           "specs": [
             {
@@ -2178,12 +2137,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2953,
+                      "duration": 1211,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:44.499Z",
+                      "startTime": "2026-05-15T12:45:38.607Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2199,7 +2158,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-01a9c5e7b844c5aafd45",
               "file": "audit.spec.ts",
-              "line": 719,
+              "line": 720,
               "column": 7
             },
             {
@@ -2218,12 +2177,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 2978,
+                      "duration": 1192,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:47.501Z",
+                      "startTime": "2026-05-15T12:45:39.849Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2239,7 +2198,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-ff9c27d83ece6c30097a",
               "file": "audit.spec.ts",
-              "line": 739,
+              "line": 740,
               "column": 7
             },
             {
@@ -2258,12 +2217,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 1509,
+                      "duration": 1270,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:50.525Z",
+                      "startTime": "2026-05-15T12:45:41.079Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2279,7 +2238,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-3017867c3036115faae5",
               "file": "audit.spec.ts",
-              "line": 753,
+              "line": 754,
               "column": 7
             }
           ]
@@ -2287,7 +2246,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Functional — Auth",
           "file": "audit.spec.ts",
-          "line": 769,
+          "line": 770,
           "column": 6,
           "specs": [
             {
@@ -2306,12 +2265,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 12544,
+                      "duration": 12980,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:50:52.071Z",
+                      "startTime": "2026-05-15T12:45:42.388Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2327,7 +2286,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-b59848cd26158ce105f3",
               "file": "audit.spec.ts",
-              "line": 770,
+              "line": 771,
               "column": 7
             },
             {
@@ -2346,12 +2305,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5177,
+                      "duration": 10576,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:51:04.737Z",
+                      "startTime": "2026-05-15T12:45:55.565Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2367,7 +2326,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-32f4571aa3275392f4f1",
               "file": "audit.spec.ts",
-              "line": 830,
+              "line": 831,
               "column": 7
             },
             {
@@ -2386,12 +2345,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 3528,
+                      "duration": 1194,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:51:09.990Z",
+                      "startTime": "2026-05-15T12:46:09.867Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2407,7 +2366,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-b378913539f919161018",
               "file": "audit.spec.ts",
-              "line": 871,
+              "line": 872,
               "column": 7
             }
           ]
@@ -2415,7 +2374,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Functional — Club CRUD",
           "file": "audit.spec.ts",
-          "line": 907,
+          "line": 908,
           "column": 6,
           "specs": [
             {
@@ -2434,12 +2393,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5229,
+                      "duration": 2970,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:51:13.574Z",
+                      "startTime": "2026-05-15T12:46:11.098Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2455,7 +2414,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-2c43cd04339c4285f567",
               "file": "audit.spec.ts",
-              "line": 908,
+              "line": 909,
               "column": 7
             },
             {
@@ -2474,12 +2433,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 9079,
+                      "duration": 1211,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:51:22.446Z",
+                      "startTime": "2026-05-15T12:46:14.111Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2495,7 +2454,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-c43358467ea4603f73c6",
               "file": "audit.spec.ts",
-              "line": 960,
+              "line": 961,
               "column": 7
             },
             {
@@ -2514,12 +2473,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 6512,
+                      "duration": 1278,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:51:31.636Z",
+                      "startTime": "2026-05-15T12:46:15.358Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2535,7 +2494,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-eeca321329cb385b4e95",
               "file": "audit.spec.ts",
-              "line": 1013,
+              "line": 1014,
               "column": 7
             }
           ]
@@ -2543,7 +2502,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Functional — Event CRUD",
           "file": "audit.spec.ts",
-          "line": 1068,
+          "line": 1069,
           "column": 6,
           "specs": [
             {
@@ -2562,12 +2521,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 37646,
+                      "duration": 1198,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:51:38.246Z",
+                      "startTime": "2026-05-15T12:46:16.672Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2583,7 +2542,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-7b15bf397dd50a5523d2",
               "file": "audit.spec.ts",
-              "line": 1069,
+              "line": 1070,
               "column": 7
             },
             {
@@ -2602,12 +2561,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5287,
+                      "duration": 73,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:52:19.530Z",
+                      "startTime": "2026-05-15T12:46:17.907Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2623,7 +2582,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-ce6cbde9dbfb5bdeb4d1",
               "file": "audit.spec.ts",
-              "line": 1126,
+              "line": 1127,
               "column": 7
             }
           ]
@@ -2631,7 +2590,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Functional — Quiz CRUD",
           "file": "audit.spec.ts",
-          "line": 1177,
+          "line": 1178,
           "column": 6,
           "specs": [
             {
@@ -2650,12 +2609,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 5701,
+                      "duration": 1200,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:52:24.889Z",
+                      "startTime": "2026-05-15T12:46:17.992Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2671,7 +2630,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-8bb6ea3c3d499979cd1e",
               "file": "audit.spec.ts",
-              "line": 1178,
+              "line": 1179,
               "column": 7
             },
             {
@@ -2695,7 +2654,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:52:34.261Z",
+                      "startTime": "2026-05-15T12:46:19.226Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2711,7 +2670,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-afff53c7e73a162832ac",
               "file": "audit.spec.ts",
-              "line": 1251,
+              "line": 1252,
               "column": 7
             },
             {
@@ -2730,12 +2689,12 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 85,
+                      "duration": 87,
                       "errors": [],
                       "stdout": [],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:52:34.363Z",
+                      "startTime": "2026-05-15T12:46:19.326Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2751,7 +2710,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-30a88597c3947ea44a02",
               "file": "audit.spec.ts",
-              "line": 1306,
+              "line": 1307,
               "column": 7
             }
           ]
@@ -2759,7 +2718,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
         {
           "title": "Functional — Profile",
           "file": "audit.spec.ts",
-          "line": 1333,
+          "line": 1334,
           "column": 6,
           "specs": [
             {
@@ -2778,16 +2737,16 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
                       "workerIndex": 0,
                       "parallelIndex": 0,
                       "status": "passed",
-                      "duration": 7953,
+                      "duration": 1209,
                       "errors": [],
                       "stdout": [
                         {
-                          "text": "\n✅ bugs.md written — 13 issue(s) found\n"
+                          "text": "\n✅ bugs.md written — 31 issue(s) found\n"
                         }
                       ],
                       "stderr": [],
                       "retry": 0,
-                      "startTime": "2026-05-11T12:52:34.461Z",
+                      "startTime": "2026-05-15T12:46:19.426Z",
                       "annotations": [],
                       "attachments": [
                         {
@@ -2803,7 +2762,7 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
               ],
               "id": "45efdff6a4d2e1f7e786-8e29f82489f3b8b0ab93",
               "file": "audit.spec.ts",
-              "line": 1334,
+              "line": 1335,
               "column": 7
             }
           ]
@@ -2813,8 +2772,8 @@ Make sure to serve the website (${window.location}) via HTTPS or localhost.`);na
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-05-11T12:49:48.705Z",
-    "duration": 156116.63700000002,
+    "startTime": "2026-05-15T12:44:46.719Z",
+    "duration": 83325.723,
     "expected": 36,
     "skipped": 0,
     "unexpected": 0,
@@ -2906,7 +2865,7 @@ Error generating stack: `+l.message+`
     <div id='root'></div>
   </body>
 </html>
-<template id="playwrightReportBase64">data:application/zip;base64,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</template>
+<template id="playwrightReportBase64">data:application/zip;base64,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</template>
 ````
 
 ## File: public/robots.txt
@@ -3439,6 +3398,65 @@ import { Club } from '../../../../core/models/club.model';
 export class ClubInfoComponent {
   readonly club = input.required<Club>();
 }
+````
+
+## File: src/app/features/clubs/clubs.routes.ts
+````typescript
+import { Routes } from '@angular/router';
+import { authGuard } from '../../core/auth/auth.guard';
+import { roleGuard } from '../../core/auth/role.guard';
+import { ClubsListComponent } from './clubs-list/clubs-list.component';
+import { ClubDetailComponent } from './club-detail/club-detail.component';
+import { CreateClubComponent } from './create-club/create-club.component';
+export const CLUBS_ROUTES: Routes = [
+  {
+    path: '',
+    component: ClubsListComponent,
+    canActivate: [authGuard],
+  },
+  {
+    path: 'create',
+    component: CreateClubComponent,
+    canActivate: [authGuard, roleGuard('organizer')],
+  },
+  {
+    path: ':id',
+    children: [
+      {
+        path: '',
+        component: ClubDetailComponent,
+        canActivate: [authGuard],
+      },
+      {
+        path: 'randomizer',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('../randomizer/randomizer.component').then(
+            m => m.RandomizerComponent,
+          ),
+      },
+      {
+        path: 'quizzes',
+        loadChildren: () =>
+          import('../quiz/quiz.routes').then(m => m.QUIZ_ROUTES),
+      },
+      {
+        path: 'events/create',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('../events/create-event/create-event.component').then(
+            m => m.CreateEventComponent,
+          ),
+      },
+      {
+        path: 'edit',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('./edit-club/edit-club.component').then(m => m.EditClubComponent),
+      },
+    ],
+  },
+];
 ````
 
 ## File: src/app/features/events/events.routes.ts
@@ -4536,12 +4554,3224 @@ ALTER TABLE events
   ADD COLUMN IF NOT EXISTS cover_image_url TEXT;
 ````
 
-## File: test-results/.last-run.json
-````json
-{
-  "status": "passed",
-  "failedTests": []
-}
+## File: test-results/e2e-audit-Authenticated-—--17a97-ents-—-feed-loads-with-tabs/error-context.md
+````markdown
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/audit.spec.ts >> Authenticated — Events >> GET /events — feed loads with tabs
+- Location: e2e/audit.spec.ts:342:7
+
+# Error details
+
+```
+Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+Call log:
+  - navigating to "/events", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  245 |       const hasValidation = await page.locator('[class*="error"], [class*="invalid"], [aria-invalid="true"]').count();
+  246 |       if (hasValidation === 0) {
+  247 |         addBug({ route: '/login', severity: 'medium', category: 'form-error', description: 'Empty form submit shows no validation errors' });
+  248 |       }
+  249 |     }
+  250 | 
+  251 |     await checkUndefinedText(page, '/login');
+  252 |     flush();
+  253 |   });
+  254 | 
+  255 |   test('GET /register — form renders and validates', async ({ page }) => {
+  256 |     const flush = attachMonitors(page, '/register');
+  257 |     await page.goto('/register');
+  258 |     await waitForAngular(page);
+  259 |     // Form is gated by a 700ms entrance animation — wait for it to render
+  260 |     await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  261 | 
+  262 |     const emailInput = page.locator('input[type="email"], input[name="email"]');
+  263 |     const passwordInput = page.locator('input[type="password"]').first();
+  264 |     const submitBtn = page.locator('button[type="submit"]');
+  265 | 
+  266 |     if (!(await emailInput.isVisible())) {
+  267 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Email input not visible on register page' });
+  268 |     }
+  269 |     if (!(await passwordInput.isVisible())) {
+  270 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Password input not visible on register page' });
+  271 |     }
+  272 |     if (!(await submitBtn.isVisible())) {
+  273 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Submit button not visible on register page' });
+  274 |     }
+  275 | 
+  276 |     await checkUndefinedText(page, '/register');
+  277 |     flush();
+  278 |   });
+  279 | 
+  280 |   test('GET /events (unauthenticated) — redirects to login (protected route)', async ({ page }) => {
+  281 |     const flush = attachMonitors(page, '/events (unauth)');
+  282 |     await page.goto('/events');
+  283 |     await waitForAngular(page);
+  284 | 
+  285 |     const url = page.url();
+  286 |     if (!url.includes('/login')) {
+  287 |       addBug({ route: '/events (unauth)', severity: 'high', category: 'redirect', description: `Protected /events route did not redirect unauthenticated user to login — ended up at: ${url}` });
+  288 |     }
+  289 | 
+  290 |     flush();
+  291 |   });
+  292 | 
+  293 |   test('GET /clubs (unauthenticated) — redirects to login', async ({ page }) => {
+  294 |     const flush = attachMonitors(page, '/clubs (unauth)');
+  295 |     await page.goto('/clubs');
+  296 |     await waitForAngular(page);
+  297 | 
+  298 |     const url = page.url();
+  299 |     const isLoginPage = url.includes('/login') || url.includes('/clubs');
+  300 |     if (!isLoginPage) {
+  301 |       addBug({ route: '/clubs (unauth)', severity: 'medium', category: 'redirect', description: `Unexpected redirect target: ${url}` });
+  302 |     }
+  303 | 
+  304 |     flush();
+  305 |   });
+  306 | });
+  307 | 
+  308 | // ── Login via browser ─────────────────────────────────────────────────────────
+  309 | 
+  310 | test.describe('Login flow', () => {
+  311 |   test('Login with valid credentials redirects to app', async ({ page }) => {
+  312 |     const flush = attachMonitors(page, '/login (submit)');
+  313 |     await page.goto('/login');
+  314 |     await waitForAngular(page);
+  315 | 
+  316 |     const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+  317 |     const passwordInput = page.locator('input[type="password"]').first();
+  318 |     const submitBtn = page.locator('button[type="submit"]').first();
+  319 | 
+  320 |     if (!(await emailInput.isVisible())) {
+  321 |       flush();
+  322 |       return;
+  323 |     }
+  324 | 
+  325 |     await emailInput.fill('test123@mail.com');
+  326 |     await passwordInput.fill('test123@mail.com');
+  327 |     await submitBtn.click();
+  328 | 
+  329 |     try {
+  330 |       await page.waitForURL(/\/(clubs|events|profile)/, { timeout: 20_000 });
+  331 |     } catch {
+  332 |       addBug({ route: '/login (submit)', severity: 'critical', category: 'redirect', description: 'Login submit did not redirect to app within 20s' });
+  333 |     }
+  334 | 
+  335 |     flush();
+  336 |   });
+  337 | });
+  338 | 
+  339 | // ── Authenticated tests ───────────────────────────────────────────────────────
+  340 | 
+  341 | test.describe('Authenticated — Events', () => {
+  342 |   test('GET /events — feed loads with tabs', async ({ page }) => {
+  343 |     await injectAuth(page);
+  344 |     const flush = attachMonitors(page, '/events (auth)');
+> 345 |     await page.goto('/events');
+      |                ^ Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+  346 |     await waitForAngular(page);
+  347 | 
+  348 |     const hasCards = await page.locator('app-event-card').count();
+  349 |     const hasEmpty = await page.locator('app-empty-state').count();
+  350 |     const hasTabs = await page.locator('[role="tab"], button:has-text("Upcoming"), button:has-text("My Events")').count();
+  351 | 
+  352 |     if (hasCards === 0 && hasEmpty === 0) {
+  353 |       addBug({ route: '/events (auth)', severity: 'high', category: 'ui-missing', description: 'No event cards or empty state visible after auth' });
+  354 |     }
+  355 |     if (hasTabs === 0) {
+  356 |       addBug({ route: '/events (auth)', severity: 'medium', category: 'ui-missing', description: 'No tab switcher (Upcoming/My Events) visible for authenticated user' });
+  357 |     }
+  358 | 
+  359 |     await checkUndefinedText(page, '/events (auth)');
+  360 |     flush();
+  361 |   });
+  362 | 
+  363 |   test('GET /events/:id — event detail', async ({ page }) => {
+  364 |     if (!ANY_EVENT_ID) {
+  365 |       console.log('ℹ️  /events/:id skipped — no events in test account and event creation failed');
+  366 |       return;
+  367 |     }
+  368 |     await injectAuth(page);
+  369 |     const flush = attachMonitors(page, `/events/${ANY_EVENT_ID}`);
+  370 |     await page.goto(`/events/${ANY_EVENT_ID}`);
+  371 |     await waitForAngular(page);
+  372 | 
+  373 |     const title = page.locator('h1, h2, [class*="title"]').first();
+  374 |     if (!(await title.isVisible().catch(() => false))) {
+  375 |       addBug({ route: `/events/${ANY_EVENT_ID}`, severity: 'high', category: 'ui-missing', description: 'Event title not visible on detail page' });
+  376 |     }
+  377 | 
+  378 |     await checkUndefinedText(page, `/events/${ANY_EVENT_ID}`);
+  379 |     flush();
+  380 |   });
+  381 | });
+  382 | 
+  383 | test.describe('Authenticated — Clubs', () => {
+  384 |   test('GET /clubs — clubs list', async ({ page }) => {
+  385 |     await injectAuth(page);
+  386 |     const flush = attachMonitors(page, '/clubs');
+  387 |     await page.goto('/clubs');
+  388 |     await waitForAngular(page);
+  389 | 
+  390 |     const hasCards = await page.locator('app-club-card, [class*="club-card"]').count();
+  391 |     const hasEmpty = await page.locator('app-empty-state').count();
+  392 |     if (hasCards === 0 && hasEmpty === 0) {
+  393 |       addBug({ route: '/clubs', severity: 'high', category: 'ui-missing', description: 'No club cards or empty state visible' });
+  394 |     }
+  395 | 
+  396 |     await checkUndefinedText(page, '/clubs');
+  397 |     flush();
+  398 |   });
+  399 | 
+  400 |   test('GET /clubs/:id — club detail', async ({ page }) => {
+  401 |     if (!ANY_CLUB_ID) {
+  402 |       addBug({ route: '/clubs/:id', severity: 'medium', category: 'ui-missing', description: 'Skipped: no club ID discovered' });
+  403 |       return;
+  404 |     }
+  405 |     await injectAuth(page);
+  406 |     const flush = attachMonitors(page, `/clubs/${ANY_CLUB_ID}`);
+  407 |     await page.goto(`/clubs/${ANY_CLUB_ID}`);
+  408 |     await waitForAngular(page);
+  409 | 
+  410 |     const clubName = page.locator('h1, h2, [class*="club-name"], [class*="title"]').first();
+  411 |     if (!(await clubName.isVisible().catch(() => false))) {
+  412 |       addBug({ route: `/clubs/${ANY_CLUB_ID}`, severity: 'high', category: 'ui-missing', description: 'Club name/title not visible on detail page' });
+  413 |     }
+  414 | 
+  415 |     await checkUndefinedText(page, `/clubs/${ANY_CLUB_ID}`);
+  416 |     flush();
+  417 |   });
+  418 | 
+  419 |   test('GET /clubs/:id/edit — edit form for owner', async ({ page }) => {
+  420 |     if (!OWNED_CLUB_ID) {
+  421 |       addBug({ route: '/clubs/:id/edit', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID discovered' });
+  422 |       return;
+  423 |     }
+  424 |     await injectAuth(page);
+  425 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/edit`);
+  426 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/edit`);
+  427 |     await waitForAngular(page);
+  428 | 
+  429 |     const url = page.url();
+  430 |     if (url.includes('/login')) {
+  431 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'critical', category: 'redirect', description: 'Club edit redirected to login — auth or role guard issue' });
+  432 |       flush();
+  433 |       return;
+  434 |     }
+  435 | 
+  436 |     const nameInput = page.locator('input[name="name"], input[formcontrolname="name"], input[placeholder*="name" i]').first();
+  437 |     const saveBtn = page.locator('button[type="submit"], button:has-text("Save"), button:has-text("Зберегти")').first();
+  438 | 
+  439 |     if (!(await nameInput.isVisible().catch(() => false))) {
+  440 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Club name input not found on edit page' });
+  441 |     }
+  442 |     if (!(await saveBtn.isVisible().catch(() => false))) {
+  443 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Save button not found on club edit page' });
+  444 |     }
+  445 | 
+```
+````
+
+## File: test-results/e2e-audit-Authenticated-—--3a8ec--create-—-create-event-form/error-context.md
+````markdown
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/audit.spec.ts >> Authenticated — Clubs >> GET /clubs/:id/events/create — create event form
+- Location: e2e/audit.spec.ts:450:7
+
+# Error details
+
+```
+Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+Call log:
+  - navigating to "/clubs/2affc525-02bb-4fc6-a2c3-99baad3c5773/events/create", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  357 |     }
+  358 | 
+  359 |     await checkUndefinedText(page, '/events (auth)');
+  360 |     flush();
+  361 |   });
+  362 | 
+  363 |   test('GET /events/:id — event detail', async ({ page }) => {
+  364 |     if (!ANY_EVENT_ID) {
+  365 |       console.log('ℹ️  /events/:id skipped — no events in test account and event creation failed');
+  366 |       return;
+  367 |     }
+  368 |     await injectAuth(page);
+  369 |     const flush = attachMonitors(page, `/events/${ANY_EVENT_ID}`);
+  370 |     await page.goto(`/events/${ANY_EVENT_ID}`);
+  371 |     await waitForAngular(page);
+  372 | 
+  373 |     const title = page.locator('h1, h2, [class*="title"]').first();
+  374 |     if (!(await title.isVisible().catch(() => false))) {
+  375 |       addBug({ route: `/events/${ANY_EVENT_ID}`, severity: 'high', category: 'ui-missing', description: 'Event title not visible on detail page' });
+  376 |     }
+  377 | 
+  378 |     await checkUndefinedText(page, `/events/${ANY_EVENT_ID}`);
+  379 |     flush();
+  380 |   });
+  381 | });
+  382 | 
+  383 | test.describe('Authenticated — Clubs', () => {
+  384 |   test('GET /clubs — clubs list', async ({ page }) => {
+  385 |     await injectAuth(page);
+  386 |     const flush = attachMonitors(page, '/clubs');
+  387 |     await page.goto('/clubs');
+  388 |     await waitForAngular(page);
+  389 | 
+  390 |     const hasCards = await page.locator('app-club-card, [class*="club-card"]').count();
+  391 |     const hasEmpty = await page.locator('app-empty-state').count();
+  392 |     if (hasCards === 0 && hasEmpty === 0) {
+  393 |       addBug({ route: '/clubs', severity: 'high', category: 'ui-missing', description: 'No club cards or empty state visible' });
+  394 |     }
+  395 | 
+  396 |     await checkUndefinedText(page, '/clubs');
+  397 |     flush();
+  398 |   });
+  399 | 
+  400 |   test('GET /clubs/:id — club detail', async ({ page }) => {
+  401 |     if (!ANY_CLUB_ID) {
+  402 |       addBug({ route: '/clubs/:id', severity: 'medium', category: 'ui-missing', description: 'Skipped: no club ID discovered' });
+  403 |       return;
+  404 |     }
+  405 |     await injectAuth(page);
+  406 |     const flush = attachMonitors(page, `/clubs/${ANY_CLUB_ID}`);
+  407 |     await page.goto(`/clubs/${ANY_CLUB_ID}`);
+  408 |     await waitForAngular(page);
+  409 | 
+  410 |     const clubName = page.locator('h1, h2, [class*="club-name"], [class*="title"]').first();
+  411 |     if (!(await clubName.isVisible().catch(() => false))) {
+  412 |       addBug({ route: `/clubs/${ANY_CLUB_ID}`, severity: 'high', category: 'ui-missing', description: 'Club name/title not visible on detail page' });
+  413 |     }
+  414 | 
+  415 |     await checkUndefinedText(page, `/clubs/${ANY_CLUB_ID}`);
+  416 |     flush();
+  417 |   });
+  418 | 
+  419 |   test('GET /clubs/:id/edit — edit form for owner', async ({ page }) => {
+  420 |     if (!OWNED_CLUB_ID) {
+  421 |       addBug({ route: '/clubs/:id/edit', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID discovered' });
+  422 |       return;
+  423 |     }
+  424 |     await injectAuth(page);
+  425 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/edit`);
+  426 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/edit`);
+  427 |     await waitForAngular(page);
+  428 | 
+  429 |     const url = page.url();
+  430 |     if (url.includes('/login')) {
+  431 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'critical', category: 'redirect', description: 'Club edit redirected to login — auth or role guard issue' });
+  432 |       flush();
+  433 |       return;
+  434 |     }
+  435 | 
+  436 |     const nameInput = page.locator('input[name="name"], input[formcontrolname="name"], input[placeholder*="name" i]').first();
+  437 |     const saveBtn = page.locator('button[type="submit"], button:has-text("Save"), button:has-text("Зберегти")').first();
+  438 | 
+  439 |     if (!(await nameInput.isVisible().catch(() => false))) {
+  440 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Club name input not found on edit page' });
+  441 |     }
+  442 |     if (!(await saveBtn.isVisible().catch(() => false))) {
+  443 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Save button not found on club edit page' });
+  444 |     }
+  445 | 
+  446 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/edit`);
+  447 |     flush();
+  448 |   });
+  449 | 
+  450 |   test('GET /clubs/:id/events/create — create event form', async ({ page }) => {
+  451 |     if (!OWNED_CLUB_ID) {
+  452 |       addBug({ route: '/clubs/:id/events/create', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID discovered' });
+  453 |       return;
+  454 |     }
+  455 |     await injectAuth(page);
+  456 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/events/create`);
+> 457 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/events/create`);
+      |                ^ Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+  458 |     await waitForAngular(page);
+  459 | 
+  460 |     const url = page.url();
+  461 |     if (url.includes('/login')) {
+  462 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'critical', category: 'redirect', description: 'Create event redirected to login — auth/role guard issue' });
+  463 |       flush();
+  464 |       return;
+  465 |     }
+  466 | 
+  467 |     const titleInput = page.locator('input[formcontrolname="title"], input[name="title"], input[placeholder*="title" i], input[placeholder*="назва" i]').first();
+  468 |     if (!(await titleInput.isVisible().catch(() => false))) {
+  469 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'high', category: 'ui-missing', description: 'Event title input not found on create event page' });
+  470 |     }
+  471 | 
+  472 |     const dateField = page.locator('input[type="date"], input[formcontrolname="date"], [class*="date"]').first();
+  473 |     if (!(await dateField.isVisible().catch(() => false))) {
+  474 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'medium', category: 'ui-missing', description: 'Date field not found on create event page' });
+  475 |     }
+  476 | 
+  477 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/events/create`);
+  478 |     flush();
+  479 |   });
+  480 | });
+  481 | 
+  482 | test.describe('Authenticated — Quizzes', () => {
+  483 |   test('GET /clubs/:id/quizzes — quiz list', async ({ page }) => {
+  484 |     if (!OWNED_CLUB_ID) {
+  485 |       addBug({ route: '/clubs/:id/quizzes', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID' });
+  486 |       return;
+  487 |     }
+  488 |     await injectAuth(page);
+  489 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes`);
+  490 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes`);
+  491 |     await waitForAngular(page);
+  492 | 
+  493 |     const url = page.url();
+  494 |     if (url.includes('/login')) {
+  495 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes`, severity: 'critical', category: 'redirect', description: 'Quiz list redirected to login' });
+  496 |       flush();
+  497 |       return;
+  498 |     }
+  499 | 
+  500 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes`);
+  501 |     flush();
+  502 |   });
+  503 | 
+  504 |   test('GET /clubs/:id/quizzes/create — create quiz step 1', async ({ page }) => {
+  505 |     if (!OWNED_CLUB_ID) {
+  506 |       addBug({ route: '/clubs/:id/quizzes/create', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID' });
+  507 |       return;
+  508 |     }
+  509 |     await injectAuth(page);
+  510 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/create`);
+  511 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/create`);
+  512 |     await waitForAngular(page);
+  513 | 
+  514 |     const url = page.url();
+  515 |     if (url.includes('/login')) {
+  516 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'critical', category: 'redirect', description: 'Create quiz redirected to login' });
+  517 |       flush();
+  518 |       return;
+  519 |     }
+  520 | 
+  521 |     const titleInput = page.locator('input[formcontrolname="title"], input[name="title"], input[placeholder*="title" i]').first();
+  522 |     if (!(await titleInput.isVisible().catch(() => false))) {
+  523 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'high', category: 'ui-missing', description: 'Quiz title input not found on create quiz page' });
+  524 |     }
+  525 | 
+  526 |     // Test next step button visibility (button is disabled on empty form — that is correct behaviour)
+  527 |     const nextBtn = page.locator('button:has-text("Next"), button:has-text("Далі"), button:has-text("Continue")').first();
+  528 |     const nextVisible = await nextBtn.isVisible().catch(() => false);
+  529 |     if (!nextVisible) {
+  530 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'medium', category: 'ui-missing', description: 'Next/Continue button not visible on create quiz step 1' });
+  531 |     }
+  532 | 
+  533 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/create`);
+  534 |     flush();
+  535 |   });
+  536 | 
+  537 |   test('GET /clubs/:id/quizzes/:quizId — take quiz', async ({ page }) => {
+  538 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
+  539 |       addBug({ route: '/clubs/:id/quizzes/:quizId', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID discovered (no quizzes in owned club)' });
+  540 |       return;
+  541 |     }
+  542 |     await injectAuth(page);
+  543 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`);
+  544 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`);
+  545 |     await waitForAngular(page);
+  546 | 
+  547 |     const url = page.url();
+  548 |     if (url.includes('/login')) {
+  549 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`, severity: 'critical', category: 'redirect', description: 'Quiz take redirected to login' });
+  550 |       flush();
+  551 |       return;
+  552 |     }
+  553 | 
+  554 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`);
+  555 |     flush();
+  556 |   });
+  557 | 
+```
+````
+
+## File: test-results/e2e-audit-Authenticated-—--4f392-file-—-profile-page-renders/error-context.md
+````markdown
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/audit.spec.ts >> Authenticated — Profile >> GET /profile — profile page renders
+- Location: e2e/audit.spec.ts:677:7
+
+# Error details
+
+```
+Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+Call log:
+  - navigating to "/profile", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  580 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
+  581 |       addBug({ route: '/clubs/:id/quizzes/:quizId/edit', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID' });
+  582 |       return;
+  583 |     }
+  584 |     await injectAuth(page);
+  585 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`);
+  586 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`);
+  587 |     await waitForAngular(page);
+  588 | 
+  589 |     const url = page.url();
+  590 |     if (url.includes('/login')) {
+  591 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`, severity: 'critical', category: 'redirect', description: 'Quiz edit redirected to login' });
+  592 |       flush();
+  593 |       return;
+  594 |     }
+  595 | 
+  596 |     const titleInput = page.locator('input[formcontrolname="title"]').first();
+  597 |     if (!(await titleInput.isVisible().catch(() => false))) {
+  598 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Quiz title input not pre-populated on edit page' });
+  599 |     }
+  600 | 
+  601 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`);
+  602 |     flush();
+  603 |   });
+  604 | 
+  605 |   test('GET /clubs/:id/quizzes/:quizId/session — quiz session', async ({ page }) => {
+  606 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
+  607 |       addBug({ route: '/clubs/:id/quizzes/:quizId/session', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID' });
+  608 |       return;
+  609 |     }
+  610 |     await injectAuth(page);
+  611 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/session`);
+  612 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/session`);
+  613 |     await waitForAngular(page);
+  614 | 
+  615 |     const url = page.url();
+  616 |     if (url.includes('/login')) {
+  617 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/session`, severity: 'critical', category: 'redirect', description: 'Quiz session redirected to login' });
+  618 |       flush();
+  619 |       return;
+  620 |     }
+  621 | 
+  622 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/session`);
+  623 |     flush();
+  624 |   });
+  625 | 
+  626 |   test('GET /clubs/:id/quizzes/:quizId/leaderboard — leaderboard', async ({ page }) => {
+  627 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
+  628 |       addBug({ route: '/clubs/:id/quizzes/:quizId/leaderboard', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID' });
+  629 |       return;
+  630 |     }
+  631 |     await injectAuth(page);
+  632 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/leaderboard`);
+  633 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/leaderboard`);
+  634 |     await waitForAngular(page);
+  635 | 
+  636 |     const url = page.url();
+  637 |     if (url.includes('/login')) {
+  638 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/leaderboard`, severity: 'critical', category: 'redirect', description: 'Leaderboard redirected to login' });
+  639 |       flush();
+  640 |       return;
+  641 |     }
+  642 | 
+  643 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/leaderboard`);
+  644 |     flush();
+  645 |   });
+  646 | });
+  647 | 
+  648 | test.describe('Authenticated — Randomizer', () => {
+  649 |   test('GET /clubs/:id/randomizer — renders', async ({ page }) => {
+  650 |     if (!OWNED_CLUB_ID) {
+  651 |       addBug({ route: '/clubs/:id/randomizer', severity: 'low', category: 'ui-missing', description: 'Skipped: no owned club ID' });
+  652 |       return;
+  653 |     }
+  654 |     await injectAuth(page);
+  655 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/randomizer`);
+  656 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/randomizer`);
+  657 |     await waitForAngular(page);
+  658 | 
+  659 |     const url = page.url();
+  660 |     if (url.includes('/login')) {
+  661 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/randomizer`, severity: 'high', category: 'redirect', description: 'Randomizer redirected to login — role guard issue' });
+  662 |       flush();
+  663 |       return;
+  664 |     }
+  665 | 
+  666 |     const spinBtn = page.locator('[data-testid="spin-button"]').first();
+  667 |     if (!(await spinBtn.isVisible().catch(() => false))) {
+  668 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/randomizer`, severity: 'medium', category: 'ui-missing', description: 'Spin button not found on randomizer page' });
+  669 |     }
+  670 | 
+  671 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/randomizer`);
+  672 |     flush();
+  673 |   });
+  674 | });
+  675 | 
+  676 | test.describe('Authenticated — Profile', () => {
+  677 |   test('GET /profile — profile page renders', async ({ page }) => {
+  678 |     await injectAuth(page);
+  679 |     const flush = attachMonitors(page, '/profile');
+> 680 |     await page.goto('/profile');
+      |                ^ Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+  681 |     await waitForAngular(page);
+  682 | 
+  683 |     const url = page.url();
+  684 |     if (url.includes('/login')) {
+  685 |       addBug({ route: '/profile', severity: 'critical', category: 'redirect', description: 'Profile redirected to login despite injected auth token' });
+  686 |       flush();
+  687 |       return;
+  688 |     }
+  689 | 
+  690 |     const displayNameInput = page.locator('input[formcontrolname="displayName"], input[name="displayName"], input[placeholder*="name" i]').first();
+  691 |     if (!(await displayNameInput.isVisible().catch(() => false))) {
+  692 |       addBug({ route: '/profile', severity: 'high', category: 'ui-missing', description: 'Display name input not visible on profile page' });
+  693 |     }
+  694 | 
+  695 |     await checkUndefinedText(page, '/profile');
+  696 |     flush();
+  697 |   });
+  698 | });
+  699 | 
+  700 | test.describe('Authenticated — Manage', () => {
+  701 |   test('GET /manage — accessible as organizer', async ({ page }) => {
+  702 |     await injectAuth(page);
+  703 |     const flush = attachMonitors(page, '/manage');
+  704 |     await page.goto('/manage');
+  705 |     await waitForAngular(page);
+  706 | 
+  707 |     const url = page.url();
+  708 |     if (url.includes('/login')) {
+  709 |       addBug({ route: '/manage', severity: 'high', category: 'redirect', description: 'Manage page redirected to login' });
+  710 |     } else if (url.includes('/clubs') && !url.includes('/manage')) {
+  711 |       addBug({ route: '/manage', severity: 'medium', category: 'redirect', description: 'Manage page redirected to /clubs (user may not have organizer role)' });
+  712 |     }
+  713 | 
+  714 |     await checkUndefinedText(page, '/manage');
+  715 |     flush();
+  716 |   });
+  717 | });
+  718 | 
+  719 | test.describe('Navigation & UI', () => {
+  720 |   test('Header navigation links work', async ({ page }) => {
+  721 |     await injectAuth(page);
+  722 |     const flush = attachMonitors(page, 'header-nav');
+  723 |     await page.goto('/clubs');
+  724 |     await waitForAngular(page);
+  725 | 
+  726 |     // Check for clubs nav link
+  727 |     const clubsLink = page.locator('a[href*="/clubs"], a[routerlink*="clubs"]').first();
+  728 |     const eventsLink = page.locator('a[href*="/events"], a[routerlink*="events"]').first();
+  729 | 
+  730 |     if (!(await clubsLink.isVisible().catch(() => false))) {
+  731 |       addBug({ route: 'header-nav', severity: 'medium', category: 'ui-missing', description: 'Clubs nav link not visible in header' });
+  732 |     }
+  733 |     if (!(await eventsLink.isVisible().catch(() => false))) {
+  734 |       addBug({ route: 'header-nav', severity: 'medium', category: 'ui-missing', description: 'Events nav link not visible in header' });
+  735 |     }
+  736 | 
+  737 |     flush();
+  738 |   });
+  739 | 
+  740 |   test('Theme toggle button exists', async ({ page }) => {
+  741 |     await injectAuth(page);
+  742 |     const flush = attachMonitors(page, 'theme-toggle');
+  743 |     await page.goto('/clubs');
+  744 |     await waitForAngular(page);
+  745 | 
+  746 |     const themeBtn = page.locator('[data-testid="theme-toggle"]').first();
+  747 |     if (!(await themeBtn.isVisible().catch(() => false))) {
+  748 |       addBug({ route: 'theme-toggle', severity: 'low', category: 'ui-missing', description: 'Theme toggle button not found in header' });
+  749 |     }
+  750 | 
+  751 |     flush();
+  752 |   });
+  753 | 
+  754 |   test('404 unknown route redirects gracefully', async ({ page }) => {
+  755 |     const flush = attachMonitors(page, '/this-route-does-not-exist');
+  756 |     await page.goto('/this-route-does-not-exist');
+  757 |     await waitForAngular(page);
+  758 | 
+  759 |     const url = page.url();
+  760 |     if (!url.includes('/login') && !url.includes('/clubs') && !url.includes('/events')) {
+  761 |       addBug({ route: '/this-route-does-not-exist', severity: 'low', category: 'nav-404', description: `Wildcard redirect went to unexpected URL: ${url}` });
+  762 |     }
+  763 | 
+  764 |     flush();
+  765 |   });
+  766 | });
+  767 | 
+  768 | // ── Functional — Auth ────────────────────────────────────────────────────────
+  769 | 
+  770 | test.describe('Functional — Auth', () => {
+  771 |   test('Register new user (unique email)', async ({ page }) => {
+  772 |     const flush = attachMonitors(page, '/register (functional)');
+  773 |     await page.goto('/register');
+  774 |     await waitForAngular(page);
+  775 |     await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
+  776 | 
+  777 |     const uniqueEmail = `audit-test-${Date.now()}@mailinator.com`;
+  778 |     const emailInput = page.locator('input[type="email"]').first();
+  779 |     if (!(await emailInput.isVisible().catch(() => false))) {
+  780 |       addBug({ route: '/register (functional)', severity: 'critical', category: 'functional', description: 'Email input not visible — cannot test registration' });
+```
+````
+
+## File: test-results/e2e-audit-Authenticated-—--64ff6-lubs-id-quizzes-—-quiz-list/error-context.md
+````markdown
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/audit.spec.ts >> Authenticated — Quizzes >> GET /clubs/:id/quizzes — quiz list
+- Location: e2e/audit.spec.ts:483:7
+
+# Error details
+
+```
+Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+Call log:
+  - navigating to "/clubs/2affc525-02bb-4fc6-a2c3-99baad3c5773/quizzes", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  390 |     const hasCards = await page.locator('app-club-card, [class*="club-card"]').count();
+  391 |     const hasEmpty = await page.locator('app-empty-state').count();
+  392 |     if (hasCards === 0 && hasEmpty === 0) {
+  393 |       addBug({ route: '/clubs', severity: 'high', category: 'ui-missing', description: 'No club cards or empty state visible' });
+  394 |     }
+  395 | 
+  396 |     await checkUndefinedText(page, '/clubs');
+  397 |     flush();
+  398 |   });
+  399 | 
+  400 |   test('GET /clubs/:id — club detail', async ({ page }) => {
+  401 |     if (!ANY_CLUB_ID) {
+  402 |       addBug({ route: '/clubs/:id', severity: 'medium', category: 'ui-missing', description: 'Skipped: no club ID discovered' });
+  403 |       return;
+  404 |     }
+  405 |     await injectAuth(page);
+  406 |     const flush = attachMonitors(page, `/clubs/${ANY_CLUB_ID}`);
+  407 |     await page.goto(`/clubs/${ANY_CLUB_ID}`);
+  408 |     await waitForAngular(page);
+  409 | 
+  410 |     const clubName = page.locator('h1, h2, [class*="club-name"], [class*="title"]').first();
+  411 |     if (!(await clubName.isVisible().catch(() => false))) {
+  412 |       addBug({ route: `/clubs/${ANY_CLUB_ID}`, severity: 'high', category: 'ui-missing', description: 'Club name/title not visible on detail page' });
+  413 |     }
+  414 | 
+  415 |     await checkUndefinedText(page, `/clubs/${ANY_CLUB_ID}`);
+  416 |     flush();
+  417 |   });
+  418 | 
+  419 |   test('GET /clubs/:id/edit — edit form for owner', async ({ page }) => {
+  420 |     if (!OWNED_CLUB_ID) {
+  421 |       addBug({ route: '/clubs/:id/edit', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID discovered' });
+  422 |       return;
+  423 |     }
+  424 |     await injectAuth(page);
+  425 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/edit`);
+  426 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/edit`);
+  427 |     await waitForAngular(page);
+  428 | 
+  429 |     const url = page.url();
+  430 |     if (url.includes('/login')) {
+  431 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'critical', category: 'redirect', description: 'Club edit redirected to login — auth or role guard issue' });
+  432 |       flush();
+  433 |       return;
+  434 |     }
+  435 | 
+  436 |     const nameInput = page.locator('input[name="name"], input[formcontrolname="name"], input[placeholder*="name" i]').first();
+  437 |     const saveBtn = page.locator('button[type="submit"], button:has-text("Save"), button:has-text("Зберегти")').first();
+  438 | 
+  439 |     if (!(await nameInput.isVisible().catch(() => false))) {
+  440 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Club name input not found on edit page' });
+  441 |     }
+  442 |     if (!(await saveBtn.isVisible().catch(() => false))) {
+  443 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Save button not found on club edit page' });
+  444 |     }
+  445 | 
+  446 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/edit`);
+  447 |     flush();
+  448 |   });
+  449 | 
+  450 |   test('GET /clubs/:id/events/create — create event form', async ({ page }) => {
+  451 |     if (!OWNED_CLUB_ID) {
+  452 |       addBug({ route: '/clubs/:id/events/create', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID discovered' });
+  453 |       return;
+  454 |     }
+  455 |     await injectAuth(page);
+  456 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/events/create`);
+  457 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/events/create`);
+  458 |     await waitForAngular(page);
+  459 | 
+  460 |     const url = page.url();
+  461 |     if (url.includes('/login')) {
+  462 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'critical', category: 'redirect', description: 'Create event redirected to login — auth/role guard issue' });
+  463 |       flush();
+  464 |       return;
+  465 |     }
+  466 | 
+  467 |     const titleInput = page.locator('input[formcontrolname="title"], input[name="title"], input[placeholder*="title" i], input[placeholder*="назва" i]').first();
+  468 |     if (!(await titleInput.isVisible().catch(() => false))) {
+  469 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'high', category: 'ui-missing', description: 'Event title input not found on create event page' });
+  470 |     }
+  471 | 
+  472 |     const dateField = page.locator('input[type="date"], input[formcontrolname="date"], [class*="date"]').first();
+  473 |     if (!(await dateField.isVisible().catch(() => false))) {
+  474 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'medium', category: 'ui-missing', description: 'Date field not found on create event page' });
+  475 |     }
+  476 | 
+  477 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/events/create`);
+  478 |     flush();
+  479 |   });
+  480 | });
+  481 | 
+  482 | test.describe('Authenticated — Quizzes', () => {
+  483 |   test('GET /clubs/:id/quizzes — quiz list', async ({ page }) => {
+  484 |     if (!OWNED_CLUB_ID) {
+  485 |       addBug({ route: '/clubs/:id/quizzes', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID' });
+  486 |       return;
+  487 |     }
+  488 |     await injectAuth(page);
+  489 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes`);
+> 490 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes`);
+      |                ^ Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+  491 |     await waitForAngular(page);
+  492 | 
+  493 |     const url = page.url();
+  494 |     if (url.includes('/login')) {
+  495 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes`, severity: 'critical', category: 'redirect', description: 'Quiz list redirected to login' });
+  496 |       flush();
+  497 |       return;
+  498 |     }
+  499 | 
+  500 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes`);
+  501 |     flush();
+  502 |   });
+  503 | 
+  504 |   test('GET /clubs/:id/quizzes/create — create quiz step 1', async ({ page }) => {
+  505 |     if (!OWNED_CLUB_ID) {
+  506 |       addBug({ route: '/clubs/:id/quizzes/create', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID' });
+  507 |       return;
+  508 |     }
+  509 |     await injectAuth(page);
+  510 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/create`);
+  511 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/create`);
+  512 |     await waitForAngular(page);
+  513 | 
+  514 |     const url = page.url();
+  515 |     if (url.includes('/login')) {
+  516 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'critical', category: 'redirect', description: 'Create quiz redirected to login' });
+  517 |       flush();
+  518 |       return;
+  519 |     }
+  520 | 
+  521 |     const titleInput = page.locator('input[formcontrolname="title"], input[name="title"], input[placeholder*="title" i]').first();
+  522 |     if (!(await titleInput.isVisible().catch(() => false))) {
+  523 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'high', category: 'ui-missing', description: 'Quiz title input not found on create quiz page' });
+  524 |     }
+  525 | 
+  526 |     // Test next step button visibility (button is disabled on empty form — that is correct behaviour)
+  527 |     const nextBtn = page.locator('button:has-text("Next"), button:has-text("Далі"), button:has-text("Continue")').first();
+  528 |     const nextVisible = await nextBtn.isVisible().catch(() => false);
+  529 |     if (!nextVisible) {
+  530 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'medium', category: 'ui-missing', description: 'Next/Continue button not visible on create quiz step 1' });
+  531 |     }
+  532 | 
+  533 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/create`);
+  534 |     flush();
+  535 |   });
+  536 | 
+  537 |   test('GET /clubs/:id/quizzes/:quizId — take quiz', async ({ page }) => {
+  538 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
+  539 |       addBug({ route: '/clubs/:id/quizzes/:quizId', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID discovered (no quizzes in owned club)' });
+  540 |       return;
+  541 |     }
+  542 |     await injectAuth(page);
+  543 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`);
+  544 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`);
+  545 |     await waitForAngular(page);
+  546 | 
+  547 |     const url = page.url();
+  548 |     if (url.includes('/login')) {
+  549 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`, severity: 'critical', category: 'redirect', description: 'Quiz take redirected to login' });
+  550 |       flush();
+  551 |       return;
+  552 |     }
+  553 | 
+  554 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`);
+  555 |     flush();
+  556 |   });
+  557 | 
+  558 |   test('GET /clubs/:id/quizzes/:quizId/preview — quiz preview', async ({ page }) => {
+  559 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
+  560 |       addBug({ route: '/clubs/:id/quizzes/:quizId/preview', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID' });
+  561 |       return;
+  562 |     }
+  563 |     await injectAuth(page);
+  564 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`);
+  565 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`);
+  566 |     await waitForAngular(page);
+  567 | 
+  568 |     const url = page.url();
+  569 |     if (url.includes('/login')) {
+  570 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`, severity: 'critical', category: 'redirect', description: 'Quiz preview redirected to login' });
+  571 |       flush();
+  572 |       return;
+  573 |     }
+  574 | 
+  575 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`);
+  576 |     flush();
+  577 |   });
+  578 | 
+  579 |   test('GET /clubs/:id/quizzes/:quizId/edit — quiz edit', async ({ page }) => {
+  580 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
+  581 |       addBug({ route: '/clubs/:id/quizzes/:quizId/edit', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID' });
+  582 |       return;
+  583 |     }
+  584 |     await injectAuth(page);
+  585 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`);
+  586 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`);
+  587 |     await waitForAngular(page);
+  588 | 
+  589 |     const url = page.url();
+  590 |     if (url.includes('/login')) {
+```
+````
+
+## File: test-results/e2e-audit-Authenticated-—--8c70a--edit-—-edit-form-for-owner/error-context.md
+````markdown
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/audit.spec.ts >> Authenticated — Clubs >> GET /clubs/:id/edit — edit form for owner
+- Location: e2e/audit.spec.ts:419:7
+
+# Error details
+
+```
+Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+Call log:
+  - navigating to "/clubs/2affc525-02bb-4fc6-a2c3-99baad3c5773/edit", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  326 |     await passwordInput.fill('test123@mail.com');
+  327 |     await submitBtn.click();
+  328 | 
+  329 |     try {
+  330 |       await page.waitForURL(/\/(clubs|events|profile)/, { timeout: 20_000 });
+  331 |     } catch {
+  332 |       addBug({ route: '/login (submit)', severity: 'critical', category: 'redirect', description: 'Login submit did not redirect to app within 20s' });
+  333 |     }
+  334 | 
+  335 |     flush();
+  336 |   });
+  337 | });
+  338 | 
+  339 | // ── Authenticated tests ───────────────────────────────────────────────────────
+  340 | 
+  341 | test.describe('Authenticated — Events', () => {
+  342 |   test('GET /events — feed loads with tabs', async ({ page }) => {
+  343 |     await injectAuth(page);
+  344 |     const flush = attachMonitors(page, '/events (auth)');
+  345 |     await page.goto('/events');
+  346 |     await waitForAngular(page);
+  347 | 
+  348 |     const hasCards = await page.locator('app-event-card').count();
+  349 |     const hasEmpty = await page.locator('app-empty-state').count();
+  350 |     const hasTabs = await page.locator('[role="tab"], button:has-text("Upcoming"), button:has-text("My Events")').count();
+  351 | 
+  352 |     if (hasCards === 0 && hasEmpty === 0) {
+  353 |       addBug({ route: '/events (auth)', severity: 'high', category: 'ui-missing', description: 'No event cards or empty state visible after auth' });
+  354 |     }
+  355 |     if (hasTabs === 0) {
+  356 |       addBug({ route: '/events (auth)', severity: 'medium', category: 'ui-missing', description: 'No tab switcher (Upcoming/My Events) visible for authenticated user' });
+  357 |     }
+  358 | 
+  359 |     await checkUndefinedText(page, '/events (auth)');
+  360 |     flush();
+  361 |   });
+  362 | 
+  363 |   test('GET /events/:id — event detail', async ({ page }) => {
+  364 |     if (!ANY_EVENT_ID) {
+  365 |       console.log('ℹ️  /events/:id skipped — no events in test account and event creation failed');
+  366 |       return;
+  367 |     }
+  368 |     await injectAuth(page);
+  369 |     const flush = attachMonitors(page, `/events/${ANY_EVENT_ID}`);
+  370 |     await page.goto(`/events/${ANY_EVENT_ID}`);
+  371 |     await waitForAngular(page);
+  372 | 
+  373 |     const title = page.locator('h1, h2, [class*="title"]').first();
+  374 |     if (!(await title.isVisible().catch(() => false))) {
+  375 |       addBug({ route: `/events/${ANY_EVENT_ID}`, severity: 'high', category: 'ui-missing', description: 'Event title not visible on detail page' });
+  376 |     }
+  377 | 
+  378 |     await checkUndefinedText(page, `/events/${ANY_EVENT_ID}`);
+  379 |     flush();
+  380 |   });
+  381 | });
+  382 | 
+  383 | test.describe('Authenticated — Clubs', () => {
+  384 |   test('GET /clubs — clubs list', async ({ page }) => {
+  385 |     await injectAuth(page);
+  386 |     const flush = attachMonitors(page, '/clubs');
+  387 |     await page.goto('/clubs');
+  388 |     await waitForAngular(page);
+  389 | 
+  390 |     const hasCards = await page.locator('app-club-card, [class*="club-card"]').count();
+  391 |     const hasEmpty = await page.locator('app-empty-state').count();
+  392 |     if (hasCards === 0 && hasEmpty === 0) {
+  393 |       addBug({ route: '/clubs', severity: 'high', category: 'ui-missing', description: 'No club cards or empty state visible' });
+  394 |     }
+  395 | 
+  396 |     await checkUndefinedText(page, '/clubs');
+  397 |     flush();
+  398 |   });
+  399 | 
+  400 |   test('GET /clubs/:id — club detail', async ({ page }) => {
+  401 |     if (!ANY_CLUB_ID) {
+  402 |       addBug({ route: '/clubs/:id', severity: 'medium', category: 'ui-missing', description: 'Skipped: no club ID discovered' });
+  403 |       return;
+  404 |     }
+  405 |     await injectAuth(page);
+  406 |     const flush = attachMonitors(page, `/clubs/${ANY_CLUB_ID}`);
+  407 |     await page.goto(`/clubs/${ANY_CLUB_ID}`);
+  408 |     await waitForAngular(page);
+  409 | 
+  410 |     const clubName = page.locator('h1, h2, [class*="club-name"], [class*="title"]').first();
+  411 |     if (!(await clubName.isVisible().catch(() => false))) {
+  412 |       addBug({ route: `/clubs/${ANY_CLUB_ID}`, severity: 'high', category: 'ui-missing', description: 'Club name/title not visible on detail page' });
+  413 |     }
+  414 | 
+  415 |     await checkUndefinedText(page, `/clubs/${ANY_CLUB_ID}`);
+  416 |     flush();
+  417 |   });
+  418 | 
+  419 |   test('GET /clubs/:id/edit — edit form for owner', async ({ page }) => {
+  420 |     if (!OWNED_CLUB_ID) {
+  421 |       addBug({ route: '/clubs/:id/edit', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID discovered' });
+  422 |       return;
+  423 |     }
+  424 |     await injectAuth(page);
+  425 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/edit`);
+> 426 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/edit`);
+      |                ^ Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+  427 |     await waitForAngular(page);
+  428 | 
+  429 |     const url = page.url();
+  430 |     if (url.includes('/login')) {
+  431 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'critical', category: 'redirect', description: 'Club edit redirected to login — auth or role guard issue' });
+  432 |       flush();
+  433 |       return;
+  434 |     }
+  435 | 
+  436 |     const nameInput = page.locator('input[name="name"], input[formcontrolname="name"], input[placeholder*="name" i]').first();
+  437 |     const saveBtn = page.locator('button[type="submit"], button:has-text("Save"), button:has-text("Зберегти")').first();
+  438 | 
+  439 |     if (!(await nameInput.isVisible().catch(() => false))) {
+  440 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Club name input not found on edit page' });
+  441 |     }
+  442 |     if (!(await saveBtn.isVisible().catch(() => false))) {
+  443 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Save button not found on club edit page' });
+  444 |     }
+  445 | 
+  446 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/edit`);
+  447 |     flush();
+  448 |   });
+  449 | 
+  450 |   test('GET /clubs/:id/events/create — create event form', async ({ page }) => {
+  451 |     if (!OWNED_CLUB_ID) {
+  452 |       addBug({ route: '/clubs/:id/events/create', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID discovered' });
+  453 |       return;
+  454 |     }
+  455 |     await injectAuth(page);
+  456 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/events/create`);
+  457 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/events/create`);
+  458 |     await waitForAngular(page);
+  459 | 
+  460 |     const url = page.url();
+  461 |     if (url.includes('/login')) {
+  462 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'critical', category: 'redirect', description: 'Create event redirected to login — auth/role guard issue' });
+  463 |       flush();
+  464 |       return;
+  465 |     }
+  466 | 
+  467 |     const titleInput = page.locator('input[formcontrolname="title"], input[name="title"], input[placeholder*="title" i], input[placeholder*="назва" i]').first();
+  468 |     if (!(await titleInput.isVisible().catch(() => false))) {
+  469 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'high', category: 'ui-missing', description: 'Event title input not found on create event page' });
+  470 |     }
+  471 | 
+  472 |     const dateField = page.locator('input[type="date"], input[formcontrolname="date"], [class*="date"]').first();
+  473 |     if (!(await dateField.isVisible().catch(() => false))) {
+  474 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'medium', category: 'ui-missing', description: 'Date field not found on create event page' });
+  475 |     }
+  476 | 
+  477 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/events/create`);
+  478 |     flush();
+  479 |   });
+  480 | });
+  481 | 
+  482 | test.describe('Authenticated — Quizzes', () => {
+  483 |   test('GET /clubs/:id/quizzes — quiz list', async ({ page }) => {
+  484 |     if (!OWNED_CLUB_ID) {
+  485 |       addBug({ route: '/clubs/:id/quizzes', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID' });
+  486 |       return;
+  487 |     }
+  488 |     await injectAuth(page);
+  489 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes`);
+  490 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes`);
+  491 |     await waitForAngular(page);
+  492 | 
+  493 |     const url = page.url();
+  494 |     if (url.includes('/login')) {
+  495 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes`, severity: 'critical', category: 'redirect', description: 'Quiz list redirected to login' });
+  496 |       flush();
+  497 |       return;
+  498 |     }
+  499 | 
+  500 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes`);
+  501 |     flush();
+  502 |   });
+  503 | 
+  504 |   test('GET /clubs/:id/quizzes/create — create quiz step 1', async ({ page }) => {
+  505 |     if (!OWNED_CLUB_ID) {
+  506 |       addBug({ route: '/clubs/:id/quizzes/create', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID' });
+  507 |       return;
+  508 |     }
+  509 |     await injectAuth(page);
+  510 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/create`);
+  511 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/create`);
+  512 |     await waitForAngular(page);
+  513 | 
+  514 |     const url = page.url();
+  515 |     if (url.includes('/login')) {
+  516 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'critical', category: 'redirect', description: 'Create quiz redirected to login' });
+  517 |       flush();
+  518 |       return;
+  519 |     }
+  520 | 
+  521 |     const titleInput = page.locator('input[formcontrolname="title"], input[name="title"], input[placeholder*="title" i]').first();
+  522 |     if (!(await titleInput.isVisible().catch(() => false))) {
+  523 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'high', category: 'ui-missing', description: 'Quiz title input not found on create quiz page' });
+  524 |     }
+  525 | 
+  526 |     // Test next step button visibility (button is disabled on empty form — that is correct behaviour)
+```
+````
+
+## File: test-results/e2e-audit-Authenticated-—--d5167-ubs-id-randomizer-—-renders/error-context.md
+````markdown
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/audit.spec.ts >> Authenticated — Randomizer >> GET /clubs/:id/randomizer — renders
+- Location: e2e/audit.spec.ts:649:7
+
+# Error details
+
+```
+Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+Call log:
+  - navigating to "/clubs/2affc525-02bb-4fc6-a2c3-99baad3c5773/randomizer", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  556 |   });
+  557 | 
+  558 |   test('GET /clubs/:id/quizzes/:quizId/preview — quiz preview', async ({ page }) => {
+  559 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
+  560 |       addBug({ route: '/clubs/:id/quizzes/:quizId/preview', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID' });
+  561 |       return;
+  562 |     }
+  563 |     await injectAuth(page);
+  564 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`);
+  565 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`);
+  566 |     await waitForAngular(page);
+  567 | 
+  568 |     const url = page.url();
+  569 |     if (url.includes('/login')) {
+  570 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`, severity: 'critical', category: 'redirect', description: 'Quiz preview redirected to login' });
+  571 |       flush();
+  572 |       return;
+  573 |     }
+  574 | 
+  575 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`);
+  576 |     flush();
+  577 |   });
+  578 | 
+  579 |   test('GET /clubs/:id/quizzes/:quizId/edit — quiz edit', async ({ page }) => {
+  580 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
+  581 |       addBug({ route: '/clubs/:id/quizzes/:quizId/edit', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID' });
+  582 |       return;
+  583 |     }
+  584 |     await injectAuth(page);
+  585 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`);
+  586 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`);
+  587 |     await waitForAngular(page);
+  588 | 
+  589 |     const url = page.url();
+  590 |     if (url.includes('/login')) {
+  591 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`, severity: 'critical', category: 'redirect', description: 'Quiz edit redirected to login' });
+  592 |       flush();
+  593 |       return;
+  594 |     }
+  595 | 
+  596 |     const titleInput = page.locator('input[formcontrolname="title"]').first();
+  597 |     if (!(await titleInput.isVisible().catch(() => false))) {
+  598 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Quiz title input not pre-populated on edit page' });
+  599 |     }
+  600 | 
+  601 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`);
+  602 |     flush();
+  603 |   });
+  604 | 
+  605 |   test('GET /clubs/:id/quizzes/:quizId/session — quiz session', async ({ page }) => {
+  606 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
+  607 |       addBug({ route: '/clubs/:id/quizzes/:quizId/session', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID' });
+  608 |       return;
+  609 |     }
+  610 |     await injectAuth(page);
+  611 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/session`);
+  612 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/session`);
+  613 |     await waitForAngular(page);
+  614 | 
+  615 |     const url = page.url();
+  616 |     if (url.includes('/login')) {
+  617 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/session`, severity: 'critical', category: 'redirect', description: 'Quiz session redirected to login' });
+  618 |       flush();
+  619 |       return;
+  620 |     }
+  621 | 
+  622 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/session`);
+  623 |     flush();
+  624 |   });
+  625 | 
+  626 |   test('GET /clubs/:id/quizzes/:quizId/leaderboard — leaderboard', async ({ page }) => {
+  627 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
+  628 |       addBug({ route: '/clubs/:id/quizzes/:quizId/leaderboard', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID' });
+  629 |       return;
+  630 |     }
+  631 |     await injectAuth(page);
+  632 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/leaderboard`);
+  633 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/leaderboard`);
+  634 |     await waitForAngular(page);
+  635 | 
+  636 |     const url = page.url();
+  637 |     if (url.includes('/login')) {
+  638 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/leaderboard`, severity: 'critical', category: 'redirect', description: 'Leaderboard redirected to login' });
+  639 |       flush();
+  640 |       return;
+  641 |     }
+  642 | 
+  643 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/leaderboard`);
+  644 |     flush();
+  645 |   });
+  646 | });
+  647 | 
+  648 | test.describe('Authenticated — Randomizer', () => {
+  649 |   test('GET /clubs/:id/randomizer — renders', async ({ page }) => {
+  650 |     if (!OWNED_CLUB_ID) {
+  651 |       addBug({ route: '/clubs/:id/randomizer', severity: 'low', category: 'ui-missing', description: 'Skipped: no owned club ID' });
+  652 |       return;
+  653 |     }
+  654 |     await injectAuth(page);
+  655 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/randomizer`);
+> 656 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/randomizer`);
+      |                ^ Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+  657 |     await waitForAngular(page);
+  658 | 
+  659 |     const url = page.url();
+  660 |     if (url.includes('/login')) {
+  661 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/randomizer`, severity: 'high', category: 'redirect', description: 'Randomizer redirected to login — role guard issue' });
+  662 |       flush();
+  663 |       return;
+  664 |     }
+  665 | 
+  666 |     const spinBtn = page.locator('[data-testid="spin-button"]').first();
+  667 |     if (!(await spinBtn.isVisible().catch(() => false))) {
+  668 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/randomizer`, severity: 'medium', category: 'ui-missing', description: 'Spin button not found on randomizer page' });
+  669 |     }
+  670 | 
+  671 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/randomizer`);
+  672 |     flush();
+  673 |   });
+  674 | });
+  675 | 
+  676 | test.describe('Authenticated — Profile', () => {
+  677 |   test('GET /profile — profile page renders', async ({ page }) => {
+  678 |     await injectAuth(page);
+  679 |     const flush = attachMonitors(page, '/profile');
+  680 |     await page.goto('/profile');
+  681 |     await waitForAngular(page);
+  682 | 
+  683 |     const url = page.url();
+  684 |     if (url.includes('/login')) {
+  685 |       addBug({ route: '/profile', severity: 'critical', category: 'redirect', description: 'Profile redirected to login despite injected auth token' });
+  686 |       flush();
+  687 |       return;
+  688 |     }
+  689 | 
+  690 |     const displayNameInput = page.locator('input[formcontrolname="displayName"], input[name="displayName"], input[placeholder*="name" i]').first();
+  691 |     if (!(await displayNameInput.isVisible().catch(() => false))) {
+  692 |       addBug({ route: '/profile', severity: 'high', category: 'ui-missing', description: 'Display name input not visible on profile page' });
+  693 |     }
+  694 | 
+  695 |     await checkUndefinedText(page, '/profile');
+  696 |     flush();
+  697 |   });
+  698 | });
+  699 | 
+  700 | test.describe('Authenticated — Manage', () => {
+  701 |   test('GET /manage — accessible as organizer', async ({ page }) => {
+  702 |     await injectAuth(page);
+  703 |     const flush = attachMonitors(page, '/manage');
+  704 |     await page.goto('/manage');
+  705 |     await waitForAngular(page);
+  706 | 
+  707 |     const url = page.url();
+  708 |     if (url.includes('/login')) {
+  709 |       addBug({ route: '/manage', severity: 'high', category: 'redirect', description: 'Manage page redirected to login' });
+  710 |     } else if (url.includes('/clubs') && !url.includes('/manage')) {
+  711 |       addBug({ route: '/manage', severity: 'medium', category: 'redirect', description: 'Manage page redirected to /clubs (user may not have organizer role)' });
+  712 |     }
+  713 | 
+  714 |     await checkUndefinedText(page, '/manage');
+  715 |     flush();
+  716 |   });
+  717 | });
+  718 | 
+  719 | test.describe('Navigation & UI', () => {
+  720 |   test('Header navigation links work', async ({ page }) => {
+  721 |     await injectAuth(page);
+  722 |     const flush = attachMonitors(page, 'header-nav');
+  723 |     await page.goto('/clubs');
+  724 |     await waitForAngular(page);
+  725 | 
+  726 |     // Check for clubs nav link
+  727 |     const clubsLink = page.locator('a[href*="/clubs"], a[routerlink*="clubs"]').first();
+  728 |     const eventsLink = page.locator('a[href*="/events"], a[routerlink*="events"]').first();
+  729 | 
+  730 |     if (!(await clubsLink.isVisible().catch(() => false))) {
+  731 |       addBug({ route: 'header-nav', severity: 'medium', category: 'ui-missing', description: 'Clubs nav link not visible in header' });
+  732 |     }
+  733 |     if (!(await eventsLink.isVisible().catch(() => false))) {
+  734 |       addBug({ route: 'header-nav', severity: 'medium', category: 'ui-missing', description: 'Events nav link not visible in header' });
+  735 |     }
+  736 | 
+  737 |     flush();
+  738 |   });
+  739 | 
+  740 |   test('Theme toggle button exists', async ({ page }) => {
+  741 |     await injectAuth(page);
+  742 |     const flush = attachMonitors(page, 'theme-toggle');
+  743 |     await page.goto('/clubs');
+  744 |     await waitForAngular(page);
+  745 | 
+  746 |     const themeBtn = page.locator('[data-testid="theme-toggle"]').first();
+  747 |     if (!(await themeBtn.isVisible().catch(() => false))) {
+  748 |       addBug({ route: 'theme-toggle', severity: 'low', category: 'ui-missing', description: 'Theme toggle button not found in header' });
+  749 |     }
+  750 | 
+  751 |     flush();
+  752 |   });
+  753 | 
+  754 |   test('404 unknown route redirects gracefully', async ({ page }) => {
+  755 |     const flush = attachMonitors(page, '/this-route-does-not-exist');
+  756 |     await page.goto('/this-route-does-not-exist');
+```
+````
+
+## File: test-results/e2e-audit-Authenticated-—--dea2a-create-—-create-quiz-step-1/error-context.md
+````markdown
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/audit.spec.ts >> Authenticated — Quizzes >> GET /clubs/:id/quizzes/create — create quiz step 1
+- Location: e2e/audit.spec.ts:504:7
+
+# Error details
+
+```
+Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+Call log:
+  - navigating to "/clubs/2affc525-02bb-4fc6-a2c3-99baad3c5773/quizzes/create", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  411 |     if (!(await clubName.isVisible().catch(() => false))) {
+  412 |       addBug({ route: `/clubs/${ANY_CLUB_ID}`, severity: 'high', category: 'ui-missing', description: 'Club name/title not visible on detail page' });
+  413 |     }
+  414 | 
+  415 |     await checkUndefinedText(page, `/clubs/${ANY_CLUB_ID}`);
+  416 |     flush();
+  417 |   });
+  418 | 
+  419 |   test('GET /clubs/:id/edit — edit form for owner', async ({ page }) => {
+  420 |     if (!OWNED_CLUB_ID) {
+  421 |       addBug({ route: '/clubs/:id/edit', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID discovered' });
+  422 |       return;
+  423 |     }
+  424 |     await injectAuth(page);
+  425 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/edit`);
+  426 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/edit`);
+  427 |     await waitForAngular(page);
+  428 | 
+  429 |     const url = page.url();
+  430 |     if (url.includes('/login')) {
+  431 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'critical', category: 'redirect', description: 'Club edit redirected to login — auth or role guard issue' });
+  432 |       flush();
+  433 |       return;
+  434 |     }
+  435 | 
+  436 |     const nameInput = page.locator('input[name="name"], input[formcontrolname="name"], input[placeholder*="name" i]').first();
+  437 |     const saveBtn = page.locator('button[type="submit"], button:has-text("Save"), button:has-text("Зберегти")').first();
+  438 | 
+  439 |     if (!(await nameInput.isVisible().catch(() => false))) {
+  440 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Club name input not found on edit page' });
+  441 |     }
+  442 |     if (!(await saveBtn.isVisible().catch(() => false))) {
+  443 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Save button not found on club edit page' });
+  444 |     }
+  445 | 
+  446 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/edit`);
+  447 |     flush();
+  448 |   });
+  449 | 
+  450 |   test('GET /clubs/:id/events/create — create event form', async ({ page }) => {
+  451 |     if (!OWNED_CLUB_ID) {
+  452 |       addBug({ route: '/clubs/:id/events/create', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID discovered' });
+  453 |       return;
+  454 |     }
+  455 |     await injectAuth(page);
+  456 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/events/create`);
+  457 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/events/create`);
+  458 |     await waitForAngular(page);
+  459 | 
+  460 |     const url = page.url();
+  461 |     if (url.includes('/login')) {
+  462 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'critical', category: 'redirect', description: 'Create event redirected to login — auth/role guard issue' });
+  463 |       flush();
+  464 |       return;
+  465 |     }
+  466 | 
+  467 |     const titleInput = page.locator('input[formcontrolname="title"], input[name="title"], input[placeholder*="title" i], input[placeholder*="назва" i]').first();
+  468 |     if (!(await titleInput.isVisible().catch(() => false))) {
+  469 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'high', category: 'ui-missing', description: 'Event title input not found on create event page' });
+  470 |     }
+  471 | 
+  472 |     const dateField = page.locator('input[type="date"], input[formcontrolname="date"], [class*="date"]').first();
+  473 |     if (!(await dateField.isVisible().catch(() => false))) {
+  474 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'medium', category: 'ui-missing', description: 'Date field not found on create event page' });
+  475 |     }
+  476 | 
+  477 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/events/create`);
+  478 |     flush();
+  479 |   });
+  480 | });
+  481 | 
+  482 | test.describe('Authenticated — Quizzes', () => {
+  483 |   test('GET /clubs/:id/quizzes — quiz list', async ({ page }) => {
+  484 |     if (!OWNED_CLUB_ID) {
+  485 |       addBug({ route: '/clubs/:id/quizzes', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID' });
+  486 |       return;
+  487 |     }
+  488 |     await injectAuth(page);
+  489 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes`);
+  490 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes`);
+  491 |     await waitForAngular(page);
+  492 | 
+  493 |     const url = page.url();
+  494 |     if (url.includes('/login')) {
+  495 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes`, severity: 'critical', category: 'redirect', description: 'Quiz list redirected to login' });
+  496 |       flush();
+  497 |       return;
+  498 |     }
+  499 | 
+  500 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes`);
+  501 |     flush();
+  502 |   });
+  503 | 
+  504 |   test('GET /clubs/:id/quizzes/create — create quiz step 1', async ({ page }) => {
+  505 |     if (!OWNED_CLUB_ID) {
+  506 |       addBug({ route: '/clubs/:id/quizzes/create', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID' });
+  507 |       return;
+  508 |     }
+  509 |     await injectAuth(page);
+  510 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/create`);
+> 511 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/create`);
+      |                ^ Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+  512 |     await waitForAngular(page);
+  513 | 
+  514 |     const url = page.url();
+  515 |     if (url.includes('/login')) {
+  516 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'critical', category: 'redirect', description: 'Create quiz redirected to login' });
+  517 |       flush();
+  518 |       return;
+  519 |     }
+  520 | 
+  521 |     const titleInput = page.locator('input[formcontrolname="title"], input[name="title"], input[placeholder*="title" i]').first();
+  522 |     if (!(await titleInput.isVisible().catch(() => false))) {
+  523 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'high', category: 'ui-missing', description: 'Quiz title input not found on create quiz page' });
+  524 |     }
+  525 | 
+  526 |     // Test next step button visibility (button is disabled on empty form — that is correct behaviour)
+  527 |     const nextBtn = page.locator('button:has-text("Next"), button:has-text("Далі"), button:has-text("Continue")').first();
+  528 |     const nextVisible = await nextBtn.isVisible().catch(() => false);
+  529 |     if (!nextVisible) {
+  530 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/create`, severity: 'medium', category: 'ui-missing', description: 'Next/Continue button not visible on create quiz step 1' });
+  531 |     }
+  532 | 
+  533 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/create`);
+  534 |     flush();
+  535 |   });
+  536 | 
+  537 |   test('GET /clubs/:id/quizzes/:quizId — take quiz', async ({ page }) => {
+  538 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
+  539 |       addBug({ route: '/clubs/:id/quizzes/:quizId', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID discovered (no quizzes in owned club)' });
+  540 |       return;
+  541 |     }
+  542 |     await injectAuth(page);
+  543 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`);
+  544 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`);
+  545 |     await waitForAngular(page);
+  546 | 
+  547 |     const url = page.url();
+  548 |     if (url.includes('/login')) {
+  549 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`, severity: 'critical', category: 'redirect', description: 'Quiz take redirected to login' });
+  550 |       flush();
+  551 |       return;
+  552 |     }
+  553 | 
+  554 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}`);
+  555 |     flush();
+  556 |   });
+  557 | 
+  558 |   test('GET /clubs/:id/quizzes/:quizId/preview — quiz preview', async ({ page }) => {
+  559 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
+  560 |       addBug({ route: '/clubs/:id/quizzes/:quizId/preview', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID' });
+  561 |       return;
+  562 |     }
+  563 |     await injectAuth(page);
+  564 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`);
+  565 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`);
+  566 |     await waitForAngular(page);
+  567 | 
+  568 |     const url = page.url();
+  569 |     if (url.includes('/login')) {
+  570 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`, severity: 'critical', category: 'redirect', description: 'Quiz preview redirected to login' });
+  571 |       flush();
+  572 |       return;
+  573 |     }
+  574 | 
+  575 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/preview`);
+  576 |     flush();
+  577 |   });
+  578 | 
+  579 |   test('GET /clubs/:id/quizzes/:quizId/edit — quiz edit', async ({ page }) => {
+  580 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
+  581 |       addBug({ route: '/clubs/:id/quizzes/:quizId/edit', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID' });
+  582 |       return;
+  583 |     }
+  584 |     await injectAuth(page);
+  585 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`);
+  586 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`);
+  587 |     await waitForAngular(page);
+  588 | 
+  589 |     const url = page.url();
+  590 |     if (url.includes('/login')) {
+  591 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`, severity: 'critical', category: 'redirect', description: 'Quiz edit redirected to login' });
+  592 |       flush();
+  593 |       return;
+  594 |     }
+  595 | 
+  596 |     const titleInput = page.locator('input[formcontrolname="title"]').first();
+  597 |     if (!(await titleInput.isVisible().catch(() => false))) {
+  598 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Quiz title input not pre-populated on edit page' });
+  599 |     }
+  600 | 
+  601 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/edit`);
+  602 |     flush();
+  603 |   });
+  604 | 
+  605 |   test('GET /clubs/:id/quizzes/:quizId/session — quiz session', async ({ page }) => {
+  606 |     if (!OWNED_CLUB_ID || !ANY_QUIZ_ID) {
+  607 |       addBug({ route: '/clubs/:id/quizzes/:quizId/session', severity: 'low', category: 'ui-missing', description: 'Skipped: no quiz ID' });
+  608 |       return;
+  609 |     }
+  610 |     await injectAuth(page);
+  611 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes/${ANY_QUIZ_ID}/session`);
+```
+````
+
+## File: test-results/e2e-audit-Authenticated-—-Clubs-GET-clubs-—-clubs-list/error-context.md
+````markdown
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/audit.spec.ts >> Authenticated — Clubs >> GET /clubs — clubs list
+- Location: e2e/audit.spec.ts:384:7
+
+# Error details
+
+```
+Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+Call log:
+  - navigating to "/clubs", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  287 |       addBug({ route: '/events (unauth)', severity: 'high', category: 'redirect', description: `Protected /events route did not redirect unauthenticated user to login — ended up at: ${url}` });
+  288 |     }
+  289 | 
+  290 |     flush();
+  291 |   });
+  292 | 
+  293 |   test('GET /clubs (unauthenticated) — redirects to login', async ({ page }) => {
+  294 |     const flush = attachMonitors(page, '/clubs (unauth)');
+  295 |     await page.goto('/clubs');
+  296 |     await waitForAngular(page);
+  297 | 
+  298 |     const url = page.url();
+  299 |     const isLoginPage = url.includes('/login') || url.includes('/clubs');
+  300 |     if (!isLoginPage) {
+  301 |       addBug({ route: '/clubs (unauth)', severity: 'medium', category: 'redirect', description: `Unexpected redirect target: ${url}` });
+  302 |     }
+  303 | 
+  304 |     flush();
+  305 |   });
+  306 | });
+  307 | 
+  308 | // ── Login via browser ─────────────────────────────────────────────────────────
+  309 | 
+  310 | test.describe('Login flow', () => {
+  311 |   test('Login with valid credentials redirects to app', async ({ page }) => {
+  312 |     const flush = attachMonitors(page, '/login (submit)');
+  313 |     await page.goto('/login');
+  314 |     await waitForAngular(page);
+  315 | 
+  316 |     const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+  317 |     const passwordInput = page.locator('input[type="password"]').first();
+  318 |     const submitBtn = page.locator('button[type="submit"]').first();
+  319 | 
+  320 |     if (!(await emailInput.isVisible())) {
+  321 |       flush();
+  322 |       return;
+  323 |     }
+  324 | 
+  325 |     await emailInput.fill('test123@mail.com');
+  326 |     await passwordInput.fill('test123@mail.com');
+  327 |     await submitBtn.click();
+  328 | 
+  329 |     try {
+  330 |       await page.waitForURL(/\/(clubs|events|profile)/, { timeout: 20_000 });
+  331 |     } catch {
+  332 |       addBug({ route: '/login (submit)', severity: 'critical', category: 'redirect', description: 'Login submit did not redirect to app within 20s' });
+  333 |     }
+  334 | 
+  335 |     flush();
+  336 |   });
+  337 | });
+  338 | 
+  339 | // ── Authenticated tests ───────────────────────────────────────────────────────
+  340 | 
+  341 | test.describe('Authenticated — Events', () => {
+  342 |   test('GET /events — feed loads with tabs', async ({ page }) => {
+  343 |     await injectAuth(page);
+  344 |     const flush = attachMonitors(page, '/events (auth)');
+  345 |     await page.goto('/events');
+  346 |     await waitForAngular(page);
+  347 | 
+  348 |     const hasCards = await page.locator('app-event-card').count();
+  349 |     const hasEmpty = await page.locator('app-empty-state').count();
+  350 |     const hasTabs = await page.locator('[role="tab"], button:has-text("Upcoming"), button:has-text("My Events")').count();
+  351 | 
+  352 |     if (hasCards === 0 && hasEmpty === 0) {
+  353 |       addBug({ route: '/events (auth)', severity: 'high', category: 'ui-missing', description: 'No event cards or empty state visible after auth' });
+  354 |     }
+  355 |     if (hasTabs === 0) {
+  356 |       addBug({ route: '/events (auth)', severity: 'medium', category: 'ui-missing', description: 'No tab switcher (Upcoming/My Events) visible for authenticated user' });
+  357 |     }
+  358 | 
+  359 |     await checkUndefinedText(page, '/events (auth)');
+  360 |     flush();
+  361 |   });
+  362 | 
+  363 |   test('GET /events/:id — event detail', async ({ page }) => {
+  364 |     if (!ANY_EVENT_ID) {
+  365 |       console.log('ℹ️  /events/:id skipped — no events in test account and event creation failed');
+  366 |       return;
+  367 |     }
+  368 |     await injectAuth(page);
+  369 |     const flush = attachMonitors(page, `/events/${ANY_EVENT_ID}`);
+  370 |     await page.goto(`/events/${ANY_EVENT_ID}`);
+  371 |     await waitForAngular(page);
+  372 | 
+  373 |     const title = page.locator('h1, h2, [class*="title"]').first();
+  374 |     if (!(await title.isVisible().catch(() => false))) {
+  375 |       addBug({ route: `/events/${ANY_EVENT_ID}`, severity: 'high', category: 'ui-missing', description: 'Event title not visible on detail page' });
+  376 |     }
+  377 | 
+  378 |     await checkUndefinedText(page, `/events/${ANY_EVENT_ID}`);
+  379 |     flush();
+  380 |   });
+  381 | });
+  382 | 
+  383 | test.describe('Authenticated — Clubs', () => {
+  384 |   test('GET /clubs — clubs list', async ({ page }) => {
+  385 |     await injectAuth(page);
+  386 |     const flush = attachMonitors(page, '/clubs');
+> 387 |     await page.goto('/clubs');
+      |                ^ Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+  388 |     await waitForAngular(page);
+  389 | 
+  390 |     const hasCards = await page.locator('app-club-card, [class*="club-card"]').count();
+  391 |     const hasEmpty = await page.locator('app-empty-state').count();
+  392 |     if (hasCards === 0 && hasEmpty === 0) {
+  393 |       addBug({ route: '/clubs', severity: 'high', category: 'ui-missing', description: 'No club cards or empty state visible' });
+  394 |     }
+  395 | 
+  396 |     await checkUndefinedText(page, '/clubs');
+  397 |     flush();
+  398 |   });
+  399 | 
+  400 |   test('GET /clubs/:id — club detail', async ({ page }) => {
+  401 |     if (!ANY_CLUB_ID) {
+  402 |       addBug({ route: '/clubs/:id', severity: 'medium', category: 'ui-missing', description: 'Skipped: no club ID discovered' });
+  403 |       return;
+  404 |     }
+  405 |     await injectAuth(page);
+  406 |     const flush = attachMonitors(page, `/clubs/${ANY_CLUB_ID}`);
+  407 |     await page.goto(`/clubs/${ANY_CLUB_ID}`);
+  408 |     await waitForAngular(page);
+  409 | 
+  410 |     const clubName = page.locator('h1, h2, [class*="club-name"], [class*="title"]').first();
+  411 |     if (!(await clubName.isVisible().catch(() => false))) {
+  412 |       addBug({ route: `/clubs/${ANY_CLUB_ID}`, severity: 'high', category: 'ui-missing', description: 'Club name/title not visible on detail page' });
+  413 |     }
+  414 | 
+  415 |     await checkUndefinedText(page, `/clubs/${ANY_CLUB_ID}`);
+  416 |     flush();
+  417 |   });
+  418 | 
+  419 |   test('GET /clubs/:id/edit — edit form for owner', async ({ page }) => {
+  420 |     if (!OWNED_CLUB_ID) {
+  421 |       addBug({ route: '/clubs/:id/edit', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID discovered' });
+  422 |       return;
+  423 |     }
+  424 |     await injectAuth(page);
+  425 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/edit`);
+  426 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/edit`);
+  427 |     await waitForAngular(page);
+  428 | 
+  429 |     const url = page.url();
+  430 |     if (url.includes('/login')) {
+  431 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'critical', category: 'redirect', description: 'Club edit redirected to login — auth or role guard issue' });
+  432 |       flush();
+  433 |       return;
+  434 |     }
+  435 | 
+  436 |     const nameInput = page.locator('input[name="name"], input[formcontrolname="name"], input[placeholder*="name" i]').first();
+  437 |     const saveBtn = page.locator('button[type="submit"], button:has-text("Save"), button:has-text("Зберегти")').first();
+  438 | 
+  439 |     if (!(await nameInput.isVisible().catch(() => false))) {
+  440 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Club name input not found on edit page' });
+  441 |     }
+  442 |     if (!(await saveBtn.isVisible().catch(() => false))) {
+  443 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Save button not found on club edit page' });
+  444 |     }
+  445 | 
+  446 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/edit`);
+  447 |     flush();
+  448 |   });
+  449 | 
+  450 |   test('GET /clubs/:id/events/create — create event form', async ({ page }) => {
+  451 |     if (!OWNED_CLUB_ID) {
+  452 |       addBug({ route: '/clubs/:id/events/create', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID discovered' });
+  453 |       return;
+  454 |     }
+  455 |     await injectAuth(page);
+  456 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/events/create`);
+  457 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/events/create`);
+  458 |     await waitForAngular(page);
+  459 | 
+  460 |     const url = page.url();
+  461 |     if (url.includes('/login')) {
+  462 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'critical', category: 'redirect', description: 'Create event redirected to login — auth/role guard issue' });
+  463 |       flush();
+  464 |       return;
+  465 |     }
+  466 | 
+  467 |     const titleInput = page.locator('input[formcontrolname="title"], input[name="title"], input[placeholder*="title" i], input[placeholder*="назва" i]').first();
+  468 |     if (!(await titleInput.isVisible().catch(() => false))) {
+  469 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'high', category: 'ui-missing', description: 'Event title input not found on create event page' });
+  470 |     }
+  471 | 
+  472 |     const dateField = page.locator('input[type="date"], input[formcontrolname="date"], [class*="date"]').first();
+  473 |     if (!(await dateField.isVisible().catch(() => false))) {
+  474 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'medium', category: 'ui-missing', description: 'Date field not found on create event page' });
+  475 |     }
+  476 | 
+  477 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/events/create`);
+  478 |     flush();
+  479 |   });
+  480 | });
+  481 | 
+  482 | test.describe('Authenticated — Quizzes', () => {
+  483 |   test('GET /clubs/:id/quizzes — quiz list', async ({ page }) => {
+  484 |     if (!OWNED_CLUB_ID) {
+  485 |       addBug({ route: '/clubs/:id/quizzes', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID' });
+  486 |       return;
+  487 |     }
+```
+````
+
+## File: test-results/e2e-audit-Authenticated-—-Clubs-GET-clubs-id-—-club-detail/error-context.md
+````markdown
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/audit.spec.ts >> Authenticated — Clubs >> GET /clubs/:id — club detail
+- Location: e2e/audit.spec.ts:400:7
+
+# Error details
+
+```
+Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+Call log:
+  - navigating to "/clubs/ae57500b-698b-45de-ad0d-53b729b6892b", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  307 | 
+  308 | // ── Login via browser ─────────────────────────────────────────────────────────
+  309 | 
+  310 | test.describe('Login flow', () => {
+  311 |   test('Login with valid credentials redirects to app', async ({ page }) => {
+  312 |     const flush = attachMonitors(page, '/login (submit)');
+  313 |     await page.goto('/login');
+  314 |     await waitForAngular(page);
+  315 | 
+  316 |     const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+  317 |     const passwordInput = page.locator('input[type="password"]').first();
+  318 |     const submitBtn = page.locator('button[type="submit"]').first();
+  319 | 
+  320 |     if (!(await emailInput.isVisible())) {
+  321 |       flush();
+  322 |       return;
+  323 |     }
+  324 | 
+  325 |     await emailInput.fill('test123@mail.com');
+  326 |     await passwordInput.fill('test123@mail.com');
+  327 |     await submitBtn.click();
+  328 | 
+  329 |     try {
+  330 |       await page.waitForURL(/\/(clubs|events|profile)/, { timeout: 20_000 });
+  331 |     } catch {
+  332 |       addBug({ route: '/login (submit)', severity: 'critical', category: 'redirect', description: 'Login submit did not redirect to app within 20s' });
+  333 |     }
+  334 | 
+  335 |     flush();
+  336 |   });
+  337 | });
+  338 | 
+  339 | // ── Authenticated tests ───────────────────────────────────────────────────────
+  340 | 
+  341 | test.describe('Authenticated — Events', () => {
+  342 |   test('GET /events — feed loads with tabs', async ({ page }) => {
+  343 |     await injectAuth(page);
+  344 |     const flush = attachMonitors(page, '/events (auth)');
+  345 |     await page.goto('/events');
+  346 |     await waitForAngular(page);
+  347 | 
+  348 |     const hasCards = await page.locator('app-event-card').count();
+  349 |     const hasEmpty = await page.locator('app-empty-state').count();
+  350 |     const hasTabs = await page.locator('[role="tab"], button:has-text("Upcoming"), button:has-text("My Events")').count();
+  351 | 
+  352 |     if (hasCards === 0 && hasEmpty === 0) {
+  353 |       addBug({ route: '/events (auth)', severity: 'high', category: 'ui-missing', description: 'No event cards or empty state visible after auth' });
+  354 |     }
+  355 |     if (hasTabs === 0) {
+  356 |       addBug({ route: '/events (auth)', severity: 'medium', category: 'ui-missing', description: 'No tab switcher (Upcoming/My Events) visible for authenticated user' });
+  357 |     }
+  358 | 
+  359 |     await checkUndefinedText(page, '/events (auth)');
+  360 |     flush();
+  361 |   });
+  362 | 
+  363 |   test('GET /events/:id — event detail', async ({ page }) => {
+  364 |     if (!ANY_EVENT_ID) {
+  365 |       console.log('ℹ️  /events/:id skipped — no events in test account and event creation failed');
+  366 |       return;
+  367 |     }
+  368 |     await injectAuth(page);
+  369 |     const flush = attachMonitors(page, `/events/${ANY_EVENT_ID}`);
+  370 |     await page.goto(`/events/${ANY_EVENT_ID}`);
+  371 |     await waitForAngular(page);
+  372 | 
+  373 |     const title = page.locator('h1, h2, [class*="title"]').first();
+  374 |     if (!(await title.isVisible().catch(() => false))) {
+  375 |       addBug({ route: `/events/${ANY_EVENT_ID}`, severity: 'high', category: 'ui-missing', description: 'Event title not visible on detail page' });
+  376 |     }
+  377 | 
+  378 |     await checkUndefinedText(page, `/events/${ANY_EVENT_ID}`);
+  379 |     flush();
+  380 |   });
+  381 | });
+  382 | 
+  383 | test.describe('Authenticated — Clubs', () => {
+  384 |   test('GET /clubs — clubs list', async ({ page }) => {
+  385 |     await injectAuth(page);
+  386 |     const flush = attachMonitors(page, '/clubs');
+  387 |     await page.goto('/clubs');
+  388 |     await waitForAngular(page);
+  389 | 
+  390 |     const hasCards = await page.locator('app-club-card, [class*="club-card"]').count();
+  391 |     const hasEmpty = await page.locator('app-empty-state').count();
+  392 |     if (hasCards === 0 && hasEmpty === 0) {
+  393 |       addBug({ route: '/clubs', severity: 'high', category: 'ui-missing', description: 'No club cards or empty state visible' });
+  394 |     }
+  395 | 
+  396 |     await checkUndefinedText(page, '/clubs');
+  397 |     flush();
+  398 |   });
+  399 | 
+  400 |   test('GET /clubs/:id — club detail', async ({ page }) => {
+  401 |     if (!ANY_CLUB_ID) {
+  402 |       addBug({ route: '/clubs/:id', severity: 'medium', category: 'ui-missing', description: 'Skipped: no club ID discovered' });
+  403 |       return;
+  404 |     }
+  405 |     await injectAuth(page);
+  406 |     const flush = attachMonitors(page, `/clubs/${ANY_CLUB_ID}`);
+> 407 |     await page.goto(`/clubs/${ANY_CLUB_ID}`);
+      |                ^ Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+  408 |     await waitForAngular(page);
+  409 | 
+  410 |     const clubName = page.locator('h1, h2, [class*="club-name"], [class*="title"]').first();
+  411 |     if (!(await clubName.isVisible().catch(() => false))) {
+  412 |       addBug({ route: `/clubs/${ANY_CLUB_ID}`, severity: 'high', category: 'ui-missing', description: 'Club name/title not visible on detail page' });
+  413 |     }
+  414 | 
+  415 |     await checkUndefinedText(page, `/clubs/${ANY_CLUB_ID}`);
+  416 |     flush();
+  417 |   });
+  418 | 
+  419 |   test('GET /clubs/:id/edit — edit form for owner', async ({ page }) => {
+  420 |     if (!OWNED_CLUB_ID) {
+  421 |       addBug({ route: '/clubs/:id/edit', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID discovered' });
+  422 |       return;
+  423 |     }
+  424 |     await injectAuth(page);
+  425 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/edit`);
+  426 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/edit`);
+  427 |     await waitForAngular(page);
+  428 | 
+  429 |     const url = page.url();
+  430 |     if (url.includes('/login')) {
+  431 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'critical', category: 'redirect', description: 'Club edit redirected to login — auth or role guard issue' });
+  432 |       flush();
+  433 |       return;
+  434 |     }
+  435 | 
+  436 |     const nameInput = page.locator('input[name="name"], input[formcontrolname="name"], input[placeholder*="name" i]').first();
+  437 |     const saveBtn = page.locator('button[type="submit"], button:has-text("Save"), button:has-text("Зберегти")').first();
+  438 | 
+  439 |     if (!(await nameInput.isVisible().catch(() => false))) {
+  440 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Club name input not found on edit page' });
+  441 |     }
+  442 |     if (!(await saveBtn.isVisible().catch(() => false))) {
+  443 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/edit`, severity: 'high', category: 'ui-missing', description: 'Save button not found on club edit page' });
+  444 |     }
+  445 | 
+  446 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/edit`);
+  447 |     flush();
+  448 |   });
+  449 | 
+  450 |   test('GET /clubs/:id/events/create — create event form', async ({ page }) => {
+  451 |     if (!OWNED_CLUB_ID) {
+  452 |       addBug({ route: '/clubs/:id/events/create', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID discovered' });
+  453 |       return;
+  454 |     }
+  455 |     await injectAuth(page);
+  456 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/events/create`);
+  457 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/events/create`);
+  458 |     await waitForAngular(page);
+  459 | 
+  460 |     const url = page.url();
+  461 |     if (url.includes('/login')) {
+  462 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'critical', category: 'redirect', description: 'Create event redirected to login — auth/role guard issue' });
+  463 |       flush();
+  464 |       return;
+  465 |     }
+  466 | 
+  467 |     const titleInput = page.locator('input[formcontrolname="title"], input[name="title"], input[placeholder*="title" i], input[placeholder*="назва" i]').first();
+  468 |     if (!(await titleInput.isVisible().catch(() => false))) {
+  469 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'high', category: 'ui-missing', description: 'Event title input not found on create event page' });
+  470 |     }
+  471 | 
+  472 |     const dateField = page.locator('input[type="date"], input[formcontrolname="date"], [class*="date"]').first();
+  473 |     if (!(await dateField.isVisible().catch(() => false))) {
+  474 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/events/create`, severity: 'medium', category: 'ui-missing', description: 'Date field not found on create event page' });
+  475 |     }
+  476 | 
+  477 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/events/create`);
+  478 |     flush();
+  479 |   });
+  480 | });
+  481 | 
+  482 | test.describe('Authenticated — Quizzes', () => {
+  483 |   test('GET /clubs/:id/quizzes — quiz list', async ({ page }) => {
+  484 |     if (!OWNED_CLUB_ID) {
+  485 |       addBug({ route: '/clubs/:id/quizzes', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID' });
+  486 |       return;
+  487 |     }
+  488 |     await injectAuth(page);
+  489 |     const flush = attachMonitors(page, `/clubs/${OWNED_CLUB_ID}/quizzes`);
+  490 |     await page.goto(`/clubs/${OWNED_CLUB_ID}/quizzes`);
+  491 |     await waitForAngular(page);
+  492 | 
+  493 |     const url = page.url();
+  494 |     if (url.includes('/login')) {
+  495 |       addBug({ route: `/clubs/${OWNED_CLUB_ID}/quizzes`, severity: 'critical', category: 'redirect', description: 'Quiz list redirected to login' });
+  496 |       flush();
+  497 |       return;
+  498 |     }
+  499 | 
+  500 |     await checkUndefinedText(page, `/clubs/${OWNED_CLUB_ID}/quizzes`);
+  501 |     flush();
+  502 |   });
+  503 | 
+  504 |   test('GET /clubs/:id/quizzes/create — create quiz step 1', async ({ page }) => {
+  505 |     if (!OWNED_CLUB_ID) {
+  506 |       addBug({ route: '/clubs/:id/quizzes/create', severity: 'medium', category: 'ui-missing', description: 'Skipped: no owned club ID' });
+  507 |       return;
+```
+````
+
+## File: test-results/e2e-audit-Login-flow-Login-0f51c-redentials-redirects-to-app/error-context.md
+````markdown
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/audit.spec.ts >> Login flow >> Login with valid credentials redirects to app
+- Location: e2e/audit.spec.ts:311:7
+
+# Error details
+
+```
+Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+Call log:
+  - navigating to "/login", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  213 |     }
+  214 |   }
+  215 | });
+  216 | 
+  217 | // ── Unauthenticated tests ─────────────────────────────────────────────────────
+  218 | 
+  219 | test.describe('Unauthenticated', () => {
+  220 |   test('GET /login — form renders and validates', async ({ page }) => {
+  221 |     const flush = attachMonitors(page, '/login');
+  222 |     await page.goto('/login');
+  223 |     await waitForAngular(page);
+  224 |     // Form is gated by a 700ms entrance animation — wait for it to render
+  225 |     await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  226 | 
+  227 |     const emailInput = page.locator('input[type="email"], input[name="email"]');
+  228 |     const passwordInput = page.locator('input[type="password"]');
+  229 |     const submitBtn = page.locator('button[type="submit"]');
+  230 | 
+  231 |     if (!(await emailInput.isVisible())) {
+  232 |       addBug({ route: '/login', severity: 'critical', category: 'ui-missing', description: 'Email input not found' });
+  233 |     }
+  234 |     if (!(await passwordInput.isVisible())) {
+  235 |       addBug({ route: '/login', severity: 'critical', category: 'ui-missing', description: 'Password input not found' });
+  236 |     }
+  237 |     if (!(await submitBtn.isVisible())) {
+  238 |       addBug({ route: '/login', severity: 'critical', category: 'ui-missing', description: 'Submit button not found' });
+  239 |     }
+  240 | 
+  241 |     // Submit empty form and check validation
+  242 |     if (await submitBtn.isVisible()) {
+  243 |       await submitBtn.click();
+  244 |       await page.waitForTimeout(500);
+  245 |       const hasValidation = await page.locator('[class*="error"], [class*="invalid"], [aria-invalid="true"]').count();
+  246 |       if (hasValidation === 0) {
+  247 |         addBug({ route: '/login', severity: 'medium', category: 'form-error', description: 'Empty form submit shows no validation errors' });
+  248 |       }
+  249 |     }
+  250 | 
+  251 |     await checkUndefinedText(page, '/login');
+  252 |     flush();
+  253 |   });
+  254 | 
+  255 |   test('GET /register — form renders and validates', async ({ page }) => {
+  256 |     const flush = attachMonitors(page, '/register');
+  257 |     await page.goto('/register');
+  258 |     await waitForAngular(page);
+  259 |     // Form is gated by a 700ms entrance animation — wait for it to render
+  260 |     await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  261 | 
+  262 |     const emailInput = page.locator('input[type="email"], input[name="email"]');
+  263 |     const passwordInput = page.locator('input[type="password"]').first();
+  264 |     const submitBtn = page.locator('button[type="submit"]');
+  265 | 
+  266 |     if (!(await emailInput.isVisible())) {
+  267 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Email input not visible on register page' });
+  268 |     }
+  269 |     if (!(await passwordInput.isVisible())) {
+  270 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Password input not visible on register page' });
+  271 |     }
+  272 |     if (!(await submitBtn.isVisible())) {
+  273 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Submit button not visible on register page' });
+  274 |     }
+  275 | 
+  276 |     await checkUndefinedText(page, '/register');
+  277 |     flush();
+  278 |   });
+  279 | 
+  280 |   test('GET /events (unauthenticated) — redirects to login (protected route)', async ({ page }) => {
+  281 |     const flush = attachMonitors(page, '/events (unauth)');
+  282 |     await page.goto('/events');
+  283 |     await waitForAngular(page);
+  284 | 
+  285 |     const url = page.url();
+  286 |     if (!url.includes('/login')) {
+  287 |       addBug({ route: '/events (unauth)', severity: 'high', category: 'redirect', description: `Protected /events route did not redirect unauthenticated user to login — ended up at: ${url}` });
+  288 |     }
+  289 | 
+  290 |     flush();
+  291 |   });
+  292 | 
+  293 |   test('GET /clubs (unauthenticated) — redirects to login', async ({ page }) => {
+  294 |     const flush = attachMonitors(page, '/clubs (unauth)');
+  295 |     await page.goto('/clubs');
+  296 |     await waitForAngular(page);
+  297 | 
+  298 |     const url = page.url();
+  299 |     const isLoginPage = url.includes('/login') || url.includes('/clubs');
+  300 |     if (!isLoginPage) {
+  301 |       addBug({ route: '/clubs (unauth)', severity: 'medium', category: 'redirect', description: `Unexpected redirect target: ${url}` });
+  302 |     }
+  303 | 
+  304 |     flush();
+  305 |   });
+  306 | });
+  307 | 
+  308 | // ── Login via browser ─────────────────────────────────────────────────────────
+  309 | 
+  310 | test.describe('Login flow', () => {
+  311 |   test('Login with valid credentials redirects to app', async ({ page }) => {
+  312 |     const flush = attachMonitors(page, '/login (submit)');
+> 313 |     await page.goto('/login');
+      |                ^ Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+  314 |     await waitForAngular(page);
+  315 | 
+  316 |     const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+  317 |     const passwordInput = page.locator('input[type="password"]').first();
+  318 |     const submitBtn = page.locator('button[type="submit"]').first();
+  319 | 
+  320 |     if (!(await emailInput.isVisible())) {
+  321 |       flush();
+  322 |       return;
+  323 |     }
+  324 | 
+  325 |     await emailInput.fill('test123@mail.com');
+  326 |     await passwordInput.fill('test123@mail.com');
+  327 |     await submitBtn.click();
+  328 | 
+  329 |     try {
+  330 |       await page.waitForURL(/\/(clubs|events|profile)/, { timeout: 20_000 });
+  331 |     } catch {
+  332 |       addBug({ route: '/login (submit)', severity: 'critical', category: 'redirect', description: 'Login submit did not redirect to app within 20s' });
+  333 |     }
+  334 | 
+  335 |     flush();
+  336 |   });
+  337 | });
+  338 | 
+  339 | // ── Authenticated tests ───────────────────────────────────────────────────────
+  340 | 
+  341 | test.describe('Authenticated — Events', () => {
+  342 |   test('GET /events — feed loads with tabs', async ({ page }) => {
+  343 |     await injectAuth(page);
+  344 |     const flush = attachMonitors(page, '/events (auth)');
+  345 |     await page.goto('/events');
+  346 |     await waitForAngular(page);
+  347 | 
+  348 |     const hasCards = await page.locator('app-event-card').count();
+  349 |     const hasEmpty = await page.locator('app-empty-state').count();
+  350 |     const hasTabs = await page.locator('[role="tab"], button:has-text("Upcoming"), button:has-text("My Events")').count();
+  351 | 
+  352 |     if (hasCards === 0 && hasEmpty === 0) {
+  353 |       addBug({ route: '/events (auth)', severity: 'high', category: 'ui-missing', description: 'No event cards or empty state visible after auth' });
+  354 |     }
+  355 |     if (hasTabs === 0) {
+  356 |       addBug({ route: '/events (auth)', severity: 'medium', category: 'ui-missing', description: 'No tab switcher (Upcoming/My Events) visible for authenticated user' });
+  357 |     }
+  358 | 
+  359 |     await checkUndefinedText(page, '/events (auth)');
+  360 |     flush();
+  361 |   });
+  362 | 
+  363 |   test('GET /events/:id — event detail', async ({ page }) => {
+  364 |     if (!ANY_EVENT_ID) {
+  365 |       console.log('ℹ️  /events/:id skipped — no events in test account and event creation failed');
+  366 |       return;
+  367 |     }
+  368 |     await injectAuth(page);
+  369 |     const flush = attachMonitors(page, `/events/${ANY_EVENT_ID}`);
+  370 |     await page.goto(`/events/${ANY_EVENT_ID}`);
+  371 |     await waitForAngular(page);
+  372 | 
+  373 |     const title = page.locator('h1, h2, [class*="title"]').first();
+  374 |     if (!(await title.isVisible().catch(() => false))) {
+  375 |       addBug({ route: `/events/${ANY_EVENT_ID}`, severity: 'high', category: 'ui-missing', description: 'Event title not visible on detail page' });
+  376 |     }
+  377 | 
+  378 |     await checkUndefinedText(page, `/events/${ANY_EVENT_ID}`);
+  379 |     flush();
+  380 |   });
+  381 | });
+  382 | 
+  383 | test.describe('Authenticated — Clubs', () => {
+  384 |   test('GET /clubs — clubs list', async ({ page }) => {
+  385 |     await injectAuth(page);
+  386 |     const flush = attachMonitors(page, '/clubs');
+  387 |     await page.goto('/clubs');
+  388 |     await waitForAngular(page);
+  389 | 
+  390 |     const hasCards = await page.locator('app-club-card, [class*="club-card"]').count();
+  391 |     const hasEmpty = await page.locator('app-empty-state').count();
+  392 |     if (hasCards === 0 && hasEmpty === 0) {
+  393 |       addBug({ route: '/clubs', severity: 'high', category: 'ui-missing', description: 'No club cards or empty state visible' });
+  394 |     }
+  395 | 
+  396 |     await checkUndefinedText(page, '/clubs');
+  397 |     flush();
+  398 |   });
+  399 | 
+  400 |   test('GET /clubs/:id — club detail', async ({ page }) => {
+  401 |     if (!ANY_CLUB_ID) {
+  402 |       addBug({ route: '/clubs/:id', severity: 'medium', category: 'ui-missing', description: 'Skipped: no club ID discovered' });
+  403 |       return;
+  404 |     }
+  405 |     await injectAuth(page);
+  406 |     const flush = attachMonitors(page, `/clubs/${ANY_CLUB_ID}`);
+  407 |     await page.goto(`/clubs/${ANY_CLUB_ID}`);
+  408 |     await waitForAngular(page);
+  409 | 
+  410 |     const clubName = page.locator('h1, h2, [class*="club-name"], [class*="title"]').first();
+  411 |     if (!(await clubName.isVisible().catch(() => false))) {
+  412 |       addBug({ route: `/clubs/${ANY_CLUB_ID}`, severity: 'high', category: 'ui-missing', description: 'Club name/title not visible on detail page' });
+  413 |     }
+```
+````
+
+## File: test-results/e2e-audit-Unauthenticated--19d54-s-to-login-protected-route-/error-context.md
+````markdown
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/audit.spec.ts >> Unauthenticated >> GET /events (unauthenticated) — redirects to login (protected route)
+- Location: e2e/audit.spec.ts:280:7
+
+# Error details
+
+```
+Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+Call log:
+  - navigating to "/events", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  182 |     const events: { id: string }[] = Array.isArray(eventsBody)
+  183 |       ? eventsBody
+  184 |       : eventsBody.items ?? eventsBody.data ?? [];
+  185 |     if (events.length > 0) {
+  186 |       ANY_EVENT_ID = events[0].id;
+  187 |     } else if (OWNED_CLUB_ID) {
+  188 |       // No events found — create a temporary test event so the detail route can be audited
+  189 |       const tomorrow = new Date(Date.now() + 86_400_000).toISOString();
+  190 |       const createResp = await request
+  191 |         .post(`${API}/clubs/${OWNED_CLUB_ID}/events`, {
+  192 |           headers,
+  193 |           data: { title: '[Audit] Test Event', date: tomorrow, city: 'Kyiv' },
+  194 |           timeout: 30_000,
+  195 |         })
+  196 |         .catch(() => null);
+  197 |       if (createResp?.ok()) {
+  198 |         const created = await createResp.json();
+  199 |         ANY_EVENT_ID = created.id ?? '';
+  200 |       }
+  201 |     }
+  202 |   }
+  203 | 
+  204 |   // Discover quizzes for owned club
+  205 |   if (OWNED_CLUB_ID) {
+  206 |     const quizzesResp = await request
+  207 |       .get(`${API}/clubs/${OWNED_CLUB_ID}/quizzes`, { headers, timeout: 30_000 })
+  208 |       .catch(() => null);
+  209 |     if (quizzesResp?.ok()) {
+  210 |       const qBody = await quizzesResp.json();
+  211 |       const quizzes: { id: string }[] = Array.isArray(qBody) ? qBody : qBody.items ?? qBody.data ?? [];
+  212 |       if (quizzes.length > 0) ANY_QUIZ_ID = quizzes[0].id;
+  213 |     }
+  214 |   }
+  215 | });
+  216 | 
+  217 | // ── Unauthenticated tests ─────────────────────────────────────────────────────
+  218 | 
+  219 | test.describe('Unauthenticated', () => {
+  220 |   test('GET /login — form renders and validates', async ({ page }) => {
+  221 |     const flush = attachMonitors(page, '/login');
+  222 |     await page.goto('/login');
+  223 |     await waitForAngular(page);
+  224 |     // Form is gated by a 700ms entrance animation — wait for it to render
+  225 |     await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  226 | 
+  227 |     const emailInput = page.locator('input[type="email"], input[name="email"]');
+  228 |     const passwordInput = page.locator('input[type="password"]');
+  229 |     const submitBtn = page.locator('button[type="submit"]');
+  230 | 
+  231 |     if (!(await emailInput.isVisible())) {
+  232 |       addBug({ route: '/login', severity: 'critical', category: 'ui-missing', description: 'Email input not found' });
+  233 |     }
+  234 |     if (!(await passwordInput.isVisible())) {
+  235 |       addBug({ route: '/login', severity: 'critical', category: 'ui-missing', description: 'Password input not found' });
+  236 |     }
+  237 |     if (!(await submitBtn.isVisible())) {
+  238 |       addBug({ route: '/login', severity: 'critical', category: 'ui-missing', description: 'Submit button not found' });
+  239 |     }
+  240 | 
+  241 |     // Submit empty form and check validation
+  242 |     if (await submitBtn.isVisible()) {
+  243 |       await submitBtn.click();
+  244 |       await page.waitForTimeout(500);
+  245 |       const hasValidation = await page.locator('[class*="error"], [class*="invalid"], [aria-invalid="true"]').count();
+  246 |       if (hasValidation === 0) {
+  247 |         addBug({ route: '/login', severity: 'medium', category: 'form-error', description: 'Empty form submit shows no validation errors' });
+  248 |       }
+  249 |     }
+  250 | 
+  251 |     await checkUndefinedText(page, '/login');
+  252 |     flush();
+  253 |   });
+  254 | 
+  255 |   test('GET /register — form renders and validates', async ({ page }) => {
+  256 |     const flush = attachMonitors(page, '/register');
+  257 |     await page.goto('/register');
+  258 |     await waitForAngular(page);
+  259 |     // Form is gated by a 700ms entrance animation — wait for it to render
+  260 |     await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  261 | 
+  262 |     const emailInput = page.locator('input[type="email"], input[name="email"]');
+  263 |     const passwordInput = page.locator('input[type="password"]').first();
+  264 |     const submitBtn = page.locator('button[type="submit"]');
+  265 | 
+  266 |     if (!(await emailInput.isVisible())) {
+  267 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Email input not visible on register page' });
+  268 |     }
+  269 |     if (!(await passwordInput.isVisible())) {
+  270 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Password input not visible on register page' });
+  271 |     }
+  272 |     if (!(await submitBtn.isVisible())) {
+  273 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Submit button not visible on register page' });
+  274 |     }
+  275 | 
+  276 |     await checkUndefinedText(page, '/register');
+  277 |     flush();
+  278 |   });
+  279 | 
+  280 |   test('GET /events (unauthenticated) — redirects to login (protected route)', async ({ page }) => {
+  281 |     const flush = attachMonitors(page, '/events (unauth)');
+> 282 |     await page.goto('/events');
+      |                ^ Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+  283 |     await waitForAngular(page);
+  284 | 
+  285 |     const url = page.url();
+  286 |     if (!url.includes('/login')) {
+  287 |       addBug({ route: '/events (unauth)', severity: 'high', category: 'redirect', description: `Protected /events route did not redirect unauthenticated user to login — ended up at: ${url}` });
+  288 |     }
+  289 | 
+  290 |     flush();
+  291 |   });
+  292 | 
+  293 |   test('GET /clubs (unauthenticated) — redirects to login', async ({ page }) => {
+  294 |     const flush = attachMonitors(page, '/clubs (unauth)');
+  295 |     await page.goto('/clubs');
+  296 |     await waitForAngular(page);
+  297 | 
+  298 |     const url = page.url();
+  299 |     const isLoginPage = url.includes('/login') || url.includes('/clubs');
+  300 |     if (!isLoginPage) {
+  301 |       addBug({ route: '/clubs (unauth)', severity: 'medium', category: 'redirect', description: `Unexpected redirect target: ${url}` });
+  302 |     }
+  303 | 
+  304 |     flush();
+  305 |   });
+  306 | });
+  307 | 
+  308 | // ── Login via browser ─────────────────────────────────────────────────────────
+  309 | 
+  310 | test.describe('Login flow', () => {
+  311 |   test('Login with valid credentials redirects to app', async ({ page }) => {
+  312 |     const flush = attachMonitors(page, '/login (submit)');
+  313 |     await page.goto('/login');
+  314 |     await waitForAngular(page);
+  315 | 
+  316 |     const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+  317 |     const passwordInput = page.locator('input[type="password"]').first();
+  318 |     const submitBtn = page.locator('button[type="submit"]').first();
+  319 | 
+  320 |     if (!(await emailInput.isVisible())) {
+  321 |       flush();
+  322 |       return;
+  323 |     }
+  324 | 
+  325 |     await emailInput.fill('test123@mail.com');
+  326 |     await passwordInput.fill('test123@mail.com');
+  327 |     await submitBtn.click();
+  328 | 
+  329 |     try {
+  330 |       await page.waitForURL(/\/(clubs|events|profile)/, { timeout: 20_000 });
+  331 |     } catch {
+  332 |       addBug({ route: '/login (submit)', severity: 'critical', category: 'redirect', description: 'Login submit did not redirect to app within 20s' });
+  333 |     }
+  334 | 
+  335 |     flush();
+  336 |   });
+  337 | });
+  338 | 
+  339 | // ── Authenticated tests ───────────────────────────────────────────────────────
+  340 | 
+  341 | test.describe('Authenticated — Events', () => {
+  342 |   test('GET /events — feed loads with tabs', async ({ page }) => {
+  343 |     await injectAuth(page);
+  344 |     const flush = attachMonitors(page, '/events (auth)');
+  345 |     await page.goto('/events');
+  346 |     await waitForAngular(page);
+  347 | 
+  348 |     const hasCards = await page.locator('app-event-card').count();
+  349 |     const hasEmpty = await page.locator('app-empty-state').count();
+  350 |     const hasTabs = await page.locator('[role="tab"], button:has-text("Upcoming"), button:has-text("My Events")').count();
+  351 | 
+  352 |     if (hasCards === 0 && hasEmpty === 0) {
+  353 |       addBug({ route: '/events (auth)', severity: 'high', category: 'ui-missing', description: 'No event cards or empty state visible after auth' });
+  354 |     }
+  355 |     if (hasTabs === 0) {
+  356 |       addBug({ route: '/events (auth)', severity: 'medium', category: 'ui-missing', description: 'No tab switcher (Upcoming/My Events) visible for authenticated user' });
+  357 |     }
+  358 | 
+  359 |     await checkUndefinedText(page, '/events (auth)');
+  360 |     flush();
+  361 |   });
+  362 | 
+  363 |   test('GET /events/:id — event detail', async ({ page }) => {
+  364 |     if (!ANY_EVENT_ID) {
+  365 |       console.log('ℹ️  /events/:id skipped — no events in test account and event creation failed');
+  366 |       return;
+  367 |     }
+  368 |     await injectAuth(page);
+  369 |     const flush = attachMonitors(page, `/events/${ANY_EVENT_ID}`);
+  370 |     await page.goto(`/events/${ANY_EVENT_ID}`);
+  371 |     await waitForAngular(page);
+  372 | 
+  373 |     const title = page.locator('h1, h2, [class*="title"]').first();
+  374 |     if (!(await title.isVisible().catch(() => false))) {
+  375 |       addBug({ route: `/events/${ANY_EVENT_ID}`, severity: 'high', category: 'ui-missing', description: 'Event title not visible on detail page' });
+  376 |     }
+  377 | 
+  378 |     await checkUndefinedText(page, `/events/${ANY_EVENT_ID}`);
+  379 |     flush();
+  380 |   });
+  381 | });
+  382 | 
+```
+````
+
+## File: test-results/e2e-audit-Unauthenticated--89871--form-renders-and-validates/error-context.md
+````markdown
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/audit.spec.ts >> Unauthenticated >> GET /login — form renders and validates
+- Location: e2e/audit.spec.ts:220:7
+
+# Error details
+
+```
+Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+Call log:
+  - navigating to "/login", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  122 | }
+  123 | 
+  124 | async function waitForAngular(page: Page): Promise<void> {
+  125 |   await page.waitForLoadState('load');
+  126 |   await page.waitForTimeout(1000);
+  127 | }
+  128 | 
+  129 | // ── Setup ─────────────────────────────────────────────────────────────────────
+  130 | 
+  131 | test.setTimeout(120_000);
+  132 | 
+  133 | test.beforeAll(async ({ request }) => {
+  134 |   // Login via API to get tokens
+  135 |   const loginResp = await request.post(`${API}/auth/login`, {
+  136 |     data: { email: 'test123@mail.com', password: 'test123@mail.com' },
+  137 |     timeout: 60_000,
+  138 |   });
+  139 | 
+  140 |   if (!loginResp.ok()) {
+  141 |     addBug({
+  142 |       route: '/login (API)',
+  143 |       severity: 'critical',
+  144 |       category: 'network-failure',
+  145 |       description: `Login API failed: HTTP ${loginResp.status()} — ${await loginResp.text()}`,
+  146 |     });
+  147 |     return;
+  148 |   }
+  149 | 
+  150 |   const loginBody = await loginResp.json();
+  151 |   ACCESS_TOKEN = loginBody.accessToken ?? '';
+  152 |   REFRESH_TOKEN = loginBody.refreshToken ?? '';
+  153 |   CURRENT_USER_ID = loginBody.user?.id ?? '';
+  154 | 
+  155 |   if (!ACCESS_TOKEN) {
+  156 |     addBug({ route: '/login (API)', severity: 'critical', category: 'form-error', description: 'Login returned no accessToken' });
+  157 |     return;
+  158 |   }
+  159 | 
+  160 |   const headers = { Authorization: `Bearer ${ACCESS_TOKEN}` };
+  161 | 
+  162 |   // Discover clubs
+  163 |   const clubsResp = await request.get(`${API}/clubs`, { headers, timeout: 30_000 }).catch(() => null);
+  164 |   if (clubsResp?.ok()) {
+  165 |     const clubsBody = await clubsResp.json();
+  166 |     const clubs: { id: string; organizerId?: string }[] = Array.isArray(clubsBody)
+  167 |       ? clubsBody
+  168 |       : clubsBody.items ?? clubsBody.data ?? [];
+  169 |     if (clubs.length > 0) {
+  170 |       ANY_CLUB_ID = clubs[0].id;
+  171 |       const owned = clubs.find(c => c.organizerId === CURRENT_USER_ID);
+  172 |       OWNED_CLUB_ID = owned?.id ?? clubs[0].id;
+  173 |     }
+  174 |   } else {
+  175 |     addBug({ route: '/clubs (API)', severity: 'high', category: 'network-failure', description: `GET /clubs failed: ${clubsResp?.status()}` });
+  176 |   }
+  177 | 
+  178 |   // Discover events — if none exist, create a temporary one so /events/:id can be tested
+  179 |   const eventsResp = await request.get(`${API}/events`, { headers, timeout: 30_000 }).catch(() => null);
+  180 |   if (eventsResp?.ok()) {
+  181 |     const eventsBody = await eventsResp.json();
+  182 |     const events: { id: string }[] = Array.isArray(eventsBody)
+  183 |       ? eventsBody
+  184 |       : eventsBody.items ?? eventsBody.data ?? [];
+  185 |     if (events.length > 0) {
+  186 |       ANY_EVENT_ID = events[0].id;
+  187 |     } else if (OWNED_CLUB_ID) {
+  188 |       // No events found — create a temporary test event so the detail route can be audited
+  189 |       const tomorrow = new Date(Date.now() + 86_400_000).toISOString();
+  190 |       const createResp = await request
+  191 |         .post(`${API}/clubs/${OWNED_CLUB_ID}/events`, {
+  192 |           headers,
+  193 |           data: { title: '[Audit] Test Event', date: tomorrow, city: 'Kyiv' },
+  194 |           timeout: 30_000,
+  195 |         })
+  196 |         .catch(() => null);
+  197 |       if (createResp?.ok()) {
+  198 |         const created = await createResp.json();
+  199 |         ANY_EVENT_ID = created.id ?? '';
+  200 |       }
+  201 |     }
+  202 |   }
+  203 | 
+  204 |   // Discover quizzes for owned club
+  205 |   if (OWNED_CLUB_ID) {
+  206 |     const quizzesResp = await request
+  207 |       .get(`${API}/clubs/${OWNED_CLUB_ID}/quizzes`, { headers, timeout: 30_000 })
+  208 |       .catch(() => null);
+  209 |     if (quizzesResp?.ok()) {
+  210 |       const qBody = await quizzesResp.json();
+  211 |       const quizzes: { id: string }[] = Array.isArray(qBody) ? qBody : qBody.items ?? qBody.data ?? [];
+  212 |       if (quizzes.length > 0) ANY_QUIZ_ID = quizzes[0].id;
+  213 |     }
+  214 |   }
+  215 | });
+  216 | 
+  217 | // ── Unauthenticated tests ─────────────────────────────────────────────────────
+  218 | 
+  219 | test.describe('Unauthenticated', () => {
+  220 |   test('GET /login — form renders and validates', async ({ page }) => {
+  221 |     const flush = attachMonitors(page, '/login');
+> 222 |     await page.goto('/login');
+      |                ^ Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+  223 |     await waitForAngular(page);
+  224 |     // Form is gated by a 700ms entrance animation — wait for it to render
+  225 |     await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  226 | 
+  227 |     const emailInput = page.locator('input[type="email"], input[name="email"]');
+  228 |     const passwordInput = page.locator('input[type="password"]');
+  229 |     const submitBtn = page.locator('button[type="submit"]');
+  230 | 
+  231 |     if (!(await emailInput.isVisible())) {
+  232 |       addBug({ route: '/login', severity: 'critical', category: 'ui-missing', description: 'Email input not found' });
+  233 |     }
+  234 |     if (!(await passwordInput.isVisible())) {
+  235 |       addBug({ route: '/login', severity: 'critical', category: 'ui-missing', description: 'Password input not found' });
+  236 |     }
+  237 |     if (!(await submitBtn.isVisible())) {
+  238 |       addBug({ route: '/login', severity: 'critical', category: 'ui-missing', description: 'Submit button not found' });
+  239 |     }
+  240 | 
+  241 |     // Submit empty form and check validation
+  242 |     if (await submitBtn.isVisible()) {
+  243 |       await submitBtn.click();
+  244 |       await page.waitForTimeout(500);
+  245 |       const hasValidation = await page.locator('[class*="error"], [class*="invalid"], [aria-invalid="true"]').count();
+  246 |       if (hasValidation === 0) {
+  247 |         addBug({ route: '/login', severity: 'medium', category: 'form-error', description: 'Empty form submit shows no validation errors' });
+  248 |       }
+  249 |     }
+  250 | 
+  251 |     await checkUndefinedText(page, '/login');
+  252 |     flush();
+  253 |   });
+  254 | 
+  255 |   test('GET /register — form renders and validates', async ({ page }) => {
+  256 |     const flush = attachMonitors(page, '/register');
+  257 |     await page.goto('/register');
+  258 |     await waitForAngular(page);
+  259 |     // Form is gated by a 700ms entrance animation — wait for it to render
+  260 |     await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  261 | 
+  262 |     const emailInput = page.locator('input[type="email"], input[name="email"]');
+  263 |     const passwordInput = page.locator('input[type="password"]').first();
+  264 |     const submitBtn = page.locator('button[type="submit"]');
+  265 | 
+  266 |     if (!(await emailInput.isVisible())) {
+  267 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Email input not visible on register page' });
+  268 |     }
+  269 |     if (!(await passwordInput.isVisible())) {
+  270 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Password input not visible on register page' });
+  271 |     }
+  272 |     if (!(await submitBtn.isVisible())) {
+  273 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Submit button not visible on register page' });
+  274 |     }
+  275 | 
+  276 |     await checkUndefinedText(page, '/register');
+  277 |     flush();
+  278 |   });
+  279 | 
+  280 |   test('GET /events (unauthenticated) — redirects to login (protected route)', async ({ page }) => {
+  281 |     const flush = attachMonitors(page, '/events (unauth)');
+  282 |     await page.goto('/events');
+  283 |     await waitForAngular(page);
+  284 | 
+  285 |     const url = page.url();
+  286 |     if (!url.includes('/login')) {
+  287 |       addBug({ route: '/events (unauth)', severity: 'high', category: 'redirect', description: `Protected /events route did not redirect unauthenticated user to login — ended up at: ${url}` });
+  288 |     }
+  289 | 
+  290 |     flush();
+  291 |   });
+  292 | 
+  293 |   test('GET /clubs (unauthenticated) — redirects to login', async ({ page }) => {
+  294 |     const flush = attachMonitors(page, '/clubs (unauth)');
+  295 |     await page.goto('/clubs');
+  296 |     await waitForAngular(page);
+  297 | 
+  298 |     const url = page.url();
+  299 |     const isLoginPage = url.includes('/login') || url.includes('/clubs');
+  300 |     if (!isLoginPage) {
+  301 |       addBug({ route: '/clubs (unauth)', severity: 'medium', category: 'redirect', description: `Unexpected redirect target: ${url}` });
+  302 |     }
+  303 | 
+  304 |     flush();
+  305 |   });
+  306 | });
+  307 | 
+  308 | // ── Login via browser ─────────────────────────────────────────────────────────
+  309 | 
+  310 | test.describe('Login flow', () => {
+  311 |   test('Login with valid credentials redirects to app', async ({ page }) => {
+  312 |     const flush = attachMonitors(page, '/login (submit)');
+  313 |     await page.goto('/login');
+  314 |     await waitForAngular(page);
+  315 | 
+  316 |     const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+  317 |     const passwordInput = page.locator('input[type="password"]').first();
+  318 |     const submitBtn = page.locator('button[type="submit"]').first();
+  319 | 
+  320 |     if (!(await emailInput.isVisible())) {
+  321 |       flush();
+  322 |       return;
+```
+````
+
+## File: test-results/e2e-audit-Unauthenticated--a722f--form-renders-and-validates/error-context.md
+````markdown
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/audit.spec.ts >> Unauthenticated >> GET /register — form renders and validates
+- Location: e2e/audit.spec.ts:255:7
+
+# Error details
+
+```
+Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+Call log:
+  - navigating to "/register", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  157 |     return;
+  158 |   }
+  159 | 
+  160 |   const headers = { Authorization: `Bearer ${ACCESS_TOKEN}` };
+  161 | 
+  162 |   // Discover clubs
+  163 |   const clubsResp = await request.get(`${API}/clubs`, { headers, timeout: 30_000 }).catch(() => null);
+  164 |   if (clubsResp?.ok()) {
+  165 |     const clubsBody = await clubsResp.json();
+  166 |     const clubs: { id: string; organizerId?: string }[] = Array.isArray(clubsBody)
+  167 |       ? clubsBody
+  168 |       : clubsBody.items ?? clubsBody.data ?? [];
+  169 |     if (clubs.length > 0) {
+  170 |       ANY_CLUB_ID = clubs[0].id;
+  171 |       const owned = clubs.find(c => c.organizerId === CURRENT_USER_ID);
+  172 |       OWNED_CLUB_ID = owned?.id ?? clubs[0].id;
+  173 |     }
+  174 |   } else {
+  175 |     addBug({ route: '/clubs (API)', severity: 'high', category: 'network-failure', description: `GET /clubs failed: ${clubsResp?.status()}` });
+  176 |   }
+  177 | 
+  178 |   // Discover events — if none exist, create a temporary one so /events/:id can be tested
+  179 |   const eventsResp = await request.get(`${API}/events`, { headers, timeout: 30_000 }).catch(() => null);
+  180 |   if (eventsResp?.ok()) {
+  181 |     const eventsBody = await eventsResp.json();
+  182 |     const events: { id: string }[] = Array.isArray(eventsBody)
+  183 |       ? eventsBody
+  184 |       : eventsBody.items ?? eventsBody.data ?? [];
+  185 |     if (events.length > 0) {
+  186 |       ANY_EVENT_ID = events[0].id;
+  187 |     } else if (OWNED_CLUB_ID) {
+  188 |       // No events found — create a temporary test event so the detail route can be audited
+  189 |       const tomorrow = new Date(Date.now() + 86_400_000).toISOString();
+  190 |       const createResp = await request
+  191 |         .post(`${API}/clubs/${OWNED_CLUB_ID}/events`, {
+  192 |           headers,
+  193 |           data: { title: '[Audit] Test Event', date: tomorrow, city: 'Kyiv' },
+  194 |           timeout: 30_000,
+  195 |         })
+  196 |         .catch(() => null);
+  197 |       if (createResp?.ok()) {
+  198 |         const created = await createResp.json();
+  199 |         ANY_EVENT_ID = created.id ?? '';
+  200 |       }
+  201 |     }
+  202 |   }
+  203 | 
+  204 |   // Discover quizzes for owned club
+  205 |   if (OWNED_CLUB_ID) {
+  206 |     const quizzesResp = await request
+  207 |       .get(`${API}/clubs/${OWNED_CLUB_ID}/quizzes`, { headers, timeout: 30_000 })
+  208 |       .catch(() => null);
+  209 |     if (quizzesResp?.ok()) {
+  210 |       const qBody = await quizzesResp.json();
+  211 |       const quizzes: { id: string }[] = Array.isArray(qBody) ? qBody : qBody.items ?? qBody.data ?? [];
+  212 |       if (quizzes.length > 0) ANY_QUIZ_ID = quizzes[0].id;
+  213 |     }
+  214 |   }
+  215 | });
+  216 | 
+  217 | // ── Unauthenticated tests ─────────────────────────────────────────────────────
+  218 | 
+  219 | test.describe('Unauthenticated', () => {
+  220 |   test('GET /login — form renders and validates', async ({ page }) => {
+  221 |     const flush = attachMonitors(page, '/login');
+  222 |     await page.goto('/login');
+  223 |     await waitForAngular(page);
+  224 |     // Form is gated by a 700ms entrance animation — wait for it to render
+  225 |     await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  226 | 
+  227 |     const emailInput = page.locator('input[type="email"], input[name="email"]');
+  228 |     const passwordInput = page.locator('input[type="password"]');
+  229 |     const submitBtn = page.locator('button[type="submit"]');
+  230 | 
+  231 |     if (!(await emailInput.isVisible())) {
+  232 |       addBug({ route: '/login', severity: 'critical', category: 'ui-missing', description: 'Email input not found' });
+  233 |     }
+  234 |     if (!(await passwordInput.isVisible())) {
+  235 |       addBug({ route: '/login', severity: 'critical', category: 'ui-missing', description: 'Password input not found' });
+  236 |     }
+  237 |     if (!(await submitBtn.isVisible())) {
+  238 |       addBug({ route: '/login', severity: 'critical', category: 'ui-missing', description: 'Submit button not found' });
+  239 |     }
+  240 | 
+  241 |     // Submit empty form and check validation
+  242 |     if (await submitBtn.isVisible()) {
+  243 |       await submitBtn.click();
+  244 |       await page.waitForTimeout(500);
+  245 |       const hasValidation = await page.locator('[class*="error"], [class*="invalid"], [aria-invalid="true"]').count();
+  246 |       if (hasValidation === 0) {
+  247 |         addBug({ route: '/login', severity: 'medium', category: 'form-error', description: 'Empty form submit shows no validation errors' });
+  248 |       }
+  249 |     }
+  250 | 
+  251 |     await checkUndefinedText(page, '/login');
+  252 |     flush();
+  253 |   });
+  254 | 
+  255 |   test('GET /register — form renders and validates', async ({ page }) => {
+  256 |     const flush = attachMonitors(page, '/register');
+> 257 |     await page.goto('/register');
+      |                ^ Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+  258 |     await waitForAngular(page);
+  259 |     // Form is gated by a 700ms entrance animation — wait for it to render
+  260 |     await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  261 | 
+  262 |     const emailInput = page.locator('input[type="email"], input[name="email"]');
+  263 |     const passwordInput = page.locator('input[type="password"]').first();
+  264 |     const submitBtn = page.locator('button[type="submit"]');
+  265 | 
+  266 |     if (!(await emailInput.isVisible())) {
+  267 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Email input not visible on register page' });
+  268 |     }
+  269 |     if (!(await passwordInput.isVisible())) {
+  270 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Password input not visible on register page' });
+  271 |     }
+  272 |     if (!(await submitBtn.isVisible())) {
+  273 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Submit button not visible on register page' });
+  274 |     }
+  275 | 
+  276 |     await checkUndefinedText(page, '/register');
+  277 |     flush();
+  278 |   });
+  279 | 
+  280 |   test('GET /events (unauthenticated) — redirects to login (protected route)', async ({ page }) => {
+  281 |     const flush = attachMonitors(page, '/events (unauth)');
+  282 |     await page.goto('/events');
+  283 |     await waitForAngular(page);
+  284 | 
+  285 |     const url = page.url();
+  286 |     if (!url.includes('/login')) {
+  287 |       addBug({ route: '/events (unauth)', severity: 'high', category: 'redirect', description: `Protected /events route did not redirect unauthenticated user to login — ended up at: ${url}` });
+  288 |     }
+  289 | 
+  290 |     flush();
+  291 |   });
+  292 | 
+  293 |   test('GET /clubs (unauthenticated) — redirects to login', async ({ page }) => {
+  294 |     const flush = attachMonitors(page, '/clubs (unauth)');
+  295 |     await page.goto('/clubs');
+  296 |     await waitForAngular(page);
+  297 | 
+  298 |     const url = page.url();
+  299 |     const isLoginPage = url.includes('/login') || url.includes('/clubs');
+  300 |     if (!isLoginPage) {
+  301 |       addBug({ route: '/clubs (unauth)', severity: 'medium', category: 'redirect', description: `Unexpected redirect target: ${url}` });
+  302 |     }
+  303 | 
+  304 |     flush();
+  305 |   });
+  306 | });
+  307 | 
+  308 | // ── Login via browser ─────────────────────────────────────────────────────────
+  309 | 
+  310 | test.describe('Login flow', () => {
+  311 |   test('Login with valid credentials redirects to app', async ({ page }) => {
+  312 |     const flush = attachMonitors(page, '/login (submit)');
+  313 |     await page.goto('/login');
+  314 |     await waitForAngular(page);
+  315 | 
+  316 |     const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+  317 |     const passwordInput = page.locator('input[type="password"]').first();
+  318 |     const submitBtn = page.locator('button[type="submit"]').first();
+  319 | 
+  320 |     if (!(await emailInput.isVisible())) {
+  321 |       flush();
+  322 |       return;
+  323 |     }
+  324 | 
+  325 |     await emailInput.fill('test123@mail.com');
+  326 |     await passwordInput.fill('test123@mail.com');
+  327 |     await submitBtn.click();
+  328 | 
+  329 |     try {
+  330 |       await page.waitForURL(/\/(clubs|events|profile)/, { timeout: 20_000 });
+  331 |     } catch {
+  332 |       addBug({ route: '/login (submit)', severity: 'critical', category: 'redirect', description: 'Login submit did not redirect to app within 20s' });
+  333 |     }
+  334 | 
+  335 |     flush();
+  336 |   });
+  337 | });
+  338 | 
+  339 | // ── Authenticated tests ───────────────────────────────────────────────────────
+  340 | 
+  341 | test.describe('Authenticated — Events', () => {
+  342 |   test('GET /events — feed loads with tabs', async ({ page }) => {
+  343 |     await injectAuth(page);
+  344 |     const flush = attachMonitors(page, '/events (auth)');
+  345 |     await page.goto('/events');
+  346 |     await waitForAngular(page);
+  347 | 
+  348 |     const hasCards = await page.locator('app-event-card').count();
+  349 |     const hasEmpty = await page.locator('app-empty-state').count();
+  350 |     const hasTabs = await page.locator('[role="tab"], button:has-text("Upcoming"), button:has-text("My Events")').count();
+  351 | 
+  352 |     if (hasCards === 0 && hasEmpty === 0) {
+  353 |       addBug({ route: '/events (auth)', severity: 'high', category: 'ui-missing', description: 'No event cards or empty state visible after auth' });
+  354 |     }
+  355 |     if (hasTabs === 0) {
+  356 |       addBug({ route: '/events (auth)', severity: 'medium', category: 'ui-missing', description: 'No tab switcher (Upcoming/My Events) visible for authenticated user' });
+  357 |     }
+```
+````
+
+## File: test-results/e2e-audit-Unauthenticated--f7dba-icated-—-redirects-to-login/error-context.md
+````markdown
+# Instructions
+
+- Following Playwright test failed.
+- Explain why, be concise, respect Playwright best practices.
+- Provide a snippet of code with the fix, if possible.
+
+# Test info
+
+- Name: e2e/audit.spec.ts >> Unauthenticated >> GET /clubs (unauthenticated) — redirects to login
+- Location: e2e/audit.spec.ts:293:7
+
+# Error details
+
+```
+Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+Call log:
+  - navigating to "/clubs", waiting until "load"
+
+```
+
+# Test source
+
+```ts
+  195 |         })
+  196 |         .catch(() => null);
+  197 |       if (createResp?.ok()) {
+  198 |         const created = await createResp.json();
+  199 |         ANY_EVENT_ID = created.id ?? '';
+  200 |       }
+  201 |     }
+  202 |   }
+  203 | 
+  204 |   // Discover quizzes for owned club
+  205 |   if (OWNED_CLUB_ID) {
+  206 |     const quizzesResp = await request
+  207 |       .get(`${API}/clubs/${OWNED_CLUB_ID}/quizzes`, { headers, timeout: 30_000 })
+  208 |       .catch(() => null);
+  209 |     if (quizzesResp?.ok()) {
+  210 |       const qBody = await quizzesResp.json();
+  211 |       const quizzes: { id: string }[] = Array.isArray(qBody) ? qBody : qBody.items ?? qBody.data ?? [];
+  212 |       if (quizzes.length > 0) ANY_QUIZ_ID = quizzes[0].id;
+  213 |     }
+  214 |   }
+  215 | });
+  216 | 
+  217 | // ── Unauthenticated tests ─────────────────────────────────────────────────────
+  218 | 
+  219 | test.describe('Unauthenticated', () => {
+  220 |   test('GET /login — form renders and validates', async ({ page }) => {
+  221 |     const flush = attachMonitors(page, '/login');
+  222 |     await page.goto('/login');
+  223 |     await waitForAngular(page);
+  224 |     // Form is gated by a 700ms entrance animation — wait for it to render
+  225 |     await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  226 | 
+  227 |     const emailInput = page.locator('input[type="email"], input[name="email"]');
+  228 |     const passwordInput = page.locator('input[type="password"]');
+  229 |     const submitBtn = page.locator('button[type="submit"]');
+  230 | 
+  231 |     if (!(await emailInput.isVisible())) {
+  232 |       addBug({ route: '/login', severity: 'critical', category: 'ui-missing', description: 'Email input not found' });
+  233 |     }
+  234 |     if (!(await passwordInput.isVisible())) {
+  235 |       addBug({ route: '/login', severity: 'critical', category: 'ui-missing', description: 'Password input not found' });
+  236 |     }
+  237 |     if (!(await submitBtn.isVisible())) {
+  238 |       addBug({ route: '/login', severity: 'critical', category: 'ui-missing', description: 'Submit button not found' });
+  239 |     }
+  240 | 
+  241 |     // Submit empty form and check validation
+  242 |     if (await submitBtn.isVisible()) {
+  243 |       await submitBtn.click();
+  244 |       await page.waitForTimeout(500);
+  245 |       const hasValidation = await page.locator('[class*="error"], [class*="invalid"], [aria-invalid="true"]').count();
+  246 |       if (hasValidation === 0) {
+  247 |         addBug({ route: '/login', severity: 'medium', category: 'form-error', description: 'Empty form submit shows no validation errors' });
+  248 |       }
+  249 |     }
+  250 | 
+  251 |     await checkUndefinedText(page, '/login');
+  252 |     flush();
+  253 |   });
+  254 | 
+  255 |   test('GET /register — form renders and validates', async ({ page }) => {
+  256 |     const flush = attachMonitors(page, '/register');
+  257 |     await page.goto('/register');
+  258 |     await waitForAngular(page);
+  259 |     // Form is gated by a 700ms entrance animation — wait for it to render
+  260 |     await page.locator('input[type="email"]').waitFor({ state: 'visible', timeout: 3000 }).catch(() => {});
+  261 | 
+  262 |     const emailInput = page.locator('input[type="email"], input[name="email"]');
+  263 |     const passwordInput = page.locator('input[type="password"]').first();
+  264 |     const submitBtn = page.locator('button[type="submit"]');
+  265 | 
+  266 |     if (!(await emailInput.isVisible())) {
+  267 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Email input not visible on register page' });
+  268 |     }
+  269 |     if (!(await passwordInput.isVisible())) {
+  270 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Password input not visible on register page' });
+  271 |     }
+  272 |     if (!(await submitBtn.isVisible())) {
+  273 |       addBug({ route: '/register', severity: 'high', category: 'ui-missing', description: 'Submit button not visible on register page' });
+  274 |     }
+  275 | 
+  276 |     await checkUndefinedText(page, '/register');
+  277 |     flush();
+  278 |   });
+  279 | 
+  280 |   test('GET /events (unauthenticated) — redirects to login (protected route)', async ({ page }) => {
+  281 |     const flush = attachMonitors(page, '/events (unauth)');
+  282 |     await page.goto('/events');
+  283 |     await waitForAngular(page);
+  284 | 
+  285 |     const url = page.url();
+  286 |     if (!url.includes('/login')) {
+  287 |       addBug({ route: '/events (unauth)', severity: 'high', category: 'redirect', description: `Protected /events route did not redirect unauthenticated user to login — ended up at: ${url}` });
+  288 |     }
+  289 | 
+  290 |     flush();
+  291 |   });
+  292 | 
+  293 |   test('GET /clubs (unauthenticated) — redirects to login', async ({ page }) => {
+  294 |     const flush = attachMonitors(page, '/clubs (unauth)');
+> 295 |     await page.goto('/clubs');
+      |                ^ Error: page.goto: Protocol error (Page.navigate): Cannot navigate to invalid URL
+  296 |     await waitForAngular(page);
+  297 | 
+  298 |     const url = page.url();
+  299 |     const isLoginPage = url.includes('/login') || url.includes('/clubs');
+  300 |     if (!isLoginPage) {
+  301 |       addBug({ route: '/clubs (unauth)', severity: 'medium', category: 'redirect', description: `Unexpected redirect target: ${url}` });
+  302 |     }
+  303 | 
+  304 |     flush();
+  305 |   });
+  306 | });
+  307 | 
+  308 | // ── Login via browser ─────────────────────────────────────────────────────────
+  309 | 
+  310 | test.describe('Login flow', () => {
+  311 |   test('Login with valid credentials redirects to app', async ({ page }) => {
+  312 |     const flush = attachMonitors(page, '/login (submit)');
+  313 |     await page.goto('/login');
+  314 |     await waitForAngular(page);
+  315 | 
+  316 |     const emailInput = page.locator('input[type="email"], input[name="email"]').first();
+  317 |     const passwordInput = page.locator('input[type="password"]').first();
+  318 |     const submitBtn = page.locator('button[type="submit"]').first();
+  319 | 
+  320 |     if (!(await emailInput.isVisible())) {
+  321 |       flush();
+  322 |       return;
+  323 |     }
+  324 | 
+  325 |     await emailInput.fill('test123@mail.com');
+  326 |     await passwordInput.fill('test123@mail.com');
+  327 |     await submitBtn.click();
+  328 | 
+  329 |     try {
+  330 |       await page.waitForURL(/\/(clubs|events|profile)/, { timeout: 20_000 });
+  331 |     } catch {
+  332 |       addBug({ route: '/login (submit)', severity: 'critical', category: 'redirect', description: 'Login submit did not redirect to app within 20s' });
+  333 |     }
+  334 | 
+  335 |     flush();
+  336 |   });
+  337 | });
+  338 | 
+  339 | // ── Authenticated tests ───────────────────────────────────────────────────────
+  340 | 
+  341 | test.describe('Authenticated — Events', () => {
+  342 |   test('GET /events — feed loads with tabs', async ({ page }) => {
+  343 |     await injectAuth(page);
+  344 |     const flush = attachMonitors(page, '/events (auth)');
+  345 |     await page.goto('/events');
+  346 |     await waitForAngular(page);
+  347 | 
+  348 |     const hasCards = await page.locator('app-event-card').count();
+  349 |     const hasEmpty = await page.locator('app-empty-state').count();
+  350 |     const hasTabs = await page.locator('[role="tab"], button:has-text("Upcoming"), button:has-text("My Events")').count();
+  351 | 
+  352 |     if (hasCards === 0 && hasEmpty === 0) {
+  353 |       addBug({ route: '/events (auth)', severity: 'high', category: 'ui-missing', description: 'No event cards or empty state visible after auth' });
+  354 |     }
+  355 |     if (hasTabs === 0) {
+  356 |       addBug({ route: '/events (auth)', severity: 'medium', category: 'ui-missing', description: 'No tab switcher (Upcoming/My Events) visible for authenticated user' });
+  357 |     }
+  358 | 
+  359 |     await checkUndefinedText(page, '/events (auth)');
+  360 |     flush();
+  361 |   });
+  362 | 
+  363 |   test('GET /events/:id — event detail', async ({ page }) => {
+  364 |     if (!ANY_EVENT_ID) {
+  365 |       console.log('ℹ️  /events/:id skipped — no events in test account and event creation failed');
+  366 |       return;
+  367 |     }
+  368 |     await injectAuth(page);
+  369 |     const flush = attachMonitors(page, `/events/${ANY_EVENT_ID}`);
+  370 |     await page.goto(`/events/${ANY_EVENT_ID}`);
+  371 |     await waitForAngular(page);
+  372 | 
+  373 |     const title = page.locator('h1, h2, [class*="title"]').first();
+  374 |     if (!(await title.isVisible().catch(() => false))) {
+  375 |       addBug({ route: `/events/${ANY_EVENT_ID}`, severity: 'high', category: 'ui-missing', description: 'Event title not visible on detail page' });
+  376 |     }
+  377 | 
+  378 |     await checkUndefinedText(page, `/events/${ANY_EVENT_ID}`);
+  379 |     flush();
+  380 |   });
+  381 | });
+  382 | 
+  383 | test.describe('Authenticated — Clubs', () => {
+  384 |   test('GET /clubs — clubs list', async ({ page }) => {
+  385 |     await injectAuth(page);
+  386 |     const flush = attachMonitors(page, '/clubs');
+  387 |     await page.goto('/clubs');
+  388 |     await waitForAngular(page);
+  389 | 
+  390 |     const hasCards = await page.locator('app-club-card, [class*="club-card"]').count();
+  391 |     const hasEmpty = await page.locator('app-empty-state').count();
+  392 |     if (hasCards === 0 && hasEmpty === 0) {
+  393 |       addBug({ route: '/clubs', severity: 'high', category: 'ui-missing', description: 'No club cards or empty state visible' });
+  394 |     }
+  395 | 
+```
 ````
 
 ## File: .editorconfig
@@ -5409,65 +8639,6 @@ export class ClubMembersListComponent {
     return lines.join('\n');
   }
 }
-````
-
-## File: src/app/features/clubs/clubs.routes.ts
-````typescript
-import { Routes } from '@angular/router';
-import { authGuard } from '../../core/auth/auth.guard';
-import { roleGuard } from '../../core/auth/role.guard';
-import { ClubsListComponent } from './clubs-list/clubs-list.component';
-import { ClubDetailComponent } from './club-detail/club-detail.component';
-import { CreateClubComponent } from './create-club/create-club.component';
-export const CLUBS_ROUTES: Routes = [
-  {
-    path: '',
-    component: ClubsListComponent,
-    canActivate: [authGuard],
-  },
-  {
-    path: 'create',
-    component: CreateClubComponent,
-    canActivate: [authGuard, roleGuard('organizer')],
-  },
-  {
-    path: ':id',
-    children: [
-      {
-        path: '',
-        component: ClubDetailComponent,
-        canActivate: [authGuard],
-      },
-      {
-        path: 'randomizer',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('../randomizer/randomizer.component').then(
-            m => m.RandomizerComponent,
-          ),
-      },
-      {
-        path: 'quizzes',
-        loadChildren: () =>
-          import('../quiz/quiz.routes').then(m => m.QUIZ_ROUTES),
-      },
-      {
-        path: 'events/create',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('../events/create-event/create-event.component').then(
-            m => m.CreateEventComponent,
-          ),
-      },
-      {
-        path: 'edit',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('./edit-club/edit-club.component').then(m => m.EditClubComponent),
-      },
-    ],
-  },
-];
 ````
 
 ## File: src/app/features/privacy/privacy.component.ts
@@ -9115,6 +12286,238 @@ export class BookVoteService {
 }
 ````
 
+## File: src/app/core/services/club.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
+import { AuthService } from '../auth/auth.service';
+import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
+import { ClubEvent } from '../models/event.model';
+@Injectable({ providedIn: 'root' })
+export class ClubService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly _clubs = signal<Club[]>([]);
+  private readonly _myClubs = signal<Club[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _error = signal<string | null>(null);
+  private readonly _searchQuery = signal('');
+  private readonly _cityFilter = signal<string | null>(null);
+  readonly clubs = this._clubs.asReadonly();
+  readonly myClubs = this._myClubs.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly searchQuery = this._searchQuery.asReadonly();
+  readonly myOwnedClubs = computed<Club[]>(() => {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return [];
+    return this._clubs().filter(c => c.organizerId === userId);
+  });
+  readonly myOwnedClubIds = computed<Set<string>>(() =>
+    new Set(this.myOwnedClubs().map(c => c.id)),
+  );
+  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
+  readonly availableCities = computed<string[]>(() => {
+    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
+    return cities.sort((a, b) => a.localeCompare(b));
+  });
+  readonly filteredClubs = computed(() => {
+    const q = this._searchQuery().toLowerCase().trim();
+    const city = this._cityFilter();
+    let clubs = this._clubs();
+    if (q) {
+      clubs = clubs.filter(
+        c =>
+          c.name.toLowerCase().includes(q) ||
+          (c.description?.toLowerCase().includes(q) ?? false),
+      );
+    }
+    if (city) {
+      clubs = clubs.filter(c => c.city === city);
+    }
+    return clubs;
+  });
+  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
+    const clubs = this.filteredClubs();
+    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
+      const city = club.city || '';
+      if (!acc[city]) acc[city] = [];
+      acc[city].push(club);
+      return acc;
+    }, {});
+  });
+  readonly myParticipatedClubs = computed<Club[]>(() => []);
+  readonly myMissedClubs = computed<Club[]>(() => []);
+  setSearchQuery(query: string): void {
+    this._searchQuery.set(query);
+  }
+  setCityFilter(city: string | null): void {
+    this._cityFilter.set(city);
+  }
+  async loadPublicClubs(): Promise<void> {
+    this._isLoading.set(true);
+    this._error.set(null);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
+      );
+      this._clubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load clubs');
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async loadMyClubs(): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
+      );
+      this._myClubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load my clubs');
+    }
+  }
+  async getClubById(id: string): Promise<Club | null> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
+      );
+      return mapClub(raw);
+    } catch {
+      return null;
+    }
+  }
+  async createClub(payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    coverUrl?: string | null;
+    city?: string;
+    tags?: string[];
+    meetingDurationMinutes?: number | null;
+    afterMeetingVenue?: { name: string; address: string; description: string } | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
+        name: payload.name,
+        description: payload.description,
+        isPublic: payload.isPublic,
+        coverUrl: payload.coverUrl ?? null,
+        city: payload.city,
+        tags: payload.tags,
+        meetingDurationMinutes: payload.meetingDurationMinutes,
+        afterMeetingVenue: payload.afterMeetingVenue,
+      }),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(existing => [club, ...existing]);
+    this._myClubs.update(existing => [club, ...existing]);
+    return club;
+  }
+  async updateClub(clubId: string, payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    city?: string;
+    coverUrl?: string | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    return club;
+  }
+  async joinClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
+    );
+    this._clubs.update(list =>
+      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
+    );
+    const club = this._clubs().find(c => c.id === clubId);
+    if (club && !this.myClubIds().has(clubId)) {
+      this._myClubs.update(list => [club, ...list]);
+    }
+  }
+  async leaveClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
+    );
+    this._clubs.update(list =>
+      list.map(c =>
+        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
+      ),
+    );
+    this._myClubs.update(list => list.filter(c => c.id !== clubId));
+  }
+  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
+    );
+    return raw.map(mapClubMember);
+  }
+  async kickMember(clubId: string, userId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
+    );
+  }
+  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
+    );
+  }
+  async getBans(clubId: string): Promise<BanRecord[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
+    );
+    return raw.map(mapBanRecord);
+  }
+  async loadClubEvents(clubId: string, includePast = false): Promise<ClubEvent[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`, {
+        params: { include_past: String(includePast) },
+      }),
+    );
+    return raw.map(mapEvent);
+  }
+  async deleteClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}`),
+    );
+    this._clubs.update(list => list.filter(c => c.id !== clubId));
+    this._myClubs.update(list => list.filter(c => c.id !== clubId));
+  }
+  async pauseClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'pause');
+  }
+  async cancelClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'cancel');
+  }
+  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
+  }
+  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+  msUntilDeletion(club: Club): number | null {
+    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
+    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
+    const remaining = deletionTime - Date.now();
+    return remaining > 0 ? remaining : null;
+  }
+}
+````
+
 ## File: src/app/core/services/event.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -10866,6 +14269,193 @@ export default {
 }
 ````
 
+## File: src/app/core/api/api-mappers.ts
+````typescript
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
+import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
+export interface ApiUserProfile {
+  id: string;
+  email: string;
+  role: UserRole;
+  displayName: string;
+  avatarUrl: string | null;
+  createdAt: string;
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export type ApiUserSocials = { [K in keyof UserSocials]?: string | null };
+export interface ApiUserStats {
+  clubsJoined: number;
+  quizzesTaken: number;
+  quizWins: number;
+  likesReceived: number;
+  booksRead: number;
+}
+export interface ApiClub {
+  id: string;
+  name: string;
+  description: string | null;
+  coverUrl: string | null;
+  organizerId: string;
+  isPublic: boolean;
+  memberCount: number;
+  memberPreviews: string[];
+  createdAt: string;
+  city: string | null;
+  nextMeetingDate: string | null;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  theme: string | null;
+  currentBook: string | null;
+  status: ClubStatus;
+  tags: string[];
+  meetingDurationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  cancelledAt?: string | null;
+}
+export interface ApiClubMember {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  role: 'organizer' | 'member';
+  socials?: ApiUserSocials | null;
+  socialsPublic?: boolean;
+}
+export interface ApiBanRecord {
+  userId: string;
+  clubId: string;
+  bannedAt: string;
+  duration: BanDuration;
+  bannedBy: string;
+}
+export interface ApiEvent {
+  id: string;
+  clubId: string;
+  clubName: string;
+  organizerId: string;
+  title: string;
+  description: string | null;
+  date: string;
+  city: string;
+  address: string | null;
+  lat: number | null;
+  lng: number | null;
+  status: EventStatus;
+  cancelledAt?: string | null;
+  coverUrl?: string | null;
+  theme: string | null;
+  tags: string[];
+  durationMinutes: number | null;
+  afterMeetingVenue: AfterMeetingVenue | null;
+  attendeeCount: number;
+  isAttending: boolean;
+  bookTitle?: string | null;
+  quizId?: string | null;
+}
+export function mapUserProfile(raw: ApiUserProfile): UserProfile {
+  return {
+    id: raw.id,
+    role: raw.role,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    createdAt: raw.createdAt,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
+}
+export function mapUserStats(raw: ApiUserStats): UserStats {
+  return {
+    clubsJoined: raw.clubsJoined,
+    quizzesTaken: raw.quizzesTaken,
+    quizWins: raw.quizWins,
+    likesReceived: raw.likesReceived,
+    booksRead: raw.booksRead,
+  };
+}
+export function mapClub(raw: ApiClub): Club {
+  return {
+    id: raw.id,
+    name: raw.name,
+    description: raw.description,
+    coverUrl: raw.coverUrl,
+    organizerId: raw.organizerId,
+    isPublic: raw.isPublic,
+    memberCount: raw.memberCount,
+    memberPreviews: raw.memberPreviews ?? [],
+    createdAt: raw.createdAt,
+    city: raw.city ?? '',
+    nextMeetingDate: raw.nextMeetingDate,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    theme: raw.theme,
+    currentBook: raw.currentBook ? { title: raw.currentBook, author: '', description: '' } : null,
+    status: raw.status,
+    tags: raw.tags ?? [],
+    meetingDurationMinutes: raw.meetingDurationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    cancelledAt: raw.cancelledAt ?? undefined,
+  };
+}
+export function mapEvent(raw: ApiEvent): ClubEvent {
+  return {
+    id: raw.id,
+    clubId: raw.clubId,
+    clubName: raw.clubName,
+    organizerId: raw.organizerId,
+    title: raw.title,
+    description: raw.description,
+    date: raw.date,
+    city: raw.city,
+    address: raw.address,
+    lat: raw.lat,
+    lng: raw.lng,
+    status: raw.status,
+    cancelledAt: raw.cancelledAt ?? undefined,
+    coverUrl: raw.coverUrl ?? null,
+    theme: raw.theme,
+    tags: raw.tags ?? [],
+    durationMinutes: raw.durationMinutes,
+    afterMeetingVenue: raw.afterMeetingVenue,
+    attendeeCount: raw.attendeeCount,
+    isAttending: raw.isAttending,
+    bookTitle: raw.bookTitle ?? null,
+    quizId: raw.quizId ?? null,
+  };
+}
+export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
+  return {
+    userId: raw.userId,
+    displayName: raw.displayName,
+    avatarUrl: raw.avatarUrl,
+    role: raw.role,
+    socials: raw.socials ? mapSocials(raw.socials) : undefined,
+    socialsPublic: raw.socialsPublic ?? false,
+  };
+}
+export function mapBanRecord(raw: ApiBanRecord): BanRecord {
+  return {
+    userId: raw.userId,
+    clubId: raw.clubId,
+    bannedAt: raw.bannedAt,
+    duration: raw.duration,
+    bannedBy: raw.bannedBy,
+  };
+}
+function mapSocials(raw: ApiUserSocials): UserSocials {
+  return {
+    telegram: raw.telegram ?? undefined,
+    instagram: raw.instagram ?? undefined,
+    twitter: raw.twitter ?? undefined,
+    linkedin: raw.linkedin ?? undefined,
+    github: raw.github ?? undefined,
+    goodreads: raw.goodreads ?? undefined,
+  };
+}
+````
+
 ## File: src/app/core/auth/auth.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -11233,238 +14823,6 @@ export class ChatService {
 }
 ````
 
-## File: src/app/core/services/club.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
-import { AuthService } from '../auth/auth.service';
-import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
-import { ClubEvent } from '../models/event.model';
-@Injectable({ providedIn: 'root' })
-export class ClubService {
-  private readonly http = inject(HttpClient);
-  private readonly auth = inject(AuthService);
-  private readonly _clubs = signal<Club[]>([]);
-  private readonly _myClubs = signal<Club[]>([]);
-  private readonly _isLoading = signal(false);
-  private readonly _error = signal<string | null>(null);
-  private readonly _searchQuery = signal('');
-  private readonly _cityFilter = signal<string | null>(null);
-  readonly clubs = this._clubs.asReadonly();
-  readonly myClubs = this._myClubs.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly error = this._error.asReadonly();
-  readonly searchQuery = this._searchQuery.asReadonly();
-  readonly myOwnedClubs = computed<Club[]>(() => {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) return [];
-    return this._clubs().filter(c => c.organizerId === userId);
-  });
-  readonly myOwnedClubIds = computed<Set<string>>(() =>
-    new Set(this.myOwnedClubs().map(c => c.id)),
-  );
-  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
-  readonly availableCities = computed<string[]>(() => {
-    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
-    return cities.sort((a, b) => a.localeCompare(b));
-  });
-  readonly filteredClubs = computed(() => {
-    const q = this._searchQuery().toLowerCase().trim();
-    const city = this._cityFilter();
-    let clubs = this._clubs();
-    if (q) {
-      clubs = clubs.filter(
-        c =>
-          c.name.toLowerCase().includes(q) ||
-          (c.description?.toLowerCase().includes(q) ?? false),
-      );
-    }
-    if (city) {
-      clubs = clubs.filter(c => c.city === city);
-    }
-    return clubs;
-  });
-  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
-    const clubs = this.filteredClubs();
-    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
-      const city = club.city || '';
-      if (!acc[city]) acc[city] = [];
-      acc[city].push(club);
-      return acc;
-    }, {});
-  });
-  readonly myParticipatedClubs = computed<Club[]>(() => []);
-  readonly myMissedClubs = computed<Club[]>(() => []);
-  setSearchQuery(query: string): void {
-    this._searchQuery.set(query);
-  }
-  setCityFilter(city: string | null): void {
-    this._cityFilter.set(city);
-  }
-  async loadPublicClubs(): Promise<void> {
-    this._isLoading.set(true);
-    this._error.set(null);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
-      );
-      this._clubs.set(raw.map(mapClub));
-    } catch {
-      this._error.set('Failed to load clubs');
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async loadMyClubs(): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
-      );
-      this._myClubs.set(raw.map(mapClub));
-    } catch {
-      this._error.set('Failed to load my clubs');
-    }
-  }
-  async getClubById(id: string): Promise<Club | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
-      );
-      return mapClub(raw);
-    } catch {
-      return null;
-    }
-  }
-  async createClub(payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    coverUrl?: string | null;
-    city?: string;
-    tags?: string[];
-    meetingDurationMinutes?: number | null;
-    afterMeetingVenue?: { name: string; address: string; description: string } | null;
-  }): Promise<Club> {
-    const raw = await firstValueFrom(
-      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
-        name: payload.name,
-        description: payload.description,
-        isPublic: payload.isPublic,
-        coverUrl: payload.coverUrl ?? null,
-        city: payload.city,
-        tags: payload.tags,
-        meetingDurationMinutes: payload.meetingDurationMinutes,
-        afterMeetingVenue: payload.afterMeetingVenue,
-      }),
-    );
-    const club = mapClub(raw);
-    this._clubs.update(existing => [club, ...existing]);
-    this._myClubs.update(existing => [club, ...existing]);
-    return club;
-  }
-  async updateClub(clubId: string, payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    city?: string;
-    coverUrl?: string | null;
-  }): Promise<Club> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
-    );
-    const club = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    return club;
-  }
-  async joinClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
-    );
-    this._clubs.update(list =>
-      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
-    );
-    const club = this._clubs().find(c => c.id === clubId);
-    if (club && !this.myClubIds().has(clubId)) {
-      this._myClubs.update(list => [club, ...list]);
-    }
-  }
-  async leaveClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
-    );
-    this._clubs.update(list =>
-      list.map(c =>
-        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
-      ),
-    );
-    this._myClubs.update(list => list.filter(c => c.id !== clubId));
-  }
-  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
-    );
-    return raw.map(mapClubMember);
-  }
-  async kickMember(clubId: string, userId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
-    );
-  }
-  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
-    );
-  }
-  async getBans(clubId: string): Promise<BanRecord[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
-    );
-    return raw.map(mapBanRecord);
-  }
-  async loadClubEvents(clubId: string, includePast = false): Promise<ClubEvent[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`, {
-        params: { include_past: String(includePast) },
-      }),
-    );
-    return raw.map(mapEvent);
-  }
-  async deleteClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}`),
-    );
-    this._clubs.update(list => list.filter(c => c.id !== clubId));
-    this._myClubs.update(list => list.filter(c => c.id !== clubId));
-  }
-  async pauseClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'pause');
-  }
-  async cancelClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'cancel');
-  }
-  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
-  }
-  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
-    );
-    const updated = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
-  }
-  msUntilDeletion(club: Club): number | null {
-    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
-    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
-    const remaining = deletionTime - Date.now();
-    return remaining > 0 ? remaining : null;
-  }
-}
-````
-
 ## File: src/app/features/auth/login/login.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
@@ -11557,6 +14915,7 @@ export class LoginComponent {
           hlmBtn
           variant="outline"
           type="button"
+          data-testid="leave-button"
           (click)="leave.emit()"
           [disabled]="isActionLoading()"
           [attr.aria-label]="'CLUB_DETAIL.leave' | translate"
@@ -12564,193 +15923,6 @@ export class ChatWidgetComponent {
 }
 ````
 
-## File: src/app/core/api/api-mappers.ts
-````typescript
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
-import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
-export interface ApiUserProfile {
-  id: string;
-  email: string;
-  role: UserRole;
-  displayName: string;
-  avatarUrl: string | null;
-  createdAt: string;
-  socials?: ApiUserSocials | null;
-  socialsPublic?: boolean;
-}
-export type ApiUserSocials = { [K in keyof UserSocials]?: string | null };
-export interface ApiUserStats {
-  clubsJoined: number;
-  quizzesTaken: number;
-  quizWins: number;
-  likesReceived: number;
-  booksRead: number;
-}
-export interface ApiClub {
-  id: string;
-  name: string;
-  description: string | null;
-  coverUrl: string | null;
-  organizerId: string;
-  isPublic: boolean;
-  memberCount: number;
-  memberPreviews: string[];
-  createdAt: string;
-  city: string | null;
-  nextMeetingDate: string | null;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  theme: string | null;
-  currentBook: string | null;
-  status: ClubStatus;
-  tags: string[];
-  meetingDurationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  cancelledAt?: string | null;
-}
-export interface ApiClubMember {
-  userId: string;
-  displayName: string;
-  avatarUrl: string | null;
-  role: 'organizer' | 'member';
-  socials?: ApiUserSocials | null;
-  socialsPublic?: boolean;
-}
-export interface ApiBanRecord {
-  userId: string;
-  clubId: string;
-  bannedAt: string;
-  duration: BanDuration;
-  bannedBy: string;
-}
-export interface ApiEvent {
-  id: string;
-  clubId: string;
-  clubName: string;
-  organizerId: string;
-  title: string;
-  description: string | null;
-  date: string;
-  city: string;
-  address: string | null;
-  lat: number | null;
-  lng: number | null;
-  status: EventStatus;
-  cancelledAt?: string | null;
-  coverUrl?: string | null;
-  theme: string | null;
-  tags: string[];
-  durationMinutes: number | null;
-  afterMeetingVenue: AfterMeetingVenue | null;
-  attendeeCount: number;
-  isAttending: boolean;
-  bookTitle?: string | null;
-  quizId?: string | null;
-}
-export function mapUserProfile(raw: ApiUserProfile): UserProfile {
-  return {
-    id: raw.id,
-    role: raw.role,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-    createdAt: raw.createdAt,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socialsPublic ?? false,
-  };
-}
-export function mapUserStats(raw: ApiUserStats): UserStats {
-  return {
-    clubsJoined: raw.clubsJoined,
-    quizzesTaken: raw.quizzesTaken,
-    quizWins: raw.quizWins,
-    likesReceived: raw.likesReceived,
-    booksRead: raw.booksRead,
-  };
-}
-export function mapClub(raw: ApiClub): Club {
-  return {
-    id: raw.id,
-    name: raw.name,
-    description: raw.description,
-    coverUrl: raw.coverUrl,
-    organizerId: raw.organizerId,
-    isPublic: raw.isPublic,
-    memberCount: raw.memberCount,
-    memberPreviews: raw.memberPreviews ?? [],
-    createdAt: raw.createdAt,
-    city: raw.city ?? '',
-    nextMeetingDate: raw.nextMeetingDate,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    theme: raw.theme,
-    currentBook: raw.currentBook ? { title: raw.currentBook, author: '', description: '' } : null,
-    status: raw.status,
-    tags: raw.tags ?? [],
-    meetingDurationMinutes: raw.meetingDurationMinutes,
-    afterMeetingVenue: raw.afterMeetingVenue,
-    cancelledAt: raw.cancelledAt ?? undefined,
-  };
-}
-export function mapEvent(raw: ApiEvent): ClubEvent {
-  return {
-    id: raw.id,
-    clubId: raw.clubId,
-    clubName: raw.clubName,
-    organizerId: raw.organizerId,
-    title: raw.title,
-    description: raw.description,
-    date: raw.date,
-    city: raw.city,
-    address: raw.address,
-    lat: raw.lat,
-    lng: raw.lng,
-    status: raw.status,
-    cancelledAt: raw.cancelledAt ?? undefined,
-    coverUrl: raw.coverUrl ?? null,
-    theme: raw.theme,
-    tags: raw.tags ?? [],
-    durationMinutes: raw.durationMinutes,
-    afterMeetingVenue: raw.afterMeetingVenue,
-    attendeeCount: raw.attendeeCount,
-    isAttending: raw.isAttending,
-    bookTitle: raw.bookTitle ?? null,
-    quizId: raw.quizId ?? null,
-  };
-}
-export function mapClubMember(raw: ApiClubMember): ClubMemberDetail {
-  return {
-    userId: raw.userId,
-    displayName: raw.displayName,
-    avatarUrl: raw.avatarUrl,
-    role: raw.role,
-    socials: raw.socials ? mapSocials(raw.socials) : undefined,
-    socialsPublic: raw.socialsPublic ?? false,
-  };
-}
-export function mapBanRecord(raw: ApiBanRecord): BanRecord {
-  return {
-    userId: raw.userId,
-    clubId: raw.clubId,
-    bannedAt: raw.bannedAt,
-    duration: raw.duration,
-    bannedBy: raw.bannedBy,
-  };
-}
-function mapSocials(raw: ApiUserSocials): UserSocials {
-  return {
-    telegram: raw.telegram ?? undefined,
-    instagram: raw.instagram ?? undefined,
-    twitter: raw.twitter ?? undefined,
-    linkedin: raw.linkedin ?? undefined,
-    github: raw.github ?? undefined,
-    goodreads: raw.goodreads ?? undefined,
-  };
-}
-````
-
 ## File: src/app/core/auth/token.store.ts
 ````typescript
 import { Injectable, signal } from '@angular/core';
@@ -12803,7 +15975,7 @@ export class TokenStore {
               </hlm-field>
             </fieldset>
             @if (errorMessage()) {
-              <div class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+              <div data-testid="login-error" class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
                 <span class="mt-0.5 shrink-0">⚠️</span>
                 <span>{{ errorMessage() }}</span>
               </div>
@@ -12855,7 +16027,7 @@ export class TokenStore {
           <p class="text-white/70 mt-2">{{ 'AUTH.create_account_subtitle' | translate }}</p>
         </div>
         @if (successMessage()) {
-          <div class="glass-card-strong p-8 text-center">
+          <div data-testid="register-feedback" class="glass-card-strong p-8 text-center">
             <div class="text-5xl mb-4">🎉</div>
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'AUTH.account_created' | translate }}</h2>
             <p class="text-gray-600 dark:text-gray-400 text-sm">
@@ -12952,7 +16124,7 @@ export class TokenStore {
                   }
                 </fieldset>
                 @if (errorMessage()) {
-                  <div class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+                  <div data-testid="register-feedback" class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
                     <span class="mt-0.5 shrink-0">⚠️</span>
                     <span>{{ errorMessage() }}</span>
                   </div>
@@ -13408,6 +16580,7 @@ export class ClubManagePanelComponent {
             </div>
           } @else if (clubService.filteredClubs().length === 0) {
             <app-empty-state
+              data-testid="empty-state"
               icon="📚"
               title="No clubs yet"
               description="No clubs have been created yet. Check back soon!"
@@ -13415,7 +16588,7 @@ export class ClubManagePanelComponent {
           } @else {
             <ul class="bento-grid">
               @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                <li data-testid="club-card" [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
                   <app-club-card
                     [club]="club"
                     [variant]="i === 0 ? 'featured' : 'default'"
@@ -13439,6 +16612,7 @@ export class ClubManagePanelComponent {
             </div>
           } @else if (clubService.myClubs().length === 0) {
             <app-empty-state
+              data-testid="empty-state"
               icon="📚"
               [title]="'CLUBS.no_clubs' | translate"
               description="Join a club to see it here."
@@ -13446,7 +16620,7 @@ export class ClubManagePanelComponent {
           } @else {
             <ul class="bento-grid">
               @for (club of clubService.myClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                <li data-testid="club-card" [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
                   <app-club-card
                     [club]="club"
                     [variant]="i === 0 ? 'featured' : 'default'"
@@ -13469,6 +16643,7 @@ export class ClubManagePanelComponent {
         </div>
       } @else if (clubService.filteredClubs().length === 0) {
         <app-empty-state
+          data-testid="empty-state"
           icon="📚"
           title="No clubs yet"
           description="No clubs have been created yet. Check back soon!"
@@ -13476,7 +16651,7 @@ export class ClubManagePanelComponent {
       } @else {
         <ul class="bento-grid">
           @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+            <li data-testid="club-card" [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
               <app-club-card
                 [club]="club"
                 [variant]="i === 0 ? 'featured' : 'default'"
@@ -13529,6 +16704,7 @@ export class ClubManagePanelComponent {
             type="text"
             formControlName="name"
             class="w-full"
+            data-testid="club-name-input"
             [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
           />
           <hlm-field-error validator="required">{{ 'CREATE_CLUB.name_required' | translate }}</hlm-field-error>
@@ -13660,6 +16836,113 @@ export class ClubManagePanelComponent {
     </article>
   </div>
 </main>
+````
+
+## File: src/app/features/clubs/edit-club/edit-club.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  input,
+  OnInit,
+} from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { toast } from '@spartan-ng/brain/sonner';
+import { ClubService } from '../../../core/services/club.service';
+import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+interface EditClubForm {
+  name: FormControl<string>;
+  description: FormControl<string>;
+  isPublic: FormControl<boolean>;
+  city: FormControl<string>;
+  coverUrl: FormControl<string>;
+}
+@Component({
+  selector: 'app-edit-club',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, TranslatePipe, CoverUploadComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './edit-club.component.html',
+})
+export class EditClubComponent implements OnInit {
+  readonly id = input.required<string>();
+  private readonly clubService = inject(ClubService);
+  private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
+  private readonly _isLoadingClub = signal(true);
+  readonly isLoadingClub = this._isLoadingClub.asReadonly();
+  private readonly _isSubmitting = signal(false);
+  readonly isSubmitting = this._isSubmitting.asReadonly();
+  private readonly _errorMessage = signal<string | null>(null);
+  readonly errorMessage = this._errorMessage.asReadonly();
+  readonly form = new FormGroup<EditClubForm>({
+    name: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
+    }),
+    description: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(500)],
+    }),
+    isPublic: new FormControl(true, { nonNullable: true }),
+    city: new FormControl('', { nonNullable: true }),
+    coverUrl: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^https?:\/\/.+\..+/)] }),
+  });
+  async ngOnInit(): Promise<void> {
+    const club = await this.clubService.getClubById(this.id());
+    if (!club) {
+      this._errorMessage.set('Club not found.');
+      this._isLoadingClub.set(false);
+      return;
+    }
+    this.form.patchValue({
+      name: club.name,
+      description: club.description ?? '',
+      isPublic: club.isPublic,
+      city: club.city ?? '',
+      coverUrl: club.coverUrl ?? '',
+    });
+    this._isLoadingClub.set(false);
+  }
+  togglePublic(): void {
+    this.form.controls.isPublic.setValue(!this.form.controls.isPublic.value);
+  }
+  cancel(): void {
+    this.router.navigate(['/clubs', this.id()]);
+  }
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this._isSubmitting.set(true);
+    this._errorMessage.set(null);
+    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
+    try {
+      await this.clubService.updateClub(this.id(), {
+        name,
+        description,
+        isPublic,
+        city: city || undefined,
+        coverUrl: coverUrl || null,
+      });
+      toast.success(this.translate.instant('EDIT_CLUB.success'));
+      this.router.navigate(['/clubs', this.id()]);
+    } catch (err) {
+      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to update club');
+    } finally {
+      this._isSubmitting.set(false);
+    }
+  }
+}
 ````
 
 ## File: src/app/features/events/event-card/event-card.component.html
@@ -13859,6 +17142,7 @@ export class EventsFeedComponent implements OnInit {
               formControlName="displayName"
               autocomplete="nickname"
               class="w-full"
+              data-testid="display-name-input"
               [placeholder]="'PROFILE.display_name_placeholder' | translate"
               [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
               aria-describedby="displayName-error"
@@ -14310,6 +17594,7 @@ import {
   ChangeDetectionStrategy,
   inject,
   computed,
+  signal,
 } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -14319,7 +17604,6 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideSun, lucideMoon } from '@ng-icons/lucide';
 import { AuthService } from '../../core/auth/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
-import { HlmDropdownMenuImports } from '../../shared/spartan/dropdown-menu/src';
 import { HlmSheetImports } from '../../shared/spartan/sheet/src';
 import { HlmButton } from '../../shared/spartan/button/src';
 import { HlmIconImports } from '../../shared/spartan/icon/src';
@@ -14331,7 +17615,7 @@ import { HlmIconImports } from '../../shared/spartan/icon/src';
   imports: [
     RouterLink, RouterLinkActive, TranslateModule, NgIcon,
     ...HlmIconImports,
-    ...HlmDropdownMenuImports, ...HlmSheetImports, HlmButton,
+    ...HlmSheetImports, HlmButton,
   ],
   templateUrl: './header.component.html',
 })
@@ -14348,6 +17632,7 @@ export class HeaderComponent {
     ),
     { initialValue: 'uk' },
   );
+  readonly showUserMenu = signal(false);
   readonly userInitials = computed(() => {
     const name = this.currentUser()?.displayName ?? '';
     return (
@@ -14681,7 +17966,7 @@ export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
 ````markdown
 # Bug Report — Book Club App Audit
 
-**Date:** 2026-05-11
+**Date:** 2026-05-15
 **URL:** https://book-club-l7xs8u371-dmytros-projects-ad22eb22.vercel.app/
 **Test user:** test123@mail.com
 **Club owner account:** terrtr
@@ -14691,30 +17976,12 @@ export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
 | Severity | Count |
 |----------|-------|
 | Critical | 0 |
-| High | 2 |
-| Medium | 5 |
-| Low | 6 |
-| **Total** | **13** |
+| High | 0 |
+| Medium | 0 |
+| Low | 5 |
+| **Total** | **5** |
 
-## HIGH (2)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `/clubs/2affc525-02bb-4fc6-a2c3-99baad3c5773/events/create (functional)` | functional | Create event did not redirect to event detail after submit |
-| | | | **Detail:** Submit button was disabled — address/city field may be required |
-| 2 | `/events/6b51cbf4-cb77-4a16-a41f-e10648aa6055/edit (functional)` | functional | Title input not found on event edit page |
-
-## MEDIUM (5)
-
-| # | Route | Type | Description |
-|---|-------|------|-------------|
-| 1 | `/register (functional)` | functional | Registration succeeds but does not auto-redirect to app — user sees a success card and must manually go back to login, despite being authenticated |
-| 2 | `/login (wrong-password)` | functional | Login with wrong password stayed on login page but showed no error message to user |
-| 3 | `/logout (functional)` | functional | Logout button not found after opening avatar dropdown — data-testid="logout" not present or dropdown did not open |
-| 4 | `/clubs/2affc525-02bb-4fc6-a2c3-99baad3c5773/quizzes/create (functional)` | functional | Publish button not found after adding a question in quiz create step 2 |
-| 5 | `/quizzes/:id/edit (functional)` | functional | Skipped: no quiz ID available |
-
-## LOW (6)
+## LOW (5)
 
 | # | Route | Type | Description |
 |---|-------|------|-------------|
@@ -14723,7 +17990,6 @@ export class HlmTabsPaginatedList extends BrnTabsPaginatedList {
 | 3 | `/clubs/:id/quizzes/:quizId/edit` | ui-missing | Skipped: no quiz ID |
 | 4 | `/clubs/:id/quizzes/:quizId/session` | ui-missing | Skipped: no quiz ID |
 | 5 | `/clubs/:id/quizzes/:quizId/leaderboard` | ui-missing | Skipped: no quiz ID |
-| 6 | `/quizzes/:id (toggle-active)` | functional | Skipped: no quiz ID available |
 ````
 
 ## File: playwright.vercel.config.ts
@@ -14795,111 +18061,243 @@ sonar.cpd.exclusions=\
   src/testing/**
 ````
 
-## File: src/app/features/clubs/edit-club/edit-club.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  input,
-  OnInit,
-} from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
-import { Router } from '@angular/router';
-import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
-import { ClubService } from '../../../core/services/club.service';
-import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-interface EditClubForm {
-  name: FormControl<string>;
-  description: FormControl<string>;
-  isPublic: FormControl<boolean>;
-  city: FormControl<string>;
-  coverUrl: FormControl<string>;
-}
-@Component({
-  selector: 'app-edit-club',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, CoverUploadComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './edit-club.component.html',
-})
-export class EditClubComponent implements OnInit {
-  readonly id = input.required<string>();
-  private readonly clubService = inject(ClubService);
-  private readonly router = inject(Router);
-  private readonly translate = inject(TranslateService);
-  private readonly _isLoadingClub = signal(true);
-  readonly isLoadingClub = this._isLoadingClub.asReadonly();
-  private readonly _isSubmitting = signal(false);
-  readonly isSubmitting = this._isSubmitting.asReadonly();
-  private readonly _errorMessage = signal<string | null>(null);
-  readonly errorMessage = this._errorMessage.asReadonly();
-  readonly form = new FormGroup<EditClubForm>({
-    name: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(3), Validators.maxLength(100)],
-    }),
-    description: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.maxLength(500)],
-    }),
-    isPublic: new FormControl(true, { nonNullable: true }),
-    city: new FormControl('', { nonNullable: true }),
-    coverUrl: new FormControl('', { nonNullable: true, validators: [Validators.pattern(/^https?:\/\/.+\..+/)] }),
-  });
-  async ngOnInit(): Promise<void> {
-    const club = await this.clubService.getClubById(this.id());
-    if (!club) {
-      this._errorMessage.set('Club not found.');
-      this._isLoadingClub.set(false);
-      return;
+## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.html
+````html
+<div hlmCard class="glass-card-subtle p-4 gap-3">
+  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
+  <div class="grid grid-cols-1 gap-2">
+    <a
+      [routerLink]="['/clubs', clubId(), 'quizzes']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">📝</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
+      </div>
+    </a>
+    <a
+      [routerLink]="['/clubs', clubId(), 'randomizer']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">🎲</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
+      </div>
+    </a>
+    <a
+      [routerLink]="['/clubs', clubId(), 'edit']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">✏️</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.edit_club_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.edit_club_desc' | translate }}</p>
+      </div>
+    </a>
+    <a
+      [routerLink]="['/clubs', clubId(), 'events', 'create']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">📅</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.create_event_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.create_event_desc' | translate }}</p>
+      </div>
+    </a>
+  </div>
+  <div class="mt-4 border-t border-white/10 pt-4">
+    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+      💬 {{ 'CLUB_DETAIL.chat_create_title' | translate }}
+    </p>
+    <div class="flex gap-2">
+      <input
+        type="text"
+        [ngModel]="newRoomName()"
+        (ngModelChange)="newRoomName.set($event)"
+        [placeholder]="'CLUB_DETAIL.chat_room_placeholder' | translate"
+        maxlength="50"
+        class="flex-1 rounded-lg border border-white/20 bg-white/10 dark:bg-white/5 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        (keyup.enter)="createChatRoom()"
+      />
+      <button
+        hlmBtn
+        size="sm"
+        type="button"
+        (click)="createChatRoom()"
+        [disabled]="isCreatingRoom() || !newRoomName().trim()"
+        class="bg-primary-600 hover:bg-primary-700 text-white"
+      >
+        {{ 'CLUB_DETAIL.chat_create_btn' | translate }}
+      </button>
+    </div>
+    @if (roomError()) {
+      <p class="mt-1 text-xs text-red-500">{{ roomError() }}</p>
     }
-    this.form.patchValue({
-      name: club.name,
-      description: club.description ?? '',
-      isPublic: club.isPublic,
-      city: club.city ?? '',
-      coverUrl: club.coverUrl ?? '',
-    });
-    this._isLoadingClub.set(false);
-  }
-  togglePublic(): void {
-    this.form.controls.isPublic.setValue(!this.form.controls.isPublic.value);
-  }
-  cancel(): void {
-    this.router.navigate(['/clubs', this.id()]);
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
+  </div>
+  <div class="mt-4 border-t border-white/10 pt-4">
+    @if (!showDeleteConfirm()) {
+      <button
+        hlmBtn
+        size="sm"
+        variant="destructive"
+        type="button"
+        (click)="showDeleteConfirm.set(true)"
+        class="w-full"
+      >
+        🗑 {{ 'CLUB_DETAIL.delete_club_btn' | translate }}
+      </button>
+    } @else {
+      <div class="rounded-xl border border-red-500/30 bg-red-50/10 dark:bg-red-900/10 p-3 space-y-2">
+        <p class="text-xs text-red-600 dark:text-red-400 font-semibold">{{ 'CLUB_DETAIL.delete_club_confirm' | translate }}</p>
+        <div class="flex gap-2">
+          <button
+            hlmBtn
+            size="sm"
+            variant="destructive"
+            type="button"
+            (click)="confirmDelete()"
+            [disabled]="isDeleting()"
+            class="flex-1"
+          >
+            {{ 'CLUB_DETAIL.delete_club_yes' | translate }}
+          </button>
+          <button
+            hlmBtn
+            size="sm"
+            variant="outline"
+            type="button"
+            (click)="cancelDelete()"
+            class="flex-1"
+          >
+            {{ 'CLUB_DETAIL.cancel' | translate }}
+          </button>
+        </div>
+        @if (deleteError()) {
+          <p class="mt-1 text-xs text-red-500">{{ deleteError() | translate }}</p>
+        }
+      </div>
     }
-    this._isSubmitting.set(true);
-    this._errorMessage.set(null);
-    const { name, description, isPublic, city, coverUrl } = this.form.getRawValue();
-    try {
-      await this.clubService.updateClub(this.id(), {
-        name,
-        description,
-        isPublic,
-        city: city || undefined,
-        coverUrl: coverUrl || null,
-      });
-      toast.success(this.translate.instant('EDIT_CLUB.success'));
-      this.router.navigate(['/clubs', this.id()]);
-    } catch (err) {
-      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to update club');
-    } finally {
-      this._isSubmitting.set(false);
-    }
-  }
-}
+  </div>
+</div>
+````
+
+## File: src/app/features/clubs/edit-club/edit-club.component.html
+````html
+<main class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+    <header class="text-center mb-8">
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'EDIT_CLUB.subtitle' | translate }}</p>
+    </header>
+    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'EDIT_CLUB.title' | translate }}</h2>
+      @if (isLoadingClub()) {
+        <div class="flex justify-center py-12">
+          <hlm-spinner />
+        </div>
+      } @else {
+        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+          <hlm-field>
+            <label hlmFieldLabel for="club-name">
+              {{ 'EDIT_CLUB.name_label' | translate }}
+              <span class="text-red-500" aria-hidden="true">*</span>
+            </label>
+            <input
+              hlmInput
+              id="club-name"
+              type="text"
+              formControlName="name"
+              class="w-full"
+              data-testid="club-name-input"
+              [placeholder]="'EDIT_CLUB.name_placeholder' | translate"
+            />
+            <hlm-field-error validator="required">{{ 'EDIT_CLUB.name_required' | translate }}</hlm-field-error>
+            <hlm-field-error validator="minlength">{{ 'EDIT_CLUB.name_min' | translate }}</hlm-field-error>
+            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.name_max' | translate }}</hlm-field-error>
+          </hlm-field>
+          <hlm-field>
+            <label hlmFieldLabel for="club-description">{{ 'EDIT_CLUB.description_label' | translate }}</label>
+            <textarea
+              hlmInput
+              id="club-description"
+              formControlName="description"
+              rows="3"
+              class="w-full resize-none"
+              [placeholder]="'EDIT_CLUB.description_placeholder' | translate"
+            ></textarea>
+            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.description_max' | translate }}</hlm-field-error>
+          </hlm-field>
+          <hlm-field>
+            <label hlmFieldLabel for="club-city">{{ 'EDIT_CLUB.city_label' | translate }}</label>
+            <input
+              hlmInput
+              id="club-city"
+              type="text"
+              formControlName="city"
+              class="w-full"
+              [placeholder]="'EDIT_CLUB.city_placeholder' | translate"
+            />
+          </hlm-field>
+          <div>
+            <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              {{ 'EDIT_CLUB.cover_url_label' | translate }}
+            </p>
+            <app-cover-upload [control]="form.controls.coverUrl" />
+          </div>
+          <fieldset>
+            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'EDIT_CLUB.visibility_legend' | translate }}</legend>
+            <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
+              <div>
+                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'EDIT_CLUB.public_label' | translate }}</p>
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'EDIT_CLUB.public_desc' | translate }}</p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                [attr.aria-checked]="form.controls.isPublic.value"
+                (click)="togglePublic()"
+                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                [class.bg-primary-600]="form.controls.isPublic.value"
+                [class.bg-gray-300]="!form.controls.isPublic.value"
+                [class.dark:bg-gray-600]="!form.controls.isPublic.value"
+              >
+                <span
+                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
+                  [class.translate-x-6]="form.controls.isPublic.value"
+                  [class.translate-x-1]="!form.controls.isPublic.value"
+                ></span>
+              </button>
+            </div>
+          </fieldset>
+          @if (errorMessage()) {
+            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+                 role="alert">
+              <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+          <div class="flex gap-3 pt-2">
+            <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
+              {{ 'EDIT_CLUB.cancel' | translate }}
+            </button>
+            <button hlmBtn type="submit" [disabled]="isSubmitting()"
+                    data-testid="save-button"
+                    class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
+              @if (isSubmitting()) {
+                <hlm-spinner class="mr-2" />
+                {{ 'EDIT_CLUB.submitting' | translate }}
+              } @else {
+                {{ 'EDIT_CLUB.submit' | translate }}
+              }
+            </button>
+          </div>
+        </form>
+      }
+    </article>
+  </div>
+</main>
 ````
 
 ## File: src/app/features/events/events-feed/events-feed.component.html
@@ -15003,6 +18401,7 @@ export class EditClubComponent implements OnInit {
             </div>
           } @else if (eventService.myEvents().length === 0) {
             <app-empty-state
+              data-testid="empty-state"
               icon="📅"
               [title]="'EVENTS.no_upcoming' | translate"
               [description]="'EVENTS.no_my_events_desc' | translate"
@@ -15010,7 +18409,7 @@ export class EditClubComponent implements OnInit {
           } @else {
             <ul class="bento-grid-3">
               @for (event of eventService.myEvents(); track event.id) {
-                <li>
+                <li data-testid="event-card">
                   <app-event-card
                     [event]="event"
                     [isAuthenticated]="auth.isAuthenticated()"
@@ -15036,6 +18435,7 @@ export class EditClubComponent implements OnInit {
     </div>
   } @else if (sortedDates().length === 0) {
     <app-empty-state
+      data-testid="empty-state"
       icon="📅"
       [title]="'EVENTS.no_upcoming' | translate"
       [description]="'EVENTS.no_upcoming_desc' | translate"
@@ -15053,7 +18453,7 @@ export class EditClubComponent implements OnInit {
         </div>
         <ul class="bento-grid-3">
           @for (event of eventService.groupedByDate()[date]; track event.id) {
-            <li>
+            <li data-testid="event-card">
               <app-event-card
                 [event]="event"
                 [isAuthenticated]="auth.isAuthenticated()"
@@ -15457,6 +18857,7 @@ export class QuizTakeComponent implements OnInit {
       <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
         <a
           routerLink="/clubs"
+          data-testid="nav-clubs"
           routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
           class="px-4 py-2 rounded-lg text-sm font-medium
                  text-[var(--color-ink-muted)]
@@ -15469,6 +18870,7 @@ export class QuizTakeComponent implements OnInit {
         @if (isAuthenticated()) {
           <a
             routerLink="/events"
+            data-testid="nav-events"
             routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
             class="px-4 py-2 rounded-lg text-sm font-medium
                    text-[var(--color-ink-muted)]
@@ -15512,35 +18914,55 @@ export class QuizTakeComponent implements OnInit {
           {{ currentLang() === 'uk' ? 'EN' : 'UK' }}
         </button>
         @if (isAuthenticated()) {
-          <button
-            type="button"
-            [hlmDropdownMenuTrigger]="userMenu"
-            class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-            aria-haspopup="menu"
-            [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
-          >
-            <div
-              class="h-9 w-9 rounded-full avatar-gradient
-                     flex items-center justify-center text-white text-sm font-semibold select-none"
-              aria-hidden="true"
+          <div class="relative">
+            <button
+              type="button"
+              (click)="showUserMenu.set(!showUserMenu())"
+              class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
+                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+              aria-haspopup="menu"
+              [attr.aria-expanded]="showUserMenu()"
+              [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
             >
-              {{ userInitials() }}
-            </div>
-          </button>
-          <ng-template #userMenu>
-            <div hlmDropdownMenu>
-              <hlm-dropdown-menu-label>{{ currentUser()?.displayName }}</hlm-dropdown-menu-label>
-              <hlm-dropdown-menu-separator />
-              <a hlmDropdownMenuItem [routerLink]="['/profile']">
-                {{ 'NAV.profile' | translate }}
-              </a>
-              <hlm-dropdown-menu-separator />
-              <button hlmDropdownMenuItem variant="destructive" data-testid="logout" (click)="signOut()">
-                {{ 'NAV.logout' | translate }}
-              </button>
-            </div>
-          </ng-template>
+              <div
+                class="h-9 w-9 rounded-full avatar-gradient
+                       flex items-center justify-center text-white text-sm font-semibold select-none"
+                aria-hidden="true"
+              >
+                {{ userInitials() }}
+              </div>
+            </button>
+            @if (showUserMenu()) {
+              <div
+                class="absolute right-0 mt-2 w-48 rounded-md border border-[var(--color-sepia)]
+                       bg-[var(--color-surface)] shadow-lg z-50 py-1"
+                role="menu"
+              >
+                <div class="px-3 py-2 text-sm font-semibold text-[var(--color-ink)]">
+                  {{ currentUser()?.displayName }}
+                </div>
+                <hr class="border-[var(--color-sepia)] my-1" />
+                <a
+                  [routerLink]="['/profile']"
+                  (click)="showUserMenu.set(false)"
+                  class="block px-3 py-2 text-sm text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)] transition-colors"
+                  role="menuitem"
+                >
+                  {{ 'NAV.profile' | translate }}
+                </a>
+                <hr class="border-[var(--color-sepia)] my-1" />
+                <button
+                  type="button"
+                  data-testid="logout"
+                  (click)="signOut()"
+                  class="w-full text-left px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  role="menuitem"
+                >
+                  {{ 'NAV.logout' | translate }}
+                </button>
+              </div>
+            }
+          </div>
         } @else {
           <a hlmBtn variant="outline" size="sm" routerLink="/login">
             {{ 'NAV.login' | translate }}
@@ -15662,243 +19084,6 @@ export class QuizTakeComponent implements OnInit {
 </header>
 ````
 
-## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.html
-````html
-<div hlmCard class="glass-card-subtle p-4 gap-3">
-  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
-  <div class="grid grid-cols-1 gap-2">
-    <a
-      [routerLink]="['/clubs', clubId(), 'quizzes']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">📝</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
-      </div>
-    </a>
-    <a
-      [routerLink]="['/clubs', clubId(), 'randomizer']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">🎲</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
-      </div>
-    </a>
-    <a
-      [routerLink]="['/clubs', clubId(), 'edit']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">✏️</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.edit_club_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.edit_club_desc' | translate }}</p>
-      </div>
-    </a>
-    <a
-      [routerLink]="['/clubs', clubId(), 'events', 'create']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">📅</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.create_event_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.create_event_desc' | translate }}</p>
-      </div>
-    </a>
-  </div>
-  <div class="mt-4 border-t border-white/10 pt-4">
-    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-      💬 {{ 'CLUB_DETAIL.chat_create_title' | translate }}
-    </p>
-    <div class="flex gap-2">
-      <input
-        type="text"
-        [ngModel]="newRoomName()"
-        (ngModelChange)="newRoomName.set($event)"
-        [placeholder]="'CLUB_DETAIL.chat_room_placeholder' | translate"
-        maxlength="50"
-        class="flex-1 rounded-lg border border-white/20 bg-white/10 dark:bg-white/5 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-        (keyup.enter)="createChatRoom()"
-      />
-      <button
-        hlmBtn
-        size="sm"
-        type="button"
-        (click)="createChatRoom()"
-        [disabled]="isCreatingRoom() || !newRoomName().trim()"
-        class="bg-primary-600 hover:bg-primary-700 text-white"
-      >
-        {{ 'CLUB_DETAIL.chat_create_btn' | translate }}
-      </button>
-    </div>
-    @if (roomError()) {
-      <p class="mt-1 text-xs text-red-500">{{ roomError() }}</p>
-    }
-  </div>
-  <div class="mt-4 border-t border-white/10 pt-4">
-    @if (!showDeleteConfirm()) {
-      <button
-        hlmBtn
-        size="sm"
-        variant="destructive"
-        type="button"
-        (click)="showDeleteConfirm.set(true)"
-        class="w-full"
-      >
-        🗑 {{ 'CLUB_DETAIL.delete_club_btn' | translate }}
-      </button>
-    } @else {
-      <div class="rounded-xl border border-red-500/30 bg-red-50/10 dark:bg-red-900/10 p-3 space-y-2">
-        <p class="text-xs text-red-600 dark:text-red-400 font-semibold">{{ 'CLUB_DETAIL.delete_club_confirm' | translate }}</p>
-        <div class="flex gap-2">
-          <button
-            hlmBtn
-            size="sm"
-            variant="destructive"
-            type="button"
-            (click)="confirmDelete()"
-            [disabled]="isDeleting()"
-            class="flex-1"
-          >
-            {{ 'CLUB_DETAIL.delete_club_yes' | translate }}
-          </button>
-          <button
-            hlmBtn
-            size="sm"
-            variant="outline"
-            type="button"
-            (click)="cancelDelete()"
-            class="flex-1"
-          >
-            {{ 'CLUB_DETAIL.cancel' | translate }}
-          </button>
-        </div>
-        @if (deleteError()) {
-          <p class="mt-1 text-xs text-red-500">{{ deleteError() | translate }}</p>
-        }
-      </div>
-    }
-  </div>
-</div>
-````
-
-## File: src/app/features/clubs/edit-club/edit-club.component.html
-````html
-<main class="min-h-screen flex items-center justify-center p-4">
-  <div class="w-full max-w-lg">
-    <header class="text-center mb-8">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
-      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'EDIT_CLUB.subtitle' | translate }}</p>
-    </header>
-    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'EDIT_CLUB.title' | translate }}</h2>
-      @if (isLoadingClub()) {
-        <div class="flex justify-center py-12">
-          <hlm-spinner />
-        </div>
-      } @else {
-        <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
-          <hlm-field>
-            <label hlmFieldLabel for="club-name">
-              {{ 'EDIT_CLUB.name_label' | translate }}
-              <span class="text-red-500" aria-hidden="true">*</span>
-            </label>
-            <input
-              hlmInput
-              id="club-name"
-              type="text"
-              formControlName="name"
-              class="w-full"
-              [placeholder]="'EDIT_CLUB.name_placeholder' | translate"
-            />
-            <hlm-field-error validator="required">{{ 'EDIT_CLUB.name_required' | translate }}</hlm-field-error>
-            <hlm-field-error validator="minlength">{{ 'EDIT_CLUB.name_min' | translate }}</hlm-field-error>
-            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.name_max' | translate }}</hlm-field-error>
-          </hlm-field>
-          <hlm-field>
-            <label hlmFieldLabel for="club-description">{{ 'EDIT_CLUB.description_label' | translate }}</label>
-            <textarea
-              hlmInput
-              id="club-description"
-              formControlName="description"
-              rows="3"
-              class="w-full resize-none"
-              [placeholder]="'EDIT_CLUB.description_placeholder' | translate"
-            ></textarea>
-            <hlm-field-error validator="maxlength">{{ 'EDIT_CLUB.description_max' | translate }}</hlm-field-error>
-          </hlm-field>
-          <hlm-field>
-            <label hlmFieldLabel for="club-city">{{ 'EDIT_CLUB.city_label' | translate }}</label>
-            <input
-              hlmInput
-              id="club-city"
-              type="text"
-              formControlName="city"
-              class="w-full"
-              [placeholder]="'EDIT_CLUB.city_placeholder' | translate"
-            />
-          </hlm-field>
-          <div>
-            <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              {{ 'EDIT_CLUB.cover_url_label' | translate }}
-            </p>
-            <app-cover-upload [control]="form.controls.coverUrl" />
-          </div>
-          <fieldset>
-            <legend class="text-sm font-semibold text-gray-900 dark:text-white mb-3">{{ 'EDIT_CLUB.visibility_legend' | translate }}</legend>
-            <div class="flex items-center justify-between rounded-xl bg-gray-50 dark:bg-gray-800 px-4 py-3">
-              <div>
-                <p class="text-sm font-medium text-gray-700 dark:text-gray-300">{{ 'EDIT_CLUB.public_label' | translate }}</p>
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{{ 'EDIT_CLUB.public_desc' | translate }}</p>
-              </div>
-              <button
-                type="button"
-                role="switch"
-                [attr.aria-checked]="form.controls.isPublic.value"
-                (click)="togglePublic()"
-                class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-                [class.bg-primary-600]="form.controls.isPublic.value"
-                [class.bg-gray-300]="!form.controls.isPublic.value"
-                [class.dark:bg-gray-600]="!form.controls.isPublic.value"
-              >
-                <span
-                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200"
-                  [class.translate-x-6]="form.controls.isPublic.value"
-                  [class.translate-x-1]="!form.controls.isPublic.value"
-                ></span>
-              </button>
-            </div>
-          </fieldset>
-          @if (errorMessage()) {
-            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
-                 role="alert">
-              <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
-              <span>{{ errorMessage() }}</span>
-            </div>
-          }
-          <div class="flex gap-3 pt-2">
-            <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
-              {{ 'EDIT_CLUB.cancel' | translate }}
-            </button>
-            <button hlmBtn type="submit" [disabled]="isSubmitting()"
-                    class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
-              @if (isSubmitting()) {
-                <hlm-spinner class="mr-2" />
-                {{ 'EDIT_CLUB.submitting' | translate }}
-              } @else {
-                {{ 'EDIT_CLUB.submit' | translate }}
-              }
-            </button>
-          </div>
-        </form>
-      }
-    </article>
-  </div>
-</main>
-````
-
 ## File: src/app/features/events/create-event/create-event.component.html
 ````html
 <main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
@@ -15922,7 +19107,7 @@ export class QuizTakeComponent implements OnInit {
           {{ 'CREATE_EVENT.title_label' | translate }} <span class="text-red-500">*</span>
         </label>
         <input hlmInput id="title" type="text" formControlName="title" class="w-full"
-               placeholder="April Discussion" />
+               data-testid="event-title-input" placeholder="April Discussion" />
         @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
           <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.title_required' | translate }}</p>
         }
@@ -15948,7 +19133,7 @@ export class QuizTakeComponent implements OnInit {
         <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
           {{ 'CREATE_EVENT.date_label' | translate }} <span class="text-red-500">*</span>
         </label>
-        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
+        <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" data-testid="date-input" />
         @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
           <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.date_required' | translate }}</p>
         }
@@ -16478,6 +19663,7 @@ export class EventDetailComponent {
           <input
             id="quiz-title"
             formControlName="title"
+            data-testid="quiz-title-input"
             [placeholder]="'QUIZ.create_title_placeholder' | translate"
             class="w-full rounded-lg border px-4 py-2.5 text-sm text-gray-900 dark:text-white
                    bg-white dark:bg-gray-800 placeholder-gray-400 focus:outline-none
@@ -16521,6 +19707,7 @@ export class EventDetailComponent {
         <div class="flex justify-end">
           <button
             type="submit"
+            data-testid="next-button"
             [disabled]="metaForm.invalid"
             class="bg-primary-600 hover:bg-primary-500 disabled:opacity-40
                    disabled:cursor-not-allowed text-white rounded-xl px-6 py-2.5
@@ -16924,283 +20111,6 @@ export class CreateEventComponent implements OnInit {
     "tailwindcss": "^4.2.4",
     "typescript": "~5.9.3",
     "typescript-eslint": "8.46.4"
-  }
-}
-````
-
-## File: src/app/features/clubs/club-detail/club-detail.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  effect,
-  input,
-  linkedSignal,
-  untracked,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
-import { ClubEvent } from '../../../core/models/event.model';
-import { UserProfile } from '../../../core/models/user.model';
-import { EventService } from '../../../core/services/event.service';
-import { ChatService } from '../../../core/services/chat.service';
-import { SeoService } from '../../../core/services/seo.service';
-import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-import { ClubMembersListComponent } from './members/club-members-list.component';
-import { ClubHeaderComponent } from './header/club-header.component';
-import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
-import { ClubEventCardComponent } from './club-event-card/club-event-card.component';
-import { ClubSidebarRightComponent } from './club-sidebar-right/club-sidebar-right.component';
-import { BookVoteSectionComponent } from './book-vote/book-vote-section.component';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmCard } from '../../../shared/spartan/card/src';
-import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
-@Component({
-  selector: 'app-club-detail',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [
-    RouterLink,
-    TranslateModule,
-    FormatDatePipe,
-    ClubMembersListComponent,
-    ClubHeaderComponent,
-    ClubManagePanelComponent,
-    ClubEventCardComponent,
-    ClubSidebarRightComponent,
-    BookVoteSectionComponent,
-    HlmButton,
-    HlmCard,
-    ...HlmTabsImports,
-  ],
-  templateUrl: './club-detail.component.html',
-})
-export class ClubDetailComponent {
-  readonly id = input.required<string>();
-  private readonly clubService = inject(ClubService);
-  private readonly eventService = inject(EventService);
-  private readonly chatService = inject(ChatService);
-  private readonly auth = inject(AuthService);
-  private readonly seo = inject(SeoService);
-  private readonly translate = inject(TranslateService);
-  private readonly _lang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: this.translate.currentLang ?? 'uk' },
-  );
-  readonly currentUser = this.auth.currentUser;
-  readonly club = signal<Club | null>(null);
-  readonly members = signal<ClubMemberDetail[]>([]);
-  readonly clubBans = signal<BanRecord[]>([]);
-  readonly events = signal<ClubEvent[]>([]);
-  readonly pastEvents = signal<ClubEvent[]>([]);
-  readonly isPastEventsLoading = signal(false);
-  readonly isPastEventsLoaded = signal(false);
-  readonly activeEventsTab = signal<'upcoming' | 'history'>('upcoming');
-  readonly isLoading = signal(true);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isActionLoading = signal(false);
-  readonly actionError = signal<string | null>(null);
-  readonly attendingEventId = signal<string | null>(null);
-  readonly sortKey = linkedSignal<'date' | 'popular' | 'status'>(() => {
-    this.id();
-    return 'date';
-  });
-  readonly sortOptions = [
-    { key: 'date' as const,    labelKey: 'CLUB_DETAIL.sort_nearest' },
-    { key: 'popular' as const, labelKey: 'CLUB_DETAIL.sort_popular' },
-    { key: 'status' as const,  labelKey: 'CLUB_DETAIL.sort_status'  },
-  ];
-  readonly isMember = computed(() => this.clubService.myClubIds().has(this.id()));
-  readonly isClubOwner = computed(
-    () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
-  );
-  readonly currentUserId = computed(() => this.auth.currentUser()?.id ?? null);
-  readonly organizerProfile = computed<UserProfile | null>(() => {
-    const organizerId = this.club()?.organizerId;
-    if (!organizerId) return null;
-    const organizer = this.members().find(m => m.role === 'organizer');
-    if (!organizer) return null;
-    return {
-      id: organizerId,
-      displayName: organizer.displayName,
-      avatarUrl: organizer.avatarUrl,
-      role: 'user',
-      createdAt: '',
-      socials: organizer.socials,
-      socialsPublic: organizer.socialsPublic,
-    } satisfies UserProfile;
-  });
-  readonly upcomingEvents = computed(() =>
-    this.events().filter(e => e.status === 'scheduled' || e.status === 'active'),
-  );
-  readonly sortedUpcomingEvents = computed(() => {
-    const events = this.upcomingEvents();
-    const key = this.sortKey();
-    if (key === 'popular') {
-      return [...events].sort((a, b) => b.attendeeCount - a.attendeeCount);
-    }
-    if (key === 'status') {
-      const order: Record<string, number> = { active: 0, scheduled: 1, rescheduled: 2 };
-      return [...events].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
-    }
-    return [...events].sort((a, b) => a.date.localeCompare(b.date));
-  });
-  readonly nearestEventBook = computed<{ title: string; author: string; description: string; coverUrl: string | null } | null>(() => {
-    const nearest = [...this.events()]
-      .filter(e => e.status === 'upcoming' || e.status === 'scheduled' || e.status === 'active')
-      .sort((a, b) => a.date.localeCompare(b.date))[0];
-    const title = nearest?.bookTitle;
-    if (title) return { title, author: '', description: '', coverUrl: nearest.coverUrl ?? null };
-    const cb = this.club()?.currentBook;
-    return cb ? { ...cb, coverUrl: null } : null;
-  });
-  readonly deleteCountdown = computed<string | null>(() => {
-    const club = this.club();
-    if (!club) return null;
-    const ms = this.clubService.msUntilDeletion(club);
-    if (ms === null) return null;
-    const totalMinutes = Math.floor(ms / 60000);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    if (hours > 0) {
-      return minutes > 0 ? `${hours} год ${minutes} хв` : `${hours} год`;
-    }
-    return `${totalMinutes} хв`;
-  });
-  constructor() {
-    effect((onCleanup) => {
-      const clubId = this.id();
-      this.activeEventsTab.set('upcoming');
-      this.pastEvents.set([]);
-      this.isPastEventsLoaded.set(false);
-      let cancelled = false;
-      onCleanup(() => { cancelled = true; });
-      this.loadClub(clubId, () => cancelled).catch((_err: unknown) => {  });
-    });
-  }
-  private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-    try {
-      if (this.auth.isAuthenticated() && untracked(() => this.clubService.myClubs().length === 0)) {
-        await this.clubService.loadMyClubs();
-      }
-      if (isCancelled()) return;
-      const found = await this.clubService.getClubById(clubId);
-      if (isCancelled()) return;
-      if (found) {
-        this.club.set(found);
-        const [members, events] = await Promise.all([
-          this.clubService.getClubMembers(clubId),
-          this.clubService.loadClubEvents(clubId),
-        ]);
-        if (isCancelled()) return;
-        this.members.set(members);
-        this.events.set(events);
-        if (this.auth.currentUser()?.id === found.organizerId) {
-          this.clubBans.set(await this.clubService.getBans(clubId));
-        }
-        this.seo.setPageI18n('SEO.club_detail_title', {
-          ogTitleKey: 'SEO.club_detail_og_title',
-          params: { name: found.name },
-        });
-      } else {
-        this.errorMessage.set('This club could not be found.');
-      }
-    } catch {
-      if (!isCancelled()) this.errorMessage.set('Failed to load club details.');
-    } finally {
-      if (!isCancelled()) this.isLoading.set(false);
-    }
-  }
-  async onJoin(): Promise<void> {
-    await this.performMembershipAction(() => this.clubService.joinClub(this.id()), 'Failed to join club');
-  }
-  async onLeave(): Promise<void> {
-    await this.performMembershipAction(() => this.clubService.leaveClub(this.id()), 'Failed to leave club');
-  }
-  openClubChat(): void {
-    const user = this.currentUser();
-    this.chatService.loadRooms(this.id(), user?.id);
-    if (!this.chatService.isOpen()) {
-      this.chatService.toggleOpen();
-    }
-  }
-  async handleKick(userId: string): Promise<void> {
-    await this.clubService.kickMember(this.id(), userId);
-    this.members.update(list => list.filter(m => m.userId !== userId));
-  }
-  async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
-    await this.clubService.banMember(this.id(), event.userId, event.duration);
-    this.members.update(list => list.filter(m => m.userId !== event.userId));
-  }
-  async onAttend(eventId: string): Promise<void> {
-    await this.performAttendanceAction(eventId, true);
-  }
-  async onCancelAttend(eventId: string): Promise<void> {
-    await this.performAttendanceAction(eventId, false);
-  }
-  private async performMembershipAction(action: () => Promise<void>, errorFallback: string): Promise<void> {
-    this.isActionLoading.set(true);
-    this.actionError.set(null);
-    try {
-      await action();
-      const updated = await this.clubService.getClubById(this.id());
-      if (updated) this.club.set(updated);
-    } catch (err) {
-      this.actionError.set(err instanceof Error ? err.message : errorFallback);
-    } finally {
-      this.isActionLoading.set(false);
-    }
-  }
-  async onEventsTabChange(tab: 'upcoming' | 'history'): Promise<void> {
-    this.activeEventsTab.set(tab);
-    if (tab === 'history' && !this.isPastEventsLoaded()) {
-      await this.loadPastEvents();
-    }
-  }
-  private async loadPastEvents(): Promise<void> {
-    this.isPastEventsLoading.set(true);
-    try {
-      const past = await this.clubService.loadClubEvents(this.id(), true);
-      const now = new Date().toISOString();
-      this.pastEvents.set(
-        past.filter(e => e.date < now).sort((a, b) => b.date.localeCompare(a.date)),
-      );
-      this.isPastEventsLoaded.set(true);
-    } finally {
-      this.isPastEventsLoading.set(false);
-    }
-  }
-  private async performAttendanceAction(eventId: string, attending: boolean): Promise<void> {
-    this.attendingEventId.set(eventId);
-    try {
-      if (attending) {
-        await this.eventService.attendEvent(eventId);
-      } else {
-        await this.eventService.cancelAttendance(eventId);
-      }
-      this.events.update(list =>
-        list.map(e =>
-          e.id === eventId
-            ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
-            : e,
-        ),
-      );
-    } finally {
-      this.attendingEventId.set(null);
-    }
   }
 }
 ````
@@ -18231,6 +21141,283 @@ export class ClubDetailComponent {
 }
 ````
 
+## File: src/app/features/clubs/club-detail/club-detail.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  effect,
+  input,
+  linkedSignal,
+  untracked,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { ClubService } from '../../../core/services/club.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
+import { ClubEvent } from '../../../core/models/event.model';
+import { UserProfile } from '../../../core/models/user.model';
+import { EventService } from '../../../core/services/event.service';
+import { ChatService } from '../../../core/services/chat.service';
+import { SeoService } from '../../../core/services/seo.service';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { ClubMembersListComponent } from './members/club-members-list.component';
+import { ClubHeaderComponent } from './header/club-header.component';
+import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.component';
+import { ClubEventCardComponent } from './club-event-card/club-event-card.component';
+import { ClubSidebarRightComponent } from './club-sidebar-right/club-sidebar-right.component';
+import { BookVoteSectionComponent } from './book-vote/book-vote-section.component';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCard } from '../../../shared/spartan/card/src';
+import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
+@Component({
+  selector: 'app-club-detail',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    RouterLink,
+    TranslateModule,
+    FormatDatePipe,
+    ClubMembersListComponent,
+    ClubHeaderComponent,
+    ClubManagePanelComponent,
+    ClubEventCardComponent,
+    ClubSidebarRightComponent,
+    BookVoteSectionComponent,
+    HlmButton,
+    HlmCard,
+    ...HlmTabsImports,
+  ],
+  templateUrl: './club-detail.component.html',
+})
+export class ClubDetailComponent {
+  readonly id = input.required<string>();
+  private readonly clubService = inject(ClubService);
+  private readonly eventService = inject(EventService);
+  private readonly chatService = inject(ChatService);
+  private readonly auth = inject(AuthService);
+  private readonly seo = inject(SeoService);
+  private readonly translate = inject(TranslateService);
+  private readonly _lang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: this.translate.currentLang ?? 'uk' },
+  );
+  readonly currentUser = this.auth.currentUser;
+  readonly club = signal<Club | null>(null);
+  readonly members = signal<ClubMemberDetail[]>([]);
+  readonly clubBans = signal<BanRecord[]>([]);
+  readonly events = signal<ClubEvent[]>([]);
+  readonly pastEvents = signal<ClubEvent[]>([]);
+  readonly isPastEventsLoading = signal(false);
+  readonly isPastEventsLoaded = signal(false);
+  readonly activeEventsTab = signal<'upcoming' | 'history'>('upcoming');
+  readonly isLoading = signal(true);
+  readonly errorMessage = signal<string | null>(null);
+  readonly isActionLoading = signal(false);
+  readonly actionError = signal<string | null>(null);
+  readonly attendingEventId = signal<string | null>(null);
+  readonly sortKey = linkedSignal<'date' | 'popular' | 'status'>(() => {
+    this.id();
+    return 'date';
+  });
+  readonly sortOptions = [
+    { key: 'date' as const,    labelKey: 'CLUB_DETAIL.sort_nearest' },
+    { key: 'popular' as const, labelKey: 'CLUB_DETAIL.sort_popular' },
+    { key: 'status' as const,  labelKey: 'CLUB_DETAIL.sort_status'  },
+  ];
+  readonly isMember = computed(() => this.clubService.myClubIds().has(this.id()));
+  readonly isClubOwner = computed(
+    () => this.auth.currentUser()?.id === this.club()?.organizerId && !!this.auth.currentUser(),
+  );
+  readonly currentUserId = computed(() => this.auth.currentUser()?.id ?? null);
+  readonly organizerProfile = computed<UserProfile | null>(() => {
+    const organizerId = this.club()?.organizerId;
+    if (!organizerId) return null;
+    const organizer = this.members().find(m => m.role === 'organizer');
+    if (!organizer) return null;
+    return {
+      id: organizerId,
+      displayName: organizer.displayName,
+      avatarUrl: organizer.avatarUrl,
+      role: 'user',
+      createdAt: '',
+      socials: organizer.socials,
+      socialsPublic: organizer.socialsPublic,
+    } satisfies UserProfile;
+  });
+  readonly upcomingEvents = computed(() =>
+    this.events().filter(e => e.status === 'scheduled' || e.status === 'active'),
+  );
+  readonly sortedUpcomingEvents = computed(() => {
+    const events = this.upcomingEvents();
+    const key = this.sortKey();
+    if (key === 'popular') {
+      return [...events].sort((a, b) => b.attendeeCount - a.attendeeCount);
+    }
+    if (key === 'status') {
+      const order: Record<string, number> = { active: 0, scheduled: 1, rescheduled: 2 };
+      return [...events].sort((a, b) => (order[a.status] ?? 9) - (order[b.status] ?? 9));
+    }
+    return [...events].sort((a, b) => a.date.localeCompare(b.date));
+  });
+  readonly nearestEventBook = computed<{ title: string; author: string; description: string; coverUrl: string | null } | null>(() => {
+    const nearest = [...this.events()]
+      .filter(e => e.status === 'upcoming' || e.status === 'scheduled' || e.status === 'active')
+      .sort((a, b) => a.date.localeCompare(b.date))[0];
+    const title = nearest?.bookTitle;
+    if (title) return { title, author: '', description: '', coverUrl: nearest.coverUrl ?? null };
+    const cb = this.club()?.currentBook;
+    return cb ? { ...cb, coverUrl: null } : null;
+  });
+  readonly deleteCountdown = computed<string | null>(() => {
+    const club = this.club();
+    if (!club) return null;
+    const ms = this.clubService.msUntilDeletion(club);
+    if (ms === null) return null;
+    const totalMinutes = Math.floor(ms / 60000);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (hours > 0) {
+      return minutes > 0 ? `${hours} год ${minutes} хв` : `${hours} год`;
+    }
+    return `${totalMinutes} хв`;
+  });
+  constructor() {
+    effect((onCleanup) => {
+      const clubId = this.id();
+      this.activeEventsTab.set('upcoming');
+      this.pastEvents.set([]);
+      this.isPastEventsLoaded.set(false);
+      let cancelled = false;
+      onCleanup(() => { cancelled = true; });
+      this.loadClub(clubId, () => cancelled).catch((_err: unknown) => {  });
+    });
+  }
+  private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {
+    this.isLoading.set(true);
+    this.errorMessage.set(null);
+    try {
+      if (this.auth.isAuthenticated() && untracked(() => this.clubService.myClubs().length === 0)) {
+        await this.clubService.loadMyClubs();
+      }
+      if (isCancelled()) return;
+      const found = await this.clubService.getClubById(clubId);
+      if (isCancelled()) return;
+      if (found) {
+        this.club.set(found);
+        const [members, events] = await Promise.all([
+          this.clubService.getClubMembers(clubId),
+          this.clubService.loadClubEvents(clubId),
+        ]);
+        if (isCancelled()) return;
+        this.members.set(members);
+        this.events.set(events);
+        if (this.auth.currentUser()?.id === found.organizerId) {
+          this.clubBans.set(await this.clubService.getBans(clubId));
+        }
+        this.seo.setPageI18n('SEO.club_detail_title', {
+          ogTitleKey: 'SEO.club_detail_og_title',
+          params: { name: found.name },
+        });
+      } else {
+        this.errorMessage.set('This club could not be found.');
+      }
+    } catch {
+      if (!isCancelled()) this.errorMessage.set('Failed to load club details.');
+    } finally {
+      if (!isCancelled()) this.isLoading.set(false);
+    }
+  }
+  async onJoin(): Promise<void> {
+    await this.performMembershipAction(() => this.clubService.joinClub(this.id()), 'Failed to join club');
+  }
+  async onLeave(): Promise<void> {
+    await this.performMembershipAction(() => this.clubService.leaveClub(this.id()), 'Failed to leave club');
+  }
+  openClubChat(): void {
+    const user = this.currentUser();
+    this.chatService.loadRooms(this.id(), user?.id);
+    if (!this.chatService.isOpen()) {
+      this.chatService.toggleOpen();
+    }
+  }
+  async handleKick(userId: string): Promise<void> {
+    await this.clubService.kickMember(this.id(), userId);
+    this.members.update(list => list.filter(m => m.userId !== userId));
+  }
+  async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
+    await this.clubService.banMember(this.id(), event.userId, event.duration);
+    this.members.update(list => list.filter(m => m.userId !== event.userId));
+  }
+  async onAttend(eventId: string): Promise<void> {
+    await this.performAttendanceAction(eventId, true);
+  }
+  async onCancelAttend(eventId: string): Promise<void> {
+    await this.performAttendanceAction(eventId, false);
+  }
+  private async performMembershipAction(action: () => Promise<void>, errorFallback: string): Promise<void> {
+    this.isActionLoading.set(true);
+    this.actionError.set(null);
+    try {
+      await action();
+      const updated = await this.clubService.getClubById(this.id());
+      if (updated) this.club.set(updated);
+    } catch (err) {
+      this.actionError.set(err instanceof Error ? err.message : errorFallback);
+    } finally {
+      this.isActionLoading.set(false);
+    }
+  }
+  async onEventsTabChange(tab: 'upcoming' | 'history'): Promise<void> {
+    this.activeEventsTab.set(tab);
+    if (tab === 'history' && !this.isPastEventsLoaded()) {
+      await this.loadPastEvents();
+    }
+  }
+  private async loadPastEvents(): Promise<void> {
+    this.isPastEventsLoading.set(true);
+    try {
+      const past = await this.clubService.loadClubEvents(this.id(), true);
+      const now = new Date().toISOString();
+      this.pastEvents.set(
+        past.filter(e => e.date < now).sort((a, b) => b.date.localeCompare(a.date)),
+      );
+      this.isPastEventsLoaded.set(true);
+    } finally {
+      this.isPastEventsLoading.set(false);
+    }
+  }
+  private async performAttendanceAction(eventId: string, attending: boolean): Promise<void> {
+    this.attendingEventId.set(eventId);
+    try {
+      if (attending) {
+        await this.eventService.attendEvent(eventId);
+      } else {
+        await this.eventService.cancelAttendance(eventId);
+      }
+      this.events.update(list =>
+        list.map(e =>
+          e.id === eventId
+            ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
+            : e,
+        ),
+      );
+    } finally {
+      this.attendingEventId.set(null);
+    }
+  }
+}
+````
+
 ## File: src/app/features/clubs/club-detail/club-detail.component.html
 ````html
 @if (isLoading()) {
@@ -18269,7 +21456,7 @@ export class ClubDetailComponent {
         <div class="bg-gradient-fantasy h-64" aria-hidden="true"></div>
       }
       <div class="absolute inset-0 flex items-end justify-center pointer-events-none px-6 pb-8">
-        <h1 class="font-fantasy font-bold text-white uppercase tracking-widest text-4xl sm:text-5xl lg:text-6xl text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
+        <h1 data-testid="club-name" class="font-fantasy font-bold text-white uppercase tracking-widest text-4xl sm:text-5xl lg:text-6xl text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
           {{ club()!.name }}
         </h1>
       </div>
@@ -18347,6 +21534,7 @@ export class ClubDetailComponent {
               <button
                 hlmBtn
                 type="button"
+                data-testid="join-button"
                 (click)="onJoin()"
                 [disabled]="isActionLoading()"
                 class="flex-shrink-0 bg-primary-600 hover:bg-primary-700 text-white"

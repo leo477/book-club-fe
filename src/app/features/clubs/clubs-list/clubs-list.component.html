@@ -104,6 +104,7 @@
             </div>
           } @else if (clubService.filteredClubs().length === 0) {
             <app-empty-state
+              data-testid="empty-state"
               icon="📚"
               title="No clubs yet"
               description="No clubs have been created yet. Check back soon!"
@@ -111,7 +112,7 @@
           } @else {
             <ul class="bento-grid">
               @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                <li data-testid="club-card" [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
                   <app-club-card
                     [club]="club"
                     [variant]="i === 0 ? 'featured' : 'default'"
@@ -137,6 +138,7 @@
             </div>
           } @else if (clubService.myClubs().length === 0) {
             <app-empty-state
+              data-testid="empty-state"
               icon="📚"
               [title]="'CLUBS.no_clubs' | translate"
               description="Join a club to see it here."
@@ -144,7 +146,7 @@
           } @else {
             <ul class="bento-grid">
               @for (club of clubService.myClubs(); track club.id; let i = $index) {
-                <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                <li data-testid="club-card" [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
                   <app-club-card
                     [club]="club"
                     [variant]="i === 0 ? 'featured' : 'default'"
@@ -169,6 +171,7 @@
         </div>
       } @else if (clubService.filteredClubs().length === 0) {
         <app-empty-state
+          data-testid="empty-state"
           icon="📚"
           title="No clubs yet"
           description="No clubs have been created yet. Check back soon!"
@@ -176,7 +179,7 @@
       } @else {
         <ul class="bento-grid">
           @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-            <li [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+            <li data-testid="club-card" [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
               <app-club-card
                 [club]="club"
                 [variant]="i === 0 ? 'featured' : 'default'"

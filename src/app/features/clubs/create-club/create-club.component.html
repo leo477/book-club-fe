@@ -23,6 +23,7 @@
             type="text"
             formControlName="name"
             class="w-full"
+            data-testid="club-name-input"
             [placeholder]="'CREATE_CLUB.name_placeholder' | translate"
           />
           <hlm-field-error validator="required">{{ 'CREATE_CLUB.name_required' | translate }}</hlm-field-error>
