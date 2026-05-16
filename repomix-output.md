@@ -1518,6 +1518,42 @@ export class ProfileRoleSelectorComponent {
 }
 ````
 
+## File: src/app/features/profile/stats/profile-stats.component.html
+````html
+<dl class="bento-grid-3">
+  <div class="glass-card-subtle p-5 text-center">
+    <div class="text-3xl mb-2" aria-hidden="true">📚</div>
+    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.clubs_joined' | translate }}</dt>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.clubsJoined ?? 0 }}</dd>
+  </div>
+  <div class="glass-card-subtle p-5 text-center">
+    <div class="text-3xl mb-2" aria-hidden="true">🧠</div>
+    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_taken' | translate }}</dt>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.quizzesTaken ?? 0 }}</dd>
+  </div>
+  <div class="glass-card-subtle p-5 text-center">
+    <div class="text-3xl mb-2" aria-hidden="true">🏆</div>
+    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_won' | translate }}</dt>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.quizWins ?? 0 }}</dd>
+  </div>
+  <div class="glass-card-subtle p-5 text-center">
+    <div class="text-3xl mb-2" aria-hidden="true">❤️</div>
+    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.likes_received' | translate }}</dt>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.likesReceived ?? 0 }}</dd>
+  </div>
+  <div class="glass-card-subtle p-5 text-center">
+    <div class="text-3xl mb-2" aria-hidden="true">📖</div>
+    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.books_read' | translate }}</dt>
+    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.booksRead ?? 0 }}</dd>
+  </div>
+</dl>
+@if (!stats()) {
+  <p class="text-center text-sm text-gray-400 dark:text-gray-500 mt-4">
+    {{ 'PROFILE.no_stats' | translate }}
+  </p>
+}
+````
+
 ## File: src/app/features/profile/stats/profile-stats.component.ts
 ````typescript
 import { Component, ChangeDetectionStrategy, input } from '@angular/core';
@@ -1946,6 +1982,26 @@ export class BookIntroComponent {
     });
   }
 }
+````
+
+## File: src/app/shared/components/empty-state/empty-state.component.html
+````html
+<div class="flex flex-col items-center justify-center py-16 px-4 text-center glass-card-subtle">
+  <div class="text-5xl mb-4" aria-hidden="true">{{ icon() }}</div>
+  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ title() }}</h3>
+  <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">{{ description() }}</p>
+  @if (actionLabel()) {
+    <button
+      type="button"
+      (click)="actionClick.emit()"
+      class="bg-gradient-brand text-white px-5 py-2 rounded-[var(--bento-radius)] font-medium
+             transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2
+             focus:ring-primary-500 focus:ring-offset-2"
+    >
+      {{ actionLabel() }}
+    </button>
+  }
+</div>
 ````
 
 ## File: src/app/shared/components/empty-state/empty-state.component.ts
@@ -5280,32 +5336,6 @@ export interface QuizLeaderboardEntry {
 }
 ````
 
-## File: src/app/core/services/book-cover.service.ts
-````typescript
-import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, map, catchError, of } from 'rxjs';
-interface OpenLibraryResponse {
-  docs: { cover_i?: number }[];
-}
-@Injectable({ providedIn: 'root' })
-export class BookCoverService {
-  private readonly http = inject(HttpClient);
-  fetchCover$(title: string): Observable<string | null> {
-    const params = `q=${encodeURIComponent(title)}&fields=cover_i&limit=1`;
-    return this.http
-      .get<OpenLibraryResponse>(`https://openlibrary.org/search.json?${params}`)
-      .pipe(
-        map(res => {
-          const coverId = res.docs[0]?.cover_i;
-          return coverId ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg` : null;
-        }),
-        catchError(() => of(null)),
-      );
-  }
-}
-````
-
 ## File: src/app/core/services/event.service.ts
 ````typescript
 import { HttpClient } from '@angular/common/http';
@@ -5517,6 +5547,79 @@ export class UploadService {
     return this.http
       .post<{ url: string }>(`${environment.apiUrl}/upload/cover`, form)
       .pipe(map(r => r.url));
+  }
+}
+````
+
+## File: src/app/features/auth/login/login.component.ts
+````typescript
+import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
+import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { AuthService } from '../../../core/auth/auth.service';
+import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
+import { SeoService } from '../../../core/services/seo.service';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+interface LoginForm {
+  email: FormControl<string>;
+  password: FormControl<string>;
+}
+@Component({
+  selector: 'app-login',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  templateUrl: './login.component.html',
+  styleUrl: './login.component.scss',
+})
+export class LoginComponent {
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly seo = inject(SeoService);
+  private readonly translate = inject(TranslateService);
+  readonly errorMessage = signal<string | null>(null);
+  readonly isSubmitting = signal(false);
+  readonly bookOpen = signal(false);
+  readonly formVisible = signal(false);
+  constructor() {
+    this.seo.setPageI18n('SEO.login_title');
+    setTimeout(() => this.formVisible.set(true), 700);
+  }
+  onBookAnimationDone(): void {
+    this.router.navigate(['/clubs']);
+  }
+  readonly form = new FormGroup<LoginForm>({
+    email: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.email],
+    }),
+    password: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.required, Validators.minLength(8)],
+    }),
+  });
+  async onSubmit(): Promise<void> {
+    if (this.form.invalid) {
+      this.form.markAllAsTouched();
+      return;
+    }
+    this.isSubmitting.set(true);
+    this.errorMessage.set(null);
+    const { email, password } = this.form.getRawValue();
+    const { error } = await this.auth.signIn(email, password);
+    this.isSubmitting.set(false);
+    if (error) {
+      const translatedError = error === 'Invalid credentials'
+        ? this.translate.instant('AUTH.error_invalid_credentials')
+        : error;
+      this.errorMessage.set(translatedError);
+    } else {
+      this.bookOpen.set(true);
+    }
   }
 }
 ````
@@ -6032,42 +6135,6 @@ import { RouterLink } from '@angular/router';
 export class PrivacyComponent {}
 ````
 
-## File: src/app/features/profile/stats/profile-stats.component.html
-````html
-<dl class="bento-grid-3">
-  <div class="glass-card-subtle p-5 text-center">
-    <div class="text-3xl mb-2" aria-hidden="true">📚</div>
-    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.clubs_joined' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.clubsJoined ?? 0 }}</dd>
-  </div>
-  <div class="glass-card-subtle p-5 text-center">
-    <div class="text-3xl mb-2" aria-hidden="true">🧠</div>
-    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_taken' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.quizzesTaken ?? 0 }}</dd>
-  </div>
-  <div class="glass-card-subtle p-5 text-center">
-    <div class="text-3xl mb-2" aria-hidden="true">🏆</div>
-    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_won' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.quizWins ?? 0 }}</dd>
-  </div>
-  <div class="glass-card-subtle p-5 text-center">
-    <div class="text-3xl mb-2" aria-hidden="true">❤️</div>
-    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.likes_received' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.likesReceived ?? 0 }}</dd>
-  </div>
-  <div class="glass-card-subtle p-5 text-center">
-    <div class="text-3xl mb-2" aria-hidden="true">📖</div>
-    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.books_read' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.booksRead ?? 0 }}</dd>
-  </div>
-</dl>
-@if (!stats()) {
-  <p class="text-center text-sm text-gray-400 dark:text-gray-500 mt-4">
-    {{ 'PROFILE.no_stats' | translate }}
-  </p>
-}
-````
-
 ## File: src/app/features/quiz/quiz-leaderboard/leaderboard-rest-table/leaderboard-rest-table.component.html
 ````html
 <div class="glass-card overflow-hidden">
@@ -6534,26 +6601,6 @@ export class CoverUploadComponent {
     });
   }
 }
-````
-
-## File: src/app/shared/components/empty-state/empty-state.component.html
-````html
-<div class="flex flex-col items-center justify-center py-16 px-4 text-center glass-card-subtle">
-  <div class="text-5xl mb-4" aria-hidden="true">{{ icon() }}</div>
-  <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">{{ title() }}</h3>
-  <p class="text-sm text-gray-500 dark:text-gray-400 max-w-sm mb-6">{{ description() }}</p>
-  @if (actionLabel()) {
-    <button
-      type="button"
-      (click)="actionClick.emit()"
-      class="bg-gradient-brand text-white px-5 py-2 rounded-[var(--bento-radius)] font-medium
-             transition-all duration-200 hover:opacity-90 focus:outline-none focus:ring-2
-             focus:ring-primary-500 focus:ring-offset-2"
-    >
-      {{ actionLabel() }}
-    </button>
-  }
-</div>
 ````
 
 ## File: src/app/shared/pipes/initials.pipe.ts
@@ -7809,57 +7856,113 @@ export class QuizService {
 }
 ````
 
-## File: src/app/features/auth/login/login.component.ts
+## File: src/app/features/auth/register/register.component.ts
 ````typescript
-import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
-import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
+import {
+  AbstractControl,
+  FormControl,
+  FormGroup,
+  ReactiveFormsModule,
+  ValidationErrors,
+  ValidatorFn,
+  Validators,
+} from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
+import { UserRole } from '../../../core/models/user.model';
 import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
 import { SeoService } from '../../../core/services/seo.service';
 import { HlmFieldImports } from '../../../shared/spartan/field/src';
 import { HlmInput } from '../../../shared/spartan/input/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-interface LoginForm {
+const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
+  const password = group.get('password')?.value as string;
+  const confirmPassword = group.get('confirmPassword')?.value as string;
+  return password === confirmPassword ? null : { passwordMismatch: true };
+};
+interface RegisterForm {
+  displayName: FormControl<string>;
   email: FormControl<string>;
   password: FormControl<string>;
+  confirmPassword: FormControl<string>;
+  role: FormControl<UserRole>;
 }
 @Component({
-  selector: 'app-login',
+  selector: 'app-register',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.scss',
+  templateUrl: './register.component.html',
+  styleUrl: './register.component.scss',
 })
-export class LoginComponent {
+export class RegisterComponent {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly seo = inject(SeoService);
-  private readonly translate = inject(TranslateService);
   readonly errorMessage = signal<string | null>(null);
   readonly isSubmitting = signal(false);
+  readonly successMessage = signal(false);
+  readonly registeredEmail = signal('');
+  readonly registeredName = signal('');
+  readonly selectedRole = signal<UserRole>('user');
   readonly bookOpen = signal(false);
   readonly formVisible = signal(false);
   constructor() {
-    this.seo.setPageI18n('SEO.login_title');
+    this.seo.setPageI18n('SEO.register_title');
     setTimeout(() => this.formVisible.set(true), 700);
   }
   onBookAnimationDone(): void {
     this.router.navigate(['/clubs']);
   }
-  readonly form = new FormGroup<LoginForm>({
-    email: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.email],
-    }),
-    password: new FormControl('', {
-      nonNullable: true,
-      validators: [Validators.required, Validators.minLength(8)],
-    }),
+  readonly form = new FormGroup<RegisterForm>(
+    {
+      displayName: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(2)],
+      }),
+      email: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.email],
+      }),
+      password: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required, Validators.minLength(8)],
+      }),
+      confirmPassword: new FormControl('', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+      role: new FormControl<UserRole>('user', {
+        nonNullable: true,
+        validators: [Validators.required],
+      }),
+    },
+    { validators: passwordMatchValidator },
+  );
+  private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
+    initialValue: '',
   });
+  readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
+    const pw = this._passwordValue();
+    if (!pw || pw.length === 0) return null;
+    if (pw.length < 8) return 'weak';
+    const hasUpper = /[A-Z]/.test(pw);
+    const hasNumber = /\d/.test(pw);
+    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
+    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
+    if (score >= 2) return 'strong';
+    if (score === 1) return 'medium';
+    return 'weak';
+  });
+  setRole(role: UserRole): void {
+    this.selectedRole.set(role);
+    this.form.controls.role.setValue(role);
+    this.form.controls.role.markAsTouched();
+  }
   async onSubmit(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -7867,15 +7970,15 @@ export class LoginComponent {
     }
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
-    const { email, password } = this.form.getRawValue();
-    const { error } = await this.auth.signIn(email, password);
+    const { displayName, email, password, role } = this.form.getRawValue();
+    const { error } = await this.auth.signUp(email, password, displayName, role);
     this.isSubmitting.set(false);
     if (error) {
-      const translatedError = error === 'Invalid credentials'
-        ? this.translate.instant('AUTH.error_invalid_credentials')
-        : error;
-      this.errorMessage.set(translatedError);
+      this.errorMessage.set(error);
     } else {
+      this.registeredEmail.set(email);
+      this.registeredName.set(displayName);
+      this.successMessage.set(true);
       this.bookOpen.set(true);
     }
   }
@@ -7993,6 +8096,251 @@ export class ClubSidebarRightComponent {
     }
   }
 </header>
+````
+
+## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.html
+````html
+<div hlmCard class="glass-card-subtle p-4 gap-3">
+  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
+  <div class="grid grid-cols-1 gap-2">
+    <a
+      [routerLink]="['/clubs', clubId(), 'quizzes']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">📝</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
+      </div>
+    </a>
+    <a
+      [routerLink]="['/clubs', clubId(), 'randomizer']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">🎲</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
+      </div>
+    </a>
+    <a
+      [routerLink]="['/clubs', clubId(), 'edit']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">✏️</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.edit_club_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.edit_club_desc' | translate }}</p>
+      </div>
+    </a>
+    <a
+      [routerLink]="['/clubs', clubId(), 'events', 'create']"
+      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
+    >
+      <span class="text-xl" aria-hidden="true">📅</span>
+      <div>
+        <p class="font-semibold">{{ 'CLUB_DETAIL.create_event_title' | translate }}</p>
+        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.create_event_desc' | translate }}</p>
+      </div>
+    </a>
+  </div>
+  <div class="mt-4 border-t border-white/10 pt-4">
+    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+      💬 {{ 'CLUB_DETAIL.chat_create_title' | translate }}
+    </p>
+    <div class="flex gap-2">
+      <input
+        type="text"
+        [ngModel]="newRoomName()"
+        (ngModelChange)="newRoomName.set($event)"
+        [placeholder]="'CLUB_DETAIL.chat_room_placeholder' | translate"
+        maxlength="50"
+        class="flex-1 rounded-lg border border-white/20 bg-white/10 dark:bg-white/5 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+        (keyup.enter)="createChatRoom()"
+      />
+      <button
+        hlmBtn
+        size="sm"
+        type="button"
+        (click)="createChatRoom()"
+        [disabled]="isCreatingRoom() || !newRoomName().trim()"
+        class="bg-primary-600 hover:bg-primary-700 text-white"
+      >
+        {{ 'CLUB_DETAIL.chat_create_btn' | translate }}
+      </button>
+    </div>
+    @if (roomError()) {
+      <p class="mt-1 text-xs text-red-500">{{ roomError() }}</p>
+    }
+  </div>
+  <div class="mt-4 border-t border-white/10 pt-4">
+    @if (!showDeleteConfirm()) {
+      <button
+        hlmBtn
+        size="sm"
+        variant="destructive"
+        type="button"
+        (click)="showDeleteConfirm.set(true)"
+        class="w-full"
+      >
+        🗑 {{ 'CLUB_DETAIL.delete_club_btn' | translate }}
+      </button>
+    } @else {
+      <div class="rounded-xl border border-red-500/30 bg-red-50/10 dark:bg-red-900/10 p-3 space-y-2">
+        <p class="text-xs text-red-600 dark:text-red-400 font-semibold">{{ 'CLUB_DETAIL.delete_club_confirm' | translate }}</p>
+        <div class="flex gap-2">
+          <button
+            hlmBtn
+            size="sm"
+            variant="destructive"
+            type="button"
+            (click)="confirmDelete()"
+            [disabled]="isDeleting()"
+            class="flex-1"
+          >
+            {{ 'CLUB_DETAIL.delete_club_yes' | translate }}
+          </button>
+          <button
+            hlmBtn
+            size="sm"
+            variant="outline"
+            type="button"
+            (click)="cancelDelete()"
+            class="flex-1"
+          >
+            {{ 'CLUB_DETAIL.cancel' | translate }}
+          </button>
+        </div>
+        @if (deleteError()) {
+          <p class="mt-1 text-xs text-red-500">{{ deleteError() | translate }}</p>
+        }
+      </div>
+    }
+  </div>
+</div>
+````
+
+## File: src/app/features/clubs/club-detail/members/club-members-list.component.html
+````html
+<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="glass-card px-6 gap-4">
+  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
+    {{ 'MEMBERS.title' | translate }} ({{ members().length }})
+  </h2>
+  @if (members().length === 0) {
+    <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'MEMBERS.empty' | translate }}</p>
+  } @else {
+    <ul class="divide-y divide-gray-100 dark:divide-gray-700">
+      @for (member of members(); track member.userId) {
+        <li class="flex items-center gap-4 py-3 relative">
+          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0" aria-hidden="true">
+            {{ member.displayName | initials }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+              {{ member.displayName.includes('@') ? member.displayName.split('@')[0] : member.displayName }}
+            </p>
+            @if (member.role === 'organizer') {
+              <span class="inline-block text-xs font-medium text-accent-600 dark:text-accent-400">
+                {{ 'MEMBERS.organizer' | translate }}
+              </span>
+            } @else {
+              <span class="inline-block text-xs text-gray-400 dark:text-gray-500">
+                {{ 'MEMBERS.member' | translate }}
+              </span>
+            }
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
+            @if (canSeeSocials(member)) {
+              @if (member.socials?.telegram) {
+                <a [href]="'https://t.me/' + member.socials!.telegram" target="_blank" rel="noopener noreferrer"
+                   class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram: @' + member.socials!.telegram" title="Telegram">
+                  ✈️
+                </a>
+              }
+              @if (member.socials?.instagram) {
+                <a [href]="'https://instagram.com/' + member.socials!.instagram" target="_blank" rel="noopener noreferrer"
+                   class="text-pink-500 hover:text-pink-600 text-lg" [attr.aria-label]="'Instagram: @' + member.socials!.instagram" title="Instagram">
+                  📸
+                </a>
+              }
+              @if (member.socials?.github) {
+                <a [href]="'https://github.com/' + member.socials!.github" target="_blank" rel="noopener noreferrer"
+                   class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" [attr.aria-label]="'GitHub: ' + member.socials!.github" title="GitHub">
+                  🐙
+                </a>
+              }
+              @if (member.socials?.goodreads) {
+                <a [href]="'https://goodreads.com/' + member.socials!.goodreads" target="_blank" rel="noopener noreferrer"
+                   class="text-amber-600 hover:text-amber-700 text-lg" title="Goodreads">
+                  📚
+                </a>
+              }
+              @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
+                <button
+                  hlmBtn
+                  variant="secondary"
+                  size="sm"
+                  type="button"
+                  (click)="toggleQr(member.userId)"
+                  class="ml-1 text-xs"
+                  [attr.aria-expanded]="showQrForUser() === member.userId"
+                  [attr.aria-label]="'MEMBERS.show_qr' | translate"
+                >
+                  <span aria-hidden="true">⊡</span> {{ 'MEMBERS.show_qr' | translate }}
+                </button>
+                @if (showQrForUser() === member.userId) {
+                  <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl glass-card-strong shadow-xl p-4 flex flex-col items-center gap-2"
+                       aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
+                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
+                    @defer (on idle) {
+                      <app-qr-code [value]="buildQrValue(member)" [size]="160" />
+                    } @placeholder {
+                      <div class="h-40 w-40 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" aria-hidden="true"></div>
+                    }
+                    <button hlmBtn variant="ghost" size="sm" type="button" (click)="toggleQr(member.userId)"
+                            class="mt-1 text-xs text-gray-400">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
+                  </dialog>
+                }
+              }
+            } @else {
+              <span class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                🔒 {{ 'MEMBERS.socials_hidden' | translate }}
+              </span>
+            }
+            @if (isOwner() && member.role !== 'organizer') {
+              <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">
+                <button hlmBtn variant="destructive" size="xs" type="button" (click)="kick.emit(member.userId)"
+                         [attr.aria-label]="'MEMBERS.kick' | translate">
+                  {{ 'MEMBERS.kick' | translate }}
+                </button>
+                <button hlmBtn variant="ghost" size="xs" type="button" (click)="toggleBanMenu(member.userId)"
+                        class="text-orange-600 hover:text-orange-700"
+                        [attr.aria-expanded]="showBanMenu() === member.userId">
+                  {{ 'MEMBERS.ban' | translate }}
+                </button>
+                @if (showBanMenu() === member.userId) {
+                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl glass-card-strong shadow-xl py-1 min-w-36">
+                    @for (duration of banDurations; track duration) {
+                      <li>
+                        <button hlmBtn variant="ghost" type="button" (click)="emitBan(member.userId, duration)"
+                                class="w-full justify-start px-4 text-sm">
+                          @if (duration === 1) { {{ 'MEMBERS.ban_1' | translate }} }
+                          @else if (duration === 3) { {{ 'MEMBERS.ban_3' | translate }} }
+                          @else if (duration === 5) { {{ 'MEMBERS.ban_5' | translate }} }
+                          @else { {{ 'MEMBERS.ban_permanent' | translate }} }
+                        </button>
+                      </li>
+                    }
+                  </menu>
+                }
+              </div>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>
 ````
 
 ## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
@@ -8274,6 +8622,91 @@ export class EditClubComponent implements OnInit {
 }
 ````
 
+## File: src/app/features/events/event-card/event-card.component.html
+````html
+<article class="parchment-card flex flex-col overflow-hidden h-full
+                hover:shadow-[var(--shadow-parchment-lg)] transition-shadow duration-200">
+  <div class="flex flex-col flex-1 p-4 gap-3">
+    <div class="flex items-start justify-between gap-2">
+      <span class="date-badge">
+        {{ event().date | formatDate }}
+      </span>
+      @if (event().status !== 'scheduled') {
+        <span hlmBadge
+              [variant]="event().status === 'cancelled' ? 'destructive'
+                       : event().status === 'active' ? 'default' : 'secondary'"
+              class="rounded-full text-xs flex-shrink-0">
+          {{ ('EVENTS.status_' + event().status) | translate }}
+        </span>
+      }
+    </div>
+    <h3 class="font-display font-semibold text-[var(--color-ink)] leading-snug line-clamp-2">
+      {{ event().title }}
+    </h3>
+    <a
+      [routerLink]="['/clubs', event().clubId]"
+      class="text-xs text-[var(--color-primary-600)] dark:text-[#fbbf24] hover:underline font-medium"
+      (click)="$event.stopPropagation()"
+    >
+      {{ event().clubName }}
+    </a>
+    @if (event().city) {
+      <p class="text-xs text-[var(--color-ink-muted)] flex items-center gap-1">
+        <span aria-hidden="true">📍</span>
+        <span>{{ event().address || event().city }}</span>
+      </p>
+    }
+    @if (event().theme || event().tags.length > 0) {
+      <div class="flex flex-wrap gap-1.5">
+        @if (event().theme) {
+          <span class="rounded-full
+                       bg-[var(--color-accent-100)]/80 dark:bg-[var(--color-accent-900)]/40
+                       border border-[var(--color-accent-300)] dark:border-[var(--color-accent-700)]/60
+                       px-2.5 py-0.5 text-xs font-medium
+                       text-[var(--color-accent-700)] dark:text-[var(--color-accent-300)]">
+            {{ event().theme }}
+          </span>
+        }
+        @for (tag of event().tags.slice(0, 2); track tag) {
+          <span class="rounded-full
+                       bg-[var(--color-surface-raised)]
+                       border border-[var(--color-sepia-mid)]
+                       px-2.5 py-0.5 text-xs text-[var(--color-ink-muted)]">
+            {{ tag }}
+          </span>
+        }
+      </div>
+    }
+    <div class="flex items-center justify-between mt-auto pt-2
+                border-t border-[var(--color-sepia-mid)]">
+      <span class="text-xs text-[var(--color-ink-muted)]">
+        {{ event().attendeeCount }} {{ 'EVENTS.attending' | translate }}
+      </span>
+      <div class="flex gap-2">
+        <a hlmBtn variant="outline" size="sm" [routerLink]="['/events', event().id]">
+          {{ 'EVENTS.view' | translate }}
+        </a>
+        @if (isAuthenticated() && event().status !== 'cancelled') {
+          @if (event().isAttending) {
+            <button hlmBtn type="button" size="sm" [disabled]="attending()"
+                    (click)="cancelAttend.emit()"
+                    class="bg-[var(--color-accent-600)] hover:bg-[var(--color-accent-700)] text-white">
+              @if (attending()) { <hlm-spinner size="xs" /> } @else { {{ 'EVENTS.going' | translate }} }
+            </button>
+          } @else {
+            <button hlmBtn type="button" size="sm" [disabled]="attending()"
+                    (click)="attend.emit()"
+                    class="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white">
+              @if (attending()) { <hlm-spinner size="xs" /> } @else { {{ 'EVENTS.rsvp' | translate }} }
+            </button>
+          }
+        }
+      </div>
+    </div>
+  </div>
+</article>
+````
+
 ## File: src/app/features/quiz/quiz-edit/quiz-edit.component.html
 ````html
 <div class="min-h-screen p-4 sm:p-8">
@@ -8485,6 +8918,158 @@ export class LeaderboardPodiumComponent {
   readonly second = input<QuizLeaderboardEntry | null>(null);
   readonly third  = input<QuizLeaderboardEntry | null>(null);
 }
+````
+
+## File: src/app/features/quiz/quiz-list/quiz-list.component.html
+````html
+<div class="min-h-screen p-4 sm:p-8">
+  <div class="max-w-3xl mx-auto space-y-6">
+    <header class="flex items-center justify-between flex-wrap gap-4">
+      <div>
+        <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🧠 {{ 'QUIZ.title' | translate }}</h1>
+        <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">
+          {{ 'QUIZ.list_subtitle' | translate }}
+        </p>
+      </div>
+      <div class="flex items-center gap-3">
+        @if (authService.isOrganizer()) {
+          <a hlmBtn [routerLink]="['/clubs', id(), 'quizzes', 'create']"
+             class="bg-gradient-brand text-white border-0 hover:opacity-90">
+            {{ 'QUIZ.create_btn' | translate }}
+          </a>
+        }
+        <nav aria-label="Breadcrumb">
+          <a [routerLink]="['/clubs', id()]"
+             class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
+            {{ 'QUIZ.back_to_club_short' | translate }}
+          </a>
+        </nav>
+      </div>
+    </header>
+    @if (quizService.isLoading()) {
+      <div class="bento-grid-3">
+        @for (_ of [1, 2, 3]; track $index) {
+          <div class="h-28 glass-card-subtle animate-pulse"></div>
+        }
+      </div>
+    } @else {
+      @if (quizService.quizzes().length === 0) {
+        <div class="glass-card p-12 text-center">
+          <p class="text-4xl mb-3">📝</p>
+          <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">{{ 'QUIZ.no_quizzes' | translate }}</h2>
+          @if (authService.isOrganizer()) {
+            <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
+              {{ 'QUIZ.no_quizzes_organizer' | translate }}
+            </p>
+          } @else {
+            <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
+              {{ 'QUIZ.no_quizzes_member' | translate }}
+            </p>
+          }
+        </div>
+      } @else {
+        <div class="bento-grid-3">
+          @for (quiz of quizService.quizzes(); track quiz.id) {
+            <div class="glass-card p-5 flex flex-col gap-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5">
+              <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2 flex-wrap mb-1">
+                    <h2 class="text-gray-900 dark:text-white font-semibold truncate">
+                      {{ quiz.title }}
+                    </h2>
+                    @switch (quiz.status) {
+                      @case ('live') {
+                        <span class="inline-flex items-center gap-1 rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
+                          <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse"></span>
+                          {{ 'QUIZ.status_live' | translate }}
+                        </span>
+                      }
+                      @case ('active') {
+                        <span class="inline-flex items-center gap-1 rounded-full bg-blue-100/80 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700/60 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-400">
+                          <span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span>
+                          {{ 'QUIZ.status_active' | translate }}
+                        </span>
+                      }
+                      @case ('closed') {
+                        <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-400 dark:text-gray-500">
+                          {{ 'QUIZ.status_closed' | translate }}
+                        </span>
+                      }
+                      @default {
+                        <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-500 dark:text-gray-400">
+                          {{ 'QUIZ.status_draft' | translate }}
+                        </span>
+                      }
+                    }
+                  </div>
+                  @if (quiz.description) {
+                    <p class="text-gray-500 dark:text-gray-400 text-xs line-clamp-2">
+                      {{ quiz.description }}
+                    </p>
+                  }
+                </div>
+              </div>
+              <div class="flex items-center gap-2 mt-auto flex-wrap">
+                @if (authService.isOrganizer()) {
+                  <a hlmBtn size="sm" variant="outline"
+                     [routerLink]="['/clubs', id(), 'quizzes', quiz.id, 'preview']">
+                    {{ 'QUIZ.preview' | translate }}
+                  </a>
+                  @if (quiz.status === 'draft') {
+                    <a hlmBtn size="sm" variant="ghost"
+                       [routerLink]="['/clubs', id(), 'quizzes', quiz.id, 'edit']">
+                      {{ 'QUIZ.edit' | translate }}
+                    </a>
+                  }
+                  @if (quiz.status !== 'draft' && quiz.status !== 'closed') {
+                    <a hlmBtn size="sm"
+                       class="bg-gradient-brand text-white border-0 hover:opacity-90"
+                       [routerLink]="['/clubs', id(), 'quizzes', quiz.id, 'session']">
+                      {{ 'QUIZ.manage_session' | translate }}
+                    </a>
+                  }
+                  @if (quiz.status === 'draft' || quiz.status === 'active') {
+                    <button
+                      hlmBtn
+                      type="button"
+                      size="sm"
+                      [variant]="quiz.isActive ? 'secondary' : 'outline'"
+                      (click)="toggleActive(quiz.id, !quiz.isActive)"
+                      [disabled]="togglingId() === quiz.id"
+                    >
+                      {{ (quiz.isActive ? 'QUIZ.deactivate' : 'QUIZ.activate') | translate }}
+                    </button>
+                  }
+                } @else if (quiz.isActive || quiz.status === 'live' || quiz.status === 'active') {
+                  <button
+                    hlmBtn
+                    type="button"
+                    size="sm"
+                    (click)="takeQuiz(quiz.id)"
+                    class="w-full bg-gradient-brand text-white border-0 hover:opacity-90"
+                  >
+                    {{ 'QUIZ.take_btn' | translate }}
+                  </button>
+                }
+                @if (quiz.status === 'live') {
+                  <a hlmBtn size="sm" variant="outline"
+                     [routerLink]="['/clubs', id(), 'quizzes', quiz.id, 'leaderboard']">
+                    {{ 'QUIZ.leaderboard' | translate }}
+                  </a>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    }
+    @if (errorMessage()) {
+      <div class="glass-card px-4 py-3 text-red-700 dark:text-red-400 text-sm" role="alert">
+        ⚠️ {{ errorMessage() }}
+      </div>
+    }
+  </div>
+</div>
 ````
 
 ## File: src/app/features/quiz/quiz-list/quiz-list.component.ts
@@ -9190,54 +9775,93 @@ export class ChatWidgetComponent {
 }
 ````
 
-## File: src/app/shared/components/qr-code/qr-code.component.ts
+## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
 ````typescript
 import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  effect,
-  input,
-  viewChild,
+  Component, ChangeDetectionStrategy, input, output,
+  DestroyRef, signal, inject, ElementRef, HostListener, effect,
 } from '@angular/core';
-import { environment } from '../../../../environments/environment';
-import { HlmCard } from '../../spartan/card/src';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { switchMap, debounceTime, distinctUntilChanged, of } from 'rxjs';
+import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
+import { HlmInput } from '../../spartan/input/src';
 @Component({
-  selector: 'app-qr-code',
+  selector: 'app-address-autocomplete',
   standalone: true,
-  imports: [HlmCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div hlmCard class="flex items-center justify-center p-6 w-fit gap-0 py-6">
-      <canvas
-        #canvas
-        [style.width.px]="size()"
-        [style.height.px]="size()"
-        class="rounded-lg"
-        [attr.aria-label]="'QR code'"
-        role="img"
-      ></canvas>
-    </div>
-  `,
+  imports: [ReactiveFormsModule, HlmInput],
+  templateUrl: './address-autocomplete.component.html',
 })
-export class QrCodeComponent {
-  readonly value = input.required<string>();
-  readonly size = input<number>(200);
-  private readonly canvasRef =
-    viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
+export class AddressAutocompleteComponent {
+  readonly control = input.required<FormControl<string>>();
+  readonly placeholder = input<string>('');
+  readonly inputId = input<string>('');
+  readonly selected = output<GeocodeSuggestion>();
+  private readonly geocoding = inject(GeocodingService);
+  private readonly elRef = inject(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
+  readonly suggestions = signal<GeocodeSuggestion[]>([]);
+  readonly isLoading = signal(false);
+  readonly isOpen = signal(false);
+  readonly activeIndex = signal(-1);
   constructor() {
     effect(() => {
-      const val = this.value();
-      const sz = this.size();
-      const canvas = this.canvasRef().nativeElement;
-      if (!val || !canvas) return;
-      void import('qrcode').then((mod) => {
-        const lib: typeof import('qrcode') = (mod as any).default;
-        lib.toCanvas(canvas, val, { width: sz, margin: 2 }, (err: unknown) => {
-          if (err && !environment.production) console.error('QR generation error:', err);
-        });
+      const ctrl = this.control();
+      ctrl.valueChanges.pipe(
+        debounceTime(300),
+        distinctUntilChanged(),
+        switchMap(q => {
+          if (!q || q.length < 2) {
+            this.suggestions.set([]);
+            this.isOpen.set(false);
+            return of([]);
+          }
+          this.isLoading.set(true);
+          return this.geocoding.autocomplete$(q);
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      ).subscribe({
+        next: (results) => {
+          this.isLoading.set(false);
+          this.suggestions.set(results);
+          this.activeIndex.set(-1);
+          this.isOpen.set(results.length > 0);
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.suggestions.set([]);
+        },
       });
     });
+  }
+  select(s: GeocodeSuggestion): void {
+    this.control().setValue(s.label, { emitEvent: false });
+    this.suggestions.set([]);
+    this.isOpen.set(false);
+    this.selected.emit(s);
+  }
+  onKeydown(event: KeyboardEvent): void {
+    if (!this.isOpen()) return;
+    const len = this.suggestions().length;
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i + 1) % len);
+    } else if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      this.activeIndex.update(i => (i - 1 + len) % len);
+    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
+      event.preventDefault();
+      this.select(this.suggestions()[this.activeIndex()]);
+    } else if (event.key === 'Escape') {
+      this.isOpen.set(false);
+    }
+  }
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    if (!this.elRef.nativeElement.contains(event.target)) {
+      this.isOpen.set(false);
+    }
   }
 }
 ````
@@ -9434,6 +10058,49 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
     }),
   );
 };
+````
+
+## File: src/app/core/services/book-cover.service.ts
+````typescript
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, map, catchError, of, shareReplay } from 'rxjs';
+interface OpenLibraryResponse {
+  docs: { cover_i?: number }[];
+}
+@Injectable({ providedIn: 'root' })
+export class BookCoverService {
+  private readonly http = inject(HttpClient);
+  private readonly inflight = new Map<string, Observable<string | null>>();
+  private readonly resolved = new Map<string, string | null>();
+  fetchCover$(title: string): Observable<string | null> {
+    const key = title.trim().toLowerCase();
+    if (this.resolved.has(key)) {
+      return of(this.resolved.get(key) ?? null);
+    }
+    const existing = this.inflight.get(key);
+    if (existing) return existing;
+    const params = `q=${encodeURIComponent(title)}&fields=cover_i&limit=1`;
+    const request$ = this.http
+      .get<OpenLibraryResponse>(`https://openlibrary.org/search.json?${params}`)
+      .pipe(
+        map(res => {
+          const coverId = res.docs[0]?.cover_i;
+          const url = coverId ? `https://covers.openlibrary.org/b/id/${coverId}-M.jpg` : null;
+          this.resolved.set(key, url);
+          this.inflight.delete(key);
+          return url;
+        }),
+        catchError(() => {
+          this.inflight.delete(key);
+          return of(null);
+        }),
+        shareReplay({ bufferSize: 1, refCount: true }),
+      );
+    this.inflight.set(key, request$);
+    return request$;
+  }
+}
 ````
 
 ## File: src/app/core/services/chat.service.ts
@@ -9667,492 +10334,224 @@ export class ChatService {
 }
 ````
 
-## File: src/app/core/services/club.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
-import { AuthService } from '../auth/auth.service';
-import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
-import { ClubEvent } from '../models/event.model';
-@Injectable({ providedIn: 'root' })
-export class ClubService {
-  private readonly http = inject(HttpClient);
-  private readonly auth = inject(AuthService);
-  private readonly _clubs = signal<Club[]>([]);
-  private readonly _myClubs = signal<Club[]>([]);
-  private readonly _isLoading = signal(false);
-  private readonly _error = signal<string | null>(null);
-  private readonly _searchQuery = signal('');
-  private readonly _cityFilter = signal<string | null>(null);
-  private myClubsLoadedAt = 0;
-  readonly clubs = this._clubs.asReadonly();
-  readonly myClubs = this._myClubs.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly error = this._error.asReadonly();
-  readonly searchQuery = this._searchQuery.asReadonly();
-  readonly myOwnedClubs = computed<Club[]>(() => {
-    const userId = this.auth.currentUser()?.id;
-    if (!userId) return [];
-    return this._clubs().filter(c => c.organizerId === userId);
-  });
-  readonly myOwnedClubIds = computed<Set<string>>(() =>
-    new Set(this.myOwnedClubs().map(c => c.id)),
-  );
-  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
-  readonly availableCities = computed<string[]>(() => {
-    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
-    return cities.sort((a, b) => a.localeCompare(b));
-  });
-  readonly filteredClubs = computed(() => {
-    const q = this._searchQuery().toLowerCase().trim();
-    const city = this._cityFilter();
-    let clubs = this._clubs();
-    if (q) {
-      clubs = clubs.filter(
-        c =>
-          c.name.toLowerCase().includes(q) ||
-          (c.description?.toLowerCase().includes(q) ?? false),
-      );
-    }
-    if (city) {
-      clubs = clubs.filter(c => c.city === city);
-    }
-    return clubs;
-  });
-  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
-    const clubs = this.filteredClubs();
-    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
-      const city = club.city || '';
-      if (!acc[city]) acc[city] = [];
-      acc[city].push(club);
-      return acc;
-    }, {});
-  });
-  readonly myParticipatedClubs = computed<Club[]>(() => []);
-  readonly myMissedClubs = computed<Club[]>(() => []);
-  setSearchQuery(query: string): void {
-    this._searchQuery.set(query);
-  }
-  setCityFilter(city: string | null): void {
-    this._cityFilter.set(city);
-  }
-  async loadPublicClubs(): Promise<void> {
-    this._isLoading.set(true);
-    this._error.set(null);
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
-      );
-      this._clubs.set(raw.map(mapClub));
-    } catch {
-      this._error.set('Failed to load clubs');
-    } finally {
-      this._isLoading.set(false);
-    }
-  }
-  async loadMyClubs(): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
-      );
-      this._myClubs.set(raw.map(mapClub));
-      this.myClubsLoadedAt = Date.now();
-    } catch {
-      this._error.set('Failed to load my clubs');
-    }
-  }
-  async ensureMyClubsLoaded(maxAgeMs = 30_000): Promise<void> {
-    if (Date.now() - this.myClubsLoadedAt < maxAgeMs && this._myClubs().length > 0) return;
-    await this.loadMyClubs();
-  }
-  async getClubById(id: string): Promise<Club | null> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
-      );
-      return mapClub(raw);
-    } catch {
-      return null;
-    }
-  }
-  async createClub(payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    coverUrl?: string | null;
-    city?: string;
-    tags?: string[];
-    meetingDurationMinutes?: number | null;
-    afterMeetingVenue?: { name: string; address: string; description: string } | null;
-  }): Promise<Club> {
-    const raw = await firstValueFrom(
-      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
-        name: payload.name,
-        description: payload.description,
-        isPublic: payload.isPublic,
-        coverUrl: payload.coverUrl ?? null,
-        city: payload.city,
-        tags: payload.tags,
-        meetingDurationMinutes: payload.meetingDurationMinutes,
-        afterMeetingVenue: payload.afterMeetingVenue,
-      }),
-    );
-    const club = mapClub(raw);
-    this._clubs.update(existing => [club, ...existing]);
-    this._myClubs.update(existing => [club, ...existing]);
-    return club;
-  }
-  async updateClub(clubId: string, payload: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    city?: string;
-    coverUrl?: string | null;
-  }): Promise<Club> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
-    );
-    const club = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
-    return club;
-  }
-  async joinClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
-    );
-    this._clubs.update(list =>
-      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
-    );
-    const club = this._clubs().find(c => c.id === clubId);
-    if (club && !this.myClubIds().has(clubId)) {
-      this._myClubs.update(list => [club, ...list]);
-    }
-  }
-  async leaveClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
-    );
-    this._clubs.update(list =>
-      list.map(c =>
-        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
-      ),
-    );
-    this._myClubs.update(list => list.filter(c => c.id !== clubId));
-  }
-  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
-    );
-    return raw.map(mapClubMember);
-  }
-  async kickMember(clubId: string, userId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
-    );
-  }
-  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
-    );
-  }
-  async getBans(clubId: string): Promise<BanRecord[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
-    );
-    return raw.map(mapBanRecord);
-  }
-  async loadClubEvents(clubId: string, includePast = false): Promise<ClubEvent[]> {
-    const raw = await firstValueFrom(
-      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`, {
-        params: { include_past: String(includePast) },
-      }),
-    );
-    return raw.map(mapEvent);
-  }
-  async deleteClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${environment.apiUrl}/clubs/${clubId}`),
-    );
-    this._clubs.update(list => list.filter(c => c.id !== clubId));
-    this._myClubs.update(list => list.filter(c => c.id !== clubId));
-  }
-  async pauseClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'pause');
-  }
-  async cancelClub(clubId: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'cancel');
-  }
-  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
-    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
-  }
-  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
-    const raw = await firstValueFrom(
-      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
-    );
-    const updated = mapClub(raw);
-    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
-  }
-  msUntilDeletion(club: Club): number | null {
-    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
-    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
-    const remaining = deletionTime - Date.now();
-    return remaining > 0 ? remaining : null;
-  }
-}
-````
-
-## File: src/app/features/auth/register/register.component.ts
-````typescript
-import { Component, ChangeDetectionStrategy, inject, signal, computed } from '@angular/core';
-import {
-  AbstractControl,
-  FormControl,
-  FormGroup,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators,
-} from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslateModule } from '@ngx-translate/core';
-import { AuthService } from '../../../core/auth/auth.service';
-import { UserRole } from '../../../core/models/user.model';
-import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
-import { SeoService } from '../../../core/services/seo.service';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmSpinner } from '../../../shared/spartan/spinner/src';
-const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
-  const password = group.get('password')?.value as string;
-  const confirmPassword = group.get('confirmPassword')?.value as string;
-  return password === confirmPassword ? null : { passwordMismatch: true };
-};
-interface RegisterForm {
-  displayName: FormControl<string>;
-  email: FormControl<string>;
-  password: FormControl<string>;
-  confirmPassword: FormControl<string>;
-  role: FormControl<UserRole>;
-}
-@Component({
-  selector: 'app-register',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
-  templateUrl: './register.component.html',
-  styleUrl: './register.component.scss',
-})
-export class RegisterComponent {
-  private readonly auth = inject(AuthService);
-  private readonly router = inject(Router);
-  private readonly seo = inject(SeoService);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isSubmitting = signal(false);
-  readonly successMessage = signal(false);
-  readonly registeredEmail = signal('');
-  readonly registeredName = signal('');
-  readonly selectedRole = signal<UserRole>('user');
-  readonly bookOpen = signal(false);
-  readonly formVisible = signal(false);
-  constructor() {
-    this.seo.setPageI18n('SEO.register_title');
-    setTimeout(() => this.formVisible.set(true), 700);
-  }
-  onBookAnimationDone(): void {
-    this.router.navigate(['/clubs']);
-  }
-  readonly form = new FormGroup<RegisterForm>(
-    {
-      displayName: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.minLength(2)],
-      }),
-      email: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.email],
-      }),
-      password: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required, Validators.minLength(8)],
-      }),
-      confirmPassword: new FormControl('', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-      role: new FormControl<UserRole>('user', {
-        nonNullable: true,
-        validators: [Validators.required],
-      }),
-    },
-    { validators: passwordMatchValidator },
-  );
-  private readonly _passwordValue = toSignal(this.form.controls.password.valueChanges, {
-    initialValue: '',
-  });
-  readonly passwordStrength = computed<'weak' | 'medium' | 'strong' | null>(() => {
-    const pw = this._passwordValue();
-    if (!pw || pw.length === 0) return null;
-    if (pw.length < 8) return 'weak';
-    const hasUpper = /[A-Z]/.test(pw);
-    const hasNumber = /\d/.test(pw);
-    const hasSpecial = /[^A-Za-z0-9]/.test(pw);
-    const score = [hasUpper, hasNumber, hasSpecial].filter(Boolean).length;
-    if (score >= 2) return 'strong';
-    if (score === 1) return 'medium';
-    return 'weak';
-  });
-  setRole(role: UserRole): void {
-    this.selectedRole.set(role);
-    this.form.controls.role.setValue(role);
-    this.form.controls.role.markAsTouched();
-  }
-  async onSubmit(): Promise<void> {
-    if (this.form.invalid) {
-      this.form.markAllAsTouched();
-      return;
-    }
-    this.isSubmitting.set(true);
-    this.errorMessage.set(null);
-    const { displayName, email, password, role } = this.form.getRawValue();
-    const { error } = await this.auth.signUp(email, password, displayName, role);
-    this.isSubmitting.set(false);
-    if (error) {
-      this.errorMessage.set(error);
-    } else {
-      this.registeredEmail.set(email);
-      this.registeredName.set(displayName);
-      this.successMessage.set(true);
-      this.bookOpen.set(true);
-    }
-  }
-}
-````
-
-## File: src/app/features/clubs/club-detail/manage-panel/club-manage-panel.component.html
+## File: src/app/features/auth/login/login.component.html
 ````html
-<div hlmCard class="glass-card-subtle p-4 gap-3">
-  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">{{ 'CLUB_DETAIL.manage_title' | translate }}</h2>
-  <div class="grid grid-cols-1 gap-2">
-    <a
-      [routerLink]="['/clubs', clubId(), 'quizzes']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">📝</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
-      </div>
-    </a>
-    <a
-      [routerLink]="['/clubs', clubId(), 'randomizer']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">🎲</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
-      </div>
-    </a>
-    <a
-      [routerLink]="['/clubs', clubId(), 'edit']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">✏️</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.edit_club_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.edit_club_desc' | translate }}</p>
-      </div>
-    </a>
-    <a
-      [routerLink]="['/clubs', clubId(), 'events', 'create']"
-      class="flex items-center gap-3 rounded-xl border border-white/20 dark:border-white/10 px-3 py-3 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-white/30 dark:hover:bg-white/10 transition-colors"
-    >
-      <span class="text-xl" aria-hidden="true">📅</span>
-      <div>
-        <p class="font-semibold">{{ 'CLUB_DETAIL.create_event_title' | translate }}</p>
-        <p class="text-xs text-gray-500 dark:text-gray-400">{{ 'CLUB_DETAIL.create_event_desc' | translate }}</p>
-      </div>
-    </a>
-  </div>
-  <div class="mt-4 border-t border-white/10 pt-4">
-    <p class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
-      💬 {{ 'CLUB_DETAIL.chat_create_title' | translate }}
-    </p>
-    <div class="flex gap-2">
-      <input
-        type="text"
-        [ngModel]="newRoomName()"
-        (ngModelChange)="newRoomName.set($event)"
-        [placeholder]="'CLUB_DETAIL.chat_room_placeholder' | translate"
-        maxlength="50"
-        class="flex-1 rounded-lg border border-white/20 bg-white/10 dark:bg-white/5 px-3 py-2 text-sm text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
-        (keyup.enter)="createChatRoom()"
-      />
-      <button
-        hlmBtn
-        size="sm"
-        type="button"
-        (click)="createChatRoom()"
-        [disabled]="isCreatingRoom() || !newRoomName().trim()"
-        class="bg-primary-600 hover:bg-primary-700 text-white"
-      >
-        {{ 'CLUB_DETAIL.chat_create_btn' | translate }}
-      </button>
-    </div>
-    @if (roomError()) {
-      <p class="mt-1 text-xs text-red-500">{{ roomError() }}</p>
-    }
-  </div>
-  <div class="mt-4 border-t border-white/10 pt-4">
-    @if (!showDeleteConfirm()) {
-      <button
-        hlmBtn
-        size="sm"
-        variant="destructive"
-        type="button"
-        (click)="showDeleteConfirm.set(true)"
-        class="w-full"
-      >
-        🗑 {{ 'CLUB_DETAIL.delete_club_btn' | translate }}
-      </button>
-    } @else {
-      <div class="rounded-xl border border-red-500/30 bg-red-50/10 dark:bg-red-900/10 p-3 space-y-2">
-        <p class="text-xs text-red-600 dark:text-red-400 font-semibold">{{ 'CLUB_DETAIL.delete_club_confirm' | translate }}</p>
-        <div class="flex gap-2">
-          <button
-            hlmBtn
-            size="sm"
-            variant="destructive"
-            type="button"
-            (click)="confirmDelete()"
-            [disabled]="isDeleting()"
-            class="flex-1"
-          >
-            {{ 'CLUB_DETAIL.delete_club_yes' | translate }}
-          </button>
-          <button
-            hlmBtn
-            size="sm"
-            variant="outline"
-            type="button"
-            (click)="cancelDelete()"
-            class="flex-1"
-          >
-            {{ 'CLUB_DETAIL.cancel' | translate }}
-          </button>
+<div class="auth-page-wrapper">
+  <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
+  <main class="auth-form-container">
+    @if (formVisible()) {
+      <div class="w-full max-w-md animate-form-in">
+        <div class="text-center mb-8">
+          <h1 class="font-display text-3xl font-bold text-white drop-shadow-sm">📚 Book Club</h1>
+          <p class="text-white/70 mt-2">{{ 'AUTH.welcome_back' | translate }}</p>
         </div>
-        @if (deleteError()) {
-          <p class="mt-1 text-xs text-red-500">{{ deleteError() | translate }}</p>
-        }
+        <div class="glass-card-strong p-8">
+          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'AUTH.sign_in_h2' | translate }}</h2>
+          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+            <fieldset class="border-0 p-0 m-0">
+              <legend class="sr-only">{{ 'AUTH.sign_in_h2' | translate }}</legend>
+              <hlm-field>
+                <label hlmFieldLabel for="login-email">{{ 'AUTH.email' | translate }}</label>
+                <input hlmInput id="login-email" type="email" placeholder="you@example.com" autocomplete="email" [formControl]="form.controls.email" />
+                <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
+              </hlm-field>
+              <hlm-field>
+                <label hlmFieldLabel for="login-password">{{ 'AUTH.password' | translate }}</label>
+                <input hlmInput id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" [formControl]="form.controls.password" />
+                <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
+              </hlm-field>
+            </fieldset>
+            @if (errorMessage()) {
+              <div data-testid="login-error" class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+                <span class="mt-0.5 shrink-0">⚠️</span>
+                <span>{{ errorMessage() }}</span>
+              </div>
+            }
+            <button
+              hlmBtn
+              type="submit"
+              [disabled]="isSubmitting()"
+              class="mt-2 w-full bg-gradient-brand text-white border-0 hover:opacity-90 focus-visible:ring-primary-500"
+            >
+              @if (isSubmitting()) {
+                <hlm-spinner aria-label="Loading" />
+                {{ 'AUTH.signing_in' | translate }}
+              } @else {
+                {{ 'AUTH.submit_login' | translate }}
+              }
+            </button>
+          </form>
+          <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+            {{ 'AUTH.no_account' | translate }}
+            <a routerLink="/register" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">
+              {{ 'AUTH.register_title' | translate }}
+            </a>
+          </p>
+        </div>
+        <p class="mt-6 text-center text-sm">
+          <a
+            routerLink="/"
+            class="inline-flex items-center gap-1 text-white/60 hover:text-white/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 rounded"
+          >
+            {{ 'NAV.back_home' | translate }}
+          </a>
+        </p>
       </div>
     }
-  </div>
+  </main>
+</div>
+````
+
+## File: src/app/features/auth/register/register.component.html
+````html
+<div class="auth-page-wrapper">
+  <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
+  <main class="auth-form-container">
+    @if (formVisible()) {
+      <div class="w-full max-w-md animate-form-in">
+        <div class="text-center mb-8">
+          <h1 class="font-display text-3xl font-bold text-white drop-shadow-sm">📚 Book Club</h1>
+          <p class="text-white/70 mt-2">{{ 'AUTH.create_account_subtitle' | translate }}</p>
+        </div>
+        @if (successMessage()) {
+          <div data-testid="register-feedback" class="glass-card-strong p-8 text-center">
+            <div class="text-5xl mb-4">🎉</div>
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'AUTH.account_created' | translate }}</h2>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">
+              {{ 'AUTH.welcome_message' | translate }} <strong>{{ registeredName() }}</strong>.
+            </p>
+            <a routerLink="/login"
+               class="mt-6 inline-block text-sm text-primary-600 dark:text-primary-400 hover:underline font-medium">
+              {{ 'AUTH.back_to_login' | translate }}
+            </a>
+          </div>
+        } @else {
+          <div class="glass-card-strong p-8">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'AUTH.create_account_h2' | translate }}</h2>
+            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
+              <fieldset class="border-0 p-0 m-0">
+                <legend class="sr-only">{{ 'AUTH.create_account_h2' | translate }}</legend>
+                <hlm-field>
+                  <label hlmFieldLabel for="reg-display-name">{{ 'AUTH.display_name' | translate }}</label>
+                  <input hlmInput id="reg-display-name" type="text" placeholder="Ada Lovelace" autocomplete="username" [formControl]="form.controls.displayName" />
+                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                  <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 2} }}</hlm-field-error>
+                </hlm-field>
+                <hlm-field>
+                  <label hlmFieldLabel for="reg-email">{{ 'AUTH.email' | translate }}</label>
+                  <input hlmInput id="reg-email" type="email" placeholder="you@example.com" autocomplete="email" [formControl]="form.controls.email" />
+                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                  <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
+                </hlm-field>
+                <hlm-field>
+                  <label hlmFieldLabel for="reg-password">{{ 'AUTH.password' | translate }}</label>
+                  <input hlmInput id="reg-password" type="password" placeholder="••••••••" autocomplete="new-password" [formControl]="form.controls.password" />
+                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                  <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
+                </hlm-field>
+                @if (passwordStrength()) {
+                  <div class="flex items-center gap-2 -mt-2">
+                    <div class="flex gap-1 flex-1">
+                      <div class="h-1 flex-1 rounded-full transition-colors"
+                           [class]="passwordStrength() !== null ? 'bg-red-400' : 'bg-gray-200'"></div>
+                      <div class="h-1 flex-1 rounded-full transition-colors"
+                           [class]="passwordStrength() === 'medium' || passwordStrength() === 'strong' ? 'bg-yellow-400' : 'bg-gray-200'"></div>
+                      <div class="h-1 flex-1 rounded-full transition-colors"
+                           [class]="passwordStrength() === 'strong' ? 'bg-green-500' : 'bg-gray-200'"></div>
+                    </div>
+                    <span class="text-xs font-medium"
+                          [class]="passwordStrength() === 'strong' ? 'text-green-600' :
+                                   passwordStrength() === 'medium' ? 'text-yellow-600' : 'text-red-500'">
+                      {{ passwordStrength() === 'strong' ? ('AUTH.password_strong' | translate) :
+                         passwordStrength() === 'medium' ? ('AUTH.password_medium' | translate) :
+                         ('AUTH.password_weak' | translate) }}
+                    </span>
+                  </div>
+                }
+                <hlm-field>
+                  <label hlmFieldLabel for="reg-confirm-password">{{ 'AUTH.confirm_password' | translate }}</label>
+                  <input hlmInput id="reg-confirm-password" type="password" placeholder="••••••••" autocomplete="new-password" [formControl]="form.controls.confirmPassword" />
+                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
+                </hlm-field>
+                @if (form.hasError('passwordMismatch') && form.controls.confirmPassword.touched) {
+                  <p class="text-xs text-red-500 -mt-3">{{ 'AUTH.passwords_no_match' | translate }}</p>
+                }
+                <fieldset class="border-0 p-0 m-0">
+                  <legend class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">{{ 'AUTH.want_to' | translate }}</legend>
+                  <div class="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      (click)="setRole('user')"
+                      [attr.aria-pressed]="selectedRole() === 'user'"
+                      class="p-4 rounded-[var(--bento-radius)] border text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      [class]="selectedRole() === 'user'
+                        ? 'glass-card-subtle border-primary-400 ring-2 ring-primary-400/50'
+                        : 'glass-card-subtle border-white/20 hover:border-primary-300'"
+                    >
+                      <div class="text-2xl mb-1">📖</div>
+                      <div class="font-medium text-sm text-gray-900 dark:text-white">{{ 'AUTH.role_reader_label' | translate }}</div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">{{ 'AUTH.role_reader_desc' | translate }}</div>
+                    </button>
+                    <button
+                      type="button"
+                      (click)="setRole('organizer')"
+                      [attr.aria-pressed]="selectedRole() === 'organizer'"
+                      class="p-4 rounded-[var(--bento-radius)] border text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                      [class]="selectedRole() === 'organizer'
+                        ? 'glass-card-subtle border-accent-400 ring-2 ring-accent-400/50'
+                        : 'glass-card-subtle border-white/20 hover:border-accent-300'"
+                    >
+                      <div class="text-2xl mb-1">🎯</div>
+                      <div class="font-medium text-sm text-gray-900 dark:text-white">{{ 'AUTH.role_organizer_label' | translate }}</div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">{{ 'AUTH.role_organizer_desc' | translate }}</div>
+                    </button>
+                  </div>
+                  @if (form.controls.role.invalid && form.controls.role.touched) {
+                    <p class="text-xs text-red-500 mt-0.5">{{ 'AUTH.select_role_error' | translate }}</p>
+                  }
+                </fieldset>
+                @if (errorMessage()) {
+                  <div data-testid="register-feedback" class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+                    <span class="mt-0.5 shrink-0">⚠️</span>
+                    <span>{{ errorMessage() }}</span>
+                  </div>
+                }
+                <button
+                  hlmBtn
+                  type="submit"
+                  [disabled]="isSubmitting()"
+                  class="mt-2 w-full bg-gradient-brand text-white border-0 hover:opacity-90 focus-visible:ring-primary-500"
+                >
+                  @if (isSubmitting()) {
+                    <hlm-spinner aria-label="Loading" />
+                    {{ 'AUTH.creating_account' | translate }}
+                  } @else {
+                    {{ 'AUTH.create_account_h2' | translate }}
+                  }
+                </button>
+              </fieldset>
+            </form>
+            <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+              {{ 'AUTH.have_account' | translate }}
+              <a routerLink="/login" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">
+                {{ 'AUTH.sign_in_h2' | translate }}
+              </a>
+            </p>
+          </div>
+        }
+        <p class="mt-6 text-center text-sm">
+          <a
+            routerLink="/"
+            class="inline-flex items-center gap-1 text-white/60 hover:text-white/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 rounded"
+          >
+            {{ 'NAV.back_home' | translate }}
+          </a>
+        </p>
+      </div>
+    }
+  </main>
 </div>
 ````
 
@@ -10222,129 +10621,6 @@ export class ClubManagePanelComponent {
     }
   }
 }
-````
-
-## File: src/app/features/clubs/club-detail/members/club-members-list.component.html
-````html
-<section hlmCard [attr.aria-label]="'MEMBERS.title' | translate" class="glass-card px-6 gap-4">
-  <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
-    {{ 'MEMBERS.title' | translate }} ({{ members().length }})
-  </h2>
-  @if (members().length === 0) {
-    <p class="text-sm text-gray-500 dark:text-gray-400">{{ 'MEMBERS.empty' | translate }}</p>
-  } @else {
-    <ul class="divide-y divide-gray-100 dark:divide-gray-700">
-      @for (member of members(); track member.userId) {
-        <li class="flex items-center gap-4 py-3 relative">
-          <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0" aria-hidden="true">
-            {{ member.displayName | initials }}
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
-              {{ member.displayName.includes('@') ? member.displayName.split('@')[0] : member.displayName }}
-            </p>
-            @if (member.role === 'organizer') {
-              <span class="inline-block text-xs font-medium text-accent-600 dark:text-accent-400">
-                {{ 'MEMBERS.organizer' | translate }}
-              </span>
-            } @else {
-              <span class="inline-block text-xs text-gray-400 dark:text-gray-500">
-                {{ 'MEMBERS.member' | translate }}
-              </span>
-            }
-          </div>
-          <div class="flex items-center gap-2 flex-shrink-0 flex-wrap justify-end">
-            @if (canSeeSocials(member)) {
-              @if (member.socials?.telegram) {
-                <a [href]="'https://t.me/' + member.socials!.telegram" target="_blank" rel="noopener noreferrer"
-                   class="text-blue-500 hover:text-blue-600 text-lg" [attr.aria-label]="'Telegram: @' + member.socials!.telegram" title="Telegram">
-                  ✈️
-                </a>
-              }
-              @if (member.socials?.instagram) {
-                <a [href]="'https://instagram.com/' + member.socials!.instagram" target="_blank" rel="noopener noreferrer"
-                   class="text-pink-500 hover:text-pink-600 text-lg" [attr.aria-label]="'Instagram: @' + member.socials!.instagram" title="Instagram">
-                  📸
-                </a>
-              }
-              @if (member.socials?.github) {
-                <a [href]="'https://github.com/' + member.socials!.github" target="_blank" rel="noopener noreferrer"
-                   class="text-gray-700 dark:text-gray-300 hover:text-gray-900 text-lg" [attr.aria-label]="'GitHub: ' + member.socials!.github" title="GitHub">
-                  🐙
-                </a>
-              }
-              @if (member.socials?.goodreads) {
-                <a [href]="'https://goodreads.com/' + member.socials!.goodreads" target="_blank" rel="noopener noreferrer"
-                   class="text-amber-600 hover:text-amber-700 text-lg" title="Goodreads">
-                  📚
-                </a>
-              }
-              @if (member.socials && (member.socials.telegram || member.socials.instagram || member.socials.github || member.socials.goodreads)) {
-                <button
-                  hlmBtn
-                  variant="secondary"
-                  size="sm"
-                  type="button"
-                  (click)="toggleQr(member.userId)"
-                  class="ml-1 text-xs"
-                  [attr.aria-expanded]="showQrForUser() === member.userId"
-                  [attr.aria-label]="'MEMBERS.show_qr' | translate"
-                >
-                  <span aria-hidden="true">⊡</span> {{ 'MEMBERS.show_qr' | translate }}
-                </button>
-                @if (showQrForUser() === member.userId) {
-                  <dialog class="absolute right-0 top-full mt-2 z-20 rounded-2xl glass-card-strong shadow-xl p-4 flex flex-col items-center gap-2"
-                       aria-modal="false" [attr.aria-label]="member.displayName + ' QR'">
-                    <p class="text-xs font-semibold text-gray-600 dark:text-gray-400">{{ member.displayName }}</p>
-                    @defer (on idle) {
-                      <app-qr-code [value]="buildQrValue(member)" [size]="160" />
-                    } @placeholder {
-                      <div class="h-40 w-40 rounded-lg bg-gray-200 dark:bg-gray-700 animate-pulse" aria-hidden="true"></div>
-                    }
-                    <button hlmBtn variant="ghost" size="sm" type="button" (click)="toggleQr(member.userId)"
-                            class="mt-1 text-xs text-gray-400">{{ 'CLUB_DETAIL.close_qr' | translate }}</button>
-                  </dialog>
-                }
-              }
-            } @else {
-              <span class="text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1">
-                🔒 {{ 'MEMBERS.socials_hidden' | translate }}
-              </span>
-            }
-            @if (isOwner() && member.role !== 'organizer') {
-              <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">
-                <button hlmBtn variant="destructive" size="xs" type="button" (click)="kick.emit(member.userId)"
-                         [attr.aria-label]="'MEMBERS.kick' | translate">
-                  {{ 'MEMBERS.kick' | translate }}
-                </button>
-                <button hlmBtn variant="ghost" size="xs" type="button" (click)="toggleBanMenu(member.userId)"
-                        class="text-orange-600 hover:text-orange-700"
-                        [attr.aria-expanded]="showBanMenu() === member.userId">
-                  {{ 'MEMBERS.ban' | translate }}
-                </button>
-                @if (showBanMenu() === member.userId) {
-                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl glass-card-strong shadow-xl py-1 min-w-36">
-                    @for (duration of banDurations; track duration) {
-                      <li>
-                        <button hlmBtn variant="ghost" type="button" (click)="emitBan(member.userId, duration)"
-                                class="w-full justify-start px-4 text-sm">
-                          @if (duration === 1) { {{ 'MEMBERS.ban_1' | translate }} }
-                          @else if (duration === 3) { {{ 'MEMBERS.ban_3' | translate }} }
-                          @else if (duration === 5) { {{ 'MEMBERS.ban_5' | translate }} }
-                          @else { {{ 'MEMBERS.ban_permanent' | translate }} }
-                        </button>
-                      </li>
-                    }
-                  </menu>
-                }
-              </div>
-            }
-          </div>
-        </li>
-      }
-    </ul>
-  }
-</section>
 ````
 
 ## File: src/app/features/clubs/clubs-list/clubs-list.component.html
@@ -10543,91 +10819,6 @@ export class ClubManagePanelComponent {
 </div>
 ````
 
-## File: src/app/features/events/event-card/event-card.component.html
-````html
-<article class="parchment-card flex flex-col overflow-hidden h-full
-                hover:shadow-[var(--shadow-parchment-lg)] transition-shadow duration-200">
-  <div class="flex flex-col flex-1 p-4 gap-3">
-    <div class="flex items-start justify-between gap-2">
-      <span class="date-badge">
-        {{ event().date | formatDate }}
-      </span>
-      @if (event().status !== 'scheduled') {
-        <span hlmBadge
-              [variant]="event().status === 'cancelled' ? 'destructive'
-                       : event().status === 'active' ? 'default' : 'secondary'"
-              class="rounded-full text-xs flex-shrink-0">
-          {{ ('EVENTS.status_' + event().status) | translate }}
-        </span>
-      }
-    </div>
-    <h3 class="font-display font-semibold text-[var(--color-ink)] leading-snug line-clamp-2">
-      {{ event().title }}
-    </h3>
-    <a
-      [routerLink]="['/clubs', event().clubId]"
-      class="text-xs text-[var(--color-primary-600)] dark:text-[#fbbf24] hover:underline font-medium"
-      (click)="$event.stopPropagation()"
-    >
-      {{ event().clubName }}
-    </a>
-    @if (event().city) {
-      <p class="text-xs text-[var(--color-ink-muted)] flex items-center gap-1">
-        <span aria-hidden="true">📍</span>
-        <span>{{ event().address || event().city }}</span>
-      </p>
-    }
-    @if (event().theme || event().tags.length > 0) {
-      <div class="flex flex-wrap gap-1.5">
-        @if (event().theme) {
-          <span class="rounded-full
-                       bg-[var(--color-accent-100)]/80 dark:bg-[var(--color-accent-900)]/40
-                       border border-[var(--color-accent-300)] dark:border-[var(--color-accent-700)]/60
-                       px-2.5 py-0.5 text-xs font-medium
-                       text-[var(--color-accent-700)] dark:text-[var(--color-accent-300)]">
-            {{ event().theme }}
-          </span>
-        }
-        @for (tag of event().tags.slice(0, 2); track tag) {
-          <span class="rounded-full
-                       bg-[var(--color-surface-raised)]
-                       border border-[var(--color-sepia-mid)]
-                       px-2.5 py-0.5 text-xs text-[var(--color-ink-muted)]">
-            {{ tag }}
-          </span>
-        }
-      </div>
-    }
-    <div class="flex items-center justify-between mt-auto pt-2
-                border-t border-[var(--color-sepia-mid)]">
-      <span class="text-xs text-[var(--color-ink-muted)]">
-        {{ event().attendeeCount }} {{ 'EVENTS.attending' | translate }}
-      </span>
-      <div class="flex gap-2">
-        <a hlmBtn variant="outline" size="sm" [routerLink]="['/events', event().id]">
-          {{ 'EVENTS.view' | translate }}
-        </a>
-        @if (isAuthenticated() && event().status !== 'cancelled') {
-          @if (event().isAttending) {
-            <button hlmBtn type="button" size="sm" [disabled]="attending()"
-                    (click)="cancelAttend.emit()"
-                    class="bg-[var(--color-accent-600)] hover:bg-[var(--color-accent-700)] text-white">
-              @if (attending()) { <hlm-spinner size="xs" /> } @else { {{ 'EVENTS.going' | translate }} }
-            </button>
-          } @else {
-            <button hlmBtn type="button" size="sm" [disabled]="attending()"
-                    (click)="attend.emit()"
-                    class="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white">
-              @if (attending()) { <hlm-spinner size="xs" /> } @else { {{ 'EVENTS.rsvp' | translate }} }
-            </button>
-          }
-        }
-      </div>
-    </div>
-  </div>
-</article>
-````
-
 ## File: src/app/features/events/event-detail/event-detail.component.html
 ````html
 @if (isLoading()) {
@@ -10818,6 +11009,151 @@ export class EventsFeedComponent implements OnInit {
 }
 ````
 
+## File: src/app/features/profile/profile.component.html
+````html
+<div class="min-h-screen bg-gradient-to-br from-primary-950/30 via-transparent to-accent-950/20">
+  <div class="max-w-2xl mx-auto space-y-5 py-8 px-4">
+    <section
+      aria-labelledby="profile-heading"
+      class="glass-card-strong p-8 text-center"
+    >
+      <div
+        class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-brand
+               flex items-center justify-center text-white text-3xl font-bold select-none
+               shadow-lg ring-4 ring-white/20"
+        aria-hidden="true"
+      >
+        {{ userInitials() }}
+      </div>
+      <h1 id="profile-heading" class="text-2xl font-bold text-gray-900 dark:text-white">
+        {{ auth.currentUser()?.displayName }}
+      </h1>
+      <span
+        class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
+        [class]="auth.currentUser()?.role === 'organizer'
+          ? 'bg-accent-100/80 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
+          : 'bg-primary-100/80 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
+      >
+        {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
+        {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
+      </span>
+      @if (joinedDate()) {
+        <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
+          {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
+        </p>
+      }
+    </section>
+    <section aria-labelledby="edit-name-heading" class="glass-card p-6">
+      <h2 id="edit-name-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+        <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
+      </h2>
+      <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
+        <div class="space-y-4">
+          <div>
+            <label for="displayName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              {{ 'PROFILE.display_name_label' | translate }}
+            </label>
+            <input
+              hlmInput
+              id="displayName"
+              type="text"
+              formControlName="displayName"
+              autocomplete="nickname"
+              class="w-full"
+              data-testid="display-name-input"
+              [placeholder]="'PROFILE.display_name_placeholder' | translate"
+              [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
+              aria-describedby="displayName-error"
+            />
+            @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
+              <p id="displayName-error" role="alert" class="mt-1.5 text-xs text-red-600 dark:text-red-400">
+                @if (nameForm.controls.displayName.hasError('required')) {
+                  {{ 'PROFILE.display_name_required' | translate }}
+                } @else if (nameForm.controls.displayName.hasError('minlength')) {
+                  {{ 'PROFILE.display_name_min' | translate }}
+                }
+              </p>
+            }
+          </div>
+          <div class="flex items-center gap-3">
+            <button
+              hlmBtn
+              type="submit"
+              [disabled]="nameForm.invalid || isSavingName()"
+              class="bg-gradient-brand text-white border-0 hover:opacity-90"
+            >
+              @if (isSavingName()) {
+                {{ 'PROFILE.saving' | translate }}
+              } @else {
+                {{ 'PROFILE.save_name' | translate }}
+              }
+            </button>
+          </div>
+        </div>
+      </form>
+    </section>
+    <section aria-labelledby="role-heading" class="glass-card p-6">
+      <h2 id="role-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+        <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
+      </h2>
+      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
+        {{ 'PROFILE.role_subtitle' | translate }}
+      </p>
+      <app-profile-role-selector
+        [currentRole]="auth.currentUser()?.role ?? 'user'"
+        (roleChange)="changeRole($event)"
+      />
+    </section>
+    <section aria-labelledby="stats-heading" class="glass-card p-6">
+      <h2 id="stats-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+        <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
+      </h2>
+      <app-profile-stats [stats]="auth.userStats()" />
+    </section>
+    <section aria-labelledby="socials-heading" class="glass-card p-6">
+      <h2 id="socials-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+        <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
+      </h2>
+      <div class="flex items-center gap-3 mb-4 p-3 rounded-[var(--bento-radius)] glass-card-subtle">
+        <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
+          <input
+            type="checkbox"
+            [formControl]="socialsPublicControl"
+            (change)="onSocialsPublicChange(socialsPublicControl.value)"
+            class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+          />
+          {{ 'PROFILE.socials_public_label' | translate }}
+        </label>
+      </div>
+      @if (
+        userSocials().telegram  ||
+        userSocials().instagram ||
+        userSocials().twitter   ||
+        userSocials().linkedin  ||
+        userSocials().github    ||
+        userSocials().goodreads
+      ) {
+        <div class="flex flex-wrap gap-2 mb-6">
+          <app-social-badges [socials]="userSocials()" />
+        </div>
+      }
+      <form [formGroup]="socialsForm" (ngSubmit)="submitSocials()" novalidate class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          @for (social of socialFields(); track social.key) {
+            <app-social-link-field [config]="social" [form]="socialsForm" />
+          }
+        </div>
+        <div class="flex items-center gap-3 pt-1">
+          <button hlmBtn type="submit" class="bg-gradient-brand text-white border-0 hover:opacity-90">
+            {{ 'PROFILE.save' | translate }}
+          </button>
+        </div>
+      </form>
+    </section>
+  </div>
+</div>
+````
+
 ## File: src/app/features/quiz/quiz-leaderboard/quiz-leaderboard.component.html
 ````html
 <div class="min-h-screen p-4 sm:p-8">
@@ -10900,156 +11236,70 @@ export class QuizLeaderboardComponent extends LeaderboardBaseComponent implement
 }
 ````
 
-## File: src/app/features/quiz/quiz-list/quiz-list.component.html
-````html
-<div class="min-h-screen p-4 sm:p-8">
-  <div class="max-w-3xl mx-auto space-y-6">
-    <header class="flex items-center justify-between flex-wrap gap-4">
-      <div>
-        <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">🧠 {{ 'QUIZ.title' | translate }}</h1>
-        <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-          {{ 'QUIZ.list_subtitle' | translate }}
-        </p>
-      </div>
-      <div class="flex items-center gap-3">
-        @if (authService.isOrganizer()) {
-          <a hlmBtn [routerLink]="['/clubs', id(), 'quizzes', 'create']"
-             class="bg-gradient-brand text-white border-0 hover:opacity-90">
-            {{ 'QUIZ.create_btn' | translate }}
-          </a>
-        }
-        <nav aria-label="Breadcrumb">
-          <a [routerLink]="['/clubs', id()]"
-             class="text-gray-500 hover:text-gray-900 dark:hover:text-white text-sm transition-colors">
-            {{ 'QUIZ.back_to_club_short' | translate }}
-          </a>
-        </nav>
-      </div>
-    </header>
-    @if (quizService.isLoading()) {
-      <div class="bento-grid-3">
-        @for (_ of [1, 2, 3]; track $index) {
-          <div class="h-28 glass-card-subtle animate-pulse"></div>
-        }
-      </div>
-    } @else {
-      @if (quizService.quizzes().length === 0) {
-        <div class="glass-card p-12 text-center">
-          <p class="text-4xl mb-3">📝</p>
-          <h2 class="text-gray-700 dark:text-gray-300 font-semibold text-lg">{{ 'QUIZ.no_quizzes' | translate }}</h2>
-          @if (authService.isOrganizer()) {
-            <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-              {{ 'QUIZ.no_quizzes_organizer' | translate }}
-            </p>
-          } @else {
-            <p class="text-gray-400 dark:text-gray-500 mt-1 text-sm">
-              {{ 'QUIZ.no_quizzes_member' | translate }}
-            </p>
-          }
-        </div>
-      } @else {
-        <div class="bento-grid-3">
-          @for (quiz of quizService.quizzes(); track quiz.id) {
-            <div class="glass-card p-5 flex flex-col gap-3 transition-all duration-300 hover:scale-[1.02] hover:-translate-y-0.5">
-              <div class="flex items-start justify-between gap-3">
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-2 flex-wrap mb-1">
-                    <h2 class="text-gray-900 dark:text-white font-semibold truncate">
-                      {{ quiz.title }}
-                    </h2>
-                    @switch (quiz.status) {
-                      @case ('live') {
-                        <span class="inline-flex items-center gap-1 rounded-full bg-green-100/80 dark:bg-green-900/30 border border-green-200 dark:border-green-700/60 px-2.5 py-0.5 text-xs font-medium text-green-700 dark:text-green-400">
-                          <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block animate-pulse"></span>
-                          {{ 'QUIZ.status_live' | translate }}
-                        </span>
-                      }
-                      @case ('active') {
-                        <span class="inline-flex items-center gap-1 rounded-full bg-blue-100/80 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-700/60 px-2.5 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-400">
-                          <span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block"></span>
-                          {{ 'QUIZ.status_active' | translate }}
-                        </span>
-                      }
-                      @case ('closed') {
-                        <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-400 dark:text-gray-500">
-                          {{ 'QUIZ.status_closed' | translate }}
-                        </span>
-                      }
-                      @default {
-                        <span class="inline-flex rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-500 dark:text-gray-400">
-                          {{ 'QUIZ.status_draft' | translate }}
-                        </span>
-                      }
-                    }
-                  </div>
-                  @if (quiz.description) {
-                    <p class="text-gray-500 dark:text-gray-400 text-xs line-clamp-2">
-                      {{ quiz.description }}
-                    </p>
-                  }
-                </div>
-              </div>
-              <div class="flex items-center gap-2 mt-auto flex-wrap">
-                @if (authService.isOrganizer()) {
-                  <a hlmBtn size="sm" variant="outline"
-                     [routerLink]="['/clubs', id(), 'quizzes', quiz.id, 'preview']">
-                    {{ 'QUIZ.preview' | translate }}
-                  </a>
-                  @if (quiz.status === 'draft') {
-                    <a hlmBtn size="sm" variant="ghost"
-                       [routerLink]="['/clubs', id(), 'quizzes', quiz.id, 'edit']">
-                      {{ 'QUIZ.edit' | translate }}
-                    </a>
-                  }
-                  @if (quiz.status !== 'draft' && quiz.status !== 'closed') {
-                    <a hlmBtn size="sm"
-                       class="bg-gradient-brand text-white border-0 hover:opacity-90"
-                       [routerLink]="['/clubs', id(), 'quizzes', quiz.id, 'session']">
-                      {{ 'QUIZ.manage_session' | translate }}
-                    </a>
-                  }
-                  @if (quiz.status === 'draft' || quiz.status === 'active') {
-                    <button
-                      hlmBtn
-                      type="button"
-                      size="sm"
-                      [variant]="quiz.isActive ? 'secondary' : 'outline'"
-                      (click)="toggleActive(quiz.id, !quiz.isActive)"
-                      [disabled]="togglingId() === quiz.id"
-                    >
-                      {{ (quiz.isActive ? 'QUIZ.deactivate' : 'QUIZ.activate') | translate }}
-                    </button>
-                  }
-                } @else if (quiz.isActive || quiz.status === 'live' || quiz.status === 'active') {
-                  <button
-                    hlmBtn
-                    type="button"
-                    size="sm"
-                    (click)="takeQuiz(quiz.id)"
-                    class="w-full bg-gradient-brand text-white border-0 hover:opacity-90"
-                  >
-                    {{ 'QUIZ.take_btn' | translate }}
-                  </button>
-                }
-                @if (quiz.status === 'live') {
-                  <a hlmBtn size="sm" variant="outline"
-                     [routerLink]="['/clubs', id(), 'quizzes', quiz.id, 'leaderboard']">
-                    {{ 'QUIZ.leaderboard' | translate }}
-                  </a>
-                }
-              </div>
-            </div>
-          }
-        </div>
-      }
-    }
-    @if (errorMessage()) {
-      <div class="glass-card px-4 py-3 text-red-700 dark:text-red-400 text-sm" role="alert">
-        ⚠️ {{ errorMessage() }}
-      </div>
-    }
-  </div>
-</div>
+## File: src/app/layout/header/header.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  computed,
+  signal,
+} from '@angular/core';
+import { RouterLink, RouterLinkActive } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { map, startWith, firstValueFrom } from 'rxjs';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { NgIcon, provideIcons } from '@ng-icons/core';
+import { lucideSun, lucideMoon } from '@ng-icons/lucide';
+import { AuthService } from '../../core/auth/auth.service';
+import { ThemeService } from '../../core/services/theme.service';
+import { HlmSheetImports } from '../../shared/spartan/sheet/src';
+import { HlmButton } from '../../shared/spartan/button/src';
+import { HlmIconImports } from '../../shared/spartan/icon/src';
+@Component({
+  selector: 'app-header',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [provideIcons({ lucideSun, lucideMoon })],
+  imports: [
+    RouterLink, RouterLinkActive, TranslateModule, NgIcon,
+    ...HlmIconImports,
+    ...HlmSheetImports, HlmButton,
+  ],
+  templateUrl: './header.component.html',
+})
+export class HeaderComponent {
+  private readonly auth      = inject(AuthService);
+  private readonly translate = inject(TranslateService);
+  readonly themeService      = inject(ThemeService);
+  readonly isAuthenticated = this.auth.isAuthenticated;
+  readonly currentUser = this.auth.currentUser;
+  readonly currentLang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: 'uk' },
+  );
+  readonly showUserMenu = signal(false);
+  readonly userInitials = computed(() => {
+    const name = this.currentUser()?.displayName ?? '';
+    return (
+      name
+        .split(' ')
+        .slice(0, 2)
+        .map(w => w[0]?.toUpperCase() ?? '')
+        .join('') || '?'
+    );
+  });
+  async switchLang(): Promise<void> {
+  const next = this.currentLang() === 'uk' ? 'en' : 'uk';
+  await firstValueFrom(this.translate.use(next));
+}
+  async signOut(): Promise<void> {
+    await this.auth.signOut();
+  }
+}
 ````
 
 ## File: src/app/shared/chat/chat-widget/chat-widget.component.html
@@ -11170,93 +11420,54 @@ export class QuizLeaderboardComponent extends LeaderboardBaseComponent implement
 }
 ````
 
-## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
+## File: src/app/shared/components/qr-code/qr-code.component.ts
 ````typescript
 import {
-  Component, ChangeDetectionStrategy, input, output,
-  DestroyRef, signal, inject, ElementRef, HostListener, effect,
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  effect,
+  input,
+  viewChild,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { switchMap, debounceTime, distinctUntilChanged, of } from 'rxjs';
-import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
-import { HlmInput } from '../../spartan/input/src';
+import { environment } from '../../../../environments/environment';
+import { HlmCard } from '../../spartan/card/src';
 @Component({
-  selector: 'app-address-autocomplete',
+  selector: 'app-qr-code',
   standalone: true,
+  imports: [HlmCard],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, HlmInput],
-  templateUrl: './address-autocomplete.component.html',
+  template: `
+    <div hlmCard class="flex items-center justify-center p-6 w-fit gap-0 py-6">
+      <canvas
+        #canvas
+        [style.width.px]="size()"
+        [style.height.px]="size()"
+        class="rounded-lg"
+        [attr.aria-label]="'QR code'"
+        role="img"
+      ></canvas>
+    </div>
+  `,
 })
-export class AddressAutocompleteComponent {
-  readonly control = input.required<FormControl<string>>();
-  readonly placeholder = input<string>('');
-  readonly inputId = input<string>('');
-  readonly selected = output<GeocodeSuggestion>();
-  private readonly geocoding = inject(GeocodingService);
-  private readonly elRef = inject(ElementRef);
-  private readonly destroyRef = inject(DestroyRef);
-  readonly suggestions = signal<GeocodeSuggestion[]>([]);
-  readonly isLoading = signal(false);
-  readonly isOpen = signal(false);
-  readonly activeIndex = signal(-1);
+export class QrCodeComponent {
+  readonly value = input.required<string>();
+  readonly size = input<number>(200);
+  private readonly canvasRef =
+    viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
   constructor() {
     effect(() => {
-      const ctrl = this.control();
-      ctrl.valueChanges.pipe(
-        debounceTime(300),
-        distinctUntilChanged(),
-        switchMap(q => {
-          if (!q || q.length < 2) {
-            this.suggestions.set([]);
-            this.isOpen.set(false);
-            return of([]);
-          }
-          this.isLoading.set(true);
-          return this.geocoding.autocomplete$(q);
-        }),
-        takeUntilDestroyed(this.destroyRef),
-      ).subscribe({
-        next: (results) => {
-          this.isLoading.set(false);
-          this.suggestions.set(results);
-          this.activeIndex.set(-1);
-          this.isOpen.set(results.length > 0);
-        },
-        error: () => {
-          this.isLoading.set(false);
-          this.suggestions.set([]);
-        },
+      const val = this.value();
+      const sz = this.size();
+      const canvas = this.canvasRef().nativeElement;
+      if (!val || !canvas) return;
+      void import('qrcode').then((mod) => {
+        const lib: typeof import('qrcode') = (mod as any).default;
+        lib.toCanvas(canvas, val, { width: sz, margin: 2 }, (err: unknown) => {
+          if (err && !environment.production) console.error('QR generation error:', err);
+        });
       });
     });
-  }
-  select(s: GeocodeSuggestion): void {
-    this.control().setValue(s.label, { emitEvent: false });
-    this.suggestions.set([]);
-    this.isOpen.set(false);
-    this.selected.emit(s);
-  }
-  onKeydown(event: KeyboardEvent): void {
-    if (!this.isOpen()) return;
-    const len = this.suggestions().length;
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i + 1) % len);
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i - 1 + len) % len);
-    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
-      event.preventDefault();
-      this.select(this.suggestions()[this.activeIndex()]);
-    } else if (event.key === 'Escape') {
-      this.isOpen.set(false);
-    }
-  }
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (!this.elRef.nativeElement.contains(event.target)) {
-      this.isOpen.set(false);
-    }
   }
 }
 ````
@@ -11877,225 +12088,281 @@ export class TokenStore {
 }
 ````
 
-## File: src/app/features/auth/login/login.component.html
-````html
-<div class="auth-page-wrapper">
-  <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
-  <main class="auth-form-container">
-    @if (formVisible()) {
-      <div class="w-full max-w-md animate-form-in">
-        <div class="text-center mb-8">
-          <h1 class="font-display text-3xl font-bold text-white drop-shadow-sm">📚 Book Club</h1>
-          <p class="text-white/70 mt-2">{{ 'AUTH.welcome_back' | translate }}</p>
-        </div>
-        <div class="glass-card-strong p-8">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'AUTH.sign_in_h2' | translate }}</h2>
-          <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
-            <fieldset class="border-0 p-0 m-0">
-              <legend class="sr-only">{{ 'AUTH.sign_in_h2' | translate }}</legend>
-              <hlm-field>
-                <label hlmFieldLabel for="login-email">{{ 'AUTH.email' | translate }}</label>
-                <input hlmInput id="login-email" type="email" placeholder="you@example.com" autocomplete="email" [formControl]="form.controls.email" />
-                <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
-              </hlm-field>
-              <hlm-field>
-                <label hlmFieldLabel for="login-password">{{ 'AUTH.password' | translate }}</label>
-                <input hlmInput id="login-password" type="password" placeholder="••••••••" autocomplete="current-password" [formControl]="form.controls.password" />
-                <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
-              </hlm-field>
-            </fieldset>
-            @if (errorMessage()) {
-              <div data-testid="login-error" class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-                <span class="mt-0.5 shrink-0">⚠️</span>
-                <span>{{ errorMessage() }}</span>
-              </div>
-            }
-            <button
-              hlmBtn
-              type="submit"
-              [disabled]="isSubmitting()"
-              class="mt-2 w-full bg-gradient-brand text-white border-0 hover:opacity-90 focus-visible:ring-primary-500"
-            >
-              @if (isSubmitting()) {
-                <hlm-spinner aria-label="Loading" />
-                {{ 'AUTH.signing_in' | translate }}
-              } @else {
-                {{ 'AUTH.submit_login' | translate }}
-              }
-            </button>
-          </form>
-          <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-            {{ 'AUTH.no_account' | translate }}
-            <a routerLink="/register" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">
-              {{ 'AUTH.register_title' | translate }}
-            </a>
-          </p>
-        </div>
-        <p class="mt-6 text-center text-sm">
-          <a
-            routerLink="/"
-            class="inline-flex items-center gap-1 text-white/60 hover:text-white/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 rounded"
-          >
-            {{ 'NAV.back_home' | translate }}
-          </a>
-        </p>
-      </div>
+## File: src/app/core/services/club.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
+import { AuthService } from '../auth/auth.service';
+import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
+import { ClubEvent } from '../models/event.model';
+@Injectable({ providedIn: 'root' })
+export class ClubService {
+  private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
+  private readonly _clubs = signal<Club[]>([]);
+  private readonly _myClubs = signal<Club[]>([]);
+  private readonly _isLoading = signal(false);
+  private readonly _error = signal<string | null>(null);
+  private readonly _searchQuery = signal('');
+  private readonly _cityFilter = signal<string | null>(null);
+  private myClubsLoadedAt = 0;
+  private readonly CLUB_CACHE_TTL_MS = 60_000;
+  private readonly clubByIdCache = new Map<string, { data: Club; fetchedAt: number }>();
+  private readonly membersCache = new Map<string, { data: ClubMemberDetail[]; fetchedAt: number }>();
+  private readonly eventsCache = new Map<string, { data: ClubEvent[]; fetchedAt: number }>();
+  private cacheRead<T>(cache: Map<string, { data: T; fetchedAt: number }>, key: string): T | null {
+    const entry = cache.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.fetchedAt > this.CLUB_CACHE_TTL_MS) {
+      cache.delete(key);
+      return null;
     }
-  </main>
-</div>
-````
-
-## File: src/app/features/auth/register/register.component.html
-````html
-<div class="auth-page-wrapper">
-  <app-book-intro [open]="bookOpen()" (animationDone)="onBookAnimationDone()" />
-  <main class="auth-form-container">
-    @if (formVisible()) {
-      <div class="w-full max-w-md animate-form-in">
-        <div class="text-center mb-8">
-          <h1 class="font-display text-3xl font-bold text-white drop-shadow-sm">📚 Book Club</h1>
-          <p class="text-white/70 mt-2">{{ 'AUTH.create_account_subtitle' | translate }}</p>
-        </div>
-        @if (successMessage()) {
-          <div data-testid="register-feedback" class="glass-card-strong p-8 text-center">
-            <div class="text-5xl mb-4">🎉</div>
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'AUTH.account_created' | translate }}</h2>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">
-              {{ 'AUTH.welcome_message' | translate }} <strong>{{ registeredName() }}</strong>.
-            </p>
-            <a routerLink="/login"
-               class="mt-6 inline-block text-sm text-primary-600 dark:text-primary-400 hover:underline font-medium">
-              {{ 'AUTH.back_to_login' | translate }}
-            </a>
-          </div>
-        } @else {
-          <div class="glass-card-strong p-8">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'AUTH.create_account_h2' | translate }}</h2>
-            <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
-              <fieldset class="border-0 p-0 m-0">
-                <legend class="sr-only">{{ 'AUTH.create_account_h2' | translate }}</legend>
-                <hlm-field>
-                  <label hlmFieldLabel for="reg-display-name">{{ 'AUTH.display_name' | translate }}</label>
-                  <input hlmInput id="reg-display-name" type="text" placeholder="Ada Lovelace" autocomplete="username" [formControl]="form.controls.displayName" />
-                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                  <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 2} }}</hlm-field-error>
-                </hlm-field>
-                <hlm-field>
-                  <label hlmFieldLabel for="reg-email">{{ 'AUTH.email' | translate }}</label>
-                  <input hlmInput id="reg-email" type="email" placeholder="you@example.com" autocomplete="email" [formControl]="form.controls.email" />
-                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                  <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
-                </hlm-field>
-                <hlm-field>
-                  <label hlmFieldLabel for="reg-password">{{ 'AUTH.password' | translate }}</label>
-                  <input hlmInput id="reg-password" type="password" placeholder="••••••••" autocomplete="new-password" [formControl]="form.controls.password" />
-                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                  <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 8} }}</hlm-field-error>
-                </hlm-field>
-                @if (passwordStrength()) {
-                  <div class="flex items-center gap-2 -mt-2">
-                    <div class="flex gap-1 flex-1">
-                      <div class="h-1 flex-1 rounded-full transition-colors"
-                           [class]="passwordStrength() !== null ? 'bg-red-400' : 'bg-gray-200'"></div>
-                      <div class="h-1 flex-1 rounded-full transition-colors"
-                           [class]="passwordStrength() === 'medium' || passwordStrength() === 'strong' ? 'bg-yellow-400' : 'bg-gray-200'"></div>
-                      <div class="h-1 flex-1 rounded-full transition-colors"
-                           [class]="passwordStrength() === 'strong' ? 'bg-green-500' : 'bg-gray-200'"></div>
-                    </div>
-                    <span class="text-xs font-medium"
-                          [class]="passwordStrength() === 'strong' ? 'text-green-600' :
-                                   passwordStrength() === 'medium' ? 'text-yellow-600' : 'text-red-500'">
-                      {{ passwordStrength() === 'strong' ? ('AUTH.password_strong' | translate) :
-                         passwordStrength() === 'medium' ? ('AUTH.password_medium' | translate) :
-                         ('AUTH.password_weak' | translate) }}
-                    </span>
-                  </div>
-                }
-                <hlm-field>
-                  <label hlmFieldLabel for="reg-confirm-password">{{ 'AUTH.confirm_password' | translate }}</label>
-                  <input hlmInput id="reg-confirm-password" type="password" placeholder="••••••••" autocomplete="new-password" [formControl]="form.controls.confirmPassword" />
-                  <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                </hlm-field>
-                @if (form.hasError('passwordMismatch') && form.controls.confirmPassword.touched) {
-                  <p class="text-xs text-red-500 -mt-3">{{ 'AUTH.passwords_no_match' | translate }}</p>
-                }
-                <fieldset class="border-0 p-0 m-0">
-                  <legend class="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">{{ 'AUTH.want_to' | translate }}</legend>
-                  <div class="grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      (click)="setRole('user')"
-                      [attr.aria-pressed]="selectedRole() === 'user'"
-                      class="p-4 rounded-[var(--bento-radius)] border text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      [class]="selectedRole() === 'user'
-                        ? 'glass-card-subtle border-primary-400 ring-2 ring-primary-400/50'
-                        : 'glass-card-subtle border-white/20 hover:border-primary-300'"
-                    >
-                      <div class="text-2xl mb-1">📖</div>
-                      <div class="font-medium text-sm text-gray-900 dark:text-white">{{ 'AUTH.role_reader_label' | translate }}</div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400">{{ 'AUTH.role_reader_desc' | translate }}</div>
-                    </button>
-                    <button
-                      type="button"
-                      (click)="setRole('organizer')"
-                      [attr.aria-pressed]="selectedRole() === 'organizer'"
-                      class="p-4 rounded-[var(--bento-radius)] border text-left transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      [class]="selectedRole() === 'organizer'
-                        ? 'glass-card-subtle border-accent-400 ring-2 ring-accent-400/50'
-                        : 'glass-card-subtle border-white/20 hover:border-accent-300'"
-                    >
-                      <div class="text-2xl mb-1">🎯</div>
-                      <div class="font-medium text-sm text-gray-900 dark:text-white">{{ 'AUTH.role_organizer_label' | translate }}</div>
-                      <div class="text-xs text-gray-500 dark:text-gray-400">{{ 'AUTH.role_organizer_desc' | translate }}</div>
-                    </button>
-                  </div>
-                  @if (form.controls.role.invalid && form.controls.role.touched) {
-                    <p class="text-xs text-red-500 mt-0.5">{{ 'AUTH.select_role_error' | translate }}</p>
-                  }
-                </fieldset>
-                @if (errorMessage()) {
-                  <div data-testid="register-feedback" class="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-                    <span class="mt-0.5 shrink-0">⚠️</span>
-                    <span>{{ errorMessage() }}</span>
-                  </div>
-                }
-                <button
-                  hlmBtn
-                  type="submit"
-                  [disabled]="isSubmitting()"
-                  class="mt-2 w-full bg-gradient-brand text-white border-0 hover:opacity-90 focus-visible:ring-primary-500"
-                >
-                  @if (isSubmitting()) {
-                    <hlm-spinner aria-label="Loading" />
-                    {{ 'AUTH.creating_account' | translate }}
-                  } @else {
-                    {{ 'AUTH.create_account_h2' | translate }}
-                  }
-                </button>
-              </fieldset>
-            </form>
-            <p class="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-              {{ 'AUTH.have_account' | translate }}
-              <a routerLink="/login" class="text-primary-600 dark:text-primary-400 hover:underline font-medium">
-                {{ 'AUTH.sign_in_h2' | translate }}
-              </a>
-            </p>
-          </div>
-        }
-        <p class="mt-6 text-center text-sm">
-          <a
-            routerLink="/"
-            class="inline-flex items-center gap-1 text-white/60 hover:text-white/90 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-white/50 rounded"
-          >
-            {{ 'NAV.back_home' | translate }}
-          </a>
-        </p>
-      </div>
+    return entry.data;
+  }
+  readonly clubs = this._clubs.asReadonly();
+  readonly myClubs = this._myClubs.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly searchQuery = this._searchQuery.asReadonly();
+  readonly myOwnedClubs = computed<Club[]>(() => {
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return [];
+    return this._clubs().filter(c => c.organizerId === userId);
+  });
+  readonly myOwnedClubIds = computed<Set<string>>(() =>
+    new Set(this.myOwnedClubs().map(c => c.id)),
+  );
+  readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
+  readonly availableCities = computed<string[]>(() => {
+    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
+    return cities.sort((a, b) => a.localeCompare(b));
+  });
+  readonly filteredClubs = computed(() => {
+    const q = this._searchQuery().toLowerCase().trim();
+    const city = this._cityFilter();
+    let clubs = this._clubs();
+    if (q) {
+      clubs = clubs.filter(
+        c =>
+          c.name.toLowerCase().includes(q) ||
+          (c.description?.toLowerCase().includes(q) ?? false),
+      );
     }
-  </main>
-</div>
+    if (city) {
+      clubs = clubs.filter(c => c.city === city);
+    }
+    return clubs;
+  });
+  readonly upcomingByCity = computed<Record<string, Club[]>>(() => {
+    const clubs = this.filteredClubs();
+    return clubs.reduce<Record<string, Club[]>>((acc, club) => {
+      const city = club.city || '';
+      if (!acc[city]) acc[city] = [];
+      acc[city].push(club);
+      return acc;
+    }, {});
+  });
+  readonly myParticipatedClubs = computed<Club[]>(() => []);
+  readonly myMissedClubs = computed<Club[]>(() => []);
+  setSearchQuery(query: string): void {
+    this._searchQuery.set(query);
+  }
+  setCityFilter(city: string | null): void {
+    this._cityFilter.set(city);
+  }
+  async loadPublicClubs(): Promise<void> {
+    this._isLoading.set(true);
+    this._error.set(null);
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs`),
+      );
+      this._clubs.set(raw.map(mapClub));
+    } catch {
+      this._error.set('Failed to load clubs');
+    } finally {
+      this._isLoading.set(false);
+    }
+  }
+  async loadMyClubs(): Promise<void> {
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
+      );
+      this._myClubs.set(raw.map(mapClub));
+      this.myClubsLoadedAt = Date.now();
+    } catch {
+      this._error.set('Failed to load my clubs');
+    }
+  }
+  async ensureMyClubsLoaded(maxAgeMs = 30_000): Promise<void> {
+    if (Date.now() - this.myClubsLoadedAt < maxAgeMs && this._myClubs().length > 0) return;
+    await this.loadMyClubs();
+  }
+  async getClubById(id: string): Promise<Club | null> {
+    const cached = this.cacheRead(this.clubByIdCache, id);
+    if (cached) return cached;
+    try {
+      const raw = await firstValueFrom(
+        this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
+      );
+      const club = mapClub(raw);
+      this.clubByIdCache.set(id, { data: club, fetchedAt: Date.now() });
+      return club;
+    } catch {
+      return null;
+    }
+  }
+  async createClub(payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    coverUrl?: string | null;
+    city?: string;
+    tags?: string[];
+    meetingDurationMinutes?: number | null;
+    afterMeetingVenue?: { name: string; address: string; description: string } | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.post<ApiClub>(`${environment.apiUrl}/clubs`, {
+        name: payload.name,
+        description: payload.description,
+        isPublic: payload.isPublic,
+        coverUrl: payload.coverUrl ?? null,
+        city: payload.city,
+        tags: payload.tags,
+        meetingDurationMinutes: payload.meetingDurationMinutes,
+        afterMeetingVenue: payload.afterMeetingVenue,
+      }),
+    );
+    const club = mapClub(raw);
+    this._clubs.update(existing => [club, ...existing]);
+    this._myClubs.update(existing => [club, ...existing]);
+    return club;
+  }
+  async updateClub(clubId: string, payload: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    city?: string;
+    coverUrl?: string | null;
+  }): Promise<Club> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
+    );
+    this.clubByIdCache.delete(clubId);
+    const club = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
+    return club;
+  }
+  async joinClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
+    );
+    this.clubByIdCache.delete(clubId);
+    this.membersCache.delete(clubId);
+    this._clubs.update(list =>
+      list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
+    );
+    const club = this._clubs().find(c => c.id === clubId);
+    if (club && !this.myClubIds().has(clubId)) {
+      this._myClubs.update(list => [club, ...list]);
+    }
+  }
+  async leaveClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
+    );
+    this.clubByIdCache.delete(clubId);
+    this.membersCache.delete(clubId);
+    this._clubs.update(list =>
+      list.map(c =>
+        c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
+      ),
+    );
+    this._myClubs.update(list => list.filter(c => c.id !== clubId));
+  }
+  async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
+    const cached = this.cacheRead(this.membersCache, clubId);
+    if (cached) return cached;
+    const raw = await firstValueFrom(
+      this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
+    );
+    const members = raw.map(mapClubMember);
+    this.membersCache.set(clubId, { data: members, fetchedAt: Date.now() });
+    return members;
+  }
+  async kickMember(clubId: string, userId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
+    );
+    this.membersCache.delete(clubId);
+  }
+  async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
+    );
+    this.membersCache.delete(clubId);
+  }
+  async getBans(clubId: string): Promise<BanRecord[]> {
+    const raw = await firstValueFrom(
+      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
+    );
+    return raw.map(mapBanRecord);
+  }
+  async loadClubEvents(clubId: string, includePast = false): Promise<ClubEvent[]> {
+    if (!includePast) {
+      const cached = this.cacheRead(this.eventsCache, clubId);
+      if (cached) return cached;
+    }
+    const raw = await firstValueFrom(
+      this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`, {
+        params: { include_past: String(includePast) },
+      }),
+    );
+    const events = raw.map(mapEvent);
+    if (!includePast) {
+      this.eventsCache.set(clubId, { data: events, fetchedAt: Date.now() });
+    }
+    return events;
+  }
+  async deleteClub(clubId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}`),
+    );
+    this.clubByIdCache.delete(clubId);
+    this.membersCache.delete(clubId);
+    this.eventsCache.delete(clubId);
+    this._clubs.update(list => list.filter(c => c.id !== clubId));
+    this._myClubs.update(list => list.filter(c => c.id !== clubId));
+  }
+  async pauseClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'pause');
+  }
+  async cancelClub(clubId: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'cancel');
+  }
+  async rescheduleMeeting(clubId: string, newDate: string): Promise<void> {
+    await this.patchClubAndSync(clubId, 'reschedule', { newDate });
+  }
+  private async patchClubAndSync(clubId: string, action: string, body: object = {}): Promise<void> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
+    );
+    const updated = mapClub(raw);
+    this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+  }
+  msUntilDeletion(club: Club): number | null {
+    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
+    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
+    const remaining = deletionTime - Date.now();
+    return remaining > 0 ? remaining : null;
+  }
+}
 ````
 
 ## File: src/app/features/clubs/create-club/create-club.component.html
@@ -12371,149 +12638,174 @@ export class TokenStore {
 </main>
 ````
 
-## File: src/app/features/profile/profile.component.html
+## File: src/app/features/events/events-feed/events-feed.component.html
 ````html
-<div class="min-h-screen bg-gradient-to-br from-primary-950/30 via-transparent to-accent-950/20">
-  <div class="max-w-2xl mx-auto space-y-5 py-8 px-4">
-    <section
-      aria-labelledby="profile-heading"
-      class="glass-card-strong p-8 text-center"
-    >
-      <div
-        class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-brand
-               flex items-center justify-center text-white text-3xl font-bold select-none
-               shadow-lg ring-4 ring-white/20"
-        aria-hidden="true"
-      >
-        {{ userInitials() }}
-      </div>
-      <h1 id="profile-heading" class="text-2xl font-bold text-gray-900 dark:text-white">
-        {{ auth.currentUser()?.displayName }}
+<div class="min-h-screen">
+  <section class="parchment-hero px-4 py-14 text-center">
+    <div class="relative z-10">
+      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
+                 text-[var(--color-ink)] mb-2 drop-shadow-sm">
+        {{ 'NAV.events' | translate }}
       </h1>
-      <span
-        class="mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium"
-        [class]="auth.currentUser()?.role === 'organizer'
-          ? 'bg-accent-100/80 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
-          : 'bg-primary-100/80 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'"
-      >
-        {{ auth.currentUser()?.role === 'organizer' ? '🎯' : '📖' }}
-        {{ auth.currentUser()?.role === 'organizer' ? ('PROFILE.role_organizer' | translate) : ('PROFILE.role_reader' | translate) }}
-      </span>
-      @if (joinedDate()) {
-        <p class="mt-3 text-sm text-gray-400 dark:text-gray-500">
-          {{ 'PROFILE.member_since' | translate }} {{ joinedDate() }}
-        </p>
-      }
-    </section>
-    <section aria-labelledby="edit-name-heading" class="glass-card p-6">
-      <h2 id="edit-name-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
-        <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
-      </h2>
-      <form [formGroup]="nameForm" (ngSubmit)="saveName()" novalidate>
-        <div class="space-y-4">
-          <div>
-            <label for="displayName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
-              {{ 'PROFILE.display_name_label' | translate }}
-            </label>
-            <input
-              hlmInput
-              id="displayName"
-              type="text"
-              formControlName="displayName"
-              autocomplete="nickname"
-              class="w-full"
-              data-testid="display-name-input"
-              [placeholder]="'PROFILE.display_name_placeholder' | translate"
-              [attr.aria-invalid]="nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched"
-              aria-describedby="displayName-error"
-            />
-            @if (nameForm.controls.displayName.invalid && nameForm.controls.displayName.touched) {
-              <p id="displayName-error" role="alert" class="mt-1.5 text-xs text-red-600 dark:text-red-400">
-                @if (nameForm.controls.displayName.hasError('required')) {
-                  {{ 'PROFILE.display_name_required' | translate }}
-                } @else if (nameForm.controls.displayName.hasError('minlength')) {
-                  {{ 'PROFILE.display_name_min' | translate }}
-                }
-              </p>
-            }
-          </div>
-          <div class="flex items-center gap-3">
-            <button
-              hlmBtn
-              type="submit"
-              [disabled]="nameForm.invalid || isSavingName()"
-              class="bg-gradient-brand text-white border-0 hover:opacity-90"
-            >
-              @if (isSavingName()) {
-                {{ 'PROFILE.saving' | translate }}
-              } @else {
-                {{ 'PROFILE.save_name' | translate }}
-              }
-            </button>
-          </div>
-        </div>
-      </form>
-    </section>
-    <section aria-labelledby="role-heading" class="glass-card p-6">
-      <h2 id="role-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
-        <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
-      </h2>
-      <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
-        {{ 'PROFILE.role_subtitle' | translate }}
+      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-8">
+        {{ 'EVENTS.subtitle' | translate }}
       </p>
-      <app-profile-role-selector
-        [currentRole]="auth.currentUser()?.role ?? 'user'"
-        (roleChange)="changeRole($event)"
-      />
-    </section>
-    <section aria-labelledby="stats-heading" class="glass-card p-6">
-      <h2 id="stats-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
-        <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
-      </h2>
-      <app-profile-stats [stats]="auth.userStats()" />
-    </section>
-    <section aria-labelledby="socials-heading" class="glass-card p-6">
-      <h2 id="socials-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
-        <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
-      </h2>
-      <div class="flex items-center gap-3 mb-4 p-3 rounded-[var(--bento-radius)] glass-card-subtle">
-        <label class="flex items-center gap-2 cursor-pointer select-none text-sm font-medium text-gray-700 dark:text-gray-300">
-          <input
-            type="checkbox"
-            [formControl]="socialsPublicControl"
-            (change)="onSocialsPublicChange(socialsPublicControl.value)"
-            class="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-          />
-          {{ 'PROFILE.socials_public_label' | translate }}
-        </label>
-      </div>
-      @if (
-        userSocials().telegram  ||
-        userSocials().instagram ||
-        userSocials().twitter   ||
-        userSocials().linkedin  ||
-        userSocials().github    ||
-        userSocials().goodreads
-      ) {
-        <div class="flex flex-wrap gap-2 mb-6">
-          <app-social-badges [socials]="userSocials()" />
+      @if (eventService.availableCities().length > 0) {
+        <div class="mx-auto max-w-sm">
+          <select
+            [ngModel]="eventService.cityFilter()"
+            (ngModelChange)="eventService.setCityFilter($event || null)"
+            class="w-full parchment-input rounded-full px-4 py-2.5 text-sm appearance-none cursor-pointer"
+          >
+            <option value="">All cities</option>
+            @for (city of eventService.availableCities(); track city) {
+              <option [value]="city">{{ city }}</option>
+            }
+          </select>
         </div>
       }
-      <form [formGroup]="socialsForm" (ngSubmit)="submitSocials()" novalidate class="space-y-4">
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          @for (social of socialFields(); track social.key) {
-            <app-social-link-field [config]="social" [form]="socialsForm" />
-          }
-        </div>
-        <div class="flex items-center gap-3 pt-1">
-          <button hlmBtn type="submit" class="bg-gradient-brand text-white border-0 hover:opacity-90">
-            {{ 'PROFILE.save' | translate }}
+    </div>
+  </section>
+  <div class="page-container py-8 space-y-8">
+    @if (eventService.error()) {
+      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+        <span aria-hidden="true">⚠️</span>
+        <span>{{ eventService.error() }}</span>
+      </div>
+    }
+    @if (auth.isAuthenticated()) {
+      <div class="flex justify-center" role="tablist" aria-label="Event filter">
+        <div class="relative flex rounded-full p-1
+                    bg-[var(--color-surface-sunken)]
+                    border border-[var(--color-sepia)]
+                    shadow-inner">
+          <div class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full
+                      bg-[var(--color-surface-raised)]
+                      shadow-[var(--shadow-parchment)]
+                      transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+               [style.left]="activeTab() === 'upcoming' ? '4px' : '50%'"
+               aria-hidden="true">
+          </div>
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'upcoming'"
+            (click)="activeTab.set('upcoming')"
+            class="relative z-10 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'upcoming'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            {{ 'EVENTS.tab_upcoming' | translate }}
+          </button>
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'my'"
+            (click)="activeTab.set('my')"
+            class="relative z-10 flex items-center gap-1.5 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'my'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            {{ 'EVENTS.tab_my' | translate }}
+            @if (eventService.myEvents().length > 0) {
+              <span class="inline-flex items-center justify-center
+                           h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
+                           transition-colors duration-300"
+                    [class]="activeTab() === 'my'
+                      ? 'bg-[var(--color-primary-600)] text-white'
+                      : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]'">
+                {{ eventService.myEvents().length }}
+              </span>
+            }
           </button>
         </div>
-      </form>
-    </section>
+      </div>
+      @if (activeTab() === 'upcoming') {
+        <div class="pt-6" role="tabpanel">
+          <ng-container [ngTemplateOutlet]="upcomingPanel" />
+        </div>
+      }
+      @if (activeTab() === 'my') {
+        <div class="pt-6" role="tabpanel">
+          @if (eventService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (eventService.myEvents().length === 0) {
+            <app-empty-state
+              data-testid="empty-state"
+              icon="📅"
+              [title]="'EVENTS.no_upcoming' | translate"
+              [description]="'EVENTS.no_my_events_desc' | translate"
+            />
+          } @else {
+            <ul class="bento-grid-3">
+              @for (event of eventService.myEvents(); track event.id) {
+                <li data-testid="event-card">
+                  <app-event-card
+                    [event]="event"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [attending]="attendingEventId() === event.id"
+                    (attend)="onAttend(event)"
+                    (cancelAttend)="onCancelAttend(event)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    } @else {
+      <ng-container [ngTemplateOutlet]="upcomingPanel" />
+    }
   </div>
 </div>
+<ng-template #upcomingPanel>
+  @if (eventService.isLoading()) {
+    <div class="py-16 flex justify-center" aria-busy="true">
+      <hlm-spinner />
+    </div>
+  } @else if (sortedDates().length === 0) {
+    <app-empty-state
+      data-testid="empty-state"
+      icon="📅"
+      [title]="'EVENTS.no_upcoming' | translate"
+      [description]="'EVENTS.no_upcoming_desc' | translate"
+    />
+  } @else {
+    @for (date of sortedDates(); track date) {
+      <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
+        <div class="date-section-divider mb-5" aria-hidden="true">
+          <h2
+            [id]="'date-' + date"
+            class="date-badge font-fantasy tracking-wider uppercase"
+          >
+            ✦ {{ date }} ✦
+          </h2>
+        </div>
+        <ul class="bento-grid-3">
+          @for (event of eventService.groupedByDate()[date]; track event.id) {
+            <li data-testid="event-card">
+              <app-event-card
+                [event]="event"
+                [isAuthenticated]="auth.isAuthenticated()"
+                [attending]="attendingEventId() === event.id"
+                (attend)="onAttend(event)"
+                (cancelAttend)="onCancelAttend(event)"
+              />
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</ng-template>
 ````
 
 ## File: src/app/features/profile/profile.component.ts
@@ -12899,70 +13191,257 @@ export class QuizSessionComponent extends LeaderboardBaseComponent implements On
 }
 ````
 
-## File: src/app/layout/header/header.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  computed,
-  signal,
-} from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith, firstValueFrom } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideSun, lucideMoon } from '@ng-icons/lucide';
-import { AuthService } from '../../core/auth/auth.service';
-import { ThemeService } from '../../core/services/theme.service';
-import { HlmSheetImports } from '../../shared/spartan/sheet/src';
-import { HlmButton } from '../../shared/spartan/button/src';
-import { HlmIconImports } from '../../shared/spartan/icon/src';
-@Component({
-  selector: 'app-header',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  providers: [provideIcons({ lucideSun, lucideMoon })],
-  imports: [
-    RouterLink, RouterLinkActive, TranslateModule, NgIcon,
-    ...HlmIconImports,
-    ...HlmSheetImports, HlmButton,
-  ],
-  templateUrl: './header.component.html',
-})
-export class HeaderComponent {
-  private readonly auth      = inject(AuthService);
-  private readonly translate = inject(TranslateService);
-  readonly themeService      = inject(ThemeService);
-  readonly isAuthenticated = this.auth.isAuthenticated;
-  readonly currentUser = this.auth.currentUser;
-  readonly currentLang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: 'uk' },
-  );
-  readonly showUserMenu = signal(false);
-  readonly userInitials = computed(() => {
-    const name = this.currentUser()?.displayName ?? '';
-    return (
-      name
-        .split(' ')
-        .slice(0, 2)
-        .map(w => w[0]?.toUpperCase() ?? '')
-        .join('') || '?'
-    );
-  });
-  async switchLang(): Promise<void> {
-  const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-  await firstValueFrom(this.translate.use(next));
-}
-  async signOut(): Promise<void> {
-    await this.auth.signOut();
-  }
-}
+## File: src/app/layout/header/header.component.html
+````html
+<header
+  class="sticky top-0 z-50
+         bg-[var(--color-surface)]/90 dark:bg-[var(--color-surface)]/95
+         backdrop-blur-[10px]
+         border-b border-[var(--color-sepia)]
+         shadow-[0_2px_12px_rgba(92,45,10,0.10)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.40)]"
+  role="banner"
+>
+  <div class="page-max-w px-6">
+    <div class="flex items-center justify-between h-16">
+      <a
+        routerLink="/"
+        class="font-fantasy text-xl font-bold tracking-widest
+               text-[var(--color-primary-600)] dark:text-[#fbbf24]
+               hover:text-[var(--color-primary-500)] dark:hover:text-[#fcd34d]
+               transition-colors duration-200
+               focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2 rounded"
+        aria-label="BookClub home"
+      >
+        BookClub
+      </a>
+      <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
+        <a
+          routerLink="/clubs"
+          data-testid="nav-clubs"
+          routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
+          class="px-4 py-2 rounded-lg text-sm font-medium
+                 text-[var(--color-ink-muted)]
+                 hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                 transition-all duration-200
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+        >
+          {{ 'NAV.discover' | translate }}
+        </a>
+        @if (isAuthenticated()) {
+          <a
+            routerLink="/events"
+            data-testid="nav-events"
+            routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
+            class="px-4 py-2 rounded-lg text-sm font-medium
+                   text-[var(--color-ink-muted)]
+                   hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                   transition-all duration-200
+                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+          >
+            {{ 'NAV.events' | translate }}
+          </a>
+        }
+      </nav>
+      <div class="hidden md:flex items-center gap-1">
+        <button
+          hlmBtn
+          variant="ghost"
+          size="icon"
+          type="button"
+          data-testid="theme-toggle"
+          (click)="themeService.toggle()"
+          [attr.aria-label]="themeService.isDark()
+            ? ('NAV.theme_toggle_light' | translate)
+            : ('NAV.theme_toggle_dark'  | translate)"
+          [attr.title]="themeService.isDark()
+            ? ('NAV.theme_toggle_light' | translate)
+            : ('NAV.theme_toggle_dark'  | translate)"
+        >
+          @if (themeService.isDark()) {
+            <ng-icon hlm name="lucideSun"  size="sm" />
+          } @else {
+            <ng-icon hlm name="lucideMoon" size="sm" />
+          }
+        </button>
+        <button
+          hlmBtn
+          variant="ghost"
+          size="sm"
+          type="button"
+          (click)="switchLang()"
+          [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+        >
+          {{ currentLang() === 'uk' ? 'EN' : 'UK' }}
+        </button>
+        @if (isAuthenticated()) {
+          <div class="relative">
+            <button
+              type="button"
+              (click)="showUserMenu.set(!showUserMenu())"
+              class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
+                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+              aria-haspopup="menu"
+              [attr.aria-expanded]="showUserMenu()"
+              [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
+            >
+              <div
+                class="h-9 w-9 rounded-full avatar-gradient
+                       flex items-center justify-center text-white text-sm font-semibold select-none"
+                aria-hidden="true"
+              >
+                {{ userInitials() }}
+              </div>
+            </button>
+            @if (showUserMenu()) {
+              <div
+                class="absolute right-0 mt-2 w-48 rounded-md border border-[var(--color-sepia)]
+                       bg-[var(--color-surface)] shadow-lg z-50 py-1"
+                role="menu"
+              >
+                <div class="px-3 py-2 text-sm font-semibold text-[var(--color-ink)]">
+                  {{ currentUser()?.displayName }}
+                </div>
+                <hr class="border-[var(--color-sepia)] my-1" />
+                <a
+                  [routerLink]="['/profile']"
+                  (click)="showUserMenu.set(false)"
+                  class="block px-3 py-2 text-sm text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)] transition-colors"
+                  role="menuitem"
+                >
+                  {{ 'NAV.profile' | translate }}
+                </a>
+                <hr class="border-[var(--color-sepia)] my-1" />
+                <button
+                  type="button"
+                  data-testid="logout"
+                  (click)="signOut()"
+                  class="w-full text-left px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                  role="menuitem"
+                >
+                  {{ 'NAV.logout' | translate }}
+                </button>
+              </div>
+            }
+          </div>
+        } @else {
+          <a hlmBtn variant="outline" size="sm" routerLink="/login">
+            {{ 'NAV.login' | translate }}
+          </a>
+          <a hlmBtn size="sm" routerLink="/register"
+             class="bg-gradient-fantasy text-white border-0 hover:opacity-90">
+            {{ 'NAV.join_free' | translate }}
+          </a>
+        }
+      </div>
+      <hlm-sheet class="md:hidden">
+        <button
+          hlmSheetTrigger
+          type="button"
+          class="p-2 rounded-lg text-[var(--color-ink-muted)]
+                 hover:bg-[var(--color-surface-raised)] transition-all duration-200
+                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+          aria-label="Toggle navigation menu"
+        >
+          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <ng-template hlmSheetPortal>
+          <hlm-sheet-content>
+            <hlm-sheet-header>
+              <h2 hlmSheetTitle
+                  class="font-fantasy font-bold tracking-widest text-[var(--color-primary-600)] dark:text-[#fbbf24]">
+                BookClub
+              </h2>
+            </hlm-sheet-header>
+            <nav class="flex flex-col gap-1 px-4 py-2" aria-label="Mobile navigation">
+              <button hlmSheetClose [routerLink]="['/clubs']"
+                      class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                             text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                             transition-all duration-200 w-full text-left">
+                {{ 'NAV.discover' | translate }}
+              </button>
+              @if (isAuthenticated()) {
+                <button hlmSheetClose [routerLink]="['/events']"
+                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                               text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                               transition-all duration-200 w-full text-left">
+                  {{ 'NAV.events' | translate }}
+                </button>
+              }
+              <button
+                type="button"
+                data-testid="theme-toggle"
+                (click)="themeService.toggle()"
+                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                       transition-all duration-200 w-full text-left"
+                [attr.aria-label]="themeService.isDark()
+                  ? ('NAV.theme_toggle_light' | translate)
+                  : ('NAV.theme_toggle_dark'  | translate)"
+              >
+                @if (themeService.isDark()) {
+                  <ng-icon hlm name="lucideSun"  size="sm" />
+                  <span>{{ 'NAV.theme_toggle_light' | translate }}</span>
+                } @else {
+                  <ng-icon hlm name="lucideMoon" size="sm" />
+                  <span>{{ 'NAV.theme_toggle_dark' | translate }}</span>
+                }
+              </button>
+              <button
+                type="button"
+                (click)="switchLang()"
+                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                       transition-all duration-200 w-full text-left"
+                [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
+              >
+                <span>{{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}</span>
+              </button>
+              <div class="pt-2 mt-2 border-t border-[var(--color-sepia)] flex flex-col gap-1">
+                @if (isAuthenticated()) {
+                  <div class="px-4 py-2">
+                    <p class="text-xs font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide">
+                      {{ 'NAV.signed_in_as' | translate }}
+                    </p>
+                    <p class="text-sm font-medium text-[var(--color-ink)] mt-0.5">
+                      {{ currentUser()?.displayName }}
+                    </p>
+                  </div>
+                  <button hlmSheetClose [routerLink]="['/profile']"
+                          class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                                 transition-all duration-200 w-full text-left">
+                    {{ 'NAV.profile' | translate }}
+                  </button>
+                  <button hlmSheetClose type="button" data-testid="logout" (click)="signOut()"
+                          class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
+                                 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
+                                 transition-all duration-200">
+                    {{ 'NAV.logout' | translate }}
+                  </button>
+                } @else {
+                  <button hlmSheetClose [routerLink]="['/login']"
+                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+                                 transition-all duration-200 w-full text-left">
+                    {{ 'NAV.login' | translate }}
+                  </button>
+                  <button hlmSheetClose [routerLink]="['/register']"
+                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
+                                 bg-gradient-fantasy text-white hover:opacity-90
+                                 transition-all duration-200 w-full text-left">
+                    {{ 'NAV.join_free' | translate }}
+                  </button>
+                }
+              </div>
+            </nav>
+          </hlm-sheet-content>
+        </ng-template>
+      </hlm-sheet>
+    </div>
+  </div>
+</header>
 ````
 
 ## File: package.json
@@ -13257,176 +13736,6 @@ sonar.cpd.exclusions=\
     </form>
   </div>
 </main>
-````
-
-## File: src/app/features/events/events-feed/events-feed.component.html
-````html
-<div class="min-h-screen">
-  <section class="parchment-hero px-4 py-14 text-center">
-    <div class="relative z-10">
-      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
-                 text-[var(--color-ink)] mb-2 drop-shadow-sm">
-        {{ 'NAV.events' | translate }}
-      </h1>
-      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-8">
-        {{ 'EVENTS.subtitle' | translate }}
-      </p>
-      @if (eventService.availableCities().length > 0) {
-        <div class="mx-auto max-w-sm">
-          <select
-            [ngModel]="eventService.cityFilter()"
-            (ngModelChange)="eventService.setCityFilter($event || null)"
-            class="w-full parchment-input rounded-full px-4 py-2.5 text-sm appearance-none cursor-pointer"
-          >
-            <option value="">All cities</option>
-            @for (city of eventService.availableCities(); track city) {
-              <option [value]="city">{{ city }}</option>
-            }
-          </select>
-        </div>
-      }
-    </div>
-  </section>
-  <div class="page-container py-8 space-y-8">
-    @if (eventService.error()) {
-      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-        <span aria-hidden="true">⚠️</span>
-        <span>{{ eventService.error() }}</span>
-      </div>
-    }
-    @if (auth.isAuthenticated()) {
-      <div class="flex justify-center" role="tablist" aria-label="Event filter">
-        <div class="relative flex rounded-full p-1
-                    bg-[var(--color-surface-sunken)]
-                    border border-[var(--color-sepia)]
-                    shadow-inner">
-          <div class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full
-                      bg-[var(--color-surface-raised)]
-                      shadow-[var(--shadow-parchment)]
-                      transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-               [style.left]="activeTab() === 'upcoming' ? '4px' : '50%'"
-               aria-hidden="true">
-          </div>
-          <button
-            role="tab"
-            type="button"
-            [attr.aria-selected]="activeTab() === 'upcoming'"
-            (click)="activeTab.set('upcoming')"
-            class="relative z-10 px-7 py-2 rounded-full text-sm font-medium
-                   transition-colors duration-300 select-none focus:outline-none
-                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
-            [class]="activeTab() === 'upcoming'
-              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
-              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
-          >
-            {{ 'EVENTS.tab_upcoming' | translate }}
-          </button>
-          <button
-            role="tab"
-            type="button"
-            [attr.aria-selected]="activeTab() === 'my'"
-            (click)="activeTab.set('my')"
-            class="relative z-10 flex items-center gap-1.5 px-7 py-2 rounded-full text-sm font-medium
-                   transition-colors duration-300 select-none focus:outline-none
-                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
-            [class]="activeTab() === 'my'
-              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
-              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
-          >
-            {{ 'EVENTS.tab_my' | translate }}
-            @if (eventService.myEvents().length > 0) {
-              <span class="inline-flex items-center justify-center
-                           h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
-                           transition-colors duration-300"
-                    [class]="activeTab() === 'my'
-                      ? 'bg-[var(--color-primary-600)] text-white'
-                      : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]'">
-                {{ eventService.myEvents().length }}
-              </span>
-            }
-          </button>
-        </div>
-      </div>
-      @if (activeTab() === 'upcoming') {
-        <div class="pt-6" role="tabpanel">
-          <ng-container [ngTemplateOutlet]="upcomingPanel" />
-        </div>
-      }
-      @if (activeTab() === 'my') {
-        <div class="pt-6" role="tabpanel">
-          @if (eventService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true">
-              <hlm-spinner />
-            </div>
-          } @else if (eventService.myEvents().length === 0) {
-            <app-empty-state
-              data-testid="empty-state"
-              icon="📅"
-              [title]="'EVENTS.no_upcoming' | translate"
-              [description]="'EVENTS.no_my_events_desc' | translate"
-            />
-          } @else {
-            <ul class="bento-grid-3">
-              @for (event of eventService.myEvents(); track event.id) {
-                <li data-testid="event-card">
-                  <app-event-card
-                    [event]="event"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [attending]="attendingEventId() === event.id"
-                    (attend)="onAttend(event)"
-                    (cancelAttend)="onCancelAttend(event)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      }
-    } @else {
-      <ng-container [ngTemplateOutlet]="upcomingPanel" />
-    }
-  </div>
-</div>
-<ng-template #upcomingPanel>
-  @if (eventService.isLoading()) {
-    <div class="py-16 flex justify-center" aria-busy="true">
-      <hlm-spinner />
-    </div>
-  } @else if (sortedDates().length === 0) {
-    <app-empty-state
-      data-testid="empty-state"
-      icon="📅"
-      [title]="'EVENTS.no_upcoming' | translate"
-      [description]="'EVENTS.no_upcoming_desc' | translate"
-    />
-  } @else {
-    @for (date of sortedDates(); track date) {
-      <section [attr.aria-labelledby]="'date-' + date" class="mb-10">
-        <div class="date-section-divider mb-5" aria-hidden="true">
-          <h2
-            [id]="'date-' + date"
-            class="date-badge font-fantasy tracking-wider uppercase"
-          >
-            ✦ {{ date }} ✦
-          </h2>
-        </div>
-        <ul class="bento-grid-3">
-          @for (event of eventService.groupedByDate()[date]; track event.id) {
-            <li data-testid="event-card">
-              <app-event-card
-                [event]="event"
-                [isAuthenticated]="auth.isAuthenticated()"
-                [attending]="attendingEventId() === event.id"
-                (attend)="onAttend(event)"
-                (cancelAttend)="onCancelAttend(event)"
-              />
-            </li>
-          }
-        </ul>
-      </section>
-    }
-  }
-</ng-template>
 ````
 
 ## File: src/app/features/quiz/quiz-create/quiz-create.component.ts
@@ -13750,259 +14059,6 @@ export class QuizTakeComponent implements OnInit {
 }
 ````
 
-## File: src/app/layout/header/header.component.html
-````html
-<header
-  class="sticky top-0 z-50
-         bg-[var(--color-surface)]/90 dark:bg-[var(--color-surface)]/95
-         backdrop-blur-[10px]
-         border-b border-[var(--color-sepia)]
-         shadow-[0_2px_12px_rgba(92,45,10,0.10)] dark:shadow-[0_2px_16px_rgba(0,0,0,0.40)]"
-  role="banner"
->
-  <div class="page-max-w px-6">
-    <div class="flex items-center justify-between h-16">
-      <a
-        routerLink="/"
-        class="font-fantasy text-xl font-bold tracking-widest
-               text-[var(--color-primary-600)] dark:text-[#fbbf24]
-               hover:text-[var(--color-primary-500)] dark:hover:text-[#fcd34d]
-               transition-colors duration-200
-               focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2 rounded"
-        aria-label="BookClub home"
-      >
-        BookClub
-      </a>
-      <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
-        <a
-          routerLink="/clubs"
-          data-testid="nav-clubs"
-          routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
-          class="px-4 py-2 rounded-lg text-sm font-medium
-                 text-[var(--color-ink-muted)]
-                 hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                 transition-all duration-200
-                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-        >
-          {{ 'NAV.discover' | translate }}
-        </a>
-        @if (isAuthenticated()) {
-          <a
-            routerLink="/events"
-            data-testid="nav-events"
-            routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
-            class="px-4 py-2 rounded-lg text-sm font-medium
-                   text-[var(--color-ink-muted)]
-                   hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                   transition-all duration-200
-                   focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-          >
-            {{ 'NAV.events' | translate }}
-          </a>
-        }
-      </nav>
-      <div class="hidden md:flex items-center gap-1">
-        <button
-          hlmBtn
-          variant="ghost"
-          size="icon"
-          type="button"
-          data-testid="theme-toggle"
-          (click)="themeService.toggle()"
-          [attr.aria-label]="themeService.isDark()
-            ? ('NAV.theme_toggle_light' | translate)
-            : ('NAV.theme_toggle_dark'  | translate)"
-          [attr.title]="themeService.isDark()
-            ? ('NAV.theme_toggle_light' | translate)
-            : ('NAV.theme_toggle_dark'  | translate)"
-        >
-          @if (themeService.isDark()) {
-            <ng-icon hlm name="lucideSun"  size="sm" />
-          } @else {
-            <ng-icon hlm name="lucideMoon" size="sm" />
-          }
-        </button>
-        <button
-          hlmBtn
-          variant="ghost"
-          size="sm"
-          type="button"
-          (click)="switchLang()"
-          [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-        >
-          {{ currentLang() === 'uk' ? 'EN' : 'UK' }}
-        </button>
-        @if (isAuthenticated()) {
-          <div class="relative">
-            <button
-              type="button"
-              (click)="showUserMenu.set(!showUserMenu())"
-              class="flex items-center gap-2 rounded-full p-0.5 transition-all duration-200
-                     focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-              aria-haspopup="menu"
-              [attr.aria-expanded]="showUserMenu()"
-              [attr.aria-label]="'User menu for ' + (currentUser()?.displayName ?? 'User')"
-            >
-              <div
-                class="h-9 w-9 rounded-full avatar-gradient
-                       flex items-center justify-center text-white text-sm font-semibold select-none"
-                aria-hidden="true"
-              >
-                {{ userInitials() }}
-              </div>
-            </button>
-            @if (showUserMenu()) {
-              <div
-                class="absolute right-0 mt-2 w-48 rounded-md border border-[var(--color-sepia)]
-                       bg-[var(--color-surface)] shadow-lg z-50 py-1"
-                role="menu"
-              >
-                <div class="px-3 py-2 text-sm font-semibold text-[var(--color-ink)]">
-                  {{ currentUser()?.displayName }}
-                </div>
-                <hr class="border-[var(--color-sepia)] my-1" />
-                <a
-                  [routerLink]="['/profile']"
-                  (click)="showUserMenu.set(false)"
-                  class="block px-3 py-2 text-sm text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)] transition-colors"
-                  role="menuitem"
-                >
-                  {{ 'NAV.profile' | translate }}
-                </a>
-                <hr class="border-[var(--color-sepia)] my-1" />
-                <button
-                  type="button"
-                  data-testid="logout"
-                  (click)="signOut()"
-                  class="w-full text-left px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                  role="menuitem"
-                >
-                  {{ 'NAV.logout' | translate }}
-                </button>
-              </div>
-            }
-          </div>
-        } @else {
-          <a hlmBtn variant="outline" size="sm" routerLink="/login">
-            {{ 'NAV.login' | translate }}
-          </a>
-          <a hlmBtn size="sm" routerLink="/register"
-             class="bg-gradient-fantasy text-white border-0 hover:opacity-90">
-            {{ 'NAV.join_free' | translate }}
-          </a>
-        }
-      </div>
-      <hlm-sheet class="md:hidden">
-        <button
-          hlmSheetTrigger
-          type="button"
-          class="p-2 rounded-lg text-[var(--color-ink-muted)]
-                 hover:bg-[var(--color-surface-raised)] transition-all duration-200
-                 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
-          aria-label="Toggle navigation menu"
-        >
-          <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-        <ng-template hlmSheetPortal>
-          <hlm-sheet-content>
-            <hlm-sheet-header>
-              <h2 hlmSheetTitle
-                  class="font-fantasy font-bold tracking-widest text-[var(--color-primary-600)] dark:text-[#fbbf24]">
-                BookClub
-              </h2>
-            </hlm-sheet-header>
-            <nav class="flex flex-col gap-1 px-4 py-2" aria-label="Mobile navigation">
-              <button hlmSheetClose [routerLink]="['/clubs']"
-                      class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                             text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                             transition-all duration-200 w-full text-left">
-                {{ 'NAV.discover' | translate }}
-              </button>
-              @if (isAuthenticated()) {
-                <button hlmSheetClose [routerLink]="['/events']"
-                        class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                               text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                               transition-all duration-200 w-full text-left">
-                  {{ 'NAV.events' | translate }}
-                </button>
-              }
-              <button
-                type="button"
-                data-testid="theme-toggle"
-                (click)="themeService.toggle()"
-                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                       transition-all duration-200 w-full text-left"
-                [attr.aria-label]="themeService.isDark()
-                  ? ('NAV.theme_toggle_light' | translate)
-                  : ('NAV.theme_toggle_dark'  | translate)"
-              >
-                @if (themeService.isDark()) {
-                  <ng-icon hlm name="lucideSun"  size="sm" />
-                  <span>{{ 'NAV.theme_toggle_light' | translate }}</span>
-                } @else {
-                  <ng-icon hlm name="lucideMoon" size="sm" />
-                  <span>{{ 'NAV.theme_toggle_dark' | translate }}</span>
-                }
-              </button>
-              <button
-                type="button"
-                (click)="switchLang()"
-                class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                       text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                       transition-all duration-200 w-full text-left"
-                [attr.aria-label]="currentLang() === 'uk' ? 'Switch to English' : 'Перейти на українську'"
-              >
-                <span>{{ currentLang() === 'uk' ? '🇬🇧 EN' : '🇺🇦 UK' }}</span>
-              </button>
-              <div class="pt-2 mt-2 border-t border-[var(--color-sepia)] flex flex-col gap-1">
-                @if (isAuthenticated()) {
-                  <div class="px-4 py-2">
-                    <p class="text-xs font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide">
-                      {{ 'NAV.signed_in_as' | translate }}
-                    </p>
-                    <p class="text-sm font-medium text-[var(--color-ink)] mt-0.5">
-                      {{ currentUser()?.displayName }}
-                    </p>
-                  </div>
-                  <button hlmSheetClose [routerLink]="['/profile']"
-                          class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                                 transition-all duration-200 w-full text-left">
-                    {{ 'NAV.profile' | translate }}
-                  </button>
-                  <button hlmSheetClose type="button" data-testid="logout" (click)="signOut()"
-                          class="w-full flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
-                                 text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
-                                 transition-all duration-200">
-                    {{ 'NAV.logout' | translate }}
-                  </button>
-                } @else {
-                  <button hlmSheetClose [routerLink]="['/login']"
-                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                                 text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
-                                 transition-all duration-200 w-full text-left">
-                    {{ 'NAV.login' | translate }}
-                  </button>
-                  <button hlmSheetClose [routerLink]="['/register']"
-                          class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
-                                 bg-gradient-fantasy text-white hover:opacity-90
-                                 transition-all duration-200 w-full text-left">
-                    {{ 'NAV.join_free' | translate }}
-                  </button>
-                }
-              </div>
-            </nav>
-          </hlm-sheet-content>
-        </ng-template>
-      </hlm-sheet>
-    </div>
-  </div>
-</header>
-````
-
 ## File: bugs.md
 ````markdown
 # Bug Report — Book Club App Audit
@@ -14031,237 +14087,6 @@ export class QuizTakeComponent implements OnInit {
 | 3 | `/clubs/:id/quizzes/:quizId/edit` | ui-missing | Skipped: no quiz ID |
 | 4 | `/clubs/:id/quizzes/:quizId/session` | ui-missing | Skipped: no quiz ID |
 | 5 | `/clubs/:id/quizzes/:quizId/leaderboard` | ui-missing | Skipped: no quiz ID |
-````
-
-## File: src/app/features/clubs/club-detail/club-detail.component.html
-````html
-@if (isLoading()) {
-  <main class="page-max-w px-6 py-8" aria-busy="true" aria-label="Loading club details">
-    <div class="animate-pulse space-y-4">
-      <div class="h-56 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-      <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-    </div>
-  </main>
-} @else if (errorMessage()) {
-  <main class="page-max-w px-6 py-8 text-center" role="alert">
-    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
-    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
-    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
-    <a
-      hlmBtn
-      routerLink="/clubs"
-      class="bg-primary-600 hover:bg-primary-700 text-white"
-    >
-      ← {{ 'CLUB_DETAIL.back' | translate }}
-    </a>
-  </main>
-} @else if (club()) {
-  <main class="min-h-screen">
-    <div class="relative parchment-hero">
-      @if (club()!.coverUrl) {
-        <img
-          [src]="club()!.coverUrl"
-          [alt]="club()!.name + ' cover'"
-          class="w-full h-64 object-cover"
-          loading="lazy"
-        />
-      } @else {
-        <div class="bg-gradient-fantasy h-64" aria-hidden="true"></div>
-      }
-      <div class="absolute inset-0 flex items-end justify-center pointer-events-none px-6 pb-8">
-        <h1 data-testid="club-name" class="font-fantasy font-bold text-white uppercase tracking-widest text-4xl sm:text-5xl lg:text-6xl text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
-          {{ club()!.name }}
-        </h1>
-      </div>
-      <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
-        <a
-          routerLink="/clubs"
-          class="inline-flex items-center gap-1.5 rounded-full parchment-card px-3 py-1.5 text-sm font-medium text-[var(--color-ink)] hover:scale-105 transition-all duration-200"
-          [attr.aria-label]="'CLUB_DETAIL.back' | translate"
-        >
-          ← {{ 'CLUB_DETAIL.back_short' | translate }}
-        </a>
-      </nav>
-    </div>
-    <div class="page-max-w px-6 py-8">
-      <div class="flex flex-col lg:flex-row gap-6 items-start">
-        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-2 lg:order-1">
-          @if (nearestEventBook()) {
-            <div hlmCard class="parchment-card-sunken p-4 gap-3">
-              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 {{ 'CLUB_DETAIL.now_reading' | translate }}</h3>
-              @if (nearestEventBook()!.coverUrl) {
-                <img
-                  [src]="nearestEventBook()!.coverUrl!"
-                  [alt]="nearestEventBook()!.title"
-                  class="w-full rounded-xl object-cover mb-3 max-h-40"
-                />
-              }
-              <p class="font-serif italic text-sm font-semibold text-gray-900 dark:text-white leading-snug">
-                {{ nearestEventBook()!.title }}
-              </p>
-              @if (nearestEventBook()!.author) {
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ nearestEventBook()!.author }}</p>
-              }
-            </div>
-          }
-          @if (isClubOwner()) {
-            <app-club-manage-panel [clubId]="id()" />
-          }
-        </aside>
-        <div class="flex-1 min-w-0 flex flex-col gap-8 order-1 lg:order-2">
-          <app-club-header
-            [club]="club()!"
-            [isMember]="isMember()"
-            [isOwner]="isClubOwner()"
-            [isAuthenticated]="!!currentUser()"
-            [isActionLoading]="isActionLoading()"
-            (leave)="onLeave()" />
-          @if (actionError()) {
-            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-              <span aria-hidden="true">⚠️</span>
-              <span>{{ actionError() }}</span>
-            </div>
-          }
-          @if (club()!.description) {
-            <section hlmCard class="parchment-card-sunken px-6 gap-3">
-              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
-              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
-            </section>
-          }
-          @if (isMember() || isClubOwner()) {
-            <app-book-vote-section
-              [clubId]="id()"
-              [isOwner]="isClubOwner()"
-              [isMember]="isMember()"
-            />
-          }
-          @if (isMember()) {
-            <button hlmBtn variant="outline" (click)="openClubChat()">Club Chat</button>
-          }
-          @if (!!currentUser() && !isMember() && !isClubOwner()) {
-            <div class="rounded-2xl border-2 border-dashed border-[var(--color-sepia)] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[var(--color-surface-raised)]">
-              <div>
-                <p class="font-semibold text-[var(--color-ink)]">{{ 'CLUB_DETAIL.join_cta_title' | translate }}</p>
-                <p class="text-sm text-[var(--color-ink-muted)] mt-0.5">{{ 'CLUB_DETAIL.join_cta_desc' | translate }}</p>
-              </div>
-              <button
-                hlmBtn
-                type="button"
-                data-testid="join-button"
-                (click)="onJoin()"
-                [disabled]="isActionLoading()"
-                class="flex-shrink-0 bg-primary-600 hover:bg-primary-700 text-white"
-              >
-                {{ 'CLUB_DETAIL.join' | translate }}
-              </button>
-            </div>
-          }
-          <section hlmCard class="parchment-card px-6 gap-4">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                📅 {{ 'CLUB_DETAIL.events_title' | translate }}
-              </h2>
-              @if (isClubOwner()) {
-                <a
-                  hlmBtn
-                  size="sm"
-                  [routerLink]="['/clubs', id(), 'events', 'create']"
-                  class="bg-primary-600 hover:bg-primary-700 text-white"
-                >
-                  {{ 'CLUB_DETAIL.create_event' | translate }}
-                </a>
-              }
-            </div>
-            <hlm-tabs [tab]="activeEventsTab()" (tabActivated)="onEventsTabChange($any($event))">
-              <hlm-tabs-list class="mb-4">
-                <button [hlmTabsTrigger]="'upcoming'">{{ 'CLUB_DETAIL.events_tab_upcoming' | translate }}</button>
-                <button [hlmTabsTrigger]="'history'">{{ 'CLUB_DETAIL.events_tab_history' | translate }}</button>
-              </hlm-tabs-list>
-              <div [hlmTabsContent]="'upcoming'">
-                @if (upcomingEvents().length > 1) {
-                  <div class="flex flex-wrap gap-2 mb-5">
-                    @for (opt of sortOptions; track opt.key) {
-                      <button
-                        type="button"
-                        (click)="sortKey.set(opt.key)"
-                        class="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
-                        [class]="sortKey() === opt.key
-                          ? 'bg-[var(--color-primary-600)] text-white border-[var(--color-primary-600)] shadow-sm'
-                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600'"
-                      >
-                        {{ opt.labelKey | translate }}
-                      </button>
-                    }
-                  </div>
-                }
-                @if (upcomingEvents().length === 0) {
-                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                    {{ 'CLUB_DETAIL.events_empty' | translate }}
-                  </p>
-                } @else {
-                  <div class="grid gap-5 sm:grid-cols-2">
-                    @for (event of sortedUpcomingEvents(); track event.id; let i = $index) {
-                      <app-club-event-card
-                        [event]="event"
-                        [isAuthenticated]="!!currentUser()"
-                        [attending]="attendingEventId() === event.id"
-                        [index]="i"
-                        (attend)="onAttend(event.id)"
-                        (cancelAttend)="onCancelAttend(event.id)"
-                      />
-                    }
-                  </div>
-                }
-              </div>
-              <div [hlmTabsContent]="'history'">
-                @if (isPastEventsLoading()) {
-                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                    {{ 'CLUB_DETAIL.events_loading' | translate }}
-                  </p>
-                } @else if (pastEvents().length === 0) {
-                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                    {{ 'CLUB_DETAIL.events_history_empty' | translate }}
-                  </p>
-                } @else {
-                  <div class="grid gap-5 sm:grid-cols-2">
-                    @for (event of pastEvents(); track event.id; let i = $index) {
-                      <app-club-event-card
-                        [event]="event"
-                        [isAuthenticated]="!!currentUser()"
-                        [attending]="false"
-                        [index]="i"
-                        (attend)="onAttend(event.id)"
-                        (cancelAttend)="onCancelAttend(event.id)"
-                      />
-                    }
-                  </div>
-                }
-              </div>
-            </hlm-tabs>
-          </section>
-          <app-club-members-list
-            [members]="members()"
-            [clubBans]="clubBans()"
-            [isOwner]="isClubOwner()"
-            [currentUserId]="currentUserId()"
-            (kick)="handleKick($event)"
-            (ban)="handleBan($event)" />
-          <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">
-            {{ 'CLUB_DETAIL.created' | translate }} {{ club()!.createdAt | formatDate }}
-          </footer>
-        </div>
-        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-3 lg:order-3">
-          <app-club-sidebar-right
-            [club]="club()!"
-            [organizerProfile]="organizerProfile()"
-          />
-        </aside>
-      </div>
-    </div>
-  </main>
-}
 ````
 
 ## File: src/app/features/events/create-event/create-event.component.ts
@@ -14402,254 +14227,6 @@ export class CreateEventComponent implements OnInit {
       this.errorMessage.set('Failed to create event. Please try again.');
     } finally {
       this.isSubmitting.set(false);
-    }
-  }
-}
-````
-
-## File: src/app/features/quiz/quiz-edit/quiz-edit.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  computed,
-  effect,
-  linkedSignal,
-  signal,
-} from '@angular/core';
-import { inject } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { HlmFieldImports } from '../../../shared/spartan/field/src';
-import { HlmInput } from '../../../shared/spartan/input/src';
-import { HlmButton } from '../../../shared/spartan/button/src';
-import { HlmCardImports } from '../../../shared/spartan/card/src';
-import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
-import { OPTION_INDICES, buildMetaForm, buildQuestionForm } from '../quiz-form.utils';
-interface EditableQuestion {
-  id?: string;
-  question: string;
-  options: string[];
-  correctIndex: number;
-}
-@Component({
-  selector: 'app-quiz-edit',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
-  templateUrl: './quiz-edit.component.html',
-})
-export class QuizEditComponent extends QuizDetailBaseComponent {
-  private readonly router = inject(Router);
-  readonly isDraft = computed(() => (this.quiz()?.status ?? 'draft') === 'draft');
-  readonly localQuestions = linkedSignal<EditableQuestion[]>(
-    () =>
-      (this._questionsResource.value() ?? []).map(q => ({
-        id: q.id,
-        question: q.question,
-        options: [...q.options],
-        correctIndex: q.correctIndex,
-      })),
-  );
-  private readonly _deletedIds = signal<string[]>([]);
-  readonly currentStep = signal<1 | 2>(1);
-  readonly isSaving = signal(false);
-  readonly errorMessage = signal('');
-  readonly canSave = computed(
-    () => this.localQuestions().length > 0 && !this.isSaving() && this.isDraft(),
-  );
-  readonly optionIndices = OPTION_INDICES;
-  readonly metaForm = buildMetaForm();
-  readonly questionForm = buildQuestionForm();
-  private readonly _syncEffect = effect(() => {
-    const quiz = this._quizResource.value();
-    if (quiz) {
-      this.metaForm.patchValue({
-        title: quiz.title,
-        description: quiz.description ?? '',
-      });
-      if (quiz.status !== 'draft') {
-        this.metaForm.disable();
-      }
-    }
-  });
-  protected nextStep(): void {
-    if (this.metaForm.invalid) {
-      this.metaForm.markAllAsTouched();
-      return;
-    }
-    this.currentStep.set(2);
-  }
-  protected previousStep(): void {
-    this.currentStep.set(1);
-    this.errorMessage.set('');
-  }
-  protected addQuestion(): void {
-    if (this.questionForm.invalid) {
-      this.questionForm.markAllAsTouched();
-      return;
-    }
-    const { question, option0, option1, option2, option3, correctIndex } =
-      this.questionForm.getRawValue();
-    this.localQuestions.update(prev => [
-      ...prev,
-      {
-        question: question.trim(),
-        options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
-        correctIndex,
-      },
-    ]);
-    this.questionForm.reset({ correctIndex: 0 });
-  }
-  protected removeQuestion(index: number): void {
-    const q = this.localQuestions()[index];
-    const qId = q.id;
-    if (qId) {
-      this._deletedIds.update(ids => [...ids, qId]);
-    }
-    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
-  }
-  protected saveChanges(): void {
-    if (!this.canSave()) return;
-    this.isSaving.set(true);
-    this.errorMessage.set('');
-    const qId = this.quizId();
-    const { title, description } = this.metaForm.getRawValue();
-    (async () => {
-      await this.quizService.updateQuiz(qId, {
-        title: title.trim(),
-        description: description.trim(),
-      });
-      for (const id of this._deletedIds()) {
-        await this.quizService.deleteQuestion(qId, id);
-      }
-      for (const q of this.localQuestions()) {
-        if (q.id) {
-          await this.quizService.updateQuestion(qId, q.id, {
-            question: q.question,
-            options: q.options,
-            correctIndex: q.correctIndex,
-          });
-        } else {
-          await this.quizService.addQuestion(qId, {
-            question: q.question,
-            options: q.options,
-            correctIndex: q.correctIndex,
-          });
-        }
-      }
-      this.isSaving.set(false);
-      this.router.navigate(['/clubs', this.id(), 'quizzes']);
-    })().catch(err => {
-      this.isSaving.set(false);
-      this.errorMessage.set((err as Error).message);
-    });
-  }
-}
-````
-
-## File: src/app/features/events/event-detail/event-detail.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  input,
-  effect,
-} from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
-import { EventService } from '../../../core/services/event.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
-import { ClubEvent } from '../../../core/models/event.model';
-import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-import { environment } from '../../../../environments/environment';
-import { ChatService } from '../../../core/services/chat.service';
-import { ChatRoom } from '../../../core/models/chat.model';
-import { HlmButton } from '../../../shared/spartan/button/src';
-@Component({
-  selector: 'app-event-detail',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton],
-  templateUrl: './event-detail.component.html',
-})
-export class EventDetailComponent {
-  readonly id = input.required<string>();
-  private readonly http = inject(HttpClient);
-  private readonly eventService = inject(EventService);
-  private readonly translate = inject(TranslateService);
-  readonly auth = inject(AuthService);
-  private readonly chatService = inject(ChatService);
-  private readonly _eventResource = rxResource<ClubEvent | null, string>({
-    params: () => this.id(),
-    stream: ({ params: id }) =>
-      this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(
-        map(mapEvent),
-      ),
-  });
-  readonly event = computed(() => this._eventResource.value() ?? null);
-  readonly isLoading = this._eventResource.isLoading;
-  readonly errorMessage = computed(() =>
-    !this._eventResource.isLoading() && this._eventResource.error() ? 'EVENT.LOAD_ERROR' : null,
-  );
-  readonly isActioning = signal(false);
-  readonly isOrganizer = computed(
-    () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,
-  );
-  private readonly _eventRoom = signal<ChatRoom | null>(null);
-  readonly eventRoom = this._eventRoom.asReadonly();
-  constructor() {
-    effect(() => {
-      if (!this._eventResource.hasValue()) return;
-      const ev = this.event();
-      if (ev && this.auth.currentUser()) {
-        this.chatService.getEventRoom(ev.id).then(room => this._eventRoom.set(room));
-      }
-    });
-  }
-  async openEventChat(): Promise<void> {
-    const ev = this.event();
-    if (!ev) return;
-    let room = this._eventRoom();
-    if (!room && this.isOrganizer()) {
-      room = await this.chatService.createEventChatRoom(ev.id);
-      this._eventRoom.set(room);
-    }
-    if (room) this.chatService.openAndFocusRoom(room);
-  }
-  async onAttend(): Promise<void> {
-    this.isActioning.set(true);
-    try {
-      await this.eventService.attendEvent(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
-    }
-  }
-  async onCancelAttend(): Promise<void> {
-    this.isActioning.set(true);
-    try {
-      await this.eventService.cancelAttendance(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
-    }
-  }
-  async onCancelEvent(): Promise<void> {
-    if (!confirm(this.translate.instant('EVENTS.cancel_confirm'))) return;
-    this.isActioning.set(true);
-    try {
-      await this.eventService.cancelEvent(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
     }
   }
 }
@@ -14924,6 +14501,498 @@ export class EventDetailComponent {
     }
   </div>
 </div>
+````
+
+## File: src/app/features/quiz/quiz-edit/quiz-edit.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  computed,
+  effect,
+  linkedSignal,
+  signal,
+} from '@angular/core';
+import { inject } from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
+import { HlmFieldImports } from '../../../shared/spartan/field/src';
+import { HlmInput } from '../../../shared/spartan/input/src';
+import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmCardImports } from '../../../shared/spartan/card/src';
+import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
+import { OPTION_INDICES, buildMetaForm, buildQuestionForm } from '../quiz-form.utils';
+interface EditableQuestion {
+  id?: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+}
+@Component({
+  selector: 'app-quiz-edit',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [ReactiveFormsModule, RouterLink, ...HlmFieldImports, HlmInput, HlmButton, ...HlmCardImports],
+  templateUrl: './quiz-edit.component.html',
+})
+export class QuizEditComponent extends QuizDetailBaseComponent {
+  private readonly router = inject(Router);
+  readonly isDraft = computed(() => (this.quiz()?.status ?? 'draft') === 'draft');
+  readonly localQuestions = linkedSignal<EditableQuestion[]>(
+    () =>
+      (this._questionsResource.value() ?? []).map(q => ({
+        id: q.id,
+        question: q.question,
+        options: [...q.options],
+        correctIndex: q.correctIndex,
+      })),
+  );
+  private readonly _deletedIds = signal<string[]>([]);
+  readonly currentStep = signal<1 | 2>(1);
+  readonly isSaving = signal(false);
+  readonly errorMessage = signal('');
+  readonly canSave = computed(
+    () => this.localQuestions().length > 0 && !this.isSaving() && this.isDraft(),
+  );
+  readonly optionIndices = OPTION_INDICES;
+  readonly metaForm = buildMetaForm();
+  readonly questionForm = buildQuestionForm();
+  private readonly _syncEffect = effect(() => {
+    const quiz = this._quizResource.value();
+    if (quiz) {
+      this.metaForm.patchValue({
+        title: quiz.title,
+        description: quiz.description ?? '',
+      });
+      if (quiz.status !== 'draft') {
+        this.metaForm.disable();
+      }
+    }
+  });
+  protected nextStep(): void {
+    if (this.metaForm.invalid) {
+      this.metaForm.markAllAsTouched();
+      return;
+    }
+    this.currentStep.set(2);
+  }
+  protected previousStep(): void {
+    this.currentStep.set(1);
+    this.errorMessage.set('');
+  }
+  protected addQuestion(): void {
+    if (this.questionForm.invalid) {
+      this.questionForm.markAllAsTouched();
+      return;
+    }
+    const { question, option0, option1, option2, option3, correctIndex } =
+      this.questionForm.getRawValue();
+    this.localQuestions.update(prev => [
+      ...prev,
+      {
+        question: question.trim(),
+        options: [option0.trim(), option1.trim(), option2.trim(), option3.trim()],
+        correctIndex,
+      },
+    ]);
+    this.questionForm.reset({ correctIndex: 0 });
+  }
+  protected removeQuestion(index: number): void {
+    const q = this.localQuestions()[index];
+    const qId = q.id;
+    if (qId) {
+      this._deletedIds.update(ids => [...ids, qId]);
+    }
+    this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
+  }
+  protected saveChanges(): void {
+    if (!this.canSave()) return;
+    this.isSaving.set(true);
+    this.errorMessage.set('');
+    const qId = this.quizId();
+    const { title, description } = this.metaForm.getRawValue();
+    (async () => {
+      await this.quizService.updateQuiz(qId, {
+        title: title.trim(),
+        description: description.trim(),
+      });
+      for (const id of this._deletedIds()) {
+        await this.quizService.deleteQuestion(qId, id);
+      }
+      for (const q of this.localQuestions()) {
+        if (q.id) {
+          await this.quizService.updateQuestion(qId, q.id, {
+            question: q.question,
+            options: q.options,
+            correctIndex: q.correctIndex,
+          });
+        } else {
+          await this.quizService.addQuestion(qId, {
+            question: q.question,
+            options: q.options,
+            correctIndex: q.correctIndex,
+          });
+        }
+      }
+      this.isSaving.set(false);
+      this.router.navigate(['/clubs', this.id(), 'quizzes']);
+    })().catch(err => {
+      this.isSaving.set(false);
+      this.errorMessage.set((err as Error).message);
+    });
+  }
+}
+````
+
+## File: src/app/features/clubs/club-detail/club-detail.component.html
+````html
+@if (isLoading()) {
+  <main class="page-max-w px-6 py-8" aria-busy="true" aria-label="Loading club details">
+    <div class="animate-pulse space-y-4">
+      <div class="h-56 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+    </div>
+  </main>
+} @else if (errorMessage()) {
+  <main class="page-max-w px-6 py-8 text-center" role="alert">
+    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
+    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
+    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
+    <a
+      hlmBtn
+      routerLink="/clubs"
+      class="bg-primary-600 hover:bg-primary-700 text-white"
+    >
+      ← {{ 'CLUB_DETAIL.back' | translate }}
+    </a>
+  </main>
+} @else if (club()) {
+  <main class="min-h-screen">
+    <div class="relative parchment-hero">
+      @if (club()!.coverUrl) {
+        <img
+          [src]="club()!.coverUrl"
+          [alt]="club()!.name + ' cover'"
+          class="w-full h-64 object-cover"
+          loading="lazy"
+        />
+      } @else {
+        <div class="bg-gradient-fantasy h-64" aria-hidden="true"></div>
+      }
+      <div class="absolute inset-0 flex items-end justify-center pointer-events-none px-6 pb-8">
+        <h1 data-testid="club-name" class="font-fantasy font-bold text-white uppercase tracking-widest text-4xl sm:text-5xl lg:text-6xl text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
+          {{ club()!.name }}
+        </h1>
+      </div>
+      <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
+        <a
+          routerLink="/clubs"
+          class="inline-flex items-center gap-1.5 rounded-full parchment-card px-3 py-1.5 text-sm font-medium text-[var(--color-ink)] hover:scale-105 transition-all duration-200"
+          [attr.aria-label]="'CLUB_DETAIL.back' | translate"
+        >
+          ← {{ 'CLUB_DETAIL.back_short' | translate }}
+        </a>
+      </nav>
+    </div>
+    <div class="page-max-w px-6 py-8">
+      <div class="flex flex-col lg:flex-row gap-6 items-start">
+        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-2 lg:order-1">
+          @if (nearestEventBook()) {
+            <div hlmCard class="parchment-card-sunken p-4 gap-3">
+              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 {{ 'CLUB_DETAIL.now_reading' | translate }}</h3>
+              @if (nearestEventBook()!.coverUrl) {
+                <img
+                  [src]="nearestEventBook()!.coverUrl!"
+                  [alt]="nearestEventBook()!.title"
+                  class="w-full rounded-xl object-cover mb-3 max-h-40"
+                />
+              }
+              <p class="font-serif italic text-sm font-semibold text-gray-900 dark:text-white leading-snug">
+                {{ nearestEventBook()!.title }}
+              </p>
+              @if (nearestEventBook()!.author) {
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ nearestEventBook()!.author }}</p>
+              }
+            </div>
+          }
+          @if (isClubOwner()) {
+            @defer (on idle) {
+              <app-club-manage-panel [clubId]="id()" />
+            } @placeholder {
+              <div hlmCard class="parchment-card-sunken p-4 gap-3" aria-busy="true">
+                <div class="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              </div>
+            }
+          }
+        </aside>
+        <div class="flex-1 min-w-0 flex flex-col gap-8 order-1 lg:order-2">
+          <app-club-header
+            [club]="club()!"
+            [isMember]="isMember()"
+            [isOwner]="isClubOwner()"
+            [isAuthenticated]="!!currentUser()"
+            [isActionLoading]="isActionLoading()"
+            (leave)="onLeave()" />
+          @if (actionError()) {
+            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+              <span aria-hidden="true">⚠️</span>
+              <span>{{ actionError() }}</span>
+            </div>
+          }
+          @if (club()!.description) {
+            <section hlmCard class="parchment-card-sunken px-6 gap-3">
+              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
+              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
+            </section>
+          }
+          @if (isMember() || isClubOwner()) {
+            <app-book-vote-section
+              [clubId]="id()"
+              [isOwner]="isClubOwner()"
+              [isMember]="isMember()"
+            />
+          }
+          @if (isMember()) {
+            <button hlmBtn variant="outline" (click)="openClubChat()">Club Chat</button>
+          }
+          @if (!!currentUser() && !isMember() && !isClubOwner()) {
+            <div class="rounded-2xl border-2 border-dashed border-[var(--color-sepia)] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[var(--color-surface-raised)]">
+              <div>
+                <p class="font-semibold text-[var(--color-ink)]">{{ 'CLUB_DETAIL.join_cta_title' | translate }}</p>
+                <p class="text-sm text-[var(--color-ink-muted)] mt-0.5">{{ 'CLUB_DETAIL.join_cta_desc' | translate }}</p>
+              </div>
+              <button
+                hlmBtn
+                type="button"
+                data-testid="join-button"
+                (click)="onJoin()"
+                [disabled]="isActionLoading()"
+                class="flex-shrink-0 bg-primary-600 hover:bg-primary-700 text-white"
+              >
+                {{ 'CLUB_DETAIL.join' | translate }}
+              </button>
+            </div>
+          }
+          <section hlmCard class="parchment-card px-6 gap-4">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                📅 {{ 'CLUB_DETAIL.events_title' | translate }}
+              </h2>
+              @if (isClubOwner()) {
+                <a
+                  hlmBtn
+                  size="sm"
+                  [routerLink]="['/clubs', id(), 'events', 'create']"
+                  class="bg-primary-600 hover:bg-primary-700 text-white"
+                >
+                  {{ 'CLUB_DETAIL.create_event' | translate }}
+                </a>
+              }
+            </div>
+            <hlm-tabs [tab]="activeEventsTab()" (tabActivated)="onEventsTabChange($any($event))">
+              <hlm-tabs-list class="mb-4">
+                <button [hlmTabsTrigger]="'upcoming'">{{ 'CLUB_DETAIL.events_tab_upcoming' | translate }}</button>
+                <button [hlmTabsTrigger]="'history'">{{ 'CLUB_DETAIL.events_tab_history' | translate }}</button>
+              </hlm-tabs-list>
+              <div [hlmTabsContent]="'upcoming'">
+                @if (upcomingEvents().length > 1) {
+                  <div class="flex flex-wrap gap-2 mb-5">
+                    @for (opt of sortOptions; track opt.key) {
+                      <button
+                        type="button"
+                        (click)="sortKey.set(opt.key)"
+                        class="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
+                        [class]="sortKey() === opt.key
+                          ? 'bg-[var(--color-primary-600)] text-white border-[var(--color-primary-600)] shadow-sm'
+                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600'"
+                      >
+                        {{ opt.labelKey | translate }}
+                      </button>
+                    }
+                  </div>
+                }
+                @if (upcomingEvents().length === 0) {
+                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                    {{ 'CLUB_DETAIL.events_empty' | translate }}
+                  </p>
+                } @else {
+                  <div class="grid gap-5 sm:grid-cols-2">
+                    @for (event of sortedUpcomingEvents(); track event.id; let i = $index) {
+                      <app-club-event-card
+                        [event]="event"
+                        [isAuthenticated]="!!currentUser()"
+                        [attending]="attendingEventId() === event.id"
+                        [index]="i"
+                        (attend)="onAttend(event.id)"
+                        (cancelAttend)="onCancelAttend(event.id)"
+                      />
+                    }
+                  </div>
+                }
+              </div>
+              <div [hlmTabsContent]="'history'">
+                @if (isPastEventsLoading()) {
+                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                    {{ 'CLUB_DETAIL.events_loading' | translate }}
+                  </p>
+                } @else if (pastEvents().length === 0) {
+                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                    {{ 'CLUB_DETAIL.events_history_empty' | translate }}
+                  </p>
+                } @else {
+                  <div class="grid gap-5 sm:grid-cols-2">
+                    @for (event of pastEvents(); track event.id; let i = $index) {
+                      <app-club-event-card
+                        [event]="event"
+                        [isAuthenticated]="!!currentUser()"
+                        [attending]="false"
+                        [index]="i"
+                        (attend)="onAttend(event.id)"
+                        (cancelAttend)="onCancelAttend(event.id)"
+                      />
+                    }
+                  </div>
+                }
+              </div>
+            </hlm-tabs>
+          </section>
+          @defer (on viewport) {
+            <app-club-members-list
+              [members]="members()"
+              [clubBans]="clubBans()"
+              [isOwner]="isClubOwner()"
+              [currentUserId]="currentUserId()"
+              (kick)="handleKick($event)"
+              (ban)="handleBan($event)" />
+          } @placeholder {
+            <div hlmCard class="parchment-card-sunken px-6 py-8 gap-3" aria-busy="true">
+              <div class="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div class="h-20 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse mt-3"></div>
+            </div>
+          }
+          <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">
+            {{ 'CLUB_DETAIL.created' | translate }} {{ club()!.createdAt | formatDate }}
+          </footer>
+        </div>
+        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-3 lg:order-3">
+          <app-club-sidebar-right
+            [club]="club()!"
+            [organizerProfile]="organizerProfile()"
+          />
+        </aside>
+      </div>
+    </div>
+  </main>
+}
+````
+
+## File: src/app/features/events/event-detail/event-detail.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  input,
+  effect,
+} from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
+import { EventService } from '../../../core/services/event.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
+import { ClubEvent } from '../../../core/models/event.model';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { environment } from '../../../../environments/environment';
+import { ChatService } from '../../../core/services/chat.service';
+import { ChatRoom } from '../../../core/models/chat.model';
+import { HlmButton } from '../../../shared/spartan/button/src';
+@Component({
+  selector: 'app-event-detail',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton],
+  templateUrl: './event-detail.component.html',
+})
+export class EventDetailComponent {
+  readonly id = input.required<string>();
+  private readonly http = inject(HttpClient);
+  private readonly eventService = inject(EventService);
+  private readonly translate = inject(TranslateService);
+  readonly auth = inject(AuthService);
+  private readonly chatService = inject(ChatService);
+  private readonly _eventResource = rxResource<ClubEvent | null, string>({
+    params: () => this.id(),
+    stream: ({ params: id }) =>
+      this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(
+        map(mapEvent),
+      ),
+  });
+  readonly event = computed(() => this._eventResource.value() ?? null);
+  readonly isLoading = this._eventResource.isLoading;
+  readonly errorMessage = computed(() =>
+    !this._eventResource.isLoading() && this._eventResource.error() ? 'EVENT.LOAD_ERROR' : null,
+  );
+  readonly isActioning = signal(false);
+  readonly isOrganizer = computed(
+    () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,
+  );
+  private readonly _eventRoom = signal<ChatRoom | null>(null);
+  readonly eventRoom = this._eventRoom.asReadonly();
+  constructor() {
+    effect(() => {
+      if (!this._eventResource.hasValue()) return;
+      const ev = this.event();
+      if (ev && this.auth.currentUser()) {
+        this.chatService.getEventRoom(ev.id).then(room => this._eventRoom.set(room));
+      }
+    });
+  }
+  async openEventChat(): Promise<void> {
+    const ev = this.event();
+    if (!ev) return;
+    let room = this._eventRoom();
+    if (!room && this.isOrganizer()) {
+      room = await this.chatService.createEventChatRoom(ev.id);
+      this._eventRoom.set(room);
+    }
+    if (room) this.chatService.openAndFocusRoom(room);
+  }
+  async onAttend(): Promise<void> {
+    this.isActioning.set(true);
+    try {
+      await this.eventService.attendEvent(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+  async onCancelAttend(): Promise<void> {
+    this.isActioning.set(true);
+    try {
+      await this.eventService.cancelAttendance(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+  async onCancelEvent(): Promise<void> {
+    if (!confirm(this.translate.instant('EVENTS.cancel_confirm'))) return;
+    this.isActioning.set(true);
+    try {
+      await this.eventService.cancelEvent(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+}
 ````
 
 ## File: public/i18n/en.json
