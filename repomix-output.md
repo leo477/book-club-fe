@@ -4596,6 +4596,30 @@ module.exports = {
 }
 ````
 
+## File: postcss.config.json
+````json
+{
+  "plugins": {
+    "@tailwindcss/postcss": {}
+  }
+}
+````
+
+## File: postcss.config.mjs
+````javascript
+import tailwindcss from '@tailwindcss/postcss';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+export default {
+  plugins: [
+    tailwindcss({ base: __dirname }),
+  ],
+};
+````
+
 ## File: README.md
 ````markdown
 # BookClubFe
@@ -6375,58 +6399,6 @@ export class CoverUploadComponent {
 </div>
 ````
 
-## File: src/app/shared/components/qr-code/qr-code.component.ts
-````typescript
-import {
-  ChangeDetectionStrategy,
-  Component,
-  ElementRef,
-  effect,
-  input,
-  viewChild,
-} from '@angular/core';
-import { environment } from '../../../../environments/environment';
-import { HlmCard } from '../../spartan/card/src';
-@Component({
-  selector: 'app-qr-code',
-  standalone: true,
-  imports: [HlmCard],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <div hlmCard class="flex items-center justify-center p-6 w-fit gap-0 py-6">
-      <canvas
-        #canvas
-        [style.width.px]="size()"
-        [style.height.px]="size()"
-        class="rounded-lg"
-        [attr.aria-label]="'QR code'"
-        role="img"
-      ></canvas>
-    </div>
-  `,
-})
-export class QrCodeComponent {
-  readonly value = input.required<string>();
-  readonly size = input<number>(200);
-  private readonly canvasRef =
-    viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
-  constructor() {
-    effect(() => {
-      const val = this.value();
-      const sz = this.size();
-      const canvas = this.canvasRef().nativeElement;
-      if (!val || !canvas) return;
-      void import('qrcode').then((mod) => {
-        const QRCode = (mod as any).default ?? mod;
-        QRCode.toCanvas(canvas, val, { width: sz, margin: 2 }, (err: unknown) => {
-          if (err && !environment.production) console.error('QR generation error:', err);
-        });
-      });
-    });
-  }
-}
-````
-
 ## File: src/app/shared/pipes/initials.pipe.ts
 ````typescript
 import { Pipe, PipeTransform } from '@angular/core';
@@ -6497,6 +6469,70 @@ export const appConfig: ApplicationConfig = {
 ````html
 <router-outlet />
     <hlm-toaster position="bottom-right" [richColors]="true" />
+````
+
+## File: src/app/app.routes.ts
+````typescript
+import { Routes } from '@angular/router';
+import { authGuard } from './core/auth/auth.guard';
+import { roleGuard } from './core/auth/role.guard';
+import { ShellComponent } from './layout/shell/shell.component';
+export const routes: Routes = [
+  {
+    path: 'privacy',
+    loadComponent: () =>
+      import('./features/privacy/privacy.component').then(m => m.PrivacyComponent),
+  },
+  {
+    path: 'terms',
+    loadComponent: () =>
+      import('./features/terms/terms.component').then(m => m.TermsComponent),
+  },
+  {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/login/login.component').then(m => m.LoginComponent),
+  },
+  {
+    path: 'register',
+    loadComponent: () =>
+      import('./features/auth/register/register.component').then(m => m.RegisterComponent),
+  },
+  {
+    path: '',
+    component: ShellComponent,
+    canActivate: [authGuard],
+    children: [
+      // Protected: any authenticated user
+      {
+        path: 'clubs',
+        canActivate: [authGuard],
+        loadChildren: () => import('./features/clubs/clubs.routes').then(m => m.CLUBS_ROUTES),
+      },
+      {
+        path: 'events',
+        canActivate: [authGuard],
+        loadChildren: () => import('./features/events/events.routes').then(m => m.EVENTS_ROUTES),
+      },
+      {
+        path: 'manage',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('./features/clubs/clubs-list/clubs-list.component').then(
+            m => m.ClubsListComponent,
+          ),
+      },
+      { path: '', redirectTo: 'clubs', pathMatch: 'full' },
+      {
+        path: 'profile',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/profile/profile.component').then(m => m.ProfileComponent),
+      },
+      { path: '**', redirectTo: 'clubs' },
+    ],
+  },
+];
 ````
 
 ## File: src/app/app.ts
@@ -6792,30 +6828,6 @@ npx playwright test --config=playwright.vercel.config.ts --reporter=list
 ```
 
 Очікуваний результат після деплою: 24/24 pass, 0 high/critical bugs.
-````
-
-## File: postcss.config.json
-````json
-{
-  "plugins": {
-    "@tailwindcss/postcss": {}
-  }
-}
-````
-
-## File: postcss.config.mjs
-````javascript
-import tailwindcss from '@tailwindcss/postcss';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-export default {
-  plugins: [
-    tailwindcss({ base: __dirname }),
-  ],
-};
 ````
 
 ## File: .github/workflows/bundle-size.yml
@@ -9178,6 +9190,58 @@ export class ChatWidgetComponent {
 }
 ````
 
+## File: src/app/shared/components/qr-code/qr-code.component.ts
+````typescript
+import {
+  ChangeDetectionStrategy,
+  Component,
+  ElementRef,
+  effect,
+  input,
+  viewChild,
+} from '@angular/core';
+import { environment } from '../../../../environments/environment';
+import { HlmCard } from '../../spartan/card/src';
+@Component({
+  selector: 'app-qr-code',
+  standalone: true,
+  imports: [HlmCard],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <div hlmCard class="flex items-center justify-center p-6 w-fit gap-0 py-6">
+      <canvas
+        #canvas
+        [style.width.px]="size()"
+        [style.height.px]="size()"
+        class="rounded-lg"
+        [attr.aria-label]="'QR code'"
+        role="img"
+      ></canvas>
+    </div>
+  `,
+})
+export class QrCodeComponent {
+  readonly value = input.required<string>();
+  readonly size = input<number>(200);
+  private readonly canvasRef =
+    viewChild.required<ElementRef<HTMLCanvasElement>>('canvas');
+  constructor() {
+    effect(() => {
+      const val = this.value();
+      const sz = this.size();
+      const canvas = this.canvasRef().nativeElement;
+      if (!val || !canvas) return;
+      void import('qrcode').then((mod) => {
+        const QRCode = (mod as any).default ?? mod;
+        QRCode.toCanvas(canvas, val, { width: sz, margin: 2 }, (err: unknown) => {
+          if (err && !environment.production) console.error('QR generation error:', err);
+        });
+      });
+    });
+  }
+}
+````
+
 ## File: src/app/shared/spartan/index.ts
 ````typescript
 export * from './badge/src';
@@ -9192,70 +9256,6 @@ export * from './sonner/src';
 export * from './spinner/src';
 export * from './tabs/src';
 export * from './utils/src';
-````
-
-## File: src/app/app.routes.ts
-````typescript
-import { Routes } from '@angular/router';
-import { authGuard } from './core/auth/auth.guard';
-import { roleGuard } from './core/auth/role.guard';
-import { ShellComponent } from './layout/shell/shell.component';
-export const routes: Routes = [
-  {
-    path: 'privacy',
-    loadComponent: () =>
-      import('./features/privacy/privacy.component').then(m => m.PrivacyComponent),
-  },
-  {
-    path: 'terms',
-    loadComponent: () =>
-      import('./features/terms/terms.component').then(m => m.TermsComponent),
-  },
-  {
-    path: 'login',
-    loadComponent: () =>
-      import('./features/auth/login/login.component').then(m => m.LoginComponent),
-  },
-  {
-    path: 'register',
-    loadComponent: () =>
-      import('./features/auth/register/register.component').then(m => m.RegisterComponent),
-  },
-  {
-    path: '',
-    component: ShellComponent,
-    canActivate: [authGuard],
-    children: [
-      // Protected: any authenticated user
-      {
-        path: 'clubs',
-        canActivate: [authGuard],
-        loadChildren: () => import('./features/clubs/clubs.routes').then(m => m.CLUBS_ROUTES),
-      },
-      {
-        path: 'events',
-        canActivate: [authGuard],
-        loadChildren: () => import('./features/events/events.routes').then(m => m.EVENTS_ROUTES),
-      },
-      {
-        path: 'manage',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('./features/clubs/clubs-list/clubs-list.component').then(
-            m => m.ClubsListComponent,
-          ),
-      },
-      { path: '', redirectTo: 'clubs', pathMatch: 'full' },
-      {
-        path: 'profile',
-        canActivate: [authGuard],
-        loadComponent: () =>
-          import('./features/profile/profile.component').then(m => m.ProfileComponent),
-      },
-      { path: '**', redirectTo: 'clubs' },
-    ],
-  },
-];
 ````
 
 ## File: src/app/core/auth/auth.service.ts
