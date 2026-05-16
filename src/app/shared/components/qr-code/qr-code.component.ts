@@ -40,8 +40,10 @@ export class QrCodeComponent {
       const sz = this.size();
       const canvas = this.canvasRef().nativeElement;
       if (!val || !canvas) return;
-      void import('qrcode').then((QRCode) => {
-        QRCode.toCanvas(canvas, val, { width: sz, margin: 2 }, (err) => {
+      void import('qrcode').then((mod) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const QRCode = (mod as any).default ?? mod;
+        QRCode.toCanvas(canvas, val, { width: sz, margin: 2 }, (err: unknown) => {
           if (err && !environment.production) console.error('QR generation error:', err);
         });
       });
