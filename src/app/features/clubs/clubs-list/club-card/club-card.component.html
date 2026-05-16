@@ -8,8 +8,16 @@
   <!-- Cover / gradient -->
   <div class="relative overflow-hidden flex-shrink-0"
        [class]="variant() === 'featured' ? 'h-48' : 'h-32'">
-    @if (club().coverUrl) {
-      <img [src]="club().coverUrl" [alt]="''" class="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
+    @let clubCover = club().coverUrl;
+    @if (clubCover) {
+      <img
+        [ngSrc]="clubCover"
+        fill
+        sizes="(min-width: 1280px) 320px, (min-width: 768px) 33vw, 100vw"
+        alt=""
+        aria-hidden="true"
+        class="object-cover"
+      />
     } @else {
       <div class="w-full h-full bg-gradient-fantasy" aria-hidden="true"></div>
     }
@@ -48,12 +56,12 @@
       <div class="flex items-center gap-1.5">
         @for (url of club().memberPreviews.slice(0, 4); track url) {
           <div
-            class="h-7 w-7 rounded-full avatar-gradient flex items-center justify-center
+            class="relative h-7 w-7 rounded-full avatar-gradient flex items-center justify-center
                    text-white text-[10px] font-bold shrink-0 overflow-hidden"
             aria-hidden="true"
           >
             @if (url) {
-              <img [src]="url" class="h-full w-full object-cover" alt="" />
+              <img [ngSrc]="url" fill sizes="28px" alt="" class="object-cover" />
             } @else { ? }
           </div>
         }

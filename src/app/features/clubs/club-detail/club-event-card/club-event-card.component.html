@@ -4,9 +4,16 @@
 >
 
   <!-- Cover image or accent bar -->
-  @if (event().coverUrl) {
-    <div class="h-28 overflow-hidden flex-shrink-0">
-      <img [src]="event().coverUrl" [alt]="event().title" class="w-full h-full object-cover" loading="lazy" />
+  @let eventCover = event().coverUrl;
+  @if (eventCover) {
+    <div class="relative h-28 overflow-hidden flex-shrink-0">
+      <img
+        [ngSrc]="eventCover"
+        fill
+        sizes="(min-width: 640px) 50vw, 100vw"
+        [alt]="event().title"
+        class="object-cover"
+      />
     </div>
   } @else {
     <div class="h-1 w-full bg-gradient-to-r from-primary-500 via-accent-500 to-primary-400 flex-shrink-0"></div>

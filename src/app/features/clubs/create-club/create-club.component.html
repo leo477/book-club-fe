@@ -51,9 +51,15 @@
             {{ 'CREATE_CLUB.cover_url_label' | translate }}
           </label>
           @if (form.controls.coverUrl.value) {
-            <div class="mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
-              <img [src]="form.controls.coverUrl.value" alt="Cover preview" class="w-full h-full object-cover"
-                   (error)="form.controls.coverUrl.setValue('')" />
+            <div class="relative mb-2 rounded-xl overflow-hidden h-28 bg-gray-100 dark:bg-gray-700">
+              <img
+                [ngSrc]="form.controls.coverUrl.value"
+                fill
+                sizes="500px"
+                alt="Cover preview"
+                class="object-cover"
+                (error)="form.controls.coverUrl.setValue('')"
+              />
             </div>
           }
           <input

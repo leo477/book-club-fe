@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
 import { QuizLeaderboardEntry } from '../../../../core/models/quiz.model';
 import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
 
@@ -7,7 +8,7 @@ import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
   host: { class: 'block' },
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [InitialsPipe],
+  imports: [NgOptimizedImage, InitialsPipe],
   templateUrl: './leaderboard-podium.component.html',
 })
 export class LeaderboardPodiumComponent {
