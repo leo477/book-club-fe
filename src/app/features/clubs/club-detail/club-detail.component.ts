@@ -188,15 +188,28 @@ export class ClubDetailComponent {
 
       if (found) {
         this.club.set(found);
-        const [members, events] = await Promise.all([
+        const [membersResult, eventsResult] = await Promise.allSettled([
           this.clubService.getClubMembers(clubId),
           this.clubService.loadClubEvents(clubId),
         ]);
         if (isCancelled()) return;
-        this.members.set(members);
-        this.events.set(events);
+        if (membersResult.status === 'fulfilled') {
+          this.members.set(membersResult.value);
+        } else {
+          console.warn('Failed to load club members:', membersResult.reason);
+        }
+        if (eventsResult.status === 'fulfilled') {
+          this.events.set(eventsResult.value);
+        } else {
+          console.warn('Failed to load club events:', eventsResult.reason);
+        }
         if (this.auth.currentUser()?.id === found.organizerId) {
-          this.clubBans.set(await this.clubService.getBans(clubId));
+          try {
+            this.clubBans.set(await this.clubService.getBans(clubId));
+          } catch (err) {
+            console.warn('Failed to load club bans:', err);
+          }
+          if (isCancelled()) return;
         }
         this.seo.setPageI18n('SEO.club_detail_title', {
           ogTitleKey: 'SEO.club_detail_og_title',
