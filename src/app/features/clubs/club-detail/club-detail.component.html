@@ -85,7 +85,13 @@
 
           <!-- Manage panel (owner only) -->
           @if (isClubOwner()) {
-            <app-club-manage-panel [clubId]="id()" />
+            @defer (on idle) {
+              <app-club-manage-panel [clubId]="id()" />
+            } @placeholder {
+              <div hlmCard class="parchment-card-sunken p-4 gap-3" aria-busy="true">
+                <div class="h-5 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              </div>
+            }
           }
 
         </aside>
@@ -243,13 +249,20 @@
           </section>
 
           <!-- Members list -->
-          <app-club-members-list
-            [members]="members()"
-            [clubBans]="clubBans()"
-            [isOwner]="isClubOwner()"
-            [currentUserId]="currentUserId()"
-            (kick)="handleKick($event)"
-            (ban)="handleBan($event)" />
+          @defer (on viewport) {
+            <app-club-members-list
+              [members]="members()"
+              [clubBans]="clubBans()"
+              [isOwner]="isClubOwner()"
+              [currentUserId]="currentUserId()"
+              (kick)="handleKick($event)"
+              (ban)="handleBan($event)" />
+          } @placeholder {
+            <div hlmCard class="parchment-card-sunken px-6 py-8 gap-3" aria-busy="true">
+              <div class="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+              <div class="h-20 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse mt-3"></div>
+            </div>
+          }
 
           <!-- Club meta footer -->
           <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">

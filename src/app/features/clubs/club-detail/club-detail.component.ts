@@ -7,7 +7,6 @@ import {
   effect,
   input,
   linkedSignal,
-  untracked,
 } from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -180,8 +179,8 @@ export class ClubDetailComponent {
     this.errorMessage.set(null);
 
     try {
-      if (this.auth.isAuthenticated() && untracked(() => this.clubService.myClubs().length === 0)) {
-        await this.clubService.loadMyClubs();
+      if (this.auth.isAuthenticated()) {
+        await this.clubService.ensureMyClubsLoaded();
       }
       if (isCancelled()) return;
 
@@ -266,7 +265,8 @@ export class ClubDetailComponent {
     this.actionError.set(null);
     try {
       await action();
-      const updated = await this.clubService.getClubById(this.id());
+      const updated = this.clubService.clubs().find(c => c.id === this.id())
+        ?? this.clubService.myClubs().find(c => c.id === this.id());
       if (updated) this.club.set(updated);
     } catch (err) {
       this.actionError.set(err instanceof Error ? err.message : errorFallback);

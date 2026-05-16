@@ -100,6 +100,116 @@ describe('ClubService', () => {
     expect(members).toEqual([]);
   });
 
+  describe('ensureMyClubsLoaded', () => {
+    const minimalApiClub = {
+      id: 'c1', name: 'C1', description: null, coverUrl: null,
+      organizerId: 'u1', isPublic: true, memberCount: 1,
+      createdAt: '2024-01-01', city: 'Kyiv', nextMeetingDate: null,
+      address: null, lat: null, lng: null, theme: null, currentBook: null,
+      memberPreviews: [], status: 'active', tags: [], cancelledAt: null,
+      meetingDurationMinutes: null, afterMeetingVenue: null,
+    };
+
+    it('calls loadMyClubs when no clubs are cached', async () => {
+      const promise = service.ensureMyClubsLoaded();
+      const req = httpMock.expectOne(`${environment.apiUrl}/clubs/my`);
+      expect(req.request.method).toBe('GET');
+      req.flush([]);
+      await promise;
+    });
+
+    it('skips loadMyClubs when clubs are fresh and non-empty', async () => {
+      const load1 = service.ensureMyClubsLoaded();
+      const req1 = httpMock.expectOne(`${environment.apiUrl}/clubs/my`);
+      req1.flush([minimalApiClub]);
+      await load1;
+
+      await service.ensureMyClubsLoaded();
+      httpMock.expectNone(`${environment.apiUrl}/clubs/my`);
+    });
+
+    it('calls loadMyClubs again when TTL has expired', async () => {
+      const load1 = service.ensureMyClubsLoaded();
+      const req1 = httpMock.expectOne(`${environment.apiUrl}/clubs/my`);
+      req1.flush([minimalApiClub]);
+      await load1;
+
+      const load2 = service.ensureMyClubsLoaded(0);
+      const req2 = httpMock.expectOne(`${environment.apiUrl}/clubs/my`);
+      req2.flush([]);
+      await load2;
+    });
+  });
+
+  describe('TTL cache', () => {
+    const minimalApiClub = {
+      id: 'club-1', name: 'Test', description: null, coverUrl: null,
+      organizerId: 'user-1', isPublic: true, memberCount: 1,
+      createdAt: '2024-01-01', city: 'Kyiv', nextMeetingDate: null,
+      address: null, lat: null, lng: null, theme: null, currentBook: null,
+      memberPreviews: [], status: 'active', tags: [], cancelledAt: null,
+      meetingDurationMinutes: null, afterMeetingVenue: null,
+    };
+
+    it('getClubById returns cached result without HTTP on second call', async () => {
+      const p1 = service.getClubById('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(minimalApiClub);
+      await p1;
+
+      const result = await service.getClubById('club-1');
+      httpMock.expectNone(`${environment.apiUrl}/clubs/club-1`);
+      expect(result?.id).toBe('club-1');
+    });
+
+    it('getClubById re-fetches after TTL expires', async () => {
+      jasmine.clock().install();
+      jasmine.clock().mockDate(new Date());
+
+      const p1 = service.getClubById('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(minimalApiClub);
+      await p1;
+
+      jasmine.clock().tick(61_000);
+
+      const p2 = service.getClubById('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(minimalApiClub);
+      await p2;
+
+      jasmine.clock().uninstall();
+    });
+
+    it('getClubMembers returns cached result on second call', async () => {
+      const apiMember = { userId: 'u1', displayName: 'Alice', avatarUrl: null, role: 'member', socials: null, socialsPublic: false };
+
+      const p1 = service.getClubMembers('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/members`).flush([apiMember]);
+      await p1;
+
+      const result = await service.getClubMembers('club-1');
+      httpMock.expectNone(`${environment.apiUrl}/clubs/club-1/members`);
+      expect(result.length).toBe(1);
+    });
+
+    it('loadClubEvents returns cached result when includePast is false', async () => {
+      const p1 = service.loadClubEvents('club-1', false);
+      httpMock.expectOne(r => r.url.includes('/clubs/club-1/events')).flush([]);
+      await p1;
+
+      await service.loadClubEvents('club-1', false);
+      httpMock.expectNone(r => r.url.includes('/clubs/club-1/events'));
+    });
+
+    it('loadClubEvents bypasses cache when includePast is true', async () => {
+      const p1 = service.loadClubEvents('club-1', false);
+      httpMock.expectOne(r => r.url.includes('/clubs/club-1/events')).flush([]);
+      await p1;
+
+      const p2 = service.loadClubEvents('club-1', true);
+      httpMock.expectOne(r => r.url.includes('/clubs/club-1/events')).flush([]);
+      await p2;
+    });
+  });
+
   it('joinClub sends POST request', async () => {
     const promise = service.joinClub('club-1');
     const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/join`);

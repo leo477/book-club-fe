@@ -57,4 +57,47 @@ describe('BookCoverService', () => {
 
     expect(result).toBeNull();
   });
+
+  it('fetchCover$ returns resolved URL from cache on second call without HTTP', () => {
+    let result1: string | null | undefined;
+    let result2: string | null | undefined;
+
+    service.fetchCover$('Dune').subscribe(url => (result1 = url));
+    const req = httpMock.expectOne(r => r.url.startsWith('https://openlibrary.org/'));
+    req.flush({ docs: [{ cover_i: 12345 }] });
+    expect(result1).toBe('https://covers.openlibrary.org/b/id/12345-M.jpg');
+
+    service.fetchCover$('Dune').subscribe(url => (result2 = url));
+    httpMock.expectNone(r => r.url.startsWith('https://openlibrary.org/'));
+    expect(result2).toBe('https://covers.openlibrary.org/b/id/12345-M.jpg');
+  });
+
+  it('fetchCover$ caches null result and returns it on second call without HTTP', () => {
+    let result1: string | null | undefined;
+    let result2: string | null | undefined;
+
+    service.fetchCover$('Unknown').subscribe(url => (result1 = url));
+    const req = httpMock.expectOne(r => r.url.startsWith('https://openlibrary.org/'));
+    req.flush({ docs: [{}] });
+    expect(result1).toBeNull();
+
+    service.fetchCover$('Unknown').subscribe(url => (result2 = url));
+    httpMock.expectNone(r => r.url.startsWith('https://openlibrary.org/'));
+    expect(result2).toBeNull();
+  });
+
+  it('fetchCover$ deduplicates concurrent requests for the same title', () => {
+    let result1: string | null | undefined;
+    let result2: string | null | undefined;
+
+    service.fetchCover$('Dune').subscribe(url => (result1 = url));
+    service.fetchCover$('Dune').subscribe(url => (result2 = url));
+
+    const reqs = httpMock.match(r => r.url.startsWith('https://openlibrary.org/'));
+    expect(reqs.length).toBe(1);
+    reqs[0].flush({ docs: [{ cover_i: 12345 }] });
+
+    expect(result1).toBe('https://covers.openlibrary.org/b/id/12345-M.jpg');
+    expect(result2).toBe('https://covers.openlibrary.org/b/id/12345-M.jpg');
+  });
 });

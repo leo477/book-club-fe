@@ -6,7 +6,6 @@ import {
   input,
   viewChild,
 } from '@angular/core';
-import * as QRCode from 'qrcode';
 import { environment } from '../../../../environments/environment';
 import { HlmCard } from '../../spartan/card/src';
 
@@ -41,8 +40,12 @@ export class QrCodeComponent {
       const sz = this.size();
       const canvas = this.canvasRef().nativeElement;
       if (!val || !canvas) return;
-      QRCode.toCanvas(canvas, val, { width: sz, margin: 2 }, (err) => {
-        if (err && !environment.production) console.error('QR generation error:', err);
+      void import('qrcode').then((mod) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const lib: typeof import('qrcode') = (mod as any).default;
+        lib.toCanvas(canvas, val, { width: sz, margin: 2 }, (err: unknown) => {
+          if (err && !environment.production) console.error('QR generation error:', err);
+        });
       });
     });
   }

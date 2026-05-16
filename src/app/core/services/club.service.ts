@@ -18,6 +18,22 @@ export class ClubService {
   private readonly _error = signal<string | null>(null);
   private readonly _searchQuery = signal('');
   private readonly _cityFilter = signal<string | null>(null);
+  private myClubsLoadedAt = 0;
+
+  private readonly CLUB_CACHE_TTL_MS = 60_000;
+  private readonly clubByIdCache = new Map<string, { data: Club; fetchedAt: number }>();
+  private readonly membersCache = new Map<string, { data: ClubMemberDetail[]; fetchedAt: number }>();
+  private readonly eventsCache = new Map<string, { data: ClubEvent[]; fetchedAt: number }>();
+
+  private cacheRead<T>(cache: Map<string, { data: T; fetchedAt: number }>, key: string): T | null {
+    const entry = cache.get(key);
+    if (!entry) return null;
+    if (Date.now() - entry.fetchedAt > this.CLUB_CACHE_TTL_MS) {
+      cache.delete(key);
+      return null;
+    }
+    return entry.data;
+  }
 
   readonly clubs = this._clubs.asReadonly();
   readonly myClubs = this._myClubs.asReadonly();
@@ -101,17 +117,27 @@ export class ClubService {
         this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
       );
       this._myClubs.set(raw.map(mapClub));
+      this.myClubsLoadedAt = Date.now();
     } catch {
       this._error.set('Failed to load my clubs');
     }
   }
 
+  async ensureMyClubsLoaded(maxAgeMs = 30_000): Promise<void> {
+    if (Date.now() - this.myClubsLoadedAt < maxAgeMs && this._myClubs().length > 0) return;
+    await this.loadMyClubs();
+  }
+
   async getClubById(id: string): Promise<Club | null> {
+    const cached = this.cacheRead(this.clubByIdCache, id);
+    if (cached) return cached;
     try {
       const raw = await firstValueFrom(
         this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
       );
-      return mapClub(raw);
+      const club = mapClub(raw);
+      this.clubByIdCache.set(id, { data: club, fetchedAt: Date.now() });
+      return club;
     } catch {
       return null;
     }
@@ -155,6 +181,7 @@ export class ClubService {
     const raw = await firstValueFrom(
       this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
     );
+    this.clubByIdCache.delete(clubId);
     const club = mapClub(raw);
     this._clubs.update(list => list.map(c => (c.id === clubId ? club : c)));
     this._myClubs.update(list => list.map(c => (c.id === clubId ? club : c)));
@@ -165,6 +192,8 @@ export class ClubService {
     await firstValueFrom(
       this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
     );
+    this.clubByIdCache.delete(clubId);
+    this.membersCache.delete(clubId);
     this._clubs.update(list =>
       list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
     );
@@ -178,6 +207,8 @@ export class ClubService {
     await firstValueFrom(
       this.http.delete(`${environment.apiUrl}/clubs/${clubId}/leave`),
     );
+    this.clubByIdCache.delete(clubId);
+    this.membersCache.delete(clubId);
     this._clubs.update(list =>
       list.map(c =>
         c.id === clubId ? { ...c, memberCount: Math.max(0, c.memberCount - 1) } : c,
@@ -187,22 +218,28 @@ export class ClubService {
   }
 
   async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
+    const cached = this.cacheRead(this.membersCache, clubId);
+    if (cached) return cached;
     const raw = await firstValueFrom(
       this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
     );
-    return raw.map(mapClubMember);
+    const members = raw.map(mapClubMember);
+    this.membersCache.set(clubId, { data: members, fetchedAt: Date.now() });
+    return members;
   }
 
   async kickMember(clubId: string, userId: string): Promise<void> {
     await firstValueFrom(
       this.http.delete(`${environment.apiUrl}/clubs/${clubId}/members/${userId}`),
     );
+    this.membersCache.delete(clubId);
   }
 
   async banMember(clubId: string, userId: string, duration: BanDuration): Promise<void> {
     await firstValueFrom(
       this.http.post(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/ban`, { duration }),
     );
+    this.membersCache.delete(clubId);
   }
 
   async getBans(clubId: string): Promise<BanRecord[]> {
@@ -213,18 +250,29 @@ export class ClubService {
   }
 
   async loadClubEvents(clubId: string, includePast = false): Promise<ClubEvent[]> {
+    if (!includePast) {
+      const cached = this.cacheRead(this.eventsCache, clubId);
+      if (cached) return cached;
+    }
     const raw = await firstValueFrom(
       this.http.get<ApiEvent[]>(`${environment.apiUrl}/clubs/${clubId}/events`, {
         params: { include_past: String(includePast) },
       }),
     );
-    return raw.map(mapEvent);
+    const events = raw.map(mapEvent);
+    if (!includePast) {
+      this.eventsCache.set(clubId, { data: events, fetchedAt: Date.now() });
+    }
+    return events;
   }
 
   async deleteClub(clubId: string): Promise<void> {
     await firstValueFrom(
       this.http.delete(`${environment.apiUrl}/clubs/${clubId}`),
     );
+    this.clubByIdCache.delete(clubId);
+    this.membersCache.delete(clubId);
+    this.eventsCache.delete(clubId);
     this._clubs.update(list => list.filter(c => c.id !== clubId));
     this._myClubs.update(list => list.filter(c => c.id !== clubId));
   }

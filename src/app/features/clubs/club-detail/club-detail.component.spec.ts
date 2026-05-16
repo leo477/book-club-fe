@@ -21,8 +21,9 @@ describe('ClubDetailComponent', () => {
 
   beforeEach(async () => {
     clubServiceSpy = jasmine.createSpyObj('ClubService', [
-      'getClubById', 'getClubMembers', 'loadMyClubs', 'getBans', 'kickMember', 'banMember', 'msUntilDeletion', 'loadClubEvents'
+      'getClubById', 'getClubMembers', 'ensureMyClubsLoaded', 'getBans', 'kickMember', 'banMember', 'msUntilDeletion', 'loadClubEvents'
     ], {
+      clubs: jasmine.createSpy().and.returnValue([]),
       myClubs: jasmine.createSpy().and.returnValue([]),
       myClubIds: jasmine.createSpy().and.returnValue(new Set()),
     });
@@ -52,7 +53,7 @@ describe('ClubDetailComponent', () => {
       meetingDurationMinutes: null,
       afterMeetingVenue: null
     }));
-    clubServiceSpy.loadMyClubs.and.returnValue(Promise.resolve());
+    clubServiceSpy.ensureMyClubsLoaded.and.returnValue(Promise.resolve());
     clubServiceSpy.getClubMembers.and.returnValue(Promise.resolve([]));
     clubServiceSpy.getBans.and.returnValue(Promise.resolve([]));
     clubServiceSpy.kickMember.and.returnValue(Promise.resolve());
@@ -210,11 +211,11 @@ describe('ClubDetailComponent', () => {
   });
 
   describe('onJoin', () => {
-    it('calls joinClub and reloads club', async () => {
+    it('calls joinClub and updates club from cache', async () => {
       clubServiceSpy.joinClub = jasmine.createSpy().and.returnValue(Promise.resolve());
       await component.onJoin();
       expect(clubServiceSpy.joinClub).toHaveBeenCalledWith('club-1');
-      expect(clubServiceSpy.getClubById).toHaveBeenCalled();
+      expect(clubServiceSpy.getClubById).not.toHaveBeenCalledTimes(2);
     });
 
     it('sets actionError on joinClub failure', async () => {
@@ -231,11 +232,11 @@ describe('ClubDetailComponent', () => {
   });
 
   describe('onLeave', () => {
-    it('calls leaveClub and reloads club', async () => {
+    it('calls leaveClub and updates club from cache', async () => {
       clubServiceSpy.leaveClub = jasmine.createSpy().and.returnValue(Promise.resolve());
       await component.onLeave();
       expect(clubServiceSpy.leaveClub).toHaveBeenCalledWith('club-1');
-      expect(clubServiceSpy.getClubById).toHaveBeenCalled();
+      expect(clubServiceSpy.getClubById).not.toHaveBeenCalledTimes(2);
     });
 
     it('sets actionError on leaveClub failure', async () => {
