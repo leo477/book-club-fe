@@ -4,6 +4,7 @@ import {
   input,
   output,
 } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Club } from '../../../../core/models/club.model';
 import { TranslateModule } from '@ngx-translate/core';
@@ -16,7 +17,7 @@ import { HlmSpinner } from '../../../../shared/spartan/spinner/src';
   selector: 'app-club-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton, HlmSeparator, HlmSpinner],
+  imports: [NgOptimizedImage, RouterLink, TranslateModule, ...HlmCardImports, HlmButton, HlmSeparator, HlmSpinner],
   templateUrl: './club-card.component.html',
 })
 export class ClubCardComponent {

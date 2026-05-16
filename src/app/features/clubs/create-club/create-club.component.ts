@@ -5,6 +5,7 @@ import {
   signal,
   effect,
 } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TranslatePipe } from '@ngx-translate/core';
@@ -28,7 +29,7 @@ interface CreateClubForm {
   selector: 'app-create-club',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  imports: [NgOptimizedImage, ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
   templateUrl: './create-club.component.html',
 })
 export class CreateClubComponent {

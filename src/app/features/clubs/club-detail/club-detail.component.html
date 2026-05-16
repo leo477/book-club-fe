@@ -25,12 +25,15 @@
 
     <!-- Cover image + back navigation (full width) -->
     <div class="relative parchment-hero">
-      @if (club()!.coverUrl) {
+      @let heroCover = club()!.coverUrl;
+      @if (heroCover) {
         <img
-          [src]="club()!.coverUrl"
+          [ngSrc]="heroCover"
+          fill
+          priority
+          sizes="100vw"
           [alt]="club()!.name + ' cover'"
-          class="w-full h-64 object-cover"
-          loading="lazy"
+          class="object-cover"
         />
       } @else {
         <div class="bg-gradient-fantasy h-64" aria-hidden="true"></div>

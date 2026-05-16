@@ -9,6 +9,7 @@ import {
   linkedSignal,
   untracked,
 } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, startWith } from 'rxjs';
@@ -37,6 +38,7 @@ import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    NgOptimizedImage,
     RouterLink,
     TranslateModule,
     FormatDatePipe,

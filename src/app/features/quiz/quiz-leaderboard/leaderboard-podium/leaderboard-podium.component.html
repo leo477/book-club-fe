@@ -3,9 +3,10 @@
   <!-- 2nd place (silver) -->
   <div class="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
     @if (second()) {
-      <div class="w-12 h-12 rounded-full ring-2 ring-gray-300 dark:ring-gray-500 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-300 overflow-hidden">
-        @if (second()!.avatarUrl) {
-          <img [src]="second()!.avatarUrl" [alt]="second()!.displayName" class="w-full h-full object-cover" />
+      <div class="relative w-12 h-12 rounded-full ring-2 ring-gray-300 dark:ring-gray-500 bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-sm font-bold text-gray-700 dark:text-gray-300 overflow-hidden">
+        @let secondAvatar = second()!.avatarUrl;
+        @if (secondAvatar) {
+          <img [ngSrc]="secondAvatar" fill sizes="48px" [alt]="second()!.displayName" class="object-cover" />
         } @else {
           {{ second()!.displayName | initials }}
         }
@@ -26,9 +27,10 @@
   <!-- 1st place (gold) — tallest -->
   <div class="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
     @if (first()) {
-      <div class="w-14 h-14 rounded-full ring-4 ring-yellow-400 dark:ring-yellow-500 bg-yellow-100 dark:bg-yellow-900/40 flex items-center justify-center text-base font-bold text-yellow-700 dark:text-yellow-300 overflow-hidden">
-        @if (first()!.avatarUrl) {
-          <img [src]="first()!.avatarUrl" [alt]="first()!.displayName" class="w-full h-full object-cover" />
+      <div class="relative w-14 h-14 rounded-full ring-4 ring-yellow-400 dark:ring-yellow-500 bg-yellow-100 dark:bg-yellow-900/40 flex items-center justify-center text-base font-bold text-yellow-700 dark:text-yellow-300 overflow-hidden">
+        @let firstAvatar = first()!.avatarUrl;
+        @if (firstAvatar) {
+          <img [ngSrc]="firstAvatar" fill sizes="56px" [alt]="first()!.displayName" class="object-cover" />
         } @else {
           {{ first()!.displayName | initials }}
         }
@@ -49,9 +51,10 @@
   <!-- 3rd place (bronze) — shortest -->
   <div class="flex flex-col items-center gap-2 flex-1 max-w-[120px]">
     @if (third()) {
-      <div class="w-12 h-12 rounded-full ring-2 ring-amber-500 dark:ring-amber-600 bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-sm font-bold text-amber-700 dark:text-amber-300 overflow-hidden">
-        @if (third()!.avatarUrl) {
-          <img [src]="third()!.avatarUrl" [alt]="third()!.displayName" class="w-full h-full object-cover" />
+      <div class="relative w-12 h-12 rounded-full ring-2 ring-amber-500 dark:ring-amber-600 bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center text-sm font-bold text-amber-700 dark:text-amber-300 overflow-hidden">
+        @let thirdAvatar = third()!.avatarUrl;
+        @if (thirdAvatar) {
+          <img [ngSrc]="thirdAvatar" fill sizes="48px" [alt]="third()!.displayName" class="object-cover" />
         } @else {
           {{ third()!.displayName | initials }}
         }

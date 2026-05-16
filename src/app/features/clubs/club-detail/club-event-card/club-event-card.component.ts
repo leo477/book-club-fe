@@ -4,6 +4,7 @@ import {
   input,
   output,
 } from '@angular/core';
+import { NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
@@ -14,7 +15,7 @@ import { HlmButton } from '../../../../shared/spartan/button/src';
   selector: 'app-club-event-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton],
+  imports: [NgOptimizedImage, RouterLink, TranslateModule, FormatDatePipe, HlmButton],
   templateUrl: './club-event-card.component.html',
   styleUrl: './club-event-card.component.scss',
 })
