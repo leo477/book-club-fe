@@ -42,8 +42,8 @@ export class QrCodeComponent {
       if (!val || !canvas) return;
       void import('qrcode').then((mod) => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const QRCode = (mod as any).default ?? mod;
-        QRCode.toCanvas(canvas, val, { width: sz, margin: 2 }, (err: unknown) => {
+        const lib: typeof import('qrcode') = (mod as any).default;
+        lib.toCanvas(canvas, val, { width: sz, margin: 2 }, (err: unknown) => {
           if (err && !environment.production) console.error('QR generation error:', err);
         });
       });

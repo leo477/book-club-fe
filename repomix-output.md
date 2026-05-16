@@ -1144,6 +1144,110 @@ export class SeoService {
 }
 ````
 
+## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html
+````html
+<article
+  class="parchment-card glass-card flex flex-col overflow-hidden h-full"
+  [style.animation-delay]="index() * 80 + 'ms'"
+>
+  @if (event().coverUrl) {
+    <div class="h-28 overflow-hidden flex-shrink-0">
+      <img [src]="event().coverUrl" [alt]="event().title" class="w-full h-full object-cover" loading="lazy" />
+    </div>
+  } @else {
+    <div class="h-1 w-full bg-gradient-to-r from-primary-500 via-accent-500 to-primary-400 flex-shrink-0"></div>
+  }
+  @if (event().status !== 'scheduled') {
+    <div
+      class="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center text-sm shadow-sm border z-10"
+      [class]="event().status === 'active'
+        ? 'bg-green-100/80 border-green-400 dark:bg-green-900/50 dark:border-green-600'
+        : event().status === 'cancelled'
+          ? 'bg-red-100/80 border-red-400 dark:bg-red-900/50 dark:border-red-600'
+          : 'bg-yellow-100/80 border-yellow-400 dark:bg-yellow-900/50 dark:border-yellow-600'"
+      [attr.title]="event().status"
+    >
+      {{ event().status === 'active' ? '🟢' : event().status === 'cancelled' ? '🔴' : '🟡' }}
+    </div>
+  }
+  <div class="flex flex-col flex-1 p-4 gap-3">
+    <div>
+      <span class="inline-flex items-center gap-1.5 rounded-full bg-primary-100/80 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/60 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
+        📅 {{ event().date | formatDate }}
+      </span>
+    </div>
+    <a
+      [routerLink]="['/events', event().id]"
+      class="block font-display text-base font-semibold leading-snug text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors line-clamp-2"
+    >
+      {{ event().title }}
+    </a>
+    @if (event().city) {
+      <p class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+        <span aria-hidden="true">📍</span>
+        <span>{{ event().address || event().city }}</span>
+      </p>
+    }
+    @if (event().theme || event().tags.length > 0) {
+      <div class="flex flex-wrap gap-1.5">
+        @if (event().theme) {
+          <span class="rune-pill rounded-full bg-accent-100/80 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700/60 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
+            ✨ {{ event().theme }}
+          </span>
+        }
+        @for (tag of event().tags.slice(0, 2); track tag) {
+          <span class="rune-pill rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-600 dark:text-gray-400">
+            🏷 {{ tag }}
+          </span>
+        }
+      </div>
+    }
+    <div class="flex items-center justify-between mt-auto pt-2 border-t border-white/20 dark:border-white/10">
+      <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
+        👥 {{ event().attendeeCount }} {{ 'CLUB_DETAIL.rsvp_attending' | translate }}
+      </span>
+      <div class="flex items-center gap-2">
+        @if (isAuthenticated() && event().status !== 'cancelled') {
+          @if (event().isAttending) {
+            <button
+              hlmBtn
+              size="sm"
+              type="button"
+              [disabled]="attending()"
+              (click)="cancelAttend.emit()"
+              class="bg-green-600 hover:bg-green-700 text-white text-xs"
+            >
+              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_going' | translate }} }
+            </button>
+          } @else {
+            <button
+              hlmBtn
+              size="sm"
+              type="button"
+              [disabled]="attending()"
+              (click)="attend.emit()"
+              class="bg-primary-600 hover:bg-primary-700 text-white text-xs"
+            >
+              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_join' | translate }} }
+            </button>
+          }
+        } @else {
+          <a
+            hlmBtn
+            variant="outline"
+            size="sm"
+            [routerLink]="['/events', event().id]"
+            class="text-xs"
+          >
+            {{ 'CLUB_DETAIL.rsvp_view' | translate }} →
+          </a>
+        }
+      </div>
+    </div>
+  </div>
+</article>
+````
+
 ## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.ts
 ````typescript
 import {
@@ -5656,110 +5760,6 @@ export class BookVoteSectionComponent {
 }
 ````
 
-## File: src/app/features/clubs/club-detail/club-event-card/club-event-card.component.html
-````html
-<article
-  class="parchment-card glass-card flex flex-col overflow-hidden h-full"
-  [style.animation-delay]="index() * 80 + 'ms'"
->
-  @if (event().coverUrl) {
-    <div class="h-28 overflow-hidden flex-shrink-0">
-      <img [src]="event().coverUrl" [alt]="event().title" class="w-full h-full object-cover" loading="lazy" />
-    </div>
-  } @else {
-    <div class="h-1 w-full bg-gradient-to-r from-primary-500 via-accent-500 to-primary-400 flex-shrink-0"></div>
-  }
-  @if (event().status !== 'scheduled') {
-    <div
-      class="absolute top-3 right-3 w-9 h-9 rounded-full flex items-center justify-center text-sm shadow-sm border z-10"
-      [class]="event().status === 'active'
-        ? 'bg-green-100/80 border-green-400 dark:bg-green-900/50 dark:border-green-600'
-        : event().status === 'cancelled'
-          ? 'bg-red-100/80 border-red-400 dark:bg-red-900/50 dark:border-red-600'
-          : 'bg-yellow-100/80 border-yellow-400 dark:bg-yellow-900/50 dark:border-yellow-600'"
-      [attr.title]="event().status"
-    >
-      {{ event().status === 'active' ? '🟢' : event().status === 'cancelled' ? '🔴' : '🟡' }}
-    </div>
-  }
-  <div class="flex flex-col flex-1 p-4 gap-3">
-    <div>
-      <span class="inline-flex items-center gap-1.5 rounded-full bg-primary-100/80 dark:bg-primary-900/40 border border-primary-200 dark:border-primary-700/60 px-3 py-1 text-xs font-semibold text-primary-700 dark:text-primary-300">
-        📅 {{ event().date | formatDate }}
-      </span>
-    </div>
-    <a
-      [routerLink]="['/events', event().id]"
-      class="block font-display text-base font-semibold leading-snug text-gray-900 dark:text-white hover:text-primary-600 dark:hover:text-primary-400 transition-colors line-clamp-2"
-    >
-      {{ event().title }}
-    </a>
-    @if (event().city) {
-      <p class="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400">
-        <span aria-hidden="true">📍</span>
-        <span>{{ event().address || event().city }}</span>
-      </p>
-    }
-    @if (event().theme || event().tags.length > 0) {
-      <div class="flex flex-wrap gap-1.5">
-        @if (event().theme) {
-          <span class="rune-pill rounded-full bg-accent-100/80 dark:bg-accent-900/40 border border-accent-200 dark:border-accent-700/60 px-2.5 py-0.5 text-xs font-medium text-accent-700 dark:text-accent-300">
-            ✨ {{ event().theme }}
-          </span>
-        }
-        @for (tag of event().tags.slice(0, 2); track tag) {
-          <span class="rune-pill rounded-full bg-gray-100/80 dark:bg-gray-800/60 border border-gray-200 dark:border-gray-700/60 px-2.5 py-0.5 text-xs text-gray-600 dark:text-gray-400">
-            🏷 {{ tag }}
-          </span>
-        }
-      </div>
-    }
-    <div class="flex items-center justify-between mt-auto pt-2 border-t border-white/20 dark:border-white/10">
-      <span class="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1">
-        👥 {{ event().attendeeCount }} {{ 'CLUB_DETAIL.rsvp_attending' | translate }}
-      </span>
-      <div class="flex items-center gap-2">
-        @if (isAuthenticated() && event().status !== 'cancelled') {
-          @if (event().isAttending) {
-            <button
-              hlmBtn
-              size="sm"
-              type="button"
-              [disabled]="attending()"
-              (click)="cancelAttend.emit()"
-              class="bg-green-600 hover:bg-green-700 text-white text-xs"
-            >
-              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_going' | translate }} }
-            </button>
-          } @else {
-            <button
-              hlmBtn
-              size="sm"
-              type="button"
-              [disabled]="attending()"
-              (click)="attend.emit()"
-              class="bg-primary-600 hover:bg-primary-700 text-white text-xs"
-            >
-              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_join' | translate }} }
-            </button>
-          }
-        } @else {
-          <a
-            hlmBtn
-            variant="outline"
-            size="sm"
-            [routerLink]="['/events', event().id]"
-            class="text-xs"
-          >
-            {{ 'CLUB_DETAIL.rsvp_view' | translate }} →
-          </a>
-        }
-      </div>
-    </div>
-  </div>
-</article>
-````
-
 ## File: src/app/features/clubs/club-detail/header/club-header.component.ts
 ````typescript
 import {
@@ -5786,6 +5786,163 @@ export class ClubHeaderComponent {
   readonly isAuthenticated = input.required<boolean>();
   readonly isActionLoading = input.required<boolean>();
   readonly leave = output<void>();
+}
+````
+
+## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
+````html
+<div
+  class="flex flex-col overflow-hidden h-full"
+  [class]="variant() === 'featured'
+    ? 'parchment-card-raised'
+    : 'parchment-card hover:shadow-[var(--shadow-parchment-lg)] transition-shadow duration-200'"
+>
+  <div class="relative overflow-hidden flex-shrink-0"
+       [class]="variant() === 'featured' ? 'h-48' : 'h-32'">
+    @if (club().coverUrl) {
+      <img [src]="club().coverUrl" [alt]="''" class="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
+    } @else {
+      <div class="w-full h-full bg-gradient-fantasy" aria-hidden="true"></div>
+    }
+    @if (variant() === 'featured') {
+      <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none"></div>
+    }
+  </div>
+  <div class="flex flex-col flex-1 gap-3"
+       [class]="variant() === 'featured' ? 'p-5' : 'p-4'">
+    <div>
+      <h3
+        class="font-display font-semibold text-[var(--color-ink)] leading-snug flex items-center gap-1.5"
+        [class]="variant() === 'featured' ? 'text-lg line-clamp-2' : 'text-base line-clamp-1'"
+      >
+        {{ club().name }}
+        @if (isOwned()) {
+          <span class="text-xs font-bold text-[var(--color-primary-600)] dark:text-[#fbbf24] flex-shrink-0"
+                title="Your club" aria-label="Your club">✦</span>
+        }
+      </h3>
+      @if (club().description) {
+        <p
+          class="text-xs text-[var(--color-ink-muted)] mt-1.5"
+          [class]="variant() === 'featured' ? 'line-clamp-3' : 'line-clamp-2'"
+        >
+          {{ club().description }}
+        </p>
+      }
+    </div>
+    @if (club().memberPreviews.length > 0) {
+      <div class="flex items-center gap-1.5">
+        @for (url of club().memberPreviews.slice(0, 4); track url) {
+          <div
+            class="h-7 w-7 rounded-full avatar-gradient flex items-center justify-center
+                   text-white text-[10px] font-bold shrink-0 overflow-hidden"
+            aria-hidden="true"
+          >
+            @if (url) {
+              <img [src]="url" class="h-full w-full object-cover" alt="" />
+            } @else { ? }
+          </div>
+        }
+        @if (club().memberCount > 4) {
+          <span class="text-xs text-[var(--color-ink-muted)] ml-1">+{{ club().memberCount - 4 }}</span>
+        }
+        <span class="text-xs text-[var(--color-ink-muted)] ml-auto">
+          {{ club().memberCount }} {{ 'CLUBS.members' | translate }}
+        </span>
+      </div>
+    }
+    <hlm-separator />
+    <div class="flex items-center gap-2 mt-auto">
+      @if (isAuthenticated() && !isMember()) {
+        <button
+          hlmBtn
+          type="button"
+          size="sm"
+          (click)="join.emit()"
+          [disabled]="joining()"
+          class="flex-1"
+          [attr.aria-label]="('CLUBS.join' | translate) + ' ' + club().name"
+        >
+          @if (joining()) { <hlm-spinner size="xs" /> } @else { {{ 'CLUBS.join' | translate }} }
+        </button>
+        <a
+          hlmBtn
+          variant="outline"
+          size="sm"
+          [routerLink]="['/clubs', club().id]"
+          class="flex-shrink-0"
+          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
+        >
+          {{ 'CLUBS.view' | translate }}
+        </a>
+      } @else if (isAuthenticated() && isMember()) {
+        <a
+          hlmBtn
+          size="sm"
+          [routerLink]="['/clubs', club().id]"
+          class="flex-1 text-center"
+          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
+        >
+          {{ 'CLUBS.view' | translate }}
+        </a>
+        <span class="rounded-lg
+                     bg-[var(--color-accent-100)] dark:bg-[var(--color-accent-900)]/30
+                     border border-[var(--color-accent-300)] dark:border-[var(--color-accent-700)]/60
+                     px-3 py-1.5 text-xs font-semibold
+                     text-[var(--color-accent-700)] dark:text-[var(--color-accent-300)]">
+          {{ 'CLUBS.member_badge' | translate }}
+        </span>
+      } @else {
+        <a
+          hlmBtn
+          size="sm"
+          [routerLink]="['/clubs', club().id]"
+          class="flex-1 text-center"
+          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
+        >
+          {{ 'CLUBS.view' | translate }}
+        </a>
+      }
+    </div>
+  </div>
+</div>
+````
+
+## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  input,
+  output,
+} from '@angular/core';
+import { RouterLink } from '@angular/router';
+import { Club } from '../../../../core/models/club.model';
+import { TranslateModule } from '@ngx-translate/core';
+import { HlmCardImports } from '../../../../shared/spartan/card/src';
+import { HlmButton } from '../../../../shared/spartan/button/src';
+import { HlmSeparator } from '../../../../shared/spartan/separator/src';
+import { HlmSpinner } from '../../../../shared/spartan/spinner/src';
+@Component({
+  selector: 'app-club-card',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton, HlmSeparator, HlmSpinner],
+  templateUrl: './club-card.component.html',
+})
+export class ClubCardComponent {
+  readonly club = input.required<Club>();
+  readonly isMember = input.required<boolean>();
+  readonly isOwned = input<boolean>(false);
+  readonly isAuthenticated = input<boolean>(false);
+  readonly joining = input<boolean>(false);
+  readonly variant = input<'default' | 'featured'>('default');
+  readonly join = output<void>();
+  protected daysUntil(dateStr: string): number {
+    const target = new Date(dateStr).getTime();
+    const now = Date.now();
+    return Math.round((target - now) / 86400000);
+  }
 }
 ````
 
@@ -7838,163 +7995,6 @@ export class ClubSidebarRightComponent {
 </header>
 ````
 
-## File: src/app/features/clubs/clubs-list/club-card/club-card.component.html
-````html
-<div
-  class="flex flex-col overflow-hidden h-full"
-  [class]="variant() === 'featured'
-    ? 'parchment-card-raised'
-    : 'parchment-card hover:shadow-[var(--shadow-parchment-lg)] transition-shadow duration-200'"
->
-  <div class="relative overflow-hidden flex-shrink-0"
-       [class]="variant() === 'featured' ? 'h-48' : 'h-32'">
-    @if (club().coverUrl) {
-      <img [src]="club().coverUrl" [alt]="''" class="w-full h-full object-cover" aria-hidden="true" loading="lazy" />
-    } @else {
-      <div class="w-full h-full bg-gradient-fantasy" aria-hidden="true"></div>
-    }
-    @if (variant() === 'featured') {
-      <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none"></div>
-    }
-  </div>
-  <div class="flex flex-col flex-1 gap-3"
-       [class]="variant() === 'featured' ? 'p-5' : 'p-4'">
-    <div>
-      <h3
-        class="font-display font-semibold text-[var(--color-ink)] leading-snug flex items-center gap-1.5"
-        [class]="variant() === 'featured' ? 'text-lg line-clamp-2' : 'text-base line-clamp-1'"
-      >
-        {{ club().name }}
-        @if (isOwned()) {
-          <span class="text-xs font-bold text-[var(--color-primary-600)] dark:text-[#fbbf24] flex-shrink-0"
-                title="Your club" aria-label="Your club">✦</span>
-        }
-      </h3>
-      @if (club().description) {
-        <p
-          class="text-xs text-[var(--color-ink-muted)] mt-1.5"
-          [class]="variant() === 'featured' ? 'line-clamp-3' : 'line-clamp-2'"
-        >
-          {{ club().description }}
-        </p>
-      }
-    </div>
-    @if (club().memberPreviews.length > 0) {
-      <div class="flex items-center gap-1.5">
-        @for (url of club().memberPreviews.slice(0, 4); track url) {
-          <div
-            class="h-7 w-7 rounded-full avatar-gradient flex items-center justify-center
-                   text-white text-[10px] font-bold shrink-0 overflow-hidden"
-            aria-hidden="true"
-          >
-            @if (url) {
-              <img [src]="url" class="h-full w-full object-cover" alt="" />
-            } @else { ? }
-          </div>
-        }
-        @if (club().memberCount > 4) {
-          <span class="text-xs text-[var(--color-ink-muted)] ml-1">+{{ club().memberCount - 4 }}</span>
-        }
-        <span class="text-xs text-[var(--color-ink-muted)] ml-auto">
-          {{ club().memberCount }} {{ 'CLUBS.members' | translate }}
-        </span>
-      </div>
-    }
-    <hlm-separator />
-    <div class="flex items-center gap-2 mt-auto">
-      @if (isAuthenticated() && !isMember()) {
-        <button
-          hlmBtn
-          type="button"
-          size="sm"
-          (click)="join.emit()"
-          [disabled]="joining()"
-          class="flex-1"
-          [attr.aria-label]="('CLUBS.join' | translate) + ' ' + club().name"
-        >
-          @if (joining()) { <hlm-spinner size="xs" /> } @else { {{ 'CLUBS.join' | translate }} }
-        </button>
-        <a
-          hlmBtn
-          variant="outline"
-          size="sm"
-          [routerLink]="['/clubs', club().id]"
-          class="flex-shrink-0"
-          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
-        >
-          {{ 'CLUBS.view' | translate }}
-        </a>
-      } @else if (isAuthenticated() && isMember()) {
-        <a
-          hlmBtn
-          size="sm"
-          [routerLink]="['/clubs', club().id]"
-          class="flex-1 text-center"
-          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
-        >
-          {{ 'CLUBS.view' | translate }}
-        </a>
-        <span class="rounded-lg
-                     bg-[var(--color-accent-100)] dark:bg-[var(--color-accent-900)]/30
-                     border border-[var(--color-accent-300)] dark:border-[var(--color-accent-700)]/60
-                     px-3 py-1.5 text-xs font-semibold
-                     text-[var(--color-accent-700)] dark:text-[var(--color-accent-300)]">
-          {{ 'CLUBS.member_badge' | translate }}
-        </span>
-      } @else {
-        <a
-          hlmBtn
-          size="sm"
-          [routerLink]="['/clubs', club().id]"
-          class="flex-1 text-center"
-          [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
-        >
-          {{ 'CLUBS.view' | translate }}
-        </a>
-      }
-    </div>
-  </div>
-</div>
-````
-
-## File: src/app/features/clubs/clubs-list/club-card/club-card.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  input,
-  output,
-} from '@angular/core';
-import { RouterLink } from '@angular/router';
-import { Club } from '../../../../core/models/club.model';
-import { TranslateModule } from '@ngx-translate/core';
-import { HlmCardImports } from '../../../../shared/spartan/card/src';
-import { HlmButton } from '../../../../shared/spartan/button/src';
-import { HlmSeparator } from '../../../../shared/spartan/separator/src';
-import { HlmSpinner } from '../../../../shared/spartan/spinner/src';
-@Component({
-  selector: 'app-club-card',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton, HlmSeparator, HlmSpinner],
-  templateUrl: './club-card.component.html',
-})
-export class ClubCardComponent {
-  readonly club = input.required<Club>();
-  readonly isMember = input.required<boolean>();
-  readonly isOwned = input<boolean>(false);
-  readonly isAuthenticated = input<boolean>(false);
-  readonly joining = input<boolean>(false);
-  readonly variant = input<'default' | 'featured'>('default');
-  readonly join = output<void>();
-  protected daysUntil(dateStr: string): number {
-    const target = new Date(dateStr).getTime();
-    const now = Date.now();
-    return Math.round((target - now) / 86400000);
-  }
-}
-````
-
 ## File: src/app/features/clubs/clubs-list/clubs-list.component.ts
 ````typescript
 import {
@@ -9232,8 +9232,8 @@ export class QrCodeComponent {
       const canvas = this.canvasRef().nativeElement;
       if (!val || !canvas) return;
       void import('qrcode').then((mod) => {
-        const QRCode = (mod as any).default ?? mod;
-        QRCode.toCanvas(canvas, val, { width: sz, margin: 2 }, (err: unknown) => {
+        const lib: typeof import('qrcode') = (mod as any).default;
+        lib.toCanvas(canvas, val, { width: sz, margin: 2 }, (err: unknown) => {
           if (err && !environment.production) console.error('QR generation error:', err);
         });
       });
@@ -10345,6 +10345,202 @@ export class ClubManagePanelComponent {
     </ul>
   }
 </section>
+````
+
+## File: src/app/features/clubs/clubs-list/clubs-list.component.html
+````html
+<div class="min-h-screen">
+  <section aria-label="Search clubs" class="parchment-hero px-4 py-14 text-center">
+    <div class="relative z-10">
+      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
+                 text-[var(--color-ink)] mb-3 drop-shadow-sm">
+        {{ 'CLUBS.title' | translate }}
+      </h1>
+      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-12">
+        {{ 'CLUBS.subtitle' | translate }}
+      </p>
+      <div class="mx-auto max-w-xl lg:max-w-2xl relative">
+        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
+        <input
+          id="club-search"
+          type="search"
+          [ngModel]="clubService.searchQuery()"
+          (ngModelChange)="clubService.setSearchQuery($event)"
+          [placeholder]="'CLUBS.search_placeholder_full' | translate"
+          class="w-full parchment-input rounded-full px-5 py-3 text-sm"
+          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
+        />
+      </div>
+    </div>
+  </section>
+  <div class="page-container py-8 space-y-8">
+    @if (clubService.error()) {
+      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+        <span aria-hidden="true">⚠️</span>
+        <span>{{ clubService.error() }}</span>
+      </div>
+    }
+    @if (auth.isAuthenticated()) {
+      <div class="flex justify-center" role="tablist" aria-label="Club filter">
+        <div class="relative flex rounded-full p-1
+                    bg-[var(--color-surface-sunken)]
+                    border border-[var(--color-sepia)]
+                    shadow-inner">
+          <div class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full
+                      bg-[var(--color-surface-raised)]
+                      shadow-[var(--shadow-parchment)]
+                      transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
+               [style.left]="activeTab() === 'all' ? '4px' : '50%'"
+               aria-hidden="true">
+          </div>
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'all'"
+            (click)="activeTab.set('all')"
+            class="relative z-10 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'all'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            {{ 'CLUBS.all' | translate }}
+          </button>
+          <button
+            role="tab"
+            type="button"
+            [attr.aria-selected]="activeTab() === 'my'"
+            (click)="activeTab.set('my')"
+            class="relative z-10 flex items-center gap-1.5 px-7 py-2 rounded-full text-sm font-medium
+                   transition-colors duration-300 select-none focus:outline-none
+                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
+            [class]="activeTab() === 'my'
+              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
+              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
+          >
+            {{ 'CLUBS.my_clubs' | translate }}
+            @if (clubService.myClubs().length > 0) {
+              <span class="inline-flex items-center justify-center
+                           h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
+                           transition-colors duration-300"
+                    [class]="activeTab() === 'my'
+                      ? 'bg-[var(--color-primary-600)] text-white'
+                      : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]'">
+                {{ clubService.myClubs().length }}
+              </span>
+            }
+          </button>
+        </div>
+      </div>
+      @if (activeTab() === 'all') {
+        <div class="pt-6" role="tabpanel">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.filteredClubs().length === 0) {
+            <app-empty-state
+              data-testid="empty-state"
+              icon="📚"
+              title="No clubs yet"
+              description="No clubs have been created yet. Check back soon!"
+            />
+          } @else {
+            <ul class="bento-grid">
+              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+                <li data-testid="club-card" [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                  <app-club-card
+                    [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+      @if (activeTab() === 'my') {
+        <div class="pt-6" role="tabpanel">
+          @if (clubService.isLoading()) {
+            <div class="py-16 flex justify-center" aria-busy="true">
+              <hlm-spinner />
+            </div>
+          } @else if (clubService.myClubs().length === 0) {
+            <app-empty-state
+              data-testid="empty-state"
+              icon="📚"
+              [title]="'CLUBS.no_clubs' | translate"
+              description="Join a club to see it here."
+            />
+          } @else {
+            <ul class="bento-grid">
+              @for (club of clubService.myClubs(); track club.id; let i = $index) {
+                <li data-testid="club-card" [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+                  <app-club-card
+                    [club]="club"
+                    [variant]="i === 0 ? 'featured' : 'default'"
+                    [isMember]="clubService.myClubIds().has(club.id)"
+                    [isOwned]="ownedClubIds().has(club.id)"
+                    [isAuthenticated]="auth.isAuthenticated()"
+                    [joining]="joiningClubId() === club.id"
+                    (join)="onJoin(club)"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </div>
+      }
+    } @else {
+      @if (clubService.isLoading()) {
+        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
+          <hlm-spinner />
+        </div>
+      } @else if (clubService.filteredClubs().length === 0) {
+        <app-empty-state
+          data-testid="empty-state"
+          icon="📚"
+          title="No clubs yet"
+          description="No clubs have been created yet. Check back soon!"
+        />
+      } @else {
+        <ul class="bento-grid">
+          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
+            <li data-testid="club-card" [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+              <app-club-card
+                [club]="club"
+                [variant]="i === 0 ? 'featured' : 'default'"
+                [isMember]="false"
+                [isOwned]="false"
+                [isAuthenticated]="false"
+                [joining]="false"
+                (join)="onJoin(club)"
+              />
+            </li>
+          }
+        </ul>
+      }
+    }
+  </div>
+  @if (auth.isOrganizer() && clubService.myOwnedClubs().length === 0) {
+    <a
+      routerLink="/clubs/create"
+      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full fab-fantasy focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] focus:ring-offset-2 transition-all duration-200"
+      [attr.aria-label]="'CLUBS.create' | translate"
+      [title]="'CLUBS.create' | translate"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+      </svg>
+    </a>
+  }
+</div>
 ````
 
 ## File: src/app/features/events/event-card/event-card.component.html
@@ -11899,202 +12095,6 @@ export class TokenStore {
       </div>
     }
   </main>
-</div>
-````
-
-## File: src/app/features/clubs/clubs-list/clubs-list.component.html
-````html
-<div class="min-h-screen">
-  <section aria-label="Search clubs" class="parchment-hero px-4 py-14 text-center">
-    <div class="relative z-10">
-      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
-                 text-[var(--color-ink)] mb-3 drop-shadow-sm">
-        {{ 'CLUBS.title' | translate }}
-      </h1>
-      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-12">
-        {{ 'CLUBS.subtitle' | translate }}
-      </p>
-      <div class="mx-auto max-w-xl lg:max-w-2xl relative">
-        <label for="club-search" class="sr-only">{{ 'CLUBS.search_placeholder' | translate }}</label>
-        <input
-          id="club-search"
-          type="search"
-          [ngModel]="clubService.searchQuery()"
-          (ngModelChange)="clubService.setSearchQuery($event)"
-          [placeholder]="'CLUBS.search_placeholder_full' | translate"
-          class="w-full parchment-input rounded-full px-5 py-3 text-sm"
-          [attr.aria-label]="'CLUBS.search_placeholder' | translate"
-        />
-      </div>
-    </div>
-  </section>
-  <div class="page-container py-8 space-y-8">
-    @if (clubService.error()) {
-      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-        <span aria-hidden="true">⚠️</span>
-        <span>{{ clubService.error() }}</span>
-      </div>
-    }
-    @if (auth.isAuthenticated()) {
-      <div class="flex justify-center" role="tablist" aria-label="Club filter">
-        <div class="relative flex rounded-full p-1
-                    bg-[var(--color-surface-sunken)]
-                    border border-[var(--color-sepia)]
-                    shadow-inner">
-          <div class="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full
-                      bg-[var(--color-surface-raised)]
-                      shadow-[var(--shadow-parchment)]
-                      transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-               [style.left]="activeTab() === 'all' ? '4px' : '50%'"
-               aria-hidden="true">
-          </div>
-          <button
-            role="tab"
-            type="button"
-            [attr.aria-selected]="activeTab() === 'all'"
-            (click)="activeTab.set('all')"
-            class="relative z-10 px-7 py-2 rounded-full text-sm font-medium
-                   transition-colors duration-300 select-none focus:outline-none
-                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
-            [class]="activeTab() === 'all'
-              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
-              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
-          >
-            {{ 'CLUBS.all' | translate }}
-          </button>
-          <button
-            role="tab"
-            type="button"
-            [attr.aria-selected]="activeTab() === 'my'"
-            (click)="activeTab.set('my')"
-            class="relative z-10 flex items-center gap-1.5 px-7 py-2 rounded-full text-sm font-medium
-                   transition-colors duration-300 select-none focus:outline-none
-                   focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1"
-            [class]="activeTab() === 'my'
-              ? 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold'
-              : 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]'"
-          >
-            {{ 'CLUBS.my_clubs' | translate }}
-            @if (clubService.myClubs().length > 0) {
-              <span class="inline-flex items-center justify-center
-                           h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none
-                           transition-colors duration-300"
-                    [class]="activeTab() === 'my'
-                      ? 'bg-[var(--color-primary-600)] text-white'
-                      : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]'">
-                {{ clubService.myClubs().length }}
-              </span>
-            }
-          </button>
-        </div>
-      </div>
-      @if (activeTab() === 'all') {
-        <div class="pt-6" role="tabpanel">
-          @if (clubService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
-              <hlm-spinner />
-            </div>
-          } @else if (clubService.filteredClubs().length === 0) {
-            <app-empty-state
-              data-testid="empty-state"
-              icon="📚"
-              title="No clubs yet"
-              description="No clubs have been created yet. Check back soon!"
-            />
-          } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-                <li data-testid="club-card" [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-                  <app-club-card
-                    [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
-                    [isMember]="clubService.myClubIds().has(club.id)"
-                    [isOwned]="ownedClubIds().has(club.id)"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [joining]="joiningClubId() === club.id"
-                    (join)="onJoin(club)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      }
-      @if (activeTab() === 'my') {
-        <div class="pt-6" role="tabpanel">
-          @if (clubService.isLoading()) {
-            <div class="py-16 flex justify-center" aria-busy="true">
-              <hlm-spinner />
-            </div>
-          } @else if (clubService.myClubs().length === 0) {
-            <app-empty-state
-              data-testid="empty-state"
-              icon="📚"
-              [title]="'CLUBS.no_clubs' | translate"
-              description="Join a club to see it here."
-            />
-          } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.myClubs(); track club.id; let i = $index) {
-                <li data-testid="club-card" [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-                  <app-club-card
-                    [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
-                    [isMember]="clubService.myClubIds().has(club.id)"
-                    [isOwned]="ownedClubIds().has(club.id)"
-                    [isAuthenticated]="auth.isAuthenticated()"
-                    [joining]="joiningClubId() === club.id"
-                    (join)="onJoin(club)"
-                  />
-                </li>
-              }
-            </ul>
-          }
-        </div>
-      }
-    } @else {
-      @if (clubService.isLoading()) {
-        <div class="py-16 flex justify-center" aria-busy="true" aria-label="Loading clubs">
-          <hlm-spinner />
-        </div>
-      } @else if (clubService.filteredClubs().length === 0) {
-        <app-empty-state
-          data-testid="empty-state"
-          icon="📚"
-          title="No clubs yet"
-          description="No clubs have been created yet. Check back soon!"
-        />
-      } @else {
-        <ul class="bento-grid">
-          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-            <li data-testid="club-card" [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
-              <app-club-card
-                [club]="club"
-                [variant]="i === 0 ? 'featured' : 'default'"
-                [isMember]="false"
-                [isOwned]="false"
-                [isAuthenticated]="false"
-                [joining]="false"
-                (join)="onJoin(club)"
-              />
-            </li>
-          }
-        </ul>
-      }
-    }
-  </div>
-  @if (auth.isOrganizer() && clubService.myOwnedClubs().length === 0) {
-    <a
-      routerLink="/clubs/create"
-      class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full fab-fantasy focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] focus:ring-offset-2 transition-all duration-200"
-      [attr.aria-label]="'CLUBS.create' | translate"
-      [title]="'CLUBS.create' | translate"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-      </svg>
-    </a>
-  }
 </div>
 ````
 
@@ -14033,6 +14033,237 @@ export class QuizTakeComponent implements OnInit {
 | 5 | `/clubs/:id/quizzes/:quizId/leaderboard` | ui-missing | Skipped: no quiz ID |
 ````
 
+## File: src/app/features/clubs/club-detail/club-detail.component.html
+````html
+@if (isLoading()) {
+  <main class="page-max-w px-6 py-8" aria-busy="true" aria-label="Loading club details">
+    <div class="animate-pulse space-y-4">
+      <div class="h-56 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
+      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+    </div>
+  </main>
+} @else if (errorMessage()) {
+  <main class="page-max-w px-6 py-8 text-center" role="alert">
+    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
+    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
+    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
+    <a
+      hlmBtn
+      routerLink="/clubs"
+      class="bg-primary-600 hover:bg-primary-700 text-white"
+    >
+      ← {{ 'CLUB_DETAIL.back' | translate }}
+    </a>
+  </main>
+} @else if (club()) {
+  <main class="min-h-screen">
+    <div class="relative parchment-hero">
+      @if (club()!.coverUrl) {
+        <img
+          [src]="club()!.coverUrl"
+          [alt]="club()!.name + ' cover'"
+          class="w-full h-64 object-cover"
+          loading="lazy"
+        />
+      } @else {
+        <div class="bg-gradient-fantasy h-64" aria-hidden="true"></div>
+      }
+      <div class="absolute inset-0 flex items-end justify-center pointer-events-none px-6 pb-8">
+        <h1 data-testid="club-name" class="font-fantasy font-bold text-white uppercase tracking-widest text-4xl sm:text-5xl lg:text-6xl text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
+          {{ club()!.name }}
+        </h1>
+      </div>
+      <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
+        <a
+          routerLink="/clubs"
+          class="inline-flex items-center gap-1.5 rounded-full parchment-card px-3 py-1.5 text-sm font-medium text-[var(--color-ink)] hover:scale-105 transition-all duration-200"
+          [attr.aria-label]="'CLUB_DETAIL.back' | translate"
+        >
+          ← {{ 'CLUB_DETAIL.back_short' | translate }}
+        </a>
+      </nav>
+    </div>
+    <div class="page-max-w px-6 py-8">
+      <div class="flex flex-col lg:flex-row gap-6 items-start">
+        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-2 lg:order-1">
+          @if (nearestEventBook()) {
+            <div hlmCard class="parchment-card-sunken p-4 gap-3">
+              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 {{ 'CLUB_DETAIL.now_reading' | translate }}</h3>
+              @if (nearestEventBook()!.coverUrl) {
+                <img
+                  [src]="nearestEventBook()!.coverUrl!"
+                  [alt]="nearestEventBook()!.title"
+                  class="w-full rounded-xl object-cover mb-3 max-h-40"
+                />
+              }
+              <p class="font-serif italic text-sm font-semibold text-gray-900 dark:text-white leading-snug">
+                {{ nearestEventBook()!.title }}
+              </p>
+              @if (nearestEventBook()!.author) {
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ nearestEventBook()!.author }}</p>
+              }
+            </div>
+          }
+          @if (isClubOwner()) {
+            <app-club-manage-panel [clubId]="id()" />
+          }
+        </aside>
+        <div class="flex-1 min-w-0 flex flex-col gap-8 order-1 lg:order-2">
+          <app-club-header
+            [club]="club()!"
+            [isMember]="isMember()"
+            [isOwner]="isClubOwner()"
+            [isAuthenticated]="!!currentUser()"
+            [isActionLoading]="isActionLoading()"
+            (leave)="onLeave()" />
+          @if (actionError()) {
+            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+              <span aria-hidden="true">⚠️</span>
+              <span>{{ actionError() }}</span>
+            </div>
+          }
+          @if (club()!.description) {
+            <section hlmCard class="parchment-card-sunken px-6 gap-3">
+              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
+              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
+            </section>
+          }
+          @if (isMember() || isClubOwner()) {
+            <app-book-vote-section
+              [clubId]="id()"
+              [isOwner]="isClubOwner()"
+              [isMember]="isMember()"
+            />
+          }
+          @if (isMember()) {
+            <button hlmBtn variant="outline" (click)="openClubChat()">Club Chat</button>
+          }
+          @if (!!currentUser() && !isMember() && !isClubOwner()) {
+            <div class="rounded-2xl border-2 border-dashed border-[var(--color-sepia)] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[var(--color-surface-raised)]">
+              <div>
+                <p class="font-semibold text-[var(--color-ink)]">{{ 'CLUB_DETAIL.join_cta_title' | translate }}</p>
+                <p class="text-sm text-[var(--color-ink-muted)] mt-0.5">{{ 'CLUB_DETAIL.join_cta_desc' | translate }}</p>
+              </div>
+              <button
+                hlmBtn
+                type="button"
+                data-testid="join-button"
+                (click)="onJoin()"
+                [disabled]="isActionLoading()"
+                class="flex-shrink-0 bg-primary-600 hover:bg-primary-700 text-white"
+              >
+                {{ 'CLUB_DETAIL.join' | translate }}
+              </button>
+            </div>
+          }
+          <section hlmCard class="parchment-card px-6 gap-4">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                📅 {{ 'CLUB_DETAIL.events_title' | translate }}
+              </h2>
+              @if (isClubOwner()) {
+                <a
+                  hlmBtn
+                  size="sm"
+                  [routerLink]="['/clubs', id(), 'events', 'create']"
+                  class="bg-primary-600 hover:bg-primary-700 text-white"
+                >
+                  {{ 'CLUB_DETAIL.create_event' | translate }}
+                </a>
+              }
+            </div>
+            <hlm-tabs [tab]="activeEventsTab()" (tabActivated)="onEventsTabChange($any($event))">
+              <hlm-tabs-list class="mb-4">
+                <button [hlmTabsTrigger]="'upcoming'">{{ 'CLUB_DETAIL.events_tab_upcoming' | translate }}</button>
+                <button [hlmTabsTrigger]="'history'">{{ 'CLUB_DETAIL.events_tab_history' | translate }}</button>
+              </hlm-tabs-list>
+              <div [hlmTabsContent]="'upcoming'">
+                @if (upcomingEvents().length > 1) {
+                  <div class="flex flex-wrap gap-2 mb-5">
+                    @for (opt of sortOptions; track opt.key) {
+                      <button
+                        type="button"
+                        (click)="sortKey.set(opt.key)"
+                        class="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
+                        [class]="sortKey() === opt.key
+                          ? 'bg-[var(--color-primary-600)] text-white border-[var(--color-primary-600)] shadow-sm'
+                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600'"
+                      >
+                        {{ opt.labelKey | translate }}
+                      </button>
+                    }
+                  </div>
+                }
+                @if (upcomingEvents().length === 0) {
+                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                    {{ 'CLUB_DETAIL.events_empty' | translate }}
+                  </p>
+                } @else {
+                  <div class="grid gap-5 sm:grid-cols-2">
+                    @for (event of sortedUpcomingEvents(); track event.id; let i = $index) {
+                      <app-club-event-card
+                        [event]="event"
+                        [isAuthenticated]="!!currentUser()"
+                        [attending]="attendingEventId() === event.id"
+                        [index]="i"
+                        (attend)="onAttend(event.id)"
+                        (cancelAttend)="onCancelAttend(event.id)"
+                      />
+                    }
+                  </div>
+                }
+              </div>
+              <div [hlmTabsContent]="'history'">
+                @if (isPastEventsLoading()) {
+                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                    {{ 'CLUB_DETAIL.events_loading' | translate }}
+                  </p>
+                } @else if (pastEvents().length === 0) {
+                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+                    {{ 'CLUB_DETAIL.events_history_empty' | translate }}
+                  </p>
+                } @else {
+                  <div class="grid gap-5 sm:grid-cols-2">
+                    @for (event of pastEvents(); track event.id; let i = $index) {
+                      <app-club-event-card
+                        [event]="event"
+                        [isAuthenticated]="!!currentUser()"
+                        [attending]="false"
+                        [index]="i"
+                        (attend)="onAttend(event.id)"
+                        (cancelAttend)="onCancelAttend(event.id)"
+                      />
+                    }
+                  </div>
+                }
+              </div>
+            </hlm-tabs>
+          </section>
+          <app-club-members-list
+            [members]="members()"
+            [clubBans]="clubBans()"
+            [isOwner]="isClubOwner()"
+            [currentUserId]="currentUserId()"
+            (kick)="handleKick($event)"
+            (ban)="handleBan($event)" />
+          <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">
+            {{ 'CLUB_DETAIL.created' | translate }} {{ club()!.createdAt | formatDate }}
+          </footer>
+        </div>
+        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-3 lg:order-3">
+          <app-club-sidebar-right
+            [club]="club()!"
+            [organizerProfile]="organizerProfile()"
+          />
+        </aside>
+      </div>
+    </div>
+  </main>
+}
+````
+
 ## File: src/app/features/events/create-event/create-event.component.ts
 ````typescript
 import {
@@ -14314,237 +14545,6 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
       this.errorMessage.set((err as Error).message);
     });
   }
-}
-````
-
-## File: src/app/features/clubs/club-detail/club-detail.component.html
-````html
-@if (isLoading()) {
-  <main class="page-max-w px-6 py-8" aria-busy="true" aria-label="Loading club details">
-    <div class="animate-pulse space-y-4">
-      <div class="h-56 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
-      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-      <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
-    </div>
-  </main>
-} @else if (errorMessage()) {
-  <main class="page-max-w px-6 py-8 text-center" role="alert">
-    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
-    <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
-    <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
-    <a
-      hlmBtn
-      routerLink="/clubs"
-      class="bg-primary-600 hover:bg-primary-700 text-white"
-    >
-      ← {{ 'CLUB_DETAIL.back' | translate }}
-    </a>
-  </main>
-} @else if (club()) {
-  <main class="min-h-screen">
-    <div class="relative parchment-hero">
-      @if (club()!.coverUrl) {
-        <img
-          [src]="club()!.coverUrl"
-          [alt]="club()!.name + ' cover'"
-          class="w-full h-64 object-cover"
-          loading="lazy"
-        />
-      } @else {
-        <div class="bg-gradient-fantasy h-64" aria-hidden="true"></div>
-      }
-      <div class="absolute inset-0 flex items-end justify-center pointer-events-none px-6 pb-8">
-        <h1 data-testid="club-name" class="font-fantasy font-bold text-white uppercase tracking-widest text-4xl sm:text-5xl lg:text-6xl text-center drop-shadow-[0_2px_12px_rgba(0,0,0,0.7)]">
-          {{ club()!.name }}
-        </h1>
-      </div>
-      <nav [attr.aria-label]="'CLUB_DETAIL.back' | translate" class="absolute top-4 left-4">
-        <a
-          routerLink="/clubs"
-          class="inline-flex items-center gap-1.5 rounded-full parchment-card px-3 py-1.5 text-sm font-medium text-[var(--color-ink)] hover:scale-105 transition-all duration-200"
-          [attr.aria-label]="'CLUB_DETAIL.back' | translate"
-        >
-          ← {{ 'CLUB_DETAIL.back_short' | translate }}
-        </a>
-      </nav>
-    </div>
-    <div class="page-max-w px-6 py-8">
-      <div class="flex flex-col lg:flex-row gap-6 items-start">
-        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-2 lg:order-1">
-          @if (nearestEventBook()) {
-            <div hlmCard class="parchment-card-sunken p-4 gap-3">
-              <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 {{ 'CLUB_DETAIL.now_reading' | translate }}</h3>
-              @if (nearestEventBook()!.coverUrl) {
-                <img
-                  [src]="nearestEventBook()!.coverUrl!"
-                  [alt]="nearestEventBook()!.title"
-                  class="w-full rounded-xl object-cover mb-3 max-h-40"
-                />
-              }
-              <p class="font-serif italic text-sm font-semibold text-gray-900 dark:text-white leading-snug">
-                {{ nearestEventBook()!.title }}
-              </p>
-              @if (nearestEventBook()!.author) {
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ nearestEventBook()!.author }}</p>
-              }
-            </div>
-          }
-          @if (isClubOwner()) {
-            <app-club-manage-panel [clubId]="id()" />
-          }
-        </aside>
-        <div class="flex-1 min-w-0 flex flex-col gap-8 order-1 lg:order-2">
-          <app-club-header
-            [club]="club()!"
-            [isMember]="isMember()"
-            [isOwner]="isClubOwner()"
-            [isAuthenticated]="!!currentUser()"
-            [isActionLoading]="isActionLoading()"
-            (leave)="onLeave()" />
-          @if (actionError()) {
-            <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
-              <span aria-hidden="true">⚠️</span>
-              <span>{{ actionError() }}</span>
-            </div>
-          }
-          @if (club()!.description) {
-            <section hlmCard class="parchment-card-sunken px-6 gap-3">
-              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{{ 'CLUB_DETAIL.about' | translate }}</h2>
-              <p class="text-gray-700 dark:text-gray-300 leading-relaxed">{{ club()!.description }}</p>
-            </section>
-          }
-          @if (isMember() || isClubOwner()) {
-            <app-book-vote-section
-              [clubId]="id()"
-              [isOwner]="isClubOwner()"
-              [isMember]="isMember()"
-            />
-          }
-          @if (isMember()) {
-            <button hlmBtn variant="outline" (click)="openClubChat()">Club Chat</button>
-          }
-          @if (!!currentUser() && !isMember() && !isClubOwner()) {
-            <div class="rounded-2xl border-2 border-dashed border-[var(--color-sepia)] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[var(--color-surface-raised)]">
-              <div>
-                <p class="font-semibold text-[var(--color-ink)]">{{ 'CLUB_DETAIL.join_cta_title' | translate }}</p>
-                <p class="text-sm text-[var(--color-ink-muted)] mt-0.5">{{ 'CLUB_DETAIL.join_cta_desc' | translate }}</p>
-              </div>
-              <button
-                hlmBtn
-                type="button"
-                data-testid="join-button"
-                (click)="onJoin()"
-                [disabled]="isActionLoading()"
-                class="flex-shrink-0 bg-primary-600 hover:bg-primary-700 text-white"
-              >
-                {{ 'CLUB_DETAIL.join' | translate }}
-              </button>
-            </div>
-          }
-          <section hlmCard class="parchment-card px-6 gap-4">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                📅 {{ 'CLUB_DETAIL.events_title' | translate }}
-              </h2>
-              @if (isClubOwner()) {
-                <a
-                  hlmBtn
-                  size="sm"
-                  [routerLink]="['/clubs', id(), 'events', 'create']"
-                  class="bg-primary-600 hover:bg-primary-700 text-white"
-                >
-                  {{ 'CLUB_DETAIL.create_event' | translate }}
-                </a>
-              }
-            </div>
-            <hlm-tabs [tab]="activeEventsTab()" (tabActivated)="onEventsTabChange($any($event))">
-              <hlm-tabs-list class="mb-4">
-                <button [hlmTabsTrigger]="'upcoming'">{{ 'CLUB_DETAIL.events_tab_upcoming' | translate }}</button>
-                <button [hlmTabsTrigger]="'history'">{{ 'CLUB_DETAIL.events_tab_history' | translate }}</button>
-              </hlm-tabs-list>
-              <div [hlmTabsContent]="'upcoming'">
-                @if (upcomingEvents().length > 1) {
-                  <div class="flex flex-wrap gap-2 mb-5">
-                    @for (opt of sortOptions; track opt.key) {
-                      <button
-                        type="button"
-                        (click)="sortKey.set(opt.key)"
-                        class="rounded-full px-3 py-1 text-xs font-medium border transition-colors"
-                        [class]="sortKey() === opt.key
-                          ? 'bg-[var(--color-primary-600)] text-white border-[var(--color-primary-600)] shadow-sm'
-                          : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border-gray-200 dark:border-gray-700 hover:border-primary-400 dark:hover:border-primary-600'"
-                      >
-                        {{ opt.labelKey | translate }}
-                      </button>
-                    }
-                  </div>
-                }
-                @if (upcomingEvents().length === 0) {
-                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                    {{ 'CLUB_DETAIL.events_empty' | translate }}
-                  </p>
-                } @else {
-                  <div class="grid gap-5 sm:grid-cols-2">
-                    @for (event of sortedUpcomingEvents(); track event.id; let i = $index) {
-                      <app-club-event-card
-                        [event]="event"
-                        [isAuthenticated]="!!currentUser()"
-                        [attending]="attendingEventId() === event.id"
-                        [index]="i"
-                        (attend)="onAttend(event.id)"
-                        (cancelAttend)="onCancelAttend(event.id)"
-                      />
-                    }
-                  </div>
-                }
-              </div>
-              <div [hlmTabsContent]="'history'">
-                @if (isPastEventsLoading()) {
-                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                    {{ 'CLUB_DETAIL.events_loading' | translate }}
-                  </p>
-                } @else if (pastEvents().length === 0) {
-                  <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
-                    {{ 'CLUB_DETAIL.events_history_empty' | translate }}
-                  </p>
-                } @else {
-                  <div class="grid gap-5 sm:grid-cols-2">
-                    @for (event of pastEvents(); track event.id; let i = $index) {
-                      <app-club-event-card
-                        [event]="event"
-                        [isAuthenticated]="!!currentUser()"
-                        [attending]="false"
-                        [index]="i"
-                        (attend)="onAttend(event.id)"
-                        (cancelAttend)="onCancelAttend(event.id)"
-                      />
-                    }
-                  </div>
-                }
-              </div>
-            </hlm-tabs>
-          </section>
-          <app-club-members-list
-            [members]="members()"
-            [clubBans]="clubBans()"
-            [isOwner]="isClubOwner()"
-            [currentUserId]="currentUserId()"
-            (kick)="handleKick($event)"
-            (ban)="handleBan($event)" />
-          <footer class="text-xs text-gray-400 dark:text-gray-600 text-right">
-            {{ 'CLUB_DETAIL.created' | translate }} {{ club()!.createdAt | formatDate }}
-          </footer>
-        </div>
-        <aside class="w-full lg:w-56 xl:w-64 flex-shrink-0 space-y-4 lg:sticky lg:top-24 self-start order-3 lg:order-3">
-          <app-club-sidebar-right
-            [club]="club()!"
-            [organizerProfile]="organizerProfile()"
-          />
-        </aside>
-      </div>
-    </div>
-  </main>
 }
 ````
 
