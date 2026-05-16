@@ -35,7 +35,7 @@ export class BookCoverService {
           this.inflight.delete(key);
           return of(null);
         }),
-        shareReplay(1),
+        shareReplay({ bufferSize: 1, refCount: true }),
       );
     this.inflight.set(key, request$);
     return request$;
