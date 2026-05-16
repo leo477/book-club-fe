@@ -68,6 +68,10 @@ yarn-error.log*
 # Local dev tools
 .playwright-cli/
 mock-server/
+
+# Playwright reports & test artifacts
+/playwright-report/
+/test-results/
 .mcp.json
 .claude/
 .claudignore
