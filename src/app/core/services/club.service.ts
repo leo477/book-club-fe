@@ -18,6 +18,7 @@ export class ClubService {
   private readonly _error = signal<string | null>(null);
   private readonly _searchQuery = signal('');
   private readonly _cityFilter = signal<string | null>(null);
+  private myClubsLoadedAt = 0;
 
   private readonly CLUB_CACHE_TTL_MS = 60_000;
   private readonly clubByIdCache = new Map<string, { data: Club; fetchedAt: number }>();
@@ -116,9 +117,15 @@ export class ClubService {
         this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
       );
       this._myClubs.set(raw.map(mapClub));
+      this.myClubsLoadedAt = Date.now();
     } catch {
       this._error.set('Failed to load my clubs');
     }
+  }
+
+  async ensureMyClubsLoaded(maxAgeMs = 30_000): Promise<void> {
+    if (Date.now() - this.myClubsLoadedAt < maxAgeMs && this._myClubs().length > 0) return;
+    await this.loadMyClubs();
   }
 
   async getClubById(id: string): Promise<Club | null> {

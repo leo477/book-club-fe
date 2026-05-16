@@ -100,6 +100,47 @@ describe('ClubService', () => {
     expect(members).toEqual([]);
   });
 
+  describe('ensureMyClubsLoaded', () => {
+    const minimalApiClub = {
+      id: 'c1', name: 'C1', description: null, coverUrl: null,
+      organizerId: 'u1', isPublic: true, memberCount: 1,
+      createdAt: '2024-01-01', city: 'Kyiv', nextMeetingDate: null,
+      address: null, lat: null, lng: null, theme: null, currentBook: null,
+      memberPreviews: [], status: 'active', tags: [], cancelledAt: null,
+      meetingDurationMinutes: null, afterMeetingVenue: null,
+    };
+
+    it('calls loadMyClubs when no clubs are cached', async () => {
+      const promise = service.ensureMyClubsLoaded();
+      const req = httpMock.expectOne(`${environment.apiUrl}/clubs/my`);
+      expect(req.request.method).toBe('GET');
+      req.flush([]);
+      await promise;
+    });
+
+    it('skips loadMyClubs when clubs are fresh and non-empty', async () => {
+      const load1 = service.ensureMyClubsLoaded();
+      const req1 = httpMock.expectOne(`${environment.apiUrl}/clubs/my`);
+      req1.flush([minimalApiClub]);
+      await load1;
+
+      await service.ensureMyClubsLoaded();
+      httpMock.expectNone(`${environment.apiUrl}/clubs/my`);
+    });
+
+    it('calls loadMyClubs again when TTL has expired', async () => {
+      const load1 = service.ensureMyClubsLoaded();
+      const req1 = httpMock.expectOne(`${environment.apiUrl}/clubs/my`);
+      req1.flush([minimalApiClub]);
+      await load1;
+
+      const load2 = service.ensureMyClubsLoaded(0);
+      const req2 = httpMock.expectOne(`${environment.apiUrl}/clubs/my`);
+      req2.flush([]);
+      await load2;
+    });
+  });
+
   it('joinClub sends POST request', async () => {
     const promise = service.joinClub('club-1');
     const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/join`);
