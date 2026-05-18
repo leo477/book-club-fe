@@ -3,6 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpRequest, provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
 import { TimeoutError, throwError } from 'rxjs';
 import { authInterceptor, BackendHttpError, RequestTimeoutError } from './auth.interceptor';
@@ -13,6 +14,7 @@ describe('authInterceptor', () => {
   let httpMock: HttpTestingController;
   let routerSpy: jasmine.SpyObj<Router>;
   let tokenStoreSpy: jasmine.SpyObj<TokenStore>;
+  let translateSpy: jasmine.SpyObj<TranslateService>;
 
   function setup(token: string | null = null) {
     routerSpy = jasmine.createSpyObj('Router', ['navigate']);
@@ -20,6 +22,8 @@ describe('authInterceptor', () => {
       token: jasmine.createSpy().and.returnValue(token),
     });
     tokenStoreSpy.snapshot.and.returnValue(token);
+    translateSpy = jasmine.createSpyObj('TranslateService', ['instant']);
+    translateSpy.instant.and.callFake((key: string) => key);
 
     TestBed.configureTestingModule({
       providers: [
@@ -28,6 +32,7 @@ describe('authInterceptor', () => {
         provideHttpClientTesting(),
         { provide: Router, useValue: routerSpy },
         { provide: TokenStore, useValue: tokenStoreSpy },
+        { provide: TranslateService, useValue: translateSpy },
       ],
     });
     http = TestBed.inject(HttpClient);
@@ -85,7 +90,7 @@ describe('authInterceptor', () => {
     http.get('/api/test').subscribe({ error: jasmine.createSpy('errorHandler') });
     const req = httpMock.expectOne('/api/test');
     req.flush({ detail: 'Server Error' }, { status: 500, statusText: 'Internal Server Error' });
-    expect(toast.error).toHaveBeenCalledWith('A server error occurred. Please try again later.');
+    expect(toast.error).toHaveBeenCalledWith('ERRORS.serverError');
   });
 
   it('re-throws the error after handling', (done) => {
@@ -183,5 +188,34 @@ describe('authInterceptor', () => {
     expect(err.detail).toBe('Validation failed');
     expect(err.translationKey).toBe('ERRORS.requestFailed');
     expect(err.name).toBe('BackendHttpError');
+  });
+
+  it('retries once on 503 and succeeds on the second attempt', (done) => {
+    setup(null);
+    jasmine.clock().install();
+
+    http.get('/api/test').subscribe({
+      next: (result) => {
+        expect(result).toEqual({ ok: true });
+        jasmine.clock().uninstall();
+        done();
+      },
+    });
+
+    // First attempt — 503 (Render cold-start)
+    httpMock.expectOne('/api/test').flush({}, { status: 503, statusText: 'Service Unavailable' });
+
+    // Advance past the 5 s retry delay; RxJS timer() respects jasmine.clock
+    jasmine.clock().tick(5001);
+
+    // Second attempt — success
+    httpMock.expectOne('/api/test').flush({ ok: true });
+  });
+
+  it('does not retry on non-503 errors', () => {
+    setup(null);
+    http.get('/api/test').subscribe({ error: jasmine.createSpy('errorHandler') });
+    httpMock.expectOne('/api/test').flush({}, { status: 500, statusText: 'Internal Server Error' });
+    httpMock.verify();
   });
 });

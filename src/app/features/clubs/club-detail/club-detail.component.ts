@@ -209,19 +209,17 @@ export class ClubDetailComponent {
           console.warn('Failed to load club events:', eventsResult.reason);
         }
         if (this.auth.currentUser()?.id === found.organizerId) {
-          try {
-            this.clubBans.set(await this.clubService.getBans(clubId));
-          } catch (err) {
-            // 403/404 is expected for a freshly-created club where the bans
-            // endpoint may not yet be available; downgrade to debug log.
-            const status = (err as { status?: number })?.status;
-            if (status === 403 || status === 404) {
-              console.debug('Club bans not available yet:', err);
-            } else {
-              console.warn('Failed to load club bans:', err);
-            }
-          }
-          if (isCancelled()) return;
+          this.clubService.getBans(clubId).then(
+            (bans) => { if (!isCancelled()) this.clubBans.set(bans); },
+            (err: unknown) => {
+              const status = (err as { status?: number })?.status;
+              if (status === 403 || status === 404 || err instanceof RequestTimeoutError) {
+                console.debug('Club bans not available yet:', err);
+              } else {
+                console.warn('Failed to load club bans:', err);
+              }
+            },
+          );
         }
         this.seo.setPageI18n('SEO.club_detail_title', {
           ogTitleKey: 'SEO.club_detail_og_title',

@@ -1,8 +1,9 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
-import { TimeoutError, catchError, throwError, timeout } from 'rxjs';
+import { TimeoutError, catchError, retry, throwError, timer, timeout } from 'rxjs';
 import { TokenStore } from '../auth/token.store';
 import { environment } from '../../../environments/environment';
 
@@ -79,6 +80,7 @@ function extractBackendDetail(err: HttpErrorResponse): string | null {
 export const authInterceptor: HttpInterceptorFn = (req, next$) => {
   const router = inject(Router);
   const tokenStore = inject(TokenStore);
+  const translate = inject(TranslateService);
 
   const token = tokenStore.snapshot();
   const authedReq = token
@@ -91,9 +93,19 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
 
   return next$(authedReq).pipe(
     timeout(timeoutMs),
+    // Retry once on 503 (Render cold-start): server was not ready but will be
+    // after a few seconds. 503 guarantees the request was never processed so
+    // retrying is safe for all methods including POST.
+    retry({
+      count: 1,
+      delay: (error: unknown) =>
+        error instanceof HttpErrorResponse && error.status === 503
+          ? timer(5000)
+          : throwError(() => error),
+    }),
     catchError((error: unknown) => {
       if (error instanceof TimeoutError) {
-        toast.error('Сервер не відповідає. Перевірте підключення та спробуйте ще раз.');
+        toast.error(translate.instant('ERRORS.timeout') as string);
         return throwError(() => new RequestTimeoutError());
       }
       const httpError = error instanceof HttpErrorResponse ? error : null;
@@ -106,7 +118,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
         if (!environment.production) {
           console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
         }
-        toast.error('A server error occurred. Please try again later.');
+        toast.error(translate.instant('ERRORS.serverError') as string);
       }
       if (httpError) {
         const detail = extractBackendDetail(httpError);
