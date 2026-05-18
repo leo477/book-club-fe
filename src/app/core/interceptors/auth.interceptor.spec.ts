@@ -1,6 +1,6 @@
 import { EnvironmentInjector, provideZonelessChangeDetection, runInInjectionContext } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { HttpErrorResponse, HttpRequest, provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
+import { HttpRequest, provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { toast } from '@spartan-ng/brain/sonner';
