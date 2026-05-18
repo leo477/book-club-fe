@@ -59,24 +59,24 @@
   --bento-radius-lg: 1.25rem;
 
   /* ── Spartan UI HSL tokens — Light "Aged Manuscript" ──────────────── */
-  --background:          35deg 45% 91%;
-  --foreground:          20deg 95% 7%;
-  --card:                38deg 42% 86%;
-  --card-foreground:     20deg 95% 7%;
-  --popover:             38deg 42% 86%;
-  --popover-foreground:  20deg 95% 7%;
-  --primary:             31deg 90% 37%;
-  --primary-foreground:  38deg 100% 97%;
-  --secondary:           35deg 35% 84%;
-  --secondary-foreground: 20deg 95% 7%;
-  --muted:               35deg 30% 82%;
-  --muted-foreground:    25deg 42% 29%;
-  --accent:              150deg 55% 23%;
-  --accent-foreground:   150deg 80% 96%;
-  --destructive:         0deg 84% 60%;
-  --border:              30deg 42% 58%;
-  --input:               30deg 35% 80%;
-  --ring:                31deg 90% 37%;
+  --background:          hsl(35deg 45% 91%);
+  --foreground:          hsl(20deg 95% 7%);
+  --card:                hsl(38deg 42% 86%);
+  --card-foreground:     hsl(20deg 95% 7%);
+  --popover:             hsl(38deg 42% 86%);
+  --popover-foreground:  hsl(20deg 95% 7%);
+  --primary:             hsl(31deg 90% 37%);
+  --primary-foreground:  hsl(38deg 100% 97%);
+  --secondary:           hsl(35deg 35% 84%);
+  --secondary-foreground: hsl(20deg 95% 7%);
+  --muted:               hsl(35deg 30% 82%);
+  --muted-foreground:    hsl(25deg 35% 50%);
+  --accent:              hsl(150deg 55% 23%);
+  --accent-foreground:   hsl(150deg 80% 96%);
+  --destructive:         hsl(0deg 84% 60%);
+  --border:              hsl(30deg 42% 58%);
+  --input:               hsl(30deg 35% 80%);
+  --ring:                hsl(31deg 90% 37%);
   --radius:              0.75rem;
 }
 
@@ -95,24 +95,24 @@
   --shadow-parchment-inset: inset 0 1px 6px rgba(212, 144, 10, 0.08);
 
   /* ── Spartan UI HSL tokens — Dark "Candlelit Vellum" ──────────────── */
-  --background:          25deg 60% 5%;
-  --foreground:          40deg 70% 82%;
-  --card:                28deg 65% 9%;
-  --card-foreground:     40deg 70% 82%;
-  --popover:             28deg 65% 9%;
-  --popover-foreground:  40deg 70% 82%;
-  --primary:             38deg 88% 45%;
-  --primary-foreground:  25deg 60% 5%;
-  --secondary:           28deg 55% 13%;
-  --secondary-foreground: 40deg 70% 82%;
-  --muted:               28deg 45% 11%;
-  --muted-foreground:    35deg 30% 50%;
-  --accent:              150deg 45% 32%;
-  --accent-foreground:   150deg 80% 92%;
-  --destructive:         0deg 80% 65%;
-  --border:              38deg 55% 27%;
-  --input:               28deg 50% 16%;
-  --ring:                38deg 88% 45%;
+  --background:          hsl(25deg 60% 5%);
+  --foreground:          hsl(40deg 70% 82%);
+  --card:                hsl(28deg 65% 9%);
+  --card-foreground:     hsl(40deg 70% 82%);
+  --popover:             hsl(28deg 65% 9%);
+  --popover-foreground:  hsl(40deg 70% 82%);
+  --primary:             hsl(38deg 88% 45%);
+  --primary-foreground:  hsl(25deg 60% 5%);
+  --secondary:           hsl(28deg 55% 13%);
+  --secondary-foreground: hsl(40deg 70% 82%);
+  --muted:               hsl(28deg 45% 11%);
+  --muted-foreground:    hsl(35deg 30% 55%);
+  --accent:              hsl(150deg 45% 32%);
+  --accent-foreground:   hsl(150deg 80% 92%);
+  --destructive:         hsl(0deg 80% 65%);
+  --border:              hsl(38deg 55% 27%);
+  --input:               hsl(28deg 50% 16%);
+  --ring:                hsl(38deg 88% 45%);
 }
 
 * { box-sizing: border-box; }
@@ -419,5 +419,11 @@ body {
     background: linear-gradient(135deg,
       color-mix(in srgb, var(--color-primary-500) 18%, transparent) 0%,
       color-mix(in srgb, var(--color-accent-500)  15%, transparent) 100%);
+  }
+
+  /* ── Global text selection ──────────────────────────────────────── */
+  ::selection {
+    background-color: color-mix(in oklab, var(--primary) 30%, transparent);
+    color: inherit;
   }
 }

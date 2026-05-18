@@ -13,7 +13,8 @@
       "**/*.scss",
       "**/*.css",
       "**/*.spec.ts",
-      "package-lock.json"
+      "package-lock.json",
+      "repomix-output.md"
     ]
   }
 }
