@@ -1,6 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { CoverUploadComponent } from './cover-upload.component';
 import { UploadService } from '../../../core/services/upload.service';
@@ -13,15 +14,19 @@ function makeUploadService() {
 
 describe('CoverUploadComponent', () => {
   let uploadSvc: ReturnType<typeof makeUploadService>;
+  let translateSpy: jasmine.SpyObj<TranslateService>;
 
   beforeEach(async () => {
     uploadSvc = makeUploadService();
+    translateSpy = jasmine.createSpyObj('TranslateService', ['instant']);
+    translateSpy.instant.and.callFake((key: string) => key);
 
     await TestBed.configureTestingModule({
-      imports: [CoverUploadComponent, ReactiveFormsModule],
+      imports: [CoverUploadComponent, ReactiveFormsModule, TranslateModule.forRoot()],
       providers: [
         provideZonelessChangeDetection(),
         { provide: UploadService, useValue: uploadSvc },
+        { provide: TranslateService, useValue: translateSpy },
       ],
     }).compileComponents();
   });
