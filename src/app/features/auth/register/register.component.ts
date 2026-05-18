@@ -61,7 +61,7 @@ export class RegisterComponent {
 
   constructor() {
     this.seo.setPageI18n('SEO.register_title');
-    setTimeout(() => this.formVisible.set(true), 700);
+    setTimeout(() => this.formVisible.set(true), 300);
   }
 
   onBookAnimationDone(): void {
