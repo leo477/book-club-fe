@@ -2,7 +2,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { CoverUploadComponent } from './cover-upload.component';
 import { UploadService } from '../../../core/services/upload.service';
 
@@ -56,5 +56,27 @@ describe('CoverUploadComponent', () => {
     expect(comp.showUrlInput()).toBeFalse();
     comp.showUrlInput.set(true);
     expect(comp.showUrlInput()).toBeTrue();
+  });
+
+  it('onFileSelected() sets uploadError and resets state on upload failure', () => {
+    uploadSvc.uploadCover$.and.returnValue(throwError(() => new Error('upload failed')));
+    const { comp } = createWithControl();
+
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:fake');
+    const file = new File([''], 'cover.jpg', { type: 'image/jpeg' });
+    const event = { target: { files: [file] } } as unknown as Event;
+
+    comp.onFileSelected(event);
+
+    expect(comp.isUploading()).toBeFalse();
+    expect(comp.previewUrl()).toBeNull();
+    expect(comp.uploadError()).toBeTruthy();
+  });
+
+  it('onFileSelected() does nothing when no file selected', () => {
+    const { comp } = createWithControl();
+    const event = { target: { files: [] } } as unknown as Event;
+    comp.onFileSelected(event);
+    expect(uploadSvc.uploadCover$).not.toHaveBeenCalled();
   });
 });

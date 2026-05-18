@@ -1,10 +1,11 @@
+import { EnvironmentInjector, provideZonelessChangeDetection, runInInjectionContext } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection } from '@angular/core';
-import { provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
+import { HttpErrorResponse, HttpRequest, provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { toast } from '@spartan-ng/brain/sonner';
-import { authInterceptor } from './auth.interceptor';
+import { TimeoutError, throwError } from 'rxjs';
+import { authInterceptor, BackendHttpError, RequestTimeoutError } from './auth.interceptor';
 import { TokenStore } from '../auth/token.store';
 
 describe('authInterceptor', () => {
@@ -106,5 +107,81 @@ describe('authInterceptor', () => {
     const req = httpMock.expectOne('/api/test');
     req.flush({}, { status: 400, statusText: 'Bad Request' });
     expect(toast.error).not.toHaveBeenCalled();
+  });
+
+  it('shows toast and throws RequestTimeoutError when next$ emits TimeoutError', () => {
+    setup(null);
+    spyOn(toast, 'error');
+    let caughtError: unknown;
+
+    const injector = TestBed.inject(EnvironmentInjector);
+    const req = new HttpRequest('GET', '/api/test');
+    runInInjectionContext(injector, () => {
+      authInterceptor(req, () => throwError(() => new TimeoutError())).subscribe({
+        error: (e: unknown) => { caughtError = e; },
+      });
+    });
+
+    expect(toast.error).toHaveBeenCalled();
+    expect(caughtError).toBeInstanceOf(RequestTimeoutError);
+    expect((caughtError as RequestTimeoutError).translationKey).toBe('ERRORS.timeout');
+  });
+
+  it('re-throws unknown (non-HTTP) errors as-is', () => {
+    setup(null);
+    const originalError = new Error('custom network failure');
+    let caughtError: unknown;
+
+    const injector = TestBed.inject(EnvironmentInjector);
+    const req = new HttpRequest('GET', '/api/test');
+    runInInjectionContext(injector, () => {
+      authInterceptor(req, () => throwError(() => originalError)).subscribe({
+        error: (e: unknown) => { caughtError = e; },
+      });
+    });
+
+    expect(caughtError).toBe(originalError);
+  });
+
+  it('throws BackendHttpError with ERRORS.network key for status 0', () => {
+    setup(null);
+    let err: BackendHttpError | undefined;
+    http.get('/api/test').subscribe({ error: (e: unknown) => { err = e as BackendHttpError; } });
+    const req = httpMock.expectOne('/api/test');
+    req.error(new ProgressEvent('error'));
+    expect(err?.translationKey).toBe('ERRORS.network');
+    expect(err?.status).toBe(0);
+  });
+
+  it('extracts detail from string error body', () => {
+    setup(null);
+    let err: BackendHttpError | undefined;
+    http.get('/api/test', { responseType: 'text' }).subscribe({ error: (e: unknown) => { err = e as BackendHttpError; } });
+    const req = httpMock.expectOne('/api/test');
+    req.flush('Plain error text', { status: 400, statusText: 'Bad Request' });
+    expect(err?.detail).toBe('Plain error text');
+  });
+
+  it('extracts detail from body.message field', () => {
+    setup(null);
+    let err: BackendHttpError | undefined;
+    http.get('/api/test').subscribe({ error: (e: unknown) => { err = e as BackendHttpError; } });
+    const req = httpMock.expectOne('/api/test');
+    req.flush({ message: 'Custom error message' }, { status: 400, statusText: 'Bad Request' });
+    expect(err?.detail).toBe('Custom error message');
+  });
+
+  it('RequestTimeoutError has correct name and translationKey', () => {
+    const err = new RequestTimeoutError();
+    expect(err.name).toBe('RequestTimeoutError');
+    expect(err.translationKey).toBe('ERRORS.timeout');
+  });
+
+  it('BackendHttpError carries status, detail, and translationKey', () => {
+    const err = new BackendHttpError(422, 'Validation failed', 'ERRORS.requestFailed');
+    expect(err.status).toBe(422);
+    expect(err.detail).toBe('Validation failed');
+    expect(err.translationKey).toBe('ERRORS.requestFailed');
+    expect(err.name).toBe('BackendHttpError');
   });
 });
