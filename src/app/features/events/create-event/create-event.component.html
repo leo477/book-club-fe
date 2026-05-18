@@ -26,7 +26,7 @@
           {{ 'CREATE_EVENT.title_label' | translate }} <span class="text-red-500">*</span>
         </label>
         <input hlmInput id="title" type="text" formControlName="title" class="w-full"
-               data-testid="event-title-input" placeholder="April Discussion" />
+               data-testid="event-title-input" [placeholder]="'CREATE_EVENT.title_placeholder' | translate" />
         @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
           <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.title_required' | translate }}</p>
         }
@@ -34,15 +34,15 @@
 
       <!-- Book title -->
       <div>
-        <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">📖 Book title</label>
+        <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.book_title_label' | translate }}</label>
         <input hlmInput id="bookTitle" type="text" formControlName="bookTitle" class="w-full"
-               placeholder="The Master and Margarita" />
+               [placeholder]="'CREATE_EVENT.book_title_placeholder' | translate" />
         @if (isFetchingCover()) {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">🔍 Searching for book cover…</p>
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_EVENT.book_cover_searching' | translate }}</p>
         } @else if (coverFetchFailed()) {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">No cover found — you can add one manually below.</p>
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_EVENT.book_cover_not_found' | translate }}</p>
         } @else {
-          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">What book will you discuss at this event?</p>
+          <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_EVENT.book_title_hint' | translate }}</p>
         }
       </div>
 
@@ -71,7 +71,7 @@
         </p>
         <app-address-autocomplete
           [control]="form.controls.address"
-          placeholder="Start typing an address…"
+          [placeholder]="'CREATE_EVENT.address_placeholder' | translate"
           (selected)="onAddressSelect($event)"
         />
         @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
@@ -88,7 +88,7 @@
         </div>
         <div>
           <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.theme_label' | translate }}</label>
-          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" placeholder="sci-fi" />
+          <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" [placeholder]="'CREATE_EVENT.theme_placeholder' | translate" />
         </div>
       </div>
 
@@ -109,11 +109,11 @@
       @if (activeQuizzes().length > 0) {
         <div>
           <label for="quizId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            🧠 Linked quiz
+            {{ 'CREATE_EVENT.linked_quiz_label' | translate }}
           </label>
           <select id="quizId" formControlName="quizId"
                   class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
-            <option [ngValue]="null">— No quiz —</option>
+            <option [ngValue]="null">{{ 'CREATE_EVENT.no_quiz' | translate }}</option>
             @for (quiz of activeQuizzes(); track quiz.id) {
               <option [value]="quiz.id">{{ quiz.title }}</option>
             }

@@ -42,6 +42,7 @@
                   <input hlmInput id="reg-display-name" type="text" placeholder="Ada Lovelace" autocomplete="username" [formControl]="form.controls.displayName" />
                   <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
                   <hlm-field-error validator="minlength">{{ 'FORM_ERRORS.minlength' | translate: {requiredLength: 2} }}</hlm-field-error>
+                  <hlm-field-error validator="unsafeChars">{{ 'SECURITY.invalid_display_name' | translate }}</hlm-field-error>
                 </hlm-field>
 
                 <!-- Email -->

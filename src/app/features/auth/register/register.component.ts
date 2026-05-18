@@ -19,6 +19,7 @@ import { HlmFieldImports } from '../../../shared/spartan/field/src';
 import { HlmInput } from '../../../shared/spartan/input/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+import { displayNameValidator } from '../../../shared/utils/display-name.validator';
 
 const passwordMatchValidator: ValidatorFn = (group: AbstractControl): ValidationErrors | null => {
   const password = group.get('password')?.value as string;
@@ -71,7 +72,12 @@ export class RegisterComponent {
     {
       displayName: new FormControl('', {
         nonNullable: true,
-        validators: [Validators.required, Validators.minLength(2)],
+        validators: [
+          Validators.required,
+          Validators.minLength(2),
+          Validators.maxLength(50),
+          displayNameValidator,
+        ],
       }),
       email: new FormControl('', {
         nonNullable: true,

@@ -11,6 +11,7 @@ import { TranslateHttpLoader, provideTranslateHttpLoader } from '@ngx-translate/
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { SeoService } from './core/services/seo.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -36,12 +37,13 @@ export const appConfig: ApplicationConfig = {
       provide: APP_INITIALIZER,
       useFactory: () => {
         const translate = inject(TranslateService);
+        const seo = inject(SeoService);
         return () =>
           firstValueFrom(
             translate.use('uk').pipe(
               catchError(() => translate.use('en').pipe(catchError(() => of(null)))),
             ),
-          );
+          ).then(() => seo.bootstrapLocaleSync());
       },
       multi: true,
     },

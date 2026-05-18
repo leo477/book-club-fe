@@ -14,6 +14,10 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { map, startWith } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
+import {
+  BackendHttpError,
+  RequestTimeoutError,
+} from '../../../core/interceptors/auth.interceptor';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/models/club.model';
 import { ClubEvent } from '../../../core/models/event.model';
@@ -208,7 +212,14 @@ export class ClubDetailComponent {
           try {
             this.clubBans.set(await this.clubService.getBans(clubId));
           } catch (err) {
-            console.warn('Failed to load club bans:', err);
+            // 403/404 is expected for a freshly-created club where the bans
+            // endpoint may not yet be available; downgrade to debug log.
+            const status = (err as { status?: number })?.status;
+            if (status === 403 || status === 404) {
+              console.debug('Club bans not available yet:', err);
+            } else {
+              console.warn('Failed to load club bans:', err);
+            }
           }
           if (isCancelled()) return;
         }
@@ -217,10 +228,10 @@ export class ClubDetailComponent {
           params: { name: found.name },
         });
       } else {
-        this.errorMessage.set('This club could not be found.');
+        this.errorMessage.set(this.translate.instant('CLUB_DETAIL.not_found_desc'));
       }
     } catch {
-      if (!isCancelled()) this.errorMessage.set('Failed to load club details.');
+      if (!isCancelled()) this.errorMessage.set(this.translate.instant('CLUB_DETAIL.load_failed'));
     } finally {
       if (!isCancelled()) this.isLoading.set(false);
     }
@@ -269,10 +280,27 @@ export class ClubDetailComponent {
         ?? this.clubService.myClubs().find(c => c.id === this.id());
       if (updated) this.club.set(updated);
     } catch (err) {
-      this.actionError.set(err instanceof Error ? err.message : errorFallback);
+      this.actionError.set(this.formatActionError(err, errorFallback));
     } finally {
       this.isActionLoading.set(false);
     }
+  }
+
+  dismissActionError(): void {
+    this.actionError.set(null);
+  }
+
+  private formatActionError(err: unknown, fallback: string): string {
+    if (err instanceof RequestTimeoutError) {
+      return this.translate.instant('ERRORS.timeout');
+    }
+    if (err instanceof BackendHttpError) {
+      // Prefer backend detail when present; otherwise localized status message.
+      if (err.detail) return err.detail;
+      return this.translate.instant(err.translationKey);
+    }
+    if (err instanceof Error && err.message) return err.message;
+    return fallback;
   }
 
   async onEventsTabChange(tab: 'upcoming' | 'history'): Promise<void> {
