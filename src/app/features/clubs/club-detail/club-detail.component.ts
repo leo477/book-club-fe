@@ -215,7 +215,7 @@ export class ClubDetailComponent {
             // 403/404 is expected for a freshly-created club where the bans
             // endpoint may not yet be available; downgrade to debug log.
             const status = (err as { status?: number })?.status;
-            if (status === 403 || status === 404) {
+            if (status === 403 || status === 404 || err instanceof RequestTimeoutError) {
               console.debug('Club bans not available yet:', err);
             } else {
               console.warn('Failed to load club bans:', err);
