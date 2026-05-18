@@ -33,7 +33,7 @@
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'AUTH.create_account_h2' | translate }}</h2>
 
             <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-4" novalidate>
-              <fieldset class="border-0 p-0 m-0">
+              <fieldset class="border-0 p-0 m-0 flex flex-col gap-4">
                 <legend class="sr-only">{{ 'AUTH.create_account_h2' | translate }}</legend>
 
                 <!-- Display name -->

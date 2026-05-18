@@ -60,6 +60,10 @@ type BookState = 'closed' | 'opening' | 'open-bg';
       pointer-events: none;
     }
 
+    @media (max-width: 767px) {
+      :host { display: none; }
+    }
+
     /* ── Wrapper ── */
     .book-scene-wrapper {
       position: absolute;
@@ -67,12 +71,12 @@ type BookState = 'closed' | 'opening' | 'open-bg';
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #f0e6d3 0%, #e8d5b7 50%, #dfc4a0 100%);
+      background: transparent;
       transition: background 0.8s ease;
     }
 
     .book-scene-wrapper.state-open-bg {
-      background: linear-gradient(135deg, #fdf6ee 0%, #f5e8d3 50%, #eedfc5 100%);
+      background: transparent;
     }
 
     /* ── 3D Scene ── */

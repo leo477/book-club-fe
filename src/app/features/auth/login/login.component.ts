@@ -38,7 +38,7 @@ export class LoginComponent {
 
   constructor() {
     this.seo.setPageI18n('SEO.login_title');
-    setTimeout(() => this.formVisible.set(true), 700);
+    setTimeout(() => this.formVisible.set(true), 300);
   }
 
   onBookAnimationDone(): void {
