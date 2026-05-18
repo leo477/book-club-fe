@@ -1678,6 +1678,47 @@ export class FooterComponent {
 
 ````
 
+## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.html
+````html
+<div class="relative">
+  <input
+    hlmInput
+    [id]="inputId() || undefined"
+    [formControl]="control()"
+    [placeholder]="placeholder()"
+    autocomplete="off"
+    (keydown)="onKeydown($event)"
+    class="w-full"
+    [class.border-red-400]="control().invalid && control().touched"
+  />
+  @if (isLoading()) {
+    <div class="absolute right-3 top-3 flex items-center justify-center">
+      <svg class="h-4 w-4 animate-spin text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+      </svg>
+    </div>
+  }
+  @if (isOpen() && suggestions().length > 0) {
+    <ul class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-48 overflow-y-auto">
+      @for (s of suggestions(); track s.label; let i = $index) {
+        <li
+          role="option"
+          tabindex="0"
+          [attr.aria-selected]="activeIndex() === i"
+          (click)="select(s)"
+          (keydown.enter)="select(s)"
+          (keydown.space)="$event.preventDefault(); select(s)"
+          [class.bg-primary-50]="activeIndex() === i"
+          [class.dark:bg-primary-900/20]="activeIndex() === i"
+          class="cursor-pointer px-4 py-2.5 text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+        >{{ s.label }}</li>
+      }
+    </ul>
+  }
+</div>
+````
+
 ## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.ts
 ````typescript
 import {
@@ -5377,6 +5418,142 @@ function mapSocials(raw: ApiUserSocials): UserSocials {
 }
 ````
 
+## File: src/app/core/auth/auth.service.ts
+````typescript
+import { HttpClient } from '@angular/common/http';
+import { Injectable, computed, inject, signal } from '@angular/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
+import { catchError, firstValueFrom, map, of } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { extractApiError } from '../api/api-error.util';
+import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
+import { TokenStore } from './token.store';
+import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
+interface AuthResponse {
+  accessToken: string;
+  user: ApiUserProfile;
+}
+@Injectable({ providedIn: 'root' })
+export class AuthService {
+  private readonly http = inject(HttpClient);
+  private readonly router = inject(Router);
+  private readonly tokenStore = inject(TokenStore);
+  private readonly _currentUser = signal<UserProfile | null>(null);
+  private readonly _isLoading = signal<boolean>(true);
+  readonly currentUser = this._currentUser.asReadonly();
+  readonly isLoading = this._isLoading.asReadonly();
+  readonly isAuthenticated = computed(() => this._currentUser() !== null);
+  readonly userRole = computed(() => this._currentUser()?.role ?? null);
+  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
+  private readonly _statsResource = rxResource<UserStats | null, string | null>({
+    params: () => this._currentUser()?.id ?? null,
+    stream: ({ params: userId }) => {
+      if (!userId) return of(null as UserStats | null);
+      return this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
+        map(raw => mapUserStats(raw)),
+        catchError(() => of(null)),
+      );
+    },
+  });
+  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
+  constructor() {
+    const token = this.tokenStore.snapshot();
+    if (token) {
+      firstValueFrom(
+        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
+          catchError(() => {
+            this.tokenStore.clear();
+            return of(null);
+          }),
+        ),
+      ).then(raw => {
+        this._currentUser.set(raw ? mapUserProfile(raw) : null);
+        this._isLoading.set(false);
+      });
+    } else {
+      this._isLoading.set(false);
+    }
+  }
+  async signUp(
+    email: string,
+    password: string,
+    displayName: string,
+    role: UserRole,
+  ): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
+          email,
+          password,
+          displayName,
+          role,
+        }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signIn(email: string, password: string): Promise<{ error: string | null }> {
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this._currentUser.set(mapUserProfile(resp.user));
+      return { error: null };
+    } catch (err) {
+      return { error: extractApiError(err) };
+    }
+  }
+  async signOut(): Promise<void> {
+    try {
+      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
+    } catch {  }
+    this.tokenStore.clear();
+    this._currentUser.set(null);
+    this.router.navigate(['/login']);
+  }
+  async updateRole(role: UserRole): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
+    );
+    this._currentUser.set({ ...user, role });
+  }
+  async updateDisplayName(name: string): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
+    );
+    this._currentUser.set({ ...user, displayName: name });
+  }
+  async updateSocials(socials: UserSocials): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
+    );
+    this._currentUser.set({ ...user, socials });
+  }
+  async setSocialsPublic(value: boolean): Promise<void> {
+    const user = this._currentUser();
+    if (!user) return;
+    await firstValueFrom(
+      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
+        socialsPublic: value,
+      }),
+    );
+    this._currentUser.set({ ...user, socialsPublic: value });
+  }
+}
+````
+
 ## File: src/app/core/models/book-vote.model.ts
 ````typescript
 export interface BookOption {
@@ -7034,47 +7211,6 @@ export class ShellComponent {
 }
 ````
 
-## File: src/app/shared/components/address-autocomplete/address-autocomplete.component.html
-````html
-<div class="relative">
-  <input
-    hlmInput
-    [id]="inputId() || undefined"
-    [formControl]="control()"
-    [placeholder]="placeholder()"
-    autocomplete="off"
-    (keydown)="onKeydown($event)"
-    class="w-full"
-    [class.border-red-400]="control().invalid && control().touched"
-  />
-  @if (isLoading()) {
-    <div class="absolute right-3 top-3 flex items-center justify-center">
-      <svg class="h-4 w-4 animate-spin text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-      </svg>
-    </div>
-  }
-  @if (isOpen() && suggestions().length > 0) {
-    <ul class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-48 overflow-y-auto">
-      @for (s of suggestions(); track s.label; let i = $index) {
-        <li
-          role="option"
-          tabindex="0"
-          [attr.aria-selected]="activeIndex() === i"
-          (click)="select(s)"
-          (keydown.enter)="select(s)"
-          (keydown.space)="$event.preventDefault(); select(s)"
-          [class.bg-primary-50]="activeIndex() === i"
-          [class.dark:bg-primary-900/20]="activeIndex() === i"
-          class="cursor-pointer px-4 py-2.5 text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        >{{ s.label }}</li>
-      }
-    </ul>
-  }
-</div>
-````
-
 ## File: src/app/shared/components/cover-upload/cover-upload.component.ts
 ````typescript
 import {
@@ -7699,142 +7835,6 @@ jobs:
           issue-number: ${{ github.event.pull_request.number }}
           body: ${{ steps.gate.outputs.body }}
           comment-tag: pr-review-gate
-````
-
-## File: src/app/core/auth/auth.service.ts
-````typescript
-import { HttpClient } from '@angular/common/http';
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
-import { catchError, firstValueFrom, map, of } from 'rxjs';
-import { environment } from '../../../environments/environment';
-import { extractApiError } from '../api/api-error.util';
-import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
-import { TokenStore } from './token.store';
-import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
-interface AuthResponse {
-  accessToken: string;
-  user: ApiUserProfile;
-}
-@Injectable({ providedIn: 'root' })
-export class AuthService {
-  private readonly http = inject(HttpClient);
-  private readonly router = inject(Router);
-  private readonly tokenStore = inject(TokenStore);
-  private readonly _currentUser = signal<UserProfile | null>(null);
-  private readonly _isLoading = signal<boolean>(true);
-  readonly currentUser = this._currentUser.asReadonly();
-  readonly isLoading = this._isLoading.asReadonly();
-  readonly isAuthenticated = computed(() => this._currentUser() !== null);
-  readonly userRole = computed(() => this._currentUser()?.role ?? null);
-  readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
-  private readonly _statsResource = rxResource<UserStats | null, string | null>({
-    params: () => this._currentUser()?.id ?? null,
-    stream: ({ params: userId }) => {
-      if (!userId) return of(null as UserStats | null);
-      return this.http.get<ApiUserStats>(`${environment.apiUrl}/users/me/stats`).pipe(
-        map(raw => mapUserStats(raw)),
-        catchError(() => of(null)),
-      );
-    },
-  });
-  readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
-  constructor() {
-    const token = this.tokenStore.snapshot();
-    if (token) {
-      firstValueFrom(
-        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
-          catchError(() => {
-            this.tokenStore.clear();
-            return of(null);
-          }),
-        ),
-      ).then(raw => {
-        this._currentUser.set(raw ? mapUserProfile(raw) : null);
-        this._isLoading.set(false);
-      });
-    } else {
-      this._isLoading.set(false);
-    }
-  }
-  async signUp(
-    email: string,
-    password: string,
-    displayName: string,
-    role: UserRole,
-  ): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
-          email,
-          password,
-          displayName,
-          role,
-        }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signIn(email: string, password: string): Promise<{ error: string | null }> {
-    try {
-      const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
-      );
-      this.tokenStore.set(resp.accessToken);
-      this._currentUser.set(mapUserProfile(resp.user));
-      return { error: null };
-    } catch (err) {
-      return { error: extractApiError(err) };
-    }
-  }
-  async signOut(): Promise<void> {
-    try {
-      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
-    } catch {  }
-    this.tokenStore.clear();
-    this._currentUser.set(null);
-    this.router.navigate(['/login']);
-  }
-  async updateRole(role: UserRole): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/role`, { role }),
-    );
-    this._currentUser.set({ ...user, role });
-  }
-  async updateDisplayName(name: string): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me`, { displayName: name }),
-    );
-    this._currentUser.set({ ...user, displayName: name });
-  }
-  async updateSocials(socials: UserSocials): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials`, socials),
-    );
-    this._currentUser.set({ ...user, socials });
-  }
-  async setSocialsPublic(value: boolean): Promise<void> {
-    const user = this._currentUser();
-    if (!user) return;
-    await firstValueFrom(
-      this.http.patch<ApiUserProfile>(`${environment.apiUrl}/users/me/socials-visibility`, {
-        socialsPublic: value,
-      }),
-    );
-    this._currentUser.set({ ...user, socialsPublic: value });
-  }
-}
 ````
 
 ## File: src/app/core/models/chat.model.ts
@@ -12472,6 +12472,113 @@ jobs:
 </main>
 ````
 
+## File: src/app/features/events/event-detail/event-detail.component.ts
+````typescript
+import {
+  Component,
+  ChangeDetectionStrategy,
+  inject,
+  signal,
+  computed,
+  input,
+  effect,
+} from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { map } from 'rxjs';
+import { EventService } from '../../../core/services/event.service';
+import { AuthService } from '../../../core/auth/auth.service';
+import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
+import { ClubEvent } from '../../../core/models/event.model';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
+import { environment } from '../../../../environments/environment';
+import { ChatService } from '../../../core/services/chat.service';
+import { ChatRoom } from '../../../core/models/chat.model';
+import { HlmButton } from '../../../shared/spartan/button/src';
+@Component({
+  selector: 'app-event-detail',
+  standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton],
+  templateUrl: './event-detail.component.html',
+})
+export class EventDetailComponent {
+  readonly id = input.required<string>();
+  private readonly http = inject(HttpClient);
+  private readonly eventService = inject(EventService);
+  private readonly translate = inject(TranslateService);
+  readonly auth = inject(AuthService);
+  private readonly chatService = inject(ChatService);
+  private readonly _eventResource = rxResource<ClubEvent | null, string>({
+    params: () => this.id(),
+    stream: ({ params: id }) =>
+      this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(
+        map(mapEvent),
+      ),
+  });
+  readonly event = computed(() => this._eventResource.value() ?? null);
+  readonly isLoading = this._eventResource.isLoading;
+  readonly errorMessage = computed(() =>
+    !this._eventResource.isLoading() && this._eventResource.error() ? 'EVENT.LOAD_ERROR' : null,
+  );
+  readonly isActioning = signal(false);
+  readonly isOrganizer = computed(
+    () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,
+  );
+  private readonly _eventRoom = signal<ChatRoom | null>(null);
+  readonly eventRoom = this._eventRoom.asReadonly();
+  constructor() {
+    effect(() => {
+      if (!this._eventResource.hasValue()) return;
+      const ev = this.event();
+      if (ev && this.auth.currentUser()) {
+        this.chatService.getEventRoom(ev.id).then(room => this._eventRoom.set(room));
+      }
+    });
+  }
+  async openEventChat(): Promise<void> {
+    const ev = this.event();
+    if (!ev) return;
+    let room = this._eventRoom();
+    if (!room && this.isOrganizer()) {
+      room = await this.chatService.createEventChatRoom(ev.id);
+      this._eventRoom.set(room);
+    }
+    if (room) this.chatService.openAndFocusRoom(room);
+  }
+  async onAttend(): Promise<void> {
+    this.isActioning.set(true);
+    try {
+      await this.eventService.attendEvent(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+  async onCancelAttend(): Promise<void> {
+    this.isActioning.set(true);
+    try {
+      await this.eventService.cancelAttendance(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+  async onCancelEvent(): Promise<void> {
+    if (!confirm(this.translate.instant('EVENTS.cancel_confirm'))) return;
+    this.isActioning.set(true);
+    try {
+      await this.eventService.cancelEvent(this.id());
+      this._eventResource.reload();
+    } finally {
+      this.isActioning.set(false);
+    }
+  }
+}
+````
+
 ## File: src/app/features/events/events-feed/events-feed.component.html
 ````html
 <div class="min-h-screen">
@@ -13459,113 +13566,6 @@ export class CreateEventComponent implements OnInit {
       this.errorMessage.set('Failed to create event. Please try again.');
     } finally {
       this.isSubmitting.set(false);
-    }
-  }
-}
-````
-
-## File: src/app/features/events/event-detail/event-detail.component.ts
-````typescript
-import {
-  Component,
-  ChangeDetectionStrategy,
-  inject,
-  signal,
-  computed,
-  input,
-  effect,
-} from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { rxResource } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
-import { EventService } from '../../../core/services/event.service';
-import { AuthService } from '../../../core/auth/auth.service';
-import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
-import { ClubEvent } from '../../../core/models/event.model';
-import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-import { environment } from '../../../../environments/environment';
-import { ChatService } from '../../../core/services/chat.service';
-import { ChatRoom } from '../../../core/models/chat.model';
-import { HlmButton } from '../../../shared/spartan/button/src';
-@Component({
-  selector: 'app-event-detail',
-  standalone: true,
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton],
-  templateUrl: './event-detail.component.html',
-})
-export class EventDetailComponent {
-  readonly id = input.required<string>();
-  private readonly http = inject(HttpClient);
-  private readonly eventService = inject(EventService);
-  private readonly translate = inject(TranslateService);
-  readonly auth = inject(AuthService);
-  private readonly chatService = inject(ChatService);
-  private readonly _eventResource = rxResource<ClubEvent | null, string>({
-    params: () => this.id(),
-    stream: ({ params: id }) =>
-      this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(
-        map(mapEvent),
-      ),
-  });
-  readonly event = computed(() => this._eventResource.value() ?? null);
-  readonly isLoading = this._eventResource.isLoading;
-  readonly errorMessage = computed(() =>
-    !this._eventResource.isLoading() && this._eventResource.error() ? 'EVENT.LOAD_ERROR' : null,
-  );
-  readonly isActioning = signal(false);
-  readonly isOrganizer = computed(
-    () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,
-  );
-  private readonly _eventRoom = signal<ChatRoom | null>(null);
-  readonly eventRoom = this._eventRoom.asReadonly();
-  constructor() {
-    effect(() => {
-      if (!this._eventResource.hasValue()) return;
-      const ev = this.event();
-      if (ev && this.auth.currentUser()) {
-        this.chatService.getEventRoom(ev.id).then(room => this._eventRoom.set(room));
-      }
-    });
-  }
-  async openEventChat(): Promise<void> {
-    const ev = this.event();
-    if (!ev) return;
-    let room = this._eventRoom();
-    if (!room && this.isOrganizer()) {
-      room = await this.chatService.createEventChatRoom(ev.id);
-      this._eventRoom.set(room);
-    }
-    if (room) this.chatService.openAndFocusRoom(room);
-  }
-  async onAttend(): Promise<void> {
-    this.isActioning.set(true);
-    try {
-      await this.eventService.attendEvent(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
-    }
-  }
-  async onCancelAttend(): Promise<void> {
-    this.isActioning.set(true);
-    try {
-      await this.eventService.cancelAttendance(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
-    }
-  }
-  async onCancelEvent(): Promise<void> {
-    if (!confirm(this.translate.instant('EVENTS.cancel_confirm'))) return;
-    this.isActioning.set(true);
-    try {
-      await this.eventService.cancelEvent(this.id());
-      this._eventResource.reload();
-    } finally {
-      this.isActioning.set(false);
     }
   }
 }
