@@ -418,5 +418,5 @@ sonar-project.properties
 tsconfig.app.json
 tsconfig.json
 tsconfig.spec.json
-vercel.json
+vercel.ts
 ```
