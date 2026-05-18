@@ -1,7 +1,14 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
-import { DOCUMENT } from '@angular/common';
+import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter } from 'rxjs';
+
+const OG_LOCALE_MAP: Record<string, string> = {
+  uk: 'uk_UA',
+  en: 'en_US',
+};
 
 export interface SeoConfig {
   title: string;
@@ -17,6 +24,81 @@ export class SeoService {
   private readonly meta = inject(Meta);
   private readonly document = inject(DOCUMENT);
   private readonly translate = inject(TranslateService);
+  private readonly platformId = inject(PLATFORM_ID);
+  private readonly router = inject(Router, { optional: true });
+  private localeSyncStarted = false;
+
+  /**
+   * Wires up <html lang>, og:locale, localized <title> / <meta> tags to the
+   * current ngx-translate language, and keeps og:url / canonical in sync with
+   * route changes. Safe to call multiple times.
+   */
+  bootstrapLocaleSync(): void {
+    if (this.localeSyncStarted) return;
+    this.localeSyncStarted = true;
+
+    const apply = (lang: string) => {
+      this.applyHtmlLang(lang);
+      this.applyLocalizedMeta(lang);
+      this.applyOgUrl();
+    };
+
+    // Apply for the lang already in effect at bootstrap.
+    const current = this.translate.currentLang ?? this.translate.getDefaultLang() ?? 'uk';
+    apply(current);
+
+    this.translate.onLangChange.subscribe(event => apply(event.lang));
+
+    this.router?.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe(() => this.applyOgUrl());
+  }
+
+  private applyHtmlLang(lang: string): void {
+    const root = this.document.documentElement;
+    if (root) {
+      root.setAttribute('lang', lang);
+    }
+  }
+
+  private applyLocalizedMeta(lang: string): void {
+    const title = this.translate.instant('META.title');
+    const description = this.translate.instant('META.description');
+    const ogTitle = this.translate.instant('META.ogTitle');
+    const ogDescription = this.translate.instant('META.ogDescription');
+    const twitterTitle = this.translate.instant('META.twitterTitle');
+    const twitterDescription = this.translate.instant('META.twitterDescription');
+    const ogLocale = OG_LOCALE_MAP[lang] ?? lang;
+
+    // Only override when key actually resolved (instant returns the key on miss).
+    if (title && title !== 'META.title') {
+      this.title.setTitle(title);
+      this.meta.updateTag({ property: 'og:title', content: ogTitle && ogTitle !== 'META.ogTitle' ? ogTitle : title });
+      this.meta.updateTag({ name: 'twitter:title', content: twitterTitle && twitterTitle !== 'META.twitterTitle' ? twitterTitle : title });
+    }
+    if (description && description !== 'META.description') {
+      this.meta.updateTag({ name: 'description', content: description });
+      this.meta.updateTag({
+        property: 'og:description',
+        content: ogDescription && ogDescription !== 'META.ogDescription' ? ogDescription : description,
+      });
+      this.meta.updateTag({
+        name: 'twitter:description',
+        content: twitterDescription && twitterDescription !== 'META.twitterDescription' ? twitterDescription : description,
+      });
+    }
+    this.meta.updateTag({ property: 'og:locale', content: ogLocale });
+  }
+
+  private applyOgUrl(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const origin = this.document.defaultView?.location?.origin;
+    const path = this.document.defaultView?.location?.pathname ?? '/';
+    if (!origin) return;
+    const url = `${origin}${path}`;
+    this.meta.updateTag({ property: 'og:url', content: url });
+    this.setCanonical(url);
+  }
 
   setPage(config: SeoConfig): void {
     const { title, description, ogTitle, ogDescription, canonical } = config;

@@ -106,8 +106,8 @@
             <app-empty-state
               data-testid="empty-state"
               icon="📚"
-              title="No clubs yet"
-              description="No clubs have been created yet. Check back soon!"
+              [title]="(clubService.searchQuery().trim() ? 'CLUBS.empty_search_title' : 'CLUBS.empty_title') | translate"
+              [description]="(clubService.searchQuery().trim() ? 'CLUBS.empty_search_desc' : 'CLUBS.empty_desc') | translate"
             />
           } @else {
             <ul class="bento-grid">
@@ -141,7 +141,7 @@
               data-testid="empty-state"
               icon="📚"
               [title]="'CLUBS.no_clubs' | translate"
-              description="Join a club to see it here."
+              [description]="'CLUBS.my_clubs_empty_desc' | translate"
             />
           } @else {
             <ul class="bento-grid">

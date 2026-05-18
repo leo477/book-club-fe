@@ -63,6 +63,7 @@
           type="button"
           data-testid="theme-toggle"
           (click)="themeService.toggle()"
+          [attr.aria-pressed]="themeService.isDark()"
           [attr.aria-label]="themeService.isDark()
             ? ('NAV.theme_toggle_light' | translate)
             : ('NAV.theme_toggle_dark'  | translate)"
@@ -198,6 +199,7 @@
                 type="button"
                 data-testid="theme-toggle"
                 (click)="themeService.toggle()"
+                [attr.aria-pressed]="themeService.isDark()"
                 class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium
                        text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
                        transition-all duration-200 w-full text-left"

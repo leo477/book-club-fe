@@ -31,7 +31,7 @@
 
     <!-- Club name + ownership marker -->
     <div>
-      <h3
+      <h2
         class="font-display font-semibold text-[var(--color-ink)] leading-snug flex items-center gap-1.5"
         [class]="variant() === 'featured' ? 'text-lg line-clamp-2' : 'text-base line-clamp-1'"
       >
@@ -40,7 +40,7 @@
           <span class="text-xs font-bold text-[var(--color-primary-600)] dark:text-[#fbbf24] flex-shrink-0"
                 title="Your club" aria-label="Your club">✦</span>
         }
-      </h3>
+      </h2>
       @if (club().description) {
         <p
           class="text-xs text-[var(--color-ink-muted)] mt-1.5"

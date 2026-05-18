@@ -83,7 +83,9 @@
     "venue_notes_max": "Notes must not exceed 300 characters.",
     "cancel": "Cancel",
     "submit": "Create club",
-    "submitting": "Creating…"
+    "submitting": "Creating…",
+    "add_first_meeting": "Add first meeting",
+    "remove_first_meeting": "Remove first meeting"
   },
   "CLUBS": {
     "active": "Active",
@@ -108,7 +110,12 @@
     "joined": "You're a member",
     "no_clubs": "No clubs found",
     "book_current": "Current book",
-    "days_until": "in {{ days }} days"
+    "days_until": "in {{ days }} days",
+    "empty_title": "No clubs yet",
+    "empty_desc": "No clubs have been created yet. Check back soon!",
+    "empty_search_title": "No matches found",
+    "empty_search_desc": "No clubs match your search. Try different keywords.",
+    "my_clubs_empty_desc": "Join a club to see it here."
   },
   "CLUB_DETAIL": {
     "about": "About",
@@ -121,6 +128,8 @@
     "manage_title": "Club management",
     "new_date": "New meeting date",
     "not_found": "Club not found",
+    "not_found_desc": "This club could not be found.",
+    "load_failed": "Failed to load club details.",
     "organizer_badge": "✨ Organizer",
     "pause": "Pause",
     "private": "Private",
@@ -199,6 +208,11 @@
     "privacy": "Privacy",
     "rights": "All rights reserved",
     "terms": "Terms"
+  },
+  "NOT_FOUND": {
+    "title": "Page not found",
+    "message": "The page you were looking for doesn't exist or has been moved.",
+    "backHome": "Back to clubs"
   },
   "MEMBERS": {
     "empty": "No members yet",
@@ -324,8 +338,12 @@
     "back_to_club": "← Back to Club",
     "heading": "Create Event",
     "title_label": "Title",
+    "title_placeholder": "April Discussion",
     "title_required": "Title is required.",
     "book_title_label": "📖 Book title",
+    "book_title_placeholder": "The Master and Margarita",
+    "address_placeholder": "Start typing an address…",
+    "theme_placeholder": "sci-fi",
     "book_title_hint": "What book will you discuss at this event?",
     "book_cover_searching": "🔍 Searching for book cover…",
     "book_cover_not_found": "No cover found — you can add one manually below.",
@@ -492,6 +510,31 @@
     "email": "Please enter a valid email address.",
     "minlength": "Minimum {{ requiredLength }} characters required.",
     "invalid": "Invalid value."
+  },
+  "SECURITY": {
+    "invalid_display_name": "Display name can contain only letters, digits, spaces and . ' - _ (2–50 characters)."
+  },
+  "ERRORS": {
+    "timeout": "The server is taking too long to respond. Please try again.",
+    "serverError": "The server returned an error. Please try again later.",
+    "requestFailed": "The request failed. Please try again.",
+    "network": "Network unavailable. Check your connection and try again.",
+    "dismiss": "Dismiss"
+  },
+  "META": {
+    "title": "Book Club — Book Clubs of Ukraine",
+    "description": "Join book clubs in your city. Book discussions, reader meetups, interest-based communities.",
+    "ogTitle": "Book Club — Book Clubs of Ukraine",
+    "ogDescription": "Join book clubs in your city.",
+    "twitterTitle": "Book Club — Book Clubs of Ukraine",
+    "twitterDescription": "Join book clubs in your city. Book discussions, reader meetups."
+  },
+  "COVER_UPLOAD": {
+    "upload_image": "📁 Upload image",
+    "uploading": "Uploading…",
+    "enter_url": "🔗 Enter URL",
+    "hide_url": "🔗 Hide URL",
+    "upload_failed": "Upload failed. Please try again or use a URL."
   },
   "SEO": {
     "clubs_title": "Book Clubs | Book Club",

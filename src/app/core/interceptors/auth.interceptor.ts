@@ -7,6 +7,54 @@ import { TokenStore } from '../auth/token.store';
 import { environment } from '../../../environments/environment';
 
 const REQUEST_TIMEOUT_MS = 15_000;
+const MUTATION_TIMEOUT_MS = 30_000;
+const MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+/**
+ * Error thrown when the frontend's own request timeout fires before the
+ * backend responds. Distinct from a backend HTTP error so the UI can show
+ * a meaningful, localizable message instead of rxjs's default
+ * "Timeout has occurred".
+ */
+export class RequestTimeoutError extends Error {
+  readonly translationKey = 'ERRORS.timeout';
+  constructor() {
+    super('ERRORS.timeout');
+    this.name = 'RequestTimeoutError';
+  }
+}
+
+/**
+ * Error wrapping a backend HTTP error (4xx/5xx). Carries an i18n key and,
+ * when present, the backend's detail/message so the UI can surface real
+ * server feedback rather than a generic "Timeout has occurred".
+ */
+export class BackendHttpError extends Error {
+  readonly translationKey: string;
+  readonly status: number;
+  readonly detail: string | null;
+  constructor(status: number, detail: string | null, translationKey: string) {
+    super(detail ?? translationKey);
+    this.name = 'BackendHttpError';
+    this.status = status;
+    this.detail = detail;
+    this.translationKey = translationKey;
+  }
+}
+
+function extractBackendDetail(err: HttpErrorResponse): string | null {
+  const body = err.error;
+  if (!body) return null;
+  if (typeof body === 'string') return body.trim() || null;
+  if (typeof body === 'object') {
+    const candidate =
+      (body as { detail?: unknown }).detail ??
+      (body as { message?: unknown }).message ??
+      (body as { error?: unknown }).error;
+    if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+  }
+  return null;
+}
 
 /**
  * Global HTTP error interceptor.
@@ -20,6 +68,11 @@ const REQUEST_TIMEOUT_MS = 15_000;
  * • 500 Internal Server Error → unexpected server failure; show a toast
  *   notification and log the full error for debugging.
  *
+ * Frontend timeouts and backend HTTP errors are normalized to dedicated
+ * error classes (`RequestTimeoutError`, `BackendHttpError`) that carry an
+ * i18n key and (for HTTP errors) the backend's detail message, so callers
+ * can render localized, accurate UI instead of rxjs's default text.
+ *
  * The error is always re-thrown so callers can still handle it locally if needed.
  */
 // eslint-disable-next-line rxjs-x/finnish
@@ -32,12 +85,16 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
     ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : req;
 
+  const timeoutMs = MUTATION_METHODS.has(req.method.toUpperCase())
+    ? MUTATION_TIMEOUT_MS
+    : REQUEST_TIMEOUT_MS;
+
   return next$(authedReq).pipe(
-    timeout(REQUEST_TIMEOUT_MS),
+    timeout(timeoutMs),
     catchError((error: unknown) => {
       if (error instanceof TimeoutError) {
         toast.error('Сервер не відповідає. Перевірте підключення та спробуйте ще раз.');
-        return throwError(() => error);
+        return throwError(() => new RequestTimeoutError());
       }
       const httpError = error instanceof HttpErrorResponse ? error : null;
       if (httpError?.status === 401 && token) {
@@ -50,6 +107,16 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
           console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
         }
         toast.error('A server error occurred. Please try again later.');
+      }
+      if (httpError) {
+        const detail = extractBackendDetail(httpError);
+        const key =
+          httpError.status >= 500
+            ? 'ERRORS.serverError'
+            : httpError.status === 0
+              ? 'ERRORS.network'
+              : 'ERRORS.requestFailed';
+        return throwError(() => new BackendHttpError(httpError.status, detail, key));
       }
       return throwError(() => error);
     }),

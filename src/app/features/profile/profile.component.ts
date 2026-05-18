@@ -17,6 +17,7 @@ import { ProfileStatsComponent } from './stats/profile-stats.component';
 import { ProfileRoleSelectorComponent } from './role-selector/profile-role-selector.component';
 import { HlmButton } from '../../shared/spartan/button/src';
 import { HlmInput } from '../../shared/spartan/input/src';
+import { displayNameValidator } from '../../shared/utils/display-name.validator';
 
 @Component({
   selector: 'app-profile',
@@ -83,7 +84,12 @@ export class ProfileComponent {
   protected readonly nameForm = new FormGroup({
     displayName: new FormControl('', {
       nonNullable: true,
-      validators: [Validators.required, Validators.minLength(2)],
+      validators: [
+        Validators.required,
+        Validators.minLength(2),
+        Validators.maxLength(50),
+        displayNameValidator,
+      ],
     }),
   });
 

@@ -68,6 +68,10 @@
                   {{ 'PROFILE.display_name_required' | translate }}
                 } @else if (nameForm.controls.displayName.hasError('minlength')) {
                   {{ 'PROFILE.display_name_min' | translate }}
+                } @else if (nameForm.controls.displayName.hasError('maxlength')) {
+                  {{ 'SECURITY.invalid_display_name' | translate }}
+                } @else if (nameForm.controls.displayName.hasError('unsafeChars')) {
+                  {{ 'SECURITY.invalid_display_name' | translate }}
                 }
               </p>
             }

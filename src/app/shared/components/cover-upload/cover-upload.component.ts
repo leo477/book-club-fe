@@ -8,13 +8,14 @@ import {
   effect,
 } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { UploadService } from '../../../core/services/upload.service';
 
 @Component({
   selector: 'app-cover-upload',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, TranslateModule],
   template: `
     <div class="space-y-2">
       @if (previewUrl() || externalUrl()) {
@@ -41,9 +42,9 @@ import { UploadService } from '../../../core/services/upload.service';
           class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 disabled:opacity-50 transition-colors"
         >
           @if (isUploading()) {
-            <span class="animate-spin">⏳</span> Uploading…
+            <span class="animate-spin">⏳</span> {{ 'COVER_UPLOAD.uploading' | translate }}
           } @else {
-            📁 Upload image
+            {{ 'COVER_UPLOAD.upload_image' | translate }}
           }
         </button>
 
@@ -52,7 +53,7 @@ import { UploadService } from '../../../core/services/upload.service';
           (click)="showUrlInput.set(!showUrlInput())"
           class="inline-flex items-center gap-1.5 rounded-xl border border-gray-300 dark:border-gray-600 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
         >
-          🔗 {{ showUrlInput() ? 'Hide URL' : 'Enter URL' }}
+          {{ (showUrlInput() ? 'COVER_UPLOAD.hide_url' : 'COVER_UPLOAD.enter_url') | translate }}
         </button>
       </div>
 
@@ -84,6 +85,7 @@ export class CoverUploadComponent {
 
   private readonly uploadService = inject(UploadService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly translate = inject(TranslateService);
 
   readonly isUploading = signal(false);
   readonly uploadError = signal<string | null>(null);
@@ -119,7 +121,7 @@ export class CoverUploadComponent {
         this.isUploading.set(false);
       },
       error: () => {
-        this.uploadError.set('Upload failed. Please try again or use a URL.');
+        this.uploadError.set(this.translate.instant('COVER_UPLOAD.upload_failed'));
         this.isUploading.set(false);
         this.previewUrl.set(null);
       },

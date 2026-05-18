@@ -107,7 +107,7 @@
         <!-- First meeting toggle -->
         <div class="space-y-3">
           <button type="button" hlmBtn variant="ghost" (click)="toggleFirstEvent()">
-            {{ showFirstEvent() ? 'Remove first meeting' : 'Add first meeting' }}
+            {{ (showFirstEvent() ? 'CREATE_CLUB.remove_first_meeting' : 'CREATE_CLUB.add_first_meeting') | translate }}
           </button>
 
           @if (showFirstEvent()) {
