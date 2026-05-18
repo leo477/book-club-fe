@@ -411,7 +411,6 @@ package.json
 playwright.md
 playwright.vercel.config.ts
 postcss.config.json
-postcss.config.mjs
 README.md
 repomix.config.json
 SECURITY.md
@@ -3614,7 +3613,7 @@ export class HlmLabel {
 	constructor() {
 		classes(
 			() =>
-				'flex items-center gap-2 text-sm leading-none font-medium select-none group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 peer-data-[disabled]:cursor-not-allowed peer-data-[disabled]:opacity-50 has-[[disabled]]:cursor-not-allowed has-[[disabled]]:opacity-50',
+				'flex items-center gap-2 text-sm leading-none font-medium group-data-[disabled=true]:pointer-events-none group-data-[disabled=true]:opacity-50 peer-disabled:cursor-not-allowed peer-disabled:opacity-50 peer-data-[disabled]:cursor-not-allowed peer-data-[disabled]:opacity-50 has-[[disabled]]:cursor-not-allowed has-[[disabled]]:opacity-50',
 		);
 	}
 }
@@ -4890,21 +4889,6 @@ module.exports = function (config) {
     "@tailwindcss/postcss": {}
   }
 }
-````
-
-## File: postcss.config.mjs
-````javascript
-import tailwindcss from '@tailwindcss/postcss';
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
-
-export default {
-  plugins: [
-    tailwindcss({ base: __dirname }),
-  ],
-};
 ````
 
 ## File: README.md
@@ -15161,7 +15145,7 @@ export class QuizEditComponent extends QuizDetailBaseComponent {
   </main>
 } @else if (club()) {
   <main class="min-h-screen">
-    <div class="relative parchment-hero">
+    <div class="relative parchment-hero h-64">
       @let heroCover = club()!.coverUrl;
       @if (heroCover) {
         <img
