@@ -35,7 +35,7 @@ describe('authInterceptor', () => {
   }
 
   afterEach(() => {
-    httpMock.verify();
+    httpMock?.verify();
   });
 
   it('passes request without Authorization when no token', () => {
