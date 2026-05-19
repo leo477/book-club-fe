@@ -85,7 +85,12 @@
     "submit": "Create club",
     "submitting": "Creating…",
     "add_first_meeting": "Add first meeting",
-    "remove_first_meeting": "Remove first meeting"
+    "remove_first_meeting": "Remove first meeting",
+    "first_meeting_title_label": "Event title",
+    "first_meeting_title_placeholder": "e.g. Kick-off meeting",
+    "first_meeting_date_label": "Event date",
+    "first_meeting_city_label": "Event city",
+    "first_meeting_city_placeholder": "e.g. Kyiv"
   },
   "CLUBS": {
     "active": "Active",
@@ -363,8 +368,11 @@
     "after_venue_add": "+ Add after-meeting venue",
     "after_venue_remove": "− Remove after-meeting venue",
     "after_venue_name_label": "Venue name",
+    "after_venue_name_placeholder": "Cozy Cafe",
     "after_venue_address_label": "Address",
+    "after_venue_address_placeholder": "123 Main St",
     "after_venue_notes_label": "Notes",
+    "after_venue_notes_placeholder": "Optional notes",
     "cancel": "Cancel",
     "submit": "Create Event",
     "submitting": "Creating…"

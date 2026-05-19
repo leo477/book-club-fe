@@ -59,9 +59,10 @@ export class HeaderComponent {
   });
 
   async switchLang(): Promise<void> {
-  const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-  await firstValueFrom(this.translate.use(next));
-}
+    const next = this.currentLang() === 'uk' ? 'en' : 'uk';
+    await firstValueFrom(this.translate.use(next));
+    document.documentElement.lang = next;
+  }
 
   async signOut(): Promise<void> {
     await this.auth.signOut();

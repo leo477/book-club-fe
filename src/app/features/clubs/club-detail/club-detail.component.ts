@@ -87,6 +87,7 @@ export class ClubDetailComponent {
   readonly activeEventsTab = signal<'upcoming' | 'history'>('upcoming');
   readonly isLoading = signal(true);
   readonly errorMessage = signal<string | null>(null);
+  readonly isClubMissing = signal(false);
   readonly isActionLoading = signal(false);
   readonly actionError = signal<string | null>(null);
   readonly attendingEventId = signal<string | null>(null);
@@ -181,6 +182,7 @@ export class ClubDetailComponent {
   private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {
     this.isLoading.set(true);
     this.errorMessage.set(null);
+    this.isClubMissing.set(false);
 
     try {
       if (this.auth.isAuthenticated()) {
@@ -226,10 +228,14 @@ export class ClubDetailComponent {
           params: { name: found.name },
         });
       } else {
-        this.errorMessage.set(this.translate.instant('CLUB_DETAIL.not_found_desc'));
+        this.isClubMissing.set(true);
+        this.errorMessage.set('not_found');
       }
     } catch {
-      if (!isCancelled()) this.errorMessage.set(this.translate.instant('CLUB_DETAIL.load_failed'));
+      if (!isCancelled()) {
+        this.isClubMissing.set(false);
+        this.errorMessage.set('load_failed');
+      }
     } finally {
       if (!isCancelled()) this.isLoading.set(false);
     }
@@ -245,7 +251,13 @@ export class ClubDetailComponent {
 
   openClubChat(): void {
     const user = this.currentUser();
-    this.chatService.loadRooms(this.id(), user?.id);
+    // Only load rooms if none are already cached for this club — the chat-widget
+    // effect eagerly calls loadAllClubRooms() on startup, so a duplicate fetch
+    // here would hit GET /clubs/{id}/chat/rooms a second time on page load.
+    const hasRoomsForClub = this.chatService.rooms().some(r => r.clubId === this.id());
+    if (!hasRoomsForClub) {
+      this.chatService.loadRooms(this.id(), user?.id);
+    }
     if (!this.chatService.isOpen()) {
       this.chatService.toggleOpen();
     }
@@ -279,13 +291,28 @@ export class ClubDetailComponent {
       if (updated) this.club.set(updated);
     } catch (err) {
       this.actionError.set(this.formatActionError(err, errorFallback));
+      this.scheduleErrorDismiss();
     } finally {
       this.isActionLoading.set(false);
     }
   }
 
+  private _errorDismissTimer: ReturnType<typeof setTimeout> | null = null;
+
   dismissActionError(): void {
+    if (this._errorDismissTimer !== null) {
+      clearTimeout(this._errorDismissTimer);
+      this._errorDismissTimer = null;
+    }
     this.actionError.set(null);
+  }
+
+  private scheduleErrorDismiss(): void {
+    if (this._errorDismissTimer !== null) clearTimeout(this._errorDismissTimer);
+    this._errorDismissTimer = setTimeout(() => {
+      this._errorDismissTimer = null;
+      this.actionError.set(null);
+    }, 5000);
   }
 
   private formatActionError(err: unknown, fallback: string): string {

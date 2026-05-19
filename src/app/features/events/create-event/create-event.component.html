@@ -133,17 +133,17 @@
             <div>
               <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_name_label' | translate }} <span class="text-red-500">*</span></label>
               <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
-                     class="w-full" placeholder="Cozy Cafe" />
+                     class="w-full" [placeholder]="'CREATE_EVENT.after_venue_name_placeholder' | translate" />
             </div>
             <div>
               <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_address_label' | translate }}</label>
               <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
-                     class="w-full" placeholder="123 Main St" />
+                     class="w-full" [placeholder]="'CREATE_EVENT.after_venue_address_placeholder' | translate" />
             </div>
             <div>
               <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_notes_label' | translate }}</label>
               <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
-                     class="w-full" placeholder="Optional notes" />
+                     class="w-full" [placeholder]="'CREATE_EVENT.after_venue_notes_placeholder' | translate" />
             </div>
           </div>
         }
