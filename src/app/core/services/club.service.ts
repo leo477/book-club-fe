@@ -25,6 +25,9 @@ export class ClubService {
   private readonly membersCache = new Map<string, { data: ClubMemberDetail[]; fetchedAt: number }>();
   private readonly eventsCache = new Map<string, { data: ClubEvent[]; fetchedAt: number }>();
 
+  /** Deduplicates concurrent loadMyClubs() calls — all callers share one in-flight request. */
+  private _loadMyClubsInFlight: Promise<void> | null = null;
+
   private cacheRead<T>(cache: Map<string, { data: T; fetchedAt: number }>, key: string): T | null {
     const entry = cache.get(key);
     if (!entry) return null;
@@ -112,15 +115,26 @@ export class ClubService {
   }
 
   async loadMyClubs(): Promise<void> {
-    try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
-      );
-      this._myClubs.set(raw.map(mapClub));
-      this.myClubsLoadedAt = Date.now();
-    } catch {
-      this._error.set('Failed to load my clubs');
-    }
+    // Deduplicate: if a request is already in flight, return the same promise
+    // so concurrent callers (e.g. clubs-list ngOnInit + chat-widget effect)
+    // share one HTTP request instead of issuing duplicates.
+    if (this._loadMyClubsInFlight) return this._loadMyClubsInFlight;
+
+    this._loadMyClubsInFlight = (async () => {
+      try {
+        const raw = await firstValueFrom(
+          this.http.get<ApiClub[]>(`${environment.apiUrl}/clubs/my`),
+        );
+        this._myClubs.set(raw.map(mapClub));
+        this.myClubsLoadedAt = Date.now();
+      } catch {
+        this._error.set('Failed to load my clubs');
+      } finally {
+        this._loadMyClubsInFlight = null;
+      }
+    })();
+
+    return this._loadMyClubsInFlight;
   }
 
   async ensureMyClubsLoaded(maxAgeMs = 30_000): Promise<void> {

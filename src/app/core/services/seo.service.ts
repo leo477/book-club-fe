@@ -1,7 +1,7 @@
 import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
-import { TranslateService } from '@ngx-translate/core';
+import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs';
 
@@ -47,7 +47,15 @@ export class SeoService {
     const current = this.translate.currentLang ?? this.translate.getDefaultLang() ?? 'uk';
     apply(current);
 
-    this.translate.onLangChange.subscribe(event => apply(event.lang));
+    // Pass event.translations directly so applyLocalizedMeta reads from the
+    // freshly-loaded translation object rather than relying on translate.instant(),
+    // which may still return the previous language's values at the time the
+    // subscriber fires.
+    this.translate.onLangChange.subscribe((event: LangChangeEvent) => {
+      this.applyHtmlLang(event.lang);
+      this.applyLocalizedMeta(event.lang, event.translations as Record<string, Record<string, string>>);
+      this.applyOgUrl();
+    });
 
     this.router?.events
       .pipe(filter(e => e instanceof NavigationEnd))
@@ -61,13 +69,18 @@ export class SeoService {
     }
   }
 
-  private applyLocalizedMeta(lang: string): void {
-    const title = this.translate.instant('META.title');
-    const description = this.translate.instant('META.description');
-    const ogTitle = this.translate.instant('META.ogTitle');
-    const ogDescription = this.translate.instant('META.ogDescription');
-    const twitterTitle = this.translate.instant('META.twitterTitle');
-    const twitterDescription = this.translate.instant('META.twitterDescription');
+  private applyLocalizedMeta(lang: string, translations?: Record<string, Record<string, string>>): void {
+    // Prefer values from the event's translation map (guaranteed to be for the
+    // new language); fall back to translate.instant() when called at bootstrap.
+    const get = (key: string): string =>
+      translations?.['META']?.[key] ?? this.translate.instant(`META.${key}`);
+
+    const title = get('title');
+    const description = get('description');
+    const ogTitle = get('ogTitle');
+    const ogDescription = get('ogDescription');
+    const twitterTitle = get('twitterTitle');
+    const twitterDescription = get('twitterDescription');
     const ogLocale = OG_LOCALE_MAP[lang] ?? lang;
 
     // Only override when key actually resolved (instant returns the key on miss).
@@ -92,10 +105,11 @@ export class SeoService {
 
   private applyOgUrl(): void {
     if (!isPlatformBrowser(this.platformId)) return;
-    const origin = this.document.defaultView?.location?.origin;
-    const path = this.document.defaultView?.location?.pathname ?? '/';
-    if (!origin) return;
-    const url = `${origin}${path}`;
+    const loc = this.document.defaultView?.location;
+    if (!loc?.origin) return;
+    // Use href so the og:url and canonical reflect the full current URL
+    // (origin + path + query string), not a hardcoded domain.
+    const url = loc.href;
     this.meta.updateTag({ property: 'og:url', content: url });
     this.setCanonical(url);
   }

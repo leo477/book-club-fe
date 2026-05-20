@@ -85,7 +85,12 @@
     "submit": "Створити клуб",
     "submitting": "Створення…",
     "add_first_meeting": "Додати першу зустріч",
-    "remove_first_meeting": "Прибрати першу зустріч"
+    "remove_first_meeting": "Прибрати першу зустріч",
+    "first_meeting_title_label": "Назва події",
+    "first_meeting_title_placeholder": "Напр. Установча зустріч",
+    "first_meeting_date_label": "Дата події",
+    "first_meeting_city_label": "Місто події",
+    "first_meeting_city_placeholder": "Напр. Київ"
   },
   "CLUBS": {
     "active": "Активний",
@@ -363,8 +368,11 @@
     "after_venue_add": "+ Додати місце після зустрічі",
     "after_venue_remove": "− Прибрати місце після зустрічі",
     "after_venue_name_label": "Назва місця",
+    "after_venue_name_placeholder": "Затишна кав'ярня",
     "after_venue_address_label": "Адреса місця",
+    "after_venue_address_placeholder": "вул. Хрещатик, 123",
     "after_venue_notes_label": "Примітки",
+    "after_venue_notes_placeholder": "Необов'язкові нотатки",
     "cancel": "Скасувати",
     "submit": "Створити подію",
     "submitting": "Створення…"

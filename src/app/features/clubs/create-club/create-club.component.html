@@ -112,19 +112,19 @@
 
           @if (showFirstEvent()) {
             <hlm-field>
-              <label hlmFieldLabel for="event-title">Event title</label>
+              <label hlmFieldLabel for="event-title">{{ 'CREATE_CLUB.first_meeting_title_label' | translate }}</label>
               <input
                 hlmInput
                 id="event-title"
                 type="text"
                 [formControl]="eventTitleCtrl"
                 class="w-full"
-                placeholder="e.g. Kick-off meeting"
+                [placeholder]="'CREATE_CLUB.first_meeting_title_placeholder' | translate"
               />
             </hlm-field>
 
             <hlm-field>
-              <label hlmFieldLabel for="event-date">Event date</label>
+              <label hlmFieldLabel for="event-date">{{ 'CREATE_CLUB.first_meeting_date_label' | translate }}</label>
               <input
                 hlmInput
                 id="event-date"
@@ -135,14 +135,14 @@
             </hlm-field>
 
             <hlm-field>
-              <label hlmFieldLabel for="event-city">Event city</label>
+              <label hlmFieldLabel for="event-city">{{ 'CREATE_CLUB.first_meeting_city_label' | translate }}</label>
               <input
                 hlmInput
                 id="event-city"
                 type="text"
                 [formControl]="eventCityCtrl"
                 class="w-full"
-                placeholder="e.g. Kyiv"
+                [placeholder]="'CREATE_CLUB.first_meeting_city_placeholder' | translate"
               />
             </hlm-field>
           }

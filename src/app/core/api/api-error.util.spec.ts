@@ -1,7 +1,31 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { extractApiError } from './api-error.util';
+import { BackendHttpError, RequestTimeoutError } from '../interceptors/auth.interceptor';
 
 describe('extractApiError', () => {
+  // ── Interceptor-normalized types (primary path) ──────────────────────────
+
+  it('returns the translation key for RequestTimeoutError', () => {
+    expect(extractApiError(new RequestTimeoutError())).toBe('ERRORS.timeout');
+  });
+
+  it('returns backend detail from BackendHttpError when present', () => {
+    const err = new BackendHttpError(500, 'Database unavailable', 'ERRORS.serverError');
+    expect(extractApiError(err)).toBe('Database unavailable');
+  });
+
+  it('returns translation key from BackendHttpError when detail is null', () => {
+    const err = new BackendHttpError(500, null, 'ERRORS.serverError');
+    expect(extractApiError(err)).toBe('ERRORS.serverError');
+  });
+
+  it('returns detail from BackendHttpError with 4xx status', () => {
+    const err = new BackendHttpError(401, 'Invalid credentials', 'ERRORS.requestFailed');
+    expect(extractApiError(err)).toBe('Invalid credentials');
+  });
+
+  // ── Raw Angular / RxJS fallback types ────────────────────────────────────
+
   it('returns detail from HttpErrorResponse when present', () => {
     const err = new HttpErrorResponse({ error: { detail: 'Not found' }, status: 404 });
     expect(extractApiError(err)).toBe('Not found');
