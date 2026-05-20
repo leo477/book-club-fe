@@ -1,3 +1,8 @@
-    <router-outlet />
-    <hlm-toaster position="bottom-right" [richColors]="true" />
+@if (isNavigating()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+    <app-loading-spinner size="lg" />
+  </div>
+}
+<router-outlet />
+<hlm-toaster position="bottom-right" [richColors]="true" />
 
