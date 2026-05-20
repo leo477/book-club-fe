@@ -41,6 +41,10 @@ export const appConfig: ApplicationConfig = {
             translate.use('uk').pipe(
               catchError(() => translate.use('en').pipe(catchError(() => of(null)))),
             ),
+          ).then(() =>
+            firstValueFrom(
+              translate.reloadLang(translate.currentLang ?? 'uk').pipe(catchError(() => of(null))),
+            ),
           ).then(() => {
             seo.bootstrapLocaleSync();
             appRef.tick();
