@@ -37,7 +37,8 @@ export class ChatService {
   private readonly _hasNewMessage = signal<boolean>(false);
   private readonly _mutedUserIds = signal<Set<string>>(new Set());
 
-  // Tracks the current user id so we can mark own messages.
+  private _ws: WebSocket | null = null;
+
   private currentUserId: string | null = null;
 
   // ── Public readonly signals ────────────────────────────────────────────────
@@ -131,6 +132,29 @@ export class ChatService {
       .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
   }
 
+  connectRoom(roomId: string, token: string): void {
+    this.disconnectRoom();
+    this._ws = new WebSocket(environment.wsUrl + '/chat/rooms/' + roomId + '?token=' + token);
+    this._ws.onmessage = (event: MessageEvent) => {
+      const raw = JSON.parse(event.data as string) as ApiChatMessage;
+      const msg = this.mapMessage(raw);
+      this._messages.update(map => ({
+        ...map,
+        [roomId]: [...(map[roomId] ?? []), msg],
+      }));
+      if (!this._isOpen()) {
+        this._unreadCount.update(n => n + 1);
+        this._hasNewMessage.set(true);
+        this._playBeep();
+      }
+    };
+  }
+
+  disconnectRoom(): void {
+    this._ws?.close();
+    this._ws = null;
+  }
+
   toggleOpen(): void {
     this._isOpen.update(v => !v);
     if (this._isOpen()) {
@@ -139,6 +163,7 @@ export class ChatService {
   }
 
   openRoom(roomId: string): void {
+    this.disconnectRoom();
     this._activeRoomId.set(roomId);
     this.loadMessages(roomId);
     this.markAsRead();
@@ -150,6 +175,7 @@ export class ChatService {
   }
 
   clearRooms(): void {
+    this.disconnectRoom();
     this._rooms.set([]);
     this._messages.set({});
     this._activeRoomId.set(null);
@@ -232,6 +258,7 @@ export class ChatService {
   }
 
   openAndFocusRoom(room: ChatRoom): void {
+    this.disconnectRoom();
     this._activeRoomId.set(room.id);
     this.loadMessages(room.id);
     this._isOpen.set(true);
@@ -259,6 +286,19 @@ export class ChatService {
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
+
+  private _playBeep(): void {
+    const ctx = new AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.frequency.value = 880;
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.3);
+  }
 
   private mapMessage(m: ApiChatMessage): ChatMessage {
     return {

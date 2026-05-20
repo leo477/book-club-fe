@@ -56,7 +56,7 @@ export const routes: Routes = [
           ),
       },
 
-      { path: '', redirectTo: 'clubs', pathMatch: 'full' },
+      { path: '', redirectTo: 'events', pathMatch: 'full' },
       {
         path: 'profile',
         canActivate: [authGuard],

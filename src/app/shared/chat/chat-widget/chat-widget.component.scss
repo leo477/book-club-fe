@@ -1,4 +1,3 @@
-// Slide-up animation for the chat panel
 @keyframes slideUp {
   from {
     opacity: 0;
@@ -14,10 +13,9 @@
   animation: slideUp 0.2s ease-out forwards;
 }
 
-// Custom scrollbar for messages
 .messages-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #e5e7eb transparent;
+  scrollbar-color: var(--border) transparent;
 
   &::-webkit-scrollbar {
     width: 4px;
@@ -28,11 +26,11 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: #e5e7eb;
+    background-color: var(--border);
     border-radius: 2px;
 
     &:hover {
-      background-color: #d1d5db;
+      background-color: var(--color-ink-muted);
     }
   }
 }

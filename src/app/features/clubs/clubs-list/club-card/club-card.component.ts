@@ -26,7 +26,6 @@ export class ClubCardComponent {
   readonly isOwned = input<boolean>(false);
   readonly isAuthenticated = input<boolean>(false);
   readonly joining = input<boolean>(false);
-  readonly variant = input<'default' | 'featured'>('default');
 
   readonly join = output<void>();
 

@@ -152,6 +152,9 @@ src/
         event-card/
           event-card.component.html
           event-card.component.ts
+        event-countdown/
+          event-countdown.component.html
+          event-countdown.component.ts
         event-detail/
           event-detail.component.html
           event-detail.component.ts

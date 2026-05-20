@@ -1,6 +1,7 @@
 import {
   Component,
   ChangeDetectionStrategy,
+  computed,
   input,
   output,
 } from '@angular/core';
@@ -12,12 +13,13 @@ import { HlmCardImports } from '../../../shared/spartan/card/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmBadge } from '../../../shared/spartan/badge/src';
 import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+import { EventCountdownComponent } from '../event-countdown/event-countdown.component';
 
 @Component({
   selector: 'app-event-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe, ...HlmCardImports, HlmButton, HlmBadge, HlmSpinner],
+  imports: [RouterLink, TranslateModule, FormatDatePipe, ...HlmCardImports, HlmButton, HlmBadge, HlmSpinner, EventCountdownComponent],
   templateUrl: './event-card.component.html',
 })
 export class EventCardComponent {
@@ -27,4 +29,8 @@ export class EventCardComponent {
 
   readonly attend = output<void>();
   readonly cancelAttend = output<void>();
+
+  readonly daysToEvent = computed(() =>
+    Math.ceil((new Date(this.event().date).getTime() - Date.now()) / 86400000)
+  );
 }
