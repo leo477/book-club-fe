@@ -7,7 +7,7 @@ import {
 } from '@angular/router';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
-import { TranslateHttpLoader, provideTranslateHttpLoader } from '@ngx-translate/http-loader';
+import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
