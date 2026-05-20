@@ -1,4 +1,4 @@
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { HttpContextToken, HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -10,6 +10,9 @@ import { environment } from '../../../environments/environment';
 const REQUEST_TIMEOUT_MS = 15_000;
 const MUTATION_TIMEOUT_MS = 30_000;
 const MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+/** Suppress toast errors for background requests that fail silently in the UI. */
+export const SUPPRESS_ERROR_TOAST = new HttpContextToken<boolean>(() => false);
 
 /**
  * Error thrown when the frontend's own request timeout fires before the
@@ -104,8 +107,11 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
           : throwError(() => error),
     }),
     catchError((error: unknown) => {
+      const suppress = req.context.get(SUPPRESS_ERROR_TOAST);
       if (error instanceof TimeoutError) {
-        toast.error(translate.instant('ERRORS.timeout') as string);
+        if (!suppress) {
+          toast.error(translate.instant('ERRORS.timeout') as string);
+        }
         return throwError(() => new RequestTimeoutError());
       }
       const httpError = error instanceof HttpErrorResponse ? error : null;
@@ -118,7 +124,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
         if (!environment.production) {
           console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
         }
-        toast.error(translate.instant('ERRORS.serverError') as string);
+        if (!suppress) {
+          toast.error(translate.instant('ERRORS.serverError') as string);
+        }
       }
       if (httpError) {
         const detail = extractBackendDetail(httpError);

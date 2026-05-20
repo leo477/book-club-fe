@@ -1,9 +1,10 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
 import { AuthService } from '../auth/auth.service';
+import { SUPPRESS_ERROR_TOAST } from '../interceptors/auth.interceptor';
 import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
 import { ClubEvent } from '../models/event.model';
 
@@ -258,7 +259,9 @@ export class ClubService {
 
   async getBans(clubId: string): Promise<BanRecord[]> {
     const raw = await firstValueFrom(
-      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`),
+      this.http.get<ApiBanRecord[]>(`${environment.apiUrl}/clubs/${clubId}/bans`, {
+        context: new HttpContext().set(SUPPRESS_ERROR_TOAST, true),
+      }),
     );
     return raw.map(mapBanRecord);
   }
