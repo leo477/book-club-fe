@@ -64,6 +64,12 @@ export const routes: Routes = [
           import('./features/profile/profile.component').then(m => m.ProfileComponent),
       },
       {
+        path: 'chats',
+        canActivate: [authGuard],
+        loadComponent: () =>
+          import('./features/chats/chats.component').then(m => m.ChatsComponent),
+      },
+      {
         path: '**',
         loadComponent: () =>
           import('./features/not-found/not-found.component').then(m => m.NotFoundComponent),

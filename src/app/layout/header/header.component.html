@@ -122,6 +122,14 @@
                 </div>
                 <hr class="border-[var(--color-sepia)] my-1" />
                 <a
+                  [routerLink]="['/chats']"
+                  (click)="showUserMenu.set(false)"
+                  class="block px-3 py-2 text-sm text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)] transition-colors"
+                  role="menuitem"
+                >
+                  {{ 'NAV.chats' | translate }}
+                </a>
+                <a
                   [routerLink]="['/profile']"
                   (click)="showUserMenu.set(false)"
                   class="block px-3 py-2 text-sm text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)] transition-colors"

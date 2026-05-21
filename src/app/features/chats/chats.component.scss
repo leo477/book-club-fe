@@ -1,0 +1,16 @@
+:host {
+  display: grid;
+  grid-template-columns: 18rem 1fr;
+  height: calc(100vh - 4rem);
+  overflow: hidden;
+}
+
+.chats-sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.chats-main {
+  display: flex;
+  flex-direction: column;
+}

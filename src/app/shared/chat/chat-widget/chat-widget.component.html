@@ -152,8 +152,8 @@
         </button>
       </div>
 
-      <!-- New Room Section (below input, organizers only) -->
-      @if (auth.isOrganizer()) {
+      <!-- New Room Section (below input, club organizers only) -->
+      @if (isCurrentClubOrganizer()) {
         <div
           class="px-3 pb-3"
           [style.border-top]="isCreatingRoom() ? '1px solid var(--border)' : 'none'"
