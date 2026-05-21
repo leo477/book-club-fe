@@ -53,7 +53,7 @@ function makeTokenStore(token: string | null = null) {
 
 function makeClubService() {
   return {
-    myClubs: signal<{ id: string; name: string }[]>([]),
+    myClubs: signal<{ id: string; name: string; organizerId?: string }[]>([]),
     loadMyClubs: jasmine.createSpy('loadMyClubs').and.returnValue(Promise.resolve()),
   };
 }
@@ -109,8 +109,14 @@ describe('ChatWidgetComponent', () => {
   });
 
   it('fabPositionClass returns bottom-24 right-6 when isOrganizer is true', () => {
-    authSvc = makeAuthService({ isOrganizer: true });
+    authSvc = makeAuthService({ currentUser: { id: 'owner-1', displayName: 'Owner' } });
+    chatSvc = makeChatService();
+    chatSvc.activeRoom.set({ clubId: 'club-1' });
+    clubSvc = makeClubService();
+    clubSvc.myClubs.set([{ id: 'club-1', name: 'Club A', organizerId: 'owner-1' }]);
     TestBed.overrideProvider(AuthService, { useValue: authSvc });
+    TestBed.overrideProvider(ChatService, { useValue: chatSvc });
+    TestBed.overrideProvider(ClubService, { useValue: clubSvc });
     const fixture = TestBed.createComponent(ChatWidgetComponent);
     const comp = fixture.componentInstance as unknown as CompProtected;
     expect(comp.fabPositionClass()).toBe('bottom-24 right-6');
@@ -153,8 +159,14 @@ describe('ChatWidgetComponent', () => {
   });
 
   it('panelPositionClass returns bottom-40 right-6 when isOrganizer is true', () => {
-    authSvc = makeAuthService({ isOrganizer: true });
+    authSvc = makeAuthService({ currentUser: { id: 'owner-1', displayName: 'Owner' } });
+    chatSvc = makeChatService();
+    chatSvc.activeRoom.set({ clubId: 'club-1' });
+    clubSvc = makeClubService();
+    clubSvc.myClubs.set([{ id: 'club-1', name: 'Club A', organizerId: 'owner-1' }]);
     TestBed.overrideProvider(AuthService, { useValue: authSvc });
+    TestBed.overrideProvider(ChatService, { useValue: chatSvc });
+    TestBed.overrideProvider(ClubService, { useValue: clubSvc });
     const fixture = TestBed.createComponent(ChatWidgetComponent);
     const comp = fixture.componentInstance as unknown as CompProtected;
     expect(comp.panelPositionClass()).toBe('bottom-40 right-6');
@@ -375,10 +387,9 @@ describe('ChatWidgetComponent', () => {
       expect(chatSvc.connectRoom).toHaveBeenCalledWith('room-1', 'tok-abc');
     });
 
-    it('calls disconnectRoom when isOpen is false', () => {
+    it('calls disconnectRoom when activeRoomId is null', () => {
       chatSvc = makeChatService();
-      chatSvc.activeRoomId.set('room-1');
-      chatSvc.isOpen.set(false);
+      chatSvc.activeRoomId.set(null);
       tokenStore = makeTokenStore('tok-abc');
       TestBed.overrideProvider(ChatService, { useValue: chatSvc });
       TestBed.overrideProvider(TokenStore, { useValue: tokenStore });

@@ -20,6 +20,8 @@ interface ApiChatMessage {
   timestamp: string; // ISO-8601
 }
 
+interface WsEnvelope { type: string; payload: ApiChatMessage; }
+
 // ── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
@@ -136,8 +138,9 @@ export class ChatService {
     this.disconnectRoom();
     this._ws = new WebSocket(environment.wsUrl + '/chat/rooms/' + roomId + '?token=' + token);
     this._ws.onmessage = (event: MessageEvent) => {
-      const raw = JSON.parse(event.data as string) as ApiChatMessage;
-      const msg = this.mapMessage(raw);
+      const envelope = JSON.parse(event.data as string) as WsEnvelope;
+      if (envelope.type !== 'message') return;
+      const msg = this.mapMessage(envelope.payload);
       this._messages.update(map => ({
         ...map,
         [roomId]: [...(map[roomId] ?? []), msg],

@@ -107,6 +107,9 @@ src/
         register/
           register.component.html
           register.component.ts
+      chats/
+        chats.component.html
+        chats.component.ts
       clubs/
         club-detail/
           book-vote/

@@ -29,11 +29,20 @@ export class ChatWidgetComponent {
   protected readonly isCreatingRoom = signal(false);
   protected readonly newRoomName = signal('');
 
+  protected readonly isCurrentClubOrganizer = computed(() => {
+    const clubId = this.chat.activeRoom()?.clubId;
+    if (!clubId) return false;
+    const userId = this.auth.currentUser()?.id;
+    if (!userId) return false;
+    const club = this.clubService.myClubs().find(c => c.id === clubId);
+    return club?.organizerId === userId;
+  });
+
   protected readonly fabPositionClass = computed(() =>
-    this.auth.isOrganizer() ? 'bottom-24 right-6' : 'bottom-6 right-6'
+    this.isCurrentClubOrganizer() ? 'bottom-24 right-6' : 'bottom-6 right-6'
   );
   protected readonly panelPositionClass = computed(() =>
-    this.auth.isOrganizer() ? 'bottom-40 right-6' : 'bottom-24 right-6'
+    this.isCurrentClubOrganizer() ? 'bottom-40 right-6' : 'bottom-24 right-6'
   );
 
   // Prevents repeated loadMyClubs() calls while waiting for the response.
@@ -68,10 +77,9 @@ export class ChatWidgetComponent {
     effect(() => {
       const roomId = this.chat.activeRoomId();
       const token = this.tokenStore.token();
-      const isOpen = this.chat.isOpen();
-      if (roomId && token && isOpen) {
+      if (roomId && token) {
         this.chat.connectRoom(roomId, token);
-      } else if (!isOpen) {
+      } else if (!roomId) {
         this.chat.disconnectRoom();
       }
     });

@@ -1,0 +1,54 @@
+<aside class="chats-sidebar border-r border-[var(--color-sepia)] overflow-y-auto">
+  <div class="p-4 font-semibold text-lg">{{ 'CHATS.title' | translate }}</div>
+  @for (group of roomsByClub(); track group.clubId) {
+    <div class="px-4 py-1 text-xs font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide">
+      {{ group.clubName }}
+    </div>
+    @for (room of group.rooms; track room.id) {
+      <button
+        type="button"
+        class="w-full text-left px-4 py-3 text-sm transition-colors"
+        [class.bg-[var(--color-primary-100)]]="chat.activeRoomId() === room.id"
+        (click)="selectRoom(room)"
+      >
+        {{ room.name }}
+      </button>
+    }
+  } @empty {
+    <p class="px-4 py-3 text-sm text-[var(--color-ink-muted)]">{{ 'CHATS.no_rooms' | translate }}</p>
+  }
+</aside>
+
+<main class="chats-main flex flex-col overflow-hidden">
+  @if (chat.activeRoomId()) {
+    @let activeRoom = chat.activeRoom();
+    <div class="p-4 border-b border-[var(--color-sepia)] font-semibold">{{ activeRoom?.name }}</div>
+    <div class="flex-1 overflow-y-auto p-4 flex flex-col gap-2" aria-live="polite">
+      @for (msg of chat.activeMessages(); track msg.id) {
+        <div class="flex flex-col max-w-[70%]" [class.self-end]="msg.isOwn" [class.self-start]="!msg.isOwn">
+          @if (!msg.isOwn) {
+            <span class="text-xs text-[var(--color-ink-muted)] mb-0.5">{{ msg.senderName }}</span>
+          }
+          <div class="px-3 py-2 rounded-2xl text-sm"
+               [class.bg-[var(--color-primary-500)]]="msg.isOwn"
+               [class.text-white]="msg.isOwn"
+               [class.bg-[var(--color-surface-raised)]]="!msg.isOwn">
+            {{ msg.text }}
+          </div>
+          <span class="text-xs text-[var(--color-ink-muted)] mt-0.5" [class.text-right]="msg.isOwn">
+            {{ msg.timestamp | date:'HH:mm' }}
+          </span>
+        </div>
+      }
+    </div>
+    <div class="p-3 border-t border-[var(--color-sepia)] flex gap-2">
+      <input hlmInput class="flex-1" [(ngModel)]="messageText" (keydown)="onKeydown($event)"
+             [placeholder]="'CHAT.placeholder' | translate" />
+      <button hlmBtn (click)="sendMessage()">{{ 'CHAT.send' | translate }}</button>
+    </div>
+  } @else {
+    <div class="flex-1 flex items-center justify-center text-[var(--color-ink-muted)]">
+      {{ 'CHATS.select_room' | translate }}
+    </div>
+  }
+</main>

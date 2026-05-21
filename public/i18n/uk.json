@@ -246,7 +246,8 @@
     "register": "Приєднатись",
     "events": "Події",
     "theme_toggle_dark": "Темна тема",
-    "theme_toggle_light": "Світла тема"
+    "theme_toggle_light": "Світла тема",
+    "chats": "Чати"
   },
   "PROFILE": {
     "active_badge": "✓ Активний",
@@ -514,6 +515,11 @@
     "add_room": "Додати кімнату",
     "room_name_placeholder": "Назва кімнати...",
     "create_room": "Створити"
+  },
+  "CHATS": {
+    "title": "Чати",
+    "no_rooms": "Немає доступних чатів",
+    "select_room": "Оберіть чат щоб почати"
   },
   "FORM_ERRORS": {
     "required": "Це поле є обов'язковим.",

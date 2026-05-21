@@ -246,7 +246,8 @@
     "register": "Register",
     "events": "Events",
     "theme_toggle_dark": "Switch to dark mode",
-    "theme_toggle_light": "Switch to light mode"
+    "theme_toggle_light": "Switch to light mode",
+    "chats": "Chats"
   },
   "PROFILE": {
     "active_badge": "✓ Active",
@@ -514,6 +515,11 @@
     "add_room": "Add room",
     "room_name_placeholder": "Room name...",
     "create_room": "Create"
+  },
+  "CHATS": {
+    "title": "Chats",
+    "no_rooms": "No chat rooms available",
+    "select_room": "Select a chat to start messaging"
   },
   "FORM_ERRORS": {
     "required": "This field is required.",
