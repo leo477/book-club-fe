@@ -54,18 +54,20 @@ describe('ChatService', () => {
 
   beforeEach(() => {
     MockWebSocket.instance = null;
-    (global as any).WebSocket = MockWebSocket;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).WebSocket = MockWebSocket;
 
-    // Stub AudioContext so _playBeep() doesn't throw in JSDOM
-    (global as any).AudioContext = class {
+    // Stub AudioContext so _playBeep() doesn't throw in browser test env
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).AudioContext = class {
       createOscillator() {
         return { connect: jasmine.createSpy(), frequency: { value: 0 }, start: jasmine.createSpy(), stop: jasmine.createSpy() };
       }
       createGain() {
         return { connect: jasmine.createSpy(), gain: { setValueAtTime: jasmine.createSpy(), exponentialRampToValueAtTime: jasmine.createSpy() } };
       }
-      get currentTime() { return 0; }
-      get destination() { return {}; }
+      readonly currentTime = 0;
+      readonly destination = {};
     };
 
     TestBed.configureTestingModule({
@@ -550,15 +552,18 @@ describe('ChatService', () => {
 
     it('connectRoom creates a WebSocket with the correct URL', () => {
       service.connectRoom('room-42', 'my-token');
-      expect(MockWebSocket.instance).not.toBeNull();
-      expect(MockWebSocket.instance!.url).toBe(`${WS_BASE}/chat/rooms/room-42?token=my-token`);
+      const ws554 = MockWebSocket.instance;
+      expect(ws554).not.toBeNull();
+      expect(ws554?.url).toBe(`${WS_BASE}/chat/rooms/room-42?token=my-token`);
     });
 
     it('receiving a WS message appends it to activeMessages', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
       service.connectRoom('room-42', 'tok');
 
-      MockWebSocket.instance!.simulateMessage({
+      const ws561 = MockWebSocket.instance;
+      if (!ws561) throw new Error('MockWebSocket not instantiated');
+      ws561.simulateMessage({
         id: 'msg-ws-1',
         senderId: 'u1',
         senderName: 'Alice',
@@ -576,7 +581,9 @@ describe('ChatService', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
       service.connectRoom('room-42', 'tok');
 
-      MockWebSocket.instance!.simulateMessage({
+      const ws579 = MockWebSocket.instance;
+      if (!ws579) throw new Error('MockWebSocket not instantiated');
+      ws579.simulateMessage({
         id: 'msg-ws-2',
         senderId: 'u1',
         senderName: 'Alice',
@@ -593,7 +600,9 @@ describe('ChatService', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
       service.connectRoom('room-42', 'tok');
 
-      MockWebSocket.instance!.simulateMessage({
+      const ws596 = MockWebSocket.instance;
+      if (!ws596) throw new Error('MockWebSocket not instantiated');
+      ws596.simulateMessage({
         id: 'msg-ws-3',
         senderId: 'u1',
         senderName: 'Alice',
@@ -607,16 +616,18 @@ describe('ChatService', () => {
 
     it('disconnectRoom calls ws.close()', () => {
       service.connectRoom('room-42', 'tok');
-      const ws = MockWebSocket.instance!;
+      const ws = MockWebSocket.instance;
+      expect(ws).not.toBeNull();
       service.disconnectRoom();
-      expect(ws.close).toHaveBeenCalled();
+      expect(ws?.close).toHaveBeenCalled();
     });
 
     it('calling connectRoom twice closes the first WebSocket', () => {
       service.connectRoom('room-42', 'tok');
-      const firstWs = MockWebSocket.instance!;
+      const firstWs = MockWebSocket.instance;
+      expect(firstWs).not.toBeNull();
       service.connectRoom('room-42', 'tok2');
-      expect(firstWs.close).toHaveBeenCalled();
+      expect(firstWs?.close).toHaveBeenCalled();
     });
   });
 });
