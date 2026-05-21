@@ -564,11 +564,14 @@ describe('ChatService', () => {
       const ws561 = MockWebSocket.instance;
       if (!ws561) throw new Error('MockWebSocket not instantiated');
       ws561.simulateMessage({
-        id: 'msg-ws-1',
-        senderId: 'u1',
-        senderName: 'Alice',
-        text: 'Hello via WS',
-        timestamp: '2024-01-01T00:00:00Z',
+        type: 'message',
+        payload: {
+          id: 'msg-ws-1',
+          senderId: 'u1',
+          senderName: 'Alice',
+          text: 'Hello via WS',
+          timestamp: '2024-01-01T00:00:00Z',
+        },
       });
 
       const msgs = getActiveMessages(service);
@@ -584,11 +587,14 @@ describe('ChatService', () => {
       const ws579 = MockWebSocket.instance;
       if (!ws579) throw new Error('MockWebSocket not instantiated');
       ws579.simulateMessage({
-        id: 'msg-ws-2',
-        senderId: 'u1',
-        senderName: 'Alice',
-        text: 'Ping',
-        timestamp: '2024-01-01T00:00:00Z',
+        type: 'message',
+        payload: {
+          id: 'msg-ws-2',
+          senderId: 'u1',
+          senderName: 'Alice',
+          text: 'Ping',
+          timestamp: '2024-01-01T00:00:00Z',
+        },
       });
 
       expect(getUnreadCount(service)).toBe(1);
@@ -603,11 +609,14 @@ describe('ChatService', () => {
       const ws596 = MockWebSocket.instance;
       if (!ws596) throw new Error('MockWebSocket not instantiated');
       ws596.simulateMessage({
-        id: 'msg-ws-3',
-        senderId: 'u1',
-        senderName: 'Alice',
-        text: 'Hi',
-        timestamp: '2024-01-01T00:00:00Z',
+        type: 'message',
+        payload: {
+          id: 'msg-ws-3',
+          senderId: 'u1',
+          senderName: 'Alice',
+          text: 'Hi',
+          timestamp: '2024-01-01T00:00:00Z',
+        },
       });
 
       expect(getUnreadCount(service)).toBe(0);
