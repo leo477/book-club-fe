@@ -63,6 +63,11 @@
       </div>
     }
 
+    <!-- Countdown -->
+    @if (daysToEvent() > 0 && daysToEvent() <= 3) {
+      <app-event-countdown [eventDate]="event().date" />
+    }
+
     <!-- Attendee count + RSVP -->
     <div class="flex items-center justify-between mt-auto pt-2
                 border-t border-[var(--color-sepia-mid)]">
@@ -75,16 +80,16 @@
         </a>
         @if (isAuthenticated() && event().status !== 'cancelled') {
           @if (event().isAttending) {
-            <button hlmBtn type="button" size="sm" [disabled]="attending()"
+            <button hlmBtn type="button" size="sm" [disabled]="attending() || daysToEvent() <= 0"
                     (click)="cancelAttend.emit()"
                     class="bg-[var(--color-accent-600)] hover:bg-[var(--color-accent-700)] text-white">
-              @if (attending()) { <hlm-spinner size="xs" /> } @else { {{ 'EVENTS.going' | translate }} }
+              @if (attending()) { <hlm-spinner size="xs" /> } @else if (daysToEvent() <= 0) { {{ 'EVENTS.registration_closed' | translate }} } @else { {{ 'EVENTS.going' | translate }} }
             </button>
           } @else {
-            <button hlmBtn type="button" size="sm" [disabled]="attending()"
+            <button hlmBtn type="button" size="sm" [disabled]="attending() || daysToEvent() <= 0"
                     (click)="attend.emit()"
                     class="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white">
-              @if (attending()) { <hlm-spinner size="xs" /> } @else { {{ 'EVENTS.rsvp' | translate }} }
+              @if (attending()) { <hlm-spinner size="xs" /> } @else if (daysToEvent() <= 0) { {{ 'EVENTS.registration_closed' | translate }} } @else { {{ 'EVENTS.rsvp' | translate }} }
             </button>
           }
         }

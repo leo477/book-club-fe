@@ -26,7 +26,7 @@ describe('EventDetailComponent', () => {
     eventServiceSpy = jasmine.createSpyObj('EventService', [
       'attendEvent', 'cancelAttendance', 'cancelEvent',
     ]);
-    eventServiceSpy.attendEvent.and.returnValue(Promise.resolve());
+    eventServiceSpy.attendEvent.and.returnValue(Promise.resolve({ auto_joined: false }));
     eventServiceSpy.cancelAttendance.and.returnValue(Promise.resolve());
     eventServiceSpy.cancelEvent.and.returnValue(Promise.resolve());
 

@@ -62,7 +62,7 @@ describe('ClubDetailComponent', () => {
     clubServiceSpy.loadClubEvents.and.returnValue(Promise.resolve([]));
     authSpy.isAuthenticated.and.returnValue(true);
     eventServiceSpy = jasmine.createSpyObj('EventService', ['loadClubEvents', 'attendEvent', 'cancelAttendance']);
-    eventServiceSpy.attendEvent.and.returnValue(Promise.resolve());
+    eventServiceSpy.attendEvent.and.returnValue(Promise.resolve({ auto_joined: false }));
     eventServiceSpy.cancelAttendance.and.returnValue(Promise.resolve());
     await TestBed.configureTestingModule({
       imports: [

@@ -1,13 +1,7 @@
-<div
-  class="flex flex-col overflow-hidden h-full"
-  [class]="variant() === 'featured'
-    ? 'parchment-card-raised'
-    : 'parchment-card hover:shadow-[var(--shadow-parchment-lg)] transition-shadow duration-200'"
->
+<div class="flex flex-col overflow-hidden h-full parchment-card hover:shadow-[var(--shadow-parchment-lg)] transition-shadow duration-200">
 
   <!-- Cover / gradient -->
-  <div class="relative overflow-hidden flex-shrink-0"
-       [class]="variant() === 'featured' ? 'h-48' : 'h-32'">
+  <div class="relative overflow-hidden flex-shrink-0 h-40">
     @let clubCover = club().coverUrl;
     @if (clubCover) {
       <img
@@ -21,19 +15,14 @@
     } @else {
       <div class="w-full h-full bg-gradient-fantasy" aria-hidden="true"></div>
     }
-    @if (variant() === 'featured') {
-      <div class="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none"></div>
-    }
   </div>
 
-  <div class="flex flex-col flex-1 gap-3"
-       [class]="variant() === 'featured' ? 'p-5' : 'p-4'">
+  <div class="flex flex-col flex-1 gap-3 p-4">
 
     <!-- Club name + ownership marker -->
     <div>
       <h2
-        class="font-display font-semibold text-[var(--color-ink)] leading-snug flex items-center gap-1.5"
-        [class]="variant() === 'featured' ? 'text-lg line-clamp-2' : 'text-base line-clamp-1'"
+        class="font-display font-semibold text-[var(--color-ink)] leading-snug flex items-center gap-1.5 text-base line-clamp-1"
       >
         {{ club().name }}
         @if (isOwned()) {
@@ -43,8 +32,7 @@
       </h2>
       @if (club().description) {
         <p
-          class="text-xs text-[var(--color-ink-muted)] mt-1.5"
-          [class]="variant() === 'featured' ? 'line-clamp-3' : 'line-clamp-2'"
+          class="text-xs text-[var(--color-ink-muted)] mt-1.5 line-clamp-2"
         >
           {{ club().description }}
         </p>

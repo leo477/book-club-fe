@@ -5,6 +5,18 @@ import { ChatService } from './chat.service';
 import { ChatMessage, ChatRoom } from '../models/chat.model';
 import { environment } from '../../../environments/environment';
 
+// ── MockWebSocket ─────────────────────────────────────────────────────────────
+
+class MockWebSocket {
+  static instance: MockWebSocket | null = null;
+  onmessage: ((e: MessageEvent) => void) | null = null;
+  close = jasmine.createSpy('ws.close');
+  constructor(public url: string) { MockWebSocket.instance = this; }
+  simulateMessage(data: object) {
+    this.onmessage?.(new MessageEvent('message', { data: JSON.stringify(data) }));
+  }
+}
+
 interface ChatServicePrivate {
   _unreadCount: WritableSignal<number>;
   _hasNewMessage: WritableSignal<boolean>;
@@ -41,6 +53,21 @@ describe('ChatService', () => {
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
+    MockWebSocket.instance = null;
+    (global as any).WebSocket = MockWebSocket;
+
+    // Stub AudioContext so _playBeep() doesn't throw in JSDOM
+    (global as any).AudioContext = class {
+      createOscillator() {
+        return { connect: jasmine.createSpy(), frequency: { value: 0 }, start: jasmine.createSpy(), stop: jasmine.createSpy() };
+      }
+      createGain() {
+        return { connect: jasmine.createSpy(), gain: { setValueAtTime: jasmine.createSpy(), exponentialRampToValueAtTime: jasmine.createSpy() } };
+      }
+      get currentTime() { return 0; }
+      get destination() { return {}; }
+    };
+
     TestBed.configureTestingModule({
       imports: [HttpClientTestingModule],
       providers: [provideZonelessChangeDetection(), ChatService],
@@ -515,6 +542,81 @@ describe('ChatService', () => {
       expect(room.id).toBe('room-e1');
       expect(room.eventId).toBe('event-1');
       expect(getRooms(service).some(r => r.id === 'room-e1')).toBeTrue();
+    });
+  });
+
+  describe('connectRoom() / disconnectRoom()', () => {
+    const WS_BASE = environment.wsUrl;
+
+    it('connectRoom creates a WebSocket with the correct URL', () => {
+      service.connectRoom('room-42', 'my-token');
+      expect(MockWebSocket.instance).not.toBeNull();
+      expect(MockWebSocket.instance!.url).toBe(`${WS_BASE}/chat/rooms/room-42?token=my-token`);
+    });
+
+    it('receiving a WS message appends it to activeMessages', () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
+      service.connectRoom('room-42', 'tok');
+
+      MockWebSocket.instance!.simulateMessage({
+        id: 'msg-ws-1',
+        senderId: 'u1',
+        senderName: 'Alice',
+        text: 'Hello via WS',
+        timestamp: '2024-01-01T00:00:00Z',
+      });
+
+      const msgs = getActiveMessages(service);
+      expect(msgs.length).toBe(1);
+      expect(msgs[0].text).toBe('Hello via WS');
+    });
+
+    it('increments unreadCount and sets hasNewMessage when chat is closed', () => {
+      // _isOpen stays false by default
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
+      service.connectRoom('room-42', 'tok');
+
+      MockWebSocket.instance!.simulateMessage({
+        id: 'msg-ws-2',
+        senderId: 'u1',
+        senderName: 'Alice',
+        text: 'Ping',
+        timestamp: '2024-01-01T00:00:00Z',
+      });
+
+      expect(getUnreadCount(service)).toBe(1);
+      expect(getHasNewMessage(service)).toBeTrue();
+    });
+
+    it('does NOT increment unreadCount when chat is open', () => {
+      service.toggleOpen(); // open the chat
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
+      service.connectRoom('room-42', 'tok');
+
+      MockWebSocket.instance!.simulateMessage({
+        id: 'msg-ws-3',
+        senderId: 'u1',
+        senderName: 'Alice',
+        text: 'Hi',
+        timestamp: '2024-01-01T00:00:00Z',
+      });
+
+      expect(getUnreadCount(service)).toBe(0);
+      expect(getHasNewMessage(service)).toBeFalse();
+    });
+
+    it('disconnectRoom calls ws.close()', () => {
+      service.connectRoom('room-42', 'tok');
+      const ws = MockWebSocket.instance!;
+      service.disconnectRoom();
+      expect(ws.close).toHaveBeenCalled();
+    });
+
+    it('calling connectRoom twice closes the first WebSocket', () => {
+      service.connectRoom('room-42', 'tok');
+      const firstWs = MockWebSocket.instance!;
+      service.connectRoom('room-42', 'tok2');
+      expect(firstWs.close).toHaveBeenCalled();
     });
   });
 });

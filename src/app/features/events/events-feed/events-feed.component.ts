@@ -8,9 +8,11 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { toast } from '@spartan-ng/brain/sonner';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { BackendHttpError } from '../../../core/interceptors/auth.interceptor';
 import { ClubEvent } from '../../../core/models/event.model';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { EventCardComponent } from '../event-card/event-card.component';
@@ -26,6 +28,7 @@ import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 export class EventsFeedComponent implements OnInit {
   readonly eventService = inject(EventService);
   readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
 
   readonly attendingEventId = signal<string | null>(null);
   readonly activeTab = signal<'upcoming' | 'my'>('upcoming');
@@ -44,9 +47,14 @@ export class EventsFeedComponent implements OnInit {
   async onAttend(event: ClubEvent): Promise<void> {
     this.attendingEventId.set(event.id);
     try {
-      await this.eventService.attendEvent(event.id);
-    } catch {
-      // handled in service
+      const result = await this.eventService.attendEvent(event.id);
+      if (result.auto_joined) {
+        toast.success(this.translate.instant('EVENTS.event_auto_joined') as string);
+      }
+    } catch (err) {
+      if (err instanceof BackendHttpError && err.status === 400) {
+        toast.error(this.translate.instant('EVENTS.registration_closed') as string);
+      }
     } finally {
       this.attendingEventId.set(null);
     }

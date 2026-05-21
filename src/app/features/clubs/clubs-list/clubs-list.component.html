@@ -110,12 +110,12 @@
               [description]="(clubService.searchQuery().trim() ? 'CLUBS.empty_search_desc' : 'CLUBS.empty_desc') | translate"
             />
           } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-                <li data-testid="club-card" [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              @for (club of clubService.filteredClubs(); track club.id) {
+                <li data-testid="club-card">
                   <app-club-card
                     [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
+                    variant="default"
                     [isMember]="clubService.myClubIds().has(club.id)"
                     [isOwned]="ownedClubIds().has(club.id)"
                     [isAuthenticated]="auth.isAuthenticated()"
@@ -144,12 +144,12 @@
               [description]="'CLUBS.my_clubs_empty_desc' | translate"
             />
           } @else {
-            <ul class="bento-grid">
-              @for (club of clubService.myClubs(); track club.id; let i = $index) {
-                <li data-testid="club-card" [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+            <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              @for (club of clubService.myClubs(); track club.id) {
+                <li data-testid="club-card">
                   <app-club-card
                     [club]="club"
-                    [variant]="i === 0 ? 'featured' : 'default'"
+                    variant="default"
                     [isMember]="clubService.myClubIds().has(club.id)"
                     [isOwned]="ownedClubIds().has(club.id)"
                     [isAuthenticated]="auth.isAuthenticated()"
@@ -177,12 +177,12 @@
           [description]="(clubService.searchQuery().trim() ? 'CLUBS.empty_search_desc' : 'CLUBS.empty_desc') | translate"
         />
       } @else {
-        <ul class="bento-grid">
-          @for (club of clubService.filteredClubs(); track club.id; let i = $index) {
-            <li data-testid="club-card" [class]="i === 0 ? 'bento-col-2 bento-row-2' : ''">
+        <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          @for (club of clubService.filteredClubs(); track club.id) {
+            <li data-testid="club-card">
               <app-club-card
                 [club]="club"
-                [variant]="i === 0 ? 'featured' : 'default'"
+                variant="default"
                 [isMember]="false"
                 [isOwned]="false"
                 [isAuthenticated]="false"

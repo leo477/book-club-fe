@@ -6,14 +6,16 @@
     [attr.aria-label]="(chat.isOpen() ? 'CHAT.close' : 'CHAT.open') | translate"
     (click)="chat.toggleOpen()"
   >
-    <!-- Chat bubble SVG icon -->
     <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
       <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
     </svg>
 
-    <!-- Notification badge -->
     @if (chat.unreadCount() > 0) {
-      <div class="absolute top-0 right-0 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-white text-xs font-bold">
+      <div
+        class="absolute top-0 right-0 w-4 h-4 rounded-full border-2 flex items-center justify-center text-white text-xs font-bold"
+        [style.background]="'var(--destructive)'"
+        [style.border-color]="'var(--color-surface-raised)'"
+      >
         {{ chat.unreadCount() > 9 ? '9+' : (chat.unreadCount() | number) }}
       </div>
     }
@@ -21,16 +23,29 @@
 
   <!-- Chat Panel -->
   @if (chat.isOpen()) {
+    @let activeRoom = chat.activeRoom();
+
     <div
-      [class]="'fixed z-40 w-80 max-h-[480px] flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-100 chat-panel ' + panelPositionClass()"
+      [class]="'fixed z-40 w-80 max-h-[480px] flex flex-col rounded-2xl shadow-2xl chat-panel ' + panelPositionClass()"
+      [style.background]="'var(--color-surface-raised)'"
+      [style.border]="'1px solid var(--border)'"
     >
       <!-- Header -->
-      <div class="flex items-center justify-between p-4 border-b border-gray-100">
-        <h2 class="text-lg font-semibold text-gray-900">
-          {{ 'CHAT.title' | translate }}
-        </h2>
+      <div
+        class="flex items-center justify-between p-4"
+        [style.border-bottom]="'1px solid var(--border)'"
+      >
+        <div class="flex items-center gap-2 min-w-0">
+          <h2 class="text-lg font-semibold" [style.color]="'var(--color-ink)'">
+            {{ 'CHAT.title' | translate }}
+          </h2>
+          @if (activeRoom) {
+            <span class="text-sm truncate" [style.color]="'var(--color-ink-muted)'">&mdash; {{ activeRoom.name }}</span>
+          }
+        </div>
         <button
-          class="text-gray-500 hover:text-gray-700 transition-colors"
+          class="transition-colors flex-shrink-0"
+          [style.color]="'var(--color-ink-muted)'"
           [attr.aria-label]="'CHAT.close' | translate"
           (click)="chat.toggleOpen()"
         >
@@ -42,14 +57,17 @@
 
       <!-- Room Tabs (horizontally scrollable) -->
       @if (chat.rooms().length > 0) {
-        <div class="flex overflow-x-auto px-3 py-2 border-b border-gray-100 gap-2">
+        <div
+          class="flex overflow-x-auto px-3 py-2 gap-2"
+          [style.border-bottom]="'1px solid var(--border)'"
+        >
           @for (room of chat.rooms(); track room.id) {
             <button
               class="px-4 py-2 rounded-lg whitespace-nowrap font-medium transition-colors duration-200 flex-shrink-0"
-              [ngClass]="{
-                'bg-accent-500 text-white': chat.activeRoomId() === room.id,
-                'bg-gray-100 text-gray-700 hover:bg-gray-200': chat.activeRoomId() !== room.id
-              }"
+              [class.bg-accent-500]="chat.activeRoomId() === room.id"
+              [class.text-white]="chat.activeRoomId() === room.id"
+              [style.background]="chat.activeRoomId() !== room.id ? 'var(--color-surface)' : null"
+              [style.color]="chat.activeRoomId() !== room.id ? 'var(--color-ink)' : null"
               role="tab"
               [attr.aria-selected]="chat.activeRoomId() === room.id"
               (click)="chat.openRoom(room.id)"
@@ -69,34 +87,33 @@
         @if (chat.rooms().length === 0) {
           <div class="flex flex-col items-center justify-center h-full gap-2 text-center px-4">
             <span class="text-2xl" aria-hidden="true">💬</span>
-            <p class="text-gray-500 text-sm">{{ 'CHAT.no_rooms_hint_member' | translate }}</p>
+            <p class="text-sm" [style.color]="'var(--color-ink-muted)'">{{ 'CHAT.no_rooms_hint_member' | translate }}</p>
           </div>
         } @else if (chat.activeMessages().length === 0) {
-          <div class="flex items-center justify-center h-full text-gray-400">
+          <div class="flex items-center justify-center h-full" [style.color]="'var(--color-ink-muted)'">
             {{ 'CHAT.no_messages' | translate }}
           </div>
         } @else {
           @for (message of chat.activeMessages(); track message.id) {
             <div [ngClass]="{ 'flex justify-end': message.isOwn, 'flex justify-start': !message.isOwn }">
               <div class="flex flex-col max-w-[75%]">
-                <!-- Sender name (for other messages) -->
                 @if (!message.isOwn) {
-                  <span class="text-xs text-gray-500 px-3 mb-1">{{ message.senderName }}</span>
+                  <span class="text-xs px-3 mb-1" [style.color]="'var(--color-ink-muted)'">{{ message.senderName }}</span>
                 }
 
-                <!-- Message bubble -->
                 <div
                   class="px-4 py-2 rounded-2xl"
                   [ngClass]="{
-                    'bg-accent-500 text-white rounded-br-sm': message.isOwn,
-                    'bg-gray-100 text-gray-800 rounded-bl-sm': !message.isOwn
+                    'bg-accent-500 text-white rounded-br-sm': message.isOwn
                   }"
+                  [style.background]="!message.isOwn ? 'var(--color-surface)' : null"
+                  [style.color]="!message.isOwn ? 'var(--color-ink)' : null"
+                  [class.rounded-bl-sm]="!message.isOwn"
                 >
                   {{ message.text }}
                 </div>
 
-                <!-- Timestamp -->
-                <span class="text-xs text-gray-400 px-3 mt-1 text-right">
+                <span class="text-xs px-3 mt-1 text-right" [style.color]="'var(--color-ink-muted)'">
                   {{ message.timestamp | date: 'HH:mm' }}
                 </span>
               </div>
@@ -104,19 +121,24 @@
           }
         }
 
-        <!-- Anchor for auto-scrolling -->
         <div #messagesEnd></div>
       </div>
 
       <!-- Input Area -->
-      <div class="border-t border-gray-100 p-3 flex gap-2">
+      <div
+        class="p-3 flex gap-2"
+        [style.border-top]="'1px solid var(--border)'"
+      >
         <input
           type="text"
           [(ngModel)]="messageText"
           (keydown)="onKeydown($event)"
           [placeholder]="'CHAT.placeholder' | translate"
           [attr.aria-label]="'CHAT.placeholder' | translate"
-          class="flex-1 px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+          class="flex-1 px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
+          [style.background]="'var(--color-surface)'"
+          [style.color]="'var(--color-ink)'"
+          [style.border]="'1px solid var(--border)'"
         />
         <button
           class="w-10 h-10 rounded-full bg-accent-500 text-white flex items-center justify-center hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
@@ -124,12 +146,55 @@
           (click)="sendMessage()"
           [attr.aria-label]="'CHAT.send' | translate"
         >
-          <!-- Paper plane SVG icon -->
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M16.6915026,12.4744748 L3.50612381,13.2599618 C3.19218622,13.2599618 3.03521743,13.4170592 3.03521743,13.5741566 L1.15159189,20.0151496 C0.8376543,20.8006365 0.99,21.89 1.77946707,22.52 C2.41,22.99 3.50612381,23.1 4.13399899,22.8429026 L21.714504,14.0454487 C22.6563168,13.5741566 23.1272231,12.6315722 22.9702544,11.6889879 L4.13399899,1.16584166 C3.50612381,0.9087443 2.40999006,1.01484963 1.77946707,1.4861418 C0.994623095,2.11535496 0.837654326,3.20500913 1.15159189,3.9904961 L3.03521743,10.4314891 C3.03521743,10.5885864 3.19218622,10.7456838 3.50612381,10.7456838 L16.6915026,11.5311707 C16.6915026,11.5311707 17.1624089,11.5311707 17.1624089,12.0024628 C17.1624089,12.4744748 16.6915026,12.4744748 16.6915026,12.4744748 Z"/>
           </svg>
         </button>
       </div>
+
+      <!-- New Room Section (below input, organizers only) -->
+      @if (auth.isOrganizer()) {
+        <div
+          class="px-3 pb-3"
+          [style.border-top]="isCreatingRoom() ? '1px solid var(--border)' : 'none'"
+        >
+          @if (isCreatingRoom()) {
+            <div class="flex gap-2 pt-3">
+              <input
+                type="text"
+                [(ngModel)]="newRoomName"
+                (keydown)="onRoomNameKeydown($event)"
+                [placeholder]="'CHAT.new_room_name' | translate"
+                [attr.aria-label]="'CHAT.new_room_name' | translate"
+                class="flex-1 px-3 py-1.5 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-accent-500"
+                [style.background]="'var(--color-surface)'"
+                [style.color]="'var(--color-ink)'"
+                [style.border]="'1px solid var(--border)'"
+              />
+              <button
+                class="px-3 py-1.5 rounded-lg text-sm font-medium bg-accent-500 text-white disabled:opacity-50"
+                [disabled]="!newRoomName().trim()"
+                (click)="submitCreateRoom()"
+                [attr.aria-label]="'CHAT.create_room' | translate"
+              >
+                {{ 'CHAT.create_room' | translate }}
+              </button>
+            </div>
+          }
+          <button
+            class="mt-2 w-full py-1.5 rounded-lg text-sm font-medium transition-colors"
+            [style.background]="'var(--color-surface)'"
+            [style.color]="'var(--color-ink-muted)'"
+            (click)="toggleCreateRoom()"
+          >
+            @if (isCreatingRoom()) {
+              {{ 'CHAT.cancel' | translate }}
+            } @else {
+              + {{ 'CHAT.new_room' | translate }}
+            }
+          </button>
+        </div>
+      }
     </div>
   }
 }

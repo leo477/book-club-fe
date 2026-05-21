@@ -3,6 +3,7 @@ import { CommonModule, DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
+import { TokenStore } from '../../../core/auth/token.store';
 import { ChatService } from '../../../core/services/chat.service';
 import { ClubService } from '../../../core/services/club.service';
 import { HlmButton } from '../../spartan/button/src';
@@ -20,6 +21,7 @@ export class ChatWidgetComponent {
   protected readonly auth = inject(AuthService);
   protected readonly chat = inject(ChatService);
   private readonly clubService = inject(ClubService);
+  private readonly tokenStore = inject(TokenStore);
 
   protected readonly messageText = signal('');
   protected readonly isBouncing = signal(false);
@@ -38,7 +40,6 @@ export class ChatWidgetComponent {
   private _clubsLoadTriggered = false;
 
   constructor() {
-    // Bounce animation on new message.
     effect(() => {
       if (this.chat.hasNewMessage()) {
         this.isBouncing.set(true);
@@ -46,7 +47,6 @@ export class ChatWidgetComponent {
       }
     });
 
-    // Load all club chat rooms whenever the user or their club list changes.
     effect(() => {
       const user = this.auth.currentUser();
       if (!user) {
@@ -62,6 +62,17 @@ export class ChatWidgetComponent {
       } else if (!this._clubsLoadTriggered) {
         this._clubsLoadTriggered = true;
         this.clubService.loadMyClubs().catch(() => undefined);
+      }
+    });
+
+    effect(() => {
+      const roomId = this.chat.activeRoomId();
+      const token = this.tokenStore.token();
+      const isOpen = this.chat.isOpen();
+      if (roomId && token && isOpen) {
+        this.chat.connectRoom(roomId, token);
+      } else if (!isOpen) {
+        this.chat.disconnectRoom();
       }
     });
   }

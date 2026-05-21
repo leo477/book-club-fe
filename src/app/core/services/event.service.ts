@@ -102,11 +102,12 @@ export class EventService {
     }
   }
 
-  async attendEvent(eventId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post(`${environment.apiUrl}/events/${eventId}/attend`, {}),
+  async attendEvent(eventId: string): Promise<{ auto_joined: boolean }> {
+    const result = await firstValueFrom(
+      this.http.post<{ auto_joined: boolean }>(`${environment.apiUrl}/events/${eventId}/attend`, {}),
     );
     this._patchEventAttending(eventId, true);
+    return result;
   }
 
   async cancelAttendance(eventId: string): Promise<void> {

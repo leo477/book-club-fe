@@ -12,8 +12,10 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
+import { toast } from '@spartan-ng/brain/sonner';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { BackendHttpError } from '../../../core/interceptors/auth.interceptor';
 import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
 import { ClubEvent } from '../../../core/models/event.model';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
@@ -84,8 +86,15 @@ export class EventDetailComponent {
   async onAttend(): Promise<void> {
     this.isActioning.set(true);
     try {
-      await this.eventService.attendEvent(this.id());
+      const result = await this.eventService.attendEvent(this.id());
+      if (result.auto_joined) {
+        toast.success(this.translate.instant('EVENTS.event_auto_joined') as string);
+      }
       this._eventResource.reload();
+    } catch (err) {
+      if (err instanceof BackendHttpError && err.status === 400) {
+        toast.error(this.translate.instant('EVENTS.registration_closed') as string);
+      }
     } finally {
       this.isActioning.set(false);
     }
