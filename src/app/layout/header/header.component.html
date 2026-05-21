@@ -25,8 +25,8 @@
       <!-- ── Desktop Nav ────────────────────────────────────────────── -->
       <nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
         <a
-          routerLink="/clubs"
-          data-testid="nav-clubs"
+          routerLink="/events"
+          data-testid="nav-events"
           routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
           class="px-4 py-2 rounded-lg text-sm font-medium
                  text-[var(--color-ink-muted)]
@@ -34,12 +34,12 @@
                  transition-all duration-200
                  focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
         >
-          {{ 'NAV.discover' | translate }}
+          {{ 'NAV.events' | translate }}
         </a>
         @if (isAuthenticated()) {
           <a
-            routerLink="/events"
-            data-testid="nav-events"
+            routerLink="/clubs"
+            data-testid="nav-clubs"
             routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
             class="px-4 py-2 rounded-lg text-sm font-medium
                    text-[var(--color-ink-muted)]
@@ -47,7 +47,7 @@
                    transition-all duration-200
                    focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
           >
-            {{ 'NAV.events' | translate }}
+            {{ 'NAV.clubs' | translate }}
           </a>
         }
       </nav>
@@ -179,18 +179,18 @@
             </hlm-sheet-header>
 
             <nav class="flex flex-col gap-1 px-4 py-2" aria-label="Mobile navigation">
-              <button hlmSheetClose [routerLink]="['/clubs']"
+              <button hlmSheetClose [routerLink]="['/events']"
                       class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
                              text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
                              transition-all duration-200 w-full text-left">
-                {{ 'NAV.discover' | translate }}
+                {{ 'NAV.events' | translate }}
               </button>
               @if (isAuthenticated()) {
-                <button hlmSheetClose [routerLink]="['/events']"
+                <button hlmSheetClose [routerLink]="['/clubs']"
                         class="flex items-center px-4 py-2.5 rounded-lg text-sm font-medium
                                text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
                                transition-all duration-200 w-full text-left">
-                  {{ 'NAV.events' | translate }}
+                  {{ 'NAV.clubs' | translate }}
                 </button>
               }
 
