@@ -51,9 +51,9 @@ describe('LoginComponent', () => {
   });
 
   describe('onBookAnimationDone', () => {
-    it('navigates to /clubs', () => {
+    it('navigates to /events', () => {
       component.onBookAnimationDone();
-      expect(routerSpy.navigate).toHaveBeenCalledWith(['/clubs']);
+      expect(routerSpy.navigate).toHaveBeenCalledWith(['/events']);
     });
   });
 

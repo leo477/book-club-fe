@@ -1,6 +1,6 @@
 :host {
   display: grid;
-  grid-template-columns: 18rem 1fr;
+  grid-template-columns: 20rem 1fr;
   height: calc(100vh - 4rem);
   overflow: hidden;
 }
@@ -13,4 +13,49 @@
 .chats-main {
   display: flex;
   flex-direction: column;
+}
+
+.room-row {
+  border-left: 2px solid transparent;
+
+  &:hover {
+    background-color: color-mix(in srgb, var(--color-surface-raised) 60%, transparent);
+  }
+
+  &--active {
+    border-left-color: var(--color-primary-600);
+    background-color: var(--color-surface-raised);
+
+    &:hover {
+      background-color: var(--color-surface-raised);
+    }
+  }
+}
+
+.room-avatar {
+  background-color: color-mix(in srgb, var(--color-primary-500) 15%, transparent);
+  color: var(--color-primary-600);
+
+  &--active {
+    background-color: var(--color-primary-600);
+    color: #fff;
+  }
+}
+
+.msg-avatar {
+  background-color: color-mix(in srgb, var(--color-ink-muted) 20%, transparent);
+  color: var(--color-ink-muted);
+}
+
+.msg-bubble {
+  word-break: break-word;
+
+  &--own {
+    background-color: var(--color-primary-600);
+    color: #fff;
+  }
+
+  &--other {
+    background-color: var(--color-surface-raised);
+  }
 }

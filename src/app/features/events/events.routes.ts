@@ -14,4 +14,10 @@ export const EVENTS_ROUTES: Routes = [
     loadComponent: () =>
       import('./event-detail/event-detail.component').then(m => m.EventDetailComponent),
   },
+  {
+    path: ':id/edit',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./edit-event/edit-event.component').then(m => m.EditEventComponent),
+  },
 ];

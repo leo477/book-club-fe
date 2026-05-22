@@ -29,6 +29,21 @@ export class ChatWidgetComponent {
   protected readonly isCreatingRoom = signal(false);
   protected readonly newRoomName = signal('');
 
+  protected readonly showingRoomList = signal(false);
+
+  protected readonly shouldShowRoomList = computed(() =>
+    this.showingRoomList() || (this.chat.rooms().length > 1 && !this.chat.activeRoomId())
+  );
+
+  protected goToRoomList(): void {
+    this.showingRoomList.set(true);
+  }
+
+  protected selectRoom(id: string): void {
+    this.chat.openRoom(id);
+    this.showingRoomList.set(false);
+  }
+
   protected readonly isCurrentClubOrganizer = computed(() => {
     const clubId = this.chat.activeRoom()?.clubId;
     if (!clubId) return false;
@@ -81,6 +96,15 @@ export class ChatWidgetComponent {
         this.chat.connectRoom(roomId, token);
       } else if (!roomId) {
         this.chat.disconnectRoom();
+      }
+
+      if (this.chat.isOpen()) {
+        const rooms = this.chat.rooms();
+        if (rooms.length > 1 && !this.chat.activeRoomId()) {
+          this.showingRoomList.set(true);
+        } else if (rooms.length === 1) {
+          this.showingRoomList.set(false);
+        }
       }
     });
   }

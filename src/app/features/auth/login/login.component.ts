@@ -42,7 +42,7 @@ export class LoginComponent {
   }
 
   onBookAnimationDone(): void {
-    this.router.navigate(['/clubs']);
+    this.router.navigate(['/events']);
   }
 
   readonly form = new FormGroup<LoginForm>({
