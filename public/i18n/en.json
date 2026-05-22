@@ -336,7 +336,9 @@
     "no_upcoming_desc": "No events are scheduled yet. Check back soon!",
     "no_my_events_desc": "Join clubs to see their events here.",
     "registration_closed": "Registration Closed",
-    "event_auto_joined": "You've been added to the club and registered for the event"
+    "event_auto_joined": "You've been added to the club and registered for the event",
+    "editEvent": "Edit Event",
+    "saveChanges": "Save Changes"
   },
   "EVENT": {
     "event_chat_btn": "Event Chat",

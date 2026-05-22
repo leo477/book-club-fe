@@ -1,0 +1,173 @@
+@if (isLoading()) {
+  <main class="max-w-2xl mx-auto px-4 py-8" aria-busy="true">
+    <div class="animate-pulse space-y-4">
+      <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+      <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+    </div>
+  </main>
+} @else if (event()) {
+  <main class="max-w-2xl mx-auto px-4 py-8 space-y-6">
+
+    <!-- Back navigation -->
+    <nav>
+      <a [routerLink]="['/events', id()]"
+         class="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+        {{ 'EVENTS.back_to_events' | translate }}
+      </a>
+    </nav>
+
+    <div class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">
+      <h1 class="text-2xl font-bold text-gray-900 dark:text-white mb-6">{{ 'EVENTS.editEvent' | translate }}</h1>
+
+      @if (errorMessage()) {
+        <div class="mb-4 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+             role="alert">
+          {{ errorMessage() }}
+        </div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+
+        <!-- Title -->
+        <div>
+          <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'CREATE_EVENT.title_label' | translate }} <span class="text-red-500">*</span>
+          </label>
+          <input hlmInput id="title" type="text" formControlName="title" class="w-full"
+                 [placeholder]="'CREATE_EVENT.title_placeholder' | translate" />
+          @if (form.controls.title.touched && form.controls.title.errors?.['required']) {
+            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.title_required' | translate }}</p>
+          }
+        </div>
+
+        <!-- Book title -->
+        <div>
+          <label for="bookTitle" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.book_title_label' | translate }}</label>
+          <input hlmInput id="bookTitle" type="text" formControlName="bookTitle" class="w-full"
+                 [placeholder]="'CREATE_EVENT.book_title_placeholder' | translate" />
+          @if (isFetchingCover()) {
+            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_EVENT.book_cover_searching' | translate }}</p>
+          } @else if (coverFetchFailed()) {
+            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_EVENT.book_cover_not_found' | translate }}</p>
+          } @else {
+            <p class="mt-1 text-xs text-gray-400 dark:text-gray-500">{{ 'CREATE_EVENT.book_title_hint' | translate }}</p>
+          }
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.description_label' | translate }}</label>
+          <textarea hlmInput id="description" formControlName="description" rows="3" class="w-full resize-none"
+                    [placeholder]="'CREATE_EVENT.description_placeholder' | translate"></textarea>
+        </div>
+
+        <!-- Date -->
+        <div>
+          <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'CREATE_EVENT.date_label' | translate }} <span class="text-red-500">*</span>
+          </label>
+          <input hlmInput id="date" type="datetime-local" formControlName="date" class="w-full" />
+          @if (form.controls.date.touched && form.controls.date.errors?.['required']) {
+            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.date_required' | translate }}</p>
+          }
+        </div>
+
+        <!-- Location -->
+        <div>
+          <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            {{ 'CREATE_EVENT.location_label' | translate }} <span class="text-red-500">*</span>
+          </p>
+          <app-address-autocomplete
+            [control]="form.controls.address"
+            [placeholder]="'CREATE_EVENT.address_placeholder' | translate"
+            (selected)="onAddressSelect($event)"
+          />
+          @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
+            <p class="mt-1 text-xs text-red-600 dark:text-red-400">{{ 'CREATE_EVENT.location_required' | translate }}</p>
+          }
+        </div>
+
+        <!-- Duration + Theme row -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="duration" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.duration_label' | translate }}</label>
+            <input hlmInput id="duration" type="number" formControlName="durationMinutes" min="15" max="480"
+                   class="w-full" placeholder="120" />
+          </div>
+          <div>
+            <label for="theme" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.theme_label' | translate }}</label>
+            <input hlmInput id="theme" type="text" formControlName="theme" class="w-full" [placeholder]="'CREATE_EVENT.theme_placeholder' | translate" />
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div>
+          <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.tags_label' | translate }}</label>
+          <input hlmInput id="tags" type="text" formControlName="tagsRaw" class="w-full"
+                 [placeholder]="'CREATE_EVENT.tags_placeholder' | translate" />
+        </div>
+
+        <!-- Cover image -->
+        <div>
+          <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{{ 'CREATE_EVENT.cover_label' | translate }}</p>
+          <app-cover-upload [control]="form.controls.coverUrl" />
+        </div>
+
+        <!-- Linked quiz -->
+        @if (activeQuizzes().length > 0) {
+          <div>
+            <label for="quizId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              {{ 'CREATE_EVENT.linked_quiz_label' | translate }}
+            </label>
+            <select id="quizId" formControlName="quizId"
+                    class="w-full rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+              <option [ngValue]="null">{{ 'CREATE_EVENT.no_quiz' | translate }}</option>
+              @for (quiz of activeQuizzes(); track quiz.id) {
+                <option [value]="quiz.id">{{ quiz.title }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        <!-- After-meeting venue toggle -->
+        <div>
+          <button type="button" (click)="toggleAfterVenue()"
+                  class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline">
+            {{ showAfterVenue() ? ('CREATE_EVENT.after_venue_remove' | translate) : ('CREATE_EVENT.after_venue_add' | translate) }}
+          </button>
+
+          @if (showAfterVenue()) {
+            <div class="mt-3 space-y-3 rounded-xl border border-gray-200 dark:border-gray-600 p-4">
+              <div>
+                <label for="afterVenueName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_name_label' | translate }} <span class="text-red-500">*</span></label>
+                <input hlmInput id="afterVenueName" type="text" formControlName="afterVenueName"
+                       class="w-full" [placeholder]="'CREATE_EVENT.after_venue_name_placeholder' | translate" />
+              </div>
+              <div>
+                <label for="afterVenueAddress" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_address_label' | translate }}</label>
+                <input hlmInput id="afterVenueAddress" type="text" formControlName="afterVenueAddress"
+                       class="w-full" [placeholder]="'CREATE_EVENT.after_venue_address_placeholder' | translate" />
+              </div>
+              <div>
+                <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_notes_label' | translate }}</label>
+                <input hlmInput id="afterVenueDesc" type="text" formControlName="afterVenueDescription"
+                       class="w-full" [placeholder]="'CREATE_EVENT.after_venue_notes_placeholder' | translate" />
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Submit -->
+        <div class="flex justify-end gap-3 pt-2">
+          <a hlmBtn variant="outline" [routerLink]="['/events', id()]">{{ 'CREATE_EVENT.cancel' | translate }}</a>
+          <button hlmBtn type="submit" [disabled]="form.invalid || isSubmitting()"
+                  class="bg-primary-600 hover:bg-primary-700 text-white">
+            @if (isSubmitting()) { {{ 'CREATE_EVENT.submitting' | translate }} } @else { {{ 'EVENTS.saveChanges' | translate }} }
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+  </main>
+}

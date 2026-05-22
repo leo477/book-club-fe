@@ -65,7 +65,7 @@ export class RegisterComponent {
   }
 
   onBookAnimationDone(): void {
-    this.router.navigate(['/clubs']);
+    this.router.navigate(['/events']);
   }
 
   readonly form = new FormGroup<RegisterForm>(

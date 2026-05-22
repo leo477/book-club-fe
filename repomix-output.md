@@ -152,6 +152,9 @@ src/
         create-event/
           create-event.component.html
           create-event.component.ts
+        edit-event/
+          edit-event.component.html
+          edit-event.component.ts
         event-card/
           event-card.component.html
           event-card.component.ts

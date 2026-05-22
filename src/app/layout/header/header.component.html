@@ -28,6 +28,7 @@
           routerLink="/events"
           data-testid="nav-events"
           routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
+          [routerLinkActiveOptions]="{exact: true}"
           class="px-4 py-2 rounded-lg text-sm font-medium
                  text-[var(--color-ink-muted)]
                  hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
@@ -41,6 +42,7 @@
             routerLink="/clubs"
             data-testid="nav-clubs"
             routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
+            [routerLinkActiveOptions]="{exact: true}"
             class="px-4 py-2 rounded-lg text-sm font-medium
                    text-[var(--color-ink-muted)]
                    hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]

@@ -1,6 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom } from 'rxjs';
+import { map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiEvent, mapEvent } from '../api/api-mappers';
 import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
@@ -134,6 +135,16 @@ export class EventService {
     );
     const updated = mapEvent(raw);
     this._updateEvent(updated);
+  }
+
+  updateEvent(eventId: string, payload: Partial<CreateEventPayload>): Observable<ClubEvent> {
+    return this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}`, payload).pipe(
+      map(raw => {
+        const updated = mapEvent(raw);
+        this._updateEvent(updated);
+        return updated;
+      }),
+    );
   }
 
   async cancelEvent(eventId: string): Promise<void> {
