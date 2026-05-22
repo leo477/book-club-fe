@@ -325,4 +325,52 @@ describe('EventService', () => {
       expect(event?.status).toBe('cancelled');
     });
   });
+
+  describe('updateEvent', () => {
+    beforeEach(async () => {
+      const allP = service.loadAllEvents();
+      httpMock.expectOne(`${API}/events?skip=0&limit=50`).flush([
+        makeApiEvent({ id: 'e1', title: 'Old Title', city: 'Kyiv' }),
+      ]);
+      await allP;
+      const myP = service.loadMyEvents();
+      httpMock.expectOne(`${API}/events/my`).flush([
+        makeApiEvent({ id: 'e1', title: 'Old Title', city: 'Kyiv' }),
+      ]);
+      await myP;
+    });
+
+    it('sends PATCH to /events/:id with payload', (done) => {
+      service.updateEvent('e1', { title: 'New Title' }).subscribe(() => done());
+      const req = httpMock.expectOne(`${API}/events/e1`);
+      expect(req.request.method).toBe('PATCH');
+      expect(req.request.body).toEqual({ title: 'New Title' });
+      req.flush(makeApiEvent({ id: 'e1', title: 'New Title' }));
+    });
+
+    it('returns mapped ClubEvent on success', (done) => {
+      service.updateEvent('e1', { title: 'New Title' }).subscribe(event => {
+        expect(event.id).toBe('e1');
+        expect(event.title).toBe('New Title');
+        done();
+      });
+      httpMock.expectOne(`${API}/events/e1`).flush(makeApiEvent({ id: 'e1', title: 'New Title' }));
+    });
+
+    it('updates the event in allEvents signal', (done) => {
+      service.updateEvent('e1', { title: 'Updated' }).subscribe(() => {
+        expect(service.allEvents().find(e => e.id === 'e1')?.title).toBe('Updated');
+        done();
+      });
+      httpMock.expectOne(`${API}/events/e1`).flush(makeApiEvent({ id: 'e1', title: 'Updated' }));
+    });
+
+    it('updates the event in myEvents signal', (done) => {
+      service.updateEvent('e1', { title: 'Updated' }).subscribe(() => {
+        expect(service.myEvents().find(e => e.id === 'e1')?.title).toBe('Updated');
+        done();
+      });
+      httpMock.expectOne(`${API}/events/e1`).flush(makeApiEvent({ id: 'e1', title: 'Updated' }));
+    });
+  });
 });

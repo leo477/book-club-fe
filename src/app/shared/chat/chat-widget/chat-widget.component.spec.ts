@@ -76,6 +76,10 @@ interface CompProtected {
   toggleCreateRoom(): void;
   submitCreateRoom(): void;
   onRoomNameKeydown(event: KeyboardEvent): void;
+  showingRoomList: { (): boolean; set(v: boolean): void };
+  shouldShowRoomList: () => boolean;
+  goToRoomList(): void;
+  selectRoom(id: string): void;
 }
 
 describe('ChatWidgetComponent', () => {
@@ -408,6 +412,85 @@ describe('ChatWidgetComponent', () => {
       TestBed.createComponent(ChatWidgetComponent);
       TestBed.flushEffects();
       expect(chatSvc.connectRoom).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('showingRoomList / goToRoomList / selectRoom', () => {
+    it('showingRoomList is false by default', () => {
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(comp.showingRoomList()).toBeFalse();
+    });
+
+    it('goToRoomList sets showingRoomList to true', () => {
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      comp.goToRoomList();
+      expect(comp.showingRoomList()).toBeTrue();
+    });
+
+    it('selectRoom calls chat.openRoom and sets showingRoomList to false', () => {
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      comp.showingRoomList.set(true);
+      comp.selectRoom('room-42');
+      expect(chatSvc.openRoom).toHaveBeenCalledWith('room-42');
+      expect(comp.showingRoomList()).toBeFalse();
+    });
+
+    it('shouldShowRoomList is true when showingRoomList is true', () => {
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      comp.showingRoomList.set(true);
+      expect(comp.shouldShowRoomList()).toBeTrue();
+    });
+
+    it('shouldShowRoomList is true when >1 rooms and no activeRoomId', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      chatSvc.rooms.set([{ id: 'r1', clubId: 'c1', name: 'R1' }, { id: 'r2', clubId: 'c1', name: 'R2' }] as any);
+      chatSvc.activeRoomId.set(null);
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(comp.shouldShowRoomList()).toBeTrue();
+    });
+
+    it('shouldShowRoomList is false when exactly 1 room', () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      chatSvc.rooms.set([{ id: 'r1', clubId: 'c1', name: 'R1' }] as any);
+      chatSvc.activeRoomId.set(null);
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(comp.shouldShowRoomList()).toBeFalse();
+    });
+  });
+
+  describe('Effect 3 — isOpen room-list logic', () => {
+    it('sets showingRoomList true when isOpen, >1 rooms, and no activeRoomId', () => {
+      chatSvc.isOpen.set(true);
+      chatSvc.activeRoomId.set(null);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      chatSvc.rooms.set([{ id: 'r1', clubId: 'c1', name: 'R1' }, { id: 'r2', clubId: 'c1', name: 'R2' }] as any);
+      tokenStore = makeTokenStore('tok');
+      TestBed.overrideProvider(TokenStore, { useValue: tokenStore });
+      TestBed.overrideProvider(ChatService, { useValue: chatSvc });
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      TestBed.flushEffects();
+      expect(comp.showingRoomList()).toBeTrue();
+    });
+
+    it('sets showingRoomList false when isOpen and exactly 1 room', () => {
+      chatSvc.isOpen.set(true);
+      chatSvc.activeRoomId.set(null);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      chatSvc.rooms.set([{ id: 'r1', clubId: 'c1', name: 'R1' }] as any);
+      tokenStore = makeTokenStore('tok');
+      TestBed.overrideProvider(TokenStore, { useValue: tokenStore });
+      TestBed.overrideProvider(ChatService, { useValue: chatSvc });
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      TestBed.flushEffects();
+      expect(comp.showingRoomList()).toBeFalse();
     });
   });
 });
