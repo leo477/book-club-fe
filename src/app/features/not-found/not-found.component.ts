@@ -18,7 +18,7 @@ import { HlmButton } from '../../shared/spartan/button/src';
         <p class="text-[var(--color-ink-muted)] mb-8">
           {{ 'NOT_FOUND.message' | translate }}
         </p>
-        <a hlmBtn routerLink="/clubs">
+        <a hlmBtn routerLink="/events">
           {{ 'NOT_FOUND.backHome' | translate }}
         </a>
       </div>

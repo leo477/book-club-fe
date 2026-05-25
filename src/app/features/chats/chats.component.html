@@ -70,7 +70,7 @@
               </div>
               @if (isLast) {
                 <span class="text-xs text-[var(--color-ink-muted)] mt-1" [class.text-right]="msg.isOwn">
-                  {{ msg.timestamp | date:'HH:mm' }}
+                  {{ msg.timestamp | chatTimestamp }}
                 </span>
               }
             </div>

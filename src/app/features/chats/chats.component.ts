@@ -6,7 +6,6 @@ import {
   computed,
   effect,
 } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
@@ -14,6 +13,7 @@ import { TokenStore } from '../../core/auth/token.store';
 import { ChatService } from '../../core/services/chat.service';
 import { ClubService } from '../../core/services/club.service';
 import { ChatRoom } from '../../core/models/chat.model';
+import { ChatTimestampPipe } from '../../shared/pipes/chat-timestamp.pipe';
 import { HlmButton } from '../../shared/spartan/button/src';
 import { HlmInput } from '../../shared/spartan/input/src';
 
@@ -21,7 +21,7 @@ import { HlmInput } from '../../shared/spartan/input/src';
   selector: 'app-chats',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule, DatePipe, FormsModule, HlmButton, HlmInput],
+  imports: [TranslateModule, ChatTimestampPipe, FormsModule, HlmButton, HlmInput],
   templateUrl: './chats.component.html',
   styleUrls: ['./chats.component.scss'],
 })

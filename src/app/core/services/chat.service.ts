@@ -16,6 +16,9 @@ interface ApiChatMessage {
   id: string;
   senderId: string;
   senderName: string;
+  senderDisplayName?: string;
+  display_name?: string;
+  sender_username?: string;
   text: string;
   timestamp: string; // ISO-8601
 }
@@ -304,10 +307,12 @@ export class ChatService {
   }
 
   private mapMessage(m: ApiChatMessage): ChatMessage {
+    const raw = m.senderDisplayName ?? m.display_name ?? m.sender_username ?? m.senderName;
+    const senderName = raw.includes('@') ? raw.split('@')[0] : raw;
     return {
       id: m.id,
       senderId: m.senderId,
-      senderName: m.senderName,
+      senderName,
       text: m.text,
       timestamp: new Date(m.timestamp),
       isOwn: m.senderId === this.currentUserId,

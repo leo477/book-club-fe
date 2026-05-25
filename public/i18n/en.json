@@ -217,7 +217,7 @@
   "NOT_FOUND": {
     "title": "Page not found",
     "message": "The page you were looking for doesn't exist or has been moved.",
-    "backHome": "Back to clubs"
+    "backHome": "Back to events"
   },
   "MEMBERS": {
     "empty": "No members yet",
@@ -506,6 +506,7 @@
     "new_message": "New message",
     "close": "Close chat",
     "open": "Open chat",
+    "back": "Back",
     "rooms": "Rooms",
     "mute": "Mute",
     "unmute": "Unmute",
@@ -516,7 +517,12 @@
     "delete_message": "Delete message",
     "add_room": "Add room",
     "room_name_placeholder": "Room name...",
-    "create_room": "Create"
+    "create_room": "Create",
+    "new_room": "New room",
+    "new_room_name": "Room name",
+    "cancel": "Cancel",
+    "today": "today",
+    "yesterday": "yesterday"
   },
   "CHATS": {
     "title": "Chats",
@@ -537,7 +543,8 @@
     "serverError": "The server returned an error. Please try again later.",
     "requestFailed": "The request failed. Please try again.",
     "network": "Network unavailable. Check your connection and try again.",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "organizers_only": "Organizers only"
   },
   "META": {
     "title": "Book Club — Book Clubs of Ukraine",
