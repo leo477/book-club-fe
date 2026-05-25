@@ -5,8 +5,10 @@ import {
   signal,
   computed,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { map, startWith } from 'rxjs';
 import { toast } from '@spartan-ng/brain/sonner';
 import { AuthService } from '../../core/auth/auth.service';
 import { UserRole, UserSocials } from '../../core/models/user.model';
@@ -30,6 +32,14 @@ export class ProfileComponent {
   protected readonly auth = inject(AuthService);
   private readonly seo = inject(SeoService);
   private readonly translate = inject(TranslateService);
+
+  private readonly currentLang = toSignal(
+    this.translate.onLangChange.pipe(
+      map(e => e.lang),
+      startWith(this.translate.currentLang ?? 'uk'),
+    ),
+    { initialValue: this.translate.currentLang ?? 'uk' },
+  );
 
   protected readonly socialFields = computed<SocialField[]>(() => {
     const atPlaceholder = this.translate.instant('PROFILE.social_placeholder_at');
@@ -125,11 +135,11 @@ export class ProfileComponent {
     this.auth.currentUser()?.role === 'organizer' ? 'Organizer' : 'Reader',
   );
 
-  /** Formatted "joined" date. */
+  /** Formatted "joined" date — reactive to language changes. */
   protected readonly joinedDate = computed<string>(() => {
     const raw = this.auth.currentUser()?.createdAt;
     if (!raw) return '';
-    const locale = this.translate.currentLang === 'uk' ? 'uk-UA' : 'en-US';
+    const locale = this.currentLang() === 'uk' ? 'uk-UA' : 'en-US';
     return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long' }).format(
       new Date(raw),
     );

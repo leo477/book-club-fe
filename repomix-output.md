@@ -263,6 +263,7 @@ src/
           social-link-field.component.ts
         .gitkeep
       pipes/
+        chat-timestamp.pipe.ts
         format-date.pipe.ts
         initials.pipe.ts
       spartan/
@@ -411,6 +412,7 @@ supabase/
 .lighthouserc.json
 .lintstagedrc.cjs
 angular.json
+audit-report.md
 bugs.md
 CLAUDE.md
 components.json

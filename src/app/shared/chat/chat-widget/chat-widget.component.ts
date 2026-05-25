@@ -1,11 +1,15 @@
 import { Component, ChangeDetectionStrategy, inject, signal, effect, computed } from '@angular/core';
-import { CommonModule, DatePipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
+import { Router, NavigationEnd } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map, startWith } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { TokenStore } from '../../../core/auth/token.store';
 import { ChatService } from '../../../core/services/chat.service';
 import { ClubService } from '../../../core/services/club.service';
+import { ChatTimestampPipe } from '../../pipes/chat-timestamp.pipe';
 import { HlmButton } from '../../spartan/button/src';
 import { HlmInput } from '../../spartan/input/src';
 
@@ -13,7 +17,7 @@ import { HlmInput } from '../../spartan/input/src';
   selector: 'app-chat-widget',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, TranslateModule, FormsModule, DatePipe, HlmButton, HlmInput],
+  imports: [CommonModule, TranslateModule, FormsModule, ChatTimestampPipe, HlmButton, HlmInput],
   templateUrl: './chat-widget.component.html',
   styleUrls: ['./chat-widget.component.scss'],
 })
@@ -22,6 +26,20 @@ export class ChatWidgetComponent {
   protected readonly chat = inject(ChatService);
   private readonly clubService = inject(ClubService);
   private readonly tokenStore = inject(TokenStore);
+  private readonly router = inject(Router);
+
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter(e => e instanceof NavigationEnd),
+      map(e => (e as NavigationEnd).urlAfterRedirects),
+      startWith(this.router.url),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  private readonly isChatsPage = computed(() => this.currentUrl().startsWith('/chats'));
+
+  private readonly isClubsListPage = computed(() => this.currentUrl() === '/clubs');
 
   protected readonly messageText = signal('');
   protected readonly isBouncing = signal(false);
@@ -53,17 +71,24 @@ export class ChatWidgetComponent {
     return club?.organizerId === userId;
   });
 
-  protected readonly fabPositionClass = computed(() =>
-    this.isCurrentClubOrganizer() ? 'bottom-24 right-6' : 'bottom-6 right-6'
-  );
-  protected readonly panelPositionClass = computed(() =>
-    this.isCurrentClubOrganizer() ? 'bottom-40 right-6' : 'bottom-24 right-6'
-  );
+  protected readonly fabPositionClass = computed(() => {
+    const needsShift = this.isCurrentClubOrganizer() || this.isClubsListPage();
+    return needsShift ? 'bottom-24 right-6' : 'bottom-6 right-6';
+  });
+  protected readonly panelPositionClass = computed(() => {
+    const needsShift = this.isCurrentClubOrganizer() || this.isClubsListPage();
+    return needsShift ? 'bottom-40 right-6' : 'bottom-24 right-6';
+  });
 
-  // Prevents repeated loadMyClubs() calls while waiting for the response.
   private _clubsLoadTriggered = false;
 
   constructor() {
+    effect(() => {
+      if (this.isChatsPage() && this.chat.isOpen()) {
+        this.chat.toggleOpen();
+      }
+    });
+
     effect(() => {
       if (this.chat.hasNewMessage()) {
         this.isBouncing.set(true);

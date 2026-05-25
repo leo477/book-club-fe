@@ -7,11 +7,13 @@ export const routes: Routes = [
   // ── Public static pages (no auth, no shell) ────────────────────────────
   {
     path: 'privacy',
+    title: 'Конфіденційність | Book Club',
     loadComponent: () =>
       import('./features/privacy/privacy.component').then(m => m.PrivacyComponent),
   },
   {
     path: 'terms',
+    title: 'Умови використання | Book Club',
     loadComponent: () =>
       import('./features/terms/terms.component').then(m => m.TermsComponent),
   },
@@ -42,6 +44,7 @@ export const routes: Routes = [
       },
       {
         path: 'events',
+        title: 'Події | Book Club',
         canActivate: [authGuard],
         loadChildren: () => import('./features/events/events.routes').then(m => m.EVENTS_ROUTES),
       },
@@ -59,21 +62,32 @@ export const routes: Routes = [
       { path: '', redirectTo: 'events', pathMatch: 'full' },
       {
         path: 'profile',
+        title: 'Профіль | Book Club',
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/profile/profile.component').then(m => m.ProfileComponent),
       },
       {
         path: 'chats',
+        title: 'Чати | Book Club',
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/chats/chats.component').then(m => m.ChatsComponent),
       },
       {
         path: '**',
+        title: 'Сторінку не знайдено | Book Club',
         loadComponent: () =>
           import('./features/not-found/not-found.component').then(m => m.NotFoundComponent),
       },
     ],
+  },
+
+  // ── Top-level 404 for unauthenticated unknown routes ───────────────────
+  {
+    path: '**',
+    title: 'Сторінку не знайдено | Book Club',
+    loadComponent: () =>
+      import('./features/not-found/not-found.component').then(m => m.NotFoundComponent),
   },
 ];
