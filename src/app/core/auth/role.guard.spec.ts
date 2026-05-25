@@ -5,6 +5,11 @@ import { Observable } from 'rxjs';
 import { roleGuard } from './role.guard';
 import { AuthService } from './auth.service';
 import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
+
+const mockTranslateService = {
+  instant: (key: string) => key,
+};
 
 // eslint-disable-next-line rxjs-x/finnish
 function runGuard(role: 'organizer' | 'user') {
@@ -20,6 +25,7 @@ describe('roleGuard', () => {
         providers: [
           provideZonelessChangeDetection(),
           provideRouter([]),
+          { provide: TranslateService, useValue: mockTranslateService },
           {
             provide: AuthService,
             useValue: {
@@ -42,6 +48,7 @@ describe('roleGuard', () => {
         providers: [
           provideZonelessChangeDetection(),
           provideRouter([]),
+          { provide: TranslateService, useValue: mockTranslateService },
           {
             provide: AuthService,
             useValue: {
@@ -72,6 +79,7 @@ describe('roleGuard', () => {
         providers: [
           provideZonelessChangeDetection(),
           provideRouter([]),
+          { provide: TranslateService, useValue: mockTranslateService },
           {
             provide: AuthService,
             useValue: {
