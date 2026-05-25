@@ -638,5 +638,23 @@ describe('ChatService', () => {
       service.connectRoom('room-42', 'tok2');
       expect(firstWs?.close).toHaveBeenCalled();
     });
+
+    it('strips email domain from senderName when it contains @', () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
+      service.connectRoom('room-1', 'tok');
+      const ws = MockWebSocket.instance;
+      if (!ws) throw new Error('MockWebSocket not instantiated');
+      ws.simulateMessage({
+        type: 'message',
+        payload: {
+          id: 'msg-email',
+          senderId: 'u1',
+          senderName: 'user@gmail.com',
+          text: 'Hi',
+          timestamp: '2024-01-01T00:00:00Z',
+        },
+      });
+      expect(getActiveMessages(service)[0].senderName).toBe('user');
+    });
   });
 });

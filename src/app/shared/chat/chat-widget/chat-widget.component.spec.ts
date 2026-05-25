@@ -2,11 +2,17 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
+import { Router } from '@angular/router';
+import { Subject, EMPTY } from 'rxjs';
 import { ChatWidgetComponent } from './chat-widget.component';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ChatService } from '../../../core/services/chat.service';
 import { ClubService } from '../../../core/services/club.service';
 import { TokenStore } from '../../../core/auth/token.store';
+
+function makeRouter(url = '/') {
+  return { url, events: EMPTY };
+}
 
 function makeAuthService(overrides: Partial<{ isOrganizer: boolean; currentUser: unknown }> = {}) {
   return {
@@ -29,6 +35,7 @@ function makeChatService() {
     openRoom: jasmine.createSpy('openRoom'),
     closeChat: jasmine.createSpy('closeChat'),
     toggleChat: jasmine.createSpy('toggleChat'),
+    toggleOpen: jasmine.createSpy('toggleOpen'),
     markAsRead: jasmine.createSpy('markAsRead'),
     muteUser: jasmine.createSpy('muteUser'),
     unmuteUser: jasmine.createSpy('unmuteUser'),
@@ -102,6 +109,7 @@ describe('ChatWidgetComponent', () => {
         { provide: ChatService, useValue: chatSvc },
         { provide: ClubService, useValue: clubSvc },
         { provide: TokenStore, useValue: tokenStore },
+        { provide: Router, useValue: makeRouter() },
       ],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
@@ -492,5 +500,26 @@ describe('ChatWidgetComponent', () => {
       TestBed.flushEffects();
       expect(comp.showingRoomList()).toBeFalse();
     });
+  });
+
+  it('shouldShowRoomList is false when showingRoomList is false and only 1 room exists', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    chatSvc.rooms.set([{ id: 'r1', clubId: 'c1', name: 'R1' }] as any);
+    chatSvc.activeRoomId.set(null);
+    const fixture = TestBed.createComponent(ChatWidgetComponent);
+    const comp = fixture.componentInstance as unknown as CompProtected;
+    expect(comp.shouldShowRoomList()).toBeFalse();
+  });
+
+  it('Effect 1 — closes chat when navigating to /chats page', () => {
+    const routerEvents$ = new Subject<unknown>();
+    const mockRouter = { url: '/chats', events: routerEvents$.asObservable() };
+    TestBed.overrideProvider(Router, { useValue: mockRouter });
+    chatSvc = makeChatService();
+    chatSvc.isOpen.set(true);
+    TestBed.overrideProvider(ChatService, { useValue: chatSvc });
+    TestBed.createComponent(ChatWidgetComponent);
+    TestBed.flushEffects();
+    expect(chatSvc.toggleOpen).toHaveBeenCalled();
   });
 });
