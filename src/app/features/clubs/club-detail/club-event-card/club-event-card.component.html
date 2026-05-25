@@ -83,29 +83,12 @@
 
       <div class="flex items-center gap-2">
         @if (isAuthenticated() && event().status !== 'cancelled') {
-          @if (event().isAttending) {
-            <button
-              hlmBtn
-              size="sm"
-              type="button"
-              [disabled]="attending()"
-              (click)="cancelAttend.emit()"
-              class="bg-green-600 hover:bg-green-700 text-white text-xs"
-            >
-              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_going' | translate }} }
-            </button>
-          } @else {
-            <button
-              hlmBtn
-              size="sm"
-              type="button"
-              [disabled]="attending()"
-              (click)="attend.emit()"
-              class="bg-primary-600 hover:bg-primary-700 text-white text-xs"
-            >
-              @if (attending()) { ⏳ } @else { {{ 'CLUB_DETAIL.rsvp_join' | translate }} }
-            </button>
-          }
+          <app-event-rsvp-button
+            [attending]="!!event().isAttending"
+            [loading]="attending()"
+            [showCancel]="true"
+            (clicked)="event().isAttending ? cancelAttend.emit() : attend.emit()"
+          />
         } @else {
           <a
             hlmBtn

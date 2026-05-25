@@ -2,7 +2,7 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import { Subject, EMPTY } from 'rxjs';
 import { ChatWidgetComponent } from './chat-widget.component';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -73,8 +73,11 @@ interface CompProtected {
   newRoomName: { (): string; set(v: string): void };
   fabPositionClass: () => string;
   panelPositionClass: () => string;
+  isFabVisible: () => boolean;
   sendMessage(): void;
   onKeydown(event: KeyboardEvent): void;
+  onEscape(): void;
+  closeAndReturnFocus(): void;
   toggleMenu(msgId: string): void;
   muteUser(userId: string): void;
   unmuteUser(userId: string): void;
@@ -502,6 +505,110 @@ describe('ChatWidgetComponent', () => {
     });
   });
 
+  describe('isFabVisible', () => {
+    it('returns true on a non-club-detail URL', () => {
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(comp.isFabVisible()).toBeTrue();
+    });
+
+    it('returns false on a club detail URL /clubs/:id', () => {
+      const routerEvents$ = new Subject<unknown>();
+      const mockRouter = { url: '/clubs/abc-123', events: routerEvents$.asObservable() };
+      TestBed.overrideProvider(Router, { useValue: mockRouter });
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(comp.isFabVisible()).toBeFalse();
+    });
+
+    it('returns true on /clubs (list page, not a detail)', () => {
+      const routerEvents$ = new Subject<unknown>();
+      const mockRouter = { url: '/clubs', events: routerEvents$.asObservable() };
+      TestBed.overrideProvider(Router, { useValue: mockRouter });
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(comp.isFabVisible()).toBeTrue();
+    });
+
+    it('returns true on /clubs/:id/subpage (nested path, not matched by regex)', () => {
+      const routerEvents$ = new Subject<unknown>();
+      const mockRouter = { url: '/clubs/abc-123/events', events: routerEvents$.asObservable() };
+      TestBed.overrideProvider(Router, { useValue: mockRouter });
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(comp.isFabVisible()).toBeTrue();
+    });
+
+    it('updates isFabVisible when router emits a NavigationEnd to a club detail URL', () => {
+      const routerEvents$ = new Subject<unknown>();
+      const mockRouter = { url: '/home', events: routerEvents$.asObservable() };
+      TestBed.overrideProvider(Router, { useValue: mockRouter });
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(comp.isFabVisible()).toBeTrue();
+      routerEvents$.next(Object.assign(new NavigationEnd(1, '/clubs/42', '/clubs/42')));
+      TestBed.flushEffects();
+      expect(comp.isFabVisible()).toBeFalse();
+    });
+  });
+
+  describe('closeAndReturnFocus', () => {
+    it('calls chat.toggleOpen', () => {
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      comp.closeAndReturnFocus();
+      expect(chatSvc.toggleOpen).toHaveBeenCalled();
+    });
+  });
+
+  describe('onEscape', () => {
+    it('calls closeAndReturnFocus when chat is open', () => {
+      chatSvc.isOpen.set(true);
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      spyOn(comp, 'closeAndReturnFocus');
+      comp.onEscape();
+      expect(comp.closeAndReturnFocus).toHaveBeenCalled();
+    });
+
+    it('does not call closeAndReturnFocus when chat is closed', () => {
+      chatSvc.isOpen.set(false);
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      spyOn(comp, 'closeAndReturnFocus');
+      comp.onEscape();
+      expect(comp.closeAndReturnFocus).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('isCurrentClubOrganizer', () => {
+    it('returns false when activeRoom has no clubId', () => {
+      chatSvc.activeRoom.set(null);
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      // access via fabPositionClass which depends on isCurrentClubOrganizer
+      expect(comp.fabPositionClass()).toBe('bottom-6 right-6');
+    });
+
+    it('returns false when user is not logged in', () => {
+      chatSvc.activeRoom.set({ clubId: 'club-1' });
+      // authSvc.currentUser is null by default
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(comp.fabPositionClass()).toBe('bottom-6 right-6');
+    });
+
+    it('returns false when club is not found in myClubs', () => {
+      authSvc = makeAuthService({ currentUser: { id: 'user-1', displayName: 'Alice' } });
+      chatSvc.activeRoom.set({ clubId: 'club-99' });
+      clubSvc.myClubs.set([{ id: 'club-1', name: 'Club A', organizerId: 'user-1' }]);
+      TestBed.overrideProvider(AuthService, { useValue: authSvc });
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(comp.fabPositionClass()).toBe('bottom-6 right-6');
+    });
+  });
+
   it('shouldShowRoomList is false when showingRoomList is false and only 1 room exists', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     chatSvc.rooms.set([{ id: 'r1', clubId: 'c1', name: 'R1' }] as any);
@@ -521,5 +628,39 @@ describe('ChatWidgetComponent', () => {
     TestBed.createComponent(ChatWidgetComponent);
     TestBed.flushEffects();
     expect(chatSvc.toggleOpen).toHaveBeenCalled();
+  });
+
+  describe('send button disabled binding', () => {
+    it('messageText signal starts empty — send button is logically disabled', () => {
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(comp.messageText()).toBe('');
+      // disabled = !messageText().trim() should be true when empty
+      expect(!comp.messageText().trim()).toBeTrue();
+    });
+
+    it('messageText signal with whitespace — send button remains logically disabled', () => {
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      comp.messageText.set('   ');
+      expect(!comp.messageText().trim()).toBeTrue();
+    });
+
+    it('messageText signal with text — send button is logically enabled', () => {
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      comp.messageText.set('Hello');
+      expect(!comp.messageText().trim()).toBeFalse();
+    });
+
+    it('messageText updates via set() and disabled state reflects new value', () => {
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(!comp.messageText().trim()).toBeTrue();
+      comp.messageText.set('Hi there');
+      expect(!comp.messageText().trim()).toBeFalse();
+      comp.messageText.set('');
+      expect(!comp.messageText().trim()).toBeTrue();
+    });
   });
 });

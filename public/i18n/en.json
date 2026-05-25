@@ -247,7 +247,18 @@
     "events": "Events",
     "theme_toggle_dark": "Switch to dark mode",
     "theme_toggle_light": "Switch to light mode",
-    "chats": "Chats"
+    "chats": "Chats",
+    "manage": "Manage"
+  },
+  "ORGANIZER": {
+    "title": "Organizer Dashboard",
+    "subtitle": "Manage your reading clubs",
+    "create_club": "Створити клуб",
+    "no_clubs_title": "No clubs yet",
+    "no_clubs_desc": "Create your first reading club to get started.",
+    "manage_members": "Members",
+    "edit": "Edit",
+    "delete": "Delete"
   },
   "PROFILE": {
     "active_badge": "✓ Active",
@@ -334,7 +345,9 @@
     "tab_my": "My Events",
     "no_upcoming": "No upcoming events",
     "no_upcoming_desc": "No events are scheduled yet. Check back soon!",
-    "no_my_events_desc": "Join clubs to see their events here.",
+    "no_my_events": "No events yet",
+    "no_my_events_desc": "RSVP to events to see them here.",
+    "create_event_cta": "+ New Event",
     "registration_closed": "Registration Closed",
     "event_auto_joined": "You've been added to the club and registered for the event",
     "editEvent": "Edit Event",
@@ -573,5 +586,29 @@
     "site_name": "Book Club",
     "site_url": "https://book-club-fe.vercel.app",
     "site_description": "Book Clubs of Ukraine"
+  },
+  "events": {
+    "rsvp": {
+      "join": "RSVP",
+      "attending": "✓ Going",
+      "cancel": "Cancel"
+    },
+    "filter": {
+      "cities": {
+        "all": "All cities"
+      }
+    },
+    "cities": {
+      "all": "All cities",
+      "kyiv": "Kyiv",
+      "lviv": "Lviv",
+      "odesa": "Odesa",
+      "kharkiv": "Kharkiv",
+      "dnipro": "Dnipro"
+    }
+  },
+  "common": {
+    "saved": "Saved!",
+    "saveError": "Failed to save. Please try again."
   }
 }

@@ -79,19 +79,12 @@
           {{ 'EVENTS.view' | translate }}
         </a>
         @if (isAuthenticated() && event().status !== 'cancelled') {
-          @if (event().isAttending) {
-            <button hlmBtn type="button" size="sm" [disabled]="attending() || daysToEvent() <= 0"
-                    (click)="cancelAttend.emit()"
-                    class="bg-[var(--color-accent-600)] hover:bg-[var(--color-accent-700)] text-white">
-              @if (attending()) { <hlm-spinner size="xs" /> } @else if (daysToEvent() <= 0) { {{ 'EVENTS.registration_closed' | translate }} } @else { {{ 'EVENTS.going' | translate }} }
-            </button>
-          } @else {
-            <button hlmBtn type="button" size="sm" [disabled]="attending() || daysToEvent() <= 0"
-                    (click)="attend.emit()"
-                    class="bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white">
-              @if (attending()) { <hlm-spinner size="xs" /> } @else if (daysToEvent() <= 0) { {{ 'EVENTS.registration_closed' | translate }} } @else { {{ 'EVENTS.rsvp' | translate }} }
-            </button>
-          }
+          <app-event-rsvp-button
+            [attending]="!!event().isAttending"
+            [loading]="attending()"
+            [closed]="daysToEvent() <= 0"
+            (clicked)="event().isAttending ? cancelAttend.emit() : attend.emit()"
+          />
         }
       </div>
     </div>

@@ -12,12 +12,13 @@ import { HlmCardImports } from '../../../../shared/spartan/card/src';
 import { HlmButton } from '../../../../shared/spartan/button/src';
 import { HlmSeparator } from '../../../../shared/spartan/separator/src';
 import { HlmSpinner } from '../../../../shared/spartan/spinner/src';
+import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
 
 @Component({
   selector: 'app-club-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgOptimizedImage, RouterLink, TranslateModule, ...HlmCardImports, HlmButton, HlmSeparator, HlmSpinner],
+  imports: [NgOptimizedImage, RouterLink, TranslateModule, ...HlmCardImports, HlmButton, HlmSeparator, HlmSpinner, InitialsPipe],
   templateUrl: './club-card.component.html',
 })
 export class ClubCardComponent {

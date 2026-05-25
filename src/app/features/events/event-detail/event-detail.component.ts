@@ -23,12 +23,13 @@ import { environment } from '../../../../environments/environment';
 import { ChatService } from '../../../core/services/chat.service';
 import { ChatRoom } from '../../../core/models/chat.model';
 import { HlmButton } from '../../../shared/spartan/button/src';
+import { EventRsvpButtonComponent } from '../../../shared/components/event-rsvp-button/event-rsvp-button.component';
 
 @Component({
   selector: 'app-event-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton],
+  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton, EventRsvpButtonComponent],
   templateUrl: './event-detail.component.html',
 })
 export class EventDetailComponent {

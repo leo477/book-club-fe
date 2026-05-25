@@ -1,5 +1,6 @@
 @if (auth.isAuthenticated()) {
   <!-- Chat FAB Button -->
+  @if (isFabVisible()) {
   <button
     [class]="'fixed z-50 w-14 h-14 rounded-full bg-accent-500 shadow-lg hover:shadow-xl transition-shadow duration-200 flex items-center justify-center text-white chat-fab ' + fabPositionClass()"
     [class.animate-bounce]="isBouncing()"
@@ -26,6 +27,7 @@
       </div>
     }
   </button>
+  }
 
   <!-- Chat Panel -->
   @if (chat.isOpen()) {
@@ -43,15 +45,6 @@
             <h2 class="text-white font-bold text-base">Book Club Chat</h2>
             <p class="text-white/70 text-xs">{{ chat.rooms().length }} rooms</p>
           </div>
-          <button
-            class="text-white/80 hover:text-white transition-colors"
-            [attr.aria-label]="'CHAT.close' | translate"
-            (click)="chat.toggleOpen()"
-          >
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
-            </svg>
-          </button>
         </div>
 
         <div class="flex-1 overflow-y-auto">
@@ -142,7 +135,7 @@
             class="flex-shrink-0 transition-colors"
             [style.color]="'var(--color-ink-muted)'"
             [attr.aria-label]="'CHAT.close' | translate"
-            (click)="chat.toggleOpen()"
+            (click)="closeAndReturnFocus()"
           >
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
@@ -203,7 +196,8 @@
         >
           <input
             type="text"
-            [(ngModel)]="messageText"
+            [ngModel]="messageText()"
+            (ngModelChange)="messageText.set($event)"
             (keydown)="onKeydown($event)"
             [placeholder]="'CHAT.placeholder' | translate"
             [attr.aria-label]="'CHAT.placeholder' | translate"

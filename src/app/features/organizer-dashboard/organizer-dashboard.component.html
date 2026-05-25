@@ -1,0 +1,141 @@
+<div class="min-h-screen">
+
+  <!-- ── Hero ──────────────────────────────────────────────────────────── -->
+  <section class="parchment-hero px-4 py-14 text-center">
+    <div class="relative z-10">
+      <h1 class="font-fantasy text-4xl font-bold tracking-widest uppercase
+                 text-[var(--color-ink)] mb-3 drop-shadow-sm">
+        {{ 'ORGANIZER.title' | translate }}
+      </h1>
+      <p class="text-[var(--color-ink-muted)] font-display text-lg mb-6">
+        {{ 'ORGANIZER.subtitle' | translate }}
+      </p>
+      <a
+        routerLink="/clubs/create"
+        class="inline-flex items-center gap-2 px-6 py-3 rounded-full
+               bg-gradient-fantasy text-white font-medium shadow-md
+               hover:opacity-90 transition-opacity focus:outline-none
+               focus:ring-2 focus:ring-[var(--color-primary-400)] focus:ring-offset-2"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+        </svg>
+        {{ 'ORGANIZER.create_club' | translate }}
+      </a>
+    </div>
+  </section>
+
+  <div class="page-container py-8 space-y-6">
+
+    <!-- ── Error ─────────────────────────────────────────────────────── -->
+    @if (error()) {
+      <div class="flex items-start gap-2 parchment-card px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+        <span aria-hidden="true">⚠️</span>
+        <span>{{ error() }}</span>
+      </div>
+    }
+
+    <!-- ── Loading ───────────────────────────────────────────────────── -->
+    @if (isLoading()) {
+      <div class="py-16 flex justify-center" aria-busy="true">
+        <hlm-spinner />
+      </div>
+    } @else if (ownedClubs().length === 0) {
+      <app-empty-state
+        icon="🏛️"
+        [title]="'ORGANIZER.no_clubs_title' | translate"
+        [description]="'ORGANIZER.no_clubs_desc' | translate"
+      />
+    } @else {
+      <!-- ── Club Cards ─────────────────────────────────────────────── -->
+      <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        @for (club of ownedClubs(); track club.id) {
+          <li class="parchment-card p-5 flex flex-col gap-4">
+
+            <!-- Club info -->
+            <div class="flex items-start gap-3">
+              @if (club.coverUrl) {
+                <img
+                  [src]="club.coverUrl"
+                  [alt]="club.name"
+                  class="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+                />
+              } @else {
+                <div class="w-14 h-14 rounded-lg bg-[var(--color-primary-100)] dark:bg-[var(--color-primary-900)]/40
+                            flex items-center justify-center text-2xl flex-shrink-0"
+                     aria-hidden="true">
+                  📚
+                </div>
+              }
+              <div class="flex-1 min-w-0">
+                <h2 class="font-semibold text-[var(--color-ink)] truncate">{{ club.name }}</h2>
+                @if (club.city) {
+                  <p class="text-xs text-[var(--color-ink-muted)] mt-0.5">📍 {{ club.city }}</p>
+                }
+                <p class="text-xs text-[var(--color-ink-muted)] mt-0.5">
+                  {{ club.memberCount }} {{ 'CLUBS.members' | translate }}
+                </p>
+              </div>
+            </div>
+
+            <!-- Action buttons -->
+            <div class="flex flex-wrap gap-2 mt-auto pt-2 border-t border-[var(--color-sepia)]">
+              <a
+                hlmBtn
+                variant="outline"
+                size="sm"
+                [routerLink]="['/clubs', club.id]"
+              >
+                {{ 'ORGANIZER.manage_members' | translate }}
+              </a>
+              <a
+                hlmBtn
+                variant="outline"
+                size="sm"
+                [routerLink]="['/clubs', club.id, 'edit']"
+              >
+                ✏️ {{ 'ORGANIZER.edit' | translate }}
+              </a>
+
+              @if (confirmDeleteId() === club.id) {
+                <div class="flex items-center gap-2 w-full mt-1">
+                  <span class="text-xs text-red-600 dark:text-red-400 flex-1">
+                    {{ 'CLUB_DETAIL.delete_club_confirm' | translate }}
+                  </span>
+                  <button
+                    hlmBtn
+                    variant="destructive"
+                    size="sm"
+                    [disabled]="deletingClubId() === club.id"
+                    (click)="onDelete(club)"
+                  >
+                    {{ 'CLUB_DETAIL.delete_club_yes' | translate }}
+                  </button>
+                  <button
+                    hlmBtn
+                    variant="ghost"
+                    size="sm"
+                    (click)="cancelDelete()"
+                  >
+                    {{ 'CREATE_CLUB.cancel' | translate }}
+                  </button>
+                </div>
+              } @else {
+                <button
+                  hlmBtn
+                  variant="ghost"
+                  size="sm"
+                  class="text-red-600 dark:text-red-400 hover:text-red-700"
+                  [disabled]="deletingClubId() === club.id"
+                  (click)="confirmDelete(club.id)"
+                >
+                  🗑️ {{ 'ORGANIZER.delete' | translate }}
+                </button>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+  </div>
+</div>

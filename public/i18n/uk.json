@@ -247,7 +247,18 @@
     "events": "Події",
     "theme_toggle_dark": "Темна тема",
     "theme_toggle_light": "Світла тема",
-    "chats": "Чати"
+    "chats": "Чати",
+    "manage": "Керування"
+  },
+  "ORGANIZER": {
+    "title": "Панель організатора",
+    "subtitle": "Керуйте вашими читацькими клубами",
+    "create_club": "Створити клуб",
+    "no_clubs_title": "Клубів ще немає",
+    "no_clubs_desc": "Створіть перший читацький клуб, щоб розпочати.",
+    "manage_members": "Учасники",
+    "edit": "Редагувати",
+    "delete": "Видалити"
   },
   "PROFILE": {
     "active_badge": "✓ Активний",
@@ -334,7 +345,9 @@
     "tab_my": "Мої події",
     "no_upcoming": "Немає майбутніх подій",
     "no_upcoming_desc": "Поки що не заплановано жодної події. Заходьте пізніше!",
-    "no_my_events_desc": "Приєднуйтесь до клубів, щоб бачити їхні події тут.",
+    "no_my_events": "Подій ще немає",
+    "no_my_events_desc": "Зареєструйтесь на події, щоб бачити їх тут.",
+    "create_event_cta": "+ Нова подія",
     "registration_closed": "Реєстрація закрита",
     "event_auto_joined": "Вас додано до клубу та зареєстровано на подію",
     "editEvent": "Редагувати подію",
@@ -573,5 +586,29 @@
     "site_name": "Book Club",
     "site_url": "https://book-club-fe.vercel.app",
     "site_description": "Читацькі клуби України"
+  },
+  "events": {
+    "rsvp": {
+      "join": "Участь",
+      "attending": "✓ Іду",
+      "cancel": "Скасувати"
+    },
+    "filter": {
+      "cities": {
+        "all": "Всі міста"
+      }
+    },
+    "cities": {
+      "all": "Всі міста",
+      "kyiv": "Київ",
+      "lviv": "Львів",
+      "odesa": "Одеса",
+      "kharkiv": "Харків",
+      "dnipro": "Дніпро"
+    }
+  },
+  "common": {
+    "saved": "Збережено!",
+    "saveError": "Не вдалось зберегти. Спробуйте ще раз."
   }
 }

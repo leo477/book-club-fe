@@ -48,6 +48,7 @@ export class RegisterComponent {
   private readonly router = inject(Router);
   private readonly seo = inject(SeoService);
 
+  readonly isAuthenticated = this.auth.isAuthenticated;
   readonly errorMessage = signal<string | null>(null);
   readonly isSubmitting = signal(false);
   readonly successMessage = signal(false);
