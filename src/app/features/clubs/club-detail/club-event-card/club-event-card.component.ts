@@ -10,12 +10,13 @@ import { TranslateModule } from '@ngx-translate/core';
 import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
 import { ClubEvent } from '../../../../core/models/event.model';
 import { HlmButton } from '../../../../shared/spartan/button/src';
+import { EventRsvpButtonComponent } from '../../../../shared/components/event-rsvp-button/event-rsvp-button.component';
 
 @Component({
   selector: 'app-club-event-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgOptimizedImage, RouterLink, TranslateModule, FormatDatePipe, HlmButton],
+  imports: [NgOptimizedImage, RouterLink, TranslateModule, FormatDatePipe, HlmButton, EventRsvpButtonComponent],
   templateUrl: './club-event-card.component.html',
   styleUrl: './club-event-card.component.scss',
 })

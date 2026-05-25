@@ -1,0 +1,45 @@
+<form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
+  <hlm-field>
+    <hlm-field-label>{{ 'ORGANIZER.club_name' | translate }}</hlm-field-label>
+    <input hlmInput formControlName="name" [placeholder]="'ORGANIZER.club_name_placeholder' | translate" />
+    @if (form.controls.name.touched && form.controls.name.errors) {
+      <hlm-field-error>
+        @if (form.controls.name.errors['required']) { {{ 'VALIDATION.required' | translate }} }
+        @if (form.controls.name.errors['minlength']) { {{ 'VALIDATION.min_length' | translate: { min: 3 } }} }
+        @if (form.controls.name.errors['maxlength']) { {{ 'VALIDATION.max_length' | translate: { max: 50 } }} }
+      </hlm-field-error>
+    }
+  </hlm-field>
+
+  <hlm-field>
+    <hlm-field-label>{{ 'ORGANIZER.description' | translate }}</hlm-field-label>
+    <input hlmInput formControlName="description" [placeholder]="'ORGANIZER.description_placeholder' | translate" />
+  </hlm-field>
+
+  <hlm-field>
+    <hlm-field-label>{{ 'ORGANIZER.city' | translate }}</hlm-field-label>
+    <input hlmInput formControlName="city" [placeholder]="'ORGANIZER.city_placeholder' | translate" />
+    @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
+      <hlm-field-error>{{ 'VALIDATION.required' | translate }}</hlm-field-error>
+    }
+  </hlm-field>
+
+  <label class="flex items-center gap-2 cursor-pointer">
+    <input type="checkbox" formControlName="isPublic" />
+    <span>{{ 'ORGANIZER.is_public' | translate }}</span>
+  </label>
+
+  @if (errorMessage()) {
+    <p class="text-red-500 text-sm">{{ errorMessage() }}</p>
+  }
+
+  <div class="flex gap-2 justify-end">
+    <button hlmBtn variant="outline" type="button" routerLink="/manage">
+      {{ 'COMMON.cancel' | translate }}
+    </button>
+    <button hlmBtn type="submit" [disabled]="isSubmitting()">
+      @if (isSubmitting()) { <hlm-spinner class="mr-2" /> }
+      {{ 'ORGANIZER.create_club' | translate }}
+    </button>
+  </div>
+</form>

@@ -197,8 +197,8 @@
 
   </div>
 
-  <!-- ── FAB: Create Club (organizers only, no existing owned club) ─── -->
-  @if (auth.isOrganizer() && clubService.myOwnedClubs().length === 0) {
+  <!-- ── FAB: Create Club (organizers only) ─── -->
+  @if (auth.isOrganizer()) {
     <a
       routerLink="/clubs/create"
       class="fixed bottom-6 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full fab-fantasy focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-400)] focus:ring-offset-2 transition-all duration-200"

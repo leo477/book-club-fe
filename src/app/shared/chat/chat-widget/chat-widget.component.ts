@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, effect, computed } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, effect, computed, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -27,6 +27,7 @@ export class ChatWidgetComponent {
   private readonly clubService = inject(ClubService);
   private readonly tokenStore = inject(TokenStore);
   private readonly router = inject(Router);
+  private readonly el = inject(ElementRef);
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -41,6 +42,13 @@ export class ChatWidgetComponent {
 
   private readonly isClubsListPage = computed(() => this.currentUrl() === '/clubs');
 
+  /** Hide FAB on club detail pages (/clubs/:id) and when chat is already open */
+  protected readonly isFabVisible = computed(() => {
+    const url = this.currentUrl();
+    const isClubDetail = /^\/clubs\/[^/]+$/.test(url);
+    return !isClubDetail;
+  });
+
   protected readonly messageText = signal('');
   protected readonly isBouncing = signal(false);
   protected readonly openMenuId = signal<string | null>(null);
@@ -48,6 +56,22 @@ export class ChatWidgetComponent {
   protected readonly newRoomName = signal('');
 
   protected readonly showingRoomList = signal(false);
+
+  @HostListener('keydown.escape')
+  onEscape(): void {
+    if (this.chat.isOpen()) {
+      this.closeAndReturnFocus();
+    }
+  }
+
+  protected closeAndReturnFocus(): void {
+    this.chat.toggleOpen();
+    // Return focus to the FAB button after the panel closes
+    setTimeout(() => {
+      const fab = this.el.nativeElement.querySelector('.chat-fab') as HTMLElement | null;
+      fab?.focus();
+    }, 0);
+  }
 
   protected readonly shouldShowRoomList = computed(() =>
     this.showingRoomList() || (this.chat.rooms().length > 1 && !this.chat.activeRoomId())

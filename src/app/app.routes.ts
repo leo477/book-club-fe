@@ -49,13 +49,14 @@ export const routes: Routes = [
         loadChildren: () => import('./features/events/events.routes').then(m => m.EVENTS_ROUTES),
       },
 
-      // Protected: organizer-only placeholder (e.g. club management)
+      // Protected: organizer dashboard
       {
         path: 'manage',
+        title: 'Керування | Book Club',
         canActivate: [authGuard, roleGuard('organizer')],
         loadComponent: () =>
-          import('./features/clubs/clubs-list/clubs-list.component').then(
-            m => m.ClubsListComponent,
+          import('./features/organizer-dashboard/organizer-dashboard.component').then(
+            m => m.OrganizerDashboardComponent,
           ),
       },
 

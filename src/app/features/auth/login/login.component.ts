@@ -29,6 +29,7 @@ export class LoginComponent {
   private readonly seo = inject(SeoService);
   private readonly translate = inject(TranslateService);
 
+  readonly isAuthenticated = this.auth.isAuthenticated;
   readonly errorMessage = signal<string | null>(null);
   readonly isSubmitting = signal(false);
   /** Triggers book opening animation on successful login. */

@@ -170,6 +170,12 @@ src/
         events.routes.ts
       not-found/
         not-found.component.ts
+      organizer-dashboard/
+        club-create-form/
+          club-create-form.component.html
+          club-create-form.component.ts
+        organizer-dashboard.component.html
+        organizer-dashboard.component.ts
       privacy/
         privacy.component.ts
       profile/
@@ -247,6 +253,8 @@ src/
         empty-state/
           empty-state.component.html
           empty-state.component.ts
+        event-rsvp-button/
+          event-rsvp-button.component.ts
         form-field/
           form-field.component.html
           form-field.component.ts
@@ -412,6 +420,8 @@ supabase/
 .lighthouserc.json
 .lintstagedrc.cjs
 angular.json
+AUDIT-2026-05-25.md
+AUDIT-FIX-PLAN-2026-05-25.md
 audit-report.md
 bugs.md
 CLAUDE.md

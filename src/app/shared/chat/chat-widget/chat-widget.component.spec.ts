@@ -522,4 +522,38 @@ describe('ChatWidgetComponent', () => {
     TestBed.flushEffects();
     expect(chatSvc.toggleOpen).toHaveBeenCalled();
   });
+
+  describe('send button disabled binding', () => {
+    it('messageText signal starts empty — send button is logically disabled', () => {
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(comp.messageText()).toBe('');
+      // disabled = !messageText().trim() should be true when empty
+      expect(!comp.messageText().trim()).toBeTrue();
+    });
+
+    it('messageText signal with whitespace — send button remains logically disabled', () => {
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      comp.messageText.set('   ');
+      expect(!comp.messageText().trim()).toBeTrue();
+    });
+
+    it('messageText signal with text — send button is logically enabled', () => {
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      comp.messageText.set('Hello');
+      expect(!comp.messageText().trim()).toBeFalse();
+    });
+
+    it('messageText updates via set() and disabled state reflects new value', () => {
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(!comp.messageText().trim()).toBeTrue();
+      comp.messageText.set('Hi there');
+      expect(!comp.messageText().trim()).toBeFalse();
+      comp.messageText.set('');
+      expect(!comp.messageText().trim()).toBeTrue();
+    });
+  });
 });

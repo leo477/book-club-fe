@@ -178,8 +178,10 @@ export class ProfileComponent {
   protected async changeRole(role: UserRole): Promise<void> {
     try {
       await this.auth.updateRole(role);
-      toast.success(this.translate.instant('PROFILE.role_changed'));
-    } catch { /* error already handled by interceptor */ }
+      toast.success(this.translate.instant('common.saved'));
+    } catch {
+      toast.error(this.translate.instant('common.saveError'));
+    }
   }
 
   /** Persist the new display name and show a transient success toast. */
@@ -189,9 +191,10 @@ export class ProfileComponent {
     const { displayName } = this.nameForm.getRawValue();
     try {
       await this.auth.updateDisplayName(displayName);
-      toast.success(this.translate.instant('PROFILE.name_updated'));
-    } catch { /* error already handled by interceptor */ }
-    finally {
+      toast.success(this.translate.instant('common.saved'));
+    } catch {
+      toast.error(this.translate.instant('common.saveError'));
+    } finally {
       this.isSavingName.set(false);
     }
   }
@@ -212,14 +215,20 @@ export class ProfileComponent {
 
     try {
       await this.auth.updateSocials(socials);
-      toast.success(this.translate.instant('PROFILE.socials_saved'));
-    } catch { /* error already handled by interceptor */ }
+      toast.success(this.translate.instant('common.saved'));
+    } catch {
+      toast.error(this.translate.instant('common.saveError'));
+    }
   }
 
   /** Toggle socials visibility for all club members. */
   protected async onSocialsPublicChange(value: boolean): Promise<void> {
     try {
       await this.auth.setSocialsPublic(value);
-    } catch { /* error already handled by interceptor */ }
+      toast.success(this.translate.instant('common.saved'));
+    } catch {
+      toast.error(this.translate.instant('common.saveError'));
+    }
   }
+
 }

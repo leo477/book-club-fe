@@ -1,15 +1,21 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { Location } from '@angular/common';
+import { Router } from '@angular/router';
+import { AuthService } from '../../core/auth/auth.service';
 
 @Component({
   selector: 'app-privacy',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink],
+  imports: [],
   template: `
     <div class="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4">
       <div class="max-w-3xl mx-auto">
-        <a routerLink="/clubs" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">← Назад</a>
+        <button
+          type="button"
+          (click)="goBack()"
+          class="text-sm text-primary-600 dark:text-primary-400 hover:underline cursor-pointer"
+        >← Назад</button>
 
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white mt-6 mb-2">Політика конфіденційності</h1>
         <p class="text-sm text-gray-500 dark:text-gray-400 mb-8">Останнє оновлення: травень 2026 р.</p>
@@ -56,4 +62,16 @@ import { RouterLink } from '@angular/router';
     </div>
   `,
 })
-export class PrivacyComponent {}
+export class PrivacyComponent {
+  private readonly location = inject(Location);
+  private readonly router = inject(Router);
+  private readonly auth = inject(AuthService);
+
+  goBack(): void {
+    if (window.history.length > 1) {
+      this.location.back();
+    } else {
+      this.router.navigate([this.auth.isAuthenticated() ? '/events' : '/login']);
+    }
+  }
+}

@@ -58,21 +58,13 @@
       <!-- RSVP actions -->
       @if (auth.isAuthenticated() && event()!.status !== 'cancelled') {
         <div class="flex gap-3 pt-2">
-          @if (event()!.isAttending) {
-            <button type="button"
-                    [disabled]="isActioning()"
-                    (click)="onCancelAttend()"
-                    class="rounded-xl bg-green-600 hover:bg-green-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
-              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.going_cancel' | translate }} }
-            </button>
-          } @else {
-            <button type="button"
-                    [disabled]="isActioning()"
-                    (click)="onAttend()"
-                    class="rounded-xl bg-primary-600 hover:bg-primary-700 px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 transition-colors">
-              @if (isActioning()) { ⏳ } @else { {{ 'EVENTS.rsvp_going' | translate }} }
-            </button>
-          }
+          <app-event-rsvp-button
+            [attending]="!!event()!.isAttending"
+            [loading]="isActioning()"
+            [showCancel]="true"
+            size="default"
+            (clicked)="event()!.isAttending ? onCancelAttend() : onAttend()"
+          />
           @if (event()?.isAttending || isOrganizer()) {
             @if (eventRoom()) {
               <button hlmBtn variant="outline" (click)="openEventChat()">{{ 'EVENT.event_chat_btn' | translate }}</button>

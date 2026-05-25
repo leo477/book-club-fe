@@ -14,12 +14,13 @@ import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmBadge } from '../../../shared/spartan/badge/src';
 import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 import { EventCountdownComponent } from '../event-countdown/event-countdown.component';
+import { EventRsvpButtonComponent } from '../../../shared/components/event-rsvp-button/event-rsvp-button.component';
 
 @Component({
   selector: 'app-event-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe, ...HlmCardImports, HlmButton, HlmBadge, HlmSpinner, EventCountdownComponent],
+  imports: [RouterLink, TranslateModule, FormatDatePipe, ...HlmCardImports, HlmButton, HlmBadge, HlmSpinner, EventCountdownComponent, EventRsvpButtonComponent],
   templateUrl: './event-card.component.html',
 })
 export class EventCardComponent {
