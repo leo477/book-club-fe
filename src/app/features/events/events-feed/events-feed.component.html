@@ -146,6 +146,7 @@
                     [event]="event"
                     [isAuthenticated]="auth.isAuthenticated()"
                     [attending]="attendingEventId() === event.id"
+                    [isOrganizer]="auth.currentUser()?.id === event.organizerId"
                     (attend)="onAttend(event)"
                     (cancelAttend)="onCancelAttend(event)"
                   />
@@ -194,6 +195,7 @@
                 [event]="event"
                 [isAuthenticated]="auth.isAuthenticated()"
                 [attending]="attendingEventId() === event.id"
+                [isOrganizer]="auth.currentUser()?.id === event.organizerId"
                 (attend)="onAttend(event)"
                 (cancelAttend)="onCancelAttend(event)"
               />

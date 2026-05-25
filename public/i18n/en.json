@@ -100,6 +100,7 @@
     "create": "Create club",
     "join": "Join",
     "member_badge": "✓ Member",
+    "organizer_badge": "Organizer",
     "member_singular": "member",
     "members": "members",
     "missed": "Missed",
@@ -351,7 +352,8 @@
     "registration_closed": "Registration Closed",
     "event_auto_joined": "You've been added to the club and registered for the event",
     "editEvent": "Edit Event",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "organizer_badge": "Organizer"
   },
   "EVENT": {
     "event_chat_btn": "Event Chat",

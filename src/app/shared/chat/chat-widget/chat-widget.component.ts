@@ -42,6 +42,11 @@ export class ChatWidgetComponent {
 
   private readonly isClubsListPage = computed(() => this.currentUrl() === '/clubs');
 
+  private readonly urlClubId = computed(() => {
+    const match = /^\/clubs\/([^/]+)$/.exec(this.currentUrl());
+    return match?.[1] ?? null;
+  });
+
   /** Hide FAB on club detail pages (/clubs/:id) and when chat is already open */
   protected readonly isFabVisible = computed(() => {
     const url = this.currentUrl();
@@ -87,7 +92,7 @@ export class ChatWidgetComponent {
   }
 
   protected readonly isCurrentClubOrganizer = computed(() => {
-    const clubId = this.chat.activeRoom()?.clubId;
+    const clubId = this.chat.activeRoom()?.clubId ?? this.urlClubId();
     if (!clubId) return false;
     const userId = this.auth.currentUser()?.id;
     if (!userId) return false;
@@ -205,7 +210,7 @@ export class ChatWidgetComponent {
 
   protected submitCreateRoom(): void {
     const name = this.newRoomName().trim();
-    const clubId = this.chat.activeRoom()?.clubId;
+    const clubId = this.chat.activeRoom()?.clubId ?? this.urlClubId();
     if (!name || !clubId) return;
     this.chat.createRoom(clubId, name);
     this.newRoomName.set('');

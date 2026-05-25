@@ -106,13 +106,23 @@
         >
           {{ 'CLUBS.view' | translate }}
         </a>
-        <span class="rounded-lg
-                     bg-[var(--color-accent-100)] dark:bg-[var(--color-accent-900)]/30
-                     border border-[var(--color-accent-300)] dark:border-[var(--color-accent-700)]/60
-                     px-3 py-1.5 text-xs font-semibold
-                     text-[var(--color-accent-700)] dark:text-[var(--color-accent-300)]">
-          {{ 'CLUBS.member_badge' | translate }}
-        </span>
+        @if (isOwned()) {
+          <span class="rounded-lg
+                       bg-[var(--color-primary-100)] dark:bg-[var(--color-primary-900)]/30
+                       border border-[var(--color-primary-300)] dark:border-[var(--color-primary-700)]/60
+                       px-3 py-1.5 text-xs font-semibold
+                       text-[var(--color-primary-700)] dark:text-[var(--color-primary-300)]">
+            {{ 'CLUBS.organizer_badge' | translate }}
+          </span>
+        } @else {
+          <span class="rounded-lg
+                       bg-[var(--color-accent-100)] dark:bg-[var(--color-accent-900)]/30
+                       border border-[var(--color-accent-300)] dark:border-[var(--color-accent-700)]/60
+                       px-3 py-1.5 text-xs font-semibold
+                       text-[var(--color-accent-700)] dark:text-[var(--color-accent-300)]">
+            {{ 'CLUBS.member_badge' | translate }}
+          </span>
+        }
       } @else {
         <a
           hlmBtn

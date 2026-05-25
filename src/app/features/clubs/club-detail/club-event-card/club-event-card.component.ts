@@ -24,6 +24,7 @@ export class ClubEventCardComponent {
   readonly event = input.required<ClubEvent>();
   readonly isAuthenticated = input<boolean>(false);
   readonly attending = input<boolean>(false);
+  readonly isOrganizer = input<boolean>(false);
   readonly index = input<number>(0);
 
   readonly attend = output<void>();

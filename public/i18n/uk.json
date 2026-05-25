@@ -100,6 +100,7 @@
     "create": "Створити клуб",
     "join": "Приєднатися",
     "member_badge": "✓ Учасник",
+    "organizer_badge": "Організатор",
     "member_singular": "учасник",
     "members": "учасників",
     "missed": "Пропущені",
@@ -351,7 +352,8 @@
     "registration_closed": "Реєстрація закрита",
     "event_auto_joined": "Вас додано до клубу та зареєстровано на подію",
     "editEvent": "Редагувати подію",
-    "saveChanges": "Зберегти зміни"
+    "saveChanges": "Зберегти зміни",
+    "organizer_badge": "Організатор"
   },
   "EVENT": {
     "event_chat_btn": "Чат події",
