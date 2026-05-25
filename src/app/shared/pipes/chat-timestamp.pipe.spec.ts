@@ -3,25 +3,12 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ChatTimestampPipe } from './chat-timestamp.pipe';
 
-function makeMockTranslate(overrides: Partial<{ currentLang: string | null; defaultLang: string }> = {}) {
-  return {
-    instant: (k: string) => k,
-    currentLang: overrides.currentLang !== undefined ? overrides.currentLang : 'uk',
-    defaultLang: overrides.defaultLang ?? 'uk',
-  };
-}
-
 describe('ChatTimestampPipe', () => {
   let pipe: ChatTimestampPipe;
-  let mockTranslate: ReturnType<typeof makeMockTranslate>;
-
-  function buildPipe(translate: ReturnType<typeof makeMockTranslate>): ChatTimestampPipe {
-    TestBed.overrideProvider(TranslateService, { useValue: translate });
-    return TestBed.runInInjectionContext(() => new ChatTimestampPipe());
-  }
+  let mockTranslate: { instant: (k: string) => string; currentLang: string | null; defaultLang: string };
 
   beforeEach(() => {
-    mockTranslate = makeMockTranslate();
+    mockTranslate = { instant: (k: string) => k, currentLang: 'uk', defaultLang: 'uk' };
 
     TestBed.configureTestingModule({
       providers: [
@@ -78,12 +65,10 @@ describe('ChatTimestampPipe', () => {
   });
 
   it('formats older date with en-US locale when currentLang is "en"', () => {
-    const translate = makeMockTranslate({ currentLang: 'en', defaultLang: 'uk' });
-    const localPipe = buildPipe(translate);
-
+    mockTranslate.currentLang = 'en';
     const older = new Date();
     older.setDate(older.getDate() - 10);
-    const result = localPipe.transform(older.toISOString());
+    const result = pipe.transform(older.toISOString());
     expect(result).not.toMatch(/^CHAT\.(today|yesterday)/);
     expect(result).toMatch(/\d{2}:\d{2}$/);
     const expected = older.toLocaleDateString('en-US', { day: 'numeric', month: 'short' });
@@ -91,14 +76,11 @@ describe('ChatTimestampPipe', () => {
   });
 
   it('falls back to defaultLang when currentLang is null', () => {
-    const translate = makeMockTranslate({ currentLang: null, defaultLang: 'uk' });
-    const localPipe = buildPipe(translate);
-
+    mockTranslate.currentLang = null;
     const older = new Date();
     older.setDate(older.getDate() - 10);
-    const result = localPipe.transform(older.toISOString());
+    const result = pipe.transform(older.toISOString());
     expect(result).not.toMatch(/^CHAT\.(today|yesterday)/);
-    // defaultLang is 'uk' so should use uk-UA locale
     const expected = older.toLocaleDateString('uk-UA', { day: 'numeric', month: 'short' });
     expect(result).toContain(expected);
   });
