@@ -35,6 +35,7 @@ describe('EventsFeedComponent', () => {
     eventServiceMock = buildEventServiceMock();
     authSpy = jasmine.createSpyObj('AuthService', [], {
       isAuthenticated: jasmine.createSpy().and.returnValue(isAuthenticated),
+      isOrganizer: jasmine.createSpy().and.returnValue(false),
       currentUser: jasmine.createSpy().and.returnValue(null),
     });
 
