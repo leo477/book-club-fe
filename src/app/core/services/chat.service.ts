@@ -43,6 +43,9 @@ export class ChatService {
   private readonly _mutedUserIds = signal<Set<string>>(new Set());
 
   private _ws: WebSocket | null = null;
+  private _reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private _reconnectDelay = 1_000;
+  private _activeRoomToken: { roomId: string; token: string } | null = null;
 
   private currentUserId: string | null = null;
 
@@ -139,24 +142,49 @@ export class ChatService {
 
   connectRoom(roomId: string, token: string): void {
     this.disconnectRoom();
+    this._activeRoomToken = { roomId, token };
     this._ws = new WebSocket(environment.wsUrl + '/chat/rooms/' + roomId + '?token=' + token);
+
+    this._ws.onopen = () => { this._reconnectDelay = 1_000; };
+
     this._ws.onmessage = (event: MessageEvent) => {
       const envelope = JSON.parse(event.data as string) as WsEnvelope;
       if (envelope.type !== 'message') return;
       const msg = this.mapMessage(envelope.payload);
-      this._messages.update(map => ({
-        ...map,
-        [roomId]: [...(map[roomId] ?? []), msg],
-      }));
+      this._messages.update(map => {
+        const existing = map[roomId] ?? [];
+        if (existing.some(m => m.id === msg.id)) return map;
+        const withoutTemp = existing.filter(
+          m => !(m.id.startsWith('temp-') && m.senderId === msg.senderId && m.text === msg.text),
+        );
+        return { ...map, [roomId]: [...withoutTemp, msg] };
+      });
       if (!this._isOpen()) {
         this._unreadCount.update(n => n + 1);
         this._hasNewMessage.set(true);
         this._playBeep();
       }
     };
+
+    this._ws.onclose = () => {
+      if (!this._activeRoomToken) return;
+      this._reconnectTimer = setTimeout(() => {
+        if (this._activeRoomToken) {
+          this._reconnectDelay = Math.min(this._reconnectDelay * 2, 30_000);
+          this.connectRoom(this._activeRoomToken.roomId, this._activeRoomToken.token);
+        }
+      }, this._reconnectDelay);
+    };
+
+    this._ws.onerror = () => this._ws?.close();
   }
 
   disconnectRoom(): void {
+    this._activeRoomToken = null;
+    if (this._reconnectTimer) {
+      clearTimeout(this._reconnectTimer);
+      this._reconnectTimer = null;
+    }
     this._ws?.close();
     this._ws = null;
   }
@@ -204,21 +232,37 @@ export class ChatService {
     });
   }
 
-  /** Send a message to the active room, then reload messages from the API. */
   sendMessage(text: string, currentUser: { id: string; displayName: string }): void {
     const roomId = this._activeRoomId();
     if (!roomId) return;
-
     this.currentUserId = currentUser.id;
+
+    const tempId = `temp-${Date.now()}`;
+    const optimistic: ChatMessage = {
+      id: tempId, senderId: currentUser.id, senderName: currentUser.displayName,
+      text, timestamp: new Date(), isOwn: true,
+    };
+    this._messages.update(map => ({ ...map, [roomId]: [...(map[roomId] ?? []), optimistic] }));
 
     firstValueFrom(
       this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
     )
-      .then(() => {
-        // Reload messages to stay in sync with server state.
-        this.loadMessages(roomId);
+      .then(saved => {
+        const real = this.mapMessage(saved);
+        // Replace optimistic entry with the confirmed message from the server.
+        // If WS broadcast already delivered it, the dedup in onmessage handles the echo.
+        this._messages.update(map => ({
+          ...map,
+          [roomId]: (map[roomId] ?? []).map(m => m.id === tempId ? real : m),
+        }));
       })
-      .catch((err: unknown) => console.error('[ChatService] sendMessage error', err));
+      .catch((err: unknown) => {
+        console.error('[ChatService] sendMessage error', err);
+        this._messages.update(map => ({
+          ...map,
+          [roomId]: (map[roomId] ?? []).filter(m => m.id !== tempId),
+        }));
+      });
   }
 
   deleteMessage(messageId: string): void {
