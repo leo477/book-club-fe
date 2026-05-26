@@ -289,7 +289,8 @@ describe('ChatService', () => {
         { detail: 'Error' }, { status: 500, statusText: 'Server Error' },
       );
 
-      await Promise.resolve();
+      // HttpClient error processing requires several microtask ticks
+      for (let i = 0; i < 5; i++) await Promise.resolve();
 
       expect(getActiveMessages(service).length).toBe(0); // rolled back
     });
