@@ -721,6 +721,44 @@ describe('ChatService', () => {
       jasmine.clock().uninstall();
     });
 
+    it('onopen resets _reconnectDelay to 1000', () => {
+      service.connectRoom('room-42', 'tok');
+      const ws = MockWebSocket.instance;
+      if (!ws) throw new Error('MockWebSocket not instantiated');
+
+      // Simulate a previous backoff that doubled the delay
+      (service as unknown as { _reconnectDelay: number })._reconnectDelay = 8_000;
+      ws.onopen?.();
+
+      expect((service as unknown as { _reconnectDelay: number })._reconnectDelay).toBe(1_000);
+    });
+
+    it('onerror calls ws.close()', () => {
+      service.connectRoom('room-42', 'tok');
+      const ws = MockWebSocket.instance;
+      if (!ws) throw new Error('MockWebSocket not instantiated');
+
+      ws.simulateError();
+
+      expect(ws.close).toHaveBeenCalled();
+    });
+
+    it('onclose with active token triggers reconnect after delay', () => {
+      jasmine.clock().install();
+      service.connectRoom('room-42', 'tok');
+      const firstWs = MockWebSocket.instance;
+      if (!firstWs) throw new Error('MockWebSocket not instantiated');
+
+      firstWs.simulateClose(); // _activeRoomToken is set → setTimeout fires
+
+      jasmine.clock().tick(1_100); // exceed default 1000ms delay
+
+      const secondWs = MockWebSocket.instance;
+      expect(secondWs).not.toBe(firstWs); // new WebSocket created
+      expect(secondWs?.url).toContain('/chat/rooms/room-42?token=tok');
+      jasmine.clock().uninstall();
+    });
+
     it('strips email domain from senderName when it contains @', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
       service.connectRoom('room-1', 'tok');
