@@ -83,6 +83,10 @@
             </div>
           }
 
+          @if (nearestEventBook()?.title) {
+            <app-book-stores [bookTitle]="nearestEventBook()!.title" />
+          }
+
           <!-- Manage panel (owner only) -->
           @if (isClubOwner()) {
             @defer (on idle) {

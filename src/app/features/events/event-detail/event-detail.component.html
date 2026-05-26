@@ -76,6 +76,11 @@
       }
     </div>
 
+    <!-- Book stores availability -->
+    @if (event()?.bookTitle) {
+      <app-book-stores [bookTitle]="event()!.bookTitle!" />
+    }
+
     <!-- Description -->
     @if (event()!.description) {
       <section class="rounded-2xl bg-white dark:bg-gray-800 shadow-sm p-6">

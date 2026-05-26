@@ -612,5 +612,10 @@
   "common": {
     "saved": "Saved!",
     "saveError": "Failed to save. Please try again."
+  },
+  "BOOK_STORES": {
+    "title": "Where to buy",
+    "found": "Available",
+    "not_found": "Not found"
   }
 }

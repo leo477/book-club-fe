@@ -75,7 +75,7 @@
         @if (isCurrentClubOrganizer()) {
           <div class="px-3 pb-3 pt-2" [style.border-top]="'1px solid var(--border)'">
             @if (isCreatingRoom()) {
-              <div class="flex gap-2 pb-2">
+              <div class="flex flex-col gap-2 pb-2">
                 <input
                   type="text"
                   [(ngModel)]="newRoomName"
@@ -88,7 +88,7 @@
                   [style.border]="'1px solid var(--border)'"
                 />
                 <button
-                  class="px-3 py-1.5 rounded-lg text-sm font-medium bg-accent-500 text-white disabled:opacity-50"
+                  class="w-full py-2 rounded-lg text-sm font-medium bg-accent-500 text-white disabled:opacity-50"
                   [disabled]="!newRoomName().trim()"
                   (click)="submitCreateRoom()"
                   [attr.aria-label]="'CHAT.create_room' | translate"
@@ -225,7 +225,7 @@
             [style.border-top]="isCreatingRoom() ? '1px solid var(--border)' : 'none'"
           >
             @if (isCreatingRoom()) {
-              <div class="flex gap-2 pt-3">
+              <div class="flex flex-col gap-2 pt-3">
                 <input
                   type="text"
                   [(ngModel)]="newRoomName"
@@ -238,7 +238,7 @@
                   [style.border]="'1px solid var(--border)'"
                 />
                 <button
-                  class="px-3 py-1.5 rounded-lg text-sm font-medium bg-accent-500 text-white disabled:opacity-50"
+                  class="w-full py-2 rounded-lg text-sm font-medium bg-accent-500 text-white disabled:opacity-50"
                   [disabled]="!newRoomName().trim()"
                   (click)="submitCreateRoom()"
                   [attr.aria-label]="'CHAT.create_room' | translate"
