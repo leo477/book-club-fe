@@ -212,8 +212,8 @@ describe('BookStoresComponent', () => {
       await fixture.whenStable();
       fixture.detectChanges();
       const el: HTMLElement = fixture.nativeElement;
-      const btn = el.querySelector('button') as HTMLButtonElement;
-      expect(btn.disabled).toBeTrue();
+      const btn = el.querySelector<HTMLButtonElement>('button');
+      expect(btn?.disabled).toBeTrue();
     });
 
     it('does not disable button when store.available is true and url is set', async () => {
@@ -233,8 +233,8 @@ describe('BookStoresComponent', () => {
       await fixture.whenStable();
       fixture.detectChanges();
       const el: HTMLElement = fixture.nativeElement;
-      const btn = el.querySelector('button') as HTMLButtonElement;
-      expect(btn.disabled).toBeFalse();
+      const btn = el.querySelector<HTMLButtonElement>('button');
+      expect(btn?.disabled).toBeFalse();
     });
   });
 
