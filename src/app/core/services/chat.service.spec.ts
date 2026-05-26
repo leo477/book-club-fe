@@ -9,12 +9,17 @@ import { environment } from '../../../environments/environment';
 
 class MockWebSocket {
   static instance: MockWebSocket | null = null;
+  onopen: (() => void) | null = null;
   onmessage: ((e: MessageEvent) => void) | null = null;
+  onclose: (() => void) | null = null;
+  onerror: (() => void) | null = null;
   close = jasmine.createSpy('ws.close');
   constructor(public url: string) { MockWebSocket.instance = this; }
   simulateMessage(data: object) {
     this.onmessage?.(new MessageEvent('message', { data: JSON.stringify(data) }));
   }
+  simulateClose() { this.onclose?.(); }
+  simulateError() { this.onerror?.(); }
 }
 
 interface ChatServicePrivate {
@@ -236,40 +241,63 @@ describe('ChatService', () => {
   });
 
   describe('sendMessage()', () => {
-    it('should POST to server and then reload messages', async () => {
-      // Set up an active room first
+    it('inserts an optimistic message immediately before the POST resolves', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
 
       service.sendMessage('Hello world', { id: 'user-99', displayName: 'TestUser' });
 
-      const postReq = httpMock.expectOne(`${API}/chat/rooms/room-1/messages`);
-      expect(postReq.request.method).toBe('POST');
-      expect(postReq.request.body).toEqual({ text: 'Hello world' });
+      // Optimistic message should be visible right away (before HTTP responds)
+      const msgs = getActiveMessages(service);
+      expect(msgs.length).toBe(1);
+      expect(msgs[0].text).toBe('Hello world');
+      expect(msgs[0].id.startsWith('temp-')).toBeTrue();
+      expect(msgs[0].isOwn).toBeTrue();
 
-      // Flush the POST response, which triggers a reload via .then()
-      postReq.flush({ id: 'new-msg', senderId: 'user-99', senderName: 'TestUser', text: 'Hello world', timestamp: '2024-01-01T00:00:00Z' });
+      // Flush POST to avoid "unexpected request" in afterEach
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush({
+        id: 'new-msg', senderId: 'user-99', senderName: 'TestUser',
+        text: 'Hello world', timestamp: '2024-01-01T00:00:00Z',
+      });
+    });
 
-      // Wait for the .then() microtask to run before expecting the GET
-      await Promise.resolve();
+    it('replaces the temp message with the server-confirmed message after POST', async () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
 
-      // Now the reload GET should be expected
-      const getReq = httpMock.expectOne(`${API}/chat/rooms/room-1/messages`);
-      getReq.flush([
-        { id: 'new-msg', senderId: 'user-99', senderName: 'TestUser', text: 'Hello world', timestamp: '2024-01-01T00:00:00Z' }
-      ]);
+      service.sendMessage('Hello world', { id: 'user-99', displayName: 'TestUser' });
+
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush({
+        id: 'real-msg-id', senderId: 'user-99', senderName: 'TestUser',
+        text: 'Hello world', timestamp: '2024-01-01T00:00:00Z',
+      });
 
       await Promise.resolve();
 
       const msgs = getActiveMessages(service);
       expect(msgs.length).toBe(1);
-      expect(msgs[0].text).toBe('Hello world');
+      expect(msgs[0].id).toBe('real-msg-id');
+      expect(msgs[0].id.startsWith('temp-')).toBeFalse();
+    });
+
+    it('removes the temp message when POST fails', async () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
+
+      service.sendMessage('Will fail', { id: 'user-99', displayName: 'TestUser' });
+
+      expect(getActiveMessages(service).length).toBe(1); // optimistic visible
+
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush(
+        { detail: 'Error' }, { status: 500, statusText: 'Server Error' },
+      );
+
+      await Promise.resolve();
+
+      expect(getActiveMessages(service).length).toBe(0); // rolled back
     });
 
     it('should not send if activeRoomId is null', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set(null);
       service.sendMessage('Should not send', { id: 'user-x', displayName: 'Nobody' });
       httpMock.expectNone(`${API}/chat/rooms/null/messages`);
-      // No requests should have been made
     });
   });
 
@@ -637,6 +665,59 @@ describe('ChatService', () => {
       expect(firstWs).not.toBeNull();
       service.connectRoom('room-42', 'tok2');
       expect(firstWs?.close).toHaveBeenCalled();
+    });
+
+    it('deduplicates WS messages — same id is not added twice', () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
+      service.connectRoom('room-42', 'tok');
+      const ws = MockWebSocket.instance;
+      if (!ws) throw new Error('MockWebSocket not instantiated');
+
+      const payload = { id: 'dup-msg', senderId: 'u1', senderName: 'Alice', text: 'Hello', timestamp: '2024-01-01T00:00:00Z' };
+      ws.simulateMessage({ type: 'message', payload });
+      ws.simulateMessage({ type: 'message', payload }); // duplicate
+
+      expect(getActiveMessages(service).length).toBe(1);
+    });
+
+    it('WS echo replaces temp message from optimistic sendMessage', async () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
+      service.sendMessage('Real text', { id: 'u1', displayName: 'Alice' });
+      const postReq = httpMock.expectOne(`${API}/chat/rooms/room-42/messages`);
+
+      // Connect WS and simulate echo before POST resolves
+      service.connectRoom('room-42', 'tok');
+      const ws = MockWebSocket.instance;
+      if (!ws) throw new Error('MockWebSocket not instantiated');
+      ws.simulateMessage({
+        type: 'message',
+        payload: { id: 'server-id', senderId: 'u1', senderName: 'Alice', text: 'Real text', timestamp: '2024-01-01T00:00:00Z' },
+      });
+
+      // temp message replaced by WS echo
+      const msgs = getActiveMessages(service);
+      expect(msgs.some(m => m.id.startsWith('temp-'))).toBeFalse();
+      expect(msgs.some(m => m.id === 'server-id')).toBeTrue();
+
+      postReq.flush({ id: 'server-id', senderId: 'u1', senderName: 'Alice', text: 'Real text', timestamp: '2024-01-01T00:00:00Z' });
+      await Promise.resolve();
+      // Still only one message (dedup handles POST .then() trying to map temp to real, but temp is gone)
+      expect(getActiveMessages(service).filter(m => m.id === 'server-id').length).toBe(1);
+    });
+
+    it('disconnectRoom prevents reconnect by clearing _activeRoomToken', () => {
+      jasmine.clock().install();
+      service.connectRoom('room-42', 'tok');
+      const ws = MockWebSocket.instance;
+      if (!ws) throw new Error('MockWebSocket not instantiated');
+
+      service.disconnectRoom(); // clears _activeRoomToken
+      ws.simulateClose();       // onclose fires, but _activeRoomToken is null → no setTimeout
+
+      jasmine.clock().tick(5_000);
+      // No second WebSocket should have been created
+      expect(MockWebSocket.instance).toBe(ws);
+      jasmine.clock().uninstall();
     });
 
     it('strips email domain from senderName when it contains @', () => {
