@@ -83,10 +83,6 @@
             </div>
           }
 
-          @if (nearestEventBook()?.title) {
-            <app-book-stores [bookTitle]="nearestEventBook()!.title" />
-          }
-
           <!-- Manage panel (owner only) -->
           @if (isClubOwner()) {
             @defer (on idle) {
@@ -290,6 +286,7 @@
           <app-club-sidebar-right
             [club]="club()!"
             [organizerProfile]="organizerProfile()"
+            [bookTitle]="nearestEventBook()?.title ?? null"
           />
         </aside>
 

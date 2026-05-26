@@ -38,6 +38,10 @@
   </div>
 }
 
+@if (bookTitle()) {
+  <app-book-stores [bookTitle]="bookTitle()!" />
+}
+
 <!-- After-meeting venue (club level) -->
 @if (club().afterMeetingVenue) {
   <div hlmCard class="glass-card-subtle p-4 gap-3">
