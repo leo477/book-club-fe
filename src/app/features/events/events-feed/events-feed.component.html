@@ -15,7 +15,7 @@
       @if (auth.isOrganizer()) {
         <div class="mb-6">
           <a
-            routerLink="/clubs"
+            [routerLink]="createEventLink()"
             class="inline-flex items-center gap-2 px-5 py-2.5 rounded-full
                    bg-gradient-fantasy text-white font-medium shadow-md
                    hover:opacity-90 transition-opacity focus:outline-none

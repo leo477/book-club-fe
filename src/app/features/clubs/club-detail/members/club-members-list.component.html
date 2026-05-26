@@ -106,7 +106,7 @@
                   {{ 'MEMBERS.ban' | translate }}
                 </button>
                 @if (showBanMenu() === member.userId) {
-                  <menu class="absolute right-0 top-full mt-1 z-30 rounded-xl glass-card-strong shadow-xl py-1 min-w-36">
+                  <menu class="absolute right-0 bottom-full mb-1 z-30 rounded-xl glass-card-strong shadow-xl py-1 min-w-36">
                     @for (duration of banDurations; track duration) {
                       <li>
                         <button hlmBtn variant="ghost" type="button" (click)="emitBan(member.userId, duration)"

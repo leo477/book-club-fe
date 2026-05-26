@@ -13,6 +13,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
+import { ClubService } from '../../../core/services/club.service';
 import { BackendHttpError } from '../../../core/interceptors/auth.interceptor';
 import { ClubEvent } from '../../../core/models/event.model';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
@@ -29,7 +30,13 @@ import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 export class EventsFeedComponent implements OnInit {
   readonly eventService = inject(EventService);
   readonly auth = inject(AuthService);
+  private readonly clubService = inject(ClubService);
   private readonly translate = inject(TranslateService);
+
+  readonly createEventLink = computed(() => {
+    const owned = this.clubService.myOwnedClubs();
+    return owned.length === 1 ? `/clubs/${owned[0].id}/events/create` : '/clubs';
+  });
 
   readonly attendingEventId = signal<string | null>(null);
   readonly activeTab = signal<'upcoming' | 'my'>('upcoming');

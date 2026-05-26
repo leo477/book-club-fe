@@ -238,6 +238,8 @@ src/
         shell.component.ts
       .gitkeep
     shared/
+      book-stores/
+        book-stores.component.ts
       chat/
         chat-widget/
           chat-widget.component.html
