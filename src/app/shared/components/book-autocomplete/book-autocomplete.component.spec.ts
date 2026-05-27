@@ -143,9 +143,10 @@ describe('BookAutocompleteComponent', () => {
 
     it('Enter selects the active item', () => {
       component.activeIndex.set(1);
+      const expectedBook = component.suggestions()[1]; // capture before select() clears suggestions
       const selectSpy = spyOn(component, 'select').and.callThrough();
       component.onKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
-      expect(selectSpy).toHaveBeenCalledWith(component.suggestions()[1]);
+      expect(selectSpy).toHaveBeenCalledWith(expectedBook);
     });
 
     it('Enter does nothing when activeIndex is -1', () => {
