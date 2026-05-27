@@ -45,6 +45,15 @@ describe('EventService', () => {
       expect(service.allEvents()[0].id).toBe('e1');
     });
 
+    it('passes custom skip and limit params', async () => {
+      const p = service.loadAllEvents(10, 20);
+      const req = httpMock.expectOne(`${API}/events?skip=10&limit=20`);
+      expect(req.request.params.get('skip')).toBe('10');
+      expect(req.request.params.get('limit')).toBe('20');
+      req.flush([]);
+      await p;
+    });
+
     it('sets isLoading to false after success', async () => {
       const p = service.loadAllEvents();
       expect(service.isLoading()).toBeTrue();
@@ -190,6 +199,31 @@ describe('EventService', () => {
       const event = service.myEvents().find(e => e.id === 'e1');
       expect(event?.attendeeCount).toBe(6);
       expect(event?.isAttending).toBeTrue();
+    });
+
+    it('returns auto_joined value from API response', async () => {
+      const p = service.attendEvent('e1');
+      httpMock.expectOne(`${API}/events/e1/attend`).flush({ auto_joined: true });
+      const result = await p;
+      expect(result.auto_joined).toBeTrue();
+    });
+
+    it('does not change unrelated events when patching attendance', async () => {
+      // Load a second event
+      const allP2 = service.loadAllEvents();
+      httpMock.expectOne(`${API}/events?skip=0&limit=50`).flush([
+        makeApiEvent({ id: 'e1', attendeeCount: 5, isAttending: false }),
+        makeApiEvent({ id: 'e2', attendeeCount: 3, isAttending: false }),
+      ]);
+      await allP2;
+
+      const p = service.attendEvent('e1');
+      httpMock.expectOne(`${API}/events/e1/attend`).flush({ auto_joined: false });
+      await p;
+
+      const e2 = service.allEvents().find(e => e.id === 'e2');
+      expect(e2?.attendeeCount).toBe(3);
+      expect(e2?.isAttending).toBeFalse();
     });
   });
 
