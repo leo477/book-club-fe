@@ -29,7 +29,8 @@
   "private": true,
   "overrides": {
     "picomatch": "^4.0.4",
-    "axios": "1.15.2"
+    "axios": "1.15.2",
+    "tmp": ">=0.2.6"
   },
   "dependencies": {
     "@angular/cdk": "^21.2.8",
