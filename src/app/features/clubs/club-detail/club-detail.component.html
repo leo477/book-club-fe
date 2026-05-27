@@ -242,15 +242,55 @@
                 } @else {
                   <div class="grid gap-5 sm:grid-cols-2">
                     @for (event of pastEvents(); track event.id; let i = $index) {
-                      <app-club-event-card
-                        [event]="event"
-                        [isAuthenticated]="!!currentUser()"
-                        [attending]="false"
-                        [isOrganizer]="currentUser()?.id === event.organizerId"
-                        [index]="i"
-                        (attend)="onAttend(event.id)"
-                        (cancelAttend)="onCancelAttend(event.id)"
-                      />
+                      <div class="flex flex-col gap-2">
+                        <app-club-event-card
+                          [event]="event"
+                          [isAuthenticated]="!!currentUser()"
+                          [attending]="false"
+                          [isOrganizer]="currentUser()?.id === event.organizerId"
+                          [index]="i"
+                          (attend)="onAttend(event.id)"
+                          (cancelAttend)="onCancelAttend(event.id)"
+                        />
+                        @if (event.hasWinner && event.winnerId) {
+                          <p class="text-xs text-[var(--color-primary-500)] px-1">
+                            🏆 {{ event.winnerName }}
+                          </p>
+                        }
+                        @if (isClubOwner() && event.hasWinner && !event.winnerId) {
+                          @if (setWinnerEventId() === event.id) {
+                            <div class="flex flex-col gap-1 px-1">
+                              <select
+                                class="w-full rounded-lg border border-[var(--color-sepia)] bg-[var(--color-surface)] px-3 py-1.5 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)]"
+                                [disabled]="setWinnerLoading() === event.id"
+                                (change)="onSetWinner(event.id, $any($event.target).value)"
+                              >
+                                <option value="">— {{ 'EVENT.set_winner' | translate }} —</option>
+                                @for (member of members(); track member.userId) {
+                                  <option [value]="member.userId">{{ member.displayName }}</option>
+                                }
+                              </select>
+                              <button
+                                hlmBtn
+                                variant="ghost"
+                                size="sm"
+                                class="self-start text-xs text-[var(--color-ink-muted)]"
+                                (click)="setWinnerEventId.set(null)"
+                              >✕</button>
+                            </div>
+                          } @else {
+                            <button
+                              hlmBtn
+                              variant="outline"
+                              size="sm"
+                              class="self-start mx-1 text-xs"
+                              (click)="setWinnerEventId.set(event.id)"
+                            >
+                              🏆 {{ 'EVENT.set_winner' | translate }}
+                            </button>
+                          }
+                        }
+                      </div>
                     }
                   </div>
                 }

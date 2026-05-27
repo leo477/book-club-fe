@@ -32,6 +32,7 @@ export class LoginComponent {
   readonly isAuthenticated = this.auth.isAuthenticated;
   readonly errorMessage = signal<string | null>(null);
   readonly isSubmitting = signal(false);
+  readonly showRegisterHint = signal(false);
   /** Triggers book opening animation on successful login. */
   readonly bookOpen = signal(false);
   /** Delays form appearance until book entrance settles (~700ms). */
@@ -64,6 +65,7 @@ export class LoginComponent {
     }
     this.isSubmitting.set(true);
     this.errorMessage.set(null);
+    this.showRegisterHint.set(false);
 
     const { email, password } = this.form.getRawValue();
     const { error } = await this.auth.signIn(email, password);
@@ -75,6 +77,9 @@ export class LoginComponent {
         ? this.translate.instant('AUTH.error_invalid_credentials')
         : error;
       this.errorMessage.set(translatedError);
+      if (error === 'Invalid credentials') {
+        this.showRegisterHint.set(true);
+      }
     } else {
       // Trigger book animation; navigate in onBookAnimationDone()
       this.bookOpen.set(true);

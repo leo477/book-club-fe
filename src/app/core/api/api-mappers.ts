@@ -46,6 +46,12 @@ export interface ApiClub {
   meetingDurationMinutes: number | null;
   afterMeetingVenue: AfterMeetingVenue | null;
   cancelledAt?: string | null;
+  current_champion?: {
+    user_id: string;
+    display_name: string;
+    event_title: string;
+    event_date: string;
+  } | null;
 }
 
 export interface ApiClubMember {
@@ -88,6 +94,10 @@ export interface ApiEvent {
   isAttending: boolean;
   bookTitle?: string | null;
   quizId?: string | null;
+  googleBookId?: string | null;
+  hasWinner?: boolean;
+  winnerId?: string | null;
+  winnerName?: string | null;
 }
 
 export function mapUserProfile(raw: ApiUserProfile): UserProfile {
@@ -135,6 +145,14 @@ export function mapClub(raw: ApiClub): Club {
     meetingDurationMinutes: raw.meetingDurationMinutes,
     afterMeetingVenue: raw.afterMeetingVenue,
     cancelledAt: raw.cancelledAt ?? undefined,
+    currentChampion: raw.current_champion
+      ? {
+          userId: raw.current_champion.user_id,
+          displayName: raw.current_champion.display_name,
+          eventTitle: raw.current_champion.event_title,
+          eventDate: raw.current_champion.event_date,
+        }
+      : null,
   };
 }
 
@@ -162,6 +180,10 @@ export function mapEvent(raw: ApiEvent): ClubEvent {
     isAttending: raw.isAttending,
     bookTitle: raw.bookTitle ?? null,
     quizId: raw.quizId ?? null,
+    googleBookId: raw.googleBookId ?? null,
+    hasWinner: raw.hasWinner ?? false,
+    winnerId: raw.winnerId ?? null,
+    winnerName: raw.winnerName ?? null,
   };
 }
 

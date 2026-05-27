@@ -11,7 +11,7 @@ const mockClub: Club = {
   createdAt: '2024-01-01', city: 'Kyiv', nextMeetingDate: null,
   address: null, lat: null, lng: null, theme: null, currentBook: null,
   memberPreviews: [], status: 'active', tags: [],
-  meetingDurationMinutes: null, afterMeetingVenue: null,
+  meetingDurationMinutes: null, afterMeetingVenue: null, currentChampion: null,
 };
 
 describe('ClubInfoComponent', () => {

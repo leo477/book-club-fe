@@ -1,22 +1,23 @@
-<div class="min-h-screen bg-gradient-to-br from-primary-950/30 via-transparent to-accent-950/20">
+<div class="parchment-hero min-h-screen">
   <div class="max-w-2xl mx-auto space-y-5 py-8 px-4">
 
     <!-- ── Section 1 — Hero / Avatar ─────────────────────────────────── -->
     <section
       aria-labelledby="profile-heading"
-      class="glass-card-strong p-8 text-center"
+      class="parchment-card-raised p-8 text-center section-stagger"
+      style="--stagger: 0"
     >
       <!-- Avatar circle -->
       <div
         class="mx-auto mb-4 h-24 w-24 rounded-full bg-gradient-brand
                flex items-center justify-center text-white text-3xl font-bold select-none
-               shadow-lg ring-4 ring-white/20"
+               shadow-lg ring-4 ring-[var(--color-primary-400)] ring-offset-2 ring-offset-[var(--color-bg)]"
         aria-hidden="true"
       >
         {{ userInitials() }}
       </div>
 
-      <h1 id="profile-heading" class="text-2xl font-bold text-gray-900 dark:text-white">
+      <h1 id="profile-heading" class="heading-display text-2xl font-bold text-gray-900 dark:text-white">
         {{ auth.currentUser()?.displayName }}
       </h1>
 
@@ -39,8 +40,8 @@
     </section>
 
     <!-- ── Section 2 — Edit Display Name ─────────────────────────────── -->
-    <section aria-labelledby="edit-name-heading" class="glass-card p-6">
-      <h2 id="edit-name-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+    <section aria-labelledby="edit-name-heading" class="glass-card p-6 section-stagger" style="--stagger: 1">
+      <h2 id="edit-name-heading" class="heading-display text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
         <span aria-hidden="true">✏️</span> {{ 'PROFILE.edit_profile' | translate }}
       </h2>
 
@@ -96,8 +97,8 @@
     </section>
 
     <!-- ── Section 3 — Change Role ────────────────────────────────────── -->
-    <section aria-labelledby="role-heading" class="glass-card p-6">
-      <h2 id="role-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
+    <section aria-labelledby="role-heading" class="glass-card p-6 section-stagger" style="--stagger: 2">
+      <h2 id="role-heading" class="heading-display text-lg font-semibold text-gray-900 dark:text-white mb-1 flex items-center gap-2">
         <span aria-hidden="true">🔖</span> {{ 'PROFILE.role_title' | translate }}
       </h2>
       <p class="text-sm text-gray-500 dark:text-gray-400 mb-5">
@@ -110,16 +111,16 @@
     </section>
 
     <!-- ── Section 4 — Statistics ─────────────────────────────────────── -->
-    <section aria-labelledby="stats-heading" class="glass-card p-6">
-      <h2 id="stats-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+    <section aria-labelledby="stats-heading" class="glass-card p-6 section-stagger" style="--stagger: 3">
+      <h2 id="stats-heading" class="heading-display text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
         <span aria-hidden="true">📊</span> {{ 'PROFILE.stats_title' | translate }}
       </h2>
       <app-profile-stats [stats]="auth.userStats()" />
     </section>
 
     <!-- ── Section 5 — Social Media Links ────────────────────────────── -->
-    <section aria-labelledby="socials-heading" class="glass-card p-6">
-      <h2 id="socials-heading" class="text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
+    <section aria-labelledby="socials-heading" class="glass-card p-6 section-stagger" style="--stagger: 4">
+      <h2 id="socials-heading" class="heading-display text-lg font-semibold text-gray-900 dark:text-white mb-5 flex items-center gap-2">
         <span aria-hidden="true">🌐</span> {{ 'PROFILE.socials_title' | translate }}
       </h2>
 

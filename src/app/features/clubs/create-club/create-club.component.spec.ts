@@ -91,7 +91,8 @@ describe('CreateClubComponent', () => {
       status: 'active',
       tags: [],
       meetingDurationMinutes: null,
-      afterMeetingVenue: null
+      afterMeetingVenue: null,
+    currentChampion: null,
     }));
     await component.onSubmit();
     expect(clubServiceSpy.createClub).toHaveBeenCalled();

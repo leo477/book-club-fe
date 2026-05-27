@@ -9,6 +9,8 @@ const BASE_EVENT = {
   coverUrl: null, theme: null, tags: [],
   durationMinutes: null, afterMeetingVenue: null,
   attendeeCount: 5, isAttending: false,
+  googleBookId: null,
+  hasWinner: false, winnerId: null, winnerName: null,
 };
 
 export function makeClubEvent(overrides: Partial<ClubEvent> = {}): ClubEvent {

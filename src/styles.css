@@ -421,6 +421,23 @@ body {
       color-mix(in srgb, var(--color-accent-500)  15%, transparent) 100%);
   }
 
+  /* ── Entrance animation ─────────────────────────────────────────── */
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .section-stagger {
+    animation: slideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+    animation-delay: calc(var(--stagger, 0) * 80ms);
+  }
+
   /* ── Global text selection ──────────────────────────────────────── */
   ::selection {
     background-color: color-mix(in oklab, var(--primary) 30%, transparent);

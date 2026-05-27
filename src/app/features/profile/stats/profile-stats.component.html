@@ -1,33 +1,43 @@
 <dl class="bento-grid-3">
 
-  <div class="glass-card-subtle p-5 text-center">
-    <div class="text-3xl mb-2" aria-hidden="true">📚</div>
-    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.clubs_joined' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.clubsJoined ?? 0 }}</dd>
+  <div class="parchment-card-raised border-t-4 border-primary-500 p-5 text-center">
+    <div class="flex justify-center mb-2 text-primary-500" aria-hidden="true">
+      <ng-icon name="lucideBookOpen" size="28" />
+    </div>
+    <dt class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mt-1">{{ 'PROFILE.clubs_joined' | translate }}</dt>
+    <dd class="heading-display text-4xl font-bold text-[var(--color-ink)]">{{ stats()?.clubsJoined ?? 0 }}</dd>
   </div>
 
-  <div class="glass-card-subtle p-5 text-center">
-    <div class="text-3xl mb-2" aria-hidden="true">🧠</div>
-    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_taken' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.quizzesTaken ?? 0 }}</dd>
+  <div class="parchment-card-raised border-t-4 border-accent-500 p-5 text-center">
+    <div class="flex justify-center mb-2 text-accent-500" aria-hidden="true">
+      <ng-icon name="lucideBrain" size="28" />
+    </div>
+    <dt class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mt-1">{{ 'PROFILE.quizzes_taken' | translate }}</dt>
+    <dd class="heading-display text-4xl font-bold text-[var(--color-ink)]">{{ stats()?.quizzesTaken ?? 0 }}</dd>
   </div>
 
-  <div class="glass-card-subtle p-5 text-center">
-    <div class="text-3xl mb-2" aria-hidden="true">🏆</div>
-    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.quizzes_won' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.quizWins ?? 0 }}</dd>
+  <div class="parchment-card-raised border-t-4 border-amber-500 p-5 text-center">
+    <div class="flex justify-center mb-2 text-amber-500" aria-hidden="true">
+      <ng-icon name="lucideTrophy" size="28" />
+    </div>
+    <dt class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mt-1">{{ 'PROFILE.quizzes_won' | translate }}</dt>
+    <dd class="heading-display text-4xl font-bold text-[var(--color-ink)]">{{ stats()?.quizWins ?? 0 }}</dd>
   </div>
 
-  <div class="glass-card-subtle p-5 text-center">
-    <div class="text-3xl mb-2" aria-hidden="true">❤️</div>
-    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.likes_received' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.likesReceived ?? 0 }}</dd>
+  <div class="parchment-card-raised border-t-4 border-rose-500 p-5 text-center">
+    <div class="flex justify-center mb-2 text-rose-500" aria-hidden="true">
+      <ng-icon name="lucideHeart" size="28" />
+    </div>
+    <dt class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mt-1">{{ 'PROFILE.likes_received' | translate }}</dt>
+    <dd class="heading-display text-4xl font-bold text-[var(--color-ink)]">{{ stats()?.likesReceived ?? 0 }}</dd>
   </div>
 
-  <div class="glass-card-subtle p-5 text-center">
-    <div class="text-3xl mb-2" aria-hidden="true">📖</div>
-    <dt class="text-xs text-gray-500 dark:text-gray-400 mb-1">{{ 'PROFILE.books_read' | translate }}</dt>
-    <dd class="text-3xl font-bold text-gray-900 dark:text-white">{{ stats()?.booksRead ?? 0 }}</dd>
+  <div class="parchment-card-raised border-t-4 border-teal-500 p-5 text-center">
+    <div class="flex justify-center mb-2 text-teal-500" aria-hidden="true">
+      <ng-icon name="lucideBook" size="28" />
+    </div>
+    <dt class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mt-1">{{ 'PROFILE.books_read' | translate }}</dt>
+    <dd class="heading-display text-4xl font-bold text-[var(--color-ink)]">{{ stats()?.booksRead ?? 0 }}</dd>
   </div>
 
 </dl>

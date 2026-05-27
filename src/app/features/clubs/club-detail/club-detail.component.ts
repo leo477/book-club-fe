@@ -8,6 +8,7 @@ import {
   input,
   linkedSignal,
 } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
 import { NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -93,6 +94,8 @@ export class ClubDetailComponent {
   readonly isActionLoading = signal(false);
   readonly actionError = signal<string | null>(null);
   readonly attendingEventId = signal<string | null>(null);
+  readonly setWinnerEventId = signal<string | null>(null);
+  readonly setWinnerLoading = signal<string | null>(null);
 
   readonly sortKey = linkedSignal<'date' | 'popular' | 'status'>(() => {
     this.id();
@@ -348,6 +351,26 @@ export class ClubDetailComponent {
       this.isPastEventsLoaded.set(true);
     } finally {
       this.isPastEventsLoading.set(false);
+    }
+  }
+
+  async onSetWinner(eventId: string, memberId: string): Promise<void> {
+    this.setWinnerLoading.set(eventId);
+    try {
+      await firstValueFrom(this.eventService.setEventWinner(eventId, memberId));
+      const member = this.members().find(m => m.userId === memberId);
+      this.pastEvents.update(list =>
+        list.map(e =>
+          e.id === eventId
+            ? { ...e, winnerId: memberId, winnerName: member?.displayName ?? null }
+            : e,
+        ),
+      );
+      this.setWinnerEventId.set(null);
+    } catch {
+      // silently fail — error handling can be extended later
+    } finally {
+      this.setWinnerLoading.set(null);
     }
   }
 

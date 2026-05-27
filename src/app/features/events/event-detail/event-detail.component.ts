@@ -6,11 +6,13 @@ import {
   computed,
   input,
   effect,
+  DestroyRef,
 } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
+import { SlicePipe } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { rxResource } from '@angular/core/rxjs-interop';
+import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs';
 import { toast } from '@spartan-ng/brain/sonner';
 import { EventService } from '../../../core/services/event.service';
@@ -23,14 +25,17 @@ import { environment } from '../../../../environments/environment';
 import { ChatService } from '../../../core/services/chat.service';
 import { ChatRoom } from '../../../core/models/chat.model';
 import { HlmButton } from '../../../shared/spartan/button/src';
+import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 import { EventRsvpButtonComponent } from '../../../shared/components/event-rsvp-button/event-rsvp-button.component';
 import { BookStoresComponent } from '../../../shared/book-stores/book-stores.component';
+import { BookSearchService } from '../../../core/services/book-search.service';
+import { BookDetails } from '../../../core/models/book.model';
 
 @Component({
   selector: 'app-event-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton, EventRsvpButtonComponent, BookStoresComponent],
+  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton, HlmSpinner, EventRsvpButtonComponent, BookStoresComponent, SlicePipe],
   templateUrl: './event-detail.component.html',
 })
 export class EventDetailComponent {
@@ -41,6 +46,8 @@ export class EventDetailComponent {
   private readonly translate = inject(TranslateService);
   readonly auth = inject(AuthService);
   private readonly chatService = inject(ChatService);
+  private readonly bookSearchService = inject(BookSearchService);
+  private readonly destroyRef = inject(DestroyRef);
 
   private readonly _eventResource = rxResource<ClubEvent | null, string>({
     params: () => this.id(),
@@ -57,6 +64,10 @@ export class EventDetailComponent {
   );
   readonly isActioning = signal(false);
 
+  readonly bookDetailsOpen = signal(false);
+  readonly bookDetails = signal<BookDetails | null>(null);
+  readonly isLoadingBookDetails = signal(false);
+
   readonly isOrganizer = computed(
     () => !!this.auth.currentUser() && this.event()?.organizerId === this.auth.currentUser()?.id,
   );
@@ -72,6 +83,18 @@ export class EventDetailComponent {
         this.chatService.getEventRoom(ev.id).then(room => this._eventRoom.set(room));
       }
     });
+  }
+
+  openBookDetails(): void {
+    this.bookDetailsOpen.update(v => !v);
+    if (!this.bookDetailsOpen() || this.bookDetails() || !this.event()?.googleBookId) return;
+    this.isLoadingBookDetails.set(true);
+    this.bookSearchService.getBookDetails(this.event()!.googleBookId!)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: d => { this.bookDetails.set(d); this.isLoadingBookDetails.set(false); },
+        error: () => this.isLoadingBookDetails.set(false),
+      });
   }
 
   async openEventChat(): Promise<void> {

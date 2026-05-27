@@ -26,6 +26,7 @@ const mockClub: Club = {
   tags: [],
   meetingDurationMinutes: null,
   afterMeetingVenue: null,
+  currentChampion: null,
 };
 
 describe('ClubCardComponent', () => {

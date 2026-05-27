@@ -32,4 +32,8 @@ export interface ClubEvent {
   isAttending: boolean;
   bookTitle?: string | null;
   quizId?: string | null;
+  googleBookId: string | null;
+  hasWinner: boolean;
+  winnerId: string | null;
+  winnerName: string | null;
 }
