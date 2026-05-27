@@ -46,7 +46,7 @@ export class ChatService {
   /** True while the /chats full-page route is active. Suppresses the FAB badge. */
   private readonly _isChatsPage = signal<boolean>(false);
   /** userId → 'online'|'offline' for the currently connected room. */
-  private readonly _presenceMap = signal<Record<string, 'online' | 'offline'>>({});
+  private readonly _presenceMap = signal<Map<string, 'online' | 'offline'>>(new Map());
   /** roomId → id of the last message the current user has read (from server). */
   private readonly _lastReadMap = signal<Record<string, string | null>>({});
   /** roomId → number of unread messages (from server, reset locally on open). */
@@ -191,13 +191,13 @@ export class ChatService {
       // ── Presence events (Feature 4) ──────────────────────────────────────
       if (envelope.type === 'presence') {
         const p = envelope.payload as { userId: string; status: 'online' | 'offline' };
-        this._presenceMap.update(m => ({ ...m, [p.userId]: p.status }));
+        this._presenceMap.update(m => { const n = new Map(m); n.set(p.userId, p.status); return n; });
         return;
       }
       if (envelope.type === 'presence_snapshot') {
         const entries = envelope.payload as { userId: string; status: 'online' | 'offline' }[];
-        const map: Record<string, 'online' | 'offline'> = {};
-        for (const e of entries) map[e.userId] = e.status;
+        const map = new Map<string, 'online' | 'offline'>();
+        for (const e of entries) map.set(e.userId, e.status);
         this._presenceMap.set(map);
         return;
       }
@@ -237,7 +237,7 @@ export class ChatService {
 
   disconnectRoom(): void {
     this._activeRoomToken = null;
-    this._presenceMap.set({});
+    this._presenceMap.set(new Map());
     if (this._reconnectTimer) {
       clearTimeout(this._reconnectTimer);
       this._reconnectTimer = null;
@@ -314,7 +314,7 @@ export class ChatService {
     this._hasNewMessage.set(false);
     this._isOpen.set(false);
     this._mutedUserIds.set(new Set());
-    this._presenceMap.set({});
+    this._presenceMap.set(new Map());
     this._lastReadMap.set({});
     this._roomUnreadCounts.set({});
     this.currentUserId = null;

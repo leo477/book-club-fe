@@ -69,7 +69,7 @@
                       {{ msg.senderName.slice(0, 2).toUpperCase() }}
                     </div>
                     <!-- Feature 4: online presence dot -->
-                    @if (chat.presenceMap()[msg.senderId] === 'online') {
+                    @if (chat.presenceMap().get(msg.senderId) === 'online') {
                       <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-[var(--color-surface)]"
                             [title]="'CHAT.online' | translate"></span>
                     }

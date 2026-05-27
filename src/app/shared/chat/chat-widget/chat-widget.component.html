@@ -175,7 +175,7 @@
                       <div class="flex items-center gap-1 px-3 mb-1">
                         <span class="text-xs" [style.color]="'var(--color-ink-muted)'">{{ message.senderName }}</span>
                         <!-- Feature 4: online presence dot -->
-                        @if (chat.presenceMap()[message.senderId] === 'online') {
+                        @if (chat.presenceMap().get(message.senderId) === 'online') {
                           <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
                         }
                       </div>

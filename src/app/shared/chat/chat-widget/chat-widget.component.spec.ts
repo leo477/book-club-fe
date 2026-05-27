@@ -32,7 +32,7 @@ function makeChatService() {
     activeMessagesWithDivider: signal([]),
     unreadCount: signal(0),
     activeRoomId: signal<string | null>(null),
-    presenceMap: signal<Record<string, 'online' | 'offline'>>({}),
+    presenceMap: signal(new Map<string, 'online' | 'offline'>()),
     roomUnreadCounts: signal<Record<string, number>>({}),
     sendMessage: jasmine.createSpy('sendMessage'),
     openRoom: jasmine.createSpy('openRoom'),
