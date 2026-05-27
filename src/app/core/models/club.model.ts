@@ -40,6 +40,20 @@ export interface Club {
   meetingDurationMinutes: number | null;
   afterMeetingVenue: AfterMeetingVenue | null;
   cancelledAt?: string;
+  currentChampion: { userId: string; displayName: string; eventTitle: string; eventDate: string } | null;
+}
+
+export interface MemberStatRow {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  count: number;
+}
+
+export interface ClubStats {
+  topActive: MemberStatRow[];
+  topWinners: MemberStatRow[];
+  recentAttendance: { eventId: string; title: string; date: string; attendeeCount: number }[];
 }
 
 export interface ClubMember {

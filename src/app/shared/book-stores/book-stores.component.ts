@@ -23,7 +23,7 @@ interface BookStoreResult {
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [TranslateModule],
   template: `
-    <section class="mt-4">
+    <section>
       <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">
         📚 {{ 'BOOK_STORES.title' | translate }}
       </h3>

@@ -33,7 +33,8 @@
     "password_strength": "Надійність паролю",
     "account_created": "Акаунт успішно створено!",
     "welcome_message": "Ласкаво просимо,",
-    "error_invalid_credentials": "Невірний email або пароль."
+    "error_invalid_credentials": "Невірний email або пароль.",
+    "not_registered_yet": "Ще не маєте акаунта?"
   },
   "CREATE_CLUB": {
     "subtitle": "Створіть нову спільноту читачів",
@@ -259,7 +260,12 @@
     "no_clubs_desc": "Створіть перший читацький клуб, щоб розпочати.",
     "manage_members": "Учасники",
     "edit": "Редагувати",
-    "delete": "Видалити"
+    "delete": "Видалити",
+    "stats_show": "Статистика",
+    "stats_hide": "Сховати",
+    "attendance": "Відвідуваність",
+    "top_active": "Найактивніші",
+    "top_winners": "Кращі переможці"
   },
   "PROFILE": {
     "active_badge": "✓ Активний",
@@ -353,11 +359,21 @@
     "event_auto_joined": "Вас додано до клубу та зареєстровано на подію",
     "editEvent": "Редагувати подію",
     "saveChanges": "Зберегти зміни",
-    "organizer_badge": "Організатор"
+    "organizer_badge": "Організатор",
+    "book_details_btn": "Детальніше про книгу",
+    "book_details_hide": "Сховати",
+    "book_about": "Про книгу",
+    "book_author": "Про автора",
+    "book_published": "Видано"
   },
   "EVENT": {
     "event_chat_btn": "Чат події",
-    "event_chat_start_btn": "Розпочати чат події"
+    "event_chat_start_btn": "Розпочати чат події",
+    "has_winner_label": "Цей захід матиме переможця",
+    "set_winner": "Призначити переможця",
+    "winner_set": "Переможця призначено!",
+    "champion_title": "Чемпіон клубу",
+    "winner_of": "Переможець"
   },
   "CREATE_EVENT": {
     "back_to_club": "← Назад до клубу",

@@ -20,7 +20,9 @@ export interface CreateEventPayload {
   afterMeetingVenue?: AfterMeetingVenue | null;
   coverUrl?: string | null;
   bookTitle?: string | null;
+  google_book_id?: string | null;
   quizId?: string | null;
+  has_winner?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -145,6 +147,10 @@ export class EventService {
         return updated;
       }),
     );
+  }
+
+  setEventWinner(eventId: string, winnerId: string): Observable<void> {
+    return this.http.patch<void>(`${environment.apiUrl}/events/${eventId}/winner`, { winner_id: winnerId });
   }
 
   async cancelEvent(eventId: string): Promise<void> {

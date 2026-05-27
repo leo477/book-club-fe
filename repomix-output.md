@@ -81,6 +81,7 @@ src/
         auth.interceptor.ts
       models/
         book-vote.model.ts
+        book.model.ts
         chat.model.ts
         club.model.ts
         event.model.ts
@@ -89,6 +90,7 @@ src/
         user.model.ts
       services/
         book-cover.service.ts
+        book-search.service.ts
         book-vote.service.ts
         chat.service.ts
         club.service.ts
@@ -248,6 +250,8 @@ src/
         address-autocomplete/
           address-autocomplete.component.html
           address-autocomplete.component.ts
+        book-autocomplete/
+          book-autocomplete.component.ts
         book-intro/
           book-intro.component.ts
         cover-upload/
@@ -416,6 +420,8 @@ supabase/
     005_randomizer.sql
     006_events.sql
     007_events_cover_image.sql
+    008_event_winner.sql
+    009_event_google_book_id.sql
 .editorconfig
 .gitignore
 .gitleaks.toml

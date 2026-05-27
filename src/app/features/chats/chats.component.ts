@@ -112,7 +112,8 @@ export class ChatsComponent {
         if (!container) return;
         const divider = container.querySelector('[data-unread-divider]') as HTMLElement | null;
         if (divider) {
-          divider.scrollIntoView({ block: 'start' });
+          divider.scrollIntoView({ block: 'start', behavior: 'smooth' });
+          setTimeout(() => { container.scrollTop -= 68; }, 200);
         } else {
           container.scrollTop = container.scrollHeight;
         }

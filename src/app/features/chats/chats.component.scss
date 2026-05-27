@@ -8,6 +8,11 @@
 .chats-sidebar {
   display: flex;
   flex-direction: column;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .chats-main {

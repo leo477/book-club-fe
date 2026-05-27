@@ -9,7 +9,7 @@ const mockClub: Club = {
   createdAt: '', coverUrl: null, isPublic: true, memberCount: 1,
   memberPreviews: [], city: 'Kyiv', nextMeetingDate: null, address: null, lat: null, lng: null,
   theme: null, currentBook: null, status: 'active', tags: [], meetingDurationMinutes: null,
-  afterMeetingVenue: null,
+  afterMeetingVenue: null, currentChampion: null,
 } as Club;
 
 describe('ClubSidebarRightComponent', () => {

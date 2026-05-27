@@ -6,14 +6,12 @@ import {
   signal,
   input,
   resource,
-  DestroyRef,
-  OnInit,
   effect,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
-import { takeUntilDestroyed, rxResource } from '@angular/core/rxjs-interop';
-import { debounceTime, distinctUntilChanged, filter, firstValueFrom, map, switchMap, tap } from 'rxjs';
+import { ReactiveFormsModule, FormBuilder, FormControl, Validators } from '@angular/forms';
+import { rxResource } from '@angular/core/rxjs-interop';
+import { firstValueFrom, map } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../../core/services/event.service';
@@ -23,20 +21,21 @@ import { AddressAutocompleteComponent } from '../../../shared/components/address
 import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
 import { HlmInput } from '../../../shared/spartan/input/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
-import { BookCoverService } from '../../../core/services/book-cover.service';
 import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
 import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
 import { ClubEvent } from '../../../core/models/event.model';
 import { environment } from '../../../../environments/environment';
+import { BookAutocompleteComponent } from '../../../shared/components/book-autocomplete/book-autocomplete.component';
+import { BookSuggestion } from '../../../core/models/book.model';
 
 @Component({
   selector: 'app-edit-event',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, TranslateModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton],
+  imports: [RouterLink, ReactiveFormsModule, TranslateModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton, BookAutocompleteComponent],
   templateUrl: './edit-event.component.html',
 })
-export class EditEventComponent implements OnInit {
+export class EditEventComponent {
   readonly id = input.required<string>();
 
   private readonly http = inject(HttpClient);
@@ -45,14 +44,10 @@ export class EditEventComponent implements OnInit {
   private readonly quizService = inject(QuizService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
-  private readonly bookCoverService = inject(BookCoverService);
-  private readonly destroyRef = inject(DestroyRef);
 
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
   readonly showAfterVenue = signal(false);
-  readonly isFetchingCover = signal(false);
-  readonly coverFetchFailed = signal(false);
   private _formPatched = false;
 
   private readonly _eventResource = rxResource<ClubEvent | null, string>({
@@ -94,7 +89,9 @@ export class EditEventComponent implements OnInit {
     afterVenueDescription: [''],
     coverUrl: [''],
     bookTitle: [''],
+    googleBookId: new FormControl<string | null>(null),
     quizId: [null as string | null],
+    hasWinner: new FormControl(false, { nonNullable: true }),
   });
 
   constructor() {
@@ -115,22 +112,10 @@ export class EditEventComponent implements OnInit {
     });
   }
 
-  ngOnInit(): void {
-    this.form.controls.bookTitle.valueChanges.pipe(
-      debounceTime(600),
-      distinctUntilChanged(),
-      filter(v => v.length > 2),
-      tap(() => { this.isFetchingCover.set(true); this.coverFetchFailed.set(false); }),
-      switchMap(title => this.bookCoverService.fetchCover$(title)),
-      takeUntilDestroyed(this.destroyRef),
-    ).subscribe(url => {
-      this.isFetchingCover.set(false);
-      if (url && !this.form.controls.coverUrl.value) {
-        this.form.controls.coverUrl.setValue(url);
-      } else if (!url) {
-        this.coverFetchFailed.set(true);
-      }
-    });
+  onBookSelected(book: BookSuggestion): void {
+    this.form.controls.bookTitle.setValue(book.title);
+    if (book.thumbnail) this.form.controls.coverUrl.setValue(book.thumbnail);
+    this.form.get('googleBookId')?.setValue(book.id);
   }
 
   private _patchForm(ev: ClubEvent): void {
@@ -148,10 +133,12 @@ export class EditEventComponent implements OnInit {
       durationMinutes: ev.durationMinutes,
       coverUrl: ev.coverUrl ?? '',
       bookTitle: ev.bookTitle ?? '',
+      googleBookId: ev.googleBookId ?? null,
       quizId: ev.quizId ?? null,
       afterVenueName: ev.afterMeetingVenue?.name ?? '',
       afterVenueAddress: ev.afterMeetingVenue?.address ?? '',
       afterVenueDescription: ev.afterMeetingVenue?.description ?? '',
+      hasWinner: ev.hasWinner,
     });
     if (ev.afterMeetingVenue?.name) {
       this.showAfterVenue.set(true);
@@ -200,7 +187,9 @@ export class EditEventComponent implements OnInit {
         afterMeetingVenue,
         coverUrl: v.coverUrl || null,
         bookTitle: v.bookTitle || null,
+        google_book_id: v.googleBookId ?? null,
         quizId: v.quizId ?? null,
+        has_winner: v.hasWinner,
       }));
       await this.router.navigate(['/events', this.id()]);
     } catch {

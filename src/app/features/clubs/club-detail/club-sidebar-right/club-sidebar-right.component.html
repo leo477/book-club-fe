@@ -1,5 +1,17 @@
 <div class="flex flex-col gap-4">
 
+<!-- Champion card -->
+@if (club().currentChampion) {
+  <div class="parchment-card-raised p-4 text-center mb-4">
+    <p class="font-fantasy text-xs tracking-widest text-[var(--color-primary-500)] mb-3 uppercase">🏆 {{ 'EVENT.champion_title' | translate }}</p>
+    <div class="mx-auto mb-2 h-12 w-12 rounded-full bg-gradient-brand flex items-center justify-center text-white text-lg font-bold select-none">
+      {{ club().currentChampion!.displayName.charAt(0).toUpperCase() }}
+    </div>
+    <p class="font-semibold text-[var(--color-ink)]">{{ club().currentChampion!.displayName }}</p>
+    <p class="text-xs text-[var(--color-ink-muted)] mt-1">{{ 'EVENT.winner_of' | translate }} {{ club().currentChampion!.eventTitle }}</p>
+  </div>
+}
+
 <!-- Organizer card (compact) -->
 @if (organizerProfile()) {
   <div hlmCard class="glass-card-subtle p-4 gap-3">

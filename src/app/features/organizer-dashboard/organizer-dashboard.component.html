@@ -51,8 +51,10 @@
     } @else {
       <!-- ── Club Cards ─────────────────────────────────────────────── -->
       <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        @for (club of ownedClubs(); track club.id) {
-          <li class="parchment-card p-5 flex flex-col gap-4">
+        @for (club of ownedClubs(); track club.id; let i = $index) {
+          <li class="parchment-card-raised p-5 flex flex-col gap-4 animate-[slideUp_0.4s_cubic-bezier(0.22,1,0.36,1)_both]"
+              [style.animation-delay]="i * 60 + 'ms'"
+          >
 
             <!-- Club info -->
             <div class="flex items-start gap-3">
@@ -63,7 +65,7 @@
                   class="w-14 h-14 rounded-lg object-cover flex-shrink-0"
                 />
               } @else {
-                <div class="w-14 h-14 rounded-lg bg-[var(--color-primary-100)] dark:bg-[var(--color-primary-900)]/40
+                <div class="w-14 h-14 rounded-lg bg-gradient-brand
                             flex items-center justify-center text-2xl flex-shrink-0"
                      aria-hidden="true">
                   📚
@@ -135,6 +137,68 @@
                 </button>
               }
             </div>
+
+            <!-- Stats toggle button -->
+            <button
+              hlmBtn
+              variant="ghost"
+              size="sm"
+              class="w-full text-[var(--color-ink-muted)] text-xs mt-1 border-t border-[var(--color-sepia)] pt-2"
+              (click)="toggleStats(club.id)"
+            >
+              📊 {{ expandedClubId() === club.id ? ('ORGANIZER.stats_hide' | translate) : ('ORGANIZER.stats_show' | translate) }}
+            </button>
+
+            @if (expandedClubId() === club.id) {
+              @let stats = clubStats()[club.id];
+              @if (stats) {
+                <div class="mt-2 space-y-3 animate-[slideUp_0.3s_ease-out_both]">
+                  @if (stats.recentAttendance.length > 0) {
+                    <div>
+                      <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-1">{{ 'ORGANIZER.attendance' | translate }}</p>
+                      <div class="flex items-end gap-0.5 h-8">
+                        @for (ev of stats.recentAttendance.slice(0, 8).reverse(); track ev.eventId) {
+                          <div
+                            class="flex-1 bg-[var(--color-primary-400)] rounded-t opacity-70 hover:opacity-100 transition-opacity min-h-[2px]"
+                            [style.height.%]="(ev.attendeeCount / (stats.recentAttendance[0]?.attendeeCount || 1)) * 100"
+                            [title]="ev.title + ': ' + ev.attendeeCount"
+                          ></div>
+                        }
+                      </div>
+                    </div>
+                  }
+                  @if (stats.topActive.length > 0) {
+                    <div>
+                      <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-1">🏃 {{ 'ORGANIZER.top_active' | translate }}</p>
+                      @for (m of stats.topActive; track m.userId; let i = $index) {
+                        <div class="flex items-center gap-2 text-xs py-0.5">
+                          <span class="text-[var(--color-primary-500)] font-bold w-4">{{ i + 1 }}.</span>
+                          <span class="text-[var(--color-ink)]">{{ m.displayName }}</span>
+                          <span class="ml-auto text-[var(--color-ink-muted)]">{{ m.count }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+                  @if (stats.topWinners.length > 0) {
+                    <div>
+                      <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-1">🏆 {{ 'ORGANIZER.top_winners' | translate }}</p>
+                      @for (m of stats.topWinners; track m.userId; let i = $index) {
+                        <div class="flex items-center gap-2 text-xs py-0.5">
+                          <span class="text-[var(--color-primary-500)] font-bold w-4">{{ i + 1 }}.</span>
+                          <span class="text-[var(--color-ink)]">{{ m.displayName }}</span>
+                          <span class="ml-auto text-[var(--color-ink-muted)]">{{ m.count }}</span>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              } @else {
+                <div class="mt-2 py-2 flex justify-center">
+                  <hlm-spinner size="sm" />
+                </div>
+              }
+            }
+
           </li>
         }
       </ul>

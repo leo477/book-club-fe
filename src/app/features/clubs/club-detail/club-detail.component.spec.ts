@@ -51,7 +51,8 @@ describe('ClubDetailComponent', () => {
       status: 'active',
       tags: ['Fiction'],
       meetingDurationMinutes: null,
-      afterMeetingVenue: null
+      afterMeetingVenue: null,
+    currentChampion: null,
     }));
     clubServiceSpy.ensureMyClubsLoaded.and.returnValue(Promise.resolve());
     clubServiceSpy.getClubMembers.and.returnValue(Promise.resolve([]));
@@ -145,7 +146,8 @@ describe('ClubDetailComponent', () => {
       cancelledAt: '2024-01-01',
       tags: [],
       meetingDurationMinutes: null,
-      afterMeetingVenue: null
+      afterMeetingVenue: null,
+    currentChampion: null,
     });
     expect(component.deleteCountdown()).toBeNull();
   });
@@ -173,7 +175,8 @@ describe('ClubDetailComponent', () => {
       cancelledAt: '2024-01-01',
       tags: [],
       meetingDurationMinutes: null,
-      afterMeetingVenue: null
+      afterMeetingVenue: null,
+    currentChampion: null,
     });
     const result = component.deleteCountdown();
     expect(result).toContain('1');
@@ -203,7 +206,8 @@ describe('ClubDetailComponent', () => {
       cancelledAt: '2024-01-01',
       tags: [],
       meetingDurationMinutes: null,
-      afterMeetingVenue: null
+      afterMeetingVenue: null,
+    currentChampion: null,
     });
     const result = component.deleteCountdown();
     expect(result).toContain('5');
@@ -378,7 +382,7 @@ describe('ClubDetailComponent', () => {
         createdAt: '2024-01-01', city: 'Kyiv', nextMeetingDate: null,
         address: null, lat: null, lng: null, theme: null, currentBook: null,
         memberPreviews: [], status: 'cancelled', cancelledAt: '2024-01-01',
-        tags: [], meetingDurationMinutes: null, afterMeetingVenue: null,
+        tags: [], meetingDurationMinutes: null, afterMeetingVenue: null, currentChampion: null,
       });
       const result = component.deleteCountdown();
       expect(result).toContain('год');
