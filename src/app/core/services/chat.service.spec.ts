@@ -777,4 +777,168 @@ describe('ChatService', () => {
       expect(getActiveMessages(service)[0].senderName).toBe('user');
     });
   });
+
+  // ── Feature 1: setChatsPage ────────────────────────────────────────────────
+
+  describe('setChatsPage()', () => {
+    it('suppresses unread counter for incoming messages when set to true', () => {
+      service.setChatsPage(true);
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
+      service.connectRoom('room-1', 'tok');
+      const ws = MockWebSocket.instance;
+      if (!ws) throw new Error('MockWebSocket not instantiated');
+      ws.simulateMessage({
+        type: 'message',
+        payload: { id: 'msg-x', senderId: 'other-user', senderName: 'Bob', text: 'Hi', timestamp: '2024-01-01T00:00:00Z' },
+      });
+      expect(getUnreadCount(service)).toBe(0);
+      expect(getHasNewMessage(service)).toBeFalse();
+    });
+
+    it('resumes unread counter after set back to false', () => {
+      service.setChatsPage(true);
+      service.setChatsPage(false);
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
+      service.connectRoom('room-1', 'tok');
+      const ws = MockWebSocket.instance;
+      if (!ws) throw new Error('MockWebSocket not instantiated');
+      ws.simulateMessage({
+        type: 'message',
+        payload: { id: 'msg-y', senderId: 'other-user', senderName: 'Bob', text: 'Hey', timestamp: '2024-01-01T00:00:00Z' },
+      });
+      expect(getUnreadCount(service)).toBe(1);
+      expect(getHasNewMessage(service)).toBeTrue();
+    });
+
+    it('does not count own messages even when setChatsPage is false', () => {
+      service.setChatsPage(false);
+      // Set currentUserId by loading rooms with userId
+      (service as unknown as { currentUserId: string | null }).currentUserId = 'me';
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
+      service.connectRoom('room-1', 'tok');
+      const ws = MockWebSocket.instance;
+      if (!ws) throw new Error('MockWebSocket not instantiated');
+      ws.simulateMessage({
+        type: 'message',
+        payload: { id: 'msg-own', senderId: 'me', senderName: 'Me', text: 'My msg', timestamp: '2024-01-01T00:00:00Z' },
+      });
+      expect(getUnreadCount(service)).toBe(0);
+    });
+  });
+
+  // ── Feature 5: fetchUnreadCounts ──────────────────────────────────────────
+
+  interface ChatServiceReadPrivate {
+    _lastReadMap: WritableSignal<Record<string, string | null>>;
+    _roomUnreadCounts: WritableSignal<Record<string, number>>;
+  }
+
+  describe('fetchUnreadCounts()', () => {
+    it('fires GET per room and updates roomUnreadCounts + _lastReadMap', async () => {
+      service.fetchUnreadCounts(['room-1', 'room-2']);
+
+      const req1 = httpMock.expectOne(`${API}/chat/rooms/room-1/unread-count`);
+      expect(req1.request.method).toBe('GET');
+      req1.flush({ room_id: 'room-1', unread_count: 3, last_read_message_id: 'msg-aaa' });
+
+      const req2 = httpMock.expectOne(`${API}/chat/rooms/room-2/unread-count`);
+      expect(req2.request.method).toBe('GET');
+      req2.flush({ room_id: 'room-2', unread_count: 0, last_read_message_id: null });
+
+      // Wait for Promise microtasks
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(service.roomUnreadCounts()['room-1']).toBe(3);
+      expect(service.roomUnreadCounts()['room-2']).toBe(0);
+      expect((service as unknown as ChatServiceReadPrivate)._lastReadMap()['room-1']).toBe('msg-aaa');
+      expect((service as unknown as ChatServiceReadPrivate)._lastReadMap()['room-2']).toBeNull();
+    });
+
+    it('handles a failed room request gracefully (other rooms still succeed)', async () => {
+      service.fetchUnreadCounts(['room-ok', 'room-fail']);
+
+      httpMock.expectOne(`${API}/chat/rooms/room-ok/unread-count`).flush({
+        room_id: 'room-ok', unread_count: 5, last_read_message_id: 'msg-z',
+      });
+      httpMock.expectOne(`${API}/chat/rooms/room-fail/unread-count`).flush(
+        { detail: 'Error' }, { status: 500, statusText: 'Server Error' },
+      );
+
+      // Allow multiple microtask cycles for error handling
+      for (let i = 0; i < 5; i++) await Promise.resolve();
+
+      expect(service.roomUnreadCounts()['room-ok']).toBe(5);
+      // room-fail key should not be set (gracefully skipped)
+      expect(service.roomUnreadCounts()['room-fail']).toBeUndefined();
+    });
+
+    it('does nothing when called with empty array', () => {
+      service.fetchUnreadCounts([]);
+      httpMock.expectNone(`${API}/chat/rooms/`);
+    });
+  });
+
+  // ── Feature 5: markRoomRead ───────────────────────────────────────────────
+
+  describe('markRoomRead()', () => {
+    it('updates _lastReadMap and resets roomUnreadCount for the room immediately', async () => {
+      // Seed messages into the room
+      service.loadRooms('club-1');
+      httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([{ id: 'room-1', name: 'General' }]);
+      await Promise.resolve();
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([
+        { id: 'msg-100', senderId: 'u1', senderName: 'Alice', text: 'First', timestamp: '2024-01-01T00:00:00Z' },
+        { id: 'msg-101', senderId: 'u2', senderName: 'Bob',   text: 'Last',  timestamp: '2024-01-01T00:01:00Z' },
+      ]);
+      await Promise.resolve();
+
+      // Pre-seed unread count from server
+      service.fetchUnreadCounts(['room-1']);
+      httpMock.expectOne(`${API}/chat/rooms/room-1/unread-count`).flush({
+        room_id: 'room-1', unread_count: 2, last_read_message_id: null,
+      });
+      await Promise.resolve();
+      await Promise.resolve();
+
+      expect(service.roomUnreadCounts()['room-1']).toBe(2);
+
+      service.markRoomRead('room-1');
+
+      // Synchronous local state update
+      expect((service as unknown as ChatServiceReadPrivate)._lastReadMap()['room-1']).toBe('msg-101');
+      expect(service.roomUnreadCounts()['room-1']).toBe(0);
+
+      // Server POST should have been sent
+      const postReq = httpMock.expectOne(`${API}/chat/rooms/room-1/read`);
+      expect(postReq.request.method).toBe('POST');
+      expect(postReq.request.body).toEqual({ last_read_message_id: 'msg-101' });
+      postReq.flush(null);
+    });
+
+    it('does nothing when the room has no messages', () => {
+      service.markRoomRead('room-empty');
+      // No POST should be made
+      httpMock.expectNone(`${API}/chat/rooms/room-empty/read`);
+    });
+
+    it('activeMessagesWithDivider inserts divider after last-read message', async () => {
+      service.loadRooms('club-1');
+      httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([{ id: 'room-d', name: 'General' }]);
+      await Promise.resolve();
+      httpMock.expectOne(`${API}/chat/rooms/room-d/messages`).flush([
+        { id: 'msg-a', senderId: 'u1', senderName: 'Alice', text: 'Read',   timestamp: '2024-01-01T00:00:00Z' },
+        { id: 'msg-b', senderId: 'u2', senderName: 'Bob',   text: 'Unread', timestamp: '2024-01-01T00:01:00Z' },
+      ]);
+      await Promise.resolve();
+
+      // Simulate server telling us msg-a was last read
+      (service as unknown as ChatServiceReadPrivate)._lastReadMap.update((m: Record<string, string | null>) => ({ ...m, ['room-d']: 'msg-a' }));
+
+      const items = service.activeMessagesWithDivider();
+      expect(items.length).toBe(3); // msg-a + divider + msg-b
+      expect(items[1]).toEqual(jasmine.objectContaining({ isDivider: true }));
+      expect((items[2] as { text: string }).text).toBe('Unread');
+    });
+  });
 });

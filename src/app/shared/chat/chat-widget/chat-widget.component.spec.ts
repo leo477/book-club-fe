@@ -396,7 +396,7 @@ describe('ChatWidgetComponent', () => {
   });
 
   describe('Effect 3 — connect/disconnect', () => {
-    it('calls connectRoom when activeRoomId, token, and isOpen are all truthy', () => {
+    it('calls connectRoom when activeRoomId and token are both set', () => {
       chatSvc = makeChatService();
       chatSvc.activeRoomId.set('room-1');
       chatSvc.isOpen.set(true);
