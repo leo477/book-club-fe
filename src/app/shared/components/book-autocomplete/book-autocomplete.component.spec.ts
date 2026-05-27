@@ -42,7 +42,7 @@ describe('BookAutocompleteComponent', () => {
     component = fixture.componentInstance;
     fixture.componentRef.setInput('control', control);
     fixture.detectChanges();
-    // allow queueMicrotask inside constructor to run
+    // flush queueMicrotask that sets up the valueChanges subscription
     await fixture.whenStable();
   });
 
@@ -55,13 +55,16 @@ describe('BookAutocompleteComponent', () => {
     expect(list).toBeNull();
   });
 
+  // ── Debounce / search ────────────────────────────────────────────────────
+  // jasmine.clock() replaces setTimeout used by debounceTime(600).
+  // Do NOT use async/await inside these tests — fixture.whenStable() may
+  // itself rely on setTimeout internally, which deadlocks under the mock clock.
   describe('search on value changes', () => {
     beforeEach(() => jasmine.clock().install());
     afterEach(() => jasmine.clock().uninstall());
 
-    it('calls searchBooks after debounce with query >= 3 chars', async () => {
+    it('calls searchBooks after debounce with query >= 3 chars', () => {
       bookSearchSpy.searchBooks.and.returnValue(of([makeBook()]));
-      await fixture.whenStable();
       control.setValue('Ang');
       jasmine.clock().tick(600);
       fixture.detectChanges();
@@ -70,25 +73,21 @@ describe('BookAutocompleteComponent', () => {
       expect(component.isOpen()).toBeTrue();
     });
 
-    it('does not call searchBooks for queries shorter than 3 chars', async () => {
-      await fixture.whenStable();
+    it('does not call searchBooks for queries shorter than 3 chars', () => {
       control.setValue('An');
       jasmine.clock().tick(600);
       expect(bookSearchSpy.searchBooks).not.toHaveBeenCalled();
     });
 
-    it('sets isLoading to true during search and false after', async () => {
+    it('sets isLoading to false after search completes', () => {
       bookSearchSpy.searchBooks.and.returnValue(of([makeBook()]));
-      await fixture.whenStable();
       control.setValue('Ang');
       jasmine.clock().tick(600);
-      // after tick the observable resolves
       expect(component.isLoading()).toBeFalse();
     });
 
-    it('handles searchBooks error gracefully and sets empty suggestions', async () => {
+    it('handles searchBooks error gracefully and clears suggestions', () => {
       bookSearchSpy.searchBooks.and.returnValue(throwError(() => new Error('network')));
-      await fixture.whenStable();
       control.setValue('Ang');
       jasmine.clock().tick(600);
       fixture.detectChanges();
@@ -97,9 +96,8 @@ describe('BookAutocompleteComponent', () => {
       expect(component.isLoading()).toBeFalse();
     });
 
-    it('resets activeIndex to -1 on new results', async () => {
+    it('resets activeIndex to -1 on new results', () => {
       bookSearchSpy.searchBooks.and.returnValue(of([makeBook(), makeBook({ id: 'b2', title: 'Book 2' })]));
-      await fixture.whenStable();
       control.setValue('Ang');
       jasmine.clock().tick(600);
       component.activeIndex.set(1);
@@ -109,15 +107,16 @@ describe('BookAutocompleteComponent', () => {
     });
   });
 
+  // ── Keyboard navigation ──────────────────────────────────────────────────
   describe('keyboard navigation', () => {
-    beforeEach(async () => {
+    beforeEach(() => {
+      // open dropdown with 3 suggestions synchronously via jasmine.clock
       jasmine.clock().install();
       bookSearchSpy.searchBooks.and.returnValue(of([
         makeBook({ id: 'b1', title: 'Book One' }),
         makeBook({ id: 'b2', title: 'Book Two' }),
         makeBook({ id: 'b3', title: 'Book Three' }),
       ]));
-      await fixture.whenStable();
       control.setValue('Boo');
       jasmine.clock().tick(600);
       fixture.detectChanges();
@@ -182,20 +181,19 @@ describe('BookAutocompleteComponent', () => {
     });
   });
 
+  // ── select() ─────────────────────────────────────────────────────────────
   describe('select()', () => {
-    it('sets control value to book title without emitting', async () => {
+    it('sets control value to book title and does not trigger another search', () => {
       jasmine.clock().install();
       bookSearchSpy.searchBooks.and.returnValue(of([makeBook()]));
-      await fixture.whenStable();
       control.setValue('Ang');
       jasmine.clock().tick(600);
-      const book = makeBook();
-      const valueChangeSpy = jasmine.createSpy('valueChange');
-      control.valueChanges.subscribe(valueChangeSpy);
-      component.select(book);
+      // searchBooks called once for the debounced query
+      expect(bookSearchSpy.searchBooks).toHaveBeenCalledTimes(1);
+      component.select(makeBook());
+      // setValue with emitEvent:false → valueChanges does not emit → no second search
       jasmine.clock().tick(600);
       expect(control.value).toBe('Angular Deep Dive');
-      // selecting via setValue with emitEvent:false should not trigger another search
       expect(bookSearchSpy.searchBooks).toHaveBeenCalledTimes(1);
       jasmine.clock().uninstall();
     });
@@ -217,10 +215,10 @@ describe('BookAutocompleteComponent', () => {
     });
   });
 
+  // ── Click outside ─────────────────────────────────────────────────────────
   describe('click outside', () => {
     it('closes dropdown when clicking outside the component', () => {
       component.isOpen.set(true);
-      // Simulate a click on an element outside the component
       const outsideEvent = new MouseEvent('click', { bubbles: true });
       Object.defineProperty(outsideEvent, 'target', { value: document.body, writable: false });
       component.onDocumentClick(outsideEvent);
@@ -237,14 +235,14 @@ describe('BookAutocompleteComponent', () => {
     });
   });
 
+  // ── Dropdown rendering ────────────────────────────────────────────────────
   describe('dropdown rendering', () => {
-    it('renders list items for each suggestion', async () => {
+    it('renders list items for each suggestion', () => {
       jasmine.clock().install();
       bookSearchSpy.searchBooks.and.returnValue(of([
         makeBook({ id: 'b1', title: 'First Book' }),
         makeBook({ id: 'b2', title: 'Second Book' }),
       ]));
-      await fixture.whenStable();
       control.setValue('Boo');
       jasmine.clock().tick(600);
       fixture.detectChanges();
