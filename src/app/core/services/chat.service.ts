@@ -1,7 +1,7 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, signal, computed, inject, ApplicationRef, DestroyRef } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { ChatMessage, ChatRoom } from '../models/chat.model';
+import { ChatItem, ChatMessage, ChatRoom, UnreadDivider } from '../models/chat.model';
 import { environment } from '../../../environments/environment';
 
 // ── Raw API shapes (snake_case) ──────────────────────────────────────────────
@@ -23,7 +23,7 @@ interface ApiChatMessage {
   timestamp: string; // ISO-8601
 }
 
-interface WsEnvelope { type: string; payload: ApiChatMessage; }
+interface WsEnvelope { type: string; payload: unknown; }
 
 // ── Service ──────────────────────────────────────────────────────────────────
 
@@ -31,6 +31,8 @@ interface WsEnvelope { type: string; payload: ApiChatMessage; }
 export class ChatService {
   private readonly http = inject(HttpClient);
   private readonly api = environment.apiUrl;
+  private readonly _appRef = inject(ApplicationRef);
+  private readonly _destroyRef = inject(DestroyRef);
 
   // ── Private writable signals ───────────────────────────────────────────────
 
@@ -41,6 +43,14 @@ export class ChatService {
   private readonly _isOpen = signal<boolean>(false);
   private readonly _hasNewMessage = signal<boolean>(false);
   private readonly _mutedUserIds = signal<Set<string>>(new Set());
+  /** True while the /chats full-page route is active. Suppresses the FAB badge. */
+  private readonly _isChatsPage = signal<boolean>(false);
+  /** userId → 'online'|'offline' for the currently connected room. */
+  private readonly _presenceMap = signal<Record<string, 'online' | 'offline'>>({});
+  /** roomId → id of the last message the current user has read (from server). */
+  private readonly _lastReadMap = signal<Record<string, string | null>>({});
+  /** roomId → number of unread messages (from server, reset locally on open). */
+  private readonly _roomUnreadCounts = signal<Record<string, number>>({});
 
   private _ws: WebSocket | null = null;
   private _reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -48,6 +58,16 @@ export class ChatService {
   private _activeRoomToken: { roomId: string; token: string } | null = null;
 
   private currentUserId: string | null = null;
+
+  constructor() {
+    // Feature 3: force Angular (zoneless) to re-render immediately when the
+    // browser tab becomes visible again (fixes "mobile chat doesn't update").
+    const onVisibility = () => { if (!document.hidden) this._appRef.tick(); };
+    document.addEventListener('visibilitychange', onVisibility);
+    this._destroyRef.onDestroy(() =>
+      document.removeEventListener('visibilitychange', onVisibility)
+    );
+  }
 
   // ── Public readonly signals ────────────────────────────────────────────────
 
@@ -58,6 +78,8 @@ export class ChatService {
   readonly isOpen = this._isOpen.asReadonly();
   readonly hasNewMessage = this._hasNewMessage.asReadonly();
   readonly mutedUserIds = this._mutedUserIds.asReadonly();
+  readonly presenceMap = this._presenceMap.asReadonly();
+  readonly roomUnreadCounts = this._roomUnreadCounts.asReadonly();
 
   readonly activeRoom = computed(() =>
     this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
@@ -67,6 +89,22 @@ export class ChatService {
     const msgs = this._messages()[this._activeRoomId() ?? ''] ?? [];
     const muted = this._mutedUserIds();
     return msgs.map(m => ({ ...m, isMuted: muted.has(m.senderId) }));
+  });
+
+  /**
+   * Active messages with an `UnreadDivider` sentinel inserted after the last
+   * read message. Used by templates to show "New messages ↓" separator and to
+   * scroll-to-first-unread on room open.
+   */
+  readonly activeMessagesWithDivider = computed<ChatItem[]>(() => {
+    const msgs = this.activeMessages();
+    const lastReadId = this._lastReadMap()[this._activeRoomId() ?? ''];
+    if (!lastReadId) return msgs;
+    const idx = msgs.findIndex(m => m.id === lastReadId);
+    // No match or last message already read → no divider
+    if (idx === -1 || idx >= msgs.length - 1) return msgs;
+    const divider: UnreadDivider = { id: 'unread-divider', isDivider: true };
+    return [...msgs.slice(0, idx + 1), divider, ...msgs.slice(idx + 1)];
   });
 
   // ── Public API ────────────────────────────────────────────────────────────
@@ -149,8 +187,24 @@ export class ChatService {
 
     this._ws.onmessage = (event: MessageEvent) => {
       const envelope = JSON.parse(event.data as string) as WsEnvelope;
+
+      // ── Presence events (Feature 4) ──────────────────────────────────────
+      if (envelope.type === 'presence') {
+        const p = envelope.payload as { userId: string; status: 'online' | 'offline' };
+        this._presenceMap.update(m => ({ ...m, [p.userId]: p.status }));
+        return;
+      }
+      if (envelope.type === 'presence_snapshot') {
+        const entries = envelope.payload as { userId: string; status: 'online' | 'offline' }[];
+        const map: Record<string, 'online' | 'offline'> = {};
+        for (const e of entries) map[e.userId] = e.status;
+        this._presenceMap.set(map);
+        return;
+      }
+
       if (envelope.type !== 'message') return;
-      const msg = this.mapMessage(envelope.payload);
+
+      const msg = this.mapMessage(envelope.payload as ApiChatMessage);
       this._messages.update(map => {
         const existing = map[roomId] ?? [];
         if (existing.some(m => m.id === msg.id)) return map;
@@ -159,7 +213,9 @@ export class ChatService {
         );
         return { ...map, [roomId]: [...withoutTemp, msg] };
       });
-      if (!this._isOpen()) {
+      // Feature 1+2: only count incoming messages from others, and only when
+      // the chat is not visible (widget closed AND not on /chats page).
+      if (!msg.isOwn && !this._isOpen() && !this._isChatsPage()) {
         this._unreadCount.update(n => n + 1);
         this._hasNewMessage.set(true);
         this._playBeep();
@@ -181,6 +237,7 @@ export class ChatService {
 
   disconnectRoom(): void {
     this._activeRoomToken = null;
+    this._presenceMap.set({});
     if (this._reconnectTimer) {
       clearTimeout(this._reconnectTimer);
       this._reconnectTimer = null;
@@ -208,6 +265,46 @@ export class ChatService {
     this._hasNewMessage.set(false);
   }
 
+  /** Feature 1: called by ChatsComponent and ChatWidgetComponent to suppress FAB badge. */
+  setChatsPage(value: boolean): void {
+    this._isChatsPage.set(value);
+  }
+
+  /**
+   * Feature 5: fetch per-room unread counts and last-read message ids from the
+   * server.  Fails gracefully — endpoint may not exist yet on older deployments.
+   */
+  fetchUnreadCounts(roomIds: string[]): void {
+    for (const roomId of roomIds) {
+      firstValueFrom(
+        this.http.get<{ room_id: string; unread_count: number; last_read_message_id: string | null }>(
+          `${this.api}/chat/rooms/${roomId}/unread-count`,
+        ),
+      )
+        .then(data => {
+          this._lastReadMap.update(m => ({ ...m, [roomId]: data.last_read_message_id ?? null }));
+          this._roomUnreadCounts.update(m => ({ ...m, [roomId]: data.unread_count }));
+        })
+        .catch(() => undefined); // graceful — endpoint may not be deployed yet
+    }
+  }
+
+  /**
+   * Feature 5: mark all messages in a room as read up to the latest loaded
+   * message.  Updates local state immediately and posts to the server.
+   * Should be called when switching away from a room or sending a message.
+   */
+  markRoomRead(roomId: string): void {
+    const msgs = this._messages()[roomId] ?? [];
+    const lastMsg = msgs[msgs.length - 1];
+    if (!lastMsg) return;
+    this._lastReadMap.update(m => ({ ...m, [roomId]: lastMsg.id }));
+    this._roomUnreadCounts.update(m => ({ ...m, [roomId]: 0 }));
+    firstValueFrom(
+      this.http.post(`${this.api}/chat/rooms/${roomId}/read`, { last_read_message_id: lastMsg.id }),
+    ).catch(() => undefined);
+  }
+
   clearRooms(): void {
     this.disconnectRoom();
     this._rooms.set([]);
@@ -217,6 +314,9 @@ export class ChatService {
     this._hasNewMessage.set(false);
     this._isOpen.set(false);
     this._mutedUserIds.set(new Set());
+    this._presenceMap.set({});
+    this._lastReadMap.set({});
+    this._roomUnreadCounts.set({});
     this.currentUserId = null;
   }
 

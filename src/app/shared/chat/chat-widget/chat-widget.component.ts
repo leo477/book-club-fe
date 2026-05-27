@@ -47,11 +47,11 @@ export class ChatWidgetComponent {
     return match?.[1] ?? null;
   });
 
-  /** Hide FAB on club detail pages (/clubs/:id) and when chat is already open */
+  /** Hide FAB on club detail pages (/clubs/:id) and on the full /chats page. */
   protected readonly isFabVisible = computed(() => {
     const url = this.currentUrl();
     const isClubDetail = /^\/clubs\/[^/]+$/.test(url);
-    return !isClubDetail;
+    return !isClubDetail && !this.isChatsPage();
   });
 
   protected readonly messageText = signal('');
@@ -113,7 +113,11 @@ export class ChatWidgetComponent {
 
   constructor() {
     effect(() => {
-      if (this.isChatsPage() && this.chat.isOpen()) {
+      const onChats = this.isChatsPage();
+      // Feature 1: tell the service when we're on the chats page so it can
+      // suppress the FAB unread counter.
+      this.chat.setChatsPage(onChats);
+      if (onChats && this.chat.isOpen()) {
         this.chat.toggleOpen();
       }
     });

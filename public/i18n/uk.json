@@ -537,7 +537,10 @@
     "new_room_name": "Назва кімнати",
     "cancel": "Скасувати",
     "today": "сьогодні",
-    "yesterday": "вчора"
+    "yesterday": "вчора",
+    "unread_divider": "Нові повідомлення",
+    "online": "Онлайн",
+    "offline": "Офлайн"
   },
   "CHATS": {
     "title": "Чати",
