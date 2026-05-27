@@ -56,6 +56,11 @@ function extractBackendDetail(err: HttpErrorResponse): string | null {
       (body as { message?: unknown }).message ??
       (body as { error?: unknown }).error;
     if (typeof candidate === 'string' && candidate.trim()) return candidate.trim();
+    // Backend returns detail as nested object: { error: string, code: string }
+    if (typeof candidate === 'object' && candidate !== null) {
+      const nested = (candidate as { error?: unknown }).error ?? (candidate as { message?: unknown }).message;
+      if (typeof nested === 'string' && nested.trim()) return nested.trim();
+    }
   }
   return null;
 }
