@@ -6,7 +6,6 @@ import {
   signal,
   input,
   resource,
-  DestroyRef,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormControl, Validators } from '@angular/forms';
@@ -77,7 +76,7 @@ export class CreateEventComponent {
   onBookSelected(book: BookSuggestion): void {
     this.form.controls.bookTitle.setValue(book.title);
     if (book.thumbnail) this.form.controls.coverUrl.setValue(book.thumbnail);
-    (this.form.controls as any).googleBookId?.setValue(book.id);
+    this.form.get('googleBookId')?.setValue(book.id);
   }
 
   onAddressSelect(suggestion: GeocodeSuggestion): void {

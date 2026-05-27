@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
@@ -56,63 +56,73 @@ describe('BookAutocompleteComponent', () => {
   });
 
   describe('search on value changes', () => {
-    it('calls searchBooks after debounce with query >= 3 chars', fakeAsync(() => {
+    beforeEach(() => jasmine.clock().install());
+    afterEach(() => jasmine.clock().uninstall());
+
+    it('calls searchBooks after debounce with query >= 3 chars', async () => {
       bookSearchSpy.searchBooks.and.returnValue(of([makeBook()]));
+      await fixture.whenStable();
       control.setValue('Ang');
-      tick(600);
+      jasmine.clock().tick(600);
       fixture.detectChanges();
       expect(bookSearchSpy.searchBooks).toHaveBeenCalledWith('Ang');
       expect(component.suggestions().length).toBe(1);
       expect(component.isOpen()).toBeTrue();
-    }));
+    });
 
-    it('does not call searchBooks for queries shorter than 3 chars', fakeAsync(() => {
+    it('does not call searchBooks for queries shorter than 3 chars', async () => {
+      await fixture.whenStable();
       control.setValue('An');
-      tick(600);
+      jasmine.clock().tick(600);
       expect(bookSearchSpy.searchBooks).not.toHaveBeenCalled();
-    }));
+    });
 
-    it('sets isLoading to true during search and false after', fakeAsync(() => {
+    it('sets isLoading to true during search and false after', async () => {
       bookSearchSpy.searchBooks.and.returnValue(of([makeBook()]));
+      await fixture.whenStable();
       control.setValue('Ang');
-      // isLoading is set synchronously inside switchMap before the observable emits
-      tick(600);
+      jasmine.clock().tick(600);
       // after tick the observable resolves
       expect(component.isLoading()).toBeFalse();
-    }));
+    });
 
-    it('handles searchBooks error gracefully and sets empty suggestions', fakeAsync(() => {
+    it('handles searchBooks error gracefully and sets empty suggestions', async () => {
       bookSearchSpy.searchBooks.and.returnValue(throwError(() => new Error('network')));
+      await fixture.whenStable();
       control.setValue('Ang');
-      tick(600);
+      jasmine.clock().tick(600);
       fixture.detectChanges();
       expect(component.suggestions().length).toBe(0);
       expect(component.isOpen()).toBeFalse();
       expect(component.isLoading()).toBeFalse();
-    }));
+    });
 
-    it('resets activeIndex to -1 on new results', fakeAsync(() => {
+    it('resets activeIndex to -1 on new results', async () => {
       bookSearchSpy.searchBooks.and.returnValue(of([makeBook(), makeBook({ id: 'b2', title: 'Book 2' })]));
+      await fixture.whenStable();
       control.setValue('Ang');
-      tick(600);
+      jasmine.clock().tick(600);
       component.activeIndex.set(1);
       control.setValue('Angular');
-      tick(600);
+      jasmine.clock().tick(600);
       expect(component.activeIndex()).toBe(-1);
-    }));
+    });
   });
 
   describe('keyboard navigation', () => {
-    beforeEach(fakeAsync(() => {
+    beforeEach(async () => {
+      jasmine.clock().install();
       bookSearchSpy.searchBooks.and.returnValue(of([
         makeBook({ id: 'b1', title: 'Book One' }),
         makeBook({ id: 'b2', title: 'Book Two' }),
         makeBook({ id: 'b3', title: 'Book Three' }),
       ]));
+      await fixture.whenStable();
       control.setValue('Boo');
-      tick(600);
+      jasmine.clock().tick(600);
       fixture.detectChanges();
-    }));
+      jasmine.clock().uninstall();
+    });
 
     it('ArrowDown increments activeIndex', () => {
       const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
@@ -173,19 +183,22 @@ describe('BookAutocompleteComponent', () => {
   });
 
   describe('select()', () => {
-    it('sets control value to book title without emitting', fakeAsync(() => {
+    it('sets control value to book title without emitting', async () => {
+      jasmine.clock().install();
       bookSearchSpy.searchBooks.and.returnValue(of([makeBook()]));
+      await fixture.whenStable();
       control.setValue('Ang');
-      tick(600);
+      jasmine.clock().tick(600);
       const book = makeBook();
       const valueChangeSpy = jasmine.createSpy('valueChange');
       control.valueChanges.subscribe(valueChangeSpy);
       component.select(book);
-      tick(600);
+      jasmine.clock().tick(600);
       expect(control.value).toBe('Angular Deep Dive');
       // selecting via setValue with emitEvent:false should not trigger another search
       expect(bookSearchSpy.searchBooks).toHaveBeenCalledTimes(1);
-    }));
+      jasmine.clock().uninstall();
+    });
 
     it('clears suggestions and closes dropdown', () => {
       component.suggestions.set([makeBook()]);
@@ -225,17 +238,20 @@ describe('BookAutocompleteComponent', () => {
   });
 
   describe('dropdown rendering', () => {
-    it('renders list items for each suggestion', fakeAsync(() => {
+    it('renders list items for each suggestion', async () => {
+      jasmine.clock().install();
       bookSearchSpy.searchBooks.and.returnValue(of([
         makeBook({ id: 'b1', title: 'First Book' }),
         makeBook({ id: 'b2', title: 'Second Book' }),
       ]));
+      await fixture.whenStable();
       control.setValue('Boo');
-      tick(600);
+      jasmine.clock().tick(600);
       fixture.detectChanges();
       const items = fixture.debugElement.queryAll(By.css('[role="option"]'));
       expect(items.length).toBe(2);
-    }));
+      jasmine.clock().uninstall();
+    });
 
     it('shows spinner when isLoading is true', () => {
       component.isLoading.set(true);

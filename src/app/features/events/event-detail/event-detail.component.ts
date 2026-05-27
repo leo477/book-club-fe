@@ -88,8 +88,10 @@ export class EventDetailComponent {
   openBookDetails(): void {
     this.bookDetailsOpen.update(v => !v);
     if (!this.bookDetailsOpen() || this.bookDetails() || !this.event()?.googleBookId) return;
+    const bookId = this.event()?.googleBookId;
+    if (!bookId) return;
     this.isLoadingBookDetails.set(true);
-    this.bookSearchService.getBookDetails(this.event()!.googleBookId!)
+    this.bookSearchService.getBookDetails(bookId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: d => { this.bookDetails.set(d); this.isLoadingBookDetails.set(false); },

@@ -46,7 +46,10 @@ import { BookSuggestion } from '../../../core/models/book.model';
   @if (isOpen() && suggestions().length > 0) {
     <ul role="listbox" class="absolute z-50 mt-1 w-full rounded-xl border border-[var(--color-sepia)] bg-[var(--color-surface)] shadow-[var(--shadow-parchment-lg)] max-h-72 overflow-y-auto">
       @for (s of suggestions(); track s.id; let i = $index) {
-        <li role="option" [attr.aria-selected]="activeIndex() === i" (click)="select(s)"
+        <li role="option" tabindex="0"
+            [attr.aria-selected]="activeIndex() === i"
+            (click)="select(s)"
+            (keydown.enter)="select(s)"
             class="flex items-center gap-3 px-3 py-2 cursor-pointer transition-colors hover:bg-[var(--color-surface-raised)]"
             [class.bg-[var(--color-surface-raised)]]="activeIndex() === i">
           @if (s.thumbnail) {

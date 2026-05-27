@@ -34,7 +34,7 @@
 
       <!-- Book title -->
       <div>
-        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.book_title_label' | translate }}</label>
+        <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.book_title_label' | translate }}</p>
         <app-book-autocomplete [control]="form.controls.bookTitle" (bookSelected)="onBookSelected($event)" />
       </div>
 
