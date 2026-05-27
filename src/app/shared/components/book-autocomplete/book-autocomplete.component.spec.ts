@@ -4,7 +4,7 @@ import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
 import { TranslateModule } from '@ngx-translate/core';
-import { BookAutocompleteComponent } from './book-autocomplete.component';
+import { BookAutocompleteComponent, BOOK_SEARCH_DEBOUNCE_MS } from './book-autocomplete.component';
 import { BookSearchService } from '../../../core/services/book-search.service';
 import { BookSuggestion } from '../../../core/models/book.model';
 
@@ -18,6 +18,9 @@ const makeBook = (overrides: Partial<BookSuggestion> = {}): BookSuggestion => ({
   publisher: null,
   ...overrides,
 });
+
+/** Wait for debounceTime(0) to fire via asyncScheduler (one macrotask). */
+const nextTick = () => new Promise<void>(resolve => setTimeout(resolve, 50));
 
 describe('BookAutocompleteComponent', () => {
   let fixture: ComponentFixture<BookAutocompleteComponent>;
@@ -34,6 +37,8 @@ describe('BookAutocompleteComponent', () => {
       providers: [
         provideZonelessChangeDetection(),
         { provide: BookSearchService, useValue: bookSearchSpy },
+        // Use 0ms debounce so tests don't need to wait 600ms or mock timers.
+        { provide: BOOK_SEARCH_DEBOUNCE_MS, useValue: 0 },
       ],
     }).compileComponents();
 
@@ -51,151 +56,130 @@ describe('BookAutocompleteComponent', () => {
   });
 
   it('shows no dropdown initially', () => {
-    const list = fixture.debugElement.query(By.css('[role="listbox"]'));
-    expect(list).toBeNull();
+    expect(fixture.debugElement.query(By.css('[role="listbox"]'))).toBeNull();
   });
 
-  // ── Debounce / search ────────────────────────────────────────────────────
-  // jasmine.clock() replaces setTimeout used by debounceTime(600).
-  // Do NOT use async/await inside these tests — fixture.whenStable() may
-  // itself rely on setTimeout internally, which deadlocks under the mock clock.
+  // ── Debounce / search ─────────────────────────────────────────────────────
   describe('search on value changes', () => {
-    beforeEach(() => jasmine.clock().install());
-    afterEach(() => jasmine.clock().uninstall());
-
-    it('calls searchBooks after debounce with query >= 3 chars', () => {
+    it('calls searchBooks for query >= 3 chars', async () => {
       bookSearchSpy.searchBooks.and.returnValue(of([makeBook()]));
       control.setValue('Ang');
-      jasmine.clock().tick(600);
+      await nextTick();
       fixture.detectChanges();
       expect(bookSearchSpy.searchBooks).toHaveBeenCalledWith('Ang');
       expect(component.suggestions().length).toBe(1);
       expect(component.isOpen()).toBeTrue();
     });
 
-    it('does not call searchBooks for queries shorter than 3 chars', () => {
+    it('does not call searchBooks for queries shorter than 3 chars', async () => {
       control.setValue('An');
-      jasmine.clock().tick(600);
+      await nextTick();
       expect(bookSearchSpy.searchBooks).not.toHaveBeenCalled();
     });
 
-    it('sets isLoading to false after search completes', () => {
+    it('sets isLoading to false after search completes', async () => {
       bookSearchSpy.searchBooks.and.returnValue(of([makeBook()]));
       control.setValue('Ang');
-      jasmine.clock().tick(600);
+      await nextTick();
       expect(component.isLoading()).toBeFalse();
     });
 
-    it('handles searchBooks error gracefully and clears suggestions', () => {
+    it('handles searchBooks error gracefully and clears suggestions', async () => {
       bookSearchSpy.searchBooks.and.returnValue(throwError(() => new Error('network')));
       control.setValue('Ang');
-      jasmine.clock().tick(600);
+      await nextTick();
       fixture.detectChanges();
       expect(component.suggestions().length).toBe(0);
       expect(component.isOpen()).toBeFalse();
       expect(component.isLoading()).toBeFalse();
     });
 
-    it('resets activeIndex to -1 on new results', () => {
+    it('resets activeIndex to -1 on new results', async () => {
       bookSearchSpy.searchBooks.and.returnValue(of([makeBook(), makeBook({ id: 'b2', title: 'Book 2' })]));
       control.setValue('Ang');
-      jasmine.clock().tick(600);
+      await nextTick();
       component.activeIndex.set(1);
       control.setValue('Angular');
-      jasmine.clock().tick(600);
+      await nextTick();
       expect(component.activeIndex()).toBe(-1);
     });
   });
 
-  // ── Keyboard navigation ──────────────────────────────────────────────────
+  // ── Keyboard navigation ───────────────────────────────────────────────────
   describe('keyboard navigation', () => {
-    beforeEach(() => {
-      // open dropdown with 3 suggestions synchronously via jasmine.clock
-      jasmine.clock().install();
+    beforeEach(async () => {
       bookSearchSpy.searchBooks.and.returnValue(of([
         makeBook({ id: 'b1', title: 'Book One' }),
         makeBook({ id: 'b2', title: 'Book Two' }),
         makeBook({ id: 'b3', title: 'Book Three' }),
       ]));
       control.setValue('Boo');
-      jasmine.clock().tick(600);
+      await nextTick();
       fixture.detectChanges();
-      jasmine.clock().uninstall();
     });
 
     it('ArrowDown increments activeIndex', () => {
-      const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
-      component.onKeydown(event);
+      component.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
       expect(component.activeIndex()).toBe(0);
     });
 
     it('ArrowDown wraps around at the end', () => {
       component.activeIndex.set(2);
-      const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
-      component.onKeydown(event);
+      component.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
       expect(component.activeIndex()).toBe(0);
     });
 
     it('ArrowUp decrements activeIndex', () => {
       component.activeIndex.set(1);
-      const event = new KeyboardEvent('keydown', { key: 'ArrowUp' });
-      component.onKeydown(event);
+      component.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
       expect(component.activeIndex()).toBe(0);
     });
 
     it('ArrowUp wraps around at the beginning', () => {
       component.activeIndex.set(0);
-      const event = new KeyboardEvent('keydown', { key: 'ArrowUp' });
-      component.onKeydown(event);
+      component.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
       expect(component.activeIndex()).toBe(2);
     });
 
     it('Enter selects the active item', () => {
       component.activeIndex.set(1);
       const selectSpy = spyOn(component, 'select').and.callThrough();
-      const event = new KeyboardEvent('keydown', { key: 'Enter' });
-      component.onKeydown(event);
+      component.onKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
       expect(selectSpy).toHaveBeenCalledWith(component.suggestions()[1]);
     });
 
     it('Enter does nothing when activeIndex is -1', () => {
       component.activeIndex.set(-1);
       const selectSpy = spyOn(component, 'select');
-      const event = new KeyboardEvent('keydown', { key: 'Enter' });
-      component.onKeydown(event);
+      component.onKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
       expect(selectSpy).not.toHaveBeenCalled();
     });
 
     it('Escape closes the dropdown', () => {
       expect(component.isOpen()).toBeTrue();
-      const event = new KeyboardEvent('keydown', { key: 'Escape' });
-      component.onKeydown(event);
+      component.onKeydown(new KeyboardEvent('keydown', { key: 'Escape' }));
       expect(component.isOpen()).toBeFalse();
     });
 
     it('does nothing for other keys when closed', () => {
       component.isOpen.set(false);
-      const event = new KeyboardEvent('keydown', { key: 'ArrowDown' });
-      component.onKeydown(event);
+      component.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
       expect(component.activeIndex()).toBe(-1);
     });
   });
 
   // ── select() ─────────────────────────────────────────────────────────────
   describe('select()', () => {
-    it('sets control value to book title and does not trigger another search', () => {
-      jasmine.clock().install();
+    it('sets control value and does not trigger another search', async () => {
       bookSearchSpy.searchBooks.and.returnValue(of([makeBook()]));
       control.setValue('Ang');
-      jasmine.clock().tick(600);
-      // searchBooks called once for the debounced query
+      await nextTick();
       expect(bookSearchSpy.searchBooks).toHaveBeenCalledTimes(1);
       component.select(makeBook());
-      // setValue with emitEvent:false → valueChanges does not emit → no second search
-      jasmine.clock().tick(600);
+      await nextTick();
       expect(control.value).toBe('Angular Deep Dive');
+      // setValue with emitEvent:false → valueChanges does not emit → no second search
       expect(bookSearchSpy.searchBooks).toHaveBeenCalledTimes(1);
-      jasmine.clock().uninstall();
     });
 
     it('clears suggestions and closes dropdown', () => {
@@ -219,50 +203,44 @@ describe('BookAutocompleteComponent', () => {
   describe('click outside', () => {
     it('closes dropdown when clicking outside the component', () => {
       component.isOpen.set(true);
-      const outsideEvent = new MouseEvent('click', { bubbles: true });
-      Object.defineProperty(outsideEvent, 'target', { value: document.body, writable: false });
-      component.onDocumentClick(outsideEvent);
+      const evt = new MouseEvent('click', { bubbles: true });
+      Object.defineProperty(evt, 'target', { value: document.body, writable: false });
+      component.onDocumentClick(evt);
       expect(component.isOpen()).toBeFalse();
     });
 
-    it('does not close dropdown when clicking inside the component', () => {
+    it('does not close dropdown when clicking inside', () => {
       component.isOpen.set(true);
-      const nativeEl = fixture.nativeElement as HTMLElement;
-      const insideEvent = new MouseEvent('click', { bubbles: true });
-      Object.defineProperty(insideEvent, 'target', { value: nativeEl, writable: false });
-      component.onDocumentClick(insideEvent);
+      const evt = new MouseEvent('click', { bubbles: true });
+      Object.defineProperty(evt, 'target', { value: fixture.nativeElement, writable: false });
+      component.onDocumentClick(evt);
       expect(component.isOpen()).toBeTrue();
     });
   });
 
   // ── Dropdown rendering ────────────────────────────────────────────────────
   describe('dropdown rendering', () => {
-    it('renders list items for each suggestion', () => {
-      jasmine.clock().install();
+    it('renders list items for each suggestion', async () => {
       bookSearchSpy.searchBooks.and.returnValue(of([
         makeBook({ id: 'b1', title: 'First Book' }),
         makeBook({ id: 'b2', title: 'Second Book' }),
       ]));
       control.setValue('Boo');
-      jasmine.clock().tick(600);
+      await nextTick();
       fixture.detectChanges();
-      const items = fixture.debugElement.queryAll(By.css('[role="option"]'));
-      expect(items.length).toBe(2);
-      jasmine.clock().uninstall();
+      expect(fixture.debugElement.queryAll(By.css('[role="option"]')).length).toBe(2);
     });
 
     it('shows spinner when isLoading is true', () => {
       component.isLoading.set(true);
       fixture.detectChanges();
-      const spinner = fixture.debugElement.query(By.css('hlm-spinner'));
-      expect(spinner).toBeTruthy();
+      expect(fixture.debugElement.query(By.css('hlm-spinner'))).toBeTruthy();
     });
 
     it('hides spinner when isLoading is false', () => {
       component.isLoading.set(false);
       fixture.detectChanges();
-      const spinner = fixture.debugElement.query(By.css('hlm-spinner'));
-      expect(spinner).toBeNull();
+      expect(fixture.debugElement.query(By.css('hlm-spinner'))).toBeNull();
     });
   });
 });

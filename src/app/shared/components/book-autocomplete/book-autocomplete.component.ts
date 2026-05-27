@@ -4,6 +4,7 @@ import {
   DestroyRef,
   ElementRef,
   HostListener,
+  InjectionToken,
   inject,
   input,
   output,
@@ -18,6 +19,11 @@ import { HlmInput } from '../../spartan/input/src';
 import { HlmSpinner } from '../../spartan/spinner/src';
 import { BookSearchService } from '../../../core/services/book-search.service';
 import { BookSuggestion } from '../../../core/models/book.model';
+
+/** Override in tests with 0 to skip the 600 ms wait. */
+export const BOOK_SEARCH_DEBOUNCE_MS = new InjectionToken<number>('BOOK_SEARCH_DEBOUNCE_MS', {
+  factory: () => 600,
+});
 
 @Component({
   selector: 'app-book-autocomplete',
@@ -78,6 +84,7 @@ export class BookAutocompleteComponent {
   private readonly bookSearchService = inject(BookSearchService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly elRef = inject(ElementRef);
+  private readonly debounceMs = inject(BOOK_SEARCH_DEBOUNCE_MS);
 
   readonly suggestions = signal<BookSuggestion[]>([]);
   readonly isLoading = signal(false);
@@ -93,7 +100,7 @@ export class BookAutocompleteComponent {
 
   private _setupSubscription(): void {
     this.control().valueChanges.pipe(
-      debounceTime(600),
+      debounceTime(this.debounceMs),
       distinctUntilChanged(),
       filter(v => v != null && v.length >= 3),
       switchMap(v => {
