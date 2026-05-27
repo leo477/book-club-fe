@@ -537,7 +537,10 @@
     "new_room_name": "Room name",
     "cancel": "Cancel",
     "today": "today",
-    "yesterday": "yesterday"
+    "yesterday": "yesterday",
+    "unread_divider": "New messages",
+    "online": "Online",
+    "offline": "Offline"
   },
   "CHATS": {
     "title": "Chats",

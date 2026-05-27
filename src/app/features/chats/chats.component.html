@@ -13,10 +13,15 @@
                [class.room-avatar--active]="chat.activeRoomId() === room.id">
             {{ room.name.slice(0, 1).toUpperCase() }}
           </div>
-          <div class="flex flex-col min-w-0">
+          <div class="flex-1 flex flex-col min-w-0">
             <span class="text-sm font-semibold leading-tight truncate">{{ room.name }}</span>
             <span class="text-xs text-[var(--color-ink-muted)] leading-tight truncate mt-0.5">{{ group.clubName }}</span>
           </div>
+          @if ((chat.roomUnreadCounts()[room.id] ?? 0) > 0 && chat.activeRoomId() !== room.id) {
+            <div class="flex-shrink-0 min-w-[20px] h-5 rounded-full bg-[var(--destructive)] flex items-center justify-center text-white text-xs font-bold px-1">
+              {{ (chat.roomUnreadCounts()[room.id] ?? 0) > 9 ? '9+' : chat.roomUnreadCounts()[room.id] }}
+            </div>
+          }
         </button>
       }
     } @empty {
@@ -38,44 +43,61 @@
         }
       }
     </div>
-    <div class="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-0" aria-live="polite">
-      @for (msg of chat.activeMessages(); track msg.id; let i = $index) {
-        @let isFirst = i === 0 || chat.activeMessages()[i - 1].senderId !== msg.senderId;
-        @let isLast = i === chat.activeMessages().length - 1 || chat.activeMessages()[i + 1].senderId !== msg.senderId;
-        <div class="flex flex-col"
-             [class.items-end]="msg.isOwn"
-             [class.items-start]="!msg.isOwn"
-             [class.mt-3]="isFirst"
-             [class.mt-0.5]="!isFirst">
-          <div class="flex items-end gap-2 max-w-[70%]" [class.flex-row-reverse]="msg.isOwn">
-            @if (!msg.isOwn) {
-              @if (isFirst) {
-                <div class="msg-avatar flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold">
-                  {{ msg.senderName.slice(0, 2).toUpperCase() }}
+    <div #messagesList class="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-0" aria-live="polite">
+      @for (item of chat.activeMessagesWithDivider(); track item.id; let i = $index) {
+        @if ($any(item).isDivider) {
+          <!-- Feature 5: unread divider -->
+          <div data-unread-divider class="flex items-center gap-2 my-3">
+            <div class="flex-1 border-t border-[var(--destructive)] opacity-60"></div>
+            <span class="text-xs font-semibold text-[var(--destructive)] px-1">{{ 'CHAT.unread_divider' | translate }}</span>
+            <div class="flex-1 border-t border-[var(--destructive)] opacity-60"></div>
+          </div>
+        } @else {
+          @let msg = $any(item);
+          @let isFirst = isMsgGroupFirst(i);
+          @let isLast = isMsgGroupLast(i);
+          <div class="flex flex-col"
+               [class.items-end]="msg.isOwn"
+               [class.items-start]="!msg.isOwn"
+               [class.mt-3]="isFirst"
+               [class.mt-0.5]="!isFirst">
+            <div class="flex items-end gap-2 max-w-[70%]" [class.flex-row-reverse]="msg.isOwn">
+              @if (!msg.isOwn) {
+                @if (isFirst) {
+                  <div class="relative">
+                    <div class="msg-avatar flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold">
+                      {{ msg.senderName.slice(0, 2).toUpperCase() }}
+                    </div>
+                    <!-- Feature 4: online presence dot -->
+                    @if (chat.presenceMap().get(msg.senderId) === 'online') {
+                      <span class="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 border-2 border-[var(--color-surface)]"
+                            [title]="'CHAT.online' | translate"></span>
+                    }
+                  </div>
+                } @else {
+                  <div class="w-7 flex-shrink-0"></div>
+                }
+              }
+              <div class="flex flex-col" [class.items-end]="msg.isOwn">
+                @if (!msg.isOwn && isFirst) {
+                  <span class="text-xs text-[var(--color-ink-muted)] mb-1 ml-1">{{ msg.senderName }}</span>
+                }
+                <div class="msg-bubble px-3 py-2 text-sm shadow-sm rounded-2xl"
+                     [class.msg-bubble--own]="msg.isOwn"
+                     [class.msg-bubble--other]="!msg.isOwn"
+                     [class.rounded-tl-sm]="!msg.isOwn && isFirst"
+                     [class.rounded-tr-sm]="msg.isOwn && isFirst">
+                  {{ msg.text }}
                 </div>
-              } @else {
-                <div class="w-7 flex-shrink-0"></div>
-              }
-            }
-            <div class="flex flex-col" [class.items-end]="msg.isOwn">
-              @if (!msg.isOwn && isFirst) {
-                <span class="text-xs text-[var(--color-ink-muted)] mb-1 ml-1">{{ msg.senderName }}</span>
-              }
-              <div class="msg-bubble px-3 py-2 text-sm shadow-sm rounded-2xl"
-                   [class.msg-bubble--own]="msg.isOwn"
-                   [class.msg-bubble--other]="!msg.isOwn"
-                   [class.rounded-tl-sm]="!msg.isOwn && isFirst"
-                   [class.rounded-tr-sm]="msg.isOwn && isFirst">
-                {{ msg.text }}
+                @if (isLast) {
+                  <span class="text-xs text-[var(--color-ink-muted)] mt-1" [class.text-right]="msg.isOwn">
+                    {{ msg.timestamp | chatTimestamp }}
+                  </span>
+                }
               </div>
-              @if (isLast) {
-                <span class="text-xs text-[var(--color-ink-muted)] mt-1" [class.text-right]="msg.isOwn">
-                  {{ msg.timestamp | chatTimestamp }}
-                </span>
-              }
             </div>
           </div>
-        </div>
+        }
       }
     </div>
     <div class="px-3 py-3 border-t border-[var(--color-sepia)] flex gap-2">

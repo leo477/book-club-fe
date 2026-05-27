@@ -6,7 +6,16 @@ export interface ChatMessage {
   timestamp: Date;
   isOwn: boolean;
   isMuted?: boolean;
+  isDivider?: never;
 }
+
+export interface UnreadDivider {
+  id: string;
+  isDivider: true;
+}
+
+/** Union of real messages and the unread-divider sentinel. */
+export type ChatItem = ChatMessage | UnreadDivider;
 
 export interface ChatRoom {
   id: string;

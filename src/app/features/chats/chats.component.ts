@@ -5,6 +5,9 @@ import {
   signal,
   computed,
   effect,
+  ViewChild,
+  ElementRef,
+  DestroyRef,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -30,10 +33,15 @@ export class ChatsComponent {
   protected readonly chat = inject(ChatService);
   private readonly clubService = inject(ClubService);
   private readonly tokenStore = inject(TokenStore);
+  private readonly _destroyRef = inject(DestroyRef);
+
+  @ViewChild('messagesList') private readonly messagesListRef?: ElementRef<HTMLElement>;
 
   protected readonly messageText = signal('');
 
   private _clubsLoadTriggered = false;
+  /** Tracks the last room we scrolled to — prevents re-scroll on every new WS message. */
+  private _lastScrolledRoomId: string | null = null;
 
   protected readonly roomsByClub = computed(() => {
     const clubs = this.clubService.myClubs();
@@ -52,6 +60,10 @@ export class ChatsComponent {
   });
 
   constructor() {
+    // Feature 1: suppress FAB badge while the /chats page is mounted.
+    this.chat.setChatsPage(true);
+    this._destroyRef.onDestroy(() => this.chat.setChatsPage(false));
+
     effect(() => {
       const user = this.auth.currentUser();
       if (!user) {
@@ -70,6 +82,14 @@ export class ChatsComponent {
       }
     });
 
+    // Feature 5: fetch per-room unread counts once rooms are loaded.
+    effect(() => {
+      const rooms = this.chat.rooms();
+      if (rooms.length > 0) {
+        this.chat.fetchUnreadCounts(rooms.map(r => r.id));
+      }
+    });
+
     effect(() => {
       const roomId = this.chat.activeRoomId();
       const token = this.tokenStore.token();
@@ -79,9 +99,35 @@ export class ChatsComponent {
         this.chat.disconnectRoom();
       }
     });
+
+    // Feature 5: scroll to first unread message when a room is opened and
+    // messages have loaded.  Runs once per room switch (tracked by _lastScrolledRoomId).
+    effect(() => {
+      const roomId = this.chat.activeRoomId();
+      const msgs = this.chat.activeMessages();
+      if (!roomId || msgs.length === 0 || this._lastScrolledRoomId === roomId) return;
+      this._lastScrolledRoomId = roomId;
+      setTimeout(() => {
+        const container = this.messagesListRef?.nativeElement;
+        if (!container) return;
+        const divider = container.querySelector('[data-unread-divider]') as HTMLElement | null;
+        if (divider) {
+          divider.scrollIntoView({ block: 'start' });
+        } else {
+          container.scrollTop = container.scrollHeight;
+        }
+      }, 80);
+    });
   }
 
   protected selectRoom(room: ChatRoom): void {
+    // Feature 5: mark the current room as read before switching.
+    const prevRoomId = this.chat.activeRoomId();
+    if (prevRoomId && prevRoomId !== room.id) {
+      this.chat.markRoomRead(prevRoomId);
+    }
+    // Reset scroll tracker so we'll scroll-to-unread in the new room.
+    this._lastScrolledRoomId = null;
     this.chat.openRoom(room.id);
     this.chat.markAsRead();
   }
@@ -93,6 +139,9 @@ export class ChatsComponent {
     if (!user) return;
     this.chat.sendMessage(text, { id: user.id, displayName: user.displayName });
     this.messageText.set('');
+    // Feature 5: sending a message implies we've read everything.
+    const roomId = this.chat.activeRoomId();
+    if (roomId) this.chat.markRoomRead(roomId);
   }
 
   protected onKeydown(event: KeyboardEvent): void {
@@ -100,5 +149,29 @@ export class ChatsComponent {
       event.preventDefault();
       this.sendMessage();
     }
+  }
+
+  /**
+   * Feature 5: returns true if the message at index i starts a new visual group
+   * (first message overall, after a divider, or sender changed).
+   */
+  protected isMsgGroupFirst(i: number): boolean {
+    const items = this.chat.activeMessagesWithDivider();
+    if (i === 0) return true;
+    const prev = items[i - 1];
+    if ((prev as { isDivider?: boolean }).isDivider) return true;
+    return (prev as { senderId: string }).senderId !== (items[i] as { senderId: string }).senderId;
+  }
+
+  /**
+   * Feature 5: returns true if the message at index i ends a visual group
+   * (last message overall, before a divider, or sender changed next).
+   */
+  protected isMsgGroupLast(i: number): boolean {
+    const items = this.chat.activeMessagesWithDivider();
+    if (i >= items.length - 1) return true;
+    const next = items[i + 1];
+    if ((next as { isDivider?: boolean }).isDivider) return true;
+    return (next as { senderId: string }).senderId !== (items[i] as { senderId: string }).senderId;
   }
 }
