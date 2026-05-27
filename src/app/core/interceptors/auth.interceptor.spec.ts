@@ -1,12 +1,12 @@
 import { EnvironmentInjector, provideZonelessChangeDetection, runInInjectionContext } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { HttpRequest, provideHttpClient, withInterceptors, HttpClient } from '@angular/common/http';
+import { HttpRequest, provideHttpClient, withInterceptors, HttpClient, HttpContext } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
 import { TimeoutError, throwError } from 'rxjs';
-import { authInterceptor, BackendHttpError, RequestTimeoutError } from './auth.interceptor';
+import { authInterceptor, BackendHttpError, RequestTimeoutError, SUPPRESS_ERROR_TOAST } from './auth.interceptor';
 import { TokenStore } from '../auth/token.store';
 
 describe('authInterceptor', () => {
@@ -217,5 +217,59 @@ describe('authInterceptor', () => {
     http.get('/api/test').subscribe({ error: jasmine.createSpy('errorHandler') });
     httpMock.expectOne('/api/test').flush({}, { status: 500, statusText: 'Internal Server Error' });
     httpMock.verify();
+  });
+
+  describe('nested detail extraction', () => {
+    it('extracts detail.error from nested object', (done) => {
+      setup();
+      http.get('/api/test').subscribe({ error: (err: unknown) => {
+        expect((err as BackendHttpError).detail).toBe('Invalid credentials');
+        done();
+      }});
+      const req = httpMock.expectOne('/api/test');
+      req.flush({ detail: { error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' } }, { status: 401, statusText: 'Unauthorized' });
+    });
+
+    it('falls back to ERRORS.requestFailed when nested detail has no error field', (done) => {
+      setup();
+      http.get('/api/test').subscribe({ error: (err: unknown) => {
+        expect((err as BackendHttpError).translationKey).toBe('ERRORS.requestFailed');
+        done();
+      }});
+      const req = httpMock.expectOne('/api/test');
+      req.flush({ detail: { code: 'SOME_CODE' } }, { status: 400, statusText: 'Bad Request' });
+    });
+
+    it('extracts string detail directly', (done) => {
+      setup();
+      http.get('/api/test').subscribe({ error: (err: unknown) => {
+        expect((err as BackendHttpError).detail).toBe('Some error');
+        done();
+      }});
+      const req = httpMock.expectOne('/api/test');
+      req.flush({ detail: 'Some error' }, { status: 400, statusText: 'Bad Request' });
+    });
+
+    it('uses ERRORS.serverError for empty body on 500', (done) => {
+      setup();
+      http.get('/api/test').subscribe({ error: (err: unknown) => {
+        expect((err as BackendHttpError).translationKey).toBe('ERRORS.serverError');
+        done();
+      }});
+      const req = httpMock.expectOne('/api/test');
+      req.flush({}, { status: 500, statusText: 'Server Error' });
+    });
+
+    it('suppresses toast when SUPPRESS_ERROR_TOAST is true', (done) => {
+      setup();
+      spyOn(toast, 'error');
+      http.get('/api/test', { context: new HttpContext().set(SUPPRESS_ERROR_TOAST, true) })
+        .subscribe({ error: () => {
+          expect(toast.error).not.toHaveBeenCalled();
+          done();
+        }});
+      const req = httpMock.expectOne('/api/test');
+      req.flush({ detail: 'err' }, { status: 400, statusText: 'Bad Request' });
+    });
   });
 });

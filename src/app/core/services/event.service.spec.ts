@@ -373,4 +373,20 @@ describe('EventService', () => {
       httpMock.expectOne(`${API}/events/e1`).flush(makeApiEvent({ id: 'e1', title: 'Updated' }));
     });
   });
+
+  describe('setEventWinner', () => {
+    it('sends PATCH to /events/:id/winner', (done) => {
+      service.setEventWinner('e1', 'u2').subscribe(() => done());
+      const req = httpMock.expectOne(`${API}/events/e1/winner`);
+      expect(req.request.method).toBe('PATCH');
+      req.flush(null);
+    });
+
+    it('sends body with winner_id', (done) => {
+      service.setEventWinner('e1', 'u2').subscribe(() => done());
+      const req = httpMock.expectOne(`${API}/events/e1/winner`);
+      expect(req.request.body).toEqual({ winner_id: 'u2' });
+      req.flush(null);
+    });
+  });
 });
