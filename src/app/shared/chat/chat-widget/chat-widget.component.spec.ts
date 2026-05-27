@@ -29,14 +29,20 @@ function makeChatService() {
     rooms: signal([]),
     activeRoom: signal<{ clubId: string } | null>(null),
     activeMessages: signal([]),
+    activeMessagesWithDivider: signal([]),
     unreadCount: signal(0),
     activeRoomId: signal<string | null>(null),
+    presenceMap: signal<Record<string, 'online' | 'offline'>>({}),
+    roomUnreadCounts: signal<Record<string, number>>({}),
     sendMessage: jasmine.createSpy('sendMessage'),
     openRoom: jasmine.createSpy('openRoom'),
     closeChat: jasmine.createSpy('closeChat'),
     toggleChat: jasmine.createSpy('toggleChat'),
     toggleOpen: jasmine.createSpy('toggleOpen'),
     markAsRead: jasmine.createSpy('markAsRead'),
+    setChatsPage: jasmine.createSpy('setChatsPage'),
+    fetchUnreadCounts: jasmine.createSpy('fetchUnreadCounts'),
+    markRoomRead: jasmine.createSpy('markRoomRead'),
     muteUser: jasmine.createSpy('muteUser'),
     unmuteUser: jasmine.createSpy('unmuteUser'),
     deleteMessage: jasmine.createSpy('deleteMessage'),
@@ -549,6 +555,39 @@ describe('ChatWidgetComponent', () => {
       routerEvents$.next(Object.assign(new NavigationEnd(1, '/clubs/42', '/clubs/42')));
       TestBed.flushEffects();
       expect(comp.isFabVisible()).toBeFalse();
+    });
+
+    it('returns false on /chats page', () => {
+      const routerEvents$ = new Subject<unknown>();
+      const mockRouter = { url: '/chats', events: routerEvents$.asObservable() };
+      TestBed.overrideProvider(Router, { useValue: mockRouter });
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(comp.isFabVisible()).toBeFalse();
+    });
+  });
+
+  describe('setChatsPage', () => {
+    it('calls setChatsPage(true) via effect when on /chats route', () => {
+      const routerEvents$ = new Subject<unknown>();
+      const mockRouter = { url: '/chats', events: routerEvents$.asObservable() };
+      TestBed.overrideProvider(Router, { useValue: mockRouter });
+      chatSvc = makeChatService();
+      TestBed.overrideProvider(ChatService, { useValue: chatSvc });
+      TestBed.createComponent(ChatWidgetComponent);
+      TestBed.flushEffects();
+      expect(chatSvc.setChatsPage).toHaveBeenCalledWith(true);
+    });
+
+    it('calls setChatsPage(false) via effect when on a non-chats route', () => {
+      const routerEvents$ = new Subject<unknown>();
+      const mockRouter = { url: '/home', events: routerEvents$.asObservable() };
+      TestBed.overrideProvider(Router, { useValue: mockRouter });
+      chatSvc = makeChatService();
+      TestBed.overrideProvider(ChatService, { useValue: chatSvc });
+      TestBed.createComponent(ChatWidgetComponent);
+      TestBed.flushEffects();
+      expect(chatSvc.setChatsPage).toHaveBeenCalledWith(false);
     });
   });
 
