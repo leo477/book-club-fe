@@ -120,10 +120,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
         return throwError(() => new RequestTimeoutError());
       }
       const httpError = error instanceof HttpErrorResponse ? error : null;
-      if (httpError?.status === 401 && token) {
+      if (httpError?.status === 401 && token && !suppress) {
         tokenStore.clear();
         router.navigate(['/login']);
-      } else if (httpError?.status === 403) {
+      } else if (httpError?.status === 403 && !suppress) {
         router.navigate(['/clubs']);
       } else if (httpError && httpError.status >= 500) {
         if (!environment.production) {
