@@ -398,6 +398,17 @@ export class ChatService {
       .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
   }
 
+  async deleteRoom(roomId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${this.api}/chat/rooms/${roomId}`),
+    );
+    this._rooms.update(rooms => rooms.filter(r => r.id !== roomId));
+    if (this._activeRoomId() === roomId) {
+      this._activeRoomId.set(null);
+      this.disconnectRoom();
+    }
+  }
+
   async createRoom(clubId: string, name: string): Promise<ChatRoom> {
     const raw = await firstValueFrom(
       this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),

@@ -153,6 +153,27 @@
               @let stats = clubStats()[club.id];
               @if (stats) {
                 <div class="mt-2 space-y-3 animate-[slideUp_0.3s_ease-out_both]">
+
+                  <!-- Summary stat cards -->
+                  <div class="grid grid-cols-2 gap-1.5">
+                    <div class="rounded-lg p-2 text-center" [style.background]="'var(--color-surface)'">
+                      <p class="text-lg font-bold" [style.color]="'var(--color-primary-400)'">{{ stats.totalMembers ?? '—' }}</p>
+                      <p class="text-[10px]" [style.color]="'var(--color-ink-muted)'">Members</p>
+                    </div>
+                    <div class="rounded-lg p-2 text-center" [style.background]="'var(--color-surface)'">
+                      <p class="text-lg font-bold" [style.color]="'var(--color-primary-400)'">{{ stats.totalEvents ?? '—' }}</p>
+                      <p class="text-[10px]" [style.color]="'var(--color-ink-muted)'">Events</p>
+                    </div>
+                    <div class="rounded-lg p-2 text-center" [style.background]="'var(--color-surface)'">
+                      <p class="text-lg font-bold" [style.color]="'var(--color-primary-400)'">{{ stats.totalMessages ?? '—' }}</p>
+                      <p class="text-[10px]" [style.color]="'var(--color-ink-muted)'">Messages</p>
+                    </div>
+                    <div class="rounded-lg p-2 text-center" [style.background]="'var(--color-surface)'">
+                      <p class="text-lg font-bold" [style.color]="'var(--color-primary-400)'">{{ stats.upcomingEventsCount ?? '—' }}</p>
+                      <p class="text-[10px]" [style.color]="'var(--color-ink-muted)'">Upcoming</p>
+                    </div>
+                  </div>
+
                   @if (stats.recentAttendance.length > 0) {
                     <div>
                       <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-1">{{ 'ORGANIZER.attendance' | translate }}</p>
@@ -191,6 +212,44 @@
                       }
                     </div>
                   }
+
+                  @if (stats.memberGrowth && stats.memberGrowth.length > 0) {
+                    <div>
+                      <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-1">👥 New members</p>
+                      <div class="flex items-end gap-0.5 h-8">
+                        @for (m of stats.memberGrowth; track m.month) {
+                          <div
+                            class="flex-1 bg-[var(--color-primary-400)] rounded-t opacity-70 hover:opacity-100 transition-opacity min-h-[2px]"
+                            [style.height.%]="(m.count / maxMemberGrowth(stats)) * 100"
+                            [title]="m.month + ': ' + m.count"
+                          ></div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  @if (stats.eventFrequency && stats.eventFrequency.length > 0) {
+                    <div>
+                      <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-1">📅 Event frequency</p>
+                      <div class="flex items-end gap-0.5 h-8">
+                        @for (m of stats.eventFrequency; track m.month) {
+                          <div
+                            class="flex-1 bg-[var(--color-primary-400)] rounded-t opacity-70 hover:opacity-100 transition-opacity min-h-[2px]"
+                            [style.height.%]="(m.count / maxEventFrequency(stats)) * 100"
+                            [title]="m.month + ': ' + m.count"
+                          ></div>
+                        }
+                      </div>
+                    </div>
+                  }
+
+                  @if (stats.bannedUsersCount && stats.bannedUsersCount > 0) {
+                    <div class="flex items-center justify-between">
+                      <p class="text-xs" [style.color]="'var(--color-ink-muted)'">🚫 Banned users</p>
+                      <span class="text-xs font-bold px-2 py-0.5 rounded-full bg-red-100 text-red-600">{{ stats.bannedUsersCount }}</span>
+                    </div>
+                  }
+
                 </div>
               } @else {
                 <div class="mt-2 py-2 flex justify-center">

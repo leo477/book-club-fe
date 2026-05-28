@@ -74,18 +74,21 @@ export class CreateEventComponent {
   });
 
   onBookSelected(book: BookSuggestion): void {
-    this.form.controls.bookTitle.setValue(book.title);
+    this.form.controls.bookTitle.setValue(book.title, { emitEvent: false });
     if (book.thumbnail) this.form.controls.coverUrl.setValue(book.thumbnail);
     this.form.get('googleBookId')?.setValue(book.id);
   }
 
   onAddressSelect(suggestion: GeocodeSuggestion): void {
-    this.form.patchValue({
-      city: suggestion.city ?? suggestion.label,
-      address: suggestion.label,
-      lat: suggestion.lat,
-      lng: suggestion.lng,
-    });
+    this.form.patchValue(
+      {
+        city: suggestion.city ?? suggestion.label,
+        address: suggestion.label,
+        lat: suggestion.lat,
+        lng: suggestion.lng,
+      },
+      { emitEvent: false },
+    );
   }
 
   toggleAfterVenue(): void {

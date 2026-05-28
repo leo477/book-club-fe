@@ -64,6 +64,14 @@ export class OrganizerDashboardComponent implements OnInit {
     });
   }
 
+  maxMemberGrowth(stats: ClubStats): number {
+    return Math.max(...(stats.memberGrowth ?? []).map(m => m.count), 1);
+  }
+
+  maxEventFrequency(stats: ClubStats): number {
+    return Math.max(...(stats.eventFrequency ?? []).map(m => m.count), 1);
+  }
+
   confirmDelete(clubId: string): void {
     this.confirmDeleteId.set(clubId);
   }

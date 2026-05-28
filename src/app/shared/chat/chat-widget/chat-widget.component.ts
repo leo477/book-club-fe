@@ -59,6 +59,7 @@ export class ChatWidgetComponent {
   protected readonly openMenuId = signal<string | null>(null);
   protected readonly isCreatingRoom = signal(false);
   protected readonly newRoomName = signal('');
+  protected readonly roomToDelete = signal<string | null>(null);
 
   protected readonly showingRoomList = signal(false);
 
@@ -205,6 +206,20 @@ export class ChatWidgetComponent {
   protected banUser(userId: string, durationSeconds: number): void {
     this.chat.banUserFromChat(userId, durationSeconds);
     this.openMenuId.set(null);
+  }
+
+  protected async deleteRoom(roomId: string): Promise<void> {
+    this.roomToDelete.set(null);
+    try {
+      await this.chat.deleteRoom(roomId);
+      const user = this.auth.currentUser();
+      const clubs = this.clubService.myClubs();
+      if (clubs.length > 0 && user) {
+        this.chat.loadAllClubRooms(clubs, user.id);
+      }
+    } catch (err: unknown) {
+      console.error('[ChatWidget] deleteRoom error', err);
+    }
   }
 
   protected toggleCreateRoom(): void {

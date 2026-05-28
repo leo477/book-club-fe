@@ -54,6 +54,13 @@ export interface ClubStats {
   topActive: MemberStatRow[];
   topWinners: MemberStatRow[];
   recentAttendance: { eventId: string; title: string; date: string; attendeeCount: number }[];
+  totalMembers?: number;
+  totalEvents?: number;
+  totalMessages?: number;
+  memberGrowth?: { month: string; count: number }[];
+  eventFrequency?: { month: string; count: number }[];
+  bannedUsersCount?: number;
+  upcomingEventsCount?: number;
 }
 
 export interface ClubMember {
