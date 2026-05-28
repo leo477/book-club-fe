@@ -112,6 +112,9 @@ export class SeoService {
     const url = loc.href;
     this.meta.updateTag({ property: 'og:url', content: url });
     this.setCanonical(url);
+    const ogImage = `${loc.origin}/og-image.png`;
+    this.meta.updateTag({ property: 'og:image', content: ogImage });
+    this.meta.updateTag({ name: 'twitter:image', content: ogImage });
   }
 
   setPage(config: SeoConfig): void {

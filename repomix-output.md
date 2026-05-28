@@ -438,6 +438,7 @@ eslint.config.js
 karma.conf.js
 package.json
 playwright.md
+playwright.total-audit.config.ts
 playwright.vercel.config.ts
 postcss.config.json
 README.md

@@ -14,7 +14,8 @@
     "build-ctx": "npx repomix --no-files",
     "prepare": "husky install",
     "mock": "node mock-server/index.js",
-    "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\""
+    "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\"",
+    "audit:total": "npx playwright test --config=playwright.total-audit.config.ts"
   },
   "prettier": {
     "overrides": [
@@ -59,6 +60,7 @@
     "@angular/build": "^21.2.8",
     "@angular/cli": "^21.2.8",
     "@angular/compiler-cli": "^21.2.10",
+    "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.59.1",
     "@types/jasmine": "~5.1.0",
     "@types/qrcode": "^1.5.6",
