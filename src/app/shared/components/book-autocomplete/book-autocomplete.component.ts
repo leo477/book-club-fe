@@ -74,6 +74,9 @@ export const BOOK_SEARCH_DEBOUNCE_MS = new InjectionToken<number>('BOOK_SEARCH_D
       }
     </ul>
   }
+  @if (errorState()) {
+    <p class="text-xs text-red-500 mt-1">{{ 'BOOK_AUTOCOMPLETE.error' | translate }}</p>
+  }
 </div>
 `,
 })
@@ -90,6 +93,7 @@ export class BookAutocompleteComponent {
   readonly isLoading = signal(false);
   readonly isOpen = signal(false);
   readonly activeIndex = signal(-1);
+  readonly errorState = signal(false);
 
   constructor() {
     // Use effect-like pattern via constructor to subscribe once control is available
@@ -105,8 +109,9 @@ export class BookAutocompleteComponent {
       filter(v => v != null && v.length >= 3),
       switchMap(v => {
         this.isLoading.set(true);
+        this.errorState.set(false);
         return this.bookSearchService.searchBooks(v).pipe(
-          catchError(() => of([] as BookSuggestion[])),
+          catchError(() => { this.errorState.set(true); return of([] as BookSuggestion[]); }),
         );
       }),
       takeUntilDestroyed(this.destroyRef),
@@ -119,6 +124,7 @@ export class BookAutocompleteComponent {
   }
 
   select(book: BookSuggestion): void {
+    this.errorState.set(false);
     this.control().setValue(book.title, { emitEvent: false });
     this.suggestions.set([]);
     this.isOpen.set(false);
