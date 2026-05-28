@@ -1,6 +1,6 @@
 import {
+  DestroyRef,
   Directive,
-  OnDestroy,
   computed,
   inject,
   input,
@@ -11,8 +11,9 @@ import { QuizService } from '../../../core/services/quiz.service';
 import { QuizSession, QuizLeaderboardEntry } from '../../../core/models/quiz.model';
 
 @Directive()
-export abstract class LeaderboardBaseComponent implements OnDestroy {
+export abstract class LeaderboardBaseComponent {
   protected readonly quizService = inject(QuizService);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly id = input<string>('');
   readonly quizId = input<string>('');
@@ -47,9 +48,6 @@ export abstract class LeaderboardBaseComponent implements OnDestroy {
       () => this._refreshTick.update(n => n + 1),
       intervalMs,
     );
-  }
-
-  ngOnDestroy(): void {
-    clearInterval(this._refreshInterval);
+    this.destroyRef.onDestroy(() => clearInterval(this._refreshInterval));
   }
 }

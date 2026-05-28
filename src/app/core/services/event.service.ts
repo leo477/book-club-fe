@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Observable, firstValueFrom } from 'rxjs';
+import { firstValueFrom } from 'rxjs';
 import { map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiEvent, mapEvent } from '../api/api-mappers';
@@ -139,18 +139,18 @@ export class EventService {
     this._updateEvent(updated);
   }
 
-  updateEvent(eventId: string, payload: Partial<CreateEventPayload>): Observable<ClubEvent> {
-    return this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}`, payload).pipe(
-      map(raw => {
-        const updated = mapEvent(raw);
-        this._updateEvent(updated);
-        return updated;
-      }),
+  async updateEvent(eventId: string, payload: Partial<CreateEventPayload>): Promise<ClubEvent> {
+    const raw = await firstValueFrom(
+      this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}`, payload).pipe(map(mapEvent)),
     );
+    this._updateEvent(raw);
+    return raw;
   }
 
-  setEventWinner(eventId: string, winnerId: string): Observable<void> {
-    return this.http.patch<void>(`${environment.apiUrl}/events/${eventId}/winner`, { winner_id: winnerId });
+  async setEventWinner(eventId: string, winnerId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.patch<void>(`${environment.apiUrl}/events/${eventId}/winner`, { winner_id: winnerId }),
+    );
   }
 
   async cancelEvent(eventId: string): Promise<void> {

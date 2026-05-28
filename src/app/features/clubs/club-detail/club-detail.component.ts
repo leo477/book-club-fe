@@ -8,7 +8,6 @@ import {
   input,
   linkedSignal,
 } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
 import { NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
@@ -357,7 +356,7 @@ export class ClubDetailComponent {
   async onSetWinner(eventId: string, memberId: string): Promise<void> {
     this.setWinnerLoading.set(eventId);
     try {
-      await firstValueFrom(this.eventService.setEventWinner(eventId, memberId));
+      await this.eventService.setEventWinner(eventId, memberId);
       const member = this.members().find(m => m.userId === memberId);
       this.pastEvents.update(list =>
         list.map(e =>
