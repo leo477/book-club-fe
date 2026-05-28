@@ -14,6 +14,7 @@ class MockWebSocket {
   onclose: (() => void) | null = null;
   onerror: (() => void) | null = null;
   close = jasmine.createSpy('ws.close');
+  send = jasmine.createSpy('ws.send');
   constructor(public url: string) { MockWebSocket.instance = this; }
   simulateMessage(data: object) {
     this.onmessage?.(new MessageEvent('message', { data: JSON.stringify(data) }));
@@ -579,11 +580,14 @@ describe('ChatService', () => {
   describe('connectRoom() / disconnectRoom()', () => {
     const WS_BASE = environment.wsUrl;
 
-    it('connectRoom creates a WebSocket with the correct URL', () => {
+    it('connectRoom creates a WebSocket with the correct URL and sends auth frame on open', () => {
       service.connectRoom('room-42', 'my-token');
       const ws554 = MockWebSocket.instance;
       expect(ws554).not.toBeNull();
-      expect(ws554?.url).toBe(`${WS_BASE}/chat/rooms/room-42?token=my-token`);
+      expect(ws554?.url).toBe(`${WS_BASE}/chat/rooms/room-42`);
+      expect(ws554?.url).not.toContain('?');
+      ws554?.onopen?.();
+      expect(ws554?.send).toHaveBeenCalledWith(JSON.stringify({ type: 'auth', token: 'my-token' }));
     });
 
     it('receiving a WS message appends it to activeMessages', () => {
@@ -755,7 +759,8 @@ describe('ChatService', () => {
 
       const secondWs = MockWebSocket.instance;
       expect(secondWs).not.toBe(firstWs); // new WebSocket created
-      expect(secondWs?.url).toContain('/chat/rooms/room-42?token=tok');
+      expect(secondWs?.url).toBe(`${WS_BASE}/chat/rooms/room-42`);
+      expect(secondWs?.url).not.toContain('?');
       jasmine.clock().uninstall();
     });
 

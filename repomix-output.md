@@ -443,6 +443,7 @@ playwright.vercel.config.ts
 postcss.config.json
 README.md
 repomix.config.json
+security-audit.md
 SECURITY.md
 sonar-project.properties
 tsconfig.app.json

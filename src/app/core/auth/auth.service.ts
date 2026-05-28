@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
@@ -6,6 +6,7 @@ import { catchError, firstValueFrom, map, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { extractApiError } from '../api/api-error.util';
 import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
+import { SKIP_AUTH_REDIRECT } from '../interceptors/auth.interceptor';
 import { TokenStore } from './token.store';
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
 
@@ -41,23 +42,41 @@ export class AuthService {
   });
   readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
 
-  constructor() {
-    const token = this.tokenStore.snapshot();
-    if (token) {
-      firstValueFrom(
-        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`).pipe(
+  async init(): Promise<void> {
+    const existingToken = this.tokenStore.snapshot();
+    const skipCtx = new HttpContext().set(SKIP_AUTH_REDIRECT, true);
+
+    if (existingToken) {
+      const raw = await firstValueFrom(
+        this.http.get<ApiUserProfile>(`${environment.apiUrl}/auth/me`, { context: skipCtx }).pipe(
           catchError(() => {
             this.tokenStore.clear();
             return of(null);
           }),
         ),
-      ).then(raw => {
-        this._currentUser.set(raw ? mapUserProfile(raw) : null);
-        this._isLoading.set(false);
-      });
+      );
+      this._currentUser.set(raw ? mapUserProfile(raw) : null);
     } else {
-      this._isLoading.set(false);
+      const refreshResp = await firstValueFrom(
+        this.http
+          .post<{ accessToken: string }>(
+            `${environment.apiUrl}/auth/refresh`,
+            {},
+            { withCredentials: true, context: skipCtx },
+          )
+          .pipe(catchError(() => of(null))),
+      );
+      if (refreshResp) {
+        this.tokenStore.set(refreshResp.accessToken);
+        const raw = await firstValueFrom(
+          this.http
+            .get<ApiUserProfile>(`${environment.apiUrl}/auth/me`, { context: skipCtx })
+            .pipe(catchError(() => of(null))),
+        );
+        this._currentUser.set(raw ? mapUserProfile(raw) : null);
+      }
     }
+    this._isLoading.set(false);
   }
 
   async signUp(

@@ -11,6 +11,7 @@ import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
 import { catchError, firstValueFrom, of } from 'rxjs';
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { AuthService } from './core/auth/auth.service';
 import { SeoService } from './core/services/seo.service';
 
 export const appConfig: ApplicationConfig = {
@@ -49,6 +50,14 @@ export const appConfig: ApplicationConfig = {
             seo.bootstrapLocaleSync();
             appRef.tick();
           });
+      },
+      multi: true,
+    },
+    {
+      provide: APP_INITIALIZER,
+      useFactory: () => {
+        const authService = inject(AuthService);
+        return () => authService.init();
       },
       multi: true,
     },
