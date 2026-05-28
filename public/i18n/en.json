@@ -636,5 +636,8 @@
     "title": "Where to buy",
     "found": "Available",
     "not_found": "Not found"
+  },
+  "BOOK_AUTOCOMPLETE": {
+    "error": "Couldn't load suggestions. Try again."
   }
 }
