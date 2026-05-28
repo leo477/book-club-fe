@@ -3,9 +3,13 @@ import { HttpClient, HttpContext } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { BookSuggestion, BookDetails } from '../models/book.model';
-import { SUPPRESS_ERROR_TOAST } from '../interceptors/auth.interceptor';
+import { SUPPRESS_ERROR_TOAST, SKIP_AUTH_REDIRECT } from '../interceptors/auth.interceptor';
 
-const SILENT = { context: new HttpContext().set(SUPPRESS_ERROR_TOAST, true) };
+const SILENT = {
+  context: new HttpContext()
+    .set(SUPPRESS_ERROR_TOAST, true)
+    .set(SKIP_AUTH_REDIRECT, true),
+};
 
 @Injectable({ providedIn: 'root' })
 export class BookSearchService {

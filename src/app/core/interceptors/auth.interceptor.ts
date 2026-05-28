@@ -14,6 +14,9 @@ const MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 /** Suppress toast errors for background requests that fail silently in the UI. */
 export const SUPPRESS_ERROR_TOAST = new HttpContextToken<boolean>(() => false);
 
+/** Mark a request as targeting a public endpoint that needs no auth error handling. */
+export const SKIP_AUTH_REDIRECT = new HttpContextToken<boolean>(() => false);
+
 /**
  * Error thrown when the frontend's own request timeout fires before the
  * backend responds. Distinct from a backend HTTP error so the UI can show
@@ -113,6 +116,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
     }),
     catchError((error: unknown) => {
       const suppress = req.context.get(SUPPRESS_ERROR_TOAST);
+      const skipAuthRedirect = req.context.get(SKIP_AUTH_REDIRECT);
       if (error instanceof TimeoutError) {
         if (!suppress) {
           toast.error(translate.instant('ERRORS.timeout') as string);
@@ -120,10 +124,10 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
         return throwError(() => new RequestTimeoutError());
       }
       const httpError = error instanceof HttpErrorResponse ? error : null;
-      if (httpError?.status === 401 && token && !suppress) {
+      if (httpError?.status === 401 && token && !skipAuthRedirect) {
         tokenStore.clear();
         router.navigate(['/login']);
-      } else if (httpError?.status === 403 && !suppress) {
+      } else if (httpError?.status === 403 && !skipAuthRedirect) {
         router.navigate(['/clubs']);
       } else if (httpError && httpError.status >= 500) {
         if (!environment.production) {
