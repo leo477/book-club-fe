@@ -1,7 +1,6 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  DestroyRef,
   ElementRef,
   HostListener,
   InjectionToken,
@@ -10,11 +9,11 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { SlicePipe } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { catchError, debounceTime, distinctUntilChanged, filter, of, switchMap } from 'rxjs';
+import { catchError, debounceTime, filter, of, switchMap } from 'rxjs';
 import { HlmInput } from '../../spartan/input/src';
 import { HlmSpinner } from '../../spartan/spinner/src';
 import { BookSearchService } from '../../../core/services/book-search.service';
@@ -85,7 +84,6 @@ export class BookAutocompleteComponent {
   readonly bookSelected = output<BookSuggestion>();
 
   private readonly bookSearchService = inject(BookSearchService);
-  private readonly destroyRef = inject(DestroyRef);
   private readonly elRef = inject(ElementRef);
   private readonly debounceMs = inject(BOOK_SEARCH_DEBOUNCE_MS);
 
@@ -96,16 +94,9 @@ export class BookAutocompleteComponent {
   readonly errorState = signal(false);
 
   constructor() {
-    // Use effect-like pattern via constructor to subscribe once control is available
-    // We use a direct approach: subscribe in constructor after the first effect
-    // Since input() signals are available after construction, we do it this way:
-    queueMicrotask(() => this._setupSubscription());
-  }
-
-  private _setupSubscription(): void {
-    this.control().valueChanges.pipe(
+    toObservable(this.control).pipe(
+      switchMap(ctrl => ctrl.valueChanges),
       debounceTime(this.debounceMs),
-      distinctUntilChanged(),
       filter(v => v != null && v.length >= 3),
       switchMap(v => {
         this.isLoading.set(true);
@@ -114,7 +105,7 @@ export class BookAutocompleteComponent {
           catchError(() => { this.errorState.set(true); return of([] as BookSuggestion[]); }),
         );
       }),
-      takeUntilDestroyed(this.destroyRef),
+      takeUntilDestroyed(),
     ).subscribe(results => {
       this.isLoading.set(false);
       this.suggestions.set(results);
