@@ -14,6 +14,7 @@ type BookState = 'closed' | 'opening' | 'open-bg';
   selector: 'app-book-intro',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  host: { 'aria-hidden': 'true' },
   template: `
     <div
       class="book-scene-wrapper"
