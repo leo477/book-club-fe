@@ -1,9 +1,9 @@
 import {
   Component,
   ChangeDetectionStrategy,
-  effect,
   inject,
   signal,
+  OnInit,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -23,7 +23,7 @@ import { HlmSpinner } from '../../../shared/spartan/spinner/src';
   imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, HlmSpinner],
   templateUrl: './clubs-list.component.html',
 })
-export class ClubsListComponent {
+export class ClubsListComponent implements OnInit {
   readonly clubService = inject(ClubService);
   readonly auth = inject(AuthService);
   private readonly seo = inject(SeoService);
@@ -33,18 +33,18 @@ export class ClubsListComponent {
   readonly activeTab = signal<'all' | 'my'>('all');
 
   constructor() {
-    effect(async () => {
-      this.seo.setPageI18n('SEO.clubs_title', {
-        descriptionKey: 'SEO.clubs_description',
-        ogTitleKey: 'SEO.clubs_og_title',
-      });
-      this.seo.injectWebSiteJsonLd();
-
-      await this.clubService.loadPublicClubs();
-      if (this.auth.isAuthenticated()) {
-        await this.clubService.loadMyClubs();
-      }
+    this.seo.setPageI18n('SEO.clubs_title', {
+      descriptionKey: 'SEO.clubs_description',
+      ogTitleKey: 'SEO.clubs_og_title',
     });
+    this.seo.injectWebSiteJsonLd();
+  }
+
+  async ngOnInit(): Promise<void> {
+    await this.clubService.loadPublicClubs();
+    if (this.auth.isAuthenticated()) {
+      await this.clubService.loadMyClubs();
+    }
   }
 
   async onJoin(club: Club): Promise<void> {

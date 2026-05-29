@@ -268,13 +268,25 @@ export class ClubDetailComponent {
   }
 
   async handleKick(userId: string): Promise<void> {
-    await this.clubService.kickMember(this.id(), userId);
+    const previous = this.members();
     this.members.update(list => list.filter(m => m.userId !== userId));
+    try {
+      await this.clubService.kickMember(this.id(), userId);
+    } catch (err) {
+      this.members.set(previous);
+      throw err;
+    }
   }
 
   async handleBan(event: { userId: string; duration: BanDuration }): Promise<void> {
-    await this.clubService.banMember(this.id(), event.userId, event.duration);
+    const previous = this.members();
     this.members.update(list => list.filter(m => m.userId !== event.userId));
+    try {
+      await this.clubService.banMember(this.id(), event.userId, event.duration);
+    } catch (err) {
+      this.members.set(previous);
+      throw err;
+    }
   }
 
   async onAttend(eventId: string): Promise<void> {
@@ -354,40 +366,46 @@ export class ClubDetailComponent {
   }
 
   async onSetWinner(eventId: string, memberId: string): Promise<void> {
+    const previousPastEvents = this.pastEvents();
+    const member = this.members().find(m => m.userId === memberId);
     this.setWinnerLoading.set(eventId);
+    this.pastEvents.update(list =>
+      list.map(e =>
+        e.id === eventId
+          ? { ...e, winnerId: memberId, winnerName: member?.displayName ?? null }
+          : e,
+      ),
+    );
     try {
       await this.eventService.setEventWinner(eventId, memberId);
-      const member = this.members().find(m => m.userId === memberId);
-      this.pastEvents.update(list =>
-        list.map(e =>
-          e.id === eventId
-            ? { ...e, winnerId: memberId, winnerName: member?.displayName ?? null }
-            : e,
-        ),
-      );
       this.setWinnerEventId.set(null);
-    } catch {
-      // silently fail — error handling can be extended later
+    } catch (err) {
+      this.pastEvents.set(previousPastEvents);
+      throw err;
     } finally {
       this.setWinnerLoading.set(null);
     }
   }
 
   private async performAttendanceAction(eventId: string, attending: boolean): Promise<void> {
+    const previousEvents = this.events();
     this.attendingEventId.set(eventId);
+    this.events.update(list =>
+      list.map(e =>
+        e.id === eventId
+          ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
+          : e,
+      ),
+    );
     try {
       if (attending) {
         await this.eventService.attendEvent(eventId);
       } else {
         await this.eventService.cancelAttendance(eventId);
       }
-      this.events.update(list =>
-        list.map(e =>
-          e.id === eventId
-            ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
-            : e,
-        ),
-      );
+    } catch (err) {
+      this.events.set(previousEvents);
+      throw err;
     } finally {
       this.attendingEventId.set(null);
     }

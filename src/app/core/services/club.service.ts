@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
 import { AuthService } from '../auth/auth.service';
 import { SUPPRESS_ERROR_TOAST } from '../interceptors/auth.interceptor';
-import { BanDuration, BanRecord, Club, ClubMemberDetail } from '../models/club.model';
+import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStats } from '../models/club.model';
 import { ClubEvent } from '../models/event.model';
 
 @Injectable({ providedIn: 'root' })
@@ -281,6 +281,10 @@ export class ClubService {
       this.eventsCache.set(clubId, { data: events, fetchedAt: Date.now() });
     }
     return events;
+  }
+
+  async getClubStats(clubId: string): Promise<ClubStats> {
+    return firstValueFrom(this.http.get<ClubStats>(`${environment.apiUrl}/clubs/${clubId}/stats`));
   }
 
   async deleteClub(clubId: string): Promise<void> {
