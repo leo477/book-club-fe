@@ -11,7 +11,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormControl, Validators } from '@angular/forms';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { firstValueFrom, map } from 'rxjs';
+import { map } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../../core/services/event.service';
@@ -173,7 +173,7 @@ export class EditEventComponent {
       : null;
 
     try {
-      await firstValueFrom(this.eventService.updateEvent(this.id(), {
+      await this.eventService.updateEvent(this.id(), {
         title: v.title,
         description: v.description || null,
         date: new Date(v.date).toISOString(),
@@ -190,7 +190,7 @@ export class EditEventComponent {
         google_book_id: v.googleBookId ?? null,
         quizId: v.quizId ?? null,
         has_winner: v.hasWinner,
-      }));
+      });
       await this.router.navigate(['/events', this.id()]);
     } catch {
       this.errorMessage.set('Failed to save changes. Please try again.');

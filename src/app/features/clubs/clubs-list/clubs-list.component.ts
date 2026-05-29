@@ -32,13 +32,15 @@ export class ClubsListComponent implements OnInit {
   readonly ownedClubIds = this.clubService.myOwnedClubIds;
   readonly activeTab = signal<'all' | 'my'>('all');
 
-  async ngOnInit(): Promise<void> {
+  constructor() {
     this.seo.setPageI18n('SEO.clubs_title', {
       descriptionKey: 'SEO.clubs_description',
       ogTitleKey: 'SEO.clubs_og_title',
     });
     this.seo.injectWebSiteJsonLd();
+  }
 
+  async ngOnInit(): Promise<void> {
     await this.clubService.loadPublicClubs();
     if (this.auth.isAuthenticated()) {
       await this.clubService.loadMyClubs();

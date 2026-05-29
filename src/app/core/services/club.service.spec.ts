@@ -258,4 +258,19 @@ describe('ClubService', () => {
     expect(club.meetingDurationMinutes).toBe(60);
     expect(club.afterMeetingVenue).toEqual(jasmine.objectContaining({ name: 'Cafe' }));
   });
+
+  it('getClubStats returns stats from API', async () => {
+    const mockStats = {
+      topActive: [], topWinners: [], recentAttendance: [],
+      totalMembers: 5, totalEvents: 3, totalMessages: 12,
+      memberGrowth: [], eventFrequency: [], bannedUsersCount: 0, upcomingEventsCount: 1,
+    };
+    const promise = service.getClubStats('club-1');
+    const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/stats`);
+    expect(req.request.method).toBe('GET');
+    req.flush(mockStats);
+    const stats = await promise;
+    expect(stats.totalMembers).toBe(5);
+    expect(stats.totalEvents).toBe(3);
+  });
 });

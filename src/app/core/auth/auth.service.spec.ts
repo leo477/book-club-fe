@@ -30,7 +30,6 @@ describe('AuthService', () => {
 
   afterEach(() => {
     httpMock?.verify();
-    sessionStorage.clear();
   });
 
   function setupTestbed(tokenValue: string | null = null) {
@@ -53,42 +52,65 @@ describe('AuthService', () => {
     httpMock = result.httpMock;
   }
 
-  describe('constructor — no token', () => {
+  describe('init() — no token (silent refresh)', () => {
     beforeEach(() => { setupTestbed(); });
 
-    it('isLoading is false immediately when no token', () => {
+    it('isLoading is true before init()', () => {
       const { service } = buildService();
-      expect(service.isLoading()).toBeFalse();
-      expect(service.isAuthenticated()).toBeFalse();
-      expect(service.currentUser()).toBeNull();
+      expect(service.isLoading()).toBeTrue();
     });
 
-    it('isOrganizer returns false when not logged in', () => {
+    it('isOrganizer returns false when not logged in', async () => {
       const { service } = buildService();
+      const p = service.init();
+      httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
+      await p;
       expect(service.isOrganizer()).toBeFalse();
     });
 
-    it('userRole returns null when not authenticated', () => {
+    it('userRole returns null when not authenticated', async () => {
       const { service } = buildService();
+      const p = service.init();
+      httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
+      await p;
       expect(service.userRole()).toBeNull();
+    });
+
+    it('refresh success → token set + /auth/me called + isLoading false', async () => {
+      const { service } = buildService();
+      const p = service.init();
+      httpMock.expectOne(`${API}/auth/refresh`).flush({ accessToken: 'refreshed-token' });
+      await Promise.resolve(); // flush microtask so firstValueFrom continuation runs before /auth/me is expected
+      httpMock.expectOne(`${API}/auth/me`).flush(rawProfile);
+      await p;
+      expect(tokenStoreSpy.set).toHaveBeenCalledWith('refreshed-token');
+      expect(service.currentUser()?.id).toBe('u1');
+      expect(service.isLoading()).toBeFalse();
+    });
+
+    it('refresh 401 → not authenticated + isLoading false', async () => {
+      const { service } = buildService();
+      const p = service.init();
+      httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
+      await p;
+      expect(service.isAuthenticated()).toBeFalse();
+      expect(service.isLoading()).toBeFalse();
     });
   });
 
-  describe('constructor — with valid token', () => {
+  describe('init() — existing token in memory', () => {
     beforeEach(() => { setupTestbed('valid-token'); });
 
-    it('starts loading when token exists', () => {
+    it('isLoading is true before init()', () => {
       const { service } = buildService();
       expect(service.isLoading()).toBeTrue();
-      httpMock.expectOne(`${API}/auth/me`).flush(rawProfile);
     });
 
     it('sets current user after /auth/me responds', async () => {
       const { service } = buildService();
-      const req = httpMock.expectOne(`${API}/auth/me`);
-      req.flush(rawProfile);
-      await Promise.resolve();
-      await Promise.resolve();
+      const p = service.init();
+      httpMock.expectOne(`${API}/auth/me`).flush(rawProfile);
+      await p;
       expect(service.currentUser()?.id).toBe('u1');
       expect(service.isLoading()).toBeFalse();
       expect(service.isAuthenticated()).toBeTrue();
@@ -96,10 +118,9 @@ describe('AuthService', () => {
 
     it('clears token and sets user null when /auth/me fails', async () => {
       const { service } = buildService();
-      const req = httpMock.expectOne(`${API}/auth/me`);
-      req.flush({}, { status: 401, statusText: 'Unauthorized' });
-      await Promise.resolve();
-      await Promise.resolve();
+      const p = service.init();
+      httpMock.expectOne(`${API}/auth/me`).flush({}, { status: 401, statusText: 'Unauthorized' });
+      await p;
       expect(tokenStoreSpy.clear).toHaveBeenCalled();
       expect(service.currentUser()).toBeNull();
       expect(service.isLoading()).toBeFalse();

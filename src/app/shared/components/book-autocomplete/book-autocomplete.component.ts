@@ -13,7 +13,7 @@ import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { SlicePipe } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { catchError, debounceTime, filter, of, switchMap } from 'rxjs';
+import { catchError, debounceTime, filter, of, switchMap, tap } from 'rxjs';
 import { HlmInput } from '../../spartan/input/src';
 import { HlmSpinner } from '../../spartan/spinner/src';
 import { BookSearchService } from '../../../core/services/book-search.service';
@@ -92,11 +92,14 @@ export class BookAutocompleteComponent {
   readonly isOpen = signal(false);
   readonly activeIndex = signal(-1);
   readonly errorState = signal(false);
+  readonly bookWasSelected = signal(false);
 
   constructor() {
     toObservable(this.control).pipe(
       switchMap(ctrl => ctrl.valueChanges),
       debounceTime(this.debounceMs),
+      filter(() => !this.bookWasSelected()),
+      tap(() => this.bookWasSelected.set(false)),
       filter(v => v != null && v.length >= 3),
       switchMap(v => {
         this.isLoading.set(true);
@@ -116,6 +119,7 @@ export class BookAutocompleteComponent {
 
   select(book: BookSuggestion): void {
     this.errorState.set(false);
+    this.bookWasSelected.set(true);
     this.control().setValue(book.title, { emitEvent: false });
     this.suggestions.set([]);
     this.isOpen.set(false);

@@ -181,9 +181,12 @@ export class ChatService {
   connectRoom(roomId: string, token: string): void {
     this.disconnectRoom();
     this._activeRoomToken = { roomId, token };
-    this._ws = new WebSocket(environment.wsUrl + '/chat/rooms/' + roomId + '?token=' + token);
+    this._ws = new WebSocket(environment.wsUrl + '/chat/rooms/' + roomId);
 
-    this._ws.onopen = () => { this._reconnectDelay = 1_000; };
+    this._ws.onopen = () => {
+      this._reconnectDelay = 1_000;
+      this._ws?.send(JSON.stringify({ type: 'auth', token }));
+    };
 
     this._ws.onmessage = (event: MessageEvent) => {
       const envelope = JSON.parse(event.data as string) as WsEnvelope;
@@ -396,6 +399,17 @@ export class ChatService {
         }));
       })
       .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
+  }
+
+  async deleteRoom(roomId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${this.api}/chat/rooms/${roomId}`),
+    );
+    this._rooms.update(rooms => rooms.filter(r => r.id !== roomId));
+    if (this._activeRoomId() === roomId) {
+      this._activeRoomId.set(null);
+      this.disconnectRoom();
+    }
   }
 
   async createRoom(clubId: string, name: string): Promise<ChatRoom> {

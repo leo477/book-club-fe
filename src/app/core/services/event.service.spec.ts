@@ -374,53 +374,53 @@ describe('EventService', () => {
       await myP;
     });
 
-    it('sends PATCH to /events/:id with payload', (done) => {
-      service.updateEvent('e1', { title: 'New Title' }).subscribe(() => done());
+    it('sends PATCH to /events/:id with payload', async () => {
+      const promise = service.updateEvent('e1', { title: 'New Title' });
       const req = httpMock.expectOne(`${API}/events/e1`);
       expect(req.request.method).toBe('PATCH');
       expect(req.request.body).toEqual({ title: 'New Title' });
       req.flush(makeApiEvent({ id: 'e1', title: 'New Title' }));
+      await promise;
     });
 
-    it('returns mapped ClubEvent on success', (done) => {
-      service.updateEvent('e1', { title: 'New Title' }).subscribe(event => {
-        expect(event.id).toBe('e1');
-        expect(event.title).toBe('New Title');
-        done();
-      });
+    it('returns mapped ClubEvent on success', async () => {
+      const promise = service.updateEvent('e1', { title: 'New Title' });
       httpMock.expectOne(`${API}/events/e1`).flush(makeApiEvent({ id: 'e1', title: 'New Title' }));
+      const event = await promise;
+      expect(event.id).toBe('e1');
+      expect(event.title).toBe('New Title');
     });
 
-    it('updates the event in allEvents signal', (done) => {
-      service.updateEvent('e1', { title: 'Updated' }).subscribe(() => {
-        expect(service.allEvents().find(e => e.id === 'e1')?.title).toBe('Updated');
-        done();
-      });
+    it('updates the event in allEvents signal', async () => {
+      const promise = service.updateEvent('e1', { title: 'Updated' });
       httpMock.expectOne(`${API}/events/e1`).flush(makeApiEvent({ id: 'e1', title: 'Updated' }));
+      await promise;
+      expect(service.allEvents().find(e => e.id === 'e1')?.title).toBe('Updated');
     });
 
-    it('updates the event in myEvents signal', (done) => {
-      service.updateEvent('e1', { title: 'Updated' }).subscribe(() => {
-        expect(service.myEvents().find(e => e.id === 'e1')?.title).toBe('Updated');
-        done();
-      });
+    it('updates the event in myEvents signal', async () => {
+      const promise = service.updateEvent('e1', { title: 'Updated' });
       httpMock.expectOne(`${API}/events/e1`).flush(makeApiEvent({ id: 'e1', title: 'Updated' }));
+      await promise;
+      expect(service.myEvents().find(e => e.id === 'e1')?.title).toBe('Updated');
     });
   });
 
   describe('setEventWinner', () => {
-    it('sends PATCH to /events/:id/winner', (done) => {
-      service.setEventWinner('e1', 'u2').subscribe(() => done());
+    it('sends PATCH to /events/:id/winner', async () => {
+      const promise = service.setEventWinner('e1', 'u2');
       const req = httpMock.expectOne(`${API}/events/e1/winner`);
       expect(req.request.method).toBe('PATCH');
       req.flush(null);
+      await promise;
     });
 
-    it('sends body with winner_id', (done) => {
-      service.setEventWinner('e1', 'u2').subscribe(() => done());
+    it('sends body with winner_id', async () => {
+      const promise = service.setEventWinner('e1', 'u2');
       const req = httpMock.expectOne(`${API}/events/e1/winner`);
       expect(req.request.body).toEqual({ winner_id: 'u2' });
       req.flush(null);
+      await promise;
     });
   });
 });

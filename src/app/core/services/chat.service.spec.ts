@@ -14,6 +14,7 @@ class MockWebSocket {
   onclose: (() => void) | null = null;
   onerror: (() => void) | null = null;
   close = jasmine.createSpy('ws.close');
+  send = jasmine.createSpy('ws.send');
   constructor(public url: string) { MockWebSocket.instance = this; }
   simulateMessage(data: object) {
     this.onmessage?.(new MessageEvent('message', { data: JSON.stringify(data) }));
@@ -512,6 +513,49 @@ describe('ChatService', () => {
     });
   });
 
+  describe('deleteRoom()', () => {
+    it('sends DELETE and removes the room from rooms signal', async () => {
+      // seed a room
+      service.loadRooms('club-1');
+      httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([{ id: 'r1', name: 'General' }]);
+      await Promise.resolve();
+      httpMock.expectOne(`${API}/chat/rooms/r1/messages`).flush([]);
+
+      const promise = service.deleteRoom('r1');
+      httpMock.expectOne(`${API}/chat/rooms/r1`).flush(null);
+      await promise;
+
+      expect(getRooms(service).length).toBe(0);
+    });
+
+    it('clears activeRoomId and disconnects when deleting the active room', async () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-del');
+
+      const promise = service.deleteRoom('room-del');
+      httpMock.expectOne(`${API}/chat/rooms/room-del`).flush(null);
+      await promise;
+
+      expect(getActiveRoomId(service)).toBeNull();
+    });
+
+    it('keeps other rooms when deleting a non-active room', async () => {
+      service.loadRooms('club-1');
+      httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([
+        { id: 'r1', name: 'Room 1' },
+        { id: 'r2', name: 'Room 2' },
+      ]);
+      await Promise.resolve();
+      httpMock.expectOne(`${API}/chat/rooms/r1/messages`).flush([]);
+      // r1 is active; delete r2 (non-active)
+      const promise = service.deleteRoom('r2');
+      httpMock.expectOne(`${API}/chat/rooms/r2`).flush(null);
+      await promise;
+
+      expect(getRooms(service).length).toBe(1);
+      expect(getActiveRoomId(service)).toBe('r1');
+    });
+  });
+
   describe('createRoom()', () => {
     it('sends POST and appends new room to rooms signal', async () => {
       service.createRoom('club-1', 'New Room');
@@ -579,11 +623,14 @@ describe('ChatService', () => {
   describe('connectRoom() / disconnectRoom()', () => {
     const WS_BASE = environment.wsUrl;
 
-    it('connectRoom creates a WebSocket with the correct URL', () => {
+    it('connectRoom creates a WebSocket with the correct URL and sends auth frame on open', () => {
       service.connectRoom('room-42', 'my-token');
       const ws554 = MockWebSocket.instance;
       expect(ws554).not.toBeNull();
-      expect(ws554?.url).toBe(`${WS_BASE}/chat/rooms/room-42?token=my-token`);
+      expect(ws554?.url).toBe(`${WS_BASE}/chat/rooms/room-42`);
+      expect(ws554?.url).not.toContain('?');
+      ws554?.onopen?.();
+      expect(ws554?.send).toHaveBeenCalledWith(JSON.stringify({ type: 'auth', token: 'my-token' }));
     });
 
     it('receiving a WS message appends it to activeMessages', () => {
@@ -755,7 +802,8 @@ describe('ChatService', () => {
 
       const secondWs = MockWebSocket.instance;
       expect(secondWs).not.toBe(firstWs); // new WebSocket created
-      expect(secondWs?.url).toContain('/chat/rooms/room-42?token=tok');
+      expect(secondWs?.url).toBe(`${WS_BASE}/chat/rooms/room-42`);
+      expect(secondWs?.url).not.toContain('?');
       jasmine.clock().uninstall();
     });
 

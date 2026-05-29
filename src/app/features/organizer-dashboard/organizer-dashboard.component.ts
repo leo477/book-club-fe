@@ -5,7 +5,6 @@ import {
   signal,
   OnInit,
 } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ClubService } from '../../core/services/club.service';
@@ -14,7 +13,6 @@ import { Club, ClubStats } from '../../core/models/club.model';
 import { HlmSpinner } from '../../shared/spartan/spinner/src';
 import { HlmButton } from '../../shared/spartan/button/src';
 import { EmptyStateComponent } from '../../shared/components/empty-state/empty-state.component';
-import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-organizer-dashboard',
@@ -26,7 +24,6 @@ import { environment } from '../../../environments/environment';
 export class OrganizerDashboardComponent implements OnInit {
   private readonly clubService = inject(ClubService);
   protected readonly auth = inject(AuthService);
-  private readonly http = inject(HttpClient);
 
   readonly isLoading = signal(false);
   readonly error = signal<string | null>(null);
@@ -58,10 +55,20 @@ export class OrganizerDashboardComponent implements OnInit {
     }
     this.expandedClubId.set(clubId);
     if (this.clubStats()[clubId] !== undefined) return;
-    this.clubStats.update(s => ({ ...s, [clubId]: null })); // null = loading
-    this.http.get<ClubStats>(`${environment.apiUrl}/clubs/${clubId}/stats`).subscribe(stats => {
+    this.clubStats.update(s => ({ ...s, [clubId]: null }));
+    this.clubService.getClubStats(clubId).then(stats => {
       this.clubStats.update(s => ({ ...s, [clubId]: stats }));
+    }).catch(() => {
+      this.clubStats.update(s => ({ ...s, [clubId]: null }));
     });
+  }
+
+  maxMemberGrowth(stats: ClubStats): number {
+    return Math.max(...(stats.memberGrowth ?? []).map(m => m.count), 1);
+  }
+
+  maxEventFrequency(stats: ClubStats): number {
+    return Math.max(...(stats.eventFrequency ?? []).map(m => m.count), 1);
   }
 
   confirmDelete(clubId: string): void {

@@ -1,4 +1,5 @@
-import { Injectable, PLATFORM_ID, inject } from '@angular/core';
+import { DestroyRef, Injectable, PLATFORM_ID, inject } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
 import { DOCUMENT, isPlatformBrowser } from '@angular/common';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
@@ -26,6 +27,7 @@ export class SeoService {
   private readonly translate = inject(TranslateService);
   private readonly platformId = inject(PLATFORM_ID);
   private readonly router = inject(Router, { optional: true });
+  private readonly destroyRef = inject(DestroyRef);
   private localeSyncStarted = false;
 
   /**
@@ -51,14 +53,16 @@ export class SeoService {
     // freshly-loaded translation object rather than relying on translate.instant(),
     // which may still return the previous language's values at the time the
     // subscriber fires.
-    this.translate.onLangChange.subscribe((event: LangChangeEvent) => {
-      this.applyHtmlLang(event.lang);
-      this.applyLocalizedMeta(event.lang, event.translations as Record<string, Record<string, string>>);
-      this.applyOgUrl();
-    });
+    this.translate.onLangChange
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event: LangChangeEvent) => {
+        this.applyHtmlLang(event.lang);
+        this.applyLocalizedMeta(event.lang, event.translations as Record<string, Record<string, string>>);
+        this.applyOgUrl();
+      });
 
     this.router?.events
-      .pipe(filter(e => e instanceof NavigationEnd))
+      .pipe(filter(e => e instanceof NavigationEnd), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.applyOgUrl());
   }
 
