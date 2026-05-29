@@ -69,36 +69,18 @@
                 @for (option of q.options; track $index) {
                   <button
                     (click)="selectOption($index)"
-                    class="w-full text-left rounded-xl px-5 py-4 text-sm font-medium
-                           transition-all duration-150 border-2 focus:outline-none"
-                    [class.border-accent-500]="selectedOption() === $index"
-                    [class.ring-2]="selectedOption() === $index"
-                    [class.ring-accent-500]="selectedOption() === $index"
-                    [class.bg-accent-50]="selectedOption() === $index"
-                    [class.dark:bg-accent-900\/20]="selectedOption() === $index"
-                    [class.text-accent-700]="selectedOption() === $index"
-                    [class.dark:text-accent-300]="selectedOption() === $index"
-                    [class.border-gray-200]="selectedOption() !== $index"
-                    [class.dark:border-gray-700]="selectedOption() !== $index"
-                    [class.bg-white]="selectedOption() !== $index"
-                    [class.dark:bg-gray-800]="selectedOption() !== $index"
-                    [class.text-gray-700]="selectedOption() !== $index"
-                    [class.dark:text-gray-300]="selectedOption() !== $index"
-                    [class.hover:border-primary-400]="selectedOption() !== $index"
-                    [class.hover:bg-primary-50]="selectedOption() !== $index"
-                    [class.dark:hover:bg-primary-900\/20]="selectedOption() !== $index"
+                    class="w-full text-left rounded-xl px-5 py-4 text-sm font-medium transition-all duration-150 border-2 focus:outline-none"
+                    [ngClass]="selectedOption() === $index
+                      ? 'border-accent-500 ring-2 ring-accent-500 bg-accent-50 dark:bg-accent-900/20 text-accent-700 dark:text-accent-300'
+                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:border-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/20'"
                     [disabled]="state() === 'submitting'"
                   >
                     <span class="flex items-center gap-3">
                       <span
-                        class="w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center
-                               justify-center text-xs font-bold"
-                        [class.border-accent-500]="selectedOption() === $index"
-                        [class.bg-accent-500]="selectedOption() === $index"
-                        [class.text-white]="selectedOption() === $index"
-                        [class.border-gray-300]="selectedOption() !== $index"
-                        [class.dark:border-gray-600]="selectedOption() !== $index"
-                        [class.text-gray-500]="selectedOption() !== $index"
+                        class="w-6 h-6 rounded-full border-2 flex-shrink-0 flex items-center justify-center text-xs font-bold"
+                        [ngClass]="selectedOption() === $index
+                          ? 'border-accent-500 bg-accent-500 text-white'
+                          : 'border-gray-300 dark:border-gray-600 text-gray-500'"
                       >
                         {{ optionLabel($index) }}
                       </span>
@@ -189,17 +171,11 @@
                     @for (option of q.options; track $index) {
                       <div
                         class="rounded-lg px-3 py-2 text-sm flex items-center gap-2"
-                        [class.bg-green-100]="$index === q.correctIndex"
-                        [class.dark:bg-green-900\/30]="$index === q.correctIndex"
-                        [class.text-green-800]="$index === q.correctIndex"
-                        [class.dark:text-green-300]="$index === q.correctIndex"
-                        [class.font-semibold]="$index === q.correctIndex"
-                        [class.bg-red-100]="$index !== q.correctIndex && $index === attempt()!.answers[i]"
-                        [class.dark:bg-red-900\/30]="$index !== q.correctIndex && $index === attempt()!.answers[i]"
-                        [class.text-red-700]="$index !== q.correctIndex && $index === attempt()!.answers[i]"
-                        [class.dark:text-red-400]="$index !== q.correctIndex && $index === attempt()!.answers[i]"
-                        [class.text-gray-500]="$index !== q.correctIndex && $index !== attempt()!.answers[i]"
-                        [class.dark:text-gray-500]="$index !== q.correctIndex && $index !== attempt()!.answers[i]"
+                        [ngClass]="$index === q.correctIndex
+                          ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 font-semibold'
+                          : $index === attempt()!.answers[i]
+                            ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                            : 'text-gray-500 dark:text-gray-500'"
                       >
                         <span class="font-bold">{{ optionLabel($index) }}.</span>
                         {{ option }}

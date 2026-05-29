@@ -3,10 +3,10 @@ import {
   Component,
   computed,
   effect,
+  inject,
   linkedSignal,
   signal,
 } from '@angular/core';
-import { inject } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { HlmFieldImports } from '../../../shared/spartan/field/src';

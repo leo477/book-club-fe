@@ -6,7 +6,8 @@ import {
   inject,
   signal,
 } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { NgClass } from '@angular/common';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { QuizService } from '../../../core/services/quiz.service';
 import { QuizAttempt } from '../../../core/models/quiz.model';
@@ -18,13 +19,12 @@ type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
   selector: 'app-quiz-take',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, LoadingSpinnerComponent, TranslateModule],
+  imports: [NgClass, RouterLink, LoadingSpinnerComponent, TranslateModule],
   templateUrl: './quiz-take.component.html',
 })
 export class QuizTakeComponent implements OnInit {
   protected readonly quizService = inject(QuizService);
   private readonly route = inject(ActivatedRoute);
-  private readonly router = inject(Router);
   private readonly translate = inject(TranslateService);
 
   protected readonly state = signal<QuizState>('loading');

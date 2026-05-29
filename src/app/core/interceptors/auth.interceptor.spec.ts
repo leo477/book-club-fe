@@ -214,9 +214,11 @@ describe('authInterceptor', () => {
 
   it('does not retry on non-503 errors', () => {
     setup(null);
-    http.get('/api/test').subscribe({ error: jasmine.createSpy('errorHandler') });
+    const errorSpy = jasmine.createSpy('errorHandler');
+    http.get('/api/test').subscribe({ error: errorSpy });
     httpMock.expectOne('/api/test').flush({}, { status: 500, statusText: 'Internal Server Error' });
     httpMock.verify();
+    expect(errorSpy).toHaveBeenCalledTimes(1);
   });
 
   describe('nested detail extraction', () => {

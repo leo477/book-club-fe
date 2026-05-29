@@ -33,8 +33,8 @@ export class HlmDropdownMenuTrigger {
 		this._cdkTrigger.opened.pipe(takeUntilDestroyed()).subscribe(() =>
 			setTimeout(
 				() =>
-					// eslint-disable-next-line
-					((this._cdkTrigger as any)._spartanLastPosition = // eslint-disable-next-line
+					// eslint-disable-next-line @typescript-eslint/no-explicit-any
+					((this._cdkTrigger as any)._spartanLastPosition = // eslint-disable-next-line @typescript-eslint/no-explicit-any
 						(this._cdkTrigger as any).overlayRef._positionStrategy._lastPosition),
 			),
 		);

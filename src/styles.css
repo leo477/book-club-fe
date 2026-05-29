@@ -113,6 +113,17 @@
   --border:              hsl(38deg 55% 27%);
   --input:               hsl(28deg 50% 16%);
   --ring:                hsl(38deg 88% 45%);
+  background-image:
+    radial-gradient(ellipse at 20% 30%, rgba(212, 144, 10, 0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 70%, rgba(45, 122, 80, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(180, 130, 60, 0.03) 0%, transparent 80%),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(180, 130, 60, 0.02) 2px,
+      rgba(180, 130, 60, 0.02) 4px
+    );
 }
 
 * { box-sizing: border-box; }
@@ -134,20 +145,6 @@ html {
       rgba(139, 90, 43, 0.015) 4px
     );
   background-attachment: fixed;
-}
-
-.dark {
-  background-image:
-    radial-gradient(ellipse at 20% 30%, rgba(212, 144, 10, 0.06) 0%, transparent 55%),
-    radial-gradient(ellipse at 75% 70%, rgba(45, 122, 80, 0.04) 0%, transparent 50%),
-    radial-gradient(ellipse at 50% 50%, rgba(180, 130, 60, 0.03) 0%, transparent 80%),
-    repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(180, 130, 60, 0.02) 2px,
-      rgba(180, 130, 60, 0.02) 4px
-    );
 }
 
 body {

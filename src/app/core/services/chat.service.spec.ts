@@ -300,6 +300,7 @@ describe('ChatService', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set(null);
       service.sendMessage('Should not send', { id: 'user-x', displayName: 'Nobody' });
       httpMock.expectNone(`${API}/chat/rooms/null/messages`);
+      expect(getActiveMessages(service).length).toBe(0);
     });
   });
 
@@ -345,6 +346,7 @@ describe('ChatService', () => {
         r.params.get('before') === 'cursor-xyz' &&
         r.params.get('limit') === '20',
       );
+      expect(req.request.params.get('before')).toBe('cursor-xyz');
       req.flush([]);
     });
 
@@ -492,6 +494,7 @@ describe('ChatService', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set(null);
       service.deleteMessage('msg-x');
       httpMock.expectNone(`${API}/chat/rooms/null/messages/msg-x`);
+      expect(getActiveMessages(service).length).toBe(0);
     });
   });
 
@@ -510,6 +513,7 @@ describe('ChatService', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set(null);
       service.banUserFromChat('bad-user', 3600);
       httpMock.expectNone(`${API}/chat/rooms/null/ban`);
+      expect(getActiveRoom(service)).toBeNull();
     });
   });
 
@@ -924,6 +928,7 @@ describe('ChatService', () => {
     it('does nothing when called with empty array', () => {
       service.fetchUnreadCounts([]);
       httpMock.expectNone(`${API}/chat/rooms/`);
+      expect(Object.keys(service.roomUnreadCounts()).length).toBe(0);
     });
   });
 
@@ -968,6 +973,7 @@ describe('ChatService', () => {
       service.markRoomRead('room-empty');
       // No POST should be made
       httpMock.expectNone(`${API}/chat/rooms/room-empty/read`);
+      expect(service.roomUnreadCounts()['room-empty']).toBeUndefined();
     });
 
     it('activeMessagesWithDivider inserts divider after last-read message', async () => {

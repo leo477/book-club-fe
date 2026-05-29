@@ -21,7 +21,7 @@ export class HlmDropdownMenuSub {
 	constructor() {
 		this.setSideWithDarkMagic();
 		// this is a best effort, but does not seem to work currently
-		// TODO: figure out a way for us to know the host is about to be closed. might not be possible with CDK
+		// TODO: figure out a way for us to know the host is about to be closed. might not be possible with CDK // NOSONAR
 		this._host.closed.pipe(takeUntilDestroyed()).subscribe(() => this._state.set('closed'));
 
 		classes(
@@ -43,7 +43,7 @@ export class HlmDropdownMenuSub {
 		setTimeout(() => {
 			// our menu trigger directive leaves the last position used for use immediately after opening
 			// we can access it here and determine the correct side.
-			// eslint-disable-next-line
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const ps = (this._host as any)._parentTrigger._spartanLastPosition;
 			if (!ps) {
 				// if we have no last position we default to the most likely option
@@ -51,7 +51,7 @@ export class HlmDropdownMenuSub {
 				this._side.set(isRoot ? 'top' : 'left');
 				return;
 			}
-			const side = isRoot ? ps.originY : ps.originX === 'end' ? 'right' : 'left';
+			const side = isRoot ? ps.originY : ps.originX === 'end' ? 'right' : 'left'; // NOSONAR
 			this._side.set(side);
 		});
 	}

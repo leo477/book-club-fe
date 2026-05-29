@@ -10,7 +10,6 @@ import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angula
 import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
-import { AuthService } from '../../../core/auth/auth.service';
 import { EventService } from '../../../core/services/event.service';
 import { HlmFieldImports } from '../../../shared/spartan/field/src';
 import { HlmInput } from '../../../shared/spartan/input/src';
@@ -34,7 +33,6 @@ interface CreateClubForm {
 })
 export class CreateClubComponent {
   private readonly clubService = inject(ClubService);
-  private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly eventService = inject(EventService);
 
@@ -57,7 +55,7 @@ export class CreateClubComponent {
   constructor() {
     effect(() => {
       if (this.clubService.myOwnedClubs().length >= 1) {
-        this.router.navigate(['/clubs']);
+        void this.router.navigate(['/clubs']);
       }
     });
   }
@@ -90,7 +88,7 @@ export class CreateClubComponent {
   }
 
   cancel(): void {
-    this.router.navigate(['/clubs']);
+    void this.router.navigate(['/clubs']);
   }
 
   async onSubmit(): Promise<void> {
@@ -120,7 +118,7 @@ export class CreateClubComponent {
           } catch { /* non-blocking — club already created */ }
         }
       }
-      this.router.navigate(['/clubs', club.id]);
+      void this.router.navigate(['/clubs', club.id]);
     } catch (err) {
       this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
     } finally {

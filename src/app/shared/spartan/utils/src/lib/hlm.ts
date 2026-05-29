@@ -130,25 +130,25 @@ export function classes(computed: () => ClassValue[] | string, options: ClassesO
 
 		// Register cleanup with DestroyRef
 		destroyRef.onDestroy(() => {
-			if (manager!.restoreRafId !== null) {
-				cancelAnimationFrame(manager!.restoreRafId);
-				manager!.restoreRafId = null;
+			if (manager!.restoreRafId !== null) { // NOSONAR
+				cancelAnimationFrame(manager!.restoreRafId); // NOSONAR
+				manager!.restoreRafId = null; // NOSONAR
 			}
 
-			if (manager!.transitionsSuppressed) {
-				manager!.transitionsSuppressed = false;
-				restoreTransitionSuppression(manager!);
+			if (manager!.transitionsSuppressed) { // NOSONAR
+				manager!.transitionsSuppressed = false; // NOSONAR
+				restoreTransitionSuppression(manager!); // NOSONAR
 			}
 
 			// Remove this source from the manager
-			manager!.sources.delete(sourceId);
+			manager!.sources.delete(sourceId); // NOSONAR
 
 			// If no more sources, clean up the manager
-			if (manager!.sources.size === 0) {
+			if (manager!.sources.size === 0) { // NOSONAR
 				cleanupManager(element);
 			} else {
 				// Update element without this source's classes
-				updateElement(manager!);
+				updateElement(manager!); // NOSONAR
 			}
 		});
 
@@ -171,7 +171,7 @@ function restoreTransitionSuppression(manager: ElementClassManager): void {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
-function setupGlobalObserver(platformId: Object): void {
+function setupGlobalObserver(platformId: Object): void { // NOSONAR
 	if (isPlatformBrowser(platformId) && !globalObserver) {
 		// Create single global observer that watches the entire document
 		globalObserver = new MutationObserver((mutations) => {

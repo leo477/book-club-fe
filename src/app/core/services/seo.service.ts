@@ -74,37 +74,34 @@ export class SeoService {
   }
 
   private applyLocalizedMeta(lang: string, translations?: Record<string, Record<string, string>>): void {
-    // Prefer values from the event's translation map (guaranteed to be for the
-    // new language); fall back to translate.instant() when called at bootstrap.
     const get = (key: string): string =>
       translations?.['META']?.[key] ?? this.translate.instant(`META.${key}`);
 
     const title = get('title');
     const description = get('description');
-    const ogTitle = get('ogTitle');
-    const ogDescription = get('ogDescription');
-    const twitterTitle = get('twitterTitle');
-    const twitterDescription = get('twitterDescription');
     const ogLocale = OG_LOCALE_MAP[lang] ?? lang;
 
-    // Only override when key actually resolved (instant returns the key on miss).
-    if (title && title !== 'META.title') {
-      this.title.setTitle(title);
-      this.meta.updateTag({ property: 'og:title', content: ogTitle && ogTitle !== 'META.ogTitle' ? ogTitle : title });
-      this.meta.updateTag({ name: 'twitter:title', content: twitterTitle && twitterTitle !== 'META.twitterTitle' ? twitterTitle : title });
-    }
-    if (description && description !== 'META.description') {
-      this.meta.updateTag({ name: 'description', content: description });
-      this.meta.updateTag({
-        property: 'og:description',
-        content: ogDescription && ogDescription !== 'META.ogDescription' ? ogDescription : description,
-      });
-      this.meta.updateTag({
-        name: 'twitter:description',
-        content: twitterDescription && twitterDescription !== 'META.twitterDescription' ? twitterDescription : description,
-      });
-    }
+    this.applyTitleMeta(title, get('ogTitle'), get('twitterTitle'));
+    this.applyDescriptionMeta(description, get('ogDescription'), get('twitterDescription'));
     this.meta.updateTag({ property: 'og:locale', content: ogLocale });
+  }
+
+  private applyTitleMeta(title: string, ogTitle: string, twitterTitle: string): void {
+    if (!title || title === 'META.title') return;
+    this.title.setTitle(title);
+    const resolvedOg = ogTitle && ogTitle !== 'META.ogTitle' ? ogTitle : title;
+    const resolvedTw = twitterTitle && twitterTitle !== 'META.twitterTitle' ? twitterTitle : title;
+    this.meta.updateTag({ property: 'og:title', content: resolvedOg });
+    this.meta.updateTag({ name: 'twitter:title', content: resolvedTw });
+  }
+
+  private applyDescriptionMeta(description: string, ogDescription: string, twitterDescription: string): void {
+    if (!description || description === 'META.description') return;
+    const resolvedOg = ogDescription && ogDescription !== 'META.ogDescription' ? ogDescription : description;
+    const resolvedTw = twitterDescription && twitterDescription !== 'META.twitterDescription' ? twitterDescription : description;
+    this.meta.updateTag({ name: 'description', content: description });
+    this.meta.updateTag({ property: 'og:description', content: resolvedOg });
+    this.meta.updateTag({ name: 'twitter:description', content: resolvedTw });
   }
 
   private applyOgUrl(): void {

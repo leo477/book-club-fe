@@ -20,7 +20,7 @@
   }
 
   @if (isOpen() && suggestions().length > 0) {
-    <ul class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-48 overflow-y-auto">
+    <ul role="listbox" class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-48 overflow-y-auto">
       @for (s of suggestions(); track s.label; let i = $index) {
         <li
           role="option"

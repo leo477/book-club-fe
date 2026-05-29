@@ -43,7 +43,7 @@ export class HlmFieldError implements OnDestroy {
 	public readonly id = input<string>(`hlm-field-error-${HlmFieldError._id++}`);
 
 	/** Additional CSS classes to apply to the field error element. */
-	public readonly userClass = input<ClassValue>('', { alias: 'class' });
+	public readonly userClass = input<ClassValue>('', { alias: 'class' }); // NOSONAR
 
 	/**
 	 * The name of the specific validator error key to match (e.g. 'required').

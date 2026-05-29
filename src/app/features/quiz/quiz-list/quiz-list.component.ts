@@ -52,6 +52,6 @@ export class QuizListComponent {
   }
 
   protected takeQuiz(quizId: string): void {
-    this.router.navigate(['/clubs', this.id(), 'quizzes', quizId]);
+    void this.router.navigate(['/clubs', this.id(), 'quizzes', quizId]);
   }
 }

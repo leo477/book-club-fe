@@ -127,6 +127,8 @@
   "CLUB_DETAIL": {
     "about": "About",
     "back": "Back to clubs",
+    "sidebar_left_label": "Reading & management",
+    "sidebar_right_label": "Club information",
     "back_short": "Back",
     "cancel": "Cancel",
     "created": "Created",

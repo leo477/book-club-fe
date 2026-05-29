@@ -20,10 +20,10 @@ const OUTPUT_FILES = ['./public/i18n/uk.json', './public/i18n/en.json'];
 
 // Patterns to extract keys from templates and TS files
 const PATTERNS = [
-  /'([\w]+\.[\w.]+)'\s*\|\s*translate/g,
-  /"([\w]+\.[\w.]+)"\s*\|\s*translate/g,
-  /translate\.instant\(['"`]([\w]+\.[\w.]+)['"`]\)/g,
-  /translate\.get\(['"`]([\w]+\.[\w.]+)['"`]\)/g,
+  /'(\w+\.\w[\w.]+)'\s*\|\s*translate/g,
+  /"(\w+\.\w[\w.]+)"\s*\|\s*translate/g,
+  /translate\.instant\(['"`](\w+\.\w[\w.]+)['"`]\)/g,
+  /translate\.get\(['"`](\w+\.\w[\w.]+)['"`]\)/g,
 ];
 
 function collectFiles(dir, extensions = ['.html', '.ts']) {

@@ -126,6 +126,7 @@ describe('ClubService', () => {
 
       await service.ensureMyClubsLoaded();
       httpMock.expectNone(`${environment.apiUrl}/clubs/my`);
+      expect(service.myClubs().length).toBe(1);
     });
 
     it('calls loadMyClubs again when TTL has expired', async () => {
@@ -138,6 +139,7 @@ describe('ClubService', () => {
       const req2 = httpMock.expectOne(`${environment.apiUrl}/clubs/my`);
       req2.flush([]);
       await load2;
+      expect(service.myClubs().length).toBe(0);
     });
   });
 
@@ -173,9 +175,10 @@ describe('ClubService', () => {
 
       const p2 = service.getClubById('club-1');
       httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(minimalApiClub);
-      await p2;
+      const result = await p2;
 
       jasmine.clock().uninstall();
+      expect(result?.id).toBe('club-1');
     });
 
     it('getClubMembers returns cached result on second call', async () => {
@@ -195,8 +198,9 @@ describe('ClubService', () => {
       httpMock.expectOne(r => r.url.includes('/clubs/club-1/events')).flush([]);
       await p1;
 
-      await service.loadClubEvents('club-1', false);
+      const result = await service.loadClubEvents('club-1', false);
       httpMock.expectNone(r => r.url.includes('/clubs/club-1/events'));
+      expect(result).toBeDefined();
     });
 
     it('loadClubEvents bypasses cache when includePast is true', async () => {
@@ -206,7 +210,8 @@ describe('ClubService', () => {
 
       const p2 = service.loadClubEvents('club-1', true);
       httpMock.expectOne(r => r.url.includes('/clubs/club-1/events')).flush([]);
-      await p2;
+      const result = await p2;
+      expect(result).toBeDefined();
     });
   });
 
