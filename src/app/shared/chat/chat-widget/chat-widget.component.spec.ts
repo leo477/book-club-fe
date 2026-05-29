@@ -47,6 +47,7 @@ function makeChatService() {
     unmuteUser: jasmine.createSpy('unmuteUser'),
     deleteMessage: jasmine.createSpy('deleteMessage'),
     banUserFromChat: jasmine.createSpy('banUserFromChat'),
+    deleteRoom: jasmine.createSpy('deleteRoom').and.returnValue(Promise.resolve()),
     createRoom: jasmine.createSpy('createRoom'),
     clearRooms: jasmine.createSpy('clearRooms'),
     loadAllClubRooms: jasmine.createSpy('loadAllClubRooms'),
@@ -588,6 +589,79 @@ describe('ChatWidgetComponent', () => {
       TestBed.createComponent(ChatWidgetComponent);
       TestBed.flushEffects();
       expect(chatSvc.setChatsPage).toHaveBeenCalledWith(false);
+    });
+  });
+
+  describe('deleteRoom', () => {
+    it('calls chat.deleteRoom and reloads rooms when user and clubs exist', async () => {
+      authSvc = makeAuthService({ currentUser: { id: 'u1', displayName: 'Alice' } });
+      chatSvc = makeChatService();
+      chatSvc.deleteRoom = jasmine.createSpy('deleteRoom').and.returnValue(Promise.resolve());
+      clubSvc = makeClubService();
+      clubSvc.myClubs.set([{ id: 'club-1', name: 'Club A' }]);
+      TestBed.overrideProvider(AuthService, { useValue: authSvc });
+      TestBed.overrideProvider(ChatService, { useValue: chatSvc });
+      TestBed.overrideProvider(ClubService, { useValue: clubSvc });
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as { deleteRoom(id: string): Promise<void> };
+      await comp.deleteRoom('room-1');
+      expect(chatSvc.deleteRoom).toHaveBeenCalledWith('room-1');
+      expect(chatSvc.loadAllClubRooms).toHaveBeenCalled();
+    });
+
+    it('does not call loadAllClubRooms when clubs list is empty', async () => {
+      authSvc = makeAuthService({ currentUser: { id: 'u1', displayName: 'Alice' } });
+      chatSvc = makeChatService();
+      chatSvc.deleteRoom = jasmine.createSpy('deleteRoom').and.returnValue(Promise.resolve());
+      TestBed.overrideProvider(AuthService, { useValue: authSvc });
+      TestBed.overrideProvider(ChatService, { useValue: chatSvc });
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as { deleteRoom(id: string): Promise<void> };
+      await comp.deleteRoom('room-1');
+      expect(chatSvc.loadAllClubRooms).not.toHaveBeenCalled();
+    });
+
+    it('does not call loadAllClubRooms when user is null', async () => {
+      // authSvc.currentUser is null by default
+      chatSvc = makeChatService();
+      chatSvc.deleteRoom = jasmine.createSpy('deleteRoom').and.returnValue(Promise.resolve());
+      clubSvc = makeClubService();
+      clubSvc.myClubs.set([{ id: 'club-1', name: 'Club A' }]);
+      TestBed.overrideProvider(ChatService, { useValue: chatSvc });
+      TestBed.overrideProvider(ClubService, { useValue: clubSvc });
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as { deleteRoom(id: string): Promise<void> };
+      await comp.deleteRoom('room-1');
+      expect(chatSvc.loadAllClubRooms).not.toHaveBeenCalled();
+    });
+
+    it('handles deleteRoom error gracefully without throwing', async () => {
+      chatSvc = makeChatService();
+      chatSvc.deleteRoom = jasmine.createSpy('deleteRoom').and.returnValue(Promise.reject(new Error('net error')));
+      TestBed.overrideProvider(ChatService, { useValue: chatSvc });
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as { deleteRoom(id: string): Promise<void> };
+      await expectAsync(comp.deleteRoom('room-bad')).toBeResolved();
+    });
+  });
+
+  describe('fabPositionClass / panelPositionClass on /clubs list page', () => {
+    it('fabPositionClass returns bottom-24 right-6 on /clubs list page', () => {
+      const routerEvents$ = new Subject<unknown>();
+      const mockRouter = { url: '/clubs', events: routerEvents$.asObservable() };
+      TestBed.overrideProvider(Router, { useValue: mockRouter });
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(comp.fabPositionClass()).toBe('bottom-24 right-6');
+    });
+
+    it('panelPositionClass returns bottom-40 right-6 on /clubs list page', () => {
+      const routerEvents$ = new Subject<unknown>();
+      const mockRouter = { url: '/clubs', events: routerEvents$.asObservable() };
+      TestBed.overrideProvider(Router, { useValue: mockRouter });
+      const fixture = TestBed.createComponent(ChatWidgetComponent);
+      const comp = fixture.componentInstance as unknown as CompProtected;
+      expect(comp.panelPositionClass()).toBe('bottom-40 right-6');
     });
   });
 
