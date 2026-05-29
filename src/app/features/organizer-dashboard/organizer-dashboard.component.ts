@@ -59,7 +59,7 @@ export class OrganizerDashboardComponent implements OnInit {
     this.clubService.getClubStats(clubId).then(stats => {
       this.clubStats.update(s => ({ ...s, [clubId]: stats }));
     }).catch(() => {
-      this.clubStats.update(s => ({ ...s, [clubId]: undefined }));
+      this.clubStats.update(s => ({ ...s, [clubId]: null }));
     });
   }
 
