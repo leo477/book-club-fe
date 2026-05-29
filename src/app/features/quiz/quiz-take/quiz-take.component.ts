@@ -1,8 +1,8 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  OnInit,
   computed,
-  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -21,7 +21,7 @@ type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
   imports: [RouterLink, LoadingSpinnerComponent, TranslateModule],
   templateUrl: './quiz-take.component.html',
 })
-export class QuizTakeComponent {
+export class QuizTakeComponent implements OnInit {
   protected readonly quizService = inject(QuizService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -38,35 +38,33 @@ export class QuizTakeComponent {
 
   protected clubId = '';
 
-  constructor() {
-    effect(() => {
-      // Both :id (club) and :quizId are inherited via paramsInheritanceStrategy:'always'
-      this.clubId = this.route.snapshot.params['id'] as string;
-      const quizId = this.route.snapshot.params['quizId'] as string;
+  ngOnInit(): void {
+    // Both :id (club) and :quizId are inherited via paramsInheritanceStrategy:'always'
+    this.clubId = this.route.snapshot.params['id'] as string;
+    const quizId = this.route.snapshot.params['quizId'] as string;
 
-      if (!quizId) {
-        this.errorMessage.set('Quiz not found.');
-        this.state.set('error');
-        return;
-      }
+    if (!quizId) {
+      this.errorMessage.set('Quiz not found.');
+      this.state.set('error');
+      return;
+    }
 
-      this.quizService
-        .loadQuestions(quizId)
-        .then(() => {
-          const count = this.quizService.questions().length;
-          if (count === 0) {
-            this.errorMessage.set('This quiz has no questions yet.');
-            this.state.set('error');
-            return;
-          }
-          this.selectedAnswers.set(new Array<number>(count).fill(-1));
-          this.state.set('taking');
-        })
-        .catch(err => {
-          this.errorMessage.set((err as Error).message);
+    this.quizService
+      .loadQuestions(quizId)
+      .then(() => {
+        const count = this.quizService.questions().length;
+        if (count === 0) {
+          this.errorMessage.set('This quiz has no questions yet.');
           this.state.set('error');
-        });
-    });
+          return;
+        }
+        this.selectedAnswers.set(new Array<number>(count).fill(-1));
+        this.state.set('taking');
+      })
+      .catch(err => {
+        this.errorMessage.set((err as Error).message);
+        this.state.set('error');
+      });
   }
 
   protected readonly currentQuestion = computed(
