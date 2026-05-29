@@ -80,6 +80,7 @@ describe('AuthService', () => {
       const { service } = buildService();
       const p = service.init();
       httpMock.expectOne(`${API}/auth/refresh`).flush({ accessToken: 'refreshed-token' });
+      await Promise.resolve(); // flush microtask so firstValueFrom continuation runs before /auth/me is expected
       httpMock.expectOne(`${API}/auth/me`).flush(rawProfile);
       await p;
       expect(tokenStoreSpy.set).toHaveBeenCalledWith('refreshed-token');
