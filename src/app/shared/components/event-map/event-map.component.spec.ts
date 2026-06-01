@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Component, Input, provideZonelessChangeDetection, signal } from '@angular/core';
+import { Component, Input, NO_ERRORS_SCHEMA, provideZonelessChangeDetection, signal } from '@angular/core';
 import { GoogleMap, MapMarker, MapDirectionsRenderer, MapDirectionsService } from '@angular/google-maps';
 import { TranslateModule } from '@ngx-translate/core';
 import { of } from 'rxjs';
@@ -48,6 +48,7 @@ function setup(opts: { lat?: number | null; lng?: number | null; loaded?: boolea
       { provide: MapsConfigService, useValue: fakeMaps },
       { provide: MapDirectionsService, useValue: dirSpy },
     ],
+    schemas: [NO_ERRORS_SCHEMA],
   });
   TestBed.overrideComponent(EventMapComponent, {
     remove: { imports: [GoogleMap, MapMarker, MapDirectionsRenderer] },
@@ -180,6 +181,7 @@ describe('EventMapComponent', () => {
           { provide: MapsConfigService, useValue: fakeMaps },
           { provide: MapDirectionsService, useValue: dirSpy },
         ],
+        schemas: [NO_ERRORS_SCHEMA],
       });
       TestBed.overrideComponent(EventMapComponent, {
         remove: { imports: [GoogleMap, MapMarker, MapDirectionsRenderer] },
@@ -210,6 +212,7 @@ describe('EventMapComponent', () => {
           { provide: MapsConfigService, useValue: fakeMaps },
           { provide: MapDirectionsService, useValue: dirSpy },
         ],
+        schemas: [NO_ERRORS_SCHEMA],
       });
       TestBed.overrideComponent(EventMapComponent, {
         remove: { imports: [GoogleMap, MapMarker, MapDirectionsRenderer] },
