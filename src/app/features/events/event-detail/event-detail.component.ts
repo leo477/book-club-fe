@@ -30,12 +30,13 @@ import { EventRsvpButtonComponent } from '../../../shared/components/event-rsvp-
 import { BookStoresComponent } from '../../../shared/book-stores/book-stores.component';
 import { BookSearchService } from '../../../core/services/book-search.service';
 import { BookDetails } from '../../../core/models/book.model';
+import { EventMapComponent } from '../../../shared/components/event-map/event-map.component';
 
 @Component({
   selector: 'app-event-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton, HlmSpinner, EventRsvpButtonComponent, BookStoresComponent, SlicePipe],
+  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton, HlmSpinner, EventRsvpButtonComponent, BookStoresComponent, SlicePipe, EventMapComponent],
   templateUrl: './event-detail.component.html',
 })
 export class EventDetailComponent {

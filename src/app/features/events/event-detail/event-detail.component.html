@@ -199,5 +199,12 @@
       </section>
     }
 
+    <app-event-map
+      [lat]="event()!.lat"
+      [lng]="event()!.lng"
+      [address]="event()!.address"
+      [afterMeetingVenue]="event()!.afterMeetingVenue"
+    />
+
   </main>
 }

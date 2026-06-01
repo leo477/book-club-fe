@@ -96,6 +96,7 @@ src/
         club.service.ts
         event.service.ts
         geocoding.service.ts
+        maps-config.service.ts
         quiz.service.ts
         randomizer.service.ts
         seo.service.ts
@@ -259,6 +260,9 @@ src/
         empty-state/
           empty-state.component.html
           empty-state.component.ts
+        event-map/
+          event-map.component.html
+          event-map.component.ts
         event-rsvp-button/
           event-rsvp-button.component.ts
         form-field/

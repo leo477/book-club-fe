@@ -366,7 +366,9 @@
     "book_details_hide": "Hide details",
     "book_about": "About the book",
     "book_author": "About the author",
-    "book_published": "Published"
+    "book_published": "Published",
+    "open_in_maps": "Open in Google Maps",
+    "route_to_venue": "Route to after-event venue"
   },
   "EVENT": {
     "event_chat_btn": "Event Chat",

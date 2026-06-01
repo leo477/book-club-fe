@@ -2,9 +2,33 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentFixture } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { of, throwError } from 'rxjs';
+import { of, throwError, Subject } from 'rxjs';
 import { AddressAutocompleteComponent } from './address-autocomplete.component';
 import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
+
+const placeIdSuggestion: GeocodeSuggestion = { label: 'Place', city: null, country: null, lat: null, lng: null, place_id: 'pid123' };
+const resolvedSuggestion: GeocodeSuggestion = { label: 'Place', city: 'Kyiv', country: 'Ukraine', lat: 50.45, lng: 30.52, place_id: 'pid123' };
+
+function setupWithPlaceDetails(result: GeocodeSuggestion | Error) {
+  const geocodingSpy = jasmine.createSpyObj<GeocodingService>('GeocodingService',
+    ['autocomplete$', 'resetSessionToken', 'getPlaceDetails']);
+  geocodingSpy.autocomplete$.and.returnValue(of([]));
+  if (result instanceof Error) {
+    geocodingSpy.getPlaceDetails.and.returnValue(throwError(() => result));
+  } else {
+    geocodingSpy.getPlaceDetails.and.returnValue(of(result));
+  }
+  TestBed.configureTestingModule({
+    imports: [AddressAutocompleteComponent, ReactiveFormsModule],
+    providers: [provideZonelessChangeDetection(), { provide: GeocodingService, useValue: geocodingSpy }],
+  });
+  const fixture = TestBed.createComponent(AddressAutocompleteComponent);
+  const component = fixture.componentInstance;
+  const control = new FormControl<string>('', { nonNullable: true });
+  fixture.componentRef.setInput('control', control);
+  fixture.detectChanges();
+  return { fixture, component, control, geocodingSpy };
+}
 
 const DEBOUNCE = 350; // slightly over the 300ms component debounce
 const JASMINE_TIMEOUT = 3000;
@@ -15,7 +39,7 @@ const mockSuggestions: GeocodeSuggestion[] = [
 ];
 
 function setup(geocodingResult: GeocodeSuggestion[] | Error = mockSuggestions) {
-  const geocodingSpy = jasmine.createSpyObj<GeocodingService>('GeocodingService', ['autocomplete$']);
+  const geocodingSpy = jasmine.createSpyObj<GeocodingService>('GeocodingService', ['autocomplete$', 'resetSessionToken']);
   if (geocodingResult instanceof Error) {
     geocodingSpy.autocomplete$.and.returnValue(throwError(() => geocodingResult));
   } else {
@@ -105,6 +129,33 @@ describe('AddressAutocompleteComponent', () => {
         done();
       }, DEBOUNCE);
     }, JASMINE_TIMEOUT);
+
+    it('sets isLoading true while waiting for results then false after results arrive', (done) => {
+      const subject$ = new Subject<GeocodeSuggestion[]>();
+      const geocodingSpy = jasmine.createSpyObj<GeocodingService>('GeocodingService', ['autocomplete$', 'resetSessionToken']);
+      geocodingSpy.autocomplete$.and.returnValue(subject$.asObservable());
+
+      TestBed.configureTestingModule({
+        imports: [AddressAutocompleteComponent, ReactiveFormsModule],
+        providers: [provideZonelessChangeDetection(), { provide: GeocodingService, useValue: geocodingSpy }],
+      });
+      const fixture = TestBed.createComponent(AddressAutocompleteComponent);
+      const component = fixture.componentInstance;
+      const control = new FormControl<string>('', { nonNullable: true });
+      fixture.componentRef.setInput('control', control);
+      fixture.detectChanges();
+
+      control.setValue('Ки');
+      setTimeout(() => {
+        expect(component.isLoading()).toBeTrue();
+
+        subject$.next([]);
+        subject$.complete();
+
+        expect(component.isLoading()).toBeFalse();
+        done();
+      }, DEBOUNCE);
+    }, JASMINE_TIMEOUT);
   });
 
   describe('select()', () => {
@@ -133,6 +184,76 @@ describe('AddressAutocompleteComponent', () => {
         done();
       }, DEBOUNCE);
     }, JASMINE_TIMEOUT);
+
+    describe('place_id resolution path', () => {
+      it('fetches place details and emits resolved suggestion', () => {
+        const { component } = setupWithPlaceDetails(resolvedSuggestion);
+        const emitted: GeocodeSuggestion[] = [];
+        component.selected.subscribe(s => emitted.push(s));
+        component.select(placeIdSuggestion);
+        expect(emitted).toEqual([resolvedSuggestion]);
+      });
+
+      it('sets isLoading true then false during resolution', () => {
+        const geocodingSpy = jasmine.createSpyObj<GeocodingService>('GeocodingService',
+          ['autocomplete$', 'resetSessionToken', 'getPlaceDetails']);
+        geocodingSpy.autocomplete$.and.returnValue(of([]));
+        let loadingDuring = false;
+        geocodingSpy.getPlaceDetails.and.callFake(() => {
+          loadingDuring = true;
+          return of(resolvedSuggestion);
+        });
+        TestBed.configureTestingModule({
+          imports: [AddressAutocompleteComponent, ReactiveFormsModule],
+          providers: [provideZonelessChangeDetection(), { provide: GeocodingService, useValue: geocodingSpy }],
+        });
+        const fixture = TestBed.createComponent(AddressAutocompleteComponent);
+        const component = fixture.componentInstance;
+        const control = new FormControl<string>('', { nonNullable: true });
+        fixture.componentRef.setInput('control', control);
+        fixture.detectChanges();
+        component.select(placeIdSuggestion);
+        expect(loadingDuring).toBeTrue();
+        expect(component.isLoading()).toBeFalse();
+      });
+
+      it('on getPlaceDetails error, emits original suggestion', () => {
+        const { component } = setupWithPlaceDetails(new Error('network'));
+        const emitted: GeocodeSuggestion[] = [];
+        component.selected.subscribe(s => emitted.push(s));
+        component.select(placeIdSuggestion);
+        expect(emitted).toEqual([placeIdSuggestion]);
+      });
+
+      it('calls resetSessionToken and emits directly when suggestion has place_id AND lat is not null', () => {
+        const suggestionWithCoords: GeocodeSuggestion = {
+          label: 'Place With Coords', city: 'Kyiv', country: 'Ukraine',
+          lat: 50.45, lng: 30.52, place_id: 'pid-with-coords',
+        };
+        const geocodingSpy = jasmine.createSpyObj<GeocodingService>('GeocodingService',
+          ['autocomplete$', 'resetSessionToken', 'getPlaceDetails']);
+        geocodingSpy.autocomplete$.and.returnValue(of([]));
+        TestBed.configureTestingModule({
+          imports: [AddressAutocompleteComponent, ReactiveFormsModule],
+          providers: [provideZonelessChangeDetection(), { provide: GeocodingService, useValue: geocodingSpy }],
+        });
+        const fixture = TestBed.createComponent(AddressAutocompleteComponent);
+        const component = fixture.componentInstance;
+        const control = new FormControl<string>('', { nonNullable: true });
+        fixture.componentRef.setInput('control', control);
+        fixture.detectChanges();
+
+        const emitted: GeocodeSuggestion[] = [];
+        component.selected.subscribe(s => emitted.push(s));
+        component.select(suggestionWithCoords);
+
+        expect(geocodingSpy.resetSessionToken).toHaveBeenCalled();
+        expect(geocodingSpy.getPlaceDetails).not.toHaveBeenCalled();
+        expect(emitted).toEqual([suggestionWithCoords]);
+        expect(control.value).toBe('Place With Coords');
+        expect(component.isOpen()).toBeFalse();
+      });
+    });
   });
 
   describe('onKeydown()', () => {

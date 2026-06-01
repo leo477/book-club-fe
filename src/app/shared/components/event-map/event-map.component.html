@@ -1,0 +1,16 @@
+<div [hidden]="!isReady()" class="flex flex-col gap-3 mt-3">
+  <google-map [center]="center()" [zoom]="15" [options]="mapOptions()" width="100%" height="300px" class="rounded-xl overflow-hidden block">
+    <map-marker [position]="center()" [title]="address() ?? ''" />
+    <map-marker [hidden]="!afterVenuePos()" [position]="afterVenuePos() ?? center()" [title]="afterMeetingVenue()?.name ?? ''" />
+    @if (directions()) {
+      <map-directions-renderer [directions]="directions()!" />
+    }
+  </google-map>
+  <a [href]="mapsUrl()" target="_blank" rel="noopener noreferrer"
+     class="inline-flex items-center gap-1.5 text-sm text-accent-500 hover:underline self-start">
+    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+    </svg>
+    {{ 'EVENTS.open_in_maps' | translate }}
+  </a>
+</div>

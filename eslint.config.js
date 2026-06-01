@@ -75,6 +75,10 @@ module.exports = defineConfig([
       angular.configs.templateAccessibility,
     ],
     rules: {
+      "@angular-eslint/template/label-has-associated-control": [
+        "error",
+        { controlComponents: ["app-address-autocomplete"] },
+      ],
     },
   }
 ]);
