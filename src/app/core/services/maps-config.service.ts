@@ -1,7 +1,8 @@
 import { Injectable, InjectionToken, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
+import { SKIP_AUTH_REDIRECT, SUPPRESS_ERROR_TOAST } from '../interceptors/auth.interceptor';
 import { environment } from '../../../environments/environment';
 
 export interface MapsLoaderFns {
@@ -24,14 +25,18 @@ export class MapsConfigService {
   async load(): Promise<void> {
     try {
       const { mapsApiKey } = await firstValueFrom(
-        this.http.get<{ mapsApiKey: string }>(`${environment.apiUrl}/config/maps-key`),
+        this.http.get<{ mapsApiKey: string }>(`${environment.apiUrl}/config/maps-key`, {
+          context: new HttpContext()
+            .set(SKIP_AUTH_REDIRECT, true)
+            .set(SUPPRESS_ERROR_TOAST, true),
+        }),
       );
       if (mapsApiKey) {
         this.loader.setOptions({ key: mapsApiKey, v: 'weekly', libraries: ['maps', 'routes'] });
         await this.loader.importLibrary('maps');
         await this.loader.importLibrary('routes');
+        this._loaded.set(true);
       }
-      this._loaded.set(true);
     } catch {
       // silent fail — app works without map
     }

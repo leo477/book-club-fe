@@ -45,14 +45,14 @@ describe('MapsConfigService', () => {
   });
 
   describe('load() with empty key', () => {
-    it('skips setOptions and importLibrary but still sets isLoaded true', async () => {
+    it('skips setOptions and importLibrary and keeps isLoaded false', async () => {
       const loadPromise = service.load();
       httpMock.expectOne(MAPS_KEY_URL).flush({ mapsApiKey: '' });
       await loadPromise;
 
       expect(setOptionsSpy).not.toHaveBeenCalled();
       expect(importLibrarySpy).not.toHaveBeenCalled();
-      expect(service.isLoaded()).toBeTrue();
+      expect(service.isLoaded()).toBeFalse();
     });
   });
 
