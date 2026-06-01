@@ -65,6 +65,8 @@ export class CreateEventComponent {
     durationMinutes: [null as number | null, [Validators.min(15), Validators.max(480)]],
     afterVenueName: [''],
     afterVenueAddress: [''],
+    afterVenueLat: [null as number | null],
+    afterVenueLng: [null as number | null],
     afterVenueDescription: [''],
     coverUrl: [''],
     bookTitle: [''],
@@ -91,10 +93,18 @@ export class CreateEventComponent {
     );
   }
 
+  onAfterVenueAddressSelect(s: GeocodeSuggestion): void {
+    this.form.patchValue({
+      afterVenueAddress: s.label,
+      afterVenueLat: s.lat,
+      afterVenueLng: s.lng,
+    }, { emitEvent: false });
+  }
+
   toggleAfterVenue(): void {
     this.showAfterVenue.update(v => !v);
     if (!this.showAfterVenue()) {
-      this.form.patchValue({ afterVenueName: '', afterVenueAddress: '', afterVenueDescription: '' });
+      this.form.patchValue({ afterVenueName: '', afterVenueAddress: '', afterVenueLat: null, afterVenueLng: null, afterVenueDescription: '' });
     }
   }
 
@@ -106,7 +116,7 @@ export class CreateEventComponent {
     const v = this.form.getRawValue();
     const tags = v.tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
     const afterMeetingVenue = this.showAfterVenue() && v.afterVenueName
-      ? { name: v.afterVenueName, address: v.afterVenueAddress, description: v.afterVenueDescription || undefined }
+      ? { name: v.afterVenueName, address: v.afterVenueAddress, description: v.afterVenueDescription || undefined, lat: v.afterVenueLat ?? undefined, lng: v.afterVenueLng ?? undefined }
       : undefined;
 
     try {

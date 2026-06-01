@@ -1,4 +1,5 @@
 import { ApplicationConfig, ApplicationRef, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, provideAppInitializer, inject } from '@angular/core';
+import { MapsConfigService } from './core/services/maps-config.service';
 import {
   provideRouter,
   withComponentInputBinding,
@@ -50,5 +51,6 @@ export const appConfig: ApplicationConfig = {
       const authService = inject(AuthService);
       return authService.init();
     }),
+    provideAppInitializer(() => inject(MapsConfigService).load()),
   ],
 };

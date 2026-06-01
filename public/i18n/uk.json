@@ -366,7 +366,9 @@
     "book_details_hide": "Сховати",
     "book_about": "Про книгу",
     "book_author": "Про автора",
-    "book_published": "Видано"
+    "book_published": "Видано",
+    "open_in_maps": "Відкрити в Google Maps",
+    "route_to_venue": "Маршрут до місця після події"
   },
   "EVENT": {
     "event_chat_btn": "Чат події",

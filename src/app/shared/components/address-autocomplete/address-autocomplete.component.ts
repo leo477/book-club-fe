@@ -62,6 +62,26 @@ export class AddressAutocompleteComponent {
   }
 
   select(s: GeocodeSuggestion): void {
+    if (s.place_id && s.lat == null) {
+      this.isLoading.set(true);
+      this.control().setValue(s.label, { emitEvent: false });
+      this.suggestions.set([]);
+      this.isOpen.set(false);
+      this.geocoding.getPlaceDetails(s.place_id)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (resolved) => {
+            this.isLoading.set(false);
+            this.selected.emit(resolved);
+          },
+          error: () => {
+            this.isLoading.set(false);
+            this.selected.emit(s);
+          },
+        });
+      return;
+    }
+    this.geocoding.resetSessionToken();
     this.control().setValue(s.label, { emitEvent: false });
     this.suggestions.set([]);
     this.isOpen.set(false);
