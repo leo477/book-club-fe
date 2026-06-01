@@ -11,13 +11,16 @@ import { AfterMeetingVenue } from '../../../core/models/event.model';
   maps: { TravelMode: { WALKING: 'WALKING' } },
 };
 
-@Component({ selector: 'app-stub-google-map', template: '', standalone: true })
+// eslint-disable-next-line @angular-eslint/component-selector
+@Component({ selector: 'google-map', template: '', standalone: true })
 class StubGoogleMap {}
 
-@Component({ selector: 'app-stub-map-marker', template: '', standalone: true })
+// eslint-disable-next-line @angular-eslint/component-selector
+@Component({ selector: 'map-marker', template: '', standalone: true })
 class StubMapMarker {}
 
-@Component({ selector: 'app-stub-map-directions-renderer', template: '', standalone: true })
+// eslint-disable-next-line @angular-eslint/component-selector
+@Component({ selector: 'map-directions-renderer', template: '', standalone: true })
 class StubMapDirectionsRenderer {
   @Input() directions: unknown;
 }
