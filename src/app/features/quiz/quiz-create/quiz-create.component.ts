@@ -151,7 +151,7 @@ export class QuizCreateComponent {
         // Activate the quiz
         await this.quizService.toggleActive(quiz.id, true);
         this.isPublishing.set(false);
-        this.router.navigate(['/clubs', clubId, 'quizzes']);
+        void this.router.navigate(['/clubs', clubId, 'quizzes']);
       })
       .catch(err => {
         this.isPublishing.set(false);

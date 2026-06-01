@@ -2,10 +2,10 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  inject,
   signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';

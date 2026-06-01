@@ -8,7 +8,7 @@ export class ChatTimestampPipe implements PipeTransform {
   transform(value: Date | string | null | undefined): string {
     if (!value) return '';
     const date = value instanceof Date ? value : new Date(value);
-    if (isNaN(date.getTime())) return '';
+    if (Number.isNaN(date.getTime())) return '';
 
     const time = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false });
 

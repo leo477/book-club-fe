@@ -300,6 +300,7 @@ describe('ChatService', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set(null);
       service.sendMessage('Should not send', { id: 'user-x', displayName: 'Nobody' });
       httpMock.expectNone(`${API}/chat/rooms/null/messages`);
+      expect(getActiveMessages(service).length).toBe(0);
     });
   });
 
@@ -345,6 +346,7 @@ describe('ChatService', () => {
         r.params.get('before') === 'cursor-xyz' &&
         r.params.get('limit') === '20',
       );
+      expect(req.request.params.get('before')).toBe('cursor-xyz');
       req.flush([]);
     });
 
@@ -492,6 +494,7 @@ describe('ChatService', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set(null);
       service.deleteMessage('msg-x');
       httpMock.expectNone(`${API}/chat/rooms/null/messages/msg-x`);
+      expect(getActiveMessages(service).length).toBe(0);
     });
   });
 
@@ -510,6 +513,50 @@ describe('ChatService', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set(null);
       service.banUserFromChat('bad-user', 3600);
       httpMock.expectNone(`${API}/chat/rooms/null/ban`);
+      expect(getActiveRoom(service)).toBeNull();
+    });
+  });
+
+  describe('deleteRoom()', () => {
+    it('sends DELETE and removes the room from rooms signal', async () => {
+      // seed a room
+      service.loadRooms('club-1');
+      httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([{ id: 'r1', name: 'General' }]);
+      await Promise.resolve();
+      httpMock.expectOne(`${API}/chat/rooms/r1/messages`).flush([]);
+
+      const promise = service.deleteRoom('r1');
+      httpMock.expectOne(`${API}/chat/rooms/r1`).flush(null);
+      await promise;
+
+      expect(getRooms(service).length).toBe(0);
+    });
+
+    it('clears activeRoomId and disconnects when deleting the active room', async () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-del');
+
+      const promise = service.deleteRoom('room-del');
+      httpMock.expectOne(`${API}/chat/rooms/room-del`).flush(null);
+      await promise;
+
+      expect(getActiveRoomId(service)).toBeNull();
+    });
+
+    it('keeps other rooms when deleting a non-active room', async () => {
+      service.loadRooms('club-1');
+      httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([
+        { id: 'r1', name: 'Room 1' },
+        { id: 'r2', name: 'Room 2' },
+      ]);
+      await Promise.resolve();
+      httpMock.expectOne(`${API}/chat/rooms/r1/messages`).flush([]);
+      // r1 is active; delete r2 (non-active)
+      const promise = service.deleteRoom('r2');
+      httpMock.expectOne(`${API}/chat/rooms/r2`).flush(null);
+      await promise;
+
+      expect(getRooms(service).length).toBe(1);
+      expect(getActiveRoomId(service)).toBe('r1');
     });
   });
 
@@ -924,6 +971,7 @@ describe('ChatService', () => {
     it('does nothing when called with empty array', () => {
       service.fetchUnreadCounts([]);
       httpMock.expectNone(`${API}/chat/rooms/`);
+      expect(Object.keys(service.roomUnreadCounts()).length).toBe(0);
     });
   });
 
@@ -968,6 +1016,7 @@ describe('ChatService', () => {
       service.markRoomRead('room-empty');
       // No POST should be made
       httpMock.expectNone(`${API}/chat/rooms/room-empty/read`);
+      expect(service.roomUnreadCounts()['room-empty']).toBeUndefined();
     });
 
     it('activeMessagesWithDivider inserts divider after last-read message', async () => {

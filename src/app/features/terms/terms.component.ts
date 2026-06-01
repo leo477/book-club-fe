@@ -73,7 +73,7 @@ export class TermsComponent {
   private readonly auth = inject(AuthService);
 
   goBack(): void {
-    if (window.history.length > 1) {
+    if (globalThis.history.length > 1) {
       this.location.back();
     } else {
       this.router.navigate([this.auth.isAuthenticated() ? '/events' : '/login']);

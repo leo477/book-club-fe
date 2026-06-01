@@ -1,4 +1,4 @@
-import { ApplicationConfig, ApplicationRef, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, APP_INITIALIZER, inject } from '@angular/core';
+import { ApplicationConfig, ApplicationRef, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, provideAppInitializer, inject } from '@angular/core';
 import {
   provideRouter,
   withComponentInputBinding,
@@ -31,35 +31,24 @@ export const appConfig: ApplicationConfig = {
     ),
     provideTranslateService({ fallbackLang: 'uk' }),
     ...provideTranslateHttpLoader({ prefix: '/i18n/', suffix: '.json' }),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: () => {
-        const translate = inject(TranslateService);
-        const seo = inject(SeoService);
-        const appRef = inject(ApplicationRef);
-        return () =>
-          firstValueFrom(
-            translate.use('uk').pipe(
-              catchError(() => translate.use('en').pipe(catchError(() => of(null)))),
-            ),
-          ).then(() =>
-            firstValueFrom(
-              translate.reloadLang(translate.currentLang ?? 'uk').pipe(catchError(() => of(null))),
-            ),
-          ).then(() => {
-            seo.bootstrapLocaleSync();
-            appRef.tick();
-          });
-      },
-      multi: true,
-    },
-    {
-      provide: APP_INITIALIZER,
-      useFactory: () => {
-        const authService = inject(AuthService);
-        return () => authService.init();
-      },
-      multi: true,
-    },
+    provideAppInitializer(async () => {
+      const translate = inject(TranslateService);
+      const seo = inject(SeoService);
+      const appRef = inject(ApplicationRef);
+      await firstValueFrom(
+        translate.use('uk').pipe(
+          catchError(() => translate.use('en').pipe(catchError(() => of(null)))),
+        ),
+      );
+      await firstValueFrom(
+        translate.reloadLang(translate.currentLang ?? 'uk').pipe(catchError(() => of(null))),
+      );
+      seo.bootstrapLocaleSync();
+      appRef.tick();
+    }),
+    provideAppInitializer(() => {
+      const authService = inject(AuthService);
+      return authService.init();
+    }),
   ],
 };

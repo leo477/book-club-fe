@@ -127,6 +127,8 @@
   "CLUB_DETAIL": {
     "about": "Про клуб",
     "back": "Назад до клубів",
+    "sidebar_left_label": "Читання та управління",
+    "sidebar_right_label": "Інформація про клуб",
     "back_short": "Назад",
     "cancel": "Скасувати",
     "created": "Створено",

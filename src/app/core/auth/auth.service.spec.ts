@@ -243,6 +243,7 @@ describe('AuthService', () => {
       (service as unknown as { _currentUser: { set: (v: null) => void } })._currentUser.set(null);
       await service.updateRole('organizer');
       httpMock.expectNone(`${API}/users/me/role`);
+      expect(service.currentUser()).toBeNull();
     });
   });
 
@@ -265,6 +266,7 @@ describe('AuthService', () => {
       const { service } = buildService();
       await service.updateDisplayName('Name');
       httpMock.expectNone(`${API}/users/me`);
+      expect(service.currentUser()).toBeNull();
     });
   });
 
@@ -287,6 +289,7 @@ describe('AuthService', () => {
       const { service } = buildService();
       await service.updateSocials({ github: 'test' });
       httpMock.expectNone(`${API}/users/me/socials`);
+      expect(service.currentUser()).toBeNull();
     });
   });
 
@@ -309,6 +312,7 @@ describe('AuthService', () => {
       const { service } = buildService();
       await service.setSocialsPublic(true);
       httpMock.expectNone(`${API}/users/me/socials-visibility`);
+      expect(service.currentUser()).toBeNull();
     });
   });
 

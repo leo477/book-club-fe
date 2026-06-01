@@ -49,6 +49,30 @@ export class BackendHttpError extends Error {
   }
 }
 
+function handleHttpSideEffects(
+  httpError: HttpErrorResponse,
+  token: string | null,
+  suppress: boolean,
+  skipAuthRedirect: boolean,
+  router: Router,
+  tokenStore: TokenStore,
+  translate: TranslateService,
+): void {
+  if (httpError.status === 401 && token && !skipAuthRedirect) {
+    tokenStore.clear();
+    void router.navigate(['/login']);
+  } else if (httpError.status === 403 && !skipAuthRedirect) {
+    void router.navigate(['/clubs']);
+  } else if (httpError.status >= 500) {
+    if (!environment.production) {
+      console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
+    }
+    if (!suppress) {
+      toast.error(translate.instant('ERRORS.serverError') as string);
+    }
+  }
+}
+
 function extractBackendDetail(err: HttpErrorResponse): string | null {
   const body = err.error;
   if (!body) return null;
@@ -124,28 +148,18 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
         return throwError(() => new RequestTimeoutError());
       }
       const httpError = error instanceof HttpErrorResponse ? error : null;
-      if (httpError?.status === 401 && token && !skipAuthRedirect) {
-        tokenStore.clear();
-        router.navigate(['/login']);
-      } else if (httpError?.status === 403 && !skipAuthRedirect) {
-        router.navigate(['/clubs']);
-      } else if (httpError && httpError.status >= 500) {
-        if (!environment.production) {
-          console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
-        }
-        if (!suppress) {
-          toast.error(translate.instant('ERRORS.serverError') as string);
-        }
-      }
       if (httpError) {
+        handleHttpSideEffects(httpError, token, suppress, skipAuthRedirect, router, tokenStore, translate);
         const detail = extractBackendDetail(httpError);
-        const key =
-          httpError.status >= 500
-            ? 'ERRORS.serverError'
-            : httpError.status === 0
-              ? 'ERRORS.network'
-              : 'ERRORS.requestFailed';
-        return throwError(() => new BackendHttpError(httpError.status, detail, key));
+        let errorKey: string;
+        if (httpError.status >= 500) {
+          errorKey = 'ERRORS.serverError';
+        } else if (httpError.status === 0) {
+          errorKey = 'ERRORS.network';
+        } else {
+          errorKey = 'ERRORS.requestFailed';
+        }
+        return throwError(() => new BackendHttpError(httpError.status, detail, errorKey));
       }
       return throwError(() => error);
     }),

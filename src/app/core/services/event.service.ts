@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
-import { map } from 'rxjs';
+import { firstValueFrom, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiEvent, mapEvent } from '../api/api-mappers';
 import { AfterMeetingVenue, ClubEvent } from '../models/event.model';

@@ -275,6 +275,7 @@ jobs:
       (needs.sonarcloud.result == 'success' || needs.sonarcloud.result == 'skipped')
     permissions:
       contents: read
+      deployments: write
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'production' || 'preview' }}
       url: ${{ steps.deploy.outputs.url }}

@@ -2,11 +2,11 @@ import {
   ChangeDetectionStrategy,
   Component,
   OnInit,
+  inject,
   signal,
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { inject } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ClubEvent } from '../../../core/models/event.model';
 import { HlmButton } from '../../../shared/spartan/button/src';

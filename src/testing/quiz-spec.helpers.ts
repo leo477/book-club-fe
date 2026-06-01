@@ -9,7 +9,7 @@ export class StubComponent {}
 
 export async function configureQuizTestBed(component: Type<unknown>, quizSvc: unknown): Promise<void> {
   await TestBed.configureTestingModule({
-    imports: [component as Type<unknown>, TranslateModule.forRoot()],
+    imports: [component, TranslateModule.forRoot()],
     providers: [
       provideZonelessChangeDetection(),
       provideRouter([{ path: '**', component: StubComponent }]),

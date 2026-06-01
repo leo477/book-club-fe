@@ -198,39 +198,7 @@ export class ClubDetailComponent {
       if (isCancelled()) return;
 
       if (found) {
-        this.club.set(found);
-        const [membersResult, eventsResult] = await Promise.allSettled([
-          this.clubService.getClubMembers(clubId),
-          this.clubService.loadClubEvents(clubId),
-        ]);
-        if (isCancelled()) return;
-        if (membersResult.status === 'fulfilled') {
-          this.members.set(membersResult.value);
-        } else {
-          console.warn('Failed to load club members:', membersResult.reason);
-        }
-        if (eventsResult.status === 'fulfilled') {
-          this.events.set(eventsResult.value);
-        } else {
-          console.warn('Failed to load club events:', eventsResult.reason);
-        }
-        if (this.auth.currentUser()?.id === found.organizerId) {
-          this.clubService.getBans(clubId).then(
-            (bans) => { if (!isCancelled()) this.clubBans.set(bans); },
-            (err: unknown) => {
-              const status = (err as { status?: number })?.status;
-              if (status === 403 || status === 404 || err instanceof RequestTimeoutError) {
-                console.debug('Club bans not available yet:', err);
-              } else {
-                console.warn('Failed to load club bans:', err);
-              }
-            },
-          );
-        }
-        this.seo.setPageI18n('SEO.club_detail_title', {
-          ogTitleKey: 'SEO.club_detail_og_title',
-          params: { name: found.name },
-        });
+        await this.loadClubDetails(clubId, found, isCancelled);
       } else {
         this.isClubMissing.set(true);
         this.errorMessage.set('not_found');
@@ -243,6 +211,42 @@ export class ClubDetailComponent {
     } finally {
       if (!isCancelled()) this.isLoading.set(false);
     }
+  }
+
+  private async loadClubDetails(clubId: string, found: Club, isCancelled: () => boolean): Promise<void> {
+    this.club.set(found);
+    const [membersResult, eventsResult] = await Promise.allSettled([
+      this.clubService.getClubMembers(clubId),
+      this.clubService.loadClubEvents(clubId),
+    ]);
+    if (isCancelled()) return;
+    if (membersResult.status === 'fulfilled') {
+      this.members.set(membersResult.value);
+    } else {
+      console.warn('Failed to load club members:', membersResult.reason);
+    }
+    if (eventsResult.status === 'fulfilled') {
+      this.events.set(eventsResult.value);
+    } else {
+      console.warn('Failed to load club events:', eventsResult.reason);
+    }
+    if (this.auth.currentUser()?.id === found.organizerId) {
+      this.clubService.getBans(clubId).then(
+        (bans) => { if (!isCancelled()) this.clubBans.set(bans); },
+        (err: unknown) => {
+          const status = (err as { status?: number })?.status;
+          if (status === 403 || status === 404 || err instanceof RequestTimeoutError) {
+            console.debug('Club bans not available yet:', err);
+          } else {
+            console.warn('Failed to load club bans:', err);
+          }
+        },
+      );
+    }
+    this.seo.setPageI18n('SEO.club_detail_title', {
+      ogTitleKey: 'SEO.club_detail_og_title',
+      params: { name: found.name },
+    });
   }
 
   async onJoin(): Promise<void> {
