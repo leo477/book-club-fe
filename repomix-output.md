@@ -437,6 +437,7 @@ components.json
 eslint.config.js
 karma.conf.js
 package.json
+playwright.audit-current.config.ts
 playwright.md
 playwright.total-audit.config.ts
 playwright.vercel.config.ts

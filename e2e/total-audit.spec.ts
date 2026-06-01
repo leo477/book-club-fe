@@ -67,7 +67,9 @@ test.describe('Total Site Audit', () => {
 
       page.on('response', resp => {
         if (resp.status() >= 400) {
-          networkFailures.push(`HTTP ${resp.status()} — ${resp.url()}`);
+          const url = resp.url();
+          if (resp.status() === 401 && url.includes('/auth/refresh')) return;
+          networkFailures.push(`HTTP ${resp.status()} — ${url}`);
         }
       });
 

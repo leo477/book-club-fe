@@ -207,12 +207,13 @@ export class ClubService {
     await firstValueFrom(
       this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
     );
+    const cachedClub = this.clubByIdCache.get(clubId)?.data;
     this.clubByIdCache.delete(clubId);
     this.membersCache.delete(clubId);
     this._clubs.update(list =>
       list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
     );
-    const club = this._clubs().find(c => c.id === clubId);
+    const club = this._clubs().find(c => c.id === clubId) ?? cachedClub;
     if (club && !this.myClubIds().has(clubId)) {
       this._myClubs.update(list => [club, ...list]);
     }
