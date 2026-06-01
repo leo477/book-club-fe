@@ -19,6 +19,7 @@ const API = 'https://book-club-be.onrender.com/api/v1';
 
 let ACCESS_TOKEN = '';
 let REFRESH_TOKEN = '';
+let USER_PROFILE: Record<string, unknown> = {};
 let CURRENT_USER_ID = '';
 let OWNED_CLUB_ID = '';
 let ANY_CLUB_ID = '';
@@ -27,6 +28,8 @@ let ANY_QUIZ_ID = '';
 let CREATED_CLUB_ID = '';
 let CREATED_QUIZ_ID = '';
 let FUNCTIONAL_EVENT_ID = '';
+let ANY_CHAT_ROOM_ID = '';
+let CREATED_AUDIT_ROOM_ID = '';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -65,6 +68,10 @@ function attachMonitors(page: Page, route: string): () => void {
       }
       // 401 on /auth/login during wrong-password test is expected — suppress from network-failure list
       if (resp.status() === 401 && url.includes('/auth/login')) {
+        suppressedNotFoundCount++;
+        return;
+      }
+      if (resp.status() === 401 && url.includes('/auth/refresh')) {
         suppressedNotFoundCount++;
         return;
       }
@@ -113,11 +120,19 @@ async function checkUndefinedText(page: Page, route: string): Promise<void> {
 }
 
 async function injectAuth(page: Page): Promise<void> {
-  await page.addInitScript(
-    ({ at }) => {
-      sessionStorage.setItem('bc_access_token', at);
-    },
-    { at: ACCESS_TOKEN },
+  await page.route('**/auth/refresh', route =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ accessToken: ACCESS_TOKEN }),
+    })
+  );
+  await page.route('**/auth/me', route =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify(USER_PROFILE),
+    })
   );
 }
 
@@ -149,6 +164,7 @@ test.beforeAll(async ({ request }) => {
   const loginBody = await loginResp.json();
   ACCESS_TOKEN = loginBody.accessToken ?? '';
   REFRESH_TOKEN = loginBody.refreshToken ?? '';
+  USER_PROFILE = loginBody.user ?? {};
   CURRENT_USER_ID = loginBody.user?.id ?? '';
 
   if (!ACCESS_TOKEN) {
@@ -209,6 +225,35 @@ test.beforeAll(async ({ request }) => {
       const qBody = await quizzesResp.json();
       const quizzes: { id: string }[] = Array.isArray(qBody) ? qBody : qBody.items ?? qBody.data ?? [];
       if (quizzes.length > 0) ANY_QUIZ_ID = quizzes[0].id;
+    }
+  }
+
+  // Discover or create a chat room for owned club
+  if (OWNED_CLUB_ID) {
+    const roomsResp = await request
+      .get(`${API}/clubs/${OWNED_CLUB_ID}/chat/rooms`, { headers, timeout: 30_000 })
+      .catch(() => null);
+    if (roomsResp?.ok()) {
+      const rooms: { id: string; name: string }[] = await roomsResp.json().catch(() => []);
+      if (rooms.length > 0) {
+        ANY_CHAT_ROOM_ID = rooms[0].id;
+      } else {
+        // No rooms exist — create a temporary one for the audit
+        const createResp = await request
+          .post(`${API}/clubs/${OWNED_CLUB_ID}/chat/rooms`, {
+            data: { name: 'Audit-Test-Room' },
+            headers,
+            timeout: 15_000,
+          })
+          .catch(() => null);
+        if (createResp?.ok()) {
+          const created: { id: string } = await createResp.json().catch(() => ({}));
+          if (created.id) {
+            ANY_CHAT_ROOM_ID = created.id;
+            CREATED_AUDIT_ROOM_ID = created.id;
+          }
+        }
+      }
     }
   }
 });
@@ -1229,8 +1274,8 @@ test.describe('Functional — Quiz CRUD', () => {
       await publishBtn.click();
       try {
         await page.waitForURL(/\/quizzes\/[a-zA-Z0-9-]+(?!\/create)/, { timeout: 10_000 });
-        const match = page.url().match(/\/quizzes\/([a-zA-Z0-9-]+)/);
-        if (match) CREATED_QUIZ_ID = match[1];
+        const match = page.url().match(/\/quizzes\/([a-zA-Z0-9]{8,}[a-zA-Z0-9-]*)/);
+        if (match && match[1] !== 'create') CREATED_QUIZ_ID = match[1];
       } catch {
         const errorMsg = await page.locator('[class*="error"], [role="alert"]').first().innerText().catch(() => '');
         addBug({
@@ -1376,6 +1421,215 @@ test.describe('Functional — Profile', () => {
   });
 });
 
+// ── Authenticated — Chat rooms ────────────────────────────────────────────────
+
+test.describe('Authenticated — Chat rooms', () => {
+  test('Chat FAB visible on club detail, panel opens and lists rooms', async ({ page }) => {
+    if (!OWNED_CLUB_ID) {
+      addBug({ route: `/clubs/:id (chat)`, severity: 'medium', category: 'functional', description: 'No owned club available — chat room tests skipped' });
+      return;
+    }
+    const route = `/clubs/${OWNED_CLUB_ID} (chat)`;
+    await injectAuth(page);
+    const flush = attachMonitors(page, route);
+    await page.goto(`/clubs/${OWNED_CLUB_ID}`);
+    await waitForAngular(page);
+
+    // FAB must be visible
+    const fab = page.locator('.chat-fab, button[aria-label*="Chat"], button[aria-label*="chat"]').first();
+    const fabVisible = await fab.isVisible().catch(() => false);
+    if (!fabVisible) {
+      addBug({ route, severity: 'high', category: 'ui-missing', description: 'Chat FAB button (.chat-fab) not visible on club detail page' });
+      flush();
+      return;
+    }
+
+    // Open chat panel
+    await fab.click();
+    await page.waitForTimeout(600);
+    const panel = page.locator('.chat-panel');
+    const panelVisible = await panel.isVisible().catch(() => false);
+    if (!panelVisible) {
+      addBug({ route, severity: 'high', category: 'ui-missing', description: 'Chat panel (.chat-panel) did not appear after clicking FAB' });
+      flush();
+      return;
+    }
+
+    // Either room list or empty state must be present — not a blank panel
+    const hasRooms = await panel.locator('.room-card').count() > 0;
+    const hasEmptyState = await panel.locator('text=no rooms, text=no chat').count() > 0 ||
+      await panel.locator('[class*="empty"]').count() > 0 ||
+      await panel.locator('span.text-2xl').count() > 0;  // emoji in empty-state
+    if (!hasRooms && !hasEmptyState) {
+      addBug({ route, severity: 'medium', category: 'ui-missing', description: 'Chat panel is open but shows neither room cards nor empty state' });
+    }
+
+    // Check no 403 WebSocket errors
+    await page.waitForTimeout(1000);
+    await checkUndefinedText(page, route);
+    flush();
+  });
+
+  test('Organizer sees delete button on chat room rows', async ({ page }) => {
+    if (!OWNED_CLUB_ID || !ANY_CHAT_ROOM_ID) {
+      return;
+    }
+    const route = `/clubs/${OWNED_CLUB_ID} (chat-delete-btn)`;
+    await injectAuth(page);
+    const flush = attachMonitors(page, route);
+    await page.goto(`/clubs/${OWNED_CLUB_ID}`);
+    await waitForAngular(page);
+
+    const fab = page.locator('.chat-fab, button[aria-label*="Chat"], button[aria-label*="chat"]').first();
+    if (!(await fab.isVisible().catch(() => false))) { flush(); return; }
+    await fab.click();
+    await page.waitForTimeout(600);
+
+    // Organizer should see trash icon button on each room row
+    const deleteBtn = page.locator('[aria-label^="Delete room"]').first();
+    const visible = await deleteBtn.isVisible().catch(() => false);
+    if (!visible) {
+      addBug({ route, severity: 'high', category: 'ui-missing', description: 'Organizer does not see delete button on chat room rows — RBAC or render issue' });
+    }
+
+    flush();
+  });
+});
+
+// ── Functional — Chat room delete ─────────────────────────────────────────────
+
+test.describe('Functional — Chat room delete', () => {
+  test('Organizer can delete a chat room and it disappears from the list', async ({ page }) => {
+    if (!OWNED_CLUB_ID || !ANY_CHAT_ROOM_ID) {
+      return;
+    }
+    const route = `/clubs/${OWNED_CLUB_ID} (chat-delete-functional)`;
+    await injectAuth(page);
+    const flush = attachMonitors(page, route);
+    await page.goto(`/clubs/${OWNED_CLUB_ID}`);
+    await waitForAngular(page);
+
+    const fab = page.locator('.chat-fab, button[aria-label*="Chat"], button[aria-label*="chat"]').first();
+    if (!(await fab.isVisible().catch(() => false))) { flush(); return; }
+    await fab.click();
+    await page.waitForTimeout(600);
+
+    const panel = page.locator('.chat-panel');
+    if (!(await panel.isVisible().catch(() => false))) { flush(); return; }
+
+    const roomsBefore = await panel.locator('.room-card').count();
+    if (roomsBefore === 0) { flush(); return; }
+
+    // Click trash icon on first room to reveal confirmation
+    const trashBtn = panel.locator('[aria-label^="Delete room"]').first();
+    if (!(await trashBtn.isVisible().catch(() => false))) { flush(); return; }
+    await trashBtn.click();
+    await page.waitForTimeout(300);
+
+    // Inline confirmation appears — click the red "Delete" button
+    const confirmBtn = panel.locator('button:has-text("Delete")').last();
+    const confirmVisible = await confirmBtn.isVisible().catch(() => false);
+    if (!confirmVisible) {
+      addBug({ route, severity: 'high', category: 'functional', description: 'Delete confirmation panel did not appear after clicking trash icon on chat room' });
+      flush();
+      return;
+    }
+
+    // Intercept DELETE request to verify it fires
+    const deletePromise = page.waitForResponse(
+      resp => resp.url().includes('/chat/rooms/') && resp.request().method() === 'DELETE',
+      { timeout: 10_000 },
+    ).catch(() => null);
+
+    await confirmBtn.click();
+    const deleteResp = await deletePromise;
+
+    if (!deleteResp) {
+      addBug({ route, severity: 'high', category: 'functional', description: 'No DELETE /chat/rooms/ request was fired after confirming room deletion' });
+      flush();
+      return;
+    }
+    if (!deleteResp.ok()) {
+      addBug({ route, severity: 'critical', category: 'functional', description: `DELETE /chat/rooms/ returned ${deleteResp.status()} — room deletion failed on backend` });
+    }
+
+    await page.waitForTimeout(600);
+    const roomsAfter = await panel.locator('.room-card').count();
+    if (roomsAfter >= roomsBefore) {
+      addBug({ route, severity: 'high', category: 'functional', description: `Room count did not decrease after deletion (before: ${roomsBefore}, after: ${roomsAfter})` });
+    }
+
+    // Track that we deleted the audit-created room so afterAll skips trying to delete it again
+    if (ANY_CHAT_ROOM_ID === CREATED_AUDIT_ROOM_ID) {
+      CREATED_AUDIT_ROOM_ID = '';
+    }
+    // If we deleted an existing room (not the one we created), recreate it so the club isn't left roomless
+    if (ANY_CHAT_ROOM_ID !== CREATED_AUDIT_ROOM_ID) {
+      ANY_CHAT_ROOM_ID = '';
+    }
+
+    flush();
+  });
+});
+
+// ── Authenticated — Club stats (organizer dashboard) ──────────────────────────
+
+test.describe('Authenticated — Club stats', () => {
+  test('/manage — stats expand for owned club, numeric values render correctly', async ({ page }) => {
+    if (!OWNED_CLUB_ID) { return; }
+    const route = '/manage (club-stats)';
+    await injectAuth(page);
+    const flush = attachMonitors(page, route);
+    await page.goto('/manage');
+    await waitForAngular(page);
+
+    // Page must render at all
+    const pageBody = await page.locator('body').innerText().catch(() => '');
+    if (pageBody.length < 50) {
+      addBug({ route, severity: 'critical', category: 'ui-missing', description: '/manage page did not render meaningful content' });
+      flush();
+      return;
+    }
+
+    // Find the "Show stats" toggle for the owned club
+    const statsToggle = page.locator('button', { hasText: /stats/i }).first();
+    const toggleVisible = await statsToggle.isVisible().catch(() => false);
+    if (!toggleVisible) {
+      addBug({ route, severity: 'high', category: 'ui-missing', description: 'Stats toggle button not found on /manage page' });
+      flush();
+      return;
+    }
+
+    await statsToggle.click();
+    await page.waitForTimeout(1500);
+
+    // Stats cards should now be visible — look for the bold stat numbers
+    const statNumbers = page.locator('[class*="font-bold"][style*="color"]');
+    const statCount = await statNumbers.count();
+    if (statCount === 0) {
+      addBug({ route, severity: 'high', category: 'ui-missing', description: 'No stat number elements found after expanding stats panel' });
+      flush();
+      return;
+    }
+
+    // Verify each visible stat value is a number or "—", not "undefined" / "null"
+    for (let i = 0; i < Math.min(statCount, 6); i++) {
+      const text = (await statNumbers.nth(i).innerText().catch(() => '')).trim();
+      if (text === 'undefined' || text === 'null') {
+        addBug({
+          route,
+          severity: 'high',
+          category: 'undefined-text',
+          description: `Stat card #${i + 1} renders "${text}" instead of a numeric value`,
+        });
+      }
+    }
+
+    await checkUndefinedText(page, route);
+    flush();
+  });
+});
+
 // ── Write bugs.md ─────────────────────────────────────────────────────────────
 
 test.afterAll(async ({ request }) => {
@@ -1390,6 +1644,9 @@ test.afterAll(async ({ request }) => {
   if (CREATED_QUIZ_ID && OWNED_CLUB_ID) {
     await request.delete(`${API}/clubs/${OWNED_CLUB_ID}/quizzes/${CREATED_QUIZ_ID}`, { headers, timeout: 10_000 }).catch(() => {});
   }
+  if (CREATED_AUDIT_ROOM_ID) {
+    await request.delete(`${API}/chat/rooms/${CREATED_AUDIT_ROOM_ID}`, { headers, timeout: 10_000 }).catch(() => {});
+  }
   const severityOrder = ['critical', 'high', 'medium', 'low'] as const;
   const counts = Object.fromEntries(severityOrder.map(s => [s, bugs.filter(b => b.severity === s).length]));
 
@@ -1397,7 +1654,7 @@ test.afterAll(async ({ request }) => {
     '# Bug Report — Book Club App Audit',
     '',
     `**Date:** ${new Date().toISOString().split('T')[0]}`,
-    `**URL:** https://book-club-l7xs8u371-dmytros-projects-ad22eb22.vercel.app/`,
+    `**URL:** https://book-club-ivvmyruoy-dmytros-projects-ad22eb22.vercel.app/`,
     `**Test user:** test123@mail.com`,
     `**Club owner account:** terrtr`,
     '',

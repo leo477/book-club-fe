@@ -15,7 +15,8 @@
     "prepare": "husky install",
     "mock": "node mock-server/index.js",
     "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\"",
-    "audit:total": "npx playwright test --config=playwright.total-audit.config.ts"
+    "audit:total": "npx playwright test --config=playwright.total-audit.config.ts",
+    "audit:current": "npx playwright test --config=playwright.audit-current.config.ts"
   },
   "prettier": {
     "overrides": [

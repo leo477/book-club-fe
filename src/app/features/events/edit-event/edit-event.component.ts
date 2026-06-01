@@ -77,7 +77,7 @@ export class EditEventComponent {
     title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(120)]],
     description: [''],
     date: ['', Validators.required],
-    city: ['', Validators.required],
+    city: [''],
     address: [''],
     lat: [null as number | null],
     lng: [null as number | null],
