@@ -1,16 +1,26 @@
 import { TestBed } from '@angular/core/testing';
 import { ComponentFixture } from '@angular/core/testing';
-import { provideZonelessChangeDetection } from '@angular/core';
+import { Component, input, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { EventDetailComponent } from './event-detail.component';
+import { EventMapComponent } from '../../../shared/components/event-map/event-map.component';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ChatService } from '../../../core/services/chat.service';
 import { environment } from '../../../../environments/environment';
 import { makeApiEvent } from '../../../../testing/event-test.helpers';
+import { AfterMeetingVenue } from '../../../core/models/event.model';
+
+@Component({ selector: 'app-event-map', template: '', standalone: true })
+class StubEventMapComponent {
+  readonly lat = input<number | null>(null);
+  readonly lng = input<number | null>(null);
+  readonly address = input<string | null>(null);
+  readonly afterMeetingVenue = input<AfterMeetingVenue | null>(null);
+}
 
 describe('EventDetailComponent', () => {
   let fixture: ComponentFixture<EventDetailComponent>;
@@ -49,6 +59,10 @@ describe('EventDetailComponent', () => {
         { provide: AuthService, useValue: authSpy },
         { provide: ChatService, useValue: chatServiceSpy },
       ],
+    });
+    TestBed.overrideComponent(EventDetailComponent, {
+      remove: { imports: [EventMapComponent] },
+      add: { imports: [StubEventMapComponent] },
     });
 
     fixture = TestBed.createComponent(EventDetailComponent);

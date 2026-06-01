@@ -34,13 +34,14 @@ export class EventMapComponent {
 
   constructor() {
     effect(() => {
-      if (!this.isReady() || !this.afterVenuePos()) {
+      const afterVenue = this.afterVenuePos();
+      if (!this.isReady() || !afterVenue) {
         this.directions.set(undefined);
         return;
       }
       this.directionsService.route({
         origin: this.center(),
-        destination: this.afterVenuePos()!,
+        destination: afterVenue,
         travelMode: google.maps.TravelMode.WALKING,
       }).subscribe(resp => {
         if (resp.status === 'OK' && resp.result) this.directions.set(resp.result);
