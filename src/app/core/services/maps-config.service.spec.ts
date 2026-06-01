@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { MapsConfigService, MAPS_LOADER_FNS } from './maps-config.service';
+import { MapsConfigService, MAPS_LOADER_FNS, MapsLoaderFns } from './maps-config.service';
 import { environment } from '../../../environments/environment';
 
 const MAPS_KEY_URL = `${environment.apiUrl}/config/maps-key`;
@@ -64,5 +64,17 @@ describe('MapsConfigService', () => {
 
       expect(service.isLoaded()).toBeFalse();
     });
+  });
+});
+
+describe('MAPS_LOADER_FNS factory', () => {
+  it('provides real setOptions and importLibrary functions from @googlemaps/js-api-loader', () => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [provideZonelessChangeDetection()],
+    });
+    const loaderFns = TestBed.inject<MapsLoaderFns>(MAPS_LOADER_FNS);
+    expect(typeof loaderFns.setOptions).toBe('function');
+    expect(typeof loaderFns.importLibrary).toBe('function');
   });
 });

@@ -81,6 +81,11 @@ describe('EventMapComponent', () => {
       expect(component.isReady()).toBeFalse();
     });
 
+    it('is false when lat is provided but lng is null', () => {
+      const { component } = setup({ lat: 50.45, lng: null });
+      expect(component.isReady()).toBeFalse();
+    });
+
     it('is true when maps loaded and lat/lng are valid', () => {
       const { component } = setup();
       expect(component.isReady()).toBeTrue();
@@ -107,6 +112,12 @@ describe('EventMapComponent', () => {
 
     it('is null when venue has no lat/lng', () => {
       const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1' };
+      const { component } = setup({ afterVenue: venue });
+      expect(component.afterVenuePos()).toBeNull();
+    });
+
+    it('is null when venue has lat but no lng', () => {
+      const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1', lat: 50.1 };
       const { component } = setup({ afterVenue: venue });
       expect(component.afterVenuePos()).toBeNull();
     });
@@ -154,6 +165,36 @@ describe('EventMapComponent', () => {
       const { component } = setup({ afterVenue: venue });
       const result = component.directions() as MockDirectionsResult | undefined;
       expect(result?.mockResult).toBeTrue();
+    });
+
+    it('directions stays undefined when status is OK but result is null', () => {
+      const fakeMaps = new FakeMapsConfigService();
+      const dirSpy = jasmine.createSpyObj<MapDirectionsService>('MapDirectionsService', ['route']);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      dirSpy.route.and.returnValue(of({ status: 'OK', result: null } as any));
+
+      TestBed.configureTestingModule({
+        imports: [EventMapComponent, TranslateModule.forRoot()],
+        providers: [
+          provideZonelessChangeDetection(),
+          { provide: MapsConfigService, useValue: fakeMaps },
+          { provide: MapDirectionsService, useValue: dirSpy },
+        ],
+      });
+      TestBed.overrideComponent(EventMapComponent, {
+        remove: { imports: [GoogleMap, MapMarker, MapDirectionsRenderer] },
+        add: { imports: [StubGoogleMap, StubMapMarker, StubMapDirectionsRenderer] },
+      });
+
+      const fixture = TestBed.createComponent(EventMapComponent);
+      fixture.componentRef.setInput('lat', 50.45);
+      fixture.componentRef.setInput('lng', 30.52);
+      const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1', lat: 49.0, lng: 32.0 };
+      fixture.componentRef.setInput('afterMeetingVenue', venue);
+      fakeMaps.setLoaded(true);
+      fixture.detectChanges();
+
+      expect(fixture.componentInstance.directions()).toBeUndefined();
     });
 
     it('directions stays undefined on non-OK response', () => {

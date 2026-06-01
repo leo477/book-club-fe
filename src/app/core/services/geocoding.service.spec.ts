@@ -78,6 +78,32 @@ describe('GeocodingService', () => {
       expect(result).toEqual(resolvedSuggestion);
     });
 
+    it('errors the observable on network failure and does NOT reset session token', () => {
+      let tokenBefore: string | null = null;
+      service.autocomplete$('test').subscribe();
+      const acReq = httpMock.expectOne(r => r.url === BASE);
+      tokenBefore = acReq.request.params.get('session_token');
+      acReq.flush([]);
+
+      let errored = false;
+      service.getPlaceDetails('pid123').subscribe({
+        next: () => { /* should not be called */ },
+        error: () => { errored = true; },
+      });
+      httpMock.expectOne(r => r.url === DETAILS_BASE).error(new ErrorEvent('network'));
+
+      expect(errored).toBeTrue();
+
+      // session token should be unchanged because tap (which calls resetSessionToken) only runs on success
+      let tokenAfter: string | null = null;
+      service.autocomplete$('test2').subscribe();
+      const acReq2 = httpMock.expectOne(r => r.url === BASE);
+      tokenAfter = acReq2.request.params.get('session_token');
+      acReq2.flush([]);
+
+      expect(tokenAfter).toBe(tokenBefore);
+    });
+
     it('resets session token after response', () => {
       let tokenBefore: string | null = null;
       service.autocomplete$('test').subscribe();
