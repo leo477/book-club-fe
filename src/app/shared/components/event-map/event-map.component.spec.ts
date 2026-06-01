@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Component, Input, NO_ERRORS_SCHEMA, provideZonelessChangeDetection, signal } from '@angular/core';
+import { Component, Input, provideZonelessChangeDetection, signal } from '@angular/core';
 import { GoogleMap, MapMarker, MapDirectionsRenderer, MapDirectionsService } from '@angular/google-maps';
 import { TranslateModule } from '@ngx-translate/core';
 import { of } from 'rxjs';
@@ -13,11 +13,18 @@ import { AfterMeetingVenue } from '../../../core/models/event.model';
 
 // eslint-disable-next-line @angular-eslint/component-selector
 @Component({ selector: 'google-map', template: '', standalone: true })
-class StubGoogleMap {}
+class StubGoogleMap {
+  @Input() center: unknown;
+  @Input() zoom: unknown;
+  @Input() options: unknown;
+}
 
 // eslint-disable-next-line @angular-eslint/component-selector
 @Component({ selector: 'map-marker', template: '', standalone: true })
-class StubMapMarker {}
+class StubMapMarker {
+  @Input() position: unknown;
+  @Input() title: unknown;
+}
 
 // eslint-disable-next-line @angular-eslint/component-selector
 @Component({ selector: 'map-directions-renderer', template: '', standalone: true })
@@ -48,7 +55,7 @@ function setup(opts: { lat?: number | null; lng?: number | null; loaded?: boolea
       { provide: MapsConfigService, useValue: fakeMaps },
       { provide: MapDirectionsService, useValue: dirSpy },
     ],
-    schemas: [NO_ERRORS_SCHEMA],
+
   });
   TestBed.overrideComponent(EventMapComponent, {
     remove: { imports: [GoogleMap, MapMarker, MapDirectionsRenderer] },
@@ -181,7 +188,7 @@ describe('EventMapComponent', () => {
           { provide: MapsConfigService, useValue: fakeMaps },
           { provide: MapDirectionsService, useValue: dirSpy },
         ],
-        schemas: [NO_ERRORS_SCHEMA],
+    
       });
       TestBed.overrideComponent(EventMapComponent, {
         remove: { imports: [GoogleMap, MapMarker, MapDirectionsRenderer] },
@@ -212,7 +219,7 @@ describe('EventMapComponent', () => {
           { provide: MapsConfigService, useValue: fakeMaps },
           { provide: MapDirectionsService, useValue: dirSpy },
         ],
-        schemas: [NO_ERRORS_SCHEMA],
+    
       });
       TestBed.overrideComponent(EventMapComponent, {
         remove: { imports: [GoogleMap, MapMarker, MapDirectionsRenderer] },
