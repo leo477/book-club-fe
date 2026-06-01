@@ -53,4 +53,68 @@ describe('GeocodingService', () => {
     expect(req.request.params.get('limit')).toBe('3');
     req.flush([]);
   });
+
+  describe('getPlaceDetails', () => {
+    const DETAILS_BASE = `${environment.apiUrl}/geocode/place-details`;
+    const resolvedSuggestion: GeocodeSuggestion = {
+      label: 'Київ, Україна', city: 'Київ', country: 'Україна', lat: 50.45, lng: 30.52, place_id: 'pid123',
+    };
+
+    it('GETs /geocode/place-details with place_id and session_token params', () => {
+      service.getPlaceDetails('pid123').subscribe();
+
+      const req = httpMock.expectOne(r => r.url === DETAILS_BASE);
+      expect(req.request.method).toBe('GET');
+      expect(req.request.params.get('place_id')).toBe('pid123');
+      expect(req.request.params.get('session_token')).toBeTruthy();
+      req.flush(resolvedSuggestion);
+    });
+
+    it('returns the resolved suggestion', () => {
+      let result: GeocodeSuggestion | undefined;
+      service.getPlaceDetails('pid123').subscribe(s => (result = s));
+
+      httpMock.expectOne(r => r.url === DETAILS_BASE).flush(resolvedSuggestion);
+      expect(result).toEqual(resolvedSuggestion);
+    });
+
+    it('resets session token after response', () => {
+      let tokenBefore: string | null = null;
+      service.autocomplete$('test').subscribe();
+      const acReq = httpMock.expectOne(r => r.url === BASE);
+      tokenBefore = acReq.request.params.get('session_token');
+      acReq.flush([]);
+
+      service.getPlaceDetails('pid123').subscribe();
+      httpMock.expectOne(r => r.url === DETAILS_BASE).flush(resolvedSuggestion);
+
+      let tokenAfter: string | null = null;
+      service.autocomplete$('test2').subscribe();
+      const acReq2 = httpMock.expectOne(r => r.url === BASE);
+      tokenAfter = acReq2.request.params.get('session_token');
+      acReq2.flush([]);
+
+      expect(tokenAfter).not.toBe(tokenBefore);
+    });
+  });
+
+  describe('resetSessionToken', () => {
+    it('changes the session_token used in the next autocomplete$ request', () => {
+      let tokenFirst: string | null = null;
+      service.autocomplete$('a').subscribe();
+      const req1 = httpMock.expectOne(r => r.url === BASE);
+      tokenFirst = req1.request.params.get('session_token');
+      req1.flush([]);
+
+      service.resetSessionToken();
+
+      let tokenSecond: string | null = null;
+      service.autocomplete$('b').subscribe();
+      const req2 = httpMock.expectOne(r => r.url === BASE);
+      tokenSecond = req2.request.params.get('session_token');
+      req2.flush([]);
+
+      expect(tokenSecond).not.toBe(tokenFirst);
+    });
+  });
 });
