@@ -15,7 +15,7 @@ const mockSuggestions: GeocodeSuggestion[] = [
 ];
 
 function setup(geocodingResult: GeocodeSuggestion[] | Error = mockSuggestions) {
-  const geocodingSpy = jasmine.createSpyObj<GeocodingService>('GeocodingService', ['autocomplete$']);
+  const geocodingSpy = jasmine.createSpyObj<GeocodingService>('GeocodingService', ['autocomplete$', 'resetSessionToken']);
   if (geocodingResult instanceof Error) {
     geocodingSpy.autocomplete$.and.returnValue(throwError(() => geocodingResult));
   } else {
