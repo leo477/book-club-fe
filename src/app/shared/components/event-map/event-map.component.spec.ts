@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Component, Input, provideZonelessChangeDetection, signal } from '@angular/core';
-import { GoogleMap, MapMarker, MapDirectionsRenderer, MapDirectionsService } from '@angular/google-maps';
+import { GoogleMap, MapAdvancedMarker, MapDirectionsRenderer, MapDirectionsService } from '@angular/google-maps';
 import { TranslateModule } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { EventMapComponent } from './event-map.component';
@@ -20,8 +20,8 @@ class StubGoogleMap {
 }
 
 // eslint-disable-next-line @angular-eslint/component-selector
-@Component({ selector: 'map-marker', template: '', standalone: true })
-class StubMapMarker {
+@Component({ selector: 'map-advanced-marker', template: '', standalone: true })
+class StubMapAdvancedMarker {
   @Input() position: unknown;
   @Input() title: unknown;
 }
@@ -34,8 +34,11 @@ class StubMapDirectionsRenderer {
 
 class FakeMapsConfigService {
   private _loaded = signal(false);
+  private _mapId = signal('');
   readonly isLoaded = this._loaded.asReadonly();
+  readonly mapId = this._mapId.asReadonly();
   setLoaded(v: boolean) { this._loaded.set(v); }
+  setMapId(v: string) { this._mapId.set(v); }
 }
 
 interface MockDirectionsResult {
@@ -59,8 +62,8 @@ function setup(opts: { lat?: number | null; lng?: number | null; loaded?: boolea
 
   });
   TestBed.overrideComponent(EventMapComponent, {
-    remove: { imports: [GoogleMap, MapMarker, MapDirectionsRenderer] },
-    add: { imports: [StubGoogleMap, StubMapMarker, StubMapDirectionsRenderer] },
+    remove: { imports: [GoogleMap, MapAdvancedMarker, MapDirectionsRenderer] },
+    add: { imports: [StubGoogleMap, StubMapAdvancedMarker, StubMapDirectionsRenderer] },
   });
 
   const fixture = TestBed.createComponent(EventMapComponent);
@@ -146,9 +149,15 @@ describe('EventMapComponent', () => {
   });
 
   describe('mapOptions()', () => {
-    it('returns non-clickable icons with cooperative gesture handling', () => {
+    it('returns non-clickable icons, cooperative gesture handling and a mapId', () => {
+      const { component, fakeMaps } = setup();
+      fakeMaps.setMapId('test-map-id');
+      expect(component.mapOptions()).toEqual({ clickableIcons: false, gestureHandling: 'cooperative', mapId: 'test-map-id' });
+    });
+
+    it('falls back to DEMO_MAP_ID when mapId is empty', () => {
       const { component } = setup();
-      expect(component.mapOptions()).toEqual({ clickableIcons: false, gestureHandling: 'cooperative' });
+      expect(component.mapOptions()).toEqual({ clickableIcons: false, gestureHandling: 'cooperative', mapId: 'DEMO_MAP_ID' });
     });
   });
 
@@ -190,11 +199,11 @@ describe('EventMapComponent', () => {
           { provide: MapsConfigService, useValue: fakeMaps },
           { provide: MapDirectionsService, useValue: dirSpy },
         ],
-    
+
       });
       TestBed.overrideComponent(EventMapComponent, {
-        remove: { imports: [GoogleMap, MapMarker, MapDirectionsRenderer] },
-        add: { imports: [StubGoogleMap, StubMapMarker, StubMapDirectionsRenderer] },
+        remove: { imports: [GoogleMap, MapAdvancedMarker, MapDirectionsRenderer] },
+        add: { imports: [StubGoogleMap, StubMapAdvancedMarker, StubMapDirectionsRenderer] },
       });
 
       const fixture = TestBed.createComponent(EventMapComponent);
@@ -222,11 +231,11 @@ describe('EventMapComponent', () => {
           { provide: MapsConfigService, useValue: fakeMaps },
           { provide: MapDirectionsService, useValue: dirSpy },
         ],
-    
+
       });
       TestBed.overrideComponent(EventMapComponent, {
-        remove: { imports: [GoogleMap, MapMarker, MapDirectionsRenderer] },
-        add: { imports: [StubGoogleMap, StubMapMarker, StubMapDirectionsRenderer] },
+        remove: { imports: [GoogleMap, MapAdvancedMarker, MapDirectionsRenderer] },
+        add: { imports: [StubGoogleMap, StubMapAdvancedMarker, StubMapDirectionsRenderer] },
       });
 
       const fixture = TestBed.createComponent(EventMapComponent);
