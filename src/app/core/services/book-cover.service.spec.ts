@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { BookCoverService } from './book-cover.service';
 
 describe('BookCoverService', () => {
@@ -9,8 +10,7 @@ describe('BookCoverService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [provideZonelessChangeDetection(), BookCoverService],
+      providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), BookCoverService],
     });
     service = TestBed.inject(BookCoverService);
     httpMock = TestBed.inject(HttpTestingController);

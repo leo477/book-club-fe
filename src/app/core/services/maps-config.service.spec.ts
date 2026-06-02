@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MapsConfigService, MAPS_LOADER_FNS, MapsLoaderFns } from './maps-config.service';
 import { environment } from '../../../environments/environment';
 
@@ -9,18 +10,19 @@ const MAPS_KEY_URL = `${environment.apiUrl}/config/maps-key`;
 describe('MapsConfigService', () => {
   let service: MapsConfigService;
   let httpMock: HttpTestingController;
-  let setOptionsSpy: jasmine.Spy;
-  let importLibrarySpy: jasmine.Spy;
+  let setOptionsSpy: ReturnType<typeof vi.fn>;
+  let importLibrarySpy: ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
-    setOptionsSpy = jasmine.createSpy('setOptions');
+    setOptionsSpy = vi.fn();
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    importLibrarySpy = jasmine.createSpy('importLibrary').and.resolveTo({} as any);
+    importLibrarySpy = vi.fn().mockResolvedValue({} as any);
 
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
       providers: [
         provideZonelessChangeDetection(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         MapsConfigService,
         { provide: MAPS_LOADER_FNS, useValue: { setOptions: setOptionsSpy, importLibrary: importLibrarySpy } },
       ],
@@ -40,7 +42,7 @@ describe('MapsConfigService', () => {
       expect(setOptionsSpy).toHaveBeenCalledWith({ key: 'key123', v: 'weekly', libraries: ['maps', 'routes'] });
       expect(importLibrarySpy).toHaveBeenCalledWith('maps');
       expect(importLibrarySpy).toHaveBeenCalledWith('routes');
-      expect(service.isLoaded()).toBeTrue();
+      expect(service.isLoaded()).toBe(true);
     });
   });
 
@@ -52,7 +54,7 @@ describe('MapsConfigService', () => {
 
       expect(setOptionsSpy).not.toHaveBeenCalled();
       expect(importLibrarySpy).not.toHaveBeenCalled();
-      expect(service.isLoaded()).toBeFalse();
+      expect(service.isLoaded()).toBe(false);
     });
   });
 
@@ -62,7 +64,7 @@ describe('MapsConfigService', () => {
       httpMock.expectOne(MAPS_KEY_URL).error(new ErrorEvent('network'));
       await loadPromise;
 
-      expect(service.isLoaded()).toBeFalse();
+      expect(service.isLoaded()).toBe(false);
     });
   });
 });
@@ -70,8 +72,11 @@ describe('MapsConfigService', () => {
 describe('MAPS_LOADER_FNS factory', () => {
   it('provides real setOptions and importLibrary functions from @googlemaps/js-api-loader', () => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [provideZonelessChangeDetection()],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+      ],
     });
     const loaderFns = TestBed.inject<MapsLoaderFns>(MAPS_LOADER_FNS);
     expect(typeof loaderFns.setOptions).toBe('function');

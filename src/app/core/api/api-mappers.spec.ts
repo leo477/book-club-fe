@@ -57,7 +57,7 @@ describe('mapUserProfile', () => {
 
   it('sets socialsPublic to false when absent', () => {
     const result = mapUserProfile(raw);
-    expect(result.socialsPublic).toBeFalse();
+    expect(result.socialsPublic).toBe(false);
   });
 
   it('maps socials when present', () => {
@@ -68,7 +68,7 @@ describe('mapUserProfile', () => {
     });
     expect(result.socials?.telegram).toBe('myuser');
     expect(result.socials?.github).toBe('gh');
-    expect(result.socialsPublic).toBeTrue();
+    expect(result.socialsPublic).toBe(true);
   });
 
   it('maps all socials fields when all are provided', () => {
@@ -120,7 +120,7 @@ describe('mapClub', () => {
     const result = mapClub(baseApiClub);
     expect(result.id).toBe('c1');
     expect(result.name).toBe('Test Club');
-    expect(result.isPublic).toBeTrue();
+    expect(result.isPublic).toBe(true);
     expect(result.memberCount).toBe(5);
     expect(result.city).toBe('Kyiv');
     expect(result.tags).toEqual(['fiction']);
@@ -177,7 +177,7 @@ describe('mapClubMember', () => {
     expect(result.displayName).toBe('Alice');
     expect(result.avatarUrl).toBe('http://img');
     expect(result.role).toBe('member');
-    expect(result.socialsPublic).toBeFalse();
+    expect(result.socialsPublic).toBe(false);
   });
 
   it('maps socials when present', () => {
@@ -187,7 +187,7 @@ describe('mapClubMember', () => {
       socialsPublic: true,
     });
     expect(result.socials?.instagram).toBe('alice_ig');
-    expect(result.socialsPublic).toBeTrue();
+    expect(result.socialsPublic).toBe(true);
   });
 
   it('sets socials to undefined when null', () => {
@@ -276,7 +276,7 @@ describe('mapEvent', () => {
     expect(result.durationMinutes).toBe(90);
     expect(result.afterMeetingVenue).toBeNull();
     expect(result.attendeeCount).toBe(5);
-    expect(result.isAttending).toBeFalse();
+    expect(result.isAttending).toBe(false);
   });
 
   it('sets cancelledAt to undefined when the raw value is null', () => {
@@ -336,12 +336,12 @@ describe('mapEvent', () => {
 
   it('maps hasWinner to true when set', () => {
     const result = mapEvent({ ...baseApiEvent, hasWinner: true });
-    expect(result.hasWinner).toBeTrue();
+    expect(result.hasWinner).toBe(true);
   });
 
   it('defaults hasWinner to false when absent', () => {
     const result = mapEvent({ ...baseApiEvent });
-    expect(result.hasWinner).toBeFalse();
+    expect(result.hasWinner).toBe(false);
   });
 
   it('maps winnerId when present', () => {

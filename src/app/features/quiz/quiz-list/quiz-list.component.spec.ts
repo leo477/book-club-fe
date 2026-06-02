@@ -11,8 +11,8 @@ function makeQuizService() {
     quizzes: signal([]),
     isLoading: signal(false),
     activeQuiz: signal(null),
-    loadQuizzes: jasmine.createSpy('loadQuizzes').and.returnValue(Promise.resolve(undefined)),
-    toggleActive: jasmine.createSpy('toggleActive').and.returnValue(Promise.resolve()),
+    loadQuizzes: vi.fn().mockResolvedValue(undefined),
+    toggleActive: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -51,11 +51,11 @@ describe('QuizListComponent', () => {
   it('isLoading is true while resource is pending', () => {
     const fixture = TestBed.createComponent(QuizListComponent);
     // resource() starts loading immediately — isLoading should be true before the promise resolves
-    expect(fixture.componentInstance.isLoading()).toBeTrue();
+    expect(fixture.componentInstance.isLoading()).toBe(true);
   });
 
   it('toggleActive sets errorMessage on failure', async () => {
-    quizSvc.toggleActive.and.callFake(() => Promise.reject(new Error('toggle failed')));
+    quizSvc.toggleActive.mockImplementation(() => Promise.reject(new Error('toggle failed')));
     const fixture = TestBed.createComponent(QuizListComponent);
     const comp = fixture.componentInstance;
 

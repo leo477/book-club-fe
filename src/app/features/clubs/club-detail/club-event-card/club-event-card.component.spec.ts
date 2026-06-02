@@ -31,11 +31,11 @@ describe('ClubEventCardComponent', () => {
   });
 
   it('isAuthenticated defaults to false', () => {
-    expect(component.isAuthenticated()).toBeFalse();
+    expect(component.isAuthenticated()).toBe(false);
   });
 
   it('attending defaults to false', () => {
-    expect(component.attending()).toBeFalse();
+    expect(component.attending()).toBe(false);
   });
 
   it('index defaults to 0', () => {
@@ -46,24 +46,24 @@ describe('ClubEventCardComponent', () => {
     let emitted = false;
     component.attend.subscribe(() => { emitted = true; });
     component.attend.emit();
-    expect(emitted).toBeTrue();
+    expect(emitted).toBe(true);
   });
 
   it('cancelAttend output emits when triggered', () => {
     let emitted = false;
     component.cancelAttend.subscribe(() => { emitted = true; });
     component.cancelAttend.emit();
-    expect(emitted).toBeTrue();
+    expect(emitted).toBe(true);
   });
 
   it('reflects isAuthenticated input', () => {
     fixture.componentRef.setInput('isAuthenticated', true);
-    expect(component.isAuthenticated()).toBeTrue();
+    expect(component.isAuthenticated()).toBe(true);
   });
 
   it('reflects attending input', () => {
     fixture.componentRef.setInput('attending', true);
-    expect(component.attending()).toBeTrue();
+    expect(component.attending()).toBe(true);
   });
 
   it('reflects index input', () => {

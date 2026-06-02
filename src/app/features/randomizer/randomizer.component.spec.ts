@@ -15,13 +15,13 @@ function makeRandomizerService() {
     isSpinning: signal(false),
     history: signal([]),
     purpose: signal('Хто представляє книгу?'),
-    setPurpose: jasmine.createSpy('setPurpose'),
-    loadClubMembers: jasmine.createSpy('loadClubMembers').and.returnValue(Promise.resolve()),
-    loadHistory: jasmine.createSpy('loadHistory').and.returnValue(Promise.resolve()),
-    spin: jasmine.createSpy('spin').and.returnValue(Promise.resolve()),
-    saveSession: jasmine.createSpy('saveSession').and.returnValue(Promise.resolve()),
-    reset: jasmine.createSpy('reset'),
-    toggleMember: jasmine.createSpy('toggleMember'),
+    setPurpose: vi.fn(),
+    loadClubMembers: vi.fn().mockResolvedValue(undefined),
+    loadHistory: vi.fn().mockResolvedValue(undefined),
+    spin: vi.fn().mockResolvedValue(undefined),
+    saveSession: vi.fn().mockResolvedValue(undefined),
+    reset: vi.fn(),
+    toggleMember: vi.fn(),
   };
 }
 
@@ -77,7 +77,7 @@ describe('RandomizerComponent', () => {
   });
 
   it('spin() sets errorMessage when spin rejects', async () => {
-    randSvc.spin.and.returnValue(Promise.reject(new Error('spin failed')));
+    randSvc.spin.mockReturnValue(Promise.reject(new Error('spin failed')));
     const fixture = TestBed.createComponent(RandomizerComponent);
     const comp = fixture.componentInstance as unknown as CompProtected;
     comp.spin();

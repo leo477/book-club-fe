@@ -32,7 +32,7 @@ describe('authGuard', () => {
     });
 
     it('returns true when authenticated', () => {
-      expect(runGuard()).toBeTrue();
+      expect(runGuard()).toBe(true);
     });
   });
 
@@ -56,7 +56,7 @@ describe('authGuard', () => {
     it('returns UrlTree to /login when not authenticated', () => {
       // eslint-disable-next-line rxjs-x/finnish
       const result = runGuard();
-      expect(result instanceof UrlTree).toBeTrue();
+      expect(result instanceof UrlTree).toBe(true);
       expect((result as UrlTree).toString()).toBe('/login');
     });
   });
@@ -83,21 +83,23 @@ describe('authGuard', () => {
       });
     });
 
-    it('returns an observable that resolves to true after loading', (done) => {
-      (runGuard() as Observable<boolean | UrlTree>).subscribe((val) => {
-        expect(val).toBeTrue();
-        done();
-      });
-      loadingSignal.set(false);
-    });
+    it('returns an observable that resolves to true after loading', () =>
+      new Promise<void>((resolve) => {
+        (runGuard() as Observable<boolean | UrlTree>).subscribe((val) => {
+          expect(val).toBe(true);
+          resolve();
+        });
+        loadingSignal.set(false);
+      }));
 
-    it('returns UrlTree after loading when not authenticated', (done) => {
-      authSignal.set(false);
-      (runGuard() as Observable<boolean | UrlTree>).subscribe((val) => {
-        expect(val instanceof UrlTree).toBeTrue();
-        done();
-      });
-      loadingSignal.set(false);
-    });
+    it('returns UrlTree after loading when not authenticated', () =>
+      new Promise<void>((resolve) => {
+        authSignal.set(false);
+        (runGuard() as Observable<boolean | UrlTree>).subscribe((val) => {
+          expect(val instanceof UrlTree).toBe(true);
+          resolve();
+        });
+        loadingSignal.set(false);
+      }));
   });
 });

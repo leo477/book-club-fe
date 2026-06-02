@@ -11,12 +11,12 @@ const mockQuestion: QuizQuestion = { id: 'qq1', quizId: 'q1', question: 'Q?', op
 
 function makeQuizService(quiz: Quiz | null = mockQuiz, questions: QuizQuestion[] = [mockQuestion]) {
   return {
-    getQuiz: jasmine.createSpy('getQuiz').and.returnValue(Promise.resolve(quiz)),
-    getQuestions: jasmine.createSpy('getQuestions').and.returnValue(Promise.resolve(questions)),
-    updateQuiz: jasmine.createSpy('updateQuiz').and.returnValue(Promise.resolve()),
-    addQuestion: jasmine.createSpy('addQuestion').and.returnValue(Promise.resolve(mockQuestion)),
-    updateQuestion: jasmine.createSpy('updateQuestion').and.returnValue(Promise.resolve(mockQuestion)),
-    deleteQuestion: jasmine.createSpy('deleteQuestion').and.returnValue(Promise.resolve()),
+    getQuiz: vi.fn().mockResolvedValue(quiz),
+    getQuestions: vi.fn().mockResolvedValue(questions),
+    updateQuiz: vi.fn().mockResolvedValue(undefined),
+    addQuestion: vi.fn().mockResolvedValue(mockQuestion),
+    updateQuestion: vi.fn().mockResolvedValue(mockQuestion),
+    deleteQuestion: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -72,7 +72,7 @@ describe('QuizEditComponent', () => {
   describe('nextStep / previousStep', () => {
     it('nextStep marks form touched and stays on step 1 when invalid', async () => {
       const { comp } = await setup();
-      spyOn(comp.metaForm, 'markAllAsTouched');
+      vi.spyOn(comp.metaForm, 'markAllAsTouched');
       comp.nextStep();
       expect(comp.metaForm.markAllAsTouched).toHaveBeenCalled();
     });
@@ -87,7 +87,7 @@ describe('QuizEditComponent', () => {
   describe('addQuestion', () => {
     it('marks form touched when invalid', async () => {
       const { comp } = await setup();
-      spyOn(comp.questionForm, 'markAllAsTouched');
+      vi.spyOn(comp.questionForm, 'markAllAsTouched');
       comp.addQuestion();
       expect(comp.questionForm.markAllAsTouched).toHaveBeenCalled();
     });
@@ -107,13 +107,13 @@ describe('QuizEditComponent', () => {
     it('returns false for a valid untouched control', async () => {
       const { comp } = await setup();
       const ctrl = { invalid: false, touched: false };
-      expect(comp.isInvalidTouched(ctrl)).toBeFalse();
+      expect(comp.isInvalidTouched(ctrl)).toBe(false);
     });
 
     it('returns true for invalid and touched control', async () => {
       const { comp } = await setup();
       const ctrl = { invalid: true, touched: true };
-      expect(comp.isInvalidTouched(ctrl)).toBeTrue();
+      expect(comp.isInvalidTouched(ctrl)).toBe(true);
     });
   });
 

@@ -38,7 +38,7 @@ describe('BookVoteService', () => {
       expect(round?.options[0].title).toBe('Book Title');
       expect(round?.options[0].author).toBe('Author');
       expect(round?.options[0].votes).toBe(0);
-      expect(round?.options[0].hasVoted).toBeFalse();
+      expect(round?.options[0].hasVoted).toBe(false);
     });
 
     it('does nothing when round does not exist', () => {
@@ -65,7 +65,7 @@ describe('BookVoteService', () => {
       service.vote('club-1', optionId);
       const round = service.getRound('club-1');
       expect(round?.options[0].votes).toBe(1);
-      expect(round?.options[0].hasVoted).toBeTrue();
+      expect(round?.options[0].hasVoted).toBe(true);
       expect(round?.totalVotes).toBe(1);
     });
 
@@ -78,8 +78,8 @@ describe('BookVoteService', () => {
       service.vote('club-1', idA);
       service.vote('club-1', idB);
       const round = service.getRound('club-1');
-      expect(round?.options.find(o => o.id === idA)?.hasVoted).toBeFalse();
-      expect(round?.options.find(o => o.id === idB)?.hasVoted).toBeTrue();
+      expect(round?.options.find(o => o.id === idA)?.hasVoted).toBe(false);
+      expect(round?.options.find(o => o.id === idB)?.hasVoted).toBe(true);
       expect(round?.totalVotes).toBe(1);
     });
   });
@@ -93,7 +93,7 @@ describe('BookVoteService', () => {
       service.unvote('club-1', optionId);
       const round = service.getRound('club-1');
       expect(round?.options[0].votes).toBe(0);
-      expect(round?.options[0].hasVoted).toBeFalse();
+      expect(round?.options[0].hasVoted).toBe(false);
       expect(round?.totalVotes).toBe(0);
     });
   });

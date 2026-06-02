@@ -8,22 +8,22 @@ import { of } from 'rxjs';
 
 describe('HeaderComponent', () => {
   let component: HeaderComponent;
-  let authSpy: jasmine.SpyObj<AuthService>;
-  let translateSpy: jasmine.SpyObj<TranslateService>;
+  let authSpy: { signOut: ReturnType<typeof vi.fn>; isAuthenticated: ReturnType<typeof signal>; currentUser: ReturnType<typeof signal> };
+  let translateSpy: { use: ReturnType<typeof vi.fn>; instant: ReturnType<typeof vi.fn>; onLangChange: unknown; currentLang: string };
 
   beforeEach(() => {
-    authSpy = jasmine.createSpyObj('AuthService', ['signOut'], {
+    authSpy = {
+      signOut: vi.fn().mockResolvedValue(undefined),
       isAuthenticated: signal(false),
       currentUser: signal(null),
-    });
-    authSpy.signOut.and.returnValue(Promise.resolve());
+    };
 
-    translateSpy = jasmine.createSpyObj('TranslateService', ['use', 'instant'], {
+    translateSpy = {
+      use: vi.fn().mockReturnValue(of('en')),
+      instant: vi.fn().mockImplementation((key: string) => key),
       onLangChange: of({ lang: 'uk' }),
       currentLang: 'uk',
-    });
-    translateSpy.use.and.returnValue(of('en') as unknown as ReturnType<typeof translateSpy.use>);
-    translateSpy.instant.and.callFake((key: string) => key);
+    };
 
     TestBed.configureTestingModule({
       imports: [HeaderComponent, TranslateModule.forRoot()],
@@ -63,11 +63,11 @@ describe('HeaderComponent', () => {
     });
 
     it('returns initials from display name', () => {
-      authSpy = jasmine.createSpyObj('AuthService', ['signOut'], {
+      authSpy = {
+        signOut: vi.fn().mockResolvedValue(undefined),
         isAuthenticated: signal(true),
         currentUser: signal({ id: 'u1', displayName: 'Alice Bob', role: 'user', avatarUrl: null, createdAt: '' }),
-      });
-      authSpy.signOut.and.returnValue(Promise.resolve());
+      };
 
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({

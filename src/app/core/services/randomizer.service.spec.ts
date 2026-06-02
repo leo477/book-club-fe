@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { RandomizerService } from './randomizer.service';
 import { AuthService } from '../auth/auth.service';
 import { environment } from '../../../environments/environment';
@@ -27,34 +28,35 @@ const rawSession = {
 describe('RandomizerService', () => {
   let service: RandomizerService;
   let httpMock: HttpTestingController;
-  let authSpy: jasmine.SpyObj<AuthService>;
+  let authSpy: { currentUser: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    authSpy = jasmine.createSpyObj('AuthService', [], {
-      currentUser: jasmine.createSpy().and.returnValue({ id: 'u1', displayName: 'Alice', role: 'organizer' }),
-    });
+    authSpy = {
+      currentUser: vi.fn().mockReturnValue({ id: 'u1', displayName: 'Alice', role: 'organizer' }),
+    };
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
       providers: [
         provideZonelessChangeDetection(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         RandomizerService,
         { provide: AuthService, useValue: authSpy },
       ],
     });
     service = TestBed.inject(RandomizerService);
     httpMock = TestBed.inject(HttpTestingController);
-    jasmine.clock().install();
+    vi.useFakeTimers();
   });
 
   afterEach(() => {
     httpMock.verify();
-    jasmine.clock().uninstall();
+    vi.useRealTimers();
   });
 
   it('starts with default state', () => {
     expect(service.candidates()).toEqual([]);
     expect(service.result()).toBeNull();
-    expect(service.isSpinning()).toBeFalse();
+    expect(service.isSpinning()).toBe(false);
     expect(service.history()).toEqual([]);
     expect(service.purpose()).toBe('Хто представляє книгу?');
   });
@@ -72,8 +74,8 @@ describe('RandomizerService', () => {
       httpMock.expectOne(`${API}/clubs/c1/members`).flush([rawMember('u1', 'Alice'), rawMember('u2', 'Bob')]);
       await p;
       expect(service.candidates().length).toBe(2);
-      expect(service.selectedIds().has('u1')).toBeTrue();
-      expect(service.selectedIds().has('u2')).toBeTrue();
+      expect(service.selectedIds().has('u1')).toBe(true);
+      expect(service.selectedIds().has('u2')).toBe(true);
       expect(service.result()).toBeNull();
     });
   });
@@ -87,14 +89,14 @@ describe('RandomizerService', () => {
 
     it('deselects a selected member', () => {
       service.toggleMember('u1');
-      expect(service.selectedIds().has('u1')).toBeFalse();
-      expect(service.selectedIds().has('u2')).toBeTrue();
+      expect(service.selectedIds().has('u1')).toBe(false);
+      expect(service.selectedIds().has('u2')).toBe(true);
     });
 
     it('re-selects a deselected member', () => {
       service.toggleMember('u1');
       service.toggleMember('u1');
-      expect(service.selectedIds().has('u1')).toBeTrue();
+      expect(service.selectedIds().has('u1')).toBe(true);
     });
   });
 
@@ -108,16 +110,16 @@ describe('RandomizerService', () => {
     it('throws when fewer than 2 members selected', async () => {
       service.toggleMember('u1');
       service.toggleMember('u2');
-      await expectAsync(service.spin()).toBeRejectedWithError('Потрібно мінімум 2 учасники');
+      await expect(service.spin()).rejects.toThrow('Потрібно мінімум 2 учасники');
     });
 
     it('sets isSpinning during animation and picks a result', async () => {
       const spinPromise = service.spin();
-      expect(service.isSpinning()).toBeTrue();
+      expect(service.isSpinning()).toBe(true);
       expect(service.result()).toBeNull();
-      jasmine.clock().tick(2001);
+      vi.advanceTimersByTime(2001);
       await spinPromise;
-      expect(service.isSpinning()).toBeFalse();
+      expect(service.isSpinning()).toBe(false);
       expect(service.result()).not.toBeNull();
       const result = service.result();
       expect(result).not.toBeNull();
@@ -127,7 +129,7 @@ describe('RandomizerService', () => {
     it('only picks from selected members', async () => {
       service.toggleMember('u2');
       // Only u1 selected — needs 2, so this should throw
-      await expectAsync(service.spin()).toBeRejectedWithError('Потрібно мінімум 2 учасники');
+      await expect(service.spin()).rejects.toThrow('Потрібно мінімум 2 учасники');
     });
   });
 
@@ -138,13 +140,13 @@ describe('RandomizerService', () => {
       await p;
 
       const spinP = service.spin();
-      jasmine.clock().tick(2001);
+      vi.advanceTimersByTime(2001);
       await spinP;
 
       service.toggleMember('u1');
       service.reset();
-      expect(service.selectedIds().has('u1')).toBeTrue();
-      expect(service.selectedIds().has('u2')).toBeTrue();
+      expect(service.selectedIds().has('u1')).toBe(true);
+      expect(service.selectedIds().has('u2')).toBe(true);
       expect(service.result()).toBeNull();
     });
   });
@@ -155,7 +157,7 @@ describe('RandomizerService', () => {
       httpMock.expectOne(`${API}/clubs/c1/members`).flush([rawMember('u1', 'Alice'), rawMember('u2', 'Bob')]);
       await p;
       const spinP = service.spin();
-      jasmine.clock().tick(2001);
+      vi.advanceTimersByTime(2001);
       await spinP;
     });
 
@@ -171,26 +173,27 @@ describe('RandomizerService', () => {
 
     it('throws when no result to save', async () => {
       service.reset();
-      await expectAsync(service.saveSession('c1')).toBeRejectedWithError('No result to save');
+      await expect(service.saveSession('c1')).rejects.toThrow('No result to save');
     });
   });
 
   describe('saveSession without auth', () => {
     it('throws when not authenticated', async () => {
-      authSpy = jasmine.createSpyObj('AuthService', [], {
-        currentUser: jasmine.createSpy().and.returnValue(null),
-      });
+      authSpy = {
+        currentUser: vi.fn().mockReturnValue(null),
+      };
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
-        imports: [HttpClientTestingModule],
         providers: [
           provideZonelessChangeDetection(),
+          provideHttpClient(),
+          provideHttpClientTesting(),
           RandomizerService,
           { provide: AuthService, useValue: authSpy },
         ],
       });
       const unauthService = TestBed.inject(RandomizerService);
-      await expectAsync(unauthService.saveSession('c1')).toBeRejectedWithError('Not authenticated');
+      await expect(unauthService.saveSession('c1')).rejects.toThrow('Not authenticated');
     });
   });
 

@@ -20,14 +20,15 @@ const mockClub: Club = {
 describe('EditClubComponent', () => {
   let fixture: ComponentFixture<EditClubComponent>;
   let component: EditClubComponent;
-  let clubServiceSpy: jasmine.SpyObj<ClubService>;
+  let clubServiceSpy: { getClubById: ReturnType<typeof vi.fn>; updateClub: ReturnType<typeof vi.fn> };
   let router: Router;
 
   beforeEach(() => {
-    clubServiceSpy = jasmine.createSpyObj('ClubService', ['getClubById', 'updateClub']);
-    clubServiceSpy.getClubById.and.returnValue(Promise.resolve(mockClub));
     const mockClubUpdated: Club = { ...mockClub, name: 'Updated Club' };
-    clubServiceSpy.updateClub.and.returnValue(Promise.resolve(mockClubUpdated));
+    clubServiceSpy = {
+      getClubById: vi.fn().mockResolvedValue(mockClub),
+      updateClub: vi.fn().mockResolvedValue(mockClubUpdated),
+    };
 
     TestBed.configureTestingModule({
       imports: [EditClubComponent, TranslateModule.forRoot()],
@@ -39,7 +40,7 @@ describe('EditClubComponent', () => {
     });
 
     router = TestBed.inject(Router);
-    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     fixture = TestBed.createComponent(EditClubComponent);
     component = fixture.componentInstance;
@@ -57,30 +58,30 @@ describe('EditClubComponent', () => {
 
     it('sets isLoadingClub to false after load', async () => {
       await component.ngOnInit();
-      expect(component.isLoadingClub()).toBeFalse();
+      expect(component.isLoadingClub()).toBe(false);
     });
 
     it('sets errorMessage when club not found', async () => {
-      clubServiceSpy.getClubById.and.returnValue(Promise.resolve(null));
+      clubServiceSpy.getClubById.mockResolvedValue(null);
       await component.ngOnInit();
       expect(component.errorMessage()).toBe('Club not found.');
-      expect(component.isLoadingClub()).toBeFalse();
+      expect(component.isLoadingClub()).toBe(false);
     });
   });
 
   describe('togglePublic', () => {
     it('toggles isPublic from true to false', async () => {
       await component.ngOnInit();
-      expect(component.form.controls.isPublic.value).toBeTrue();
+      expect(component.form.controls.isPublic.value).toBe(true);
       component.togglePublic();
-      expect(component.form.controls.isPublic.value).toBeFalse();
+      expect(component.form.controls.isPublic.value).toBe(false);
     });
 
     it('toggles isPublic back to true', async () => {
       await component.ngOnInit();
       component.togglePublic();
       component.togglePublic();
-      expect(component.form.controls.isPublic.value).toBeTrue();
+      expect(component.form.controls.isPublic.value).toBe(true);
     });
   });
 
@@ -98,7 +99,7 @@ describe('EditClubComponent', () => {
 
     it('marks all touched and does not call updateClub when form is invalid', async () => {
       component.form.controls.name.setValue('');
-      spyOn(component.form, 'markAllAsTouched');
+      vi.spyOn(component.form, 'markAllAsTouched');
       await component.onSubmit();
       expect(component.form.markAllAsTouched).toHaveBeenCalled();
       expect(clubServiceSpy.updateClub).not.toHaveBeenCalled();
@@ -106,33 +107,33 @@ describe('EditClubComponent', () => {
 
     it('calls updateClub with form values when form is valid', async () => {
       await component.onSubmit();
-      expect(clubServiceSpy.updateClub).toHaveBeenCalledWith('c1', jasmine.objectContaining({
+      expect(clubServiceSpy.updateClub).toHaveBeenCalledWith('c1', expect.objectContaining({
         name: 'Test Club',
       }));
     });
 
     it('shows toast and navigates on success', async () => {
-      spyOn(toast, 'success');
+      vi.spyOn(toast, 'success').mockImplementation(() => '');
       await component.onSubmit();
       expect(toast.success).toHaveBeenCalled();
       expect(router.navigate).toHaveBeenCalledWith(['/clubs', 'c1']);
     });
 
     it('sets errorMessage on updateClub failure', async () => {
-      clubServiceSpy.updateClub.and.returnValue(Promise.reject(new Error('Server error')) as Promise<Club>);
+      clubServiceSpy.updateClub.mockRejectedValue(new Error('Server error'));
       await component.onSubmit();
       expect(component.errorMessage()).toBe('Server error');
     });
 
     it('resets isSubmitting to false after completion', async () => {
       await component.onSubmit();
-      expect(component.isSubmitting()).toBeFalse();
+      expect(component.isSubmitting()).toBe(false);
     });
 
     it('resets isSubmitting to false even on error', async () => {
-      clubServiceSpy.updateClub.and.returnValue(Promise.reject(new Error('error')) as Promise<Club>);
+      clubServiceSpy.updateClub.mockRejectedValue(new Error('error'));
       await component.onSubmit();
-      expect(component.isSubmitting()).toBeFalse();
+      expect(component.isSubmitting()).toBe(false);
     });
   });
 });

@@ -45,7 +45,7 @@ describe('App', () => {
   it('isNavigating should start as false', () => {
     const fixture = TestBed.createComponent(App);
     const app = fixture.componentInstance;
-    expect(app.isNavigating()).toBeFalse();
+    expect(app.isNavigating()).toBe(false);
   });
 
   describe('navigation spinner logic', () => {
@@ -73,7 +73,7 @@ describe('App', () => {
       events$.next(new NavigationStart(1, '/some-route'));
       fixture.detectChanges();
 
-      expect(app.isNavigating()).toBeTrue();
+      expect(app.isNavigating()).toBe(true);
       const overlay = (fixture.nativeElement as HTMLElement).querySelector('.fixed.inset-0');
       expect(overlay).not.toBeNull();
     });
@@ -81,12 +81,12 @@ describe('App', () => {
     it('should set isNavigating to false on NavigationEnd and hide the spinner overlay', () => {
       events$.next(new NavigationStart(1, '/some-route'));
       fixture.detectChanges();
-      expect(app.isNavigating()).toBeTrue();
+      expect(app.isNavigating()).toBe(true);
 
       events$.next(new NavigationEnd(1, '/some-route', '/some-route'));
       fixture.detectChanges();
 
-      expect(app.isNavigating()).toBeFalse();
+      expect(app.isNavigating()).toBe(false);
       const overlay = (fixture.nativeElement as HTMLElement).querySelector('.fixed.inset-0');
       expect(overlay).toBeNull();
     });
@@ -94,30 +94,30 @@ describe('App', () => {
     it('should set isNavigating to false on NavigationCancel', () => {
       events$.next(new NavigationStart(1, '/some-route'));
       fixture.detectChanges();
-      expect(app.isNavigating()).toBeTrue();
+      expect(app.isNavigating()).toBe(true);
 
       events$.next(new NavigationCancel(1, '/some-route', 'cancelled'));
       fixture.detectChanges();
 
-      expect(app.isNavigating()).toBeFalse();
+      expect(app.isNavigating()).toBe(false);
     });
 
     it('should set isNavigating to false on NavigationError', () => {
       events$.next(new NavigationStart(1, '/some-route'));
       fixture.detectChanges();
-      expect(app.isNavigating()).toBeTrue();
+      expect(app.isNavigating()).toBe(true);
 
       events$.next(new NavigationError(1, '/some-route', new Error('nav failed')));
       fixture.detectChanges();
 
-      expect(app.isNavigating()).toBeFalse();
+      expect(app.isNavigating()).toBe(false);
     });
 
     it('should not react to unrelated router events and leave isNavigating unchanged', () => {
       events$.next({ type: 99 });
       fixture.detectChanges();
 
-      expect(app.isNavigating()).toBeFalse();
+      expect(app.isNavigating()).toBe(false);
     });
   });
 });

@@ -26,6 +26,6 @@ describe('BookIntroComponent', () => {
   it('entering starts as true', () => {
     const fixture = TestBed.createComponent(BookIntroComponent);
     fixture.detectChanges();
-    expect(fixture.componentInstance.entering()).toBeTrue();
+    expect(fixture.componentInstance.entering()).toBe(true);
   });
 });

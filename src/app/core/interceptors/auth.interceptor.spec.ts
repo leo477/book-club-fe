@@ -12,18 +12,18 @@ import { TokenStore } from '../auth/token.store';
 describe('authInterceptor', () => {
   let http: HttpClient;
   let httpMock: HttpTestingController;
-  let routerSpy: jasmine.SpyObj<Router>;
-  let tokenStoreSpy: jasmine.SpyObj<TokenStore>;
-  let translateSpy: jasmine.SpyObj<TranslateService>;
+  let routerSpy: { navigate: ReturnType<typeof vi.fn> };
+  let tokenStoreSpy: { snapshot: ReturnType<typeof vi.fn>; clear: ReturnType<typeof vi.fn>; token: ReturnType<typeof vi.fn> };
+  let translateSpy: { instant: ReturnType<typeof vi.fn> };
 
   function setup(token: string | null = null) {
-    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-    tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'clear'], {
-      token: jasmine.createSpy().and.returnValue(token),
-    });
-    tokenStoreSpy.snapshot.and.returnValue(token);
-    translateSpy = jasmine.createSpyObj('TranslateService', ['instant']);
-    translateSpy.instant.and.callFake((key: string) => key);
+    routerSpy = { navigate: vi.fn() };
+    tokenStoreSpy = {
+      token: vi.fn().mockReturnValue(token),
+      snapshot: vi.fn().mockReturnValue(token),
+      clear: vi.fn(),
+    };
+    translateSpy = { instant: vi.fn().mockImplementation((key: string) => key) };
 
     TestBed.configureTestingModule({
       providers: [
@@ -41,13 +41,14 @@ describe('authInterceptor', () => {
 
   afterEach(() => {
     httpMock?.verify();
+    vi.restoreAllMocks();
   });
 
   it('passes request without Authorization when no token', () => {
     setup(null);
     http.get('/api/test').subscribe();
     const req = httpMock.expectOne('/api/test');
-    expect(req.request.headers.has('Authorization')).toBeFalse();
+    expect(req.request.headers.has('Authorization')).toBe(false);
     req.flush({});
   });
 
@@ -61,7 +62,7 @@ describe('authInterceptor', () => {
 
   it('navigates to /login and clears token on 401 for authenticated requests', () => {
     setup('my-token');
-    http.get('/api/test').subscribe({ error: jasmine.createSpy('errorHandler') });
+    http.get('/api/test').subscribe({ error: vi.fn() });
     const req = httpMock.expectOne('/api/test');
     req.flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
     expect(tokenStoreSpy.clear).toHaveBeenCalled();
@@ -70,7 +71,7 @@ describe('authInterceptor', () => {
 
   it('does not redirect on 401 for unauthenticated requests (e.g. wrong login credentials)', () => {
     setup(null);
-    http.post('/api/auth/login', {}).subscribe({ error: jasmine.createSpy('errorHandler') });
+    http.post('/api/auth/login', {}).subscribe({ error: vi.fn() });
     const req = httpMock.expectOne('/api/auth/login');
     req.flush({ detail: 'Invalid credentials' }, { status: 401, statusText: 'Unauthorized' });
     expect(routerSpy.navigate).not.toHaveBeenCalled();
@@ -78,7 +79,7 @@ describe('authInterceptor', () => {
 
   it('navigates to /clubs on 403', () => {
     setup('my-token');
-    http.get('/api/test').subscribe({ error: jasmine.createSpy('errorHandler') });
+    http.get('/api/test').subscribe({ error: vi.fn() });
     const req = httpMock.expectOne('/api/test');
     req.flush({ detail: 'Forbidden' }, { status: 403, statusText: 'Forbidden' });
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/clubs']);
@@ -86,29 +87,30 @@ describe('authInterceptor', () => {
 
   it('shows toast on 500', () => {
     setup('my-token');
-    spyOn(toast, 'error');
-    http.get('/api/test').subscribe({ error: jasmine.createSpy('errorHandler') });
+    vi.spyOn(toast, 'error').mockImplementation(() => '');
+    http.get('/api/test').subscribe({ error: vi.fn() });
     const req = httpMock.expectOne('/api/test');
     req.flush({ detail: 'Server Error' }, { status: 500, statusText: 'Internal Server Error' });
     expect(toast.error).toHaveBeenCalledWith('ERRORS.serverError');
   });
 
-  it('re-throws the error after handling', (done) => {
-    setup('my-token');
-    http.get('/api/test').subscribe({
-      error: (err: unknown) => {
-        expect(err).toBeTruthy();
-        done();
-      },
-    });
-    const req = httpMock.expectOne('/api/test');
-    req.flush({}, { status: 401, statusText: 'Unauthorized' });
-  });
+  it('re-throws the error after handling', () =>
+    new Promise<void>((resolve) => {
+      setup('my-token');
+      http.get('/api/test').subscribe({
+        error: (err: unknown) => {
+          expect(err).toBeTruthy();
+          resolve();
+        },
+      });
+      const req = httpMock.expectOne('/api/test');
+      req.flush({}, { status: 401, statusText: 'Unauthorized' });
+    }));
 
   it('does not show toast on non-5xx errors', () => {
     setup('my-token');
-    spyOn(toast, 'error');
-    http.get('/api/test').subscribe({ error: jasmine.createSpy('errorHandler') });
+    vi.spyOn(toast, 'error').mockImplementation(() => '');
+    http.get('/api/test').subscribe({ error: vi.fn() });
     const req = httpMock.expectOne('/api/test');
     req.flush({}, { status: 400, statusText: 'Bad Request' });
     expect(toast.error).not.toHaveBeenCalled();
@@ -116,7 +118,7 @@ describe('authInterceptor', () => {
 
   it('shows toast and throws RequestTimeoutError when next$ emits TimeoutError', () => {
     setup(null);
-    spyOn(toast, 'error');
+    vi.spyOn(toast, 'error').mockImplementation(() => '');
     let caughtError: unknown;
 
     const injector = TestBed.inject(EnvironmentInjector);
@@ -190,31 +192,32 @@ describe('authInterceptor', () => {
     expect(err.name).toBe('BackendHttpError');
   });
 
-  it('retries once on 503 and succeeds on the second attempt', (done) => {
-    setup(null);
-    jasmine.clock().install();
+  it('retries once on 503 and succeeds on the second attempt', () =>
+    new Promise<void>((resolve) => {
+      setup(null);
+      vi.useFakeTimers();
 
-    http.get('/api/test').subscribe({
-      next: (result) => {
-        expect(result).toEqual({ ok: true });
-        jasmine.clock().uninstall();
-        done();
-      },
-    });
+      http.get('/api/test').subscribe({
+        next: (result) => {
+          expect(result).toEqual({ ok: true });
+          vi.useRealTimers();
+          resolve();
+        },
+      });
 
-    // First attempt — 503 (Render cold-start)
-    httpMock.expectOne('/api/test').flush({}, { status: 503, statusText: 'Service Unavailable' });
+      // First attempt — 503 (Render cold-start)
+      httpMock.expectOne('/api/test').flush({}, { status: 503, statusText: 'Service Unavailable' });
 
-    // Advance past the 5 s retry delay; RxJS timer() respects jasmine.clock
-    jasmine.clock().tick(5001);
+      // Advance past the 5 s retry delay; RxJS timer() respects fake timers
+      vi.advanceTimersByTime(5001);
 
-    // Second attempt — success
-    httpMock.expectOne('/api/test').flush({ ok: true });
-  });
+      // Second attempt — success
+      httpMock.expectOne('/api/test').flush({ ok: true });
+    }));
 
   it('does not retry on non-503 errors', () => {
     setup(null);
-    const errorSpy = jasmine.createSpy('errorHandler');
+    const errorSpy = vi.fn();
     http.get('/api/test').subscribe({ error: errorSpy });
     httpMock.expectOne('/api/test').flush({}, { status: 500, statusText: 'Internal Server Error' });
     httpMock.verify();
@@ -222,56 +225,61 @@ describe('authInterceptor', () => {
   });
 
   describe('nested detail extraction', () => {
-    it('extracts detail.error from nested object', (done) => {
-      setup();
-      http.get('/api/test').subscribe({ error: (err: unknown) => {
-        expect((err as BackendHttpError).detail).toBe('Invalid credentials');
-        done();
-      }});
-      const req = httpMock.expectOne('/api/test');
-      req.flush({ detail: { error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' } }, { status: 401, statusText: 'Unauthorized' });
-    });
-
-    it('falls back to ERRORS.requestFailed when nested detail has no error field', (done) => {
-      setup();
-      http.get('/api/test').subscribe({ error: (err: unknown) => {
-        expect((err as BackendHttpError).translationKey).toBe('ERRORS.requestFailed');
-        done();
-      }});
-      const req = httpMock.expectOne('/api/test');
-      req.flush({ detail: { code: 'SOME_CODE' } }, { status: 400, statusText: 'Bad Request' });
-    });
-
-    it('extracts string detail directly', (done) => {
-      setup();
-      http.get('/api/test').subscribe({ error: (err: unknown) => {
-        expect((err as BackendHttpError).detail).toBe('Some error');
-        done();
-      }});
-      const req = httpMock.expectOne('/api/test');
-      req.flush({ detail: 'Some error' }, { status: 400, statusText: 'Bad Request' });
-    });
-
-    it('uses ERRORS.serverError for empty body on 500', (done) => {
-      setup();
-      http.get('/api/test').subscribe({ error: (err: unknown) => {
-        expect((err as BackendHttpError).translationKey).toBe('ERRORS.serverError');
-        done();
-      }});
-      const req = httpMock.expectOne('/api/test');
-      req.flush({}, { status: 500, statusText: 'Server Error' });
-    });
-
-    it('suppresses toast when SUPPRESS_ERROR_TOAST is true', (done) => {
-      setup();
-      spyOn(toast, 'error');
-      http.get('/api/test', { context: new HttpContext().set(SUPPRESS_ERROR_TOAST, true) })
-        .subscribe({ error: () => {
-          expect(toast.error).not.toHaveBeenCalled();
-          done();
+    it('extracts detail.error from nested object', () =>
+      new Promise<void>((resolve) => {
+        setup();
+        http.get('/api/test').subscribe({ error: (err: unknown) => {
+          expect((err as BackendHttpError).detail).toBe('Invalid credentials');
+          resolve();
         }});
-      const req = httpMock.expectOne('/api/test');
-      req.flush({ detail: 'err' }, { status: 400, statusText: 'Bad Request' });
-    });
+        const req = httpMock.expectOne('/api/test');
+        req.flush({ detail: { error: 'Invalid credentials', code: 'INVALID_CREDENTIALS' } }, { status: 401, statusText: 'Unauthorized' });
+      }));
+
+    it('falls back to ERRORS.requestFailed when nested detail has no error field', () =>
+      new Promise<void>((resolve) => {
+        setup();
+        http.get('/api/test').subscribe({ error: (err: unknown) => {
+          expect((err as BackendHttpError).translationKey).toBe('ERRORS.requestFailed');
+          resolve();
+        }});
+        const req = httpMock.expectOne('/api/test');
+        req.flush({ detail: { code: 'SOME_CODE' } }, { status: 400, statusText: 'Bad Request' });
+      }));
+
+    it('extracts string detail directly', () =>
+      new Promise<void>((resolve) => {
+        setup();
+        http.get('/api/test').subscribe({ error: (err: unknown) => {
+          expect((err as BackendHttpError).detail).toBe('Some error');
+          resolve();
+        }});
+        const req = httpMock.expectOne('/api/test');
+        req.flush({ detail: 'Some error' }, { status: 400, statusText: 'Bad Request' });
+      }));
+
+    it('uses ERRORS.serverError for empty body on 500', () =>
+      new Promise<void>((resolve) => {
+        setup();
+        http.get('/api/test').subscribe({ error: (err: unknown) => {
+          expect((err as BackendHttpError).translationKey).toBe('ERRORS.serverError');
+          resolve();
+        }});
+        const req = httpMock.expectOne('/api/test');
+        req.flush({}, { status: 500, statusText: 'Server Error' });
+      }));
+
+    it('suppresses toast when SUPPRESS_ERROR_TOAST is true', () =>
+      new Promise<void>((resolve) => {
+        setup();
+        vi.spyOn(toast, 'error').mockImplementation(() => '');
+        http.get('/api/test', { context: new HttpContext().set(SUPPRESS_ERROR_TOAST, true) })
+          .subscribe({ error: () => {
+            expect(toast.error).not.toHaveBeenCalled();
+            resolve();
+          }});
+        const req = httpMock.expectOne('/api/test');
+        req.flush({ detail: 'err' }, { status: 400, statusText: 'Bad Request' });
+      }));
   });
 });

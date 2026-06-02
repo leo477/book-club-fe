@@ -13,25 +13,40 @@ import { makeClubEvent } from '../../../../testing/event-test.helpers';
 
 describe('ClubDetailComponent', () => {
   let component: ClubDetailComponent;
-  let clubServiceSpy: jasmine.SpyObj<ClubService>;
-  let eventServiceSpy: jasmine.SpyObj<EventService>;
-  let authSpy: jasmine.SpyObj<AuthService>;
-  let seoSpy: jasmine.SpyObj<SeoService>;
+  let clubServiceSpy: {
+    getClubById: ReturnType<typeof vi.fn>; getClubMembers: ReturnType<typeof vi.fn>;
+    ensureMyClubsLoaded: ReturnType<typeof vi.fn>; getBans: ReturnType<typeof vi.fn>;
+    kickMember: ReturnType<typeof vi.fn>; banMember: ReturnType<typeof vi.fn>;
+    msUntilDeletion: ReturnType<typeof vi.fn>; loadClubEvents: ReturnType<typeof vi.fn>;
+    clubs: ReturnType<typeof vi.fn>; myClubs: ReturnType<typeof vi.fn>;
+    myClubIds: ReturnType<typeof vi.fn>; joinClub?: ReturnType<typeof vi.fn>;
+    leaveClub?: ReturnType<typeof vi.fn>;
+  };
+  let eventServiceSpy: { loadClubEvents: ReturnType<typeof vi.fn>; attendEvent: ReturnType<typeof vi.fn>; cancelAttendance: ReturnType<typeof vi.fn> };
+  let authSpy: { isAuthenticated: ReturnType<typeof vi.fn>; currentUser: ReturnType<typeof vi.fn> };
+  let seoSpy: { setPage: ReturnType<typeof vi.fn>; setPageI18n: ReturnType<typeof vi.fn>; injectJsonLd: ReturnType<typeof vi.fn> };
   let fixture: ComponentFixture<ClubDetailComponent>;
 
   beforeEach(async () => {
-    clubServiceSpy = jasmine.createSpyObj('ClubService', [
-      'getClubById', 'getClubMembers', 'ensureMyClubsLoaded', 'getBans', 'kickMember', 'banMember', 'msUntilDeletion', 'loadClubEvents'
-    ], {
-      clubs: jasmine.createSpy().and.returnValue([]),
-      myClubs: jasmine.createSpy().and.returnValue([]),
-      myClubIds: jasmine.createSpy().and.returnValue(new Set()),
-    });
-    authSpy = jasmine.createSpyObj('AuthService', ['isAuthenticated'], {
-      currentUser: jasmine.createSpy().and.returnValue({ id: 'user-1', displayName: 'Organizer', role: 'organizer' }),
-    });
-    seoSpy = jasmine.createSpyObj('SeoService', ['setPage', 'setPageI18n', 'injectJsonLd']);
-    clubServiceSpy.getClubById.and.returnValue(Promise.resolve({
+    clubServiceSpy = {
+      getClubById: vi.fn(),
+      getClubMembers: vi.fn().mockResolvedValue([]),
+      ensureMyClubsLoaded: vi.fn().mockResolvedValue(undefined),
+      getBans: vi.fn().mockResolvedValue([]),
+      kickMember: vi.fn().mockResolvedValue(undefined),
+      banMember: vi.fn().mockResolvedValue(undefined),
+      msUntilDeletion: vi.fn().mockReturnValue(null),
+      loadClubEvents: vi.fn().mockResolvedValue([]),
+      clubs: vi.fn().mockReturnValue([]),
+      myClubs: vi.fn().mockReturnValue([]),
+      myClubIds: vi.fn().mockReturnValue(new Set()),
+    };
+    authSpy = {
+      isAuthenticated: vi.fn().mockReturnValue(true),
+      currentUser: vi.fn().mockReturnValue({ id: 'user-1', displayName: 'Organizer', role: 'organizer' }),
+    };
+    seoSpy = { setPage: vi.fn(), setPageI18n: vi.fn(), injectJsonLd: vi.fn() };
+    clubServiceSpy.getClubById.mockResolvedValue({
       id: 'club-1',
       name: 'Test Club',
       description: null,
@@ -53,18 +68,12 @@ describe('ClubDetailComponent', () => {
       meetingDurationMinutes: null,
       afterMeetingVenue: null,
     currentChampion: null,
-    }));
-    clubServiceSpy.ensureMyClubsLoaded.and.returnValue(Promise.resolve());
-    clubServiceSpy.getClubMembers.and.returnValue(Promise.resolve([]));
-    clubServiceSpy.getBans.and.returnValue(Promise.resolve([]));
-    clubServiceSpy.kickMember.and.returnValue(Promise.resolve());
-    clubServiceSpy.banMember.and.returnValue(Promise.resolve());
-    clubServiceSpy.msUntilDeletion.and.returnValue(null);
-    clubServiceSpy.loadClubEvents.and.returnValue(Promise.resolve([]));
-    authSpy.isAuthenticated.and.returnValue(true);
-    eventServiceSpy = jasmine.createSpyObj('EventService', ['loadClubEvents', 'attendEvent', 'cancelAttendance']);
-    eventServiceSpy.attendEvent.and.returnValue(Promise.resolve({ auto_joined: false }));
-    eventServiceSpy.cancelAttendance.and.returnValue(Promise.resolve());
+    });
+    eventServiceSpy = {
+      loadClubEvents: vi.fn().mockResolvedValue([]),
+      attendEvent: vi.fn().mockResolvedValue({ auto_joined: false }),
+      cancelAttendance: vi.fn().mockResolvedValue(undefined),
+    };
     await TestBed.configureTestingModule({
       imports: [
         ClubDetailComponent,
@@ -124,7 +133,7 @@ describe('ClubDetailComponent', () => {
   });
 
   it('deleteCountdown returns null if msUntilDeletion is null', () => {
-    clubServiceSpy.msUntilDeletion.and.returnValue(null);
+    clubServiceSpy.msUntilDeletion.mockReturnValue(null);
     component.club.set({
       id: 'club-1',
       name: 'Test Club',
@@ -153,7 +162,7 @@ describe('ClubDetailComponent', () => {
   });
 
   it('deleteCountdown returns hours/minutes string', () => {
-    clubServiceSpy.msUntilDeletion.and.returnValue(3600000);
+    clubServiceSpy.msUntilDeletion.mockReturnValue(3600000);
     component.club.set({
       id: 'club-1',
       name: 'Test Club',
@@ -184,7 +193,7 @@ describe('ClubDetailComponent', () => {
   });
 
   it('deleteCountdown returns minutes string', () => {
-    clubServiceSpy.msUntilDeletion.and.returnValue(300000);
+    clubServiceSpy.msUntilDeletion.mockReturnValue(300000);
     component.club.set({
       id: 'club-1',
       name: 'Test Club',
@@ -216,43 +225,43 @@ describe('ClubDetailComponent', () => {
 
   describe('onJoin', () => {
     it('calls joinClub and updates club from cache', async () => {
-      clubServiceSpy.joinClub = jasmine.createSpy().and.returnValue(Promise.resolve());
+      clubServiceSpy.joinClub = vi.fn().mockResolvedValue(undefined);
       await component.onJoin();
       expect(clubServiceSpy.joinClub).toHaveBeenCalledWith('club-1');
       expect(clubServiceSpy.getClubById).not.toHaveBeenCalledTimes(2);
     });
 
     it('sets actionError on joinClub failure', async () => {
-      clubServiceSpy.joinClub = jasmine.createSpy().and.returnValue(Promise.reject(new Error('Already a member')));
+      clubServiceSpy.joinClub = vi.fn().mockRejectedValue(new Error('Already a member'));
       await component.onJoin();
       expect(component.actionError()).toBe('Already a member');
     });
 
     it('resets isActionLoading to false after completion', async () => {
-      clubServiceSpy.joinClub = jasmine.createSpy().and.returnValue(Promise.resolve());
+      clubServiceSpy.joinClub = vi.fn().mockResolvedValue(undefined);
       await component.onJoin();
-      expect(component.isActionLoading()).toBeFalse();
+      expect(component.isActionLoading()).toBe(false);
     });
   });
 
   describe('onLeave', () => {
     it('calls leaveClub and updates club from cache', async () => {
-      clubServiceSpy.leaveClub = jasmine.createSpy().and.returnValue(Promise.resolve());
+      clubServiceSpy.leaveClub = vi.fn().mockResolvedValue(undefined);
       await component.onLeave();
       expect(clubServiceSpy.leaveClub).toHaveBeenCalledWith('club-1');
       expect(clubServiceSpy.getClubById).not.toHaveBeenCalledTimes(2);
     });
 
     it('sets actionError on leaveClub failure', async () => {
-      clubServiceSpy.leaveClub = jasmine.createSpy().and.returnValue(Promise.reject(new Error('Not a member')));
+      clubServiceSpy.leaveClub = vi.fn().mockRejectedValue(new Error('Not a member'));
       await component.onLeave();
       expect(component.actionError()).toBe('Not a member');
     });
 
     it('resets isActionLoading to false after completion', async () => {
-      clubServiceSpy.leaveClub = jasmine.createSpy().and.returnValue(Promise.resolve());
+      clubServiceSpy.leaveClub = vi.fn().mockResolvedValue(undefined);
       await component.onLeave();
-      expect(component.isActionLoading()).toBeFalse();
+      expect(component.isActionLoading()).toBe(false);
     });
   });
 
@@ -261,7 +270,7 @@ describe('ClubDetailComponent', () => {
       component.events.set([makeClubEvent({ id: 'e1', attendeeCount: 5, isAttending: false })]);
       await component.onAttend('e1');
       expect(eventServiceSpy.attendEvent).toHaveBeenCalledWith('e1');
-      expect(component.events()[0].isAttending).toBeTrue();
+      expect(component.events()[0].isAttending).toBe(true);
       expect(component.events()[0].attendeeCount).toBe(6);
     });
 
@@ -277,7 +286,7 @@ describe('ClubDetailComponent', () => {
       component.events.set([makeClubEvent({ id: 'e1', attendeeCount: 5, isAttending: true })]);
       await component.onCancelAttend('e1');
       expect(eventServiceSpy.cancelAttendance).toHaveBeenCalledWith('e1');
-      expect(component.events()[0].isAttending).toBeFalse();
+      expect(component.events()[0].isAttending).toBe(false);
       expect(component.events()[0].attendeeCount).toBe(4);
     });
 
@@ -368,14 +377,15 @@ describe('ClubDetailComponent', () => {
 
   describe('currentUserId', () => {
     it('returns null when no user is authenticated', () => {
-      authSpy.currentUser.and.returnValue(null as unknown as ReturnType<typeof authSpy.currentUser>);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      authSpy.currentUser.mockReturnValue(null as any);
       expect(component.currentUserId()).toBeNull();
     });
   });
 
   describe('deleteCountdown with hours and minutes', () => {
     it('returns hours and minutes string when both > 0', () => {
-      clubServiceSpy.msUntilDeletion.and.returnValue(5400000); // 1.5 hours
+      clubServiceSpy.msUntilDeletion.mockReturnValue(5400000); // 1.5 hours
       component.club.set({
         id: 'club-1', name: 'Test Club', description: null, coverUrl: null,
         organizerId: 'user-1', isPublic: true, memberCount: 1,
@@ -392,13 +402,13 @@ describe('ClubDetailComponent', () => {
 
   describe('onJoin/onLeave: non-Error exception', () => {
     it('onJoin uses generic message for non-Error rejection', async () => {
-      clubServiceSpy.joinClub = jasmine.createSpy().and.returnValue(Promise.reject('string error'));
+      clubServiceSpy.joinClub = vi.fn().mockRejectedValue('string error');
       await component.onJoin();
       expect(component.actionError()).toBe('Failed to join club');
     });
 
     it('onLeave uses generic message for non-Error rejection', async () => {
-      clubServiceSpy.leaveClub = jasmine.createSpy().and.returnValue(Promise.reject('string error'));
+      clubServiceSpy.leaveClub = vi.fn().mockRejectedValue('string error');
       await component.onLeave();
       expect(component.actionError()).toBe('Failed to leave club');
     });

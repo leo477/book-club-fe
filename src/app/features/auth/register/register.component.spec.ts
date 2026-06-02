@@ -8,16 +8,14 @@ import { SeoService } from '../../../core/services/seo.service';
 
 describe('RegisterComponent', () => {
   let component: RegisterComponent;
-  let authSpy: jasmine.SpyObj<AuthService>;
-  let seoSpy: jasmine.SpyObj<SeoService>;
+  let authSpy: { signUp: ReturnType<typeof vi.fn> };
+  let seoSpy: { setPageI18n: ReturnType<typeof vi.fn>; injectWebSiteJsonLd: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    authSpy = jasmine.createSpyObj('AuthService', ['signUp']);
-    authSpy.signUp.and.returnValue(Promise.resolve({ error: null }));
+    authSpy = { signUp: vi.fn().mockResolvedValue({ error: null }) };
+    seoSpy = { setPageI18n: vi.fn(), injectWebSiteJsonLd: vi.fn() };
 
-    seoSpy = jasmine.createSpyObj('SeoService', ['setPageI18n', 'injectWebSiteJsonLd']);
-
-    jasmine.clock().install();
+    vi.useFakeTimers();
 
     TestBed.configureTestingModule({
       imports: [RegisterComponent, TranslateModule.forRoot()],
@@ -34,7 +32,7 @@ describe('RegisterComponent', () => {
   });
 
   afterEach(() => {
-    jasmine.clock().uninstall();
+    vi.useRealTimers();
   });
 
   it('sets SEO in constructor', () => {
@@ -42,9 +40,9 @@ describe('RegisterComponent', () => {
   });
 
   it('form is visible after 700ms', () => {
-    expect(component.formVisible()).toBeFalse();
-    jasmine.clock().tick(701);
-    expect(component.formVisible()).toBeTrue();
+    expect(component.formVisible()).toBe(false);
+    vi.advanceTimersByTime(701);
+    expect(component.formVisible()).toBe(true);
   });
 
   describe('setRole', () => {
@@ -92,20 +90,20 @@ describe('RegisterComponent', () => {
       component.form.controls.password.setValue('password1');
       component.form.controls.confirmPassword.setValue('password2');
       component.form.controls.confirmPassword.markAsTouched();
-      expect(component.form.hasError('passwordMismatch')).toBeTrue();
+      expect(component.form.hasError('passwordMismatch')).toBe(true);
     });
 
     it('clears passwordMismatch when passwords match', () => {
       component.form.controls.password.setValue('password1');
       component.form.controls.confirmPassword.setValue('password1');
-      expect(component.form.hasError('passwordMismatch')).toBeFalse();
+      expect(component.form.hasError('passwordMismatch')).toBe(false);
     });
   });
 
   describe('onSubmit', () => {
     it('marks form as touched when invalid and does not call signUp', async () => {
       await component.onSubmit();
-      expect(component.form.touched).toBeTrue();
+      expect(component.form.touched).toBe(true);
       expect(authSpy.signUp).not.toHaveBeenCalled();
     });
 
@@ -130,13 +128,13 @@ describe('RegisterComponent', () => {
         role: 'user',
       });
       await component.onSubmit();
-      expect(component.successMessage()).toBeTrue();
-      expect(component.bookOpen()).toBeTrue();
+      expect(component.successMessage()).toBe(true);
+      expect(component.bookOpen()).toBe(true);
       expect(component.errorMessage()).toBeNull();
     });
 
     it('sets errorMessage on failure', async () => {
-      authSpy.signUp.and.returnValue(Promise.resolve({ error: 'Email already exists' }));
+      authSpy.signUp.mockReturnValue(Promise.resolve({ error: 'Email already exists' }));
       component.form.setValue({
         displayName: 'Ada Lovelace',
         email: 'ada@test.com',
@@ -146,7 +144,7 @@ describe('RegisterComponent', () => {
       });
       await component.onSubmit();
       expect(component.errorMessage()).toBe('Email already exists');
-      expect(component.successMessage()).toBeFalse();
+      expect(component.successMessage()).toBe(false);
     });
 
     it('resets isSubmitting after submission', async () => {
@@ -158,7 +156,7 @@ describe('RegisterComponent', () => {
         role: 'user',
       });
       await component.onSubmit();
-      expect(component.isSubmitting()).toBeFalse();
+      expect(component.isSubmitting()).toBe(false);
     });
   });
 });

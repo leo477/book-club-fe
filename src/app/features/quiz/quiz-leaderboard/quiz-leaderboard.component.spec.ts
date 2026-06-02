@@ -5,8 +5,8 @@ import { configureQuizTestBed } from '../../../../testing/quiz-spec.helpers';
 
 function makeQuizService(session: QuizSession | null = null) {
   return {
-    getActiveSession: jasmine.createSpy('getActiveSession').and.returnValue(Promise.resolve(session)),
-    getLeaderboard: jasmine.createSpy('getLeaderboard').and.returnValue(Promise.resolve([])),
+    getActiveSession: vi.fn().mockResolvedValue(session),
+    getLeaderboard: vi.fn().mockResolvedValue([]),
   };
 }
 
@@ -30,7 +30,7 @@ describe('QuizLeaderboardComponent', () => {
     const { comp } = await setup(session);
     comp.ngOnInit();
     await new Promise<void>(r => setTimeout(r));
-    expect((comp as unknown as { isLoadingSession: () => boolean }).isLoadingSession()).toBeFalse();
+    expect((comp as unknown as { isLoadingSession: () => boolean }).isLoadingSession()).toBe(false);
   });
 
   it('ngOnDestroy clears interval without error', async () => {

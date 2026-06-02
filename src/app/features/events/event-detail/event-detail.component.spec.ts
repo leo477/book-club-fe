@@ -25,28 +25,30 @@ class StubEventMapComponent {
 describe('EventDetailComponent', () => {
   let fixture: ComponentFixture<EventDetailComponent>;
   let component: EventDetailComponent;
-  let eventServiceSpy: jasmine.SpyObj<EventService>;
-  let authSpy: jasmine.SpyObj<AuthService>;
-  let chatServiceSpy: jasmine.SpyObj<ChatService>;
+  let eventServiceSpy: { attendEvent: ReturnType<typeof vi.fn>; cancelAttendance: ReturnType<typeof vi.fn>; cancelEvent: ReturnType<typeof vi.fn> };
+  let authSpy: { currentUser: ReturnType<typeof vi.fn>; isAuthenticated: ReturnType<typeof vi.fn> };
+  let chatServiceSpy: { getEventRoom: ReturnType<typeof vi.fn>; createEventChatRoom: ReturnType<typeof vi.fn>; openAndFocusRoom: ReturnType<typeof vi.fn> };
   let httpMock: HttpTestingController;
 
   const eventUrl = `${environment.apiUrl}/events/e1`;
 
   function setup(currentUser: { id: string } | null = null) {
-    eventServiceSpy = jasmine.createSpyObj('EventService', [
-      'attendEvent', 'cancelAttendance', 'cancelEvent',
-    ]);
-    eventServiceSpy.attendEvent.and.returnValue(Promise.resolve({ auto_joined: false }));
-    eventServiceSpy.cancelAttendance.and.returnValue(Promise.resolve());
-    eventServiceSpy.cancelEvent.and.returnValue(Promise.resolve());
+    eventServiceSpy = {
+      attendEvent: vi.fn().mockResolvedValue({ auto_joined: false }),
+      cancelAttendance: vi.fn().mockResolvedValue(undefined),
+      cancelEvent: vi.fn().mockResolvedValue(undefined),
+    };
 
-    chatServiceSpy = jasmine.createSpyObj('ChatService', ['getEventRoom', 'createEventChatRoom', 'openAndFocusRoom']);
-    chatServiceSpy.getEventRoom.and.returnValue(Promise.resolve(null));
+    chatServiceSpy = {
+      getEventRoom: vi.fn().mockResolvedValue(null),
+      createEventChatRoom: vi.fn(),
+      openAndFocusRoom: vi.fn(),
+    };
 
-    authSpy = jasmine.createSpyObj('AuthService', [], {
-      currentUser: jasmine.createSpy().and.returnValue(currentUser),
-      isAuthenticated: jasmine.createSpy().and.returnValue(currentUser !== null),
-    });
+    authSpy = {
+      currentUser: vi.fn().mockReturnValue(currentUser),
+      isAuthenticated: vi.fn().mockReturnValue(currentUser !== null),
+    };
 
     TestBed.configureTestingModule({
       imports: [EventDetailComponent, TranslateModule.forRoot()],
@@ -95,7 +97,7 @@ describe('EventDetailComponent', () => {
       setup();
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       await fixture.whenStable();
-      expect(component.isLoading()).toBeFalse();
+      expect(component.isLoading()).toBe(false);
     });
 
     it('sets errorMessage when event is not found', async () => {
@@ -114,21 +116,21 @@ describe('EventDetailComponent', () => {
       setup({ id: 'u1' });
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       await fixture.whenStable();
-      expect(component.isOrganizer()).toBeTrue();
+      expect(component.isOrganizer()).toBe(true);
     });
 
     it('returns false when currentUser id does not match organizerId', async () => {
       setup({ id: 'other-user' });
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       await fixture.whenStable();
-      expect(component.isOrganizer()).toBeFalse();
+      expect(component.isOrganizer()).toBe(false);
     });
 
     it('returns false when not authenticated', async () => {
       setup(null);
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       await fixture.whenStable();
-      expect(component.isOrganizer()).toBeFalse();
+      expect(component.isOrganizer()).toBe(false);
     });
   });
 
@@ -153,7 +155,7 @@ describe('EventDetailComponent', () => {
       await component.onAttend();
       fixture.detectChanges();
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
-      expect(component.isActioning()).toBeFalse();
+      expect(component.isActioning()).toBe(false);
     });
   });
 
@@ -178,7 +180,7 @@ describe('EventDetailComponent', () => {
       await component.onCancelAttend();
       fixture.detectChanges();
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
-      expect(component.isActioning()).toBeFalse();
+      expect(component.isActioning()).toBe(false);
     });
   });
 
@@ -187,7 +189,7 @@ describe('EventDetailComponent', () => {
       setup({ id: 'u1' });
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       await fixture.whenStable();
-      spyOn(window, 'confirm').and.returnValue(false);
+      vi.spyOn(window, 'confirm').mockReturnValue(false);
 
       await component.onCancelEvent();
 
@@ -198,7 +200,7 @@ describe('EventDetailComponent', () => {
       setup({ id: 'u1' });
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       await fixture.whenStable();
-      spyOn(window, 'confirm').and.returnValue(true);
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       await component.onCancelEvent();
       expect(eventServiceSpy.cancelEvent).toHaveBeenCalledWith('e1');
@@ -211,12 +213,12 @@ describe('EventDetailComponent', () => {
       setup({ id: 'u1' });
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       await fixture.whenStable();
-      spyOn(window, 'confirm').and.returnValue(true);
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       await component.onCancelEvent();
       fixture.detectChanges();
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
-      expect(component.isActioning()).toBeFalse();
+      expect(component.isActioning()).toBe(false);
     });
   });
 });

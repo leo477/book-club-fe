@@ -10,14 +10,13 @@ const placeIdSuggestion: GeocodeSuggestion = { label: 'Place', city: null, count
 const resolvedSuggestion: GeocodeSuggestion = { label: 'Place', city: 'Kyiv', country: 'Ukraine', lat: 50.45, lng: 30.52, place_id: 'pid123' };
 
 function setupWithPlaceDetails(result: GeocodeSuggestion | Error) {
-  const geocodingSpy = jasmine.createSpyObj<GeocodingService>('GeocodingService',
-    ['autocomplete$', 'resetSessionToken', 'getPlaceDetails']);
-  geocodingSpy.autocomplete$.and.returnValue(of([]));
-  if (result instanceof Error) {
-    geocodingSpy.getPlaceDetails.and.returnValue(throwError(() => result));
-  } else {
-    geocodingSpy.getPlaceDetails.and.returnValue(of(result));
-  }
+  const geocodingSpy = {
+    autocomplete$: vi.fn().mockReturnValue(of([])),
+    resetSessionToken: vi.fn(),
+    getPlaceDetails: result instanceof Error
+      ? vi.fn().mockReturnValue(throwError(() => result))
+      : vi.fn().mockReturnValue(of(result)),
+  };
   TestBed.configureTestingModule({
     imports: [AddressAutocompleteComponent, ReactiveFormsModule],
     providers: [provideZonelessChangeDetection(), { provide: GeocodingService, useValue: geocodingSpy }],
@@ -39,12 +38,12 @@ const mockSuggestions: GeocodeSuggestion[] = [
 ];
 
 function setup(geocodingResult: GeocodeSuggestion[] | Error = mockSuggestions) {
-  const geocodingSpy = jasmine.createSpyObj<GeocodingService>('GeocodingService', ['autocomplete$', 'resetSessionToken']);
-  if (geocodingResult instanceof Error) {
-    geocodingSpy.autocomplete$.and.returnValue(throwError(() => geocodingResult));
-  } else {
-    geocodingSpy.autocomplete$.and.returnValue(of(geocodingResult));
-  }
+  const geocodingSpy = {
+    autocomplete$: geocodingResult instanceof Error
+      ? vi.fn().mockReturnValue(throwError(() => geocodingResult))
+      : vi.fn().mockReturnValue(of(geocodingResult)),
+    resetSessionToken: vi.fn(),
+  };
 
   TestBed.configureTestingModule({
     imports: [AddressAutocompleteComponent, ReactiveFormsModule],
@@ -68,72 +67,74 @@ describe('AddressAutocompleteComponent', () => {
     it('starts with empty suggestions, closed, not loading', () => {
       const { component } = setup();
       expect(component.suggestions()).toEqual([]);
-      expect(component.isOpen()).toBeFalse();
-      expect(component.isLoading()).toBeFalse();
+      expect(component.isOpen()).toBe(false);
+      expect(component.isLoading()).toBe(false);
       expect(component.activeIndex()).toBe(-1);
     });
   });
 
   describe('valueChanges → debounce → autocomplete', () => {
-    it('does not call autocomplete for query shorter than 2 chars', (done) => {
+    it('does not call autocomplete for query shorter than 2 chars', () => {
       const { geocodingSpy, control } = setup();
       control.setValue('K');
-      setTimeout(() => {
+      return new Promise<void>((resolve) => setTimeout(() => {
         expect(geocodingSpy.autocomplete$).not.toHaveBeenCalled();
-        done();
-      }, DEBOUNCE);
+        resolve();
+      }, DEBOUNCE));
     }, JASMINE_TIMEOUT);
 
-    it('calls autocomplete and opens dropdown for query ≥ 2 chars', (done) => {
+    it('calls autocomplete and opens dropdown for query ≥ 2 chars', () => {
       const { component, control, geocodingSpy } = setup();
       control.setValue('Ки');
-      setTimeout(() => {
+      return new Promise<void>((resolve) => setTimeout(() => {
         expect(geocodingSpy.autocomplete$).toHaveBeenCalledWith('Ки');
         expect(component.suggestions()).toEqual(mockSuggestions);
-        expect(component.isOpen()).toBeTrue();
+        expect(component.isOpen()).toBe(true);
         expect(component.activeIndex()).toBe(-1);
-        done();
-      }, DEBOUNCE);
+        resolve();
+      }, DEBOUNCE));
     }, JASMINE_TIMEOUT);
 
-    it('clears suggestions and closes dropdown for empty query', (done) => {
+    it('clears suggestions and closes dropdown for empty query', () => {
       const { component, control } = setup();
       control.setValue('Ки');
-      setTimeout(() => {
-        expect(component.isOpen()).toBeTrue();
+      return new Promise<void>((resolve) => setTimeout(() => {
+        expect(component.isOpen()).toBe(true);
         control.setValue('');
         setTimeout(() => {
-          expect(component.isOpen()).toBeFalse();
+          expect(component.isOpen()).toBe(false);
           expect(component.suggestions()).toEqual([]);
-          done();
+          resolve();
         }, DEBOUNCE);
-      }, DEBOUNCE);
+      }, DEBOUNCE));
     }, JASMINE_TIMEOUT * 2);
 
-    it('closes dropdown when autocomplete returns empty array', (done) => {
+    it('closes dropdown when autocomplete returns empty array', () => {
       const { component, control } = setup([]);
       control.setValue('Ки');
-      setTimeout(() => {
-        expect(component.isOpen()).toBeFalse();
+      return new Promise<void>((resolve) => setTimeout(() => {
+        expect(component.isOpen()).toBe(false);
         expect(component.suggestions()).toEqual([]);
-        done();
-      }, DEBOUNCE);
+        resolve();
+      }, DEBOUNCE));
     }, JASMINE_TIMEOUT);
 
-    it('clears suggestions and stops loading on HTTP error', (done) => {
+    it('clears suggestions and stops loading on HTTP error', () => {
       const { component, control } = setup(new Error('network'));
       control.setValue('Ки');
-      setTimeout(() => {
+      return new Promise<void>((resolve) => setTimeout(() => {
         expect(component.suggestions()).toEqual([]);
-        expect(component.isLoading()).toBeFalse();
-        done();
-      }, DEBOUNCE);
+        expect(component.isLoading()).toBe(false);
+        resolve();
+      }, DEBOUNCE));
     }, JASMINE_TIMEOUT);
 
-    it('sets isLoading true while waiting for results then false after results arrive', (done) => {
+    it('sets isLoading true while waiting for results then false after results arrive', () => {
       const subject$ = new Subject<GeocodeSuggestion[]>();
-      const geocodingSpy = jasmine.createSpyObj<GeocodingService>('GeocodingService', ['autocomplete$', 'resetSessionToken']);
-      geocodingSpy.autocomplete$.and.returnValue(subject$.asObservable());
+      const geocodingSpy = {
+        autocomplete$: vi.fn().mockReturnValue(subject$.asObservable()),
+        resetSessionToken: vi.fn(),
+      };
 
       TestBed.configureTestingModule({
         imports: [AddressAutocompleteComponent, ReactiveFormsModule],
@@ -146,15 +147,15 @@ describe('AddressAutocompleteComponent', () => {
       fixture.detectChanges();
 
       control.setValue('Ки');
-      setTimeout(() => {
-        expect(component.isLoading()).toBeTrue();
+      return new Promise<void>((resolve) => setTimeout(() => {
+        expect(component.isLoading()).toBe(true);
 
         subject$.next([]);
         subject$.complete();
 
-        expect(component.isLoading()).toBeFalse();
-        done();
-      }, DEBOUNCE);
+        expect(component.isLoading()).toBe(false);
+        resolve();
+      }, DEBOUNCE));
     }, JASMINE_TIMEOUT);
   });
 
@@ -169,20 +170,20 @@ describe('AddressAutocompleteComponent', () => {
 
       component.select(mockSuggestions[0]);
       expect(control.value).toBe('Київ, Україна');
-      expect(component.isOpen()).toBeFalse();
+      expect(component.isOpen()).toBe(false);
       expect(component.suggestions()).toEqual([]);
       expect(emitted).toEqual([mockSuggestions[0]]);
     });
 
-    it('does not re-trigger the autocomplete pipeline (emitEvent: false)', (done) => {
+    it('does not re-trigger the autocomplete pipeline (emitEvent: false)', () => {
       const { component, geocodingSpy } = setup();
       component.suggestions.set(mockSuggestions);
       component.isOpen.set(true);
       component.select(mockSuggestions[0]);
-      setTimeout(() => {
+      return new Promise<void>((resolve) => setTimeout(() => {
         expect(geocodingSpy.autocomplete$).not.toHaveBeenCalled();
-        done();
-      }, DEBOUNCE);
+        resolve();
+      }, DEBOUNCE));
     }, JASMINE_TIMEOUT);
 
     describe('place_id resolution path', () => {
@@ -195,14 +196,15 @@ describe('AddressAutocompleteComponent', () => {
       });
 
       it('sets isLoading true then false during resolution', () => {
-        const geocodingSpy = jasmine.createSpyObj<GeocodingService>('GeocodingService',
-          ['autocomplete$', 'resetSessionToken', 'getPlaceDetails']);
-        geocodingSpy.autocomplete$.and.returnValue(of([]));
         let loadingDuring = false;
-        geocodingSpy.getPlaceDetails.and.callFake(() => {
-          loadingDuring = true;
-          return of(resolvedSuggestion);
-        });
+        const geocodingSpy = {
+          autocomplete$: vi.fn().mockReturnValue(of([])),
+          resetSessionToken: vi.fn(),
+          getPlaceDetails: vi.fn().mockImplementation(() => {
+            loadingDuring = true;
+            return of(resolvedSuggestion);
+          }),
+        };
         TestBed.configureTestingModule({
           imports: [AddressAutocompleteComponent, ReactiveFormsModule],
           providers: [provideZonelessChangeDetection(), { provide: GeocodingService, useValue: geocodingSpy }],
@@ -213,8 +215,8 @@ describe('AddressAutocompleteComponent', () => {
         fixture.componentRef.setInput('control', control);
         fixture.detectChanges();
         component.select(placeIdSuggestion);
-        expect(loadingDuring).toBeTrue();
-        expect(component.isLoading()).toBeFalse();
+        expect(loadingDuring).toBe(true);
+        expect(component.isLoading()).toBe(false);
       });
 
       it('on getPlaceDetails error, emits original suggestion', () => {
@@ -230,9 +232,11 @@ describe('AddressAutocompleteComponent', () => {
           label: 'Place With Coords', city: 'Kyiv', country: 'Ukraine',
           lat: 50.45, lng: 30.52, place_id: 'pid-with-coords',
         };
-        const geocodingSpy = jasmine.createSpyObj<GeocodingService>('GeocodingService',
-          ['autocomplete$', 'resetSessionToken', 'getPlaceDetails']);
-        geocodingSpy.autocomplete$.and.returnValue(of([]));
+        const geocodingSpy = {
+          autocomplete$: vi.fn().mockReturnValue(of([])),
+          resetSessionToken: vi.fn(),
+          getPlaceDetails: vi.fn(),
+        };
         TestBed.configureTestingModule({
           imports: [AddressAutocompleteComponent, ReactiveFormsModule],
           providers: [provideZonelessChangeDetection(), { provide: GeocodingService, useValue: geocodingSpy }],
@@ -251,7 +255,7 @@ describe('AddressAutocompleteComponent', () => {
         expect(geocodingSpy.getPlaceDetails).not.toHaveBeenCalled();
         expect(emitted).toEqual([suggestionWithCoords]);
         expect(control.value).toBe('Place With Coords');
-        expect(component.isOpen()).toBeFalse();
+        expect(component.isOpen()).toBe(false);
       });
     });
   });
@@ -319,14 +323,14 @@ describe('AddressAutocompleteComponent', () => {
       component.suggestions.set(mockSuggestions);
       component.isOpen.set(true);
       component.onKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
-      expect(component.isOpen()).toBeTrue();
+      expect(component.isOpen()).toBe(true);
     });
 
     it('Escape closes the dropdown', () => {
       const { component } = setup();
       component.isOpen.set(true);
       component.onKeydown(new KeyboardEvent('keydown', { key: 'Escape' }));
-      expect(component.isOpen()).toBeFalse();
+      expect(component.isOpen()).toBe(false);
     });
   });
 
@@ -337,7 +341,7 @@ describe('AddressAutocompleteComponent', () => {
       const outsideEl = document.createElement('div');
       document.body.appendChild(outsideEl);
       component.onDocumentClick({ target: outsideEl } as unknown as MouseEvent);
-      expect(component.isOpen()).toBeFalse();
+      expect(component.isOpen()).toBe(false);
       outsideEl.remove();
     });
 
@@ -345,19 +349,19 @@ describe('AddressAutocompleteComponent', () => {
       const { fixture, component } = setup();
       component.isOpen.set(true);
       component.onDocumentClick({ target: fixture.nativeElement } as unknown as MouseEvent);
-      expect(component.isOpen()).toBeTrue();
+      expect(component.isOpen()).toBe(true);
     });
   });
 
   describe('destroy', () => {
-    it('stops reacting to valueChanges after component is destroyed', (done) => {
+    it('stops reacting to valueChanges after component is destroyed', () => {
       const { fixture, control, geocodingSpy } = setup();
       fixture.destroy();
       control.setValue('Ки');
-      setTimeout(() => {
+      return new Promise<void>((resolve) => setTimeout(() => {
         expect(geocodingSpy.autocomplete$).not.toHaveBeenCalled();
-        done();
-      }, DEBOUNCE);
+        resolve();
+      }, DEBOUNCE));
     }, JASMINE_TIMEOUT);
   });
 });

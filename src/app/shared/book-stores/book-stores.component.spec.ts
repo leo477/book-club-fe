@@ -14,6 +14,10 @@ interface BookStoreResult {
 }
 
 describe('BookStoresComponent', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [BookStoresComponent, TranslateModule.forRoot()],
@@ -54,7 +58,7 @@ describe('BookStoresComponent', () => {
     it('calls window.open with the store url when url is set', () => {
       const fixture = TestBed.createComponent(BookStoresComponent);
       const comp = fixture.componentInstance;
-      spyOn(window, 'open');
+      vi.spyOn(window, 'open').mockImplementation(() => null);
       const store: BookStoreResult = { name: 'Rozetka', available: true, url: 'https://rozetka.com.ua' };
       comp.openStore(store);
       expect(window.open).toHaveBeenCalledWith('https://rozetka.com.ua', '_blank');
@@ -63,7 +67,7 @@ describe('BookStoresComponent', () => {
     it('does NOT call window.open when url is null', () => {
       const fixture = TestBed.createComponent(BookStoresComponent);
       const comp = fixture.componentInstance;
-      spyOn(window, 'open');
+      vi.spyOn(window, 'open').mockImplementation(() => null);
       const store: BookStoreResult = { name: 'OLX', available: false, url: null };
       comp.openStore(store);
       expect(window.open).not.toHaveBeenCalled();
@@ -213,7 +217,7 @@ describe('BookStoresComponent', () => {
       fixture.detectChanges();
       const el: HTMLElement = fixture.nativeElement;
       const btn = el.querySelector<HTMLButtonElement>('button');
-      expect(btn?.disabled).toBeTrue();
+      expect(btn?.disabled).toBe(true);
     });
 
     it('does not disable button when store.available is true and url is set', async () => {
@@ -234,16 +238,16 @@ describe('BookStoresComponent', () => {
       fixture.detectChanges();
       const el: HTMLElement = fixture.nativeElement;
       const btn = el.querySelector<HTMLButtonElement>('button');
-      expect(btn?.disabled).toBeFalse();
+      expect(btn?.disabled).toBe(false);
     });
   });
 
   describe('HttpClient.get spy-based tests (fallback approach)', () => {
     it('stream calls http.get with properly encoded URL for non-null title', () => {
-      const http = TestBed.inject(HttpClient) as jasmine.SpyObj<HttpClient>;
+      const http = TestBed.inject(HttpClient);
       const stores: BookStoreResult[] = [{ name: 'Yakaboo', available: true, url: 'https://yakaboo.ua' }];
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      spyOn(http, 'get').and.returnValue(of(stores) as any);
+      vi.spyOn(http, 'get').mockReturnValue(of(stores) as any);
 
       const fixture = TestBed.createComponent(BookStoresComponent);
       fixture.componentRef.setInput('bookTitle', 'Harry Potter');

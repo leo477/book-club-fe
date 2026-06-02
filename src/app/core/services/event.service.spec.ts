@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { EventService } from './event.service';
 import { environment } from '../../../environments/environment';
 
@@ -24,9 +25,10 @@ describe('EventService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
       providers: [
         provideZonelessChangeDetection(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         EventService,
       ],
     });
@@ -56,10 +58,10 @@ describe('EventService', () => {
 
     it('sets isLoading to false after success', async () => {
       const p = service.loadAllEvents();
-      expect(service.isLoading()).toBeTrue();
+      expect(service.isLoading()).toBe(true);
       httpMock.expectOne(`${API}/events?skip=0&limit=50`).flush([makeApiEvent()]);
       await p;
-      expect(service.isLoading()).toBeFalse();
+      expect(service.isLoading()).toBe(false);
     });
 
     it('sets error on failure', async () => {
@@ -67,7 +69,7 @@ describe('EventService', () => {
       httpMock.expectOne(`${API}/events?skip=0&limit=50`).flush({}, { status: 500, statusText: 'Error' });
       await p;
       expect(service.error()).toBe('Failed to load events');
-      expect(service.isLoading()).toBeFalse();
+      expect(service.isLoading()).toBe(false);
     });
   });
 
@@ -120,7 +122,7 @@ describe('EventService', () => {
       service.setCityFilter('Kyiv');
       const filtered = service.filteredAllEvents();
       expect(filtered.length).toBe(2);
-      expect(filtered.every(e => e.city === 'Kyiv')).toBeTrue();
+      expect(filtered.every(e => e.city === 'Kyiv')).toBe(true);
     });
 
     it('null removes filter and returns all events', () => {
@@ -189,7 +191,7 @@ describe('EventService', () => {
       await p;
       const event = service.allEvents().find(e => e.id === 'e1');
       expect(event?.attendeeCount).toBe(6);
-      expect(event?.isAttending).toBeTrue();
+      expect(event?.isAttending).toBe(true);
     });
 
     it('increments attendeeCount and sets isAttending true in myEvents', async () => {
@@ -198,14 +200,14 @@ describe('EventService', () => {
       await p;
       const event = service.myEvents().find(e => e.id === 'e1');
       expect(event?.attendeeCount).toBe(6);
-      expect(event?.isAttending).toBeTrue();
+      expect(event?.isAttending).toBe(true);
     });
 
     it('returns auto_joined value from API response', async () => {
       const p = service.attendEvent('e1');
       httpMock.expectOne(`${API}/events/e1/attend`).flush({ auto_joined: true });
       const result = await p;
-      expect(result.auto_joined).toBeTrue();
+      expect(result.auto_joined).toBe(true);
     });
 
     it('does not change unrelated events when patching attendance', async () => {
@@ -223,7 +225,7 @@ describe('EventService', () => {
 
       const e2 = service.allEvents().find(e => e.id === 'e2');
       expect(e2?.attendeeCount).toBe(3);
-      expect(e2?.isAttending).toBeFalse();
+      expect(e2?.isAttending).toBe(false);
     });
   });
 
@@ -255,7 +257,7 @@ describe('EventService', () => {
       await p;
       const event = service.allEvents().find(e => e.id === 'e1');
       expect(event?.attendeeCount).toBe(4);
-      expect(event?.isAttending).toBeFalse();
+      expect(event?.isAttending).toBe(false);
     });
 
     it('decrements attendeeCount and sets isAttending false in myEvents', async () => {
@@ -264,7 +266,7 @@ describe('EventService', () => {
       await p;
       const event = service.myEvents().find(e => e.id === 'e1');
       expect(event?.attendeeCount).toBe(4);
-      expect(event?.isAttending).toBeFalse();
+      expect(event?.isAttending).toBe(false);
     });
   });
 

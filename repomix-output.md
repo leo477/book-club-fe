@@ -415,6 +415,7 @@ src/
     quiz-spec.helpers.ts
   index.html
   main.ts
+  test-setup.ts
 supabase/
   migrations/
     001_profiles.sql
@@ -435,7 +436,6 @@ angular.json
 CLAUDE.md
 components.json
 eslint.config.js
-karma.conf.js
 package.json
 postcss.config.json
 README.md
@@ -446,4 +446,5 @@ tsconfig.app.json
 tsconfig.json
 tsconfig.spec.json
 vercel.json
+vitest.config.ts
 ```

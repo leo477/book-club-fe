@@ -10,11 +10,11 @@ const mockSession: QuizSession = {
 
 function makeQuizService(session: QuizSession | null = null) {
   return {
-    getActiveSession: jasmine.createSpy('getActiveSession').and.returnValue(Promise.resolve(session)),
-    loadClubEvents: jasmine.createSpy('loadClubEvents').and.returnValue(Promise.resolve([])),
-    startSession: jasmine.createSpy('startSession').and.returnValue(Promise.resolve(mockSession)),
-    endSession: jasmine.createSpy('endSession').and.returnValue(Promise.resolve()),
-    getLeaderboard: jasmine.createSpy('getLeaderboard').and.returnValue(Promise.resolve([])),
+    getActiveSession: vi.fn().mockResolvedValue(session),
+    loadClubEvents: vi.fn().mockResolvedValue([]),
+    startSession: vi.fn().mockResolvedValue(mockSession),
+    endSession: vi.fn().mockResolvedValue(undefined),
+    getLeaderboard: vi.fn().mockResolvedValue([]),
   };
 }
 
@@ -40,7 +40,7 @@ describe('QuizSessionComponent', () => {
     expect(quizSvc.getActiveSession).toHaveBeenCalled();
     expect(quizSvc.loadClubEvents).toHaveBeenCalled();
     const c = comp as unknown as { isLoadingSession: () => boolean };
-    expect(c.isLoadingSession()).toBeFalse();
+    expect(c.isLoadingSession()).toBe(false);
   });
 
   it('ngOnDestroy clears interval without error', async () => {
@@ -64,12 +64,12 @@ describe('QuizSessionComponent', () => {
       c.startSession();
       await new Promise<void>(r => setTimeout(r));
       expect(quizSvc.startSession).toHaveBeenCalled();
-      expect(c.isStarting()).toBeFalse();
+      expect(c.isStarting()).toBe(false);
     });
 
     it('sets errorMessage on failure', async () => {
       const { comp, quizSvc } = await setup();
-      quizSvc.startSession.and.returnValue(Promise.reject(new Error('network error')));
+      quizSvc.startSession.mockRejectedValue(new Error('network error'));
       const c = comp as unknown as { startSession(): void; selectedEventId: { set(v: string): void }; errorMessage: () => string };
       c.selectedEventId.set('e1');
       c.startSession();
@@ -100,12 +100,12 @@ describe('QuizSessionComponent', () => {
       const { comp, quizSvc } = await setup(mockSession);
       comp.ngOnInit();
       await new Promise<void>(r => setTimeout(r));
-      quizSvc.endSession.and.returnValue(Promise.reject(new Error('end failed')));
+      quizSvc.endSession.mockRejectedValue(new Error('end failed'));
       const c = comp as unknown as { endSession(): void; errorMessage: () => string; isEnding: () => boolean };
       c.endSession();
       await new Promise<void>(r => setTimeout(r));
       expect(c.errorMessage()).toBe('end failed');
-      expect(c.isEnding()).toBeFalse();
+      expect(c.isEnding()).toBe(false);
     });
   });
 

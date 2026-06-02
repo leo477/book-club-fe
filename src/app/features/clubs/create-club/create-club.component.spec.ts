@@ -10,14 +10,14 @@ import { AuthService } from '../../../core/auth/auth.service';
 
 describe('CreateClubComponent', () => {
   let component: CreateClubComponent;
-  let routerSpy: jasmine.SpyObj<Router>;
-  let clubServiceSpy: jasmine.SpyObj<ClubService>;
-  let authSpy: jasmine.SpyObj<AuthService>;
+  let routerSpy: { navigate: ReturnType<typeof vi.fn> };
+  let clubServiceSpy: { createClub: ReturnType<typeof vi.fn> };
+  let authSpy: { currentUser: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-    clubServiceSpy = jasmine.createSpyObj('ClubService', ['createClub']);
-    authSpy = jasmine.createSpyObj('AuthService', [], { currentUser: jasmine.createSpy().and.returnValue(null) });
+    routerSpy = { navigate: vi.fn() };
+    clubServiceSpy = { createClub: vi.fn() };
+    authSpy = { currentUser: vi.fn().mockReturnValue(null) };
     TestBed.configureTestingModule({
       imports: [CreateClubComponent, TranslateModule.forRoot()],
       providers: [
@@ -34,25 +34,25 @@ describe('CreateClubComponent', () => {
   });
 
   it('initial state: form invalid, showAfterMeeting false, isSubmitting false', () => {
-    expect(component.form.valid).toBeFalse();
-    expect(component.showAfterMeeting()).toBeFalse();
-    expect(component.isSubmitting()).toBeFalse();
+    expect(component.form.valid).toBe(false);
+    expect(component.showAfterMeeting()).toBe(false);
+    expect(component.isSubmitting()).toBe(false);
   });
 
   it('togglePublic toggles isPublic', () => {
-    expect(component.form.controls.isPublic.value).toBeTrue();
+    expect(component.form.controls.isPublic.value).toBe(true);
     component.togglePublic();
-    expect(component.form.controls.isPublic.value).toBeFalse();
+    expect(component.form.controls.isPublic.value).toBe(false);
     component.togglePublic();
-    expect(component.form.controls.isPublic.value).toBeTrue();
+    expect(component.form.controls.isPublic.value).toBe(true);
   });
 
   it('toggleAfterMeeting toggles showAfterMeeting', () => {
-    expect(component.showAfterMeeting()).toBeFalse();
+    expect(component.showAfterMeeting()).toBe(false);
     component.toggleAfterMeeting();
-    expect(component.showAfterMeeting()).toBeTrue();
+    expect(component.showAfterMeeting()).toBe(true);
     component.toggleAfterMeeting();
-    expect(component.showAfterMeeting()).toBeFalse();
+    expect(component.showAfterMeeting()).toBe(false);
   });
 
   it('cancel navigates to /clubs', () => {
@@ -61,7 +61,7 @@ describe('CreateClubComponent', () => {
   });
 
   it('onSubmit with invalid form marks all as touched and does not call createClub', async () => {
-    spyOn(component.form, 'markAllAsTouched');
+    vi.spyOn(component.form, 'markAllAsTouched');
     await component.onSubmit();
     expect(component.form.markAllAsTouched).toHaveBeenCalled();
     expect(clubServiceSpy.createClub).not.toHaveBeenCalled();
@@ -71,7 +71,7 @@ describe('CreateClubComponent', () => {
     component.form.controls.name.setValue('Test Club');
     component.form.controls.city.setValue('Kyiv');
     component.form.controls.isPublic.setValue(true);
-    clubServiceSpy.createClub.and.returnValue(Promise.resolve({
+    clubServiceSpy.createClub.mockReturnValue(Promise.resolve({
       id: 'club-99',
       name: 'Test Club',
       description: null,
@@ -103,9 +103,9 @@ describe('CreateClubComponent', () => {
     component.form.controls.name.setValue('Test Club');
     component.form.controls.city.setValue('Kyiv');
     component.form.controls.isPublic.setValue(true);
-    clubServiceSpy.createClub.and.returnValue(Promise.reject(new Error('fail')));
+    clubServiceSpy.createClub.mockReturnValue(Promise.reject(new Error('fail')));
     await component.onSubmit();
     expect(component.errorMessage()).toBe('fail');
-    expect(component.isSubmitting()).toBeFalse();
+    expect(component.isSubmitting()).toBe(false);
   });
 });

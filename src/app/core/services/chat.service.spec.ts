@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection, WritableSignal } from '@angular/core';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ChatService } from './chat.service';
 import { ChatMessage, ChatRoom } from '../models/chat.model';
 import { environment } from '../../../environments/environment';
@@ -13,8 +14,8 @@ class MockWebSocket {
   onmessage: ((e: MessageEvent) => void) | null = null;
   onclose: (() => void) | null = null;
   onerror: (() => void) | null = null;
-  close = jasmine.createSpy('ws.close');
-  send = jasmine.createSpy('ws.send');
+  close = vi.fn();
+  send = vi.fn();
   constructor(public url: string) { MockWebSocket.instance = this; }
   simulateMessage(data: object) {
     this.onmessage?.(new MessageEvent('message', { data: JSON.stringify(data) }));
@@ -67,18 +68,17 @@ describe('ChatService', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).AudioContext = class {
       createOscillator() {
-        return { connect: jasmine.createSpy(), frequency: { value: 0 }, start: jasmine.createSpy(), stop: jasmine.createSpy() };
+        return { connect: vi.fn(), frequency: { value: 0 }, start: vi.fn(), stop: vi.fn() };
       }
       createGain() {
-        return { connect: jasmine.createSpy(), gain: { setValueAtTime: jasmine.createSpy(), exponentialRampToValueAtTime: jasmine.createSpy() } };
+        return { connect: vi.fn(), gain: { setValueAtTime: vi.fn(), exponentialRampToValueAtTime: vi.fn() } };
       }
       readonly currentTime = 0;
       readonly destination = {};
     };
 
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [provideZonelessChangeDetection(), ChatService],
+      providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), ChatService],
     });
     service = TestBed.inject(ChatService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -251,8 +251,8 @@ describe('ChatService', () => {
       const msgs = getActiveMessages(service);
       expect(msgs.length).toBe(1);
       expect(msgs[0].text).toBe('Hello world');
-      expect(msgs[0].id.startsWith('temp-')).toBeTrue();
-      expect(msgs[0].isOwn).toBeTrue();
+      expect(msgs[0].id.startsWith('temp-')).toBe(true);
+      expect(msgs[0].isOwn).toBe(true);
 
       // Flush POST to avoid "unexpected request" in afterEach
       httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush({
@@ -276,7 +276,7 @@ describe('ChatService', () => {
       const msgs = getActiveMessages(service);
       expect(msgs.length).toBe(1);
       expect(msgs[0].id).toBe('real-msg-id');
-      expect(msgs[0].id.startsWith('temp-')).toBeFalse();
+      expect(msgs[0].id.startsWith('temp-')).toBe(false);
     });
 
     it('removes the temp message when POST fails', async () => {
@@ -410,7 +410,7 @@ describe('ChatService', () => {
 
       await flushMicrotasks();
 
-      expect(getActiveMessages(service)[0].isOwn).toBeTrue();
+      expect(getActiveMessages(service)[0].isOwn).toBe(true);
     });
 
     it('gracefully handles failed club room requests', async () => {
@@ -453,13 +453,13 @@ describe('ChatService', () => {
   describe('muteUser() / unmuteUser()', () => {
     it('muteUser adds user to muted set', () => {
       service.muteUser('user-bad');
-      expect(service.mutedUserIds().has('user-bad')).toBeTrue();
+      expect(service.mutedUserIds().has('user-bad')).toBe(true);
     });
 
     it('unmuteUser removes user from muted set', () => {
       service.muteUser('user-bad');
       service.unmuteUser('user-bad');
-      expect(service.mutedUserIds().has('user-bad')).toBeFalse();
+      expect(service.mutedUserIds().has('user-bad')).toBe(false);
     });
 
     it('activeMessages() marks muted user messages', async () => {
@@ -476,7 +476,7 @@ describe('ChatService', () => {
       await Promise.resolve();
 
       service.muteUser('bad-user');
-      expect(getActiveMessages(service)[0].isMuted).toBeTrue();
+      expect(getActiveMessages(service)[0].isMuted).toBe(true);
     });
   });
 
@@ -626,7 +626,7 @@ describe('ChatService', () => {
       service.openAndFocusRoom(room);
 
       expect(getActiveRoomId(service)).toBe('room-1');
-      expect(getIsOpen(service)).toBeTrue();
+      expect(getIsOpen(service)).toBe(true);
       expect(getUnreadCount(service)).toBe(0);
 
       httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([]);
@@ -663,7 +663,7 @@ describe('ChatService', () => {
       const room = await promise;
       expect(room.id).toBe('room-e1');
       expect(room.eventId).toBe('event-1');
-      expect(getRooms(service).some(r => r.id === 'room-e1')).toBeTrue();
+      expect(getRooms(service).some(r => r.id === 'room-e1')).toBe(true);
     });
   });
 
@@ -721,7 +721,7 @@ describe('ChatService', () => {
       });
 
       expect(getUnreadCount(service)).toBe(1);
-      expect(getHasNewMessage(service)).toBeTrue();
+      expect(getHasNewMessage(service)).toBe(true);
     });
 
     it('does NOT increment unreadCount when chat is open', () => {
@@ -743,7 +743,7 @@ describe('ChatService', () => {
       });
 
       expect(getUnreadCount(service)).toBe(0);
-      expect(getHasNewMessage(service)).toBeFalse();
+      expect(getHasNewMessage(service)).toBe(false);
     });
 
     it('disconnectRoom calls ws.close()', () => {
@@ -791,8 +791,8 @@ describe('ChatService', () => {
 
       // temp message replaced by WS echo
       const msgs = getActiveMessages(service);
-      expect(msgs.some(m => m.id.startsWith('temp-'))).toBeFalse();
-      expect(msgs.some(m => m.id === 'server-id')).toBeTrue();
+      expect(msgs.some(m => m.id.startsWith('temp-'))).toBe(false);
+      expect(msgs.some(m => m.id === 'server-id')).toBe(true);
 
       postReq.flush({ id: 'server-id', senderId: 'u1', senderName: 'Alice', text: 'Real text', timestamp: '2024-01-01T00:00:00Z' });
       await Promise.resolve();
@@ -801,7 +801,7 @@ describe('ChatService', () => {
     });
 
     it('disconnectRoom prevents reconnect by clearing _activeRoomToken', () => {
-      jasmine.clock().install();
+      vi.useFakeTimers();
       service.connectRoom('room-42', 'tok');
       const ws = MockWebSocket.instance;
       if (!ws) throw new Error('MockWebSocket not instantiated');
@@ -809,10 +809,10 @@ describe('ChatService', () => {
       service.disconnectRoom(); // clears _activeRoomToken
       ws.simulateClose();       // onclose fires, but _activeRoomToken is null → no setTimeout
 
-      jasmine.clock().tick(5_000);
+      vi.advanceTimersByTime(5_000);
       // No second WebSocket should have been created
       expect(MockWebSocket.instance).toBe(ws);
-      jasmine.clock().uninstall();
+      vi.useRealTimers();
     });
 
     it('onopen resets _reconnectDelay to 1000', () => {
@@ -838,20 +838,20 @@ describe('ChatService', () => {
     });
 
     it('onclose with active token triggers reconnect after delay', () => {
-      jasmine.clock().install();
+      vi.useFakeTimers();
       service.connectRoom('room-42', 'tok');
       const firstWs = MockWebSocket.instance;
       if (!firstWs) throw new Error('MockWebSocket not instantiated');
 
       firstWs.simulateClose(); // _activeRoomToken is set → setTimeout fires
 
-      jasmine.clock().tick(1_100); // exceed default 1000ms delay
+      vi.advanceTimersByTime(1_100); // exceed default 1000ms delay
 
       const secondWs = MockWebSocket.instance;
       expect(secondWs).not.toBe(firstWs); // new WebSocket created
       expect(secondWs?.url).toBe(`${WS_BASE}/chat/rooms/room-42`);
       expect(secondWs?.url).not.toContain('?');
-      jasmine.clock().uninstall();
+      vi.useRealTimers();
     });
 
     it('strips email domain from senderName when it contains @', () => {
@@ -887,7 +887,7 @@ describe('ChatService', () => {
         payload: { id: 'msg-x', senderId: 'other-user', senderName: 'Bob', text: 'Hi', timestamp: '2024-01-01T00:00:00Z' },
       });
       expect(getUnreadCount(service)).toBe(0);
-      expect(getHasNewMessage(service)).toBeFalse();
+      expect(getHasNewMessage(service)).toBe(false);
     });
 
     it('resumes unread counter after set back to false', () => {
@@ -902,7 +902,7 @@ describe('ChatService', () => {
         payload: { id: 'msg-y', senderId: 'other-user', senderName: 'Bob', text: 'Hey', timestamp: '2024-01-01T00:00:00Z' },
       });
       expect(getUnreadCount(service)).toBe(1);
-      expect(getHasNewMessage(service)).toBeTrue();
+      expect(getHasNewMessage(service)).toBe(true);
     });
 
     it('does not count own messages even when setChatsPage is false', () => {
@@ -1034,7 +1034,7 @@ describe('ChatService', () => {
 
       const items = service.activeMessagesWithDivider();
       expect(items.length).toBe(3); // msg-a + divider + msg-b
-      expect(items[1]).toEqual(jasmine.objectContaining({ isDivider: true }));
+      expect(items[1]).toEqual(expect.objectContaining({ isDivider: true }));
       expect((items[2] as { text: string }).text).toBe('Unread');
     });
   });
