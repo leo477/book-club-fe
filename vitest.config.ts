@@ -6,7 +6,14 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     coverage: {
-      exclude: ['src/test-setup.ts'],
+      provider: 'v8',
+      reporter: ['lcov', 'text-summary', 'html'],
+      reportsDirectory: 'coverage/book-club-fe',
+      exclude: [
+        'src/test-setup.ts',
+        'src/app/shared/spartan/**',
+        '**/*.spec.ts',
+      ],
     },
   },
 });
