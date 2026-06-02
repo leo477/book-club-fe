@@ -1,7 +1,7 @@
 import {
   Component, ChangeDetectionStrategy, input, signal, computed, inject, effect,
 } from '@angular/core';
-import { GoogleMap, MapMarker, MapDirectionsRenderer, MapDirectionsService } from '@angular/google-maps';
+import { GoogleMap, MapAdvancedMarker, MapDirectionsRenderer, MapDirectionsService } from '@angular/google-maps';
 import { TranslateModule } from '@ngx-translate/core';
 import { AfterMeetingVenue } from '../../../core/models/event.model';
 import { MapsConfigService } from '../../../core/services/maps-config.service';
@@ -10,7 +10,7 @@ import { MapsConfigService } from '../../../core/services/maps-config.service';
   selector: 'app-event-map',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [GoogleMap, MapMarker, MapDirectionsRenderer, TranslateModule],
+  imports: [GoogleMap, MapAdvancedMarker, MapDirectionsRenderer, TranslateModule],
   templateUrl: './event-map.component.html',
 })
 export class EventMapComponent {
@@ -29,7 +29,11 @@ export class EventMapComponent {
     return v?.lat != null && v?.lng != null ? { lat: v.lat, lng: v.lng } : null;
   });
   readonly mapsUrl = computed(() => `https://www.google.com/maps?q=${this.lat()},${this.lng()}`);
-  readonly mapOptions = computed<google.maps.MapOptions>(() => ({ clickableIcons: false, gestureHandling: 'cooperative' }));
+  readonly mapOptions = computed<google.maps.MapOptions>(() => ({
+    clickableIcons: false,
+    gestureHandling: 'cooperative',
+    mapId: this.maps.mapId() || 'DEMO_MAP_ID',
+  }));
   readonly directions = signal<google.maps.DirectionsResult | undefined>(undefined);
 
   constructor() {

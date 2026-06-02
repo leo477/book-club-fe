@@ -20,21 +20,25 @@ export class MapsConfigService {
   private readonly http = inject(HttpClient);
   private readonly loader = inject(MAPS_LOADER_FNS);
   private _loaded = signal(false);
+  private _mapId = signal('');
   readonly isLoaded = this._loaded.asReadonly();
+  readonly mapId = this._mapId.asReadonly();
 
   async load(): Promise<void> {
     try {
-      const { mapsApiKey } = await firstValueFrom(
-        this.http.get<{ mapsApiKey: string }>(`${environment.apiUrl}/config/maps-key`, {
+      const { mapsApiKey, mapsMapId } = await firstValueFrom(
+        this.http.get<{ mapsApiKey: string; mapsMapId: string }>(`${environment.apiUrl}/config/maps-key`, {
           context: new HttpContext()
             .set(SKIP_AUTH_REDIRECT, true)
             .set(SUPPRESS_ERROR_TOAST, true),
         }),
       );
       if (mapsApiKey) {
-        this.loader.setOptions({ key: mapsApiKey, v: 'weekly', libraries: ['maps', 'routes'] });
+        this.loader.setOptions({ key: mapsApiKey, v: 'weekly', libraries: ['maps', 'routes', 'marker'] });
         await this.loader.importLibrary('maps');
         await this.loader.importLibrary('routes');
+        await this.loader.importLibrary('marker');
+        this._mapId.set(mapsMapId ?? '');
         this._loaded.set(true);
       }
     } catch {
