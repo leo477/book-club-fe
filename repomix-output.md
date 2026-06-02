@@ -435,6 +435,7 @@ angular.json
 CLAUDE.md
 components.json
 eslint.config.js
+karma.conf.js
 package.json
 postcss.config.json
 README.md
