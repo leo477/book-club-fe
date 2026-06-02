@@ -19,12 +19,13 @@ import { ClubEvent } from '../../../core/models/event.model';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { EventCardComponent } from '../event-card/event-card.component';
 import { HlmSpinner } from '../../../shared/spartan/spinner/src';
+import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 
 @Component({
   selector: 'app-events-feed',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, TranslateModule, EmptyStateComponent, EventCardComponent, HlmSpinner, NgTemplateOutlet],
+  imports: [RouterLink, FormsModule, TranslateModule, EmptyStateComponent, EventCardComponent, HlmSpinner, NgTemplateOutlet, FormatDatePipe],
   templateUrl: './events-feed.component.html',
 })
 export class EventsFeedComponent implements OnInit {

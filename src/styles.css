@@ -6,7 +6,7 @@
 
 @theme {
   /* ── Fonts ──────────────────────────────────────────────────────────── */
-  --font-sans:    Inter, system-ui, sans-serif;
+  --font-sans:    Inter, system-ui, 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji', sans-serif;
   --font-display: "Playfair Display", Georgia, serif;
   --font-fantasy: Cinzel, serif;
 
