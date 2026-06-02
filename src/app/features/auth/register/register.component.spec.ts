@@ -8,7 +8,7 @@ import { SeoService } from '../../../core/services/seo.service';
 
 describe('RegisterComponent', () => {
   let component: RegisterComponent;
-  let authSpy: { signUp: ReturnType<typeof vi.fn> };
+  let authSpy: { signUp: ReturnType<typeof vi.fn>; isAuthenticated: ReturnType<typeof vi.fn> };
   let seoSpy: { setPageI18n: ReturnType<typeof vi.fn>; injectWebSiteJsonLd: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
