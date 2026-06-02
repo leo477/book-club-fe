@@ -120,6 +120,16 @@ describe('ClubService', () => {
       await promise;
     });
 
+    it('skips loadMyClubs when already loaded with empty clubs within TTL', async () => {
+      const load1 = service.ensureMyClubsLoaded();
+      httpMock.expectOne(`${environment.apiUrl}/clubs/my`).flush([]);
+      await load1;
+
+      await service.ensureMyClubsLoaded();
+      httpMock.expectNone(`${environment.apiUrl}/clubs/my`);
+      expect(service.myClubs().length).toBe(0);
+    });
+
     it('skips loadMyClubs when clubs are fresh and non-empty', async () => {
       const load1 = service.ensureMyClubsLoaded();
       const req1 = httpMock.expectOne(`${environment.apiUrl}/clubs/my`);

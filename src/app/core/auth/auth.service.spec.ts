@@ -55,6 +55,21 @@ describe('AuthService', () => {
     httpMock = TestBed.inject(HttpTestingController);
   }
 
+  describe('init() — no token, no session marker', () => {
+    beforeEach(() => {
+      localStorage.removeItem('bc_has_session');
+      setupTestbed();
+    });
+
+    it('skips refresh and sets isLoading false when marker is absent', async () => {
+      const { service } = buildService();
+      await service.init();
+      httpMock.expectNone(`${API}/auth/refresh`);
+      expect(service.isAuthenticated()).toBe(false);
+      expect(service.isLoading()).toBe(false);
+    });
+  });
+
   describe('init() — no token (silent refresh)', () => {
     beforeEach(() => {
       // Set session marker so AuthService.init() attempts the refresh call
@@ -107,6 +122,14 @@ describe('AuthService', () => {
       expect(service.isAuthenticated()).toBe(false);
       expect(service.isLoading()).toBe(false);
     });
+
+    it('refresh 401 → removes session marker', async () => {
+      const { service } = buildService();
+      const p = service.init();
+      httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
+      await p;
+      expect(localStorage.getItem('bc_has_session')).toBeNull();
+    });
   });
 
   describe('init() — existing token in memory', () => {
@@ -152,6 +175,15 @@ describe('AuthService', () => {
       expect(service.currentUser()?.id).toBe('u1');
     });
 
+    it('sets session marker on success', async () => {
+      localStorage.removeItem('bc_has_session');
+      const { service } = buildService();
+      const p = service.signIn('test@test.com', 'password');
+      httpMock.expectOne(`${API}/auth/login`).flush({ accessToken: 'tok', refreshToken: 'ref', user: rawProfile });
+      await p;
+      expect(localStorage.getItem('bc_has_session')).toBe('1');
+    });
+
     it('returns error on failure with detail format', async () => {
       const { service } = buildService();
       const p = service.signIn('bad@test.com', 'wrong');
@@ -194,6 +226,15 @@ describe('AuthService', () => {
       expect(tokenStoreSpy.set).toHaveBeenCalledWith('new-token');
     });
 
+    it('sets session marker on success', async () => {
+      localStorage.removeItem('bc_has_session');
+      const { service } = buildService();
+      const p = service.signUp('test@test.com', 'password', 'Name', 'user');
+      httpMock.expectOne(`${API}/auth/register`).flush({ accessToken: 'tok', refreshToken: 'ref', user: rawProfile });
+      await p;
+      expect(localStorage.getItem('bc_has_session')).toBe('1');
+    });
+
     it('returns error on failure', async () => {
       const { service } = buildService();
       const p = service.signUp('test@test.com', 'password', 'Name', 'user');
@@ -217,6 +258,15 @@ describe('AuthService', () => {
       expect(tokenStoreSpy.clear).toHaveBeenCalled();
       expect(service.currentUser()).toBeNull();
       expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
+    });
+
+    it('removes session marker on signOut', async () => {
+      localStorage.setItem('bc_has_session', '1');
+      const { service } = buildService();
+      const p = service.signOut();
+      httpMock.expectOne(`${API}/auth/logout`).flush({});
+      await p;
+      expect(localStorage.getItem('bc_has_session')).toBeNull();
     });
 
     it('still clears token even if logout request fails', async () => {
