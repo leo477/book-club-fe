@@ -1,9 +1,6 @@
-/**
- * Global test setup for Vitest.
- * Provides browser API stubs that jsdom does not implement.
- */
+import { vi } from 'vitest';
 
-// matchMedia stub — required by ThemeService; vi.fn() satisfies no-empty-function
+// matchMedia stub — required by ThemeService
 Object.defineProperty(window, 'matchMedia', {
   writable: true,
   value: (query: string) => ({

@@ -153,7 +153,7 @@ describe('BookAutocompleteComponent', () => {
 
     it('Enter does nothing when activeIndex is -1', () => {
       component.activeIndex.set(-1);
-      const selectSpy = vi.spyOn(component, 'select').mockImplementation(() => {});
+      const selectSpy = vi.spyOn(component, 'select').mockImplementation(() => undefined);
       component.onKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
       expect(selectSpy).not.toHaveBeenCalled();
     });
