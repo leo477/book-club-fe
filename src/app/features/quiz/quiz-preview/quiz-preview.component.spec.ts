@@ -8,9 +8,9 @@ const mockQuestion: QuizQuestion = { id: 'qq1', quizId: 'q1', question: 'Q?', op
 
 function makeQuizService() {
   return {
-    getQuiz: jasmine.createSpy('getQuiz').and.returnValue(Promise.resolve(mockQuiz)),
-    getQuestions: jasmine.createSpy('getQuestions').and.returnValue(Promise.resolve([mockQuestion])),
-    toggleActive: jasmine.createSpy('toggleActive').and.returnValue(Promise.resolve()),
+    getQuiz: vi.fn().mockResolvedValue(mockQuiz),
+    getQuestions: vi.fn().mockResolvedValue([mockQuestion]),
+    toggleActive: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -45,7 +45,7 @@ describe('QuizPreviewComponent', () => {
       const { comp } = await setup();
       await new Promise<void>(r => setTimeout(r));
       const c = comp as unknown as { currentIndex: { update: (fn: (i: number) => number) => void; (): number }; isFirstQuestion: () => boolean; prev(): void };
-      expect(c.isFirstQuestion()).toBeTrue();
+      expect(c.isFirstQuestion()).toBe(true);
       c.prev();
       expect(c.currentIndex()).toBe(0);
     });
@@ -54,7 +54,7 @@ describe('QuizPreviewComponent', () => {
       const { comp } = await setup();
       await new Promise<void>(r => setTimeout(r));
       const c = comp as unknown as { isLastQuestion: () => boolean; next(): void; currentIndex: () => number };
-      expect(c.isLastQuestion()).toBeTrue();
+      expect(c.isLastQuestion()).toBe(true);
       c.next();
       expect(c.currentIndex()).toBe(0);
     });
@@ -71,12 +71,12 @@ describe('QuizPreviewComponent', () => {
 
     it('sets errorMessage on failure', async () => {
       const { comp, quizSvc } = await setup();
-      quizSvc.toggleActive.and.returnValue(Promise.reject(new Error('fail')));
+      quizSvc.toggleActive.mockReturnValue(Promise.reject(new Error('fail')));
       const c = comp as unknown as { activateQuiz(): void; errorMessage: () => string; isActivating: () => boolean };
       c.activateQuiz();
       await new Promise<void>(r => setTimeout(r));
       expect(c.errorMessage()).toBe('fail');
-      expect(c.isActivating()).toBeFalse();
+      expect(c.isActivating()).toBe(false);
     });
   });
 });

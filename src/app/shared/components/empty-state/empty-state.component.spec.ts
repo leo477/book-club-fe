@@ -30,6 +30,6 @@ describe('EmptyStateComponent', () => {
     let clicked = false;
     fixture.componentInstance.actionClick.subscribe(() => (clicked = true));
     fixture.componentInstance.actionClick.emit();
-    expect(clicked).toBeTrue();
+    expect(clicked).toBe(true);
   });
 });

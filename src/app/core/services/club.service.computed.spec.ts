@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ClubService } from './club.service';
 import { AuthService } from '../auth/auth.service';
 import { Club } from '../models/club.model';
@@ -22,17 +23,18 @@ function makeApiClub(overrides: Record<string, unknown> = {}) {
 
 describe('ClubService – computed signals and additional methods', () => {
   let service: ClubService;
-  let authSpy: jasmine.SpyObj<AuthService>;
+  let authSpy: { currentUser: ReturnType<typeof vi.fn> };
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    authSpy = jasmine.createSpyObj('AuthService', [], {
-      currentUser: jasmine.createSpy().and.returnValue({ id: 'user-1', displayName: 'Test', role: 'organizer' }),
-    });
+    authSpy = {
+      currentUser: vi.fn().mockReturnValue({ id: 'user-1', displayName: 'Test', role: 'organizer' }),
+    };
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
       providers: [
         provideZonelessChangeDetection(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         ClubService,
         { provide: AuthService, useValue: authSpy },
       ],
@@ -49,7 +51,7 @@ describe('ClubService – computed signals and additional methods', () => {
       httpMock.expectOne(`${API}/clubs`).flush([makeApiClub()]);
       await p;
       expect(service.clubs().length).toBe(1);
-      expect(service.isLoading()).toBeFalse();
+      expect(service.isLoading()).toBe(false);
     });
 
     it('sets error on failure', async () => {
@@ -112,7 +114,7 @@ describe('ClubService – computed signals and additional methods', () => {
 
     it('filters by description query', () => {
       service.setSearchQuery('alpha themed');
-      expect(service.filteredClubs().some(c => c.id === 'c3')).toBeTrue();
+      expect(service.filteredClubs().some(c => c.id === 'c3')).toBe(true);
     });
 
     it('returns all clubs when query is empty', () => {
@@ -141,7 +143,7 @@ describe('ClubService – computed signals and additional methods', () => {
 
     it('setCityFilter filters clubs by city', () => {
       service.setCityFilter('Lviv');
-      expect(service.filteredClubs().every(c => c.city === 'Lviv')).toBeTrue();
+      expect(service.filteredClubs().every(c => c.city === 'Lviv')).toBe(true);
     });
 
     it('setCityFilter(null) removes filter', () => {
@@ -185,15 +187,15 @@ describe('ClubService – computed signals and additional methods', () => {
     });
 
     it('myOwnedClubIds returns set of owned club ids', () => {
-      expect(service.myOwnedClubIds().has('c1')).toBeTrue();
-      expect(service.myOwnedClubIds().has('c2')).toBeFalse();
+      expect(service.myOwnedClubIds().has('c1')).toBe(true);
+      expect(service.myOwnedClubIds().has('c2')).toBe(false);
     });
 
     it('myClubIds reflects myClubs', async () => {
       const p = service.loadMyClubs();
       httpMock.expectOne(`${API}/clubs/my`).flush([makeApiClub({ id: 'c1' })]);
       await p;
-      expect(service.myClubIds().has('c1')).toBeTrue();
+      expect(service.myClubIds().has('c1')).toBe(true);
     });
   });
 
@@ -305,7 +307,7 @@ describe('ClubService – computed signals and additional methods', () => {
 
   describe('myOwnedClubs branch: no authenticated user', () => {
     it('returns empty array when currentUser is null', () => {
-      authSpy.currentUser.and.returnValue(null);
+      authSpy.currentUser.mockReturnValue(null);
       expect(service.myOwnedClubs()).toEqual([]);
     });
   });
@@ -318,7 +320,7 @@ describe('ClubService – computed signals and additional methods', () => {
       ]);
       await p;
       service.setSearchQuery('alpha');
-      expect(service.filteredClubs().some(c => c.id === 'c1')).toBeTrue();
+      expect(service.filteredClubs().some(c => c.id === 'c1')).toBe(true);
     });
 
     it('does not match query against null description', async () => {
@@ -355,7 +357,7 @@ describe('ClubService – computed signals and additional methods', () => {
       httpMock.expectOne(`${API}/clubs/my`).flush([makeApiClub({ id: 'c1' })]);
       await myP;
 
-      expect(service.myClubs().some(c => c.id === 'c1')).toBeTrue();
+      expect(service.myClubs().some(c => c.id === 'c1')).toBe(true);
 
       const deleteP = service.deleteClub('c1');
       const req = httpMock.expectOne(`${API}/clubs/c1`);
@@ -363,8 +365,8 @@ describe('ClubService – computed signals and additional methods', () => {
       req.flush(null);
       await deleteP;
 
-      expect(service.clubs().some(c => c.id === 'c1')).toBeFalse();
-      expect(service.myClubs().some(c => c.id === 'c1')).toBeFalse();
+      expect(service.clubs().some(c => c.id === 'c1')).toBe(false);
+      expect(service.myClubs().some(c => c.id === 'c1')).toBe(false);
     });
   });
 
@@ -394,7 +396,7 @@ describe('ClubService – computed signals and additional methods', () => {
       const myP = service.loadMyClubs();
       httpMock.expectOne(`${API}/clubs/my`).flush([makeApiClub({ id: 'c1' })]);
       await myP;
-      expect(service.myClubIds().has('c1')).toBeTrue();
+      expect(service.myClubIds().has('c1')).toBe(true);
 
       const joinP = service.joinClub('c1');
       httpMock.expectOne(`${API}/clubs/c1/join`).flush({ memberCount: 6 });

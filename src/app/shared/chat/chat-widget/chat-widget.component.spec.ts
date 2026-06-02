@@ -34,41 +34,41 @@ function makeChatService() {
     activeRoomId: signal<string | null>(null),
     presenceMap: signal(new Map<string, 'online' | 'offline'>()),
     roomUnreadCounts: signal<Record<string, number>>({}),
-    sendMessage: jasmine.createSpy('sendMessage'),
-    openRoom: jasmine.createSpy('openRoom'),
-    closeChat: jasmine.createSpy('closeChat'),
-    toggleChat: jasmine.createSpy('toggleChat'),
-    toggleOpen: jasmine.createSpy('toggleOpen'),
-    markAsRead: jasmine.createSpy('markAsRead'),
-    setChatsPage: jasmine.createSpy('setChatsPage'),
-    fetchUnreadCounts: jasmine.createSpy('fetchUnreadCounts'),
-    markRoomRead: jasmine.createSpy('markRoomRead'),
-    muteUser: jasmine.createSpy('muteUser'),
-    unmuteUser: jasmine.createSpy('unmuteUser'),
-    deleteMessage: jasmine.createSpy('deleteMessage'),
-    banUserFromChat: jasmine.createSpy('banUserFromChat'),
-    deleteRoom: jasmine.createSpy('deleteRoom').and.returnValue(Promise.resolve()),
-    createRoom: jasmine.createSpy('createRoom'),
-    clearRooms: jasmine.createSpy('clearRooms'),
-    loadAllClubRooms: jasmine.createSpy('loadAllClubRooms'),
-    connectRoom: jasmine.createSpy('connectRoom'),
-    disconnectRoom: jasmine.createSpy('disconnectRoom'),
+    sendMessage: vi.fn(),
+    openRoom: vi.fn(),
+    closeChat: vi.fn(),
+    toggleChat: vi.fn(),
+    toggleOpen: vi.fn(),
+    markAsRead: vi.fn(),
+    setChatsPage: vi.fn(),
+    fetchUnreadCounts: vi.fn(),
+    markRoomRead: vi.fn(),
+    muteUser: vi.fn(),
+    unmuteUser: vi.fn(),
+    deleteMessage: vi.fn(),
+    banUserFromChat: vi.fn(),
+    deleteRoom: vi.fn().mockResolvedValue(undefined),
+    createRoom: vi.fn(),
+    clearRooms: vi.fn(),
+    loadAllClubRooms: vi.fn(),
+    connectRoom: vi.fn(),
+    disconnectRoom: vi.fn(),
   };
 }
 
 function makeTokenStore(token: string | null = null) {
   return {
     token: signal<string | null>(token),
-    set: jasmine.createSpy('set'),
-    clear: jasmine.createSpy('clear'),
-    snapshot: jasmine.createSpy('snapshot').and.returnValue(token),
+    set: vi.fn(),
+    clear: vi.fn(),
+    snapshot: vi.fn().mockReturnValue(token),
   };
 }
 
 function makeClubService() {
   return {
     myClubs: signal<{ id: string; name: string; organizerId?: string }[]>([]),
-    loadMyClubs: jasmine.createSpy('loadMyClubs').and.returnValue(Promise.resolve()),
+    loadMyClubs: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -207,7 +207,7 @@ describe('ChatWidgetComponent', () => {
     const comp = fixture.componentInstance as unknown as CompProtected;
     comp.messageText.set('Hi');
     const event = new KeyboardEvent('keydown', { key: 'Enter', shiftKey: false });
-    spyOn(event, 'preventDefault');
+    vi.spyOn(event, 'preventDefault');
     comp.onKeydown(event);
     expect(event.preventDefault).toHaveBeenCalled();
     expect(chatSvc.sendMessage).toHaveBeenCalled();
@@ -287,10 +287,10 @@ describe('ChatWidgetComponent', () => {
     const comp = fixture.componentInstance as unknown as CompProtected;
     comp.newRoomName.set('some name');
     comp.toggleCreateRoom();
-    expect(comp.isCreatingRoom()).toBeTrue();
+    expect(comp.isCreatingRoom()).toBe(true);
     expect(comp.newRoomName()).toBe('');
     comp.toggleCreateRoom();
-    expect(comp.isCreatingRoom()).toBeFalse();
+    expect(comp.isCreatingRoom()).toBe(false);
   });
 
   it('submitCreateRoom does nothing when name is empty', () => {
@@ -320,7 +320,7 @@ describe('ChatWidgetComponent', () => {
     comp.submitCreateRoom();
     expect(chatSvc.createRoom).toHaveBeenCalledWith('club-1', 'New Room');
     expect(comp.newRoomName()).toBe('');
-    expect(comp.isCreatingRoom()).toBeFalse();
+    expect(comp.isCreatingRoom()).toBe(false);
   });
 
   it('onRoomNameKeydown submits on Enter', () => {
@@ -330,7 +330,7 @@ describe('ChatWidgetComponent', () => {
     comp.isCreatingRoom.set(true);
     comp.newRoomName.set('A Room');
     const event = new KeyboardEvent('keydown', { key: 'Enter' });
-    spyOn(event, 'preventDefault');
+    vi.spyOn(event, 'preventDefault');
     comp.onRoomNameKeydown(event);
     expect(event.preventDefault).toHaveBeenCalled();
     expect(chatSvc.createRoom).toHaveBeenCalled();
@@ -341,7 +341,7 @@ describe('ChatWidgetComponent', () => {
     const comp = fixture.componentInstance as unknown as CompProtected;
     comp.isCreatingRoom.set(true);
     comp.onRoomNameKeydown(new KeyboardEvent('keydown', { key: 'Escape' }));
-    expect(comp.isCreatingRoom()).toBeFalse();
+    expect(comp.isCreatingRoom()).toBe(false);
   });
 
   describe('Effect 1 — isBouncing', () => {
@@ -350,7 +350,7 @@ describe('ChatWidgetComponent', () => {
       const comp = fixture.componentInstance as unknown as CompProtected;
       chatSvc.hasNewMessage.set(true);
       TestBed.flushEffects();
-      expect(comp.isBouncing()).toBeTrue();
+      expect(comp.isBouncing()).toBe(true);
     });
 
     it('does not set isBouncing when hasNewMessage is false', () => {
@@ -358,7 +358,7 @@ describe('ChatWidgetComponent', () => {
       const comp = fixture.componentInstance as unknown as CompProtected;
       chatSvc.hasNewMessage.set(false);
       TestBed.flushEffects();
-      expect(comp.isBouncing()).toBeFalse();
+      expect(comp.isBouncing()).toBe(false);
     });
   });
 
@@ -367,7 +367,7 @@ describe('ChatWidgetComponent', () => {
       authSvc = makeAuthService({ currentUser: { id: 'u1', displayName: 'Alice' } });
       TestBed.overrideProvider(AuthService, { useValue: authSvc });
       TestBed.createComponent(ChatWidgetComponent);
-      chatSvc.clearRooms.calls.reset();
+      chatSvc.clearRooms.mockClear();
       authSvc.currentUser.set(null);
       TestBed.flushEffects();
       expect(chatSvc.clearRooms).toHaveBeenCalled();
@@ -437,14 +437,14 @@ describe('ChatWidgetComponent', () => {
     it('showingRoomList is false by default', () => {
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.showingRoomList()).toBeFalse();
+      expect(comp.showingRoomList()).toBe(false);
     });
 
     it('goToRoomList sets showingRoomList to true', () => {
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
       comp.goToRoomList();
-      expect(comp.showingRoomList()).toBeTrue();
+      expect(comp.showingRoomList()).toBe(true);
     });
 
     it('selectRoom calls chat.openRoom and sets showingRoomList to false', () => {
@@ -453,14 +453,14 @@ describe('ChatWidgetComponent', () => {
       comp.showingRoomList.set(true);
       comp.selectRoom('room-42');
       expect(chatSvc.openRoom).toHaveBeenCalledWith('room-42');
-      expect(comp.showingRoomList()).toBeFalse();
+      expect(comp.showingRoomList()).toBe(false);
     });
 
     it('shouldShowRoomList is true when showingRoomList is true', () => {
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
       comp.showingRoomList.set(true);
-      expect(comp.shouldShowRoomList()).toBeTrue();
+      expect(comp.shouldShowRoomList()).toBe(true);
     });
 
     it('shouldShowRoomList is true when >1 rooms and no activeRoomId', () => {
@@ -469,7 +469,7 @@ describe('ChatWidgetComponent', () => {
       chatSvc.activeRoomId.set(null);
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.shouldShowRoomList()).toBeTrue();
+      expect(comp.shouldShowRoomList()).toBe(true);
     });
 
     it('shouldShowRoomList is false when exactly 1 room', () => {
@@ -478,7 +478,7 @@ describe('ChatWidgetComponent', () => {
       chatSvc.activeRoomId.set(null);
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.shouldShowRoomList()).toBeFalse();
+      expect(comp.shouldShowRoomList()).toBe(false);
     });
   });
 
@@ -494,7 +494,7 @@ describe('ChatWidgetComponent', () => {
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
       TestBed.flushEffects();
-      expect(comp.showingRoomList()).toBeTrue();
+      expect(comp.showingRoomList()).toBe(true);
     });
 
     it('sets showingRoomList false when isOpen and exactly 1 room', () => {
@@ -508,7 +508,7 @@ describe('ChatWidgetComponent', () => {
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
       TestBed.flushEffects();
-      expect(comp.showingRoomList()).toBeFalse();
+      expect(comp.showingRoomList()).toBe(false);
     });
   });
 
@@ -516,7 +516,7 @@ describe('ChatWidgetComponent', () => {
     it('returns true on a non-club-detail URL', () => {
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.isFabVisible()).toBeTrue();
+      expect(comp.isFabVisible()).toBe(true);
     });
 
     it('returns false on a club detail URL /clubs/:id', () => {
@@ -525,7 +525,7 @@ describe('ChatWidgetComponent', () => {
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.isFabVisible()).toBeFalse();
+      expect(comp.isFabVisible()).toBe(false);
     });
 
     it('returns true on /clubs (list page, not a detail)', () => {
@@ -534,7 +534,7 @@ describe('ChatWidgetComponent', () => {
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.isFabVisible()).toBeTrue();
+      expect(comp.isFabVisible()).toBe(true);
     });
 
     it('returns true on /clubs/:id/subpage (nested path, not matched by regex)', () => {
@@ -543,7 +543,7 @@ describe('ChatWidgetComponent', () => {
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.isFabVisible()).toBeTrue();
+      expect(comp.isFabVisible()).toBe(true);
     });
 
     it('updates isFabVisible when router emits a NavigationEnd to a club detail URL', () => {
@@ -552,10 +552,10 @@ describe('ChatWidgetComponent', () => {
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.isFabVisible()).toBeTrue();
+      expect(comp.isFabVisible()).toBe(true);
       routerEvents$.next(Object.assign(new NavigationEnd(1, '/clubs/42', '/clubs/42')));
       TestBed.flushEffects();
-      expect(comp.isFabVisible()).toBeFalse();
+      expect(comp.isFabVisible()).toBe(false);
     });
 
     it('returns false on /chats page', () => {
@@ -564,7 +564,7 @@ describe('ChatWidgetComponent', () => {
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.isFabVisible()).toBeFalse();
+      expect(comp.isFabVisible()).toBe(false);
     });
   });
 
@@ -596,7 +596,7 @@ describe('ChatWidgetComponent', () => {
     it('calls chat.deleteRoom and reloads rooms when user and clubs exist', async () => {
       authSvc = makeAuthService({ currentUser: { id: 'u1', displayName: 'Alice' } });
       chatSvc = makeChatService();
-      chatSvc.deleteRoom = jasmine.createSpy('deleteRoom').and.returnValue(Promise.resolve());
+      chatSvc.deleteRoom = vi.fn().mockResolvedValue(undefined);
       clubSvc = makeClubService();
       clubSvc.myClubs.set([{ id: 'club-1', name: 'Club A' }]);
       TestBed.overrideProvider(AuthService, { useValue: authSvc });
@@ -612,7 +612,7 @@ describe('ChatWidgetComponent', () => {
     it('does not call loadAllClubRooms when clubs list is empty', async () => {
       authSvc = makeAuthService({ currentUser: { id: 'u1', displayName: 'Alice' } });
       chatSvc = makeChatService();
-      chatSvc.deleteRoom = jasmine.createSpy('deleteRoom').and.returnValue(Promise.resolve());
+      chatSvc.deleteRoom = vi.fn().mockResolvedValue(undefined);
       TestBed.overrideProvider(AuthService, { useValue: authSvc });
       TestBed.overrideProvider(ChatService, { useValue: chatSvc });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
@@ -624,7 +624,7 @@ describe('ChatWidgetComponent', () => {
     it('does not call loadAllClubRooms when user is null', async () => {
       // authSvc.currentUser is null by default
       chatSvc = makeChatService();
-      chatSvc.deleteRoom = jasmine.createSpy('deleteRoom').and.returnValue(Promise.resolve());
+      chatSvc.deleteRoom = vi.fn().mockResolvedValue(undefined);
       clubSvc = makeClubService();
       clubSvc.myClubs.set([{ id: 'club-1', name: 'Club A' }]);
       TestBed.overrideProvider(ChatService, { useValue: chatSvc });
@@ -637,11 +637,11 @@ describe('ChatWidgetComponent', () => {
 
     it('handles deleteRoom error gracefully without throwing', async () => {
       chatSvc = makeChatService();
-      chatSvc.deleteRoom = jasmine.createSpy('deleteRoom').and.returnValue(Promise.reject(new Error('net error')));
+      chatSvc.deleteRoom = vi.fn().mockRejectedValue(new Error('net error'));
       TestBed.overrideProvider(ChatService, { useValue: chatSvc });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as { deleteRoom(id: string): Promise<void> };
-      await expectAsync(comp.deleteRoom('room-bad')).toBeResolved();
+      await expect(comp.deleteRoom('room-bad')).resolves.not.toThrow();
     });
   });
 
@@ -679,7 +679,7 @@ describe('ChatWidgetComponent', () => {
       chatSvc.isOpen.set(true);
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
-      spyOn(comp, 'closeAndReturnFocus');
+      vi.spyOn(comp, 'closeAndReturnFocus');
       comp.onEscape();
       expect(comp.closeAndReturnFocus).toHaveBeenCalled();
     });
@@ -688,7 +688,7 @@ describe('ChatWidgetComponent', () => {
       chatSvc.isOpen.set(false);
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
-      spyOn(comp, 'closeAndReturnFocus');
+      vi.spyOn(comp, 'closeAndReturnFocus');
       comp.onEscape();
       expect(comp.closeAndReturnFocus).not.toHaveBeenCalled();
     });
@@ -728,7 +728,7 @@ describe('ChatWidgetComponent', () => {
     chatSvc.activeRoomId.set(null);
     const fixture = TestBed.createComponent(ChatWidgetComponent);
     const comp = fixture.componentInstance as unknown as CompProtected;
-    expect(comp.shouldShowRoomList()).toBeFalse();
+    expect(comp.shouldShowRoomList()).toBe(false);
   });
 
   it('Effect 1 — closes chat when navigating to /chats page', () => {
@@ -749,31 +749,31 @@ describe('ChatWidgetComponent', () => {
       const comp = fixture.componentInstance as unknown as CompProtected;
       expect(comp.messageText()).toBe('');
       // disabled = !messageText().trim() should be true when empty
-      expect(!comp.messageText().trim()).toBeTrue();
+      expect(!comp.messageText().trim()).toBe(true);
     });
 
     it('messageText signal with whitespace — send button remains logically disabled', () => {
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
       comp.messageText.set('   ');
-      expect(!comp.messageText().trim()).toBeTrue();
+      expect(!comp.messageText().trim()).toBe(true);
     });
 
     it('messageText signal with text — send button is logically enabled', () => {
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
       comp.messageText.set('Hello');
-      expect(!comp.messageText().trim()).toBeFalse();
+      expect(!comp.messageText().trim()).toBe(false);
     });
 
     it('messageText updates via set() and disabled state reflects new value', () => {
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(!comp.messageText().trim()).toBeTrue();
+      expect(!comp.messageText().trim()).toBe(true);
       comp.messageText.set('Hi there');
-      expect(!comp.messageText().trim()).toBeFalse();
+      expect(!comp.messageText().trim()).toBe(false);
       comp.messageText.set('');
-      expect(!comp.messageText().trim()).toBeTrue();
+      expect(!comp.messageText().trim()).toBe(true);
     });
   });
 });

@@ -66,8 +66,8 @@ jobs:
             ${{ runner.os }}-node20-
       - name: Install dependencies
         run: npm ci
-      - name: Run tests (ChromeHeadless)
-        run: npm run test:ci -- --code-coverage
+      - name: Run tests (Vitest)
+        run: npm run test:ci -- --coverage
       - name: Upload coverage artifact
         if: always()
         uses: actions/upload-artifact@v4

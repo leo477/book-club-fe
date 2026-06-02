@@ -17,11 +17,11 @@ const member = (overrides: Partial<ClubMemberDetail> = {}): ClubMemberDetail => 
 describe('ClubMembersListComponent', () => {
   let component: ClubMembersListComponent;
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
       imports: [ClubMembersListComponent, TranslateModule.forRoot()],
       providers: [provideZonelessChangeDetection()],
-    });
+    }).compileComponents();
     const fixture = TestBed.createComponent(ClubMembersListComponent);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('members', [member()]);
@@ -31,20 +31,21 @@ describe('ClubMembersListComponent', () => {
 
   describe('canSeeSocials', () => {
     it('returns true when socialsPublic is true', () => {
-      expect(component.canSeeSocials(member({ socialsPublic: true }))).toBeTrue();
+      expect(component.canSeeSocials(member({ socialsPublic: true }))).toBe(true);
     });
 
-    it('returns true when isOwner is true regardless of socialsPublic', () => {
+    it('returns true when isOwner is true regardless of socialsPublic', async () => {
+      await TestBed.compileComponents();
       const fixture = TestBed.createComponent(ClubMembersListComponent);
       fixture.componentRef.setInput('members', []);
       fixture.componentRef.setInput('clubBans', []);
       fixture.componentRef.setInput('isOwner', true);
       const c = fixture.componentInstance;
-      expect(c.canSeeSocials(member({ socialsPublic: false }))).toBeTrue();
+      expect(c.canSeeSocials(member({ socialsPublic: false }))).toBe(true);
     });
 
     it('returns false when socialsPublic is false and not owner', () => {
-      expect(component.canSeeSocials(member({ socialsPublic: false }))).toBeFalse();
+      expect(component.canSeeSocials(member({ socialsPublic: false }))).toBe(false);
     });
   });
 

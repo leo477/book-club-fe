@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { QuizService } from './quiz.service';
 import { environment } from '../../../environments/environment';
 
@@ -38,8 +39,7 @@ describe('QuizService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [provideZonelessChangeDetection(), QuizService],
+      providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), QuizService],
     });
     service = TestBed.inject(QuizService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -52,7 +52,7 @@ describe('QuizService', () => {
   it('starts with empty state', () => {
     expect(service.quizzes()).toEqual([]);
     expect(service.questions()).toEqual([]);
-    expect(service.isLoading()).toBeFalse();
+    expect(service.isLoading()).toBe(false);
     expect(service.activeQuiz()).toBeNull();
   });
 
@@ -64,15 +64,15 @@ describe('QuizService', () => {
       await p;
       expect(service.quizzes().length).toBe(1);
       expect(service.quizzes()[0].id).toBe('q1');
-      expect(service.quizzes()[0].isActive).toBeTrue();
+      expect(service.quizzes()[0].isActive).toBe(true);
     });
 
     it('sets isLoading during request', async () => {
       const p = service.loadQuizzes('c1');
-      expect(service.isLoading()).toBeTrue();
+      expect(service.isLoading()).toBe(true);
       httpMock.expectOne(`${API}/clubs/c1/quizzes`).flush([]);
       await p;
-      expect(service.isLoading()).toBeFalse();
+      expect(service.isLoading()).toBe(false);
     });
 
     it('throws on HTTP error', async () => {
@@ -81,7 +81,7 @@ describe('QuizService', () => {
         { detail: 'Not found' },
         { status: 404, statusText: 'Not Found' },
       );
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -127,7 +127,7 @@ describe('QuizService', () => {
         { detail: 'Error' },
         { status: 500, statusText: 'Error' },
       );
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -146,7 +146,7 @@ describe('QuizService', () => {
         {},
         { status: 500, statusText: 'Error' },
       );
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -171,7 +171,7 @@ describe('QuizService', () => {
         {},
         { status: 400, statusText: 'Bad Request' },
       );
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -192,7 +192,7 @@ describe('QuizService', () => {
         {},
         { status: 500, statusText: 'Error' },
       );
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -209,7 +209,7 @@ describe('QuizService', () => {
       expect(req.request.body).toEqual({ isActive: true });
       req.flush({});
       await p;
-      expect(service.quizzes()[0].isActive).toBeTrue();
+      expect(service.quizzes()[0].isActive).toBe(true);
     });
 
     it('throws on HTTP error', async () => {
@@ -218,7 +218,7 @@ describe('QuizService', () => {
         {},
         { status: 500, statusText: 'Error' },
       );
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -234,7 +234,7 @@ describe('QuizService', () => {
     it('throws on HTTP error', async () => {
       const p = service.getQuiz('q1');
       httpMock.expectOne(`${API}/quizzes/q1`).flush({}, { status: 404, statusText: 'Not Found' });
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -250,7 +250,7 @@ describe('QuizService', () => {
     it('throws on HTTP error', async () => {
       const p = service.getQuestions('q1');
       httpMock.expectOne(`${API}/quizzes/q1/questions`).flush({}, { status: 500, statusText: 'Error' });
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -273,7 +273,7 @@ describe('QuizService', () => {
     it('throws on HTTP error', async () => {
       const p = service.updateQuiz('q1', { title: 'X', description: '' });
       httpMock.expectOne(`${API}/quizzes/q1`).flush({}, { status: 500, statusText: 'Error' });
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -290,7 +290,7 @@ describe('QuizService', () => {
     it('throws on HTTP error', async () => {
       const p = service.updateQuestion('q1', 'qq1', { question: 'X' });
       httpMock.expectOne(`${API}/quizzes/q1/questions/qq1`).flush({}, { status: 500, statusText: 'Error' });
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -306,7 +306,7 @@ describe('QuizService', () => {
     it('throws on HTTP error', async () => {
       const p = service.deleteQuestion('q1', 'qq1');
       httpMock.expectOne(`${API}/quizzes/q1/questions/qq1`).flush({}, { status: 500, statusText: 'Error' });
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -323,7 +323,7 @@ describe('QuizService', () => {
     it('throws on HTTP error', async () => {
       const p = service.reorderQuestions('q1', ['qq1']);
       httpMock.expectOne(`${API}/quizzes/q1/questions/order`).flush({}, { status: 500, statusText: 'Error' });
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -347,7 +347,7 @@ describe('QuizService', () => {
     it('throws on HTTP error', async () => {
       const p = service.startSession('q1', 'e1');
       httpMock.expectOne(`${API}/quizzes/q1/sessions`).flush({}, { status: 500, statusText: 'Error' });
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -390,7 +390,7 @@ describe('QuizService', () => {
     it('throws on HTTP error', async () => {
       const p = service.getLeaderboard('q1', 's1');
       httpMock.expectOne(`${API}/quizzes/q1/sessions/s1/leaderboard`).flush({}, { status: 500, statusText: 'Error' });
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -407,7 +407,7 @@ describe('QuizService', () => {
     it('throws on HTTP error', async () => {
       const p = service.endSession('q1', 's1');
       httpMock.expectOne(`${API}/quizzes/q1/sessions/s1/close`).flush({}, { status: 500, statusText: 'Error' });
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -425,7 +425,7 @@ describe('QuizService', () => {
     it('throws on HTTP error', async () => {
       const p = service.getClubQuizzes('c1');
       httpMock.expectOne(`${API}/clubs/c1/quizzes`).flush({}, { status: 500, statusText: 'Error' });
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 
@@ -443,7 +443,7 @@ describe('QuizService', () => {
     it('throws on HTTP error', async () => {
       const p = service.loadClubEvents('c1');
       httpMock.expectOne(`${API}/clubs/c1/events`).flush({}, { status: 500, statusText: 'Error' });
-      await expectAsync(p).toBeRejectedWithError();
+      await expect(p).rejects.toThrow();
     });
   });
 });

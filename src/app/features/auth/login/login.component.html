@@ -45,15 +45,6 @@
                 <span>{{ errorMessage() }}</span>
               </div>
             }
-            @if (showRegisterHint()) {
-              <p class="text-sm text-center text-white/60 mt-2">
-                {{ 'AUTH.not_registered_yet' | translate }}
-                <a routerLink="/register" class="text-primary-400 hover:text-primary-300 hover:underline font-medium transition-colors">
-                  {{ 'AUTH.register_title' | translate }}
-                </a>
-              </p>
-            }
-
             <!-- Submit button -->
             <button
               hlmBtn

@@ -10,10 +10,8 @@ import { QuizQuestion } from '../../../core/models/quiz.model';
 function makeQuizService(questions: QuizQuestion[] = []) {
   return {
     questions: signal<QuizQuestion[]>(questions),
-    loadQuestions: jasmine.createSpy('loadQuestions').and.returnValue(Promise.resolve()),
-    submitAttempt: jasmine.createSpy('submitAttempt').and.returnValue(
-      Promise.resolve({ score: 3, total: 5, answers: [] }),
-    ),
+    loadQuestions: vi.fn().mockResolvedValue(undefined),
+    submitAttempt: vi.fn().mockResolvedValue({ score: 3, total: 5, answers: [] }),
   };
 }
 
@@ -88,7 +86,7 @@ describe('QuizTakeComponent', () => {
     await setup([]);
     // loadQuestions will resolve and questions signal will be updated by the service in real usage;
     // here we simulate by updating after load
-    quizSvc.loadQuestions.and.callFake(async () => {
+    quizSvc.loadQuestions.mockImplementation(async () => {
       quizSvc.questions.set(fakeQuestions);
     });
 
@@ -106,7 +104,7 @@ describe('QuizTakeComponent', () => {
       { id: 'q2', quizId: 'quiz-1', question: 'Q2?', options: ['X', 'Y', 'Z'], correctIndex: 1 },
     ];
     await setup(fakeQuestions);
-    quizSvc.loadQuestions.and.callFake(async () => quizSvc.questions.set(fakeQuestions));
+    quizSvc.loadQuestions.mockImplementation(async () => quizSvc.questions.set(fakeQuestions));
 
     const fixture = TestBed.createComponent(QuizTakeComponent);
     fixture.componentInstance.ngOnInit();
@@ -129,7 +127,7 @@ describe('QuizTakeComponent', () => {
       { id: 'q2', quizId: 'quiz-1', question: 'Q2?', options: ['X', 'Y'], correctIndex: 1 },
     ];
     await setup(fakeQuestions);
-    quizSvc.loadQuestions.and.callFake(async () => quizSvc.questions.set(fakeQuestions));
+    quizSvc.loadQuestions.mockImplementation(async () => quizSvc.questions.set(fakeQuestions));
 
     const fixture = TestBed.createComponent(QuizTakeComponent);
     fixture.componentInstance.ngOnInit();
@@ -153,7 +151,7 @@ describe('QuizTakeComponent', () => {
       { id: 'q2', quizId: 'quiz-1', question: 'Q2?', options: ['X', 'Y'], correctIndex: 1 },
     ];
     await setup(fakeQuestions);
-    quizSvc.loadQuestions.and.callFake(async () => quizSvc.questions.set(fakeQuestions));
+    quizSvc.loadQuestions.mockImplementation(async () => quizSvc.questions.set(fakeQuestions));
 
     const fixture = TestBed.createComponent(QuizTakeComponent);
     fixture.componentInstance.ngOnInit();
@@ -175,7 +173,7 @@ describe('QuizTakeComponent', () => {
       { id: 'q1', quizId: 'quiz-1', question: 'Q1?', options: ['A', 'B'], correctIndex: 0 },
     ];
     await setup(fakeQuestions);
-    quizSvc.loadQuestions.and.callFake(async () => quizSvc.questions.set(fakeQuestions));
+    quizSvc.loadQuestions.mockImplementation(async () => quizSvc.questions.set(fakeQuestions));
 
     const fixture = TestBed.createComponent(QuizTakeComponent);
     fixture.componentInstance.ngOnInit();

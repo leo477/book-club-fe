@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { UploadService } from './upload.service';
 import { environment } from '../../../environments/environment';
 
@@ -10,8 +11,7 @@ describe('UploadService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [provideZonelessChangeDetection(), UploadService],
+      providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), UploadService],
     });
     service = TestBed.inject(UploadService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -45,7 +45,7 @@ describe('UploadService', () => {
 
     const req = httpMock.expectOne(`${environment.apiUrl}/upload/cover`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body instanceof FormData).toBeTrue();
+    expect(req.request.body instanceof FormData).toBe(true);
     expect(req.request.body.get('file')).toBe(file);
 
     req.flush({ url: 'https://cdn.example.com/cover.jpg' });

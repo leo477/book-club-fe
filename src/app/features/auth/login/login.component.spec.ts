@@ -8,18 +8,15 @@ import { SeoService } from '../../../core/services/seo.service';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
-  let authSpy: jasmine.SpyObj<AuthService>;
-  let routerSpy: jasmine.SpyObj<Router>;
-  let seoSpy: jasmine.SpyObj<SeoService>;
+  let authSpy: { signIn: ReturnType<typeof vi.fn>; isAuthenticated: ReturnType<typeof vi.fn> };
+  let routerSpy: Router;
+  let seoSpy: { setPageI18n: ReturnType<typeof vi.fn>; injectWebSiteJsonLd: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    authSpy = jasmine.createSpyObj('AuthService', ['signIn']);
-    authSpy.signIn.and.returnValue(Promise.resolve({ error: null }));
+    authSpy = { signIn: vi.fn().mockResolvedValue({ error: null }), isAuthenticated: vi.fn().mockReturnValue(false) };
+    seoSpy = { setPageI18n: vi.fn(), injectWebSiteJsonLd: vi.fn() };
 
-    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-    seoSpy = jasmine.createSpyObj('SeoService', ['setPageI18n', 'injectWebSiteJsonLd']);
-
-    jasmine.clock().install();
+    vi.useFakeTimers();
 
     TestBed.configureTestingModule({
       imports: [LoginComponent, TranslateModule.forRoot()],
@@ -27,17 +24,18 @@ describe('LoginComponent', () => {
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: AuthService, useValue: authSpy },
-        { provide: Router, useValue: routerSpy },
         { provide: SeoService, useValue: seoSpy },
       ],
     });
 
     const fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
+    routerSpy = TestBed.inject(Router);
+    vi.spyOn(routerSpy, 'navigate').mockResolvedValue(true);
   });
 
   afterEach(() => {
-    jasmine.clock().uninstall();
+    vi.useRealTimers();
   });
 
   it('sets SEO in constructor', () => {
@@ -45,9 +43,9 @@ describe('LoginComponent', () => {
   });
 
   it('form is visible after 700ms', () => {
-    expect(component.formVisible()).toBeFalse();
-    jasmine.clock().tick(701);
-    expect(component.formVisible()).toBeTrue();
+    expect(component.formVisible()).toBe(false);
+    vi.advanceTimersByTime(701);
+    expect(component.formVisible()).toBe(true);
   });
 
   describe('onBookAnimationDone', () => {
@@ -62,7 +60,7 @@ describe('LoginComponent', () => {
       component.form.controls.email.setValue('');
       component.form.controls.password.setValue('');
       await component.onSubmit();
-      expect(component.form.touched).toBeTrue();
+      expect(component.form.touched).toBe(true);
       expect(authSpy.signIn).not.toHaveBeenCalled();
     });
 
@@ -70,22 +68,22 @@ describe('LoginComponent', () => {
       component.form.setValue({ email: 'test@test.com', password: 'password123' });
       await component.onSubmit();
       expect(authSpy.signIn).toHaveBeenCalledWith('test@test.com', 'password123');
-      expect(component.bookOpen()).toBeTrue();
+      expect(component.bookOpen()).toBe(true);
       expect(component.errorMessage()).toBeNull();
     });
 
     it('sets errorMessage when signIn fails', async () => {
-      authSpy.signIn.and.returnValue(Promise.resolve({ error: 'Invalid credentials' }));
+      authSpy.signIn.mockReturnValue(Promise.resolve({ error: 'Invalid credentials' }));
       component.form.setValue({ email: 'test@test.com', password: 'password123' });
       await component.onSubmit();
       expect(component.errorMessage()).toBe('AUTH.error_invalid_credentials');
-      expect(component.bookOpen()).toBeFalse();
+      expect(component.bookOpen()).toBe(false);
     });
 
     it('resets isSubmitting after submission', async () => {
       component.form.setValue({ email: 'test@test.com', password: 'password123' });
       await component.onSubmit();
-      expect(component.isSubmitting()).toBeFalse();
+      expect(component.isSubmitting()).toBe(false);
     });
   });
 });

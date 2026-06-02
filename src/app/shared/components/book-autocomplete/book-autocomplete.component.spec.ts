@@ -25,12 +25,14 @@ const nextTick = () => new Promise<void>(resolve => setTimeout(resolve, 50));
 describe('BookAutocompleteComponent', () => {
   let fixture: ComponentFixture<BookAutocompleteComponent>;
   let component: BookAutocompleteComponent;
-  let bookSearchSpy: jasmine.SpyObj<BookSearchService>;
+  let bookSearchSpy: { searchBooks: ReturnType<typeof vi.fn>; getBookDetails: ReturnType<typeof vi.fn> };
   let control: FormControl<string>;
 
   beforeEach(async () => {
-    bookSearchSpy = jasmine.createSpyObj('BookSearchService', ['searchBooks', 'getBookDetails']);
-    bookSearchSpy.searchBooks.and.returnValue(of([]));
+    bookSearchSpy = {
+      searchBooks: vi.fn().mockReturnValue(of([])),
+      getBookDetails: vi.fn(),
+    };
 
     await TestBed.configureTestingModule({
       imports: [BookAutocompleteComponent, ReactiveFormsModule, TranslateModule.forRoot()],
@@ -62,13 +64,13 @@ describe('BookAutocompleteComponent', () => {
   // ── Debounce / search ─────────────────────────────────────────────────────
   describe('search on value changes', () => {
     it('calls searchBooks for query >= 3 chars', async () => {
-      bookSearchSpy.searchBooks.and.returnValue(of([makeBook()]));
+      bookSearchSpy.searchBooks.mockReturnValue(of([makeBook()]));
       control.setValue('Ang');
       await nextTick();
       fixture.detectChanges();
       expect(bookSearchSpy.searchBooks).toHaveBeenCalledWith('Ang');
       expect(component.suggestions().length).toBe(1);
-      expect(component.isOpen()).toBeTrue();
+      expect(component.isOpen()).toBe(true);
     });
 
     it('does not call searchBooks for queries shorter than 3 chars', async () => {
@@ -78,24 +80,24 @@ describe('BookAutocompleteComponent', () => {
     });
 
     it('sets isLoading to false after search completes', async () => {
-      bookSearchSpy.searchBooks.and.returnValue(of([makeBook()]));
+      bookSearchSpy.searchBooks.mockReturnValue(of([makeBook()]));
       control.setValue('Ang');
       await nextTick();
-      expect(component.isLoading()).toBeFalse();
+      expect(component.isLoading()).toBe(false);
     });
 
     it('handles searchBooks error gracefully and clears suggestions', async () => {
-      bookSearchSpy.searchBooks.and.returnValue(throwError(() => new Error('network')));
+      bookSearchSpy.searchBooks.mockReturnValue(throwError(() => new Error('network')));
       control.setValue('Ang');
       await nextTick();
       fixture.detectChanges();
       expect(component.suggestions().length).toBe(0);
-      expect(component.isOpen()).toBeFalse();
-      expect(component.isLoading()).toBeFalse();
+      expect(component.isOpen()).toBe(false);
+      expect(component.isLoading()).toBe(false);
     });
 
     it('resets activeIndex to -1 on new results', async () => {
-      bookSearchSpy.searchBooks.and.returnValue(of([makeBook(), makeBook({ id: 'b2', title: 'Book 2' })]));
+      bookSearchSpy.searchBooks.mockReturnValue(of([makeBook(), makeBook({ id: 'b2', title: 'Book 2' })]));
       control.setValue('Ang');
       await nextTick();
       component.activeIndex.set(1);
@@ -108,7 +110,7 @@ describe('BookAutocompleteComponent', () => {
   // ── Keyboard navigation ───────────────────────────────────────────────────
   describe('keyboard navigation', () => {
     beforeEach(async () => {
-      bookSearchSpy.searchBooks.and.returnValue(of([
+      bookSearchSpy.searchBooks.mockReturnValue(of([
         makeBook({ id: 'b1', title: 'Book One' }),
         makeBook({ id: 'b2', title: 'Book Two' }),
         makeBook({ id: 'b3', title: 'Book Three' }),
@@ -144,22 +146,22 @@ describe('BookAutocompleteComponent', () => {
     it('Enter selects the active item', () => {
       component.activeIndex.set(1);
       const expectedBook = component.suggestions()[1]; // capture before select() clears suggestions
-      const selectSpy = spyOn(component, 'select').and.callThrough();
+      const selectSpy = vi.spyOn(component, 'select');
       component.onKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
       expect(selectSpy).toHaveBeenCalledWith(expectedBook);
     });
 
     it('Enter does nothing when activeIndex is -1', () => {
       component.activeIndex.set(-1);
-      const selectSpy = spyOn(component, 'select');
+      const selectSpy = vi.spyOn(component, 'select').mockImplementation(() => undefined);
       component.onKeydown(new KeyboardEvent('keydown', { key: 'Enter' }));
       expect(selectSpy).not.toHaveBeenCalled();
     });
 
     it('Escape closes the dropdown', () => {
-      expect(component.isOpen()).toBeTrue();
+      expect(component.isOpen()).toBe(true);
       component.onKeydown(new KeyboardEvent('keydown', { key: 'Escape' }));
-      expect(component.isOpen()).toBeFalse();
+      expect(component.isOpen()).toBe(false);
     });
 
     it('does nothing for other keys when closed', () => {
@@ -172,7 +174,7 @@ describe('BookAutocompleteComponent', () => {
   // ── select() ─────────────────────────────────────────────────────────────
   describe('select()', () => {
     it('sets control value and does not trigger another search', async () => {
-      bookSearchSpy.searchBooks.and.returnValue(of([makeBook()]));
+      bookSearchSpy.searchBooks.mockReturnValue(of([makeBook()]));
       control.setValue('Ang');
       await nextTick();
       expect(bookSearchSpy.searchBooks).toHaveBeenCalledTimes(1);
@@ -188,7 +190,7 @@ describe('BookAutocompleteComponent', () => {
       component.isOpen.set(true);
       component.select(makeBook());
       expect(component.suggestions().length).toBe(0);
-      expect(component.isOpen()).toBeFalse();
+      expect(component.isOpen()).toBe(false);
     });
 
     it('emits bookSelected output', () => {
@@ -207,7 +209,7 @@ describe('BookAutocompleteComponent', () => {
       const evt = new MouseEvent('click', { bubbles: true });
       Object.defineProperty(evt, 'target', { value: document.body, writable: false });
       component.onDocumentClick(evt);
-      expect(component.isOpen()).toBeFalse();
+      expect(component.isOpen()).toBe(false);
     });
 
     it('does not close dropdown when clicking inside', () => {
@@ -215,14 +217,14 @@ describe('BookAutocompleteComponent', () => {
       const evt = new MouseEvent('click', { bubbles: true });
       Object.defineProperty(evt, 'target', { value: fixture.nativeElement, writable: false });
       component.onDocumentClick(evt);
-      expect(component.isOpen()).toBeTrue();
+      expect(component.isOpen()).toBe(true);
     });
   });
 
   // ── Dropdown rendering ────────────────────────────────────────────────────
   describe('dropdown rendering', () => {
     it('renders list items for each suggestion', async () => {
-      bookSearchSpy.searchBooks.and.returnValue(of([
+      bookSearchSpy.searchBooks.mockReturnValue(of([
         makeBook({ id: 'b1', title: 'First Book' }),
         makeBook({ id: 'b2', title: 'Second Book' }),
       ]));

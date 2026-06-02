@@ -415,6 +415,7 @@ src/
     quiz-spec.helpers.ts
   index.html
   main.ts
+  test-setup.ts
 supabase/
   migrations/
     001_profiles.sql
@@ -432,27 +433,18 @@ supabase/
 .lighthouserc.json
 .lintstagedrc.cjs
 angular.json
-AUDIT-2026-05-25.md
-AUDIT-FIX-PLAN-2026-05-25.md
-audit-report.md
-bugs.md
 CLAUDE.md
 components.json
 eslint.config.js
-karma.conf.js
 package.json
-playwright.audit-current.config.ts
-playwright.md
-playwright.total-audit.config.ts
-playwright.vercel.config.ts
 postcss.config.json
 README.md
 repomix.config.json
-security-audit.md
 SECURITY.md
 sonar-project.properties
 tsconfig.app.json
 tsconfig.json
 tsconfig.spec.json
 vercel.json
+vitest.config.ts
 ```

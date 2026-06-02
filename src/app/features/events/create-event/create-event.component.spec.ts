@@ -14,15 +14,15 @@ import { TranslateModule } from '@ngx-translate/core';
 describe('CreateEventComponent', () => {
   let fixture: ComponentFixture<CreateEventComponent>;
   let component: CreateEventComponent;
-  let eventServiceSpy: jasmine.SpyObj<EventService>;
+  let eventServiceSpy: { createEvent: ReturnType<typeof vi.fn> };
   let router: Router;
 
   beforeEach(() => {
-    eventServiceSpy = jasmine.createSpyObj('EventService', ['createEvent']);
-    eventServiceSpy.createEvent.and.returnValue(Promise.resolve(makeEvent()));
+    eventServiceSpy = { createEvent: vi.fn().mockResolvedValue(makeEvent()) };
 
-    const geocodingSpy = jasmine.createSpyObj('GeocodingService', ['autocomplete$']);
-    geocodingSpy.autocomplete$.and.returnValue(of([]));
+    const geocodingSpy = {
+      autocomplete$: vi.fn().mockReturnValue(of([])),
+    };
 
     TestBed.configureTestingModule({
       imports: [CreateEventComponent, TranslateModule.forRoot()],
@@ -38,7 +38,7 @@ describe('CreateEventComponent', () => {
     });
 
     router = TestBed.inject(Router);
-    spyOn(router, 'navigate').and.returnValue(Promise.resolve(true));
+    vi.spyOn(router, 'navigate').mockResolvedValue(true);
 
     fixture = TestBed.createComponent(CreateEventComponent);
     component = fixture.componentInstance;
@@ -48,11 +48,11 @@ describe('CreateEventComponent', () => {
 
   describe('initial state', () => {
     it('form is invalid on init (required fields empty)', () => {
-      expect(component.form.invalid).toBeTrue();
+      expect(component.form.invalid).toBe(true);
     });
 
     it('isSubmitting defaults to false', () => {
-      expect(component.isSubmitting()).toBeFalse();
+      expect(component.isSubmitting()).toBe(false);
     });
 
     it('errorMessage defaults to null', () => {
@@ -60,7 +60,7 @@ describe('CreateEventComponent', () => {
     });
 
     it('showAfterVenue defaults to false', () => {
-      expect(component.showAfterVenue()).toBeFalse();
+      expect(component.showAfterVenue()).toBe(false);
     });
   });
 
@@ -96,7 +96,7 @@ describe('CreateEventComponent', () => {
   describe('toggleAfterVenue', () => {
     it('toggles showAfterVenue to true', () => {
       component.toggleAfterVenue();
-      expect(component.showAfterVenue()).toBeTrue();
+      expect(component.showAfterVenue()).toBe(true);
     });
 
     it('clears after-venue fields when toggled back to false', () => {
@@ -104,7 +104,7 @@ describe('CreateEventComponent', () => {
       component.form.controls.afterVenueName.setValue('Bar');
       component.form.controls.afterVenueAddress.setValue('Street 1');
       component.toggleAfterVenue();
-      expect(component.showAfterVenue()).toBeFalse();
+      expect(component.showAfterVenue()).toBe(false);
       expect(component.form.controls.afterVenueName.value).toBe('');
       expect(component.form.controls.afterVenueAddress.value).toBe('');
     });
@@ -125,7 +125,7 @@ describe('CreateEventComponent', () => {
     it('calls createEvent with clubId and form values when form is valid', async () => {
       fillValidForm();
       await component.onSubmit();
-      expect(eventServiceSpy.createEvent).toHaveBeenCalledWith('c1', jasmine.objectContaining({
+      expect(eventServiceSpy.createEvent).toHaveBeenCalledWith('c1', expect.objectContaining({
         title: 'Book Club Meetup',
         city: 'Kyiv',
       }));
@@ -139,7 +139,7 @@ describe('CreateEventComponent', () => {
 
     it('sets errorMessage on createEvent failure', async () => {
       fillValidForm();
-      eventServiceSpy.createEvent.and.returnValue(Promise.reject(new Error('Server error')));
+      eventServiceSpy.createEvent.mockRejectedValue(new Error('Server error'));
       await component.onSubmit();
       expect(component.errorMessage()).toBe('Failed to create event. Please try again.');
     });
@@ -147,14 +147,14 @@ describe('CreateEventComponent', () => {
     it('resets isSubmitting to false after completion', async () => {
       fillValidForm();
       await component.onSubmit();
-      expect(component.isSubmitting()).toBeFalse();
+      expect(component.isSubmitting()).toBe(false);
     });
 
     it('resets isSubmitting to false even on error', async () => {
       fillValidForm();
-      eventServiceSpy.createEvent.and.returnValue(Promise.reject(new Error('error')));
+      eventServiceSpy.createEvent.mockRejectedValue(new Error('error'));
       await component.onSubmit();
-      expect(component.isSubmitting()).toBeFalse();
+      expect(component.isSubmitting()).toBe(false);
     });
   });
 });

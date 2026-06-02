@@ -9,15 +9,14 @@ import { SeoService } from './seo.service';
 
 describe('SeoService', () => {
   let service: SeoService;
-  let titleSpy: jasmine.SpyObj<Title>;
-  let metaSpy: jasmine.SpyObj<Meta>;
-  let translateSpy: jasmine.SpyObj<TranslateService>;
+  let titleSpy: { setTitle: ReturnType<typeof vi.fn> };
+  let metaSpy: { updateTag: ReturnType<typeof vi.fn> };
+  let translateSpy: { instant: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    titleSpy = jasmine.createSpyObj('Title', ['setTitle']);
-    metaSpy = jasmine.createSpyObj('Meta', ['updateTag']);
-    translateSpy = jasmine.createSpyObj('TranslateService', ['instant']);
-    translateSpy.instant.and.callFake((key: string) => key);
+    titleSpy = { setTitle: vi.fn() };
+    metaSpy = { updateTag: vi.fn() };
+    translateSpy = { instant: vi.fn().mockImplementation((key: string) => key) };
 
     TestBed.configureTestingModule({
       providers: [
@@ -60,8 +59,8 @@ describe('SeoService', () => {
 
   it('setPage() does not set description tags when description is absent', () => {
     service.setPage({ title: 'My Page' });
-    const calls = metaSpy.updateTag.calls.all().map(c => c.args[0]);
-    expect(calls.some(c => 'name' in c && (c as { name: string }).name === 'description')).toBeFalse();
+    const calls = metaSpy.updateTag.mock.calls.map(c => c[0]);
+    expect(calls.some(c => 'name' in c && (c as { name: string }).name === 'description')).toBe(false);
   });
 
   it('setPage() sets canonical og:url and link element when canonical provided', () => {
@@ -110,7 +109,7 @@ describe('SeoService', () => {
   });
 
   it('injectWebSiteJsonLd() calls injectJsonLd', () => {
-    spyOn(service, 'injectJsonLd').and.callThrough();
+    vi.spyOn(service, 'injectJsonLd');
     service.injectWebSiteJsonLd();
     expect(service.injectJsonLd).toHaveBeenCalled();
   });
@@ -118,10 +117,10 @@ describe('SeoService', () => {
 
 describe('SeoService — bootstrapLocaleSync', () => {
   let service: SeoService;
-  let titleSpy: jasmine.SpyObj<Title>;
-  let metaSpy: jasmine.SpyObj<Meta>;
-  let translateSpy: jasmine.SpyObj<TranslateService>;
-  let routerSpy: jasmine.SpyObj<Router>;
+  let titleSpy: { setTitle: ReturnType<typeof vi.fn> };
+  let metaSpy: { updateTag: ReturnType<typeof vi.fn> };
+  let translateSpy: { instant: ReturnType<typeof vi.fn>; getDefaultLang: ReturnType<typeof vi.fn>; currentLang: string | undefined; onLangChange: EventEmitter<LangChangeEvent> };
+  let routerSpy: { navigate: ReturnType<typeof vi.fn>; events: ReturnType<Subject<unknown>['asObservable']> };
   let langChangeEmitter: EventEmitter<LangChangeEvent>;
   let routerEvents$: Subject<unknown>;
 
@@ -129,18 +128,18 @@ describe('SeoService — bootstrapLocaleSync', () => {
     langChangeEmitter = new EventEmitter<LangChangeEvent>();
     routerEvents$ = new Subject<unknown>();
 
-    titleSpy = jasmine.createSpyObj('Title', ['setTitle']);
-    metaSpy = jasmine.createSpyObj('Meta', ['updateTag']);
-    translateSpy = jasmine.createSpyObj(
-      'TranslateService',
-      ['instant', 'getDefaultLang'],
-      { currentLang, onLangChange: langChangeEmitter },
-    );
-    translateSpy.instant.and.callFake((key: string) => key);
-    translateSpy.getDefaultLang.and.returnValue('uk');
-    routerSpy = jasmine.createSpyObj('Router', ['navigate'], {
+    titleSpy = { setTitle: vi.fn() };
+    metaSpy = { updateTag: vi.fn() };
+    translateSpy = {
+      instant: vi.fn().mockImplementation((key: string) => key),
+      getDefaultLang: vi.fn().mockReturnValue('uk'),
+      currentLang,
+      onLangChange: langChangeEmitter,
+    };
+    routerSpy = {
+      navigate: vi.fn(),
       events: routerEvents$.asObservable(),
-    });
+    };
 
     TestBed.configureTestingModule({
       providers: [
@@ -165,37 +164,37 @@ describe('SeoService — bootstrapLocaleSync', () => {
   it('is idempotent — calling twice applies meta only once', () => {
     service.bootstrapLocaleSync();
     service.bootstrapLocaleSync();
-    const localeCalls = metaSpy.updateTag.calls.all()
-      .filter(c => (c.args[0] as Record<string, string>)['property'] === 'og:locale');
+    const localeCalls = metaSpy.updateTag.mock.calls
+      .filter((c: unknown[]) => (c[0] as Record<string, string>)['property'] === 'og:locale');
     expect(localeCalls.length).toBe(1);
   });
 
   it('updates html lang and og:locale on language change', () => {
     service.bootstrapLocaleSync();
-    metaSpy.updateTag.calls.reset();
+    metaSpy.updateTag.mockClear();
 
     langChangeEmitter.emit({ lang: 'uk', translations: {} });
 
     expect(document.documentElement.getAttribute('lang')).toBe('uk');
-    const localeCalls = metaSpy.updateTag.calls.all()
-      .filter(c => (c.args[0] as Record<string, string>)['property'] === 'og:locale');
+    const localeCalls = metaSpy.updateTag.mock.calls
+      .filter((c: unknown[]) => (c[0] as Record<string, string>)['property'] === 'og:locale');
     expect(localeCalls.length).toBeGreaterThan(0);
-    expect((localeCalls[0].args[0] as Record<string, string>)['content']).toBe('uk_UA');
+    expect((localeCalls[0][0] as Record<string, string>)['content']).toBe('uk_UA');
   });
 
   it('updates og:url on NavigationEnd router event', () => {
     service.bootstrapLocaleSync();
-    metaSpy.updateTag.calls.reset();
+    metaSpy.updateTag.mockClear();
 
     routerEvents$.next(new NavigationEnd(1, '/new-page', '/new-page'));
 
-    const ogUrlCalls = metaSpy.updateTag.calls.all()
-      .filter(c => (c.args[0] as Record<string, string>)['property'] === 'og:url');
+    const ogUrlCalls = metaSpy.updateTag.mock.calls
+      .filter((c: unknown[]) => (c[0] as Record<string, string>)['property'] === 'og:url');
     expect(ogUrlCalls.length).toBeGreaterThan(0);
   });
 
   it('sets title and og tags when translations resolve', () => {
-    translateSpy.instant.and.callFake((key: string) => {
+    translateSpy.instant.mockImplementation((key: string) => {
       const map: Record<string, string> = {
         'META.title': 'Book Club',
         'META.description': 'Read together',
@@ -211,35 +210,35 @@ describe('SeoService — bootstrapLocaleSync', () => {
 
     expect(titleSpy.setTitle).toHaveBeenCalledWith('Book Club');
     expect(metaSpy.updateTag).toHaveBeenCalledWith(
-      jasmine.objectContaining({ property: 'og:title', content: 'Book Club OG' }),
+      expect.objectContaining({ property: 'og:title', content: 'Book Club OG' }),
     );
     expect(metaSpy.updateTag).toHaveBeenCalledWith(
-      jasmine.objectContaining({ name: 'description', content: 'Read together' }),
+      expect.objectContaining({ name: 'description', content: 'Read together' }),
     );
     expect(metaSpy.updateTag).toHaveBeenCalledWith(
-      jasmine.objectContaining({ property: 'og:description', content: 'OG Read together' }),
+      expect.objectContaining({ property: 'og:description', content: 'OG Read together' }),
     );
   });
 
   it('falls back to title for og:title when META.ogTitle key not resolved', () => {
-    translateSpy.instant.and.callFake((key: string) =>
+    translateSpy.instant.mockImplementation((key: string) =>
       key === 'META.title' ? 'Book Club' : key,
     );
 
     service.bootstrapLocaleSync();
 
     expect(metaSpy.updateTag).toHaveBeenCalledWith(
-      jasmine.objectContaining({ property: 'og:title', content: 'Book Club' }),
+      expect.objectContaining({ property: 'og:title', content: 'Book Club' }),
     );
   });
 
   it('maps unknown lang to itself in og:locale', () => {
     service.bootstrapLocaleSync();
     langChangeEmitter.emit({ lang: 'fr', translations: {} });
-    const localeCalls = metaSpy.updateTag.calls.all()
-      .filter(c => (c.args[0] as Record<string, string>)['property'] === 'og:locale');
+    const localeCalls = metaSpy.updateTag.mock.calls
+      .filter((c: unknown[]) => (c[0] as Record<string, string>)['property'] === 'og:locale');
     const frCall = localeCalls.find(
-      c => (c.args[0] as Record<string, string>)['content'] === 'fr',
+      (c: unknown[]) => (c[0] as Record<string, string>)['content'] === 'fr',
     );
     expect(frCall).toBeDefined();
   });
@@ -247,19 +246,19 @@ describe('SeoService — bootstrapLocaleSync', () => {
 
 describe('SeoService — bootstrapLocaleSync with no currentLang', () => {
   it('falls back to getDefaultLang() when currentLang is undefined', () => {
-    const titleSpy = jasmine.createSpyObj('Title', ['setTitle']);
-    const metaSpy = jasmine.createSpyObj('Meta', ['updateTag']);
+    const titleSpy = { setTitle: vi.fn() };
+    const metaSpy = { updateTag: vi.fn() };
     const langChangeEmitter = new EventEmitter<LangChangeEvent>();
-    const translateSpy = jasmine.createSpyObj(
-      'TranslateService',
-      ['instant', 'getDefaultLang'],
-      { currentLang: undefined, onLangChange: langChangeEmitter },
-    );
-    translateSpy.instant.and.callFake((key: string) => key);
-    translateSpy.getDefaultLang.and.returnValue('uk');
-    const routerSpy = jasmine.createSpyObj('Router', ['navigate'], {
+    const translateSpy = {
+      instant: vi.fn().mockImplementation((key: string) => key),
+      getDefaultLang: vi.fn().mockReturnValue('uk'),
+      currentLang: undefined,
+      onLangChange: langChangeEmitter,
+    };
+    const routerSpy = {
+      navigate: vi.fn(),
       events: new Subject<unknown>().asObservable(),
-    });
+    };
 
     TestBed.configureTestingModule({
       providers: [

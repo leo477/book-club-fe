@@ -139,7 +139,7 @@ export class ClubService {
   }
 
   async ensureMyClubsLoaded(maxAgeMs = 30_000): Promise<void> {
-    if (Date.now() - this.myClubsLoadedAt < maxAgeMs && this._myClubs().length > 0) return;
+    if (this.myClubsLoadedAt > 0 && Date.now() - this.myClubsLoadedAt < maxAgeMs) return;
     await this.loadMyClubs();
   }
 

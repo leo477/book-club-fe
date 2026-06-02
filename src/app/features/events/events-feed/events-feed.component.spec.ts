@@ -9,19 +9,19 @@ import { makeClubEvent as makeEvent } from '../../../../testing/event-test.helpe
 
 function buildEventServiceMock() {
   return {
-    loadAllEvents: jasmine.createSpy().and.returnValue(Promise.resolve()),
-    loadMyEvents: jasmine.createSpy().and.returnValue(Promise.resolve()),
-    attendEvent: jasmine.createSpy().and.returnValue(Promise.resolve()),
-    cancelAttendance: jasmine.createSpy().and.returnValue(Promise.resolve()),
-    setCityFilter: jasmine.createSpy(),
-    groupedByDate: jasmine.createSpy().and.returnValue({}),
-    filteredAllEvents: jasmine.createSpy().and.returnValue([]),
-    myEvents: jasmine.createSpy().and.returnValue([]),
-    allEvents: jasmine.createSpy().and.returnValue([]),
-    isLoading: jasmine.createSpy().and.returnValue(false),
-    error: jasmine.createSpy().and.returnValue(null),
-    cityFilter: jasmine.createSpy().and.returnValue(null),
-    availableCities: jasmine.createSpy().and.returnValue([]),
+    loadAllEvents: vi.fn().mockResolvedValue(undefined),
+    loadMyEvents: vi.fn().mockResolvedValue(undefined),
+    attendEvent: vi.fn().mockResolvedValue(undefined),
+    cancelAttendance: vi.fn().mockResolvedValue(undefined),
+    setCityFilter: vi.fn(),
+    groupedByDate: vi.fn().mockReturnValue({}),
+    filteredAllEvents: vi.fn().mockReturnValue([]),
+    myEvents: vi.fn().mockReturnValue([]),
+    allEvents: vi.fn().mockReturnValue([]),
+    isLoading: vi.fn().mockReturnValue(false),
+    error: vi.fn().mockReturnValue(null),
+    cityFilter: vi.fn().mockReturnValue(null),
+    availableCities: vi.fn().mockReturnValue([]),
   };
 }
 
@@ -29,15 +29,15 @@ describe('EventsFeedComponent', () => {
   let fixture: ComponentFixture<EventsFeedComponent>;
   let component: EventsFeedComponent;
   let eventServiceMock: ReturnType<typeof buildEventServiceMock>;
-  let authSpy: jasmine.SpyObj<AuthService>;
+  let authSpy: { isAuthenticated: ReturnType<typeof vi.fn>; isOrganizer: ReturnType<typeof vi.fn>; currentUser: ReturnType<typeof vi.fn> };
 
   function setup(isAuthenticated = false) {
     eventServiceMock = buildEventServiceMock();
-    authSpy = jasmine.createSpyObj('AuthService', [], {
-      isAuthenticated: jasmine.createSpy().and.returnValue(isAuthenticated),
-      isOrganizer: jasmine.createSpy().and.returnValue(false),
-      currentUser: jasmine.createSpy().and.returnValue(null),
-    });
+    authSpy = {
+      isAuthenticated: vi.fn().mockReturnValue(isAuthenticated),
+      isOrganizer: vi.fn().mockReturnValue(false),
+      currentUser: vi.fn().mockReturnValue(null),
+    };
 
     TestBed.configureTestingModule({
       imports: [EventsFeedComponent, TranslateModule.forRoot()],
@@ -97,7 +97,7 @@ describe('EventsFeedComponent', () => {
 
     it('sets attendingEventId during the call and clears it after', async () => {
       let idDuringCall: unknown = null;
-      eventServiceMock.attendEvent.and.callFake(async (id: string) => {
+      eventServiceMock.attendEvent.mockImplementation(async (id: string) => {
         idDuringCall = component.attendingEventId();
         return id as unknown;
       });
@@ -107,7 +107,7 @@ describe('EventsFeedComponent', () => {
     });
 
     it('clears attendingEventId even when attendEvent throws', async () => {
-      eventServiceMock.attendEvent.and.returnValue(Promise.reject(new Error('Network error')));
+      eventServiceMock.attendEvent.mockReturnValue(Promise.reject(new Error('Network error')));
       await component.onAttend(makeEvent());
       expect(component.attendingEventId()).toBeNull();
     });
@@ -118,7 +118,7 @@ describe('EventsFeedComponent', () => {
 
     it('sets attendingEventId during the call and clears it after', async () => {
       let idDuringCall: unknown = null;
-      eventServiceMock.cancelAttendance.and.callFake(async (id: string) => {
+      eventServiceMock.cancelAttendance.mockImplementation(async (id: string) => {
         idDuringCall = component.attendingEventId();
         return id as unknown;
       });
@@ -128,7 +128,7 @@ describe('EventsFeedComponent', () => {
     });
 
     it('clears attendingEventId even when cancelAttendance throws', async () => {
-      eventServiceMock.cancelAttendance.and.returnValue(Promise.reject(new Error('Network error')));
+      eventServiceMock.cancelAttendance.mockReturnValue(Promise.reject(new Error('Network error')));
       await component.onCancelAttend(makeEvent());
       expect(component.attendingEventId()).toBeNull();
     });

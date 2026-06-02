@@ -82,7 +82,7 @@ describe('BookVoteSectionComponent', () => {
       c.addOption();
       const option = c.round()?.options[0] ?? { id: '', hasVoted: false, votes: 0 };
       c.toggleVote({ ...option, hasVoted: false });
-      expect(c.round()?.options[0].hasVoted).toBeTrue();
+      expect(c.round()?.options[0].hasVoted).toBe(true);
     });
 
     it('unvotes when hasVoted is true', async () => {
@@ -95,7 +95,7 @@ describe('BookVoteSectionComponent', () => {
       c.toggleVote({ ...option, hasVoted: false });
       const voted = c.round()?.options[0] ?? { id: '', hasVoted: true, votes: 1 };
       c.toggleVote({ ...voted, hasVoted: true });
-      expect(c.round()?.options[0].hasVoted).toBeFalse();
+      expect(c.round()?.options[0].hasVoted).toBe(false);
     });
   });
 

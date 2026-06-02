@@ -20,20 +20,20 @@ const mockClub: Club = {
 
 function buildClubServiceMock() {
   return {
-    loadPublicClubs: jasmine.createSpy().and.returnValue(Promise.resolve()),
-    loadMyClubs: jasmine.createSpy().and.returnValue(Promise.resolve()),
-    joinClub: jasmine.createSpy().and.returnValue(Promise.resolve()),
-    clubs: jasmine.createSpy().and.returnValue([]),
-    myClubs: jasmine.createSpy().and.returnValue([]),
-    isLoading: jasmine.createSpy().and.returnValue(false),
-    error: jasmine.createSpy().and.returnValue(null),
-    filteredClubs: jasmine.createSpy().and.returnValue([]),
-    myClubIds: jasmine.createSpy().and.returnValue(new Set()),
-    myOwnedClubIds: jasmine.createSpy().and.returnValue(new Set()),
-    availableCities: jasmine.createSpy().and.returnValue([]),
-    searchQuery: jasmine.createSpy().and.returnValue(''),
-    setSearchQuery: jasmine.createSpy(),
-    setCityFilter: jasmine.createSpy(),
+    loadPublicClubs: vi.fn().mockResolvedValue(undefined),
+    loadMyClubs: vi.fn().mockResolvedValue(undefined),
+    joinClub: vi.fn().mockResolvedValue(undefined),
+    clubs: vi.fn().mockReturnValue([]),
+    myClubs: vi.fn().mockReturnValue([]),
+    isLoading: vi.fn().mockReturnValue(false),
+    error: vi.fn().mockReturnValue(null),
+    filteredClubs: vi.fn().mockReturnValue([]),
+    myClubIds: vi.fn().mockReturnValue(new Set()),
+    myOwnedClubIds: vi.fn().mockReturnValue(new Set()),
+    availableCities: vi.fn().mockReturnValue([]),
+    searchQuery: vi.fn().mockReturnValue(''),
+    setSearchQuery: vi.fn(),
+    setCityFilter: vi.fn(),
   };
 }
 
@@ -41,18 +41,18 @@ describe('ClubsListComponent', () => {
   let fixture: ComponentFixture<ClubsListComponent>;
   let component: ClubsListComponent;
   let clubServiceMock: ReturnType<typeof buildClubServiceMock>;
-  let authSpy: jasmine.SpyObj<AuthService>;
-  let seoSpy: jasmine.SpyObj<SeoService>;
+  let authSpy: { currentUser: ReturnType<typeof vi.fn>; isAuthenticated: ReturnType<typeof vi.fn>; isOrganizer: ReturnType<typeof vi.fn>; userRole: ReturnType<typeof vi.fn> };
+  let seoSpy: { setPageI18n: ReturnType<typeof vi.fn>; injectWebSiteJsonLd: ReturnType<typeof vi.fn>; setPage: ReturnType<typeof vi.fn>; injectJsonLd: ReturnType<typeof vi.fn> };
 
   function setup(isAuthenticated = false) {
     clubServiceMock = buildClubServiceMock();
-    authSpy = jasmine.createSpyObj('AuthService', [], {
-      currentUser: jasmine.createSpy().and.returnValue(null),
-      isAuthenticated: jasmine.createSpy().and.returnValue(isAuthenticated),
-      isOrganizer: jasmine.createSpy().and.returnValue(false),
-      userRole: jasmine.createSpy().and.returnValue(null),
-    });
-    seoSpy = jasmine.createSpyObj('SeoService', ['setPageI18n', 'injectWebSiteJsonLd', 'setPage', 'injectJsonLd']);
+    authSpy = {
+      currentUser: vi.fn().mockReturnValue(null),
+      isAuthenticated: vi.fn().mockReturnValue(isAuthenticated),
+      isOrganizer: vi.fn().mockReturnValue(false),
+      userRole: vi.fn().mockReturnValue(null),
+    };
+    seoSpy = { setPageI18n: vi.fn(), injectWebSiteJsonLd: vi.fn(), setPage: vi.fn(), injectJsonLd: vi.fn() };
 
     TestBed.configureTestingModule({
       imports: [ClubsListComponent, TranslateModule.forRoot()],
@@ -113,7 +113,7 @@ describe('ClubsListComponent', () => {
 
     it('sets joiningClubId during join and clears after', async () => {
       let idDuringCall: unknown = null;
-      clubServiceMock.joinClub.and.callFake(async (id: string) => {
+      clubServiceMock.joinClub.mockImplementation(async (id: string) => {
         idDuringCall = component.joiningClubId();
         return id as unknown;
       });
@@ -123,7 +123,7 @@ describe('ClubsListComponent', () => {
     });
 
     it('clears joiningClubId even when joinClub throws', async () => {
-      clubServiceMock.joinClub.and.returnValue(Promise.reject(new Error('Network error')));
+      clubServiceMock.joinClub.mockReturnValue(Promise.reject(new Error('Network error')));
       await component.onJoin(mockClub);
       expect(component.joiningClubId()).toBeNull();
     });

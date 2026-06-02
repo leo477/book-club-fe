@@ -79,21 +79,12 @@
           "builder": "@angular/build:extract-i18n"
         },
         "test": {
-          "builder": "@angular/build:karma",
+          "builder": "@angular/build:unit-test",
           "options": {
-            "karmaConfig": "karma.conf.js",
-            "codeCoverageExclude": ["src/app/shared/spartan/**"],
+            "buildTarget": "book-club-fe:build:development",
             "tsConfig": "tsconfig.spec.json",
-            "inlineStyleLanguage": "scss",
-            "assets": [
-              {
-                "glob": "**/*",
-                "input": "public"
-              }
-            ],
-            "styles": [
-              "src/styles.css"
-            ]
+            "runner": "vitest",
+            "runnerConfig": "vitest.config.ts"
           }
         },
         "lint": {

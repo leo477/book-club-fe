@@ -42,6 +42,8 @@ export class AuthService {
   });
   readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
 
+  private static readonly SESSION_MARKER = 'bc_has_session';
+
   async init(): Promise<void> {
     const existingToken = this.tokenStore.snapshot();
     const skipCtx = new HttpContext().set(SKIP_AUTH_REDIRECT, true);
@@ -56,7 +58,7 @@ export class AuthService {
         ),
       );
       this._currentUser.set(raw ? mapUserProfile(raw) : null);
-    } else {
+    } else if (localStorage.getItem(AuthService.SESSION_MARKER)) {
       const refreshResp = await firstValueFrom(
         this.http
           .post<{ accessToken: string }>(
@@ -64,7 +66,10 @@ export class AuthService {
             {},
             { withCredentials: true, context: skipCtx },
           )
-          .pipe(catchError(() => of(null))),
+          .pipe(catchError(() => {
+            localStorage.removeItem(AuthService.SESSION_MARKER);
+            return of(null);
+          })),
       );
       if (refreshResp) {
         this.tokenStore.set(refreshResp.accessToken);
@@ -95,6 +100,7 @@ export class AuthService {
         }),
       );
       this.tokenStore.set(resp.accessToken);
+      localStorage.setItem(AuthService.SESSION_MARKER, '1');
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -108,6 +114,7 @@ export class AuthService {
         this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
       );
       this.tokenStore.set(resp.accessToken);
+      localStorage.setItem(AuthService.SESSION_MARKER, '1');
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -120,6 +127,7 @@ export class AuthService {
       await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
     } catch { /* ignore logout errors */ }
     this.tokenStore.clear();
+    localStorage.removeItem(AuthService.SESSION_MARKER);
     this._currentUser.set(null);
     this.router.navigate(['/login']);
   }

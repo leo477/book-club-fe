@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { GeocodingService, GeocodeSuggestion } from './geocoding.service';
 import { environment } from '../../../environments/environment';
 
@@ -17,8 +18,7 @@ describe('GeocodingService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [provideZonelessChangeDetection(), GeocodingService],
+      providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), GeocodingService],
     });
     service = TestBed.inject(GeocodingService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -92,7 +92,7 @@ describe('GeocodingService', () => {
       });
       httpMock.expectOne(r => r.url === DETAILS_BASE).error(new ErrorEvent('network'));
 
-      expect(errored).toBeTrue();
+      expect(errored).toBe(true);
 
       // session token should be unchanged because tap (which calls resetSessionToken) only runs on success
       let tokenAfter: string | null = null;

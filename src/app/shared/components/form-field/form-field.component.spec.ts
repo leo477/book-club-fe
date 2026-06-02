@@ -6,14 +6,14 @@ import { FormFieldComponent } from './form-field.component';
 import { of } from 'rxjs';
 
 describe('FormFieldComponent', () => {
-  let translateSpy: jasmine.SpyObj<TranslateService>;
+  let translateSpy: { instant: ReturnType<typeof vi.fn>; onLangChange: unknown; currentLang: string };
 
   function setup(control: FormControl<string | null>) {
-    translateSpy = jasmine.createSpyObj('TranslateService', ['instant'], {
+    translateSpy = {
+      instant: vi.fn().mockImplementation((key: string) => key),
       onLangChange: of({ lang: 'uk' }),
       currentLang: 'uk',
-    });
-    translateSpy.instant.and.callFake((key: string) => key);
+    };
 
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
@@ -35,20 +35,20 @@ describe('FormFieldComponent', () => {
   it('hasError is false when control is valid', () => {
     const ctrl = new FormControl('test@test.com', [Validators.required, Validators.email]);
     const component = setup(ctrl);
-    expect(component.hasError()).toBeFalse();
+    expect(component.hasError()).toBe(false);
   });
 
   it('hasError is false when control is invalid but not touched', () => {
     const ctrl = new FormControl('', [Validators.required]);
     const component = setup(ctrl);
-    expect(component.hasError()).toBeFalse();
+    expect(component.hasError()).toBe(false);
   });
 
   it('hasError is true when control is invalid and touched', () => {
     const ctrl = new FormControl('', [Validators.required]);
     ctrl.markAsTouched();
     const component = setup(ctrl);
-    expect(component.hasError()).toBeTrue();
+    expect(component.hasError()).toBe(true);
   });
 
   it('errorMessage returns empty string when no errors', () => {

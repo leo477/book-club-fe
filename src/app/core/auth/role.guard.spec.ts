@@ -38,7 +38,7 @@ describe('roleGuard', () => {
     });
 
     it('returns true when role matches', () => {
-      expect(runGuard('organizer')).toBeTrue();
+      expect(runGuard('organizer')).toBe(true);
     });
   });
 
@@ -63,7 +63,7 @@ describe('roleGuard', () => {
     it('returns UrlTree to /clubs when role does not match', () => {
       // eslint-disable-next-line rxjs-x/finnish
       const result = runGuard('organizer');
-      expect(result instanceof UrlTree).toBeTrue();
+      expect(result instanceof UrlTree).toBe(true);
       expect((result as UrlTree).toString()).toBe('/clubs');
     });
   });
@@ -91,21 +91,23 @@ describe('roleGuard', () => {
       });
     });
 
-    it('resolves to true after loading when role matches', (done) => {
-      (runGuard('organizer') as Observable<boolean | UrlTree>).subscribe((val) => {
-        expect(val).toBeTrue();
-        done();
-      });
-      loadingSignal.set(false);
-    });
+    it('resolves to true after loading when role matches', () =>
+      new Promise<void>((resolve) => {
+        (runGuard('organizer') as Observable<boolean | UrlTree>).subscribe((val) => {
+          expect(val).toBe(true);
+          resolve();
+        });
+        loadingSignal.set(false);
+      }));
 
-    it('resolves to UrlTree after loading when role does not match', (done) => {
-      roleSignal.set('user');
-      (runGuard('organizer') as Observable<boolean | UrlTree>).subscribe((val) => {
-        expect(val instanceof UrlTree).toBeTrue();
-        done();
-      });
-      loadingSignal.set(false);
-    });
+    it('resolves to UrlTree after loading when role does not match', () =>
+      new Promise<void>((resolve) => {
+        roleSignal.set('user');
+        (runGuard('organizer') as Observable<boolean | UrlTree>).subscribe((val) => {
+          expect(val instanceof UrlTree).toBe(true);
+          resolve();
+        });
+        loadingSignal.set(false);
+      }));
   });
 });

@@ -44,9 +44,10 @@ interface MockDirectionsResult {
 
 function setup(opts: { lat?: number | null; lng?: number | null; loaded?: boolean; afterVenue?: AfterMeetingVenue | null } = {}) {
   const fakeMaps = new FakeMapsConfigService();
-  const dirSpy = jasmine.createSpyObj<MapDirectionsService>('MapDirectionsService', ['route']);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  dirSpy.route.and.returnValue(of({ status: 'OK', result: { mockResult: true } } as any));
+  const dirSpy = {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    route: vi.fn().mockReturnValue(of({ status: 'OK', result: { mockResult: true } } as any)),
+  };
 
   TestBed.configureTestingModule({
     imports: [EventMapComponent, TranslateModule.forRoot()],
@@ -76,27 +77,27 @@ describe('EventMapComponent', () => {
   describe('isReady()', () => {
     it('is false when maps not loaded', () => {
       const { component } = setup({ loaded: false });
-      expect(component.isReady()).toBeFalse();
+      expect(component.isReady()).toBe(false);
     });
 
     it('is false when lat is null', () => {
       const { component } = setup({ lat: null });
-      expect(component.isReady()).toBeFalse();
+      expect(component.isReady()).toBe(false);
     });
 
     it('is false when lng is null', () => {
       const { component } = setup({ lng: null });
-      expect(component.isReady()).toBeFalse();
+      expect(component.isReady()).toBe(false);
     });
 
     it('is false when lat is provided but lng is null', () => {
       const { component } = setup({ lat: 50.45, lng: null });
-      expect(component.isReady()).toBeFalse();
+      expect(component.isReady()).toBe(false);
     });
 
     it('is true when maps loaded and lat/lng are valid', () => {
       const { component } = setup();
-      expect(component.isReady()).toBeTrue();
+      expect(component.isReady()).toBe(true);
     });
   });
 
@@ -172,14 +173,15 @@ describe('EventMapComponent', () => {
       const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1', lat: 49.0, lng: 32.0 };
       const { component } = setup({ afterVenue: venue });
       const result = component.directions() as MockDirectionsResult | undefined;
-      expect(result?.mockResult).toBeTrue();
+      expect(result?.mockResult).toBe(true);
     });
 
     it('directions stays undefined when status is OK but result is null', () => {
       const fakeMaps = new FakeMapsConfigService();
-      const dirSpy = jasmine.createSpyObj<MapDirectionsService>('MapDirectionsService', ['route']);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      dirSpy.route.and.returnValue(of({ status: 'OK', result: null } as any));
+      const dirSpy = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        route: vi.fn().mockReturnValue(of({ status: 'OK', result: null } as any)),
+      };
 
       TestBed.configureTestingModule({
         imports: [EventMapComponent, TranslateModule.forRoot()],
@@ -208,9 +210,10 @@ describe('EventMapComponent', () => {
 
     it('directions stays undefined on non-OK response', () => {
       const fakeMaps = new FakeMapsConfigService();
-      const dirSpy = jasmine.createSpyObj<MapDirectionsService>('MapDirectionsService', ['route']);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      dirSpy.route.and.returnValue(of({ status: 'NOT_FOUND', result: null } as any));
+      const dirSpy = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        route: vi.fn().mockReturnValue(of({ status: 'NOT_FOUND', result: null } as any)),
+      };
 
       TestBed.configureTestingModule({
         imports: [EventMapComponent, TranslateModule.forRoot()],

@@ -8,7 +8,7 @@ import { UploadService } from '../../../core/services/upload.service';
 
 function makeUploadService() {
   return {
-    uploadCover$: jasmine.createSpy('uploadCover$').and.returnValue(of('https://cdn.example.com/img.jpg')),
+    uploadCover$: vi.fn().mockReturnValue(of('https://cdn.example.com/img.jpg')),
   };
 }
 
@@ -53,22 +53,22 @@ describe('CoverUploadComponent', () => {
 
   it('showUrlInput starts false and toggles on button click', () => {
     const { comp } = createWithControl();
-    expect(comp.showUrlInput()).toBeFalse();
+    expect(comp.showUrlInput()).toBe(false);
     comp.showUrlInput.set(true);
-    expect(comp.showUrlInput()).toBeTrue();
+    expect(comp.showUrlInput()).toBe(true);
   });
 
   it('onFileSelected() sets uploadError and resets state on upload failure', () => {
-    uploadSvc.uploadCover$.and.returnValue(throwError(() => new Error('upload failed')));
+    uploadSvc.uploadCover$.mockReturnValue(throwError(() => new Error('upload failed')));
     const { comp } = createWithControl();
 
-    spyOn(URL, 'createObjectURL').and.returnValue('blob:fake');
+    vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:fake');
     const file = new File([''], 'cover.jpg', { type: 'image/jpeg' });
     const event = { target: { files: [file] } } as unknown as Event;
 
     comp.onFileSelected(event);
 
-    expect(comp.isUploading()).toBeFalse();
+    expect(comp.isUploading()).toBe(false);
     expect(comp.previewUrl()).toBeNull();
     expect(comp.uploadError()).toBeTruthy();
   });

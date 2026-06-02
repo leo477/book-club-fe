@@ -81,7 +81,14 @@ export class EventDetailComponent {
       if (!this._eventResource.hasValue()) return;
       const ev = this.event();
       if (ev && this.auth.currentUser()) {
-        this.chatService.getEventRoom(ev.id).then(room => this._eventRoom.set(room));
+        this.chatService.getEventRoom(ev.id).then(room => this._eventRoom.set(room)).catch((err: unknown) => {
+          const status = (err as { status?: number })?.status;
+          if (status === 403) {
+            this._eventRoom.set(null);
+          } else {
+            console.error('Failed to load event chat room', err);
+          }
+        });
       }
     });
   }

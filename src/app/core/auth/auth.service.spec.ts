@@ -1,6 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
 import { TokenStore } from './token.store';
@@ -24,8 +25,8 @@ function buildService() {
 }
 
 describe('AuthService', () => {
-  let routerSpy: jasmine.SpyObj<Router>;
-  let tokenStoreSpy: jasmine.SpyObj<TokenStore>;
+  let routerSpy: { navigate: ReturnType<typeof vi.fn> };
+  let tokenStoreSpy: { snapshot: ReturnType<typeof vi.fn>; set: ReturnType<typeof vi.fn>; clear: ReturnType<typeof vi.fn>; token: ReturnType<typeof vi.fn> };
   let httpMock: HttpTestingController;
 
   afterEach(() => {
@@ -33,31 +34,56 @@ describe('AuthService', () => {
   });
 
   function setupTestbed(tokenValue: string | null = null) {
-    routerSpy = jasmine.createSpyObj('Router', ['navigate']);
-    tokenStoreSpy = jasmine.createSpyObj('TokenStore', ['snapshot', 'set', 'clear'], {
-      token: jasmine.createSpy().and.returnValue(tokenValue),
-    });
-    tokenStoreSpy.snapshot.and.returnValue(tokenValue);
+    routerSpy = { navigate: vi.fn() };
+    tokenStoreSpy = {
+      token: vi.fn().mockReturnValue(tokenValue),
+      snapshot: vi.fn().mockReturnValue(tokenValue),
+      set: vi.fn(),
+      clear: vi.fn(),
+    };
 
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
       providers: [
         provideZonelessChangeDetection(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         AuthService,
         { provide: Router, useValue: routerSpy },
         { provide: TokenStore, useValue: tokenStoreSpy },
       ],
     });
-    const result = buildService();
-    httpMock = result.httpMock;
+    httpMock = TestBed.inject(HttpTestingController);
   }
 
+  describe('init() — no token, no session marker', () => {
+    beforeEach(() => {
+      localStorage.removeItem('bc_has_session');
+      setupTestbed();
+    });
+
+    it('skips refresh and sets isLoading false when marker is absent', async () => {
+      const { service } = buildService();
+      await service.init();
+      httpMock.expectNone(`${API}/auth/refresh`);
+      expect(service.isAuthenticated()).toBe(false);
+      expect(service.isLoading()).toBe(false);
+    });
+  });
+
   describe('init() — no token (silent refresh)', () => {
-    beforeEach(() => { setupTestbed(); });
+    beforeEach(() => {
+      // Set session marker so AuthService.init() attempts the refresh call
+      localStorage.setItem('bc_has_session', '1');
+      setupTestbed();
+    });
+
+    afterEach(() => {
+      localStorage.removeItem('bc_has_session');
+    });
 
     it('isLoading is true before init()', () => {
       const { service } = buildService();
-      expect(service.isLoading()).toBeTrue();
+      expect(service.isLoading()).toBe(true);
     });
 
     it('isOrganizer returns false when not logged in', async () => {
@@ -65,7 +91,7 @@ describe('AuthService', () => {
       const p = service.init();
       httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
       await p;
-      expect(service.isOrganizer()).toBeFalse();
+      expect(service.isOrganizer()).toBe(false);
     });
 
     it('userRole returns null when not authenticated', async () => {
@@ -85,7 +111,7 @@ describe('AuthService', () => {
       await p;
       expect(tokenStoreSpy.set).toHaveBeenCalledWith('refreshed-token');
       expect(service.currentUser()?.id).toBe('u1');
-      expect(service.isLoading()).toBeFalse();
+      expect(service.isLoading()).toBe(false);
     });
 
     it('refresh 401 → not authenticated + isLoading false', async () => {
@@ -93,8 +119,16 @@ describe('AuthService', () => {
       const p = service.init();
       httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
       await p;
-      expect(service.isAuthenticated()).toBeFalse();
-      expect(service.isLoading()).toBeFalse();
+      expect(service.isAuthenticated()).toBe(false);
+      expect(service.isLoading()).toBe(false);
+    });
+
+    it('refresh 401 → removes session marker', async () => {
+      const { service } = buildService();
+      const p = service.init();
+      httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
+      await p;
+      expect(localStorage.getItem('bc_has_session')).toBeNull();
     });
   });
 
@@ -103,7 +137,7 @@ describe('AuthService', () => {
 
     it('isLoading is true before init()', () => {
       const { service } = buildService();
-      expect(service.isLoading()).toBeTrue();
+      expect(service.isLoading()).toBe(true);
     });
 
     it('sets current user after /auth/me responds', async () => {
@@ -112,8 +146,8 @@ describe('AuthService', () => {
       httpMock.expectOne(`${API}/auth/me`).flush(rawProfile);
       await p;
       expect(service.currentUser()?.id).toBe('u1');
-      expect(service.isLoading()).toBeFalse();
-      expect(service.isAuthenticated()).toBeTrue();
+      expect(service.isLoading()).toBe(false);
+      expect(service.isAuthenticated()).toBe(true);
     });
 
     it('clears token and sets user null when /auth/me fails', async () => {
@@ -123,7 +157,7 @@ describe('AuthService', () => {
       await p;
       expect(tokenStoreSpy.clear).toHaveBeenCalled();
       expect(service.currentUser()).toBeNull();
-      expect(service.isLoading()).toBeFalse();
+      expect(service.isLoading()).toBe(false);
     });
   });
 
@@ -139,6 +173,15 @@ describe('AuthService', () => {
       expect(result.error).toBeNull();
       expect(tokenStoreSpy.set).toHaveBeenCalledWith('new-token');
       expect(service.currentUser()?.id).toBe('u1');
+    });
+
+    it('sets session marker on success', async () => {
+      localStorage.removeItem('bc_has_session');
+      const { service } = buildService();
+      const p = service.signIn('test@test.com', 'password');
+      httpMock.expectOne(`${API}/auth/login`).flush({ accessToken: 'tok', refreshToken: 'ref', user: rawProfile });
+      await p;
+      expect(localStorage.getItem('bc_has_session')).toBe('1');
     });
 
     it('returns error on failure with detail format', async () => {
@@ -183,6 +226,15 @@ describe('AuthService', () => {
       expect(tokenStoreSpy.set).toHaveBeenCalledWith('new-token');
     });
 
+    it('sets session marker on success', async () => {
+      localStorage.removeItem('bc_has_session');
+      const { service } = buildService();
+      const p = service.signUp('test@test.com', 'password', 'Name', 'user');
+      httpMock.expectOne(`${API}/auth/register`).flush({ accessToken: 'tok', refreshToken: 'ref', user: rawProfile });
+      await p;
+      expect(localStorage.getItem('bc_has_session')).toBe('1');
+    });
+
     it('returns error on failure', async () => {
       const { service } = buildService();
       const p = service.signUp('test@test.com', 'password', 'Name', 'user');
@@ -206,6 +258,15 @@ describe('AuthService', () => {
       expect(tokenStoreSpy.clear).toHaveBeenCalled();
       expect(service.currentUser()).toBeNull();
       expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
+    });
+
+    it('removes session marker on signOut', async () => {
+      localStorage.setItem('bc_has_session', '1');
+      const { service } = buildService();
+      const p = service.signOut();
+      httpMock.expectOne(`${API}/auth/logout`).flush({});
+      await p;
+      expect(localStorage.getItem('bc_has_session')).toBeNull();
     });
 
     it('still clears token even if logout request fails', async () => {
@@ -305,7 +366,7 @@ describe('AuthService', () => {
       const p = service.setSocialsPublic(true);
       httpMock.expectOne(`${API}/users/me/socials-visibility`).flush(rawProfile);
       await p;
-      expect(service.currentUser()?.socialsPublic).toBeTrue();
+      expect(service.currentUser()?.socialsPublic).toBe(true);
     });
 
     it('does nothing when user is null', async () => {

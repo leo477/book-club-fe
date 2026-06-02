@@ -7,9 +7,9 @@ import { QuizService } from '../../../core/services/quiz.service';
 
 function makeQuizService() {
   return {
-    createQuiz: jasmine.createSpy('createQuiz').and.returnValue(Promise.resolve({ id: 'q1' })),
-    addQuestion: jasmine.createSpy('addQuestion').and.returnValue(Promise.resolve()),
-    toggleActive: jasmine.createSpy('toggleActive').and.returnValue(Promise.resolve()),
+    createQuiz: vi.fn().mockResolvedValue({ id: 'q1' }),
+    addQuestion: vi.fn().mockResolvedValue(undefined),
+    toggleActive: vi.fn().mockResolvedValue(undefined),
   };
 }
 

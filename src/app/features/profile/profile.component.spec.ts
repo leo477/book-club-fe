@@ -24,16 +24,16 @@ function makeAuthService(overrides: Partial<{ displayName: string; role: string;
     isAuthenticated: signal(user !== null),
     isOrganizer: signal(user?.role === 'organizer'),
     userStats: signal(null),
-    updateRole: jasmine.createSpy('updateRole').and.returnValue(Promise.resolve()),
-    updateDisplayName: jasmine.createSpy('updateDisplayName').and.returnValue(Promise.resolve()),
-    updateSocials: jasmine.createSpy('updateSocials').and.returnValue(Promise.resolve()),
-    setSocialsPublic: jasmine.createSpy('setSocialsPublic').and.returnValue(Promise.resolve()),
+    updateRole: vi.fn().mockResolvedValue(undefined),
+    updateDisplayName: vi.fn().mockResolvedValue(undefined),
+    updateSocials: vi.fn().mockResolvedValue(undefined),
+    setSocialsPublic: vi.fn().mockResolvedValue(undefined),
   };
 }
 
 function makeSeoService() {
   return {
-    setPageI18n: jasmine.createSpy('setPageI18n'),
+    setPageI18n: vi.fn(),
   };
 }
 
@@ -95,7 +95,7 @@ describe('ProfileComponent', () => {
     };
 
     comp.nameForm.controls.displayName.setValue('');
-    expect(comp.nameForm.invalid).toBeTrue();
+    expect(comp.nameForm.invalid).toBe(true);
 
     await comp.saveName();
 
@@ -104,7 +104,7 @@ describe('ProfileComponent', () => {
 
   it('saveName() calls updateDisplayName and shows toast on success', async () => {
     await setup({ displayName: 'Alice' });
-    spyOn(toast, 'success');
+    vi.spyOn(toast, 'success');
     const fixture = TestBed.createComponent(ProfileComponent);
     fixture.detectChanges();
     const comp = fixture.componentInstance as unknown as {

@@ -1,26 +1,28 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { ClubService } from './club.service';
 import { AuthService } from '../auth/auth.service';
 import { environment } from '../../../environments/environment';
 
 describe('ClubService', () => {
   let service: ClubService;
-  let authSpy: jasmine.SpyObj<AuthService>;
+  let authSpy: { currentUser: ReturnType<typeof vi.fn> };
   let httpMock: HttpTestingController;
 
   beforeEach(() => {
-    authSpy = jasmine.createSpyObj('AuthService', [], {
-      currentUser: jasmine.createSpy().and.returnValue({ id: 'user-1', displayName: 'Test User', role: 'organizer' })
-    });
+    authSpy = {
+      currentUser: vi.fn().mockReturnValue({ id: 'user-1', displayName: 'Test User', role: 'organizer' }),
+    };
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
       providers: [
         provideZonelessChangeDetection(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         ClubService,
         { provide: AuthService, useValue: authSpy },
-      ]
+      ],
     });
     service = TestBed.inject(ClubService);
     httpMock = TestBed.inject(HttpTestingController);
@@ -118,6 +120,16 @@ describe('ClubService', () => {
       await promise;
     });
 
+    it('skips loadMyClubs when already loaded with empty clubs within TTL', async () => {
+      const load1 = service.ensureMyClubsLoaded();
+      httpMock.expectOne(`${environment.apiUrl}/clubs/my`).flush([]);
+      await load1;
+
+      await service.ensureMyClubsLoaded();
+      httpMock.expectNone(`${environment.apiUrl}/clubs/my`);
+      expect(service.myClubs().length).toBe(0);
+    });
+
     it('skips loadMyClubs when clubs are fresh and non-empty', async () => {
       const load1 = service.ensureMyClubsLoaded();
       const req1 = httpMock.expectOne(`${environment.apiUrl}/clubs/my`);
@@ -164,20 +176,20 @@ describe('ClubService', () => {
     });
 
     it('getClubById re-fetches after TTL expires', async () => {
-      jasmine.clock().install();
-      jasmine.clock().mockDate(new Date());
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date());
 
       const p1 = service.getClubById('club-1');
       httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(minimalApiClub);
       await p1;
 
-      jasmine.clock().tick(61_000);
+      vi.advanceTimersByTime(61_000);
 
       const p2 = service.getClubById('club-1');
       httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(minimalApiClub);
       const result = await p2;
 
-      jasmine.clock().uninstall();
+      vi.useRealTimers();
       expect(result?.id).toBe('club-1');
     });
 
@@ -261,7 +273,7 @@ describe('ClubService', () => {
     const club = await promise;
     expect(club.tags).toEqual(['tag1', 'tag2']);
     expect(club.meetingDurationMinutes).toBe(60);
-    expect(club.afterMeetingVenue).toEqual(jasmine.objectContaining({ name: 'Cafe' }));
+    expect(club.afterMeetingVenue).toEqual(expect.objectContaining({ name: 'Cafe' }));
   });
 
   it('getClubStats returns stats from API', async () => {

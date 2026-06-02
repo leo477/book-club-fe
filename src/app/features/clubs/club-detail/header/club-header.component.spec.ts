@@ -43,33 +43,33 @@ describe('ClubHeaderComponent', () => {
   });
 
   it('isMember input is reflected', () => {
-    expect(component.isMember()).toBeFalse();
+    expect(component.isMember()).toBe(false);
     fixture.componentRef.setInput('isMember', true);
-    expect(component.isMember()).toBeTrue();
+    expect(component.isMember()).toBe(true);
   });
 
   it('isOwner input is reflected', () => {
-    expect(component.isOwner()).toBeFalse();
+    expect(component.isOwner()).toBe(false);
     fixture.componentRef.setInput('isOwner', true);
-    expect(component.isOwner()).toBeTrue();
+    expect(component.isOwner()).toBe(true);
   });
 
   it('isAuthenticated input is reflected', () => {
-    expect(component.isAuthenticated()).toBeFalse();
+    expect(component.isAuthenticated()).toBe(false);
     fixture.componentRef.setInput('isAuthenticated', true);
-    expect(component.isAuthenticated()).toBeTrue();
+    expect(component.isAuthenticated()).toBe(true);
   });
 
   it('isActionLoading input is reflected', () => {
-    expect(component.isActionLoading()).toBeFalse();
+    expect(component.isActionLoading()).toBe(false);
     fixture.componentRef.setInput('isActionLoading', true);
-    expect(component.isActionLoading()).toBeTrue();
+    expect(component.isActionLoading()).toBe(true);
   });
 
   it('leave output emits when triggered', () => {
     let emitted = false;
     component.leave.subscribe(() => { emitted = true; });
     component.leave.emit();
-    expect(emitted).toBeTrue();
+    expect(emitted).toBe(true);
   });
 });
