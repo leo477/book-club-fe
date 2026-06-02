@@ -8,13 +8,12 @@ import { SeoService } from '../../../core/services/seo.service';
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
-  let authSpy: { signIn: ReturnType<typeof vi.fn> };
-  let routerSpy: { navigate: ReturnType<typeof vi.fn> };
+  let authSpy: { signIn: ReturnType<typeof vi.fn>; isAuthenticated: ReturnType<typeof vi.fn> };
+  let routerSpy: Router;
   let seoSpy: { setPageI18n: ReturnType<typeof vi.fn>; injectWebSiteJsonLd: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    authSpy = { signIn: vi.fn().mockResolvedValue({ error: null }) };
-    routerSpy = { navigate: vi.fn() };
+    authSpy = { signIn: vi.fn().mockResolvedValue({ error: null }), isAuthenticated: vi.fn().mockReturnValue(false) };
     seoSpy = { setPageI18n: vi.fn(), injectWebSiteJsonLd: vi.fn() };
 
     vi.useFakeTimers();
@@ -25,13 +24,14 @@ describe('LoginComponent', () => {
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: AuthService, useValue: authSpy },
-        { provide: Router, useValue: routerSpy },
         { provide: SeoService, useValue: seoSpy },
       ],
     });
 
     const fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
+    routerSpy = TestBed.inject(Router);
+    vi.spyOn(routerSpy, 'navigate').mockResolvedValue(true);
   });
 
   afterEach(() => {

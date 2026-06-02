@@ -12,7 +12,7 @@ describe('RegisterComponent', () => {
   let seoSpy: { setPageI18n: ReturnType<typeof vi.fn>; injectWebSiteJsonLd: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    authSpy = { signUp: vi.fn().mockResolvedValue({ error: null }) };
+    authSpy = { signUp: vi.fn().mockResolvedValue({ error: null }), isAuthenticated: vi.fn().mockReturnValue(false) };
     seoSpy = { setPageI18n: vi.fn(), injectWebSiteJsonLd: vi.fn() };
 
     vi.useFakeTimers();
