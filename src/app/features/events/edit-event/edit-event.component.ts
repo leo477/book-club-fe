@@ -195,12 +195,10 @@ export class EditEventComponent {
         lng: v.lng ?? null,
         theme: v.theme || null,
         tags,
-        durationMinutes: v.durationMinutes ?? null,
-        afterMeetingVenue,
-        coverUrl: v.coverUrl || null,
-        bookTitle: v.bookTitle || null,
+        duration_minutes: v.durationMinutes ?? null,
+        after_meeting_venue: afterMeetingVenue,
+        cover_url: v.coverUrl || null,
         google_book_id: v.googleBookId ?? null,
-        quizId: v.quizId ?? null,
         has_winner: v.hasWinner,
       });
       await this.router.navigate(['/events', this.id()]);

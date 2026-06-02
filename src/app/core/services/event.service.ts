@@ -24,6 +24,23 @@ export interface CreateEventPayload {
   has_winner?: boolean;
 }
 
+export interface UpdateEventPayload {
+  title?: string;
+  description?: string | null;
+  date?: string;
+  city?: string;
+  address?: string | null;
+  lat?: number | null;
+  lng?: number | null;
+  theme?: string | null;
+  tags?: string[];
+  duration_minutes?: number | null;
+  after_meeting_venue?: AfterMeetingVenue | null;
+  cover_url?: string | null;
+  google_book_id?: string | null;
+  has_winner?: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class EventService {
   private readonly http = inject(HttpClient);
@@ -138,7 +155,7 @@ export class EventService {
     this._updateEvent(updated);
   }
 
-  async updateEvent(eventId: string, payload: Partial<CreateEventPayload>): Promise<ClubEvent> {
+  async updateEvent(eventId: string, payload: UpdateEventPayload): Promise<ClubEvent> {
     const raw = await firstValueFrom(
       this.http.patch<ApiEvent>(`${environment.apiUrl}/events/${eventId}`, payload).pipe(map(mapEvent)),
     );
