@@ -19,7 +19,7 @@ This project uses **Repomix** to provide a full map of the codebase.
 - **Update context:** `npm run build-ctx`
 
 ## Testing & Linting
-- **Unit tests:** `npm run test` (Jest)
+- **Unit tests:** `npm run test` (Vitest)
 - **E2E tests:** Playwright (see docs)
 - **Lint:** `npm run lint`
 
