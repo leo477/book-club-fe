@@ -92,12 +92,16 @@ export class AuthService {
   ): Promise<{ error: string | null }> {
     try {
       const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/register`, {
-          email,
-          password,
-          displayName,
-          role,
-        }),
+        this.http.post<AuthResponse>(
+          `${environment.apiUrl}/auth/register`,
+          {
+            email,
+            password,
+            displayName,
+            role,
+          },
+          { withCredentials: true },
+        ),
       );
       this.tokenStore.set(resp.accessToken);
       localStorage.setItem(AuthService.SESSION_MARKER, '1');
@@ -111,7 +115,11 @@ export class AuthService {
   async signIn(email: string, password: string): Promise<{ error: string | null }> {
     try {
       const resp = await firstValueFrom(
-        this.http.post<AuthResponse>(`${environment.apiUrl}/auth/login`, { email, password }),
+        this.http.post<AuthResponse>(
+          `${environment.apiUrl}/auth/login`,
+          { email, password },
+          { withCredentials: true },
+        ),
       );
       this.tokenStore.set(resp.accessToken);
       localStorage.setItem(AuthService.SESSION_MARKER, '1');
@@ -124,7 +132,9 @@ export class AuthService {
 
   async signOut(): Promise<void> {
     try {
-      await firstValueFrom(this.http.post(`${environment.apiUrl}/auth/logout`, {}));
+      await firstValueFrom(
+        this.http.post(`${environment.apiUrl}/auth/logout`, {}, { withCredentials: true }),
+      );
     } catch { /* ignore logout errors */ }
     this.tokenStore.clear();
     localStorage.removeItem(AuthService.SESSION_MARKER);
