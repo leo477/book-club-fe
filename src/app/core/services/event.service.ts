@@ -19,9 +19,7 @@ export interface CreateEventPayload {
   afterMeetingVenue?: AfterMeetingVenue | null;
   coverUrl?: string | null;
   bookTitle?: string | null;
-  google_book_id?: string | null;
-  quizId?: string | null;
-  has_winner?: boolean;
+  googleBookId?: string | null;
 }
 
 export interface UpdateEventPayload {
@@ -49,7 +47,7 @@ export class EventService {
   private readonly _myEvents = signal<ClubEvent[]>([]);
   private readonly _isLoading = signal(false);
   private readonly _error = signal<string | null>(null);
-  private readonly _cityFilter = signal<string | null>(null);
+  private readonly _cityFilter = signal<string>('');
 
   readonly allEvents = this._allEvents.asReadonly();
   readonly myEvents = this._myEvents.asReadonly();
@@ -78,7 +76,7 @@ export class EventService {
     }, {});
   });
 
-  setCityFilter(city: string | null): void {
+  setCityFilter(city: string): void {
     this._cityFilter.set(city);
   }
 

@@ -14,6 +14,7 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/auth/auth.service';
 import { SeoService } from './core/services/seo.service';
+import { LanguageService } from './core/services/language.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -36,14 +37,16 @@ export const appConfig: ApplicationConfig = {
       const translate = inject(TranslateService);
       const seo = inject(SeoService);
       const appRef = inject(ApplicationRef);
+      const initialLang = inject(LanguageService).initialLang;
       await firstValueFrom(
-        translate.use('uk').pipe(
+        translate.use(initialLang).pipe(
           catchError(() => translate.use('en').pipe(catchError(() => of(null)))),
         ),
       );
       await firstValueFrom(
-        translate.reloadLang(translate.currentLang ?? 'uk').pipe(catchError(() => of(null))),
+        translate.reloadLang(translate.currentLang ?? initialLang).pipe(catchError(() => of(null))),
       );
+      document.documentElement.lang = translate.currentLang ?? initialLang;
       seo.bootstrapLocaleSync();
       appRef.tick();
     }),

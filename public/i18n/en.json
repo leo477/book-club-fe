@@ -357,6 +357,7 @@
     "no_my_events": "No events yet",
     "no_my_events_desc": "RSVP to events to see them here.",
     "create_event_cta": "+ New Event",
+    "choose_club_cta": "+ New Event in a club",
     "registration_closed": "Registration Closed",
     "event_auto_joined": "You've been added to the club and registered for the event",
     "editEvent": "Edit Event",

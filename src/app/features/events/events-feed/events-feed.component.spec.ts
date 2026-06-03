@@ -20,7 +20,7 @@ function buildEventServiceMock() {
     allEvents: vi.fn().mockReturnValue([]),
     isLoading: vi.fn().mockReturnValue(false),
     error: vi.fn().mockReturnValue(null),
-    cityFilter: vi.fn().mockReturnValue(null),
+    cityFilter: vi.fn().mockReturnValue(''),
     availableCities: vi.fn().mockReturnValue([]),
   };
 }

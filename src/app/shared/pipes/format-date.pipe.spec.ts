@@ -1,10 +1,20 @@
+import { TestBed } from '@angular/core/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { FormatDatePipe } from './format-date.pipe';
 
 describe('FormatDatePipe', () => {
   let pipe: FormatDatePipe;
+  let translate: { currentLang: string; defaultLang: string };
 
   beforeEach(() => {
-    pipe = new FormatDatePipe();
+    translate = { currentLang: 'uk', defaultLang: 'uk' };
+    TestBed.configureTestingModule({
+      providers: [
+        FormatDatePipe,
+        { provide: TranslateService, useValue: translate },
+      ],
+    });
+    pipe = TestBed.inject(FormatDatePipe);
   });
 
   it('should return em dash for null', () => {
@@ -23,5 +33,11 @@ describe('FormatDatePipe', () => {
     const result = pipe.transform('2024-01-15T10:00:00Z');
     expect(result).not.toBe('—');
     expect(result).toContain('2024');
+  });
+
+  it('should format in English when language is en', () => {
+    translate.currentLang = 'en';
+    const result = pipe.transform('2024-01-15T10:00:00Z');
+    expect(result).toContain('January');
   });
 });

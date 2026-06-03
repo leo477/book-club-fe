@@ -30,7 +30,7 @@
   </div>
 </aside>
 
-<main class="chats-main flex flex-col overflow-hidden">
+<section class="chats-main flex flex-col overflow-hidden">
   @if (chat.activeRoomId()) {
     @let activeRoom = chat.activeRoom();
     <div class="px-4 py-3 border-b border-[var(--color-sepia)] flex flex-col">
@@ -110,4 +110,4 @@
       {{ 'CHATS.select_room' | translate }}
     </div>
   }
-</main>
+</section>

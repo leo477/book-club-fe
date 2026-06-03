@@ -1,14 +1,14 @@
 @if (isLoading()) {
-  <main class="page-max-w px-6 py-8" aria-busy="true" aria-label="Loading club details">
+  <section class="page-max-w px-6 py-8" aria-busy="true" aria-label="Loading club details">
     <div class="animate-pulse space-y-4">
       <div class="h-56 bg-gray-200 dark:bg-gray-700 rounded-2xl"></div>
       <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
       <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
       <div class="h-4 w-3/4 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
     </div>
-  </main>
+  </section>
 } @else if (errorMessage()) {
-  <main class="page-max-w px-6 py-8 text-center" role="alert">
+  <section class="page-max-w px-6 py-8 text-center" role="alert">
     <p class="text-6xl mb-4" aria-hidden="true">😕</p>
     <h2 class="text-2xl font-semibold text-gray-900 dark:text-white mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
     <p class="text-gray-500 dark:text-gray-400 mb-6">{{ (isClubMissing() ? 'CLUB_DETAIL.not_found_desc' : 'CLUB_DETAIL.load_failed') | translate }}</p>
@@ -19,9 +19,9 @@
     >
       ← {{ 'CLUB_DETAIL.back' | translate }}
     </a>
-  </main>
+  </section>
 } @else if (club()) {
-  <main class="min-h-screen">
+  <section class="min-h-screen">
 
     <!-- Cover image + back navigation (full width) -->
     <div class="relative parchment-hero h-64">
@@ -333,5 +333,5 @@
       </div>
     </div>
 
-  </main>
+  </section>
 }

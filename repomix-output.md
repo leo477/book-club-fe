@@ -96,6 +96,7 @@ src/
         club.service.ts
         event.service.ts
         geocoding.service.ts
+        language.service.ts
         maps-config.service.ts
         quiz.service.ts
         randomizer.service.ts

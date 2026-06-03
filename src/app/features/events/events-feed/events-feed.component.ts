@@ -34,10 +34,16 @@ export class EventsFeedComponent implements OnInit {
   private readonly clubService = inject(ClubService);
   private readonly translate = inject(TranslateService);
 
+  readonly hasSingleOwnedClub = computed(() => this.clubService.myOwnedClubs().length === 1);
+
   readonly createEventLink = computed(() => {
     const owned = this.clubService.myOwnedClubs();
     return owned.length === 1 ? `/clubs/${owned[0].id}/events/create` : '/clubs';
   });
+
+  readonly createEventLabel = computed(() =>
+    this.hasSingleOwnedClub() ? 'EVENTS.create_event_cta' : 'EVENTS.choose_club_cta',
+  );
 
   readonly attendingEventId = signal<string | null>(null);
   readonly activeTab = signal<'upcoming' | 'my'>('upcoming');
