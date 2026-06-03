@@ -5,6 +5,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { EventMapComponent } from './event-map.component';
 import { MapsConfigService } from '../../../core/services/maps-config.service';
+import { GeocodingService } from '../../../core/services/geocoding.service';
 import { AfterMeetingVenue } from '../../../core/models/event.model';
 
 (globalThis as Record<string, unknown>)['google'] = {
@@ -45,8 +46,23 @@ interface MockDirectionsResult {
   mockResult: boolean;
 }
 
-function setup(opts: { lat?: number | null; lng?: number | null; loaded?: boolean; afterVenue?: AfterMeetingVenue | null } = {}) {
+class FakeGeocodingService {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  autocomplete$ = vi.fn().mockReturnValue(of([]));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  getPlaceDetails = vi.fn().mockReturnValue(of(null));
+  resetSessionToken = vi.fn();
+}
+
+function setup(opts: {
+  lat?: number | null;
+  lng?: number | null;
+  loaded?: boolean;
+  afterVenue?: AfterMeetingVenue | null;
+  geocodingStub?: Partial<FakeGeocodingService>;
+} = {}) {
   const fakeMaps = new FakeMapsConfigService();
+  const fakeGeocoding = Object.assign(new FakeGeocodingService(), opts.geocodingStub ?? {});
   const dirSpy = {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     route: vi.fn().mockReturnValue(of({ status: 'OK', result: { mockResult: true } } as any)),
@@ -58,6 +74,7 @@ function setup(opts: { lat?: number | null; lng?: number | null; loaded?: boolea
       provideZonelessChangeDetection(),
       { provide: MapsConfigService, useValue: fakeMaps },
       { provide: MapDirectionsService, useValue: dirSpy },
+      { provide: GeocodingService, useValue: fakeGeocoding },
     ],
 
   });
@@ -72,7 +89,7 @@ function setup(opts: { lat?: number | null; lng?: number | null; loaded?: boolea
   if (opts.afterVenue !== undefined) fixture.componentRef.setInput('afterMeetingVenue', opts.afterVenue);
   if (opts.loaded !== false) fakeMaps.setLoaded(true);
   fixture.detectChanges();
-  return { fixture, component: fixture.componentInstance, fakeMaps, dirSpy };
+  return { fixture, component: fixture.componentInstance, fakeMaps, dirSpy, fakeGeocoding };
 }
 
 describe('EventMapComponent', () => {
@@ -161,6 +178,54 @@ describe('EventMapComponent', () => {
     });
   });
 
+  describe('resolvedAfterVenuePos()', () => {
+    it('is null when no afterMeetingVenue', () => {
+      const { component } = setup();
+      expect(component.resolvedAfterVenuePos()).toBeNull();
+    });
+
+    it('uses direct coords when venue has lat/lng', () => {
+      const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1', lat: 50.1, lng: 30.2 };
+      const { component } = setup({ afterVenue: venue });
+      expect(component.resolvedAfterVenuePos()).toEqual({ lat: 50.1, lng: 30.2 });
+    });
+
+    it('geocodes address when venue has no lat/lng and maps is ready', () => {
+      const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1' };
+      const { component } = setup({
+        afterVenue: venue,
+        geocodingStub: {
+          autocomplete$: vi.fn().mockReturnValue(of([{ label: 'Street 1', city: null, country: null, lat: 49.5, lng: 31.1 }])),
+        },
+      });
+      expect(component.resolvedAfterVenuePos()).toEqual({ lat: 49.5, lng: 31.1 });
+    });
+
+    it('resolves via getPlaceDetails when autocomplete returns only place_id', () => {
+      const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1' };
+      const { component } = setup({
+        afterVenue: venue,
+        geocodingStub: {
+          autocomplete$: vi.fn().mockReturnValue(of([{ label: 'Street 1', city: null, country: null, lat: null, lng: null, place_id: 'abc' }])),
+          getPlaceDetails: vi.fn().mockReturnValue(of({ label: 'Street 1', city: null, country: null, lat: 49.5, lng: 31.1 })),
+        },
+      });
+      expect(component.resolvedAfterVenuePos()).toEqual({ lat: 49.5, lng: 31.1 });
+    });
+
+    it('is null when maps not ready even if address is set', () => {
+      const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1' };
+      const { component } = setup({ loaded: false, afterVenue: venue });
+      expect(component.resolvedAfterVenuePos()).toBeNull();
+    });
+
+    it('is null when autocomplete returns empty', () => {
+      const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1' };
+      const { component } = setup({ afterVenue: venue });
+      expect(component.resolvedAfterVenuePos()).toBeNull();
+    });
+  });
+
   describe('directions effect', () => {
     it('directions is undefined when not ready', () => {
       const { component } = setup({ loaded: false });
@@ -198,6 +263,7 @@ describe('EventMapComponent', () => {
           provideZonelessChangeDetection(),
           { provide: MapsConfigService, useValue: fakeMaps },
           { provide: MapDirectionsService, useValue: dirSpy },
+          { provide: GeocodingService, useValue: new FakeGeocodingService() },
         ],
 
       });
@@ -230,6 +296,7 @@ describe('EventMapComponent', () => {
           provideZonelessChangeDetection(),
           { provide: MapsConfigService, useValue: fakeMaps },
           { provide: MapDirectionsService, useValue: dirSpy },
+          { provide: GeocodingService, useValue: new FakeGeocodingService() },
         ],
 
       });
