@@ -74,6 +74,7 @@ describe('GeocodingService', () => {
       expect(req.request.method).toBe('GET');
       expect(req.request.params.get('place_id')).toBe('pid123');
       expect(req.request.params.get('session_token')).toBeTruthy();
+      expect(req.request.params.get('lang')).toBeTruthy();
       req.flush(resolvedSuggestion);
     });
 
