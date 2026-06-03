@@ -29,11 +29,14 @@ export class EventMapComponent {
     return v?.lat != null && v?.lng != null ? { lat: v.lat, lng: v.lng } : null;
   });
   readonly mapsUrl = computed(() => `https://www.google.com/maps?q=${this.lat()},${this.lng()}`);
-  readonly mapOptions = computed<google.maps.MapOptions>(() => ({
-    clickableIcons: false,
-    gestureHandling: 'cooperative',
-    mapId: this.maps.mapId() || 'DEMO_MAP_ID',
-  }));
+  readonly mapOptions = computed<google.maps.MapOptions>(() => {
+    const mapId = this.maps.mapId();
+    return {
+      clickableIcons: false,
+      gestureHandling: 'cooperative',
+      ...(mapId ? { mapId } : {}),
+    };
+  });
   readonly directions = signal<google.maps.DirectionsResult | undefined>(undefined);
 
   constructor() {
