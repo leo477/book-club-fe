@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { Component, Input, provideZonelessChangeDetection, signal } from '@angular/core';
-import { GoogleMap, MapAdvancedMarker, MapDirectionsRenderer, MapDirectionsService } from '@angular/google-maps';
+import { GoogleMap, MapAdvancedMarker, MapPolyline } from '@angular/google-maps';
 import { TranslateModule } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { EventMapComponent } from './event-map.component';
@@ -9,7 +9,10 @@ import { GeocodingService } from '../../../core/services/geocoding.service';
 import { AfterMeetingVenue } from '../../../core/models/event.model';
 
 (globalThis as Record<string, unknown>)['google'] = {
-  maps: { TravelMode: { WALKING: 'WALKING' } },
+  maps: {
+    TravelMode: { WALKING: 'WALKING' },
+    LatLngBounds: class { extend() { return this; } },
+  },
 };
 
 // eslint-disable-next-line @angular-eslint/component-selector
@@ -28,9 +31,10 @@ class StubMapAdvancedMarker {
 }
 
 // eslint-disable-next-line @angular-eslint/component-selector
-@Component({ selector: 'map-directions-renderer', template: '', standalone: true })
-class StubMapDirectionsRenderer {
-  @Input() directions: unknown;
+@Component({ selector: 'map-polyline', template: '', standalone: true })
+class StubMapPolyline {
+  @Input() path: unknown;
+  @Input() options: unknown;
 }
 
 class FakeMapsConfigService {
@@ -40,10 +44,6 @@ class FakeMapsConfigService {
   readonly mapId = this._mapId.asReadonly();
   setLoaded(v: boolean) { this._loaded.set(v); }
   setMapId(v: string) { this._mapId.set(v); }
-}
-
-interface MockDirectionsResult {
-  mockResult: boolean;
 }
 
 class FakeGeocodingService {
@@ -63,24 +63,18 @@ function setup(opts: {
 } = {}) {
   const fakeMaps = new FakeMapsConfigService();
   const fakeGeocoding = Object.assign(new FakeGeocodingService(), opts.geocodingStub ?? {});
-  const dirSpy = {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    route: vi.fn().mockReturnValue(of({ status: 'OK', result: { mockResult: true } } as any)),
-  };
 
   TestBed.configureTestingModule({
     imports: [EventMapComponent, TranslateModule.forRoot()],
     providers: [
       provideZonelessChangeDetection(),
       { provide: MapsConfigService, useValue: fakeMaps },
-      { provide: MapDirectionsService, useValue: dirSpy },
       { provide: GeocodingService, useValue: fakeGeocoding },
     ],
-
   });
   TestBed.overrideComponent(EventMapComponent, {
-    remove: { imports: [GoogleMap, MapAdvancedMarker, MapDirectionsRenderer] },
-    add: { imports: [StubGoogleMap, StubMapAdvancedMarker, StubMapDirectionsRenderer] },
+    remove: { imports: [GoogleMap, MapAdvancedMarker, MapPolyline] },
+    add: { imports: [StubGoogleMap, StubMapAdvancedMarker, StubMapPolyline] },
   });
 
   const fixture = TestBed.createComponent(EventMapComponent);
@@ -89,7 +83,7 @@ function setup(opts: {
   if (opts.afterVenue !== undefined) fixture.componentRef.setInput('afterMeetingVenue', opts.afterVenue);
   if (opts.loaded !== false) fakeMaps.setLoaded(true);
   fixture.detectChanges();
-  return { fixture, component: fixture.componentInstance, fakeMaps, dirSpy, fakeGeocoding };
+  return { fixture, component: fixture.componentInstance, fakeMaps, fakeGeocoding };
 }
 
 describe('EventMapComponent', () => {
@@ -226,94 +220,16 @@ describe('EventMapComponent', () => {
     });
   });
 
-  describe('directions effect', () => {
-    it('directions is undefined when not ready', () => {
-      const { component } = setup({ loaded: false });
-      expect(component.directions()).toBeUndefined();
-    });
-
-    it('directions is undefined when no afterVenuePos', () => {
+  describe('polylinePath()', () => {
+    it('returns null when no afterMeetingVenue', () => {
       const { component } = setup();
-      expect(component.directions()).toBeUndefined();
+      expect(component.polylinePath()).toBeNull();
     });
 
-    it('calls directionsService.route when ready and afterVenuePos is set', () => {
-      const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1', lat: 49.0, lng: 32.0 };
-      const { dirSpy } = setup({ afterVenue: venue });
-      expect(dirSpy.route).toHaveBeenCalled();
-    });
-
-    it('sets directions on OK response', () => {
+    it('returns [center, afterVenuePos] when venue has coords', () => {
       const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1', lat: 49.0, lng: 32.0 };
       const { component } = setup({ afterVenue: venue });
-      const result = component.directions() as MockDirectionsResult | undefined;
-      expect(result?.mockResult).toBe(true);
-    });
-
-    it('directions stays undefined when status is OK but result is null', () => {
-      const fakeMaps = new FakeMapsConfigService();
-      const dirSpy = {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        route: vi.fn().mockReturnValue(of({ status: 'OK', result: null } as any)),
-      };
-
-      TestBed.configureTestingModule({
-        imports: [EventMapComponent, TranslateModule.forRoot()],
-        providers: [
-          provideZonelessChangeDetection(),
-          { provide: MapsConfigService, useValue: fakeMaps },
-          { provide: MapDirectionsService, useValue: dirSpy },
-          { provide: GeocodingService, useValue: new FakeGeocodingService() },
-        ],
-
-      });
-      TestBed.overrideComponent(EventMapComponent, {
-        remove: { imports: [GoogleMap, MapAdvancedMarker, MapDirectionsRenderer] },
-        add: { imports: [StubGoogleMap, StubMapAdvancedMarker, StubMapDirectionsRenderer] },
-      });
-
-      const fixture = TestBed.createComponent(EventMapComponent);
-      fixture.componentRef.setInput('lat', 50.45);
-      fixture.componentRef.setInput('lng', 30.52);
-      const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1', lat: 49.0, lng: 32.0 };
-      fixture.componentRef.setInput('afterMeetingVenue', venue);
-      fakeMaps.setLoaded(true);
-      fixture.detectChanges();
-
-      expect(fixture.componentInstance.directions()).toBeUndefined();
-    });
-
-    it('directions stays undefined on non-OK response', () => {
-      const fakeMaps = new FakeMapsConfigService();
-      const dirSpy = {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        route: vi.fn().mockReturnValue(of({ status: 'NOT_FOUND', result: null } as any)),
-      };
-
-      TestBed.configureTestingModule({
-        imports: [EventMapComponent, TranslateModule.forRoot()],
-        providers: [
-          provideZonelessChangeDetection(),
-          { provide: MapsConfigService, useValue: fakeMaps },
-          { provide: MapDirectionsService, useValue: dirSpy },
-          { provide: GeocodingService, useValue: new FakeGeocodingService() },
-        ],
-
-      });
-      TestBed.overrideComponent(EventMapComponent, {
-        remove: { imports: [GoogleMap, MapAdvancedMarker, MapDirectionsRenderer] },
-        add: { imports: [StubGoogleMap, StubMapAdvancedMarker, StubMapDirectionsRenderer] },
-      });
-
-      const fixture = TestBed.createComponent(EventMapComponent);
-      fixture.componentRef.setInput('lat', 50.45);
-      fixture.componentRef.setInput('lng', 30.52);
-      const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1', lat: 49.0, lng: 32.0 };
-      fixture.componentRef.setInput('afterMeetingVenue', venue);
-      fakeMaps.setLoaded(true);
-      fixture.detectChanges();
-
-      expect(fixture.componentInstance.directions()).toBeUndefined();
+      expect(component.polylinePath()).toEqual([{ lat: 50.45, lng: 30.52 }, { lat: 49.0, lng: 32.0 }]);
     });
   });
 });

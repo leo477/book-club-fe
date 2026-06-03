@@ -1,9 +1,9 @@
 <div [hidden]="!isReady()" class="flex flex-col gap-3 mt-3">
-  <google-map [center]="center()" [zoom]="15" [options]="mapOptions()" width="100%" height="300px" class="rounded-xl overflow-hidden block">
+  <google-map [center]="center()" [zoom]="15" [options]="mapOptions()" width="100%" height="300px" class="rounded-xl overflow-hidden block" (mapInitialized)="onMapReady($event)">
     <map-advanced-marker [position]="center()" [title]="address() ?? ''" />
     <map-advanced-marker [hidden]="!resolvedAfterVenuePos()" [position]="resolvedAfterVenuePos() ?? center()" [title]="afterMeetingVenue()?.name ?? ''" />
-    @if (directions()) {
-      <map-directions-renderer [directions]="directions()!" />
+    @if (polylinePath()) {
+      <map-polyline [path]="polylinePath()!" [options]="polylineOptions" />
     }
   </google-map>
   <a [href]="mapsUrl()" target="_blank" rel="noopener noreferrer"

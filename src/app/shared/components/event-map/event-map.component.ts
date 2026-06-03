@@ -1,7 +1,7 @@
 import {
   Component, ChangeDetectionStrategy, input, signal, computed, inject, effect,
 } from '@angular/core';
-import { GoogleMap, MapAdvancedMarker, MapDirectionsRenderer, MapDirectionsService } from '@angular/google-maps';
+import { GoogleMap, MapAdvancedMarker, MapPolyline } from '@angular/google-maps';
 import { TranslateModule } from '@ngx-translate/core';
 import { of, switchMap, catchError, take } from 'rxjs';
 import { AfterMeetingVenue } from '../../../core/models/event.model';
@@ -12,7 +12,7 @@ import { GeocodingService } from '../../../core/services/geocoding.service';
   selector: 'app-event-map',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [GoogleMap, MapAdvancedMarker, MapDirectionsRenderer, TranslateModule],
+  imports: [GoogleMap, MapAdvancedMarker, MapPolyline, TranslateModule],
   templateUrl: './event-map.component.html',
 })
 export class EventMapComponent {
@@ -22,8 +22,8 @@ export class EventMapComponent {
   readonly afterMeetingVenue = input<AfterMeetingVenue | null>(null);
 
   private readonly maps = inject(MapsConfigService);
-  private readonly directionsService = inject(MapDirectionsService);
   private readonly geocoding = inject(GeocodingService);
+  private readonly nativeMap = signal<google.maps.Map | null>(null);
 
   readonly isReady = computed(() => this.maps.isLoaded() && this.lat() != null && this.lng() != null);
   readonly center = computed<google.maps.LatLngLiteral>(() => ({ lat: this.lat() ?? 0, lng: this.lng() ?? 0 }));
@@ -40,8 +40,18 @@ export class EventMapComponent {
       ...(mapId ? { mapId } : {}),
     };
   });
-  readonly directions = signal<google.maps.DirectionsResult | undefined>(undefined);
   readonly resolvedAfterVenuePos = signal<google.maps.LatLngLiteral | null>(null);
+  readonly polylinePath = computed<google.maps.LatLngLiteral[] | null>(() => {
+    const after = this.resolvedAfterVenuePos();
+    return after ? [this.center(), after] : null;
+  });
+  readonly polylineOptions: google.maps.PolylineOptions = {
+    strokeColor: '#4f46e5', strokeWeight: 3, strokeOpacity: 0.7, geodesic: true,
+  };
+
+  onMapReady(map: google.maps.Map): void {
+    this.nativeMap.set(map);
+  }
 
   constructor() {
     effect(() => {
@@ -71,18 +81,13 @@ export class EventMapComponent {
     });
 
     effect(() => {
-      const afterVenue = this.resolvedAfterVenuePos();
-      if (!this.isReady() || !afterVenue) {
-        this.directions.set(undefined);
-        return;
-      }
-      this.directionsService.route({
-        origin: this.center(),
-        destination: afterVenue,
-        travelMode: google.maps.TravelMode.WALKING,
-      }).subscribe(resp => {
-        if (resp.status === 'OK' && resp.result) this.directions.set(resp.result);
-      });
+      const map = this.nativeMap();
+      const afterPos = this.resolvedAfterVenuePos();
+      if (!map || !afterPos) return;
+      const bounds = new google.maps.LatLngBounds();
+      bounds.extend(this.center());
+      bounds.extend(afterPos);
+      map.fitBounds(bounds, 60);
     });
   }
 }
