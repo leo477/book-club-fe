@@ -1,21 +1,21 @@
 @if (isLoading()) {
-  <main class="max-w-3xl mx-auto px-4 py-8" aria-busy="true">
+  <section class="max-w-3xl mx-auto px-4 py-8" aria-busy="true">
     <div class="animate-pulse space-y-4">
       <div class="h-8 w-64 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
       <div class="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
     </div>
-  </main>
+  </section>
 } @else if (errorMessage()) {
-  <main class="max-w-3xl mx-auto px-4 py-8 text-center" role="alert">
+  <section class="max-w-3xl mx-auto px-4 py-8 text-center" role="alert">
     <p class="text-6xl mb-4" aria-hidden="true">😕</p>
     <p class="text-gray-500 dark:text-gray-400 mb-6">{{ errorMessage() }}</p>
     <a routerLink="/events"
        class="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 transition-colors">
       {{ 'EVENTS.back_to_events' | translate }}
     </a>
-  </main>
+  </section>
 } @else if (event()) {
-  <main class="max-w-3xl mx-auto px-4 py-8 space-y-6">
+  <section class="max-w-3xl mx-auto px-4 py-8 space-y-6">
 
     <!-- Back navigation -->
     <nav>
@@ -206,5 +206,5 @@
       [afterMeetingVenue]="event()!.afterMeetingVenue"
     />
 
-  </main>
+  </section>
 }

@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { GeocodingService, GeocodeSuggestion } from './geocoding.service';
 import { environment } from '../../../environments/environment';
 
@@ -18,7 +19,13 @@ describe('GeocodingService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), GeocodingService],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: TranslateService, useValue: { currentLang: 'uk', defaultLang: 'uk' } },
+        GeocodingService,
+      ],
     });
     service = TestBed.inject(GeocodingService);
     httpMock = TestBed.inject(HttpTestingController);

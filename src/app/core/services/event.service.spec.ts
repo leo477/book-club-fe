@@ -125,9 +125,9 @@ describe('EventService', () => {
       expect(filtered.every(e => e.city === 'Kyiv')).toBe(true);
     });
 
-    it('null removes filter and returns all events', () => {
+    it('empty filter returns all events', () => {
       service.setCityFilter('Kyiv');
-      service.setCityFilter(null);
+      service.setCityFilter('');
       expect(service.filteredAllEvents().length).toBe(3);
     });
   });

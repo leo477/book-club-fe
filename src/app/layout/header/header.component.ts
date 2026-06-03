@@ -7,12 +7,13 @@ import {
 } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith, firstValueFrom } from 'rxjs';
+import { map, startWith } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideSun, lucideMoon } from '@ng-icons/lucide';
 import { AuthService } from '../../core/auth/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { LanguageService, AppLang } from '../../core/services/language.service';
 import { HlmSheetImports } from '../../shared/spartan/sheet/src';
 import { HlmButton } from '../../shared/spartan/button/src';
 import { HlmIconImports } from '../../shared/spartan/icon/src';
@@ -32,6 +33,7 @@ import { HlmIconImports } from '../../shared/spartan/icon/src';
 export class HeaderComponent {
   private readonly auth      = inject(AuthService);
   private readonly translate = inject(TranslateService);
+  private readonly language  = inject(LanguageService);
   readonly themeService      = inject(ThemeService);
 
   readonly isAuthenticated = this.auth.isAuthenticated;
@@ -59,9 +61,8 @@ export class HeaderComponent {
   });
 
   async switchLang(): Promise<void> {
-    const next = this.currentLang() === 'uk' ? 'en' : 'uk';
-    await firstValueFrom(this.translate.use(next));
-    document.documentElement.lang = next;
+    const next: AppLang = this.currentLang() === 'uk' ? 'en' : 'uk';
+    await this.language.use(next);
   }
 
   async signOut(): Promise<void> {

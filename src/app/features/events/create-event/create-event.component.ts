@@ -134,9 +134,7 @@ export class CreateEventComponent {
         afterMeetingVenue,
         coverUrl: v.coverUrl || null,
         bookTitle: v.bookTitle || null,
-        google_book_id: v.googleBookId ?? null,
-        quizId: v.quizId ?? null,
-        has_winner: v.hasWinner,
+        googleBookId: v.googleBookId ?? null,
       });
       await this.router.navigate(['/events', created.id]);
     } catch {

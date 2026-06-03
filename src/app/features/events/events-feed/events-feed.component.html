@@ -24,7 +24,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
             </svg>
-            {{ 'EVENTS.create_event_cta' | translate }}
+            {{ createEventLabel() | translate }}
           </a>
         </div>
       }
@@ -34,7 +34,7 @@
         <div class="mx-auto max-w-sm">
           <select
             [ngModel]="eventService.cityFilter()"
-            (ngModelChange)="eventService.setCityFilter($event || null)"
+            (ngModelChange)="eventService.setCityFilter($event)"
             class="w-full parchment-input rounded-full px-4 py-2.5 text-sm appearance-none cursor-pointer"
           >
             <option value="">{{ 'events.filter.cities.all' | translate }}</option>

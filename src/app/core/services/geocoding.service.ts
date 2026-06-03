@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
 
 export interface GeocodeSuggestion {
@@ -16,13 +17,18 @@ export interface GeocodeSuggestion {
 @Injectable({ providedIn: 'root' })
 export class GeocodingService {
   private readonly http = inject(HttpClient);
+  private readonly translate = inject(TranslateService);
   private _sessionToken = signal(crypto.randomUUID());
 
   resetSessionToken(): void {
     this._sessionToken.set(crypto.randomUUID());
   }
 
-  autocomplete$(q: string, lang = 'uk', limit = 5): Observable<GeocodeSuggestion[]> {
+  private activeLang(): string {
+    return this.translate.currentLang ?? this.translate.defaultLang ?? 'uk';
+  }
+
+  autocomplete$(q: string, lang = this.activeLang(), limit = 5): Observable<GeocodeSuggestion[]> {
     return this.http.get<GeocodeSuggestion[]>(`${environment.apiUrl}/geocode/autocomplete`, {
       params: { q, lang, limit: String(limit), session_token: this._sessionToken() },
     });

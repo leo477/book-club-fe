@@ -1,10 +1,15 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, inject } from '@angular/core';
+import { TranslateService } from '@ngx-translate/core';
 
-@Pipe({ name: 'formatDate', standalone: true, pure: true })
+@Pipe({ name: 'formatDate', standalone: true, pure: false })
 export class FormatDatePipe implements PipeTransform {
+  private readonly translate = inject(TranslateService);
+
   transform(dateString: string | null | undefined): string {
     if (!dateString) return '—';
-    return new Date(dateString).toLocaleDateString('uk-UA', {
+    const lang = this.translate.currentLang ?? this.translate.defaultLang ?? 'uk';
+    const locale = lang === 'uk' ? 'uk-UA' : 'en-US';
+    return new Date(dateString).toLocaleDateString(locale, {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
