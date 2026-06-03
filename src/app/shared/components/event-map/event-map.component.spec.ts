@@ -155,9 +155,9 @@ describe('EventMapComponent', () => {
       expect(component.mapOptions()).toEqual({ clickableIcons: false, gestureHandling: 'cooperative', mapId: 'test-map-id' });
     });
 
-    it('falls back to DEMO_MAP_ID when mapId is empty', () => {
+    it('omits mapId when empty (no DEMO_MAP_ID fallback)', () => {
       const { component } = setup();
-      expect(component.mapOptions()).toEqual({ clickableIcons: false, gestureHandling: 'cooperative', mapId: 'DEMO_MAP_ID' });
+      expect(component.mapOptions()).toEqual({ clickableIcons: false, gestureHandling: 'cooperative' });
     });
   });
 

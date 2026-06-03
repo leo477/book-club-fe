@@ -168,6 +168,7 @@ describe('AuthService', () => {
       const { service } = buildService();
       const p = service.signIn('test@test.com', 'password');
       const req = httpMock.expectOne(`${API}/auth/login`);
+      expect(req.request.withCredentials).toBe(true);
       req.flush({ accessToken: 'new-token', refreshToken: 'refresh-token', user: rawProfile });
       const result = await p;
       expect(result.error).toBeNull();
@@ -214,6 +215,7 @@ describe('AuthService', () => {
       const { service } = buildService();
       const p = service.signUp('test@test.com', 'password', 'Test User', 'user');
       const req = httpMock.expectOne(`${API}/auth/register`);
+      expect(req.request.withCredentials).toBe(true);
       expect(req.request.body).toEqual({
         email: 'test@test.com',
         password: 'password',
@@ -253,7 +255,9 @@ describe('AuthService', () => {
     it('clears token and navigates to /login', async () => {
       const { service } = buildService();
       const p = service.signOut();
-      httpMock.expectOne(`${API}/auth/logout`).flush({});
+      const req = httpMock.expectOne(`${API}/auth/logout`);
+      expect(req.request.withCredentials).toBe(true);
+      req.flush({});
       await p;
       expect(tokenStoreSpy.clear).toHaveBeenCalled();
       expect(service.currentUser()).toBeNull();
