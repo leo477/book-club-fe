@@ -63,9 +63,7 @@ class FakeMapsConfigService {
 }
 
 class FakeGeocodingService {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   autocomplete$ = vi.fn().mockReturnValue(of([]));
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getPlaceDetails = vi.fn().mockReturnValue(of(null));
   resetSessionToken = vi.fn();
 }
@@ -313,6 +311,7 @@ describe('EventMapComponent', () => {
             route() { return Promise.reject(new Error('ZERO_RESULTS')); }
           },
           LatLngBounds: class {
+            // eslint-disable-next-line @typescript-eslint/no-this-alias
             constructor() { capturedBoundsInstance = this; }
             extend(p: unknown) { extendSpy(p); return this; }
           },
