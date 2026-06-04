@@ -381,6 +381,53 @@ describe('AuthService', () => {
     });
   });
 
+  describe('loginWithGoogle', () => {
+    beforeEach(() => { setupTestbed(); });
+
+    it('sets window.location.href to the Google OAuth endpoint', () => {
+      const { service } = buildService();
+      const original = window.location.href;
+      Object.defineProperty(window, 'location', {
+        value: { ...window.location, href: original },
+        writable: true,
+        configurable: true,
+      });
+      service.loginWithGoogle();
+      expect((window.location as { href: string }).href).toBe(`${API}/auth/oauth/google`);
+    });
+  });
+
+  describe('completeOAuthSession', () => {
+    beforeEach(() => {
+      localStorage.removeItem('bc_has_session');
+      setupTestbed();
+    });
+
+    afterEach(() => {
+      localStorage.removeItem('bc_has_session');
+    });
+
+    it('returns { error: null } when restoreSession succeeds', async () => {
+      const { service } = buildService();
+      const p = service.completeOAuthSession();
+      httpMock.expectOne(`${API}/auth/refresh`).flush({ accessToken: 'oauth-token' });
+      await Promise.resolve();
+      httpMock.expectOne(`${API}/auth/me`).flush(rawProfile);
+      const result = await p;
+      expect(result).toEqual({ error: null });
+      expect(tokenStoreSpy.set).toHaveBeenCalledWith('oauth-token');
+      expect(service.currentUser()?.id).toBe('u1');
+    });
+
+    it('returns { error: "OAUTH_FAILED" } when refresh returns 401', async () => {
+      const { service } = buildService();
+      const p = service.completeOAuthSession();
+      httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
+      const result = await p;
+      expect(result).toEqual({ error: 'OAUTH_FAILED' });
+    });
+  });
+
   describe('userStats', () => {
     beforeEach(() => { setupTestbed(); });
 
