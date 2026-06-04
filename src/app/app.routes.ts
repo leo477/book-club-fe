@@ -29,6 +29,13 @@ export const routes: Routes = [
     loadComponent: () =>
       import('./features/auth/register/register.component').then(m => m.RegisterComponent),
   },
+  {
+    path: 'auth/callback',
+    loadComponent: () =>
+      import('./features/auth/oauth-callback/oauth-callback.component').then(
+        m => m.OAuthCallbackComponent,
+      ),
+  },
 
   // ── App shell (header + footer) ─────────────────────────────────────────
   {

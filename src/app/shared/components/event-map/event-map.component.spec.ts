@@ -8,10 +8,26 @@ import { MapsConfigService } from '../../../core/services/maps-config.service';
 import { GeocodingService } from '../../../core/services/geocoding.service';
 import { AfterMeetingVenue } from '../../../core/models/event.model';
 
+const ROUTE_PATH = [
+  { lat: 50.45, lng: 30.52 },
+  { lat: 49.7, lng: 31.2 },
+  { lat: 49.0, lng: 32.0 },
+];
+
 (globalThis as Record<string, unknown>)['google'] = {
   maps: {
     TravelMode: { WALKING: 'WALKING' },
     LatLngBounds: class { extend() { return this; } },
+    DirectionsService: class {
+      route() {
+        return Promise.resolve({
+          routes: [{
+            overview_path: ROUTE_PATH.map(p => ({ toJSON: () => p })),
+            bounds: { toJSON: () => ({ east: 32.0, north: 50.45, south: 49.0, west: 30.52 }) },
+          }],
+        });
+      }
+    },
   },
 };
 
@@ -47,9 +63,7 @@ class FakeMapsConfigService {
 }
 
 class FakeGeocodingService {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   autocomplete$ = vi.fn().mockReturnValue(of([]));
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   getPlaceDetails = vi.fn().mockReturnValue(of(null));
   resetSessionToken = vi.fn();
 }
@@ -226,10 +240,101 @@ describe('EventMapComponent', () => {
       expect(component.polylinePath()).toBeNull();
     });
 
-    it('returns [center, afterVenuePos] when venue has coords', () => {
+    it('builds a walking route between the two points when venue has coords', async () => {
       const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1', lat: 49.0, lng: 32.0 };
       const { component } = setup({ afterVenue: venue });
-      expect(component.polylinePath()).toEqual([{ lat: 50.45, lng: 30.52 }, { lat: 49.0, lng: 32.0 }]);
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(component.polylinePath()).toEqual(ROUTE_PATH);
+    });
+
+    it('falls back to straight line when DirectionsService rejects', async () => {
+      const origin = { lat: 50.45, lng: 30.52 };
+      const afterPos = { lat: 49.0, lng: 32.0 };
+      const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1', lat: afterPos.lat, lng: afterPos.lng };
+
+      const g = globalThis as unknown as Record<string, { maps: Record<string, unknown> }>;
+      const savedGoogle = g['google'];
+      g['google'] = {
+        maps: {
+          ...savedGoogle.maps,
+          DirectionsService: class {
+            route() { return Promise.reject(new Error('ZERO_RESULTS')); }
+          },
+        },
+      };
+
+      const { component } = setup({ afterVenue: venue });
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(component.polylinePath()).toEqual([origin, afterPos]);
+
+      g['google'] = savedGoogle;
+    });
+  });
+
+  describe('onMapReady() + fitBounds effect', () => {
+    it('calls fitBounds with routeBounds when a walking route is resolved', async () => {
+      const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1', lat: 49.0, lng: 32.0 };
+      const { component } = setup({ afterVenue: venue });
+
+      const fitBoundsSpy = vi.fn();
+      const fakeMap = { fitBounds: fitBoundsSpy } as unknown as google.maps.Map;
+
+      // Wait for the DirectionsService promise to resolve and routeBounds to be set
+      await Promise.resolve();
+      await Promise.resolve();
+
+      component.onMapReady(fakeMap);
+      TestBed.flushEffects();
+      await Promise.resolve();
+
+      expect(fitBoundsSpy).toHaveBeenCalledWith(
+        { east: 32.0, north: 50.45, south: 49.0, west: 30.52 },
+        60,
+      );
+    });
+
+    it('calls fitBounds with LatLngBounds when routeBounds is null (fallback)', async () => {
+      const origin = { lat: 50.45, lng: 30.52 };
+      const afterPos = { lat: 49.0, lng: 32.0 };
+      const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1', lat: afterPos.lat, lng: afterPos.lng };
+
+      const g2 = globalThis as unknown as Record<string, { maps: Record<string, unknown> }>;
+      const savedGoogle2 = g2['google'];
+      const extendSpy = vi.fn().mockReturnThis();
+      let capturedBoundsInstance: unknown;
+      g2['google'] = {
+        maps: {
+          ...savedGoogle2.maps,
+          DirectionsService: class {
+            route() { return Promise.reject(new Error('ZERO_RESULTS')); }
+          },
+          LatLngBounds: class {
+            // eslint-disable-next-line @typescript-eslint/no-this-alias
+            constructor() { capturedBoundsInstance = this; }
+            extend(p: unknown) { extendSpy(p); return this; }
+          },
+        },
+      };
+
+      const { component } = setup({ afterVenue: venue });
+
+      const fitBoundsSpy = vi.fn();
+      const fakeMap = { fitBounds: fitBoundsSpy } as unknown as google.maps.Map;
+
+      await Promise.resolve();
+      await Promise.resolve();
+
+      component.onMapReady(fakeMap);
+      TestBed.flushEffects();
+      await Promise.resolve();
+
+      expect(extendSpy).toHaveBeenCalledWith(origin);
+      expect(extendSpy).toHaveBeenCalledWith(afterPos);
+      expect(fitBoundsSpy).toHaveBeenCalledWith(capturedBoundsInstance, 60);
+
+      g2['google'] = savedGoogle2;
     });
   });
 });

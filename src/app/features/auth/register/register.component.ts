@@ -69,6 +69,10 @@ export class RegisterComponent {
     this.router.navigate(['/events']);
   }
 
+  onGoogleLogin(): void {
+    this.auth.loginWithGoogle();
+  }
+
   readonly form = new FormGroup<RegisterForm>(
     {
       displayName: new FormControl('', {

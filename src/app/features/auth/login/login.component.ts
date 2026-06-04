@@ -47,6 +47,10 @@ export class LoginComponent {
     void this.router.navigate(['/events']);
   }
 
+  onGoogleLogin(): void {
+    this.auth.loginWithGoogle();
+  }
+
   readonly form = new FormGroup<LoginForm>({
     email: new FormControl('', {
       nonNullable: true,

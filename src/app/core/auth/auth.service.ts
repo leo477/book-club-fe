@@ -59,29 +59,55 @@ export class AuthService {
       );
       this._currentUser.set(raw ? mapUserProfile(raw) : null);
     } else if (localStorage.getItem(AuthService.SESSION_MARKER)) {
-      const refreshResp = await firstValueFrom(
-        this.http
-          .post<{ accessToken: string }>(
-            `${environment.apiUrl}/auth/refresh`,
-            {},
-            { withCredentials: true, context: skipCtx },
-          )
-          .pipe(catchError(() => {
-            localStorage.removeItem(AuthService.SESSION_MARKER);
-            return of(null);
-          })),
-      );
-      if (refreshResp) {
-        this.tokenStore.set(refreshResp.accessToken);
-        const raw = await firstValueFrom(
-          this.http
-            .get<ApiUserProfile>(`${environment.apiUrl}/auth/me`, { context: skipCtx })
-            .pipe(catchError(() => of(null))),
-        );
-        this._currentUser.set(raw ? mapUserProfile(raw) : null);
-      }
+      await this.restoreSession();
     }
     this._isLoading.set(false);
+  }
+
+  /**
+   * Recovers an access token from the httpOnly refresh cookie and loads the
+   * current user. Assumes the SESSION_MARKER is already set. Clears the marker
+   * on failure. Returns true when a session was restored.
+   */
+  private async restoreSession(): Promise<boolean> {
+    const skipCtx = new HttpContext().set(SKIP_AUTH_REDIRECT, true);
+    const refreshResp = await firstValueFrom(
+      this.http
+        .post<{ accessToken: string }>(
+          `${environment.apiUrl}/auth/refresh`,
+          {},
+          { withCredentials: true, context: skipCtx },
+        )
+        .pipe(catchError(() => {
+          localStorage.removeItem(AuthService.SESSION_MARKER);
+          return of(null);
+        })),
+    );
+    if (!refreshResp) return false;
+    this.tokenStore.set(refreshResp.accessToken);
+    const raw = await firstValueFrom(
+      this.http
+        .get<ApiUserProfile>(`${environment.apiUrl}/auth/me`, { context: skipCtx })
+        .pipe(catchError(() => of(null))),
+    );
+    this._currentUser.set(raw ? mapUserProfile(raw) : null);
+    return raw !== null;
+  }
+
+  /** Starts the Google OAuth flow via a full-page redirect to the backend. */
+  loginWithGoogle(): void {
+    window.location.href = `${environment.apiUrl}/auth/oauth/google`;
+  }
+
+  /**
+   * Completes an OAuth login after the backend redirects back. The refresh
+   * cookie has already been set server-side, so we mark the session and restore
+   * the access token + user from it.
+   */
+  async completeOAuthSession(): Promise<{ error: string | null }> {
+    localStorage.setItem(AuthService.SESSION_MARKER, '1');
+    const restored = await this.restoreSession();
+    return restored ? { error: null } : { error: 'OAUTH_FAILED' };
   }
 
   async signUp(
