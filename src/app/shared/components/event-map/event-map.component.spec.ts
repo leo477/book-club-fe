@@ -8,10 +8,26 @@ import { MapsConfigService } from '../../../core/services/maps-config.service';
 import { GeocodingService } from '../../../core/services/geocoding.service';
 import { AfterMeetingVenue } from '../../../core/models/event.model';
 
+const ROUTE_PATH = [
+  { lat: 50.45, lng: 30.52 },
+  { lat: 49.7, lng: 31.2 },
+  { lat: 49.0, lng: 32.0 },
+];
+
 (globalThis as Record<string, unknown>)['google'] = {
   maps: {
     TravelMode: { WALKING: 'WALKING' },
     LatLngBounds: class { extend() { return this; } },
+    DirectionsService: class {
+      route() {
+        return Promise.resolve({
+          routes: [{
+            overview_path: ROUTE_PATH.map(p => ({ toJSON: () => p })),
+            bounds: { toJSON: () => ({ east: 32.0, north: 50.45, south: 49.0, west: 30.52 }) },
+          }],
+        });
+      }
+    },
   },
 };
 
@@ -226,10 +242,12 @@ describe('EventMapComponent', () => {
       expect(component.polylinePath()).toBeNull();
     });
 
-    it('returns [center, afterVenuePos] when venue has coords', () => {
+    it('builds a walking route between the two points when venue has coords', async () => {
       const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1', lat: 49.0, lng: 32.0 };
       const { component } = setup({ afterVenue: venue });
-      expect(component.polylinePath()).toEqual([{ lat: 50.45, lng: 30.52 }, { lat: 49.0, lng: 32.0 }]);
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(component.polylinePath()).toEqual(ROUTE_PATH);
     });
   });
 });

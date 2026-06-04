@@ -41,12 +41,13 @@ export class EventMapComponent {
     };
   });
   readonly resolvedAfterVenuePos = signal<google.maps.LatLngLiteral | null>(null);
-  readonly polylinePath = computed<google.maps.LatLngLiteral[] | null>(() => {
-    const after = this.resolvedAfterVenuePos();
-    return after ? [this.center(), after] : null;
-  });
+  /** Walking-route points from the Directions API (falls back to a straight line). */
+  private readonly routePath = signal<google.maps.LatLngLiteral[] | null>(null);
+  /** Bounds of the resolved walking route, used to frame both endpoints. */
+  private readonly routeBounds = signal<google.maps.LatLngBoundsLiteral | null>(null);
+  readonly polylinePath = this.routePath.asReadonly();
   readonly polylineOptions: google.maps.PolylineOptions = {
-    strokeColor: '#4f46e5', strokeWeight: 3, strokeOpacity: 0.7, geodesic: true,
+    strokeColor: '#4f46e5', strokeWeight: 4, strokeOpacity: 0.8,
   };
 
   onMapReady(map: google.maps.Map): void {
@@ -80,10 +81,38 @@ export class EventMapComponent {
       });
     });
 
+    // Build a real walking route between the two points; fall back to a
+    // straight line if directions are unavailable (e.g. ZERO_RESULTS).
+    effect(() => {
+      const origin = this.center();
+      const afterPos = this.resolvedAfterVenuePos();
+      if (!this.isReady() || !afterPos) {
+        this.routePath.set(null);
+        this.routeBounds.set(null);
+        return;
+      }
+      new google.maps.DirectionsService()
+        .route({ origin, destination: afterPos, travelMode: google.maps.TravelMode.WALKING })
+        .then(result => {
+          const route = result.routes[0];
+          this.routePath.set(route.overview_path.map(p => p.toJSON()));
+          this.routeBounds.set(route.bounds?.toJSON() ?? null);
+        })
+        .catch(() => {
+          this.routePath.set([origin, afterPos]);
+          this.routeBounds.set(null);
+        });
+    });
+
     effect(() => {
       const map = this.nativeMap();
       const afterPos = this.resolvedAfterVenuePos();
       if (!map || !afterPos) return;
+      const routeBounds = this.routeBounds();
+      if (routeBounds) {
+        map.fitBounds(routeBounds, 60);
+        return;
+      }
       const bounds = new google.maps.LatLngBounds();
       bounds.extend(this.center());
       bounds.extend(afterPos);

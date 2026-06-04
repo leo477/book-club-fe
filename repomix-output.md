@@ -108,6 +108,8 @@ src/
         login/
           login.component.html
           login.component.ts
+        oauth-callback/
+          oauth-callback.component.ts
         register/
           register.component.html
           register.component.ts
