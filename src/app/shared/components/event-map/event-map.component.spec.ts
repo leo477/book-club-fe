@@ -18,6 +18,16 @@ const ROUTE_PATH = [
 (globalThis as Record<string, unknown>)['google'] = {
   maps: {
     LatLngBounds: class { extend() { return this; } },
+    DirectionsService: class {
+      route() {
+        return Promise.resolve({
+          routes: [{
+            overview_path: ROUTE_PATH.map(p => ({ toJSON: () => p })),
+            bounds: { toJSON: () => ({ east: 32.0, north: 50.45, south: 49.0, west: 30.52 }) },
+          }],
+        });
+      }
+    },
   },
 };
 
