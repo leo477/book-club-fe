@@ -96,7 +96,7 @@ export class AuthService {
 
   /** Starts the Google OAuth flow via a full-page redirect to the backend. */
   loginWithGoogle(): void {
-    window.location.href = `${environment.apiUrl}/auth/oauth/google`;
+    window.location.href = `${environment.apiUrl}/auth/oauth/google?origin=${encodeURIComponent(window.location.origin)}`;
   }
 
   /**

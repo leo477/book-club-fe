@@ -7,6 +7,7 @@ import {
   input,
   effect,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { UploadService } from '../../../core/services/upload.service';
@@ -94,11 +95,12 @@ export class CoverUploadComponent {
   readonly externalUrl = signal<string>('');
 
   constructor() {
-    effect(onCleanup => {
+    effect(() => {
       const ctrl = this.control();
       this.externalUrl.set(ctrl.value);
-      const sub = ctrl.valueChanges.subscribe(v => this.externalUrl.set(v ?? ''));
-      onCleanup(() => sub.unsubscribe());
+      ctrl.valueChanges
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe(v => this.externalUrl.set(v ?? ''));
     });
   }
 
@@ -115,7 +117,7 @@ export class CoverUploadComponent {
     this.uploadError.set(null);
     this.isUploading.set(true);
 
-    this.uploadService.uploadCover$(file).subscribe({
+    this.uploadService.uploadCover$(file).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: url => {
         this.control().setValue(url);
         this.isUploading.set(false);

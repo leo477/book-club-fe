@@ -34,9 +34,8 @@ export class MapsConfigService {
         }),
       );
       if (mapsApiKey) {
-        this.loader.setOptions({ key: mapsApiKey, v: 'weekly', libraries: ['maps', 'routes', 'marker'] });
+        this.loader.setOptions({ key: mapsApiKey, v: 'weekly', libraries: ['maps', 'marker'] });
         await this.loader.importLibrary('maps');
-        await this.loader.importLibrary('routes');
         await this.loader.importLibrary('marker');
         this._mapId.set(mapsMapId ?? '');
         this._loaded.set(true);
