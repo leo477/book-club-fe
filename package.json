@@ -58,6 +58,8 @@
     "@spartan-ng/brain": "^0.0.1-alpha.678",
     "@spartan-ng/cli": "^0.0.1-alpha.678",
     "@tailwindcss/postcss": "^4.2.4",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "qrcode": "^1.5.4",

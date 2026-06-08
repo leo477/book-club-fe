@@ -393,7 +393,9 @@ describe('AuthService', () => {
         configurable: true,
       });
       service.loginWithGoogle();
-      expect((window.location as { href: string }).href).toBe(`${API}/auth/oauth/google`);
+      expect((window.location as { href: string }).href).toBe(
+        `${API}/auth/oauth/google?origin=${encodeURIComponent(window.location.origin)}`,
+      );
     });
   });
 

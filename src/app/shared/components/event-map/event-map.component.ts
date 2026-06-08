@@ -7,6 +7,7 @@ import { of, switchMap, catchError, take } from 'rxjs';
 import { AfterMeetingVenue } from '../../../core/models/event.model';
 import { MapsConfigService } from '../../../core/services/maps-config.service';
 import { GeocodingService } from '../../../core/services/geocoding.service';
+import { RoutingService } from '../../../core/services/routing.service';
 
 @Component({
   selector: 'app-event-map',
@@ -23,14 +24,11 @@ export class EventMapComponent {
 
   private readonly maps = inject(MapsConfigService);
   private readonly geocoding = inject(GeocodingService);
+  private readonly routing = inject(RoutingService);
   private readonly nativeMap = signal<google.maps.Map | null>(null);
 
   readonly isReady = computed(() => this.maps.isLoaded() && this.lat() != null && this.lng() != null);
   readonly center = computed<google.maps.LatLngLiteral>(() => ({ lat: this.lat() ?? 0, lng: this.lng() ?? 0 }));
-  readonly afterVenuePos = computed<google.maps.LatLngLiteral | null>(() => {
-    const v = this.afterMeetingVenue();
-    return v?.lat != null && v?.lng != null ? { lat: v.lat, lng: v.lng } : null;
-  });
   readonly mapsUrl = computed(() => `https://www.google.com/maps?q=${this.lat()},${this.lng()}`);
   readonly mapOptions = computed<google.maps.MapOptions>(() => {
     const mapId = this.maps.mapId();
@@ -41,10 +39,7 @@ export class EventMapComponent {
     };
   });
   readonly resolvedAfterVenuePos = signal<google.maps.LatLngLiteral | null>(null);
-  /** Walking-route points from the Directions API (falls back to a straight line). */
   private readonly routePath = signal<google.maps.LatLngLiteral[] | null>(null);
-  /** Bounds of the resolved walking route, used to frame both endpoints. */
-  private readonly routeBounds = signal<google.maps.LatLngBoundsLiteral | null>(null);
   readonly polylinePath = this.routePath.asReadonly();
   readonly polylineOptions: google.maps.PolylineOptions = {
     strokeColor: '#4f46e5', strokeWeight: 4, strokeOpacity: 0.8,
@@ -55,7 +50,7 @@ export class EventMapComponent {
   }
 
   constructor() {
-    effect(() => {
+    effect(onCleanup => {
       const venue = this.afterMeetingVenue();
       if (venue?.lat != null && venue?.lng != null) {
         this.resolvedAfterVenuePos.set({ lat: venue.lat, lng: venue.lng });
@@ -65,7 +60,7 @@ export class EventMapComponent {
         this.resolvedAfterVenuePos.set(null);
         return;
       }
-      this.geocoding.autocomplete$(venue.address, undefined, 1).pipe(
+      const sub = this.geocoding.autocomplete$(venue.address, undefined, 1).pipe(
         take(1),
         switchMap(suggestions => {
           const s = suggestions[0];
@@ -79,43 +74,34 @@ export class EventMapComponent {
           s?.lat != null && s?.lng != null ? { lat: s.lat, lng: s.lng } : null,
         );
       });
+      onCleanup(() => sub.unsubscribe());
     });
 
-    // Build a real walking route between the two points; fall back to a
-    // straight line if directions are unavailable (e.g. ZERO_RESULTS).
-    effect(() => {
+    effect(onCleanup => {
       const origin = this.center();
       const afterPos = this.resolvedAfterVenuePos();
       if (!this.isReady() || !afterPos) {
         this.routePath.set(null);
-        this.routeBounds.set(null);
         return;
       }
-      new google.maps.DirectionsService()
-        .route({ origin, destination: afterPos, travelMode: google.maps.TravelMode.WALKING })
-        .then(result => {
-          const route = result.routes[0];
-          this.routePath.set(route.overview_path.map(p => p.toJSON()));
-          this.routeBounds.set(route.bounds?.toJSON() ?? null);
-        })
-        .catch(() => {
-          this.routePath.set([origin, afterPos]);
-          this.routeBounds.set(null);
-        });
+      const sub = this.routing.walkingRoute$(origin, afterPos).pipe(take(1)).subscribe(path => {
+        this.routePath.set(path.length > 1 ? path : [origin, afterPos]);
+      });
+      onCleanup(() => sub.unsubscribe());
     });
 
     effect(() => {
       const map = this.nativeMap();
       const afterPos = this.resolvedAfterVenuePos();
       if (!map || !afterPos) return;
-      const routeBounds = this.routeBounds();
-      if (routeBounds) {
-        map.fitBounds(routeBounds, 60);
-        return;
-      }
+      const path = this.polylinePath();
       const bounds = new google.maps.LatLngBounds();
-      bounds.extend(this.center());
-      bounds.extend(afterPos);
+      if (path && path.length > 0) {
+        for (const point of path) bounds.extend(point);
+      } else {
+        bounds.extend(this.center());
+        bounds.extend(afterPos);
+      }
       map.fitBounds(bounds, 60);
     });
   }

@@ -34,15 +34,15 @@ describe('MapsConfigService', () => {
   afterEach(() => httpMock.verify());
 
   describe('load() with valid key', () => {
-    it('calls setOptions and importLibrary for maps, routes and marker, sets isLoaded and mapId', async () => {
+    it('calls setOptions and importLibrary for maps and marker, sets isLoaded and mapId', async () => {
       const loadPromise = service.load();
       httpMock.expectOne(MAPS_KEY_URL).flush({ mapsApiKey: 'key123', mapsMapId: 'mapid123' });
       await loadPromise;
 
-      expect(setOptionsSpy).toHaveBeenCalledWith({ key: 'key123', v: 'weekly', libraries: ['maps', 'routes', 'marker'] });
+      expect(setOptionsSpy).toHaveBeenCalledWith({ key: 'key123', v: 'weekly', libraries: ['maps', 'marker'] });
       expect(importLibrarySpy).toHaveBeenCalledWith('maps');
-      expect(importLibrarySpy).toHaveBeenCalledWith('routes');
       expect(importLibrarySpy).toHaveBeenCalledWith('marker');
+      expect(importLibrarySpy).not.toHaveBeenCalledWith('routes');
       expect(service.isLoaded()).toBe(true);
       expect(service.mapId()).toBe('mapid123');
     });

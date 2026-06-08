@@ -100,6 +100,7 @@ src/
         maps-config.service.ts
         quiz.service.ts
         randomizer.service.ts
+        routing.service.ts
         seo.service.ts
         theme.service.ts
         upload.service.ts
