@@ -90,29 +90,6 @@ export class EventMapComponent {
       onCleanup(() => sub.unsubscribe());
     });
 
-    // Build a real walking route between the two points; fall back to a
-    // straight line if directions are unavailable (e.g. ZERO_RESULTS).
-    effect(() => {
-      const origin = this.center();
-      const afterPos = this.resolvedAfterVenuePos();
-      if (!this.isReady() || !afterPos) {
-        this.routePath.set(null);
-        this.routeBounds.set(null);
-        return;
-      }
-      new google.maps.DirectionsService()
-        .route({ origin, destination: afterPos, travelMode: google.maps.TravelMode.WALKING })
-        .then(result => {
-          const route = result.routes[0];
-          this.routePath.set(route.overview_path.map(p => p.toJSON()));
-          this.routeBounds.set(route.bounds?.toJSON() ?? null);
-        })
-        .catch(() => {
-          this.routePath.set([origin, afterPos]);
-          this.routeBounds.set(null);
-        });
-    });
-
     effect(() => {
       const map = this.nativeMap();
       const afterPos = this.resolvedAfterVenuePos();
