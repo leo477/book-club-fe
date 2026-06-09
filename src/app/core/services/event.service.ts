@@ -62,9 +62,14 @@ export class EventService {
   });
 
   readonly availableCities = computed<string[]>(() => {
-    const seen = new Set<string>();
-    for (const e of this._allEvents()) seen.add(e.city);
-    return [...seen].sort((a, b) => a.localeCompare(b));
+    const byKey = new Map<string, string>();
+    for (const e of this._allEvents()) {
+      const original = e.city?.trim();
+      if (!original) continue;
+      const key = original.toLowerCase();
+      if (!byKey.has(key)) byKey.set(key, original);
+    }
+    return [...byKey.values()].sort((a, b) => a.localeCompare(b));
   });
 
   readonly groupedByDate = computed<Record<string, ClubEvent[]>>(() => {
@@ -119,9 +124,14 @@ export class EventService {
     }
   }
 
-  async attendEvent(eventId: string): Promise<{ auto_joined: boolean }> {
+  async attendEvent(
+    eventId: string,
+  ): Promise<{ attendeeCount: number; joinRequestStatus: 'none' | 'pending' | 'member' }> {
     const result = await firstValueFrom(
-      this.http.post<{ auto_joined: boolean }>(`${environment.apiUrl}/events/${eventId}/attend`, {}),
+      this.http.post<{ attendeeCount: number; joinRequestStatus: 'none' | 'pending' | 'member' }>(
+        `${environment.apiUrl}/events/${eventId}/attend`,
+        {},
+      ),
     );
     this._patchEventAttending(eventId, true);
     return result;

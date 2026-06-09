@@ -13,7 +13,8 @@ import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, startWith } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ClubService } from '../../../core/services/club.service';
+import { toast } from '@spartan-ng/brain/sonner';
+import { ClubService, JoinRequest } from '../../../core/services/club.service';
 import {
   BackendHttpError,
   RequestTimeoutError,
@@ -95,6 +96,9 @@ export class ClubDetailComponent {
   readonly attendingEventId = signal<string | null>(null);
   readonly setWinnerEventId = signal<string | null>(null);
   readonly setWinnerLoading = signal<string | null>(null);
+  readonly joinRequestStatus = signal<'none' | 'pending' | 'rejected'>('none');
+  readonly joinRequests = signal<JoinRequest[]>([]);
+  readonly processingRequestUserId = signal<string | null>(null);
 
   readonly sortKey = linkedSignal<'date' | 'popular' | 'status'>(() => {
     this.id();
@@ -230,6 +234,12 @@ export class ClubDetailComponent {
     } else {
       console.warn('Failed to load club events:', eventsResult.reason);
     }
+    if (this.auth.isAuthenticated()) {
+      this.clubService.getMyMembership(clubId).then(
+        (m) => { if (!isCancelled()) this.joinRequestStatus.set(m.joinRequestStatus); },
+        (err: unknown) => console.debug('Failed to load membership:', err),
+      );
+    }
     if (this.auth.currentUser()?.id === found.organizerId) {
       this.clubService.getBans(clubId).then(
         (bans) => { if (!isCancelled()) this.clubBans.set(bans); },
@@ -242,6 +252,10 @@ export class ClubDetailComponent {
           }
         },
       );
+      this.clubService.getJoinRequests(clubId).then(
+        (requests) => { if (!isCancelled()) this.joinRequests.set(requests); },
+        (err: unknown) => console.debug('Failed to load join requests:', err),
+      );
     }
     this.seo.setPageI18n('SEO.club_detail_title', {
       ogTitleKey: 'SEO.club_detail_og_title',
@@ -250,7 +264,46 @@ export class ClubDetailComponent {
   }
 
   async onJoin(): Promise<void> {
-    await this.performMembershipAction(() => this.clubService.joinClub(this.id()), 'Failed to join club');
+    this.isActionLoading.set(true);
+    this.actionError.set(null);
+    try {
+      const status = await this.clubService.joinClub(this.id());
+      if (status === 'pending' || status === 'already_requested') {
+        this.joinRequestStatus.set('pending');
+        toast.success(this.translate.instant('CLUBS.join_request_sent') as string);
+      }
+    } catch (err) {
+      this.actionError.set(this.formatActionError(err, 'Failed to join club'));
+      this.scheduleErrorDismiss();
+    } finally {
+      this.isActionLoading.set(false);
+    }
+  }
+
+  async onApproveJoinRequest(userId: string): Promise<void> {
+    this.processingRequestUserId.set(userId);
+    try {
+      await this.clubService.approveJoinRequest(this.id(), userId);
+      this.joinRequests.update(list => list.filter(r => r.userId !== userId));
+    } catch (err) {
+      this.actionError.set(this.formatActionError(err, 'Failed to approve request'));
+      this.scheduleErrorDismiss();
+    } finally {
+      this.processingRequestUserId.set(null);
+    }
+  }
+
+  async onRejectJoinRequest(userId: string): Promise<void> {
+    this.processingRequestUserId.set(userId);
+    try {
+      await this.clubService.rejectJoinRequest(this.id(), userId);
+      this.joinRequests.update(list => list.filter(r => r.userId !== userId));
+    } catch (err) {
+      this.actionError.set(this.formatActionError(err, 'Failed to reject request'));
+      this.scheduleErrorDismiss();
+    } finally {
+      this.processingRequestUserId.set(null);
+    }
   }
 
   async onLeave(): Promise<void> {

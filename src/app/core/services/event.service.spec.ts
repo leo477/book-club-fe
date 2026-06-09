@@ -203,11 +203,11 @@ describe('EventService', () => {
       expect(event?.isAttending).toBe(true);
     });
 
-    it('returns auto_joined value from API response', async () => {
+    it('returns joinRequestStatus value from API response', async () => {
       const p = service.attendEvent('e1');
-      httpMock.expectOne(`${API}/events/e1/attend`).flush({ auto_joined: true });
+      httpMock.expectOne(`${API}/events/e1/attend`).flush({ attendeeCount: 6, joinRequestStatus: 'pending' });
       const result = await p;
-      expect(result.auto_joined).toBe(true);
+      expect(result.joinRequestStatus).toBe('pending');
     });
 
     it('does not change unrelated events when patching attendance', async () => {
@@ -220,7 +220,7 @@ describe('EventService', () => {
       await allP2;
 
       const p = service.attendEvent('e1');
-      httpMock.expectOne(`${API}/events/e1/attend`).flush({ auto_joined: false });
+      httpMock.expectOne(`${API}/events/e1/attend`).flush({ attendeeCount: 6, joinRequestStatus: 'none' });
       await p;
 
       const e2 = service.allEvents().find(e => e.id === 'e2');

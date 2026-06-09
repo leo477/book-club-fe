@@ -7,6 +7,11 @@ const rxjsX = require("eslint-plugin-rxjs-x");
 
 module.exports = defineConfig([
   {
+    // Playwright audit tooling is type-checked by Playwright itself and lives
+    // outside the app/spec tsconfigs, so exclude it from the typed-lint pass.
+    ignores: ["e2e/**", "playwright.*.config.ts"],
+  },
+  {
     files: ["**/*.ts"],
     extends: [
       eslint.configs.recommended,

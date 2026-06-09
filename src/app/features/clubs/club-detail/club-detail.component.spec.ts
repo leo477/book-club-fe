@@ -21,6 +21,8 @@ describe('ClubDetailComponent', () => {
     clubs: ReturnType<typeof vi.fn>; myClubs: ReturnType<typeof vi.fn>;
     myClubIds: ReturnType<typeof vi.fn>; joinClub?: ReturnType<typeof vi.fn>;
     leaveClub?: ReturnType<typeof vi.fn>;
+    getMyMembership: ReturnType<typeof vi.fn>; getJoinRequests: ReturnType<typeof vi.fn>;
+    approveJoinRequest: ReturnType<typeof vi.fn>; rejectJoinRequest: ReturnType<typeof vi.fn>;
   };
   let eventServiceSpy: { loadClubEvents: ReturnType<typeof vi.fn>; attendEvent: ReturnType<typeof vi.fn>; cancelAttendance: ReturnType<typeof vi.fn> };
   let authSpy: { isAuthenticated: ReturnType<typeof vi.fn>; currentUser: ReturnType<typeof vi.fn> };
@@ -40,6 +42,10 @@ describe('ClubDetailComponent', () => {
       clubs: vi.fn().mockReturnValue([]),
       myClubs: vi.fn().mockReturnValue([]),
       myClubIds: vi.fn().mockReturnValue(new Set()),
+      getMyMembership: vi.fn().mockResolvedValue({ isMember: false, role: null, joinRequestStatus: 'none' }),
+      getJoinRequests: vi.fn().mockResolvedValue([]),
+      approveJoinRequest: vi.fn().mockResolvedValue(undefined),
+      rejectJoinRequest: vi.fn().mockResolvedValue(undefined),
     };
     authSpy = {
       isAuthenticated: vi.fn().mockReturnValue(true),
@@ -71,7 +77,7 @@ describe('ClubDetailComponent', () => {
     });
     eventServiceSpy = {
       loadClubEvents: vi.fn().mockResolvedValue([]),
-      attendEvent: vi.fn().mockResolvedValue({ auto_joined: false }),
+      attendEvent: vi.fn().mockResolvedValue({ attendeeCount: 0, joinRequestStatus: 'none' }),
       cancelAttendance: vi.fn().mockResolvedValue(undefined),
     };
     await TestBed.configureTestingModule({
@@ -224,11 +230,17 @@ describe('ClubDetailComponent', () => {
   });
 
   describe('onJoin', () => {
-    it('calls joinClub and updates club from cache', async () => {
-      clubServiceSpy.joinClub = vi.fn().mockResolvedValue(undefined);
+    it('calls joinClub and sets pending status when request is pending', async () => {
+      clubServiceSpy.joinClub = vi.fn().mockResolvedValue('pending');
       await component.onJoin();
       expect(clubServiceSpy.joinClub).toHaveBeenCalledWith('club-1');
-      expect(clubServiceSpy.getClubById).not.toHaveBeenCalledTimes(2);
+      expect(component.joinRequestStatus()).toBe('pending');
+    });
+
+    it('sets pending status when request was already requested', async () => {
+      clubServiceSpy.joinClub = vi.fn().mockResolvedValue('already_requested');
+      await component.onJoin();
+      expect(component.joinRequestStatus()).toBe('pending');
     });
 
     it('sets actionError on joinClub failure', async () => {
@@ -238,9 +250,40 @@ describe('ClubDetailComponent', () => {
     });
 
     it('resets isActionLoading to false after completion', async () => {
-      clubServiceSpy.joinClub = vi.fn().mockResolvedValue(undefined);
+      clubServiceSpy.joinClub = vi.fn().mockResolvedValue('member');
       await component.onJoin();
       expect(component.isActionLoading()).toBe(false);
+    });
+  });
+
+  describe('join request management', () => {
+    const reqs = [
+      { userId: 'u9', displayName: 'A', avatarUrl: null, status: 'pending', source: 'manual', createdAt: '2026-01-01' },
+      { userId: 'u10', displayName: 'B', avatarUrl: null, status: 'pending', source: 'event', createdAt: '2026-01-02' },
+    ];
+
+    it('onApproveJoinRequest approves and removes the request', async () => {
+      component.joinRequests.set([...reqs]);
+      await component.onApproveJoinRequest('u9');
+      expect(clubServiceSpy.approveJoinRequest).toHaveBeenCalledWith('club-1', 'u9');
+      expect(component.joinRequests().map(r => r.userId)).toEqual(['u10']);
+      expect(component.processingRequestUserId()).toBeNull();
+    });
+
+    it('onRejectJoinRequest rejects and removes the request', async () => {
+      component.joinRequests.set([...reqs]);
+      await component.onRejectJoinRequest('u10');
+      expect(clubServiceSpy.rejectJoinRequest).toHaveBeenCalledWith('club-1', 'u10');
+      expect(component.joinRequests().map(r => r.userId)).toEqual(['u9']);
+      expect(component.processingRequestUserId()).toBeNull();
+    });
+
+    it('sets actionError and keeps the list when approve fails', async () => {
+      component.joinRequests.set([...reqs]);
+      clubServiceSpy.approveJoinRequest = vi.fn().mockRejectedValue(new Error('Failed'));
+      await component.onApproveJoinRequest('u9');
+      expect(component.actionError()).toBeTruthy();
+      expect(component.joinRequests().map(r => r.userId)).toEqual(['u9', 'u10']);
     });
   });
 

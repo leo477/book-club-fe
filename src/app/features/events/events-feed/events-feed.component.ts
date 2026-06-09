@@ -63,8 +63,8 @@ export class EventsFeedComponent implements OnInit {
     this.attendingEventId.set(event.id);
     try {
       const result = await this.eventService.attendEvent(event.id);
-      if (result.auto_joined) {
-        toast.success(this.translate.instant('EVENTS.event_auto_joined') as string);
+      if (result.joinRequestStatus === 'pending') {
+        toast.success(this.translate.instant('EVENTS.join_request_sent') as string);
       }
     } catch (err) {
       if (err instanceof BackendHttpError && err.status === 400) {
