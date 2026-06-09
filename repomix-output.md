@@ -57,6 +57,8 @@ The content is organized as follows:
   labeler.yml
 .husky/
   pre-commit
+e2e/
+  audit-helper.ts
 public/
   i18n/
     en.json
@@ -441,6 +443,8 @@ CLAUDE.md
 components.json
 eslint.config.js
 package.json
+playwright.audit-current.config.ts
+playwright.total-audit.config.ts
 postcss.config.json
 README.md
 repomix.config.json
