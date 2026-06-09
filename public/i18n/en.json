@@ -650,7 +650,8 @@
   "BOOK_STORES": {
     "title": "Where to buy",
     "found": "Available",
-    "not_found": "Not found"
+    "not_found": "Not found",
+    "unavailable": "Couldn't check stores right now."
   },
   "BOOK_AUTOCOMPLETE": {
     "error": "Couldn't load suggestions. Try again."
