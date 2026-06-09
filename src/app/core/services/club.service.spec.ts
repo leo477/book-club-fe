@@ -227,12 +227,76 @@ describe('ClubService', () => {
     });
   });
 
-  it('joinClub sends POST request', async () => {
+  const makeApiClub = (overrides: Record<string, unknown>) => ({
+    id: 'club-1', name: 'Test', description: null, coverUrl: null,
+    organizerId: 'u1', isPublic: true, memberCount: 1, createdAt: '2024-01-01',
+    city: 'Kyiv', nextMeetingDate: null, address: null, lat: null, lng: null,
+    theme: null, currentBook: null, memberPreviews: [], status: 'active',
+    tags: [], cancelledAt: null, meetingDurationMinutes: null, afterMeetingVenue: null,
+    ...overrides,
+  });
+
+  it('joinClub posts and returns the join-request status', async () => {
     const promise = service.joinClub('club-1');
     const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/join`);
     expect(req.request.method).toBe('POST');
-    req.flush({ memberCount: 1 });
+    req.flush({ status: 'pending' });
+    expect(await promise).toBe('pending');
+  });
+
+  it('getMyMembership fetches membership state', async () => {
+    const promise = service.getMyMembership('club-1');
+    const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/my-membership`);
+    expect(req.request.method).toBe('GET');
+    req.flush({ isMember: false, role: null, joinRequestStatus: 'pending' });
+    expect(await promise).toEqual({ isMember: false, role: null, joinRequestStatus: 'pending' });
+  });
+
+  it('getJoinRequests fetches pending requests', async () => {
+    const rows = [
+      { userId: 'u9', displayName: 'A', avatarUrl: null, status: 'pending', source: 'manual', createdAt: '2026-01-01' },
+    ];
+    const promise = service.getJoinRequests('club-1');
+    const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/join-requests`);
+    expect(req.request.method).toBe('GET');
+    req.flush(rows);
+    expect(await promise).toEqual(rows);
+  });
+
+  it('approveJoinRequest posts approve and bumps member count', async () => {
+    const loadP = service.loadPublicClubs();
+    httpMock.expectOne(`${environment.apiUrl}/clubs`).flush([makeApiClub({ id: 'club-1', memberCount: 1 })]);
+    await loadP;
+
+    const promise = service.approveJoinRequest('club-1', 'u9');
+    const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/join-requests/u9/approve`);
+    expect(req.request.method).toBe('POST');
+    req.flush({ memberCount: 2 });
     await promise;
+    expect(service.clubs().find(c => c.id === 'club-1')?.memberCount).toBe(2);
+  });
+
+  it('rejectJoinRequest posts reject', async () => {
+    const promise = service.rejectJoinRequest('club-1', 'u9');
+    const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/join-requests/u9/reject`);
+    expect(req.request.method).toBe('POST');
+    req.flush(null);
+    await promise;
+  });
+
+  it('availableCities dedupes city names case-insensitively and trimmed', async () => {
+    const loadP = service.loadPublicClubs();
+    httpMock.expectOne(`${environment.apiUrl}/clubs`).flush([
+      makeApiClub({ id: 'a', city: 'Kyiv' }),
+      makeApiClub({ id: 'b', city: 'kyiv ' }),
+      makeApiClub({ id: 'c', city: 'Львів' }),
+    ]);
+    await loadP;
+    const cities = service.availableCities();
+    expect(cities).toHaveLength(2);
+    expect(cities).toContain('Kyiv');
+    expect(cities).toContain('Львів');
+    expect(cities).not.toContain('kyiv ');
   });
 
   it('createClub sends POST and returns mapped club', async () => {
