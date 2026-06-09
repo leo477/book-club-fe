@@ -8,6 +8,15 @@ import { SUPPRESS_ERROR_TOAST } from '../interceptors/auth.interceptor';
 import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStats } from '../models/club.model';
 import { ClubEvent } from '../models/event.model';
 
+export interface JoinRequest {
+  userId: string;
+  displayName: string;
+  avatarUrl: string | null;
+  status: string;
+  source: string;
+  createdAt: string;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ClubService {
   private readonly http = inject(HttpClient);
@@ -58,8 +67,14 @@ export class ClubService {
   readonly myClubIds = computed(() => new Set(this._myClubs().map(c => c.id)));
 
   readonly availableCities = computed<string[]>(() => {
-    const cities = [...new Set(this._clubs().map(c => c.city).filter(Boolean))];
-    return cities.sort((a, b) => a.localeCompare(b));
+    const byKey = new Map<string, string>();
+    for (const club of this._clubs()) {
+      const original = club.city?.trim();
+      if (!original) continue;
+      const key = original.toLowerCase();
+      if (!byKey.has(key)) byKey.set(key, original);
+    }
+    return [...byKey.values()].sort((a, b) => a.localeCompare(b));
   });
 
   readonly filteredClubs = computed(() => {
@@ -203,20 +218,53 @@ export class ClubService {
     return club;
   }
 
-  async joinClub(clubId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.post<{ memberCount: number }>(`${environment.apiUrl}/clubs/${clubId}/join`, {}),
+  async joinClub(clubId: string): Promise<'pending' | 'already_requested' | 'member'> {
+    const { status } = await firstValueFrom(
+      this.http.post<{ status: 'pending' | 'already_requested' | 'member' }>(
+        `${environment.apiUrl}/clubs/${clubId}/join`,
+        {},
+      ),
     );
-    const cachedClub = this.clubByIdCache.get(clubId)?.data;
     this.clubByIdCache.delete(clubId);
+    return status;
+  }
+
+  async getMyMembership(
+    clubId: string,
+  ): Promise<{ isMember: boolean; role: string | null; joinRequestStatus: 'none' | 'pending' | 'rejected' }> {
+    return firstValueFrom(
+      this.http.get<{
+        isMember: boolean;
+        role: string | null;
+        joinRequestStatus: 'none' | 'pending' | 'rejected';
+      }>(`${environment.apiUrl}/clubs/${clubId}/my-membership`),
+    );
+  }
+
+  async getJoinRequests(clubId: string): Promise<JoinRequest[]> {
+    return firstValueFrom(
+      this.http.get<JoinRequest[]>(`${environment.apiUrl}/clubs/${clubId}/join-requests`),
+    );
+  }
+
+  async approveJoinRequest(clubId: string, userId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post<{ memberCount: number }>(
+        `${environment.apiUrl}/clubs/${clubId}/join-requests/${userId}/approve`,
+        {},
+      ),
+    );
     this.membersCache.delete(clubId);
+    this.clubByIdCache.delete(clubId);
     this._clubs.update(list =>
       list.map(c => (c.id === clubId ? { ...c, memberCount: c.memberCount + 1 } : c)),
     );
-    const club = this._clubs().find(c => c.id === clubId) ?? cachedClub;
-    if (club && !this.myClubIds().has(clubId)) {
-      this._myClubs.update(list => [club, ...list]);
-    }
+  }
+
+  async rejectJoinRequest(clubId: string, userId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${environment.apiUrl}/clubs/${clubId}/join-requests/${userId}/reject`, {}),
+    );
   }
 
   async leaveClub(clubId: string): Promise<void> {

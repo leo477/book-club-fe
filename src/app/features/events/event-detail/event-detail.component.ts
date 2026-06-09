@@ -122,8 +122,8 @@ export class EventDetailComponent {
     this.isActioning.set(true);
     try {
       const result = await this.eventService.attendEvent(this.id());
-      if (result.auto_joined) {
-        toast.success(this.translate.instant('EVENTS.event_auto_joined') as string);
+      if (result.joinRequestStatus === 'pending') {
+        toast.success(this.translate.instant('EVENTS.join_request_sent') as string);
       }
       this._eventResource.reload();
     } catch (err) {

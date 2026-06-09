@@ -34,7 +34,7 @@ describe('EventDetailComponent', () => {
 
   function setup(currentUser: { id: string } | null = null) {
     eventServiceSpy = {
-      attendEvent: vi.fn().mockResolvedValue({ auto_joined: false }),
+      attendEvent: vi.fn().mockResolvedValue({ attendeeCount: 0, joinRequestStatus: 'none' }),
       cancelAttendance: vi.fn().mockResolvedValue(undefined),
       cancelEvent: vi.fn().mockResolvedValue(undefined),
     };
