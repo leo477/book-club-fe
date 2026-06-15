@@ -11,6 +11,7 @@ import { Router } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { ClubService } from '../../../core/services/club.service';
 import { EventService } from '../../../core/services/event.service';
+import { SeoService } from '../../../core/services/seo.service';
 import { HlmFieldImports } from '../../../shared/spartan/field/src';
 import { HlmInput } from '../../../shared/spartan/input/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
@@ -35,6 +36,7 @@ export class CreateClubComponent {
   private readonly clubService = inject(ClubService);
   private readonly router = inject(Router);
   private readonly eventService = inject(EventService);
+  private readonly seo = inject(SeoService);
 
   private readonly _errorMessage = signal<string | null>(null);
   readonly errorMessage = this._errorMessage.asReadonly();
@@ -53,6 +55,11 @@ export class CreateClubComponent {
   readonly eventCityCtrl  = new FormControl('', { nonNullable: true });
 
   constructor() {
+    this.seo.setPageI18n('SEO.create_club_title', {
+      descriptionKey: 'SEO.create_club_description',
+      ogTitleKey: 'SEO.create_club_og_title',
+    });
+
     effect(() => {
       if (this.clubService.myOwnedClubs().length >= 1) {
         void this.router.navigate(['/clubs']);

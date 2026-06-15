@@ -571,7 +571,8 @@
     "yesterday": "yesterday",
     "unread_divider": "New messages",
     "online": "Online",
-    "offline": "Offline"
+    "offline": "Offline",
+    "page_title": "Chats"
   },
   "CHATS": {
     "title": "Chats",
@@ -614,6 +615,9 @@
     "clubs_title": "Book Clubs | Book Club",
     "clubs_description": "Find a book club in your city. Book discussions, reader meetups, interest communities.",
     "clubs_og_title": "Book Clubs",
+    "create_club_title": "Create a Club | Book Club",
+    "create_club_description": "Start your own book club: pick a name, description, city and invite readers to your community.",
+    "create_club_og_title": "Create a Book Club",
     "login_title": "Sign In | Book Club",
     "register_title": "Register | Book Club",
     "profile_title": "Profile | Book Club",

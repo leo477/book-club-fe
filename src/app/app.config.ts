@@ -5,7 +5,9 @@ import {
   withComponentInputBinding,
   withViewTransitions,
   withRouterConfig,
+  TitleStrategy,
 } from '@angular/router';
+import { OgTitleStrategy } from './core/services/og-title-strategy';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -27,6 +29,7 @@ export const appConfig: ApplicationConfig = {
       // Inherit parent route params (e.g. :id) into all descendant routes
       withRouterConfig({ paramsInheritanceStrategy: 'always' }),
     ),
+    { provide: TitleStrategy, useClass: OgTitleStrategy },
     provideHttpClient(
       withFetch(),
       withInterceptors([authInterceptor]),

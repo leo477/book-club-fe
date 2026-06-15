@@ -571,7 +571,8 @@
     "yesterday": "вчора",
     "unread_divider": "Нові повідомлення",
     "online": "Онлайн",
-    "offline": "Офлайн"
+    "offline": "Офлайн",
+    "page_title": "Чати"
   },
   "CHATS": {
     "title": "Чати",
@@ -614,6 +615,9 @@
     "clubs_title": "Книжкові клуби | Book Club",
     "clubs_description": "Знайдіть книжковий клуб у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
     "clubs_og_title": "Книжкові клуби",
+    "create_club_title": "Створити клуб | Book Club",
+    "create_club_description": "Створіть власний книжковий клуб: оберіть назву, опис, місто та запросіть читачів до спільноти.",
+    "create_club_og_title": "Створити книжковий клуб",
     "login_title": "Вхід | Book Club",
     "register_title": "Реєстрація | Book Club",
     "profile_title": "Профіль | Book Club",
