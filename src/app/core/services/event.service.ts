@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom, map } from 'rxjs';
+import { Observable, firstValueFrom, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiEvent, mapEvent } from '../api/api-mappers';
 import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
@@ -111,6 +111,12 @@ export class EventService {
     } catch {
       this._error.set('Failed to load my events');
     }
+  }
+
+  eventById$(id: string): Observable<ClubEvent> {
+    return this.http
+      .get<ApiEvent>(`${environment.apiUrl}/events/${id}`)
+      .pipe(map(mapEvent));
   }
 
   async getEventById(id: string): Promise<ClubEvent | null> {

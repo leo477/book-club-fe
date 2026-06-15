@@ -455,6 +455,7 @@ supabase/
 .lighthouserc.json
 .lintstagedrc.cjs
 angular.json
+ARCHITECTURE-REVIEW.md
 AUDIT-CHECKLIST.md
 AUDIT-REPORT.md
 CLAUDE.md

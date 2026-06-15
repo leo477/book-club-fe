@@ -8,20 +8,16 @@ import {
   effect,
   DestroyRef,
 } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { SlicePipe } from '@angular/common';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
 import { toast } from '@spartan-ng/brain/sonner';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { BackendHttpError } from '../../../core/interceptors/auth.interceptor';
-import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
 import { ClubEvent } from '../../../core/models/event.model';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
-import { environment } from '../../../../environments/environment';
 import { ChatService } from '../../../core/services/chat.service';
 import { ChatRoom } from '../../../core/models/chat.model';
 import { HlmButton } from '../../../shared/spartan/button/src';
@@ -42,7 +38,6 @@ import { EventMapComponent } from '../../../shared/components/event-map/event-ma
 export class EventDetailComponent {
   readonly id = input.required<string>();
 
-  private readonly http = inject(HttpClient);
   private readonly eventService = inject(EventService);
   private readonly translate = inject(TranslateService);
   readonly auth = inject(AuthService);
@@ -52,10 +47,7 @@ export class EventDetailComponent {
 
   private readonly _eventResource = rxResource<ClubEvent | null, string>({
     params: () => this.id(),
-    stream: ({ params: id }) =>
-      this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(
-        map(mapEvent),
-      ),
+    stream: ({ params: id }) => this.eventService.eventById$(id),
   });
 
   readonly event = computed(() => this._eventResource.value() ?? null);
