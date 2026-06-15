@@ -94,6 +94,8 @@ src/
         auth.service.ts
         role.guard.ts
         token.store.ts
+      error/
+        global-error-handler.ts
       interceptors/
         auth.interceptor.ts
       models/

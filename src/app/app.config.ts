@@ -1,4 +1,5 @@
-import { ApplicationConfig, ApplicationRef, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, provideAppInitializer, inject } from '@angular/core';
+import { ApplicationConfig, ApplicationRef, ErrorHandler, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, provideAppInitializer, inject } from '@angular/core';
+import { GlobalErrorHandler } from './core/error/global-error-handler';
 import { MapsConfigService } from './core/services/maps-config.service';
 import {
   provideRouter,
@@ -21,6 +22,7 @@ import { LanguageService } from './core/services/language.service';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
     provideZonelessChangeDetection(),
     provideRouter(
       routes,
