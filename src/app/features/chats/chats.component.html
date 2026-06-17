@@ -104,6 +104,7 @@
     </div>
     <div class="px-3 py-3 border-t border-[var(--color-sepia)] flex gap-2">
       <input hlmInput class="flex-1" [(ngModel)]="messageText" (keydown)="onKeydown($event)"
+             [attr.aria-label]="'CHAT.placeholder' | translate"
              [placeholder]="'CHAT.placeholder' | translate" />
       <button hlmBtn (click)="sendMessage()">{{ 'CHAT.send' | translate }}</button>
     </div>

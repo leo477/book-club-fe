@@ -1,6 +1,13 @@
 import { TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection } from '@angular/core';
+import { isDevMode, provideZonelessChangeDetection } from '@angular/core';
+import { track } from '@vercel/analytics';
 import { GlobalErrorHandler } from './global-error-handler';
+
+vi.mock('@vercel/analytics', () => ({ track: vi.fn() }));
+vi.mock('@angular/core', async (importActual) => {
+  const actual = await importActual<typeof import('@angular/core')>();
+  return { ...actual, isDevMode: vi.fn(() => true) };
+});
 
 describe('GlobalErrorHandler', () => {
   let handler: GlobalErrorHandler;
@@ -12,6 +19,8 @@ describe('GlobalErrorHandler', () => {
     });
     handler = TestBed.inject(GlobalErrorHandler);
     consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.mocked(track).mockClear();
+    vi.mocked(isDevMode).mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -37,5 +46,36 @@ describe('GlobalErrorHandler', () => {
   it('does not throw on null/undefined errors', () => {
     expect(() => handler.handleError(null)).not.toThrow();
     expect(() => handler.handleError(undefined)).not.toThrow();
+  });
+
+  it('does not report telemetry in dev mode', () => {
+    handler.handleError(new Error('boom'));
+    expect(track).not.toHaveBeenCalled();
+  });
+
+  describe('in production', () => {
+    beforeEach(() => {
+      vi.mocked(isDevMode).mockReturnValue(false);
+    });
+
+    it('reports the Error message', () => {
+      handler.handleError(new Error('boom'));
+      expect(track).toHaveBeenCalledWith('client_error', { message: 'boom' });
+    });
+
+    it('reports a string error verbatim', () => {
+      handler.handleError('string failure');
+      expect(track).toHaveBeenCalledWith('client_error', { message: 'string failure' });
+    });
+
+    it('reports the message property of object errors', () => {
+      handler.handleError({ message: 'object failure' });
+      expect(track).toHaveBeenCalledWith('client_error', { message: 'object failure' });
+    });
+
+    it('stringifies errors with no message', () => {
+      handler.handleError(42);
+      expect(track).toHaveBeenCalledWith('client_error', { message: '42' });
+    });
   });
 });
