@@ -107,6 +107,15 @@ describe('EventService', () => {
     });
   });
 
+  describe('eventById$', () => {
+    it('emits the mapped event from GET /events/:id', () => {
+      let emitted: { id: string } | undefined;
+      service.eventById$('e1').subscribe((e) => (emitted = e));
+      httpMock.expectOne(`${API}/events/e1`).flush(makeApiEvent());
+      expect(emitted?.id).toBe('e1');
+    });
+  });
+
   describe('setCityFilter / filteredAllEvents', () => {
     beforeEach(async () => {
       const p = service.loadAllEvents();

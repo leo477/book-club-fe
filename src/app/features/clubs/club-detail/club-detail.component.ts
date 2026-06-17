@@ -237,7 +237,7 @@ export class ClubDetailComponent {
     if (this.auth.isAuthenticated()) {
       this.clubService.getMyMembership(clubId).then(
         (m) => { if (!isCancelled()) this.joinRequestStatus.set(m.joinRequestStatus); },
-        (err: unknown) => console.debug('Failed to load membership:', err),
+        (err: unknown) => console.warn('Failed to load membership:', err),
       );
     }
     if (this.auth.currentUser()?.id === found.organizerId) {
@@ -245,16 +245,15 @@ export class ClubDetailComponent {
         (bans) => { if (!isCancelled()) this.clubBans.set(bans); },
         (err: unknown) => {
           const status = (err as { status?: number })?.status;
-          if (status === 403 || status === 404 || err instanceof RequestTimeoutError) {
-            console.debug('Club bans not available yet:', err);
-          } else {
+          const expected = status === 403 || status === 404 || err instanceof RequestTimeoutError;
+          if (!expected) {
             console.warn('Failed to load club bans:', err);
           }
         },
       );
       this.clubService.getJoinRequests(clubId).then(
         (requests) => { if (!isCancelled()) this.joinRequests.set(requests); },
-        (err: unknown) => console.debug('Failed to load join requests:', err),
+        (err: unknown) => console.warn('Failed to load join requests:', err),
       );
     }
     this.seo.setPageI18n('SEO.club_detail_title', {
