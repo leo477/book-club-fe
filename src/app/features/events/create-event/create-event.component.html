@@ -128,10 +128,10 @@
                      class="w-full" [placeholder]="'CREATE_EVENT.after_venue_name_placeholder' | translate" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 {{ 'CREATE_EVENT.after_venue_address_label' | translate }}
                 <app-address-autocomplete [control]="form.controls.afterVenueAddress" (selected)="onAfterVenueAddressSelect($event)" />
-              </label>
+              </p>
             </div>
             <div>
               <label for="afterVenueDesc" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{{ 'CREATE_EVENT.after_venue_notes_label' | translate }}</label>

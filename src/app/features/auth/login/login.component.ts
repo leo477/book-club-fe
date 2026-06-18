@@ -43,8 +43,8 @@ export class LoginComponent {
     setTimeout(() => this.formVisible.set(true), 300);
   }
 
-  onBookAnimationDone(): void {
-    void this.router.navigate(['/events']);
+  async onBookAnimationDone(): Promise<void> {
+    await this.router.navigate(['/events']);
   }
 
   onGoogleLogin(): void {

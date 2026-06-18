@@ -111,6 +111,7 @@
             [ngModel]="newTitle()"
             (ngModelChange)="newTitle.set($event)"
             placeholder="Назва книги *"
+            aria-label="Назва книги"
             class="flex-1 min-w-0 parchment-input rounded-lg px-3 py-2 text-sm"
           />
           <input
@@ -118,6 +119,7 @@
             [ngModel]="newAuthor()"
             (ngModelChange)="newAuthor.set($event)"
             placeholder="Автор"
+            aria-label="Автор"
             class="flex-1 min-w-0 parchment-input rounded-lg px-3 py-2 text-sm"
           />
           <button hlmBtn size="sm" type="button" (click)="addOption()" class="flex-shrink-0">

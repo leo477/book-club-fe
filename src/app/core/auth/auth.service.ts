@@ -96,7 +96,7 @@ export class AuthService {
 
   /** Starts the Google OAuth flow via a full-page redirect to the backend. */
   loginWithGoogle(): void {
-    window.location.href = `${environment.apiUrl}/auth/oauth/google?origin=${encodeURIComponent(window.location.origin)}`;
+    globalThis.location.href = `${environment.apiUrl}/auth/oauth/google?origin=${encodeURIComponent(globalThis.location.origin)}`;
   }
 
   /**
@@ -165,7 +165,7 @@ export class AuthService {
     this.tokenStore.clear();
     localStorage.removeItem(AuthService.SESSION_MARKER);
     this._currentUser.set(null);
-    this.router.navigate(['/login']);
+    await this.router.navigate(['/login']);
   }
 
   async updateRole(role: UserRole): Promise<void> {

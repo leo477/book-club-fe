@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { ClubDetailComponent } from './club-detail.component';
 import { TranslateModule, TranslateLoader, TranslateService } from '@ngx-translate/core';
-import { RouterTestingModule } from '@angular/router/testing';
+import { provideRouter } from '@angular/router';
 import { firstValueFrom, of } from 'rxjs';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -96,9 +96,9 @@ describe('ClubDetailComponent', () => {
             },
           },
         }),
-        RouterTestingModule,
       ],
       providers: [
+        provideRouter([]),
         provideZonelessChangeDetection(),
         { provide: ClubService, useValue: clubServiceSpy },
         { provide: AuthService, useValue: authSpy },

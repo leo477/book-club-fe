@@ -131,7 +131,7 @@ export class QuizCreateComponent {
     this.localQuestions.update(prev => prev.filter((_, i) => i !== index));
   }
 
-  protected publishQuiz(): void {
+  protected async publishQuiz(): Promise<void> {
     const questions = this.localQuestions();
     if (questions.length === 0) return;
 
@@ -141,21 +141,17 @@ export class QuizCreateComponent {
     const { title, description } = this.metaForm.getRawValue();
     const clubId = this.id();
 
-    this.quizService
-      .createQuiz({ clubId, title: title.trim(), description: description.trim() })
-      .then(async quiz => {
-        // Add questions sequentially to preserve sort_order
-        for (const q of questions) {
-          await this.quizService.addQuestion(quiz.id, q);
-        }
-        // Activate the quiz
-        await this.quizService.toggleActive(quiz.id, true);
-        this.isPublishing.set(false);
-        void this.router.navigate(['/clubs', clubId, 'quizzes']);
-      })
-      .catch(err => {
-        this.isPublishing.set(false);
-        this.errorMessage.set((err as Error).message);
-      });
+    try {
+      const quiz = await this.quizService.createQuiz({ clubId, title: title.trim(), description: description.trim() });
+      for (const q of questions) {
+        await this.quizService.addQuestion(quiz.id, q);
+      }
+      await this.quizService.toggleActive(quiz.id, true);
+      this.isPublishing.set(false);
+      await this.router.navigate(['/clubs', clubId, 'quizzes']);
+    } catch (err) {
+      this.isPublishing.set(false);
+      this.errorMessage.set((err as Error).message);
+    }
   }
 }

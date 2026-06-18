@@ -22,17 +22,19 @@
   @if (isOpen() && suggestions().length > 0) {
     <ul role="listbox" class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-48 overflow-y-auto">
       @for (s of suggestions(); track s.label; let i = $index) {
-        <li
-          role="option"
-          tabindex="0"
-          [attr.aria-selected]="activeIndex() === i"
-          (click)="select(s)"
-          (keydown.enter)="select(s)"
-          (keydown.space)="$event.preventDefault(); select(s)"
-          [class.bg-primary-50]="activeIndex() === i"
-          [class.dark:bg-primary-900/20]="activeIndex() === i"
-          class="cursor-pointer px-4 py-2.5 text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-        >{{ s.label }}</li>
+        <li role="presentation">
+          <button
+            type="button"
+            role="option"
+            [attr.aria-selected]="activeIndex() === i"
+            (click)="select(s)"
+            (keydown.enter)="select(s)"
+            (keydown.space)="$event.preventDefault(); select(s)"
+            [class.bg-primary-50]="activeIndex() === i"
+            [class.dark:bg-primary-900/20]="activeIndex() === i"
+            class="block w-full text-left cursor-pointer px-4 py-2.5 text-sm text-gray-800 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >{{ s.label }}</button>
+        </li>
       }
     </ul>
   }
