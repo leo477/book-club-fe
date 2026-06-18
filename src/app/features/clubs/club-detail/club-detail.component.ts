@@ -33,7 +33,6 @@ import { ClubManagePanelComponent } from './manage-panel/club-manage-panel.compo
 import { ClubEventCardComponent } from './club-event-card/club-event-card.component';
 import { ClubSidebarRightComponent } from './club-sidebar-right/club-sidebar-right.component';
 import { BookVoteSectionComponent } from './book-vote/book-vote-section.component';
-import { BookStoresComponent } from '../../../shared/book-stores/book-stores.component';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCard } from '../../../shared/spartan/card/src';
 import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
@@ -53,7 +52,6 @@ import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
     ClubEventCardComponent,
     ClubSidebarRightComponent,
     BookVoteSectionComponent,
-    BookStoresComponent,
     HlmButton,
     HlmCard,
     ...HlmTabsImports,

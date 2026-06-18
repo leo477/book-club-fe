@@ -5,7 +5,7 @@ import { firstValueFrom } from 'rxjs';
 export type AppLang = 'en' | 'uk';
 
 const STORAGE_KEY = 'lang';
-const SUPPORTED: AppLang[] = ['en', 'uk'];
+const SUPPORTED = new Set<AppLang>(['en', 'uk']);
 const DEFAULT_LANG: AppLang = 'uk';
 
 @Injectable({ providedIn: 'root' })
@@ -16,7 +16,7 @@ export class LanguageService {
 
   private resolveInitial(): AppLang {
     const saved = localStorage.getItem(STORAGE_KEY) as AppLang | null;
-    return saved && SUPPORTED.includes(saved) ? saved : DEFAULT_LANG;
+    return saved && SUPPORTED.has(saved) ? saved : DEFAULT_LANG;
   }
 
   async use(lang: AppLang): Promise<void> {

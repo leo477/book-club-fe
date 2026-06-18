@@ -193,7 +193,7 @@
                   @for (req of joinRequests(); track req.userId) {
                     <li class="flex items-center gap-3 rounded-xl border border-[var(--color-sepia)] bg-[var(--color-surface)] p-3">
                       @if (req.avatarUrl) {
-                        <img [src]="req.avatarUrl" [alt]="req.displayName" class="h-10 w-10 rounded-full object-cover flex-shrink-0" />
+                        <img [ngSrc]="req.avatarUrl" width="40" height="40" [alt]="req.displayName" class="h-10 w-10 rounded-full object-cover flex-shrink-0" />
                       } @else {
                         <div class="h-10 w-10 rounded-full bg-gradient-fantasy flex items-center justify-center text-white font-semibold flex-shrink-0" aria-hidden="true">
                           {{ req.displayName.charAt(0) }}
@@ -330,6 +330,7 @@
                             <div class="flex flex-col gap-1 px-1">
                               <select
                                 class="w-full rounded-lg border border-[var(--color-sepia)] bg-[var(--color-surface)] px-3 py-1.5 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)]"
+                                [attr.aria-label]="'EVENT.set_winner' | translate"
                                 [disabled]="setWinnerLoading() === event.id"
                                 (change)="onSetWinner(event.id, $any($event.target).value)"
                               >

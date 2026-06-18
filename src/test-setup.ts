@@ -1,7 +1,7 @@
 import { vi } from 'vitest';
 
 // matchMedia stub — required by ThemeService
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(globalThis, 'matchMedia', {
   writable: true,
   value: (query: string) => ({
     matches: false,

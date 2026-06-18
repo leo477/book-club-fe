@@ -1,7 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
-import { Observable } from 'rxjs';
-import { tap } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
 
@@ -18,7 +17,7 @@ export interface GeocodeSuggestion {
 export class GeocodingService {
   private readonly http = inject(HttpClient);
   private readonly translate = inject(TranslateService);
-  private _sessionToken = signal(crypto.randomUUID());
+  private readonly _sessionToken = signal(crypto.randomUUID());
 
   resetSessionToken(): void {
     this._sessionToken.set(crypto.randomUUID());

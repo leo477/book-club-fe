@@ -15,7 +15,7 @@ describe('CreateClubComponent', () => {
   let authSpy: { currentUser: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
-    routerSpy = { navigate: vi.fn() };
+    routerSpy = { navigate: vi.fn().mockResolvedValue(true) };
     clubServiceSpy = { createClub: vi.fn() };
     authSpy = { currentUser: vi.fn().mockReturnValue(null) };
     TestBed.configureTestingModule({

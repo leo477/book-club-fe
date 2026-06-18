@@ -62,7 +62,7 @@ export class CreateClubComponent {
 
     effect(() => {
       if (this.clubService.myOwnedClubs().length >= 1) {
-        void this.router.navigate(['/clubs']);
+        this.router.navigate(['/clubs']).catch(() => { /* */ });
       }
     });
   }
@@ -95,7 +95,7 @@ export class CreateClubComponent {
   }
 
   cancel(): void {
-    void this.router.navigate(['/clubs']);
+    this.router.navigate(['/clubs']).catch(() => { /* */ });
   }
 
   async onSubmit(): Promise<void> {
@@ -125,7 +125,7 @@ export class CreateClubComponent {
           } catch { /* non-blocking — club already created */ }
         }
       }
-      void this.router.navigate(['/clubs', club.id]);
+      await this.router.navigate(['/clubs', club.id]);
     } catch (err) {
       this._errorMessage.set(err instanceof Error ? err.message : 'Failed to create club');
     } finally {

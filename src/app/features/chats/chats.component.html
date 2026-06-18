@@ -19,9 +19,9 @@
             <span class="text-sm font-semibold leading-tight truncate">{{ room.name }}</span>
             <span class="text-xs text-[var(--color-ink-muted)] leading-tight truncate mt-0.5">{{ group.clubName }}</span>
           </div>
-          @if ((chat.roomUnreadCounts()[room.id] ?? 0) > 0 && chat.activeRoomId() !== room.id) {
+          @if (chat.roomUnreadCounts()[room.id] > 0 && chat.activeRoomId() !== room.id) {
             <div class="flex-shrink-0 min-w-[20px] h-5 rounded-full bg-[var(--destructive)] flex items-center justify-center text-white text-xs font-bold px-1">
-              {{ (chat.roomUnreadCounts()[room.id] ?? 0) > 9 ? '9+' : chat.roomUnreadCounts()[room.id] }}
+              {{ chat.roomUnreadCounts()[room.id] > 9 ? '9+' : chat.roomUnreadCounts()[room.id] }}
             </div>
           }
         </button>

@@ -49,7 +49,22 @@ export class BackendHttpError extends Error {
   }
 }
 
-function handleHttpSideEffects(
+function resolveAuthRedirect(
+  httpError: HttpErrorResponse,
+  token: string | null,
+  tokenStore: TokenStore,
+): string | null {
+  if (httpError.status === 401 && token) {
+    tokenStore.clear();
+    return '/login';
+  }
+  if (httpError.status === 403) {
+    return '/clubs';
+  }
+  return null;
+}
+
+async function handleHttpSideEffects(
   httpError: HttpErrorResponse,
   token: string | null,
   suppress: boolean,
@@ -57,13 +72,15 @@ function handleHttpSideEffects(
   router: Router,
   tokenStore: TokenStore,
   translate: TranslateService,
-): void {
-  if (httpError.status === 401 && token && !skipAuthRedirect) {
-    tokenStore.clear();
-    void router.navigate(['/login']);
-  } else if (httpError.status === 403 && !skipAuthRedirect) {
-    void router.navigate(['/clubs']);
-  } else if (httpError.status >= 500) {
+): Promise<void> {
+  if (!skipAuthRedirect) {
+    const target = resolveAuthRedirect(httpError, token, tokenStore);
+    if (target) {
+      await router.navigate([target]);
+      return;
+    }
+  }
+  if (httpError.status >= 500) {
     if (!environment.production) {
       console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
     }
@@ -149,7 +166,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
       }
       const httpError = error instanceof HttpErrorResponse ? error : null;
       if (httpError) {
-        handleHttpSideEffects(httpError, token, suppress, skipAuthRedirect, router, tokenStore, translate);
+        handleHttpSideEffects(httpError, token, suppress, skipAuthRedirect, router, tokenStore, translate).catch(() => { /* navigation/side-effects best-effort */ });
         const detail = extractBackendDetail(httpError);
         let errorKey: string;
         if (httpError.status >= 500) {

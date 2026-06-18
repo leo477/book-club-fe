@@ -360,10 +360,9 @@ export class QuizService {
 
   async loadClubEvents(clubId: string): Promise<ClubEvent[]> {
     try {
-      const raw = await firstValueFrom(
+      return await firstValueFrom(
         this.http.get<ClubEvent[]>(`${this.api}/clubs/${clubId}/events`),
       );
-      return raw;
     } catch (err) {
       throw new Error(extractApiError(err));
     }
