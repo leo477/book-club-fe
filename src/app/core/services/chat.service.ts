@@ -1,7 +1,8 @@
 import { Injectable, signal, computed, inject, ApplicationRef, DestroyRef } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpContext } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { ChatItem, ChatMessage, ChatRoom, UnreadDivider } from '../models/chat.model';
+import { SKIP_AUTH_REDIRECT } from '../interceptors/auth.interceptor';
 import { environment } from '../../../environments/environment';
 
 // ── Raw API shapes (snake_case) ──────────────────────────────────────────────
@@ -432,7 +433,9 @@ export class ChatService {
   async getEventRoom(eventId: string): Promise<ChatRoom | null> {
     try {
       const raw = await firstValueFrom(
-        this.http.get<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`),
+        this.http.get<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`, {
+          context: new HttpContext().set(SKIP_AUTH_REDIRECT, true),
+        }),
       );
       return { id: raw.id, name: raw.name, clubId: '', eventId: raw.eventId };
     } catch {
