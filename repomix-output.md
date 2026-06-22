@@ -78,6 +78,7 @@ public/
     en.json
     uk.json
   favicon.ico
+  og-image.png
   robots.txt
   sitemap.xml
 scripts/
@@ -93,6 +94,8 @@ src/
         auth.service.ts
         role.guard.ts
         token.store.ts
+      error/
+        global-error-handler.ts
       interceptors/
         auth.interceptor.ts
       models/
@@ -114,6 +117,7 @@ src/
         geocoding.service.ts
         language.service.ts
         maps-config.service.ts
+        og-title-strategy.ts
         quiz.service.ts
         randomizer.service.ts
         routing.service.ts
@@ -454,6 +458,8 @@ supabase/
 .lintstagedrc.cjs
 angular.json
 ARCHITECTURE-REVIEW.md
+AUDIT-CHECKLIST.md
+AUDIT-REPORT.md
 CLAUDE.md
 components.json
 eslint.config.js

@@ -10,14 +10,12 @@ import { TokenStore } from '../../../core/auth/token.store';
 import { ChatService } from '../../../core/services/chat.service';
 import { ClubService } from '../../../core/services/club.service';
 import { ChatTimestampPipe } from '../../pipes/chat-timestamp.pipe';
-import { HlmButton } from '../../spartan/button/src';
-import { HlmInput } from '../../spartan/input/src';
 
 @Component({
   selector: 'app-chat-widget',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, TranslateModule, FormsModule, ChatTimestampPipe, HlmButton, HlmInput],
+  imports: [CommonModule, TranslateModule, FormsModule, ChatTimestampPipe],
   templateUrl: './chat-widget.component.html',
   styleUrls: ['./chat-widget.component.scss'],
 })

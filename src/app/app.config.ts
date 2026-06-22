@@ -1,11 +1,14 @@
-import { ApplicationConfig, ApplicationRef, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, provideAppInitializer, inject } from '@angular/core';
+import { ApplicationConfig, ApplicationRef, ErrorHandler, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, provideAppInitializer, inject } from '@angular/core';
+import { GlobalErrorHandler } from './core/error/global-error-handler';
 import { MapsConfigService } from './core/services/maps-config.service';
 import {
   provideRouter,
   withComponentInputBinding,
   withViewTransitions,
   withRouterConfig,
+  TitleStrategy,
 } from '@angular/router';
+import { OgTitleStrategy } from './core/services/og-title-strategy';
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
@@ -19,6 +22,7 @@ import { LanguageService } from './core/services/language.service';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
+    { provide: ErrorHandler, useClass: GlobalErrorHandler },
     provideZonelessChangeDetection(),
     provideRouter(
       routes,
@@ -27,6 +31,7 @@ export const appConfig: ApplicationConfig = {
       // Inherit parent route params (e.g. :id) into all descendant routes
       withRouterConfig({ paramsInheritanceStrategy: 'always' }),
     ),
+    { provide: TitleStrategy, useClass: OgTitleStrategy },
     provideHttpClient(
       withFetch(),
       withInterceptors([authInterceptor]),

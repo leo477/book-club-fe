@@ -61,6 +61,10 @@ interface BookStoreResult {
             </button>
           }
         </div>
+      } @else if (bookTitle()) {
+        <p class="text-sm text-gray-400 dark:text-gray-500">
+          {{ 'BOOK_STORES.unavailable' | translate }}
+        </p>
       }
     </section>
   `,

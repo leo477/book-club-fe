@@ -1,7 +1,7 @@
 <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-col gap-4">
   <hlm-field>
     <hlm-field-label>{{ 'ORGANIZER.club_name' | translate }}</hlm-field-label>
-    <input hlmInput formControlName="name" [placeholder]="'ORGANIZER.club_name_placeholder' | translate" />
+    <input hlmInput formControlName="name" [placeholder]="'ORGANIZER.club_name_placeholder' | translate" [attr.aria-label]="'ORGANIZER.club_name' | translate" />
     @if (form.controls.name.touched && form.controls.name.errors) {
       <hlm-field-error>
         @if (form.controls.name.errors['required']) { {{ 'VALIDATION.required' | translate }} }
@@ -13,12 +13,12 @@
 
   <hlm-field>
     <hlm-field-label>{{ 'ORGANIZER.description' | translate }}</hlm-field-label>
-    <input hlmInput formControlName="description" [placeholder]="'ORGANIZER.description_placeholder' | translate" />
+    <input hlmInput formControlName="description" [placeholder]="'ORGANIZER.description_placeholder' | translate" [attr.aria-label]="'ORGANIZER.description' | translate" />
   </hlm-field>
 
   <hlm-field>
     <hlm-field-label>{{ 'ORGANIZER.city' | translate }}</hlm-field-label>
-    <input hlmInput formControlName="city" [placeholder]="'ORGANIZER.city_placeholder' | translate" />
+    <input hlmInput formControlName="city" [placeholder]="'ORGANIZER.city_placeholder' | translate" [attr.aria-label]="'ORGANIZER.city' | translate" />
     @if (form.controls.city.touched && form.controls.city.errors?.['required']) {
       <hlm-field-error>{{ 'VALIDATION.required' | translate }}</hlm-field-error>
     }

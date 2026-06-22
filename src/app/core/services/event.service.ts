@@ -1,6 +1,6 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom, map } from 'rxjs';
+import { Observable, firstValueFrom, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiEvent, mapEvent } from '../api/api-mappers';
 import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
@@ -43,6 +43,14 @@ export interface UpdateEventPayload {
 export class EventService {
   private readonly http = inject(HttpClient);
 
+  private readonly CITY_NORM: Record<string, string> = {
+    'київ': 'Kyiv', 'kyiv': 'Kyiv',
+    'львів': 'Lviv', 'lviv': 'Lviv',
+    'одеса': 'Odesa', 'odesa': 'Odesa',
+    'харків': 'Kharkiv', 'kharkiv': 'Kharkiv',
+    'дніпро': 'Dnipro', 'dnipro': 'Dnipro',
+  };
+
   private readonly _allEvents = signal<ClubEvent[]>([]);
   private readonly _myEvents = signal<ClubEvent[]>([]);
   private readonly _isLoading = signal(false);
@@ -58,7 +66,11 @@ export class EventService {
   readonly filteredAllEvents = computed(() => {
     const city = this._cityFilter();
     const events = this._allEvents();
-    return city ? events.filter(e => e.city === city) : events;
+    if (!city) return events;
+    return events.filter(e => {
+      const norm = this.CITY_NORM[e.city?.trim().toLowerCase() ?? ''] ?? e.city?.trim();
+      return norm === city;
+    });
   });
 
   readonly availableCities = computed<string[]>(() => {
@@ -66,8 +78,9 @@ export class EventService {
     for (const e of this._allEvents()) {
       const original = e.city?.trim();
       if (!original) continue;
-      const key = original.toLowerCase();
-      if (!byKey.has(key)) byKey.set(key, original);
+      const normalized = this.CITY_NORM[original.toLowerCase()] ?? original;
+      const key = normalized.toLowerCase();
+      if (!byKey.has(key)) byKey.set(key, normalized);
     }
     return [...byKey.values()].sort((a, b) => a.localeCompare(b));
   });
@@ -111,6 +124,12 @@ export class EventService {
     } catch {
       this._error.set('Failed to load my events');
     }
+  }
+
+  eventById$(id: string): Observable<ClubEvent> {
+    return this.http
+      .get<ApiEvent>(`${environment.apiUrl}/events/${id}`)
+      .pipe(map(mapEvent));
   }
 
   async getEventById(id: string): Promise<ClubEvent | null> {

@@ -2,8 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentFixture } from '@angular/core/testing';
 import { Component, input, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { map } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { EventDetailComponent } from './event-detail.component';
 import { EventMapComponent } from '../../../shared/components/event-map/event-map.component';
@@ -11,6 +12,7 @@ import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ChatService } from '../../../core/services/chat.service';
 import { environment } from '../../../../environments/environment';
+import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
 import { makeApiEvent } from '../../../../testing/event-test.helpers';
 import { AfterMeetingVenue } from '../../../core/models/event.model';
 
@@ -25,7 +27,7 @@ class StubEventMapComponent {
 describe('EventDetailComponent', () => {
   let fixture: ComponentFixture<EventDetailComponent>;
   let component: EventDetailComponent;
-  let eventServiceSpy: { attendEvent: ReturnType<typeof vi.fn>; cancelAttendance: ReturnType<typeof vi.fn>; cancelEvent: ReturnType<typeof vi.fn> };
+  let eventServiceSpy: { eventById$: ReturnType<typeof vi.fn>; attendEvent: ReturnType<typeof vi.fn>; cancelAttendance: ReturnType<typeof vi.fn>; cancelEvent: ReturnType<typeof vi.fn> };
   let authSpy: { currentUser: ReturnType<typeof vi.fn>; isAuthenticated: ReturnType<typeof vi.fn> };
   let chatServiceSpy: { getEventRoom: ReturnType<typeof vi.fn>; createEventChatRoom: ReturnType<typeof vi.fn>; openAndFocusRoom: ReturnType<typeof vi.fn> };
   let httpMock: HttpTestingController;
@@ -34,6 +36,9 @@ describe('EventDetailComponent', () => {
 
   function setup(currentUser: { id: string } | null = null) {
     eventServiceSpy = {
+      eventById$: vi.fn((id: string) =>
+        TestBed.inject(HttpClient).get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(map(mapEvent)),
+      ),
       attendEvent: vi.fn().mockResolvedValue({ attendeeCount: 0, joinRequestStatus: 'none' }),
       cancelAttendance: vi.fn().mockResolvedValue(undefined),
       cancelEvent: vi.fn().mockResolvedValue(undefined),

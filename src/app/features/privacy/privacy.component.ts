@@ -14,11 +14,11 @@ import { AuthService } from '../../core/auth/auth.service';
         <button
           type="button"
           (click)="goBack()"
-          class="text-sm text-primary-600 dark:text-primary-400 hover:underline cursor-pointer"
+          class="text-sm text-primary-700 dark:text-primary-300 hover:underline cursor-pointer"
         >← Назад</button>
 
         <h1 class="text-3xl font-bold text-gray-900 dark:text-white mt-6 mb-2">Політика конфіденційності</h1>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mb-8">Останнє оновлення: травень 2026 р.</p>
+        <p class="text-sm text-gray-600 dark:text-gray-300 mb-8">Останнє оновлення: травень 2026 р.</p>
 
         <div class="space-y-8 text-gray-700 dark:text-gray-300 leading-relaxed">
 
@@ -54,7 +54,7 @@ import { AuthService } from '../../core/auth/auth.service';
 
           <section>
             <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-3">5. Контакти</h2>
-            <p>З питань конфіденційності звертайтеся: <a href="mailto:privacy&#64;bookclub.ua" class="text-primary-600 dark:text-primary-400 hover:underline">privacy&#64;bookclub.ua</a></p>
+            <p>З питань конфіденційності звертайтеся: <a href="mailto:privacy&#64;bookclub.ua" class="text-primary-700 dark:text-primary-300 underline">privacy&#64;bookclub.ua</a></p>
           </section>
 
         </div>

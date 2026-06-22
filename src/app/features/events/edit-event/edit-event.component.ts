@@ -11,9 +11,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormControl, Validators } from '@angular/forms';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { map } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
-import { HttpClient } from '@angular/common/http';
 import { EventService } from '../../../core/services/event.service';
 import { QuizService } from '../../../core/services/quiz.service';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -22,9 +20,7 @@ import { CoverUploadComponent } from '../../../shared/components/cover-upload/co
 import { HlmInput } from '../../../shared/spartan/input/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { GeocodeSuggestion } from '../../../core/services/geocoding.service';
-import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
 import { ClubEvent } from '../../../core/models/event.model';
-import { environment } from '../../../../environments/environment';
 import { BookAutocompleteComponent } from '../../../shared/components/book-autocomplete/book-autocomplete.component';
 import { BookSuggestion } from '../../../core/models/book.model';
 
@@ -38,7 +34,6 @@ import { BookSuggestion } from '../../../core/models/book.model';
 export class EditEventComponent {
   readonly id = input.required<string>();
 
-  private readonly http = inject(HttpClient);
   private readonly fb = inject(FormBuilder);
   private readonly eventService = inject(EventService);
   private readonly quizService = inject(QuizService);
@@ -52,8 +47,7 @@ export class EditEventComponent {
 
   private readonly _eventResource = rxResource<ClubEvent | null, string>({
     params: () => this.id(),
-    stream: ({ params: id }) =>
-      this.http.get<ApiEvent>(`${environment.apiUrl}/events/${id}`).pipe(map(mapEvent)),
+    stream: ({ params: id }) => this.eventService.eventById$(id),
   });
 
   readonly event = computed(() => this._eventResource.value() ?? null);

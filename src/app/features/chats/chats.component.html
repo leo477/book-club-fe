@@ -1,3 +1,5 @@
+<h1 class="sr-only">{{ 'CHAT.page_title' | translate }}</h1>
+
 <aside class="chats-sidebar border-r border-[var(--color-sepia)] overflow-y-auto">
   <div class="px-4 py-4 font-semibold text-base border-b border-[var(--color-sepia)]">{{ 'CHATS.title' | translate }}</div>
   <div class="py-2">
@@ -17,9 +19,9 @@
             <span class="text-sm font-semibold leading-tight truncate">{{ room.name }}</span>
             <span class="text-xs text-[var(--color-ink-muted)] leading-tight truncate mt-0.5">{{ group.clubName }}</span>
           </div>
-          @if ((chat.roomUnreadCounts()[room.id] ?? 0) > 0 && chat.activeRoomId() !== room.id) {
+          @if (chat.roomUnreadCounts()[room.id] > 0 && chat.activeRoomId() !== room.id) {
             <div class="flex-shrink-0 min-w-[20px] h-5 rounded-full bg-[var(--destructive)] flex items-center justify-center text-white text-xs font-bold px-1">
-              {{ (chat.roomUnreadCounts()[room.id] ?? 0) > 9 ? '9+' : chat.roomUnreadCounts()[room.id] }}
+              {{ chat.roomUnreadCounts()[room.id] > 9 ? '9+' : chat.roomUnreadCounts()[room.id] }}
             </div>
           }
         </button>
@@ -102,6 +104,7 @@
     </div>
     <div class="px-3 py-3 border-t border-[var(--color-sepia)] flex gap-2">
       <input hlmInput class="flex-1" [(ngModel)]="messageText" (keydown)="onKeydown($event)"
+             [attr.aria-label]="'CHAT.placeholder' | translate"
              [placeholder]="'CHAT.placeholder' | translate" />
       <button hlmBtn (click)="sendMessage()">{{ 'CHAT.send' | translate }}</button>
     </div>

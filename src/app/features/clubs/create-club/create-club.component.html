@@ -2,12 +2,12 @@
   <div class="w-full max-w-lg">
 
     <header class="text-center mb-8">
-      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</h1>
+      <p class="font-display text-3xl font-bold text-gray-900 dark:text-white">📚 BookClub</p>
       <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'CREATE_CLUB.subtitle' | translate }}</p>
     </header>
 
     <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h2>
+      <h1 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'CREATE_CLUB.title' | translate }}</h1>
 
       <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
 

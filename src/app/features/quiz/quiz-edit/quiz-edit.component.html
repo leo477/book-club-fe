@@ -108,8 +108,8 @@
                 <p class="text-sm font-medium">Answer options *</p>
                 @for (idx of optionIndices; track idx) {
                   <div class="flex items-center gap-3">
-                    <input type="radio" formControlName="correctIndex" [value]="idx" class="w-4 h-4 text-accent-600" />
-                    <input hlmInput [formControlName]="'option' + idx" [placeholder]="'Option ' + optionLabel(idx)" class="flex-1"/>
+                    <input type="radio" formControlName="correctIndex" [value]="idx" [attr.aria-label]="'Correct answer ' + optionLabel(idx)" class="w-4 h-4 text-accent-600" />
+                    <input hlmInput [formControlName]="'option' + idx" [placeholder]="'Option ' + optionLabel(idx)" [attr.aria-label]="'Option ' + optionLabel(idx)" class="flex-1"/>
                   </div>
                 }
               </div>

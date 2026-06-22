@@ -19,8 +19,8 @@ export const MAPS_LOADER_FNS = new InjectionToken<MapsLoaderFns>('MAPS_LOADER_FN
 export class MapsConfigService {
   private readonly http = inject(HttpClient);
   private readonly loader = inject(MAPS_LOADER_FNS);
-  private _loaded = signal(false);
-  private _mapId = signal('');
+  private readonly _loaded = signal(false);
+  private readonly _mapId = signal('');
   readonly isLoaded = this._loaded.asReadonly();
   readonly mapId = this._mapId.asReadonly();
 

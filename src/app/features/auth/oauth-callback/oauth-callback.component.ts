@@ -31,9 +31,9 @@ export class OAuthCallbackComponent implements OnInit {
     const { error } = await this.auth.completeOAuthSession();
     if (error) {
       toast.error(this.translate.instant('AUTH.oauth_failed') as string);
-      void this.router.navigate(['/login']);
+      await this.router.navigate(['/login']);
       return;
     }
-    void this.router.navigate(['/events']);
+    await this.router.navigate(['/events']);
   }
 }

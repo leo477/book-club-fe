@@ -170,43 +170,35 @@ function restoreTransitionSuppression(manager: ElementClassManager): void {
 	}
 }
 
+function handleClassMutation(mutation: MutationRecord): void {
+	if (mutation.type !== 'attributes' || mutation.attributeName !== 'class') return;
+	const element = mutation.target as HTMLElement;
+	const manager = elementClassManagers.get(element);
+	if (!manager || !observedElements.has(element) || manager.isUpdating) return;
+
+	const currentClasses = toClassList(element.className);
+	const allSourceClasses = new Set<string>();
+	for (const source of manager.sources.values()) {
+		for (const className of source.classes) {
+			allSourceClasses.add(className);
+		}
+	}
+	manager.baseClasses.clear();
+	for (const className of currentClasses) {
+		if (!allSourceClasses.has(className)) {
+			manager.baseClasses.add(className);
+		}
+	}
+	updateElement(manager);
+}
+
 // eslint-disable-next-line @typescript-eslint/no-wrapper-object-types
 function setupGlobalObserver(platformId: Object): void { // NOSONAR
 	if (isPlatformBrowser(platformId) && !globalObserver) {
 		// Create single global observer that watches the entire document
 		globalObserver = new MutationObserver((mutations) => {
 			for (const mutation of mutations) {
-				if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-					const element = mutation.target as HTMLElement;
-					const manager = elementClassManagers.get(element);
-
-					// Only process elements we're managing
-					if (manager && observedElements.has(element)) {
-						if (manager.isUpdating) continue; // Ignore changes we're making
-
-						// Update base classes to include any externally added classes
-						const currentClasses = toClassList(element.className);
-						const allSourceClasses = new Set<string>();
-
-						// Collect all classes from all sources
-						for (const source of manager.sources.values()) {
-							for (const className of source.classes) {
-								allSourceClasses.add(className);
-							}
-						}
-
-						// Any classes not from sources become new base classes
-						manager.baseClasses.clear();
-
-						for (const className of currentClasses) {
-							if (!allSourceClasses.has(className)) {
-								manager.baseClasses.add(className);
-							}
-						}
-
-						updateElement(manager);
-					}
-				}
+				handleClassMutation(mutation);
 			}
 		});
 
