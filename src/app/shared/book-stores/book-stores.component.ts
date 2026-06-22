@@ -13,8 +13,9 @@ import { environment } from '../../../environments/environment';
 
 interface BookStoreResult {
   name: string;
-  available: boolean;
-  url: string | null;
+  url: string;
+  found: boolean | null;
+  product_url: string | null;
 }
 
 @Component({
@@ -39,20 +40,24 @@ interface BookStoreResult {
           @for (store of stores(); track store.name) {
             <button
               type="button"
-              [disabled]="!store.available || !store.url"
               (click)="openStore(store)"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-colors"
-              [class]="store.available
-                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30 cursor-pointer'
-                : 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 cursor-default'"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-colors cursor-pointer"
+              [class]="store.found === true
+                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30'
+                : store.found === false
+                  ? 'bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-700'
+                  : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'"
             >
               <span>{{ store.name }}</span>
-              <span class="text-xs rounded-full px-1.5 py-0.5 font-semibold"
-                    [class]="store.available
-                      ? 'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'">
-                {{ (store.available ? 'BOOK_STORES.found' : 'BOOK_STORES.not_found') | translate }}
-              </span>
+              @if (store.found === true) {
+                <span class="text-xs rounded-full px-1.5 py-0.5 font-semibold bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200">
+                  {{ 'BOOK_STORES.found' | translate }}
+                </span>
+              } @else if (store.found === false) {
+                <span class="text-xs rounded-full px-1.5 py-0.5 font-semibold bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                  {{ 'BOOK_STORES.not_found' | translate }}
+                </span>
+              }
             </button>
           }
         </div>

@@ -57,6 +57,20 @@ The content is organized as follows:
   labeler.yml
 .husky/
   pre-commit
+audit-evidence/
+  prod/
+    login.png
+    p_chats.png
+    p_club_create.png
+    p_clubs.png
+    p_events.png
+    p_manage.png
+    p_profile.png
+    privacy.png
+    register.png
+    root.png
+    terms.png
+  audit-prod-results.json
 e2e/
   audit-helper.ts
 public/
@@ -439,6 +453,7 @@ supabase/
 .lighthouserc.json
 .lintstagedrc.cjs
 angular.json
+ARCHITECTURE-REVIEW.md
 CLAUDE.md
 components.json
 eslint.config.js
