@@ -180,6 +180,17 @@ export class ChatService {
   }
 
   connectRoom(roomId: string, token: string): void {
+    // Idempotent: if a socket for the same room/token is already live, don't
+    // tear it down — closing a CONNECTING socket triggers the browser's
+    // "closed before the connection is established" warning and can loop.
+    if (
+      this._ws &&
+      this._activeRoomToken?.roomId === roomId &&
+      this._activeRoomToken.token === token &&
+      (this._ws.readyState === WebSocket.OPEN || this._ws.readyState === WebSocket.CONNECTING)
+    ) {
+      return;
+    }
     this.disconnectRoom();
     this._activeRoomToken = { roomId, token };
     this._ws = new WebSocket(environment.wsUrl + '/chat/rooms/' + roomId);
@@ -304,6 +315,8 @@ export class ChatService {
     if (!lastMsg) return;
     this._lastReadMap.update(m => ({ ...m, [roomId]: lastMsg.id }));
     this._roomUnreadCounts.update(m => ({ ...m, [roomId]: 0 }));
+    // Never POST an optimistic temp id — the server expects a confirmed UUID.
+    if (lastMsg.id.startsWith('temp-')) return;
     firstValueFrom(
       this.http.post(`${this.api}/chat/rooms/${roomId}/read`, { last_read_message_id: lastMsg.id }),
     ).catch(() => undefined);
