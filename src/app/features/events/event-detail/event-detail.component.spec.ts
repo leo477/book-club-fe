@@ -139,6 +139,29 @@ describe('EventDetailComponent', () => {
     });
   });
 
+  describe('event chat room loading (403 guard)', () => {
+    it('does NOT fetch the event room for a non-participant viewer', async () => {
+      setup({ id: 'viewer' }); // not organizer (organizerId is u1), isAttending false
+      httpMock.expectOne(eventUrl).flush(makeApiEvent());
+      await fixture.whenStable();
+      expect(chatServiceSpy.getEventRoom).not.toHaveBeenCalled();
+    });
+
+    it('fetches the event room when the viewer is the organizer', async () => {
+      setup({ id: 'u1' });
+      httpMock.expectOne(eventUrl).flush(makeApiEvent());
+      await fixture.whenStable();
+      expect(chatServiceSpy.getEventRoom).toHaveBeenCalledWith('e1');
+    });
+
+    it('fetches the event room when the viewer is attending', async () => {
+      setup({ id: 'viewer' });
+      httpMock.expectOne(eventUrl).flush(makeApiEvent({ isAttending: true }));
+      await fixture.whenStable();
+      expect(chatServiceSpy.getEventRoom).toHaveBeenCalledWith('e1');
+    });
+  });
+
   describe('onAttend', () => {
     it('calls attendEvent and reloads the resource', async () => {
       setup();
