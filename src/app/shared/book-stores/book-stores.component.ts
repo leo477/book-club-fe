@@ -11,10 +11,11 @@ import { of } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
 
-interface BookStoreResult {
+interface StoreResult {
   name: string;
   url: string;
-  found: boolean;
+  found: boolean | null;
+  product_url: string | null;
 }
 
 @Component({
@@ -28,38 +29,43 @@ interface BookStoreResult {
         📚 {{ 'BOOK_STORES.title' | translate }}
       </h3>
 
-      @if (storesResource.isLoading()) {
-        <div class="flex flex-wrap gap-2">
-          @for (i of skeletons; track i) {
-            <div class="h-9 w-28 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
-          }
-        </div>
-      } @else if (stores().length > 0) {
-        <div class="flex flex-wrap gap-2">
-          @for (store of stores(); track store.name) {
-            <button
-              type="button"
-              [disabled]="!store.url"
-              (click)="openStore(store)"
-              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-colors cursor-pointer"
-              [class]="store.found
-                ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30'
-                : 'bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'"
-            >
-              <span>{{ store.name }}</span>
-              <span class="text-xs rounded-full px-1.5 py-0.5 font-semibold"
-                    [class]="store.found
-                      ? 'bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200'
-                      : 'bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'">
-                {{ (store.found ? 'BOOK_STORES.found' : 'BOOK_STORES.not_found') | translate }}
-              </span>
-            </button>
-          }
-        </div>
-      } @else if (bookTitle()) {
-        <p class="text-sm text-gray-400 dark:text-gray-500">
-          {{ 'BOOK_STORES.unavailable' | translate }}
-        </p>
+      @if (bookTitle()) {
+        @if (storesResource.isLoading()) {
+          <div class="flex flex-wrap gap-2">
+            @for (i of skeletons; track i) {
+              <div class="h-9 w-28 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+            }
+          </div>
+        } @else if (storesResource.error()) {
+          <p class="text-sm text-gray-400 dark:text-gray-500">
+            {{ 'BOOK_STORES.error' | translate }}
+          </p>
+        } @else if (stores().length > 0) {
+          <div class="flex flex-wrap gap-2">
+            @for (store of stores(); track store.name) {
+              <a
+                [href]="store.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-medium border transition-colors"
+                [class]="store.found === true
+                  ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-800 dark:text-green-300 hover:bg-green-100 dark:hover:bg-green-900/30'
+                  : 'bg-gray-50 dark:bg-gray-800/60 border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800'"
+              >
+                <span>{{ store.name }}</span>
+                @if (store.found === true) {
+                  <span class="text-xs rounded-full px-1.5 py-0.5 font-semibold bg-green-200 dark:bg-green-800 text-green-800 dark:text-green-200">
+                    {{ 'BOOK_STORES.found' | translate }}
+                  </span>
+                } @else if (store.found === false) {
+                  <span class="text-xs rounded-full px-1.5 py-0.5 font-semibold bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400">
+                    {{ 'BOOK_STORES.not_found' | translate }}
+                  </span>
+                }
+              </a>
+            }
+          </div>
+        }
       }
     </section>
   `,
@@ -69,11 +75,11 @@ export class BookStoresComponent {
 
   private readonly http = inject(HttpClient);
 
-  readonly storesResource = rxResource<BookStoreResult[], string | null>({
+  readonly storesResource = rxResource<StoreResult[], string | null>({
     params: () => this.bookTitle(),
     stream: ({ params: title }) => {
       if (!title) return of([]);
-      return this.http.get<BookStoreResult[]>(
+      return this.http.get<StoreResult[]>(
         `${environment.apiUrl}/books/stores?title=${encodeURIComponent(title)}`,
       );
     },
@@ -82,8 +88,4 @@ export class BookStoresComponent {
   readonly stores = computed(() => this.storesResource.value() ?? []);
 
   readonly skeletons = [1, 2, 3];
-
-  openStore(store: BookStoreResult): void {
-    if (store.url) window.open(store.url, '_blank');
-  }
 }

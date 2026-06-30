@@ -1,0 +1,393 @@
+{
+  "base": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app",
+  "public": [
+    {
+      "route": "/",
+      "label": "root",
+      "finalUrl": "/login",
+      "redirected": true,
+      "seo": {
+        "title": "Вхід | Book Club",
+        "lang": "uk",
+        "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+        "robots": "index, follow",
+        "canonical": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/login",
+        "ogTitle": "Вхід | Book Club",
+        "ogUrl": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/login",
+        "ogImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "twitterImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "h1count": 1,
+        "h1": [
+          "📚 Book Club"
+        ],
+        "h2count": 1,
+        "imgsNoAlt": [],
+        "blankNoNoopener": []
+      },
+      "consoleErrors": [],
+      "shot": "playwright-report/audit-shots-prod/root.png"
+    },
+    {
+      "route": "/login",
+      "label": "login",
+      "finalUrl": "/login",
+      "redirected": false,
+      "seo": {
+        "title": "Вхід | Book Club",
+        "lang": "uk",
+        "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+        "robots": "index, follow",
+        "canonical": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/login",
+        "ogTitle": "Вхід | Book Club",
+        "ogUrl": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/login",
+        "ogImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "twitterImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "h1count": 1,
+        "h1": [
+          "📚 Book Club"
+        ],
+        "h2count": 1,
+        "imgsNoAlt": [],
+        "blankNoNoopener": []
+      },
+      "consoleErrors": [],
+      "shot": "playwright-report/audit-shots-prod/login.png"
+    },
+    {
+      "route": "/register",
+      "label": "register",
+      "finalUrl": "/register",
+      "redirected": false,
+      "seo": {
+        "title": "Реєстрація | Book Club",
+        "lang": "uk",
+        "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+        "robots": "index, follow",
+        "canonical": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/register",
+        "ogTitle": "Реєстрація | Book Club",
+        "ogUrl": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/register",
+        "ogImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "twitterImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "h1count": 1,
+        "h1": [
+          "📚 Book Club"
+        ],
+        "h2count": 1,
+        "imgsNoAlt": [],
+        "blankNoNoopener": []
+      },
+      "consoleErrors": [],
+      "shot": "playwright-report/audit-shots-prod/register.png"
+    },
+    {
+      "route": "/privacy",
+      "label": "privacy",
+      "finalUrl": "/privacy",
+      "redirected": false,
+      "seo": {
+        "title": "Конфіденційність | Book Club",
+        "lang": "uk",
+        "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+        "robots": "index, follow",
+        "canonical": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/privacy",
+        "ogTitle": "Book Club — Читацькі клуби України",
+        "ogUrl": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/privacy",
+        "ogImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "twitterImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "h1count": 1,
+        "h1": [
+          "Політика конфіденційності"
+        ],
+        "h2count": 5,
+        "imgsNoAlt": [],
+        "blankNoNoopener": []
+      },
+      "consoleErrors": [],
+      "shot": "playwright-report/audit-shots-prod/privacy.png"
+    },
+    {
+      "route": "/terms",
+      "label": "terms",
+      "finalUrl": "/terms",
+      "redirected": false,
+      "seo": {
+        "title": "Умови використання | Book Club",
+        "lang": "uk",
+        "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+        "robots": "index, follow",
+        "canonical": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/terms",
+        "ogTitle": "Book Club — Читацькі клуби України",
+        "ogUrl": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/terms",
+        "ogImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "twitterImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "h1count": 1,
+        "h1": [
+          "Умови використання"
+        ],
+        "h2count": 6,
+        "imgsNoAlt": [],
+        "blankNoNoopener": []
+      },
+      "consoleErrors": [],
+      "shot": "playwright-report/audit-shots-prod/terms.png"
+    },
+    {
+      "route": "/clubs",
+      "label": "clubs_noauth",
+      "finalUrl": "/login",
+      "redirected": true,
+      "seo": {
+        "title": "Вхід | Book Club",
+        "lang": "uk",
+        "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+        "robots": "index, follow",
+        "canonical": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/login",
+        "ogTitle": "Вхід | Book Club",
+        "ogUrl": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/login",
+        "ogImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "twitterImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "h1count": 1,
+        "h1": [
+          "📚 Book Club"
+        ],
+        "h2count": 1,
+        "imgsNoAlt": [],
+        "blankNoNoopener": []
+      },
+      "consoleErrors": [],
+      "shot": "playwright-report/audit-shots-prod/clubs_noauth.png"
+    },
+    {
+      "route": "/events",
+      "label": "events_noauth",
+      "finalUrl": "/login",
+      "redirected": true,
+      "seo": {
+        "title": "Вхід | Book Club",
+        "lang": "uk",
+        "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+        "robots": "index, follow",
+        "canonical": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/login",
+        "ogTitle": "Вхід | Book Club",
+        "ogUrl": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/login",
+        "ogImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "twitterImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "h1count": 1,
+        "h1": [
+          "📚 Book Club"
+        ],
+        "h2count": 1,
+        "imgsNoAlt": [],
+        "blankNoNoopener": []
+      },
+      "consoleErrors": [],
+      "shot": "playwright-report/audit-shots-prod/events_noauth.png"
+    },
+    {
+      "route": "/this-does-not-exist-xyz",
+      "label": "notfound",
+      "finalUrl": "/login",
+      "redirected": true,
+      "seo": {
+        "title": "Вхід | Book Club",
+        "lang": "uk",
+        "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+        "robots": "index, follow",
+        "canonical": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/login",
+        "ogTitle": "Вхід | Book Club",
+        "ogUrl": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/login",
+        "ogImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "twitterImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "h1count": 1,
+        "h1": [
+          "📚 Book Club"
+        ],
+        "h2count": 1,
+        "imgsNoAlt": [],
+        "blankNoNoopener": []
+      },
+      "consoleErrors": [
+        "Failed to load resource: the server responded with a status of 429 ()"
+      ],
+      "shot": "playwright-report/audit-shots-prod/notfound.png"
+    }
+  ],
+  "protected": [
+    {
+      "route": "/events",
+      "label": "p_events",
+      "finalUrl": "/events",
+      "redirected": false,
+      "seo": {
+        "title": "Події | Book Club",
+        "lang": "uk",
+        "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+        "robots": "index, follow",
+        "canonical": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/events",
+        "ogTitle": "Book Club — Читацькі клуби України",
+        "ogUrl": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/events",
+        "ogImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "twitterImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "h1count": 1,
+        "h1": [
+          "Події"
+        ],
+        "h2count": 2,
+        "imgsNoAlt": [],
+        "blankNoNoopener": []
+      },
+      "consoleErrors": [],
+      "shot": "playwright-report/audit-shots-prod/p_events.png"
+    },
+    {
+      "route": "/clubs",
+      "label": "p_clubs",
+      "finalUrl": "/clubs",
+      "redirected": false,
+      "seo": {
+        "title": "Книжкові клуби | Book Club",
+        "lang": "uk",
+        "description": "Знайдіть книжковий клуб у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+        "robots": "index, follow",
+        "canonical": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/clubs",
+        "ogTitle": "Книжкові клуби",
+        "ogUrl": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/clubs",
+        "ogImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "twitterImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "h1count": 1,
+        "h1": [
+          "Книжкові клуби"
+        ],
+        "h2count": 8,
+        "imgsNoAlt": [],
+        "blankNoNoopener": []
+      },
+      "consoleErrors": [],
+      "shot": "playwright-report/audit-shots-prod/p_clubs.png"
+    },
+    {
+      "route": "/profile",
+      "label": "p_profile",
+      "finalUrl": "/profile",
+      "redirected": false,
+      "seo": {
+        "title": "Профіль | Book Club",
+        "lang": "uk",
+        "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+        "robots": "index, follow",
+        "canonical": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/profile",
+        "ogTitle": "Профіль | Book Club",
+        "ogUrl": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/profile",
+        "ogImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "twitterImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "h1count": 1,
+        "h1": [
+          "QA Auditor"
+        ],
+        "h2count": 4,
+        "imgsNoAlt": [],
+        "blankNoNoopener": []
+      },
+      "consoleErrors": [],
+      "shot": "playwright-report/audit-shots-prod/p_profile.png"
+    },
+    {
+      "route": "/chats",
+      "label": "p_chats",
+      "finalUrl": "/chats",
+      "redirected": false,
+      "seo": {
+        "title": "Чати | Book Club",
+        "lang": "uk",
+        "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+        "robots": "index, follow",
+        "canonical": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/chats",
+        "ogTitle": "Book Club — Читацькі клуби України",
+        "ogUrl": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/chats",
+        "ogImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "twitterImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "h1count": 0,
+        "h1": [],
+        "h2count": 0,
+        "imgsNoAlt": [],
+        "blankNoNoopener": []
+      },
+      "consoleErrors": [],
+      "shot": "playwright-report/audit-shots-prod/p_chats.png"
+    },
+    {
+      "route": "/manage",
+      "label": "p_manage",
+      "finalUrl": "/manage",
+      "redirected": false,
+      "seo": {
+        "title": "Керування | Book Club",
+        "lang": "uk",
+        "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+        "robots": "index, follow",
+        "canonical": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/manage",
+        "ogTitle": "Book Club — Читацькі клуби України",
+        "ogUrl": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/manage",
+        "ogImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "twitterImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "h1count": 1,
+        "h1": [
+          "Панель організатора"
+        ],
+        "h2count": 1,
+        "imgsNoAlt": [],
+        "blankNoNoopener": []
+      },
+      "consoleErrors": [],
+      "shot": "playwright-report/audit-shots-prod/p_manage.png"
+    },
+    {
+      "route": "/clubs/create",
+      "label": "p_club_create",
+      "finalUrl": "/clubs/create",
+      "redirected": false,
+      "seo": {
+        "title": "Book Club — Читацькі клуби України",
+        "lang": "uk",
+        "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+        "robots": "index, follow",
+        "canonical": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/clubs/create",
+        "ogTitle": "Book Club — Читацькі клуби України",
+        "ogUrl": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/clubs/create",
+        "ogImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "twitterImage": "https://book-club-81rhzaq0y-dmytros-projects-ad22eb22.vercel.app/og-image.png",
+        "h1count": 1,
+        "h1": [
+          "📚 BookClub"
+        ],
+        "h2count": 1,
+        "imgsNoAlt": [],
+        "blankNoNoopener": []
+      },
+      "consoleErrors": [],
+      "shot": "playwright-report/audit-shots-prod/p_club_create.png"
+    }
+  ],
+  "forms": {},
+  "account": {
+    "name": "QA Auditor",
+    "email": "qa.audit.1781533545975@example.com",
+    "password": "AuditPass123!",
+    "registerFeedback": "(none)",
+    "afterLoginUrl": "/events",
+    "loginError": null,
+    "storage": {
+      "bc_has_session": "1"
+    },
+    "authenticated": true
+  },
+  "errors": [],
+  "headerNav": [
+    "BookClub",
+    "Події",
+    "Клуби",
+    "Керування",
+    "Конфіденційність",
+    "Умови"
+  ]
+}

@@ -1,6 +1,7 @@
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
 import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStatus } from '../models/club.model';
 import { AfterMeetingVenue, ClubEvent, EventStatus } from '../models/event.model';
+import { Submission, SubmissionStatus, SubmissionType } from '../models/support.model';
 
 // Raw API response shapes (camelCase from FastAPI)
 export interface ApiUserProfile {
@@ -98,6 +99,17 @@ export interface ApiEvent {
   hasWinner?: boolean;
   winnerId?: string | null;
   winnerName?: string | null;
+}
+
+export interface ApiSubmission {
+  id: string;
+  type: SubmissionType;
+  title: string;
+  body: string;
+  status: SubmissionStatus;
+  authorId: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export function mapUserProfile(raw: ApiUserProfile): UserProfile {
@@ -205,6 +217,19 @@ export function mapBanRecord(raw: ApiBanRecord): BanRecord {
     bannedAt: raw.bannedAt,
     duration: raw.duration,
     bannedBy: raw.bannedBy,
+  };
+}
+
+export function mapSubmission(raw: ApiSubmission): Submission {
+  return {
+    id: raw.id,
+    type: raw.type,
+    title: raw.title,
+    body: raw.body,
+    status: raw.status,
+    authorId: raw.authorId,
+    createdAt: raw.createdAt,
+    updatedAt: raw.updatedAt,
   };
 }
 

@@ -7,6 +7,13 @@ import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from './auth.service';
 import { UserRole } from '../models/user.model';
 
+// Role hierarchy: 'admin' satisfies every guard; 'organizer' routes also admit 'admin'.
+const ALLOWED_ROLES: Record<UserRole, readonly UserRole[]> = {
+  user: ['user', 'organizer', 'admin'],
+  organizer: ['organizer', 'admin'],
+  admin: ['admin'],
+};
+
 export const roleGuard =
   (requiredRole: UserRole): CanActivateFn =>
   () => {
@@ -15,7 +22,8 @@ export const roleGuard =
     const translate = inject(TranslateService);
 
     const evaluate = () => {
-      if (auth.userRole() === requiredRole) return true;
+      const role = auth.userRole();
+      if (role && ALLOWED_ROLES[requiredRole].includes(role)) return true;
       toast.error(translate.instant('ERRORS.organizers_only') as string);
       return router.createUrlTree(['/clubs']);
     };

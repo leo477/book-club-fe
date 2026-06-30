@@ -12,6 +12,7 @@ import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.mo
 
 interface AuthResponse {
   accessToken: string;
+  refreshToken: string;
   user: ApiUserProfile;
 }
 
@@ -29,6 +30,7 @@ export class AuthService {
   readonly isAuthenticated = computed(() => this._currentUser() !== null);
   readonly userRole = computed(() => this._currentUser()?.role ?? null);
   readonly isOrganizer = computed(() => this._currentUser()?.role === 'organizer');
+  readonly isAdmin = computed(() => this._currentUser()?.role === 'admin');
 
   private readonly _statsResource = rxResource<UserStats | null, string | null>({
     params: () => this._currentUser()?.id ?? null,
@@ -71,20 +73,25 @@ export class AuthService {
    */
   private async restoreSession(): Promise<boolean> {
     const skipCtx = new HttpContext().set(SKIP_AUTH_REDIRECT, true);
+    // Desktop relies on the httpOnly cookie (withCredentials); mobile blocks that
+    // cross-site cookie, so we also send the SPA-persisted refresh token in the body.
+    const persistedRefresh = this.tokenStore.refreshToken();
     const refreshResp = await firstValueFrom(
       this.http
-        .post<{ accessToken: string }>(
+        .post<{ accessToken: string; refreshToken: string }>(
           `${environment.apiUrl}/auth/refresh`,
-          {},
+          persistedRefresh ? { refreshToken: persistedRefresh } : {},
           { withCredentials: true, context: skipCtx },
         )
         .pipe(catchError(() => {
           localStorage.removeItem(AuthService.SESSION_MARKER);
+          this.tokenStore.clearRefreshToken();
           return of(null);
         })),
     );
     if (!refreshResp) return false;
     this.tokenStore.set(refreshResp.accessToken);
+    if (refreshResp.refreshToken) this.tokenStore.setRefreshToken(refreshResp.refreshToken);
     const raw = await firstValueFrom(
       this.http
         .get<ApiUserProfile>(`${environment.apiUrl}/auth/me`, { context: skipCtx })
@@ -110,6 +117,44 @@ export class AuthService {
     return restored ? { error: null } : { error: 'OAUTH_FAILED' };
   }
 
+  /**
+   * Exchanges the one-time OAuth handoff code for tokens. Used by the callback
+   * route on mobile, where the cross-site refresh cookie is unavailable, so the
+   * SPA must hold the rotated refresh token itself.
+   */
+  async exchangeOAuthCode(code: string): Promise<{ error: string | null }> {
+    const skipCtx = new HttpContext().set(SKIP_AUTH_REDIRECT, true);
+    try {
+      const resp = await firstValueFrom(
+        this.http.post<{ accessToken: string; refreshToken: string }>(
+          `${environment.apiUrl}/auth/oauth/exchange`,
+          { code },
+          { withCredentials: true, context: skipCtx },
+        ),
+      );
+      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefreshToken(resp.refreshToken);
+      localStorage.setItem(AuthService.SESSION_MARKER, '1');
+      const raw = await firstValueFrom(
+        this.http
+          .get<ApiUserProfile>(`${environment.apiUrl}/auth/me`, { context: skipCtx })
+          .pipe(catchError(() => of(null))),
+      );
+      if (!raw) {
+        // /auth/me failed after tokens were stored: tear down the half-set
+        // session so nothing stale is left behind (mirrors restoreSession()).
+        this.tokenStore.clear();
+        this.tokenStore.clearRefreshToken();
+        localStorage.removeItem(AuthService.SESSION_MARKER);
+        return { error: 'OAUTH_FAILED' };
+      }
+      this._currentUser.set(mapUserProfile(raw));
+      return { error: null };
+    } catch {
+      return { error: 'OAUTH_FAILED' };
+    }
+  }
+
   async signUp(
     email: string,
     password: string,
@@ -130,6 +175,7 @@ export class AuthService {
         ),
       );
       this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefreshToken(resp.refreshToken);
       localStorage.setItem(AuthService.SESSION_MARKER, '1');
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
@@ -148,6 +194,7 @@ export class AuthService {
         ),
       );
       this.tokenStore.set(resp.accessToken);
+      this.tokenStore.setRefreshToken(resp.refreshToken);
       localStorage.setItem(AuthService.SESSION_MARKER, '1');
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
@@ -163,6 +210,7 @@ export class AuthService {
       );
     } catch { /* ignore logout errors */ }
     this.tokenStore.clear();
+    this.tokenStore.clearRefreshToken();
     localStorage.removeItem(AuthService.SESSION_MARKER);
     this._currentUser.set(null);
     await this.router.navigate(['/login']);

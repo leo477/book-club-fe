@@ -1,0 +1,406 @@
+@if (isLoading()) {
+  <div class="page-container py-16 flex justify-center" aria-busy="true">
+    <hlm-spinner />
+  </div>
+} @else if (isClubMissing() || !club()) {
+  <div class="page-container py-16 text-center" role="alert">
+    <p class="text-6xl mb-4" aria-hidden="true">😕</p>
+    <h2 class="text-2xl font-semibold text-[var(--color-ink)] mb-2">{{ 'CLUB_DETAIL.not_found' | translate }}</h2>
+    <a hlmBtn routerLink="/clubs" class="bg-primary-600 hover:bg-primary-700 text-white">
+      ← {{ 'CLUB_DETAIL.back' | translate }}
+    </a>
+  </div>
+} @else {
+  <div class="page-container page-max-w py-8 space-y-6">
+
+    <!-- ── Header ──────────────────────────────────────────── -->
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
+        <a
+          [routerLink]="['/clubs', id()]"
+          class="inline-flex items-center gap-1.5 text-sm text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors mb-1"
+        >
+          ← {{ 'CLUB_MANAGE.back_to_club' | translate }}
+        </a>
+        <div class="flex items-center gap-3 flex-wrap">
+          <h1 class="font-fantasy text-3xl font-bold tracking-wide text-[var(--color-ink)]">{{ club()!.name }}</h1>
+          @switch (club()!.status) {
+            @case ('paused') {
+              <span class="rounded-full bg-amber-100 text-amber-700 px-2.5 py-0.5 text-xs font-medium">{{ 'CLUBS.paused' | translate }}</span>
+            }
+            @case ('cancelled') {
+              <span class="rounded-full bg-red-100 text-red-700 px-2.5 py-0.5 text-xs font-medium">{{ 'CLUBS.cancelled' | translate }}</span>
+            }
+            @default {
+              <span class="rounded-full bg-green-100 text-green-700 px-2.5 py-0.5 text-xs font-medium">{{ 'CLUB_MANAGE.status_active' | translate }}</span>
+            }
+          }
+        </div>
+        <p class="text-sm text-[var(--color-ink-muted)] mt-1">{{ 'CLUB_MANAGE.subtitle' | translate }}</p>
+      </div>
+    </header>
+
+    <hlm-tabs [tab]="activeTab()" (tabActivated)="activeTab.set($any($event))">
+      <hlm-tabs-list class="mb-6 flex-wrap">
+        <button [hlmTabsTrigger]="'dashboard'">{{ 'CLUB_MANAGE.tab_dashboard' | translate }}</button>
+        <button [hlmTabsTrigger]="'members'">{{ 'CLUB_MANAGE.tab_members' | translate }}</button>
+        <button [hlmTabsTrigger]="'requests'">
+          {{ 'CLUB_MANAGE.tab_requests' | translate }}
+          @if (joinRequests().length > 0) {
+            <span class="ml-1.5 rounded-full bg-primary-600 text-white text-[10px] px-1.5 py-0.5">{{ joinRequests().length }}</span>
+          }
+        </button>
+        <button [hlmTabsTrigger]="'settings'">{{ 'CLUB_MANAGE.tab_settings' | translate }}</button>
+        <button [hlmTabsTrigger]="'tools'">{{ 'CLUB_MANAGE.tab_tools' | translate }}</button>
+      </hlm-tabs-list>
+
+      <!-- ═══════ DASHBOARD ═══════ -->
+      <div [hlmTabsContent]="'dashboard'">
+        @let s = stats();
+        @if (!s) {
+          <p class="text-sm text-[var(--color-ink-muted)] text-center py-10">{{ 'CLUB_MANAGE.no_stats' | translate }}</p>
+        } @else {
+          <div class="space-y-8">
+
+            <!-- Headline stat cards -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="parchment-card-raised p-4 text-center">
+                <p class="text-3xl font-bold text-[var(--color-primary-500)]">{{ s.totalMembers ?? '—' }}</p>
+                <p class="text-xs text-[var(--color-ink-muted)] mt-1">{{ 'CLUB_MANAGE.stat_members' | translate }}</p>
+              </div>
+              <div class="parchment-card-raised p-4 text-center">
+                <p class="text-3xl font-bold text-[var(--color-primary-500)]">{{ s.totalEvents ?? '—' }}</p>
+                <p class="text-xs text-[var(--color-ink-muted)] mt-1">{{ 'CLUB_MANAGE.stat_events' | translate }}</p>
+              </div>
+              <div class="parchment-card-raised p-4 text-center">
+                <p class="text-3xl font-bold text-[var(--color-primary-500)]">{{ s.totalMessages ?? '—' }}</p>
+                <p class="text-xs text-[var(--color-ink-muted)] mt-1">{{ 'CLUB_MANAGE.stat_messages' | translate }}</p>
+              </div>
+              <div class="parchment-card-raised p-4 text-center">
+                <p class="text-3xl font-bold text-[var(--color-primary-500)]">{{ s.upcomingEventsCount ?? '—' }}</p>
+                <p class="text-xs text-[var(--color-ink-muted)] mt-1">{{ 'CLUB_MANAGE.stat_upcoming' | translate }}</p>
+              </div>
+            </div>
+
+            <!-- Bar charts -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              @if (s.memberGrowth && s.memberGrowth.length > 0) {
+                <div class="parchment-card p-4">
+                  <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-3">👥 {{ 'CLUB_MANAGE.member_growth' | translate }}</p>
+                  <div class="flex items-end gap-1 h-24">
+                    @for (m of s.memberGrowth; track m.month) {
+                      <div
+                        class="flex-1 bg-[var(--color-primary-400)] rounded-t opacity-70 hover:opacity-100 transition-opacity min-h-[2px]"
+                        [style.height.%]="(m.count / maxMemberGrowth(s)) * 100"
+                        [title]="m.month + ': ' + m.count"
+                      ></div>
+                    }
+                  </div>
+                </div>
+              }
+              @if (s.eventFrequency && s.eventFrequency.length > 0) {
+                <div class="parchment-card p-4">
+                  <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-3">📅 {{ 'CLUB_MANAGE.event_frequency' | translate }}</p>
+                  <div class="flex items-end gap-1 h-24">
+                    @for (m of s.eventFrequency; track m.month) {
+                      <div
+                        class="flex-1 bg-[var(--color-primary-400)] rounded-t opacity-70 hover:opacity-100 transition-opacity min-h-[2px]"
+                        [style.height.%]="(m.count / maxEventFrequency(s)) * 100"
+                        [title]="m.month + ': ' + m.count"
+                      ></div>
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+
+            @if (s.recentAttendance.length > 0) {
+              <div class="parchment-card p-4">
+                <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-3">{{ 'ORGANIZER.attendance' | translate }}</p>
+                <div class="flex items-end gap-1 h-24">
+                  @for (ev of s.recentAttendance.slice(0, 12).reverse(); track ev.eventId) {
+                    <div
+                      class="flex-1 bg-[var(--color-accent-500)] rounded-t opacity-70 hover:opacity-100 transition-opacity min-h-[2px]"
+                      [style.height.%]="(ev.attendeeCount / (s.recentAttendance[0]?.attendeeCount || 1)) * 100"
+                      [title]="ev.title + ': ' + ev.attendeeCount"
+                    ></div>
+                  }
+                </div>
+              </div>
+            }
+
+            <!-- Leaderboards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              @if (s.topActive.length > 0) {
+                <div class="parchment-card p-4">
+                  <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-2">🏃 {{ 'ORGANIZER.top_active' | translate }}</p>
+                  @for (m of s.topActive; track m.userId; let i = $index) {
+                    <div class="flex items-center gap-2 text-sm py-1">
+                      <span class="text-[var(--color-primary-500)] font-bold w-5">{{ i + 1 }}.</span>
+                      <span class="text-[var(--color-ink)]">{{ m.displayName }}</span>
+                      <span class="ml-auto text-[var(--color-ink-muted)]">{{ m.count }}</span>
+                    </div>
+                  }
+                </div>
+              }
+              @if (s.topWinners.length > 0) {
+                <div class="parchment-card p-4">
+                  <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-2">🏆 {{ 'ORGANIZER.top_winners' | translate }}</p>
+                  @for (m of s.topWinners; track m.userId; let i = $index) {
+                    <div class="flex items-center gap-2 text-sm py-1">
+                      <span class="text-[var(--color-primary-500)] font-bold w-5">{{ i + 1 }}.</span>
+                      <span class="text-[var(--color-ink)]">{{ m.displayName }}</span>
+                      <span class="ml-auto text-[var(--color-ink-muted)]">{{ m.count }}</span>
+                    </div>
+                  }
+                </div>
+              }
+            </div>
+
+            @if (s.bannedUsersCount && s.bannedUsersCount > 0) {
+              <div class="flex items-center gap-2">
+                <span class="text-sm text-[var(--color-ink-muted)]">🚫 {{ 'CLUB_MANAGE.banned_users' | translate }}</span>
+                <span class="text-sm font-bold px-2.5 py-0.5 rounded-full bg-red-100 text-red-600">{{ s.bannedUsersCount }}</span>
+              </div>
+            }
+
+          </div>
+        }
+      </div>
+
+      <!-- ═══════ MEMBERS ═══════ -->
+      <div [hlmTabsContent]="'members'">
+        <div class="space-y-6">
+          <app-club-members-list
+            [members]="members()"
+            [clubBans]="bans()"
+            [isOwner]="true"
+            [showRoleControls]="true"
+            [currentUserId]="currentUserId()"
+            [ownerId]="club()!.organizerId"
+            (kick)="handleKick($event)"
+            (ban)="handleBan($event)"
+            (promote)="handlePromote($event)"
+            (demote)="handleDemote($event)" />
+
+          <!-- Banned users -->
+          <section class="parchment-card px-6 py-5">
+            <h2 class="text-sm font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide mb-4">
+              {{ 'CLUB_MANAGE.bans_title' | translate }} ({{ bans().length }})
+            </h2>
+            @if (bans().length === 0) {
+              <p class="text-sm text-[var(--color-ink-muted)]">{{ 'CLUB_MANAGE.no_bans' | translate }}</p>
+            } @else {
+              <ul class="divide-y divide-[var(--color-sepia)]">
+                @for (ban of bans(); track ban.userId) {
+                  <li class="flex items-center gap-3 py-3">
+                    <span class="text-lg" aria-hidden="true">🚫</span>
+                    <span class="flex-1 text-sm text-[var(--color-ink)]">{{ bannedDisplayName(ban) }}</span>
+                    <button
+                      hlmBtn
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      [disabled]="processingMemberId() === ban.userId"
+                      (click)="handleUnban(ban.userId)"
+                    >
+                      {{ 'CLUB_MANAGE.unban' | translate }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          </section>
+        </div>
+      </div>
+
+      <!-- ═══════ REQUESTS ═══════ -->
+      <div [hlmTabsContent]="'requests'">
+        <section class="parchment-card px-6 py-5">
+          <h2 class="text-sm font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide mb-4">
+            {{ 'CLUBS.join_requests_title' | translate }}
+          </h2>
+          @if (joinRequests().length === 0) {
+            <p class="text-sm text-[var(--color-ink-muted)] text-center py-6">{{ 'CLUBS.no_join_requests' | translate }}</p>
+          } @else {
+            <ul class="flex flex-col gap-3">
+              @for (req of joinRequests(); track req.userId) {
+                <li class="flex items-center gap-3 rounded-xl border border-[var(--color-sepia)] bg-[var(--color-surface)] p-3">
+                  @if (req.avatarUrl) {
+                    <img [src]="req.avatarUrl" width="40" height="40" [alt]="req.displayName" class="h-10 w-10 rounded-full object-cover flex-shrink-0" />
+                  } @else {
+                    <div class="h-10 w-10 rounded-full bg-gradient-fantasy flex items-center justify-center text-white font-semibold flex-shrink-0" aria-hidden="true">
+                      {{ req.displayName.charAt(0) }}
+                    </div>
+                  }
+                  <div class="flex-1 min-w-0">
+                    <p class="font-medium text-[var(--color-ink)] truncate">{{ req.displayName }}</p>
+                    <span class="inline-block mt-0.5 rounded-full bg-[var(--color-surface-raised)] px-2 py-0.5 text-xs text-[var(--color-ink-muted)] border border-[var(--color-sepia)]">
+                      {{ req.source }}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2 flex-shrink-0">
+                    <button
+                      hlmBtn
+                      size="sm"
+                      type="button"
+                      [disabled]="processingRequestUserId() === req.userId"
+                      (click)="onApproveJoinRequest(req.userId)"
+                      class="bg-gradient-fantasy text-white"
+                    >
+                      {{ 'CLUBS.approve' | translate }}
+                    </button>
+                    <button
+                      hlmBtn
+                      variant="outline"
+                      size="sm"
+                      type="button"
+                      [disabled]="processingRequestUserId() === req.userId"
+                      (click)="onRejectJoinRequest(req.userId)"
+                    >
+                      {{ 'CLUBS.reject' | translate }}
+                    </button>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      </div>
+
+      <!-- ═══════ SETTINGS ═══════ -->
+      <div [hlmTabsContent]="'settings'">
+        <app-edit-club [id]="id()" />
+      </div>
+
+      <!-- ═══════ TOOLS & DANGER ZONE ═══════ -->
+      <div [hlmTabsContent]="'tools'">
+        <div class="space-y-8">
+
+          <!-- Action tiles -->
+          <section>
+            <h2 class="text-sm font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide mb-3">{{ 'CLUB_MANAGE.tools_title' | translate }}</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <a [routerLink]="['/clubs', id(), 'quizzes']" class="flex items-center gap-3 parchment-card p-4 hover:scale-[1.01] transition-transform">
+                <span class="text-2xl" aria-hidden="true">📝</span>
+                <div>
+                  <p class="font-semibold text-[var(--color-ink)]">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
+                  <p class="text-xs text-[var(--color-ink-muted)]">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
+                </div>
+              </a>
+              <a [routerLink]="['/clubs', id(), 'randomizer']" class="flex items-center gap-3 parchment-card p-4 hover:scale-[1.01] transition-transform">
+                <span class="text-2xl" aria-hidden="true">🎲</span>
+                <div>
+                  <p class="font-semibold text-[var(--color-ink)]">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
+                  <p class="text-xs text-[var(--color-ink-muted)]">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
+                </div>
+              </a>
+              <a [routerLink]="['/clubs', id(), 'events', 'create']" class="flex items-center gap-3 parchment-card p-4 hover:scale-[1.01] transition-transform">
+                <span class="text-2xl" aria-hidden="true">📅</span>
+                <div>
+                  <p class="font-semibold text-[var(--color-ink)]">{{ 'CLUB_DETAIL.create_event_title' | translate }}</p>
+                  <p class="text-xs text-[var(--color-ink-muted)]">{{ 'CLUB_DETAIL.create_event_desc' | translate }}</p>
+                </div>
+              </a>
+            </div>
+          </section>
+
+          <!-- Create chat room -->
+          <section class="parchment-card p-4">
+            <p class="text-xs font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide mb-2">
+              💬 {{ 'CLUB_DETAIL.chat_create_title' | translate }}
+            </p>
+            <div class="flex flex-col sm:flex-row gap-2">
+              <input
+                type="text"
+                [ngModel]="newRoomName()"
+                (ngModelChange)="newRoomName.set($event)"
+                [placeholder]="'CLUB_DETAIL.chat_room_placeholder' | translate"
+                [attr.aria-label]="'CLUB_DETAIL.chat_room_placeholder' | translate"
+                maxlength="50"
+                class="flex-1 rounded-lg border border-[var(--color-sepia)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+                (keyup.enter)="createChatRoom()"
+              />
+              <button
+                hlmBtn
+                size="sm"
+                type="button"
+                (click)="createChatRoom()"
+                [disabled]="isCreatingRoom() || !newRoomName().trim()"
+                class="bg-primary-600 hover:bg-primary-700 text-white"
+              >
+                {{ 'CLUB_DETAIL.chat_create_btn' | translate }}
+              </button>
+            </div>
+            @if (roomError()) {
+              <p class="mt-1 text-xs text-red-500">{{ roomError() }}</p>
+            }
+          </section>
+
+          <!-- Danger zone -->
+          <section class="rounded-2xl border border-red-500/40 bg-red-50/40 dark:bg-red-900/10 p-4 space-y-4">
+            <h2 class="text-sm font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide">{{ 'CLUB_MANAGE.danger_title' | translate }}</h2>
+
+            <!-- Lifecycle -->
+            <div class="flex flex-wrap gap-2">
+              <button hlmBtn variant="outline" size="sm" type="button" (click)="onPause()">
+                {{ 'CLUB_DETAIL.pause' | translate }}
+              </button>
+              <button hlmBtn variant="outline" size="sm" type="button" (click)="showRescheduleInput.set(!showRescheduleInput())">
+                {{ 'CLUB_DETAIL.reschedule' | translate }}
+              </button>
+              @if (!showCancelConfirm()) {
+                <button hlmBtn variant="outline" size="sm" type="button" class="text-orange-600" (click)="showCancelConfirm.set(true)">
+                  {{ 'CLUB_MANAGE.cancel_club' | translate }}
+                </button>
+              } @else {
+                <span class="inline-flex items-center gap-2">
+                  <button hlmBtn variant="destructive" size="sm" type="button" (click)="onCancel()">{{ 'CLUB_DETAIL.delete_club_yes' | translate }}</button>
+                  <button hlmBtn variant="ghost" size="sm" type="button" (click)="showCancelConfirm.set(false)">{{ 'CLUB_DETAIL.cancel' | translate }}</button>
+                </span>
+              }
+            </div>
+
+            @if (showRescheduleInput()) {
+              <div class="flex flex-wrap items-center gap-2">
+                <input
+                  type="datetime-local"
+                  [ngModel]="rescheduleDate()"
+                  (ngModelChange)="rescheduleDate.set($event)"
+                  [attr.aria-label]="'CLUB_DETAIL.reschedule' | translate"
+                  class="rounded-lg border border-[var(--color-sepia)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+                <button hlmBtn size="sm" type="button" [disabled]="!rescheduleDate()" (click)="onReschedule()" class="bg-primary-600 text-white">
+                  {{ 'CLUB_DETAIL.reschedule_submit' | translate }}
+                </button>
+              </div>
+            }
+
+            <!-- Delete -->
+            <div class="border-t border-red-500/20 pt-4">
+              @if (!showDeleteConfirm()) {
+                <button hlmBtn variant="destructive" size="sm" type="button" (click)="showDeleteConfirm.set(true)">
+                  🗑 {{ 'CLUB_DETAIL.delete_club_btn' | translate }}
+                </button>
+              } @else {
+                <div class="space-y-2">
+                  <p class="text-xs text-red-600 dark:text-red-400 font-semibold">{{ 'CLUB_DETAIL.delete_club_confirm' | translate }}</p>
+                  <div class="flex gap-2">
+                    <button hlmBtn variant="destructive" size="sm" type="button" [disabled]="isDeleting()" (click)="onDelete()">
+                      {{ 'CLUB_DETAIL.delete_club_yes' | translate }}
+                    </button>
+                    <button hlmBtn variant="outline" size="sm" type="button" (click)="showDeleteConfirm.set(false)">
+                      {{ 'CLUB_DETAIL.cancel' | translate }}
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          </section>
+
+        </div>
+      </div>
+
+    </hlm-tabs>
+  </div>
+}

@@ -12,7 +12,7 @@ const mockTranslateService = {
 };
 
 // eslint-disable-next-line rxjs-x/finnish
-function runGuard(role: 'organizer' | 'user') {
+function runGuard(role: 'organizer' | 'user' | 'admin') {
   return TestBed.runInInjectionContext(() =>
     roleGuard(role)(null as unknown as ActivatedRouteSnapshot, null as unknown as RouterStateSnapshot)
   );
@@ -63,6 +63,34 @@ describe('roleGuard', () => {
     it('returns UrlTree to /clubs when role does not match', () => {
       // eslint-disable-next-line rxjs-x/finnish
       const result = runGuard('organizer');
+      expect(result instanceof UrlTree).toBe(true);
+      expect((result as UrlTree).toString()).toBe('/clubs');
+    });
+  });
+
+  describe('role hierarchy', () => {
+    function configure(role: string) {
+      TestBed.configureTestingModule({
+        providers: [
+          provideZonelessChangeDetection(),
+          provideRouter([]),
+          { provide: TranslateService, useValue: mockTranslateService },
+          {
+            provide: AuthService,
+            useValue: { isLoading: signal(false), userRole: signal(role) },
+          },
+        ],
+      });
+    }
+
+    it('admin satisfies an organizer-gated route', () => {
+      configure('admin');
+      expect(runGuard('organizer')).toBe(true);
+    });
+
+    it('rejects a non-admin from an admin-only route', () => {
+      configure('organizer');
+      const result = runGuard('admin');
       expect(result instanceof UrlTree).toBe(true);
       expect((result as UrlTree).toString()).toBe('/clubs');
     });

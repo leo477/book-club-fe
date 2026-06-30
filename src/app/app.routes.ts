@@ -55,6 +55,12 @@ export const routes: Routes = [
         canActivate: [authGuard],
         loadChildren: () => import('./features/events/events.routes').then(m => m.EVENTS_ROUTES),
       },
+      {
+        path: 'support',
+        title: 'Підтримка | Book Club',
+        canActivate: [authGuard],
+        loadChildren: () => import('./features/support/support.routes').then(m => m.SUPPORT_ROUTES),
+      },
 
       // Protected: organizer dashboard
       {

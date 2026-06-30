@@ -106,6 +106,7 @@ src/
         event.model.ts
         quiz.model.ts
         randomizer.model.ts
+        support.model.ts
         user.model.ts
       services/
         book-cover.service.ts
@@ -122,6 +123,7 @@ src/
         randomizer.service.ts
         routing.service.ts
         seo.service.ts
+        support.service.ts
         theme.service.ts
         upload.service.ts
     features/
@@ -162,6 +164,9 @@ src/
             club-members-list.component.ts
           club-detail.component.html
           club-detail.component.ts
+        club-manage/
+          club-manage.component.html
+          club-manage.component.ts
         clubs-list/
           club-card/
             club-card.component.html
@@ -251,6 +256,17 @@ src/
         .gitkeep
         randomizer.component.html
         randomizer.component.ts
+      support/
+        create-submission/
+          create-submission.component.html
+          create-submission.component.ts
+        submission-card/
+          submission-card.component.html
+          submission-card.component.ts
+        support-board/
+          support-board.component.html
+          support-board.component.ts
+        support.routes.ts
       terms/
         terms.component.ts
     layout/

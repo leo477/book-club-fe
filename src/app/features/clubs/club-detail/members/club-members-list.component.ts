@@ -24,9 +24,13 @@ export class ClubMembersListComponent {
   readonly clubBans = input.required<BanRecord[]>();
   readonly isOwner = input.required<boolean>();
   readonly currentUserId = input<string | null>(null);
+  readonly ownerId = input<string | null>(null);
+  readonly showRoleControls = input(false);
 
   readonly kick = output<string>();
   readonly ban = output<{ userId: string; duration: BanDuration }>();
+  readonly promote = output<string>();
+  readonly demote = output<string>();
 
   readonly showQrForUser = signal<string | null>(null);
   readonly showBanMenu = signal<string | null>(null);

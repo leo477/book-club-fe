@@ -1,4 +1,4 @@
-export type UserRole = 'user' | 'organizer';
+export type UserRole = 'user' | 'organizer' | 'admin';
 
 export interface UserStats {
   clubsJoined: number;
