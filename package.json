@@ -16,7 +16,10 @@
     "mock": "node mock-server/index.js",
     "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\"",
     "audit:total": "npx playwright test --config=playwright.total-audit.config.ts",
-    "audit:current": "npx playwright test --config=playwright.audit-current.config.ts"
+    "audit:current": "npx playwright test --config=playwright.audit-current.config.ts",
+    "audit:full": "npx playwright test --config=playwright.full-audit.config.ts",
+    "audit:full:ui": "npx playwright test --config=playwright.full-audit.config.ts e2e/ui",
+    "audit:full:api": "npx playwright test --config=playwright.full-audit.config.ts e2e/api"
   },
   "prettier": {
     "overrides": [
