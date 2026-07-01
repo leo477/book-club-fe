@@ -26,7 +26,15 @@ function buildService() {
 
 describe('AuthService', () => {
   let routerSpy: { navigate: ReturnType<typeof vi.fn> };
-  let tokenStoreSpy: { snapshot: ReturnType<typeof vi.fn>; set: ReturnType<typeof vi.fn>; clear: ReturnType<typeof vi.fn>; token: ReturnType<typeof vi.fn> };
+  let tokenStoreSpy: {
+    snapshot: ReturnType<typeof vi.fn>;
+    set: ReturnType<typeof vi.fn>;
+    clear: ReturnType<typeof vi.fn>;
+    token: ReturnType<typeof vi.fn>;
+    refreshToken: ReturnType<typeof vi.fn>;
+    setRefreshToken: ReturnType<typeof vi.fn>;
+    clearRefreshToken: ReturnType<typeof vi.fn>;
+  };
   let httpMock: HttpTestingController;
 
   afterEach(() => {
@@ -40,6 +48,9 @@ describe('AuthService', () => {
       snapshot: vi.fn().mockReturnValue(tokenValue),
       set: vi.fn(),
       clear: vi.fn(),
+      refreshToken: vi.fn().mockReturnValue(null),
+      setRefreshToken: vi.fn(),
+      clearRefreshToken: vi.fn(),
     };
 
     TestBed.configureTestingModule({
@@ -425,6 +436,44 @@ describe('AuthService', () => {
       const { service } = buildService();
       const p = service.completeOAuthSession();
       httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
+      const result = await p;
+      expect(result).toEqual({ error: 'OAUTH_FAILED' });
+    });
+  });
+
+  describe('exchangeOAuthCode', () => {
+    beforeEach(() => {
+      localStorage.removeItem('bc_has_session');
+      setupTestbed();
+    });
+
+    afterEach(() => {
+      localStorage.removeItem('bc_has_session');
+    });
+
+    it('stores tokens, marks session and loads user on success', async () => {
+      const { service } = buildService();
+      const p = service.exchangeOAuthCode('handoff');
+      const req = httpMock.expectOne(`${API}/auth/oauth/exchange`);
+      expect(req.request.body).toEqual({ code: 'handoff' });
+      req.flush({ accessToken: 'acc', refreshToken: 'ref' });
+      await Promise.resolve();
+      httpMock.expectOne(`${API}/auth/me`).flush(rawProfile);
+      const result = await p;
+      expect(result).toEqual({ error: null });
+      expect(tokenStoreSpy.set).toHaveBeenCalledWith('acc');
+      expect(tokenStoreSpy.setRefreshToken).toHaveBeenCalledWith('ref');
+      expect(localStorage.getItem('bc_has_session')).toBe('1');
+      expect(service.currentUser()?.id).toBe('u1');
+    });
+
+    it('returns OAUTH_FAILED when exchange rejects', async () => {
+      const { service } = buildService();
+      const p = service.exchangeOAuthCode('bad');
+      httpMock.expectOne(`${API}/auth/oauth/exchange`).flush(
+        { detail: { code: 'INVALID_OAUTH_CODE' } },
+        { status: 400, statusText: 'Bad Request' },
+      );
       const result = await p;
       expect(result).toEqual({ error: 'OAUTH_FAILED' });
     });

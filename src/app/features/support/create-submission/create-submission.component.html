@@ -1,0 +1,102 @@
+<section class="min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-lg">
+
+    <header class="text-center mb-8">
+      <p class="font-display text-3xl font-bold text-gray-900 dark:text-white">💬 {{ 'SUPPORT.title' | translate }}</p>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">{{ 'SUPPORT.create_subtitle' | translate }}</p>
+    </header>
+
+    <article class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl p-8">
+      <h1 class="text-xl font-semibold text-gray-900 dark:text-white mb-6">{{ 'SUPPORT.create_title' | translate }}</h1>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="space-y-5" novalidate>
+
+        <!-- Type -->
+        <hlm-field>
+          <label hlmFieldLabel for="submission-type">
+            {{ 'SUPPORT.type_label' | translate }}
+            <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <select
+            hlmInput
+            id="submission-type"
+            formControlName="type"
+            class="w-full bg-white text-gray-900 dark:bg-gray-900 dark:text-white"
+            data-testid="submission-type-select"
+          >
+            @for (type of types; track type) {
+              <option [value]="type" class="bg-white text-gray-900 dark:bg-gray-900 dark:text-white">{{ 'SUPPORT.type_' + type | translate }}</option>
+            }
+          </select>
+        </hlm-field>
+
+        <!-- Title -->
+        <hlm-field>
+          <label hlmFieldLabel for="submission-title">
+            {{ 'SUPPORT.title_label' | translate }}
+            <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <input
+            hlmInput
+            id="submission-title"
+            type="text"
+            formControlName="title"
+            class="w-full"
+            data-testid="submission-title-input"
+            [placeholder]="'SUPPORT.title_placeholder' | translate"
+          />
+          <hlm-field-error validator="required">{{ 'SUPPORT.title_required' | translate }}</hlm-field-error>
+          <hlm-field-error validator="minlength">{{ 'SUPPORT.title_min' | translate }}</hlm-field-error>
+          <hlm-field-error validator="maxlength">{{ 'SUPPORT.title_max' | translate }}</hlm-field-error>
+        </hlm-field>
+
+        <!-- Body -->
+        <hlm-field>
+          <label hlmFieldLabel for="submission-body">
+            {{ 'SUPPORT.body_label' | translate }}
+            <span class="text-red-500" aria-hidden="true">*</span>
+          </label>
+          <textarea
+            hlmInput
+            id="submission-body"
+            formControlName="body"
+            rows="5"
+            class="w-full resize-none"
+            data-testid="submission-body-input"
+            [placeholder]="'SUPPORT.body_placeholder' | translate"
+          ></textarea>
+          <hlm-field-error validator="required">{{ 'SUPPORT.body_required' | translate }}</hlm-field-error>
+          <hlm-field-error validator="minlength">{{ 'SUPPORT.body_min' | translate }}</hlm-field-error>
+          <hlm-field-error validator="maxlength">{{ 'SUPPORT.body_max' | translate }}</hlm-field-error>
+        </hlm-field>
+
+        <!-- Error alert -->
+        @if (errorMessage()) {
+          <div class="flex items-start gap-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-4 py-3 text-sm text-red-700 dark:text-red-400"
+               role="alert">
+            <span class="mt-0.5 shrink-0" aria-hidden="true">⚠️</span>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <!-- Actions -->
+        <div class="flex gap-3 pt-2">
+          <button hlmBtn type="button" variant="outline" (click)="cancel()" class="flex-1">
+            {{ 'SUPPORT.cancel' | translate }}
+          </button>
+          <button hlmBtn type="submit" [disabled]="isSubmitting()"
+                  data-testid="submission-submit"
+                  class="flex-1 bg-primary-600 hover:bg-primary-700 text-white">
+            @if (isSubmitting()) {
+              <hlm-spinner class="mr-2" />
+              {{ 'SUPPORT.submitting' | translate }}
+            } @else {
+              {{ 'SUPPORT.submit' | translate }}
+            }
+          </button>
+        </div>
+
+      </form>
+    </article>
+  </div>
+</section>

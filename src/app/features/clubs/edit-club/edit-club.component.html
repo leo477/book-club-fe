@@ -63,6 +63,55 @@
             />
           </hlm-field>
 
+          <!-- Tags -->
+          <hlm-field>
+            <label hlmFieldLabel for="club-tags">{{ 'CLUB_MANAGE.tags_label' | translate }}</label>
+            <input
+              hlmInput
+              id="club-tags"
+              type="text"
+              formControlName="tags"
+              class="w-full"
+              [placeholder]="'CLUB_MANAGE.tags_placeholder' | translate"
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">{{ 'CLUB_MANAGE.tags_hint' | translate }}</p>
+          </hlm-field>
+
+          <!-- Meeting duration -->
+          <hlm-field>
+            <label hlmFieldLabel for="club-duration">{{ 'CLUB_MANAGE.duration_label' | translate }}</label>
+            <input
+              hlmInput
+              id="club-duration"
+              type="number"
+              min="1"
+              max="480"
+              formControlName="meetingDurationMinutes"
+              class="w-full"
+              [placeholder]="'CLUB_MANAGE.duration_placeholder' | translate"
+            />
+            <hlm-field-error validator="min">{{ 'CLUB_MANAGE.duration_invalid' | translate }}</hlm-field-error>
+            <hlm-field-error validator="max">{{ 'CLUB_MANAGE.duration_invalid' | translate }}</hlm-field-error>
+          </hlm-field>
+
+          <!-- After-meeting venue -->
+          <fieldset class="space-y-3 rounded-xl border border-gray-200 dark:border-gray-700 p-4">
+            <legend class="px-1 text-sm font-semibold text-gray-900 dark:text-white">{{ 'CLUB_MANAGE.venue_legend' | translate }}</legend>
+            <hlm-field>
+              <label hlmFieldLabel for="venue-name">{{ 'CLUB_MANAGE.venue_name' | translate }}</label>
+              <input hlmInput id="venue-name" type="text" formControlName="venueName" class="w-full" />
+            </hlm-field>
+            <hlm-field>
+              <label hlmFieldLabel for="venue-address">{{ 'CLUB_MANAGE.venue_address' | translate }}</label>
+              <input hlmInput id="venue-address" type="text" formControlName="venueAddress" class="w-full" />
+              <hlm-field-error validator="required">{{ 'CLUB_MANAGE.venue_address_required' | translate }}</hlm-field-error>
+            </hlm-field>
+            <hlm-field>
+              <label hlmFieldLabel for="venue-description">{{ 'CLUB_MANAGE.venue_description' | translate }}</label>
+              <textarea hlmInput id="venue-description" formControlName="venueDescription" rows="2" class="w-full resize-none"></textarea>
+            </hlm-field>
+          </fieldset>
+
           <!-- Cover image -->
           <div>
             <p class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">

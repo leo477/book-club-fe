@@ -52,6 +52,12 @@ export const CLUBS_ROUTES: Routes = [
         loadComponent: () =>
           import('./edit-club/edit-club.component').then(m => m.EditClubComponent),
       },
+      {
+        path: 'manage',
+        canActivate: [authGuard, roleGuard('organizer')],
+        loadComponent: () =>
+          import('./club-manage/club-manage.component').then(m => m.ClubManageComponent),
+      },
     ],
   },
 ];

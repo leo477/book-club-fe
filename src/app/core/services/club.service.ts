@@ -6,7 +6,7 @@ import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember,
 import { AuthService } from '../auth/auth.service';
 import { SUPPRESS_ERROR_TOAST } from '../interceptors/auth.interceptor';
 import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStats } from '../models/club.model';
-import { ClubEvent } from '../models/event.model';
+import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
 
 export interface JoinRequest {
   userId: string;
@@ -207,6 +207,9 @@ export class ClubService {
     isPublic: boolean;
     city?: string;
     coverUrl?: string | null;
+    tags?: string[];
+    meetingDurationMinutes?: number | null;
+    afterMeetingVenue?: AfterMeetingVenue | null;
   }): Promise<Club> {
     const raw = await firstValueFrom(
       this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}`, payload),
@@ -313,6 +316,25 @@ export class ClubService {
       }),
     );
     return raw.map(mapBanRecord);
+  }
+
+  async unbanMember(clubId: string, userId: string): Promise<void> {
+    await firstValueFrom(
+      this.http.delete(`${environment.apiUrl}/clubs/${clubId}/bans/${userId}`),
+    );
+    this.clubByIdCache.delete(clubId);
+  }
+
+  async updateMemberRole(
+    clubId: string,
+    userId: string,
+    role: 'organizer' | 'member',
+  ): Promise<void> {
+    await firstValueFrom(
+      this.http.patch(`${environment.apiUrl}/clubs/${clubId}/members/${userId}/role`, { role }),
+    );
+    this.membersCache.delete(clubId);
+    this.clubByIdCache.delete(clubId);
   }
 
   async loadClubEvents(clubId: string, includePast = false): Promise<ClubEvent[]> {
