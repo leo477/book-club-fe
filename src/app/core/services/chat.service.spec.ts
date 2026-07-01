@@ -10,17 +10,22 @@ import { environment } from '../../../environments/environment';
 
 class MockWebSocket {
   static instance: MockWebSocket | null = null;
+  static readonly CONNECTING = 0;
+  static readonly OPEN = 1;
+  static readonly CLOSING = 2;
+  static readonly CLOSED = 3;
   onopen: (() => void) | null = null;
   onmessage: ((e: MessageEvent) => void) | null = null;
   onclose: (() => void) | null = null;
   onerror: (() => void) | null = null;
-  close = vi.fn();
+  readyState = MockWebSocket.CONNECTING;
+  close = vi.fn(() => { this.readyState = MockWebSocket.CLOSED; });
   send = vi.fn();
   constructor(public url: string) { MockWebSocket.instance = this; }
   simulateMessage(data: object) {
     this.onmessage?.(new MessageEvent('message', { data: JSON.stringify(data) }));
   }
-  simulateClose() { this.onclose?.(); }
+  simulateClose() { this.readyState = MockWebSocket.CLOSED; this.onclose?.(); }
   simulateError() { this.onerror?.(); }
 }
 
@@ -762,6 +767,34 @@ describe('ChatService', () => {
       expect(firstWs?.close).toHaveBeenCalled();
     });
 
+    it('is idempotent: re-connecting the same room/token while CONNECTING does not tear down the socket', () => {
+      service.connectRoom('room-42', 'tok');
+      const firstWs = MockWebSocket.instance;
+      expect(firstWs).not.toBeNull();
+      // readyState stays CONNECTING (default); a re-run with the same token must no-op
+      service.connectRoom('room-42', 'tok');
+      expect(firstWs?.close).not.toHaveBeenCalled();
+      expect(MockWebSocket.instance).toBe(firstWs);
+    });
+
+    it('is idempotent while OPEN for the same room/token', () => {
+      service.connectRoom('room-42', 'tok');
+      const firstWs = MockWebSocket.instance;
+      if (!firstWs) throw new Error('MockWebSocket not instantiated');
+      firstWs.readyState = MockWebSocket.OPEN;
+      service.connectRoom('room-42', 'tok');
+      expect(firstWs.close).not.toHaveBeenCalled();
+      expect(MockWebSocket.instance).toBe(firstWs);
+    });
+
+    it('reconnects when the room id changes', () => {
+      service.connectRoom('room-42', 'tok');
+      const firstWs = MockWebSocket.instance;
+      service.connectRoom('room-99', 'tok');
+      expect(firstWs?.close).toHaveBeenCalled();
+      expect(MockWebSocket.instance?.url).toBe(`${WS_BASE}/chat/rooms/room-99`);
+    });
+
     it('deduplicates WS messages — same id is not added twice', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
       service.connectRoom('room-42', 'tok');
@@ -1017,6 +1050,22 @@ describe('ChatService', () => {
       // No POST should be made
       httpMock.expectNone(`${API}/chat/rooms/room-empty/read`);
       expect(service.roomUnreadCounts()['room-empty']).toBeUndefined();
+    });
+
+    it('does not POST when the last message id is an optimistic temp id', () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-temp');
+      service.sendMessage('Pending', { id: 'u1', displayName: 'Alice' });
+      // Optimistic message has a temp- id and the POST is still in flight
+      const sendReq = httpMock.expectOne(`${API}/chat/rooms/room-temp/messages`);
+
+      service.markRoomRead('room-temp');
+
+      // local state still updates, but no read call with a temp id
+      httpMock.expectNone(`${API}/chat/rooms/room-temp/read`);
+      expect(service.roomUnreadCounts()['room-temp']).toBe(0);
+
+      // flush the message POST to keep httpMock.verify() happy
+      sendReq.flush({ id: 'real-id', senderId: 'u1', senderName: 'Alice', text: 'Pending', timestamp: '2024-01-01T00:00:00Z' });
     });
 
     it('activeMessagesWithDivider inserts divider after last-read message', async () => {

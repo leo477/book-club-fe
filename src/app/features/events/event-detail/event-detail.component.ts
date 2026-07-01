@@ -72,7 +72,9 @@ export class EventDetailComponent {
     effect(() => {
       if (!this._eventResource.hasValue()) return;
       const ev = this.event();
-      if (ev && this.auth.currentUser()) {
+      // Only participants/organizers may access the event chat room; firing for
+      // others produces a 403 that the browser logs as a console error.
+      if (ev && this.auth.currentUser() && (ev.isAttending || this.isOrganizer())) {
         this.chatService.getEventRoom(ev.id).then(room => this._eventRoom.set(room)).catch((err: unknown) => {
           const status = (err as { status?: number })?.status;
           if (status === 403) {

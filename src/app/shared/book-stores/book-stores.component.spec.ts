@@ -1,28 +1,23 @@
 import { provideZonelessChangeDetection } from '@angular/core';
-import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
+import { TestBed } from '@angular/core/testing';
+import { HttpClient, provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
+import { of } from 'rxjs';
 import { BookStoresComponent } from './book-stores.component';
 import { environment } from '../../../environments/environment';
 
-const API = environment.apiUrl;
-
-interface StoreResult {
+interface BookStoreResult {
   name: string;
   url: string;
   found: boolean | null;
   product_url: string | null;
 }
 
-const stores: StoreResult[] = [
-  { name: 'Небо', url: 'https://nebo.example/p/1', found: true, product_url: 'https://nebo.example/p/1' },
-  { name: 'КСД', url: 'https://google.com/search?q=ksd', found: false, product_url: null },
-  { name: 'Yakaboo', url: 'https://google.com/search?q=yakaboo', found: null, product_url: null },
-];
-
 describe('BookStoresComponent', () => {
-  let httpMock: HttpTestingController;
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -33,80 +28,175 @@ describe('BookStoresComponent', () => {
         provideHttpClientTesting(),
       ],
     }).compileComponents();
-    httpMock = TestBed.inject(HttpTestingController);
   });
-
-  afterEach(() => httpMock.verify());
-
-  function setupWithTitle(title: string): ComponentFixture<BookStoresComponent> {
-    const fixture = TestBed.createComponent(BookStoresComponent);
-    fixture.componentRef.setInput('bookTitle', title);
-    fixture.detectChanges();
-    return fixture;
-  }
 
   it('should create', () => {
     const fixture = TestBed.createComponent(BookStoresComponent);
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('renders no anchors when bookTitle is null', () => {
+  it('stores() returns [] when bookTitle is null (no HTTP call)', () => {
+    const httpMock = TestBed.inject(HttpTestingController);
+    const fixture = TestBed.createComponent(BookStoresComponent);
+    const comp = fixture.componentInstance;
+    fixture.detectChanges();
+    // default bookTitle is null
+    expect(comp.stores()).toEqual([]);
+    httpMock.verify();
+  });
+
+  it('renders no anchors/buttons and makes no HTTP call when bookTitle is null', () => {
+    const httpMock = TestBed.inject(HttpTestingController);
     const fixture = TestBed.createComponent(BookStoresComponent);
     fixture.detectChanges();
-    httpMock.expectNone(() => true);
-    expect((fixture.nativeElement as HTMLElement).querySelectorAll('a').length).toBe(0);
+    const el: HTMLElement = fixture.nativeElement;
+    expect(el.querySelectorAll('button').length).toBe(0);
+    httpMock.verify();
   });
 
-  it('requests the stores endpoint with the encoded title', () => {
-    setupWithTitle('Clean Code');
-    const req = httpMock.expectOne(
-      `${API}/books/stores?title=${encodeURIComponent('Clean Code')}`,
-    );
-    expect(req.request.method).toBe('GET');
-    req.flush([]);
+  it('skeletons array has exactly 3 entries', () => {
+    const fixture = TestBed.createComponent(BookStoresComponent);
+    expect(fixture.componentInstance.skeletons).toEqual([1, 2, 3]);
   });
 
-  it('shows a loading skeleton while the request is pending', () => {
-    const fixture = setupWithTitle('Clean Code');
-    const el = fixture.nativeElement as HTMLElement;
-    expect(el.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
-    httpMock.expectOne(() => true).flush([]);
-  });
-
-  it('renders an anchor per store using url as href', async () => {
-    const fixture = setupWithTitle('Clean Code');
-    httpMock.expectOne(() => true).flush(stores);
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    const anchors = [
-      ...(fixture.nativeElement as HTMLElement).querySelectorAll('a'),
-    ] as HTMLAnchorElement[];
-    expect(anchors.length).toBe(3);
-    expect(anchors.map((a) => a.getAttribute('href'))).toEqual(stores.map((s) => s.url));
-    anchors.forEach((a) => {
-      expect(a.getAttribute('target')).toBe('_blank');
-      expect(a.getAttribute('rel')).toBe('noopener noreferrer');
+  describe('openStore()', () => {
+    it('calls window.open with the store url when url is set', () => {
+      const fixture = TestBed.createComponent(BookStoresComponent);
+      const comp = fixture.componentInstance;
+      vi.spyOn(window, 'open').mockImplementation(() => null);
+      const store: BookStoreResult = {
+        name: 'Rozetka',
+        url: 'https://rozetka.com.ua',
+        found: true,
+        product_url: 'https://rozetka.com.ua',
+      };
+      comp.openStore(store);
+      expect(window.open).toHaveBeenCalledWith('https://rozetka.com.ua', '_blank');
     });
   });
 
-  it('renders badges derived from found (true → in-stock, false → not-found, null → none)', async () => {
-    const fixture = setupWithTitle('Clean Code');
-    httpMock.expectOne(() => true).flush(stores);
-    await fixture.whenStable();
-    fixture.detectChanges();
+  describe('rxResource stream — non-null title branch (HTTP GET)', () => {
+    it('calls HttpClient.get with the encoded title', () => {
+      const httpMock = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(BookStoresComponent);
+      fixture.componentRef.setInput('bookTitle', 'Clean Code');
+      fixture.detectChanges();
 
-    const anchors = [
-      ...(fixture.nativeElement as HTMLElement).querySelectorAll('a'),
-    ] as HTMLAnchorElement[];
+      const req = httpMock.expectOne(
+        `${environment.apiUrl}/books/stores?title=${encodeURIComponent('Clean Code')}`,
+      );
+      expect(req.request.method).toBe('GET');
+      req.flush([]);
+      httpMock.verify();
+    });
 
-    // found === true → positive badge present
-    expect(anchors[0].querySelector('span.rounded-full')?.textContent?.trim())
-      .toBe('BOOK_STORES.found');
-    // found === false → muted badge present
-    expect(anchors[1].querySelector('span.rounded-full')?.textContent?.trim())
-      .toBe('BOOK_STORES.not_found');
-    // found === null → no definitive badge
-    expect(anchors[2].querySelector('span.rounded-full')).toBeNull();
+    it('stores() reflects data returned by the HTTP call', async () => {
+      const httpMock = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(BookStoresComponent);
+      fixture.componentRef.setInput('bookTitle', 'Clean Code');
+      fixture.detectChanges();
+
+      const mockStores: BookStoreResult[] = [
+        { name: 'Rozetka', url: 'https://rozetka.com.ua', found: true, product_url: 'https://rozetka.com.ua' },
+      ];
+      httpMock.expectOne(
+        `${environment.apiUrl}/books/stores?title=${encodeURIComponent('Clean Code')}`,
+      ).flush(mockStores);
+
+      await fixture.whenStable();
+      TestBed.flushEffects();
+
+      httpMock.verify();
+      expect(fixture.componentInstance.stores()).toEqual(mockStores);
+    });
+  });
+
+  describe('stores() computed — value() ?? [] fallback', () => {
+    it('returns [] when storesResource.value() returns undefined', () => {
+      const fixture = TestBed.createComponent(BookStoresComponent);
+      const comp = fixture.componentInstance;
+      expect(comp.storesResource.value()).toBeUndefined();
+      expect(comp.stores()).toEqual([]);
+    });
+  });
+
+  describe('badge rendering by found', () => {
+    async function renderStores(stores: BookStoreResult[]): Promise<HTMLElement> {
+      const httpMock = TestBed.inject(HttpTestingController);
+      const fixture = TestBed.createComponent(BookStoresComponent);
+      fixture.componentRef.setInput('bookTitle', 'Clean Code');
+      fixture.detectChanges();
+      httpMock.expectOne(
+        `${environment.apiUrl}/books/stores?title=${encodeURIComponent('Clean Code')}`,
+      ).flush(stores);
+      httpMock.verify();
+      await fixture.whenStable();
+      fixture.detectChanges();
+      return fixture.nativeElement as HTMLElement;
+    }
+
+    it('found === true → renders the BOOK_STORES.found badge', async () => {
+      const el = await renderStores([
+        { name: 'Rozetka', url: 'https://rozetka.com.ua', found: true, product_url: 'https://rozetka.com.ua' },
+      ]);
+      const btn = el.querySelector('button');
+      expect(btn?.textContent).toContain('BOOK_STORES.found');
+      expect(btn?.textContent).not.toContain('BOOK_STORES.not_found');
+    });
+
+    it('found === false → renders the BOOK_STORES.not_found badge', async () => {
+      const el = await renderStores([
+        { name: 'OLX', url: 'https://google.com/search?q=OLX', found: false, product_url: null },
+      ]);
+      const btn = el.querySelector('button');
+      expect(btn?.textContent).toContain('BOOK_STORES.not_found');
+      expect(btn?.textContent).not.toContain('BOOK_STORES.found');
+    });
+
+    it('found === null → no badge but the link is still present and clickable', async () => {
+      const el = await renderStores([
+        { name: 'Yakaboo', url: 'https://google.com/search?q=Yakaboo', found: null, product_url: null },
+      ]);
+      const btn = el.querySelector<HTMLButtonElement>('button');
+      expect(btn).toBeTruthy();
+      expect(btn?.textContent).not.toContain('BOOK_STORES.found');
+      expect(btn?.textContent).not.toContain('BOOK_STORES.not_found');
+      expect(btn?.disabled).toBe(false);
+    });
+
+    it('no store renders as disabled regardless of found value', async () => {
+      const el = await renderStores([
+        { name: 'Rozetka', url: 'https://rozetka.com.ua', found: true, product_url: 'https://rozetka.com.ua' },
+        { name: 'OLX', url: 'https://google.com/search?q=OLX', found: false, product_url: null },
+        { name: 'Yakaboo', url: 'https://google.com/search?q=Yakaboo', found: null, product_url: null },
+      ]);
+      const buttons = el.querySelectorAll<HTMLButtonElement>('button');
+      expect(buttons.length).toBe(3);
+      buttons.forEach((b) => expect(b.disabled).toBe(false));
+    });
+
+    it('does not render store buttons when stores list is empty', async () => {
+      const el = await renderStores([]);
+      expect(el.querySelectorAll('button').length).toBe(0);
+    });
+  });
+
+  describe('HttpClient.get spy-based tests (fallback approach)', () => {
+    it('stream calls http.get with properly encoded URL for non-null title', () => {
+      const http = TestBed.inject(HttpClient);
+      const stores: BookStoreResult[] = [
+        { name: 'Yakaboo', url: 'https://yakaboo.ua', found: true, product_url: 'https://yakaboo.ua' },
+      ];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      vi.spyOn(http, 'get').mockReturnValue(of(stores) as any);
+
+      const fixture = TestBed.createComponent(BookStoresComponent);
+      fixture.componentRef.setInput('bookTitle', 'Harry Potter');
+      fixture.detectChanges();
+
+      expect(http.get).toHaveBeenCalledWith(
+        `${environment.apiUrl}/books/stores?title=${encodeURIComponent('Harry Potter')}`,
+      );
+    });
   });
 });
