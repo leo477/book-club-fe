@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { randomInt } from 'node:crypto';
 import path from 'node:path';
 import type { APIRequestContext } from '@playwright/test';
 import type { RunContext } from '../global-setup';
@@ -74,7 +75,8 @@ export async function apiContextFor(role: 'member' | 'organizer'): Promise<APIRe
 // fixture for a second `POST /clubs` call 409s every time.
 export async function registerDisposableOrganizer(): Promise<APIRequestContext> {
   const anon = await newApiContext();
-  const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+  // randomInt (CSPRNG), not Math.random(), since this feeds a password below.
+  const suffix = `${Date.now()}${randomInt(0, 1000)}`;
   const resp = await anon.post('/auth/register', {
     data: {
       email: `pw.audit.probe.${suffix}.organizer@gmail.com`,

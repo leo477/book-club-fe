@@ -1,5 +1,6 @@
 import { chromium, type APIRequestContext, type FullConfig } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
+import { randomInt } from 'node:crypto';
 import path from 'node:path';
 import { apiBaseURL } from '../playwright.full-audit.config';
 import { newApiContext } from './fixtures/api-client';
@@ -92,7 +93,9 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
   // auth calls on a slow first request.
   await apiRequest.get('/health', { timeout: 60_000 }).catch(() => undefined);
 
-  const runId = `${Date.now()}${Math.floor(Math.random() * 1000)}`;
+  // randomInt (CSPRNG), not Math.random(), since this feeds the throwaway
+  // test accounts' passwords below.
+  const runId = `${Date.now()}${randomInt(0, 1000)}`;
   // email-validator on the backend rejects fake TLDs like .test/.example
   // (confirmed: registering with a .test address returns 422), so namespaced
   // addresses use a real, deliverable-looking domain instead.
