@@ -25,9 +25,12 @@ export class SupportBoardComponent implements OnInit {
 
   readonly columns: KanbanStatus[] = ['pending', 'approved', 'in_progress', 'done', 'rejected'];
 
-  /** complaint + comment submissions, shown as a simple card list. */
-  readonly feedback = computed<Submission[]>(() =>
-    this.support.submissions().filter(s => s.type !== 'suggestion'),
+  readonly complaints = computed<Submission[]>(() =>
+    this.support.submissions().filter(s => s.type === 'complaint'),
+  );
+
+  readonly comments = computed<Submission[]>(() =>
+    this.support.submissions().filter(s => s.type === 'comment'),
   );
 
   readonly suggestions = computed<Submission[]>(() =>
