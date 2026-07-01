@@ -72,7 +72,13 @@ audit-evidence/
     terms.png
   audit-prod-results.json
 e2e/
+  fixtures/
+    api-client.ts
+    api-context.fixture.ts
+    auth.fixture.ts
+    seed-helper.ts
   audit-helper.ts
+  global-setup.ts
 public/
   i18n/
     en.json
@@ -481,6 +487,7 @@ components.json
 eslint.config.js
 package.json
 playwright.audit-current.config.ts
+playwright.full-audit.config.ts
 playwright.total-audit.config.ts
 postcss.config.json
 README.md

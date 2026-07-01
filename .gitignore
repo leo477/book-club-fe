@@ -42,6 +42,7 @@ Thumbs.db
 /tmp/
 /coverage/
 /e2e/test-output/
+/e2e/.auth/
 /.angular/
 .angular/
 
