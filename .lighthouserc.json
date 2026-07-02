@@ -2,6 +2,7 @@
   "ci": {
     "collect": {
       "staticDistDir": "./dist/book-club-fe/browser",
+      "url": ["http://localhost/index.html"],
       "numberOfRuns": 1
     },
     "assert": {
