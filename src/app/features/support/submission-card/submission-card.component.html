@@ -15,6 +15,22 @@
     <p class="text-sm text-[var(--color-ink)] whitespace-pre-line break-words">{{ submission().body }}</p>
   </div>
 
+  @if (canLike()) {
+    <div class="px-6 pb-2">
+      <button
+        type="button"
+        (click)="onToggleLike()"
+        data-testid="support-like"
+        [attr.aria-pressed]="submission().likedByMe"
+        [attr.aria-label]="'SUPPORT.reaction_toggle' | translate"
+        [class]="'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2 ' + reactionClasses()"
+      >
+        <span aria-hidden="true">{{ reactionEmoji() }}</span>
+        <span>{{ submission().likeCount }}</span>
+      </button>
+    </div>
+  }
+
   @if (isAdmin()) {
     <div hlmCardFooter class="flex flex-wrap gap-2">
       @if (submission().status === 'pending') {

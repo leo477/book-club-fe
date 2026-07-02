@@ -19,18 +19,36 @@
     <div class="flex justify-center py-16"><hlm-spinner /></div>
   } @else {
 
-    <!-- ── Feedback (complaints + comments) ── -->
+    <!-- ── Complaints ── -->
     <section class="space-y-4">
-      <h2 class="text-lg font-semibold text-[var(--color-ink)]">{{ 'SUPPORT.feedback_heading' | translate }}</h2>
-      @if (feedback().length === 0) {
+      <h2 class="text-lg font-semibold text-[var(--color-ink)]">{{ 'SUPPORT.complaints_heading' | translate }}</h2>
+      @if (complaints().length === 0) {
         <app-empty-state
-          icon="📭"
-          [title]="'SUPPORT.empty_feedback_title' | translate"
-          [description]="'SUPPORT.empty_feedback_desc' | translate"
+          icon="😠"
+          [title]="'SUPPORT.empty_complaints_title' | translate"
+          [description]="'SUPPORT.empty_complaints_desc' | translate"
         />
       } @else {
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          @for (item of feedback(); track item.id) {
+          @for (item of complaints(); track item.id) {
+            <app-submission-card [submission]="item" />
+          }
+        </div>
+      }
+    </section>
+
+    <!-- ── Comments ── -->
+    <section class="space-y-4">
+      <h2 class="text-lg font-semibold text-[var(--color-ink)]">{{ 'SUPPORT.comments_heading' | translate }}</h2>
+      @if (comments().length === 0) {
+        <app-empty-state
+          icon="💬"
+          [title]="'SUPPORT.empty_comments_title' | translate"
+          [description]="'SUPPORT.empty_comments_desc' | translate"
+        />
+      } @else {
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          @for (item of comments(); track item.id) {
             <app-submission-card [submission]="item" />
           }
         </div>

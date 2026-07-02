@@ -110,6 +110,8 @@ export interface ApiSubmission {
   authorId: string;
   createdAt: string;
   updatedAt: string;
+  likeCount: number;
+  likedByMe: boolean;
 }
 
 export function mapUserProfile(raw: ApiUserProfile): UserProfile {
@@ -230,6 +232,8 @@ export function mapSubmission(raw: ApiSubmission): Submission {
     authorId: raw.authorId,
     createdAt: raw.createdAt,
     updatedAt: raw.updatedAt,
+    likeCount: raw.likeCount,
+    likedByMe: raw.likedByMe,
   };
 }
 

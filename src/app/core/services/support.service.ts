@@ -71,4 +71,36 @@ export class SupportService {
     toast.success(this.translate.instant('SUPPORT.status_updated') as string);
     return submission;
   }
+
+  async toggleLike(id: string): Promise<void> {
+    const current = this._submissions().find(s => s.id === id);
+    if (!current) return;
+    const wasLiked = current.likedByMe;
+
+    this._submissions.update(list =>
+      list.map(s =>
+        s.id === id
+          ? { ...s, likedByMe: !wasLiked, likeCount: s.likeCount + (wasLiked ? -1 : 1) }
+          : s,
+      ),
+    );
+
+    try {
+      if (wasLiked) {
+        await firstValueFrom(this.http.delete<void>(`${environment.apiUrl}/support/${id}/like`));
+      } else {
+        await firstValueFrom(this.http.post<void>(`${environment.apiUrl}/support/${id}/like`, {}));
+      }
+    } catch (err) {
+      this._submissions.update(list =>
+        list.map(s =>
+          s.id === id
+            ? { ...s, likedByMe: wasLiked, likeCount: s.likeCount + (wasLiked ? 1 : -1) }
+            : s,
+        ),
+      );
+      this._error.set(extractApiError(err));
+      throw err;
+    }
+  }
 }

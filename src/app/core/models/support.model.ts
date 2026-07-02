@@ -17,4 +17,6 @@ export interface Submission {
   authorId: string;
   createdAt: string;
   updatedAt: string;
+  likeCount: number;
+  likedByMe: boolean;
 }
