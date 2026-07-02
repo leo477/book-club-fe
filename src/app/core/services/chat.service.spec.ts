@@ -689,7 +689,7 @@ describe('ChatService', () => {
       httpMock.expectOne(`${API}/events/event-1/chat/room`).flush({ id: 'room-1', name: 'Event Chat', eventId: 'event-1' });
       await second;
 
-      expect(getRooms(service).filter(r => r.id === 'room-1').length).toBe(1);
+      expect(getRooms(service).filter(r => r.id === 'room-1')).toHaveLength(1);
     });
   });
 
