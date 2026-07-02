@@ -18,6 +18,8 @@ function makeApiSubmission(overrides: Record<string, unknown> = {}) {
     authorId: 'u1',
     createdAt: '2025-06-01T10:00:00',
     updatedAt: '2025-06-01T10:00:00',
+    likeCount: 0,
+    likedByMe: false,
     ...overrides,
   };
 }
@@ -93,6 +95,79 @@ describe('SupportService', () => {
       req.flush(makeApiSubmission({ status: 'approved' }));
       await p;
       expect(service.submissions()[0].status).toBe('approved');
+    });
+  });
+
+  describe('toggleLike', () => {
+    async function loadOne(overrides: Record<string, unknown> = {}) {
+      const p = service.loadSubmissions();
+      httpMock.expectOne(`${API}/support`).flush([makeApiSubmission(overrides)]);
+      await p;
+    }
+
+    it('does nothing when the submission is not found', async () => {
+      await service.toggleLike('missing');
+      httpMock.expectNone(`${API}/support/missing/like`);
+    });
+
+    it('optimistically likes and posts to the like endpoint', async () => {
+      await loadOne({ likedByMe: false, likeCount: 2 });
+
+      const p = service.toggleLike('s1');
+      expect(service.submissions()[0].likedByMe).toBe(true);
+      expect(service.submissions()[0].likeCount).toBe(3);
+
+      const req = httpMock.expectOne(`${API}/support/s1/like`);
+      expect(req.request.method).toBe('POST');
+      req.flush(null);
+      await p;
+
+      expect(service.submissions()[0].likedByMe).toBe(true);
+      expect(service.submissions()[0].likeCount).toBe(3);
+    });
+
+    it('optimistically unlikes and deletes on the like endpoint', async () => {
+      await loadOne({ likedByMe: true, likeCount: 3 });
+
+      const p = service.toggleLike('s1');
+      expect(service.submissions()[0].likedByMe).toBe(false);
+      expect(service.submissions()[0].likeCount).toBe(2);
+
+      const req = httpMock.expectOne(`${API}/support/s1/like`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(null);
+      await p;
+
+      expect(service.submissions()[0].likedByMe).toBe(false);
+      expect(service.submissions()[0].likeCount).toBe(2);
+    });
+
+    it('rolls back the like on failure and sets the error', async () => {
+      await loadOne({ likedByMe: false, likeCount: 2 });
+
+      const p = service.toggleLike('s1');
+      httpMock
+        .expectOne(`${API}/support/s1/like`)
+        .flush({}, { status: 500, statusText: 'Error' });
+
+      await expect(p).rejects.toBeTruthy();
+      expect(service.submissions()[0].likedByMe).toBe(false);
+      expect(service.submissions()[0].likeCount).toBe(2);
+      expect(service.error()).not.toBeNull();
+    });
+
+    it('rolls back the unlike on failure and sets the error', async () => {
+      await loadOne({ likedByMe: true, likeCount: 3 });
+
+      const p = service.toggleLike('s1');
+      httpMock
+        .expectOne(`${API}/support/s1/like`)
+        .flush({}, { status: 500, statusText: 'Error' });
+
+      await expect(p).rejects.toBeTruthy();
+      expect(service.submissions()[0].likedByMe).toBe(true);
+      expect(service.submissions()[0].likeCount).toBe(3);
+      expect(service.error()).not.toBeNull();
     });
   });
 });
