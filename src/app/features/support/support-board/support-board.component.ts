@@ -64,7 +64,9 @@ export class SupportBoardComponent implements OnInit {
   }
 
   async onAdvance(s: Submission): Promise<void> {
-    const next = s.status === 'approved' ? 'in_progress' : s.status === 'in_progress' ? 'done' : null;
+    let next: 'in_progress' | 'done' | null = null;
+    if (s.status === 'approved') next = 'in_progress';
+    else if (s.status === 'in_progress') next = 'done';
     if (next) await this.runStatus(s, next);
   }
 
