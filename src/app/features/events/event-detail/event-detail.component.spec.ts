@@ -151,14 +151,14 @@ describe('EventDetailComponent', () => {
       setup({ id: 'u1' });
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       await fixture.whenStable();
-      expect(chatServiceSpy.getEventRoom).toHaveBeenCalledWith('e1');
+      expect(chatServiceSpy.getEventRoom).toHaveBeenCalledWith('e1', 'c1');
     });
 
     it('fetches the event room when the viewer is attending', async () => {
       setup({ id: 'viewer' });
       httpMock.expectOne(eventUrl).flush(makeApiEvent({ isAttending: true }));
       await fixture.whenStable();
-      expect(chatServiceSpy.getEventRoom).toHaveBeenCalledWith('e1');
+      expect(chatServiceSpy.getEventRoom).toHaveBeenCalledWith('e1', 'c1');
     });
   });
 
@@ -184,6 +184,36 @@ describe('EventDetailComponent', () => {
       fixture.detectChanges();
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       expect(component.isActioning()).toBe(false);
+    });
+
+    it('reveals the event chat room on a successful (non-pending) attend', async () => {
+      setup();
+      httpMock.expectOne(eventUrl).flush(makeApiEvent());
+      await fixture.whenStable();
+      chatServiceSpy.getEventRoom.mockResolvedValue({ id: 'room-e1', name: 'Event Chat', clubId: 'c1', eventId: 'e1' });
+
+      await component.onAttend();
+
+      expect(chatServiceSpy.getEventRoom).toHaveBeenCalledWith('e1', 'c1');
+      expect(component.eventRoom()?.id).toBe('room-e1');
+      fixture.detectChanges();
+      httpMock.expectOne(eventUrl).flush(makeApiEvent());
+      await fixture.whenStable();
+    });
+
+    it('does not fetch the event chat room when the attend is pending', async () => {
+      setup();
+      httpMock.expectOne(eventUrl).flush(makeApiEvent());
+      await fixture.whenStable();
+      chatServiceSpy.getEventRoom.mockClear();
+      eventServiceSpy.attendEvent.mockResolvedValue({ attendeeCount: 0, joinRequestStatus: 'pending' });
+
+      await component.onAttend();
+
+      expect(chatServiceSpy.getEventRoom).not.toHaveBeenCalled();
+      fixture.detectChanges();
+      httpMock.expectOne(eventUrl).flush(makeApiEvent());
+      await fixture.whenStable();
     });
   });
 

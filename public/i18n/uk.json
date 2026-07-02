@@ -611,7 +611,9 @@
     "unread_divider": "Нові повідомлення",
     "online": "Онлайн",
     "offline": "Офлайн",
-    "page_title": "Чати"
+    "page_title": "Чати",
+    "club_chat_ready_toast": "Вітаємо! Чат клубу вже доступний.",
+    "event_chat_ready_toast": "Вітаємо! Чат події вже доступний."
   },
   "CHATS": {
     "title": "Чати",

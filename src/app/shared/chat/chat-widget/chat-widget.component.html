@@ -200,6 +200,17 @@
                   <span class="text-xs font-semibold text-[var(--destructive)]">{{ 'CHAT.unread_divider' | translate }}</span>
                   <div class="flex-1 border-t border-[var(--destructive)] opacity-60"></div>
                 </div>
+              } @else if ($any(item).isSystem) {
+                @let systemMessage = $any(item);
+                <div class="flex justify-center my-2">
+                  <span
+                    class="text-xs px-3 py-1 rounded-full text-center"
+                    [style.background]="'var(--color-surface)'"
+                    [style.color]="'var(--color-ink-muted)'"
+                  >
+                    {{ systemMessage.text }}
+                  </span>
+                </div>
               } @else {
                 @let message = $any(item);
                 <div [ngClass]="{ 'flex justify-end': message.isOwn, 'flex justify-start': !message.isOwn }">
