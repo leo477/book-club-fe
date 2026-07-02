@@ -611,7 +611,9 @@
     "unread_divider": "New messages",
     "online": "Online",
     "offline": "Offline",
-    "page_title": "Chats"
+    "page_title": "Chats",
+    "club_chat_ready_toast": "You're in! The club chat is now open for you.",
+    "event_chat_ready_toast": "You're in! The event chat is now open for you."
   },
   "CHATS": {
     "title": "Chats",

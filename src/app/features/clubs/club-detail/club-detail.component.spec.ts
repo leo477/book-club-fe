@@ -254,6 +254,26 @@ describe('ClubDetailComponent', () => {
       await component.onJoin();
       expect(component.isActionLoading()).toBe(false);
     });
+
+    it('reveals the club chat by refreshing rooms on a successful (member) join', async () => {
+      const { ChatService } = await import('../../../core/services/chat.service');
+      const loadRoomsSpy = vi.spyOn(TestBed.inject(ChatService), 'loadRooms').mockImplementation(() => undefined);
+      clubServiceSpy.joinClub = vi.fn().mockResolvedValue('member');
+
+      await component.onJoin();
+
+      expect(loadRoomsSpy).toHaveBeenCalledWith('club-1', 'user-1');
+    });
+
+    it('does not refresh the club chat while the join request is pending', async () => {
+      const { ChatService } = await import('../../../core/services/chat.service');
+      const loadRoomsSpy = vi.spyOn(TestBed.inject(ChatService), 'loadRooms').mockImplementation(() => undefined);
+      clubServiceSpy.joinClub = vi.fn().mockResolvedValue('pending');
+
+      await component.onJoin();
+
+      expect(loadRoomsSpy).not.toHaveBeenCalled();
+    });
   });
 
   describe('onLeave', () => {

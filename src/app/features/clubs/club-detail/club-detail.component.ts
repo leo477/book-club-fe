@@ -262,6 +262,9 @@ export class ClubDetailComponent {
       if (status === 'pending' || status === 'already_requested') {
         this.joinRequestStatus.set('pending');
         toast.success(this.translate.instant('CLUBS.join_request_sent') as string);
+      } else {
+        this.chatService.loadRooms(this.id(), this.currentUser()?.id);
+        toast.success(this.translate.instant('CHAT.club_chat_ready_toast') as string);
       }
     } catch (err) {
       this.actionError.set(this.formatActionError(err, 'Failed to join club'));

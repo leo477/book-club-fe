@@ -22,6 +22,7 @@ interface ApiChatMessage {
   sender_username?: string;
   text: string;
   timestamp: string; // ISO-8601
+  isSystem?: boolean;
 }
 
 interface WsEnvelope { type: string; payload: unknown; }
@@ -59,6 +60,7 @@ export class ChatService {
   private _activeRoomToken: { roomId: string; token: string } | null = null;
 
   private currentUserId: string | null = null;
+  private _audioContext: AudioContext | null = null;
 
   constructor() {
     // Feature 3: force Angular (zoneless) to re-render immediately when the
@@ -68,6 +70,19 @@ export class ChatService {
     this._destroyRef.onDestroy(() =>
       document.removeEventListener('visibilitychange', onVisibility)
     );
+
+    // Browsers keep a newly-created AudioContext suspended until a real user
+    // gesture unlocks it; without this, the unread-message beep silently no-ops.
+    const unlockAudio = () => {
+      this._audioContext ??= new AudioContext();
+      if (this._audioContext.state === 'suspended') void this._audioContext.resume();
+    };
+    document.addEventListener('click', unlockAudio, { once: true });
+    document.addEventListener('keydown', unlockAudio, { once: true });
+    this._destroyRef.onDestroy(() => {
+      document.removeEventListener('click', unlockAudio);
+      document.removeEventListener('keydown', unlockAudio);
+    });
   }
 
   // ── Public readonly signals ────────────────────────────────────────────────
@@ -357,7 +372,7 @@ export class ChatService {
     const tempId = `temp-${Date.now()}`;
     const optimistic: ChatMessage = {
       id: tempId, senderId: currentUser.id, senderName: currentUser.displayName,
-      text, timestamp: new Date(), isOwn: true,
+      text, timestamp: new Date(), isOwn: true, isSystem: false,
     };
     this._messages.update(map => ({ ...map, [roomId]: [...(map[roomId] ?? []), optimistic] }));
 
@@ -443,32 +458,46 @@ export class ChatService {
     this.markAsRead();
   }
 
-  async getEventRoom(eventId: string): Promise<ChatRoom | null> {
+  async getEventRoom(eventId: string, clubId = ''): Promise<ChatRoom | null> {
     try {
       const raw = await firstValueFrom(
         this.http.get<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`, {
           context: new HttpContext().set(SKIP_AUTH_REDIRECT, true),
         }),
       );
-      return { id: raw.id, name: raw.name, clubId: '', eventId: raw.eventId };
+      const room: ChatRoom = { id: raw.id, name: raw.name, clubId, eventId: raw.eventId };
+      this._upsertRoom(room);
+      return room;
     } catch {
       return null;
     }
   }
 
-  async createEventChatRoom(eventId: string): Promise<ChatRoom> {
+  async createEventChatRoom(eventId: string, clubId = ''): Promise<ChatRoom> {
     const raw = await firstValueFrom(
       this.http.post<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`, {}),
     );
-    const room: ChatRoom = { id: raw.id, name: raw.name, clubId: '', eventId: raw.eventId };
-    this._rooms.update(rooms => [...rooms, room]);
+    const room: ChatRoom = { id: raw.id, name: raw.name, clubId, eventId: raw.eventId };
+    this._upsertRoom(room);
     return room;
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
 
+  /** Merge an event/club room into `_rooms`, deduped by id, so event rooms
+   * feed the same room-list-driven pipelines (unread polling, chats list) as
+   * club rooms instead of living outside them. */
+  private _upsertRoom(room: ChatRoom): void {
+    this._rooms.update(rooms =>
+      rooms.some(r => r.id === room.id)
+        ? rooms.map(r => (r.id === room.id ? room : r))
+        : [...rooms, room],
+    );
+  }
+
   private _playBeep(): void {
-    const ctx = new AudioContext();
+    const ctx = this._audioContext ??= new AudioContext();
+    if (ctx.state === 'suspended') return; // still locked, waiting for a user gesture
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
@@ -490,6 +519,7 @@ export class ChatService {
       text: m.text,
       timestamp: new Date(m.timestamp),
       isOwn: m.senderId === this.currentUserId,
+      isSystem: m.isSystem ?? false,
     };
   }
 }

@@ -5,6 +5,7 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
   isOwn: boolean;
+  isSystem: boolean;
   isMuted?: boolean;
   isDivider?: never;
 }

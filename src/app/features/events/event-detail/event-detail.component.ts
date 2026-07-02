@@ -75,7 +75,7 @@ export class EventDetailComponent {
       // Only participants/organizers may access the event chat room; firing for
       // others produces a 403 that the browser logs as a console error.
       if (ev && this.auth.currentUser() && (ev.isAttending || this.isOrganizer())) {
-        this.chatService.getEventRoom(ev.id).then(room => this._eventRoom.set(room)).catch((err: unknown) => {
+        this.chatService.getEventRoom(ev.id, ev.clubId).then(room => this._eventRoom.set(room)).catch((err: unknown) => {
           const status = (err as { status?: number })?.status;
           if (status === 403) {
             this._eventRoom.set(null);
@@ -106,7 +106,7 @@ export class EventDetailComponent {
     if (!ev) return;
     let room = this._eventRoom();
     if (!room && this.isOrganizer()) {
-      room = await this.chatService.createEventChatRoom(ev.id);
+      room = await this.chatService.createEventChatRoom(ev.id, ev.clubId);
       this._eventRoom.set(room);
     }
     if (room) this.chatService.openAndFocusRoom(room);
@@ -118,6 +118,15 @@ export class EventDetailComponent {
       const result = await this.eventService.attendEvent(this.id());
       if (result.joinRequestStatus === 'pending') {
         toast.success(this.translate.instant('EVENTS.join_request_sent') as string);
+      } else {
+        const ev = this.event();
+        if (ev) {
+          const room = await this.chatService.getEventRoom(ev.id, ev.clubId);
+          if (room) {
+            this._eventRoom.set(room);
+            toast.success(this.translate.instant('CHAT.event_chat_ready_toast') as string);
+          }
+        }
       }
       this._eventResource.reload();
     } catch (err) {
