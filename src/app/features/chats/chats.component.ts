@@ -5,6 +5,7 @@ import {
   signal,
   computed,
   effect,
+  untracked,
   ViewChild,
   ElementRef,
   DestroyRef,
@@ -92,7 +93,10 @@ export class ChatsComponent {
 
     effect(() => {
       const roomId = this.chat.activeRoomId();
-      const token = this.tokenStore.token();
+      // Read the token untracked so this effect only re-runs when the active
+      // room changes — not on every token re-emit (e.g. after refresh), which
+      // would tear down and reopen a still-connecting socket.
+      const token = untracked(() => this.tokenStore.token());
       if (roomId && token) {
         this.chat.connectRoom(roomId, token);
       } else if (!roomId) {

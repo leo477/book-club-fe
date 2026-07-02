@@ -1,0 +1,97 @@
+<div class="page-max-w px-4 sm:px-6 py-6 space-y-8">
+
+  <!-- ── Header ── -->
+  <header class="flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <h1 class="font-display text-3xl font-bold text-gray-900 dark:text-white">💬 {{ 'SUPPORT.title' | translate }}</h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-1 text-sm">{{ 'SUPPORT.subtitle' | translate }}</p>
+    </div>
+    <a
+      routerLink="/support/new"
+      data-testid="support-new"
+      class="rounded-lg bg-gradient-brand px-4 py-2 text-sm font-medium text-white transition-all hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+    >
+      {{ 'SUPPORT.new_btn' | translate }}
+    </a>
+  </header>
+
+  @if (support.isLoading()) {
+    <div class="flex justify-center py-16"><hlm-spinner /></div>
+  } @else {
+
+    <!-- ── Complaints ── -->
+    <section class="space-y-4">
+      <h2 class="text-lg font-semibold text-[var(--color-ink)]">{{ 'SUPPORT.complaints_heading' | translate }}</h2>
+      @if (complaints().length === 0) {
+        <app-empty-state
+          icon="😠"
+          [title]="'SUPPORT.empty_complaints_title' | translate"
+          [description]="'SUPPORT.empty_complaints_desc' | translate"
+        />
+      } @else {
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          @for (item of complaints(); track item.id) {
+            <app-submission-card [submission]="item" />
+          }
+        </div>
+      }
+    </section>
+
+    <!-- ── Comments ── -->
+    <section class="space-y-4">
+      <h2 class="text-lg font-semibold text-[var(--color-ink)]">{{ 'SUPPORT.comments_heading' | translate }}</h2>
+      @if (comments().length === 0) {
+        <app-empty-state
+          icon="💬"
+          [title]="'SUPPORT.empty_comments_title' | translate"
+          [description]="'SUPPORT.empty_comments_desc' | translate"
+        />
+      } @else {
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          @for (item of comments(); track item.id) {
+            <app-submission-card [submission]="item" />
+          }
+        </div>
+      }
+    </section>
+
+    <!-- ── Suggestions Kanban ── -->
+    <section class="space-y-4">
+      <h2 class="text-lg font-semibold text-[var(--color-ink)]">{{ 'SUPPORT.suggestions_heading' | translate }}</h2>
+      @if (suggestions().length === 0) {
+        <app-empty-state
+          icon="💡"
+          [title]="'SUPPORT.empty_suggestions_title' | translate"
+          [description]="'SUPPORT.empty_suggestions_desc' | translate"
+        />
+      } @else {
+        <div class="overflow-x-auto pb-2 -mx-4 px-4">
+          <div class="flex gap-4 md:grid md:grid-cols-5 md:gap-4">
+            @for (status of columns; track status) {
+              <div class="flex w-72 shrink-0 flex-col gap-3 md:w-auto">
+                <div class="flex items-center justify-between rounded-lg bg-[var(--color-surface-raised)] px-3 py-2">
+                  <span class="text-sm font-semibold text-[var(--color-ink)]">{{ 'SUPPORT.status_' + status | translate }}</span>
+                  <span class="text-xs text-[var(--color-ink-muted)]">{{ suggestionsByStatus()[status].length }}</span>
+                </div>
+                <div class="flex flex-col gap-3">
+                  @for (item of suggestionsByStatus()[status]; track item.id) {
+                    <app-submission-card
+                      [submission]="item"
+                      [isAdmin]="auth.isAdmin()"
+                      (approve)="onApprove($event)"
+                      (reject)="onReject($event)"
+                      (advance)="onAdvance($event)"
+                    />
+                  } @empty {
+                    <p class="px-1 text-xs text-[var(--color-ink-muted)]">{{ 'SUPPORT.column_empty' | translate }}</p>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </section>
+
+  }
+</div>

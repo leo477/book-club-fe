@@ -93,6 +93,22 @@
               </span>
             }
 
+            <!-- Promote organizer (owner only) -->
+            @if (isOwner() && showRoleControls() && member.role !== 'organizer') {
+              <button hlmBtn variant="outline" size="xs" type="button" (click)="promote.emit(member.userId)"
+                      class="ml-2 text-accent-600 dark:text-accent-400">
+                {{ 'CLUB_MANAGE.promote' | translate }}
+              </button>
+            }
+
+            <!-- Demote organizer (owner only, not the club owner) -->
+            @if (isOwner() && showRoleControls() && member.role === 'organizer' && member.userId !== ownerId() && member.userId !== currentUserId()) {
+              <button hlmBtn variant="outline" size="xs" type="button" (click)="demote.emit(member.userId)"
+                      class="ml-2">
+                {{ 'CLUB_MANAGE.demote' | translate }}
+              </button>
+            }
+
             <!-- Kick and Ban buttons (owner only) -->
             @if (isOwner() && member.role !== 'organizer') {
               <div class="flex items-center gap-1 ml-2 flex-shrink-0 relative">

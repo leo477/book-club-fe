@@ -6,6 +6,8 @@ import { Injectable, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class TokenStore {
+  private static readonly REFRESH_KEY = 'bc_refresh_token';
+
   private readonly _token = signal<string | null>(null);
 
   readonly token = this._token.asReadonly();
@@ -20,5 +22,20 @@ export class TokenStore {
 
   snapshot(): string | null {
     return this._token();
+  }
+
+  // Mobile browsers block the cross-site refresh cookie, so the SPA persists its
+  // own copy. Tradeoff: localStorage is XSS-readable; mitigated by a short
+  // access-token TTL plus server-side refresh-token rotation.
+  setRefreshToken(token: string): void {
+    localStorage.setItem(TokenStore.REFRESH_KEY, token);
+  }
+
+  refreshToken(): string | null {
+    return localStorage.getItem(TokenStore.REFRESH_KEY);
+  }
+
+  clearRefreshToken(): void {
+    localStorage.removeItem(TokenStore.REFRESH_KEY);
   }
 }

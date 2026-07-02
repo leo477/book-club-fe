@@ -34,7 +34,7 @@
     @let activeRoom = chat.activeRoom();
 
     <div
-      [class]="'fixed z-40 w-80 max-h-[480px] flex flex-col rounded-2xl shadow-2xl chat-panel overflow-hidden ' + panelPositionClass()"
+      [class]="'fixed z-40 w-[calc(100vw-3rem)] max-w-[20rem] max-h-[480px] flex flex-col rounded-2xl shadow-2xl chat-panel overflow-hidden ' + panelPositionClass()"
       [style.background]="'var(--color-surface-raised)'"
       [style.border]="'1px solid var(--border)'"
     >

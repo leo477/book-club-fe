@@ -72,7 +72,13 @@ audit-evidence/
     terms.png
   audit-prod-results.json
 e2e/
+  fixtures/
+    api-client.ts
+    api-context.fixture.ts
+    auth.fixture.ts
+    seed-helper.ts
   audit-helper.ts
+  global-setup.ts
 public/
   i18n/
     en.json
@@ -106,6 +112,7 @@ src/
         event.model.ts
         quiz.model.ts
         randomizer.model.ts
+        support.model.ts
         user.model.ts
       services/
         book-cover.service.ts
@@ -122,6 +129,7 @@ src/
         randomizer.service.ts
         routing.service.ts
         seo.service.ts
+        support.service.ts
         theme.service.ts
         upload.service.ts
     features/
@@ -162,6 +170,9 @@ src/
             club-members-list.component.ts
           club-detail.component.html
           club-detail.component.ts
+        club-manage/
+          club-manage.component.html
+          club-manage.component.ts
         clubs-list/
           club-card/
             club-card.component.html
@@ -251,6 +262,17 @@ src/
         .gitkeep
         randomizer.component.html
         randomizer.component.ts
+      support/
+        create-submission/
+          create-submission.component.html
+          create-submission.component.ts
+        submission-card/
+          submission-card.component.html
+          submission-card.component.ts
+        support-board/
+          support-board.component.html
+          support-board.component.ts
+        support.routes.ts
       terms/
         terms.component.ts
     layout/
@@ -465,6 +487,7 @@ components.json
 eslint.config.js
 package.json
 playwright.audit-current.config.ts
+playwright.full-audit.config.ts
 playwright.total-audit.config.ts
 postcss.config.json
 README.md

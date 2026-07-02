@@ -41,4 +41,23 @@ describe('TokenStore', () => {
     store.set('snap-token');
     expect(store.snapshot()).toBe('snap-token');
   });
+
+  describe('refresh token persistence', () => {
+    afterEach(() => store.clearRefreshToken());
+
+    it('refreshToken() is null initially', () => {
+      expect(store.refreshToken()).toBeNull();
+    });
+
+    it('setRefreshToken() persists and refreshToken() reads it', () => {
+      store.setRefreshToken('refresh-1');
+      expect(store.refreshToken()).toBe('refresh-1');
+    });
+
+    it('clearRefreshToken() removes the persisted token', () => {
+      store.setRefreshToken('refresh-1');
+      store.clearRefreshToken();
+      expect(store.refreshToken()).toBeNull();
+    });
+  });
 });
