@@ -361,6 +361,19 @@ describe('ChatService', () => {
       expect(req.request.params.keys().length).toBe(0);
       req.flush([]);
     });
+
+    it('maps isSystem from the API response onto the message model', async () => {
+      service.loadMessages('room-1');
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([
+        { id: 'm1', senderId: 'bot-1', senderName: 'Book Club Bot', text: 'Залишилось 2 дні', timestamp: '2024-01-01T00:00:00Z', isSystem: true },
+        { id: 'm2', senderId: 'u1', senderName: 'Alice', text: 'hi', timestamp: '2024-01-01T00:01:00Z' },
+      ]);
+      await Promise.resolve();
+
+      const messages = service.messages()['room-1'] ?? [];
+      expect(messages.find(m => m.id === 'm1')?.isSystem).toBe(true);
+      expect(messages.find(m => m.id === 'm2')?.isSystem).toBe(false);
+    });
   });
 
   describe('loadAllClubRooms()', () => {
@@ -656,6 +669,28 @@ describe('ChatService', () => {
       const room = await promise;
       expect(room).toBeNull();
     });
+
+    it('upserts the event room into the rooms signal with the given clubId', async () => {
+      const promise = service.getEventRoom('event-1', 'club-9');
+      httpMock.expectOne(`${API}/events/event-1/chat/room`).flush({ id: 'room-1', name: 'Event Chat', eventId: 'event-1' });
+      await promise;
+
+      const room = getRooms(service).find(r => r.id === 'room-1');
+      expect(room?.clubId).toBe('club-9');
+      expect(room?.eventId).toBe('event-1');
+    });
+
+    it('does not duplicate the room if called twice for the same room id', async () => {
+      const first = service.getEventRoom('event-1', 'club-9');
+      httpMock.expectOne(`${API}/events/event-1/chat/room`).flush({ id: 'room-1', name: 'Event Chat', eventId: 'event-1' });
+      await first;
+
+      const second = service.getEventRoom('event-1', 'club-9');
+      httpMock.expectOne(`${API}/events/event-1/chat/room`).flush({ id: 'room-1', name: 'Event Chat', eventId: 'event-1' });
+      await second;
+
+      expect(getRooms(service).filter(r => r.id === 'room-1').length).toBe(1);
+    });
   });
 
   describe('createEventChatRoom()', () => {
@@ -669,6 +704,13 @@ describe('ChatService', () => {
       expect(room.id).toBe('room-e1');
       expect(room.eventId).toBe('event-1');
       expect(getRooms(service).some(r => r.id === 'room-e1')).toBe(true);
+    });
+
+    it('carries the given clubId onto the created room', async () => {
+      const promise = service.createEventChatRoom('event-1', 'club-9');
+      httpMock.expectOne(`${API}/events/event-1/chat/room`).flush({ id: 'room-e1', name: 'Event Chat', eventId: 'event-1' });
+      const room = await promise;
+      expect(room.clubId).toBe('club-9');
     });
   });
 
