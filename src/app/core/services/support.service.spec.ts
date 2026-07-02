@@ -108,6 +108,7 @@ describe('SupportService', () => {
     it('does nothing when the submission is not found', async () => {
       await service.toggleLike('missing');
       httpMock.expectNone(`${API}/support/missing/like`);
+      expect(service.submissions()).toEqual([]);
     });
 
     it('optimistically likes and posts to the like endpoint', async () => {
