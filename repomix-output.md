@@ -84,6 +84,7 @@ public/
     en.json
     uk.json
   favicon.ico
+  favicon.svg
   googleea44a5e89a1de9d7.html
   og-image.png
   robots.txt

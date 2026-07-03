@@ -1,4 +1,10 @@
 User-agent: *
 Allow: /
 Disallow: /manage/
+Disallow: /clubs
+Disallow: /events
+Disallow: /support
+Disallow: /profile
+Disallow: /chats
+
 Sitemap: https://book-club-fe.vercel.app/sitemap.xml
