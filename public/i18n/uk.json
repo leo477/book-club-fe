@@ -665,7 +665,7 @@
     "club_detail_title": "{{ name }} | Book Club",
     "club_detail_og_title": "{{ name }}",
     "site_name": "Book Club",
-    "site_url": "https://book-club-fe.vercel.app",
+    "site_url": "https://book-club-planer.vercel.app",
     "site_description": "Читацькі клуби України"
   },
   "events": {
