@@ -7,4 +7,4 @@ Disallow: /support
 Disallow: /profile
 Disallow: /chats
 
-Sitemap: https://book-club-fe.vercel.app/sitemap.xml
+Sitemap: https://book-club-planer.vercel.app/sitemap.xml
