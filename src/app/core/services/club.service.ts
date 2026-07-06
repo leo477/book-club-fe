@@ -104,9 +104,6 @@ export class ClubService {
     }, {});
   });
 
-  readonly myParticipatedClubs = computed<Club[]>(() => []);
-  readonly myMissedClubs = computed<Club[]>(() => []);
-
   setSearchQuery(query: string): void {
     this._searchQuery.set(query);
   }
@@ -389,10 +386,4 @@ export class ClubService {
     this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
   }
 
-  msUntilDeletion(club: Club): number | null {
-    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
-    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
-    const remaining = deletionTime - Date.now();
-    return remaining > 0 ? remaining : null;
-  }
 }

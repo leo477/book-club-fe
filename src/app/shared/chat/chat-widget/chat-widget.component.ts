@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, effect, computed, HostListener, ElementRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, effect, computed, HostListener, ElementRef, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -148,7 +148,10 @@ export class ChatWidgetComponent {
 
     effect(() => {
       const roomId = this.chat.activeRoomId();
-      const token = this.tokenStore.token();
+      // Read the token untracked so this effect only re-runs when the active
+      // room changes — not on every token re-emit (e.g. after refresh), which
+      // would tear down and reopen a still-connecting socket.
+      const token = untracked(() => this.tokenStore.token());
       if (roomId && token) {
         this.chat.connectRoom(roomId, token);
       } else if (!roomId) {

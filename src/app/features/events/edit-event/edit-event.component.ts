@@ -114,8 +114,13 @@ export class EditEventComponent {
     this.form.get('googleBookId')?.setValue(book.id);
   }
 
+  private toDatetimeLocal(date: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
   private _patchForm(ev: ClubEvent): void {
-    const localDate = ev.date ? new Date(ev.date).toISOString().slice(0, 16) : '';
+    const localDate = ev.date ? this.toDatetimeLocal(new Date(ev.date)) : '';
     this.form.patchValue({
       title: ev.title,
       description: ev.description ?? '',

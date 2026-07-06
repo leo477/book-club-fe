@@ -258,53 +258,6 @@ describe('ClubService – computed signals and additional methods', () => {
     });
   });
 
-  describe('msUntilDeletion', () => {
-    const base: Partial<Club> = {
-      id: 'c1', name: 'T', description: null, coverUrl: null, organizerId: 'u1',
-      isPublic: true, memberCount: 0, createdAt: '', city: '', nextMeetingDate: null,
-      address: null, lat: null, lng: null, theme: null, currentBook: null,
-      memberPreviews: [], tags: [], meetingDurationMinutes: null, afterMeetingVenue: null,
-    };
-
-    it('returns null for active club', () => {
-      const club = { ...base, status: 'active' as const };
-      expect(service.msUntilDeletion(club as Club)).toBeNull();
-    });
-
-    it('returns null when cancelled but no cancelledAt', () => {
-      const club = { ...base, status: 'cancelled' as const };
-      expect(service.msUntilDeletion(club as Club)).toBeNull();
-    });
-
-    it('returns positive ms when cancelled recently', () => {
-      const club = {
-        ...base, status: 'cancelled' as const,
-        cancelledAt: new Date(Date.now() - 1000).toISOString(),
-      };
-      const ms = service.msUntilDeletion(club as Club);
-      expect(ms).not.toBeNull();
-      if (ms !== null) expect(ms).toBeGreaterThan(0);
-    });
-
-    it('returns null when cancelledAt is too old (>24h)', () => {
-      const club = {
-        ...base, status: 'cancelled' as const,
-        cancelledAt: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
-      };
-      expect(service.msUntilDeletion(club as Club)).toBeNull();
-    });
-  });
-
-  describe('myParticipatedClubs / myMissedClubs', () => {
-    it('myParticipatedClubs returns empty array', () => {
-      expect(service.myParticipatedClubs()).toEqual([]);
-    });
-
-    it('myMissedClubs returns empty array', () => {
-      expect(service.myMissedClubs()).toEqual([]);
-    });
-  });
-
   describe('myOwnedClubs branch: no authenticated user', () => {
     it('returns empty array when currentUser is null', () => {
       authSpy.currentUser.mockReturnValue(null);

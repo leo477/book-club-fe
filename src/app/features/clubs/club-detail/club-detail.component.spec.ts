@@ -17,7 +17,7 @@ describe('ClubDetailComponent', () => {
     getClubById: ReturnType<typeof vi.fn>; getClubMembers: ReturnType<typeof vi.fn>;
     ensureMyClubsLoaded: ReturnType<typeof vi.fn>; getBans: ReturnType<typeof vi.fn>;
     kickMember: ReturnType<typeof vi.fn>; banMember: ReturnType<typeof vi.fn>;
-    msUntilDeletion: ReturnType<typeof vi.fn>; loadClubEvents: ReturnType<typeof vi.fn>;
+    loadClubEvents: ReturnType<typeof vi.fn>;
     clubs: ReturnType<typeof vi.fn>; myClubs: ReturnType<typeof vi.fn>;
     myClubIds: ReturnType<typeof vi.fn>; joinClub?: ReturnType<typeof vi.fn>;
     leaveClub?: ReturnType<typeof vi.fn>;
@@ -37,7 +37,6 @@ describe('ClubDetailComponent', () => {
       getBans: vi.fn().mockResolvedValue([]),
       kickMember: vi.fn().mockResolvedValue(undefined),
       banMember: vi.fn().mockResolvedValue(undefined),
-      msUntilDeletion: vi.fn().mockReturnValue(null),
       loadClubEvents: vi.fn().mockResolvedValue([]),
       clubs: vi.fn().mockReturnValue([]),
       myClubs: vi.fn().mockReturnValue([]),
@@ -136,97 +135,6 @@ describe('ClubDetailComponent', () => {
     expect(component.members()).toEqual([
       { userId: 'user-3', displayName: 'User 3', avatarUrl: null, role: 'member', socialsPublic: false }
     ]);
-  });
-
-  it('deleteCountdown returns null if msUntilDeletion is null', () => {
-    clubServiceSpy.msUntilDeletion.mockReturnValue(null);
-    component.club.set({
-      id: 'club-1',
-      name: 'Test Club',
-      description: null,
-      coverUrl: null,
-      organizerId: 'user-1',
-      isPublic: true,
-      memberCount: 1,
-      createdAt: '2024-01-01',
-      city: 'Kyiv',
-      nextMeetingDate: null,
-      address: null,
-      lat: null,
-      lng: null,
-      theme: null,
-      currentBook: null,
-      memberPreviews: [],
-      status: 'cancelled',
-      cancelledAt: '2024-01-01',
-      tags: [],
-      meetingDurationMinutes: null,
-      afterMeetingVenue: null,
-    currentChampion: null,
-    });
-    expect(component.deleteCountdown()).toBeNull();
-  });
-
-  it('deleteCountdown returns hours/minutes string', () => {
-    clubServiceSpy.msUntilDeletion.mockReturnValue(3600000);
-    component.club.set({
-      id: 'club-1',
-      name: 'Test Club',
-      description: null,
-      coverUrl: null,
-      organizerId: 'user-1',
-      isPublic: true,
-      memberCount: 1,
-      createdAt: '2024-01-01',
-      city: 'Kyiv',
-      nextMeetingDate: null,
-      address: null,
-      lat: null,
-      lng: null,
-      theme: null,
-      currentBook: null,
-      memberPreviews: [],
-      status: 'cancelled',
-      cancelledAt: '2024-01-01',
-      tags: [],
-      meetingDurationMinutes: null,
-      afterMeetingVenue: null,
-    currentChampion: null,
-    });
-    const result = component.deleteCountdown();
-    expect(result).toContain('1');
-    expect(result).toContain('год');
-  });
-
-  it('deleteCountdown returns minutes string', () => {
-    clubServiceSpy.msUntilDeletion.mockReturnValue(300000);
-    component.club.set({
-      id: 'club-1',
-      name: 'Test Club',
-      description: null,
-      coverUrl: null,
-      organizerId: 'user-1',
-      isPublic: true,
-      memberCount: 1,
-      createdAt: '2024-01-01',
-      city: 'Kyiv',
-      nextMeetingDate: null,
-      address: null,
-      lat: null,
-      lng: null,
-      theme: null,
-      currentBook: null,
-      memberPreviews: [],
-      status: 'cancelled',
-      cancelledAt: '2024-01-01',
-      tags: [],
-      meetingDurationMinutes: null,
-      afterMeetingVenue: null,
-    currentChampion: null,
-    });
-    const result = component.deleteCountdown();
-    expect(result).toContain('5');
-    expect(result).toContain('хв');
   });
 
   describe('onJoin', () => {
@@ -412,23 +320,6 @@ describe('ClubDetailComponent', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       authSpy.currentUser.mockReturnValue(null as any);
       expect(component.currentUserId()).toBeNull();
-    });
-  });
-
-  describe('deleteCountdown with hours and minutes', () => {
-    it('returns hours and minutes string when both > 0', () => {
-      clubServiceSpy.msUntilDeletion.mockReturnValue(5400000); // 1.5 hours
-      component.club.set({
-        id: 'club-1', name: 'Test Club', description: null, coverUrl: null,
-        organizerId: 'user-1', isPublic: true, memberCount: 1,
-        createdAt: '2024-01-01', city: 'Kyiv', nextMeetingDate: null,
-        address: null, lat: null, lng: null, theme: null, currentBook: null,
-        memberPreviews: [], status: 'cancelled', cancelledAt: '2024-01-01',
-        tags: [], meetingDurationMinutes: null, afterMeetingVenue: null, currentChampion: null,
-      });
-      const result = component.deleteCountdown();
-      expect(result).toContain('год');
-      expect(result).toContain('хв');
     });
   });
 

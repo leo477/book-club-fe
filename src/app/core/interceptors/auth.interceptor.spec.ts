@@ -60,6 +60,22 @@ describe('authInterceptor', () => {
     req.flush({});
   });
 
+  it('does not attach Authorization header to absolute third-party URLs', () => {
+    setup('my-token');
+    http.get('https://openlibrary.org/search.json?q=test').subscribe();
+    const req = httpMock.expectOne('https://openlibrary.org/search.json?q=test');
+    expect(req.request.headers.has('Authorization')).toBe(false);
+    req.flush({});
+  });
+
+  it('attaches Authorization header to absolute requests targeting the backend API', () => {
+    setup('my-token');
+    http.get('https://book-club-be.onrender.com/api/v1/clubs').subscribe();
+    const req = httpMock.expectOne('https://book-club-be.onrender.com/api/v1/clubs');
+    expect(req.request.headers.get('Authorization')).toBe('Bearer my-token');
+    req.flush({});
+  });
+
   it('navigates to /login and clears token on 401 for authenticated requests', () => {
     setup('my-token');
     http.get('/api/test').subscribe({ error: vi.fn() });

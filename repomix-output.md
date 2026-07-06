@@ -91,6 +91,7 @@ public/
   sitemap.xml
 scripts/
   extract-i18n.mjs
+  generate-sitemap.mjs
 src/
   app/
     core/
@@ -493,6 +494,7 @@ playwright.full-audit.config.ts
 playwright.total-audit.config.ts
 postcss.config.json
 README.md
+REFACTOR-PLAN-2026-07-06.md
 repomix.config.json
 SECURITY.md
 sonar-project.properties

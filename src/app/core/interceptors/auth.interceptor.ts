@@ -49,6 +49,10 @@ export class BackendHttpError extends Error {
   }
 }
 
+function isFirstPartyRequest(url: string): boolean {
+  return !/^https?:\/\//i.test(url) || url.startsWith(environment.apiUrl);
+}
+
 function resolveAuthRedirect(
   httpError: HttpErrorResponse,
   token: string | null,
@@ -135,7 +139,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
   const translate = inject(TranslateService);
 
   const token = tokenStore.snapshot();
-  const authedReq = token
+  const authedReq = token && isFirstPartyRequest(req.url)
     ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
     : req;
 

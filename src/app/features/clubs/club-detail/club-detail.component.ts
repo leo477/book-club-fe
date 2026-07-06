@@ -10,8 +10,6 @@ import {
 } from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { toSignal } from '@angular/core/rxjs-interop';
-import { map, startWith } from 'rxjs';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
 import { ClubService } from '../../../core/services/club.service';
@@ -67,14 +65,6 @@ export class ClubDetailComponent {
   private readonly auth = inject(AuthService);
   private readonly seo = inject(SeoService);
   private readonly translate = inject(TranslateService);
-
-  private readonly _lang = toSignal(
-    this.translate.onLangChange.pipe(
-      map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
-    ),
-    { initialValue: this.translate.currentLang ?? 'uk' },
-  );
 
   readonly currentUser = this.auth.currentUser;
 
@@ -155,20 +145,6 @@ export class ClubDetailComponent {
     if (title) return { title, author: '', description: '', coverUrl: nearest.coverUrl ?? null };
     const cb = this.club()?.currentBook;
     return cb ? { ...cb, coverUrl: null } : null;
-  });
-
-  readonly deleteCountdown = computed<string | null>(() => {
-    const club = this.club();
-    if (!club) return null;
-    const ms = this.clubService.msUntilDeletion(club);
-    if (ms === null) return null;
-    const totalMinutes = Math.floor(ms / 60000);
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-    if (hours > 0) {
-      return minutes > 0 ? `${hours} год ${minutes} хв` : `${hours} год`;
-    }
-    return `${totalMinutes} хв`;
   });
 
   constructor() {
