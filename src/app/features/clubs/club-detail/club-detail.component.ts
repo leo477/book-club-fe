@@ -141,7 +141,7 @@ export class ClubDetailComponent {
 
   readonly nearestEventBook = computed<{ title: string; author: string; description: string; coverUrl: string | null } | null>(() => {
     const nearest = [...this.events()]
-      .filter(e => e.status === 'upcoming' || e.status === 'scheduled' || e.status === 'active')
+      .filter(e => e.status === 'scheduled' || e.status === 'active')
       .sort((a, b) => a.date.localeCompare(b.date))[0];
     const title = nearest?.bookTitle;
     if (title) return { title, author: '', description: '', coverUrl: nearest.coverUrl ?? null };
