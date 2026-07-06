@@ -481,7 +481,7 @@ export class ChatService {
   }
 
   private mapMessage(m: ApiChatMessage): ChatMessage {
-    const raw = m.senderDisplayName ?? m.display_name ?? m.sender_username ?? m.senderName;
+    const raw = m.senderDisplayName ?? m.display_name ?? m.sender_username ?? m.senderName ?? '';
     const senderName = raw.includes('@') ? raw.split('@')[0] : raw;
     return {
       id: m.id,

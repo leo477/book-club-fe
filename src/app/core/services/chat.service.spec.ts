@@ -1001,6 +1001,23 @@ describe('ChatService', () => {
       });
       expect(getActiveMessages(service)[0].senderName).toBe('user');
     });
+
+    it('falls back to an empty senderName instead of throwing when all sender-name fields are missing', () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
+      service.connectRoom('room-1');
+      const ws = MockWebSocket.instance;
+      if (!ws) throw new Error('MockWebSocket not instantiated');
+      expect(() => ws.simulateMessage({
+        type: 'message',
+        payload: {
+          id: 'msg-no-name',
+          senderId: 'u1',
+          text: 'Hi',
+          timestamp: '2024-01-01T00:00:00Z',
+        },
+      })).not.toThrow();
+      expect(getActiveMessages(service)[0].senderName).toBe('');
+    });
   });
 
   // ── Feature 1: setChatsPage ────────────────────────────────────────────────

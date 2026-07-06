@@ -43,19 +43,25 @@ export class ChatSocket {
     };
 
     this._ws.onmessage = (event: MessageEvent) => {
-      const envelope = JSON.parse(event.data as string) as WsEnvelope;
+      try {
+        const envelope = JSON.parse(event.data as string) as WsEnvelope;
 
-      if (envelope.type === 'presence') {
-        const p = envelope.payload as { userId: string; status: 'online' | 'offline' };
-        handlers.onPresence(p.userId, p.status);
-        return;
+        if (envelope.type === 'presence') {
+          const p = envelope.payload as { userId: string; status: 'online' | 'offline' };
+          handlers.onPresence(p.userId, p.status);
+          return;
+        }
+        if (envelope.type === 'presence_snapshot') {
+          handlers.onPresenceSnapshot(envelope.payload as { userId: string; status: 'online' | 'offline' }[]);
+          return;
+        }
+        if (envelope.type !== 'message') return;
+        handlers.onMessage(envelope.payload);
+      } catch (err) {
+        // A malformed/non-JSON frame (bad backend push, proxy noise) must not
+        // kill the socket's event handler — drop the frame and keep listening.
+        console.error('[ChatSocket] onmessage parse error', err);
       }
-      if (envelope.type === 'presence_snapshot') {
-        handlers.onPresenceSnapshot(envelope.payload as { userId: string; status: 'online' | 'offline' }[]);
-        return;
-      }
-      if (envelope.type !== 'message') return;
-      handlers.onMessage(envelope.payload);
     };
 
     this._ws.onclose = () => {

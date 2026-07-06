@@ -60,6 +60,19 @@ describe('ChatSocket', () => {
     expect(handlers.onMessage).toHaveBeenCalledWith(payload);
   });
 
+  it('swallows a malformed (non-JSON) message without throwing, and still processes the next valid one', () => {
+    const handlers = makeHandlers();
+    socket.connect('room-1', () => 'tok', handlers);
+    const ws = MockWebSocket.instance;
+
+    expect(() => ws?.onmessage?.(new MessageEvent('message', { data: 'not json' }))).not.toThrow();
+    expect(handlers.onMessage).not.toHaveBeenCalled();
+
+    const payload = { id: 'm1', senderId: 'u1', senderName: 'Alice', text: 'Hi', timestamp: '2024-01-01T00:00:00Z' };
+    ws?.simulateMessage({ type: 'message', payload });
+    expect(handlers.onMessage).toHaveBeenCalledWith(payload);
+  });
+
   it('dispatches presence updates to onPresence', () => {
     const handlers = makeHandlers();
     socket.connect('room-1', () => 'tok', handlers);
