@@ -98,7 +98,7 @@ export class ChatService {
       // would tear down and reopen a still-connecting socket.
       const token = untracked(() => this._tokenStore.token());
       if (roomId && token) {
-        this.connectRoom(roomId, token);
+        this.connectRoom(roomId);
       } else if (!roomId) {
         this.disconnectRoom();
       }
@@ -212,8 +212,8 @@ export class ChatService {
       });
   }
 
-  connectRoom(roomId: string, token: string): void {
-    this._socket.connect(roomId, token, {
+  connectRoom(roomId: string): void {
+    this._socket.connect(roomId, () => this._tokenStore.token(), {
       onMessage: payload => this._onWsMessage(roomId, payload as ApiChatMessage),
       onPresence: (userId, status) => {
         this._presenceMap.update(m => { const n = new Map(m); n.set(userId, status); return n; });

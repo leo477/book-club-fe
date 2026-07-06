@@ -20,27 +20,26 @@ export class ChatSocket {
   private _ws: WebSocket | null = null;
   private _reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private _reconnectDelay = 1_000;
-  private _activeRoomToken: { roomId: string; token: string } | null = null;
+  private _activeRoom: { roomId: string; getToken: () => string | null } | null = null;
 
-  connect(roomId: string, token: string, handlers: ChatSocketHandlers): void {
-    // Idempotent: if a socket for the same room/token is already live, don't
-    // tear it down — closing a CONNECTING socket triggers the browser's
-    // "closed before the connection is established" warning and can loop.
+  connect(roomId: string, getToken: () => string | null, handlers: ChatSocketHandlers): void {
+    // Idempotent: if a socket for the same room is already live, don't tear
+    // it down — closing a CONNECTING socket triggers the browser's "closed
+    // before the connection is established" warning and can loop.
     if (
       this._ws &&
-      this._activeRoomToken?.roomId === roomId &&
-      this._activeRoomToken.token === token &&
+      this._activeRoom?.roomId === roomId &&
       (this._ws.readyState === WebSocket.OPEN || this._ws.readyState === WebSocket.CONNECTING)
     ) {
       return;
     }
     this.disconnect();
-    this._activeRoomToken = { roomId, token };
+    this._activeRoom = { roomId, getToken };
     this._ws = new WebSocket(environment.wsUrl + '/chat/rooms/' + roomId);
 
     this._ws.onopen = () => {
       this._reconnectDelay = 1_000;
-      this._ws?.send(JSON.stringify({ type: 'auth', token }));
+      this._ws?.send(JSON.stringify({ type: 'auth', token: getToken() }));
     };
 
     this._ws.onmessage = (event: MessageEvent) => {
@@ -60,12 +59,19 @@ export class ChatSocket {
     };
 
     this._ws.onclose = () => {
-      if (!this._activeRoomToken) return;
+      if (!this._activeRoom) return;
       this._reconnectTimer = setTimeout(() => {
-        if (this._activeRoomToken) {
-          this._reconnectDelay = Math.min(this._reconnectDelay * 2, 30_000);
-          this.connect(this._activeRoomToken.roomId, this._activeRoomToken.token, handlers);
+        const active = this._activeRoom;
+        if (!active) return;
+        const freshToken = active.getToken();
+        if (!freshToken) {
+          // No valid token to reconnect with (e.g. user logged out) — stop
+          // looping instead of hammering the backend with a dead auth frame.
+          this.disconnect();
+          return;
         }
+        this._reconnectDelay = Math.min(this._reconnectDelay * 2, 30_000);
+        this.connect(active.roomId, active.getToken, handlers);
       }, this._reconnectDelay);
     };
 
@@ -73,7 +79,7 @@ export class ChatSocket {
   }
 
   disconnect(): void {
-    this._activeRoomToken = null;
+    this._activeRoom = null;
     if (this._reconnectTimer) {
       clearTimeout(this._reconnectTimer);
       this._reconnectTimer = null;
