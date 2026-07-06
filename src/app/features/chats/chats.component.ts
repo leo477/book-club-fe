@@ -140,8 +140,8 @@ export class ChatsComponent {
     }
     // Reset scroll tracker so we'll scroll-to-unread in the new room.
     this._lastScrolledRoomId = null;
+    // openRoom() already marks the newly-active room read and resets the pulse.
     this.chat.openRoom(room.id);
-    this.chat.markAsRead();
   }
 
   protected sendMessage(): void {

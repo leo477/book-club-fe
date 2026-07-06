@@ -99,7 +99,7 @@ describe('ChatsComponent', () => {
   });
 
   describe('selectRoom', () => {
-    it('marks the previous room read, opens the new room, and marks as read', () => {
+    it('marks the previous room read and opens the new room (which marks itself read)', () => {
       chatSvc.activeRoomId.set('room-prev');
       const fixture = TestBed.createComponent(ChatsComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
@@ -108,7 +108,9 @@ describe('ChatsComponent', () => {
 
       expect(chatSvc.markRoomRead).toHaveBeenCalledWith('room-prev');
       expect(chatSvc.openRoom).toHaveBeenCalledWith('room-next');
-      expect(chatSvc.markAsRead).toHaveBeenCalled();
+      // N-8: openRoom() now marks the newly-active room read and resets the
+      // pulse internally — chats.component no longer needs a separate call.
+      expect(chatSvc.markAsRead).not.toHaveBeenCalled();
     });
 
     it('does not mark previous room read when selecting the already-active room', () => {

@@ -29,7 +29,6 @@ export class ChatService {
   private readonly _rooms = signal<ChatRoom[]>([]);
   private readonly _messages = signal<Record<string, ChatMessage[]>>({});
   private readonly _activeRoomId = signal<string | null>(null);
-  private readonly _unreadCount = signal<number>(0);
   private readonly _isOpen = signal<boolean>(false);
   private readonly _hasNewMessage = signal<boolean>(false);
   private readonly _mutedUserIds = signal<Set<string>>(new Set());
@@ -117,7 +116,6 @@ export class ChatService {
   readonly rooms = this._rooms.asReadonly();
   readonly messages = this._messages.asReadonly();
   readonly activeRoomId = this._activeRoomId.asReadonly();
-  readonly unreadCount = this._unreadCount.asReadonly();
   readonly isOpen = this._isOpen.asReadonly();
   readonly hasNewMessage = this._hasNewMessage.asReadonly();
   readonly mutedUserIds = this._mutedUserIds.asReadonly();
@@ -125,6 +123,15 @@ export class ChatService {
   readonly roomUnreadCounts = this._roomUnreadCounts.asReadonly();
   readonly hasMoreOlder = this._hasMoreOlder.asReadonly();
   readonly isLoadingOlder = this._isLoadingOlder.asReadonly();
+
+  /**
+   * N-8: single source of truth for "unread" — the server-backed per-room
+   * counts. Previously a separate WS-driven `_unreadCount` signal could
+   * disagree with this one; now the FAB badge is just their sum.
+   */
+  readonly unreadCount = computed(() =>
+    Object.values(this._roomUnreadCounts()).reduce((sum, n) => sum + n, 0),
+  );
 
   readonly activeRoom = computed(() =>
     this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
@@ -287,6 +294,8 @@ export class ChatService {
     this._isOpen.update(v => !v);
     if (this._isOpen()) {
       this.markAsRead();
+      const activeId = this._activeRoomId();
+      if (activeId) this.markRoomRead(activeId);
     }
   }
 
@@ -294,11 +303,14 @@ export class ChatService {
     this.disconnectRoom();
     this._activeRoomId.set(roomId);
     this.loadMessages(roomId);
+    this.markRoomRead(roomId);
     this.markAsRead();
   }
 
+  /** N-8: only the "new message" pulse — per-room read state is exclusively
+   *  owned by `markRoomRead()` now, so this never zeroes another room's
+   *  unread count just because the widget happened to open. */
   markAsRead(): void {
-    this._unreadCount.set(0);
     this._hasNewMessage.set(false);
   }
 
@@ -328,11 +340,16 @@ export class ChatService {
    * Should be called when switching away from a room or sending a message.
    */
   markRoomRead(roomId: string): void {
+    // Always clear the visible badge for this room immediately — even if we
+    // haven't loaded its messages yet (e.g. called right as a room is opened,
+    // before the fetch resolves). Syncing `_lastReadMap` and the server only
+    // makes sense once we know what the last message actually is.
+    this._roomUnreadCounts.update(m => ({ ...m, [roomId]: 0 }));
+
     const msgs = this._messages()[roomId] ?? [];
     const lastMsg = msgs[msgs.length - 1];
     if (!lastMsg) return;
     this._lastReadMap.update(m => ({ ...m, [roomId]: lastMsg.id }));
-    this._roomUnreadCounts.update(m => ({ ...m, [roomId]: 0 }));
     // Never POST an optimistic temp id — the server expects a confirmed UUID.
     if (lastMsg.id.startsWith('temp-')) return;
     this._api.markRead(roomId, lastMsg.id).catch(() => undefined);
@@ -343,7 +360,6 @@ export class ChatService {
     this._rooms.set([]);
     this._messages.set({});
     this._activeRoomId.set(null);
-    this._unreadCount.set(0);
     this._hasNewMessage.set(false);
     this._isOpen.set(false);
     this._mutedUserIds.set(new Set());
@@ -452,6 +468,7 @@ export class ChatService {
     this._activeRoomId.set(room.id);
     this.loadMessages(room.id);
     this._isOpen.set(true);
+    this.markRoomRead(room.id);
     this.markAsRead();
   }
 
@@ -499,7 +516,7 @@ export class ChatService {
     // Feature 1+2: only count incoming messages from others, and only when
     // the chat is not visible (widget closed AND not on /chats page).
     if (!msg.isOwn && !this._isOpen() && !this._isChatsPage()) {
-      this._unreadCount.update(n => n + 1);
+      this._roomUnreadCounts.update(m => ({ ...m, [roomId]: (m[roomId] ?? 0) + 1 }));
       this._hasNewMessage.set(true);
       this._playBeep();
     }

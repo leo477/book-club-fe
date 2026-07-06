@@ -47,9 +47,13 @@ class MockWebSocket {
 }
 
 interface ChatServicePrivate {
-  _unreadCount: WritableSignal<number>;
   _hasNewMessage: WritableSignal<boolean>;
   _activeRoomId: WritableSignal<string | null>;
+}
+
+interface ChatServiceReadPrivate {
+  _lastReadMap: WritableSignal<Record<string, string | null>>;
+  _roomUnreadCounts: WritableSignal<Record<string, number>>;
 }
 
 // Helper for extracting signal values
@@ -218,10 +222,17 @@ describe('ChatService', () => {
       service.toggleOpen(); // close
       expect(getIsOpen(service)).toBe(false);
     });
-    it('should call markAsRead and set unreadCount to 0 when opening', () => {
-      (service as unknown as ChatServicePrivate)._unreadCount.set(5);
+    it('clears the active room unread count and resets hasNewMessage when opening', () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
+      (service as unknown as ChatServiceReadPrivate)._roomUnreadCounts.set({ 'room-1': 5 });
+      (service as unknown as ChatServicePrivate)._hasNewMessage.set(true);
       service.toggleOpen();
       expect(getUnreadCount(service)).toBe(0);
+      expect(getHasNewMessage(service)).toBe(false);
+    });
+    it('only resets hasNewMessage (no room counts to touch) when there is no active room', () => {
+      (service as unknown as ChatServicePrivate)._hasNewMessage.set(true);
+      service.toggleOpen();
       expect(getHasNewMessage(service)).toBe(false);
     });
   });
@@ -236,8 +247,9 @@ describe('ChatService', () => {
       expect(getActiveRoomId(service)).toBe('room-2');
     });
 
-    it('should call markAsRead and set unreadCount to 0', () => {
-      (service as unknown as ChatServicePrivate)._unreadCount.set(5);
+    it('clears the unread count for the opened room and resets hasNewMessage', () => {
+      (service as unknown as ChatServiceReadPrivate)._roomUnreadCounts.set({ 'room-2': 5 });
+      (service as unknown as ChatServicePrivate)._hasNewMessage.set(true);
       service.openRoom('room-2');
 
       const req = httpMock.expectOne(`${API}/chat/rooms/room-2/messages`);
@@ -266,12 +278,12 @@ describe('ChatService', () => {
   });
 
   describe('markAsRead()', () => {
-    it('should set unreadCount to 0 and hasNewMessage to false', () => {
-      (service as unknown as ChatServicePrivate)._unreadCount.set(5);
+    it('resets hasNewMessage but does not touch any room unread counts (N-8)', () => {
+      (service as unknown as ChatServiceReadPrivate)._roomUnreadCounts.set({ 'room-1': 5 });
       (service as unknown as ChatServicePrivate)._hasNewMessage.set(true);
       service.markAsRead();
-      expect(getUnreadCount(service)).toBe(0);
       expect(getHasNewMessage(service)).toBe(false);
+      expect(getUnreadCount(service)).toBe(5);
     });
   });
 
@@ -756,7 +768,8 @@ describe('ChatService', () => {
   });
 
   describe('openAndFocusRoom()', () => {
-    it('sets activeRoomId, opens chat, marks as read, and loads messages', () => {
+    it('sets activeRoomId, opens chat, marks the room read, and loads messages', () => {
+      (service as unknown as ChatServiceReadPrivate)._roomUnreadCounts.set({ 'room-1': 4 });
       const room: ChatRoom = { id: 'room-1', name: 'General', clubId: 'club-1' };
       service.openAndFocusRoom(room);
 
@@ -1108,6 +1121,36 @@ describe('ChatService', () => {
     });
   });
 
+  // ── N-8: unreadCount is a single source of truth derived from roomUnreadCounts ──
+
+  describe('unreadCount (N-8 consolidation)', () => {
+    it('is the sum of all per-room unread counts', () => {
+      (service as unknown as ChatServiceReadPrivate)._roomUnreadCounts.set({ 'room-1': 2, 'room-2': 3 });
+      expect(getUnreadCount(service)).toBe(5);
+    });
+
+    it('a WS message increments only the count for the room it arrived in', () => {
+      (service as unknown as ChatServiceReadPrivate)._roomUnreadCounts.set({ 'room-1': 1 });
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-2');
+      service.connectRoom('room-2');
+
+      const ws = MockWebSocket.instance;
+      if (!ws) throw new Error('MockWebSocket not instantiated');
+      ws.simulateMessage({
+        type: 'message',
+        payload: { id: 'msg-new', senderId: 'other-user', senderName: 'Bob', text: 'Hi', timestamp: '2024-01-01T00:00:00Z' },
+      });
+
+      expect(service.roomUnreadCounts()['room-1']).toBe(1);
+      expect(service.roomUnreadCounts()['room-2']).toBe(1);
+      expect(getUnreadCount(service)).toBe(2);
+    });
+
+    it('has no standalone global counter left to disagree with roomUnreadCounts', () => {
+      expect((service as unknown as Record<string, unknown>)['_unreadCount']).toBeUndefined();
+    });
+  });
+
   // ── Feature 1: setChatsPage ────────────────────────────────────────────────
 
   describe('setChatsPage()', () => {
@@ -1157,11 +1200,6 @@ describe('ChatService', () => {
   });
 
   // ── Feature 5: fetchUnreadCounts ──────────────────────────────────────────
-
-  interface ChatServiceReadPrivate {
-    _lastReadMap: WritableSignal<Record<string, string | null>>;
-    _roomUnreadCounts: WritableSignal<Record<string, number>>;
-  }
 
   describe('fetchUnreadCounts()', () => {
     it('fires GET per room and updates roomUnreadCounts + _lastReadMap', async () => {
@@ -1247,11 +1285,12 @@ describe('ChatService', () => {
       postReq.flush(null);
     });
 
-    it('does nothing when the room has no messages', () => {
+    it('clears the local unread count but skips the server call when the room has no messages', () => {
+      (service as unknown as ChatServiceReadPrivate)._roomUnreadCounts.set({ 'room-empty': 3 });
       service.markRoomRead('room-empty');
-      // No POST should be made
+      // No POST should be made — we don't know the last-read message yet
       httpMock.expectNone(`${API}/chat/rooms/room-empty/read`);
-      expect(service.roomUnreadCounts()['room-empty']).toBeUndefined();
+      expect(service.roomUnreadCounts()['room-empty']).toBe(0);
     });
 
     it('does not POST when the last message id is an optimistic temp id', () => {
