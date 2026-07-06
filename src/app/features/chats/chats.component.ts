@@ -105,6 +105,33 @@ export class ChatsComponent {
     });
   }
 
+  /** N-7: near-top scroll on the messages list triggers loading older history. */
+  protected onMessagesScroll(): void {
+    const el = this.messagesListRef()?.nativeElement;
+    if (!el || el.scrollTop > 40) return;
+    this.maybeLoadOlderMessages();
+  }
+
+  private maybeLoadOlderMessages(): void {
+    const roomId = this.chat.activeRoomId();
+    if (!roomId) return;
+    if (this.chat.isLoadingOlder()[roomId]) return;
+    if (this.chat.hasMoreOlder()[roomId] === false) return;
+
+    const el = this.messagesListRef()?.nativeElement;
+    if (!el) return;
+    const prevScrollHeight = el.scrollHeight;
+    const prevScrollTop = el.scrollTop;
+
+    void this.chat.loadOlderMessages(roomId).then(() => {
+      requestAnimationFrame(() => {
+        const container = this.messagesListRef()?.nativeElement;
+        if (!container) return;
+        container.scrollTop = prevScrollTop + (container.scrollHeight - prevScrollHeight);
+      });
+    });
+  }
+
   protected selectRoom(room: ChatRoom): void {
     // Feature 5: mark the current room as read before switching.
     const prevRoomId = this.chat.activeRoomId();

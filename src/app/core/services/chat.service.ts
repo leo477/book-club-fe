@@ -41,6 +41,13 @@ export class ChatService {
   private readonly _lastReadMap = signal<Record<string, string | null>>({});
   /** roomId → number of unread messages (from server, reset locally on open). */
   private readonly _roomUnreadCounts = signal<Record<string, number>>({});
+  /** roomId → whether there is more (older) history left to fetch. Defaults to
+   *  true (unknown) until a page comes back shorter than the page size. */
+  private readonly _hasMoreOlder = signal<Record<string, boolean>>({});
+  /** roomId → true while a loadOlderMessages() request is in flight. */
+  private readonly _isLoadingOlder = signal<Record<string, boolean>>({});
+
+  private static readonly OLDER_PAGE_SIZE = 50;
 
   private currentUserId: string | null = null;
   private _audioContext: AudioContext | null = null;
@@ -116,6 +123,8 @@ export class ChatService {
   readonly mutedUserIds = this._mutedUserIds.asReadonly();
   readonly presenceMap = this._presenceMap.asReadonly();
   readonly roomUnreadCounts = this._roomUnreadCounts.asReadonly();
+  readonly hasMoreOlder = this._hasMoreOlder.asReadonly();
+  readonly isLoadingOlder = this._isLoadingOlder.asReadonly();
 
   readonly activeRoom = computed(() =>
     this._rooms().find(r => r.id === this._activeRoomId()) ?? null,
@@ -205,11 +214,54 @@ export class ChatService {
       .then(raw => {
         const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
         this._messages.update(map => ({ ...map, [roomId]: msgs }));
+        // Fresh (non-paged) load replaces the whole array — any prior
+        // "no more history" verdict for this room is now stale.
+        if (!params?.before) {
+          this._hasMoreOlder.update(map => ({ ...map, [roomId]: true }));
+        }
       })
       .catch((err: unknown) => {
         console.error('[ChatService] loadMessages error', err);
         this.notifyError(err);
       });
+  }
+
+  /**
+   * Feature N-7: fetch a page of messages older than the oldest one currently
+   * loaded for `roomId` and prepend them. No-ops if there's nothing loaded yet,
+   * a known "no more history" state, or a request already in flight.
+   */
+  async loadOlderMessages(roomId: string): Promise<void> {
+    if (this._isLoadingOlder()[roomId]) return;
+    if (this._hasMoreOlder()[roomId] === false) return;
+
+    const existing = this._messages()[roomId] ?? [];
+    const oldest = existing[0];
+    if (!oldest) return;
+
+    this._isLoadingOlder.update(map => ({ ...map, [roomId]: true }));
+    try {
+      const raw = await this._api.getMessages(roomId, { before: oldest.id, limit: ChatService.OLDER_PAGE_SIZE });
+      const older: ChatMessage[] = raw.map(m => this.mapMessage(m));
+
+      this._messages.update(map => {
+        const current = map[roomId] ?? [];
+        const existingIds = new Set(current.map(m => m.id));
+        const deduped = older.filter(m => !existingIds.has(m.id));
+        return { ...map, [roomId]: [...deduped, ...current] };
+      });
+
+      if (raw.length < ChatService.OLDER_PAGE_SIZE) {
+        this._hasMoreOlder.update(map => ({ ...map, [roomId]: false }));
+      } else {
+        this._hasMoreOlder.update(map => ({ ...map, [roomId]: true }));
+      }
+    } catch (err: unknown) {
+      console.error('[ChatService] loadOlderMessages error', err);
+      this.notifyError(err);
+    } finally {
+      this._isLoadingOlder.update(map => ({ ...map, [roomId]: false }));
+    }
   }
 
   connectRoom(roomId: string): void {
@@ -298,6 +350,8 @@ export class ChatService {
     this._presenceMap.set(new Map());
     this._lastReadMap.set({});
     this._roomUnreadCounts.set({});
+    this._hasMoreOlder.set({});
+    this._isLoadingOlder.set({});
     this.currentUserId = null;
   }
 

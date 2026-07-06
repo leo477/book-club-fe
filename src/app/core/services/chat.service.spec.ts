@@ -405,6 +405,94 @@ describe('ChatService', () => {
     });
   });
 
+  // ── N-7: loadOlderMessages ────────────────────────────────────────────────
+
+  describe('loadOlderMessages()', () => {
+    it('does nothing when the room has no messages loaded yet', async () => {
+      await service.loadOlderMessages('room-empty');
+      httpMock.expectNone(r => r.url.startsWith(`${API}/chat/rooms/room-empty/messages`));
+    });
+
+    it('prepends older messages without duplicating already-loaded ones', async () => {
+      service.loadMessages('room-1');
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([
+        { id: 'msg-10', senderId: 'u1', senderName: 'Alice', text: 'Ten', timestamp: '2024-01-01T00:10:00Z' },
+        { id: 'msg-11', senderId: 'u2', senderName: 'Bob', text: 'Eleven', timestamp: '2024-01-01T00:11:00Z' },
+      ]);
+      await Promise.resolve();
+
+      const promise = service.loadOlderMessages('room-1');
+      const req = httpMock.expectOne(r =>
+        r.url === `${API}/chat/rooms/room-1/messages` &&
+        r.params.get('before') === 'msg-10',
+      );
+      // Includes msg-10 by accident (e.g. a race) to verify dedup
+      req.flush([
+        { id: 'msg-8', senderId: 'u1', senderName: 'Alice', text: 'Eight', timestamp: '2024-01-01T00:08:00Z' },
+        { id: 'msg-9', senderId: 'u2', senderName: 'Bob', text: 'Nine', timestamp: '2024-01-01T00:09:00Z' },
+        { id: 'msg-10', senderId: 'u1', senderName: 'Alice', text: 'Ten', timestamp: '2024-01-01T00:10:00Z' },
+      ]);
+      await promise;
+
+      const msgs = service.messages()['room-1'];
+      expect(msgs.map(m => m.id)).toEqual(['msg-8', 'msg-9', 'msg-10', 'msg-11']);
+    });
+
+    it('sets hasMoreOlder to false when the page comes back shorter than the limit', async () => {
+      service.loadMessages('room-1');
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([
+        { id: 'msg-10', senderId: 'u1', senderName: 'Alice', text: 'Ten', timestamp: '2024-01-01T00:10:00Z' },
+      ]);
+      await Promise.resolve();
+
+      const promise = service.loadOlderMessages('room-1');
+      const req = httpMock.expectOne(r => r.url === `${API}/chat/rooms/room-1/messages`);
+      expect(req.request.params.get('limit')).toBe('50');
+      // Fewer results than the page size → no more history
+      req.flush([
+        { id: 'msg-9', senderId: 'u1', senderName: 'Alice', text: 'Nine', timestamp: '2024-01-01T00:09:00Z' },
+      ]);
+      await promise;
+
+      expect(service.hasMoreOlder()['room-1']).toBe(false);
+    });
+
+    it('does not fire a duplicate request while one is already in flight for that room', async () => {
+      service.loadMessages('room-1');
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([
+        { id: 'msg-10', senderId: 'u1', senderName: 'Alice', text: 'Ten', timestamp: '2024-01-01T00:10:00Z' },
+      ]);
+      await Promise.resolve();
+
+      const first = service.loadOlderMessages('room-1');
+      // Second call while the first is still in flight should not issue a new HTTP request
+      const second = service.loadOlderMessages('room-1');
+
+      const req = httpMock.expectOne(r => r.url === `${API}/chat/rooms/room-1/messages`);
+      req.flush([{ id: 'msg-9', senderId: 'u1', senderName: 'Alice', text: 'Nine', timestamp: '2024-01-01T00:09:00Z' }]);
+
+      await Promise.all([first, second]);
+
+      httpMock.expectNone(r => r.url === `${API}/chat/rooms/room-1/messages` && r.params.get('before') != null && r.params.get('before') !== 'msg-10');
+    });
+
+    it('sets isLoadingOlder true while the request is in flight and false after', async () => {
+      service.loadMessages('room-1');
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([
+        { id: 'msg-10', senderId: 'u1', senderName: 'Alice', text: 'Ten', timestamp: '2024-01-01T00:10:00Z' },
+      ]);
+      await Promise.resolve();
+
+      const promise = service.loadOlderMessages('room-1');
+      expect(service.isLoadingOlder()['room-1']).toBe(true);
+
+      httpMock.expectOne(r => r.url === `${API}/chat/rooms/room-1/messages`).flush([]);
+      await promise;
+
+      expect(service.isLoadingOlder()['room-1']).toBe(false);
+    });
+  });
+
   describe('loadAllClubRooms()', () => {
     async function flushMicrotasks(n = 5): Promise<void> {
       for (let i = 0; i < n; i++) await Promise.resolve();

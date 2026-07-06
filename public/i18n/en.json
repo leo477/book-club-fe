@@ -619,6 +619,7 @@
     "today": "today",
     "yesterday": "yesterday",
     "unread_divider": "New messages",
+    "loading_older": "Loading older messages...",
     "online": "Online",
     "offline": "Offline",
     "page_title": "Chats",
