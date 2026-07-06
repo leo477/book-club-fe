@@ -14,6 +14,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { toast } from '@spartan-ng/brain/sonner';
 import { EventService } from '../../../core/services/event.service';
+import { logError } from '../../../core/utils/logger.util';
 import { AuthService } from '../../../core/auth/auth.service';
 import { BackendHttpError, RequestTimeoutError } from '../../../core/interceptors/auth.interceptor';
 import { ClubEvent } from '../../../core/models/event.model';
@@ -81,7 +82,7 @@ export class EventDetailComponent {
           if (status === 403) {
             this._eventRoom.set(null);
           } else {
-            console.error('Failed to load event chat room', err);
+            logError('Failed to load event chat room', err);
           }
         });
       }

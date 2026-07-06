@@ -4,6 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
 import { ChatItem, ChatMessage, ChatRoom, UnreadDivider } from '../models/chat.model';
 import { extractApiError } from '../api/api-error.util';
+import { logError } from '../utils/logger.util';
 import { AuthService } from '../auth/auth.service';
 import { TokenStore } from '../auth/token.store';
 import { ClubService } from './club.service';
@@ -184,7 +185,7 @@ export class ChatService {
         this._autoSelectFirstRoom(rooms);
       })
       .catch((err: unknown) => {
-        console.error('[ChatService] loadRooms error', err);
+        logError('[ChatService] loadRooms error', err);
         this.notifyError(err);
       });
   }
@@ -210,7 +211,7 @@ export class ChatService {
       this._rooms.set(allRooms);
       this._autoSelectFirstRoom(allRooms);
     }).catch((err: unknown) => {
-      console.error('[ChatService] loadAllClubRooms error', err);
+      logError('[ChatService] loadAllClubRooms error', err);
       this.notifyError(err);
     });
   }
@@ -228,7 +229,7 @@ export class ChatService {
         }
       })
       .catch((err: unknown) => {
-        console.error('[ChatService] loadMessages error', err);
+        logError('[ChatService] loadMessages error', err);
         this.notifyError(err);
       });
   }
@@ -264,7 +265,7 @@ export class ChatService {
         this._hasMoreOlder.update(map => ({ ...map, [roomId]: true }));
       }
     } catch (err: unknown) {
-      console.error('[ChatService] loadOlderMessages error', err);
+      logError('[ChatService] loadOlderMessages error', err);
       this.notifyError(err);
     } finally {
       this._isLoadingOlder.update(map => ({ ...map, [roomId]: false }));
@@ -406,7 +407,7 @@ export class ChatService {
         }));
       })
       .catch((err: unknown) => {
-        console.error('[ChatService] sendMessage error', err);
+        logError('[ChatService] sendMessage error', err);
         this._messages.update(map => ({
           ...map,
           [roomId]: (map[roomId] ?? []).filter(m => m.id !== tempId),
@@ -426,7 +427,7 @@ export class ChatService {
         }));
       })
       .catch((err: unknown) => {
-        console.error('[ChatService] deleteMessage error', err);
+        logError('[ChatService] deleteMessage error', err);
         this.notifyError(err);
       });
   }
@@ -442,7 +443,7 @@ export class ChatService {
         }));
       })
       .catch((err: unknown) => {
-        console.error('[ChatService] banUserFromChat error', err);
+        logError('[ChatService] banUserFromChat error', err);
         this.notifyError(err);
       });
   }

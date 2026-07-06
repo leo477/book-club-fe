@@ -139,6 +139,7 @@ src/
         upload.service.ts
       utils/
         event-attendance.util.ts
+        logger.util.ts
     features/
       auth/
         login/

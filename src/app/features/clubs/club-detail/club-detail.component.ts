@@ -13,6 +13,7 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
 import { ClubService } from '../../../core/services/club.service';
+import { logWarn } from '../../../core/utils/logger.util';
 import {
   BackendHttpError,
   RequestTimeoutError,
@@ -200,17 +201,17 @@ export class ClubDetailComponent {
     if (membersResult.status === 'fulfilled') {
       this.members.set(membersResult.value);
     } else {
-      console.warn('Failed to load club members:', membersResult.reason);
+      logWarn('Failed to load club members:', membersResult.reason);
     }
     if (eventsResult.status === 'fulfilled') {
       this.events.set(eventsResult.value);
     } else {
-      console.warn('Failed to load club events:', eventsResult.reason);
+      logWarn('Failed to load club events:', eventsResult.reason);
     }
     if (this.auth.isAuthenticated()) {
       this.clubService.getMyMembership(clubId).then(
         (m) => { if (!isCancelled()) this.joinRequestStatus.set(m.joinRequestStatus); },
-        (err: unknown) => console.warn('Failed to load membership:', err),
+        (err: unknown) => logWarn('Failed to load membership:', err),
       );
     }
     if (this.auth.currentUser()?.id === found.organizerId) {
@@ -220,7 +221,7 @@ export class ClubDetailComponent {
           const status = (err as { status?: number })?.status;
           const expected = status === 403 || status === 404 || err instanceof RequestTimeoutError;
           if (!expected) {
-            console.warn('Failed to load club bans:', err);
+            logWarn('Failed to load club bans:', err);
           }
         },
       );

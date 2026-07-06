@@ -646,7 +646,8 @@
     "requestFailed": "The request failed. Please try again.",
     "network": "Network unavailable. Check your connection and try again.",
     "dismiss": "Dismiss",
-    "organizers_only": "Organizers only"
+    "organizers_only": "Organizers only",
+    "unexpected": "Something went wrong. Please try again."
   },
   "META": {
     "title": "Book Club — Book Clubs of Ukraine",

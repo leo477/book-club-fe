@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
+import { logError } from '../utils/logger.util';
 
 interface WsEnvelope { type: string; payload: unknown; }
 
@@ -60,7 +61,7 @@ export class ChatSocket {
       } catch (err) {
         // A malformed/non-JSON frame (bad backend push, proxy noise) must not
         // kill the socket's event handler — drop the frame and keep listening.
-        console.error('[ChatSocket] onmessage parse error', err);
+        logError('[ChatSocket] onmessage parse error', err);
       }
     };
 

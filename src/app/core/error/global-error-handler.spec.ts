@@ -1,6 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { isDevMode, provideZonelessChangeDetection } from '@angular/core';
 import { track } from '@vercel/analytics';
+import { TranslateService } from '@ngx-translate/core';
+import { toast } from '@spartan-ng/brain/sonner';
 import { GlobalErrorHandler } from './global-error-handler';
 
 vi.mock('@vercel/analytics', () => ({ track: vi.fn() }));
@@ -9,22 +11,30 @@ vi.mock('@angular/core', async (importActual) => {
   return { ...actual, isDevMode: vi.fn(() => true) };
 });
 
+const mockTranslateService = { instant: (key: string) => key };
+
 describe('GlobalErrorHandler', () => {
   let handler: GlobalErrorHandler;
   let consoleError: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), GlobalErrorHandler],
+      providers: [
+        provideZonelessChangeDetection(),
+        GlobalErrorHandler,
+        { provide: TranslateService, useValue: mockTranslateService },
+      ],
     });
     handler = TestBed.inject(GlobalErrorHandler);
     consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    vi.spyOn(toast, 'error').mockImplementation(() => '');
     vi.mocked(track).mockClear();
     vi.mocked(isDevMode).mockReturnValue(true);
   });
 
   afterEach(() => {
     consoleError.mockRestore();
+    vi.mocked(toast.error).mockRestore();
   });
 
   it('logs the error to the console', () => {
@@ -53,9 +63,20 @@ describe('GlobalErrorHandler', () => {
     expect(track).not.toHaveBeenCalled();
   });
 
+  it('does not show a toast in dev mode', () => {
+    handler.handleError(new Error('boom'));
+    expect(toast.error).not.toHaveBeenCalled();
+  });
+
   describe('in production', () => {
     beforeEach(() => {
       vi.mocked(isDevMode).mockReturnValue(false);
+    });
+
+    it('shows a generic toast instead of nothing', async () => {
+      handler.handleError(new Error('boom'));
+      await new Promise(resolve => setTimeout(resolve));
+      expect(toast.error).toHaveBeenCalledWith('ERRORS.unexpected');
     });
 
     it('reports the Error message', () => {

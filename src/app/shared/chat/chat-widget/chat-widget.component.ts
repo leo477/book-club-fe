@@ -8,6 +8,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ChatService } from '../../../core/services/chat.service';
+import { logError } from '../../../core/utils/logger.util';
 import { ClubService } from '../../../core/services/club.service';
 import { extractApiError } from '../../../core/api/api-error.util';
 import { ChatTimestampPipe } from '../../pipes/chat-timestamp.pipe';
@@ -193,7 +194,7 @@ export class ChatWidgetComponent {
         this.chat.loadAllClubRooms(clubs, user.id);
       }
     } catch (err: unknown) {
-      console.error('[ChatWidget] deleteRoom error', err);
+      logError('[ChatWidget] deleteRoom error', err);
     }
   }
 
@@ -211,7 +212,7 @@ export class ChatWidgetComponent {
       this.newRoomName.set('');
       this.isCreatingRoom.set(false);
     } catch (err) {
-      console.error('[ChatWidget] createRoom error', err);
+      logError('[ChatWidget] createRoom error', err);
       toast.error(this.translate.instant(extractApiError(err)) as string);
     }
   }
