@@ -65,7 +65,7 @@ class FakeMapsConfigService {
 
 class FakeGeocodingService {
   autocomplete$ = vi.fn().mockReturnValue(of([]));
-  getPlaceDetails = vi.fn().mockReturnValue(of(null));
+  getPlaceDetails$ = vi.fn().mockReturnValue(of(null));
   resetSessionToken = vi.fn();
 }
 
@@ -192,13 +192,13 @@ describe('EventMapComponent', () => {
       expect(component.resolvedAfterVenuePos()).toEqual({ lat: 49.5, lng: 31.1 });
     });
 
-    it('resolves via getPlaceDetails when autocomplete returns only place_id', () => {
+    it('resolves via getPlaceDetails$ when autocomplete returns only place_id', () => {
       const venue: AfterMeetingVenue = { name: 'Cafe', address: 'Street 1' };
       const { component } = setup({
         afterVenue: venue,
         geocodingStub: {
           autocomplete$: vi.fn().mockReturnValue(of([{ label: 'Street 1', city: null, country: null, lat: null, lng: null, place_id: 'abc' }])),
-          getPlaceDetails: vi.fn().mockReturnValue(of({ label: 'Street 1', city: null, country: null, lat: 49.5, lng: 31.1 })),
+          getPlaceDetails$: vi.fn().mockReturnValue(of({ label: 'Street 1', city: null, country: null, lat: 49.5, lng: 31.1 })),
         },
       });
       expect(component.resolvedAfterVenuePos()).toEqual({ lat: 49.5, lng: 31.1 });

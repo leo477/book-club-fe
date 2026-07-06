@@ -67,7 +67,7 @@ export class AddressAutocompleteComponent {
       this.control().setValue(s.label, { emitEvent: false });
       this.suggestions.set([]);
       this.isOpen.set(false);
-      this.geocoding.getPlaceDetails(s.place_id)
+      this.geocoding.getPlaceDetails$(s.place_id)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (resolved) => {

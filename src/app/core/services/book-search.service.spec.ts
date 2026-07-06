@@ -26,10 +26,10 @@ describe('BookSearchService', () => {
 
   afterEach(() => { httpMock.verify(); });
 
-  describe('searchBooks', () => {
+  describe('searchBooks$', () => {
     it('GETs /books/search with q and limit=5 by default', () =>
       new Promise<void>((resolve) => {
-        service.searchBooks('Angular').subscribe(results => {
+        service.searchBooks$('Angular').subscribe(results => {
           expect(results).toEqual([mockBook]);
           resolve();
         });
@@ -42,17 +42,17 @@ describe('BookSearchService', () => {
 
     it('passes custom limit param', () =>
       new Promise<void>((resolve) => {
-        service.searchBooks('React', 10).subscribe(() => resolve());
+        service.searchBooks$('React', 10).subscribe(() => resolve());
         const req = httpMock.expectOne(r => r.url === `${API}/books/search`);
         expect(req.request.params.get('limit')).toBe('10');
         req.flush([]);
       }));
   });
 
-  describe('getBookDetails', () => {
+  describe('getBookDetails$', () => {
     it('GETs /books/details/{id}', () =>
       new Promise<void>((resolve) => {
-        service.getBookDetails('b1').subscribe(result => {
+        service.getBookDetails$('b1').subscribe(result => {
           expect(result).toEqual(mockBook);
           resolve();
         });

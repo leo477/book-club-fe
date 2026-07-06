@@ -90,6 +90,7 @@ describe('roleGuard', () => {
 
     it('rejects a non-admin from an admin-only route', () => {
       configure('organizer');
+      // eslint-disable-next-line rxjs-x/finnish
       const result = runGuard('admin');
       expect(result instanceof UrlTree).toBe(true);
       expect((result as UrlTree).toString()).toBe('/clubs');

@@ -25,13 +25,13 @@ const nextTick = () => new Promise<void>(resolve => setTimeout(resolve, 50));
 describe('BookAutocompleteComponent', () => {
   let fixture: ComponentFixture<BookAutocompleteComponent>;
   let component: BookAutocompleteComponent;
-  let bookSearchSpy: { searchBooks: ReturnType<typeof vi.fn>; getBookDetails: ReturnType<typeof vi.fn> };
+  let bookSearchSpy: { searchBooks$: ReturnType<typeof vi.fn>; getBookDetails$: ReturnType<typeof vi.fn> };
   let control: FormControl<string>;
 
   beforeEach(async () => {
     bookSearchSpy = {
-      searchBooks: vi.fn().mockReturnValue(of([])),
-      getBookDetails: vi.fn(),
+      searchBooks$: vi.fn().mockReturnValue(of([])),
+      getBookDetails$: vi.fn(),
     };
 
     await TestBed.configureTestingModule({
@@ -63,31 +63,31 @@ describe('BookAutocompleteComponent', () => {
 
   // ── Debounce / search ─────────────────────────────────────────────────────
   describe('search on value changes', () => {
-    it('calls searchBooks for query >= 3 chars', async () => {
-      bookSearchSpy.searchBooks.mockReturnValue(of([makeBook()]));
+    it('calls searchBooks$ for query >= 3 chars', async () => {
+      bookSearchSpy.searchBooks$.mockReturnValue(of([makeBook()]));
       control.setValue('Ang');
       await nextTick();
       fixture.detectChanges();
-      expect(bookSearchSpy.searchBooks).toHaveBeenCalledWith('Ang');
+      expect(bookSearchSpy.searchBooks$).toHaveBeenCalledWith('Ang');
       expect(component.suggestions().length).toBe(1);
       expect(component.isOpen()).toBe(true);
     });
 
-    it('does not call searchBooks for queries shorter than 3 chars', async () => {
+    it('does not call searchBooks$ for queries shorter than 3 chars', async () => {
       control.setValue('An');
       await nextTick();
-      expect(bookSearchSpy.searchBooks).not.toHaveBeenCalled();
+      expect(bookSearchSpy.searchBooks$).not.toHaveBeenCalled();
     });
 
     it('sets isLoading to false after search completes', async () => {
-      bookSearchSpy.searchBooks.mockReturnValue(of([makeBook()]));
+      bookSearchSpy.searchBooks$.mockReturnValue(of([makeBook()]));
       control.setValue('Ang');
       await nextTick();
       expect(component.isLoading()).toBe(false);
     });
 
-    it('handles searchBooks error gracefully and clears suggestions', async () => {
-      bookSearchSpy.searchBooks.mockReturnValue(throwError(() => new Error('network')));
+    it('handles searchBooks$ error gracefully and clears suggestions', async () => {
+      bookSearchSpy.searchBooks$.mockReturnValue(throwError(() => new Error('network')));
       control.setValue('Ang');
       await nextTick();
       fixture.detectChanges();
@@ -97,7 +97,7 @@ describe('BookAutocompleteComponent', () => {
     });
 
     it('resets activeIndex to -1 on new results', async () => {
-      bookSearchSpy.searchBooks.mockReturnValue(of([makeBook(), makeBook({ id: 'b2', title: 'Book 2' })]));
+      bookSearchSpy.searchBooks$.mockReturnValue(of([makeBook(), makeBook({ id: 'b2', title: 'Book 2' })]));
       control.setValue('Ang');
       await nextTick();
       component.activeIndex.set(1);
@@ -110,7 +110,7 @@ describe('BookAutocompleteComponent', () => {
   // ── Keyboard navigation ───────────────────────────────────────────────────
   describe('keyboard navigation', () => {
     beforeEach(async () => {
-      bookSearchSpy.searchBooks.mockReturnValue(of([
+      bookSearchSpy.searchBooks$.mockReturnValue(of([
         makeBook({ id: 'b1', title: 'Book One' }),
         makeBook({ id: 'b2', title: 'Book Two' }),
         makeBook({ id: 'b3', title: 'Book Three' }),
@@ -174,15 +174,15 @@ describe('BookAutocompleteComponent', () => {
   // ── select() ─────────────────────────────────────────────────────────────
   describe('select()', () => {
     it('sets control value and does not trigger another search', async () => {
-      bookSearchSpy.searchBooks.mockReturnValue(of([makeBook()]));
+      bookSearchSpy.searchBooks$.mockReturnValue(of([makeBook()]));
       control.setValue('Ang');
       await nextTick();
-      expect(bookSearchSpy.searchBooks).toHaveBeenCalledTimes(1);
+      expect(bookSearchSpy.searchBooks$).toHaveBeenCalledTimes(1);
       component.select(makeBook());
       await nextTick();
       expect(control.value).toBe('Angular Deep Dive');
       // setValue with emitEvent:false → valueChanges does not emit → no second search
-      expect(bookSearchSpy.searchBooks).toHaveBeenCalledTimes(1);
+      expect(bookSearchSpy.searchBooks$).toHaveBeenCalledTimes(1);
     });
 
     it('clears suggestions and closes dropdown', () => {
@@ -224,7 +224,7 @@ describe('BookAutocompleteComponent', () => {
   // ── Dropdown rendering ────────────────────────────────────────────────────
   describe('dropdown rendering', () => {
     it('renders list items for each suggestion', async () => {
-      bookSearchSpy.searchBooks.mockReturnValue(of([
+      bookSearchSpy.searchBooks$.mockReturnValue(of([
         makeBook({ id: 'b1', title: 'First Book' }),
         makeBook({ id: 'b2', title: 'Second Book' }),
       ]));

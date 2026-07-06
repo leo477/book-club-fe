@@ -94,7 +94,7 @@ export class EventDetailComponent {
     const bookId = this.event()?.googleBookId;
     if (!bookId) return;
     this.isLoadingBookDetails.set(true);
-    this.bookSearchService.getBookDetails(bookId)
+    this.bookSearchService.getBookDetails$(bookId)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: d => { this.bookDetails.set(d); this.isLoadingBookDetails.set(false); },

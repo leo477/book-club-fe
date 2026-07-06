@@ -2,7 +2,7 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router, NavigationEnd, Event as RouterEvent } from '@angular/router';
 import { Subject, EMPTY } from 'rxjs';
 import { ChatWidgetComponent } from './chat-widget.component';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -11,7 +11,7 @@ import { ClubService } from '../../../core/services/club.service';
 import { TokenStore } from '../../../core/auth/token.store';
 
 function makeRouter(url = '/') {
-  return { url, events: EMPTY };
+  return { url, events: EMPTY } satisfies Partial<Router>;
 }
 
 function makeAuthService(overrides: Partial<{ isOrganizer: boolean; currentUser: unknown }> = {}) {
@@ -465,8 +465,8 @@ describe('ChatWidgetComponent', () => {
     });
 
     it('returns false on a club detail URL /clubs/:id', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/clubs/abc-123', events: routerEvents$.asObservable() };
+      const routerEvents$ = new Subject<RouterEvent>();
+      const mockRouter = { url: '/clubs/abc-123', events: routerEvents$.asObservable() } satisfies Partial<Router>;
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
@@ -474,8 +474,8 @@ describe('ChatWidgetComponent', () => {
     });
 
     it('returns true on /clubs (list page, not a detail)', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/clubs', events: routerEvents$.asObservable() };
+      const routerEvents$ = new Subject<RouterEvent>();
+      const mockRouter = { url: '/clubs', events: routerEvents$.asObservable() } satisfies Partial<Router>;
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
@@ -483,8 +483,8 @@ describe('ChatWidgetComponent', () => {
     });
 
     it('returns true on /clubs/:id/subpage (nested path, not matched by regex)', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/clubs/abc-123/events', events: routerEvents$.asObservable() };
+      const routerEvents$ = new Subject<RouterEvent>();
+      const mockRouter = { url: '/clubs/abc-123/events', events: routerEvents$.asObservable() } satisfies Partial<Router>;
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
@@ -492,8 +492,8 @@ describe('ChatWidgetComponent', () => {
     });
 
     it('updates isFabVisible when router emits a NavigationEnd to a club detail URL', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/home', events: routerEvents$.asObservable() };
+      const routerEvents$ = new Subject<RouterEvent>();
+      const mockRouter = { url: '/home', events: routerEvents$.asObservable() } satisfies Partial<Router>;
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
@@ -504,8 +504,8 @@ describe('ChatWidgetComponent', () => {
     });
 
     it('returns false on /chats page', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/chats', events: routerEvents$.asObservable() };
+      const routerEvents$ = new Subject<RouterEvent>();
+      const mockRouter = { url: '/chats', events: routerEvents$.asObservable() } satisfies Partial<Router>;
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
@@ -515,8 +515,8 @@ describe('ChatWidgetComponent', () => {
 
   describe('setChatsPage', () => {
     it('calls setChatsPage(true) via effect when on /chats route', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/chats', events: routerEvents$.asObservable() };
+      const routerEvents$ = new Subject<RouterEvent>();
+      const mockRouter = { url: '/chats', events: routerEvents$.asObservable() } satisfies Partial<Router>;
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       chatSvc = makeChatService();
       TestBed.overrideProvider(ChatService, { useValue: chatSvc });
@@ -526,8 +526,8 @@ describe('ChatWidgetComponent', () => {
     });
 
     it('calls setChatsPage(false) via effect when on a non-chats route', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/home', events: routerEvents$.asObservable() };
+      const routerEvents$ = new Subject<RouterEvent>();
+      const mockRouter = { url: '/home', events: routerEvents$.asObservable() } satisfies Partial<Router>;
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       chatSvc = makeChatService();
       TestBed.overrideProvider(ChatService, { useValue: chatSvc });
@@ -592,8 +592,8 @@ describe('ChatWidgetComponent', () => {
 
   describe('fabPositionClass / panelPositionClass on /clubs list page', () => {
     it('fabPositionClass returns bottom-24 right-6 on /clubs list page', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/clubs', events: routerEvents$.asObservable() };
+      const routerEvents$ = new Subject<RouterEvent>();
+      const mockRouter = { url: '/clubs', events: routerEvents$.asObservable() } satisfies Partial<Router>;
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
@@ -601,8 +601,8 @@ describe('ChatWidgetComponent', () => {
     });
 
     it('panelPositionClass returns bottom-40 right-6 on /clubs list page', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/clubs', events: routerEvents$.asObservable() };
+      const routerEvents$ = new Subject<RouterEvent>();
+      const mockRouter = { url: '/clubs', events: routerEvents$.asObservable() } satisfies Partial<Router>;
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
@@ -677,8 +677,8 @@ describe('ChatWidgetComponent', () => {
   });
 
   it('Effect 1 — closes chat when navigating to /chats page', () => {
-    const routerEvents$ = new Subject<unknown>();
-    const mockRouter = { url: '/chats', events: routerEvents$.asObservable() };
+    const routerEvents$ = new Subject<RouterEvent>();
+    const mockRouter = { url: '/chats', events: routerEvents$.asObservable() } satisfies Partial<Router>;
     TestBed.overrideProvider(Router, { useValue: mockRouter });
     chatSvc = makeChatService();
     chatSvc.isOpen.set(true);

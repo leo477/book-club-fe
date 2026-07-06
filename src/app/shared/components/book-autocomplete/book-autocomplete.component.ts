@@ -104,7 +104,7 @@ export class BookAutocompleteComponent {
       switchMap(v => {
         this.isLoading.set(true);
         this.errorState.set(false);
-        return this.bookSearchService.searchBooks(v).pipe(
+        return this.bookSearchService.searchBooks$(v).pipe(
           catchError(() => { this.errorState.set(true); return of([] as BookSuggestion[]); }),
         );
       }),
