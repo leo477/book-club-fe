@@ -1,4 +1,4 @@
-import { Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { ReactiveFormsModule, FormGroup } from '@angular/forms';
 
 export interface SocialField {
@@ -12,6 +12,7 @@ export interface SocialField {
 @Component({
   selector: 'app-social-link-field',
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [ReactiveFormsModule],
   templateUrl: './social-link-field.component.html',
 })

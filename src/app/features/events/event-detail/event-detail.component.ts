@@ -56,6 +56,7 @@ export class EventDetailComponent {
     !this._eventResource.isLoading() && this._eventResource.error() ? 'EVENT.LOAD_ERROR' : null,
   );
   readonly isActioning = signal(false);
+  readonly showCancelConfirm = signal(false);
 
   readonly bookDetailsOpen = signal(false);
   readonly bookDetails = signal<BookDetails | null>(null);
@@ -153,7 +154,7 @@ export class EventDetailComponent {
   }
 
   async onCancelEvent(): Promise<void> {
-    if (!confirm(this.translate.instant('EVENTS.cancel_confirm'))) return;
+    this.showCancelConfirm.set(false);
     this.isActioning.set(true);
     try {
       await this.eventService.cancelEvent(this.id());

@@ -121,7 +121,7 @@ describe('BookVoteSectionComponent', () => {
     toggleVote(option: { id: string; hasVoted: boolean; votes: number }): Promise<void>;
     closeRound(): Promise<void>;
     newRound(): Promise<void>;
-    getPercent(option: { votes: number }): number;
+    percentByOptionId: () => Record<string, number>;
   }
 
   it('should create', async () => {
@@ -204,11 +204,14 @@ describe('BookVoteSectionComponent', () => {
     });
   });
 
-  describe('getPercent', () => {
+  describe('percentByOptionId', () => {
     it('returns 0 when no total votes', async () => {
       const { comp, act } = await setup();
       await act(() => comp.createRound());
-      expect(comp.getPercent({ votes: 0 })).toBe(0);
+      comp.newTitle.set('Book');
+      await act(() => comp.addOption());
+      const optionId = comp.round()?.options[0].id ?? '';
+      expect(comp.percentByOptionId()[optionId]).toBe(0);
     });
   });
 

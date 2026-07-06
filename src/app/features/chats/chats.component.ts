@@ -5,7 +5,7 @@ import {
   signal,
   computed,
   effect,
-  ViewChild,
+  viewChild,
   ElementRef,
   DestroyRef,
 } from '@angular/core';
@@ -33,7 +33,7 @@ export class ChatsComponent {
   private readonly clubService = inject(ClubService);
   private readonly _destroyRef = inject(DestroyRef);
 
-  @ViewChild('messagesList') private readonly messagesListRef?: ElementRef<HTMLElement>;
+  private readonly messagesListRef = viewChild<ElementRef<HTMLElement>>('messagesList');
 
   protected readonly messageText = signal('');
 
@@ -92,7 +92,7 @@ export class ChatsComponent {
       if (!roomId || msgs.length === 0 || this._lastScrolledRoomId === roomId) return;
       this._lastScrolledRoomId = roomId;
       setTimeout(() => {
-        const container = this.messagesListRef?.nativeElement;
+        const container = this.messagesListRef()?.nativeElement;
         if (!container) return;
         const divider = container.querySelector('[data-unread-divider]') as HTMLElement | null;
         if (divider) {
@@ -136,27 +136,4 @@ export class ChatsComponent {
     }
   }
 
-  /**
-   * Feature 5: returns true if the message at index i starts a new visual group
-   * (first message overall, after a divider, or sender changed).
-   */
-  protected isMsgGroupFirst(i: number): boolean {
-    const items = this.chat.activeMessagesWithDivider();
-    if (i === 0) return true;
-    const prev = items[i - 1];
-    if ((prev as { isDivider?: boolean }).isDivider) return true;
-    return (prev as { senderId: string }).senderId !== (items[i] as { senderId: string }).senderId;
-  }
-
-  /**
-   * Feature 5: returns true if the message at index i ends a visual group
-   * (last message overall, before a divider, or sender changed next).
-   */
-  protected isMsgGroupLast(i: number): boolean {
-    const items = this.chat.activeMessagesWithDivider();
-    if (i >= items.length - 1) return true;
-    const next = items[i + 1];
-    if ((next as { isDivider?: boolean }).isDivider) return true;
-    return (next as { senderId: string }).senderId !== (items[i] as { senderId: string }).senderId;
-  }
 }

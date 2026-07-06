@@ -96,11 +96,11 @@
             <div class="h-1.5 rounded-full bg-[var(--color-surface-raised)] overflow-hidden">
               <div
                 class="h-full rounded-full bg-[var(--color-primary-600)] transition-all duration-500"
-                [style.width.%]="getPercent(option)"
+                [style.width.%]="percentByOptionId()[option.id]"
               ></div>
             </div>
             <p class="text-[11px] text-[var(--color-ink-muted)]">
-              {{ option.votes }} {{ voteCountLabel(option.votes) }} · {{ getPercent(option) }}%
+              {{ option.votes }} {{ voteCountLabel(option.votes) }} · {{ percentByOptionId()[option.id] }}%
             </p>
 
           </li>
@@ -176,11 +176,11 @@
               [class]="option.id === round()!.winnerId
                 ? 'bg-[var(--color-primary-500)]'
                 : 'bg-[var(--color-ink-muted)]/40'"
-              [style.width.%]="getPercent(option)"
+              [style.width.%]="percentByOptionId()[option.id]"
             ></div>
           </div>
           <p class="text-[11px] text-[var(--color-ink-muted)]">
-            {{ option.votes }} {{ voteCountLabel(option.votes) }} · {{ getPercent(option) }}%
+            {{ option.votes }} {{ voteCountLabel(option.votes) }} · {{ percentByOptionId()[option.id] }}%
           </p>
         </li>
       }

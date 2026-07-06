@@ -243,35 +243,35 @@ describe('EventDetailComponent', () => {
   });
 
   describe('onCancelEvent', () => {
-    it('does nothing when confirm returns false', async () => {
+    it('showCancelConfirm gates the action — setting it true does not call cancelEvent yet', async () => {
       setup({ id: 'u1' });
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       await fixture.whenStable();
-      vi.spyOn(window, 'confirm').mockReturnValue(false);
 
-      await component.onCancelEvent();
+      component.showCancelConfirm.set(true);
 
       expect(eventServiceSpy.cancelEvent).not.toHaveBeenCalled();
+      expect(component.showCancelConfirm()).toBe(true);
     });
 
-    it('calls cancelEvent and reloads the resource when confirmed', async () => {
+    it('calls cancelEvent, reloads the resource, and dismisses the confirm prompt', async () => {
       setup({ id: 'u1' });
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       await fixture.whenStable();
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      component.showCancelConfirm.set(true);
 
       await component.onCancelEvent();
       expect(eventServiceSpy.cancelEvent).toHaveBeenCalledWith('e1');
+      expect(component.showCancelConfirm()).toBe(false);
       fixture.detectChanges();
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       await fixture.whenStable();
     });
 
-    it('sets isActioning to false after confirmed cancel', async () => {
+    it('sets isActioning to false after cancel completes', async () => {
       setup({ id: 'u1' });
       httpMock.expectOne(eventUrl).flush(makeApiEvent());
       await fixture.whenStable();
-      vi.spyOn(window, 'confirm').mockReturnValue(true);
 
       await component.onCancelEvent();
       fixture.detectChanges();

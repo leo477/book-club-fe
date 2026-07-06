@@ -48,10 +48,17 @@ export class BookVoteSectionComponent {
     [...(this.round()?.options ?? [])].sort((a, b) => b.votes - a.votes),
   );
 
-  protected getPercent(option: BookOption): number {
-    const total = this.round()?.totalVotes ?? 0;
-    return total > 0 ? Math.round((option.votes / total) * 100) : 0;
-  }
+  /** Vote percentage per option id — computed once per round change instead of
+   *  re-running a lookup function for every option on every template check. */
+  protected readonly percentByOptionId = computed<Record<string, number>>(() => {
+    const round = this.round();
+    const total = round?.totalVotes ?? 0;
+    const percents: Record<string, number> = {};
+    for (const option of round?.options ?? []) {
+      percents[option.id] = total > 0 ? Math.round((option.votes / total) * 100) : 0;
+    }
+    return percents;
+  });
 
   /** Localized plural form of "vote(s)" for the given count (uk has one/few/many, en has one/other). */
   protected voteCountLabel(count: number): string {

@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { firstValueFrom } from 'rxjs';
 
@@ -11,6 +12,7 @@ const DEFAULT_LANG: AppLang = 'uk';
 @Injectable({ providedIn: 'root' })
 export class LanguageService {
   private readonly translate = inject(TranslateService);
+  private readonly document = inject(DOCUMENT);
 
   readonly initialLang = this.resolveInitial();
 
@@ -22,6 +24,6 @@ export class LanguageService {
   async use(lang: AppLang): Promise<void> {
     await firstValueFrom(this.translate.use(lang));
     localStorage.setItem(STORAGE_KEY, lang);
-    document.documentElement.lang = lang;
+    this.document.documentElement.lang = lang;
   }
 }

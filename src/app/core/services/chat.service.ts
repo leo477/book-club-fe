@@ -1,4 +1,5 @@
 import { Injectable, signal, computed, inject, effect, untracked, ApplicationRef, DestroyRef } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
 import { ChatItem, ChatMessage, ChatRoom, UnreadDivider } from '../models/chat.model';
@@ -14,6 +15,7 @@ import { ChatSocket } from './chat-socket.service';
 @Injectable({ providedIn: 'root' })
 export class ChatService {
   private readonly translate = inject(TranslateService);
+  private readonly document = inject(DOCUMENT);
   private readonly _appRef = inject(ApplicationRef);
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _auth = inject(AuthService);
@@ -47,10 +49,10 @@ export class ChatService {
   constructor() {
     // Feature 3: force Angular (zoneless) to re-render immediately when the
     // browser tab becomes visible again (fixes "mobile chat doesn't update").
-    const onVisibility = () => { if (!document.hidden) this._appRef.tick(); };
-    document.addEventListener('visibilitychange', onVisibility);
+    const onVisibility = () => { if (!this.document.hidden) this._appRef.tick(); };
+    this.document.addEventListener('visibilitychange', onVisibility);
     this._destroyRef.onDestroy(() =>
-      document.removeEventListener('visibilitychange', onVisibility)
+      this.document.removeEventListener('visibilitychange', onVisibility)
     );
 
     // Browsers keep a newly-created AudioContext suspended until a real user
@@ -59,11 +61,11 @@ export class ChatService {
       this._audioContext ??= new AudioContext();
       if (this._audioContext.state === 'suspended') void this._audioContext.resume();
     };
-    document.addEventListener('click', unlockAudio, { once: true });
-    document.addEventListener('keydown', unlockAudio, { once: true });
+    this.document.addEventListener('click', unlockAudio, { once: true });
+    this.document.addEventListener('keydown', unlockAudio, { once: true });
     this._destroyRef.onDestroy(() => {
-      document.removeEventListener('click', unlockAudio);
-      document.removeEventListener('keydown', unlockAudio);
+      this.document.removeEventListener('click', unlockAudio);
+      this.document.removeEventListener('keydown', unlockAudio);
     });
 
     // Single orchestrator for "load rooms for my clubs" — previously
@@ -133,12 +135,23 @@ export class ChatService {
   readonly activeMessagesWithDivider = computed<ChatItem[]>(() => {
     const msgs = this.activeMessages();
     const lastReadId = this._lastReadMap()[this._activeRoomId() ?? ''];
-    if (!lastReadId) return msgs;
-    const idx = msgs.findIndex(m => m.id === lastReadId);
+    const idx = lastReadId ? msgs.findIndex(m => m.id === lastReadId) : -1;
     // No match or last message already read → no divider
-    if (idx === -1 || idx >= msgs.length - 1) return msgs;
-    const divider: UnreadDivider = { id: 'unread-divider', isDivider: true };
-    return [...msgs.slice(0, idx + 1), divider, ...msgs.slice(idx + 1)];
+    const items: ChatItem[] =
+      idx === -1 || idx >= msgs.length - 1
+        ? msgs
+        : [...msgs.slice(0, idx + 1), { id: 'unread-divider', isDivider: true } satisfies UnreadDivider, ...msgs.slice(idx + 1)];
+
+    return items.map((item, i) => {
+      if (item.isDivider) return item;
+      const prev = items[i - 1];
+      const next = items[i + 1];
+      return {
+        ...item,
+        isGroupFirst: !prev || !!prev.isDivider || prev.senderId !== item.senderId,
+        isGroupLast: !next || !!next.isDivider || next.senderId !== item.senderId,
+      };
+    });
   });
 
   // ── Public API ────────────────────────────────────────────────────────────
