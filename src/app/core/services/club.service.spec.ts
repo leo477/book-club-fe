@@ -238,6 +238,64 @@ describe('ClubService', () => {
     ...overrides,
   });
 
+  describe('patchClubAndSync (pauseClub, cancelClub, rescheduleMeeting)', () => {
+    it('pauseClub invalidates clubByIdCache and syncs myClubs', async () => {
+      const p1 = service.getClubById('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(makeApiClub({ status: 'active' }));
+      await p1;
+
+      const myClubsPromise = service.loadMyClubs();
+      httpMock.expectOne(`${environment.apiUrl}/clubs/my`).flush([makeApiClub({ status: 'active' })]);
+      await myClubsPromise;
+
+      const pausePromise = service.pauseClub('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/pause`).flush(makeApiClub({ status: 'paused' }));
+      await pausePromise;
+
+      const resultPromise = service.getClubById('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(makeApiClub({ status: 'paused' }));
+      const result = await resultPromise;
+      expect(result?.status).toBe('paused');
+      expect(service.myClubs().find(c => c.id === 'club-1')?.status).toBe('paused');
+    });
+
+    it('cancelClub invalidates clubByIdCache and syncs myClubs', async () => {
+      const myClubsPromise = service.loadMyClubs();
+      httpMock.expectOne(`${environment.apiUrl}/clubs/my`).flush([makeApiClub({ status: 'active' })]);
+      await myClubsPromise;
+
+      const cancelPromise = service.cancelClub('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/cancel`).flush(makeApiClub({ status: 'cancelled' }));
+      await cancelPromise;
+
+      expect(service.myClubs().find(c => c.id === 'club-1')?.status).toBe('cancelled');
+
+      const p2 = service.getClubById('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(makeApiClub({ status: 'cancelled' }));
+      expect((await p2)?.status).toBe('cancelled');
+    });
+
+    it('rescheduleMeeting invalidates clubByIdCache and syncs myClubs', async () => {
+      const p1 = service.getClubById('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(makeApiClub({ nextMeetingDate: '2024-01-01T00:00:00Z' }));
+      await p1;
+
+      const myClubsPromise = service.loadMyClubs();
+      httpMock.expectOne(`${environment.apiUrl}/clubs/my`).flush([makeApiClub({ nextMeetingDate: '2024-01-01T00:00:00Z' })]);
+      await myClubsPromise;
+
+      const newDate = '2024-06-01T00:00:00Z';
+      const reschedulePromise = service.rescheduleMeeting('club-1', newDate);
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/reschedule`).flush(makeApiClub({ nextMeetingDate: newDate }));
+      await reschedulePromise;
+
+      const p2 = service.getClubById('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(makeApiClub({ nextMeetingDate: newDate }));
+      expect((await p2)?.nextMeetingDate).toBe(newDate);
+      expect(service.myClubs().find(c => c.id === 'club-1')?.nextMeetingDate).toBe(newDate);
+    });
+  });
+
   it('joinClub posts and returns the join-request status', async () => {
     const promise = service.joinClub('club-1');
     const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/join`);

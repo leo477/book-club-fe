@@ -384,8 +384,10 @@ export class ClubService {
     const raw = await firstValueFrom(
       this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
     );
+    this.clubByIdCache.delete(clubId);
     const updated = mapClub(raw);
     this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+    this._myClubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
   }
 
 }
