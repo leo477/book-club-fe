@@ -39,6 +39,9 @@ export class ChatsComponent {
 
   /** Tracks the last room we scrolled to — prevents re-scroll on every new WS message. */
   private _lastScrolledRoomId: string | null = null;
+  /** Room ids we've already requested unread counts for — avoids an N+1 refetch
+   *  of every room's unread-count on each `rooms()` change (e.g. `_upsertRoom`). */
+  private readonly _unreadCountsFetchedFor = new Set<string>();
 
   protected readonly roomsByClub = computed(() => {
     const clubs = this.clubService.myClubs();
@@ -66,11 +69,18 @@ export class ChatsComponent {
     // ChatWidgetComponent, which caused a double GET /clubs/{id}/chat/rooms
     // whenever this page mounted alongside the globally-mounted widget.
 
-    // Feature 5: fetch per-room unread counts once rooms are loaded.
+    // Feature 5: fetch per-room unread counts once rooms are loaded. Only the
+    // rooms we haven't already requested — `rooms()` also changes on
+    // `_upsertRoom` (e.g. opening an event chat), which would otherwise
+    // refetch every already-known room's unread count (N+1 on each change).
     effect(() => {
       const rooms = this.chat.rooms();
-      if (rooms.length > 0) {
-        this.chat.fetchUnreadCounts(rooms.map(r => r.id));
+      const newRoomIds = rooms
+        .map(r => r.id)
+        .filter(id => !this._unreadCountsFetchedFor.has(id));
+      if (newRoomIds.length > 0) {
+        for (const id of newRoomIds) this._unreadCountsFetchedFor.add(id);
+        this.chat.fetchUnreadCounts(newRoomIds);
       }
     });
 
