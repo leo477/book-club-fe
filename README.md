@@ -6,13 +6,21 @@ This project was generated using [Angular CLI](https://github.com/angular/angula
 
 ## Development server
 
-To start a local development server, run:
+`src/environments/environment.ts` (used by default `ng serve` / `npm start`) points at `http://localhost:8000/api/v1`, so a local backend must be running on port 8000 before you serve the app. Use one of:
 
 ```bash
-ng serve
+npm run dev    # ng serve + the mock-server (mock-server/) on localhost:8000, concurrently
+```
+
+or run a local FastAPI backend instance on port 8000 and then:
+
+```bash
+npm start      # ng serve only, expects a backend already on localhost:8000
 ```
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+
+Production builds (`ng build`) use `src/environments/environment.prod.ts` instead, via the `fileReplacements` config in `angular.json`, which points at the real deployed backend. Local dev no longer talks to production by default.
 
 ## Code scaffolding
 
