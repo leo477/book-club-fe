@@ -15,7 +15,7 @@ import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { toast } from '@spartan-ng/brain/sonner';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
-import { BackendHttpError } from '../../../core/interceptors/auth.interceptor';
+import { BackendHttpError, RequestTimeoutError } from '../../../core/interceptors/auth.interceptor';
 import { ClubEvent } from '../../../core/models/event.model';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 import { ChatService } from '../../../core/services/chat.service';
@@ -132,6 +132,8 @@ export class EventDetailComponent {
     } catch (err) {
       if (err instanceof BackendHttpError && err.status === 400) {
         toast.error(this.translate.instant('EVENTS.registration_closed') as string);
+      } else {
+        toast.error(this.formatActionError(err, 'Failed to attend event'));
       }
     } finally {
       this.isActioning.set(false);
@@ -143,6 +145,8 @@ export class EventDetailComponent {
     try {
       await this.eventService.cancelAttendance(this.id());
       this._eventResource.reload();
+    } catch (err) {
+      toast.error(this.formatActionError(err, 'Failed to cancel attendance'));
     } finally {
       this.isActioning.set(false);
     }
@@ -154,8 +158,22 @@ export class EventDetailComponent {
     try {
       await this.eventService.cancelEvent(this.id());
       this._eventResource.reload();
+    } catch (err) {
+      toast.error(this.formatActionError(err, 'Failed to cancel event'));
     } finally {
       this.isActioning.set(false);
     }
+  }
+
+  private formatActionError(err: unknown, fallback: string): string {
+    if (err instanceof RequestTimeoutError) {
+      return this.translate.instant('ERRORS.timeout');
+    }
+    if (err instanceof BackendHttpError) {
+      if (err.detail) return err.detail;
+      return this.translate.instant(err.translationKey);
+    }
+    if (err instanceof Error && err.message) return err.message;
+    return fallback;
   }
 }

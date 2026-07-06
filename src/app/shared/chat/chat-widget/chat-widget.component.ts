@@ -1,7 +1,8 @@
 import { Component, ChangeDetectionStrategy, inject, signal, effect, computed, HostListener, ElementRef, untracked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { toast } from '@spartan-ng/brain/sonner';
 import { Router, NavigationEnd } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
@@ -9,6 +10,7 @@ import { AuthService } from '../../../core/auth/auth.service';
 import { TokenStore } from '../../../core/auth/token.store';
 import { ChatService } from '../../../core/services/chat.service';
 import { ClubService } from '../../../core/services/club.service';
+import { extractApiError } from '../../../core/api/api-error.util';
 import { ChatTimestampPipe } from '../../pipes/chat-timestamp.pipe';
 
 @Component({
@@ -26,6 +28,7 @@ export class ChatWidgetComponent {
   private readonly tokenStore = inject(TokenStore);
   private readonly router = inject(Router);
   private readonly el = inject(ElementRef);
+  private readonly translate = inject(TranslateService);
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -228,13 +231,18 @@ export class ChatWidgetComponent {
     this.newRoomName.set('');
   }
 
-  protected submitCreateRoom(): void {
+  protected async submitCreateRoom(): Promise<void> {
     const name = this.newRoomName().trim();
     const clubId = this.chat.activeRoom()?.clubId ?? this.urlClubId();
     if (!name || !clubId) return;
-    this.chat.createRoom(clubId, name);
-    this.newRoomName.set('');
-    this.isCreatingRoom.set(false);
+    try {
+      await this.chat.createRoom(clubId, name);
+      this.newRoomName.set('');
+      this.isCreatingRoom.set(false);
+    } catch (err) {
+      console.error('[ChatWidget] createRoom error', err);
+      toast.error(this.translate.instant(extractApiError(err)) as string);
+    }
   }
 
   protected onRoomNameKeydown(event: KeyboardEvent): void {

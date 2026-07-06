@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection, WritableSignal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { ChatService } from './chat.service';
 import { ChatMessage, ChatRoom } from '../models/chat.model';
 import { environment } from '../../../environments/environment';
@@ -83,7 +84,13 @@ describe('ChatService', () => {
     };
 
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), ChatService],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        ChatService,
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
+      ],
     });
     service = TestBed.inject(ChatService);
     httpMock = TestBed.inject(HttpTestingController);

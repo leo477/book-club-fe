@@ -275,7 +275,7 @@ export class ClubDetailComponent {
       await this.clubService.kickMember(this.id(), userId);
     } catch (err) {
       this.members.set(previous);
-      throw err;
+      toast.error(this.formatActionError(err, 'Failed to remove member'));
     }
   }
 
@@ -286,7 +286,7 @@ export class ClubDetailComponent {
       await this.clubService.banMember(this.id(), event.userId, event.duration);
     } catch (err) {
       this.members.set(previous);
-      throw err;
+      toast.error(this.formatActionError(err, 'Failed to ban member'));
     }
   }
 
@@ -382,7 +382,7 @@ export class ClubDetailComponent {
       this.setWinnerEventId.set(null);
     } catch (err) {
       this.pastEvents.set(previousPastEvents);
-      throw err;
+      toast.error(this.formatActionError(err, 'Failed to set event winner'));
     } finally {
       this.setWinnerLoading.set(null);
     }

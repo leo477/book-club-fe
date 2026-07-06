@@ -1,4 +1,9 @@
-@if (round() || isOwner()) {
+@if (isLoading() && !round()) {
+<section class="parchment-card px-6 py-5 flex flex-col gap-3">
+  <div class="h-4 w-48 rounded bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+  <div class="h-16 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+</section>
+} @else if (round() || isOwner()) {
 <section class="parchment-card px-6 py-5 flex flex-col gap-4">
 
   <!-- ── Header ──────────────────────────────────────────────────── -->
@@ -9,11 +14,11 @@
 
     @if (isOwner()) {
       @if (round()?.status === 'open') {
-        <button hlmBtn variant="outline" size="sm" type="button" (click)="closeRound()">
+        <button hlmBtn variant="outline" size="sm" type="button" [disabled]="isActionLoading()" (click)="closeRound()">
           Закрити голосування
         </button>
       } @else if (round()?.status === 'closed') {
-        <button hlmBtn size="sm" type="button" (click)="newRound()">
+        <button hlmBtn size="sm" type="button" [disabled]="isActionLoading()" (click)="newRound()">
           Нове голосування
         </button>
       }
@@ -26,7 +31,7 @@
       <p class="text-sm text-[var(--color-ink-muted)]">
         Запропонуйте учасникам клубу обрати наступну книгу
       </p>
-      <button hlmBtn size="sm" type="button" (click)="createRound()">
+      <button hlmBtn size="sm" type="button" [disabled]="isActionLoading()" (click)="createRound()">
         Почати голосування
       </button>
     </div>
@@ -63,6 +68,7 @@
                     type="button"
                     size="sm"
                     [attr.variant]="option.hasVoted ? 'default' : 'outline'"
+                    [disabled]="isActionLoading()"
                     (click)="toggleVote(option)"
                     class="text-xs"
                   >
@@ -72,6 +78,7 @@
                 @if (isOwner() && option.votes === 0) {
                   <button
                     type="button"
+                    [disabled]="isActionLoading()"
                     (click)="removeOption(option.id)"
                     class="text-[var(--color-ink-muted)] hover:text-red-600 dark:hover:text-red-400
                            transition-colors duration-150 p-1 rounded"
@@ -122,7 +129,7 @@
             aria-label="Автор"
             class="flex-1 min-w-0 parchment-input rounded-lg px-3 py-2 text-sm"
           />
-          <button hlmBtn size="sm" type="button" (click)="addOption()" class="flex-shrink-0">
+          <button hlmBtn size="sm" type="button" [disabled]="isActionLoading()" (click)="addOption()" class="flex-shrink-0">
             Додати
           </button>
         </div>

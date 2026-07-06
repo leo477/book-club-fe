@@ -13,7 +13,14 @@ describe('authInterceptor', () => {
   let http: HttpClient;
   let httpMock: HttpTestingController;
   let routerSpy: { navigate: ReturnType<typeof vi.fn> };
-  let tokenStoreSpy: { snapshot: ReturnType<typeof vi.fn>; clear: ReturnType<typeof vi.fn>; token: ReturnType<typeof vi.fn> };
+  let tokenStoreSpy: {
+    snapshot: ReturnType<typeof vi.fn>;
+    clear: ReturnType<typeof vi.fn>;
+    token: ReturnType<typeof vi.fn>;
+    refreshToken: ReturnType<typeof vi.fn>;
+    setRefreshToken: ReturnType<typeof vi.fn>;
+    set: ReturnType<typeof vi.fn>;
+  };
   let translateSpy: { instant: ReturnType<typeof vi.fn> };
 
   function setup(token: string | null = null) {
@@ -22,6 +29,9 @@ describe('authInterceptor', () => {
       token: vi.fn().mockReturnValue(token),
       snapshot: vi.fn().mockReturnValue(token),
       clear: vi.fn(),
+      refreshToken: vi.fn().mockReturnValue(null),
+      setRefreshToken: vi.fn(),
+      set: vi.fn(),
     };
     translateSpy = { instant: vi.fn().mockImplementation((key: string) => key) };
 
@@ -76,14 +86,68 @@ describe('authInterceptor', () => {
     req.flush({});
   });
 
-  it('navigates to /login and clears token on 401 for authenticated requests', () => {
-    setup('my-token');
-    http.get('/api/test').subscribe({ error: vi.fn() });
-    const req = httpMock.expectOne('/api/test');
-    req.flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
-    expect(tokenStoreSpy.clear).toHaveBeenCalled();
-    expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
-  });
+  it('attempts a token refresh on 401 and replays the request on success', () =>
+    new Promise<void>((resolve) => {
+      setup('stale-token');
+      http.get('/api/test').subscribe({
+        next: (result) => {
+          expect(result).toEqual({ ok: true });
+          expect(tokenStoreSpy.clear).not.toHaveBeenCalled();
+          expect(routerSpy.navigate).not.toHaveBeenCalled();
+          resolve();
+        },
+      });
+
+      const first = httpMock.expectOne('/api/test');
+      expect(first.request.headers.get('Authorization')).toBe('Bearer stale-token');
+      first.flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+      const refresh = httpMock.expectOne('https://book-club-be.onrender.com/api/v1/auth/refresh');
+      refresh.flush({ accessToken: 'fresh-token', refreshToken: 'fresh-refresh' });
+
+      const retried = httpMock.expectOne('/api/test');
+      expect(retried.request.headers.get('Authorization')).toBe('Bearer fresh-token');
+      retried.flush({ ok: true });
+    }));
+
+  it('clears token and navigates to /login when the refresh attempt itself fails', () =>
+    new Promise<void>((resolve) => {
+      setup('stale-token');
+      http.get('/api/test').subscribe({
+        error: () => {
+          expect(tokenStoreSpy.clear).toHaveBeenCalled();
+          expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
+          resolve();
+        },
+      });
+
+      const first = httpMock.expectOne('/api/test');
+      first.flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+      const refresh = httpMock.expectOne('https://book-club-be.onrender.com/api/v1/auth/refresh');
+      refresh.flush({ detail: 'Refresh token invalid' }, { status: 401, statusText: 'Unauthorized' });
+    }));
+
+  it('clears token and navigates to /login when the replayed request 401s again', () =>
+    new Promise<void>((resolve) => {
+      setup('stale-token');
+      http.get('/api/test').subscribe({
+        error: () => {
+          expect(tokenStoreSpy.clear).toHaveBeenCalled();
+          expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
+          resolve();
+        },
+      });
+
+      const first = httpMock.expectOne('/api/test');
+      first.flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+      const refresh = httpMock.expectOne('https://book-club-be.onrender.com/api/v1/auth/refresh');
+      refresh.flush({ accessToken: 'fresh-token', refreshToken: 'fresh-refresh' });
+
+      const retried = httpMock.expectOne('/api/test');
+      retried.flush({ detail: 'Still unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+    }));
 
   it('does not redirect on 401 for unauthenticated requests (e.g. wrong login credentials)', () => {
     setup(null);
@@ -121,6 +185,8 @@ describe('authInterceptor', () => {
       });
       const req = httpMock.expectOne('/api/test');
       req.flush({}, { status: 401, statusText: 'Unauthorized' });
+      const refresh = httpMock.expectOne('https://book-club-be.onrender.com/api/v1/auth/refresh');
+      refresh.flush({ detail: 'Refresh token invalid' }, { status: 401, statusText: 'Unauthorized' });
     }));
 
   it('does not show toast on non-5xx errors', () => {

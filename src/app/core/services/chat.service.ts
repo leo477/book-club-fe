@@ -1,8 +1,11 @@
 import { Injectable, signal, computed, inject, ApplicationRef, DestroyRef } from '@angular/core';
 import { HttpClient, HttpContext } from '@angular/common/http';
+import { TranslateService } from '@ngx-translate/core';
+import { toast } from '@spartan-ng/brain/sonner';
 import { firstValueFrom } from 'rxjs';
 import { ChatItem, ChatMessage, ChatRoom, UnreadDivider } from '../models/chat.model';
 import { SKIP_AUTH_REDIRECT } from '../interceptors/auth.interceptor';
+import { extractApiError } from '../api/api-error.util';
 import { environment } from '../../../environments/environment';
 
 // ── Raw API shapes (snake_case) ──────────────────────────────────────────────
@@ -32,6 +35,7 @@ interface WsEnvelope { type: string; payload: unknown; }
 @Injectable({ providedIn: 'root' })
 export class ChatService {
   private readonly http = inject(HttpClient);
+  private readonly translate = inject(TranslateService);
   private readonly api = environment.apiUrl;
   private readonly _appRef = inject(ApplicationRef);
   private readonly _destroyRef = inject(DestroyRef);
@@ -143,7 +147,10 @@ export class ChatService {
           }
         }
       })
-      .catch((err: unknown) => console.error('[ChatService] loadRooms error', err));
+      .catch((err: unknown) => {
+        console.error('[ChatService] loadRooms error', err);
+        this.notifyError(err);
+      });
   }
 
   /** Fetch rooms for all user clubs in parallel and merge into one flat list. */
@@ -173,7 +180,10 @@ export class ChatService {
           this.loadMessages(first.id);
         }
       }
-    }).catch((err: unknown) => console.error('[ChatService] loadAllClubRooms error', err));
+    }).catch((err: unknown) => {
+      console.error('[ChatService] loadAllClubRooms error', err);
+      this.notifyError(err);
+    });
   }
 
   /** Fetch messages for a room and update the messages map. */
@@ -191,7 +201,10 @@ export class ChatService {
         const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
         this._messages.update(map => ({ ...map, [roomId]: msgs }));
       })
-      .catch((err: unknown) => console.error('[ChatService] loadMessages error', err));
+      .catch((err: unknown) => {
+        console.error('[ChatService] loadMessages error', err);
+        this.notifyError(err);
+      });
   }
 
   connectRoom(roomId: string, token: string): void {
@@ -394,6 +407,7 @@ export class ChatService {
           ...map,
           [roomId]: (map[roomId] ?? []).filter(m => m.id !== tempId),
         }));
+        this.notifyError(err);
       });
   }
 
@@ -409,7 +423,10 @@ export class ChatService {
           [roomId]: (map[roomId] ?? []).filter(m => m.id !== messageId),
         }));
       })
-      .catch((err: unknown) => console.error('[ChatService] deleteMessage error', err));
+      .catch((err: unknown) => {
+        console.error('[ChatService] deleteMessage error', err);
+        this.notifyError(err);
+      });
   }
 
   banUserFromChat(userId: string, durationSeconds: number): void {
@@ -427,7 +444,10 @@ export class ChatService {
           [roomId]: (map[roomId] ?? []).filter(m => m.senderId !== userId),
         }));
       })
-      .catch((err: unknown) => console.error('[ChatService] banUserFromChat error', err));
+      .catch((err: unknown) => {
+        console.error('[ChatService] banUserFromChat error', err);
+        this.notifyError(err);
+      });
   }
 
   async deleteRoom(roomId: string): Promise<void> {
@@ -507,6 +527,10 @@ export class ChatService {
     gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
     osc.start(ctx.currentTime);
     osc.stop(ctx.currentTime + 0.3);
+  }
+
+  private notifyError(err: unknown): void {
+    toast.error(this.translate.instant(extractApiError(err)) as string);
   }
 
   private mapMessage(m: ApiChatMessage): ChatMessage {

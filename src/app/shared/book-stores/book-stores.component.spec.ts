@@ -71,7 +71,21 @@ describe('BookStoresComponent', () => {
         product_url: 'https://rozetka.com.ua',
       };
       comp.openStore(store);
-      expect(window.open).toHaveBeenCalledWith('https://rozetka.com.ua', '_blank');
+      expect(window.open).toHaveBeenCalledWith('https://rozetka.com.ua', '_blank', 'noopener,noreferrer');
+    });
+
+    it('does not open non-https urls', () => {
+      const fixture = TestBed.createComponent(BookStoresComponent);
+      const comp = fixture.componentInstance;
+      vi.spyOn(window, 'open').mockImplementation(() => null);
+      const store: BookStoreResult = {
+        name: 'Rozetka',
+        url: 'javascript:alert(1)',
+        found: true,
+        product_url: null,
+      };
+      comp.openStore(store);
+      expect(window.open).not.toHaveBeenCalled();
     });
   });
 

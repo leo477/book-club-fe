@@ -91,7 +91,7 @@ interface CompProtected {
   deleteMessage(messageId: string): void;
   banUser(userId: string, durationSeconds: number): void;
   toggleCreateRoom(): void;
-  submitCreateRoom(): void;
+  submitCreateRoom(): Promise<void>;
   onRoomNameKeydown(event: KeyboardEvent): void;
   showingRoomList: { (): boolean; set(v: boolean): void };
   shouldShowRoomList: () => boolean;
@@ -311,16 +311,28 @@ describe('ChatWidgetComponent', () => {
     expect(chatSvc.createRoom).not.toHaveBeenCalled();
   });
 
-  it('submitCreateRoom calls createRoom and resets state', () => {
+  it('submitCreateRoom calls createRoom and resets state', async () => {
     chatSvc.activeRoom.set({ clubId: 'club-1' });
     const fixture = TestBed.createComponent(ChatWidgetComponent);
     const comp = fixture.componentInstance as unknown as CompProtected;
     comp.isCreatingRoom.set(true);
     comp.newRoomName.set('New Room');
-    comp.submitCreateRoom();
+    await comp.submitCreateRoom();
     expect(chatSvc.createRoom).toHaveBeenCalledWith('club-1', 'New Room');
     expect(comp.newRoomName()).toBe('');
     expect(comp.isCreatingRoom()).toBe(false);
+  });
+
+  it('submitCreateRoom shows a toast and keeps the form open on failure', async () => {
+    chatSvc.activeRoom.set({ clubId: 'club-1' });
+    chatSvc.createRoom.mockRejectedValueOnce(new Error('boom'));
+    const fixture = TestBed.createComponent(ChatWidgetComponent);
+    const comp = fixture.componentInstance as unknown as CompProtected;
+    comp.isCreatingRoom.set(true);
+    comp.newRoomName.set('New Room');
+    await comp.submitCreateRoom();
+    expect(comp.newRoomName()).toBe('New Room');
+    expect(comp.isCreatingRoom()).toBe(true);
   });
 
   it('onRoomNameKeydown submits on Enter', () => {

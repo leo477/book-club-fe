@@ -1,9 +1,30 @@
-import { HttpContextToken, HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpContext,
+  HttpContextToken,
+  HttpErrorResponse,
+  HttpEvent,
+  HttpInterceptorFn,
+  HttpRequest,
+} from '@angular/common/http';
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
-import { TimeoutError, catchError, retry, throwError, timer, timeout } from 'rxjs';
+import {
+  Observable,
+  TimeoutError,
+  catchError,
+  finalize,
+  map,
+  of,
+  retry,
+  shareReplay,
+  switchMap,
+  throwError,
+  timer,
+  timeout,
+} from 'rxjs';
 import { TokenStore } from '../auth/token.store';
 import { environment } from '../../../environments/environment';
 
@@ -16,6 +37,38 @@ export const SUPPRESS_ERROR_TOAST = new HttpContextToken<boolean>(() => false);
 
 /** Mark a request as targeting a public endpoint that needs no auth error handling. */
 export const SKIP_AUTH_REDIRECT = new HttpContextToken<boolean>(() => false);
+
+/** Marks a request as already having gone through one refresh-and-replay cycle. */
+const IS_REFRESH_RETRY = new HttpContextToken<boolean>(() => false);
+
+// Module-scoped so concurrent 401s across the app share a single in-flight
+// refresh instead of each racing the backend's refresh-token rotation.
+// eslint-disable-next-line rxjs-x/finnish
+let refreshInFlight: Observable<string | null> | null = null;
+
+function refreshAccessToken$(http: HttpClient, tokenStore: TokenStore): Observable<string | null> {
+  if (refreshInFlight) return refreshInFlight;
+  const persistedRefresh = tokenStore.refreshToken();
+  refreshInFlight = http
+    .post<{ accessToken: string; refreshToken: string }>(
+      `${environment.apiUrl}/auth/refresh`,
+      persistedRefresh ? { refreshToken: persistedRefresh } : {},
+      { withCredentials: true, context: new HttpContext().set(SKIP_AUTH_REDIRECT, true) },
+    )
+    .pipe(
+      map(resp => {
+        tokenStore.set(resp.accessToken);
+        if (resp.refreshToken) tokenStore.setRefreshToken(resp.refreshToken);
+        return resp.accessToken as string | null;
+      }),
+      catchError(() => of(null)),
+      finalize(() => {
+        refreshInFlight = null;
+      }),
+      shareReplay({ bufferSize: 1, refCount: false }),
+    );
+  return refreshInFlight;
+}
 
 /**
  * Error thrown when the frontend's own request timeout fires before the
@@ -135,54 +188,86 @@ function extractBackendDetail(err: HttpErrorResponse): string | null {
 // eslint-disable-next-line rxjs-x/finnish
 export const authInterceptor: HttpInterceptorFn = (req, next$) => {
   const router = inject(Router);
+  const http = inject(HttpClient);
   const tokenStore = inject(TokenStore);
   const translate = inject(TranslateService);
-
-  const token = tokenStore.snapshot();
-  const authedReq = token && isFirstPartyRequest(req.url)
-    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
-    : req;
 
   const timeoutMs = MUTATION_METHODS.has(req.method.toUpperCase())
     ? MUTATION_TIMEOUT_MS
     : REQUEST_TIMEOUT_MS;
 
-  return next$(authedReq).pipe(
-    timeout(timeoutMs),
-    // Retry once on 503 (Render cold-start): server was not ready but will be
-    // after a few seconds. 503 guarantees the request was never processed so
-    // retrying is safe for all methods including POST.
-    retry({
-      count: 1,
-      delay: (error: unknown) =>
-        error instanceof HttpErrorResponse && error.status === 503
-          ? timer(5000)
-          : throwError(() => error),
-    }),
-    catchError((error: unknown) => {
-      const suppress = req.context.get(SUPPRESS_ERROR_TOAST);
-      const skipAuthRedirect = req.context.get(SKIP_AUTH_REDIRECT);
-      if (error instanceof TimeoutError) {
-        if (!suppress) {
-          toast.error(translate.instant('ERRORS.timeout') as string);
+  const authorize = (request: HttpRequest<unknown>, withToken: string | null) =>
+    withToken && isFirstPartyRequest(request.url)
+      ? request.clone({ setHeaders: { Authorization: `Bearer ${withToken}` } })
+      : request;
+
+  // eslint-disable-next-line rxjs-x/finnish
+  const run = (request: HttpRequest<unknown>, activeToken: string | null): Observable<HttpEvent<unknown>> =>
+    next$(authorize(request, activeToken)).pipe(
+      timeout(timeoutMs),
+      // Retry once on 503 (Render cold-start): server was not ready but will be
+      // after a few seconds. 503 guarantees the request was never processed so
+      // retrying is safe for all methods including POST.
+      retry({
+        count: 1,
+        delay: (error: unknown) =>
+          error instanceof HttpErrorResponse && error.status === 503
+            ? timer(5000)
+            : throwError(() => error),
+      }),
+      catchError((error: unknown) => {
+        const suppress = request.context.get(SUPPRESS_ERROR_TOAST);
+        const skipAuthRedirect = request.context.get(SKIP_AUTH_REDIRECT);
+        if (error instanceof TimeoutError) {
+          if (!suppress) {
+            toast.error(translate.instant('ERRORS.timeout') as string);
+          }
+          return throwError(() => new RequestTimeoutError());
         }
-        return throwError(() => new RequestTimeoutError());
-      }
-      const httpError = error instanceof HttpErrorResponse ? error : null;
-      if (httpError) {
-        handleHttpSideEffects(httpError, token, suppress, skipAuthRedirect, router, tokenStore, translate).catch(() => { /* navigation/side-effects best-effort */ });
-        const detail = extractBackendDetail(httpError);
-        let errorKey: string;
-        if (httpError.status >= 500) {
-          errorKey = 'ERRORS.serverError';
-        } else if (httpError.status === 0) {
-          errorKey = 'ERRORS.network';
-        } else {
-          errorKey = 'ERRORS.requestFailed';
+        const httpError = error instanceof HttpErrorResponse ? error : null;
+
+        // One refresh-and-replay attempt on a stale access token, instead of
+        // logging the user out mid-session. Guarded by IS_REFRESH_RETRY so the
+        // replayed request's own 401 falls straight through to logout.
+        const shouldRetryAfterRefresh =
+          httpError?.status === 401 &&
+          !!activeToken &&
+          !skipAuthRedirect &&
+          !request.context.get(IS_REFRESH_RETRY);
+
+        if (shouldRetryAfterRefresh) {
+          return refreshAccessToken$(http, tokenStore).pipe(
+            switchMap(newToken => {
+              if (!newToken) {
+                tokenStore.clear();
+                router.navigate(['/login']).catch(() => { /* best-effort */ });
+                return throwError(
+                  () => new BackendHttpError(401, extractBackendDetail(httpError), 'ERRORS.requestFailed'),
+                );
+              }
+              const retriedReq = request.clone({ context: request.context.set(IS_REFRESH_RETRY, true) });
+              return run(retriedReq, newToken);
+            }),
+          );
         }
-        return throwError(() => new BackendHttpError(httpError.status, detail, errorKey));
-      }
-      return throwError(() => error);
-    }),
-  );
+
+        if (httpError) {
+          handleHttpSideEffects(httpError, activeToken, suppress, skipAuthRedirect, router, tokenStore, translate)
+            .catch(() => { /* navigation/side-effects best-effort */ });
+          const detail = extractBackendDetail(httpError);
+          let errorKey: string;
+          if (httpError.status >= 500) {
+            errorKey = 'ERRORS.serverError';
+          } else if (httpError.status === 0) {
+            errorKey = 'ERRORS.network';
+          } else {
+            errorKey = 'ERRORS.requestFailed';
+          }
+          return throwError(() => new BackendHttpError(httpError.status, detail, errorKey));
+        }
+        return throwError(() => error);
+      }),
+    );
+
+  return run(req, tokenStore.snapshot());
 };
