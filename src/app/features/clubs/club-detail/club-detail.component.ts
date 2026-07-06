@@ -22,6 +22,7 @@ import { Club, ClubMemberDetail, BanRecord, BanDuration } from '../../../core/mo
 import { ClubEvent } from '../../../core/models/event.model';
 import { UserProfile } from '../../../core/models/user.model';
 import { EventService } from '../../../core/services/event.service';
+import { patchEventAttendance } from '../../../core/utils/event-attendance.util';
 import { ChatService } from '../../../core/services/chat.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
@@ -391,13 +392,7 @@ export class ClubDetailComponent {
   private async performAttendanceAction(eventId: string, attending: boolean): Promise<void> {
     const previousEvents = this.events();
     this.attendingEventId.set(eventId);
-    this.events.update(list =>
-      list.map(e =>
-        e.id === eventId
-          ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
-          : e,
-      ),
-    );
+    this.events.update(list => patchEventAttendance(list, eventId, attending));
     try {
       if (attending) {
         await this.eventService.attendEvent(eventId);

@@ -4,6 +4,7 @@ import { Observable, firstValueFrom, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiEvent, mapEvent } from '../api/api-mappers';
 import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
+import { patchEventAttendance } from '../utils/event-attendance.util';
 
 export interface CreateEventPayload {
   title: string;
@@ -205,12 +206,7 @@ export class EventService {
   }
 
   private _patchEventAttending(eventId: string, attending: boolean): void {
-    const patch = (list: ClubEvent[]) =>
-      list.map(e =>
-        e.id === eventId
-          ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
-          : e,
-      );
+    const patch = (list: ClubEvent[]) => patchEventAttendance(list, eventId, attending);
     this._allEvents.update(patch);
     this._myEvents.update(patch);
   }

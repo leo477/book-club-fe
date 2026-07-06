@@ -137,6 +137,8 @@ src/
         support.service.ts
         theme.service.ts
         upload.service.ts
+      utils/
+        event-attendance.util.ts
     features/
       auth/
         login/
