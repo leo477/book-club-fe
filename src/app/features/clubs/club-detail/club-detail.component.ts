@@ -7,6 +7,7 @@ import {
   effect,
   input,
   linkedSignal,
+  resource,
 } from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -36,6 +37,12 @@ import { BookVoteSectionComponent } from './book-vote/book-vote-section.componen
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCard } from '../../../shared/spartan/card/src';
 import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
+
+interface ClubDetailData {
+  club: Club | null;
+  members: ClubMemberDetail[];
+  events: ClubEvent[];
+}
 
 @Component({
   selector: 'app-club-detail',
@@ -70,17 +77,59 @@ export class ClubDetailComponent {
 
   readonly currentUser = this.auth.currentUser;
 
-  readonly club = signal<Club | null>(null);
-  readonly members = signal<ClubMemberDetail[]>([]);
+  private readonly _clubResource = resource<ClubDetailData, string>({
+    params: () => this.id(),
+    loader: async ({ params: clubId }) => {
+      if (this.auth.isAuthenticated()) {
+        await this.clubService.ensureMyClubsLoaded();
+      }
+      const found = await this.clubService.getClubById(clubId);
+      if (!found) {
+        return { club: null, members: [], events: [] };
+      }
+      const [membersResult, eventsResult] = await Promise.allSettled([
+        this.clubService.getClubMembers(clubId),
+        this.clubService.loadClubEvents(clubId),
+      ]);
+      if (membersResult.status === 'rejected') {
+        logWarn('Failed to load club members:', membersResult.reason);
+      }
+      if (eventsResult.status === 'rejected') {
+        logWarn('Failed to load club events:', eventsResult.reason);
+      }
+      return {
+        club: found,
+        members: membersResult.status === 'fulfilled' ? membersResult.value : [],
+        events: eventsResult.status === 'fulfilled' ? eventsResult.value : [],
+      };
+    },
+  });
+
+  readonly club = linkedSignal<Club | null>(() =>
+    this._clubResource.error() ? null : (this._clubResource.value()?.club ?? null),
+  );
+  readonly members = linkedSignal<ClubMemberDetail[]>(() =>
+    this._clubResource.error() ? [] : (this._clubResource.value()?.members ?? []),
+  );
+  readonly events = linkedSignal<ClubEvent[]>(() =>
+    this._clubResource.error() ? [] : (this._clubResource.value()?.events ?? []),
+  );
+
+  readonly isLoading = this._clubResource.isLoading;
+  readonly isClubMissing = computed(() =>
+    !this._clubResource.error() && this._clubResource.value()?.club === null,
+  );
+  readonly errorMessage = computed<string | null>(() => {
+    if (this._clubResource.error()) return 'load_failed';
+    if (this.isClubMissing()) return 'not_found';
+    return null;
+  });
+
   readonly clubBans = signal<BanRecord[]>([]);
-  readonly events = signal<ClubEvent[]>([]);
   readonly pastEvents = signal<ClubEvent[]>([]);
   readonly isPastEventsLoading = signal(false);
   readonly isPastEventsLoaded = signal(false);
   readonly activeEventsTab = signal<'upcoming' | 'history'>('upcoming');
-  readonly isLoading = signal(true);
-  readonly errorMessage = signal<string | null>(null);
-  readonly isClubMissing = signal(false);
   readonly isActionLoading = signal(false);
   readonly actionError = signal<string | null>(null);
   readonly attendingEventId = signal<string | null>(null);
@@ -150,85 +199,43 @@ export class ClubDetailComponent {
   });
 
   constructor() {
-    effect((onCleanup) => {
-      const clubId = this.id();
+    effect(() => {
+      this.id();
       this.activeEventsTab.set('upcoming');
       this.pastEvents.set([]);
       this.isPastEventsLoaded.set(false);
+    });
+
+    effect((onCleanup) => {
+      if (this._clubResource.error()) return;
+      const data = this._clubResource.value();
+      if (!data?.club) return;
+      const found = data.club;
       let cancelled = false;
       onCleanup(() => { cancelled = true; });
-      this.loadClub(clubId, () => cancelled).catch((_err: unknown) => { /* swallow */ });
-    });
-  }
 
-  private async loadClub(clubId: string, isCancelled: () => boolean): Promise<void> {
-    this.isLoading.set(true);
-    this.errorMessage.set(null);
-    this.isClubMissing.set(false);
-
-    try {
       if (this.auth.isAuthenticated()) {
-        await this.clubService.ensureMyClubsLoaded();
+        this.clubService.getMyMembership(found.id).then(
+          (m) => { if (!cancelled) this.joinRequestStatus.set(m.joinRequestStatus); },
+          (err: unknown) => logWarn('Failed to load membership:', err),
+        );
       }
-      if (isCancelled()) return;
-
-      const found = await this.clubService.getClubById(clubId);
-      if (isCancelled()) return;
-
-      if (found) {
-        await this.loadClubDetails(clubId, found, isCancelled);
-      } else {
-        this.isClubMissing.set(true);
-        this.errorMessage.set('not_found');
+      if (this.auth.currentUser()?.id === found.organizerId) {
+        this.clubService.getBans(found.id).then(
+          (bans) => { if (!cancelled) this.clubBans.set(bans); },
+          (err: unknown) => {
+            const status = (err as { status?: number })?.status;
+            const expected = status === 403 || status === 404 || err instanceof RequestTimeoutError;
+            if (!expected) {
+              logWarn('Failed to load club bans:', err);
+            }
+          },
+        );
       }
-    } catch {
-      if (!isCancelled()) {
-        this.isClubMissing.set(false);
-        this.errorMessage.set('load_failed');
-      }
-    } finally {
-      if (!isCancelled()) this.isLoading.set(false);
-    }
-  }
-
-  private async loadClubDetails(clubId: string, found: Club, isCancelled: () => boolean): Promise<void> {
-    this.club.set(found);
-    const [membersResult, eventsResult] = await Promise.allSettled([
-      this.clubService.getClubMembers(clubId),
-      this.clubService.loadClubEvents(clubId),
-    ]);
-    if (isCancelled()) return;
-    if (membersResult.status === 'fulfilled') {
-      this.members.set(membersResult.value);
-    } else {
-      logWarn('Failed to load club members:', membersResult.reason);
-    }
-    if (eventsResult.status === 'fulfilled') {
-      this.events.set(eventsResult.value);
-    } else {
-      logWarn('Failed to load club events:', eventsResult.reason);
-    }
-    if (this.auth.isAuthenticated()) {
-      this.clubService.getMyMembership(clubId).then(
-        (m) => { if (!isCancelled()) this.joinRequestStatus.set(m.joinRequestStatus); },
-        (err: unknown) => logWarn('Failed to load membership:', err),
-      );
-    }
-    if (this.auth.currentUser()?.id === found.organizerId) {
-      this.clubService.getBans(clubId).then(
-        (bans) => { if (!isCancelled()) this.clubBans.set(bans); },
-        (err: unknown) => {
-          const status = (err as { status?: number })?.status;
-          const expected = status === 403 || status === 404 || err instanceof RequestTimeoutError;
-          if (!expected) {
-            logWarn('Failed to load club bans:', err);
-          }
-        },
-      );
-    }
-    this.seo.setPageI18n('SEO.club_detail_title', {
-      ogTitleKey: 'SEO.club_detail_og_title',
-      params: { name: found.name },
+      this.seo.setPageI18n('SEO.club_detail_title', {
+        ogTitleKey: 'SEO.club_detail_og_title',
+        params: { name: found.name },
+      });
     });
   }
 
