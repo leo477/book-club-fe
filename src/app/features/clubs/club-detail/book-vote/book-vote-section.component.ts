@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
 import { BookVoteService } from '../../../../core/services/book-vote.service';
 import { BookOption, BookVoteRound } from '../../../../core/models/book-vote.model';
@@ -20,7 +20,7 @@ import { HlmButton } from '../../../../shared/spartan/button/src';
   host: { class: 'block' },
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, HlmButton],
+  imports: [FormsModule, TranslateModule, HlmButton],
   templateUrl: './book-vote-section.component.html',
 })
 export class BookVoteSectionComponent {
@@ -53,13 +53,22 @@ export class BookVoteSectionComponent {
     return total > 0 ? Math.round((option.votes / total) * 100) : 0;
   }
 
+  /** Localized plural form of "vote(s)" for the given count (uk has one/few/many, en has one/other). */
+  protected voteCountLabel(count: number): string {
+    const category = new Intl.PluralRules(this.translate.currentLang || 'uk').select(count);
+    const key = `BOOK_VOTE.votes_${category}`;
+    const label = this.translate.instant(key) as string;
+    // Fall back to the "other" form for categories a locale doesn't define (e.g. en has no "few").
+    return label === key ? (this.translate.instant('BOOK_VOTE.votes_other') as string) : label;
+  }
+
   protected async createRound(): Promise<void> {
     await this.runAction(() => this.voteService.createRound(this.clubId()));
   }
 
   protected async addOption(): Promise<void> {
     const title = this.newTitle().trim();
-    if (!title) { this.addError.set('Введіть назву книги'); return; }
+    if (!title) { this.addError.set(this.translate.instant('BOOK_VOTE.title_required_error')); return; }
     const round = this.round();
     if (!round) return;
     this.addError.set('');

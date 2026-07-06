@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { ClubService } from './club.service';
 import { AuthService } from '../auth/auth.service';
 import { environment } from '../../../environments/environment';
@@ -22,6 +23,7 @@ describe('ClubService', () => {
         provideHttpClientTesting(),
         ClubService,
         { provide: AuthService, useValue: authSpy },
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
       ],
     });
     service = TestBed.inject(ClubService);

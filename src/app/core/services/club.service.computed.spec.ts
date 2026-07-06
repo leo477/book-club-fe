@@ -2,9 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { ClubService } from './club.service';
 import { AuthService } from '../auth/auth.service';
-import { Club } from '../models/club.model';
 import { environment } from '../../../environments/environment';
 
 const API = environment.apiUrl;
@@ -37,6 +37,7 @@ describe('ClubService – computed signals and additional methods', () => {
         provideHttpClientTesting(),
         ClubService,
         { provide: AuthService, useValue: authSpy },
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
       ],
     });
     service = TestBed.inject(ClubService);
@@ -58,7 +59,7 @@ describe('ClubService – computed signals and additional methods', () => {
       const p = service.loadPublicClubs();
       httpMock.expectOne(`${API}/clubs`).flush({}, { status: 500, statusText: 'Error' });
       await p;
-      expect(service.error()).toBe('Failed to load clubs');
+      expect(service.error()).toBe('CLUBS.load_error');
     });
   });
 
@@ -74,7 +75,7 @@ describe('ClubService – computed signals and additional methods', () => {
       const p = service.loadMyClubs();
       httpMock.expectOne(`${API}/clubs/my`).flush({}, { status: 500, statusText: 'Error' });
       await p;
-      expect(service.error()).toBe('Failed to load my clubs');
+      expect(service.error()).toBe('CLUBS.load_my_error');
     });
   });
 

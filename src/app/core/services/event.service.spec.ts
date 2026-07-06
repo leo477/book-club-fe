@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { EventService } from './event.service';
 import { environment } from '../../../environments/environment';
 
@@ -30,6 +31,7 @@ describe('EventService', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         EventService,
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
       ],
     });
     service = TestBed.inject(EventService);
@@ -68,7 +70,7 @@ describe('EventService', () => {
       const p = service.loadAllEvents();
       httpMock.expectOne(`${API}/events?skip=0&limit=50`).flush({}, { status: 500, statusText: 'Error' });
       await p;
-      expect(service.error()).toBe('Failed to load events');
+      expect(service.error()).toBe('EVENTS.load_error');
       expect(service.isLoading()).toBe(false);
     });
   });
@@ -86,7 +88,7 @@ describe('EventService', () => {
       const p = service.loadMyEvents();
       httpMock.expectOne(`${API}/events/my`).flush({}, { status: 500, statusText: 'Error' });
       await p;
-      expect(service.error()).toBe('Failed to load my events');
+      expect(service.error()).toBe('EVENTS.load_my_error');
     });
   });
 

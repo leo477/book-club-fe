@@ -58,7 +58,7 @@ describe('RandomizerService', () => {
     expect(service.result()).toBeNull();
     expect(service.isSpinning()).toBe(false);
     expect(service.history()).toEqual([]);
-    expect(service.purpose()).toBe('Хто представляє книгу?');
+    expect(service.purpose()).toBe('');
   });
 
   describe('setPurpose', () => {
@@ -110,7 +110,7 @@ describe('RandomizerService', () => {
     it('throws when fewer than 2 members selected', async () => {
       service.toggleMember('u1');
       service.toggleMember('u2');
-      await expect(service.spin()).rejects.toThrow('Потрібно мінімум 2 учасники');
+      await expect(service.spin()).rejects.toThrow('RANDOMIZER.error_min');
     });
 
     it('sets isSpinning during animation and picks a result', async () => {
@@ -129,7 +129,7 @@ describe('RandomizerService', () => {
     it('only picks from selected members', async () => {
       service.toggleMember('u2');
       // Only u1 selected — needs 2, so this should throw
-      await expect(service.spin()).rejects.toThrow('Потрібно мінімум 2 учасники');
+      await expect(service.spin()).rejects.toThrow('RANDOMIZER.error_min');
     });
   });
 
@@ -173,7 +173,7 @@ describe('RandomizerService', () => {
 
     it('throws when no result to save', async () => {
       service.reset();
-      await expect(service.saveSession('c1')).rejects.toThrow('No result to save');
+      await expect(service.saveSession('c1')).rejects.toThrow('RANDOMIZER.no_result_error');
     });
   });
 
@@ -193,7 +193,7 @@ describe('RandomizerService', () => {
         ],
       });
       const unauthService = TestBed.inject(RandomizerService);
-      await expect(unauthService.saveSession('c1')).rejects.toThrow('Not authenticated');
+      await expect(unauthService.saveSession('c1')).rejects.toThrow('RANDOMIZER.not_authenticated_error');
     });
   });
 

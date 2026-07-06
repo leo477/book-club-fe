@@ -169,7 +169,9 @@
     "empty_desc": "Поки що не створено жодного клубу. Зазирніть пізніше!",
     "empty_search_title": "Нічого не знайдено",
     "empty_search_desc": "Жоден клуб не відповідає вашому пошуку. Спробуйте інші ключові слова.",
-    "my_clubs_empty_desc": "Приєднайтесь до клубу, щоб побачити його тут."
+    "my_clubs_empty_desc": "Приєднайтесь до клубу, щоб побачити його тут.",
+    "load_error": "Не вдалося завантажити клуби",
+    "load_my_error": "Не вдалося завантажити мої клуби"
   },
   "CLUB_DETAIL": {
     "about": "Про клуб",
@@ -258,7 +260,9 @@
     "public_desc": "Хто завгодно може виявити та приєднатися",
     "cover_url_label": "URL обкладинки",
     "cover_url_placeholder": "https://example.com/cover.jpg",
-    "cover_url_hint": "Вставте публічне посилання на зображення (JPG, PNG, WebP)"
+    "cover_url_hint": "Вставте публічне посилання на зображення (JPG, PNG, WebP)",
+    "not_found": "Клуб не знайдено.",
+    "update_error": "Не вдалося оновити клуб."
   },
   "FOOTER": {
     "privacy": "Конфіденційність",
@@ -376,7 +380,10 @@
     "title": "Рандомайзер",
     "no_history": "Немає результатів",
     "error_min": "Оберіть щонайменше 2 учасників",
-    "winner": "Переможець"
+    "winner": "Переможець",
+    "default_purpose": "Хто представляє книгу?",
+    "not_authenticated_error": "Потрібно увійти в акаунт",
+    "no_result_error": "Немає результату для збереження"
   },
   "EVENTS": {
     "subtitle": "Відкривайте та приєднуйтесь до майбутніх зустрічей",
@@ -418,7 +425,9 @@
     "book_author": "Про автора",
     "book_published": "Видано",
     "open_in_maps": "Відкрити в Google Maps",
-    "route_to_venue": "Маршрут до місця після події"
+    "route_to_venue": "Маршрут до місця після події",
+    "load_error": "Не вдалося завантажити події",
+    "load_my_error": "Не вдалося завантажити мої події"
   },
   "EVENT": {
     "event_chat_btn": "Чат події",
@@ -465,7 +474,8 @@
     "after_venue_notes_placeholder": "Необов'язкові нотатки",
     "cancel": "Скасувати",
     "submit": "Створити подію",
-    "submitting": "Створення…"
+    "submitting": "Створення…",
+    "save_error": "Не вдалося зберегти зміни. Спробуйте ще раз."
   },
   "QUIZ": {
     "title": "Квізи",
@@ -747,5 +757,39 @@
     "action_reject": "Відхилити",
     "action_move_to_in_progress": "Почати роботу",
     "action_move_to_done": "Позначити готовим"
+  },
+  "BOOK_VOTE": {
+    "section_title": "Голосування за наступну книгу",
+    "close_round": "Закрити голосування",
+    "new_round": "Нове голосування",
+    "no_round_prompt": "Запропонуйте учасникам клубу обрати наступну книгу",
+    "start_round": "Почати голосування",
+    "no_options_prompt": "Додайте книги для голосування нижче",
+    "vote": "Голосувати",
+    "voted": "Проголосовано",
+    "remove_option_aria": "Видалити варіант",
+    "votes_one": "голос",
+    "votes_few": "голоси",
+    "votes_many": "голосів",
+    "votes_other": "голосів",
+    "add_book_heading": "Додати книгу",
+    "title_placeholder": "Назва книги *",
+    "title_aria": "Назва книги",
+    "author_placeholder": "Автор",
+    "author_aria": "Автор",
+    "add_button": "Додати",
+    "winner_badge": "Переможець",
+    "no_options_closed": "Варіанти не додавалися",
+    "title_required_error": "Введіть назву книги"
+  },
+  "TITLES": {
+    "privacy": "Конфіденційність | Book Club",
+    "terms": "Умови використання | Book Club",
+    "events": "Події | Book Club",
+    "support": "Підтримка | Book Club",
+    "manage": "Керування | Book Club",
+    "profile": "Профіль | Book Club",
+    "chats": "Чати | Book Club",
+    "not_found": "Сторінку не знайдено | Book Club"
   }
 }

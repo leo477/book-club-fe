@@ -169,7 +169,9 @@
     "empty_desc": "No clubs have been created yet. Check back soon!",
     "empty_search_title": "No matches found",
     "empty_search_desc": "No clubs match your search. Try different keywords.",
-    "my_clubs_empty_desc": "Join a club to see it here."
+    "my_clubs_empty_desc": "Join a club to see it here.",
+    "load_error": "Failed to load clubs",
+    "load_my_error": "Failed to load my clubs"
   },
   "CLUB_DETAIL": {
     "about": "About",
@@ -258,7 +260,9 @@
     "public_desc": "Anyone can discover and join",
     "cover_url_label": "Cover image URL",
     "cover_url_placeholder": "https://example.com/cover.jpg",
-    "cover_url_hint": "Paste a public image link (JPG, PNG, WebP)"
+    "cover_url_hint": "Paste a public image link (JPG, PNG, WebP)",
+    "not_found": "Club not found.",
+    "update_error": "Failed to update club."
   },
   "FOOTER": {
     "privacy": "Privacy",
@@ -376,7 +380,10 @@
     "title": "Randomizer",
     "no_history": "No results yet",
     "error_min": "Select at least 2 members",
-    "winner": "Winner"
+    "winner": "Winner",
+    "default_purpose": "Who presents the book?",
+    "not_authenticated_error": "You need to be signed in",
+    "no_result_error": "No result to save"
   },
   "EVENTS": {
     "subtitle": "Discover and join upcoming book club gatherings",
@@ -418,7 +425,9 @@
     "book_author": "About the author",
     "book_published": "Published",
     "open_in_maps": "Open in Google Maps",
-    "route_to_venue": "Route to after-event venue"
+    "route_to_venue": "Route to after-event venue",
+    "load_error": "Failed to load events",
+    "load_my_error": "Failed to load my events"
   },
   "EVENT": {
     "event_chat_btn": "Event Chat",
@@ -465,7 +474,8 @@
     "after_venue_notes_placeholder": "Optional notes",
     "cancel": "Cancel",
     "submit": "Create Event",
-    "submitting": "Creating…"
+    "submitting": "Creating…",
+    "save_error": "Failed to save changes. Please try again."
   },
   "QUIZ": {
     "title": "Quizzes",
@@ -747,5 +757,37 @@
     "action_reject": "Reject",
     "action_move_to_in_progress": "Start work",
     "action_move_to_done": "Mark done"
+  },
+  "BOOK_VOTE": {
+    "section_title": "Vote for the next book",
+    "close_round": "Close voting",
+    "new_round": "New voting round",
+    "no_round_prompt": "Suggest club members choose the next book",
+    "start_round": "Start voting",
+    "no_options_prompt": "Add books to vote for below",
+    "vote": "Vote",
+    "voted": "Voted",
+    "remove_option_aria": "Remove option",
+    "votes_one": "vote",
+    "votes_other": "votes",
+    "add_book_heading": "Add a book",
+    "title_placeholder": "Book title *",
+    "title_aria": "Book title",
+    "author_placeholder": "Author",
+    "author_aria": "Author",
+    "add_button": "Add",
+    "winner_badge": "Winner",
+    "no_options_closed": "No options were added",
+    "title_required_error": "Enter a book title"
+  },
+  "TITLES": {
+    "privacy": "Privacy Policy | Book Club",
+    "terms": "Terms of Use | Book Club",
+    "events": "Events | Book Club",
+    "support": "Support | Book Club",
+    "manage": "Manage | Book Club",
+    "profile": "Profile | Book Club",
+    "chats": "Chats | Book Club",
+    "not_found": "Page Not Found | Book Club"
   }
 }

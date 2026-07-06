@@ -11,7 +11,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { RandomizerService } from '../../core/services/randomizer.service';
 import { InitialsPipe } from '../../shared/pipes/initials.pipe';
@@ -30,12 +30,13 @@ export class RandomizerComponent implements OnInit {
   protected readonly randomizerService = inject(RandomizerService);
   protected readonly authService = inject(AuthService);
   private readonly route = inject(ActivatedRoute);
+  private readonly translate = inject(TranslateService);
 
   protected readonly isSaving = signal(false);
   protected readonly errorMessage = signal('');
   protected clubId = '';
 
-  protected readonly purposeControl = new FormControl('Хто представляє книгу?', {
+  protected readonly purposeControl = new FormControl(this.translate.instant('RANDOMIZER.default_purpose') as string, {
     nonNullable: true,
     validators: [Validators.required],
   });
@@ -66,7 +67,7 @@ export class RandomizerComponent implements OnInit {
   protected spin(): void {
     this.errorMessage.set('');
     this.randomizerService.spin().catch(err => {
-      this.errorMessage.set((err as Error).message);
+      this.errorMessage.set(this.translate.instant((err as Error).message));
     });
   }
 
@@ -78,7 +79,7 @@ export class RandomizerComponent implements OnInit {
       .then(() => this.isSaving.set(false))
       .catch(err => {
         this.isSaving.set(false);
-        this.errorMessage.set((err as Error).message);
+        this.errorMessage.set(this.translate.instant((err as Error).message));
       });
   }
 

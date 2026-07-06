@@ -54,7 +54,9 @@ export class RandomizerService {
   private readonly _result = signal<MemberCandidate | null>(null);
   private readonly _isSpinning = signal(false);
   private readonly _history = signal<RandomizerSession[]>([]);
-  private readonly _purpose = signal('Хто представляє книгу?');
+  // Overwritten immediately by RandomizerComponent's (translated) form default;
+  // this is just the pre-hydration value for the very first render.
+  private readonly _purpose = signal('');
 
   readonly candidates = this._candidates.asReadonly();
   readonly selectedIds = this._selectedIds.asReadonly();
@@ -94,7 +96,8 @@ export class RandomizerService {
 
   async spin(): Promise<void> {
     const selected = this._candidates().filter(m => this._selectedIds().has(m.userId));
-    if (selected.length < 2) throw new Error('Потрібно мінімум 2 учасники');
+    // Message is an i18n key, not literal text — the component translates it.
+    if (selected.length < 2) throw new Error('RANDOMIZER.error_min');
 
     this._isSpinning.set(true);
     this._result.set(null);
@@ -111,11 +114,12 @@ export class RandomizerService {
   }
 
   async saveSession(clubId: string): Promise<void> {
+    // Messages are i18n keys, not literal text — the component translates them.
     const user = this.auth.currentUser();
-    if (!user) throw new Error('Not authenticated');
+    if (!user) throw new Error('RANDOMIZER.not_authenticated_error');
 
     const result = this._result();
-    if (!result) throw new Error('No result to save');
+    if (!result) throw new Error('RANDOMIZER.no_result_error');
 
     const body = {
       purpose: this._purpose(),
