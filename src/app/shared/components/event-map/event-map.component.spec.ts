@@ -60,6 +60,7 @@ class FakeMapsConfigService {
   readonly mapId = this._mapId.asReadonly();
   setLoaded(v: boolean) { this._loaded.set(v); }
   setMapId(v: string) { this._mapId.set(v); }
+  ensureLoaded = vi.fn().mockResolvedValue(undefined);
 }
 
 class FakeGeocodingService {

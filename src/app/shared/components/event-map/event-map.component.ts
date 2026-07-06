@@ -50,6 +50,8 @@ export class EventMapComponent {
   }
 
   constructor() {
+    void this.maps.ensureLoaded();
+
     effect(onCleanup => {
       const venue = this.afterMeetingVenue();
       if (venue?.lat != null && venue?.lng != null) {
