@@ -488,6 +488,7 @@ supabase/
 angular.json
 ARCHITECTURE-REVIEW.md
 AUDIT-CHECKLIST.md
+AUDIT-FE-2026-07-06.md
 AUDIT-REPORT.md
 CLAUDE.md
 components.json
