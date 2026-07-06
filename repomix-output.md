@@ -121,6 +121,8 @@ src/
         book-cover.service.ts
         book-search.service.ts
         book-vote.service.ts
+        chat-api.service.ts
+        chat-socket.service.ts
         chat.service.ts
         club.service.ts
         event.service.ts

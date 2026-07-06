@@ -1,50 +1,26 @@
 import { Injectable, signal, computed, inject, effect, untracked, ApplicationRef, DestroyRef } from '@angular/core';
-import { HttpClient, HttpContext } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
-import { firstValueFrom } from 'rxjs';
 import { ChatItem, ChatMessage, ChatRoom, UnreadDivider } from '../models/chat.model';
-import { SKIP_AUTH_REDIRECT } from '../interceptors/auth.interceptor';
 import { extractApiError } from '../api/api-error.util';
-import { environment } from '../../../environments/environment';
 import { AuthService } from '../auth/auth.service';
 import { TokenStore } from '../auth/token.store';
 import { ClubService } from './club.service';
-
-// ── Raw API shapes (snake_case) ──────────────────────────────────────────────
-
-interface ApiChatRoom {
-  id: string;
-  name: string;
-  eventId?: string;
-}
-
-interface ApiChatMessage {
-  id: string;
-  senderId: string;
-  senderName: string;
-  senderDisplayName?: string;
-  display_name?: string;
-  sender_username?: string;
-  text: string;
-  timestamp: string; // ISO-8601
-  isSystem?: boolean;
-}
-
-interface WsEnvelope { type: string; payload: unknown; }
+import { ChatApi, ApiChatMessage } from './chat-api.service';
+import { ChatSocket } from './chat-socket.service';
 
 // ── Service ──────────────────────────────────────────────────────────────────
 
 @Injectable({ providedIn: 'root' })
 export class ChatService {
-  private readonly http = inject(HttpClient);
   private readonly translate = inject(TranslateService);
-  private readonly api = environment.apiUrl;
   private readonly _appRef = inject(ApplicationRef);
   private readonly _destroyRef = inject(DestroyRef);
   private readonly _auth = inject(AuthService);
   private readonly _clubService = inject(ClubService);
   private readonly _tokenStore = inject(TokenStore);
+  private readonly _api = inject(ChatApi);
+  private readonly _socket = inject(ChatSocket);
 
   // ── Private writable signals ───────────────────────────────────────────────
 
@@ -63,11 +39,6 @@ export class ChatService {
   private readonly _lastReadMap = signal<Record<string, string | null>>({});
   /** roomId → number of unread messages (from server, reset locally on open). */
   private readonly _roomUnreadCounts = signal<Record<string, number>>({});
-
-  private _ws: WebSocket | null = null;
-  private _reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private _reconnectDelay = 1_000;
-  private _activeRoomToken: { roomId: string; token: string } | null = null;
 
   private currentUserId: string | null = null;
   private _audioContext: AudioContext | null = null;
@@ -177,18 +148,11 @@ export class ChatService {
     if (userId !== undefined) {
       this.currentUserId = userId;
     }
-    firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${clubId}/chat/rooms`))
+    this._api.getClubRooms(clubId)
       .then(raw => {
         const rooms: ChatRoom[] = raw.map(r => ({ id: r.id, name: r.name, clubId, eventId: r.eventId }));
         this._rooms.set(rooms);
-        const currentId = this._activeRoomId();
-        if (!currentId || !rooms.some(r => r.id === currentId)) {
-          const first = rooms[0];
-          if (first) {
-            this._activeRoomId.set(first.id);
-            this.loadMessages(first.id);
-          }
-        }
+        this._autoSelectFirstRoom(rooms);
       })
       .catch((err: unknown) => {
         console.error('[ChatService] loadRooms error', err);
@@ -202,7 +166,7 @@ export class ChatService {
 
     const multipleClubs = clubs.length > 1;
     const requests = clubs.map(club =>
-      firstValueFrom(this.http.get<ApiChatRoom[]>(`${this.api}/clubs/${club.id}/chat/rooms`))
+      this._api.getClubRooms(club.id)
         .then(raw => raw.map(r => ({
           id: r.id,
           name: multipleClubs ? `${club.name} · ${r.name}` : r.name,
@@ -215,14 +179,7 @@ export class ChatService {
     Promise.all(requests).then(results => {
       const allRooms = results.flat();
       this._rooms.set(allRooms);
-      const currentId = this._activeRoomId();
-      if (!currentId || !allRooms.some(r => r.id === currentId)) {
-        const first = allRooms[0];
-        if (first) {
-          this._activeRoomId.set(first.id);
-          this.loadMessages(first.id);
-        }
-      }
+      this._autoSelectFirstRoom(allRooms);
     }).catch((err: unknown) => {
       console.error('[ChatService] loadAllClubRooms error', err);
       this.notifyError(err);
@@ -231,15 +188,7 @@ export class ChatService {
 
   /** Fetch messages for a room and update the messages map. */
   loadMessages(roomId: string, params?: { before?: string; limit?: number }): void {
-    const query: Record<string, string> = {};
-    if (params?.before) query['before'] = params.before;
-    if (params?.limit != null) query['limit'] = String(params.limit);
-
-    firstValueFrom(
-      this.http.get<ApiChatMessage[]>(`${this.api}/chat/rooms/${roomId}/messages`, {
-        params: query,
-      }),
-    )
+    this._api.getMessages(roomId, params)
       .then(raw => {
         const msgs: ChatMessage[] = raw.map(m => this.mapMessage(m));
         this._messages.update(map => ({ ...map, [roomId]: msgs }));
@@ -251,85 +200,22 @@ export class ChatService {
   }
 
   connectRoom(roomId: string, token: string): void {
-    // Idempotent: if a socket for the same room/token is already live, don't
-    // tear it down — closing a CONNECTING socket triggers the browser's
-    // "closed before the connection is established" warning and can loop.
-    if (
-      this._ws &&
-      this._activeRoomToken?.roomId === roomId &&
-      this._activeRoomToken.token === token &&
-      (this._ws.readyState === WebSocket.OPEN || this._ws.readyState === WebSocket.CONNECTING)
-    ) {
-      return;
-    }
-    this.disconnectRoom();
-    this._activeRoomToken = { roomId, token };
-    this._ws = new WebSocket(environment.wsUrl + '/chat/rooms/' + roomId);
-
-    this._ws.onopen = () => {
-      this._reconnectDelay = 1_000;
-      this._ws?.send(JSON.stringify({ type: 'auth', token }));
-    };
-
-    this._ws.onmessage = (event: MessageEvent) => {
-      const envelope = JSON.parse(event.data as string) as WsEnvelope;
-
-      // ── Presence events (Feature 4) ──────────────────────────────────────
-      if (envelope.type === 'presence') {
-        const p = envelope.payload as { userId: string; status: 'online' | 'offline' };
-        this._presenceMap.update(m => { const n = new Map(m); n.set(p.userId, p.status); return n; });
-        return;
-      }
-      if (envelope.type === 'presence_snapshot') {
-        const entries = envelope.payload as { userId: string; status: 'online' | 'offline' }[];
+    this._socket.connect(roomId, token, {
+      onMessage: payload => this._onWsMessage(roomId, payload as ApiChatMessage),
+      onPresence: (userId, status) => {
+        this._presenceMap.update(m => { const n = new Map(m); n.set(userId, status); return n; });
+      },
+      onPresenceSnapshot: entries => {
         const map = new Map<string, 'online' | 'offline'>();
         for (const e of entries) map.set(e.userId, e.status);
         this._presenceMap.set(map);
-        return;
-      }
-
-      if (envelope.type !== 'message') return;
-
-      const msg = this.mapMessage(envelope.payload as ApiChatMessage);
-      this._messages.update(map => {
-        const existing = map[roomId] ?? [];
-        if (existing.some(m => m.id === msg.id)) return map;
-        const withoutTemp = existing.filter(
-          m => !(m.id.startsWith('temp-') && m.senderId === msg.senderId && m.text === msg.text),
-        );
-        return { ...map, [roomId]: [...withoutTemp, msg] };
-      });
-      // Feature 1+2: only count incoming messages from others, and only when
-      // the chat is not visible (widget closed AND not on /chats page).
-      if (!msg.isOwn && !this._isOpen() && !this._isChatsPage()) {
-        this._unreadCount.update(n => n + 1);
-        this._hasNewMessage.set(true);
-        this._playBeep();
-      }
-    };
-
-    this._ws.onclose = () => {
-      if (!this._activeRoomToken) return;
-      this._reconnectTimer = setTimeout(() => {
-        if (this._activeRoomToken) {
-          this._reconnectDelay = Math.min(this._reconnectDelay * 2, 30_000);
-          this.connectRoom(this._activeRoomToken.roomId, this._activeRoomToken.token);
-        }
-      }, this._reconnectDelay);
-    };
-
-    this._ws.onerror = () => this._ws?.close();
+      },
+    });
   }
 
   disconnectRoom(): void {
-    this._activeRoomToken = null;
     this._presenceMap.set(new Map());
-    if (this._reconnectTimer) {
-      clearTimeout(this._reconnectTimer);
-      this._reconnectTimer = null;
-    }
-    this._ws?.close();
-    this._ws = null;
+    this._socket.disconnect();
   }
 
   toggleOpen(): void {
@@ -362,11 +248,7 @@ export class ChatService {
    */
   fetchUnreadCounts(roomIds: string[]): void {
     for (const roomId of roomIds) {
-      firstValueFrom(
-        this.http.get<{ room_id: string; unread_count: number; last_read_message_id: string | null }>(
-          `${this.api}/chat/rooms/${roomId}/unread-count`,
-        ),
-      )
+      this._api.getUnreadCount(roomId)
         .then(data => {
           this._lastReadMap.update(m => ({ ...m, [roomId]: data.last_read_message_id ?? null }));
           this._roomUnreadCounts.update(m => ({ ...m, [roomId]: data.unread_count }));
@@ -388,9 +270,7 @@ export class ChatService {
     this._roomUnreadCounts.update(m => ({ ...m, [roomId]: 0 }));
     // Never POST an optimistic temp id — the server expects a confirmed UUID.
     if (lastMsg.id.startsWith('temp-')) return;
-    firstValueFrom(
-      this.http.post(`${this.api}/chat/rooms/${roomId}/read`, { last_read_message_id: lastMsg.id }),
-    ).catch(() => undefined);
+    this._api.markRead(roomId, lastMsg.id).catch(() => undefined);
   }
 
   clearRooms(): void {
@@ -432,9 +312,7 @@ export class ChatService {
     };
     this._messages.update(map => ({ ...map, [roomId]: [...(map[roomId] ?? []), optimistic] }));
 
-    firstValueFrom(
-      this.http.post<ApiChatMessage>(`${this.api}/chat/rooms/${roomId}/messages`, { text }),
-    )
+    this._api.sendMessage(roomId, text)
       .then(saved => {
         const real = this.mapMessage(saved);
         // Replace optimistic entry with the confirmed message from the server.
@@ -457,9 +335,7 @@ export class ChatService {
   deleteMessage(messageId: string): void {
     const roomId = this._activeRoomId();
     if (!roomId) return;
-    firstValueFrom(
-      this.http.delete(`${this.api}/chat/rooms/${roomId}/messages/${messageId}`),
-    )
+    this._api.deleteMessage(roomId, messageId)
       .then(() => {
         this._messages.update(map => ({
           ...map,
@@ -475,12 +351,7 @@ export class ChatService {
   banUserFromChat(userId: string, durationSeconds: number): void {
     const roomId = this._activeRoomId();
     if (!roomId) return;
-    firstValueFrom(
-      this.http.post(`${this.api}/chat/rooms/${roomId}/ban`, {
-        user_id: userId,
-        duration_seconds: durationSeconds,
-      }),
-    )
+    this._api.banUser(roomId, userId, durationSeconds)
       .then(() => {
         this._messages.update(map => ({
           ...map,
@@ -494,9 +365,7 @@ export class ChatService {
   }
 
   async deleteRoom(roomId: string): Promise<void> {
-    await firstValueFrom(
-      this.http.delete(`${this.api}/chat/rooms/${roomId}`),
-    );
+    await this._api.deleteRoom(roomId);
     this._rooms.update(rooms => rooms.filter(r => r.id !== roomId));
     if (this._activeRoomId() === roomId) {
       this._activeRoomId.set(null);
@@ -505,9 +374,7 @@ export class ChatService {
   }
 
   async createRoom(clubId: string, name: string): Promise<ChatRoom> {
-    const raw = await firstValueFrom(
-      this.http.post<ApiChatRoom>(`${this.api}/clubs/${clubId}/chat/rooms`, { name }),
-    );
+    const raw = await this._api.createRoom(clubId, name);
     const room: ChatRoom = { id: raw.id, name: raw.name, clubId, eventId: raw.eventId };
     this._rooms.update(rooms => [...rooms, room]);
     return room;
@@ -523,11 +390,7 @@ export class ChatService {
 
   async getEventRoom(eventId: string, clubId = ''): Promise<ChatRoom | null> {
     try {
-      const raw = await firstValueFrom(
-        this.http.get<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`, {
-          context: new HttpContext().set(SKIP_AUTH_REDIRECT, true),
-        }),
-      );
+      const raw = await this._api.getEventRoom(eventId);
       const room: ChatRoom = { id: raw.id, name: raw.name, clubId, eventId: raw.eventId };
       this._upsertRoom(room);
       return room;
@@ -537,15 +400,43 @@ export class ChatService {
   }
 
   async createEventChatRoom(eventId: string, clubId = ''): Promise<ChatRoom> {
-    const raw = await firstValueFrom(
-      this.http.post<ApiChatRoom>(`${this.api}/events/${eventId}/chat/room`, {}),
-    );
+    const raw = await this._api.createEventChatRoom(eventId);
     const room: ChatRoom = { id: raw.id, name: raw.name, clubId, eventId: raw.eventId };
     this._upsertRoom(room);
     return room;
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
+
+  private _autoSelectFirstRoom(rooms: ChatRoom[]): void {
+    const currentId = this._activeRoomId();
+    if (!currentId || !rooms.some(r => r.id === currentId)) {
+      const first = rooms[0];
+      if (first) {
+        this._activeRoomId.set(first.id);
+        this.loadMessages(first.id);
+      }
+    }
+  }
+
+  private _onWsMessage(roomId: string, payload: ApiChatMessage): void {
+    const msg = this.mapMessage(payload);
+    this._messages.update(map => {
+      const existing = map[roomId] ?? [];
+      if (existing.some(m => m.id === msg.id)) return map;
+      const withoutTemp = existing.filter(
+        m => !(m.id.startsWith('temp-') && m.senderId === msg.senderId && m.text === msg.text),
+      );
+      return { ...map, [roomId]: [...withoutTemp, msg] };
+    });
+    // Feature 1+2: only count incoming messages from others, and only when
+    // the chat is not visible (widget closed AND not on /chats page).
+    if (!msg.isOwn && !this._isOpen() && !this._isChatsPage()) {
+      this._unreadCount.update(n => n + 1);
+      this._hasNewMessage.set(true);
+      this._playBeep();
+    }
+  }
 
   /** Merge an event/club room into `_rooms`, deduped by id, so event rooms
    * feed the same room-list-driven pipelines (unread polling, chats list) as

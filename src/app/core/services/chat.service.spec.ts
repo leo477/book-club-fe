@@ -9,6 +9,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from '../auth/auth.service';
 import { TokenStore } from '../auth/token.store';
 import { ClubService } from './club.service';
+import { ChatSocket } from './chat-socket.service';
 
 function makeAuthService(currentUser: { id: string } | null = null) {
   return { currentUser: signal(currentUser) };
@@ -916,16 +917,17 @@ describe('ChatService', () => {
       vi.useRealTimers();
     });
 
-    it('onopen resets _reconnectDelay to 1000', () => {
+    it('onopen resets the socket reconnect delay to 1000', () => {
       service.connectRoom('room-42', 'tok');
       const ws = MockWebSocket.instance;
       if (!ws) throw new Error('MockWebSocket not instantiated');
 
+      const socket = TestBed.inject(ChatSocket);
       // Simulate a previous backoff that doubled the delay
-      (service as unknown as { _reconnectDelay: number })._reconnectDelay = 8_000;
+      (socket as unknown as { _reconnectDelay: number })._reconnectDelay = 8_000;
       ws.onopen?.();
 
-      expect((service as unknown as { _reconnectDelay: number })._reconnectDelay).toBe(1_000);
+      expect((socket as unknown as { _reconnectDelay: number })._reconnectDelay).toBe(1_000);
     });
 
     it('onerror calls ws.close()', () => {
