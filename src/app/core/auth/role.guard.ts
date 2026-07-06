@@ -2,7 +2,6 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { toObservable } from '@angular/core/rxjs-interop';
 import { filter, map, take } from 'rxjs';
-import { toast } from '@spartan-ng/brain/sonner';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from './auth.service';
 import { UserRole } from '../models/user.model';
@@ -24,7 +23,9 @@ export const roleGuard =
     const evaluate = () => {
       const role = auth.userRole();
       if (role && ALLOWED_ROLES[requiredRole].includes(role)) return true;
-      toast.error(translate.instant('ERRORS.organizers_only') as string);
+      import('@spartan-ng/brain/sonner')
+        .then(({ toast }) => toast.error(translate.instant('ERRORS.organizers_only') as string))
+        .catch(() => { /* best-effort */ });
       return router.createUrlTree(['/clubs']);
     };
 

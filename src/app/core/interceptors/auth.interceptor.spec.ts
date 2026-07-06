@@ -165,12 +165,13 @@ describe('authInterceptor', () => {
     expect(routerSpy.navigate).toHaveBeenCalledWith(['/clubs']);
   });
 
-  it('shows toast on 500', () => {
+  it('shows toast on 500', async () => {
     setup('my-token');
     vi.spyOn(toast, 'error').mockImplementation(() => '');
     http.get('/api/test').subscribe({ error: vi.fn() });
     const req = httpMock.expectOne('/api/test');
     req.flush({ detail: 'Server Error' }, { status: 500, statusText: 'Internal Server Error' });
+    await new Promise(resolve => setTimeout(resolve));
     expect(toast.error).toHaveBeenCalledWith('ERRORS.serverError');
   });
 
@@ -198,7 +199,7 @@ describe('authInterceptor', () => {
     expect(toast.error).not.toHaveBeenCalled();
   });
 
-  it('shows toast and throws RequestTimeoutError when next$ emits TimeoutError', () => {
+  it('shows toast and throws RequestTimeoutError when next$ emits TimeoutError', async () => {
     setup(null);
     vi.spyOn(toast, 'error').mockImplementation(() => '');
     let caughtError: unknown;
@@ -211,6 +212,7 @@ describe('authInterceptor', () => {
       });
     });
 
+    await new Promise(resolve => setTimeout(resolve));
     expect(toast.error).toHaveBeenCalled();
     expect(caughtError).toBeInstanceOf(RequestTimeoutError);
     expect((caughtError as RequestTimeoutError).translationKey).toBe('ERRORS.timeout');

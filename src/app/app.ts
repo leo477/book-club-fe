@@ -2,14 +2,14 @@ import { Component, ChangeDetectionStrategy, signal, DestroyRef, inject } from '
 import { RouterOutlet, Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LiveAnnouncer } from '@angular/cdk/a11y';
-import { HlmToasterImports } from './shared/spartan';
+import { HlmToaster } from './shared/spartan/sonner/src';
 import { LoadingSpinnerComponent } from './shared/components/loading-spinner/loading-spinner.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterOutlet, ...HlmToasterImports, LoadingSpinnerComponent],
+  imports: [RouterOutlet, HlmToaster, LoadingSpinnerComponent],
   templateUrl: './app.html',
 })
 export class App {

@@ -10,7 +10,6 @@ import {
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
 import {
   Observable,
   TimeoutError,
@@ -142,6 +141,7 @@ async function handleHttpSideEffects(
       console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
     }
     if (!suppress) {
+      const { toast } = await import('@spartan-ng/brain/sonner');
       toast.error(translate.instant('ERRORS.serverError') as string);
     }
   }
@@ -220,7 +220,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
         const skipAuthRedirect = request.context.get(SKIP_AUTH_REDIRECT);
         if (error instanceof TimeoutError) {
           if (!suppress) {
-            toast.error(translate.instant('ERRORS.timeout') as string);
+            import('@spartan-ng/brain/sonner')
+              .then(({ toast }) => toast.error(translate.instant('ERRORS.timeout') as string))
+              .catch(() => { /* best-effort */ });
           }
           return throwError(() => new RequestTimeoutError());
         }
