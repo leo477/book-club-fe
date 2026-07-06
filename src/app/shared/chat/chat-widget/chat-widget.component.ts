@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, effect, computed, HostListener, ElementRef, untracked } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, effect, computed, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -7,7 +7,6 @@ import { Router, NavigationEnd } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
-import { TokenStore } from '../../../core/auth/token.store';
 import { ChatService } from '../../../core/services/chat.service';
 import { ClubService } from '../../../core/services/club.service';
 import { extractApiError } from '../../../core/api/api-error.util';
@@ -25,7 +24,6 @@ export class ChatWidgetComponent {
   protected readonly auth = inject(AuthService);
   protected readonly chat = inject(ChatService);
   private readonly clubService = inject(ClubService);
-  private readonly tokenStore = inject(TokenStore);
   private readonly router = inject(Router);
   private readonly el = inject(ElementRef);
   private readonly translate = inject(TranslateService);
@@ -111,8 +109,6 @@ export class ChatWidgetComponent {
     return needsShift ? 'bottom-40 right-6' : 'bottom-24 right-6';
   });
 
-  private _clubsLoadTriggered = false;
-
   constructor() {
     effect(() => {
       const onChats = this.isChatsPage();
@@ -131,36 +127,9 @@ export class ChatWidgetComponent {
       }
     });
 
+    // Room-list connection/bootstrap lives in ChatService (single orchestrator);
+    // this effect only reacts to the resulting room state for widget-local UI.
     effect(() => {
-      const user = this.auth.currentUser();
-      if (!user) {
-        this._clubsLoadTriggered = false;
-        this.chat.clearRooms();
-        return;
-      }
-
-      const clubs = this.clubService.myClubs();
-      if (clubs.length > 0) {
-        this._clubsLoadTriggered = false;
-        this.chat.loadAllClubRooms(clubs, user.id);
-      } else if (!this._clubsLoadTriggered) {
-        this._clubsLoadTriggered = true;
-        this.clubService.loadMyClubs().catch(() => undefined);
-      }
-    });
-
-    effect(() => {
-      const roomId = this.chat.activeRoomId();
-      // Read the token untracked so this effect only re-runs when the active
-      // room changes — not on every token re-emit (e.g. after refresh), which
-      // would tear down and reopen a still-connecting socket.
-      const token = untracked(() => this.tokenStore.token());
-      if (roomId && token) {
-        this.chat.connectRoom(roomId, token);
-      } else if (!roomId) {
-        this.chat.disconnectRoom();
-      }
-
       if (this.chat.isOpen()) {
         const rooms = this.chat.rooms();
         if (rooms.length > 1 && !this.chat.activeRoomId()) {

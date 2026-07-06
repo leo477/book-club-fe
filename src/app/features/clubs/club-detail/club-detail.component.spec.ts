@@ -20,7 +20,7 @@ describe('ClubDetailComponent', () => {
     loadClubEvents: ReturnType<typeof vi.fn>;
     clubs: ReturnType<typeof vi.fn>; myClubs: ReturnType<typeof vi.fn>;
     myClubIds: ReturnType<typeof vi.fn>; joinClub?: ReturnType<typeof vi.fn>;
-    leaveClub?: ReturnType<typeof vi.fn>;
+    leaveClub?: ReturnType<typeof vi.fn>; loadMyClubs: ReturnType<typeof vi.fn>;
     getMyMembership: ReturnType<typeof vi.fn>; getJoinRequests: ReturnType<typeof vi.fn>;
     approveJoinRequest: ReturnType<typeof vi.fn>; rejectJoinRequest: ReturnType<typeof vi.fn>;
   };
@@ -41,6 +41,7 @@ describe('ClubDetailComponent', () => {
       clubs: vi.fn().mockReturnValue([]),
       myClubs: vi.fn().mockReturnValue([]),
       myClubIds: vi.fn().mockReturnValue(new Set()),
+      loadMyClubs: vi.fn().mockResolvedValue(undefined),
       getMyMembership: vi.fn().mockResolvedValue({ isMember: false, role: null, joinRequestStatus: 'none' }),
       getJoinRequests: vi.fn().mockResolvedValue([]),
       approveJoinRequest: vi.fn().mockResolvedValue(undefined),

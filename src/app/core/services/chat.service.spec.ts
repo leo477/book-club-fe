@@ -1,11 +1,26 @@
 import { TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection, WritableSignal } from '@angular/core';
+import { provideZonelessChangeDetection, signal, WritableSignal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { ChatService } from './chat.service';
 import { ChatMessage, ChatRoom } from '../models/chat.model';
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../auth/auth.service';
+import { TokenStore } from '../auth/token.store';
+import { ClubService } from './club.service';
+
+function makeAuthService(currentUser: { id: string } | null = null) {
+  return { currentUser: signal(currentUser) };
+}
+
+function makeClubService(myClubs: { id: string; name: string }[] = []) {
+  return { myClubs: signal(myClubs), loadMyClubs: vi.fn().mockResolvedValue(undefined) };
+}
+
+function makeTokenStore(token: string | null = null) {
+  return { token: signal(token) };
+}
 
 // ── MockWebSocket ─────────────────────────────────────────────────────────────
 
@@ -90,10 +105,14 @@ describe('ChatService', () => {
         provideHttpClientTesting(),
         ChatService,
         { provide: TranslateService, useValue: { instant: (key: string) => key } },
+        { provide: AuthService, useValue: makeAuthService(null) },
+        { provide: ClubService, useValue: makeClubService([]) },
+        { provide: TokenStore, useValue: makeTokenStore(null) },
       ],
     });
     service = TestBed.inject(ChatService);
     httpMock = TestBed.inject(HttpTestingController);
+    TestBed.flushEffects();
   });
 
   afterEach(() => {
@@ -1135,5 +1154,83 @@ describe('ChatService', () => {
       expect(items[1]).toEqual(expect.objectContaining({ isDivider: true }));
       expect((items[2] as { text: string }).text).toBe('Unread');
     });
+  });
+});
+
+// ── A-1: single orchestrator for room-list bootstrap + WS connect ───────────
+// Previously duplicated as component effects in ChatWidgetComponent and
+// ChatsComponent; now owned centrally by ChatService's constructor.
+describe('ChatService — constructor orchestrator effects', () => {
+  function setup(overrides: {
+    user?: { id: string } | null;
+    clubs?: { id: string; name: string }[];
+    activeRoomId?: string | null;
+    token?: string | null;
+  } = {}) {
+    const authSvc = makeAuthService(overrides.user ?? null);
+    const clubSvc = makeClubService(overrides.clubs ?? []);
+    const tokenStore = makeTokenStore(overrides.token ?? null);
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        ChatService,
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
+        { provide: AuthService, useValue: authSvc },
+        { provide: ClubService, useValue: clubSvc },
+        { provide: TokenStore, useValue: tokenStore },
+      ],
+    });
+    const svc = TestBed.inject(ChatService);
+    if (overrides.activeRoomId !== undefined) {
+      (svc as unknown as ChatServicePrivate)._activeRoomId.set(overrides.activeRoomId);
+    }
+    TestBed.flushEffects();
+    return { svc, http: TestBed.inject(HttpTestingController), authSvc, clubSvc, tokenStore };
+  }
+
+  it('loads all club rooms when the user has clubs', () => {
+    const { http } = setup({ user: { id: 'u1' }, clubs: [{ id: 'club-1', name: 'Club A' }] });
+    http.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([]);
+    http.verify();
+  });
+
+  it('calls loadMyClubs when the user exists but has no clubs cached yet', () => {
+    const { clubSvc, http } = setup({ user: { id: 'u1' }, clubs: [] });
+    expect(clubSvc.loadMyClubs).toHaveBeenCalled();
+    http.verify();
+  });
+
+  it('clears rooms when the user signs out', () => {
+    const { svc, authSvc, http } = setup({ user: { id: 'u1' }, clubs: [{ id: 'club-1', name: 'Club A' }] });
+    http.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([]);
+    authSvc.currentUser.set(null);
+    TestBed.flushEffects();
+    expect(getRooms(svc)).toEqual([]);
+    http.verify();
+  });
+
+  it('connects the WS socket when there is an active room and a token', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).WebSocket = MockWebSocket;
+    MockWebSocket.instance = null;
+    // A signed-out user (default) makes the clubs-bootstrap effect call
+    // clearRooms(), which would reset activeRoomId back to null — sign a
+    // user in with no clubs so that effect is a no-op here.
+    const { http } = setup({ user: { id: 'u1' }, clubs: [], activeRoomId: 'room-1', token: 'tok-abc' });
+    const ws = MockWebSocket.instance as MockWebSocket | null;
+    expect(ws?.url).toBe(`${environment.wsUrl}/chat/rooms/room-1`);
+    http.verify();
+  });
+
+  it('does not connect when there is no token', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).WebSocket = MockWebSocket;
+    MockWebSocket.instance = null;
+    const { http } = setup({ user: { id: 'u1' }, clubs: [], activeRoomId: 'room-1', token: null });
+    const ws = MockWebSocket.instance as MockWebSocket | null;
+    expect(ws).toBeNull();
+    http.verify();
   });
 });

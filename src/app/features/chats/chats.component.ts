@@ -5,7 +5,6 @@ import {
   signal,
   computed,
   effect,
-  untracked,
   ViewChild,
   ElementRef,
   DestroyRef,
@@ -13,7 +12,6 @@ import {
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
-import { TokenStore } from '../../core/auth/token.store';
 import { ChatService } from '../../core/services/chat.service';
 import { ClubService } from '../../core/services/club.service';
 import { ChatRoom } from '../../core/models/chat.model';
@@ -33,14 +31,12 @@ export class ChatsComponent {
   protected readonly auth = inject(AuthService);
   protected readonly chat = inject(ChatService);
   private readonly clubService = inject(ClubService);
-  private readonly tokenStore = inject(TokenStore);
   private readonly _destroyRef = inject(DestroyRef);
 
   @ViewChild('messagesList') private readonly messagesListRef?: ElementRef<HTMLElement>;
 
   protected readonly messageText = signal('');
 
-  private _clubsLoadTriggered = false;
   /** Tracks the last room we scrolled to — prevents re-scroll on every new WS message. */
   private _lastScrolledRoomId: string | null = null;
 
@@ -65,42 +61,16 @@ export class ChatsComponent {
     this.chat.setChatsPage(true);
     this._destroyRef.onDestroy(() => this.chat.setChatsPage(false));
 
-    effect(() => {
-      const user = this.auth.currentUser();
-      if (!user) {
-        this._clubsLoadTriggered = false;
-        this.chat.clearRooms();
-        return;
-      }
-
-      const clubs = this.clubService.myClubs();
-      if (clubs.length > 0) {
-        this._clubsLoadTriggered = false;
-        this.chat.loadAllClubRooms(clubs, user.id);
-      } else if (!this._clubsLoadTriggered) {
-        this._clubsLoadTriggered = true;
-        this.clubService.loadMyClubs().catch(() => undefined);
-      }
-    });
+    // Room-list load and WS connection are orchestrated centrally in
+    // ChatService (see its constructor) — previously duplicated here and in
+    // ChatWidgetComponent, which caused a double GET /clubs/{id}/chat/rooms
+    // whenever this page mounted alongside the globally-mounted widget.
 
     // Feature 5: fetch per-room unread counts once rooms are loaded.
     effect(() => {
       const rooms = this.chat.rooms();
       if (rooms.length > 0) {
         this.chat.fetchUnreadCounts(rooms.map(r => r.id));
-      }
-    });
-
-    effect(() => {
-      const roomId = this.chat.activeRoomId();
-      // Read the token untracked so this effect only re-runs when the active
-      // room changes — not on every token re-emit (e.g. after refresh), which
-      // would tear down and reopen a still-connecting socket.
-      const token = untracked(() => this.tokenStore.token());
-      if (roomId && token) {
-        this.chat.connectRoom(roomId, token);
-      } else if (!roomId) {
-        this.chat.disconnectRoom();
       }
     });
 

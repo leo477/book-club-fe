@@ -374,76 +374,9 @@ describe('ChatWidgetComponent', () => {
     });
   });
 
-  describe('Effect 2 — clubs/user', () => {
-    it('calls clearRooms when user becomes null', () => {
-      authSvc = makeAuthService({ currentUser: { id: 'u1', displayName: 'Alice' } });
-      TestBed.overrideProvider(AuthService, { useValue: authSvc });
-      TestBed.createComponent(ChatWidgetComponent);
-      chatSvc.clearRooms.mockClear();
-      authSvc.currentUser.set(null);
-      TestBed.flushEffects();
-      expect(chatSvc.clearRooms).toHaveBeenCalled();
-    });
-
-    it('calls loadAllClubRooms when user and clubs both exist', () => {
-      authSvc = makeAuthService({ currentUser: { id: 'u1', displayName: 'Alice' } });
-      clubSvc = makeClubService();
-      clubSvc.myClubs.set([{ id: 'club-1', name: 'Club A' }]);
-      TestBed.overrideProvider(AuthService, { useValue: authSvc });
-      TestBed.overrideProvider(ClubService, { useValue: clubSvc });
-      TestBed.createComponent(ChatWidgetComponent);
-      TestBed.flushEffects();
-      expect(chatSvc.loadAllClubRooms).toHaveBeenCalledWith(
-        [{ id: 'club-1', name: 'Club A' }],
-        'u1',
-      );
-    });
-
-    it('calls loadMyClubs when user exists but clubs are empty', () => {
-      authSvc = makeAuthService({ currentUser: { id: 'u1', displayName: 'Alice' } });
-      TestBed.overrideProvider(AuthService, { useValue: authSvc });
-      TestBed.createComponent(ChatWidgetComponent);
-      TestBed.flushEffects();
-      expect(clubSvc.loadMyClubs).toHaveBeenCalled();
-    });
-  });
-
-  describe('Effect 3 — connect/disconnect', () => {
-    it('calls connectRoom when activeRoomId and token are both set', () => {
-      chatSvc = makeChatService();
-      chatSvc.activeRoomId.set('room-1');
-      chatSvc.isOpen.set(true);
-      tokenStore = makeTokenStore('tok-abc');
-      TestBed.overrideProvider(ChatService, { useValue: chatSvc });
-      TestBed.overrideProvider(TokenStore, { useValue: tokenStore });
-      TestBed.createComponent(ChatWidgetComponent);
-      TestBed.flushEffects();
-      expect(chatSvc.connectRoom).toHaveBeenCalledWith('room-1', 'tok-abc');
-    });
-
-    it('calls disconnectRoom when activeRoomId is null', () => {
-      chatSvc = makeChatService();
-      chatSvc.activeRoomId.set(null);
-      tokenStore = makeTokenStore('tok-abc');
-      TestBed.overrideProvider(ChatService, { useValue: chatSvc });
-      TestBed.overrideProvider(TokenStore, { useValue: tokenStore });
-      TestBed.createComponent(ChatWidgetComponent);
-      TestBed.flushEffects();
-      expect(chatSvc.disconnectRoom).toHaveBeenCalled();
-    });
-
-    it('does not call connectRoom when token is missing', () => {
-      chatSvc = makeChatService();
-      chatSvc.activeRoomId.set('room-1');
-      chatSvc.isOpen.set(true);
-      tokenStore = makeTokenStore(null);
-      TestBed.overrideProvider(ChatService, { useValue: chatSvc });
-      TestBed.overrideProvider(TokenStore, { useValue: tokenStore });
-      TestBed.createComponent(ChatWidgetComponent);
-      TestBed.flushEffects();
-      expect(chatSvc.connectRoom).not.toHaveBeenCalled();
-    });
-  });
+  // "clubs/user" room-list bootstrap and WS connect/disconnect are now
+  // orchestrated centrally in ChatService (see chat.service.spec.ts) —
+  // ChatWidgetComponent no longer has its own copy of those effects.
 
   describe('showingRoomList / goToRoomList / selectRoom', () => {
     it('showingRoomList is false by default', () => {

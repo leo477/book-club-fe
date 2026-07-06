@@ -1,4 +1,4 @@
-import { Injectable, signal, computed, inject, ApplicationRef, DestroyRef } from '@angular/core';
+import { Injectable, signal, computed, inject, effect, untracked, ApplicationRef, DestroyRef } from '@angular/core';
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
@@ -7,6 +7,9 @@ import { ChatItem, ChatMessage, ChatRoom, UnreadDivider } from '../models/chat.m
 import { SKIP_AUTH_REDIRECT } from '../interceptors/auth.interceptor';
 import { extractApiError } from '../api/api-error.util';
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../auth/auth.service';
+import { TokenStore } from '../auth/token.store';
+import { ClubService } from './club.service';
 
 // ── Raw API shapes (snake_case) ──────────────────────────────────────────────
 
@@ -39,6 +42,9 @@ export class ChatService {
   private readonly api = environment.apiUrl;
   private readonly _appRef = inject(ApplicationRef);
   private readonly _destroyRef = inject(DestroyRef);
+  private readonly _auth = inject(AuthService);
+  private readonly _clubService = inject(ClubService);
+  private readonly _tokenStore = inject(TokenStore);
 
   // ── Private writable signals ───────────────────────────────────────────────
 
@@ -65,6 +71,7 @@ export class ChatService {
 
   private currentUserId: string | null = null;
   private _audioContext: AudioContext | null = null;
+  private _clubsLoadTriggered = false;
 
   constructor() {
     // Feature 3: force Angular (zoneless) to re-render immediately when the
@@ -86,6 +93,42 @@ export class ChatService {
     this._destroyRef.onDestroy(() => {
       document.removeEventListener('click', unlockAudio);
       document.removeEventListener('keydown', unlockAudio);
+    });
+
+    // Single orchestrator for "load rooms for my clubs" — previously
+    // duplicated in ChatWidgetComponent and ChatsComponent, which meant the
+    // globally-mounted widget and the /chats page both fired
+    // GET /clubs/{id}/chat/rooms on every visit.
+    effect(() => {
+      const user = this._auth.currentUser();
+      if (!user) {
+        this._clubsLoadTriggered = false;
+        this.clearRooms();
+        return;
+      }
+
+      const clubs = this._clubService.myClubs();
+      if (clubs.length > 0) {
+        this._clubsLoadTriggered = false;
+        this.loadAllClubRooms(clubs, user.id);
+      } else if (!this._clubsLoadTriggered) {
+        this._clubsLoadTriggered = true;
+        this._clubService.loadMyClubs().catch(() => undefined);
+      }
+    });
+
+    // Single orchestrator for connecting the WS socket to the active room.
+    effect(() => {
+      const roomId = this._activeRoomId();
+      // Read the token untracked so this effect only re-runs when the active
+      // room changes — not on every token re-emit (e.g. after refresh), which
+      // would tear down and reopen a still-connecting socket.
+      const token = untracked(() => this._tokenStore.token());
+      if (roomId && token) {
+        this.connectRoom(roomId, token);
+      } else if (!roomId) {
+        this.disconnectRoom();
+      }
     });
   }
 
