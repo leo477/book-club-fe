@@ -35,6 +35,33 @@ describe('setupTrustedTypesPolicy', () => {
     expect(createPolicy).toHaveBeenCalledWith('default', expect.any(Object));
   });
 
+  it('registers a private "dompurify-internal" passthrough policy for DOMPurify\'s own parse step', () => {
+    const { win, createPolicy } = createFakeWindow();
+    setupTrustedTypesPolicy(win);
+    expect(createPolicy).toHaveBeenCalledWith('dompurify-internal', expect.any(Object));
+    expect(createPolicy).toHaveBeenCalledTimes(2);
+  });
+
+  it('registers exactly two policies and never re-enters createPolicy from createHTML', () => {
+    // Regression test for an infinite-loop hang: createHTML sanitizes via
+    // DOMPurify.sanitize(), which parses markup by assigning it to a scratch
+    // document's innerHTML. Under real Trusted Types enforcement, an
+    // unsigned internal write like that falls back to this same "default"
+    // policy, calling createHTML -> sanitize -> createHTML forever. Passing
+    // DOMPurify a dedicated internal policy via TRUSTED_TYPES_POLICY breaks
+    // the cycle: its internal write is already trusted and never re-enters
+    // "default". A fake window can't reproduce the browser's real sink
+    // interception, so the regression is asserted structurally instead:
+    // setup must call createPolicy exactly twice (the internal policy, then
+    // "default"), and running the trap must not call it again.
+    const { win, createPolicy, getPolicy } = createFakeWindow();
+    setupTrustedTypesPolicy(win);
+    expect(createPolicy).toHaveBeenCalledTimes(2);
+
+    getPolicy().createHTML('<svg xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="5" r="4"></circle></svg>');
+    expect(createPolicy).toHaveBeenCalledTimes(2);
+  });
+
   describe('createScriptURL', () => {
     it('allows same-origin paths starting with /', () => {
       const { win, getPolicy } = createFakeWindow();
@@ -97,6 +124,59 @@ describe('setupTrustedTypesPolicy', () => {
         expect(result).not.toContain('onload=');
         expect(result).not.toContain('<script');
       }
+    });
+
+    it('strips a foreignObject/iframe smuggling a javascript: src', () => {
+      const { win, getPolicy } = createFakeWindow();
+      setupTrustedTypesPolicy(win);
+      const malicious =
+        '<svg><foreignObject><iframe src="javascript:alert(1)"></iframe></foreignObject></svg>';
+
+      let result: string | undefined;
+      let threw = false;
+      try {
+        result = getPolicy().createHTML(malicious);
+      } catch {
+        threw = true;
+      }
+
+      if (threw) {
+        expect(threw).toBe(true);
+      } else {
+        expect(result?.toLowerCase()).not.toContain('iframe');
+        expect(result?.toLowerCase()).not.toContain('foreignobject');
+        expect(result).not.toContain('javascript:');
+      }
+    });
+
+    it('strips a javascript: URI from an href/xlink:href attribute', () => {
+      const { win, getPolicy } = createFakeWindow();
+      setupTrustedTypesPolicy(win);
+      const malicious = '<svg><use xlink:href="javascript:alert(1)"></use></svg>';
+
+      let result: string | undefined;
+      let threw = false;
+      try {
+        result = getPolicy().createHTML(malicious);
+      } catch {
+        threw = true;
+      }
+
+      if (threw) {
+        expect(threw).toBe(true);
+      } else {
+        expect(result).not.toContain('javascript:');
+      }
+    });
+
+    it('preserves benign gradient/fill svg markup used by real icons', () => {
+      const { win, getPolicy } = createFakeWindow();
+      setupTrustedTypesPolicy(win);
+      const input =
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16v16H4z"></path></svg>';
+      const result = getPolicy().createHTML(input);
+      expect(result).toContain('<path');
+      expect(result).toContain('d="M4 4h16v16H4z"');
     });
   });
 });
