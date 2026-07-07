@@ -495,10 +495,12 @@ CLAUDE.md
 components.json
 eslint.config.js
 package.json
+PLAN-COOKIE-AUTH-2026-07-07.md
 playwright.audit-current.config.ts
 playwright.full-audit.config.ts
 playwright.total-audit.config.ts
 postcss.config.json
+proxy.conf.json
 README.md
 REFACTOR-PLAN-2026-07-06.md
 repomix.config.json
