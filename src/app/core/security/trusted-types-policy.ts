@@ -54,6 +54,7 @@ export function setupTrustedTypesPolicy(win: TrustedTypesWindow = globalThis as 
         USE_PROFILES: { svg: true, svgFilters: true },
         FORBID_TAGS: ['script'],
         FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],
+        TRUSTED_TYPES_POLICY: null,
       });
       if (!clean) throw new Error('Blocked untrusted HTML assignment');
       return clean;
