@@ -14,7 +14,14 @@ describe('setupTrustedTypesPolicy', () => {
       return policy;
     });
     const win: TrustedTypesWindow = { trustedTypes: { createPolicy } };
-    return { win, createPolicy, getPolicy: () => capturedPolicy! };
+    return {
+      win,
+      createPolicy,
+      getPolicy: () => {
+        if (!capturedPolicy) throw new Error('policy not captured — call setupTrustedTypesPolicy(win) first');
+        return capturedPolicy;
+      },
+    };
   }
 
   it('does nothing when trustedTypes is undefined', () => {
