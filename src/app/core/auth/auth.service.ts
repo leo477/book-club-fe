@@ -44,20 +44,22 @@ export class AuthService {
   });
   readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
 
-  /** Legacy localStorage marker, superseded by the `bc_session` cookie. Only
-   *  read once during init() to drive the one-release migration below. */
+  /** Legacy localStorage marker, superseded by the session-status endpoint.
+   *  Only read once during init() to drive the one-release migration below. */
   private static readonly LEGACY_SESSION_MARKER = 'bc_has_session';
 
-  /** Non-httpOnly marker cookie the backend sets alongside the auth cookies,
-   *  readable via document.cookie so the SPA can decide whether to attempt
-   *  a silent restore without needing the access token in memory. */
-  private hasSessionCookie(): boolean {
-    return document.cookie.split('; ').includes('bc_session=1');
-  }
-
-  /** Client-side belt-and-braces cookie clear; the backend also clears it on logout. */
-  private clearSessionCookie(): void {
-    document.cookie = 'bc_session=; Max-Age=0; path=/';
+  /** Lightweight, unauthenticated presence check of the httpOnly refresh
+   *  cookie, so the SPA can decide whether to attempt a silent restore
+   *  without needing the access token in memory. */
+  private checkSessionStatus$(): Observable<boolean> {
+    return this.http
+      .get<{ hasSession: boolean }>(`${environment.apiUrl}/auth/session-status`, {
+        withCredentials: true,
+      })
+      .pipe(
+        map(resp => resp.hasSession),
+        catchError(() => of(false)),
+      );
   }
 
   async init(): Promise<void> {
@@ -77,7 +79,7 @@ export class AuthService {
         ),
       );
       this._currentUser.set(raw ? mapUserProfile(raw) : null);
-    } else if (this.hasSessionCookie() || hasLegacySession) {
+    } else if ((await firstValueFrom(this.checkSessionStatus$())) || hasLegacySession) {
       await this.restoreSession();
       if (hasLegacySession) {
         // One-release migration: legacy refresh token/marker are no longer
@@ -216,7 +218,6 @@ export class AuthService {
       );
     } catch { /* ignore logout errors */ }
     this.tokenStore.clear();
-    this.clearSessionCookie();
     this._currentUser.set(null);
     await this.router.navigate(['/login']);
   }

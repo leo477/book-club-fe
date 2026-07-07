@@ -10,12 +10,9 @@ import { environment } from '../../../environments/environment';
 
 const API = environment.apiUrl;
 
-function setSessionCookie(): void {
-  document.cookie = 'bc_session=1; path=/';
-}
-
-function clearSessionCookie(): void {
-  document.cookie = 'bc_session=; Max-Age=0; path=/';
+async function flushSessionStatus(httpMock: HttpTestingController, hasSession: boolean): Promise<void> {
+  httpMock.expectOne(`${API}/auth/session-status`).flush({ hasSession });
+  await Promise.resolve(); // flush microtask so firstValueFrom continuation runs before the next request is expected
 }
 
 const rawProfile = {
@@ -75,30 +72,38 @@ describe('AuthService', () => {
     httpMock = TestBed.inject(HttpTestingController);
   }
 
-  describe('init() — no token, no session cookie/legacy marker', () => {
+  describe('init() — no token, no session-status/legacy marker', () => {
     beforeEach(() => {
-      clearSessionCookie();
       localStorage.removeItem('bc_has_session');
       setupTestbed();
     });
 
-    it('skips refresh and sets isLoading false when no session signal is present', async () => {
+    it('skips refresh and sets isLoading false when session-status returns false', async () => {
       const { service } = buildService();
-      await service.init();
+      const p = service.init();
+      await flushSessionStatus(httpMock, false);
+      await p;
+      httpMock.expectNone(`${API}/auth/refresh`);
+      expect(service.isAuthenticated()).toBe(false);
+      expect(service.isLoading()).toBe(false);
+    });
+
+    it('treats a failed session-status call as no session', async () => {
+      const { service } = buildService();
+      const p = service.init();
+      httpMock
+        .expectOne(`${API}/auth/session-status`)
+        .flush({}, { status: 500, statusText: 'Error' });
+      await p;
       httpMock.expectNone(`${API}/auth/refresh`);
       expect(service.isAuthenticated()).toBe(false);
       expect(service.isLoading()).toBe(false);
     });
   });
 
-  describe('init() — no token (silent refresh via bc_session cookie)', () => {
+  describe('init() — no token (silent refresh via session-status)', () => {
     beforeEach(() => {
-      setSessionCookie();
       setupTestbed();
-    });
-
-    afterEach(() => {
-      clearSessionCookie();
     });
 
     it('isLoading is true before init()', () => {
@@ -109,6 +114,7 @@ describe('AuthService', () => {
     it('isOrganizer returns false when not logged in', async () => {
       const { service } = buildService();
       const p = service.init();
+      await flushSessionStatus(httpMock, true);
       httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
       await p;
       expect(service.isOrganizer()).toBe(false);
@@ -117,6 +123,7 @@ describe('AuthService', () => {
     it('userRole returns null when not authenticated', async () => {
       const { service } = buildService();
       const p = service.init();
+      await flushSessionStatus(httpMock, true);
       httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
       await p;
       expect(service.userRole()).toBeNull();
@@ -125,6 +132,7 @@ describe('AuthService', () => {
     it('refresh success → token set + /auth/me called + isLoading false', async () => {
       const { service } = buildService();
       const p = service.init();
+      await flushSessionStatus(httpMock, true);
       httpMock.expectOne(`${API}/auth/refresh`).flush({ accessToken: 'refreshed-token' });
       await Promise.resolve(); // flush microtask so firstValueFrom continuation runs before /auth/me is expected
       httpMock.expectOne(`${API}/auth/me`).flush(rawProfile);
@@ -137,6 +145,7 @@ describe('AuthService', () => {
     it('refresh 401 → not authenticated + isLoading false', async () => {
       const { service } = buildService();
       const p = service.init();
+      await flushSessionStatus(httpMock, true);
       httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
       await p;
       expect(service.isAuthenticated()).toBe(false);
@@ -146,15 +155,15 @@ describe('AuthService', () => {
     it('refresh 401 → not authenticated, no crash', async () => {
       const { service } = buildService();
       const p = service.init();
+      await flushSessionStatus(httpMock, true);
       httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
       await p;
       expect(service.isAuthenticated()).toBe(false);
     });
   });
 
-  describe('init() — legacy migration (bc_refresh_token / bc_has_session present, no cookie)', () => {
+  describe('init() — legacy migration (bc_refresh_token / bc_has_session present, no session-status)', () => {
     beforeEach(() => {
-      clearSessionCookie();
       localStorage.setItem('bc_has_session', '1');
       setupTestbed();
     });
@@ -167,6 +176,7 @@ describe('AuthService', () => {
       tokenStoreSpy.refreshToken.mockReturnValue('legacy-refresh');
       const { service } = buildService();
       const p = service.init();
+      await flushSessionStatus(httpMock, false);
       const req = httpMock.expectOne(`${API}/auth/refresh`);
       expect(req.request.body).toEqual({ refreshToken: 'legacy-refresh' });
       req.flush({}, { status: 401, statusText: 'Unauthorized' });
@@ -308,13 +318,13 @@ describe('AuthService', () => {
       expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
     });
 
-    it('clears the bc_session cookie on signOut', async () => {
-      setSessionCookie();
+    it('does not touch document.cookie on signOut', async () => {
+      const cookieSpy = vi.spyOn(document, 'cookie', 'set');
       const { service } = buildService();
       const p = service.signOut();
       httpMock.expectOne(`${API}/auth/logout`).flush({});
       await p;
-      expect(document.cookie.includes('bc_session=1')).toBe(false);
+      expect(cookieSpy).not.toHaveBeenCalled();
     });
 
     it('still clears token even if logout request fails', async () => {
