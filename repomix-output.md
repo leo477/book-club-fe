@@ -117,6 +117,8 @@ src/
         randomizer.model.ts
         support.model.ts
         user.model.ts
+      security/
+        trusted-types-policy.ts
       services/
         book-cover.service.ts
         book-search.service.ts
