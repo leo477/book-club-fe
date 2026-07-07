@@ -8,7 +8,6 @@ import { AuthService } from '../../../core/auth/auth.service';
 function makeAuthService() {
   return {
     exchangeOAuthCode: vi.fn().mockResolvedValue({ error: null }),
-    completeOAuthSession: vi.fn().mockResolvedValue({ error: null }),
   };
 }
 
@@ -50,13 +49,12 @@ describe('OAuthCallbackComponent', () => {
   it('exchanges the code when present in the query params', async () => {
     await setup('the-code');
     expect(authSvc.exchangeOAuthCode).toHaveBeenCalledWith('the-code');
-    expect(authSvc.completeOAuthSession).not.toHaveBeenCalled();
   });
 
-  it('completes the session (no code) when returning from a mobile OAuth redirect', async () => {
+  it('treats a missing code as a failed OAuth attempt and navigates to /login', async () => {
     await setup(null);
-    expect(authSvc.completeOAuthSession).toHaveBeenCalled();
     expect(authSvc.exchangeOAuthCode).not.toHaveBeenCalled();
+    expect(router.navigate).toHaveBeenCalledWith(['/login']);
   });
 
   it('navigates to /events on success', async () => {

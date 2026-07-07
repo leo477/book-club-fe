@@ -2,7 +2,7 @@ import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
-import { catchError, firstValueFrom, map, of } from 'rxjs';
+import { Observable, catchError, firstValueFrom, map, of } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { extractApiError } from '../api/api-error.util';
 import { ApiUserProfile, ApiUserStats, mapUserProfile, mapUserStats } from '../api/api-mappers';
@@ -44,11 +44,28 @@ export class AuthService {
   });
   readonly userStats = computed<UserStats | null>(() => this._statsResource.value() ?? null);
 
-  private static readonly SESSION_MARKER = 'bc_has_session';
+  /** Legacy localStorage marker, superseded by the `bc_session` cookie. Only
+   *  read once during init() to drive the one-release migration below. */
+  private static readonly LEGACY_SESSION_MARKER = 'bc_has_session';
+
+  /** Non-httpOnly marker cookie the backend sets alongside the auth cookies,
+   *  readable via document.cookie so the SPA can decide whether to attempt
+   *  a silent restore without needing the access token in memory. */
+  private hasSessionCookie(): boolean {
+    return document.cookie.split('; ').includes('bc_session=1');
+  }
+
+  /** Client-side belt-and-braces cookie clear; the backend also clears it on logout. */
+  private clearSessionCookie(): void {
+    document.cookie = 'bc_session=; Max-Age=0; path=/';
+  }
 
   async init(): Promise<void> {
     const existingToken = this.tokenStore.snapshot();
     const skipCtx = new HttpContext().set(SKIP_AUTH_REDIRECT, true);
+
+    const hasLegacySession =
+      !!this.tokenStore.refreshToken() || !!localStorage.getItem(AuthService.LEGACY_SESSION_MARKER);
 
     if (existingToken) {
       const raw = await firstValueFrom(
@@ -60,21 +77,27 @@ export class AuthService {
         ),
       );
       this._currentUser.set(raw ? mapUserProfile(raw) : null);
-    } else if (localStorage.getItem(AuthService.SESSION_MARKER)) {
+    } else if (this.hasSessionCookie() || hasLegacySession) {
       await this.restoreSession();
+      if (hasLegacySession) {
+        // One-release migration: legacy refresh token/marker are no longer
+        // read after this point, so drop them regardless of outcome.
+        this.tokenStore.clearRefreshToken();
+        localStorage.removeItem(AuthService.LEGACY_SESSION_MARKER);
+      }
     }
     this._isLoading.set(false);
   }
 
   /**
    * Recovers an access token from the httpOnly refresh cookie and loads the
-   * current user. Assumes the SESSION_MARKER is already set. Clears the marker
-   * on failure. Returns true when a session was restored.
+   * current user. Returns true when a session was restored.
    */
   private async restoreSession(): Promise<boolean> {
     const skipCtx = new HttpContext().set(SKIP_AUTH_REDIRECT, true);
-    // Desktop relies on the httpOnly cookie (withCredentials); mobile blocks that
-    // cross-site cookie, so we also send the SPA-persisted refresh token in the body.
+    // Desktop relies on the httpOnly cookie (withCredentials); the legacy
+    // SPA-persisted refresh token is sent too, needed only for the one-release
+    // migration off the pre-cookie-auth session shape.
     const persistedRefresh = this.tokenStore.refreshToken();
     const refreshResp = await firstValueFrom(
       this.http
@@ -83,15 +106,10 @@ export class AuthService {
           persistedRefresh ? { refreshToken: persistedRefresh } : {},
           { withCredentials: true, context: skipCtx },
         )
-        .pipe(catchError(() => {
-          localStorage.removeItem(AuthService.SESSION_MARKER);
-          this.tokenStore.clearRefreshToken();
-          return of(null);
-        })),
+        .pipe(catchError(() => of(null))),
     );
     if (!refreshResp) return false;
     this.tokenStore.set(refreshResp.accessToken);
-    if (refreshResp.refreshToken) this.tokenStore.setRefreshToken(refreshResp.refreshToken);
     const raw = await firstValueFrom(
       this.http
         .get<ApiUserProfile>(`${environment.apiUrl}/auth/me`, { context: skipCtx })
@@ -103,18 +121,14 @@ export class AuthService {
 
   /** Starts the Google OAuth flow via a full-page redirect to the backend. */
   loginWithGoogle(): void {
-    globalThis.location.href = `${environment.apiUrl}/auth/oauth/google?origin=${encodeURIComponent(globalThis.location.origin)}`;
+    globalThis.location.href = `${environment.oauthBaseUrl}/auth/oauth/google?origin=${encodeURIComponent(globalThis.location.origin)}`;
   }
 
-  /**
-   * Completes an OAuth login after the backend redirects back. The refresh
-   * cookie has already been set server-side, so we mark the session and restore
-   * the access token + user from it.
-   */
-  async completeOAuthSession(): Promise<{ error: string | null }> {
-    localStorage.setItem(AuthService.SESSION_MARKER, '1');
-    const restored = await this.restoreSession();
-    return restored ? { error: null } : { error: 'OAUTH_FAILED' };
+  /** Fetches a one-time, short-lived ticket used to authenticate the chat WebSocket. */
+  getWsTicket$(): Observable<string> {
+    return this.http
+      .post<{ ticket: string }>(`${environment.apiUrl}/auth/ws-ticket`, {})
+      .pipe(map(resp => resp.ticket));
   }
 
   /**
@@ -133,8 +147,6 @@ export class AuthService {
         ),
       );
       this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefreshToken(resp.refreshToken);
-      localStorage.setItem(AuthService.SESSION_MARKER, '1');
       const raw = await firstValueFrom(
         this.http
           .get<ApiUserProfile>(`${environment.apiUrl}/auth/me`, { context: skipCtx })
@@ -144,8 +156,6 @@ export class AuthService {
         // /auth/me failed after tokens were stored: tear down the half-set
         // session so nothing stale is left behind (mirrors restoreSession()).
         this.tokenStore.clear();
-        this.tokenStore.clearRefreshToken();
-        localStorage.removeItem(AuthService.SESSION_MARKER);
         return { error: 'OAUTH_FAILED' };
       }
       this._currentUser.set(mapUserProfile(raw));
@@ -175,8 +185,6 @@ export class AuthService {
         ),
       );
       this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefreshToken(resp.refreshToken);
-      localStorage.setItem(AuthService.SESSION_MARKER, '1');
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -194,8 +202,6 @@ export class AuthService {
         ),
       );
       this.tokenStore.set(resp.accessToken);
-      this.tokenStore.setRefreshToken(resp.refreshToken);
-      localStorage.setItem(AuthService.SESSION_MARKER, '1');
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -210,8 +216,7 @@ export class AuthService {
       );
     } catch { /* ignore logout errors */ }
     this.tokenStore.clear();
-    this.tokenStore.clearRefreshToken();
-    localStorage.removeItem(AuthService.SESSION_MARKER);
+    this.clearSessionCookie();
     this._currentUser.set(null);
     await this.router.navigate(['/login']);
   }

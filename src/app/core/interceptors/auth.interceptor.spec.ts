@@ -78,10 +78,10 @@ describe('authInterceptor', () => {
     req.flush({});
   });
 
-  it('attaches Authorization header to absolute requests targeting the backend API', () => {
+  it('attaches Authorization header to requests targeting the relative apiUrl prefix', () => {
     setup('my-token');
-    http.get('http://localhost:8000/api/v1/clubs').subscribe();
-    const req = httpMock.expectOne('http://localhost:8000/api/v1/clubs');
+    http.get('/api/v1/clubs').subscribe();
+    const req = httpMock.expectOne('/api/v1/clubs');
     expect(req.request.headers.get('Authorization')).toBe('Bearer my-token');
     req.flush({});
   });
@@ -102,11 +102,14 @@ describe('authInterceptor', () => {
       expect(first.request.headers.get('Authorization')).toBe('Bearer stale-token');
       first.flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
 
-      const refresh = httpMock.expectOne('http://localhost:8000/api/v1/auth/refresh');
+      const refresh = httpMock.expectOne('/api/v1/auth/refresh');
+      expect(refresh.request.body).toEqual({});
+      expect(refresh.request.withCredentials).toBe(true);
       refresh.flush({ accessToken: 'fresh-token', refreshToken: 'fresh-refresh' });
 
       const retried = httpMock.expectOne('/api/test');
       expect(retried.request.headers.get('Authorization')).toBe('Bearer fresh-token');
+      expect(tokenStoreSpy.setRefreshToken).not.toHaveBeenCalled();
       retried.flush({ ok: true });
     }));
 
@@ -124,7 +127,7 @@ describe('authInterceptor', () => {
       const first = httpMock.expectOne('/api/test');
       first.flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
 
-      const refresh = httpMock.expectOne('http://localhost:8000/api/v1/auth/refresh');
+      const refresh = httpMock.expectOne('/api/v1/auth/refresh');
       refresh.flush({ detail: 'Refresh token invalid' }, { status: 401, statusText: 'Unauthorized' });
     }));
 
@@ -142,7 +145,7 @@ describe('authInterceptor', () => {
       const first = httpMock.expectOne('/api/test');
       first.flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
 
-      const refresh = httpMock.expectOne('http://localhost:8000/api/v1/auth/refresh');
+      const refresh = httpMock.expectOne('/api/v1/auth/refresh');
       refresh.flush({ accessToken: 'fresh-token', refreshToken: 'fresh-refresh' });
 
       const retried = httpMock.expectOne('/api/test');
@@ -186,7 +189,7 @@ describe('authInterceptor', () => {
       });
       const req = httpMock.expectOne('/api/test');
       req.flush({}, { status: 401, statusText: 'Unauthorized' });
-      const refresh = httpMock.expectOne('http://localhost:8000/api/v1/auth/refresh');
+      const refresh = httpMock.expectOne('/api/v1/auth/refresh');
       refresh.flush({ detail: 'Refresh token invalid' }, { status: 401, statusText: 'Unauthorized' });
     }));
 

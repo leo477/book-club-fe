@@ -21,9 +21,9 @@ export class ChatSocket {
   private _ws: WebSocket | null = null;
   private _reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private _reconnectDelay = 1_000;
-  private _activeRoom: { roomId: string; getToken: () => string | null } | null = null;
+  private _activeRoom: { roomId: string; getTicket: () => Promise<string | null> } | null = null;
 
-  connect(roomId: string, getToken: () => string | null, handlers: ChatSocketHandlers): void {
+  connect(roomId: string, getTicket: () => Promise<string | null>, handlers: ChatSocketHandlers): void {
     // Idempotent: if a socket for the same room is already live, don't tear
     // it down — closing a CONNECTING socket triggers the browser's "closed
     // before the connection is established" warning and can loop.
@@ -35,12 +35,25 @@ export class ChatSocket {
       return;
     }
     this.disconnect();
-    this._activeRoom = { roomId, getToken };
-    this._ws = new WebSocket(environment.wsUrl + '/chat/rooms/' + roomId);
+    this._activeRoom = { roomId, getTicket };
+    const ws = new WebSocket(environment.wsUrl + '/chat/rooms/' + roomId);
+    this._ws = ws;
 
-    this._ws.onopen = () => {
+    ws.onopen = () => {
       this._reconnectDelay = 1_000;
-      this._ws?.send(JSON.stringify({ type: 'auth', token: getToken() }));
+      getTicket()
+        .then(ticket => {
+          if (this._ws !== ws) return;
+          if (!ticket) {
+            // No valid ticket to authenticate with (e.g. user logged out) —
+            // stop looping instead of hammering the backend with a dead
+            // auth frame.
+            this.disconnect();
+            return;
+          }
+          ws.send(JSON.stringify({ type: 'auth', ticket }));
+        })
+        .catch(() => this.disconnect());
     };
 
     this._ws.onmessage = (event: MessageEvent) => {
@@ -70,15 +83,11 @@ export class ChatSocket {
       this._reconnectTimer = setTimeout(() => {
         const active = this._activeRoom;
         if (!active) return;
-        const freshToken = active.getToken();
-        if (!freshToken) {
-          // No valid token to reconnect with (e.g. user logged out) — stop
-          // looping instead of hammering the backend with a dead auth frame.
-          this.disconnect();
-          return;
-        }
+        // A fresh ticket is fetched per attempt on the reconnected socket's
+        // onopen; if that fetch fails/returns null (e.g. logged out), the
+        // loop aborts there instead of here.
         this._reconnectDelay = Math.min(this._reconnectDelay * 2, 30_000);
-        this.connect(active.roomId, active.getToken, handlers);
+        this.connect(active.roomId, active.getTicket, handlers);
       }, this._reconnectDelay);
     };
 

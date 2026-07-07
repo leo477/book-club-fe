@@ -32,6 +32,11 @@ function makeHandlers(): ChatSocketHandlers {
   };
 }
 
+/** Fixed ticket getter, mirroring a resolved AuthService.getWsTicket() call. */
+function ticketGetter(ticket: string | null) {
+  return () => Promise.resolve(ticket);
+}
+
 describe('ChatSocket', () => {
   let socket: ChatSocket;
   const WS_BASE = environment.wsUrl;
@@ -44,17 +49,19 @@ describe('ChatSocket', () => {
     socket = TestBed.inject(ChatSocket);
   });
 
-  it('creates a WebSocket with the correct URL and sends the auth frame on open', () => {
-    socket.connect('room-1', () => 'tok', makeHandlers());
+  it('creates a WebSocket with the correct URL and sends the auth frame with a fetched ticket on open', async () => {
+    socket.connect('room-1', ticketGetter('tik'), makeHandlers());
     const ws = MockWebSocket.instance;
     expect(ws?.url).toBe(`${WS_BASE}/chat/rooms/room-1`);
     ws?.onopen?.();
-    expect(ws?.send).toHaveBeenCalledWith(JSON.stringify({ type: 'auth', token: 'tok' }));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(ws?.send).toHaveBeenCalledWith(JSON.stringify({ type: 'auth', ticket: 'tik' }));
   });
 
   it('dispatches a decoded message envelope to onMessage', () => {
     const handlers = makeHandlers();
-    socket.connect('room-1', () => 'tok', handlers);
+    socket.connect('room-1', ticketGetter('tik'), handlers);
     const payload = { id: 'm1', senderId: 'u1', senderName: 'Alice', text: 'Hi', timestamp: '2024-01-01T00:00:00Z' };
     MockWebSocket.instance?.simulateMessage({ type: 'message', payload });
     expect(handlers.onMessage).toHaveBeenCalledWith(payload);
@@ -62,7 +69,7 @@ describe('ChatSocket', () => {
 
   it('swallows a malformed (non-JSON) message without throwing, and still processes the next valid one', () => {
     const handlers = makeHandlers();
-    socket.connect('room-1', () => 'tok', handlers);
+    socket.connect('room-1', ticketGetter('tik'), handlers);
     const ws = MockWebSocket.instance;
 
     expect(() => ws?.onmessage?.(new MessageEvent('message', { data: 'not json' }))).not.toThrow();
@@ -75,52 +82,52 @@ describe('ChatSocket', () => {
 
   it('dispatches presence updates to onPresence', () => {
     const handlers = makeHandlers();
-    socket.connect('room-1', () => 'tok', handlers);
+    socket.connect('room-1', ticketGetter('tik'), handlers);
     MockWebSocket.instance?.simulateMessage({ type: 'presence', payload: { userId: 'u1', status: 'online' } });
     expect(handlers.onPresence).toHaveBeenCalledWith('u1', 'online');
   });
 
   it('dispatches a presence snapshot to onPresenceSnapshot', () => {
     const handlers = makeHandlers();
-    socket.connect('room-1', () => 'tok', handlers);
+    socket.connect('room-1', ticketGetter('tik'), handlers);
     const entries = [{ userId: 'u1', status: 'online' as const }];
     MockWebSocket.instance?.simulateMessage({ type: 'presence_snapshot', payload: entries });
     expect(handlers.onPresenceSnapshot).toHaveBeenCalledWith(entries);
   });
 
   it('disconnect closes the socket', () => {
-    socket.connect('room-1', () => 'tok', makeHandlers());
+    socket.connect('room-1', ticketGetter('tik'), makeHandlers());
     const ws = MockWebSocket.instance;
     socket.disconnect();
     expect(ws?.close).toHaveBeenCalled();
   });
 
   it('is idempotent while CONNECTING for the same room', () => {
-    socket.connect('room-1', () => 'tok', makeHandlers());
+    socket.connect('room-1', ticketGetter('tik'), makeHandlers());
     const firstWs = MockWebSocket.instance;
-    socket.connect('room-1', () => 'tok', makeHandlers());
+    socket.connect('room-1', ticketGetter('tik'), makeHandlers());
     expect(firstWs?.close).not.toHaveBeenCalled();
     expect(MockWebSocket.instance).toBe(firstWs);
   });
 
-  it('is idempotent for the same room even when the token getter changes', () => {
-    socket.connect('room-1', () => 'tok', makeHandlers());
+  it('is idempotent for the same room even when the ticket getter changes', () => {
+    socket.connect('room-1', ticketGetter('tik'), makeHandlers());
     const firstWs = MockWebSocket.instance;
-    socket.connect('room-1', () => 'a-different-token', makeHandlers());
+    socket.connect('room-1', ticketGetter('a-different-ticket'), makeHandlers());
     expect(firstWs?.close).not.toHaveBeenCalled();
     expect(MockWebSocket.instance).toBe(firstWs);
   });
 
   it('reconnects when the room id changes', () => {
-    socket.connect('room-1', () => 'tok', makeHandlers());
+    socket.connect('room-1', ticketGetter('tik'), makeHandlers());
     const firstWs = MockWebSocket.instance;
-    socket.connect('room-2', () => 'tok', makeHandlers());
+    socket.connect('room-2', ticketGetter('tik'), makeHandlers());
     expect(firstWs?.close).toHaveBeenCalled();
     expect(MockWebSocket.instance?.url).toBe(`${WS_BASE}/chat/rooms/room-2`);
   });
 
   it('onerror closes the socket', () => {
-    socket.connect('room-1', () => 'tok', makeHandlers());
+    socket.connect('room-1', ticketGetter('tik'), makeHandlers());
     const ws = MockWebSocket.instance;
     ws?.simulateError();
     expect(ws?.close).toHaveBeenCalled();
@@ -128,7 +135,7 @@ describe('ChatSocket', () => {
 
   it('reconnects with backoff after an unexpected close', () => {
     vi.useFakeTimers();
-    socket.connect('room-1', () => 'tok', makeHandlers());
+    socket.connect('room-1', ticketGetter('tik'), makeHandlers());
     const firstWs = MockWebSocket.instance;
     firstWs?.simulateClose();
 
@@ -140,45 +147,58 @@ describe('ChatSocket', () => {
     vi.useRealTimers();
   });
 
-  it('reconnects using the CURRENT token from the getter, not the connect-time snapshot', () => {
+  it('reconnects using a freshly fetched ticket, not the connect-time snapshot', async () => {
     vi.useFakeTimers();
-    let currentToken = 'stale-token';
-    socket.connect('room-1', () => currentToken, makeHandlers());
+    let currentTicket = 'stale-ticket';
+    socket.connect('room-1', () => Promise.resolve(currentTicket), makeHandlers());
     const firstWs = MockWebSocket.instance;
 
-    currentToken = 'fresh-token';
+    currentTicket = 'fresh-ticket';
     firstWs?.simulateClose();
-    vi.advanceTimersByTime(1_100);
+    await vi.advanceTimersByTimeAsync(1_100);
 
     const secondWs = MockWebSocket.instance;
     expect(secondWs).not.toBe(firstWs);
     secondWs?.onopen?.();
-    expect(secondWs?.send).toHaveBeenCalledWith(JSON.stringify({ type: 'auth', token: 'fresh-token' }));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(secondWs?.send).toHaveBeenCalledWith(JSON.stringify({ type: 'auth', ticket: 'fresh-ticket' }));
     vi.useRealTimers();
   });
 
-  it('disconnects instead of reconnecting when the token getter returns null at reconnect time', () => {
+  it('disconnects instead of reconnecting when the ticket getter resolves null on open', async () => {
     vi.useFakeTimers();
-    let currentToken: string | null = 'tok';
-    socket.connect('room-1', () => currentToken, makeHandlers());
-    const firstWs = MockWebSocket.instance;
+    socket.connect('room-1', ticketGetter(null), makeHandlers());
+    const ws = MockWebSocket.instance;
 
-    currentToken = null;
-    firstWs?.simulateClose();
-    vi.advanceTimersByTime(5_000);
+    ws?.onopen?.();
+    await vi.advanceTimersByTimeAsync(0);
 
-    expect(MockWebSocket.instance).toBe(firstWs);
+    expect(ws?.close).toHaveBeenCalled();
 
     // Confirm the reconnect loop is fully torn down, not merely paused: a
-    // later close of a would-be new socket must not schedule another attempt.
-    vi.advanceTimersByTime(30_000);
-    expect(MockWebSocket.instance).toBe(firstWs);
+    // later close must not schedule another connection attempt.
+    ws?.simulateClose();
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(MockWebSocket.instance).toBe(ws);
+    vi.useRealTimers();
+  });
+
+  it('disconnects instead of reconnecting when the ticket getter rejects on open', async () => {
+    vi.useFakeTimers();
+    const getTicket = () => Promise.reject(new Error('logged out'));
+    socket.connect('room-1', getTicket, makeHandlers());
+    const ws = MockWebSocket.instance;
+
+    ws?.onopen?.();
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(ws?.close).toHaveBeenCalled();
     vi.useRealTimers();
   });
 
   it('does not reconnect after an explicit disconnect', () => {
     vi.useFakeTimers();
-    socket.connect('room-1', () => 'tok', makeHandlers());
+    socket.connect('room-1', ticketGetter('tik'), makeHandlers());
     const ws = MockWebSocket.instance;
     socket.disconnect();
     ws?.simulateClose();
@@ -189,7 +209,7 @@ describe('ChatSocket', () => {
   });
 
   it('onopen resets the reconnect delay back to 1000ms', () => {
-    socket.connect('room-1', () => 'tok', makeHandlers());
+    socket.connect('room-1', ticketGetter('tik'), makeHandlers());
     const ws = MockWebSocket.instance;
     (socket as unknown as { _reconnectDelay: number })._reconnectDelay = 8_000;
     ws?.onopen?.();

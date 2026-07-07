@@ -1,6 +1,7 @@
 import { Injectable, signal, computed, inject, effect, untracked, ApplicationRef, DestroyRef } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
+import { catchError, firstValueFrom, of } from 'rxjs';
 import { toast } from '@spartan-ng/brain/sonner';
 import { ChatItem, ChatMessage, ChatRoom, UnreadDivider } from '../models/chat.model';
 import { extractApiError } from '../api/api-error.util';
@@ -273,7 +274,7 @@ export class ChatService {
   }
 
   connectRoom(roomId: string): void {
-    this._socket.connect(roomId, () => this._tokenStore.token(), {
+    this._socket.connect(roomId, () => firstValueFrom(this._auth.getWsTicket$().pipe(catchError(() => of(null)))), {
       onMessage: payload => this._onWsMessage(roomId, payload as ApiChatMessage),
       onPresence: (userId, status) => {
         this._presenceMap.update(m => { const n = new Map(m); n.set(userId, status); return n; });

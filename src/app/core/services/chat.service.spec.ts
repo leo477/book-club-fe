@@ -3,6 +3,7 @@ import { provideZonelessChangeDetection, signal, WritableSignal } from '@angular
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { of } from 'rxjs';
 import { ChatService } from './chat.service';
 import { ChatMessage, ChatRoom } from '../models/chat.model';
 import { environment } from '../../../environments/environment';
@@ -11,8 +12,8 @@ import { TokenStore } from '../auth/token.store';
 import { ClubService } from './club.service';
 import { ChatSocket } from './chat-socket.service';
 
-function makeAuthService(currentUser: { id: string } | null = null) {
-  return { currentUser: signal(currentUser) };
+function makeAuthService(currentUser: { id: string } | null = null, getWsTicket$ = () => of<string | null>('tok')) {
+  return { currentUser: signal(currentUser), getWsTicket$ };
 }
 
 function makeClubService(myClubs: { id: string; name: string }[] = []) {
@@ -85,6 +86,7 @@ describe('ChatService', () => {
   let service: ChatService;
   let httpMock: HttpTestingController;
   let tokenSignal: WritableSignal<string | null>;
+  let wsTicket: string | null;
 
   beforeEach(() => {
     MockWebSocket.instance = null;
@@ -105,6 +107,7 @@ describe('ChatService', () => {
     };
 
     tokenSignal = signal<string | null>('tok');
+    wsTicket = 'tok';
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
@@ -112,7 +115,7 @@ describe('ChatService', () => {
         provideHttpClientTesting(),
         ChatService,
         { provide: TranslateService, useValue: { instant: (key: string) => key } },
-        { provide: AuthService, useValue: makeAuthService(null) },
+        { provide: AuthService, useValue: makeAuthService(null, () => of(wsTicket)) },
         { provide: ClubService, useValue: makeClubService([]) },
         { provide: TokenStore, useValue: { token: tokenSignal } },
       ],
@@ -847,23 +850,28 @@ describe('ChatService', () => {
   describe('connectRoom() / disconnectRoom()', () => {
     const WS_BASE = environment.wsUrl;
 
-    it('connectRoom creates a WebSocket with the correct URL and sends auth frame on open', () => {
-      tokenSignal.set('my-token');
+    it('connectRoom creates a WebSocket with the correct URL and sends a ws-ticket auth frame on open', async () => {
+      wsTicket = 'my-ticket';
       service.connectRoom('room-42');
       const ws554 = MockWebSocket.instance;
       expect(ws554).not.toBeNull();
       expect(ws554?.url).toBe(`${WS_BASE}/chat/rooms/room-42`);
       expect(ws554?.url).not.toContain('?');
       ws554?.onopen?.();
-      expect(ws554?.send).toHaveBeenCalledWith(JSON.stringify({ type: 'auth', token: 'my-token' }));
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(ws554?.send).toHaveBeenCalledWith(JSON.stringify({ type: 'auth', ticket: 'my-ticket' }));
     });
 
-    it('connectRoom reads the CURRENT token at auth-frame time, not a connect-time snapshot', () => {
+    it('connectRoom fetches a fresh ticket at auth-frame time, not a connect-time snapshot', async () => {
+      wsTicket = 'stale-ticket';
       service.connectRoom('room-42');
       const ws = MockWebSocket.instance;
-      tokenSignal.set('rotated-token');
+      wsTicket = 'rotated-ticket';
       ws?.onopen?.();
-      expect(ws?.send).toHaveBeenCalledWith(JSON.stringify({ type: 'auth', token: 'rotated-token' }));
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(ws?.send).toHaveBeenCalledWith(JSON.stringify({ type: 'auth', ticket: 'rotated-ticket' }));
     });
 
     it('receiving a WS message appends it to activeMessages', () => {
@@ -1071,17 +1079,21 @@ describe('ChatService', () => {
       vi.useRealTimers();
     });
 
-    it('does not reconnect and disconnects cleanly when the token is gone by reconnect time (e.g. logout)', () => {
+    it('disconnects the reconnected socket when the ws-ticket is gone by reconnect time (e.g. logout)', async () => {
       vi.useFakeTimers();
       service.connectRoom('room-42');
       const firstWs = MockWebSocket.instance;
       if (!firstWs) throw new Error('MockWebSocket not instantiated');
 
-      tokenSignal.set(null);
+      wsTicket = null;
       firstWs.simulateClose();
+      await vi.advanceTimersByTimeAsync(1_100);
 
-      vi.advanceTimersByTime(30_000);
-      expect(MockWebSocket.instance).toBe(firstWs);
+      const secondWs = MockWebSocket.instance;
+      expect(secondWs).not.toBe(firstWs);
+      secondWs?.onopen?.();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(secondWs?.close).toHaveBeenCalled();
       vi.useRealTimers();
     });
 

@@ -47,17 +47,15 @@ let refreshInFlight: Observable<string | null> | null = null;
 
 function refreshAccessToken$(http: HttpClient, tokenStore: TokenStore): Observable<string | null> {
   if (refreshInFlight) return refreshInFlight;
-  const persistedRefresh = tokenStore.refreshToken();
   refreshInFlight = http
     .post<{ accessToken: string; refreshToken: string }>(
       `${environment.apiUrl}/auth/refresh`,
-      persistedRefresh ? { refreshToken: persistedRefresh } : {},
+      {},
       { withCredentials: true, context: new HttpContext().set(SKIP_AUTH_REDIRECT, true) },
     )
     .pipe(
       map(resp => {
         tokenStore.set(resp.accessToken);
-        if (resp.refreshToken) tokenStore.setRefreshToken(resp.refreshToken);
         return resp.accessToken as string | null;
       }),
       catchError(() => of(null)),
