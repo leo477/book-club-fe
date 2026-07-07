@@ -3,6 +3,7 @@ import { appConfig } from './app/app.config';
 import { App } from './app/app';
 import { inject } from '@vercel/analytics';
 import { injectSpeedInsights } from '@vercel/speed-insights';
+import DOMPurify from 'dompurify';
 
 // @googlemaps/js-api-loader and @vercel/analytics|speed-insights assign
 // script.src as a raw string rather than through a Trusted Types policy. With
@@ -24,6 +25,15 @@ import { injectSpeedInsights } from '@vercel/speed-insights';
 // pass-through — since that's the only thing `@ng-icons/core` ever assigns
 // here, and the SVG bodies come from the bundled `@ng-icons/lucide` package
 // at build time, not user input.
+//
+// The `<svg` prefix check alone is not sufficient: it only gates the start
+// of the string, so anything inside a well-formed `<svg>...</svg>` wrapper
+// (including an inline `<script>` or `on*=` event handler) would pass
+// through unsanitized. That's a residual XSS risk even though today's only
+// consumer isn't attacker-controlled, so the trap also runs the string
+// through DOMPurify's SVG profile (which strips `<script>` and most event
+// handlers) with an explicit FORBID_TAGS/FORBID_ATTR belt-and-suspenders,
+// as defense in depth for any future consumer of this same fallback path.
 interface TrustedTypesWindow {
   trustedTypes?: {
     createPolicy(
@@ -42,8 +52,14 @@ if (trustedTypes) {
       throw new Error(`Blocked untrusted script URL: ${url}`);
     },
     createHTML: (html: string) => {
-      if (/^\s*<svg[\s>]/i.test(html)) return html;
-      throw new Error('Blocked untrusted HTML assignment');
+      if (!/^\s*<svg[\s>]/i.test(html)) throw new Error('Blocked untrusted HTML assignment');
+      const clean = DOMPurify.sanitize(html, {
+        USE_PROFILES: { svg: true, svgFilters: true },
+        FORBID_TAGS: ['script'],
+        FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],
+      });
+      if (!clean) throw new Error('Blocked untrusted HTML assignment');
+      return clean;
     },
   });
 }
