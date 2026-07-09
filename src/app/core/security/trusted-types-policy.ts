@@ -1,4 +1,4 @@
-import DOMPurify from 'dompurify';
+import DOMPurify, { type Config } from 'dompurify';
 
 // @googlemaps/js-api-loader and @vercel/analytics|speed-insights assign
 // script.src as a raw string rather than through a Trusted Types policy. With
@@ -23,12 +23,37 @@ import DOMPurify from 'dompurify';
 //
 // The `<svg` prefix check alone is not sufficient: it only gates the start
 // of the string, so anything inside a well-formed `<svg>...</svg>` wrapper
-// (including an inline `<script>` or `on*=` event handler) would pass
-// through unsanitized. That's a residual XSS risk even though today's only
-// consumer isn't attacker-controlled, so the trap also runs the string
-// through DOMPurify's SVG profile (which strips `<script>` and most event
-// handlers) with an explicit FORBID_TAGS/FORBID_ATTR belt-and-suspenders,
-// as defense in depth for any future consumer of this same fallback path.
+// (including an inline `<script>`, an `on*=` handler, or a nested
+// `<foreignObject><iframe src="javascript:...">`) would pass through
+// unsanitized. That's a residual XSS risk even though today's only consumer
+// isn't attacker-controlled, so the trap also runs the string through
+// DOMPurify's SVG profile (which strips disallowed elements — including
+// `foreignObject`/`iframe` — plus event handlers and javascript:/data: URIs
+// in any attribute, not just href) with an explicit FORBID_TAGS/FORBID_ATTR
+// belt-and-suspenders, as defense in depth for any future consumer of this
+// same fallback path.
+//
+// DOMPurify sanitizes by parsing the markup into a scratch, detached
+// document — an `innerHTML` write (or `DOMParser.parseFromString`, itself a
+// guarded Trusted Types sink in this Chromium version) like any other. If
+// that internal write isn't pre-signed, it falls back to *this* "default"
+// policy's `createHTML`, which would call `DOMPurify.sanitize()` again:
+// every icon render would recurse into itself and peg the renderer
+// (confirmed via a CDP profile: thousands of nested createHTML -> sanitize
+// -> createHTML frames per render). DOMPurify ships a documented mechanism
+// for exactly this case (`TRUSTED_TYPES_POLICY`): give it its own, narrowly
+// scoped policy purely for that internal parse, so its write is already
+// trusted and never re-enters the policy below. That inner policy's
+// `createHTML` is a pure passthrough — it does no sanitization itself — but
+// it's only ever used to let DOMPurify build the scratch DOM it then walks
+// and cleans; DOMPurify's actual sanitization (and the `<svg` prefix check
+// above) still fully gates what `default.createHTML` returns. The inner
+// policy is never assigned anywhere else, so it grants no capability beyond
+// what DOMPurify's parse step already needs. Its name is allowlisted in
+// vercel.json's `trusted-types` directive as a single, narrowly-scoped
+// addition (see the comment there) — approved specifically for this fix.
+const DOMPURIFY_INTERNAL_POLICY_NAME = 'dompurify-internal';
+
 export interface TrustedTypesWindow {
   trustedTypes?: {
     createPolicy(
@@ -42,6 +67,13 @@ export function setupTrustedTypesPolicy(win: TrustedTypesWindow = globalThis as 
   const trustedTypes = win.trustedTypes;
   if (!trustedTypes) return;
 
+  // Passthrough only — DOMPurify's own sanitizer, invoked below, is the real
+  // security boundary. See the module comment above for why this is safe.
+  const domPurifyInternalPolicy = trustedTypes.createPolicy(DOMPURIFY_INTERNAL_POLICY_NAME, {
+    createScriptURL: (url: string) => url,
+    createHTML: (html: string) => html,
+  });
+
   const allowedScriptUrlPrefixes = ['https://maps.googleapis.com/', 'https://maps.gstatic.com/'];
   trustedTypes.createPolicy('default', {
     createScriptURL: (url: string) => {
@@ -54,7 +86,7 @@ export function setupTrustedTypesPolicy(win: TrustedTypesWindow = globalThis as 
         USE_PROFILES: { svg: true, svgFilters: true },
         FORBID_TAGS: ['script'],
         FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover'],
-        TRUSTED_TYPES_POLICY: null,
+        TRUSTED_TYPES_POLICY: domPurifyInternalPolicy as unknown as NonNullable<Config['TRUSTED_TYPES_POLICY']>,
       });
       if (!clean) throw new Error('Blocked untrusted HTML assignment');
       return clean;
