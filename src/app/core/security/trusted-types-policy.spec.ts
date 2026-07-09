@@ -1,4 +1,5 @@
 import { vi } from 'vitest';
+import DOMPurify from 'dompurify';
 import { setupTrustedTypesPolicy, TrustedTypesWindow } from './trusted-types-policy';
 
 interface CapturedPolicy {
@@ -40,6 +41,13 @@ describe('setupTrustedTypesPolicy', () => {
     setupTrustedTypesPolicy(win);
     expect(createPolicy).toHaveBeenCalledWith('dompurify-internal', expect.any(Object));
     expect(createPolicy).toHaveBeenCalledTimes(2);
+  });
+
+  it('the internal policy\'s createScriptURL is a pure passthrough (required by the Trusted Types policy shape, unused by DOMPurify\'s SVG parse)', () => {
+    const { win, createPolicy } = createFakeWindow();
+    setupTrustedTypesPolicy(win);
+    const internalPolicy = createPolicy.mock.calls[0][1] as CapturedPolicy;
+    expect(internalPolicy.createScriptURL('https://example.com/x.js')).toBe('https://example.com/x.js');
   });
 
   it('registers exactly two policies and never re-enters createPolicy from createHTML', () => {
@@ -167,6 +175,16 @@ describe('setupTrustedTypesPolicy', () => {
       } else {
         expect(result).not.toContain('javascript:');
       }
+    });
+
+    it('throws when DOMPurify sanitizes the input down to an empty string', () => {
+      const { win, getPolicy } = createFakeWindow();
+      setupTrustedTypesPolicy(win);
+      const sanitizeSpy = vi.spyOn(DOMPurify, 'sanitize').mockReturnValue('');
+
+      expect(() => getPolicy().createHTML('<svg></svg>')).toThrow('Blocked untrusted HTML assignment');
+
+      sanitizeSpy.mockRestore();
     });
 
     it('preserves benign gradient/fill svg markup used by real icons', () => {
