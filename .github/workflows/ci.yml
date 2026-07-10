@@ -261,7 +261,7 @@ jobs:
           "
       - name: Upload SARIF to GitHub Code Scanning
         if: github.event_name == 'push'
-        uses: github/codeql-action/upload-sarif@641a925cfafe92d0fdf8b239ba4053e3f8d99d6d # v3
+        uses: github/codeql-action/upload-sarif@02c5e83432fe5497fd85b873b6c9f16a8578e1d9 # v3
         with:
           sarif_file: sonar.sarif
           category: sonarcloud
