@@ -49,7 +49,7 @@ describe('SupportService', () => {
       const p = service.loadSubmissions();
       httpMock.expectOne(`${API}/support`).flush([makeApiSubmission()]);
       await p;
-      expect(service.submissions().length).toBe(1);
+      expect(service.submissions()).toHaveLength(1);
       expect(service.submissions()[0].id).toBe('s1');
     });
 

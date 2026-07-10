@@ -34,13 +34,13 @@ describe('LeaderboardRestTableComponent', () => {
     const { fixture } = await setup([mockEntry]);
     fixture.detectChanges();
     const rows = fixture.nativeElement.querySelectorAll('tbody tr');
-    expect(rows.length).toBe(1);
+    expect(rows).toHaveLength(1);
   });
 
   it('renders empty tbody when no entries', async () => {
     const { fixture } = await setup([]);
     fixture.detectChanges();
     const rows = fixture.nativeElement.querySelectorAll('tbody tr');
-    expect(rows.length).toBe(0);
+    expect(rows).toHaveLength(0);
   });
 });

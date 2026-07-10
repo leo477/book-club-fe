@@ -71,7 +71,7 @@ describe('ClubService', () => {
     const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/bans`);
     req.flush([apiBan]);
     const bans = await promise;
-    expect(bans.length).toBe(1);
+    expect(bans).toHaveLength(1);
     expect(bans[0].userId).toBe('user-2');
     expect(bans[0].clubId).toBe('club-1');
     expect(bans[0].duration).toBe(1);
@@ -91,7 +91,7 @@ describe('ClubService', () => {
     const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/members`);
     req.flush([apiMember]);
     const members = await promise;
-    expect(members.length).toBe(1);
+    expect(members).toHaveLength(1);
     expect(members[0].userId).toBe('user-2');
     expect(members[0].displayName).toBe('Alice');
   });
@@ -129,7 +129,7 @@ describe('ClubService', () => {
 
       await service.ensureMyClubsLoaded();
       httpMock.expectNone(`${environment.apiUrl}/clubs/my`);
-      expect(service.myClubs().length).toBe(0);
+      expect(service.myClubs()).toHaveLength(0);
     });
 
     it('skips loadMyClubs when clubs are fresh and non-empty', async () => {
@@ -140,7 +140,7 @@ describe('ClubService', () => {
 
       await service.ensureMyClubsLoaded();
       httpMock.expectNone(`${environment.apiUrl}/clubs/my`);
-      expect(service.myClubs().length).toBe(1);
+      expect(service.myClubs()).toHaveLength(1);
     });
 
     it('calls loadMyClubs again when TTL has expired', async () => {
@@ -153,7 +153,7 @@ describe('ClubService', () => {
       const req2 = httpMock.expectOne(`${environment.apiUrl}/clubs/my`);
       req2.flush([]);
       await load2;
-      expect(service.myClubs().length).toBe(0);
+      expect(service.myClubs()).toHaveLength(0);
     });
   });
 
@@ -204,7 +204,7 @@ describe('ClubService', () => {
 
       const result = await service.getClubMembers('club-1');
       httpMock.expectNone(`${environment.apiUrl}/clubs/club-1/members`);
-      expect(result.length).toBe(1);
+      expect(result).toHaveLength(1);
     });
 
     it('loadClubEvents returns cached result when includePast is false', async () => {

@@ -69,7 +69,7 @@ describe('BookAutocompleteComponent', () => {
       await nextTick();
       fixture.detectChanges();
       expect(bookSearchSpy.searchBooks$).toHaveBeenCalledWith('Ang');
-      expect(component.suggestions().length).toBe(1);
+      expect(component.suggestions()).toHaveLength(1);
       expect(component.isOpen()).toBe(true);
     });
 
@@ -91,7 +91,7 @@ describe('BookAutocompleteComponent', () => {
       control.setValue('Ang');
       await nextTick();
       fixture.detectChanges();
-      expect(component.suggestions().length).toBe(0);
+      expect(component.suggestions()).toHaveLength(0);
       expect(component.isOpen()).toBe(false);
       expect(component.isLoading()).toBe(false);
     });
@@ -189,7 +189,7 @@ describe('BookAutocompleteComponent', () => {
       component.suggestions.set([makeBook()]);
       component.isOpen.set(true);
       component.select(makeBook());
-      expect(component.suggestions().length).toBe(0);
+      expect(component.suggestions()).toHaveLength(0);
       expect(component.isOpen()).toBe(false);
     });
 
@@ -231,7 +231,7 @@ describe('BookAutocompleteComponent', () => {
       control.setValue('Boo');
       await nextTick();
       fixture.detectChanges();
-      expect(fixture.debugElement.queryAll(By.css('[role="option"]')).length).toBe(2);
+      expect(fixture.debugElement.queryAll(By.css('[role="option"]'))).toHaveLength(2);
     });
 
     it('shows spinner when isLoading is true', () => {

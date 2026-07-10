@@ -131,7 +131,7 @@ describe('ChatService', () => {
 
   describe('Initial state', () => {
     it('should have 0 rooms before loading', () => {
-      expect(getRooms(service).length).toBe(0);
+      expect(getRooms(service)).toHaveLength(0);
     });
     it('should have activeRoomId as null initially', () => {
       expect(getActiveRoomId(service)).toBeNull();
@@ -171,7 +171,7 @@ describe('ChatService', () => {
       const msgsReq = httpMock.expectOne(`${API}/chat/rooms/room-1/messages`);
       msgsReq.flush([]);
 
-      expect(getRooms(service).length).toBe(2);
+      expect(getRooms(service)).toHaveLength(2);
       expect(getRooms(service)[0].id).toBe('room-1');
     });
 
@@ -210,7 +210,7 @@ describe('ChatService', () => {
       await Promise.resolve();
 
       const msgs = getActiveMessages(service);
-      expect(msgs.length).toBe(1);
+      expect(msgs).toHaveLength(1);
       expect(msgs[0].isOwn).toBe(true);
     });
   });
@@ -275,7 +275,7 @@ describe('ChatService', () => {
       await Promise.resolve();
 
       const msgs = getActiveMessages(service);
-      expect(msgs.length).toBe(2);
+      expect(msgs).toHaveLength(2);
       expect(msgs[0].id).toBe('msg-3-1');
     });
   });
@@ -298,7 +298,7 @@ describe('ChatService', () => {
 
       // Optimistic message should be visible right away (before HTTP responds)
       const msgs = getActiveMessages(service);
-      expect(msgs.length).toBe(1);
+      expect(msgs).toHaveLength(1);
       expect(msgs[0].text).toBe('Hello world');
       expect(msgs[0].id.startsWith('temp-')).toBe(true);
       expect(msgs[0].isOwn).toBe(true);
@@ -323,7 +323,7 @@ describe('ChatService', () => {
       await Promise.resolve();
 
       const msgs = getActiveMessages(service);
-      expect(msgs.length).toBe(1);
+      expect(msgs).toHaveLength(1);
       expect(msgs[0].id).toBe('real-msg-id');
       expect(msgs[0].id.startsWith('temp-')).toBe(false);
     });
@@ -333,7 +333,7 @@ describe('ChatService', () => {
 
       service.sendMessage('Will fail', { id: 'user-99', displayName: 'TestUser' });
 
-      expect(getActiveMessages(service).length).toBe(1); // optimistic visible
+      expect(getActiveMessages(service)).toHaveLength(1); // optimistic visible
 
       httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush(
         { detail: 'Error' }, { status: 500, statusText: 'Server Error' },
@@ -342,14 +342,14 @@ describe('ChatService', () => {
       // HttpClient error processing requires several microtask ticks
       for (let i = 0; i < 5; i++) await Promise.resolve();
 
-      expect(getActiveMessages(service).length).toBe(0); // rolled back
+      expect(getActiveMessages(service)).toHaveLength(0); // rolled back
     });
 
     it('should not send if activeRoomId is null', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set(null);
       service.sendMessage('Should not send', { id: 'user-x', displayName: 'Nobody' });
       httpMock.expectNone(`${API}/chat/rooms/null/messages`);
-      expect(getActiveMessages(service).length).toBe(0);
+      expect(getActiveMessages(service)).toHaveLength(0);
     });
   });
 
@@ -402,7 +402,7 @@ describe('ChatService', () => {
     it('should not include params when not provided', () => {
       service.loadMessages('room-1');
       const req = httpMock.expectOne(`${API}/chat/rooms/room-1/messages`);
-      expect(req.request.params.keys().length).toBe(0);
+      expect(req.request.params.keys()).toHaveLength(0);
       req.flush([]);
     });
 
@@ -531,7 +531,7 @@ describe('ChatService', () => {
 
       await flushMicrotasks();
 
-      expect(getRooms(service).length).toBe(2);
+      expect(getRooms(service)).toHaveLength(2);
       expect(getRooms(service)[0].name).toBe('Club A · General');
       expect(getRooms(service)[1].name).toBe('Club B · General');
     });
@@ -580,7 +580,7 @@ describe('ChatService', () => {
 
       httpMock.expectOne(`${API}/chat/rooms/r1/messages`).flush([]);
 
-      expect(getRooms(service).length).toBe(1);
+      expect(getRooms(service)).toHaveLength(1);
     });
   });
 
@@ -646,7 +646,7 @@ describe('ChatService', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set(null);
       service.deleteMessage('msg-x');
       httpMock.expectNone(`${API}/chat/rooms/null/messages/msg-x`);
-      expect(getActiveMessages(service).length).toBe(0);
+      expect(getActiveMessages(service)).toHaveLength(0);
     });
   });
 
@@ -681,7 +681,7 @@ describe('ChatService', () => {
       httpMock.expectOne(`${API}/chat/rooms/r1`).flush(null);
       await promise;
 
-      expect(getRooms(service).length).toBe(0);
+      expect(getRooms(service)).toHaveLength(0);
     });
 
     it('clears activeRoomId and disconnects when deleting the active room', async () => {
@@ -707,7 +707,7 @@ describe('ChatService', () => {
       httpMock.expectOne(`${API}/chat/rooms/r2`).flush(null);
       await promise;
 
-      expect(getRooms(service).length).toBe(1);
+      expect(getRooms(service)).toHaveLength(1);
       expect(getActiveRoomId(service)).toBe('r1');
     });
   });
@@ -724,7 +724,7 @@ describe('ChatService', () => {
       httpMock.expectOne(`${API}/chat/rooms/r1`).flush(null);
       await promise;
 
-      expect(getRooms(service).length).toBe(0);
+      expect(getRooms(service)).toHaveLength(0);
     });
 
     it('clears activeRoomId and disconnects when deleting the active room', async () => {
@@ -750,7 +750,7 @@ describe('ChatService', () => {
       httpMock.expectOne(`${API}/chat/rooms/r2`).flush(null);
       await promise;
 
-      expect(getRooms(service).length).toBe(1);
+      expect(getRooms(service)).toHaveLength(1);
       expect(getActiveRoomId(service)).toBe('r1');
     });
   });
@@ -766,7 +766,7 @@ describe('ChatService', () => {
 
       await Promise.resolve();
 
-      expect(getRooms(service).length).toBe(1);
+      expect(getRooms(service)).toHaveLength(1);
       expect(getRooms(service)[0].id).toBe('new-room-id');
       expect(getRooms(service)[0].clubId).toBe('club-1');
     });
@@ -894,7 +894,7 @@ describe('ChatService', () => {
       });
 
       const msgs = getActiveMessages(service);
-      expect(msgs.length).toBe(1);
+      expect(msgs).toHaveLength(1);
       expect(msgs[0].text).toBe('Hello via WS');
     });
 
@@ -998,7 +998,7 @@ describe('ChatService', () => {
       ws.simulateMessage({ type: 'message', payload });
       ws.simulateMessage({ type: 'message', payload }); // duplicate
 
-      expect(getActiveMessages(service).length).toBe(1);
+      expect(getActiveMessages(service)).toHaveLength(1);
     });
 
     it('WS echo replaces temp message from optimistic sendMessage', async () => {
@@ -1023,7 +1023,7 @@ describe('ChatService', () => {
       postReq.flush({ id: 'server-id', senderId: 'u1', senderName: 'Alice', text: 'Real text', timestamp: '2024-01-01T00:00:00Z' });
       await Promise.resolve();
       // Still only one message (dedup handles POST .then() trying to map temp to real, but temp is gone)
-      expect(getActiveMessages(service).filter(m => m.id === 'server-id').length).toBe(1);
+      expect(getActiveMessages(service).filter(m => m.id === 'server-id')).toHaveLength(1);
     });
 
     it('disconnectRoom prevents reconnect by clearing _activeRoomToken', () => {
@@ -1258,7 +1258,7 @@ describe('ChatService', () => {
     it('does nothing when called with empty array', () => {
       service.fetchUnreadCounts([]);
       httpMock.expectNone(`${API}/chat/rooms/`);
-      expect(Object.keys(service.roomUnreadCounts()).length).toBe(0);
+      expect(Object.keys(service.roomUnreadCounts())).toHaveLength(0);
     });
   });
 
@@ -1337,7 +1337,7 @@ describe('ChatService', () => {
       (service as unknown as ChatServiceReadPrivate)._lastReadMap.update((m: Record<string, string | null>) => ({ ...m, ['room-d']: 'msg-a' }));
 
       const items = service.activeMessagesWithDivider();
-      expect(items.length).toBe(3); // msg-a + divider + msg-b
+      expect(items).toHaveLength(3); // msg-a + divider + msg-b
       expect(items[1]).toEqual(expect.objectContaining({ isDivider: true }));
       expect((items[2] as { text: string }).text).toBe('Unread');
     });

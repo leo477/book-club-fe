@@ -73,7 +73,7 @@ describe('RandomizerService', () => {
       const p = service.loadClubMembers('c1');
       httpMock.expectOne(`${API}/clubs/c1/members`).flush([rawMember('u1', 'Alice'), rawMember('u2', 'Bob')]);
       await p;
-      expect(service.candidates().length).toBe(2);
+      expect(service.candidates()).toHaveLength(2);
       expect(service.selectedIds().has('u1')).toBe(true);
       expect(service.selectedIds().has('u2')).toBe(true);
       expect(service.result()).toBeNull();
@@ -167,7 +167,7 @@ describe('RandomizerService', () => {
       expect(req.request.method).toBe('POST');
       req.flush(rawSession);
       await p;
-      expect(service.history().length).toBe(1);
+      expect(service.history()).toHaveLength(1);
       expect(service.history()[0].id).toBe('s1');
     });
 
@@ -202,7 +202,7 @@ describe('RandomizerService', () => {
       const p = service.loadHistory('c1');
       httpMock.expectOne(`${API}/clubs/c1/randomizer/history`).flush([rawSession]);
       await p;
-      expect(service.history().length).toBe(1);
+      expect(service.history()).toHaveLength(1);
       expect(service.history()[0].clubId).toBe('c1');
       expect(service.history()[0].result?.displayName).toBe('Alice');
     });
