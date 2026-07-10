@@ -5,6 +5,11 @@
     [formControl]="control()"
     [placeholder]="placeholder()"
     autocomplete="off"
+    role="combobox"
+    aria-autocomplete="list"
+    [attr.aria-expanded]="isOpen()"
+    [attr.aria-controls]="listboxId"
+    [attr.aria-activedescendant]="activeIndex() >= 0 ? listboxId + '-option-' + activeIndex() : null"
     (keydown)="onKeydown($event)"
     class="w-full"
     [class.border-red-400]="control().invalid && control().touched"
@@ -20,10 +25,11 @@
   }
 
   @if (isOpen() && suggestions().length > 0) {
-    <ul role="listbox" class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-48 overflow-y-auto">
+    <ul [id]="listboxId" role="listbox" class="absolute z-50 mt-1 w-full rounded-xl border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg max-h-48 overflow-y-auto">
       @for (s of suggestions(); track s.label; let i = $index) {
         <li role="presentation">
           <button
+            [id]="listboxId + '-option-' + i"
             type="button"
             role="option"
             [attr.aria-selected]="activeIndex() === i"
