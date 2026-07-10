@@ -85,9 +85,9 @@ describe('ChatsComponent', () => {
       const fixture = TestBed.createComponent(ChatsComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
       const grouped = comp.roomsByClub();
-      expect(grouped.length).toBe(1);
+      expect(grouped).toHaveLength(1);
       expect(grouped[0].clubName).toBe('Club One');
-      expect(grouped[0].rooms.length).toBe(2);
+      expect(grouped[0].rooms).toHaveLength(2);
     });
 
     it('falls back to the clubId as name when the club is not in myClubs', () => {

@@ -60,7 +60,7 @@ export const appConfig: ApplicationConfig = {
       return authService.init();
     }),
     provideAppInitializer(() => {
-      void inject(MapsConfigService).load();
+      inject(MapsConfigService).load();
     }),
   ],
 };

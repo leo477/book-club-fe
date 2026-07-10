@@ -90,6 +90,7 @@ describe('MapsConfigService', () => {
 
       await service.ensureLoaded();
 
+      expect(service.isLoaded()).toBe(true);
       httpMock.verify();
     });
 

@@ -36,6 +36,7 @@ describe('ChatApi', () => {
       r.params.get('before') === 'cursor' &&
       r.params.get('limit') === '10',
     );
+    expect(req.request.method).toBe('GET');
     req.flush([]);
   });
 

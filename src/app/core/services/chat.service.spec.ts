@@ -425,6 +425,7 @@ describe('ChatService', () => {
   describe('loadOlderMessages()', () => {
     it('does nothing when the room has no messages loaded yet', async () => {
       await service.loadOlderMessages('room-empty');
+      expect(service.messages()['room-empty']).toBeUndefined();
       httpMock.expectNone(r => r.url.startsWith(`${API}/chat/rooms/room-empty/messages`));
     });
 
@@ -488,6 +489,7 @@ describe('ChatService', () => {
 
       await Promise.all([first, second]);
 
+      expect(service.messages()['room-1']?.map(m => m.id)).toEqual(['msg-9', 'msg-10']);
       httpMock.expectNone(r => r.url === `${API}/chat/rooms/room-1/messages` && r.params.get('before') != null && r.params.get('before') !== 'msg-10');
     });
 
@@ -1377,7 +1379,9 @@ describe('ChatService — constructor orchestrator effects', () => {
 
   it('loads all club rooms when the user has clubs', () => {
     const { http } = setup({ user: { id: 'u1' }, clubs: [{ id: 'club-1', name: 'Club A' }] });
-    http.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([]);
+    const req = http.expectOne(`${API}/clubs/club-1/chat/rooms`);
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
     http.verify();
   });
 

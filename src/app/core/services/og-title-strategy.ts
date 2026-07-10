@@ -1,8 +1,7 @@
 import { DestroyRef, EnvironmentInjector, Injectable, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Meta, Title } from '@angular/platform-browser';
-import { RouterStateSnapshot } from '@angular/router';
-import { TitleStrategy } from '@angular/router';
+import { RouterStateSnapshot, TitleStrategy } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 
 /**

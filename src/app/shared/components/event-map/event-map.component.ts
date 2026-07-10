@@ -50,7 +50,7 @@ export class EventMapComponent {
   }
 
   constructor() {
-    void this.maps.ensureLoaded();
+    this.maps.ensureLoaded();
 
     effect(onCleanup => {
       const venue = this.afterMeetingVenue();

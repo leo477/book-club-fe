@@ -182,7 +182,7 @@ describe('ClubDetailComponent', () => {
       await fixture.whenStable();
 
       expect(component.joinRequestStatus()).toBe('pending');
-      expect(component.clubBans().length).toBe(1);
+      expect(component.clubBans()).toHaveLength(1);
     });
 
     it('resets the events tab state when the id input changes', async () => {

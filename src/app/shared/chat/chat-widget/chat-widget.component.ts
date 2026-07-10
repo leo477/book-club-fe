@@ -240,7 +240,7 @@ export class ChatWidgetComponent {
     const prevScrollHeight = el.scrollHeight;
     const prevScrollTop = el.scrollTop;
 
-    void this.chat.loadOlderMessages(roomId).then(() => {
+    this.chat.loadOlderMessages(roomId).then(() => {
       requestAnimationFrame(() => {
         const container = this.messagesScrollRef()?.nativeElement;
         if (!container) return;
