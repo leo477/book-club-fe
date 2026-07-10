@@ -9,7 +9,7 @@ import { of } from 'rxjs';
 describe('HeaderComponent', () => {
   let component: HeaderComponent;
   let authSpy: { signOut: ReturnType<typeof vi.fn>; isAuthenticated: ReturnType<typeof signal>; currentUser: ReturnType<typeof signal> };
-  let translateSpy: { use: ReturnType<typeof vi.fn>; instant: ReturnType<typeof vi.fn>; onLangChange: unknown; currentLang: string };
+  let translateSpy: { use: ReturnType<typeof vi.fn>; instant: ReturnType<typeof vi.fn>; onLangChange: unknown; getCurrentLang: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     authSpy = {
@@ -22,7 +22,7 @@ describe('HeaderComponent', () => {
       use: vi.fn().mockReturnValue(of('en')),
       instant: vi.fn().mockImplementation((key: string) => key),
       onLangChange: of({ lang: 'uk' }),
-      currentLang: 'uk',
+      getCurrentLang: vi.fn().mockReturnValue('uk'),
     };
 
     TestBed.configureTestingModule({
