@@ -43,7 +43,7 @@ describe('QuizDetailBaseComponent', () => {
     expect(quizServiceSpy.getQuiz).toHaveBeenCalledWith('q1');
     expect(quizServiceSpy.getQuestions).toHaveBeenCalledWith('q1');
     expect(component.quiz()?.id).toBe('q1');
-    expect(component.questions().length).toBe(1);
+    expect(component.questions()).toHaveLength(1);
   });
 
   it('isLoading reflects the resources settling', async () => {

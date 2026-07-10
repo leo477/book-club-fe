@@ -99,7 +99,7 @@ describe('ClubManageComponent', () => {
   it('loads club, stats, members, bans, and join requests on init', async () => {
     await setup();
     expect(component.club()?.id).toBe('club-1');
-    expect(component.members().length).toBe(2);
+    expect(component.members()).toHaveLength(2);
     expect(component.isLoading()).toBe(false);
   });
 
@@ -134,7 +134,7 @@ describe('ClubManageComponent', () => {
       expect(clubServiceSpy.banMember).toHaveBeenCalledWith('club-1', 'u2', '1d');
       expect(component.members().some(m => m.userId === 'u2')).toBe(false);
       await Promise.resolve();
-      expect(component.bans().length).toBe(1);
+      expect(component.bans()).toHaveLength(1);
     });
   });
 
@@ -160,7 +160,7 @@ describe('ClubManageComponent', () => {
       await setup();
       await component.handleUnban('u3');
       expect(clubServiceSpy.unbanMember).toHaveBeenCalledWith('club-1', 'u3');
-      expect(component.bans().length).toBe(0);
+      expect(component.bans()).toHaveLength(0);
     });
 
     it('rolls back the ban list on failure', async () => {
@@ -168,7 +168,7 @@ describe('ClubManageComponent', () => {
       await setup();
       clubServiceSpy.unbanMember.mockRejectedValue(new Error('fail'));
       await component.handleUnban('u3');
-      expect(component.bans().length).toBe(1);
+      expect(component.bans()).toHaveLength(1);
     });
   });
 
@@ -178,7 +178,7 @@ describe('ClubManageComponent', () => {
       await setup();
       await component.onApproveJoinRequest('u9');
       expect(clubServiceSpy.approveJoinRequest).toHaveBeenCalledWith('club-1', 'u9');
-      expect(component.joinRequests().length).toBe(0);
+      expect(component.joinRequests()).toHaveLength(0);
     });
 
     it('rejects a request', async () => {
@@ -186,7 +186,7 @@ describe('ClubManageComponent', () => {
       await setup();
       await component.onRejectJoinRequest('u9');
       expect(clubServiceSpy.rejectJoinRequest).toHaveBeenCalledWith('club-1', 'u9');
-      expect(component.joinRequests().length).toBe(0);
+      expect(component.joinRequests()).toHaveLength(0);
     });
   });
 

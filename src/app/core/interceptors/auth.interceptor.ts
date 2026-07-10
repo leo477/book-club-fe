@@ -199,6 +199,24 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
       ? request.clone({ setHeaders: { Authorization: `Bearer ${withToken}` } })
       : request;
 
+  // Extracted out of the catchError/switchMap chain so it isn't a fifth level of
+  // nested function (SonarCloud caps nesting at 4); `run` is defined below but only
+  // invoked here after the closure is fully initialized.
+  // eslint-disable-next-line rxjs-x/finnish
+  const handleTokenRefreshResult = (
+    newToken: string | null,
+    request: HttpRequest<unknown>,
+    httpError: HttpErrorResponse,
+  ): Observable<HttpEvent<unknown>> => {
+    if (!newToken) {
+      tokenStore.clear();
+      router.navigate(['/login']).catch(() => { /* best-effort */ });
+      return throwError(() => new BackendHttpError(401, extractBackendDetail(httpError), 'ERRORS.requestFailed'));
+    }
+    const retriedReq = request.clone({ context: request.context.set(IS_REFRESH_RETRY, true) });
+    return run(retriedReq, newToken);
+  };
+
   // eslint-disable-next-line rxjs-x/finnish
   const run = (request: HttpRequest<unknown>, activeToken: string | null): Observable<HttpEvent<unknown>> =>
     next$(authorize(request, activeToken)).pipe(
@@ -237,17 +255,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
 
         if (shouldRetryAfterRefresh) {
           return refreshAccessToken$(http, tokenStore).pipe(
-            switchMap(newToken => {
-              if (!newToken) {
-                tokenStore.clear();
-                router.navigate(['/login']).catch(() => { /* best-effort */ });
-                return throwError(
-                  () => new BackendHttpError(401, extractBackendDetail(httpError), 'ERRORS.requestFailed'),
-                );
-              }
-              const retriedReq = request.clone({ context: request.context.set(IS_REFRESH_RETRY, true) });
-              return run(retriedReq, newToken);
-            }),
+            switchMap(newToken => handleTokenRefreshResult(newToken, request, httpError)),
           );
         }
 
