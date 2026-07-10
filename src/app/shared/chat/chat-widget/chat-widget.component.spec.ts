@@ -458,37 +458,20 @@ describe('ChatWidgetComponent', () => {
   });
 
   describe('isFabVisible', () => {
-    it('returns true on a non-club-detail URL', () => {
+    it.each<[string, string, boolean]>([
+      ['non-club-detail URL', '/', true],
+      ['club detail URL /clubs/:id', '/clubs/abc-123', false],
+      ['/clubs (list page, not a detail)', '/clubs', true],
+      ['/clubs/:id/subpage (nested path, not matched by regex)', '/clubs/abc-123/events', true],
+    ])('returns %s (%s)', (_label, url, expected) => {
+      if (url !== '/') {
+        const routerEvents$ = new Subject<RouterEvent>();
+        const mockRouter = { url, events: routerEvents$.asObservable() } satisfies Partial<Router>;
+        TestBed.overrideProvider(Router, { useValue: mockRouter });
+      }
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.isFabVisible()).toBe(true);
-    });
-
-    it('returns false on a club detail URL /clubs/:id', () => {
-      const routerEvents$ = new Subject<RouterEvent>();
-      const mockRouter = { url: '/clubs/abc-123', events: routerEvents$.asObservable() } satisfies Partial<Router>;
-      TestBed.overrideProvider(Router, { useValue: mockRouter });
-      const fixture = TestBed.createComponent(ChatWidgetComponent);
-      const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.isFabVisible()).toBe(false);
-    });
-
-    it('returns true on /clubs (list page, not a detail)', () => {
-      const routerEvents$ = new Subject<RouterEvent>();
-      const mockRouter = { url: '/clubs', events: routerEvents$.asObservable() } satisfies Partial<Router>;
-      TestBed.overrideProvider(Router, { useValue: mockRouter });
-      const fixture = TestBed.createComponent(ChatWidgetComponent);
-      const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.isFabVisible()).toBe(true);
-    });
-
-    it('returns true on /clubs/:id/subpage (nested path, not matched by regex)', () => {
-      const routerEvents$ = new Subject<RouterEvent>();
-      const mockRouter = { url: '/clubs/abc-123/events', events: routerEvents$.asObservable() } satisfies Partial<Router>;
-      TestBed.overrideProvider(Router, { useValue: mockRouter });
-      const fixture = TestBed.createComponent(ChatWidgetComponent);
-      const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.isFabVisible()).toBe(true);
+      expect(comp.isFabVisible()).toBe(expected);
     });
 
     it('updates isFabVisible when router emits a NavigationEnd to a club detail URL', () => {

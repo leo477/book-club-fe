@@ -51,7 +51,7 @@ describe('ClubService – computed signals and additional methods', () => {
       const p = service.loadPublicClubs();
       httpMock.expectOne(`${API}/clubs`).flush([makeApiClub()]);
       await p;
-      expect(service.clubs().length).toBe(1);
+      expect(service.clubs()).toHaveLength(1);
       expect(service.isLoading()).toBe(false);
     });
 
@@ -68,7 +68,7 @@ describe('ClubService – computed signals and additional methods', () => {
       const p = service.loadMyClubs();
       httpMock.expectOne(`${API}/clubs/my`).flush([makeApiClub({ id: 'c2', organizerId: 'user-1' })]);
       await p;
-      expect(service.myClubs().length).toBe(1);
+      expect(service.myClubs()).toHaveLength(1);
     });
 
     it('sets error on failure', async () => {
@@ -120,7 +120,7 @@ describe('ClubService – computed signals and additional methods', () => {
 
     it('returns all clubs when query is empty', () => {
       service.setSearchQuery('');
-      expect(service.filteredClubs().length).toBe(3);
+      expect(service.filteredClubs()).toHaveLength(3);
     });
   });
 
@@ -150,7 +150,7 @@ describe('ClubService – computed signals and additional methods', () => {
     it('setCityFilter(null) removes filter', () => {
       service.setCityFilter('Kyiv');
       service.setCityFilter(null);
-      expect(service.filteredClubs().length).toBe(3);
+      expect(service.filteredClubs()).toHaveLength(3);
     });
 
     it('upcomingByCity groups clubs with meetings by city', () => {
@@ -158,7 +158,7 @@ describe('ClubService – computed signals and additional methods', () => {
       const kyiv = 'Kyiv';
       const lviv = 'Lviv';
       expect(byCity[kyiv]).toBeDefined();
-      expect(byCity[kyiv].length).toBe(2); // c1 has date, c3 has null — both included, sorted by date
+      expect(byCity[kyiv]).toHaveLength(2); // c1 has date, c3 has null — both included, sorted by date
       expect(byCity[lviv]).toBeDefined();
     });
 
@@ -183,7 +183,7 @@ describe('ClubService – computed signals and additional methods', () => {
     });
 
     it('myOwnedClubs returns clubs owned by current user', () => {
-      expect(service.myOwnedClubs().length).toBe(1);
+      expect(service.myOwnedClubs()).toHaveLength(1);
       expect(service.myOwnedClubs()[0].id).toBe('c1');
     });
 
@@ -284,7 +284,7 @@ describe('ClubService – computed signals and additional methods', () => {
       ]);
       await p;
       service.setSearchQuery('alpha');
-      expect(service.filteredClubs().length).toBe(0);
+      expect(service.filteredClubs()).toHaveLength(0);
     });
   });
 
@@ -297,7 +297,7 @@ describe('ClubService – computed signals and additional methods', () => {
       await p;
       const byCity = service.upcomingByCity();
       expect(byCity['']).toBeDefined();
-      expect(byCity[''].length).toBe(1);
+      expect(byCity['']).toHaveLength(1);
     });
   });
 
@@ -356,7 +356,7 @@ describe('ClubService – computed signals and additional methods', () => {
       httpMock.expectOne(`${API}/clubs/c1/join`).flush({ memberCount: 6 });
       await joinP;
       const c1Clubs = service.myClubs().filter(c => c.id === 'c1');
-      expect(c1Clubs.length).toBe(1);
+      expect(c1Clubs).toHaveLength(1);
     });
   });
 });

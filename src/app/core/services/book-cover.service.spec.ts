@@ -94,7 +94,7 @@ describe('BookCoverService', () => {
     service.fetchCover$('Dune').subscribe(url => (result2 = url));
 
     const reqs = httpMock.match(r => r.url.startsWith('https://openlibrary.org/'));
-    expect(reqs.length).toBe(1);
+    expect(reqs).toHaveLength(1);
     reqs[0].flush({ docs: [{ cover_i: 12345 }] });
 
     expect(result1).toBe('https://covers.openlibrary.org/b/id/12345-M.jpg');

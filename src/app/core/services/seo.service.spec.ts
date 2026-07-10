@@ -74,7 +74,7 @@ describe('SeoService', () => {
     service.setPage({ title: 'T', canonical: 'https://example.com/page1' });
     service.setPage({ title: 'T', canonical: 'https://example.com/page2' });
     const links = document.querySelectorAll('link[rel="canonical"]');
-    expect(links.length).toBe(1);
+    expect(links).toHaveLength(1);
     expect(links[0].getAttribute('href')).toBe('https://example.com/page2');
   });
 
@@ -104,7 +104,7 @@ describe('SeoService', () => {
     service.injectJsonLd({ '@type': 'WebSite' });
     service.injectJsonLd({ '@type': 'Organization' });
     const scripts = document.head.querySelectorAll('script[type="application/ld+json"]');
-    expect(scripts.length).toBe(1);
+    expect(scripts).toHaveLength(1);
     expect(scripts[0].textContent).toContain('Organization');
   });
 
@@ -166,7 +166,7 @@ describe('SeoService — bootstrapLocaleSync', () => {
     service.bootstrapLocaleSync();
     const localeCalls = metaSpy.updateTag.mock.calls
       .filter((c: unknown[]) => (c[0] as Record<string, string>)['property'] === 'og:locale');
-    expect(localeCalls.length).toBe(1);
+    expect(localeCalls).toHaveLength(1);
   });
 
   it('updates html lang and og:locale on language change', () => {

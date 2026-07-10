@@ -50,7 +50,7 @@ describe('BookStoresComponent', () => {
     const fixture = TestBed.createComponent(BookStoresComponent);
     fixture.detectChanges();
     const el: HTMLElement = fixture.nativeElement;
-    expect(el.querySelectorAll('button').length).toBe(0);
+    expect(el.querySelectorAll('button')).toHaveLength(0);
     httpMock.verify();
   });
 
@@ -185,13 +185,13 @@ describe('BookStoresComponent', () => {
         { name: 'Yakaboo', url: 'https://google.com/search?q=Yakaboo', found: null, product_url: null },
       ]);
       const buttons = el.querySelectorAll<HTMLButtonElement>('button');
-      expect(buttons.length).toBe(3);
+      expect(buttons).toHaveLength(3);
       buttons.forEach((b) => expect(b.disabled).toBe(false));
     });
 
     it('does not render store buttons when stores list is empty', async () => {
       const el = await renderStores([]);
-      expect(el.querySelectorAll('button').length).toBe(0);
+      expect(el.querySelectorAll('button')).toHaveLength(0);
     });
   });
 

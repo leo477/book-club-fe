@@ -277,31 +277,17 @@ describe('AddressAutocompleteComponent', () => {
       expect(component.activeIndex()).toBe(1);
     });
 
-    it('ArrowDown wraps from last item to first', () => {
+    it.each<[string, 'ArrowDown' | 'ArrowUp', number, number]>([
+      ['ArrowDown wraps from last item to first', 'ArrowDown', 1, 0],
+      ['ArrowUp decrements activeIndex', 'ArrowUp', 1, 0],
+      ['ArrowUp wraps from first item to last', 'ArrowUp', 0, 1],
+    ])('%s', (_label, key, startIndex, expectedIndex) => {
       const { component } = setup();
       component.suggestions.set(mockSuggestions);
       component.isOpen.set(true);
-      component.activeIndex.set(1);
-      component.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
-      expect(component.activeIndex()).toBe(0);
-    });
-
-    it('ArrowUp decrements activeIndex', () => {
-      const { component } = setup();
-      component.suggestions.set(mockSuggestions);
-      component.isOpen.set(true);
-      component.activeIndex.set(1);
-      component.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
-      expect(component.activeIndex()).toBe(0);
-    });
-
-    it('ArrowUp wraps from first item to last', () => {
-      const { component } = setup();
-      component.suggestions.set(mockSuggestions);
-      component.isOpen.set(true);
-      component.activeIndex.set(0);
-      component.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
-      expect(component.activeIndex()).toBe(1);
+      component.activeIndex.set(startIndex);
+      component.onKeydown(new KeyboardEvent('keydown', { key }));
+      expect(component.activeIndex()).toBe(expectedIndex);
     });
 
     it('Enter selects the active suggestion', () => {

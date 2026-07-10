@@ -45,7 +45,7 @@ describe('EventService', () => {
       const p = service.loadAllEvents();
       httpMock.expectOne(`${API}/events?skip=0&limit=50`).flush([makeApiEvent()]);
       await p;
-      expect(service.allEvents().length).toBe(1);
+      expect(service.allEvents()).toHaveLength(1);
       expect(service.allEvents()[0].id).toBe('e1');
     });
 
@@ -80,7 +80,7 @@ describe('EventService', () => {
       const p = service.loadMyEvents();
       httpMock.expectOne(`${API}/events/my`).flush([makeApiEvent({ id: 'e2' })]);
       await p;
-      expect(service.myEvents().length).toBe(1);
+      expect(service.myEvents()).toHaveLength(1);
       expect(service.myEvents()[0].id).toBe('e2');
     });
 
@@ -132,14 +132,14 @@ describe('EventService', () => {
     it('filters events by city', () => {
       service.setCityFilter('Kyiv');
       const filtered = service.filteredAllEvents();
-      expect(filtered.length).toBe(2);
+      expect(filtered).toHaveLength(2);
       expect(filtered.every(e => e.city === 'Kyiv')).toBe(true);
     });
 
     it('empty filter returns all events', () => {
       service.setCityFilter('Kyiv');
       service.setCityFilter('');
-      expect(service.filteredAllEvents().length).toBe(3);
+      expect(service.filteredAllEvents()).toHaveLength(3);
     });
   });
 
@@ -168,9 +168,9 @@ describe('EventService', () => {
       await p;
       const grouped = service.groupedByDate();
       expect(grouped['2025-06-01']).toBeDefined();
-      expect(grouped['2025-06-01'].length).toBe(2);
+      expect(grouped['2025-06-01']).toHaveLength(2);
       expect(grouped['2025-07-15']).toBeDefined();
-      expect(grouped['2025-07-15'].length).toBe(1);
+      expect(grouped['2025-07-15']).toHaveLength(1);
     });
   });
 

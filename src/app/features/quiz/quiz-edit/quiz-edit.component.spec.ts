@@ -97,9 +97,9 @@ describe('QuizEditComponent', () => {
     it('removes question at index (no id)', async () => {
       const { comp } = await setup(mockQuiz, [mockQuestion]);
       await new Promise<void>(r => setTimeout(r));
-      expect(comp.localQuestions().length).toBe(1);
+      expect(comp.localQuestions()).toHaveLength(1);
       comp.removeQuestion(0);
-      expect(comp.localQuestions().length).toBe(0);
+      expect(comp.localQuestions()).toHaveLength(0);
     });
   });
 

@@ -360,7 +360,7 @@ describe('ClubDetailComponent', () => {
         makeClubEvent({ id: 'e4', status: 'held' }),
       ]);
       const upcoming = component.upcomingEvents();
-      expect(upcoming.length).toBe(2);
+      expect(upcoming).toHaveLength(2);
       expect(upcoming.map(e => e.id)).toEqual(['e1', 'e2']);
     });
   });

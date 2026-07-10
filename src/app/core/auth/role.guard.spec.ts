@@ -63,7 +63,7 @@ describe('roleGuard', () => {
     it('returns UrlTree to /clubs when role does not match', () => {
       // eslint-disable-next-line rxjs-x/finnish
       const result = runGuard('organizer');
-      expect(result instanceof UrlTree).toBe(true);
+      expect(result).toBeInstanceOf(UrlTree);
       expect((result as UrlTree).toString()).toBe('/clubs');
     });
   });
@@ -92,7 +92,7 @@ describe('roleGuard', () => {
       configure('organizer');
       // eslint-disable-next-line rxjs-x/finnish
       const result = runGuard('admin');
-      expect(result instanceof UrlTree).toBe(true);
+      expect(result).toBeInstanceOf(UrlTree);
       expect((result as UrlTree).toString()).toBe('/clubs');
     });
   });
@@ -133,7 +133,7 @@ describe('roleGuard', () => {
       new Promise<void>((resolve) => {
         roleSignal.set('user');
         (runGuard('organizer') as Observable<boolean | UrlTree>).subscribe((val) => {
-          expect(val instanceof UrlTree).toBe(true);
+          expect(val).toBeInstanceOf(UrlTree);
           resolve();
         });
         loadingSignal.set(false);
