@@ -2,7 +2,7 @@ import { EventEmitter } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
-import { NavigationEnd, Router } from '@angular/router';
+import { NavigationEnd, Router, Event as RouterEvent } from '@angular/router';
 import { LangChangeEvent, TranslateService } from '@ngx-translate/core';
 import { Subject } from 'rxjs';
 import { SeoService } from './seo.service';
@@ -74,7 +74,7 @@ describe('SeoService', () => {
     service.setPage({ title: 'T', canonical: 'https://example.com/page1' });
     service.setPage({ title: 'T', canonical: 'https://example.com/page2' });
     const links = document.querySelectorAll('link[rel="canonical"]');
-    expect(links.length).toBe(1);
+    expect(links).toHaveLength(1);
     expect(links[0].getAttribute('href')).toBe('https://example.com/page2');
   });
 
@@ -104,7 +104,7 @@ describe('SeoService', () => {
     service.injectJsonLd({ '@type': 'WebSite' });
     service.injectJsonLd({ '@type': 'Organization' });
     const scripts = document.head.querySelectorAll('script[type="application/ld+json"]');
-    expect(scripts.length).toBe(1);
+    expect(scripts).toHaveLength(1);
     expect(scripts[0].textContent).toContain('Organization');
   });
 
@@ -120,13 +120,13 @@ describe('SeoService — bootstrapLocaleSync', () => {
   let titleSpy: { setTitle: ReturnType<typeof vi.fn> };
   let metaSpy: { updateTag: ReturnType<typeof vi.fn> };
   let translateSpy: { instant: ReturnType<typeof vi.fn>; getDefaultLang: ReturnType<typeof vi.fn>; currentLang: string | undefined; onLangChange: EventEmitter<LangChangeEvent> };
-  let routerSpy: { navigate: ReturnType<typeof vi.fn>; events: ReturnType<Subject<unknown>['asObservable']> };
+  let routerSpy: Pick<Router, 'navigate' | 'events'>;
   let langChangeEmitter: EventEmitter<LangChangeEvent>;
-  let routerEvents$: Subject<unknown>;
+  let routerEvents$: Subject<RouterEvent>;
 
   function buildModule(currentLang: string | undefined = 'en') {
     langChangeEmitter = new EventEmitter<LangChangeEvent>();
-    routerEvents$ = new Subject<unknown>();
+    routerEvents$ = new Subject<RouterEvent>();
 
     titleSpy = { setTitle: vi.fn() };
     metaSpy = { updateTag: vi.fn() };
@@ -166,7 +166,7 @@ describe('SeoService — bootstrapLocaleSync', () => {
     service.bootstrapLocaleSync();
     const localeCalls = metaSpy.updateTag.mock.calls
       .filter((c: unknown[]) => (c[0] as Record<string, string>)['property'] === 'og:locale');
-    expect(localeCalls.length).toBe(1);
+    expect(localeCalls).toHaveLength(1);
   });
 
   it('updates html lang and og:locale on language change', () => {
@@ -257,8 +257,8 @@ describe('SeoService — bootstrapLocaleSync with no currentLang', () => {
     };
     const routerSpy = {
       navigate: vi.fn(),
-      events: new Subject<unknown>().asObservable(),
-    };
+      events: new Subject<RouterEvent>().asObservable(),
+    } satisfies Partial<Router>;
 
     TestBed.configureTestingModule({
       providers: [

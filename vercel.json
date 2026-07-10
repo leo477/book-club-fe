@@ -2,7 +2,8 @@
   "buildCommand": "npm run build -- --configuration=production",
   "outputDirectory": "dist/book-club-fe/browser",
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/api/:path*", "destination": "https://book-club-be.onrender.com/api/:path*" },
+    { "source": "/((?!api/)(?!.*\\.[a-zA-Z0-9]+$).*)", "destination": "/index.html" }
   ],
   "headers": [
     {
@@ -14,7 +15,19 @@
         { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" },
         { "key": "Permissions-Policy", "value": "camera=(), microphone=(), geolocation=()" },
         { "key": "Strict-Transport-Security", "value": "max-age=63072000; includeSubDomains; preload" },
-        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'unsafe-hashes' 'wasm-unsafe-eval' 'sha256-MhtPZXr7+LpJUY5qtMutB+qWfQtMaPccfe7QXtCcEYc=' 'sha256-w3KwAKq2pNzb4kEd/DAPh1eW71XJXqAzkFjDa8M1P+s=' 'sha256-MphvQ4PxoZm6aXbN9KW13g4zYi4GlL2Iz6nJT7au+0w=' https://vercel.live https://vercel.live/toolbar https://maps.googleapis.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https: blob: https://maps.gstatic.com https://maps.googleapis.com; connect-src 'self' data: https://*.supabase.co https://vercel.live https://book-club-be.onrender.com wss://book-club-be.onrender.com wss://*.pusher.com https://*.pusher.com https://*.pusherapp.com https://openlibrary.org https://maps.googleapis.com https://maps.gstatic.com https://www.gstatic.com; frame-src https://vercel.live; frame-ancestors 'none';" }
+        { "key": "Content-Security-Policy", "value": "default-src 'self'; script-src 'self' 'wasm-unsafe-eval' 'sha256-MhtPZXr7+LpJUY5qtMutB+qWfQtMaPccfe7QXtCcEYc=' 'sha256-w3KwAKq2pNzb4kEd/DAPh1eW71XJXqAzkFjDa8M1P+s=' 'sha256-MphvQ4PxoZm6aXbN9KW13g4zYi4GlL2Iz6nJT7au+0w=' https://vercel.live https://vercel.live/toolbar https://maps.googleapis.com; worker-src 'self' blob:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://covers.openlibrary.org https://maps.gstatic.com https://maps.googleapis.com https://*.supabase.co; connect-src 'self' data: https://vercel.live wss://book-club-be.onrender.com https://openlibrary.org https://maps.googleapis.com https://maps.gstatic.com https://www.gstatic.com; frame-src https://vercel.live; frame-ancestors 'none'; require-trusted-types-for 'script'; trusted-types angular default dompurify-internal @googlemaps/js-api-loader google-maps-api-loader google-maps-api#html lit-html 'allow-duplicates';" }
+      ]
+    },
+    {
+      "source": "/sitemap.xml",
+      "headers": [
+        { "key": "Content-Type", "value": "application/xml; charset=utf-8" }
+      ]
+    },
+    {
+      "source": "/robots.txt",
+      "headers": [
+        { "key": "Content-Type", "value": "text/plain; charset=utf-8" }
       ]
     }
   ]

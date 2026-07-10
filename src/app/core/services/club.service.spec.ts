@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { ClubService } from './club.service';
 import { AuthService } from '../auth/auth.service';
 import { environment } from '../../../environments/environment';
@@ -22,6 +23,7 @@ describe('ClubService', () => {
         provideHttpClientTesting(),
         ClubService,
         { provide: AuthService, useValue: authSpy },
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
       ],
     });
     service = TestBed.inject(ClubService);
@@ -69,7 +71,7 @@ describe('ClubService', () => {
     const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/bans`);
     req.flush([apiBan]);
     const bans = await promise;
-    expect(bans.length).toBe(1);
+    expect(bans).toHaveLength(1);
     expect(bans[0].userId).toBe('user-2');
     expect(bans[0].clubId).toBe('club-1');
     expect(bans[0].duration).toBe(1);
@@ -89,7 +91,7 @@ describe('ClubService', () => {
     const req = httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/members`);
     req.flush([apiMember]);
     const members = await promise;
-    expect(members.length).toBe(1);
+    expect(members).toHaveLength(1);
     expect(members[0].userId).toBe('user-2');
     expect(members[0].displayName).toBe('Alice');
   });
@@ -127,7 +129,7 @@ describe('ClubService', () => {
 
       await service.ensureMyClubsLoaded();
       httpMock.expectNone(`${environment.apiUrl}/clubs/my`);
-      expect(service.myClubs().length).toBe(0);
+      expect(service.myClubs()).toHaveLength(0);
     });
 
     it('skips loadMyClubs when clubs are fresh and non-empty', async () => {
@@ -138,7 +140,7 @@ describe('ClubService', () => {
 
       await service.ensureMyClubsLoaded();
       httpMock.expectNone(`${environment.apiUrl}/clubs/my`);
-      expect(service.myClubs().length).toBe(1);
+      expect(service.myClubs()).toHaveLength(1);
     });
 
     it('calls loadMyClubs again when TTL has expired', async () => {
@@ -151,7 +153,7 @@ describe('ClubService', () => {
       const req2 = httpMock.expectOne(`${environment.apiUrl}/clubs/my`);
       req2.flush([]);
       await load2;
-      expect(service.myClubs().length).toBe(0);
+      expect(service.myClubs()).toHaveLength(0);
     });
   });
 
@@ -202,7 +204,7 @@ describe('ClubService', () => {
 
       const result = await service.getClubMembers('club-1');
       httpMock.expectNone(`${environment.apiUrl}/clubs/club-1/members`);
-      expect(result.length).toBe(1);
+      expect(result).toHaveLength(1);
     });
 
     it('loadClubEvents returns cached result when includePast is false', async () => {
@@ -234,6 +236,64 @@ describe('ClubService', () => {
     theme: null, currentBook: null, memberPreviews: [], status: 'active',
     tags: [], cancelledAt: null, meetingDurationMinutes: null, afterMeetingVenue: null,
     ...overrides,
+  });
+
+  describe('patchClubAndSync (pauseClub, cancelClub, rescheduleMeeting)', () => {
+    it('pauseClub invalidates clubByIdCache and syncs myClubs', async () => {
+      const p1 = service.getClubById('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(makeApiClub({ status: 'active' }));
+      await p1;
+
+      const myClubsPromise = service.loadMyClubs();
+      httpMock.expectOne(`${environment.apiUrl}/clubs/my`).flush([makeApiClub({ status: 'active' })]);
+      await myClubsPromise;
+
+      const pausePromise = service.pauseClub('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/pause`).flush(makeApiClub({ status: 'paused' }));
+      await pausePromise;
+
+      const resultPromise = service.getClubById('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(makeApiClub({ status: 'paused' }));
+      const result = await resultPromise;
+      expect(result?.status).toBe('paused');
+      expect(service.myClubs().find(c => c.id === 'club-1')?.status).toBe('paused');
+    });
+
+    it('cancelClub invalidates clubByIdCache and syncs myClubs', async () => {
+      const myClubsPromise = service.loadMyClubs();
+      httpMock.expectOne(`${environment.apiUrl}/clubs/my`).flush([makeApiClub({ status: 'active' })]);
+      await myClubsPromise;
+
+      const cancelPromise = service.cancelClub('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/cancel`).flush(makeApiClub({ status: 'cancelled' }));
+      await cancelPromise;
+
+      expect(service.myClubs().find(c => c.id === 'club-1')?.status).toBe('cancelled');
+
+      const p2 = service.getClubById('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(makeApiClub({ status: 'cancelled' }));
+      expect((await p2)?.status).toBe('cancelled');
+    });
+
+    it('rescheduleMeeting invalidates clubByIdCache and syncs myClubs', async () => {
+      const p1 = service.getClubById('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(makeApiClub({ nextMeetingDate: '2024-01-01T00:00:00Z' }));
+      await p1;
+
+      const myClubsPromise = service.loadMyClubs();
+      httpMock.expectOne(`${environment.apiUrl}/clubs/my`).flush([makeApiClub({ nextMeetingDate: '2024-01-01T00:00:00Z' })]);
+      await myClubsPromise;
+
+      const newDate = '2024-06-01T00:00:00Z';
+      const reschedulePromise = service.rescheduleMeeting('club-1', newDate);
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/reschedule`).flush(makeApiClub({ nextMeetingDate: newDate }));
+      await reschedulePromise;
+
+      const p2 = service.getClubById('club-1');
+      httpMock.expectOne(`${environment.apiUrl}/clubs/club-1`).flush(makeApiClub({ nextMeetingDate: newDate }));
+      expect((await p2)?.nextMeetingDate).toBe(newDate);
+      expect(service.myClubs().find(c => c.id === 'club-1')?.nextMeetingDate).toBe(newDate);
+    });
   });
 
   it('joinClub posts and returns the join-request status', async () => {

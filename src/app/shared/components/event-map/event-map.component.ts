@@ -50,6 +50,8 @@ export class EventMapComponent {
   }
 
   constructor() {
+    this.maps.ensureLoaded();
+
     effect(onCleanup => {
       const venue = this.afterMeetingVenue();
       if (venue?.lat != null && venue?.lng != null) {
@@ -66,7 +68,7 @@ export class EventMapComponent {
           const s = suggestions[0];
           if (!s) return of(null);
           if (s.lat != null && s.lng != null) return of(s);
-          if (s.place_id) return this.geocoding.getPlaceDetails(s.place_id).pipe(catchError(() => of(s)));
+          if (s.place_id) return this.geocoding.getPlaceDetails$(s.place_id).pipe(catchError(() => of(s)));
           return of(s);
         }),
       ).subscribe(s => {

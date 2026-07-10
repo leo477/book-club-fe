@@ -14,6 +14,12 @@ export default defineConfig({
         'src/app/shared/spartan/**',
         '**/*.spec.ts',
       ],
+      thresholds: {
+        lines: 55,
+        branches: 65,
+        functions: 65,
+        statements: 55,
+      },
     },
   },
 });

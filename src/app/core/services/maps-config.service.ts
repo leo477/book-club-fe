@@ -23,8 +23,18 @@ export class MapsConfigService {
   private readonly _mapId = signal('');
   readonly isLoaded = this._loaded.asReadonly();
   readonly mapId = this._mapId.asReadonly();
+  private _loadPromise: Promise<void> | null = null;
 
-  async load(): Promise<void> {
+  load(): Promise<void> {
+    this._loadPromise ??= this.doLoad();
+    return this._loadPromise;
+  }
+
+  ensureLoaded(): Promise<void> {
+    return this._loaded() ? Promise.resolve() : this.load();
+  }
+
+  private async doLoad(): Promise<void> {
     try {
       const { mapsApiKey, mapsMapId } = await firstValueFrom(
         this.http.get<{ mapsApiKey: string; mapsMapId: string }>(`${environment.apiUrl}/config/maps-key`, {

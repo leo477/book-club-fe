@@ -45,8 +45,13 @@
         }
       }
     </div>
-    <div #messagesList class="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-0" aria-live="polite">
-      @for (item of chat.activeMessagesWithDivider(); track item.id; let i = $index) {
+    <div #messagesList class="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-0" aria-live="polite" (scroll)="onMessagesScroll()">
+      @if (chat.isLoadingOlder()[activeRoom?.id ?? '']) {
+        <div class="flex justify-center pb-3">
+          <span class="text-xs text-[var(--color-ink-muted)]">{{ 'CHAT.loading_older' | translate }}</span>
+        </div>
+      }
+      @for (item of chat.activeMessagesWithDivider(); track item.id) {
         @if ($any(item).isDivider) {
           <!-- Feature 5: unread divider -->
           <div data-unread-divider class="flex items-center gap-2 my-3">
@@ -63,8 +68,8 @@
           </div>
         } @else {
           @let msg = $any(item);
-          @let isFirst = isMsgGroupFirst(i);
-          @let isLast = isMsgGroupLast(i);
+          @let isFirst = msg.isGroupFirst;
+          @let isLast = msg.isGroupLast;
           <div class="flex flex-col"
                [class.items-end]="msg.isOwn"
                [class.items-start]="!msg.isOwn"

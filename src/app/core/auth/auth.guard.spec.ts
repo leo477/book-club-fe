@@ -56,7 +56,7 @@ describe('authGuard', () => {
     it('returns UrlTree to /login when not authenticated', () => {
       // eslint-disable-next-line rxjs-x/finnish
       const result = runGuard();
-      expect(result instanceof UrlTree).toBe(true);
+      expect(result).toBeInstanceOf(UrlTree);
       expect((result as UrlTree).toString()).toBe('/login');
     });
   });
@@ -96,7 +96,7 @@ describe('authGuard', () => {
       new Promise<void>((resolve) => {
         authSignal.set(false);
         (runGuard() as Observable<boolean | UrlTree>).subscribe((val) => {
-          expect(val instanceof UrlTree).toBe(true);
+          expect(val).toBeInstanceOf(UrlTree);
           resolve();
         });
         loadingSignal.set(false);

@@ -1,4 +1,4 @@
-export type EventStatus = 'scheduled' | 'active' | 'held' | 'cancelled' | 'rescheduled' | 'upcoming';
+export type EventStatus = 'scheduled' | 'active' | 'held' | 'cancelled' | 'rescheduled';
 
 export interface AfterMeetingVenue {
   name: string;

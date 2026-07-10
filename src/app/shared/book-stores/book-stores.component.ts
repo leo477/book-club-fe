@@ -89,6 +89,8 @@ export class BookStoresComponent {
   readonly skeletons = [1, 2, 3];
 
   openStore(store: BookStoreResult): void {
-    if (store.url) window.open(store.url, '_blank');
+    if (store.url?.startsWith('https://')) {
+      window.open(store.url, '_blank', 'noopener,noreferrer');
+    }
   }
 }

@@ -4,5 +4,7 @@
   </div>
 }
 <router-outlet />
-<hlm-toaster position="bottom-right" [richColors]="true" />
+@defer (on idle) {
+  <hlm-toaster position="bottom-right" [richColors]="true" />
+}
 

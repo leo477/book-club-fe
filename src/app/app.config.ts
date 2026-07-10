@@ -49,9 +49,9 @@ export const appConfig: ApplicationConfig = {
         ),
       );
       await firstValueFrom(
-        translate.reloadLang(translate.currentLang ?? initialLang).pipe(catchError(() => of(null))),
+        translate.reloadLang(translate.getCurrentLang() ?? initialLang).pipe(catchError(() => of(null))),
       );
-      document.documentElement.lang = translate.currentLang ?? initialLang;
+      document.documentElement.lang = translate.getCurrentLang() ?? initialLang;
       seo.bootstrapLocaleSync();
       appRef.tick();
     }),
@@ -59,6 +59,8 @@ export const appConfig: ApplicationConfig = {
       const authService = inject(AuthService);
       return authService.init();
     }),
-    provideAppInitializer(() => inject(MapsConfigService).load()),
+    provideAppInitializer(() => {
+      inject(MapsConfigService).load();
+    }),
   ],
 };

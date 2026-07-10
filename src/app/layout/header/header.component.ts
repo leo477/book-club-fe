@@ -42,7 +42,7 @@ export class HeaderComponent {
   readonly currentLang = toSignal(
     this.translate.onLangChange.pipe(
       map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
+      startWith(this.translate.getCurrentLang() ?? 'uk'),
     ),
     { initialValue: 'uk' },
   );

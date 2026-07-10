@@ -61,14 +61,14 @@ describe('GeocodingService', () => {
     req.flush([]);
   });
 
-  describe('getPlaceDetails', () => {
+  describe('getPlaceDetails$', () => {
     const DETAILS_BASE = `${environment.apiUrl}/geocode/place-details`;
     const resolvedSuggestion: GeocodeSuggestion = {
       label: 'Київ, Україна', city: 'Київ', country: 'Україна', lat: 50.45, lng: 30.52, place_id: 'pid123',
     };
 
     it('GETs /geocode/place-details with place_id and session_token params', () => {
-      service.getPlaceDetails('pid123').subscribe();
+      service.getPlaceDetails$('pid123').subscribe();
 
       const req = httpMock.expectOne(r => r.url === DETAILS_BASE);
       expect(req.request.method).toBe('GET');
@@ -80,7 +80,7 @@ describe('GeocodingService', () => {
 
     it('returns the resolved suggestion', () => {
       let result: GeocodeSuggestion | undefined;
-      service.getPlaceDetails('pid123').subscribe(s => (result = s));
+      service.getPlaceDetails$('pid123').subscribe(s => (result = s));
 
       httpMock.expectOne(r => r.url === DETAILS_BASE).flush(resolvedSuggestion);
       expect(result).toEqual(resolvedSuggestion);
@@ -94,7 +94,7 @@ describe('GeocodingService', () => {
       acReq.flush([]);
 
       let errored = false;
-      service.getPlaceDetails('pid123').subscribe({
+      service.getPlaceDetails$('pid123').subscribe({
         next: () => { /* should not be called */ },
         error: () => { errored = true; },
       });
@@ -119,7 +119,7 @@ describe('GeocodingService', () => {
       tokenBefore = acReq.request.params.get('session_token');
       acReq.flush([]);
 
-      service.getPlaceDetails('pid123').subscribe();
+      service.getPlaceDetails$('pid123').subscribe();
       httpMock.expectOne(r => r.url === DETAILS_BASE).flush(resolvedSuggestion);
 
       let tokenAfter: string | null = null;

@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { firstValueFrom } from 'rxjs';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
@@ -8,6 +9,11 @@ import { TokenStore } from './token.store';
 import { environment } from '../../../environments/environment';
 
 const API = environment.apiUrl;
+
+async function flushSessionStatus(httpMock: HttpTestingController, hasSession: boolean): Promise<void> {
+  httpMock.expectOne(`${API}/auth/session-status`).flush({ hasSession });
+  await Promise.resolve(); // flush microtask so firstValueFrom continuation runs before the next request is expected
+}
 
 const rawProfile = {
   id: 'u1',
@@ -66,30 +72,38 @@ describe('AuthService', () => {
     httpMock = TestBed.inject(HttpTestingController);
   }
 
-  describe('init() — no token, no session marker', () => {
+  describe('init() — no token, no session-status/legacy marker', () => {
     beforeEach(() => {
       localStorage.removeItem('bc_has_session');
       setupTestbed();
     });
 
-    it('skips refresh and sets isLoading false when marker is absent', async () => {
+    it('skips refresh and sets isLoading false when session-status returns false', async () => {
       const { service } = buildService();
-      await service.init();
+      const p = service.init();
+      await flushSessionStatus(httpMock, false);
+      await p;
+      httpMock.expectNone(`${API}/auth/refresh`);
+      expect(service.isAuthenticated()).toBe(false);
+      expect(service.isLoading()).toBe(false);
+    });
+
+    it('treats a failed session-status call as no session', async () => {
+      const { service } = buildService();
+      const p = service.init();
+      httpMock
+        .expectOne(`${API}/auth/session-status`)
+        .flush({}, { status: 500, statusText: 'Error' });
+      await p;
       httpMock.expectNone(`${API}/auth/refresh`);
       expect(service.isAuthenticated()).toBe(false);
       expect(service.isLoading()).toBe(false);
     });
   });
 
-  describe('init() — no token (silent refresh)', () => {
+  describe('init() — no token (silent refresh via session-status)', () => {
     beforeEach(() => {
-      // Set session marker so AuthService.init() attempts the refresh call
-      localStorage.setItem('bc_has_session', '1');
       setupTestbed();
-    });
-
-    afterEach(() => {
-      localStorage.removeItem('bc_has_session');
     });
 
     it('isLoading is true before init()', () => {
@@ -100,6 +114,7 @@ describe('AuthService', () => {
     it('isOrganizer returns false when not logged in', async () => {
       const { service } = buildService();
       const p = service.init();
+      await flushSessionStatus(httpMock, true);
       httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
       await p;
       expect(service.isOrganizer()).toBe(false);
@@ -108,6 +123,7 @@ describe('AuthService', () => {
     it('userRole returns null when not authenticated', async () => {
       const { service } = buildService();
       const p = service.init();
+      await flushSessionStatus(httpMock, true);
       httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
       await p;
       expect(service.userRole()).toBeNull();
@@ -116,6 +132,7 @@ describe('AuthService', () => {
     it('refresh success → token set + /auth/me called + isLoading false', async () => {
       const { service } = buildService();
       const p = service.init();
+      await flushSessionStatus(httpMock, true);
       httpMock.expectOne(`${API}/auth/refresh`).flush({ accessToken: 'refreshed-token' });
       await Promise.resolve(); // flush microtask so firstValueFrom continuation runs before /auth/me is expected
       httpMock.expectOne(`${API}/auth/me`).flush(rawProfile);
@@ -128,17 +145,43 @@ describe('AuthService', () => {
     it('refresh 401 → not authenticated + isLoading false', async () => {
       const { service } = buildService();
       const p = service.init();
+      await flushSessionStatus(httpMock, true);
       httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
       await p;
       expect(service.isAuthenticated()).toBe(false);
       expect(service.isLoading()).toBe(false);
     });
 
-    it('refresh 401 → removes session marker', async () => {
+    it('refresh 401 → not authenticated, no crash', async () => {
       const { service } = buildService();
       const p = service.init();
+      await flushSessionStatus(httpMock, true);
       httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
       await p;
+      expect(service.isAuthenticated()).toBe(false);
+    });
+  });
+
+  describe('init() — legacy migration (bc_refresh_token / bc_has_session present, no session-status)', () => {
+    beforeEach(() => {
+      localStorage.setItem('bc_has_session', '1');
+      setupTestbed();
+    });
+
+    afterEach(() => {
+      localStorage.removeItem('bc_has_session');
+    });
+
+    it('attempts restoreSession and clears legacy keys regardless of outcome', async () => {
+      tokenStoreSpy.refreshToken.mockReturnValue('legacy-refresh');
+      const { service } = buildService();
+      const p = service.init();
+      await flushSessionStatus(httpMock, false);
+      const req = httpMock.expectOne(`${API}/auth/refresh`);
+      expect(req.request.body).toEqual({ refreshToken: 'legacy-refresh' });
+      req.flush({}, { status: 401, statusText: 'Unauthorized' });
+      await p;
+      expect(tokenStoreSpy.clearRefreshToken).toHaveBeenCalled();
       expect(localStorage.getItem('bc_has_session')).toBeNull();
     });
   });
@@ -187,13 +230,13 @@ describe('AuthService', () => {
       expect(service.currentUser()?.id).toBe('u1');
     });
 
-    it('sets session marker on success', async () => {
-      localStorage.removeItem('bc_has_session');
+    it('does not persist a refresh token or legacy marker (backend cookies handle the session)', async () => {
       const { service } = buildService();
       const p = service.signIn('test@test.com', 'password');
       httpMock.expectOne(`${API}/auth/login`).flush({ accessToken: 'tok', refreshToken: 'ref', user: rawProfile });
       await p;
-      expect(localStorage.getItem('bc_has_session')).toBe('1');
+      expect(tokenStoreSpy.setRefreshToken).not.toHaveBeenCalled();
+      expect(localStorage.getItem('bc_has_session')).toBeNull();
     });
 
     it('returns error on failure with detail format', async () => {
@@ -239,13 +282,13 @@ describe('AuthService', () => {
       expect(tokenStoreSpy.set).toHaveBeenCalledWith('new-token');
     });
 
-    it('sets session marker on success', async () => {
-      localStorage.removeItem('bc_has_session');
+    it('does not persist a refresh token or legacy marker (backend cookies handle the session)', async () => {
       const { service } = buildService();
       const p = service.signUp('test@test.com', 'password', 'Name', 'user');
       httpMock.expectOne(`${API}/auth/register`).flush({ accessToken: 'tok', refreshToken: 'ref', user: rawProfile });
       await p;
-      expect(localStorage.getItem('bc_has_session')).toBe('1');
+      expect(tokenStoreSpy.setRefreshToken).not.toHaveBeenCalled();
+      expect(localStorage.getItem('bc_has_session')).toBeNull();
     });
 
     it('returns error on failure', async () => {
@@ -275,13 +318,13 @@ describe('AuthService', () => {
       expect(routerSpy.navigate).toHaveBeenCalledWith(['/login']);
     });
 
-    it('removes session marker on signOut', async () => {
-      localStorage.setItem('bc_has_session', '1');
+    it('does not touch document.cookie on signOut', async () => {
+      const cookieSpy = vi.spyOn(document, 'cookie', 'set');
       const { service } = buildService();
       const p = service.signOut();
       httpMock.expectOne(`${API}/auth/logout`).flush({});
       await p;
-      expect(localStorage.getItem('bc_has_session')).toBeNull();
+      expect(cookieSpy).not.toHaveBeenCalled();
     });
 
     it('still clears token even if logout request fails', async () => {
@@ -405,39 +448,8 @@ describe('AuthService', () => {
       });
       service.loginWithGoogle();
       expect((window.location as { href: string }).href).toBe(
-        `${API}/auth/oauth/google?origin=${encodeURIComponent(window.location.origin)}`,
+        `${environment.oauthBaseUrl}/auth/oauth/google?origin=${encodeURIComponent(window.location.origin)}`,
       );
-    });
-  });
-
-  describe('completeOAuthSession', () => {
-    beforeEach(() => {
-      localStorage.removeItem('bc_has_session');
-      setupTestbed();
-    });
-
-    afterEach(() => {
-      localStorage.removeItem('bc_has_session');
-    });
-
-    it('returns { error: null } when restoreSession succeeds', async () => {
-      const { service } = buildService();
-      const p = service.completeOAuthSession();
-      httpMock.expectOne(`${API}/auth/refresh`).flush({ accessToken: 'oauth-token' });
-      await Promise.resolve();
-      httpMock.expectOne(`${API}/auth/me`).flush(rawProfile);
-      const result = await p;
-      expect(result).toEqual({ error: null });
-      expect(tokenStoreSpy.set).toHaveBeenCalledWith('oauth-token');
-      expect(service.currentUser()?.id).toBe('u1');
-    });
-
-    it('returns { error: "OAUTH_FAILED" } when refresh returns 401', async () => {
-      const { service } = buildService();
-      const p = service.completeOAuthSession();
-      httpMock.expectOne(`${API}/auth/refresh`).flush({}, { status: 401, statusText: 'Unauthorized' });
-      const result = await p;
-      expect(result).toEqual({ error: 'OAUTH_FAILED' });
     });
   });
 
@@ -451,7 +463,7 @@ describe('AuthService', () => {
       localStorage.removeItem('bc_has_session');
     });
 
-    it('stores tokens, marks session and loads user on success', async () => {
+    it('stores the access token (no legacy localStorage persistence) and loads user on success', async () => {
       const { service } = buildService();
       const p = service.exchangeOAuthCode('handoff');
       const req = httpMock.expectOne(`${API}/auth/oauth/exchange`);
@@ -462,8 +474,8 @@ describe('AuthService', () => {
       const result = await p;
       expect(result).toEqual({ error: null });
       expect(tokenStoreSpy.set).toHaveBeenCalledWith('acc');
-      expect(tokenStoreSpy.setRefreshToken).toHaveBeenCalledWith('ref');
-      expect(localStorage.getItem('bc_has_session')).toBe('1');
+      expect(tokenStoreSpy.setRefreshToken).not.toHaveBeenCalled();
+      expect(localStorage.getItem('bc_has_session')).toBeNull();
       expect(service.currentUser()?.id).toBe('u1');
     });
 
@@ -476,6 +488,19 @@ describe('AuthService', () => {
       );
       const result = await p;
       expect(result).toEqual({ error: 'OAUTH_FAILED' });
+    });
+  });
+
+  describe('getWsTicket$', () => {
+    beforeEach(() => { setupTestbed('valid-token'); });
+
+    it('posts to /auth/ws-ticket and returns the ticket string', async () => {
+      const { service } = buildService();
+      const p = firstValueFrom(service.getWsTicket$());
+      const req = httpMock.expectOne(`${API}/auth/ws-ticket`);
+      expect(req.request.method).toBe('POST');
+      req.flush({ ticket: 'one-time-ticket' });
+      await expect(p).resolves.toBe('one-time-ticket');
     });
   });
 

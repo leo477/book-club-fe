@@ -5,15 +5,13 @@ import {
   signal,
   computed,
   effect,
-  untracked,
-  ViewChild,
+  viewChild,
   ElementRef,
   DestroyRef,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
-import { TokenStore } from '../../core/auth/token.store';
 import { ChatService } from '../../core/services/chat.service';
 import { ClubService } from '../../core/services/club.service';
 import { ChatRoom } from '../../core/models/chat.model';
@@ -33,16 +31,17 @@ export class ChatsComponent {
   protected readonly auth = inject(AuthService);
   protected readonly chat = inject(ChatService);
   private readonly clubService = inject(ClubService);
-  private readonly tokenStore = inject(TokenStore);
   private readonly _destroyRef = inject(DestroyRef);
 
-  @ViewChild('messagesList') private readonly messagesListRef?: ElementRef<HTMLElement>;
+  private readonly messagesListRef = viewChild<ElementRef<HTMLElement>>('messagesList');
 
   protected readonly messageText = signal('');
 
-  private _clubsLoadTriggered = false;
   /** Tracks the last room we scrolled to — prevents re-scroll on every new WS message. */
   private _lastScrolledRoomId: string | null = null;
+  /** Room ids we've already requested unread counts for — avoids an N+1 refetch
+   *  of every room's unread-count on each `rooms()` change (e.g. `_upsertRoom`). */
+  private readonly _unreadCountsFetchedFor = new Set<string>();
 
   protected readonly roomsByClub = computed(() => {
     const clubs = this.clubService.myClubs();
@@ -65,42 +64,23 @@ export class ChatsComponent {
     this.chat.setChatsPage(true);
     this._destroyRef.onDestroy(() => this.chat.setChatsPage(false));
 
-    effect(() => {
-      const user = this.auth.currentUser();
-      if (!user) {
-        this._clubsLoadTriggered = false;
-        this.chat.clearRooms();
-        return;
-      }
+    // Room-list load and WS connection are orchestrated centrally in
+    // ChatService (see its constructor) — previously duplicated here and in
+    // ChatWidgetComponent, which caused a double GET /clubs/{id}/chat/rooms
+    // whenever this page mounted alongside the globally-mounted widget.
 
-      const clubs = this.clubService.myClubs();
-      if (clubs.length > 0) {
-        this._clubsLoadTriggered = false;
-        this.chat.loadAllClubRooms(clubs, user.id);
-      } else if (!this._clubsLoadTriggered) {
-        this._clubsLoadTriggered = true;
-        this.clubService.loadMyClubs().catch(() => undefined);
-      }
-    });
-
-    // Feature 5: fetch per-room unread counts once rooms are loaded.
+    // Feature 5: fetch per-room unread counts once rooms are loaded. Only the
+    // rooms we haven't already requested — `rooms()` also changes on
+    // `_upsertRoom` (e.g. opening an event chat), which would otherwise
+    // refetch every already-known room's unread count (N+1 on each change).
     effect(() => {
       const rooms = this.chat.rooms();
-      if (rooms.length > 0) {
-        this.chat.fetchUnreadCounts(rooms.map(r => r.id));
-      }
-    });
-
-    effect(() => {
-      const roomId = this.chat.activeRoomId();
-      // Read the token untracked so this effect only re-runs when the active
-      // room changes — not on every token re-emit (e.g. after refresh), which
-      // would tear down and reopen a still-connecting socket.
-      const token = untracked(() => this.tokenStore.token());
-      if (roomId && token) {
-        this.chat.connectRoom(roomId, token);
-      } else if (!roomId) {
-        this.chat.disconnectRoom();
+      const newRoomIds = rooms
+        .map(r => r.id)
+        .filter(id => !this._unreadCountsFetchedFor.has(id));
+      if (newRoomIds.length > 0) {
+        for (const id of newRoomIds) this._unreadCountsFetchedFor.add(id);
+        this.chat.fetchUnreadCounts(newRoomIds);
       }
     });
 
@@ -112,7 +92,7 @@ export class ChatsComponent {
       if (!roomId || msgs.length === 0 || this._lastScrolledRoomId === roomId) return;
       this._lastScrolledRoomId = roomId;
       setTimeout(() => {
-        const container = this.messagesListRef?.nativeElement;
+        const container = this.messagesListRef()?.nativeElement;
         if (!container) return;
         const divider = container.querySelector('[data-unread-divider]') as HTMLElement | null;
         if (divider) {
@@ -125,6 +105,33 @@ export class ChatsComponent {
     });
   }
 
+  /** N-7: near-top scroll on the messages list triggers loading older history. */
+  protected onMessagesScroll(): void {
+    const el = this.messagesListRef()?.nativeElement;
+    if (!el || el.scrollTop > 40) return;
+    this.maybeLoadOlderMessages();
+  }
+
+  private maybeLoadOlderMessages(): void {
+    const roomId = this.chat.activeRoomId();
+    if (!roomId) return;
+    if (this.chat.isLoadingOlder()[roomId]) return;
+    if (this.chat.hasMoreOlder()[roomId] === false) return;
+
+    const el = this.messagesListRef()?.nativeElement;
+    if (!el) return;
+    const prevScrollHeight = el.scrollHeight;
+    const prevScrollTop = el.scrollTop;
+
+    this.chat.loadOlderMessages(roomId).then(() => {
+      requestAnimationFrame(() => {
+        const container = this.messagesListRef()?.nativeElement;
+        if (!container) return;
+        container.scrollTop = prevScrollTop + (container.scrollHeight - prevScrollHeight);
+      });
+    });
+  }
+
   protected selectRoom(room: ChatRoom): void {
     // Feature 5: mark the current room as read before switching.
     const prevRoomId = this.chat.activeRoomId();
@@ -133,8 +140,8 @@ export class ChatsComponent {
     }
     // Reset scroll tracker so we'll scroll-to-unread in the new room.
     this._lastScrolledRoomId = null;
+    // openRoom() already marks the newly-active room read and resets the pulse.
     this.chat.openRoom(room.id);
-    this.chat.markAsRead();
   }
 
   protected sendMessage(): void {
@@ -156,27 +163,4 @@ export class ChatsComponent {
     }
   }
 
-  /**
-   * Feature 5: returns true if the message at index i starts a new visual group
-   * (first message overall, after a divider, or sender changed).
-   */
-  protected isMsgGroupFirst(i: number): boolean {
-    const items = this.chat.activeMessagesWithDivider();
-    if (i === 0) return true;
-    const prev = items[i - 1];
-    if ((prev as { isDivider?: boolean }).isDivider) return true;
-    return (prev as { senderId: string }).senderId !== (items[i] as { senderId: string }).senderId;
-  }
-
-  /**
-   * Feature 5: returns true if the message at index i ends a visual group
-   * (last message overall, before a divider, or sender changed next).
-   */
-  protected isMsgGroupLast(i: number): boolean {
-    const items = this.chat.activeMessagesWithDivider();
-    if (i >= items.length - 1) return true;
-    const next = items[i + 1];
-    if ((next as { isDivider?: boolean }).isDivider) return true;
-    return (next as { senderId: string }).senderId !== (items[i] as { senderId: string }).senderId;
-  }
 }

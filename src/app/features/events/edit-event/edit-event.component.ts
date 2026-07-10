@@ -11,7 +11,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormControl, Validators } from '@angular/forms';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { EventService } from '../../../core/services/event.service';
 import { QuizService } from '../../../core/services/quiz.service';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -39,6 +39,7 @@ export class EditEventComponent {
   private readonly quizService = inject(QuizService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
 
   readonly isSubmitting = signal(false);
   readonly errorMessage = signal<string | null>(null);
@@ -114,8 +115,13 @@ export class EditEventComponent {
     this.form.get('googleBookId')?.setValue(book.id);
   }
 
+  private toDatetimeLocal(date: Date): string {
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+
   private _patchForm(ev: ClubEvent): void {
-    const localDate = ev.date ? new Date(ev.date).toISOString().slice(0, 16) : '';
+    const localDate = ev.date ? this.toDatetimeLocal(new Date(ev.date)) : '';
     this.form.patchValue({
       title: ev.title,
       description: ev.description ?? '',
@@ -197,7 +203,7 @@ export class EditEventComponent {
       });
       await this.router.navigate(['/events', this.id()]);
     } catch {
-      this.errorMessage.set('Failed to save changes. Please try again.');
+      this.errorMessage.set(this.translate.instant('CREATE_EVENT.save_error'));
     } finally {
       this.isSubmitting.set(false);
     }

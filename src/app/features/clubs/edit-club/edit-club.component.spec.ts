@@ -64,7 +64,7 @@ describe('EditClubComponent', () => {
     it('sets errorMessage when club not found', async () => {
       clubServiceSpy.getClubById.mockResolvedValue(null);
       await component.ngOnInit();
-      expect(component.errorMessage()).toBe('Club not found.');
+      expect(component.errorMessage()).toBe('EDIT_CLUB.not_found');
       expect(component.isLoadingClub()).toBe(false);
     });
   });

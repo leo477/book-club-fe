@@ -59,7 +59,7 @@ module.exports = defineConfig([
       "rxjs-x/no-floating-observables": "error",
       "rxjs-x/no-unbound-methods": "error",
       "rxjs-x/no-subject-value": "error",
-      "rxjs-x/finnish": "warn",
+      "rxjs-x/finnish": "error",
     },
   },
   {

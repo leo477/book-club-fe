@@ -2,9 +2,9 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { ClubService } from './club.service';
 import { AuthService } from '../auth/auth.service';
-import { Club } from '../models/club.model';
 import { environment } from '../../../environments/environment';
 
 const API = environment.apiUrl;
@@ -37,6 +37,7 @@ describe('ClubService – computed signals and additional methods', () => {
         provideHttpClientTesting(),
         ClubService,
         { provide: AuthService, useValue: authSpy },
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
       ],
     });
     service = TestBed.inject(ClubService);
@@ -50,7 +51,7 @@ describe('ClubService – computed signals and additional methods', () => {
       const p = service.loadPublicClubs();
       httpMock.expectOne(`${API}/clubs`).flush([makeApiClub()]);
       await p;
-      expect(service.clubs().length).toBe(1);
+      expect(service.clubs()).toHaveLength(1);
       expect(service.isLoading()).toBe(false);
     });
 
@@ -58,7 +59,7 @@ describe('ClubService – computed signals and additional methods', () => {
       const p = service.loadPublicClubs();
       httpMock.expectOne(`${API}/clubs`).flush({}, { status: 500, statusText: 'Error' });
       await p;
-      expect(service.error()).toBe('Failed to load clubs');
+      expect(service.error()).toBe('CLUBS.load_error');
     });
   });
 
@@ -67,14 +68,14 @@ describe('ClubService – computed signals and additional methods', () => {
       const p = service.loadMyClubs();
       httpMock.expectOne(`${API}/clubs/my`).flush([makeApiClub({ id: 'c2', organizerId: 'user-1' })]);
       await p;
-      expect(service.myClubs().length).toBe(1);
+      expect(service.myClubs()).toHaveLength(1);
     });
 
     it('sets error on failure', async () => {
       const p = service.loadMyClubs();
       httpMock.expectOne(`${API}/clubs/my`).flush({}, { status: 500, statusText: 'Error' });
       await p;
-      expect(service.error()).toBe('Failed to load my clubs');
+      expect(service.error()).toBe('CLUBS.load_my_error');
     });
   });
 
@@ -119,7 +120,7 @@ describe('ClubService – computed signals and additional methods', () => {
 
     it('returns all clubs when query is empty', () => {
       service.setSearchQuery('');
-      expect(service.filteredClubs().length).toBe(3);
+      expect(service.filteredClubs()).toHaveLength(3);
     });
   });
 
@@ -149,7 +150,7 @@ describe('ClubService – computed signals and additional methods', () => {
     it('setCityFilter(null) removes filter', () => {
       service.setCityFilter('Kyiv');
       service.setCityFilter(null);
-      expect(service.filteredClubs().length).toBe(3);
+      expect(service.filteredClubs()).toHaveLength(3);
     });
 
     it('upcomingByCity groups clubs with meetings by city', () => {
@@ -157,7 +158,7 @@ describe('ClubService – computed signals and additional methods', () => {
       const kyiv = 'Kyiv';
       const lviv = 'Lviv';
       expect(byCity[kyiv]).toBeDefined();
-      expect(byCity[kyiv].length).toBe(2); // c1 has date, c3 has null — both included, sorted by date
+      expect(byCity[kyiv]).toHaveLength(2); // c1 has date, c3 has null — both included, sorted by date
       expect(byCity[lviv]).toBeDefined();
     });
 
@@ -182,7 +183,7 @@ describe('ClubService – computed signals and additional methods', () => {
     });
 
     it('myOwnedClubs returns clubs owned by current user', () => {
-      expect(service.myOwnedClubs().length).toBe(1);
+      expect(service.myOwnedClubs()).toHaveLength(1);
       expect(service.myOwnedClubs()[0].id).toBe('c1');
     });
 
@@ -258,53 +259,6 @@ describe('ClubService – computed signals and additional methods', () => {
     });
   });
 
-  describe('msUntilDeletion', () => {
-    const base: Partial<Club> = {
-      id: 'c1', name: 'T', description: null, coverUrl: null, organizerId: 'u1',
-      isPublic: true, memberCount: 0, createdAt: '', city: '', nextMeetingDate: null,
-      address: null, lat: null, lng: null, theme: null, currentBook: null,
-      memberPreviews: [], tags: [], meetingDurationMinutes: null, afterMeetingVenue: null,
-    };
-
-    it('returns null for active club', () => {
-      const club = { ...base, status: 'active' as const };
-      expect(service.msUntilDeletion(club as Club)).toBeNull();
-    });
-
-    it('returns null when cancelled but no cancelledAt', () => {
-      const club = { ...base, status: 'cancelled' as const };
-      expect(service.msUntilDeletion(club as Club)).toBeNull();
-    });
-
-    it('returns positive ms when cancelled recently', () => {
-      const club = {
-        ...base, status: 'cancelled' as const,
-        cancelledAt: new Date(Date.now() - 1000).toISOString(),
-      };
-      const ms = service.msUntilDeletion(club as Club);
-      expect(ms).not.toBeNull();
-      if (ms !== null) expect(ms).toBeGreaterThan(0);
-    });
-
-    it('returns null when cancelledAt is too old (>24h)', () => {
-      const club = {
-        ...base, status: 'cancelled' as const,
-        cancelledAt: new Date(Date.now() - 25 * 60 * 60 * 1000).toISOString(),
-      };
-      expect(service.msUntilDeletion(club as Club)).toBeNull();
-    });
-  });
-
-  describe('myParticipatedClubs / myMissedClubs', () => {
-    it('myParticipatedClubs returns empty array', () => {
-      expect(service.myParticipatedClubs()).toEqual([]);
-    });
-
-    it('myMissedClubs returns empty array', () => {
-      expect(service.myMissedClubs()).toEqual([]);
-    });
-  });
-
   describe('myOwnedClubs branch: no authenticated user', () => {
     it('returns empty array when currentUser is null', () => {
       authSpy.currentUser.mockReturnValue(null);
@@ -330,7 +284,7 @@ describe('ClubService – computed signals and additional methods', () => {
       ]);
       await p;
       service.setSearchQuery('alpha');
-      expect(service.filteredClubs().length).toBe(0);
+      expect(service.filteredClubs()).toHaveLength(0);
     });
   });
 
@@ -343,7 +297,7 @@ describe('ClubService – computed signals and additional methods', () => {
       await p;
       const byCity = service.upcomingByCity();
       expect(byCity['']).toBeDefined();
-      expect(byCity[''].length).toBe(1);
+      expect(byCity['']).toHaveLength(1);
     });
   });
 
@@ -402,7 +356,7 @@ describe('ClubService – computed signals and additional methods', () => {
       httpMock.expectOne(`${API}/clubs/c1/join`).flush({ memberCount: 6 });
       await joinP;
       const c1Clubs = service.myClubs().filter(c => c.id === 'c1');
-      expect(c1Clubs.length).toBe(1);
+      expect(c1Clubs).toHaveLength(1);
     });
   });
 });

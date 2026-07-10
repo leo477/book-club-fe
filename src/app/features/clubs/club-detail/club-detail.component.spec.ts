@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection } from '@angular/core';
+import { Component, input, provideZonelessChangeDetection } from '@angular/core';
 import { ClubDetailComponent } from './club-detail.component';
 import { TranslateModule, TranslateLoader, TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
@@ -10,6 +10,14 @@ import { SeoService } from '../../../core/services/seo.service';
 import { EventService } from '../../../core/services/event.service';
 import { ComponentFixture } from '@angular/core/testing';
 import { makeClubEvent } from '../../../../testing/event-test.helpers';
+import { BookVoteSectionComponent } from './book-vote/book-vote-section.component';
+
+@Component({ selector: 'app-book-vote-section', template: '', standalone: true })
+class StubBookVoteSectionComponent {
+  readonly clubId = input.required<string>();
+  readonly isOwner = input(false);
+  readonly isMember = input(false);
+}
 
 describe('ClubDetailComponent', () => {
   let component: ClubDetailComponent;
@@ -17,10 +25,10 @@ describe('ClubDetailComponent', () => {
     getClubById: ReturnType<typeof vi.fn>; getClubMembers: ReturnType<typeof vi.fn>;
     ensureMyClubsLoaded: ReturnType<typeof vi.fn>; getBans: ReturnType<typeof vi.fn>;
     kickMember: ReturnType<typeof vi.fn>; banMember: ReturnType<typeof vi.fn>;
-    msUntilDeletion: ReturnType<typeof vi.fn>; loadClubEvents: ReturnType<typeof vi.fn>;
+    loadClubEvents: ReturnType<typeof vi.fn>;
     clubs: ReturnType<typeof vi.fn>; myClubs: ReturnType<typeof vi.fn>;
     myClubIds: ReturnType<typeof vi.fn>; joinClub?: ReturnType<typeof vi.fn>;
-    leaveClub?: ReturnType<typeof vi.fn>;
+    leaveClub?: ReturnType<typeof vi.fn>; loadMyClubs: ReturnType<typeof vi.fn>;
     getMyMembership: ReturnType<typeof vi.fn>; getJoinRequests: ReturnType<typeof vi.fn>;
     approveJoinRequest: ReturnType<typeof vi.fn>; rejectJoinRequest: ReturnType<typeof vi.fn>;
   };
@@ -37,11 +45,11 @@ describe('ClubDetailComponent', () => {
       getBans: vi.fn().mockResolvedValue([]),
       kickMember: vi.fn().mockResolvedValue(undefined),
       banMember: vi.fn().mockResolvedValue(undefined),
-      msUntilDeletion: vi.fn().mockReturnValue(null),
       loadClubEvents: vi.fn().mockResolvedValue([]),
       clubs: vi.fn().mockReturnValue([]),
       myClubs: vi.fn().mockReturnValue([]),
       myClubIds: vi.fn().mockReturnValue(new Set()),
+      loadMyClubs: vi.fn().mockResolvedValue(undefined),
       getMyMembership: vi.fn().mockResolvedValue({ isMember: false, role: null, joinRequestStatus: 'none' }),
       getJoinRequests: vi.fn().mockResolvedValue([]),
       approveJoinRequest: vi.fn().mockResolvedValue(undefined),
@@ -106,12 +114,89 @@ describe('ClubDetailComponent', () => {
         { provide: EventService, useValue: eventServiceSpy },
       ]
     }).compileComponents();
+    TestBed.overrideComponent(ClubDetailComponent, {
+      remove: { imports: [BookVoteSectionComponent] },
+      add: { imports: [StubBookVoteSectionComponent] },
+    });
     const translate = TestBed.inject(TranslateService);
     await firstValueFrom(translate.use('uk'));
     fixture = TestBed.createComponent(ClubDetailComponent);
     fixture.componentRef.setInput('id', 'club-1');
     component = fixture.componentInstance;
     await fixture.whenStable();
+  });
+
+  describe('resource-driven load', () => {
+    it('loads the club, resolves isLoading and calls seo.setPageI18n', () => {
+      expect(component.club()?.id).toBe('club-1');
+      expect(component.isLoading()).toBe(false);
+      expect(component.errorMessage()).toBeNull();
+      expect(component.isClubMissing()).toBe(false);
+      expect(seoSpy.setPageI18n).toHaveBeenCalledWith('SEO.club_detail_title', {
+        ogTitleKey: 'SEO.club_detail_og_title',
+        params: { name: 'Test Club' },
+      });
+    });
+
+    it('populates members and events from the club service', async () => {
+      clubServiceSpy.getClubMembers.mockResolvedValue([
+        { userId: 'user-2', displayName: 'User 2', avatarUrl: null, role: 'member', socialsPublic: false },
+      ]);
+      clubServiceSpy.loadClubEvents.mockResolvedValue([makeClubEvent({ id: 'e1' })]);
+
+      fixture.componentRef.setInput('id', 'club-2');
+      await fixture.whenStable();
+
+      expect(component.members().map(m => m.userId)).toEqual(['user-2']);
+      expect(component.events().map(e => e.id)).toEqual(['e1']);
+    });
+
+    it('sets isClubMissing and errorMessage to not_found when the club does not exist', async () => {
+      clubServiceSpy.getClubById.mockResolvedValue(null);
+
+      fixture.componentRef.setInput('id', 'missing-club');
+      await fixture.whenStable();
+
+      expect(component.club()).toBeNull();
+      expect(component.isClubMissing()).toBe(true);
+      expect(component.errorMessage()).toBe('not_found');
+    });
+
+    it('sets errorMessage to load_failed when the club load throws', async () => {
+      clubServiceSpy.getClubById.mockRejectedValue(new Error('network error'));
+
+      fixture.componentRef.setInput('id', 'broken-club');
+      await fixture.whenStable();
+
+      expect(component.errorMessage()).toBe('load_failed');
+      expect(component.isClubMissing()).toBe(false);
+    });
+
+    it('loads join request status and bans for the club organizer after resolving', async () => {
+      clubServiceSpy.getMyMembership.mockResolvedValue({ isMember: true, role: 'member', joinRequestStatus: 'pending' });
+      clubServiceSpy.getBans.mockResolvedValue([
+        { userId: 'banned-1', clubId: 'club-3', bannedAt: '2024-01-01', duration: 7, bannedBy: 'user-1' },
+      ]);
+
+      fixture.componentRef.setInput('id', 'club-3');
+      await fixture.whenStable();
+
+      expect(component.joinRequestStatus()).toBe('pending');
+      expect(component.clubBans()).toHaveLength(1);
+    });
+
+    it('resets the events tab state when the id input changes', async () => {
+      component.activeEventsTab.set('history');
+      component.pastEvents.set([makeClubEvent({ id: 'past-1' })]);
+      component.isPastEventsLoaded.set(true);
+
+      fixture.componentRef.setInput('id', 'club-4');
+      await fixture.whenStable();
+
+      expect(component.activeEventsTab()).toBe('upcoming');
+      expect(component.pastEvents()).toEqual([]);
+      expect(component.isPastEventsLoaded()).toBe(false);
+    });
   });
 
   it('handleKick calls clubService.kickMember and removes member', async () => {
@@ -136,97 +221,6 @@ describe('ClubDetailComponent', () => {
     expect(component.members()).toEqual([
       { userId: 'user-3', displayName: 'User 3', avatarUrl: null, role: 'member', socialsPublic: false }
     ]);
-  });
-
-  it('deleteCountdown returns null if msUntilDeletion is null', () => {
-    clubServiceSpy.msUntilDeletion.mockReturnValue(null);
-    component.club.set({
-      id: 'club-1',
-      name: 'Test Club',
-      description: null,
-      coverUrl: null,
-      organizerId: 'user-1',
-      isPublic: true,
-      memberCount: 1,
-      createdAt: '2024-01-01',
-      city: 'Kyiv',
-      nextMeetingDate: null,
-      address: null,
-      lat: null,
-      lng: null,
-      theme: null,
-      currentBook: null,
-      memberPreviews: [],
-      status: 'cancelled',
-      cancelledAt: '2024-01-01',
-      tags: [],
-      meetingDurationMinutes: null,
-      afterMeetingVenue: null,
-    currentChampion: null,
-    });
-    expect(component.deleteCountdown()).toBeNull();
-  });
-
-  it('deleteCountdown returns hours/minutes string', () => {
-    clubServiceSpy.msUntilDeletion.mockReturnValue(3600000);
-    component.club.set({
-      id: 'club-1',
-      name: 'Test Club',
-      description: null,
-      coverUrl: null,
-      organizerId: 'user-1',
-      isPublic: true,
-      memberCount: 1,
-      createdAt: '2024-01-01',
-      city: 'Kyiv',
-      nextMeetingDate: null,
-      address: null,
-      lat: null,
-      lng: null,
-      theme: null,
-      currentBook: null,
-      memberPreviews: [],
-      status: 'cancelled',
-      cancelledAt: '2024-01-01',
-      tags: [],
-      meetingDurationMinutes: null,
-      afterMeetingVenue: null,
-    currentChampion: null,
-    });
-    const result = component.deleteCountdown();
-    expect(result).toContain('1');
-    expect(result).toContain('год');
-  });
-
-  it('deleteCountdown returns minutes string', () => {
-    clubServiceSpy.msUntilDeletion.mockReturnValue(300000);
-    component.club.set({
-      id: 'club-1',
-      name: 'Test Club',
-      description: null,
-      coverUrl: null,
-      organizerId: 'user-1',
-      isPublic: true,
-      memberCount: 1,
-      createdAt: '2024-01-01',
-      city: 'Kyiv',
-      nextMeetingDate: null,
-      address: null,
-      lat: null,
-      lng: null,
-      theme: null,
-      currentBook: null,
-      memberPreviews: [],
-      status: 'cancelled',
-      cancelledAt: '2024-01-01',
-      tags: [],
-      meetingDurationMinutes: null,
-      afterMeetingVenue: null,
-    currentChampion: null,
-    });
-    const result = component.deleteCountdown();
-    expect(result).toContain('5');
-    expect(result).toContain('хв');
   });
 
   describe('onJoin', () => {
@@ -366,7 +360,7 @@ describe('ClubDetailComponent', () => {
         makeClubEvent({ id: 'e4', status: 'held' }),
       ]);
       const upcoming = component.upcomingEvents();
-      expect(upcoming.length).toBe(2);
+      expect(upcoming).toHaveLength(2);
       expect(upcoming.map(e => e.id)).toEqual(['e1', 'e2']);
     });
   });
@@ -412,23 +406,6 @@ describe('ClubDetailComponent', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       authSpy.currentUser.mockReturnValue(null as any);
       expect(component.currentUserId()).toBeNull();
-    });
-  });
-
-  describe('deleteCountdown with hours and minutes', () => {
-    it('returns hours and minutes string when both > 0', () => {
-      clubServiceSpy.msUntilDeletion.mockReturnValue(5400000); // 1.5 hours
-      component.club.set({
-        id: 'club-1', name: 'Test Club', description: null, coverUrl: null,
-        organizerId: 'user-1', isPublic: true, memberCount: 1,
-        createdAt: '2024-01-01', city: 'Kyiv', nextMeetingDate: null,
-        address: null, lat: null, lng: null, theme: null, currentBook: null,
-        memberPreviews: [], status: 'cancelled', cancelledAt: '2024-01-01',
-        tags: [], meetingDurationMinutes: null, afterMeetingVenue: null, currentChampion: null,
-      });
-      const result = component.deleteCountdown();
-      expect(result).toContain('год');
-      expect(result).toContain('хв');
     });
   });
 

@@ -69,6 +69,49 @@ describe('MapsConfigService', () => {
       expect(service.isLoaded()).toBe(false);
     });
   });
+
+  describe('load() memoization', () => {
+    it('reuses the in-flight promise and issues only one HTTP request', async () => {
+      const first = service.load();
+      const second = service.load();
+
+      httpMock.expectOne(MAPS_KEY_URL).flush({ mapsApiKey: 'key123', mapsMapId: 'mapid123' });
+      await Promise.all([first, second]);
+
+      expect(setOptionsSpy).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('ensureLoaded()', () => {
+    it('resolves immediately without an HTTP call when already loaded', async () => {
+      const loadPromise = service.load();
+      httpMock.expectOne(MAPS_KEY_URL).flush({ mapsApiKey: 'key123', mapsMapId: 'mapid123' });
+      await loadPromise;
+
+      await service.ensureLoaded();
+
+      expect(service.isLoaded()).toBe(true);
+      httpMock.verify();
+    });
+
+    it('triggers load() when not yet loaded and resolves once it completes', async () => {
+      const ensurePromise = service.ensureLoaded();
+      httpMock.expectOne(MAPS_KEY_URL).flush({ mapsApiKey: 'key123', mapsMapId: 'mapid123' });
+      await ensurePromise;
+
+      expect(service.isLoaded()).toBe(true);
+    });
+
+    it('memoizes concurrent calls into a single HTTP request', async () => {
+      const first = service.ensureLoaded();
+      const second = service.ensureLoaded();
+
+      httpMock.expectOne(MAPS_KEY_URL).flush({ mapsApiKey: 'key123', mapsMapId: 'mapid123' });
+      await Promise.all([first, second]);
+
+      expect(setOptionsSpy).toHaveBeenCalledTimes(1);
+    });
+  });
 });
 
 describe('MAPS_LOADER_FNS factory', () => {

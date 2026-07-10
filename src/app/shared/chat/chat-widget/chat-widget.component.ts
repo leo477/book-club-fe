@@ -1,14 +1,16 @@
-import { Component, ChangeDetectionStrategy, inject, signal, effect, computed, HostListener, ElementRef } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, effect, computed, HostListener, ElementRef, viewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { toast } from '@spartan-ng/brain/sonner';
 import { Router, NavigationEnd } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
 import { AuthService } from '../../../core/auth/auth.service';
-import { TokenStore } from '../../../core/auth/token.store';
 import { ChatService } from '../../../core/services/chat.service';
+import { logError } from '../../../core/utils/logger.util';
 import { ClubService } from '../../../core/services/club.service';
+import { extractApiError } from '../../../core/api/api-error.util';
 import { ChatTimestampPipe } from '../../pipes/chat-timestamp.pipe';
 
 @Component({
@@ -23,9 +25,9 @@ export class ChatWidgetComponent {
   protected readonly auth = inject(AuthService);
   protected readonly chat = inject(ChatService);
   private readonly clubService = inject(ClubService);
-  private readonly tokenStore = inject(TokenStore);
   private readonly router = inject(Router);
   private readonly el = inject(ElementRef);
+  private readonly translate = inject(TranslateService);
 
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
@@ -60,6 +62,8 @@ export class ChatWidgetComponent {
   protected readonly roomToDelete = signal<string | null>(null);
 
   protected readonly showingRoomList = signal(false);
+
+  private readonly messagesScrollRef = viewChild<ElementRef<HTMLElement>>('messagesScroll');
 
   @HostListener('keydown.escape')
   onEscape(): void {
@@ -108,8 +112,6 @@ export class ChatWidgetComponent {
     return needsShift ? 'bottom-40 right-6' : 'bottom-24 right-6';
   });
 
-  private _clubsLoadTriggered = false;
-
   constructor() {
     effect(() => {
       const onChats = this.isChatsPage();
@@ -128,33 +130,9 @@ export class ChatWidgetComponent {
       }
     });
 
+    // Room-list connection/bootstrap lives in ChatService (single orchestrator);
+    // this effect only reacts to the resulting room state for widget-local UI.
     effect(() => {
-      const user = this.auth.currentUser();
-      if (!user) {
-        this._clubsLoadTriggered = false;
-        this.chat.clearRooms();
-        return;
-      }
-
-      const clubs = this.clubService.myClubs();
-      if (clubs.length > 0) {
-        this._clubsLoadTriggered = false;
-        this.chat.loadAllClubRooms(clubs, user.id);
-      } else if (!this._clubsLoadTriggered) {
-        this._clubsLoadTriggered = true;
-        this.clubService.loadMyClubs().catch(() => undefined);
-      }
-    });
-
-    effect(() => {
-      const roomId = this.chat.activeRoomId();
-      const token = this.tokenStore.token();
-      if (roomId && token) {
-        this.chat.connectRoom(roomId, token);
-      } else if (!roomId) {
-        this.chat.disconnectRoom();
-      }
-
       if (this.chat.isOpen()) {
         const rooms = this.chat.rooms();
         if (rooms.length > 1 && !this.chat.activeRoomId()) {
@@ -216,7 +194,7 @@ export class ChatWidgetComponent {
         this.chat.loadAllClubRooms(clubs, user.id);
       }
     } catch (err: unknown) {
-      console.error('[ChatWidget] deleteRoom error', err);
+      logError('[ChatWidget] deleteRoom error', err);
     }
   }
 
@@ -225,17 +203,50 @@ export class ChatWidgetComponent {
     this.newRoomName.set('');
   }
 
-  protected submitCreateRoom(): void {
+  protected async submitCreateRoom(): Promise<void> {
     const name = this.newRoomName().trim();
     const clubId = this.chat.activeRoom()?.clubId ?? this.urlClubId();
     if (!name || !clubId) return;
-    this.chat.createRoom(clubId, name);
-    this.newRoomName.set('');
-    this.isCreatingRoom.set(false);
+    try {
+      await this.chat.createRoom(clubId, name);
+      this.newRoomName.set('');
+      this.isCreatingRoom.set(false);
+    } catch (err) {
+      logError('[ChatWidget] createRoom error', err);
+      toast.error(this.translate.instant(extractApiError(err)) as string);
+    }
   }
 
   protected onRoomNameKeydown(event: KeyboardEvent): void {
     if (event.key === 'Enter') { event.preventDefault(); this.submitCreateRoom(); }
     if (event.key === 'Escape') { this.isCreatingRoom.set(false); }
+  }
+
+  /** N-7: near-top scroll on the messages container triggers loading older history. */
+  protected onMessagesScroll(): void {
+    const el = this.messagesScrollRef()?.nativeElement;
+    if (!el || el.scrollTop > 40) return;
+    this.maybeLoadOlderMessages();
+  }
+
+  private maybeLoadOlderMessages(): void {
+    const roomId = this.chat.activeRoomId();
+    if (!roomId) return;
+    if (this.chat.isLoadingOlder()[roomId]) return;
+    if (this.chat.hasMoreOlder()[roomId] === false) return;
+
+    const el = this.messagesScrollRef()?.nativeElement;
+    if (!el) return;
+    const prevScrollHeight = el.scrollHeight;
+    const prevScrollTop = el.scrollTop;
+
+    this.chat.loadOlderMessages(roomId).then(() => {
+      requestAnimationFrame(() => {
+        const container = this.messagesScrollRef()?.nativeElement;
+        if (!container) return;
+        // Preserve visual position — prepending older messages shifts scrollHeight.
+        container.scrollTop = prevScrollTop + (container.scrollHeight - prevScrollHeight);
+      });
+    });
   }
 }

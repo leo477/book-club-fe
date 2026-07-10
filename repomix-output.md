@@ -91,6 +91,7 @@ public/
   sitemap.xml
 scripts/
   extract-i18n.mjs
+  generate-sitemap.mjs
 src/
   app/
     core/
@@ -116,10 +117,14 @@ src/
         randomizer.model.ts
         support.model.ts
         user.model.ts
+      security/
+        trusted-types-policy.ts
       services/
         book-cover.service.ts
         book-search.service.ts
         book-vote.service.ts
+        chat-api.service.ts
+        chat-socket.service.ts
         chat.service.ts
         club.service.ts
         event.service.ts
@@ -134,6 +139,9 @@ src/
         support.service.ts
         theme.service.ts
         upload.service.ts
+      utils/
+        event-attendance.util.ts
+        logger.util.ts
     features/
       auth/
         login/
@@ -483,16 +491,22 @@ supabase/
 angular.json
 ARCHITECTURE-REVIEW.md
 AUDIT-CHECKLIST.md
+AUDIT-FE-2026-07-06.md
 AUDIT-REPORT.md
 CLAUDE.md
 components.json
 eslint.config.js
+LICENSE
 package.json
+PLAN-CODE-SCANNING-2026-07-10.md
+PLAN-COOKIE-AUTH-2026-07-07.md
 playwright.audit-current.config.ts
 playwright.full-audit.config.ts
 playwright.total-audit.config.ts
 postcss.config.json
+proxy.conf.json
 README.md
+REFACTOR-PLAN-2026-07-06.md
 repomix.config.json
 SECURITY.md
 sonar-project.properties

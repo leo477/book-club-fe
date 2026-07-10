@@ -16,10 +16,14 @@ import { HlmInput } from '../../spartan/input/src';
   templateUrl: './address-autocomplete.component.html',
 })
 export class AddressAutocompleteComponent {
+  private static nextId = 0;
+
   readonly control = input.required<FormControl<string>>();
   readonly placeholder = input<string>('');
   readonly inputId = input<string>('');
   readonly selected = output<GeocodeSuggestion>();
+
+  readonly listboxId = `address-autocomplete-listbox-${AddressAutocompleteComponent.nextId++}`;
 
   private readonly geocoding = inject(GeocodingService);
   private readonly elRef = inject(ElementRef);
@@ -67,7 +71,7 @@ export class AddressAutocompleteComponent {
       this.control().setValue(s.label, { emitEvent: false });
       this.suggestions.set([]);
       this.isOpen.set(false);
-      this.geocoding.getPlaceDetails(s.place_id)
+      this.geocoding.getPlaceDetails$(s.place_id)
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe({
           next: (resolved) => {

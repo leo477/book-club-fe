@@ -8,6 +8,11 @@ export interface ChatMessage {
   isSystem: boolean;
   isMuted?: boolean;
   isDivider?: never;
+  /** True if this message starts/ends a new visual group (first overall, after
+   *  a divider, or sender changed). Precomputed by ChatService so templates
+   *  don't call an O(n) lookup function per row. */
+  isGroupFirst?: boolean;
+  isGroupLast?: boolean;
 }
 
 export interface UnreadDivider {

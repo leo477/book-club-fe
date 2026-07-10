@@ -2,7 +2,7 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router, NavigationEnd, Event as RouterEvent } from '@angular/router';
 import { Subject, EMPTY } from 'rxjs';
 import { ChatWidgetComponent } from './chat-widget.component';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -11,7 +11,7 @@ import { ClubService } from '../../../core/services/club.service';
 import { TokenStore } from '../../../core/auth/token.store';
 
 function makeRouter(url = '/') {
-  return { url, events: EMPTY };
+  return { url, events: EMPTY } satisfies Partial<Router>;
 }
 
 function makeAuthService(overrides: Partial<{ isOrganizer: boolean; currentUser: unknown }> = {}) {
@@ -91,7 +91,7 @@ interface CompProtected {
   deleteMessage(messageId: string): void;
   banUser(userId: string, durationSeconds: number): void;
   toggleCreateRoom(): void;
-  submitCreateRoom(): void;
+  submitCreateRoom(): Promise<void>;
   onRoomNameKeydown(event: KeyboardEvent): void;
   showingRoomList: { (): boolean; set(v: boolean): void };
   shouldShowRoomList: () => boolean;
@@ -311,16 +311,28 @@ describe('ChatWidgetComponent', () => {
     expect(chatSvc.createRoom).not.toHaveBeenCalled();
   });
 
-  it('submitCreateRoom calls createRoom and resets state', () => {
+  it('submitCreateRoom calls createRoom and resets state', async () => {
     chatSvc.activeRoom.set({ clubId: 'club-1' });
     const fixture = TestBed.createComponent(ChatWidgetComponent);
     const comp = fixture.componentInstance as unknown as CompProtected;
     comp.isCreatingRoom.set(true);
     comp.newRoomName.set('New Room');
-    comp.submitCreateRoom();
+    await comp.submitCreateRoom();
     expect(chatSvc.createRoom).toHaveBeenCalledWith('club-1', 'New Room');
     expect(comp.newRoomName()).toBe('');
     expect(comp.isCreatingRoom()).toBe(false);
+  });
+
+  it('submitCreateRoom shows a toast and keeps the form open on failure', async () => {
+    chatSvc.activeRoom.set({ clubId: 'club-1' });
+    chatSvc.createRoom.mockRejectedValueOnce(new Error('boom'));
+    const fixture = TestBed.createComponent(ChatWidgetComponent);
+    const comp = fixture.componentInstance as unknown as CompProtected;
+    comp.isCreatingRoom.set(true);
+    comp.newRoomName.set('New Room');
+    await comp.submitCreateRoom();
+    expect(comp.newRoomName()).toBe('New Room');
+    expect(comp.isCreatingRoom()).toBe(true);
   });
 
   it('onRoomNameKeydown submits on Enter', () => {
@@ -362,76 +374,9 @@ describe('ChatWidgetComponent', () => {
     });
   });
 
-  describe('Effect 2 — clubs/user', () => {
-    it('calls clearRooms when user becomes null', () => {
-      authSvc = makeAuthService({ currentUser: { id: 'u1', displayName: 'Alice' } });
-      TestBed.overrideProvider(AuthService, { useValue: authSvc });
-      TestBed.createComponent(ChatWidgetComponent);
-      chatSvc.clearRooms.mockClear();
-      authSvc.currentUser.set(null);
-      TestBed.flushEffects();
-      expect(chatSvc.clearRooms).toHaveBeenCalled();
-    });
-
-    it('calls loadAllClubRooms when user and clubs both exist', () => {
-      authSvc = makeAuthService({ currentUser: { id: 'u1', displayName: 'Alice' } });
-      clubSvc = makeClubService();
-      clubSvc.myClubs.set([{ id: 'club-1', name: 'Club A' }]);
-      TestBed.overrideProvider(AuthService, { useValue: authSvc });
-      TestBed.overrideProvider(ClubService, { useValue: clubSvc });
-      TestBed.createComponent(ChatWidgetComponent);
-      TestBed.flushEffects();
-      expect(chatSvc.loadAllClubRooms).toHaveBeenCalledWith(
-        [{ id: 'club-1', name: 'Club A' }],
-        'u1',
-      );
-    });
-
-    it('calls loadMyClubs when user exists but clubs are empty', () => {
-      authSvc = makeAuthService({ currentUser: { id: 'u1', displayName: 'Alice' } });
-      TestBed.overrideProvider(AuthService, { useValue: authSvc });
-      TestBed.createComponent(ChatWidgetComponent);
-      TestBed.flushEffects();
-      expect(clubSvc.loadMyClubs).toHaveBeenCalled();
-    });
-  });
-
-  describe('Effect 3 — connect/disconnect', () => {
-    it('calls connectRoom when activeRoomId and token are both set', () => {
-      chatSvc = makeChatService();
-      chatSvc.activeRoomId.set('room-1');
-      chatSvc.isOpen.set(true);
-      tokenStore = makeTokenStore('tok-abc');
-      TestBed.overrideProvider(ChatService, { useValue: chatSvc });
-      TestBed.overrideProvider(TokenStore, { useValue: tokenStore });
-      TestBed.createComponent(ChatWidgetComponent);
-      TestBed.flushEffects();
-      expect(chatSvc.connectRoom).toHaveBeenCalledWith('room-1', 'tok-abc');
-    });
-
-    it('calls disconnectRoom when activeRoomId is null', () => {
-      chatSvc = makeChatService();
-      chatSvc.activeRoomId.set(null);
-      tokenStore = makeTokenStore('tok-abc');
-      TestBed.overrideProvider(ChatService, { useValue: chatSvc });
-      TestBed.overrideProvider(TokenStore, { useValue: tokenStore });
-      TestBed.createComponent(ChatWidgetComponent);
-      TestBed.flushEffects();
-      expect(chatSvc.disconnectRoom).toHaveBeenCalled();
-    });
-
-    it('does not call connectRoom when token is missing', () => {
-      chatSvc = makeChatService();
-      chatSvc.activeRoomId.set('room-1');
-      chatSvc.isOpen.set(true);
-      tokenStore = makeTokenStore(null);
-      TestBed.overrideProvider(ChatService, { useValue: chatSvc });
-      TestBed.overrideProvider(TokenStore, { useValue: tokenStore });
-      TestBed.createComponent(ChatWidgetComponent);
-      TestBed.flushEffects();
-      expect(chatSvc.connectRoom).not.toHaveBeenCalled();
-    });
-  });
+  // "clubs/user" room-list bootstrap and WS connect/disconnect are now
+  // orchestrated centrally in ChatService (see chat.service.spec.ts) —
+  // ChatWidgetComponent no longer has its own copy of those effects.
 
   describe('showingRoomList / goToRoomList / selectRoom', () => {
     it('showingRoomList is false by default', () => {
@@ -513,42 +458,25 @@ describe('ChatWidgetComponent', () => {
   });
 
   describe('isFabVisible', () => {
-    it('returns true on a non-club-detail URL', () => {
+    it.each<[string, string, boolean]>([
+      ['non-club-detail URL', '/', true],
+      ['club detail URL /clubs/:id', '/clubs/abc-123', false],
+      ['/clubs (list page, not a detail)', '/clubs', true],
+      ['/clubs/:id/subpage (nested path, not matched by regex)', '/clubs/abc-123/events', true],
+    ])('returns %s (%s)', (_label, url, expected) => {
+      if (url !== '/') {
+        const routerEvents$ = new Subject<RouterEvent>();
+        const mockRouter = { url, events: routerEvents$.asObservable() } satisfies Partial<Router>;
+        TestBed.overrideProvider(Router, { useValue: mockRouter });
+      }
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.isFabVisible()).toBe(true);
-    });
-
-    it('returns false on a club detail URL /clubs/:id', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/clubs/abc-123', events: routerEvents$.asObservable() };
-      TestBed.overrideProvider(Router, { useValue: mockRouter });
-      const fixture = TestBed.createComponent(ChatWidgetComponent);
-      const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.isFabVisible()).toBe(false);
-    });
-
-    it('returns true on /clubs (list page, not a detail)', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/clubs', events: routerEvents$.asObservable() };
-      TestBed.overrideProvider(Router, { useValue: mockRouter });
-      const fixture = TestBed.createComponent(ChatWidgetComponent);
-      const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.isFabVisible()).toBe(true);
-    });
-
-    it('returns true on /clubs/:id/subpage (nested path, not matched by regex)', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/clubs/abc-123/events', events: routerEvents$.asObservable() };
-      TestBed.overrideProvider(Router, { useValue: mockRouter });
-      const fixture = TestBed.createComponent(ChatWidgetComponent);
-      const comp = fixture.componentInstance as unknown as CompProtected;
-      expect(comp.isFabVisible()).toBe(true);
+      expect(comp.isFabVisible()).toBe(expected);
     });
 
     it('updates isFabVisible when router emits a NavigationEnd to a club detail URL', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/home', events: routerEvents$.asObservable() };
+      const routerEvents$ = new Subject<RouterEvent>();
+      const mockRouter = { url: '/home', events: routerEvents$.asObservable() } satisfies Partial<Router>;
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
@@ -559,8 +487,8 @@ describe('ChatWidgetComponent', () => {
     });
 
     it('returns false on /chats page', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/chats', events: routerEvents$.asObservable() };
+      const routerEvents$ = new Subject<RouterEvent>();
+      const mockRouter = { url: '/chats', events: routerEvents$.asObservable() } satisfies Partial<Router>;
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
@@ -570,8 +498,8 @@ describe('ChatWidgetComponent', () => {
 
   describe('setChatsPage', () => {
     it('calls setChatsPage(true) via effect when on /chats route', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/chats', events: routerEvents$.asObservable() };
+      const routerEvents$ = new Subject<RouterEvent>();
+      const mockRouter = { url: '/chats', events: routerEvents$.asObservable() } satisfies Partial<Router>;
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       chatSvc = makeChatService();
       TestBed.overrideProvider(ChatService, { useValue: chatSvc });
@@ -581,8 +509,8 @@ describe('ChatWidgetComponent', () => {
     });
 
     it('calls setChatsPage(false) via effect when on a non-chats route', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/home', events: routerEvents$.asObservable() };
+      const routerEvents$ = new Subject<RouterEvent>();
+      const mockRouter = { url: '/home', events: routerEvents$.asObservable() } satisfies Partial<Router>;
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       chatSvc = makeChatService();
       TestBed.overrideProvider(ChatService, { useValue: chatSvc });
@@ -647,8 +575,8 @@ describe('ChatWidgetComponent', () => {
 
   describe('fabPositionClass / panelPositionClass on /clubs list page', () => {
     it('fabPositionClass returns bottom-24 right-6 on /clubs list page', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/clubs', events: routerEvents$.asObservable() };
+      const routerEvents$ = new Subject<RouterEvent>();
+      const mockRouter = { url: '/clubs', events: routerEvents$.asObservable() } satisfies Partial<Router>;
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
@@ -656,8 +584,8 @@ describe('ChatWidgetComponent', () => {
     });
 
     it('panelPositionClass returns bottom-40 right-6 on /clubs list page', () => {
-      const routerEvents$ = new Subject<unknown>();
-      const mockRouter = { url: '/clubs', events: routerEvents$.asObservable() };
+      const routerEvents$ = new Subject<RouterEvent>();
+      const mockRouter = { url: '/clubs', events: routerEvents$.asObservable() } satisfies Partial<Router>;
       TestBed.overrideProvider(Router, { useValue: mockRouter });
       const fixture = TestBed.createComponent(ChatWidgetComponent);
       const comp = fixture.componentInstance as unknown as CompProtected;
@@ -732,8 +660,8 @@ describe('ChatWidgetComponent', () => {
   });
 
   it('Effect 1 — closes chat when navigating to /chats page', () => {
-    const routerEvents$ = new Subject<unknown>();
-    const mockRouter = { url: '/chats', events: routerEvents$.asObservable() };
+    const routerEvents$ = new Subject<RouterEvent>();
+    const mockRouter = { url: '/chats', events: routerEvents$.asObservable() } satisfies Partial<Router>;
     TestBed.overrideProvider(Router, { useValue: mockRouter });
     chatSvc = makeChatService();
     chatSvc.isOpen.set(true);

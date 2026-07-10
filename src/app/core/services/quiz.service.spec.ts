@@ -62,7 +62,7 @@ describe('QuizService', () => {
       const req = httpMock.expectOne(`${API}/clubs/c1/quizzes`);
       req.flush([rawQuiz]);
       await p;
-      expect(service.quizzes().length).toBe(1);
+      expect(service.quizzes()).toHaveLength(1);
       expect(service.quizzes()[0].id).toBe('q1');
       expect(service.quizzes()[0].isActive).toBe(true);
     });
@@ -110,7 +110,7 @@ describe('QuizService', () => {
       req.flush(rawQuiz);
       const quiz = await p;
       expect(quiz.id).toBe('q1');
-      expect(service.quizzes().length).toBe(1);
+      expect(service.quizzes()).toHaveLength(1);
     });
 
     it('sends null description when empty string', async () => {
@@ -162,7 +162,7 @@ describe('QuizService', () => {
       expect(req.request.body).toEqual({ question: 'Q?', options: ['A', 'B'], correctIndex: 0 });
       req.flush(rawQuestion);
       await p;
-      expect(service.questions().length).toBe(1);
+      expect(service.questions()).toHaveLength(1);
     });
 
     it('throws on HTTP error', async () => {
@@ -243,7 +243,7 @@ describe('QuizService', () => {
       const p = service.getQuestions('q1');
       httpMock.expectOne(`${API}/quizzes/q1/questions`).flush([rawQuestion]);
       const questions = await p;
-      expect(questions.length).toBe(1);
+      expect(questions).toHaveLength(1);
       expect(questions[0].question).toBe('What is 2+2?');
     });
 
@@ -382,7 +382,7 @@ describe('QuizService', () => {
       const p = service.getLeaderboard('q1', 's1');
       httpMock.expectOne(`${API}/quizzes/q1/sessions/s1/leaderboard`).flush({ entries: [rawEntry] });
       const entries = await p;
-      expect(entries.length).toBe(1);
+      expect(entries).toHaveLength(1);
       expect(entries[0].rank).toBe(1);
       expect(entries[0].displayName).toBe('Alice');
     });
@@ -416,7 +416,7 @@ describe('QuizService', () => {
       const p = service.getClubQuizzes('c1');
       httpMock.expectOne(`${API}/clubs/c1/quizzes`).flush([rawQuiz]);
       const quizzes = await p;
-      expect(quizzes.length).toBe(1);
+      expect(quizzes).toHaveLength(1);
       expect(quizzes[0].id).toBe('q1');
       // Does NOT update the quizzes signal
       expect(service.quizzes()).toEqual([]);
@@ -436,7 +436,7 @@ describe('QuizService', () => {
       const p = service.loadClubEvents('c1');
       httpMock.expectOne(`${API}/clubs/c1/events`).flush([rawEvent]);
       const events = await p;
-      expect(events.length).toBe(1);
+      expect(events).toHaveLength(1);
       expect((events[0] as { id: string }).id).toBe('ev1');
     });
 

@@ -1,10 +1,28 @@
 import { TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection, WritableSignal } from '@angular/core';
+import { provideZonelessChangeDetection, signal, WritableSignal } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
+import { of } from 'rxjs';
 import { ChatService } from './chat.service';
 import { ChatMessage, ChatRoom } from '../models/chat.model';
 import { environment } from '../../../environments/environment';
+import { AuthService } from '../auth/auth.service';
+import { TokenStore } from '../auth/token.store';
+import { ClubService } from './club.service';
+import { ChatSocket } from './chat-socket.service';
+
+function makeAuthService(currentUser: { id: string } | null = null, getWsTicket$ = () => of<string | null>('tok')) {
+  return { currentUser: signal(currentUser), getWsTicket$ };
+}
+
+function makeClubService(myClubs: { id: string; name: string }[] = []) {
+  return { myClubs: signal(myClubs), loadMyClubs: vi.fn().mockResolvedValue(undefined) };
+}
+
+function makeTokenStore(token: string | null = 'tok') {
+  return { token: signal(token) };
+}
 
 // ── MockWebSocket ─────────────────────────────────────────────────────────────
 
@@ -30,9 +48,13 @@ class MockWebSocket {
 }
 
 interface ChatServicePrivate {
-  _unreadCount: WritableSignal<number>;
   _hasNewMessage: WritableSignal<boolean>;
   _activeRoomId: WritableSignal<string | null>;
+}
+
+interface ChatServiceReadPrivate {
+  _lastReadMap: WritableSignal<Record<string, string | null>>;
+  _roomUnreadCounts: WritableSignal<Record<string, number>>;
 }
 
 // Helper for extracting signal values
@@ -63,6 +85,8 @@ const API = environment.apiUrl;
 describe('ChatService', () => {
   let service: ChatService;
   let httpMock: HttpTestingController;
+  let tokenSignal: WritableSignal<string | null>;
+  let wsTicket: string | null;
 
   beforeEach(() => {
     MockWebSocket.instance = null;
@@ -82,11 +106,23 @@ describe('ChatService', () => {
       readonly destination = {};
     };
 
+    tokenSignal = signal<string | null>('tok');
+    wsTicket = 'tok';
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), ChatService],
+      providers: [
+        provideZonelessChangeDetection(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        ChatService,
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
+        { provide: AuthService, useValue: makeAuthService(null, () => of(wsTicket)) },
+        { provide: ClubService, useValue: makeClubService([]) },
+        { provide: TokenStore, useValue: { token: tokenSignal } },
+      ],
     });
     service = TestBed.inject(ChatService);
     httpMock = TestBed.inject(HttpTestingController);
+    TestBed.flushEffects();
   });
 
   afterEach(() => {
@@ -95,7 +131,7 @@ describe('ChatService', () => {
 
   describe('Initial state', () => {
     it('should have 0 rooms before loading', () => {
-      expect(getRooms(service).length).toBe(0);
+      expect(getRooms(service)).toHaveLength(0);
     });
     it('should have activeRoomId as null initially', () => {
       expect(getActiveRoomId(service)).toBeNull();
@@ -135,7 +171,7 @@ describe('ChatService', () => {
       const msgsReq = httpMock.expectOne(`${API}/chat/rooms/room-1/messages`);
       msgsReq.flush([]);
 
-      expect(getRooms(service).length).toBe(2);
+      expect(getRooms(service)).toHaveLength(2);
       expect(getRooms(service)[0].id).toBe('room-1');
     });
 
@@ -174,7 +210,7 @@ describe('ChatService', () => {
       await Promise.resolve();
 
       const msgs = getActiveMessages(service);
-      expect(msgs.length).toBe(1);
+      expect(msgs).toHaveLength(1);
       expect(msgs[0].isOwn).toBe(true);
     });
   });
@@ -189,10 +225,17 @@ describe('ChatService', () => {
       service.toggleOpen(); // close
       expect(getIsOpen(service)).toBe(false);
     });
-    it('should call markAsRead and set unreadCount to 0 when opening', () => {
-      (service as unknown as ChatServicePrivate)._unreadCount.set(5);
+    it('clears the active room unread count and resets hasNewMessage when opening', () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
+      (service as unknown as ChatServiceReadPrivate)._roomUnreadCounts.set({ 'room-1': 5 });
+      (service as unknown as ChatServicePrivate)._hasNewMessage.set(true);
       service.toggleOpen();
       expect(getUnreadCount(service)).toBe(0);
+      expect(getHasNewMessage(service)).toBe(false);
+    });
+    it('only resets hasNewMessage (no room counts to touch) when there is no active room', () => {
+      (service as unknown as ChatServicePrivate)._hasNewMessage.set(true);
+      service.toggleOpen();
       expect(getHasNewMessage(service)).toBe(false);
     });
   });
@@ -207,8 +250,9 @@ describe('ChatService', () => {
       expect(getActiveRoomId(service)).toBe('room-2');
     });
 
-    it('should call markAsRead and set unreadCount to 0', () => {
-      (service as unknown as ChatServicePrivate)._unreadCount.set(5);
+    it('clears the unread count for the opened room and resets hasNewMessage', () => {
+      (service as unknown as ChatServiceReadPrivate)._roomUnreadCounts.set({ 'room-2': 5 });
+      (service as unknown as ChatServicePrivate)._hasNewMessage.set(true);
       service.openRoom('room-2');
 
       const req = httpMock.expectOne(`${API}/chat/rooms/room-2/messages`);
@@ -231,18 +275,18 @@ describe('ChatService', () => {
       await Promise.resolve();
 
       const msgs = getActiveMessages(service);
-      expect(msgs.length).toBe(2);
+      expect(msgs).toHaveLength(2);
       expect(msgs[0].id).toBe('msg-3-1');
     });
   });
 
   describe('markAsRead()', () => {
-    it('should set unreadCount to 0 and hasNewMessage to false', () => {
-      (service as unknown as ChatServicePrivate)._unreadCount.set(5);
+    it('resets hasNewMessage but does not touch any room unread counts (N-8)', () => {
+      (service as unknown as ChatServiceReadPrivate)._roomUnreadCounts.set({ 'room-1': 5 });
       (service as unknown as ChatServicePrivate)._hasNewMessage.set(true);
       service.markAsRead();
-      expect(getUnreadCount(service)).toBe(0);
       expect(getHasNewMessage(service)).toBe(false);
+      expect(getUnreadCount(service)).toBe(5);
     });
   });
 
@@ -254,7 +298,7 @@ describe('ChatService', () => {
 
       // Optimistic message should be visible right away (before HTTP responds)
       const msgs = getActiveMessages(service);
-      expect(msgs.length).toBe(1);
+      expect(msgs).toHaveLength(1);
       expect(msgs[0].text).toBe('Hello world');
       expect(msgs[0].id.startsWith('temp-')).toBe(true);
       expect(msgs[0].isOwn).toBe(true);
@@ -279,7 +323,7 @@ describe('ChatService', () => {
       await Promise.resolve();
 
       const msgs = getActiveMessages(service);
-      expect(msgs.length).toBe(1);
+      expect(msgs).toHaveLength(1);
       expect(msgs[0].id).toBe('real-msg-id');
       expect(msgs[0].id.startsWith('temp-')).toBe(false);
     });
@@ -289,7 +333,7 @@ describe('ChatService', () => {
 
       service.sendMessage('Will fail', { id: 'user-99', displayName: 'TestUser' });
 
-      expect(getActiveMessages(service).length).toBe(1); // optimistic visible
+      expect(getActiveMessages(service)).toHaveLength(1); // optimistic visible
 
       httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush(
         { detail: 'Error' }, { status: 500, statusText: 'Server Error' },
@@ -298,14 +342,14 @@ describe('ChatService', () => {
       // HttpClient error processing requires several microtask ticks
       for (let i = 0; i < 5; i++) await Promise.resolve();
 
-      expect(getActiveMessages(service).length).toBe(0); // rolled back
+      expect(getActiveMessages(service)).toHaveLength(0); // rolled back
     });
 
     it('should not send if activeRoomId is null', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set(null);
       service.sendMessage('Should not send', { id: 'user-x', displayName: 'Nobody' });
       httpMock.expectNone(`${API}/chat/rooms/null/messages`);
-      expect(getActiveMessages(service).length).toBe(0);
+      expect(getActiveMessages(service)).toHaveLength(0);
     });
   });
 
@@ -358,7 +402,7 @@ describe('ChatService', () => {
     it('should not include params when not provided', () => {
       service.loadMessages('room-1');
       const req = httpMock.expectOne(`${API}/chat/rooms/room-1/messages`);
-      expect(req.request.params.keys().length).toBe(0);
+      expect(req.request.params.keys()).toHaveLength(0);
       req.flush([]);
     });
 
@@ -373,6 +417,96 @@ describe('ChatService', () => {
       const messages = service.messages()['room-1'] ?? [];
       expect(messages.find(m => m.id === 'm1')?.isSystem).toBe(true);
       expect(messages.find(m => m.id === 'm2')?.isSystem).toBe(false);
+    });
+  });
+
+  // ── N-7: loadOlderMessages ────────────────────────────────────────────────
+
+  describe('loadOlderMessages()', () => {
+    it('does nothing when the room has no messages loaded yet', async () => {
+      await service.loadOlderMessages('room-empty');
+      expect(service.messages()['room-empty']).toBeUndefined();
+      httpMock.expectNone(r => r.url.startsWith(`${API}/chat/rooms/room-empty/messages`));
+    });
+
+    it('prepends older messages without duplicating already-loaded ones', async () => {
+      service.loadMessages('room-1');
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([
+        { id: 'msg-10', senderId: 'u1', senderName: 'Alice', text: 'Ten', timestamp: '2024-01-01T00:10:00Z' },
+        { id: 'msg-11', senderId: 'u2', senderName: 'Bob', text: 'Eleven', timestamp: '2024-01-01T00:11:00Z' },
+      ]);
+      await Promise.resolve();
+
+      const promise = service.loadOlderMessages('room-1');
+      const req = httpMock.expectOne(r =>
+        r.url === `${API}/chat/rooms/room-1/messages` &&
+        r.params.get('before') === 'msg-10',
+      );
+      // Includes msg-10 by accident (e.g. a race) to verify dedup
+      req.flush([
+        { id: 'msg-8', senderId: 'u1', senderName: 'Alice', text: 'Eight', timestamp: '2024-01-01T00:08:00Z' },
+        { id: 'msg-9', senderId: 'u2', senderName: 'Bob', text: 'Nine', timestamp: '2024-01-01T00:09:00Z' },
+        { id: 'msg-10', senderId: 'u1', senderName: 'Alice', text: 'Ten', timestamp: '2024-01-01T00:10:00Z' },
+      ]);
+      await promise;
+
+      const msgs = service.messages()['room-1'];
+      expect(msgs.map(m => m.id)).toEqual(['msg-8', 'msg-9', 'msg-10', 'msg-11']);
+    });
+
+    it('sets hasMoreOlder to false when the page comes back shorter than the limit', async () => {
+      service.loadMessages('room-1');
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([
+        { id: 'msg-10', senderId: 'u1', senderName: 'Alice', text: 'Ten', timestamp: '2024-01-01T00:10:00Z' },
+      ]);
+      await Promise.resolve();
+
+      const promise = service.loadOlderMessages('room-1');
+      const req = httpMock.expectOne(r => r.url === `${API}/chat/rooms/room-1/messages`);
+      expect(req.request.params.get('limit')).toBe('50');
+      // Fewer results than the page size → no more history
+      req.flush([
+        { id: 'msg-9', senderId: 'u1', senderName: 'Alice', text: 'Nine', timestamp: '2024-01-01T00:09:00Z' },
+      ]);
+      await promise;
+
+      expect(service.hasMoreOlder()['room-1']).toBe(false);
+    });
+
+    it('does not fire a duplicate request while one is already in flight for that room', async () => {
+      service.loadMessages('room-1');
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([
+        { id: 'msg-10', senderId: 'u1', senderName: 'Alice', text: 'Ten', timestamp: '2024-01-01T00:10:00Z' },
+      ]);
+      await Promise.resolve();
+
+      const first = service.loadOlderMessages('room-1');
+      // Second call while the first is still in flight should not issue a new HTTP request
+      const second = service.loadOlderMessages('room-1');
+
+      const req = httpMock.expectOne(r => r.url === `${API}/chat/rooms/room-1/messages`);
+      req.flush([{ id: 'msg-9', senderId: 'u1', senderName: 'Alice', text: 'Nine', timestamp: '2024-01-01T00:09:00Z' }]);
+
+      await Promise.all([first, second]);
+
+      expect(service.messages()['room-1']?.map(m => m.id)).toEqual(['msg-9', 'msg-10']);
+      httpMock.expectNone(r => r.url === `${API}/chat/rooms/room-1/messages` && r.params.get('before') != null && r.params.get('before') !== 'msg-10');
+    });
+
+    it('sets isLoadingOlder true while the request is in flight and false after', async () => {
+      service.loadMessages('room-1');
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([
+        { id: 'msg-10', senderId: 'u1', senderName: 'Alice', text: 'Ten', timestamp: '2024-01-01T00:10:00Z' },
+      ]);
+      await Promise.resolve();
+
+      const promise = service.loadOlderMessages('room-1');
+      expect(service.isLoadingOlder()['room-1']).toBe(true);
+
+      httpMock.expectOne(r => r.url === `${API}/chat/rooms/room-1/messages`).flush([]);
+      await promise;
+
+      expect(service.isLoadingOlder()['room-1']).toBe(false);
     });
   });
 
@@ -397,7 +531,7 @@ describe('ChatService', () => {
 
       await flushMicrotasks();
 
-      expect(getRooms(service).length).toBe(2);
+      expect(getRooms(service)).toHaveLength(2);
       expect(getRooms(service)[0].name).toBe('Club A · General');
       expect(getRooms(service)[1].name).toBe('Club B · General');
     });
@@ -446,7 +580,7 @@ describe('ChatService', () => {
 
       httpMock.expectOne(`${API}/chat/rooms/r1/messages`).flush([]);
 
-      expect(getRooms(service).length).toBe(1);
+      expect(getRooms(service)).toHaveLength(1);
     });
   });
 
@@ -512,7 +646,7 @@ describe('ChatService', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set(null);
       service.deleteMessage('msg-x');
       httpMock.expectNone(`${API}/chat/rooms/null/messages/msg-x`);
-      expect(getActiveMessages(service).length).toBe(0);
+      expect(getActiveMessages(service)).toHaveLength(0);
     });
   });
 
@@ -547,7 +681,7 @@ describe('ChatService', () => {
       httpMock.expectOne(`${API}/chat/rooms/r1`).flush(null);
       await promise;
 
-      expect(getRooms(service).length).toBe(0);
+      expect(getRooms(service)).toHaveLength(0);
     });
 
     it('clears activeRoomId and disconnects when deleting the active room', async () => {
@@ -573,7 +707,7 @@ describe('ChatService', () => {
       httpMock.expectOne(`${API}/chat/rooms/r2`).flush(null);
       await promise;
 
-      expect(getRooms(service).length).toBe(1);
+      expect(getRooms(service)).toHaveLength(1);
       expect(getActiveRoomId(service)).toBe('r1');
     });
   });
@@ -590,7 +724,7 @@ describe('ChatService', () => {
       httpMock.expectOne(`${API}/chat/rooms/r1`).flush(null);
       await promise;
 
-      expect(getRooms(service).length).toBe(0);
+      expect(getRooms(service)).toHaveLength(0);
     });
 
     it('clears activeRoomId and disconnects when deleting the active room', async () => {
@@ -616,7 +750,7 @@ describe('ChatService', () => {
       httpMock.expectOne(`${API}/chat/rooms/r2`).flush(null);
       await promise;
 
-      expect(getRooms(service).length).toBe(1);
+      expect(getRooms(service)).toHaveLength(1);
       expect(getActiveRoomId(service)).toBe('r1');
     });
   });
@@ -632,14 +766,15 @@ describe('ChatService', () => {
 
       await Promise.resolve();
 
-      expect(getRooms(service).length).toBe(1);
+      expect(getRooms(service)).toHaveLength(1);
       expect(getRooms(service)[0].id).toBe('new-room-id');
       expect(getRooms(service)[0].clubId).toBe('club-1');
     });
   });
 
   describe('openAndFocusRoom()', () => {
-    it('sets activeRoomId, opens chat, marks as read, and loads messages', () => {
+    it('sets activeRoomId, opens chat, marks the room read, and loads messages', () => {
+      (service as unknown as ChatServiceReadPrivate)._roomUnreadCounts.set({ 'room-1': 4 });
       const room: ChatRoom = { id: 'room-1', name: 'General', clubId: 'club-1' };
       service.openAndFocusRoom(room);
 
@@ -717,19 +852,33 @@ describe('ChatService', () => {
   describe('connectRoom() / disconnectRoom()', () => {
     const WS_BASE = environment.wsUrl;
 
-    it('connectRoom creates a WebSocket with the correct URL and sends auth frame on open', () => {
-      service.connectRoom('room-42', 'my-token');
+    it('connectRoom creates a WebSocket with the correct URL and sends a ws-ticket auth frame on open', async () => {
+      wsTicket = 'my-ticket';
+      service.connectRoom('room-42');
       const ws554 = MockWebSocket.instance;
       expect(ws554).not.toBeNull();
       expect(ws554?.url).toBe(`${WS_BASE}/chat/rooms/room-42`);
       expect(ws554?.url).not.toContain('?');
       ws554?.onopen?.();
-      expect(ws554?.send).toHaveBeenCalledWith(JSON.stringify({ type: 'auth', token: 'my-token' }));
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(ws554?.send).toHaveBeenCalledWith(JSON.stringify({ type: 'auth', ticket: 'my-ticket' }));
+    });
+
+    it('connectRoom fetches a fresh ticket at auth-frame time, not a connect-time snapshot', async () => {
+      wsTicket = 'stale-ticket';
+      service.connectRoom('room-42');
+      const ws = MockWebSocket.instance;
+      wsTicket = 'rotated-ticket';
+      ws?.onopen?.();
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(ws?.send).toHaveBeenCalledWith(JSON.stringify({ type: 'auth', ticket: 'rotated-ticket' }));
     });
 
     it('receiving a WS message appends it to activeMessages', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
-      service.connectRoom('room-42', 'tok');
+      service.connectRoom('room-42');
 
       const ws561 = MockWebSocket.instance;
       if (!ws561) throw new Error('MockWebSocket not instantiated');
@@ -745,14 +894,14 @@ describe('ChatService', () => {
       });
 
       const msgs = getActiveMessages(service);
-      expect(msgs.length).toBe(1);
+      expect(msgs).toHaveLength(1);
       expect(msgs[0].text).toBe('Hello via WS');
     });
 
     it('increments unreadCount and sets hasNewMessage when chat is closed', () => {
       // _isOpen stays false by default
       (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
-      service.connectRoom('room-42', 'tok');
+      service.connectRoom('room-42');
 
       const ws579 = MockWebSocket.instance;
       if (!ws579) throw new Error('MockWebSocket not instantiated');
@@ -774,7 +923,7 @@ describe('ChatService', () => {
     it('does NOT increment unreadCount when chat is open', () => {
       service.toggleOpen(); // open the chat
       (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
-      service.connectRoom('room-42', 'tok');
+      service.connectRoom('room-42');
 
       const ws596 = MockWebSocket.instance;
       if (!ws596) throw new Error('MockWebSocket not instantiated');
@@ -794,52 +943,54 @@ describe('ChatService', () => {
     });
 
     it('disconnectRoom calls ws.close()', () => {
-      service.connectRoom('room-42', 'tok');
+      service.connectRoom('room-42');
       const ws = MockWebSocket.instance;
       expect(ws).not.toBeNull();
       service.disconnectRoom();
       expect(ws?.close).toHaveBeenCalled();
     });
 
-    it('calling connectRoom twice closes the first WebSocket', () => {
-      service.connectRoom('room-42', 'tok');
+    it('calling connectRoom twice for the same room does not close the first socket, even if the token changed', () => {
+      service.connectRoom('room-42');
       const firstWs = MockWebSocket.instance;
       expect(firstWs).not.toBeNull();
-      service.connectRoom('room-42', 'tok2');
-      expect(firstWs?.close).toHaveBeenCalled();
+      tokenSignal.set('tok2');
+      service.connectRoom('room-42');
+      expect(firstWs?.close).not.toHaveBeenCalled();
+      expect(MockWebSocket.instance).toBe(firstWs);
     });
 
     it('is idempotent: re-connecting the same room/token while CONNECTING does not tear down the socket', () => {
-      service.connectRoom('room-42', 'tok');
+      service.connectRoom('room-42');
       const firstWs = MockWebSocket.instance;
       expect(firstWs).not.toBeNull();
       // readyState stays CONNECTING (default); a re-run with the same token must no-op
-      service.connectRoom('room-42', 'tok');
+      service.connectRoom('room-42');
       expect(firstWs?.close).not.toHaveBeenCalled();
       expect(MockWebSocket.instance).toBe(firstWs);
     });
 
     it('is idempotent while OPEN for the same room/token', () => {
-      service.connectRoom('room-42', 'tok');
+      service.connectRoom('room-42');
       const firstWs = MockWebSocket.instance;
       if (!firstWs) throw new Error('MockWebSocket not instantiated');
       firstWs.readyState = MockWebSocket.OPEN;
-      service.connectRoom('room-42', 'tok');
+      service.connectRoom('room-42');
       expect(firstWs.close).not.toHaveBeenCalled();
       expect(MockWebSocket.instance).toBe(firstWs);
     });
 
     it('reconnects when the room id changes', () => {
-      service.connectRoom('room-42', 'tok');
+      service.connectRoom('room-42');
       const firstWs = MockWebSocket.instance;
-      service.connectRoom('room-99', 'tok');
+      service.connectRoom('room-99');
       expect(firstWs?.close).toHaveBeenCalled();
       expect(MockWebSocket.instance?.url).toBe(`${WS_BASE}/chat/rooms/room-99`);
     });
 
     it('deduplicates WS messages — same id is not added twice', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
-      service.connectRoom('room-42', 'tok');
+      service.connectRoom('room-42');
       const ws = MockWebSocket.instance;
       if (!ws) throw new Error('MockWebSocket not instantiated');
 
@@ -847,7 +998,7 @@ describe('ChatService', () => {
       ws.simulateMessage({ type: 'message', payload });
       ws.simulateMessage({ type: 'message', payload }); // duplicate
 
-      expect(getActiveMessages(service).length).toBe(1);
+      expect(getActiveMessages(service)).toHaveLength(1);
     });
 
     it('WS echo replaces temp message from optimistic sendMessage', async () => {
@@ -856,7 +1007,7 @@ describe('ChatService', () => {
       const postReq = httpMock.expectOne(`${API}/chat/rooms/room-42/messages`);
 
       // Connect WS and simulate echo before POST resolves
-      service.connectRoom('room-42', 'tok');
+      service.connectRoom('room-42');
       const ws = MockWebSocket.instance;
       if (!ws) throw new Error('MockWebSocket not instantiated');
       ws.simulateMessage({
@@ -872,12 +1023,12 @@ describe('ChatService', () => {
       postReq.flush({ id: 'server-id', senderId: 'u1', senderName: 'Alice', text: 'Real text', timestamp: '2024-01-01T00:00:00Z' });
       await Promise.resolve();
       // Still only one message (dedup handles POST .then() trying to map temp to real, but temp is gone)
-      expect(getActiveMessages(service).filter(m => m.id === 'server-id').length).toBe(1);
+      expect(getActiveMessages(service).filter(m => m.id === 'server-id')).toHaveLength(1);
     });
 
     it('disconnectRoom prevents reconnect by clearing _activeRoomToken', () => {
       vi.useFakeTimers();
-      service.connectRoom('room-42', 'tok');
+      service.connectRoom('room-42');
       const ws = MockWebSocket.instance;
       if (!ws) throw new Error('MockWebSocket not instantiated');
 
@@ -890,20 +1041,21 @@ describe('ChatService', () => {
       vi.useRealTimers();
     });
 
-    it('onopen resets _reconnectDelay to 1000', () => {
-      service.connectRoom('room-42', 'tok');
+    it('onopen resets the socket reconnect delay to 1000', () => {
+      service.connectRoom('room-42');
       const ws = MockWebSocket.instance;
       if (!ws) throw new Error('MockWebSocket not instantiated');
 
+      const socket = TestBed.inject(ChatSocket);
       // Simulate a previous backoff that doubled the delay
-      (service as unknown as { _reconnectDelay: number })._reconnectDelay = 8_000;
+      (socket as unknown as { _reconnectDelay: number })._reconnectDelay = 8_000;
       ws.onopen?.();
 
-      expect((service as unknown as { _reconnectDelay: number })._reconnectDelay).toBe(1_000);
+      expect((socket as unknown as { _reconnectDelay: number })._reconnectDelay).toBe(1_000);
     });
 
     it('onerror calls ws.close()', () => {
-      service.connectRoom('room-42', 'tok');
+      service.connectRoom('room-42');
       const ws = MockWebSocket.instance;
       if (!ws) throw new Error('MockWebSocket not instantiated');
 
@@ -914,7 +1066,7 @@ describe('ChatService', () => {
 
     it('onclose with active token triggers reconnect after delay', () => {
       vi.useFakeTimers();
-      service.connectRoom('room-42', 'tok');
+      service.connectRoom('room-42');
       const firstWs = MockWebSocket.instance;
       if (!firstWs) throw new Error('MockWebSocket not instantiated');
 
@@ -929,9 +1081,27 @@ describe('ChatService', () => {
       vi.useRealTimers();
     });
 
+    it('disconnects the reconnected socket when the ws-ticket is gone by reconnect time (e.g. logout)', async () => {
+      vi.useFakeTimers();
+      service.connectRoom('room-42');
+      const firstWs = MockWebSocket.instance;
+      if (!firstWs) throw new Error('MockWebSocket not instantiated');
+
+      wsTicket = null;
+      firstWs.simulateClose();
+      await vi.advanceTimersByTimeAsync(1_100);
+
+      const secondWs = MockWebSocket.instance;
+      expect(secondWs).not.toBe(firstWs);
+      secondWs?.onopen?.();
+      await vi.advanceTimersByTimeAsync(0);
+      expect(secondWs?.close).toHaveBeenCalled();
+      vi.useRealTimers();
+    });
+
     it('strips email domain from senderName when it contains @', () => {
       (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
-      service.connectRoom('room-1', 'tok');
+      service.connectRoom('room-1');
       const ws = MockWebSocket.instance;
       if (!ws) throw new Error('MockWebSocket not instantiated');
       ws.simulateMessage({
@@ -946,6 +1116,53 @@ describe('ChatService', () => {
       });
       expect(getActiveMessages(service)[0].senderName).toBe('user');
     });
+
+    it('falls back to an empty senderName instead of throwing when all sender-name fields are missing', () => {
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
+      service.connectRoom('room-1');
+      const ws = MockWebSocket.instance;
+      if (!ws) throw new Error('MockWebSocket not instantiated');
+      expect(() => ws.simulateMessage({
+        type: 'message',
+        payload: {
+          id: 'msg-no-name',
+          senderId: 'u1',
+          text: 'Hi',
+          timestamp: '2024-01-01T00:00:00Z',
+        },
+      })).not.toThrow();
+      expect(getActiveMessages(service)[0].senderName).toBe('');
+    });
+  });
+
+  // ── N-8: unreadCount is a single source of truth derived from roomUnreadCounts ──
+
+  describe('unreadCount (N-8 consolidation)', () => {
+    it('is the sum of all per-room unread counts', () => {
+      (service as unknown as ChatServiceReadPrivate)._roomUnreadCounts.set({ 'room-1': 2, 'room-2': 3 });
+      expect(getUnreadCount(service)).toBe(5);
+    });
+
+    it('a WS message increments only the count for the room it arrived in', () => {
+      (service as unknown as ChatServiceReadPrivate)._roomUnreadCounts.set({ 'room-1': 1 });
+      (service as unknown as ChatServicePrivate)._activeRoomId.set('room-2');
+      service.connectRoom('room-2');
+
+      const ws = MockWebSocket.instance;
+      if (!ws) throw new Error('MockWebSocket not instantiated');
+      ws.simulateMessage({
+        type: 'message',
+        payload: { id: 'msg-new', senderId: 'other-user', senderName: 'Bob', text: 'Hi', timestamp: '2024-01-01T00:00:00Z' },
+      });
+
+      expect(service.roomUnreadCounts()['room-1']).toBe(1);
+      expect(service.roomUnreadCounts()['room-2']).toBe(1);
+      expect(getUnreadCount(service)).toBe(2);
+    });
+
+    it('has no standalone global counter left to disagree with roomUnreadCounts', () => {
+      expect((service as unknown as Record<string, unknown>)['_unreadCount']).toBeUndefined();
+    });
   });
 
   // ── Feature 1: setChatsPage ────────────────────────────────────────────────
@@ -954,7 +1171,7 @@ describe('ChatService', () => {
     it('suppresses unread counter for incoming messages when set to true', () => {
       service.setChatsPage(true);
       (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
-      service.connectRoom('room-1', 'tok');
+      service.connectRoom('room-1');
       const ws = MockWebSocket.instance;
       if (!ws) throw new Error('MockWebSocket not instantiated');
       ws.simulateMessage({
@@ -969,7 +1186,7 @@ describe('ChatService', () => {
       service.setChatsPage(true);
       service.setChatsPage(false);
       (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
-      service.connectRoom('room-1', 'tok');
+      service.connectRoom('room-1');
       const ws = MockWebSocket.instance;
       if (!ws) throw new Error('MockWebSocket not instantiated');
       ws.simulateMessage({
@@ -985,7 +1202,7 @@ describe('ChatService', () => {
       // Set currentUserId by loading rooms with userId
       (service as unknown as { currentUserId: string | null }).currentUserId = 'me';
       (service as unknown as ChatServicePrivate)._activeRoomId.set('room-1');
-      service.connectRoom('room-1', 'tok');
+      service.connectRoom('room-1');
       const ws = MockWebSocket.instance;
       if (!ws) throw new Error('MockWebSocket not instantiated');
       ws.simulateMessage({
@@ -997,11 +1214,6 @@ describe('ChatService', () => {
   });
 
   // ── Feature 5: fetchUnreadCounts ──────────────────────────────────────────
-
-  interface ChatServiceReadPrivate {
-    _lastReadMap: WritableSignal<Record<string, string | null>>;
-    _roomUnreadCounts: WritableSignal<Record<string, number>>;
-  }
 
   describe('fetchUnreadCounts()', () => {
     it('fires GET per room and updates roomUnreadCounts + _lastReadMap', async () => {
@@ -1046,7 +1258,7 @@ describe('ChatService', () => {
     it('does nothing when called with empty array', () => {
       service.fetchUnreadCounts([]);
       httpMock.expectNone(`${API}/chat/rooms/`);
-      expect(Object.keys(service.roomUnreadCounts()).length).toBe(0);
+      expect(Object.keys(service.roomUnreadCounts())).toHaveLength(0);
     });
   });
 
@@ -1087,11 +1299,12 @@ describe('ChatService', () => {
       postReq.flush(null);
     });
 
-    it('does nothing when the room has no messages', () => {
+    it('clears the local unread count but skips the server call when the room has no messages', () => {
+      (service as unknown as ChatServiceReadPrivate)._roomUnreadCounts.set({ 'room-empty': 3 });
       service.markRoomRead('room-empty');
-      // No POST should be made
+      // No POST should be made — we don't know the last-read message yet
       httpMock.expectNone(`${API}/chat/rooms/room-empty/read`);
-      expect(service.roomUnreadCounts()['room-empty']).toBeUndefined();
+      expect(service.roomUnreadCounts()['room-empty']).toBe(0);
     });
 
     it('does not POST when the last message id is an optimistic temp id', () => {
@@ -1124,9 +1337,89 @@ describe('ChatService', () => {
       (service as unknown as ChatServiceReadPrivate)._lastReadMap.update((m: Record<string, string | null>) => ({ ...m, ['room-d']: 'msg-a' }));
 
       const items = service.activeMessagesWithDivider();
-      expect(items.length).toBe(3); // msg-a + divider + msg-b
+      expect(items).toHaveLength(3); // msg-a + divider + msg-b
       expect(items[1]).toEqual(expect.objectContaining({ isDivider: true }));
       expect((items[2] as { text: string }).text).toBe('Unread');
     });
+  });
+});
+
+// ── A-1: single orchestrator for room-list bootstrap + WS connect ───────────
+// Previously duplicated as component effects in ChatWidgetComponent and
+// ChatsComponent; now owned centrally by ChatService's constructor.
+describe('ChatService — constructor orchestrator effects', () => {
+  function setup(overrides: {
+    user?: { id: string } | null;
+    clubs?: { id: string; name: string }[];
+    activeRoomId?: string | null;
+    token?: string | null;
+  } = {}) {
+    const authSvc = makeAuthService(overrides.user ?? null);
+    const clubSvc = makeClubService(overrides.clubs ?? []);
+    const tokenStore = makeTokenStore(overrides.token ?? null);
+    TestBed.configureTestingModule({
+      providers: [
+        provideZonelessChangeDetection(),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        ChatService,
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
+        { provide: AuthService, useValue: authSvc },
+        { provide: ClubService, useValue: clubSvc },
+        { provide: TokenStore, useValue: tokenStore },
+      ],
+    });
+    const svc = TestBed.inject(ChatService);
+    if (overrides.activeRoomId !== undefined) {
+      (svc as unknown as ChatServicePrivate)._activeRoomId.set(overrides.activeRoomId);
+    }
+    TestBed.flushEffects();
+    return { svc, http: TestBed.inject(HttpTestingController), authSvc, clubSvc, tokenStore };
+  }
+
+  it('loads all club rooms when the user has clubs', () => {
+    const { http } = setup({ user: { id: 'u1' }, clubs: [{ id: 'club-1', name: 'Club A' }] });
+    const req = http.expectOne(`${API}/clubs/club-1/chat/rooms`);
+    expect(req.request.method).toBe('GET');
+    req.flush([]);
+    http.verify();
+  });
+
+  it('calls loadMyClubs when the user exists but has no clubs cached yet', () => {
+    const { clubSvc, http } = setup({ user: { id: 'u1' }, clubs: [] });
+    expect(clubSvc.loadMyClubs).toHaveBeenCalled();
+    http.verify();
+  });
+
+  it('clears rooms when the user signs out', () => {
+    const { svc, authSvc, http } = setup({ user: { id: 'u1' }, clubs: [{ id: 'club-1', name: 'Club A' }] });
+    http.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([]);
+    authSvc.currentUser.set(null);
+    TestBed.flushEffects();
+    expect(getRooms(svc)).toEqual([]);
+    http.verify();
+  });
+
+  it('connects the WS socket when there is an active room and a token', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).WebSocket = MockWebSocket;
+    MockWebSocket.instance = null;
+    // A signed-out user (default) makes the clubs-bootstrap effect call
+    // clearRooms(), which would reset activeRoomId back to null — sign a
+    // user in with no clubs so that effect is a no-op here.
+    const { http } = setup({ user: { id: 'u1' }, clubs: [], activeRoomId: 'room-1', token: 'tok-abc' });
+    const ws = MockWebSocket.instance as MockWebSocket | null;
+    expect(ws?.url).toBe(`${environment.wsUrl}/chat/rooms/room-1`);
+    http.verify();
+  });
+
+  it('does not connect when there is no token', () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (window as any).WebSocket = MockWebSocket;
+    MockWebSocket.instance = null;
+    const { http } = setup({ user: { id: 'u1' }, clubs: [], activeRoomId: 'room-1', token: null });
+    const ws = MockWebSocket.instance as MockWebSocket | null;
+    expect(ws).toBeNull();
+    http.verify();
   });
 });

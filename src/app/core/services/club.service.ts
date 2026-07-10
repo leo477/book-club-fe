@@ -1,6 +1,7 @@
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
 import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
 import { AuthService } from '../auth/auth.service';
@@ -21,6 +22,7 @@ export interface JoinRequest {
 export class ClubService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
+  private readonly translate = inject(TranslateService);
 
   private readonly _clubs = signal<Club[]>([]);
   private readonly _myClubs = signal<Club[]>([]);
@@ -104,9 +106,6 @@ export class ClubService {
     }, {});
   });
 
-  readonly myParticipatedClubs = computed<Club[]>(() => []);
-  readonly myMissedClubs = computed<Club[]>(() => []);
-
   setSearchQuery(query: string): void {
     this._searchQuery.set(query);
   }
@@ -124,7 +123,7 @@ export class ClubService {
       );
       this._clubs.set(raw.map(mapClub));
     } catch {
-      this._error.set('Failed to load clubs');
+      this._error.set(this.translate.instant('CLUBS.load_error'));
     } finally {
       this._isLoading.set(false);
     }
@@ -144,7 +143,7 @@ export class ClubService {
         this._myClubs.set(raw.map(mapClub));
         this.myClubsLoadedAt = Date.now();
       } catch {
-        this._error.set('Failed to load my clubs');
+        this._error.set(this.translate.instant('CLUBS.load_my_error'));
       } finally {
         this._loadMyClubsInFlight = null;
       }
@@ -385,14 +384,10 @@ export class ClubService {
     const raw = await firstValueFrom(
       this.http.patch<ApiClub>(`${environment.apiUrl}/clubs/${clubId}/${action}`, body),
     );
+    this.clubByIdCache.delete(clubId);
     const updated = mapClub(raw);
     this._clubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
+    this._myClubs.update(list => list.map(c => (c.id === clubId ? updated : c)));
   }
 
-  msUntilDeletion(club: Club): number | null {
-    if (club.status !== 'cancelled' || !club.cancelledAt) return null;
-    const deletionTime = new Date(club.cancelledAt).getTime() + 24 * 60 * 60 * 1000;
-    const remaining = deletionTime - Date.now();
-    return remaining > 0 ? remaining : null;
-  }
 }

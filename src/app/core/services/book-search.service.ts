@@ -15,14 +15,14 @@ const SILENT = {
 export class BookSearchService {
   private readonly http = inject(HttpClient);
 
-  searchBooks(query: string, limit = 5): Observable<BookSuggestion[]> {
+  searchBooks$(query: string, limit = 5): Observable<BookSuggestion[]> {
     return this.http.get<BookSuggestion[]>(
       `${environment.apiUrl}/books/search`,
       { params: { q: query, limit: limit.toString() }, ...SILENT }
     );
   }
 
-  getBookDetails(bookId: string): Observable<BookDetails> {
+  getBookDetails$(bookId: string): Observable<BookDetails> {
     return this.http.get<BookDetails>(`${environment.apiUrl}/books/details/${bookId}`, SILENT);
   }
 }

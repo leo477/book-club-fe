@@ -45,7 +45,7 @@ describe('UploadService', () => {
 
     const req = httpMock.expectOne(`${environment.apiUrl}/upload/cover`);
     expect(req.request.method).toBe('POST');
-    expect(req.request.body instanceof FormData).toBe(true);
+    expect(req.request.body).toBeInstanceOf(FormData);
     expect(req.request.body.get('file')).toBe(file);
 
     req.flush({ url: 'https://cdn.example.com/cover.jpg' });

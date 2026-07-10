@@ -1,7 +1,9 @@
-import { Injectable, signal, computed, effect } from '@angular/core';
+import { Injectable, signal, computed, effect, inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
+  private readonly document = inject(DOCUMENT);
   private readonly _theme = signal<'light' | 'dark'>('light');
 
   readonly theme  = this._theme.asReadonly();
@@ -15,7 +17,7 @@ export class ThemeService {
     this._theme.set(initial);
 
     effect(() => {
-      document.documentElement.classList.toggle('dark', this._theme() === 'dark');
+      this.document.documentElement.classList.toggle('dark', this._theme() === 'dark');
     });
   }
 

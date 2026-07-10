@@ -66,7 +66,7 @@ describe('QuizCreateComponent', () => {
     const fixture = TestBed.createComponent(QuizCreateComponent);
     const comp = fixture.componentInstance as unknown as CompProtected;
     comp.addQuestion();
-    expect(comp.localQuestions().length).toBe(0);
+    expect(comp.localQuestions()).toHaveLength(0);
   });
 
   it('removeQuestion removes the question at given index', () => {
@@ -89,6 +89,6 @@ describe('QuizCreateComponent', () => {
     };
     anyComp.localQuestions.update(() => [{ question: 'Q1', options: [], correctIndex: 0 }, { question: 'Q2', options: [], correctIndex: 0 }]);
     comp.removeQuestion(0);
-    expect(anyComp.localQuestions().length).toBe(1);
+    expect(anyComp.localQuestions()).toHaveLength(1);
   });
 });

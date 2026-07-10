@@ -6,6 +6,11 @@ import { Injectable, signal } from '@angular/core';
 
 @Injectable({ providedIn: 'root' })
 export class TokenStore {
+  // Legacy-migration-only: the refresh token is now carried by an httpOnly
+  // cookie set by the backend. These methods persist/read the old
+  // localStorage-based refresh token solely so AuthService.init() can
+  // complete a one-time silent-refresh migration for browsers with a
+  // pre-cookie-auth session, then delete the key. Do not use for new flows.
   private static readonly REFRESH_KEY = 'bc_refresh_token';
 
   private readonly _token = signal<string | null>(null);

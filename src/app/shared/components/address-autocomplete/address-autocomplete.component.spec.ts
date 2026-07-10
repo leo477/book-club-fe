@@ -13,7 +13,7 @@ function setupWithPlaceDetails(result: GeocodeSuggestion | Error) {
   const geocodingSpy = {
     autocomplete$: vi.fn().mockReturnValue(of([])),
     resetSessionToken: vi.fn(),
-    getPlaceDetails: result instanceof Error
+    getPlaceDetails$: result instanceof Error
       ? vi.fn().mockReturnValue(throwError(() => result))
       : vi.fn().mockReturnValue(of(result)),
   };
@@ -200,7 +200,7 @@ describe('AddressAutocompleteComponent', () => {
         const geocodingSpy = {
           autocomplete$: vi.fn().mockReturnValue(of([])),
           resetSessionToken: vi.fn(),
-          getPlaceDetails: vi.fn().mockImplementation(() => {
+          getPlaceDetails$: vi.fn().mockImplementation(() => {
             loadingDuring = true;
             return of(resolvedSuggestion);
           }),
@@ -219,7 +219,7 @@ describe('AddressAutocompleteComponent', () => {
         expect(component.isLoading()).toBe(false);
       });
 
-      it('on getPlaceDetails error, emits original suggestion', () => {
+      it('on getPlaceDetails$ error, emits original suggestion', () => {
         const { component } = setupWithPlaceDetails(new Error('network'));
         const emitted: GeocodeSuggestion[] = [];
         component.selected.subscribe(s => emitted.push(s));
@@ -235,7 +235,7 @@ describe('AddressAutocompleteComponent', () => {
         const geocodingSpy = {
           autocomplete$: vi.fn().mockReturnValue(of([])),
           resetSessionToken: vi.fn(),
-          getPlaceDetails: vi.fn(),
+          getPlaceDetails$: vi.fn(),
         };
         TestBed.configureTestingModule({
           imports: [AddressAutocompleteComponent, ReactiveFormsModule],
@@ -252,7 +252,7 @@ describe('AddressAutocompleteComponent', () => {
         component.select(suggestionWithCoords);
 
         expect(geocodingSpy.resetSessionToken).toHaveBeenCalled();
-        expect(geocodingSpy.getPlaceDetails).not.toHaveBeenCalled();
+        expect(geocodingSpy.getPlaceDetails$).not.toHaveBeenCalled();
         expect(emitted).toEqual([suggestionWithCoords]);
         expect(control.value).toBe('Place With Coords');
         expect(component.isOpen()).toBe(false);
@@ -277,31 +277,17 @@ describe('AddressAutocompleteComponent', () => {
       expect(component.activeIndex()).toBe(1);
     });
 
-    it('ArrowDown wraps from last item to first', () => {
+    it.each<[string, 'ArrowDown' | 'ArrowUp', number, number]>([
+      ['ArrowDown wraps from last item to first', 'ArrowDown', 1, 0],
+      ['ArrowUp decrements activeIndex', 'ArrowUp', 1, 0],
+      ['ArrowUp wraps from first item to last', 'ArrowUp', 0, 1],
+    ])('%s', (_label, key, startIndex, expectedIndex) => {
       const { component } = setup();
       component.suggestions.set(mockSuggestions);
       component.isOpen.set(true);
-      component.activeIndex.set(1);
-      component.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
-      expect(component.activeIndex()).toBe(0);
-    });
-
-    it('ArrowUp decrements activeIndex', () => {
-      const { component } = setup();
-      component.suggestions.set(mockSuggestions);
-      component.isOpen.set(true);
-      component.activeIndex.set(1);
-      component.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
-      expect(component.activeIndex()).toBe(0);
-    });
-
-    it('ArrowUp wraps from first item to last', () => {
-      const { component } = setup();
-      component.suggestions.set(mockSuggestions);
-      component.isOpen.set(true);
-      component.activeIndex.set(0);
-      component.onKeydown(new KeyboardEvent('keydown', { key: 'ArrowUp' }));
-      expect(component.activeIndex()).toBe(1);
+      component.activeIndex.set(startIndex);
+      component.onKeydown(new KeyboardEvent('keydown', { key }));
+      expect(component.activeIndex()).toBe(expectedIndex);
     });
 
     it('Enter selects the active suggestion', () => {

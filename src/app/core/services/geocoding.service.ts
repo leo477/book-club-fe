@@ -33,7 +33,7 @@ export class GeocodingService {
     });
   }
 
-  getPlaceDetails(placeId: string): Observable<GeocodeSuggestion> {
+  getPlaceDetails$(placeId: string): Observable<GeocodeSuggestion> {
     return this.http.get<GeocodeSuggestion>(`${environment.apiUrl}/geocode/place-details`, {
       params: { place_id: placeId, session_token: this._sessionToken(), lang: this.activeLang() },
     }).pipe(tap(() => this.resetSessionToken()));

@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       - name: Check for missing translation keys
         run: |
           node -e "
@@ -39,7 +39,19 @@ jobs:
           const ukFlat = flatten(uk, '');
           const enFlat = flatten(en, '');
 
-          const missing = Object.keys(ukFlat).filter(key => !(key in enFlat));
+          // CLDR plural categories are locale-specific (uk has one/few/many/other,
+          // en has only one/other) — a uk-only _few/_many/_two/_zero key is expected
+          // to be absent in en.json as long as its _other sibling exists there.
+          const pluralSuffix = /_(few|many|two|zero)$/;
+          const missing = Object.keys(ukFlat).filter(key => {
+            if (key in enFlat) return false;
+            const match = key.match(pluralSuffix);
+            if (match) {
+              const otherKey = key.slice(0, -match[0].length) + '_other';
+              if (otherKey in enFlat) return false;
+            }
+            return true;
+          });
 
           if (missing.length > 0) {
             console.error('Missing keys in en.json:');

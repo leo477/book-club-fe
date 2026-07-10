@@ -1,20 +1,25 @@
-@if (round() || isOwner()) {
+@if (isLoading() && !round()) {
+<section class="parchment-card px-6 py-5 flex flex-col gap-3">
+  <div class="h-4 w-48 rounded bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+  <div class="h-16 rounded-xl bg-gray-200 dark:bg-gray-700 animate-pulse"></div>
+</section>
+} @else if (round() || isOwner()) {
 <section class="parchment-card px-6 py-5 flex flex-col gap-4">
 
   <!-- ── Header ──────────────────────────────────────────────────── -->
   <div class="flex items-center justify-between">
     <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-      📚 Голосування за наступну книгу
+      📚 {{ 'BOOK_VOTE.section_title' | translate }}
     </h2>
 
     @if (isOwner()) {
       @if (round()?.status === 'open') {
-        <button hlmBtn variant="outline" size="sm" type="button" (click)="closeRound()">
-          Закрити голосування
+        <button hlmBtn variant="outline" size="sm" type="button" [disabled]="isActionLoading()" (click)="closeRound()">
+          {{ 'BOOK_VOTE.close_round' | translate }}
         </button>
       } @else if (round()?.status === 'closed') {
-        <button hlmBtn size="sm" type="button" (click)="newRound()">
-          Нове голосування
+        <button hlmBtn size="sm" type="button" [disabled]="isActionLoading()" (click)="newRound()">
+          {{ 'BOOK_VOTE.new_round' | translate }}
         </button>
       }
     }
@@ -24,10 +29,10 @@
   @if (!round()) {
     <div class="flex flex-col items-center gap-3 py-6 text-center">
       <p class="text-sm text-[var(--color-ink-muted)]">
-        Запропонуйте учасникам клубу обрати наступну книгу
+        {{ 'BOOK_VOTE.no_round_prompt' | translate }}
       </p>
-      <button hlmBtn size="sm" type="button" (click)="createRound()">
-        Почати голосування
+      <button hlmBtn size="sm" type="button" [disabled]="isActionLoading()" (click)="createRound()">
+        {{ 'BOOK_VOTE.start_round' | translate }}
       </button>
     </div>
   }
@@ -37,7 +42,7 @@
 
     @if (round()!.options.length === 0) {
       <p class="text-sm text-[var(--color-ink-muted)] text-center py-4">
-        Додайте книги для голосування нижче
+        {{ 'BOOK_VOTE.no_options_prompt' | translate }}
       </p>
     } @else {
       <ul class="flex flex-col gap-3">
@@ -63,19 +68,21 @@
                     type="button"
                     size="sm"
                     [attr.variant]="option.hasVoted ? 'default' : 'outline'"
+                    [disabled]="isActionLoading()"
                     (click)="toggleVote(option)"
                     class="text-xs"
                   >
-                    {{ option.hasVoted ? '✓ Проголосовано' : 'Голосувати' }}
+                    {{ option.hasVoted ? '✓ ' + ('BOOK_VOTE.voted' | translate) : ('BOOK_VOTE.vote' | translate) }}
                   </button>
                 }
                 @if (isOwner() && option.votes === 0) {
                   <button
                     type="button"
+                    [disabled]="isActionLoading()"
                     (click)="removeOption(option.id)"
                     class="text-[var(--color-ink-muted)] hover:text-red-600 dark:hover:text-red-400
                            transition-colors duration-150 p-1 rounded"
-                    aria-label="Видалити варіант"
+                    [attr.aria-label]="'BOOK_VOTE.remove_option_aria' | translate"
                   >
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
@@ -89,11 +96,11 @@
             <div class="h-1.5 rounded-full bg-[var(--color-surface-raised)] overflow-hidden">
               <div
                 class="h-full rounded-full bg-[var(--color-primary-600)] transition-all duration-500"
-                [style.width.%]="getPercent(option)"
+                [style.width.%]="percentByOptionId()[option.id]"
               ></div>
             </div>
             <p class="text-[11px] text-[var(--color-ink-muted)]">
-              {{ option.votes }} {{ option.votes === 1 ? 'голос' : 'голосів' }} · {{ getPercent(option) }}%
+              {{ option.votes }} {{ voteCountLabel(option.votes) }} · {{ percentByOptionId()[option.id] }}%
             </p>
 
           </li>
@@ -104,26 +111,26 @@
     <!-- Add book form (owner only) -->
     @if (isOwner()) {
       <div class="border-t border-[var(--color-sepia)] pt-4 flex flex-col gap-2">
-        <p class="text-xs font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide">Додати книгу</p>
+        <p class="text-xs font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide">{{ 'BOOK_VOTE.add_book_heading' | translate }}</p>
         <div class="flex flex-col sm:flex-row gap-2">
           <input
             type="text"
             [ngModel]="newTitle()"
             (ngModelChange)="newTitle.set($event)"
-            placeholder="Назва книги *"
-            aria-label="Назва книги"
+            [placeholder]="'BOOK_VOTE.title_placeholder' | translate"
+            [attr.aria-label]="'BOOK_VOTE.title_aria' | translate"
             class="flex-1 min-w-0 parchment-input rounded-lg px-3 py-2 text-sm"
           />
           <input
             type="text"
             [ngModel]="newAuthor()"
             (ngModelChange)="newAuthor.set($event)"
-            placeholder="Автор"
-            aria-label="Автор"
+            [placeholder]="'BOOK_VOTE.author_placeholder' | translate"
+            [attr.aria-label]="'BOOK_VOTE.author_aria' | translate"
             class="flex-1 min-w-0 parchment-input rounded-lg px-3 py-2 text-sm"
           />
-          <button hlmBtn size="sm" type="button" (click)="addOption()" class="flex-shrink-0">
-            Додати
+          <button hlmBtn size="sm" type="button" [disabled]="isActionLoading()" (click)="addOption()" class="flex-shrink-0">
+            {{ 'BOOK_VOTE.add_button' | translate }}
           </button>
         </div>
         @if (addError()) {
@@ -158,7 +165,7 @@
                            bg-[var(--color-primary-100)] dark:bg-[var(--color-primary-900)]/40
                            border border-[var(--color-primary-300)] dark:border-[var(--color-primary-700)]/60
                            rounded-full px-2.5 py-0.5">
-                🏆 Переможець
+                🏆 {{ 'BOOK_VOTE.winner_badge' | translate }}
               </span>
             }
           </div>
@@ -169,18 +176,18 @@
               [class]="option.id === round()!.winnerId
                 ? 'bg-[var(--color-primary-500)]'
                 : 'bg-[var(--color-ink-muted)]/40'"
-              [style.width.%]="getPercent(option)"
+              [style.width.%]="percentByOptionId()[option.id]"
             ></div>
           </div>
           <p class="text-[11px] text-[var(--color-ink-muted)]">
-            {{ option.votes }} {{ option.votes === 1 ? 'голос' : 'голосів' }} · {{ getPercent(option) }}%
+            {{ option.votes }} {{ voteCountLabel(option.votes) }} · {{ percentByOptionId()[option.id] }}%
           </p>
         </li>
       }
     </ul>
 
     @if (round()!.options.length === 0) {
-      <p class="text-sm text-[var(--color-ink-muted)] text-center py-4">Варіанти не додавалися</p>
+      <p class="text-sm text-[var(--color-ink-muted)] text-center py-4">{{ 'BOOK_VOTE.no_options_closed' | translate }}</p>
     }
   }
 

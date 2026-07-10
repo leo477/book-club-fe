@@ -17,8 +17,8 @@ export class BookCoverService {
     if (this.resolved.has(key)) {
       return of(this.resolved.get(key) ?? null);
     }
-    const existing = this.inflight.get(key);
-    if (existing) return existing;
+    const existing$ = this.inflight.get(key);
+    if (existing$) return existing$;
 
     const params = `q=${encodeURIComponent(title)}&fields=cover_i&limit=1`;
     const request$ = this.http

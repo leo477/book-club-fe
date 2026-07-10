@@ -7,8 +7,9 @@ import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 
 /**
  * Landing route after the backend completes the Google OAuth exchange. The
- * refresh cookie is already set server-side; here we restore the session and
- * route the user onward.
+ * backend redirects here with a one-time `code` query param, which we
+ * exchange for the access token (and, during rollout, the auth cookies);
+ * an absent code is treated as a failed OAuth attempt.
  */
 @Component({
   selector: 'app-oauth-callback',
@@ -35,7 +36,7 @@ export class OAuthCallbackComponent implements OnInit {
     history.replaceState({}, '', '/auth/callback');
     const { error } = code
       ? await this.auth.exchangeOAuthCode(code)
-      : await this.auth.completeOAuthSession();
+      : { error: 'OAUTH_FAILED' };
     if (error) {
       toast.error(this.translate.instant('AUTH.oauth_failed') as string);
       await this.router.navigate(['/login']);

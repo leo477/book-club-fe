@@ -7,13 +7,13 @@ export const routes: Routes = [
   // ── Public static pages (no auth, no shell) ────────────────────────────
   {
     path: 'privacy',
-    title: 'Конфіденційність | Book Club',
+    title: 'TITLES.privacy',
     loadComponent: () =>
       import('./features/privacy/privacy.component').then(m => m.PrivacyComponent),
   },
   {
     path: 'terms',
-    title: 'Умови використання | Book Club',
+    title: 'TITLES.terms',
     loadComponent: () =>
       import('./features/terms/terms.component').then(m => m.TermsComponent),
   },
@@ -51,13 +51,13 @@ export const routes: Routes = [
       },
       {
         path: 'events',
-        title: 'Події | Book Club',
+        title: 'TITLES.events',
         canActivate: [authGuard],
         loadChildren: () => import('./features/events/events.routes').then(m => m.EVENTS_ROUTES),
       },
       {
         path: 'support',
-        title: 'Підтримка | Book Club',
+        title: 'TITLES.support',
         canActivate: [authGuard],
         loadChildren: () => import('./features/support/support.routes').then(m => m.SUPPORT_ROUTES),
       },
@@ -65,7 +65,7 @@ export const routes: Routes = [
       // Protected: organizer dashboard
       {
         path: 'manage',
-        title: 'Керування | Book Club',
+        title: 'TITLES.manage',
         canActivate: [authGuard, roleGuard('organizer')],
         loadComponent: () =>
           import('./features/organizer-dashboard/organizer-dashboard.component').then(
@@ -76,21 +76,21 @@ export const routes: Routes = [
       { path: '', redirectTo: 'events', pathMatch: 'full' },
       {
         path: 'profile',
-        title: 'Профіль | Book Club',
+        title: 'TITLES.profile',
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/profile/profile.component').then(m => m.ProfileComponent),
       },
       {
         path: 'chats',
-        title: 'Чати | Book Club',
+        title: 'TITLES.chats',
         canActivate: [authGuard],
         loadComponent: () =>
           import('./features/chats/chats.component').then(m => m.ChatsComponent),
       },
       {
         path: '**',
-        title: 'Сторінку не знайдено | Book Club',
+        title: 'TITLES.not_found',
         loadComponent: () =>
           import('./features/not-found/not-found.component').then(m => m.NotFoundComponent),
       },
@@ -100,7 +100,7 @@ export const routes: Routes = [
   // ── Top-level 404 for unauthenticated unknown routes ───────────────────
   {
     path: '**',
-    title: 'Сторінку не знайдено | Book Club',
+    title: 'TITLES.not_found',
     loadComponent: () =>
       import('./features/not-found/not-found.component').then(m => m.NotFoundComponent),
   },

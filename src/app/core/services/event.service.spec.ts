@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TranslateService } from '@ngx-translate/core';
 import { EventService } from './event.service';
 import { environment } from '../../../environments/environment';
 
@@ -30,6 +31,7 @@ describe('EventService', () => {
         provideHttpClient(),
         provideHttpClientTesting(),
         EventService,
+        { provide: TranslateService, useValue: { instant: (key: string) => key } },
       ],
     });
     service = TestBed.inject(EventService);
@@ -43,7 +45,7 @@ describe('EventService', () => {
       const p = service.loadAllEvents();
       httpMock.expectOne(`${API}/events?skip=0&limit=50`).flush([makeApiEvent()]);
       await p;
-      expect(service.allEvents().length).toBe(1);
+      expect(service.allEvents()).toHaveLength(1);
       expect(service.allEvents()[0].id).toBe('e1');
     });
 
@@ -68,7 +70,7 @@ describe('EventService', () => {
       const p = service.loadAllEvents();
       httpMock.expectOne(`${API}/events?skip=0&limit=50`).flush({}, { status: 500, statusText: 'Error' });
       await p;
-      expect(service.error()).toBe('Failed to load events');
+      expect(service.error()).toBe('EVENTS.load_error');
       expect(service.isLoading()).toBe(false);
     });
   });
@@ -78,7 +80,7 @@ describe('EventService', () => {
       const p = service.loadMyEvents();
       httpMock.expectOne(`${API}/events/my`).flush([makeApiEvent({ id: 'e2' })]);
       await p;
-      expect(service.myEvents().length).toBe(1);
+      expect(service.myEvents()).toHaveLength(1);
       expect(service.myEvents()[0].id).toBe('e2');
     });
 
@@ -86,7 +88,7 @@ describe('EventService', () => {
       const p = service.loadMyEvents();
       httpMock.expectOne(`${API}/events/my`).flush({}, { status: 500, statusText: 'Error' });
       await p;
-      expect(service.error()).toBe('Failed to load my events');
+      expect(service.error()).toBe('EVENTS.load_my_error');
     });
   });
 
@@ -130,14 +132,14 @@ describe('EventService', () => {
     it('filters events by city', () => {
       service.setCityFilter('Kyiv');
       const filtered = service.filteredAllEvents();
-      expect(filtered.length).toBe(2);
+      expect(filtered).toHaveLength(2);
       expect(filtered.every(e => e.city === 'Kyiv')).toBe(true);
     });
 
     it('empty filter returns all events', () => {
       service.setCityFilter('Kyiv');
       service.setCityFilter('');
-      expect(service.filteredAllEvents().length).toBe(3);
+      expect(service.filteredAllEvents()).toHaveLength(3);
     });
   });
 
@@ -166,9 +168,9 @@ describe('EventService', () => {
       await p;
       const grouped = service.groupedByDate();
       expect(grouped['2025-06-01']).toBeDefined();
-      expect(grouped['2025-06-01'].length).toBe(2);
+      expect(grouped['2025-06-01']).toHaveLength(2);
       expect(grouped['2025-07-15']).toBeDefined();
-      expect(grouped['2025-07-15'].length).toBe(1);
+      expect(grouped['2025-07-15']).toHaveLength(1);
     });
   });
 

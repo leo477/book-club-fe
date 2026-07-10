@@ -1,129 +1,113 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
+import { provideHttpClient } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { BookVoteService } from './book-vote.service';
+import { BookVoteRound } from '../models/book-vote.model';
+import { environment } from '../../../environments/environment';
+
+const API = environment.apiUrl;
+
+function makeRound(overrides: Partial<BookVoteRound> = {}): BookVoteRound {
+  return {
+    id: 'round-1',
+    clubId: 'club-1',
+    status: 'open',
+    options: [],
+    totalVotes: 0,
+    winnerId: null,
+    ...overrides,
+  };
+}
 
 describe('BookVoteService', () => {
   let service: BookVoteService;
+  let httpMock: HttpTestingController;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), BookVoteService],
+      providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), BookVoteService],
     });
     service = TestBed.inject(BookVoteService);
+    httpMock = TestBed.inject(HttpTestingController);
   });
 
-  it('getRound returns null when no round exists', () => {
-    expect(service.getRound('club-1')).toBeNull();
+  afterEach(() => httpMock.verify());
+
+  describe('getRound$', () => {
+    it('GETs the current round for a club', () => {
+      let result: BookVoteRound | null | undefined;
+      service.getRound$('club-1').subscribe(r => { result = r; });
+      const req = httpMock.expectOne(`${API}/clubs/club-1/book-vote/round`);
+      expect(req.request.method).toBe('GET');
+      req.flush(makeRound());
+      expect(result?.id).toBe('round-1');
+    });
+
+    it('maps a null backend response to null', () => {
+      let result: BookVoteRound | null | undefined;
+      service.getRound$('club-1').subscribe(r => { result = r; });
+      httpMock.expectOne(`${API}/clubs/club-1/book-vote/round`).flush(null);
+      expect(result).toBeNull();
+    });
   });
 
   describe('createRound', () => {
-    it('creates a round with open status and no options', () => {
-      service.createRound('club-1');
-      const round = service.getRound('club-1');
-      expect(round).toBeTruthy();
-      expect(round?.status).toBe('open');
-      expect(round?.clubId).toBe('club-1');
-      expect(round?.options).toEqual([]);
-      expect(round?.totalVotes).toBe(0);
-      expect(round?.winnerId).toBeNull();
+    it('POSTs to create a round', async () => {
+      const promise = service.createRound('club-1');
+      const req = httpMock.expectOne(`${API}/clubs/club-1/book-vote/rounds`);
+      expect(req.request.method).toBe('POST');
+      req.flush(makeRound());
+      await promise;
     });
   });
 
   describe('addOption', () => {
-    it('adds an option to the round', () => {
-      service.createRound('club-1');
-      service.addOption('club-1', '  Book Title  ', 'Author');
-      const round = service.getRound('club-1');
-      expect(round?.options.length).toBe(1);
-      expect(round?.options[0].title).toBe('Book Title');
-      expect(round?.options[0].author).toBe('Author');
-      expect(round?.options[0].votes).toBe(0);
-      expect(round?.options[0].hasVoted).toBe(false);
-    });
-
-    it('does nothing when round does not exist', () => {
-      service.addOption('missing', 'Title', 'Author');
-      expect(service.getRound('missing')).toBeNull();
+    it('POSTs the title and author to the round options endpoint', async () => {
+      const promise = service.addOption('club-1', 'round-1', 'Dune', 'Frank Herbert');
+      const req = httpMock.expectOne(`${API}/clubs/club-1/book-vote/rounds/round-1/options`);
+      expect(req.request.method).toBe('POST');
+      expect(req.request.body).toEqual({ title: 'Dune', author: 'Frank Herbert' });
+      req.flush(makeRound());
+      await promise;
     });
   });
 
   describe('removeOption', () => {
-    it('removes option and adjusts totalVotes', () => {
-      service.createRound('club-1');
-      service.addOption('club-1', 'Book A', 'Auth A');
-      const options = service.getRound('club-1')?.options ?? [];
-      service.removeOption('club-1', options[0].id);
-      expect(service.getRound('club-1')?.options.length).toBe(0);
+    it('DELETEs the option', async () => {
+      const promise = service.removeOption('club-1', 'opt-1');
+      const req = httpMock.expectOne(`${API}/clubs/club-1/book-vote/options/opt-1`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(makeRound());
+      await promise;
     });
   });
 
-  describe('vote', () => {
-    it('votes for an option and increments count', () => {
-      service.createRound('club-1');
-      service.addOption('club-1', 'Book A', 'Auth A');
-      const optionId = service.getRound('club-1')?.options[0].id ?? '';
-      service.vote('club-1', optionId);
-      const round = service.getRound('club-1');
-      expect(round?.options[0].votes).toBe(1);
-      expect(round?.options[0].hasVoted).toBe(true);
-      expect(round?.totalVotes).toBe(1);
+  describe('vote / unvote', () => {
+    it('POSTs to vote for an option', async () => {
+      const promise = service.vote('club-1', 'opt-1');
+      const req = httpMock.expectOne(`${API}/clubs/club-1/book-vote/options/opt-1/vote`);
+      expect(req.request.method).toBe('POST');
+      req.flush(makeRound());
+      await promise;
     });
 
-    it('switches vote from one option to another', () => {
-      service.createRound('club-1');
-      service.addOption('club-1', 'Book A', 'Auth A');
-      service.addOption('club-1', 'Book B', 'Auth B');
-      const ids = service.getRound('club-1')?.options.map(o => o.id) ?? [];
-      const [idA, idB] = ids;
-      service.vote('club-1', idA);
-      service.vote('club-1', idB);
-      const round = service.getRound('club-1');
-      expect(round?.options.find(o => o.id === idA)?.hasVoted).toBe(false);
-      expect(round?.options.find(o => o.id === idB)?.hasVoted).toBe(true);
-      expect(round?.totalVotes).toBe(1);
-    });
-  });
-
-  describe('unvote', () => {
-    it('removes vote from option', () => {
-      service.createRound('club-1');
-      service.addOption('club-1', 'Book A', 'Auth A');
-      const optionId = service.getRound('club-1')?.options[0].id ?? '';
-      service.vote('club-1', optionId);
-      service.unvote('club-1', optionId);
-      const round = service.getRound('club-1');
-      expect(round?.options[0].votes).toBe(0);
-      expect(round?.options[0].hasVoted).toBe(false);
-      expect(round?.totalVotes).toBe(0);
+    it('DELETEs to remove a vote', async () => {
+      const promise = service.unvote('club-1', 'opt-1');
+      const req = httpMock.expectOne(`${API}/clubs/club-1/book-vote/options/opt-1/vote`);
+      expect(req.request.method).toBe('DELETE');
+      req.flush(makeRound());
+      await promise;
     });
   });
 
   describe('closeRound', () => {
-    it('closes round and sets winnerId to highest-voted option', () => {
-      service.createRound('club-1');
-      service.addOption('club-1', 'Book A', 'Auth A');
-      service.addOption('club-1', 'Book B', 'Auth B');
-      const ids = service.getRound('club-1')?.options.map(o => o.id) ?? [];
-      const [idA] = ids;
-      service.vote('club-1', idA);
-      service.closeRound('club-1');
-      const round = service.getRound('club-1');
-      expect(round?.status).toBe('closed');
-      expect(round?.winnerId).toBe(idA);
-    });
-
-    it('closes round with null winner when no options', () => {
-      service.createRound('club-1');
-      service.closeRound('club-1');
-      expect(service.getRound('club-1')?.winnerId).toBeNull();
-    });
-  });
-
-  describe('clearRound', () => {
-    it('removes the round', () => {
-      service.createRound('club-1');
-      service.clearRound('club-1');
-      expect(service.getRound('club-1')).toBeNull();
+    it('POSTs to close the round', async () => {
+      const promise = service.closeRound('club-1', 'round-1');
+      const req = httpMock.expectOne(`${API}/clubs/club-1/book-vote/rounds/round-1/close`);
+      expect(req.request.method).toBe('POST');
+      req.flush(makeRound({ status: 'closed' }));
+      await promise;
     });
   });
 });

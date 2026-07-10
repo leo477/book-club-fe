@@ -1,9 +1,11 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Observable, firstValueFrom, map } from 'rxjs';
+import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
 import { ApiEvent, mapEvent } from '../api/api-mappers';
 import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
+import { patchEventAttendance } from '../utils/event-attendance.util';
 
 export interface CreateEventPayload {
   title: string;
@@ -42,6 +44,7 @@ export interface UpdateEventPayload {
 @Injectable({ providedIn: 'root' })
 export class EventService {
   private readonly http = inject(HttpClient);
+  private readonly translate = inject(TranslateService);
 
   private readonly CITY_NORM: Record<string, string> = {
     'київ': 'Kyiv', 'kyiv': 'Kyiv',
@@ -109,7 +112,7 @@ export class EventService {
       );
       this._allEvents.set(raw.map(mapEvent));
     } catch {
-      this._error.set('Failed to load events');
+      this._error.set(this.translate.instant('EVENTS.load_error'));
     } finally {
       this._isLoading.set(false);
     }
@@ -122,7 +125,7 @@ export class EventService {
       );
       this._myEvents.set(raw.map(mapEvent));
     } catch {
-      this._error.set('Failed to load my events');
+      this._error.set(this.translate.instant('EVENTS.load_my_error'));
     }
   }
 
@@ -205,12 +208,7 @@ export class EventService {
   }
 
   private _patchEventAttending(eventId: string, attending: boolean): void {
-    const patch = (list: ClubEvent[]) =>
-      list.map(e =>
-        e.id === eventId
-          ? { ...e, isAttending: attending, attendeeCount: e.attendeeCount + (attending ? 1 : -1) }
-          : e,
-      );
+    const patch = (list: ClubEvent[]) => patchEventAttendance(list, eventId, attending);
     this._allEvents.update(patch);
     this._myEvents.update(patch);
   }

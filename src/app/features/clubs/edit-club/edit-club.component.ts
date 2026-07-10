@@ -97,7 +97,7 @@ export class EditClubComponent implements OnInit {
   async ngOnInit(): Promise<void> {
     const club = await this.clubService.getClubById(this.id());
     if (!club) {
-      this._errorMessage.set('Club not found.');
+      this._errorMessage.set(this.translate.instant('EDIT_CLUB.not_found'));
       this._isLoadingClub.set(false);
       return;
     }
@@ -153,7 +153,7 @@ export class EditClubComponent implements OnInit {
       toast.success(this.translate.instant('EDIT_CLUB.success'));
       this.router.navigate(['/clubs', this.id()]);
     } catch (err) {
-      this._errorMessage.set(err instanceof Error ? err.message : 'Failed to update club');
+      this._errorMessage.set(err instanceof Error ? err.message : this.translate.instant('EDIT_CLUB.update_error'));
     } finally {
       this._isSubmitting.set(false);
     }
