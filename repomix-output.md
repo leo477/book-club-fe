@@ -496,7 +496,9 @@ AUDIT-REPORT.md
 CLAUDE.md
 components.json
 eslint.config.js
+LICENSE
 package.json
+PLAN-CODE-SCANNING-2026-07-10.md
 PLAN-COOKIE-AUTH-2026-07-07.md
 playwright.audit-current.config.ts
 playwright.full-audit.config.ts
