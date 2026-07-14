@@ -1,10 +1,15 @@
 User-agent: *
 Allow: /
 Disallow: /manage/
-Disallow: /clubs
 Disallow: /events
 Disallow: /support
 Disallow: /profile
 Disallow: /chats
+Disallow: /clubs/create
+Disallow: /clubs/*/edit
+Disallow: /clubs/*/manage
+Disallow: /clubs/*/randomizer
+Disallow: /clubs/*/quizzes
+Disallow: /clubs/*/events/create
 
 Sitemap: https://book-club-planer.vercel.app/sitemap.xml

@@ -87,8 +87,11 @@ export class ClubDetailComponent {
       if (!found) {
         return { club: null, members: [], events: [] };
       }
+      // Guests must not hit GET /clubs/{id}/members — it requires auth (guaranteed 401).
       const [membersResult, eventsResult] = await Promise.allSettled([
-        this.clubService.getClubMembers(clubId),
+        this.auth.isAuthenticated()
+          ? this.clubService.getClubMembers(clubId)
+          : Promise.resolve<ClubMemberDetail[]>([]),
         this.clubService.loadClubEvents(clubId),
       ]);
       if (membersResult.status === 'rejected') {
@@ -232,9 +235,35 @@ export class ClubDetailComponent {
           },
         );
       }
-      this.seo.setPageI18n('SEO.club_detail_title', {
-        ogTitleKey: 'SEO.club_detail_og_title',
-        params: { name: found.name },
+      const description = found.description
+        ? found.description.slice(0, 160)
+        : (this.translate.instant('SEO.club_detail_description', {
+            name: found.name,
+            city: found.city ?? '',
+          }) as string);
+      const canonical = `${this.translate.instant('SEO.site_url') as string}/clubs/${found.id}`;
+      this.seo.setPage({
+        title: this.translate.instant('SEO.club_detail_title', { name: found.name }) as string,
+        ogTitle: this.translate.instant('SEO.club_detail_og_title', { name: found.name }) as string,
+        description,
+        canonical,
+      });
+      this.seo.injectJsonLd({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: found.name,
+        description,
+        url: canonical,
+        ...(found.coverUrl && { image: found.coverUrl }),
+        ...(found.city && {
+          address: {
+            '@type': 'PostalAddress',
+            addressLocality: found.city,
+            addressCountry: 'UA',
+          },
+        }),
+        ...(found.createdAt && { foundingDate: found.createdAt.slice(0, 10) }),
+        ...(found.tags?.length && { keywords: found.tags.join(', ') }),
       });
     });
   }

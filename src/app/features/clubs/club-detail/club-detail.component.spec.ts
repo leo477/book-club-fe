@@ -19,6 +19,30 @@ class StubBookVoteSectionComponent {
   readonly isMember = input(false);
 }
 
+const baseClub = {
+  id: 'club-1',
+  name: 'Test Club',
+  description: null,
+  coverUrl: null,
+  organizerId: 'user-1',
+  isPublic: true,
+  memberCount: 5,
+  createdAt: '2024-01-01',
+  city: 'Kyiv',
+  nextMeetingDate: null,
+  address: null,
+  lat: null,
+  lng: null,
+  theme: null,
+  currentBook: null,
+  memberPreviews: [],
+  status: 'active',
+  tags: ['Fiction'],
+  meetingDurationMinutes: null,
+  afterMeetingVenue: null,
+  currentChampion: null,
+};
+
 describe('ClubDetailComponent', () => {
   let component: ClubDetailComponent;
   let clubServiceSpy: {
@@ -60,29 +84,7 @@ describe('ClubDetailComponent', () => {
       currentUser: vi.fn().mockReturnValue({ id: 'user-1', displayName: 'Organizer', role: 'organizer' }),
     };
     seoSpy = { setPage: vi.fn(), setPageI18n: vi.fn(), injectJsonLd: vi.fn() };
-    clubServiceSpy.getClubById.mockResolvedValue({
-      id: 'club-1',
-      name: 'Test Club',
-      description: null,
-      coverUrl: null,
-      organizerId: 'user-1',
-      isPublic: true,
-      memberCount: 5,
-      createdAt: '2024-01-01',
-      city: 'Kyiv',
-      nextMeetingDate: null,
-      address: null,
-      lat: null,
-      lng: null,
-      theme: null,
-      currentBook: null,
-      memberPreviews: [],
-      status: 'active',
-      tags: ['Fiction'],
-      meetingDurationMinutes: null,
-      afterMeetingVenue: null,
-    currentChampion: null,
-    });
+    clubServiceSpy.getClubById.mockResolvedValue(baseClub);
     eventServiceSpy = {
       loadClubEvents: vi.fn().mockResolvedValue([]),
       attendEvent: vi.fn().mockResolvedValue({ attendeeCount: 0, joinRequestStatus: 'none' }),
@@ -99,6 +101,12 @@ describe('ClubDetailComponent', () => {
                 CLUB_DETAIL: {
                   deletion_countdown_hours: 'буде видалено через {{ hours }} год. {{ minutes }} хв.',
                   deletion_countdown_minutes: 'буде видалено через {{ minutes }} хв.',
+                },
+                SEO: {
+                  club_detail_title: '{{ name }} | Book Club',
+                  club_detail_og_title: '{{ name }}',
+                  club_detail_description: '{{ name }} — a book club in {{ city }}. Join discussions, meetups and reading events.',
+                  site_url: 'https://book-club-planer.vercel.app',
                 },
               }),
             },
@@ -127,15 +135,41 @@ describe('ClubDetailComponent', () => {
   });
 
   describe('resource-driven load', () => {
-    it('loads the club, resolves isLoading and calls seo.setPageI18n', () => {
+    it('loads the club, resolves isLoading and sets per-club meta + JSON-LD', () => {
       expect(component.club()?.id).toBe('club-1');
       expect(component.isLoading()).toBe(false);
       expect(component.errorMessage()).toBeNull();
       expect(component.isClubMissing()).toBe(false);
-      expect(seoSpy.setPageI18n).toHaveBeenCalledWith('SEO.club_detail_title', {
-        ogTitleKey: 'SEO.club_detail_og_title',
-        params: { name: 'Test Club' },
+      expect(seoSpy.setPage).toHaveBeenCalledWith({
+        title: 'Test Club | Book Club',
+        ogTitle: 'Test Club',
+        description: 'Test Club — a book club in Kyiv. Join discussions, meetups and reading events.',
+        canonical: 'https://book-club-planer.vercel.app/clubs/club-1',
       });
+      expect(seoSpy.injectJsonLd).toHaveBeenCalledWith({
+        '@context': 'https://schema.org',
+        '@type': 'Organization',
+        name: 'Test Club',
+        description: 'Test Club — a book club in Kyiv. Join discussions, meetups and reading events.',
+        url: 'https://book-club-planer.vercel.app/clubs/club-1',
+        address: { '@type': 'PostalAddress', addressLocality: 'Kyiv', addressCountry: 'UA' },
+        foundingDate: '2024-01-01',
+        keywords: 'Fiction',
+      });
+    });
+
+    it('prefers the club description (truncated to 160 chars) for meta description', async () => {
+      clubServiceSpy.getClubById.mockResolvedValue({
+        ...baseClub,
+        id: 'club-desc',
+        description: 'x'.repeat(200),
+      });
+
+      fixture.componentRef.setInput('id', 'club-desc');
+      await fixture.whenStable();
+
+      const lastCall = seoSpy.setPage.mock.calls.at(-1)?.[0] as { description: string };
+      expect(lastCall.description).toBe('x'.repeat(160));
     });
 
     it('populates members and events from the club service', async () => {
@@ -196,6 +230,49 @@ describe('ClubDetailComponent', () => {
       expect(component.activeEventsTab()).toBe('upcoming');
       expect(component.pastEvents()).toEqual([]);
       expect(component.isPastEventsLoaded()).toBe(false);
+    });
+  });
+
+  describe('guest mode', () => {
+    beforeEach(async () => {
+      authSpy.isAuthenticated.mockReturnValue(false);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      authSpy.currentUser.mockReturnValue(null as any);
+      clubServiceSpy.getClubMembers.mockClear();
+      clubServiceSpy.getMyMembership.mockClear();
+      seoSpy.setPage.mockClear();
+      seoSpy.injectJsonLd.mockClear();
+      fixture = TestBed.createComponent(ClubDetailComponent);
+      fixture.componentRef.setInput('id', 'club-1');
+      component = fixture.componentInstance;
+      await fixture.whenStable();
+    });
+
+    it('does not request members for guests and resolves them to []', () => {
+      expect(clubServiceSpy.getClubMembers).not.toHaveBeenCalled();
+      expect(clubServiceSpy.getMyMembership).not.toHaveBeenCalled();
+      expect(component.members()).toEqual([]);
+      expect(clubServiceSpy.loadClubEvents).toHaveBeenCalledWith('club-1');
+    });
+
+    it('renders the guest CTA and the hidden-members card instead of the members list', () => {
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('[data-testid="guest-cta"]')).not.toBeNull();
+      expect(el.querySelector('[data-testid="guest-cta-login"]')?.getAttribute('href')).toBe('/login');
+      expect(el.querySelector('[data-testid="guest-members-hidden"]')).not.toBeNull();
+      expect(el.querySelector('app-club-members-list')).toBeNull();
+    });
+
+    it('sets per-club meta description and JSON-LD for guests', () => {
+      expect(seoSpy.setPage).toHaveBeenCalledWith(
+        expect.objectContaining({
+          description: 'Test Club — a book club in Kyiv. Join discussions, meetups and reading events.',
+          canonical: 'https://book-club-planer.vercel.app/clubs/club-1',
+        }),
+      );
+      expect(seoSpy.injectJsonLd).toHaveBeenCalledWith(
+        expect.objectContaining({ '@type': 'Organization', name: 'Test Club' }),
+      );
     });
   });
 
