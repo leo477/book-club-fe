@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
@@ -31,16 +31,37 @@ const mockClub: Club = {
 
 describe('ClubCardComponent', () => {
   let component: ClubCardComponent;
+  let fixture: ComponentFixture<ClubCardComponent>;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [ClubCardComponent, TranslateModule.forRoot()],
       providers: [provideZonelessChangeDetection(), provideRouter([])],
     });
-    const fixture = TestBed.createComponent(ClubCardComponent);
+    fixture = TestBed.createComponent(ClubCardComponent);
     component = fixture.componentInstance;
     fixture.componentRef.setInput('club', mockClub);
     fixture.componentRef.setInput('isMember', false);
+  });
+
+  describe('guest actions', () => {
+    it('renders a login CTA linking to /login when not authenticated', async () => {
+      fixture.componentRef.setInput('isAuthenticated', false);
+      await fixture.whenStable();
+
+      const el: HTMLElement = fixture.nativeElement;
+      const login = el.querySelector('[data-testid="login-to-join"]');
+      expect(login).not.toBeNull();
+      expect(login?.getAttribute('href')).toBe('/login');
+    });
+
+    it('renders the join button instead of the login CTA when authenticated', async () => {
+      fixture.componentRef.setInput('isAuthenticated', true);
+      await fixture.whenStable();
+
+      const el: HTMLElement = fixture.nativeElement;
+      expect(el.querySelector('[data-testid="login-to-join"]')).toBeNull();
+    });
   });
 
   describe('daysUntil', () => {

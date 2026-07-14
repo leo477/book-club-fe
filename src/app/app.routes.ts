@@ -41,12 +41,10 @@ export const routes: Routes = [
   {
     path: '',
     component: ShellComponent,
-    canActivate: [authGuard],
     children: [
-      // Protected: any authenticated user
+      // Public: club discovery (guest-accessible for SEO)
       {
         path: 'clubs',
-        canActivate: [authGuard],
         loadChildren: () => import('./features/clubs/clubs.routes').then(m => m.CLUBS_ROUTES),
       },
       {
