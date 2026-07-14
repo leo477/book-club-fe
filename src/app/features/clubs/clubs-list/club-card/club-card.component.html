@@ -127,8 +127,19 @@
         <a
           hlmBtn
           size="sm"
-          [routerLink]="['/clubs', club().id]"
+          routerLink="/login"
+          data-testid="login-to-join"
           class="flex-1 text-center"
+          [attr.aria-label]="('CLUBS.login_to_join' | translate) + ' ' + club().name"
+        >
+          {{ 'CLUBS.login_to_join' | translate }}
+        </a>
+        <a
+          hlmBtn
+          variant="outline"
+          size="sm"
+          [routerLink]="['/clubs', club().id]"
+          class="flex-shrink-0"
           [attr.aria-label]="('CLUBS.view' | translate) + ' ' + club().name"
         >
           {{ 'CLUBS.view' | translate }}

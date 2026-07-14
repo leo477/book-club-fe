@@ -146,6 +146,27 @@
             <button hlmBtn variant="outline" (click)="openClubChat()">{{ 'CHAT.open' | translate }}</button>
           }
 
+          <!-- Guest CTA -->
+          @if (!currentUser()) {
+            <div
+              data-testid="guest-cta"
+              class="rounded-2xl border-2 border-dashed border-[var(--color-sepia)] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[var(--color-surface-raised)]"
+            >
+              <div>
+                <p class="font-semibold text-[var(--color-ink)]">{{ 'CLUB_DETAIL.guest_cta_title' | translate }}</p>
+                <p class="text-sm text-[var(--color-ink-muted)] mt-0.5">{{ 'CLUB_DETAIL.guest_cta_desc' | translate }}</p>
+              </div>
+              <a
+                hlmBtn
+                routerLink="/login"
+                data-testid="guest-cta-login"
+                class="flex-shrink-0 bg-primary-600 hover:bg-primary-700 text-white"
+              >
+                {{ 'CLUB_DETAIL.guest_cta_login' | translate }}
+              </a>
+            </div>
+          }
+
           <!-- Join CTA for authenticated non-members -->
           @if (!!currentUser() && !isMember() && !isClubOwner()) {
             <div class="rounded-2xl border-2 border-dashed border-[var(--color-sepia)] p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-[var(--color-surface-raised)]">
@@ -312,18 +333,29 @@
           </section>
 
           <!-- Members list -->
-          @defer (on viewport) {
-            <app-club-members-list
-              [members]="members()"
-              [clubBans]="clubBans()"
-              [isOwner]="isClubOwner()"
-              [currentUserId]="currentUserId()"
-              (kick)="handleKick($event)"
-              (ban)="handleBan($event)" />
-          } @placeholder {
-            <div hlmCard class="parchment-card-sunken px-6 py-8 gap-3" aria-busy="true">
-              <div class="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
-              <div class="h-20 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse mt-3"></div>
+          @if (currentUser()) {
+            @defer (on viewport) {
+              <app-club-members-list
+                [members]="members()"
+                [clubBans]="clubBans()"
+                [isOwner]="isClubOwner()"
+                [currentUserId]="currentUserId()"
+                (kick)="handleKick($event)"
+                (ban)="handleBan($event)" />
+            } @placeholder {
+              <div hlmCard class="parchment-card-sunken px-6 py-8 gap-3" aria-busy="true">
+                <div class="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div class="h-20 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse mt-3"></div>
+              </div>
+            }
+          } @else {
+            <div hlmCard data-testid="guest-members-hidden" class="parchment-card-sunken px-6 py-6">
+              <h2 class="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">
+                {{ 'CLUB_DETAIL.members_title' | translate }}
+              </h2>
+              <p class="text-sm text-[var(--color-ink-muted)]">
+                {{ 'CLUB_DETAIL.guest_members_hidden' | translate: { count: club()!.memberCount } }}
+              </p>
             </div>
           }
 
