@@ -500,6 +500,7 @@ LICENSE
 package.json
 PLAN-CODE-SCANNING-2026-07-10.md
 PLAN-COOKIE-AUTH-2026-07-07.md
+PLAN-MOBILE-APP-2026-07-15.md
 playwright.audit-current.config.ts
 playwright.full-audit.config.ts
 playwright.total-audit.config.ts
