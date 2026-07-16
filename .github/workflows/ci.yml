@@ -194,10 +194,6 @@ jobs:
       # (Administration → Analysis Method) to avoid exit-code-3 conflict with CI scanning.
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6
-        with:
-          # SonarCloud's JRE-provisioning endpoint (analysis/jres) has been
-          # returning HTTP 504; skip it and use the runner's pre-installed JDK.
-          args: -Dsonar.scanner.skipJreProvisioning=true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
