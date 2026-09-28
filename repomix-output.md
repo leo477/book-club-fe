@@ -37,7 +37,7 @@ The content is organized as follows:
 - Files are sorted by Git change count (files with more changes are at the bottom)
 
 # Directory Structure
-```
+````
 .github/
   codeql/
     codeql-config.yml
@@ -71,6 +71,15 @@ audit-evidence/
     root.png
     terms.png
   audit-prod-results.json
+docs/
+  archive/
+    ARCHITECTURE-REVIEW.md
+    AUDIT-CHECKLIST.md
+    AUDIT-FE-2026-07-06.md
+    AUDIT-REPORT.md
+    PLAN-CODE-SCANNING-2026-07-10.md
+    PLAN-COOKIE-AUTH-2026-07-07.md
+    REFACTOR-PLAN-2026-07-06.md
 e2e/
   fixtures/
     api-client.ts
@@ -124,6 +133,7 @@ src/
         book-search.service.ts
         book-vote.service.ts
         chat-api.service.ts
+        chat-audio-alert.service.ts
         chat-socket.service.ts
         chat.service.ts
         club.service.ts
@@ -142,6 +152,7 @@ src/
       utils/
         event-attendance.util.ts
         logger.util.ts
+        ttl-cache.util.ts
     features/
       auth/
         login/
@@ -218,12 +229,6 @@ src/
         events.routes.ts
       not-found/
         not-found.component.ts
-      organizer-dashboard/
-        club-create-form/
-          club-create-form.component.html
-          club-create-form.component.ts
-        organizer-dashboard.component.html
-        organizer-dashboard.component.ts
       privacy/
         privacy.component.ts
       profile/
@@ -336,6 +341,7 @@ src/
           social-link-field.component.html
           social-link-field.component.ts
         .gitkeep
+        typeahead-combobox-base.component.ts
       pipes/
         chat-timestamp.pipe.ts
         format-date.pipe.ts
@@ -489,25 +495,17 @@ supabase/
 .lighthouserc.json
 .lintstagedrc.cjs
 angular.json
-ARCHITECTURE-REVIEW.md
-AUDIT-CHECKLIST.md
-AUDIT-FE-2026-07-06.md
-AUDIT-REPORT.md
 CLAUDE.md
 components.json
 eslint.config.js
 LICENSE
 package.json
-PLAN-CODE-SCANNING-2026-07-10.md
-PLAN-COOKIE-AUTH-2026-07-07.md
 PLAN-MOBILE-APP-2026-07-15.md
-playwright.audit-current.config.ts
 playwright.full-audit.config.ts
-playwright.total-audit.config.ts
 postcss.config.json
 proxy.conf.json
 README.md
-REFACTOR-PLAN-2026-07-06.md
+REFACTOR-PLAN-FABLE-2026-09-28.md
 repomix.config.json
 SECURITY.md
 sonar-project.properties
@@ -516,4 +514,4 @@ tsconfig.json
 tsconfig.spec.json
 vercel.json
 vitest.config.ts
-```
+````
