@@ -1,0 +1,13 @@
+{
+  "bookVoteRound": {
+    "id": "r1",
+    "clubId": "c0a80101-0000-4000-8000-000000000001",
+    "status": "open",
+    "options": [
+      { "id": "o1", "title": "Dune", "author": "Frank Herbert", "votes": 3, "hasVoted": true },
+      { "id": "o2", "title": "Solaris", "author": "", "votes": 1, "hasVoted": false }
+    ],
+    "totalVotes": 4,
+    "winnerId": null
+  }
+}
