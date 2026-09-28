@@ -18,7 +18,10 @@
     "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\"",
     "audit:full": "npx playwright test --config=playwright.full-audit.config.ts",
     "audit:full:ui": "npx playwright test --config=playwright.full-audit.config.ts e2e/ui",
-    "audit:full:api": "npx playwright test --config=playwright.full-audit.config.ts e2e/api"
+    "audit:full:api": "npx playwright test --config=playwright.full-audit.config.ts e2e/api",
+    "parity": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON e2e/parity/har-diff.ts",
+    "parity:seo": "playwright test --config=playwright.parity.config.ts e2e/parity/seo.spec.ts",
+    "parity:visual": "playwright test --config=playwright.parity.config.ts e2e/parity/visual.spec.ts"
   },
   "prettier": {
     "overrides": [
