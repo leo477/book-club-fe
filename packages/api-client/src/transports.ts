@@ -2,16 +2,16 @@ import type { AuthTokens } from '@book-club/contracts';
 import type { Transport } from './types';
 
 export interface CookieTransportOptions {
-  /** Override when guests must not trigger refresh/redirect (e.g. cached /auth/session-status). */
-  hasSession?: () => boolean | Promise<boolean>;
+  /** Required: guests must not trigger refresh/redirect (e.g. cached /auth/session-status). */
+  hasSession: () => boolean | Promise<boolean>;
 }
 
 /** Web: httpOnly cookies carry the session; JS never sees or sends a token. */
-export function cookieTransport(options: CookieTransportOptions = {}): Transport {
+export function cookieTransport(options: CookieTransportOptions): Transport {
   return {
     credentials: 'include',
     getAccessToken: () => null,
-    hasSession: options.hasSession ?? (() => true),
+    hasSession: options.hasSession,
     getRefreshBody: () => ({}),
     storeTokens: () => undefined,
     clear: () => undefined,

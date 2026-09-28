@@ -29,7 +29,7 @@ function setup(handler: (url: string, init: RequestInit) => Response | Promise<R
   const onError = vi.fn();
   const client = createApiClient({
     baseUrl: '/api/v1',
-    transport: cookieTransport(),
+    transport: cookieTransport({ hasSession: () => true }),
     fetch: fetchMock as unknown as typeof fetch,
     onUnauthenticated,
     onForbidden,
@@ -104,7 +104,7 @@ describe('createApiClient', () => {
     let n = 0;
     const s = setup(() => (++n === 1 ? json(503) : json(200, { ok: true })));
     const p = s.client.get('/x', ok);
-    await vi.advanceTimersByTimeAsync(2_999);
+    await vi.advanceTimersByTimeAsync(4_999);
     expect(s.fetchMock).toHaveBeenCalledTimes(1);
     await vi.advanceTimersByTimeAsync(1);
     await expect(p).resolves.toEqual({ ok: true });
@@ -185,7 +185,7 @@ describe('createApiClient', () => {
       const settled = await Promise.allSettled([s.client.get('/a', ok), s.client.get('/b', ok), s.client.get('/c', ok)]);
       expect(settled.every((r) => r.status === 'rejected')).toBe(true);
       expect(s.calls.filter((c) => c.url.endsWith('/auth/refresh'))).toHaveLength(1);
-      expect(s.onUnauthenticated).toHaveBeenCalledTimes(3);
+      expect(s.onUnauthenticated).toHaveBeenCalledTimes(1);
       const err = (settled[0] as PromiseRejectedResult).reason as BackendHttpError;
       expect(err).toMatchObject({ status: 401, translationKey: 'ERRORS.requestFailed', detail: 'expired' });
     });

@@ -40,7 +40,7 @@ afterEach(() => {
 });
 afterAll(() => server.close());
 
-const api = createApi(createApiClient({ baseUrl: BASE, transport: cookieTransport() }));
+const api = createApi(createApiClient({ baseUrl: BASE, transport: cookieTransport({ hasSession: () => true }) }));
 type Api = typeof api;
 
 interface Row {

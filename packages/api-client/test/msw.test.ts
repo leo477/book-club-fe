@@ -53,7 +53,7 @@ function makeClient(cfg: Partial<ApiClientConfig> = {}) {
   const onError = vi.fn();
   const client = createApiClient({
     baseUrl: BASE,
-    transport: cookieTransport(),
+    transport: cookieTransport({ hasSession: () => true }),
     onUnauthenticated,
     onForbidden,
     onError,
@@ -110,7 +110,7 @@ describe('single-flight refresh', () => {
     expect(count('/x')).toBe(1);
   });
 
-  it('each concurrent caller reports unauthenticated after one shared failed refresh (current behaviour)', async () => {
+  it('concurrent callers report unauthenticated once per failed refresh', async () => {
     server.use(
       http.post(`${BASE}/auth/refresh`, () => HttpResponse.json({}, { status: 401 })),
       http.get(`${BASE}/x`, () => HttpResponse.json({}, { status: 401 })),
@@ -118,7 +118,7 @@ describe('single-flight refresh', () => {
     const { client, onUnauthenticated } = makeClient();
     await Promise.allSettled([1, 2, 3, 4, 5].map(() => client.get('/x', ok)));
     expect(count('/auth/refresh')).toBe(1);
-    expect(onUnauthenticated).toHaveBeenCalledTimes(5);
+    expect(onUnauthenticated).toHaveBeenCalledTimes(1);
   });
 
   it('a malformed refresh body is treated as a failed refresh', async () => {
@@ -147,12 +147,12 @@ describe('single-flight refresh', () => {
 describe('retry on 503', () => {
   beforeEach(() => vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] }));
 
-  it('retries once after 3s and returns the second response', async () => {
+  it('retries once after 5s and returns the second response', async () => {
     let n = 0;
     server.use(http.get(`${BASE}/x`, () => (++n === 1 ? new HttpResponse(null, { status: 503 }) : HttpResponse.json({ ok: true }))));
     const { client } = makeClient();
     const p = client.get('/x', ok);
-    await vi.advanceTimersByTimeAsync(2_999);
+    await vi.advanceTimersByTimeAsync(4_999);
     expect(count('/x')).toBe(1);
     await vi.advanceTimersByTimeAsync(1);
     await expect(p).resolves.toEqual({ ok: true });
@@ -174,7 +174,7 @@ describe('retry on 503', () => {
     server.use(http.post(`${BASE}/x`, () => (++n === 1 ? new HttpResponse(null, { status: 503 }) : HttpResponse.json({ ok: true }))));
     const { client } = makeClient();
     const p = client.post('/x', ok, { a: 1 });
-    await vi.advanceTimersByTimeAsync(3_000);
+    await vi.advanceTimersByTimeAsync(5_000);
     await expect(p).resolves.toEqual({ ok: true });
     expect(seen.map((s) => s.body)).toEqual([{ a: 1 }, { a: 1 }]);
   });
@@ -187,13 +187,27 @@ describe('retry on 503', () => {
     expect(onError).toHaveBeenCalledTimes(1);
   });
 
-  it('deviation vs Angular: the 503 delay is 3s, not 5s', async () => {
+  it('waits the default 5s before replaying a 503', async () => {
     let n = 0;
     server.use(http.get(`${BASE}/x`, () => (++n === 1 ? new HttpResponse(null, { status: 503 }) : HttpResponse.json({ ok: true }))));
     const { client } = makeClient();
     const p = client.get('/x', ok);
-    await vi.advanceTimersByTimeAsync(3_000);
+    await vi.advanceTimersByTimeAsync(4_999);
+    expect(count('/x')).toBe(1);
+    await vi.advanceTimersByTimeAsync(1);
     await expect(p).resolves.toEqual({ ok: true });
+  });
+
+  it('aborting during the 503 wait rejects immediately without a replay', async () => {
+    server.use(http.get(`${BASE}/x`, () => new HttpResponse(null, { status: 503 })));
+    const { client } = makeClient();
+    const ctrl = new AbortController();
+    const p = client.get('/x', ok, { signal: ctrl.signal }).catch((e: unknown) => e);
+    await vi.advanceTimersByTimeAsync(1_000);
+    ctrl.abort(new Error('user'));
+    expect(await p).toMatchObject({ message: 'user' });
+    await vi.advanceTimersByTimeAsync(10_000);
+    expect(count('/x')).toBe(1);
   });
 });
 
@@ -382,30 +396,106 @@ describe('cookie transport', () => {
     expect(count('/auth/refresh')).toBe(0);
     expect(onUnauthenticated).not.toHaveBeenCalled();
   });
-
-  it('deviation vs Angular: by default (hasSession omitted) a guest 401 still triggers a refresh and sign-out', async () => {
-    server.use(
-      http.post(`${BASE}/auth/refresh`, () => HttpResponse.json({ detail: 'no cookie' }, { status: 401 })),
-      http.get(`${BASE}/clubs/1`, () => HttpResponse.json({ detail: 'auth' }, { status: 401 })),
-    );
-    const { client, onUnauthenticated } = makeClient();
-    await expect(client.get('/clubs/1', ok)).rejects.toMatchObject({ status: 401 });
-    expect(count('/auth/refresh')).toBe(1);
-    expect(onUnauthenticated).toHaveBeenCalledTimes(1);
-  });
 });
 
-describe('refresh 5xx', () => {
-  it('deviation vs Angular: a failing refresh (500) is not reported to onError, only signs out', async () => {
+describe('refresh failures', () => {
+  it('reports a refresh 500 to onError and still signs out', async () => {
     server.use(
       http.post(`${BASE}/auth/refresh`, () => HttpResponse.json({ detail: 'db down' }, { status: 500 })),
       http.get(`${BASE}/x`, () => HttpResponse.json({}, { status: 401 })),
     );
     const { client, onError, onUnauthenticated } = makeClient();
     await expect(client.get('/x', ok)).rejects.toMatchObject({ status: 401 });
-    expect(onError).not.toHaveBeenCalled();
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(onError).toHaveBeenCalledWith(expect.objectContaining({ status: 500 }), { suppress: false, path: '/auth/refresh', method: 'POST' });
     expect(onUnauthenticated).toHaveBeenCalledTimes(1);
     expect(count('/auth/refresh')).toBe(1);
+  });
+
+  it('reports a refresh timeout to onError and still signs out', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    server.use(
+      http.post(`${BASE}/auth/refresh`, hang),
+      http.get(`${BASE}/x`, () => HttpResponse.json({}, { status: 401 })),
+    );
+    const { client, onError, onUnauthenticated } = makeClient();
+    const p = client.get('/x', ok).catch((e: unknown) => e);
+    await vi.advanceTimersByTimeAsync(30_000);
+    expect(await p).toMatchObject({ status: 401 });
+    expect(onError).toHaveBeenCalledWith(expect.any(RequestTimeoutError), expect.objectContaining({ path: '/auth/refresh' }));
+    expect(onUnauthenticated).toHaveBeenCalledTimes(1);
+  });
+
+  it.each([3, 5])('%i concurrent 401s with a failing refresh sign out exactly once, and a later cycle signs out again', async (n) => {
+    server.use(
+      http.post(`${BASE}/auth/refresh`, () => HttpResponse.json({ detail: 'no' }, { status: 401 })),
+      http.get(`${BASE}/x`, () => HttpResponse.json({}, { status: 401 })),
+    );
+    const clear = vi.fn();
+    const transport = { ...cookieTransport({ hasSession: () => true }), clear };
+    const { client, onUnauthenticated } = makeClient({ transport });
+    const results = await Promise.allSettled(Array.from({ length: n }, () => client.get('/x', ok)));
+    expect(results.every((r) => r.status === 'rejected')).toBe(true);
+    expect(count('/auth/refresh')).toBe(1);
+    expect(clear).toHaveBeenCalledTimes(1);
+    expect(onUnauthenticated).toHaveBeenCalledTimes(1);
+    await expect(client.get('/x', ok)).rejects.toMatchObject({ status: 401 });
+    expect(onUnauthenticated).toHaveBeenCalledTimes(2);
+    expect(clear).toHaveBeenCalledTimes(2);
+  });
+
+  it('concurrent replayed 401s after a successful refresh sign out once', async () => {
+    server.use(
+      http.post(`${BASE}/auth/refresh`, () => HttpResponse.json(tokens)),
+      http.get(`${BASE}/x`, () => HttpResponse.json({}, { status: 401 })),
+    );
+    const { client, onUnauthenticated } = makeClient();
+    await Promise.allSettled([1, 2, 3].map(() => client.get('/x', ok)));
+    expect(onUnauthenticated).toHaveBeenCalledTimes(1);
+  });
+
+  it('still fires onUnauthenticated when transport.clear throws', async () => {
+    server.use(
+      http.post(`${BASE}/auth/refresh`, () => HttpResponse.json({}, { status: 401 })),
+      http.get(`${BASE}/x`, () => HttpResponse.json({}, { status: 401 })),
+    );
+    const transport = { ...cookieTransport({ hasSession: () => true }), clear: () => { throw new Error('storage'); } };
+    const { client, onUnauthenticated } = makeClient({ transport });
+    await expect(client.get('/x', ok)).rejects.toMatchObject({ status: 401 });
+    expect(onUnauthenticated).toHaveBeenCalledTimes(1);
+  });
+
+  it('a throwing onError cannot replace the real error', async () => {
+    server.use(http.get(`${BASE}/x`, () => HttpResponse.json({ detail: 'boom' }, { status: 500 })));
+    const { client } = makeClient({ onError: () => { throw new Error('reporter'); } });
+    await expect(client.get('/x', ok)).rejects.toMatchObject({ status: 500 });
+  });
+
+  it('a guest 401 (hasSession false) triggers no refresh and no sign-out', async () => {
+    server.use(http.get(`${BASE}/x`, () => HttpResponse.json({}, { status: 401 })));
+    const { client, onUnauthenticated } = makeClient({ transport: cookieTransport({ hasSession: () => false }) });
+    await expect(client.get('/x', ok)).rejects.toMatchObject({ status: 401 });
+    expect(count('/auth/refresh')).toBe(0);
+    expect(onUnauthenticated).not.toHaveBeenCalled();
+  });
+
+  it('skips the refresh and replays when the access token changed during the request', async () => {
+    let access = 'old';
+    const clear = vi.fn();
+    const transport = bearerTransport({ getToken: () => access, getRefreshToken: () => 'r', setTokens: vi.fn(), clearTokens: clear });
+    server.use(
+      http.get(`${BASE}/x`, ({ request }) => {
+        if (request.headers.get('authorization') === 'Bearer old') {
+          access = 'rotated';
+          return HttpResponse.json({}, { status: 401 });
+        }
+        return HttpResponse.json({ ok: true });
+      }),
+    );
+    const { client } = makeClient({ transport });
+    await expect(client.get('/x', ok)).resolves.toEqual({ ok: true });
+    expect(count('/auth/refresh')).toBe(0);
+    expect(seen.map((s) => s.authorization)).toEqual(['Bearer old', 'Bearer rotated']);
   });
 });
 

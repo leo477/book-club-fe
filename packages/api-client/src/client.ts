@@ -5,7 +5,7 @@ import type { ApiClientConfig, RequestOptions } from './types';
 
 const GET_TIMEOUT_MS = 15_000;
 const MUTATION_TIMEOUT_MS = 30_000;
-const RETRY_503_DELAY_MS = 3_000;
+const RETRY_503_DELAY_MS = 5_000;
 const MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 interface RawResponse {
@@ -33,7 +33,25 @@ function parseJson(text: string): unknown {
   }
 }
 
-const sleep = (ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms));
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) return reject(signal.reason ?? new DOMException('Aborted', 'AbortError'));
+    const onAbort = () => {
+      clearTimeout(timer);
+      reject(signal?.reason ?? new DOMException('Aborted', 'AbortError'));
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    signal?.addEventListener('abort', onAbort, { once: true });
+  });
+}
+
+interface RefreshCycle {
+  ok: boolean;
+  signedOut: boolean;
+}
 
 export function createApiClient(config: ApiClientConfig) {
   const { baseUrl, transport, onUnauthenticated, onForbidden, onError } = config;
@@ -42,7 +60,28 @@ export function createApiClient(config: ApiClientConfig) {
   const retryDelay = config.retry503DelayMs ?? RETRY_503_DELAY_MS;
   const doFetch: typeof fetch = (input, init) => (config.fetch ?? globalThis.fetch)(input, init);
 
-  let refreshInFlight: Promise<boolean> | null = null;
+  let refreshInFlight: Promise<RefreshCycle> | null = null;
+
+  const notifyError: NonNullable<ApiClientConfig['onError']> = (error, info) => {
+    try {
+      onError?.(error, info);
+    } catch {
+      // a throwing reporter must never replace the real error
+    }
+  };
+
+  // Once per refresh cycle, however many concurrent requests observe the failure.
+  async function signOut(cycle: RefreshCycle): Promise<void> {
+    if (cycle.signedOut) return;
+    cycle.signedOut = true;
+    try {
+      await transport.clear();
+    } catch {
+      // logout must complete even if clearing fails
+    } finally {
+      onUnauthenticated?.();
+    }
+  }
 
   async function once(
     method: string,
@@ -90,23 +129,32 @@ export function createApiClient(config: ApiClientConfig) {
   ): Promise<RawResponse> {
     const first = await once(method, path, options, token, timeoutMs);
     if (first.status !== 503) return first;
-    await sleep(retryDelay);
+    await sleep(retryDelay, options.signal);
     return once(method, path, options, token, timeoutMs);
   }
 
   // Concurrent 401s share one refresh instead of racing the backend's refresh-token rotation.
-  function refresh(): Promise<boolean> {
+  function refresh(): Promise<RefreshCycle> {
     refreshInFlight ??= (async () => {
+      const cycle: RefreshCycle = { ok: false, signedOut: false };
+      const info = { suppress: false, path: '/auth/refresh', method: 'POST' };
       try {
         const body = await transport.getRefreshBody();
-        if (!body) return false;
+        if (!body) return cycle;
         const raw = await attempt('POST', '/auth/refresh', { body }, null, mutationTimeout);
-        if (!raw.ok) return false;
+        if (!raw.ok) {
+          if (raw.status >= 500) {
+            const detail = extractBackendDetail(parseJson(raw.text));
+            notifyError(new BackendHttpError(raw.status, detail, translationKeyForStatus(raw.status)), info);
+          }
+          return cycle;
+        }
         await transport.storeTokens(parse(authTokens, parseJson(raw.text), 'refresh response'));
-        return true;
-      } catch {
-        return false;
+        cycle.ok = true;
+      } catch (err) {
+        if (err instanceof RequestTimeoutError) notifyError(err, info);
       }
+      return cycle;
     })().finally(() => {
       refreshInFlight = null;
     });
@@ -119,9 +167,9 @@ export function createApiClient(config: ApiClientConfig) {
     const skip = options.skipAuthRedirect === true;
     const suppress = options.suppressErrorToast === true;
     const report = (error: BackendHttpError | RequestTimeoutError) =>
-      onError?.(error, { suppress, path, method: verb });
+      notifyError(error, { suppress, path, method: verb });
 
-    const run = async (sessionActive: boolean, isRetry: boolean): Promise<unknown> => {
+    const run = async (sessionActive: boolean, cycle: RefreshCycle | null): Promise<unknown> => {
       const token = await transport.getAccessToken();
       let raw: RawResponse;
       try {
@@ -134,17 +182,19 @@ export function createApiClient(config: ApiClientConfig) {
 
       const detail = extractBackendDetail(parseJson(raw.text));
 
-      if (raw.status === 401 && sessionActive && !skip && !isRetry) {
-        if (await refresh()) return run(true, true);
-        await transport.clear();
-        onUnauthenticated?.();
+      if (raw.status === 401 && sessionActive && !skip && !cycle) {
+        // Another request already rotated the token while this one was in flight: replay without refreshing.
+        const current = await transport.getAccessToken();
+        if (current !== null && current !== token) return run(true, { ok: true, signedOut: false });
+        const next = await refresh();
+        if (next.ok) return run(true, next);
+        await signOut(next);
         throw new BackendHttpError(401, detail, ERROR_KEYS.requestFailed);
       }
 
       const error = new BackendHttpError(raw.status, detail, translationKeyForStatus(raw.status));
       if (!skip && raw.status === 401 && sessionActive) {
-        await transport.clear();
-        onUnauthenticated?.();
+        await signOut(cycle ?? { ok: false, signedOut: false });
       } else if (!skip && raw.status === 403) {
         onForbidden?.();
       } else if (raw.status >= 500) {
@@ -153,7 +203,7 @@ export function createApiClient(config: ApiClientConfig) {
       throw error;
     };
 
-    return run(await transport.hasSession(), false);
+    return run(await transport.hasSession(), null);
   }
 
   async function send<S extends z.ZodType>(
