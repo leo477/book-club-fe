@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { CreateSubmissionComponent } from './create-submission.component';
 import { SupportService } from '../../../core/services/support.service';
 import { SeoService } from '../../../core/services/seo.service';
@@ -16,8 +16,8 @@ describe('CreateSubmissionComponent', () => {
     supportSpy = { submit: vi.fn().mockResolvedValue(undefined) };
     seoSpy = { setPageI18n: vi.fn() };
     await TestBed.configureTestingModule({
-      imports: [CreateSubmissionComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [CreateSubmissionComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: SupportService, useValue: supportSpy },

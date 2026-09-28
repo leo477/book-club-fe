@@ -9,7 +9,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -25,7 +25,7 @@ import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
   selector: 'app-events-feed',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, TranslateModule, EmptyStateComponent, EventCardComponent, HlmSpinner, NgTemplateOutlet, FormatDatePipe],
+  imports: [RouterLink, FormsModule, TranslatePipe, EmptyStateComponent, EventCardComponent, HlmSpinner, NgTemplateOutlet, FormatDatePipe],
   templateUrl: './events-feed.component.html',
 })
 export class EventsFeedComponent implements OnInit {

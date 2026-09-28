@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ComponentFixture } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ClubHeaderComponent } from './club-header.component';
 import { Club } from '../../../../core/models/club.model';
 
@@ -20,8 +20,8 @@ describe('ClubHeaderComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [ClubHeaderComponent, TranslateModule.forRoot()],
-      providers: [provideZonelessChangeDetection()],
+      imports: [ClubHeaderComponent],
+      providers: [provideTranslateService(), provideZonelessChangeDetection()],
     });
     fixture = TestBed.createComponent(ClubHeaderComponent);
     component = fixture.componentInstance;

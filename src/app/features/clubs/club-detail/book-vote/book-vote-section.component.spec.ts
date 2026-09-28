@@ -1,6 +1,6 @@
 import { NO_ERRORS_SCHEMA, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { BookVoteSectionComponent } from './book-vote-section.component';
 import { BookVoteService } from '../../../../core/services/book-vote.service';
@@ -73,8 +73,8 @@ describe('BookVoteSectionComponent', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [BookVoteSectionComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [BookVoteSectionComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         { provide: BookVoteService, useValue: voteServiceSpy },
       ],

@@ -4,7 +4,7 @@ import {
   input,
   output,
 } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Club } from '../../../../core/models/club.model';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { HlmButton } from '../../../../shared/spartan/button/src';
@@ -13,7 +13,7 @@ import { HlmButton } from '../../../../shared/spartan/button/src';
   selector: 'app-club-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule, LoadingSpinnerComponent, HlmButton],
+  imports: [TranslatePipe, LoadingSpinnerComponent, HlmButton],
   templateUrl: './club-header.component.html',
 })
 export class ClubHeaderComponent {

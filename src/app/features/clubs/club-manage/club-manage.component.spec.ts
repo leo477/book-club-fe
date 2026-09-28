@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ClubManageComponent } from './club-manage.component';
 import { ClubService } from '../../../core/services/club.service';
 import { ChatService } from '../../../core/services/chat.service';
@@ -51,8 +51,8 @@ describe('ClubManageComponent', () => {
 
   async function setup(clubId = 'club-1') {
     await TestBed.configureTestingModule({
-      imports: [ClubManageComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [ClubManageComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         { provide: ClubService, useValue: clubServiceSpy },
         { provide: ChatService, useValue: chatServiceSpy },

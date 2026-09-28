@@ -3,7 +3,7 @@ import { ComponentFixture } from '@angular/core/testing';
 import { provideZonelessChangeDetection, NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { of } from 'rxjs';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { EditEventComponent } from './edit-event.component';
 import { EventService } from '../../../core/services/event.service';
 import { QuizService } from '../../../core/services/quiz.service';
@@ -28,8 +28,8 @@ describe('EditEventComponent', () => {
 
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      imports: [EditEventComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [EditEventComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: EventService, useValue: eventServiceSpy },

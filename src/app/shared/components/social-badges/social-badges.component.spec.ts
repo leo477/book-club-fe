@@ -1,14 +1,14 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { SocialBadgesComponent } from './social-badges.component';
 import { UserSocials } from '../../../core/models/user.model';
 
 describe('SocialBadgesComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [SocialBadgesComponent, TranslateModule.forRoot()],
-      providers: [provideZonelessChangeDetection()],
+      imports: [SocialBadgesComponent],
+      providers: [provideTranslateService(), provideZonelessChangeDetection()],
     }).compileComponents();
   });
 

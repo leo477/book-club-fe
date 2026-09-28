@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ClubManageDashboardComponent } from './club-manage-dashboard.component';
 import { ClubStats } from '../../../../core/models/club.model';
 
@@ -9,8 +9,8 @@ describe('ClubManageDashboardComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ClubManageDashboardComponent, TranslateModule.forRoot()],
-      providers: [provideZonelessChangeDetection()],
+      imports: [ClubManageDashboardComponent],
+      providers: [provideTranslateService(), provideZonelessChangeDetection()],
     }).compileComponents();
     const fixture = TestBed.createComponent(ClubManageDashboardComponent);
     component = fixture.componentInstance;

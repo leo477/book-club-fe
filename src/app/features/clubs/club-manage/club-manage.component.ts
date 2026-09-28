@@ -8,7 +8,7 @@ import {
   effect,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
 import { ClubService, JoinRequest } from '../../../core/services/club.service';
 import { ChatService } from '../../../core/services/chat.service';
@@ -29,7 +29,7 @@ import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     RouterLink,
-    TranslateModule,
+    TranslatePipe,
     EditClubComponent,
     ClubManageDashboardComponent,
     ClubManageMembersComponent,

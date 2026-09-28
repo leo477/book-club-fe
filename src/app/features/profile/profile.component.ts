@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { map, startWith } from 'rxjs';
 import { toast } from '@spartan-ng/brain/sonner';
 import { AuthService } from '../../core/auth/auth.service';
@@ -24,7 +24,7 @@ import { displayNameValidator } from '../../shared/utils/display-name.validator'
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslateModule, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent, HlmButton, HlmInput],
+  imports: [ReactiveFormsModule, TranslatePipe, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent, HlmButton, HlmInput],
   templateUrl: './profile.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
@@ -36,9 +36,9 @@ export class ProfileComponent {
   private readonly currentLang = toSignal(
     this.translate.onLangChange.pipe(
       map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
+      startWith(this.translate.getCurrentLang() ?? 'uk'),
     ),
-    { initialValue: this.translate.currentLang ?? 'uk' },
+    { initialValue: this.translate.getCurrentLang() ?? 'uk' },
   );
 
   protected readonly socialFields = computed<SocialField[]>(() => {

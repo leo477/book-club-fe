@@ -9,7 +9,7 @@ import { EventService } from '../../../core/services/event.service';
 import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
 import { of } from 'rxjs';
 import { makeClubEvent as makeEvent } from '../../../../testing/event-test.helpers';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 
 describe('CreateEventComponent', () => {
   let fixture: ComponentFixture<CreateEventComponent>;
@@ -25,8 +25,8 @@ describe('CreateEventComponent', () => {
     };
 
     TestBed.configureTestingModule({
-      imports: [CreateEventComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [CreateEventComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         provideRouter([]),
         provideHttpClient(withXhr()),

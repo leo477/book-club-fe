@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { FormatDatePipe } from '../../../../shared/pipes/format-date.pipe';
 import { ClubEvent } from '../../../../core/models/event.model';
 import { EventRsvpButtonComponent } from '../../../../shared/components/event-rsvp-button/event-rsvp-button.component';
@@ -15,7 +15,7 @@ import { EventRsvpButtonComponent } from '../../../../shared/components/event-rs
   selector: 'app-club-event-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgOptimizedImage, RouterLink, TranslateModule, FormatDatePipe, EventRsvpButtonComponent],
+  imports: [NgOptimizedImage, RouterLink, TranslatePipe, FormatDatePipe, EventRsvpButtonComponent],
   templateUrl: './club-event-card.component.html',
   styleUrl: './club-event-card.component.scss',
 })

@@ -1,14 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { HeaderNavLinksComponent } from './header-nav-links.component';
 
 describe('HeaderNavLinksComponent', () => {
   async function setup(isAuthenticated: boolean) {
     await TestBed.configureTestingModule({
-      imports: [HeaderNavLinksComponent, TranslateModule.forRoot()],
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      imports: [HeaderNavLinksComponent],
+      providers: [provideTranslateService(), provideZonelessChangeDetection(), provideRouter([])],
     }).compileComponents();
     const fixture = TestBed.createComponent(HeaderNavLinksComponent);
     fixture.componentRef.setInput('isAuthenticated', isAuthenticated);

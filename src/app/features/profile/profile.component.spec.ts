@@ -1,6 +1,6 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
 import { ProfileComponent } from './profile.component';
 import { AuthService } from '../../core/auth/auth.service';
@@ -44,8 +44,8 @@ describe('ProfileComponent', () => {
     authSvc = makeAuthService(userOverrides);
 
     await TestBed.configureTestingModule({
-      imports: [ProfileComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [ProfileComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         { provide: AuthService, useValue: authSvc },
         { provide: SeoService, useValue: makeSeoService() },

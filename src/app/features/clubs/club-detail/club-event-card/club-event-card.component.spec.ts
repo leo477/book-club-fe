@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentFixture } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ClubEventCardComponent } from './club-event-card.component';
 import { makeClubEvent as makeEvent } from '../../../../../testing/event-test.helpers';
 
@@ -12,8 +12,8 @@ describe('ClubEventCardComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [ClubEventCardComponent, TranslateModule.forRoot()],
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      imports: [ClubEventCardComponent],
+      providers: [provideTranslateService(), provideZonelessChangeDetection(), provideRouter([])],
     });
     fixture = TestBed.createComponent(ClubEventCardComponent);
     component = fixture.componentInstance;

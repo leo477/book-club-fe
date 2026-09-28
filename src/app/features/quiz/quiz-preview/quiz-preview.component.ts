@@ -6,7 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
 import { QuizDetailBaseComponent } from '../quiz-detail-base.component';
@@ -16,7 +16,7 @@ import { OPTION_INDICES } from '../quiz-form.utils';
   selector: 'app-quiz-preview',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, ...HlmCardImports, HlmButton],
+  imports: [RouterLink, TranslatePipe, ...HlmCardImports, HlmButton],
   templateUrl: './quiz-preview.component.html',
 })
 export class QuizPreviewComponent extends QuizDetailBaseComponent {

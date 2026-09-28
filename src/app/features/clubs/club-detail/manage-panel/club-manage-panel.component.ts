@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { HlmCard } from '../../../../shared/spartan/card/src';
 import { HlmButton } from '../../../../shared/spartan/button/src';
 
@@ -9,7 +9,7 @@ import { HlmButton } from '../../../../shared/spartan/button/src';
   host: { class: 'block' },
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, HlmCard, HlmButton],
+  imports: [RouterLink, TranslatePipe, HlmCard, HlmButton],
   templateUrl: './club-manage-panel.component.html',
 })
 export class ClubManagePanelComponent {

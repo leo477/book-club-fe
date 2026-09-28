@@ -1,7 +1,7 @@
 import { NO_ERRORS_SCHEMA, provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ClubSidebarRightComponent } from './club-sidebar-right.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { Club } from '../../../../core/models/club.model';
 
 const mockClub: Club = {
@@ -15,8 +15,8 @@ const mockClub: Club = {
 describe('ClubSidebarRightComponent', () => {
   async function setup() {
     await TestBed.configureTestingModule({
-      imports: [ClubSidebarRightComponent, TranslateModule.forRoot()],
-      providers: [provideZonelessChangeDetection()],
+      imports: [ClubSidebarRightComponent],
+      providers: [provideTranslateService(), provideZonelessChangeDetection()],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
     const fixture = TestBed.createComponent(ClubSidebarRightComponent);

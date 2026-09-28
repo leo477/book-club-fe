@@ -1,6 +1,6 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ProfileRoleSelectorComponent } from './profile-role-selector.component';
 import { firstValueFrom } from 'rxjs';
 import { outputToObservable } from '@angular/core/rxjs-interop';
@@ -8,8 +8,8 @@ import { outputToObservable } from '@angular/core/rxjs-interop';
 describe('ProfileRoleSelectorComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ProfileRoleSelectorComponent, TranslateModule.forRoot()],
-      providers: [provideZonelessChangeDetection()],
+      imports: [ProfileRoleSelectorComponent],
+      providers: [provideTranslateService(), provideZonelessChangeDetection()],
     }).compileComponents();
   });
 

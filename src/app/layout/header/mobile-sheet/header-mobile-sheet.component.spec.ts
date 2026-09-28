@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { HeaderMobileSheetComponent } from './header-mobile-sheet.component';
 
 describe('HeaderMobileSheetComponent', () => {
@@ -9,8 +9,8 @@ describe('HeaderMobileSheetComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [HeaderMobileSheetComponent, TranslateModule.forRoot()],
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      imports: [HeaderMobileSheetComponent],
+      providers: [provideTranslateService(), provideZonelessChangeDetection(), provideRouter([])],
       schemas: [NO_ERRORS_SCHEMA],
     }).compileComponents();
     const fixture = TestBed.createComponent(HeaderMobileSheetComponent);
