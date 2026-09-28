@@ -2,11 +2,14 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { IntlMessageFormat } from 'intl-messageformat';
 import { describe, expect, it } from 'vitest';
-import { flatten, buildIcu, type Tree } from '../scripts/icu.ts';
+import { applyOverrides, buildIcu, type Tree } from '../scripts/icu.ts';
 
 const load = (locale: string): Tree =>
   JSON.parse(readFileSync(resolve(__dirname, '../../../public/i18n', `${locale}.json`), 'utf8'));
-const messages = { en: buildIcu(load('en')).messages, uk: buildIcu(load('uk')).messages };
+const loadOverrides = (locale: string): Tree =>
+  JSON.parse(readFileSync(resolve(__dirname, '../overrides', `${locale}.json`), 'utf8'));
+const built = (locale: string) => buildIcu(applyOverrides(load(locale), loadOverrides(locale)).merged);
+const messages = { en: built('en').messages, uk: built('uk').messages };
 const render = (locale: 'en' | 'uk', key: string, count: number) =>
   new IntlMessageFormat(messages[locale][key] as string, locale).format({ count });
 
@@ -25,21 +28,32 @@ describe('uk BOOK_VOTE.votes', () => {
   });
 });
 
-describe('uk QUIZ.create_questions_count', () => {
+describe('uk QUIZ.create_questions_count (override adds few and other)', () => {
   it.each([
     [0, 'запитань'],
     [1, 'запитання'],
+    [2, 'запитання'],
+    [3, 'запитання'],
+    [4, 'запитання'],
     [5, 'запитань'],
     [11, 'запитань'],
     [12, 'запитань'],
     [21, 'запитання'],
+    [22, 'запитання'],
   ])('%i -> %s', (count, expected) => {
     expect(render('uk', 'QUIZ.create_questions_count', count)).toBe(expected);
   });
+});
 
-  it('has no few form in the source, so 2 falls back to the genitive plural (known gap)', () => {
-    expect(Object.keys(flatten(load('uk'))).some((k) => k === 'QUIZ.create_questions_count_few')).toBe(false);
-    expect(render('uk', 'QUIZ.create_questions_count', 2)).toBe('запитань');
+describe('plural groups', () => {
+  it.each(['en', 'uk'] as const)('%s: every plural group has at least 2 forms', (locale) => {
+    const msgs = messages[locale];
+    const groups = Object.entries(msgs).filter(([, m]) => m.includes(', plural,'));
+    expect(groups.length).toBeGreaterThan(0);
+    for (const [key, message] of groups) {
+      const forms = [...message.matchAll(/\b(zero|one|two|few|many|other) \{/g)];
+      expect(forms.length, key).toBeGreaterThanOrEqual(2);
+    }
   });
 });
 

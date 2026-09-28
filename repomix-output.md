@@ -147,6 +147,9 @@ packages/
     tsconfig.json
     vitest.config.ts
   i18n/
+    overrides/
+      en.json
+      uk.json
     scripts/
       build-icu.mjs
       icu.ts
@@ -157,6 +160,7 @@ packages/
       plurals.test.ts
     eslint.config.mjs
     package.json
+    README.md
     tsconfig.json
     vitest.config.ts
 public/

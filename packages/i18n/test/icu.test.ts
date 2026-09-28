@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { IntlMessageFormat } from 'intl-messageformat';
 import { describe, expect, it } from 'vitest';
-import { buildIcu, flatten, toIcuBody, type Tree } from '../scripts/icu.ts';
+import { applyOverrides, buildIcu, flatten, toIcuBody, type Tree } from '../scripts/icu.ts';
 
 const load = (locale: string): Tree =>
   JSON.parse(readFileSync(resolve(__dirname, '../../../public/i18n', `${locale}.json`), 'utf8'));
@@ -11,7 +11,12 @@ const base = (key: string) => key.replace(PLURAL, '$1');
 
 const en = load('en');
 const uk = load('uk');
-const built = { en: buildIcu(en), uk: buildIcu(uk) };
+const overrides = {
+  en: JSON.parse(readFileSync(resolve(__dirname, '../overrides/en.json'), 'utf8')) as Tree,
+  uk: JSON.parse(readFileSync(resolve(__dirname, '../overrides/uk.json'), 'utf8')) as Tree,
+};
+const merged = { en: applyOverrides(en, overrides.en), uk: applyOverrides(uk, overrides.uk) };
+const built = { en: buildIcu(merged.en.merged), uk: buildIcu(merged.uk.merged) };
 
 describe('locale parity', () => {
   it('has the same keys in en and uk once plural forms are collapsed', () => {
@@ -26,9 +31,28 @@ describe('locale parity', () => {
   });
 });
 
+describe('overrides', () => {
+  it('only add keys the source lacks, never replace existing ones', () => {
+    const { merged: m, added, redundant } = applyOverrides({ A: { x: 'src' } }, { A: { x: 'over', y: 'new' } });
+    expect(flatten(m)).toEqual({ 'A.x': 'src', 'A.y': 'new' });
+    expect(added).toEqual(['A.y']);
+    expect(redundant).toEqual(['A.x']);
+  });
+
+  it.each(['en', 'uk'] as const)('%s overrides are all still needed (remove them once the source JSON has the keys)', (locale) => {
+    expect(merged[locale].redundant).toEqual([]);
+    expect(merged[locale].added.length).toBeGreaterThan(0);
+  });
+
+  it('keeps en and uk key parity after overrides', () => {
+    const keys = (o: Tree) => [...new Set(Object.keys(flatten(o)).map(base))].sort();
+    expect(keys(merged.en.merged)).toEqual(keys(merged.uk.merged));
+  });
+});
+
 describe.each(['en', 'uk'] as const)('%s ICU output', (locale) => {
   const { messages, sourceKeyCount, pluralGroups } = built[locale];
-  const source = flatten(locale === 'en' ? en : uk);
+  const source = flatten(merged[locale].merged);
 
   it('parses every generated message', () => {
     for (const [key, message] of Object.entries(messages)) {

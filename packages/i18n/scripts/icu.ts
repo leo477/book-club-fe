@@ -13,6 +13,24 @@ export function flatten(obj: Tree, prefix = ''): Record<string, string> {
   return out;
 }
 
+/**
+ * Adds override keys that the source lacks (the Angular i18n JSON is frozen). Keys the source already
+ * defines are never replaced; they are returned in `redundant` so the override can be deleted.
+ */
+export function applyOverrides(source: Tree, overrides: Tree) {
+  const flat = flatten(source);
+  const added: string[] = [];
+  const redundant: string[] = [];
+  for (const [key, value] of Object.entries(flatten(overrides))) {
+    if (key in flat) redundant.push(key);
+    else {
+      flat[key] = value;
+      added.push(key);
+    }
+  }
+  return { merged: flat as Tree, added, redundant };
+}
+
 function escapeIcu(text: string): string {
   return text.replace(/'/g, "''").replace(/[{}]/g, "'$&'");
 }
