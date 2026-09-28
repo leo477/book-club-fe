@@ -3,10 +3,10 @@
   "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
   "ogTitle": "Вхід | Book Club",
   "ogDescription": "Приєднуйтесь до книжкових клубів у вашому місті.",
-  "ogUrl": "http://localhost:4200/login",
-  "ogImage": "http://localhost:4200/og-image.png",
-  "canonical": "http://localhost:4200/login",
+  "ogUrl": "{ORIGIN}/login",
+  "ogImage": "{ORIGIN}/og-image.png",
+  "canonical": "{ORIGIN}/login",
   "jsonLd": [
-    "unknown"
+    "Organization+WebApplication"
   ]
 }

@@ -3,10 +3,10 @@
   "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
   "ogTitle": "Book Club — Читацькі клуби України",
   "ogDescription": "Приєднуйтесь до книжкових клубів у вашому місті.",
-  "ogUrl": "https://book-club-planer.vercel.app/",
+  "ogUrl": "{ORIGIN}/",
   "ogImage": "/og-image.png",
-  "canonical": "https://book-club-planer.vercel.app/",
+  "canonical": "{ORIGIN}/",
   "jsonLd": [
-    "unknown"
+    "Organization+WebApplication"
   ]
 }

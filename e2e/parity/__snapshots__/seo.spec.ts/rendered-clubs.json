@@ -3,9 +3,9 @@
   "description": "Знайдіть книжковий клуб у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
   "ogTitle": "Книжкові клуби",
   "ogDescription": "Знайдіть книжковий клуб у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
-  "ogUrl": "http://localhost:4200/clubs",
-  "ogImage": "http://localhost:4200/og-image.png",
-  "canonical": "http://localhost:4200/clubs",
+  "ogUrl": "{ORIGIN}/clubs",
+  "ogImage": "{ORIGIN}/og-image.png",
+  "canonical": "{ORIGIN}/clubs",
   "jsonLd": [
     "WebSite"
   ]
