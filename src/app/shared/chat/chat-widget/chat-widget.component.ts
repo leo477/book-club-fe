@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, signal, effect, computed, H
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
+import { ToastService } from '../../../core/services/toast.service';
 import { Router, NavigationEnd } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
@@ -29,6 +29,7 @@ export class ChatWidgetComponent {
   private readonly clubService = inject(ClubService);
   private readonly router = inject(Router);
   private readonly el = inject(ElementRef);
+  private readonly toast = inject(ToastService);
   private readonly translate = inject(TranslateService);
 
   private readonly currentUrl = toSignal(
@@ -213,7 +214,7 @@ export class ChatWidgetComponent {
       this.isCreatingRoom.set(false);
     } catch (err) {
       logError('[ChatWidget] createRoom error', err);
-      toast.error(this.translate.instant(extractApiError(err)) as string);
+      this.toast.error(this.translate.instant(extractApiError(err)) as string);
     }
   }
 

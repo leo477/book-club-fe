@@ -4,7 +4,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
 import { provideTranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
-import { toast } from '@spartan-ng/brain/sonner';
+import { ToastService } from '../../../core/services/toast.service';
 import { EditClubComponent } from './edit-club.component';
 import { ClubService } from '../../../core/services/club.service';
 import { Club } from '../../../core/models/club.model';
@@ -123,9 +123,9 @@ describe('EditClubComponent', () => {
     });
 
     it('shows toast and navigates on success', async () => {
-      vi.spyOn(toast, 'success').mockImplementation(() => '');
+      vi.spyOn(TestBed.inject(ToastService), 'success').mockImplementation(() => undefined);
       await component.onSubmit();
-      expect(toast.success).toHaveBeenCalled();
+      expect(TestBed.inject(ToastService).success).toHaveBeenCalled();
       expect(router.navigate).toHaveBeenCalledWith(['/clubs', 'c1']);
     });
 

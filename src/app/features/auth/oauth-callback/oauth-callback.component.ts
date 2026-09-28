@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
+import { ToastService } from '../../../core/services/toast.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 
@@ -27,6 +27,7 @@ export class OAuthCallbackComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly toast = inject(ToastService);
   private readonly translate = inject(TranslateService);
 
   async ngOnInit(): Promise<void> {
@@ -38,7 +39,7 @@ export class OAuthCallbackComponent implements OnInit {
       ? await this.auth.exchangeOAuthCode(code)
       : { error: 'OAUTH_FAILED' };
     if (error) {
-      toast.error(this.translate.instant('AUTH.oauth_failed') as string);
+      this.toast.error(this.translate.instant('AUTH.oauth_failed') as string);
       await this.router.navigate(['/login']);
       return;
     }

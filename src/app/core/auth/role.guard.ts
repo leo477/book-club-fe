@@ -5,6 +5,7 @@ import { filter, map, take } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from './auth.service';
 import { UserRole } from '../models/user.model';
+import { ToastService } from '../services/toast.service';
 
 // Role hierarchy: 'admin' satisfies every guard; 'organizer' routes also admit 'admin'.
 const ALLOWED_ROLES: Record<UserRole, readonly UserRole[]> = {
@@ -19,13 +20,12 @@ export const roleGuard =
     const auth = inject(AuthService);
     const router = inject(Router);
     const translate = inject(TranslateService);
+    const toast = inject(ToastService);
 
     const evaluate = () => {
       const role = auth.userRole();
       if (role && ALLOWED_ROLES[requiredRole].includes(role)) return true;
-      import('@spartan-ng/brain/sonner')
-        .then(({ toast }) => toast.error(translate.instant('ERRORS.organizers_only') as string))
-        .catch(() => { /* best-effort */ });
+      toast.error(translate.instant('ERRORS.organizers_only') as string);
       return router.createUrlTree(['/clubs']);
     };
 

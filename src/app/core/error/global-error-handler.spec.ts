@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { isDevMode, provideZonelessChangeDetection } from '@angular/core';
 import { track } from '@vercel/analytics';
 import { TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
+import { ToastService } from '../services/toast.service';
 import { GlobalErrorHandler } from './global-error-handler';
 
 vi.mock('@vercel/analytics', () => ({ track: vi.fn() }));
@@ -27,14 +27,14 @@ describe('GlobalErrorHandler', () => {
     });
     handler = TestBed.inject(GlobalErrorHandler);
     consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
-    vi.spyOn(toast, 'error').mockImplementation(() => '');
+    vi.spyOn(TestBed.inject(ToastService), 'error').mockImplementation(() => undefined);
     vi.mocked(track).mockClear();
     vi.mocked(isDevMode).mockReturnValue(true);
   });
 
   afterEach(() => {
     consoleError.mockRestore();
-    vi.mocked(toast.error).mockRestore();
+    vi.mocked(TestBed.inject(ToastService).error).mockRestore();
   });
 
   it('logs the error to the console', () => {
@@ -65,7 +65,7 @@ describe('GlobalErrorHandler', () => {
 
   it('does not show a toast in dev mode', () => {
     handler.handleError(new Error('boom'));
-    expect(toast.error).not.toHaveBeenCalled();
+    expect(TestBed.inject(ToastService).error).not.toHaveBeenCalled();
   });
 
   describe('in production', () => {
@@ -76,7 +76,7 @@ describe('GlobalErrorHandler', () => {
     it('shows a generic toast instead of nothing', async () => {
       handler.handleError(new Error('boom'));
       await new Promise(resolve => setTimeout(resolve));
-      expect(toast.error).toHaveBeenCalledWith('ERRORS.unexpected');
+      expect(TestBed.inject(ToastService).error).toHaveBeenCalledWith('ERRORS.unexpected');
     });
 
     it('reports the Error message', () => {

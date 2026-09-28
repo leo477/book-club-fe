@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject, signal } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
+import { ToastService } from './toast.service';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiSubmission, mapSubmission } from '../api/api-mappers';
@@ -24,6 +24,7 @@ export type AdminStatus = 'approved' | 'rejected' | 'in_progress' | 'done';
 @Injectable({ providedIn: 'root' })
 export class SupportService {
   private readonly http = inject(HttpClient);
+  private readonly toast = inject(ToastService);
   private readonly translate = inject(TranslateService);
 
   private readonly _submissions = signal<Submission[]>([]);
@@ -58,7 +59,7 @@ export class SupportService {
     );
     const submission = mapSubmission(raw);
     this._submissions.update(existing => [submission, ...existing]);
-    toast.success(this.translate.instant('SUPPORT.submit_success') as string);
+    this.toast.success(this.translate.instant('SUPPORT.submit_success') as string);
     return submission;
   }
 
@@ -68,7 +69,7 @@ export class SupportService {
     );
     const submission = mapSubmission(raw);
     this._submissions.update(list => list.map(s => (s.id === id ? submission : s)));
-    toast.success(this.translate.instant('SUPPORT.status_updated') as string);
+    this.toast.success(this.translate.instant('SUPPORT.status_updated') as string);
     return submission;
   }
 

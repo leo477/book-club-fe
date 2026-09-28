@@ -8,7 +8,7 @@ import DOMPurify, { type Config } from 'dompurify';
 //
 // `@ng-icons/core` (used via `@ng-icons/lucide` throughout the app for icon
 // rendering — header, profile stats, Spartan UI components like hlm-icon/
-// hlm-toaster/hlm-spinner/hlm-dropdown-menu/hlm-sheet-content/
+// hlm-toaster/hlm-spinner/hlm-sheet-content/
 // hlm-tabs-paginated-list) writes SVG icon markup directly via `innerHTML`
 // (through `Renderer2.setProperty` client-side, `nativeElement.innerHTML =`
 // during SSR) without going through Angular's DomSanitizer or its own
