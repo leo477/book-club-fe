@@ -51,9 +51,6 @@
       ],
       "@spartan-ng/helm/sheet": [
         "./src/app/shared/spartan/sheet/src/index.ts"
-      ],
-      "@spartan-ng/helm/dropdown-menu": [
-        "./src/app/shared/spartan/dropdown-menu/src/index.ts"
       ]
     }
   },
