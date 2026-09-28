@@ -67,12 +67,22 @@ docs/
     PLAN-COOKIE-AUTH-2026-07-07.md
     PLAN-MOBILE-APP-2026-07-15.md
     REFACTOR-PLAN-2026-07-06.md
+  migration/
+    BASELINE-2026-10.md
 e2e/
   fixtures/
     api-client.ts
     api-context.fixture.ts
     auth.fixture.ts
     seed-helper.ts
+  parity/
+    allowlists/
+      guest-auth-pages.json
+      guest-browse.json
+      member-browse.json
+    har-diff.ts
+    html-meta.ts
+    routes.ts
   audit-helper.ts
   global-setup.ts
 public/
@@ -500,6 +510,7 @@ package.json
 PLAN-REACT-MIGRATION-2026-09-28.md
 PLAN-UI-STACK-2026-09-28.md
 playwright.full-audit.config.ts
+playwright.parity.config.ts
 postcss.config.json
 proxy.conf.json
 README.md
