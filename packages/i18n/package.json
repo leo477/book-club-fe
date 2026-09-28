@@ -1,0 +1,22 @@
+{
+  "name": "@book-club/i18n",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./en.icu.json": "./dist/en.icu.json",
+    "./uk.icu.json": "./dist/uk.icu.json"
+  },
+  "scripts": {
+    "build": "node scripts/build-icu.mjs",
+    "pretest": "node scripts/build-icu.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint ."
+  },
+  "devDependencies": {
+    "intl-messageformat": "12.1.2",
+    "vitest": "5.0.2"
+  }
+}
