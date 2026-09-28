@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { tolerantEnum } from './tolerant';
 
 export const bookSuggestion = z.object({
   id: z.string(),
@@ -34,7 +35,7 @@ export type BookOption = z.infer<typeof bookOption>;
 export const bookVoteRound = z.object({
   id: z.string(),
   clubId: z.string(),
-  status: z.enum(['open', 'closed']),
+  status: tolerantEnum(['open', 'closed'], 'closed'),
   options: z.array(bookOption),
   totalVotes: z.number(),
   winnerId: z.string().nullable(),

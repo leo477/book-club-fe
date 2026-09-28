@@ -1,6 +1,8 @@
 import { z } from 'zod';
+import { tolerantEnum } from './tolerant';
 
-export const quizStatus = z.enum(['draft', 'active', 'live', 'closed']);
+const QUIZ_STATUSES = ['draft', 'active', 'live', 'closed'] as const;
+export const quizStatus = z.enum(QUIZ_STATUSES);
 export type QuizStatus = z.infer<typeof quizStatus>;
 
 export const quiz = z.object({
@@ -10,7 +12,7 @@ export const quiz = z.object({
   title: z.string(),
   description: z.string().nullable(),
   isActive: z.boolean(),
-  status: quizStatus.default('draft'),
+  status: tolerantEnum(QUIZ_STATUSES, 'draft').default('draft'),
 });
 export type Quiz = z.infer<typeof quiz>;
 

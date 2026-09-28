@@ -130,6 +130,7 @@ packages/
       misc.ts
       parse.ts
       quiz.ts
+      tolerant.ts
       user.ts
     test/
       fixtures/

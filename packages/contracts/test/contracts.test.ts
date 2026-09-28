@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { z } from 'zod';
 import {
   ContractParseError,
   apiErrorBody,
@@ -14,9 +15,11 @@ import {
   geocodeSuggestion,
   mapsKeyConfig,
   parse,
+  quiz,
   quizLeaderboard,
   quizQuestion,
   randomizerSession,
+  registerRequest,
   safeParse,
   submission,
   unreadCount,
@@ -99,7 +102,8 @@ describe('contracts parse backend payloads', () => {
     expect(parse(banRecord, { ...base, duration: '3' }).duration).toBe(3);
     expect(parse(banRecord, { ...base, duration: 5 }).duration).toBe(5);
     expect(parse(banRecord, { ...base, duration: 'permanent' }).duration).toBe('permanent');
-    expect(safeParse(banRecord, { ...base, duration: '7' }).ok).toBe(false);
+    expect(parse(banRecord, { ...base, duration: '7' }).duration).toBe('permanent');
+    expect(parse(banRecord, { ...base, duration: 'forever' }).duration).toBe('permanent');
   });
 
   it('book vote round, quiz, randomizer, support, chat, geocode, config', () => {
@@ -175,8 +179,27 @@ describe('contracts reject malformed payloads', () => {
   });
 
   it('rejects unknown enum values and wrong types', () => {
-    expect(safeParse(clubEvent, { ...eventPayload, status: 'weird' }).ok).toBe(false);
+    expect(safeParse(clubEvent, { ...eventPayload, status: 7 }).ok).toBe(false);
     expect(safeParse(club, { ...clubPayload, memberCount: '3' }).ok).toBe(false);
-    expect(safeParse(userProfile, { ...user, role: 'root' }).ok).toBe(false);
+    expect(safeParse(userProfile, { ...user, role: undefined }).ok).toBe(false);
+  });
+});
+
+describe('tolerant response enums', () => {
+  it('an unknown club status does not break list parsing', () => {
+    const list = parse(z.array(club), [{ ...clubPayload, status: 'archived' }, { ...clubPayload, id: 'd', status: 'paused' }]);
+    expect(list.map((c) => c.status)).toEqual(['active', 'paused']);
+  });
+
+  it('falls back for quiz, event, role and vote round statuses', () => {
+    expect(parse(quiz, { id: 'q', clubId: 'c', createdBy: 'u', title: 't', description: null, isActive: true, status: 'archived' }).status).toBe('draft');
+    expect(parse(clubMember, { userId: 'u', displayName: 'A', avatarUrl: null, role: 'moderator', socials: null, socialsPublic: false }).role).toBe('member');
+    expect(parse(bookVoteRound, { id: 'r', clubId: 'c', status: 'paused', options: [], totalVotes: 0, winnerId: null }).status).toBe('closed');
+    expect(parse(userProfile, { id: 'u', email: 'e', displayName: 'A', role: 'superuser', createdAt: 'x', socialsPublic: false, socials: {} }).role).toBe('user');
+    expect(parse(clubEvent, { ...eventPayload, status: 'postponed' }).status).toBe('scheduled');
+  });
+
+  it('keeps strict enums for requests', () => {
+    expect(safeParse(registerRequest, { email: 'e', password: 'p', displayName: 'n', role: 'superuser' }).ok).toBe(false);
   });
 });

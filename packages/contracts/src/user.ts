@@ -1,6 +1,8 @@
 import { z } from 'zod';
+import { tolerantEnum } from './tolerant';
 
-export const userRole = z.enum(['user', 'organizer', 'admin']);
+const USER_ROLES = ['user', 'organizer', 'admin'] as const;
+export const userRole = z.enum(USER_ROLES);
 export type UserRole = z.infer<typeof userRole>;
 
 export const userSocials = z.object({
@@ -17,7 +19,7 @@ export const userProfile = z.object({
   id: z.string(),
   email: z.string(),
   displayName: z.string(),
-  role: userRole,
+  role: tolerantEnum(USER_ROLES, 'user'),
   avatarUrl: z.string().nullish(),
   createdAt: z.string(),
   socialsPublic: z.boolean(),

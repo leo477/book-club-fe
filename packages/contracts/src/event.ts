@@ -1,6 +1,8 @@
 import { z } from 'zod';
+import { tolerantEnum } from './tolerant';
 
-export const eventStatus = z.enum(['scheduled', 'active', 'held', 'cancelled', 'rescheduled']);
+const EVENT_STATUSES = ['scheduled', 'active', 'held', 'cancelled', 'rescheduled'] as const;
+export const eventStatus = z.enum(EVENT_STATUSES);
 export type EventStatus = z.infer<typeof eventStatus>;
 
 export const afterMeetingVenue = z.object({
@@ -24,7 +26,7 @@ export const clubEvent = z.object({
   address: z.string().nullable(),
   lat: z.number().nullable(),
   lng: z.number().nullable(),
-  status: eventStatus,
+  status: tolerantEnum(EVENT_STATUSES, 'scheduled'),
   cancelledAt: z.string().nullable(),
   coverUrl: z.string().nullish(),
   bookTitle: z.string().nullish(),

@@ -113,20 +113,29 @@ describe.each(cases)('fixture $name', ({ schema, data, required }) => {
 
 describe('unknown enum values', () => {
   it.each([
-    ['userProfile.role', userProfile, users.userProfile, { role: 'superuser' }],
-    ['club.status', club, clubs.club, { status: 'archived' }],
-    ['clubEvent.status', clubEvent, events.clubEvent, { status: 'postponed' }],
-    ['clubMember.role', clubMember, clubs.clubMember, { role: 'owner' }],
     ['joinClubResponse.status', joinClubResponse, clubs.joinClubResponse, { status: 'approved' }],
     ['myMembership.joinRequestStatus', myMembership, clubs.myMembership, { joinRequestStatus: 'approved' }],
     ['attendEventResponse.joinRequestStatus', attendEventResponse, events.attendEventResponse, { joinRequestStatus: 'rejected' }],
-    ['bookVoteRound.status', bookVoteRound, votes.bookVoteRound, { status: 'pending' }],
-    ['quiz.status', quiz, quizzes.quiz, { status: 'archived' }],
     ['submission.type', submission, misc.submission, { type: 'praise' }],
     ['submission.status', submission, misc.submission, { status: 'wontfix' }],
-    ['banRecord.duration', banRecord, clubs.banRecord, { duration: '7' }],
   ] as const)('%s', (_name, schema, data, patch) => {
     expect(safeParse(schema as z.ZodType, { ...data, ...patch }).ok).toBe(false);
+  });
+});
+
+describe('tolerant response enums', () => {
+  it.each([
+    ['userProfile.role', userProfile, users.userProfile, { role: 'superuser' }, 'role', 'user'],
+    ['club.status', club, clubs.club, { status: 'archived' }, 'status', 'active'],
+    ['clubEvent.status', clubEvent, events.clubEvent, { status: 'postponed' }, 'status', 'scheduled'],
+    ['clubMember.role', clubMember, clubs.clubMember, { role: 'owner' }, 'role', 'member'],
+    ['bookVoteRound.status', bookVoteRound, votes.bookVoteRound, { status: 'pending' }, 'status', 'closed'],
+    ['quiz.status', quiz, quizzes.quiz, { status: 'archived' }, 'status', 'draft'],
+    ['banRecord.duration', banRecord, clubs.banRecord, { duration: '7' }, 'duration', 'permanent'],
+  ] as const)('%s falls back instead of failing', (_name, schema, data, patch, field, expected) => {
+    const result = safeParse(schema as z.ZodType, { ...data, ...patch });
+    expect(result.ok).toBe(true);
+    expect((result as { data: Record<string, unknown> }).data[field]).toBe(expected);
   });
 });
 
@@ -166,7 +175,7 @@ describe('backend verification findings', () => {
     }
     expect(parse(banRecord, clubs.banRecord).duration).toBe(3);
     expect(safeParse(banRecord, { ...clubs.banRecord, duration: 7 }).ok).toBe(false);
-    expect(safeParse(banRecord, { ...clubs.banRecord, duration: '' }).ok).toBe(false);
+    expect(parse(banRecord, { ...clubs.banRecord, duration: '' }).duration).toBe('permanent');
   });
 
   it('chat unread count is snake_case, camelCase is rejected', () => {

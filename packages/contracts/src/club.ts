@@ -1,16 +1,21 @@
 import { z } from 'zod';
+import { tolerantEnum } from './tolerant';
 import { afterMeetingVenue } from './event';
 
-export const clubStatus = z.enum(['active', 'paused', 'cancelled']);
+const CLUB_STATUSES = ['active', 'paused', 'cancelled'] as const;
+export const clubStatus = z.enum(CLUB_STATUSES);
 export type ClubStatus = z.infer<typeof clubStatus>;
 
 export const banDuration = z.union([z.literal(1), z.literal(3), z.literal(5), z.literal('permanent')]);
 export type BanDuration = z.infer<typeof banDuration>;
 
-const banDurationWire = z.union([
-  banDuration,
-  z.enum(['1', '3', '5']).transform((v) => Number(v) as 1 | 3 | 5),
-]);
+// Backend stores str(duration) and treats anything other than "1"/"3"/"5" as a permanent ban (expires_at = None).
+const banDurationWire = z
+  .union([
+    banDuration,
+    z.enum(['1', '3', '5']).transform((v) => Number(v) as 1 | 3 | 5),
+    z.string().transform((): 'permanent' => 'permanent'),
+  ]);
 
 export const championInfo = z.object({
   userId: z.string(),
@@ -31,7 +36,7 @@ export const club = z.object({
   memberCount: z.number(),
   memberPreviews: z.array(z.string()).default([]),
   createdAt: z.string(),
-  status: clubStatus.default('active'),
+  status: tolerantEnum(CLUB_STATUSES, 'active').default('active'),
   city: z.string().nullish(),
   nextMeetingDate: z.string().nullish(),
   address: z.string().nullish(),
@@ -73,14 +78,15 @@ export const clubStats = z.object({
 });
 export type ClubStats = z.infer<typeof clubStats>;
 
-export const memberRole = z.enum(['member', 'organizer']);
+const MEMBER_ROLES = ['member', 'organizer'] as const;
+export const memberRole = z.enum(MEMBER_ROLES);
 export type MemberRole = z.infer<typeof memberRole>;
 
 export const clubMember = z.object({
   userId: z.string(),
   displayName: z.string(),
   avatarUrl: z.string().nullable(),
-  role: memberRole,
+  role: tolerantEnum(MEMBER_ROLES, 'member'),
   socials: z.record(z.string(), z.string()).nullable(),
   socialsPublic: z.boolean(),
 });
