@@ -5,7 +5,7 @@ import {
   output,
   signal,
 } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ClubMemberDetail, BanRecord, BanDuration } from '../../../../core/models/club.model';
 import { QrCodeComponent } from '../../../../shared/components/qr-code/qr-code.component';
 import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
@@ -16,7 +16,7 @@ import { HlmCard } from '../../../../shared/spartan/card/src';
   selector: 'app-club-members-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule, QrCodeComponent, InitialsPipe, HlmButton, HlmCard],
+  imports: [TranslatePipe, QrCodeComponent, InitialsPipe, HlmButton, HlmCard],
   templateUrl: './club-members-list.component.html',
 })
 export class ClubMembersListComponent {

@@ -7,7 +7,7 @@ import {
 import { NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { Club } from '../../../../core/models/club.model';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { HlmCardImports } from '../../../../shared/spartan/card/src';
 import { HlmButton } from '../../../../shared/spartan/button/src';
 import { HlmSeparator } from '../../../../shared/spartan/separator/src';
@@ -18,7 +18,7 @@ import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
   selector: 'app-club-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgOptimizedImage, RouterLink, TranslateModule, ...HlmCardImports, HlmButton, HlmSeparator, HlmSpinner, InitialsPipe],
+  imports: [NgOptimizedImage, RouterLink, TranslatePipe, ...HlmCardImports, HlmButton, HlmSeparator, HlmSpinner, InitialsPipe],
   templateUrl: './club-card.component.html',
 })
 export class ClubCardComponent {

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Component, Input, provideZonelessChangeDetection, signal, ChangeDetectionStrategy } from '@angular/core';
 import { GoogleMap, MapAdvancedMarker, MapPolyline } from '@angular/google-maps';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { EventMapComponent } from './event-map.component';
 import { MapsConfigService } from '../../../core/services/maps-config.service';
@@ -89,8 +89,8 @@ function setup(opts: {
   const fakeRouting = Object.assign(new FakeRoutingService(), opts.routingStub ?? {});
 
   TestBed.configureTestingModule({
-    imports: [EventMapComponent, TranslateModule.forRoot()],
-    providers: [
+    imports: [EventMapComponent],
+    providers: [provideTranslateService(), 
       provideZonelessChangeDetection(),
       { provide: MapsConfigService, useValue: fakeMaps },
       { provide: GeocodingService, useValue: fakeGeocoding },

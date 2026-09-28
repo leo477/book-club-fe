@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { SupportService } from '../../../core/services/support.service';
 import { SeoService } from '../../../core/services/seo.service';
@@ -15,7 +15,7 @@ type KanbanStatus = Extract<SubmissionStatus, 'pending' | 'approved' | 'in_progr
   selector: 'app-support-board',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, SubmissionCardComponent, EmptyStateComponent, HlmSpinner],
+  imports: [RouterLink, TranslatePipe, SubmissionCardComponent, EmptyStateComponent, HlmSpinner],
   templateUrl: './support-board.component.html',
 })
 export class SupportBoardComponent implements OnInit {

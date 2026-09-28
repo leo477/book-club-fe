@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ClubMemberDetail, BanRecord, BanDuration } from '../../../../core/models/club.model';
 import { ClubMembersListComponent } from '../../club-detail/members/club-members-list.component';
 import { HlmButton } from '../../../../shared/spartan/button/src';
@@ -8,7 +8,7 @@ import { HlmButton } from '../../../../shared/spartan/button/src';
   selector: 'app-club-manage-members',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule, ClubMembersListComponent, HlmButton],
+  imports: [TranslatePipe, ClubMembersListComponent, HlmButton],
   templateUrl: './club-manage-members.component.html',
 })
 export class ClubManageMembersComponent {

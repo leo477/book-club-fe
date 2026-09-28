@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { NgClass } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { QuizService } from '../../../core/services/quiz.service';
 import { QuizAttempt } from '../../../core/models/quiz.model';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
@@ -19,7 +19,7 @@ type QuizState = 'loading' | 'taking' | 'submitting' | 'results' | 'error';
   selector: 'app-quiz-take',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgClass, RouterLink, LoadingSpinnerComponent, TranslateModule],
+  imports: [NgClass, RouterLink, LoadingSpinnerComponent, TranslatePipe],
   templateUrl: './quiz-take.component.html',
 })
 export class QuizTakeComponent implements OnInit {

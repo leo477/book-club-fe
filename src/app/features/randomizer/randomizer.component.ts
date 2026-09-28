@@ -11,7 +11,7 @@ import { toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormControl, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe } from '@angular/common';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../core/auth/auth.service';
 import { RandomizerService } from '../../core/services/randomizer.service';
 import { InitialsPipe } from '../../shared/pipes/initials.pipe';
@@ -22,7 +22,7 @@ import { HlmInput } from '../../shared/spartan/input/src';
   selector: 'app-randomizer',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslateModule, InitialsPipe, HlmButton, HlmInput],
+  imports: [ReactiveFormsModule, RouterLink, DatePipe, TranslatePipe, InitialsPipe, HlmButton, HlmInput],
   styleUrl: './randomizer.component.scss',
   templateUrl: './randomizer.component.html',
 })

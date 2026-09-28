@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentFixture } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ClubManagePanelComponent } from './club-manage-panel.component';
 
 describe('ClubManagePanelComponent', () => {
@@ -11,8 +11,8 @@ describe('ClubManagePanelComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [ClubManagePanelComponent, TranslateModule.forRoot()],
-      providers: [provideZonelessChangeDetection(), provideRouter([])],
+      imports: [ClubManagePanelComponent],
+      providers: [provideTranslateService(), provideZonelessChangeDetection(), provideRouter([])],
     });
     fixture = TestBed.createComponent(ClubManagePanelComponent);
     component = fixture.componentInstance;

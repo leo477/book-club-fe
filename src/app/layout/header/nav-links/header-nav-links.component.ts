@@ -1,12 +1,12 @@
 import { Component, ChangeDetectionStrategy, input } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-header-nav-links',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive, TranslateModule],
+  imports: [RouterLink, RouterLinkActive, TranslatePipe],
   templateUrl: './header-nav-links.component.html',
 })
 export class HeaderNavLinksComponent {

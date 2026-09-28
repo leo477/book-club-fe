@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ChatComposerComponent } from './chat-composer.component';
 
 describe('ChatComposerComponent', () => {
@@ -8,8 +8,8 @@ describe('ChatComposerComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ChatComposerComponent, TranslateModule.forRoot()],
-      providers: [provideZonelessChangeDetection()],
+      imports: [ChatComposerComponent],
+      providers: [provideTranslateService(), provideZonelessChangeDetection()],
     }).compileComponents();
     const fixture = TestBed.createComponent(ChatComposerComponent);
     component = fixture.componentInstance;

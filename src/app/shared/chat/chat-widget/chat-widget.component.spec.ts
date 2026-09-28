@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { Router, NavigationEnd, Event as RouterEvent } from '@angular/router';
 import { Subject, EMPTY } from 'rxjs';
 import { ChatWidgetComponent } from './chat-widget.component';
@@ -112,8 +112,8 @@ describe('ChatWidgetComponent', () => {
     tokenStore = makeTokenStore();
 
     await TestBed.configureTestingModule({
-      imports: [ChatWidgetComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [ChatWidgetComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         { provide: AuthService, useValue: authSvc },
         { provide: ChatService, useValue: chatSvc },

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { LoginComponent } from './login.component';
 import { AuthService } from '../../../core/auth/auth.service';
 import { SeoService } from '../../../core/services/seo.service';
@@ -19,8 +19,8 @@ describe('LoginComponent', () => {
     vi.useFakeTimers();
 
     TestBed.configureTestingModule({
-      imports: [LoginComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [LoginComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: AuthService, useValue: authSpy },

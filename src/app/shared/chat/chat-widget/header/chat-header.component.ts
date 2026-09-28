@@ -1,11 +1,11 @@
 import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-chat-header',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule],
+  imports: [TranslatePipe],
   templateUrl: './chat-header.component.html',
 })
 export class ChatHeaderComponent {

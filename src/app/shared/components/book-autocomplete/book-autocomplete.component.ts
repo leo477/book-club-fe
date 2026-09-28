@@ -9,7 +9,7 @@ import {
 import { toObservable } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule } from '@angular/forms';
 import { SlicePipe } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { catchError, filter, of, switchMap, tap } from 'rxjs';
 import { HlmInput } from '../../spartan/input/src';
 import { HlmSpinner } from '../../spartan/spinner/src';
@@ -26,7 +26,7 @@ export const BOOK_SEARCH_DEBOUNCE_MS = new InjectionToken<number>('BOOK_SEARCH_D
   selector: 'app-book-autocomplete',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslateModule, HlmInput, HlmSpinner, SlicePipe],
+  imports: [ReactiveFormsModule, TranslatePipe, HlmInput, HlmSpinner, SlicePipe],
   template: `
 <div class="relative">
   <div class="relative">
