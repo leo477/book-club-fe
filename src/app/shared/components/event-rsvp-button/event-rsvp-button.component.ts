@@ -17,6 +17,7 @@ import { HlmSpinner } from '../../spartan/spinner/src';
     @if (attending()) {
       <button
         hlmBtn
+        data-testid="event-rsvp-button"
         type="button"
         [size]="size()"
         [disabled]="loading() || closed()"
@@ -36,6 +37,7 @@ import { HlmSpinner } from '../../spartan/spinner/src';
     } @else {
       <button
         hlmBtn
+        data-testid="event-rsvp-button"
         type="button"
         [size]="size()"
         [disabled]="loading() || closed()"

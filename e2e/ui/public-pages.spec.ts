@@ -39,12 +39,8 @@ test.describe('register page', () => {
     await page.locator('#reg-display-name').fill('Playwright Prober');
     await page.locator('#reg-email').fill('not-an-email');
     await page.locator('#reg-email').blur();
-    // Matched on the validator attribute, not error text: the text is locale-
-    // dependent (register.component.html renders it via ngx-translate) and
-    // the Ukrainian translation ("...електронної пошти") doesn't contain the
-    // literal word "email", so an /email/i text match silently misses it
-    // whenever the page renders in Ukrainian.
-    await expect(page.locator('hlm-field-error[validator="email"]').first()).toBeVisible();
+    // Matched on a test id, not error text: the text is locale-dependent.
+    await expect(page.getByTestId('register-email-error')).toBeVisible();
   });
 
   test('mismatched passwords are flagged before submit', async ({ page }) => {

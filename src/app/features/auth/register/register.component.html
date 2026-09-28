@@ -50,7 +50,7 @@
                   <label hlmFieldLabel for="reg-email">{{ 'AUTH.email' | translate }}</label>
                   <input hlmInput id="reg-email" type="email" placeholder="you@example.com" autocomplete="email" [formControl]="form.controls.email" />
                   <hlm-field-error validator="required">{{ 'FORM_ERRORS.required' | translate }}</hlm-field-error>
-                  <hlm-field-error validator="email">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
+                  <hlm-field-error validator="email" data-testid="register-email-error">{{ 'FORM_ERRORS.email' | translate }}</hlm-field-error>
                 </hlm-field>
 
                 <!-- Password -->

@@ -497,6 +497,7 @@ components.json
 eslint.config.js
 LICENSE
 package.json
+PLAN-REACT-MIGRATION-2026-09-28.md
 PLAN-UI-STACK-2026-09-28.md
 playwright.full-audit.config.ts
 postcss.config.json
