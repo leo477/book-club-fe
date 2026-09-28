@@ -266,29 +266,4 @@ describe('ClubManageComponent', () => {
     });
   });
 
-  describe('maxMemberGrowth / maxEventFrequency', () => {
-    it('returns at least 1 even with empty data', async () => {
-      await setup();
-      expect(component.maxMemberGrowth({ memberGrowth: [] } as unknown as ClubStats)).toBe(1);
-      expect(component.maxEventFrequency({ eventFrequency: [] } as unknown as ClubStats)).toBe(1);
-    });
-
-    it('returns the max count', async () => {
-      await setup();
-      const stats = { memberGrowth: [{ count: 3 }, { count: 7 }] } as unknown as ClubStats;
-      expect(component.maxMemberGrowth(stats)).toBe(7);
-    });
-  });
-
-  describe('bannedDisplayName', () => {
-    it('resolves the display name from members', async () => {
-      await setup();
-      expect(component.bannedDisplayName({ userId: 'u2' } as BanRecord)).toBe('User u2');
-    });
-
-    it('falls back to the userId when the member is not found', async () => {
-      await setup();
-      expect(component.bannedDisplayName({ userId: 'unknown' } as BanRecord)).toBe('unknown');
-    });
-  });
 });

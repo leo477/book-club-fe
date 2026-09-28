@@ -57,20 +57,6 @@ The content is organized as follows:
   labeler.yml
 .husky/
   pre-commit
-audit-evidence/
-  prod/
-    login.png
-    p_chats.png
-    p_club_create.png
-    p_clubs.png
-    p_events.png
-    p_manage.png
-    p_profile.png
-    privacy.png
-    register.png
-    root.png
-    terms.png
-  audit-prod-results.json
 docs/
   archive/
     ARCHITECTURE-REVIEW.md
@@ -79,6 +65,7 @@ docs/
     AUDIT-REPORT.md
     PLAN-CODE-SCANNING-2026-07-10.md
     PLAN-COOKIE-AUTH-2026-07-07.md
+    PLAN-MOBILE-APP-2026-07-15.md
     REFACTOR-PLAN-2026-07-06.md
 e2e/
   fixtures/
@@ -192,6 +179,18 @@ src/
           club-detail.component.html
           club-detail.component.ts
         club-manage/
+          dashboard/
+            club-manage-dashboard.component.html
+            club-manage-dashboard.component.ts
+          members/
+            club-manage-members.component.html
+            club-manage-members.component.ts
+          requests/
+            club-manage-requests.component.html
+            club-manage-requests.component.ts
+          tools/
+            club-manage-tools.component.html
+            club-manage-tools.component.ts
           club-manage.component.html
           club-manage.component.ts
         clubs-list/
@@ -295,6 +294,12 @@ src/
         footer.component.html
         footer.component.ts
       header/
+        mobile-sheet/
+          header-mobile-sheet.component.html
+          header-mobile-sheet.component.ts
+        nav-links/
+          header-nav-links.component.html
+          header-nav-links.component.ts
         header.component.html
         header.component.ts
       shell/
@@ -306,6 +311,15 @@ src/
         book-stores.component.ts
       chat/
         chat-widget/
+          composer/
+            chat-composer.component.html
+            chat-composer.component.ts
+          header/
+            chat-header.component.html
+            chat-header.component.ts
+          message-list/
+            chat-message-list.component.html
+            chat-message-list.component.ts
           chat-widget.component.html
           chat-widget.component.ts
       components/
@@ -500,7 +514,6 @@ components.json
 eslint.config.js
 LICENSE
 package.json
-PLAN-MOBILE-APP-2026-07-15.md
 playwright.full-audit.config.ts
 postcss.config.json
 proxy.conf.json

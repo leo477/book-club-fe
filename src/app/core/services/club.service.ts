@@ -1,6 +1,6 @@
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom, map, of, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
 import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
@@ -146,6 +146,15 @@ export class ClubService {
   async ensureMyClubsLoaded(maxAgeMs = 30_000): Promise<void> {
     if (this.myClubsLoadedAt > 0 && Date.now() - this.myClubsLoadedAt < maxAgeMs) return;
     await this.loadMyClubs();
+  }
+
+  getClubById$(id: string): Observable<Club> {
+    const cached = this.clubByIdCache.get(id);
+    if (cached) return of(cached);
+    return this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`).pipe(
+      map(mapClub),
+      tap(club => this.clubByIdCache.set(id, club)),
+    );
   }
 
   async getClubById(id: string): Promise<Club | null> {
