@@ -49,7 +49,6 @@ The content is organized as follows:
     dependency-review.yml
     i18n-check.yml
     lighthouse.yml
-    pr-review.yml
     scorecard.yml
     secret-scan.yml
     stale.yml
