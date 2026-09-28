@@ -8,6 +8,7 @@ export const parityTargets = {
 export default defineConfig({
   testDir: './e2e/parity',
   testMatch: ['**/*.spec.ts'],
+  updateSnapshots: 'none',
   snapshotPathTemplate: '{testDir}/__snapshots__/{testFilePath}/{arg}{ext}',
   fullyParallel: false,
   retries: 0,

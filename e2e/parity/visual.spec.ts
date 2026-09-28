@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { assertBaselineWritable } from './snapshot-guard';
 import { publicRoutes, slug } from './routes';
 
 const viewports = [
@@ -9,11 +10,7 @@ const viewports = [
 const themes = ['light', 'dark'] as const;
 const dynamicAreas = ['[data-testid="dynamic"]', 'app-toast-container', 'iframe', 'video'];
 
-test.beforeAll(({}, testInfo) => {
-  if (testInfo.project.name === 'next' && ['all', 'changed'].includes(testInfo.config.updateSnapshots)) {
-    throw new Error('Refusing to update snapshots for the "next" project: legacy baselines are the reference.');
-  }
-});
+test.beforeAll(({}, testInfo) => assertBaselineWritable(testInfo));
 
 for (const route of publicRoutes) {
   for (const theme of themes) {

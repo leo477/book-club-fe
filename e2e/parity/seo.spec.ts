@@ -1,9 +1,13 @@
 import { test, expect } from '@playwright/test';
 import { extractSeo, jsonLdProblems, jsonLdTypes, type SeoSnapshot } from './html-meta';
 import { expectations } from './expectations';
+import { assertBaselineWritable } from './snapshot-guard';
 import { guestRedirects, publicRoutes, rawRoutes, slug } from './routes';
 
-const PROD_ORIGIN = 'https://book-club-planer.vercel.app';
+const PROD_ORIGINS = ['https://book-club-planer.vercel.app', 'https://www.book-club-planer.vercel.app'];
+const PREVIEW_ORIGIN = /https:\/\/book-club-planer(?:-[a-z0-9-]+)?\.vercel\.app/g;
+
+test.beforeAll(({}, testInfo) => assertBaselineWritable(testInfo));
 
 function assertComplete(seo: SeoSnapshot): void {
   expect(seo.title).not.toBe('');
@@ -18,7 +22,8 @@ function assertComplete(seo: SeoSnapshot): void {
 
 function summarise(seo: SeoSnapshot, origins: string[]): string {
   let text = JSON.stringify({ ...seo, jsonLd: jsonLdTypes(seo.jsonLd) }, null, 2) + '\n';
-  for (const origin of [...origins, PROD_ORIGIN]) text = text.split(origin).join('{ORIGIN}');
+  for (const origin of [...origins, ...PROD_ORIGINS]) text = text.split(origin).join('{ORIGIN}');
+  text = text.replace(PREVIEW_ORIGIN, '{ORIGIN}');
   return text;
 }
 
