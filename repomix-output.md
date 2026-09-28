@@ -110,6 +110,8 @@ packages/
       types.ts
     test/
       client.test.ts
+      modules.test.ts
+      msw.test.ts
     eslint.config.mjs
     package.json
     tsconfig.json
@@ -130,7 +132,15 @@ packages/
       quiz.ts
       user.ts
     test/
+      fixtures/
+        book-vote.json
+        clubs.json
+        events.json
+        misc.json
+        quiz.json
+        users.json
       contracts.test.ts
+      fixtures.test.ts
     eslint.config.mjs
     package.json
     tsconfig.json
@@ -143,6 +153,7 @@ packages/
       index.ts
     test/
       icu.test.ts
+      plurals.test.ts
     eslint.config.mjs
     package.json
     tsconfig.json

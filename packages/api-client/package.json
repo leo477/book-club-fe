@@ -14,5 +14,9 @@
     "@book-club/contracts": "*",
     "zod": "4.6.5"
   },
-  "devDependencies": { "vitest": "5.0.2" }
+  "devDependencies": {
+    "@vitest/coverage-v8": "5.0.2",
+    "msw": "3.0.0",
+    "vitest": "5.0.2"
+  }
 }

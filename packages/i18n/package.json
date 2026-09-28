@@ -16,6 +16,7 @@
     "lint": "eslint ."
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "5.0.2",
     "intl-messageformat": "12.1.2",
     "vitest": "5.0.2"
   }

@@ -91,3 +91,7 @@ mock-server/
 
 # Workspace build output
 packages/*/dist
+
+# workspace packages
+packages/*/node_modules/
+packages/*/coverage/

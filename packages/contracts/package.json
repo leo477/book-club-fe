@@ -11,5 +11,8 @@
     "lint": "eslint ."
   },
   "dependencies": { "zod": "4.6.5" },
-  "devDependencies": { "vitest": "5.0.2" }
+  "devDependencies": {
+    "@vitest/coverage-v8": "5.0.2",
+    "vitest": "5.0.2"
+  }
 }
