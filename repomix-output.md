@@ -85,6 +85,7 @@ e2e/
     html-meta.ts
     member.setup.ts
     routes.ts
+    snapshot-guard.ts
   audit-helper.ts
   global-setup.ts
   seed-guard.ts
