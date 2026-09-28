@@ -1,6 +1,7 @@
 import { chromium, type BrowserContext, type Page } from '@playwright/test';
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { isSeedAllowed } from '../seed-guard';
 
 interface Journey {
   auth?: 'member';
@@ -140,8 +141,21 @@ function loadAllowlist(journey: string): AllowEntry[] {
 }
 
 function storageStateFor(origin: string): string {
-  const hint = 'run `AUDIT_API_BASE_URL=<local api> npm run parity:setup-member` (ALLOW_PROD_SEED=1 for a non-local API)';
+  const hint = 'run `AUDIT_API_BASE_URL=<local api> npm run parity:setup-member` (plus ALLOW_PROD_SEED=<hostname> for a non-local API)';
   if (!existsSync(AUTH_STATE)) throw new Error(`e2e/.auth/member.json is missing: ${hint}`);
+  const metaFile = path.join(path.dirname(AUTH_STATE), 'member.meta.json');
+  let backend: string | undefined;
+  try {
+    backend = (JSON.parse(readFileSync(metaFile, 'utf-8')) as { apiBaseURL?: string }).apiBaseURL;
+  } catch {
+    backend = undefined;
+  }
+  if (!backend) {
+    throw new Error(`e2e/.auth/member.json has no recorded backend (legacy file): regenerate it via npm run parity:setup-member (${hint})`);
+  }
+  if (!isSeedAllowed(backend)) {
+    throw new Error(`e2e/.auth/member.json was created against non-local backend ${backend}; set ALLOW_PROD_SEED=${new URL(backend).hostname} to use it, or regenerate against a local API.`);
+  }
   const maxAgeH = Number(process.env['PARITY_AUTH_MAX_AGE_H'] ?? 12);
   const ageH = (Date.now() - statSync(AUTH_STATE).mtimeMs) / 3_600_000;
   if (ageH > maxAgeH) {

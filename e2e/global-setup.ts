@@ -7,7 +7,7 @@ import { newApiContext } from './fixtures/api-client';
 import { assertSeedAllowed } from './seed-guard';
 
 // Runs once before the full-audit suite. Refuses a non-local AUDIT_API_BASE_URL
-// unless ALLOW_PROD_SEED=1 is set explicitly (see assertSeedAllowed).
+// unless ALLOW_PROD_SEED=<hostname> is set explicitly (see assertSeedAllowed).
 //
 //  1. Warms up the (possibly sleeping) live backend.
 //  2. Registers two throwaway test users (member + organizer) via the real
@@ -122,6 +122,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
   const memberStorageStatePath = path.join(AUTH_DIR, 'member.json');
   const organizerStorageStatePath = path.join(AUTH_DIR, 'organizer.json');
   await primeStorageState(baseURL, memberAuth, memberStorageStatePath);
+  writeFileSync(path.join(AUTH_DIR, 'member.meta.json'), JSON.stringify({ apiBaseURL, createdAt: new Date().toISOString() }));
   await primeStorageState(baseURL, organizerAuth, organizerStorageStatePath);
 
   const organizerApi = await newApiContext({
