@@ -10,7 +10,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SlicePipe } from '@angular/common';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { toast } from '@spartan-ng/brain/sonner';
 import { EventService } from '../../../core/services/event.service';
@@ -33,7 +33,7 @@ import { EventMapComponent } from '../../../shared/components/event-map/event-ma
   selector: 'app-event-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton, HlmSpinner, EventRsvpButtonComponent, BookStoresComponent, SlicePipe, EventMapComponent],
+  imports: [RouterLink, TranslatePipe, FormatDatePipe, HlmButton, HlmSpinner, EventRsvpButtonComponent, BookStoresComponent, SlicePipe, EventMapComponent],
   templateUrl: './event-detail.component.html',
 })
 export class EventDetailComponent {

@@ -11,7 +11,7 @@ import {
 } from '@angular/core';
 import { NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
 import { ClubService } from '../../../core/services/club.service';
 import { logWarn } from '../../../core/utils/logger.util';
@@ -51,7 +51,7 @@ interface ClubDetailData {
   imports: [
     NgOptimizedImage,
     RouterLink,
-    TranslateModule,
+    TranslatePipe,
     FormatDatePipe,
     ClubMembersListComponent,
     ClubHeaderComponent,

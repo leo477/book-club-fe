@@ -46,7 +46,7 @@ export class SeoService {
     };
 
     // Apply for the lang already in effect at bootstrap.
-    const current = this.translate.currentLang ?? this.translate.getDefaultLang() ?? 'uk';
+    const current = this.translate.getCurrentLang() ?? this.translate.fallbackLang() ?? 'uk';
     apply(current);
 
     // Pass event.translations directly so applyLocalizedMeta reads from the

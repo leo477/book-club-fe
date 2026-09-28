@@ -1,12 +1,12 @@
 import { Component, ChangeDetectionStrategy, input } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ClubStats } from '../../../../core/models/club.model';
 
 @Component({
   selector: 'app-club-manage-dashboard',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule],
+  imports: [TranslatePipe],
   templateUrl: './club-manage-dashboard.component.html',
 })
 export class ClubManageDashboardComponent {

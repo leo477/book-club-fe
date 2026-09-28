@@ -9,14 +9,14 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { UploadService } from '../../../core/services/upload.service';
 
 @Component({
   selector: 'app-cover-upload',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslateModule],
+  imports: [ReactiveFormsModule, TranslatePipe],
   template: `
     <div class="space-y-2">
       @if (previewUrl() || externalUrl()) {

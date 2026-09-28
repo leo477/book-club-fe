@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { NgIcon } from '@ng-icons/core';
 import { HlmSheetImports } from '../../../shared/spartan/sheet/src';
 import { HlmIconImports } from '../../../shared/spartan/icon/src';
@@ -9,7 +9,7 @@ import { HlmIconImports } from '../../../shared/spartan/icon/src';
   selector: 'app-header-mobile-sheet',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, NgIcon, ...HlmIconImports, ...HlmSheetImports],
+  imports: [RouterLink, TranslatePipe, NgIcon, ...HlmIconImports, ...HlmSheetImports],
   templateUrl: './header-mobile-sheet.component.html',
 })
 export class HeaderMobileSheetComponent {

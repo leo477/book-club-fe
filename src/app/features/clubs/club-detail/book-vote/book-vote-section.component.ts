@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
 import { BookVoteService } from '../../../../core/services/book-vote.service';
 import { BookOption, BookVoteRound } from '../../../../core/models/book-vote.model';
@@ -20,7 +20,7 @@ import { HlmButton } from '../../../../shared/spartan/button/src';
   host: { class: 'block' },
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, TranslateModule, HlmButton],
+  imports: [FormsModule, TranslatePipe, HlmButton],
   templateUrl: './book-vote-section.component.html',
 })
 export class BookVoteSectionComponent {
@@ -62,7 +62,7 @@ export class BookVoteSectionComponent {
 
   /** Localized plural form of "vote(s)" for the given count (uk has one/few/many, en has one/other). */
   protected voteCountLabel(count: number): string {
-    const category = new Intl.PluralRules(this.translate.currentLang || 'uk').select(count);
+    const category = new Intl.PluralRules(this.translate.getCurrentLang() ?? 'uk').select(count);
     const key = `BOOK_VOTE.votes_${category}`;
     const label = this.translate.instant(key) as string;
     // Fall back to the "other" form for categories a locale doesn't define (e.g. en has no "few").

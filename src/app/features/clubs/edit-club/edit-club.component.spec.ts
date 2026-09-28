@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentFixture } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
 import { toast } from '@spartan-ng/brain/sonner';
 import { EditClubComponent } from './edit-club.component';
@@ -39,8 +39,8 @@ describe('EditClubComponent', () => {
     };
 
     TestBed.configureTestingModule({
-      imports: [EditClubComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [EditClubComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: ClubService, useValue: clubServiceSpy },

@@ -2,7 +2,7 @@ import {
   Component, ChangeDetectionStrategy, input, signal, computed, inject, effect,
 } from '@angular/core';
 import { GoogleMap, MapAdvancedMarker, MapPolyline } from '@angular/google-maps';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { of, switchMap, catchError, take } from 'rxjs';
 import { AfterMeetingVenue } from '../../../core/models/event.model';
 import { MapsConfigService } from '../../../core/services/maps-config.service';
@@ -13,7 +13,7 @@ import { RoutingService } from '../../../core/services/routing.service';
   selector: 'app-event-map',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [GoogleMap, MapAdvancedMarker, MapPolyline, TranslateModule],
+  imports: [GoogleMap, MapAdvancedMarker, MapPolyline, TranslatePipe],
   templateUrl: './event-map.component.html',
 })
 export class EventMapComponent {

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { Component, input, provideZonelessChangeDetection, ChangeDetectionStrategy } from '@angular/core';
 import { ClubDetailComponent } from './club-detail.component';
-import { TranslateModule, TranslateLoader, TranslateService } from '@ngx-translate/core';
+import { provideTranslateService, TranslateLoader, TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
 import { firstValueFrom, of } from 'rxjs';
 import { ClubService } from '../../../core/services/club.service';
@@ -94,27 +94,26 @@ describe('ClubDetailComponent', () => {
     await TestBed.configureTestingModule({
       imports: [
         ClubDetailComponent,
-        TranslateModule.forRoot({
-          loader: {
-            provide: TranslateLoader,
-            useValue: {
-              getTranslation: () => of({
-                CLUB_DETAIL: {
-                  deletion_countdown_hours: 'буде видалено через {{ hours }} год. {{ minutes }} хв.',
-                  deletion_countdown_minutes: 'буде видалено через {{ minutes }} хв.',
-                },
-                SEO: {
-                  club_detail_title: '{{ name }} | Book Club',
-                  club_detail_og_title: '{{ name }}',
-                  club_detail_description: '{{ name }} — a book club in {{ city }}. Join discussions, meetups and reading events.',
-                  site_url: 'https://book-club-planer.vercel.app',
-                },
-              }),
-            },
-          },
-        }),
       ],
       providers: [
+        provideTranslateService(),
+        {
+          provide: TranslateLoader,
+          useValue: {
+            getTranslation: () => of({
+              CLUB_DETAIL: {
+                deletion_countdown_hours: 'буде видалено через {{ hours }} год. {{ minutes }} хв.',
+                deletion_countdown_minutes: 'буде видалено через {{ minutes }} хв.',
+              },
+              SEO: {
+                club_detail_title: '{{ name }} | Book Club',
+                club_detail_og_title: '{{ name }}',
+                club_detail_description: '{{ name }} — a book club in {{ city }}. Join discussions, meetups and reading events.',
+                site_url: 'https://book-club-planer.vercel.app',
+              },
+            }),
+          },
+        },
         provideRouter([]),
         provideZonelessChangeDetection(),
         { provide: ClubService, useValue: clubServiceSpy },

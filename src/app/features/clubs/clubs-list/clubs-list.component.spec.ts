@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentFixture } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ClubsListComponent } from './clubs-list.component';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -55,8 +55,8 @@ describe('ClubsListComponent', () => {
     seoSpy = { setPageI18n: vi.fn(), injectWebSiteJsonLd: vi.fn(), setPage: vi.fn(), injectJsonLd: vi.fn() };
 
     TestBed.configureTestingModule({
-      imports: [ClubsListComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [ClubsListComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: ClubService, useValue: clubServiceMock },

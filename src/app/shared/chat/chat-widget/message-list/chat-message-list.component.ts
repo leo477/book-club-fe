@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, ElementRef, inject, viewChild } from '@angular/core';
 import { NgClass } from '@angular/common';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ChatService } from '../../../../core/services/chat.service';
 import { ChatTimestampPipe } from '../../../pipes/chat-timestamp.pipe';
 
@@ -8,7 +8,7 @@ import { ChatTimestampPipe } from '../../../pipes/chat-timestamp.pipe';
   selector: 'app-chat-message-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [NgClass, TranslateModule, ChatTimestampPipe],
+  imports: [NgClass, TranslatePipe, ChatTimestampPipe],
   templateUrl: './chat-message-list.component.html',
 })
 export class ChatMessageListComponent {

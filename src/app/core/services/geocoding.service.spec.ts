@@ -23,7 +23,7 @@ describe('GeocodingService', () => {
         provideZonelessChangeDetection(),
         provideHttpClient(withXhr()),
         provideHttpClientTesting(),
-        { provide: TranslateService, useValue: { currentLang: 'uk', defaultLang: 'uk' } },
+        { provide: TranslateService, useValue: { getCurrentLang: () => 'uk', fallbackLang: () => 'uk' } },
         GeocodingService,
       ],
     });

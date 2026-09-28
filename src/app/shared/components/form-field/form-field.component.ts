@@ -1,14 +1,14 @@
 import { Component, ChangeDetectionStrategy, inject, input, computed } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateService } from '@ngx-translate/core';
 import { map, startWith } from 'rxjs';
 
 @Component({
   selector: 'app-form-field',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslateModule],
+  imports: [ReactiveFormsModule],
   templateUrl: './form-field.component.html',
 })
 export class FormFieldComponent {
@@ -29,9 +29,9 @@ export class FormFieldComponent {
   private readonly _lang = toSignal(
     this.translate.onLangChange.pipe(
       map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
+      startWith(this.translate.getCurrentLang() ?? 'uk'),
     ),
-    { initialValue: this.translate.currentLang ?? 'uk' },
+    { initialValue: this.translate.getCurrentLang() ?? 'uk' },
   );
 
   readonly errorMessage = computed(() => {

@@ -8,7 +8,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, startWith } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideSun, lucideMoon } from '@ng-icons/lucide';
 import { AuthService } from '../../core/auth/auth.service';
@@ -25,7 +25,7 @@ import { HeaderMobileSheetComponent } from './mobile-sheet/header-mobile-sheet.c
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [provideIcons({ lucideSun, lucideMoon })],
   imports: [
-    RouterLink, TranslateModule, NgIcon,
+    RouterLink, TranslatePipe, NgIcon,
     ...HlmIconImports,
     HlmButton, HeaderNavLinksComponent, HeaderMobileSheetComponent,
   ],

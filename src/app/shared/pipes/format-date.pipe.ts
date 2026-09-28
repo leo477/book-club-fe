@@ -7,7 +7,7 @@ export class FormatDatePipe implements PipeTransform {
 
   transform(dateString: string | null | undefined): string {
     if (!dateString) return '—';
-    const lang = this.translate.currentLang ?? this.translate.defaultLang ?? 'uk';
+    const lang = this.translate.getCurrentLang() ?? this.translate.fallbackLang() ?? 'uk';
     const locale = lang === 'uk' ? 'uk-UA' : 'en-US';
     return new Date(dateString).toLocaleDateString(locale, {
       year: 'numeric',

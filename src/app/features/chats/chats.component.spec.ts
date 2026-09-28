@@ -1,6 +1,6 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ChatsComponent } from './chats.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { ChatService } from '../../core/services/chat.service';
@@ -52,8 +52,8 @@ describe('ChatsComponent', () => {
     chatSvc = makeChatService();
 
     TestBed.configureTestingModule({
-      imports: [ChatsComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [ChatsComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         { provide: AuthService, useValue: authSvc },
         { provide: ClubService, useValue: clubSvc },

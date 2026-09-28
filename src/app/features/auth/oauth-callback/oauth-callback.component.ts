@@ -1,6 +1,6 @@
 import { Component, ChangeDetectionStrategy, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
 import { AuthService } from '../../../core/auth/auth.service';
 import { HlmSpinner } from '../../../shared/spartan/spinner/src';
@@ -15,7 +15,7 @@ import { HlmSpinner } from '../../../shared/spartan/spinner/src';
   selector: 'app-oauth-callback',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule, HlmSpinner],
+  imports: [TranslatePipe, HlmSpinner],
   template: `
     <div class="min-h-screen flex flex-col items-center justify-center gap-4">
       <hlm-spinner />

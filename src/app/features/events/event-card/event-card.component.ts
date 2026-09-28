@@ -6,7 +6,7 @@ import {
   output,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
 import { ClubEvent } from '../../../core/models/event.model';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
@@ -19,7 +19,7 @@ import { EventRsvpButtonComponent } from '../../../shared/components/event-rsvp-
   selector: 'app-event-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe, ...HlmCardImports, HlmButton, HlmBadge, EventCountdownComponent, EventRsvpButtonComponent],
+  imports: [RouterLink, TranslatePipe, FormatDatePipe, ...HlmCardImports, HlmButton, HlmBadge, EventCountdownComponent, EventRsvpButtonComponent],
   templateUrl: './event-card.component.html',
 })
 export class EventCardComponent {

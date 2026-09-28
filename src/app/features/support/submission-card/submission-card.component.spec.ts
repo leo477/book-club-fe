@@ -1,6 +1,6 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { SubmissionCardComponent } from './submission-card.component';
 import { SupportService } from '../../../core/services/support.service';
 import { Submission } from '../../../core/models/support.model';
@@ -20,8 +20,8 @@ describe('SubmissionCardComponent', () => {
   async function setup(submission: Submission) {
     supportSpy = { toggleLike: vi.fn().mockResolvedValue(undefined) };
     await TestBed.configureTestingModule({
-      imports: [SubmissionCardComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [SubmissionCardComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         { provide: SupportService, useValue: supportSpy },
       ],

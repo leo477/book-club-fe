@@ -3,7 +3,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { By } from '@angular/platform-browser';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { BookAutocompleteComponent, BOOK_SEARCH_DEBOUNCE_MS } from './book-autocomplete.component';
 import { BookSearchService } from '../../../core/services/book-search.service';
 import { BookSuggestion } from '../../../core/models/book.model';
@@ -35,8 +35,8 @@ describe('BookAutocompleteComponent', () => {
     };
 
     await TestBed.configureTestingModule({
-      imports: [BookAutocompleteComponent, ReactiveFormsModule, TranslateModule.forRoot()],
-      providers: [
+      imports: [BookAutocompleteComponent, ReactiveFormsModule],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         { provide: BookSearchService, useValue: bookSearchSpy },
         // Use 0ms debounce so tests don't need to wait 600ms or mock timers.

@@ -4,7 +4,7 @@ import {
   input,
   output,
 } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { HlmButton } from '../../spartan/button/src';
 import { HlmSpinner } from '../../spartan/spinner/src';
 
@@ -12,7 +12,7 @@ import { HlmSpinner } from '../../spartan/spinner/src';
   selector: 'app-event-rsvp-button',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule, HlmButton, HlmSpinner],
+  imports: [TranslatePipe, HlmButton, HlmSpinner],
   template: `
     @if (attending()) {
       <button

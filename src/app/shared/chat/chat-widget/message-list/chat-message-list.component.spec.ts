@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection, signal } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ChatMessageListComponent } from './chat-message-list.component';
 import { ChatService } from '../../../../core/services/chat.service';
 
@@ -23,8 +23,8 @@ describe('ChatMessageListComponent', () => {
 
   async function setup() {
     await TestBed.configureTestingModule({
-      imports: [ChatMessageListComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [ChatMessageListComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         { provide: ChatService, useValue: chatSvc },
       ],

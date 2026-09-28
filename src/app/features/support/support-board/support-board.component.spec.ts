@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { SupportBoardComponent } from './support-board.component';
 import { SupportService } from '../../../core/services/support.service';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -33,8 +33,8 @@ describe('SupportBoardComponent', () => {
     };
     seoSpy = { setPageI18n: vi.fn() };
     await TestBed.configureTestingModule({
-      imports: [SupportBoardComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [SupportBoardComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: SupportService, useValue: supportSpy },

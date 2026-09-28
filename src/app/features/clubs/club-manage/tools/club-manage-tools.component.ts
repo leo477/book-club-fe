@@ -1,14 +1,14 @@
 import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { HlmButton } from '../../../../shared/spartan/button/src';
 
 @Component({
   selector: 'app-club-manage-tools',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule, RouterLink, TranslateModule, HlmButton],
+  imports: [FormsModule, RouterLink, TranslatePipe, HlmButton],
   templateUrl: './club-manage-tools.component.html',
 })
 export class ClubManageToolsComponent {

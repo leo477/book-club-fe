@@ -5,7 +5,7 @@ import { provideRouter } from '@angular/router';
 import { HttpClient, provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { map } from 'rxjs';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { EventDetailComponent } from './event-detail.component';
 import { EventMapComponent } from '../../../shared/components/event-map/event-map.component';
 import { EventService } from '../../../core/services/event.service';
@@ -57,8 +57,8 @@ describe('EventDetailComponent', () => {
     };
 
     TestBed.configureTestingModule({
-      imports: [EventDetailComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [EventDetailComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         provideRouter([]),
         provideHttpClient(withXhr()),

@@ -1,10 +1,10 @@
 import { Component, ChangeDetectionStrategy, input, output } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-profile-role-selector',
   standalone: true,
-  imports: [TranslateModule],
+  imports: [TranslatePipe],
   templateUrl: './profile-role-selector.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

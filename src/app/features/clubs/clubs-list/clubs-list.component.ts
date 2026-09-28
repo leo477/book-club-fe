@@ -11,7 +11,7 @@ import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Club } from '../../../core/models/club.model';
 import { SeoService } from '../../../core/services/seo.service';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { EmptyStateComponent } from '../../../shared/components/empty-state/empty-state.component';
 import { ClubCardComponent } from './club-card/club-card.component';
 import { HlmSpinner } from '../../../shared/spartan/spinner/src';
@@ -20,7 +20,7 @@ import { HlmSpinner } from '../../../shared/spartan/spinner/src';
   selector: 'app-clubs-list',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslateModule, ClubCardComponent, HlmSpinner],
+  imports: [RouterLink, FormsModule, EmptyStateComponent, TranslatePipe, ClubCardComponent, HlmSpinner],
   templateUrl: './clubs-list.component.html',
 })
 export class ClubsListComponent implements OnInit {

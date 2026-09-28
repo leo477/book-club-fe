@@ -8,7 +8,7 @@ import {
 import { HttpClient } from '@angular/common/http';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { of } from 'rxjs';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
 
 interface BookStoreResult {
@@ -22,7 +22,7 @@ interface BookStoreResult {
   selector: 'app-book-stores',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule],
+  imports: [TranslatePipe],
   template: `
     <section>
       <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ClubMembersListComponent } from './club-members-list.component';
 import { ClubMemberDetail, BanDuration } from '../../../../core/models/club.model';
 
@@ -19,8 +19,8 @@ describe('ClubMembersListComponent', () => {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ClubMembersListComponent, TranslateModule.forRoot()],
-      providers: [provideZonelessChangeDetection()],
+      imports: [ClubMembersListComponent],
+      providers: [provideTranslateService(), provideZonelessChangeDetection()],
     }).compileComponents();
     const fixture = TestBed.createComponent(ClubMembersListComponent);
     component = fixture.componentInstance;
