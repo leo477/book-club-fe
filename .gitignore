@@ -84,4 +84,7 @@ mock-server/
 /refactor_opus.md
 /spartan_plan.md
 /ui_changes.md
+
+# Audit evidence (screenshots/results, kept on disk but not tracked)
+/audit-evidence/
 .vercel

@@ -1,0 +1,50 @@
+<section class="parchment-card px-6 py-5">
+  <h2 class="text-sm font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide mb-4">
+    {{ 'CLUBS.join_requests_title' | translate }}
+  </h2>
+  @if (joinRequests().length === 0) {
+    <p class="text-sm text-[var(--color-ink-muted)] text-center py-6">{{ 'CLUBS.no_join_requests' | translate }}</p>
+  } @else {
+    <ul class="flex flex-col gap-3">
+      @for (req of joinRequests(); track req.userId) {
+        <li class="flex items-center gap-3 rounded-xl border border-[var(--color-sepia)] bg-[var(--color-surface)] p-3">
+          @if (req.avatarUrl) {
+            <img [src]="req.avatarUrl" width="40" height="40" [alt]="req.displayName" class="h-10 w-10 rounded-full object-cover flex-shrink-0" />
+          } @else {
+            <div class="h-10 w-10 rounded-full bg-gradient-fantasy flex items-center justify-center text-white font-semibold flex-shrink-0" aria-hidden="true">
+              {{ req.displayName.charAt(0) }}
+            </div>
+          }
+          <div class="flex-1 min-w-0">
+            <p class="font-medium text-[var(--color-ink)] truncate">{{ req.displayName }}</p>
+            <span class="inline-block mt-0.5 rounded-full bg-[var(--color-surface-raised)] px-2 py-0.5 text-xs text-[var(--color-ink-muted)] border border-[var(--color-sepia)]">
+              {{ req.source }}
+            </span>
+          </div>
+          <div class="flex items-center gap-2 flex-shrink-0">
+            <button
+              hlmBtn
+              size="sm"
+              type="button"
+              [disabled]="processingRequestUserId() === req.userId"
+              (click)="approve.emit(req.userId)"
+              class="bg-gradient-fantasy text-white"
+            >
+              {{ 'CLUBS.approve' | translate }}
+            </button>
+            <button
+              hlmBtn
+              variant="outline"
+              size="sm"
+              type="button"
+              [disabled]="processingRequestUserId() === req.userId"
+              (click)="reject.emit(req.userId)"
+            >
+              {{ 'CLUBS.reject' | translate }}
+            </button>
+          </div>
+        </li>
+      }
+    </ul>
+  }
+</section>

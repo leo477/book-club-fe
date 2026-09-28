@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Component, Input, provideZonelessChangeDetection, signal } from '@angular/core';
+import { Component, Input, provideZonelessChangeDetection, signal, ChangeDetectionStrategy } from '@angular/core';
 import { GoogleMap, MapAdvancedMarker, MapPolyline } from '@angular/google-maps';
 import { TranslateModule } from '@ngx-translate/core';
 import { of } from 'rxjs';
@@ -32,7 +32,8 @@ const ROUTE_PATH = [
 };
 
 // eslint-disable-next-line @angular-eslint/component-selector
-@Component({ selector: 'google-map', template: '', standalone: true })
+@Component({ selector: 'google-map', template: '', changeDetection: ChangeDetectionStrategy.OnPush,
+ standalone: true })
 class StubGoogleMap {
   @Input() center: unknown;
   @Input() zoom: unknown;
@@ -40,14 +41,16 @@ class StubGoogleMap {
 }
 
 // eslint-disable-next-line @angular-eslint/component-selector
-@Component({ selector: 'map-advanced-marker', template: '', standalone: true })
+@Component({ selector: 'map-advanced-marker', template: '', changeDetection: ChangeDetectionStrategy.OnPush,
+ standalone: true })
 class StubMapAdvancedMarker {
   @Input() position: unknown;
   @Input() title: unknown;
 }
 
 // eslint-disable-next-line @angular-eslint/component-selector
-@Component({ selector: 'map-polyline', template: '', standalone: true })
+@Component({ selector: 'map-polyline', template: '', changeDetection: ChangeDetectionStrategy.OnPush,
+ standalone: true })
 class StubMapPolyline {
   @Input() path: unknown;
   @Input() options: unknown;

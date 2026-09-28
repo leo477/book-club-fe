@@ -7,7 +7,6 @@ import {
   computed,
   effect,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { toast } from '@spartan-ng/brain/sonner';
@@ -15,8 +14,11 @@ import { ClubService, JoinRequest } from '../../../core/services/club.service';
 import { ChatService } from '../../../core/services/chat.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Club, ClubMemberDetail, BanRecord, BanDuration, ClubStats } from '../../../core/models/club.model';
-import { ClubMembersListComponent } from '../club-detail/members/club-members-list.component';
 import { EditClubComponent } from '../edit-club/edit-club.component';
+import { ClubManageDashboardComponent } from './dashboard/club-manage-dashboard.component';
+import { ClubManageMembersComponent } from './members/club-manage-members.component';
+import { ClubManageRequestsComponent } from './requests/club-manage-requests.component';
+import { ClubManageToolsComponent } from './tools/club-manage-tools.component';
 import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
@@ -26,11 +28,13 @@ import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FormsModule,
     RouterLink,
     TranslateModule,
-    ClubMembersListComponent,
     EditClubComponent,
+    ClubManageDashboardComponent,
+    ClubManageMembersComponent,
+    ClubManageRequestsComponent,
+    ClubManageToolsComponent,
     HlmSpinner,
     HlmButton,
     ...HlmTabsImports,
@@ -102,18 +106,6 @@ export class ClubManageComponent {
     if (bans.status === 'fulfilled') this.bans.set(bans.value);
     if (requests.status === 'fulfilled') this.joinRequests.set(requests.value);
     this.isLoading.set(false);
-  }
-
-  maxMemberGrowth(stats: ClubStats): number {
-    return Math.max(...(stats.memberGrowth ?? []).map(m => m.count), 1);
-  }
-
-  maxEventFrequency(stats: ClubStats): number {
-    return Math.max(...(stats.eventFrequency ?? []).map(m => m.count), 1);
-  }
-
-  bannedDisplayName(ban: BanRecord): string {
-    return this.members().find(m => m.userId === ban.userId)?.displayName ?? ban.userId;
   }
 
   async handleKick(userId: string): Promise<void> {

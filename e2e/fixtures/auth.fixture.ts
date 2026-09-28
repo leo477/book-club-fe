@@ -15,10 +15,9 @@ export const organizerStorageStatePath = path.join(AUTH_DIR, 'organizer.json');
 const RESOURCE_LOAD_ERROR = /^Failed to load resource: the server responded with a status of \d+/;
 
 // Auto-fixture: fails a test if the page threw an uncaught JS error or logged
-// to console.error (excluding the network-status noise above), same signal
-// total-audit.spec.ts already checks for unauthenticated routes — replicated
-// here so every authenticated UI spec gets it for free instead of copy-pasting
-// the listener/assert pair.
+// to console.error (excluding the network-status noise above), so every
+// authenticated UI spec gets it for free instead of copy-pasting the
+// listener/assert pair.
 const withConsoleGuard = base.extend<{ consoleGuard: void }>({
   consoleGuard: [
     async ({ page }, use) => {

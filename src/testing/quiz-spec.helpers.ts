@@ -1,10 +1,11 @@
-import { Component, NO_ERRORS_SCHEMA, Type, provideZonelessChangeDetection } from '@angular/core';
+import { Component, NO_ERRORS_SCHEMA, Type, provideZonelessChangeDetection, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { TranslateModule } from '@ngx-translate/core';
 import { QuizService } from '../app/core/services/quiz.service';
 
-@Component({ template: '', standalone: true })
+@Component({ template: '', changeDetection: ChangeDetectionStrategy.OnPush,
+ standalone: true })
 export class StubComponent {}
 
 export async function configureQuizTestBed(component: Type<unknown>, quizSvc: unknown): Promise<void> {

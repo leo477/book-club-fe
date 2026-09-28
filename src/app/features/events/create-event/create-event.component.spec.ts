@@ -2,7 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentFixture } from '@angular/core/testing';
 import { provideZonelessChangeDetection, NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CreateEventComponent } from './create-event.component';
 import { EventService } from '../../../core/services/event.service';
@@ -29,7 +29,7 @@ describe('CreateEventComponent', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: EventService, useValue: eventServiceSpy },
         { provide: GeocodingService, useValue: geocodingSpy },

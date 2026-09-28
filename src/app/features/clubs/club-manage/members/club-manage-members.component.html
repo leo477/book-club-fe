@@ -1,0 +1,42 @@
+<div class="space-y-6">
+  <app-club-members-list
+    [members]="members()"
+    [clubBans]="bans()"
+    [isOwner]="true"
+    [showRoleControls]="true"
+    [currentUserId]="currentUserId()"
+    [ownerId]="ownerId()"
+    (kick)="kick.emit($event)"
+    (ban)="ban.emit($event)"
+    (promote)="promote.emit($event)"
+    (demote)="demote.emit($event)" />
+
+  <!-- Banned users -->
+  <section class="parchment-card px-6 py-5">
+    <h2 class="text-sm font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide mb-4">
+      {{ 'CLUB_MANAGE.bans_title' | translate }} ({{ bans().length }})
+    </h2>
+    @if (bans().length === 0) {
+      <p class="text-sm text-[var(--color-ink-muted)]">{{ 'CLUB_MANAGE.no_bans' | translate }}</p>
+    } @else {
+      <ul class="divide-y divide-[var(--color-sepia)]">
+        @for (ban of bans(); track ban.userId) {
+          <li class="flex items-center gap-3 py-3">
+            <span class="text-lg" aria-hidden="true">🚫</span>
+            <span class="flex-1 text-sm text-[var(--color-ink)]">{{ bannedDisplayName(ban) }}</span>
+            <button
+              hlmBtn
+              variant="outline"
+              size="sm"
+              type="button"
+              [disabled]="processingMemberId() === ban.userId"
+              (click)="unban.emit(ban.userId)"
+            >
+              {{ 'CLUB_MANAGE.unban' | translate }}
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</div>

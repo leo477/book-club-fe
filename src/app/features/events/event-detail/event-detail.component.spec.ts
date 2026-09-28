@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { ComponentFixture } from '@angular/core/testing';
-import { Component, input, provideZonelessChangeDetection } from '@angular/core';
+import { Component, input, provideZonelessChangeDetection, ChangeDetectionStrategy } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { HttpClient, provideHttpClient } from '@angular/common/http';
+import { HttpClient, provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { map } from 'rxjs';
 import { TranslateModule } from '@ngx-translate/core';
@@ -16,7 +16,8 @@ import { ApiEvent, mapEvent } from '../../../core/api/api-mappers';
 import { makeApiEvent } from '../../../../testing/event-test.helpers';
 import { AfterMeetingVenue } from '../../../core/models/event.model';
 
-@Component({ selector: 'app-event-map', template: '', standalone: true })
+@Component({ selector: 'app-event-map', template: '', changeDetection: ChangeDetectionStrategy.OnPush,
+ standalone: true })
 class StubEventMapComponent {
   readonly lat = input<number | null>(null);
   readonly lng = input<number | null>(null);
@@ -60,7 +61,7 @@ describe('EventDetailComponent', () => {
       providers: [
         provideZonelessChangeDetection(),
         provideRouter([]),
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: EventService, useValue: eventServiceSpy },
         { provide: AuthService, useValue: authSpy },

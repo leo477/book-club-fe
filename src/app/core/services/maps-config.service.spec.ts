@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { MapsConfigService, MAPS_LOADER_FNS, MapsLoaderFns } from './maps-config.service';
 import { environment } from '../../../environments/environment';
@@ -21,7 +21,7 @@ describe('MapsConfigService', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         MapsConfigService,
         { provide: MAPS_LOADER_FNS, useValue: { setOptions: setOptionsSpy, importLibrary: importLibrarySpy } },
@@ -119,7 +119,7 @@ describe('MAPS_LOADER_FNS factory', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
       ],
     });

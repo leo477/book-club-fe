@@ -1,0 +1,35 @@
+version: 2
+
+updates:
+  # Angular/npm dependencies at the repo root
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "build"
+    groups:
+      # Bundle low-risk minor/patch bumps into a single weekly PR to cut noise.
+      # Majors are excluded so breaking changes stay visible and reviewable
+      # on their own (e.g. Angular major upgrades, ESLint, etc.).
+      npm-minor-patch:
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Keep GitHub Actions pinned-SHA versions current (workflows pin by SHA
+  # with a `# vX` comment, so these need explicit bumps to stay in sync).
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "ci"
+    groups:
+      github-actions:
+        patterns:
+          - "*"

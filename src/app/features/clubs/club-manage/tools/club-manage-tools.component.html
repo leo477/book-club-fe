@@ -1,0 +1,124 @@
+<div class="space-y-8">
+
+  <!-- Action tiles -->
+  <section>
+    <h2 class="text-sm font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide mb-3">{{ 'CLUB_MANAGE.tools_title' | translate }}</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <a [routerLink]="['/clubs', id(), 'quizzes']" class="flex items-center gap-3 parchment-card p-4 hover:scale-[1.01] transition-transform">
+        <span class="text-2xl" aria-hidden="true">📝</span>
+        <div>
+          <p class="font-semibold text-[var(--color-ink)]">{{ 'CLUB_DETAIL.quizzes_title' | translate }}</p>
+          <p class="text-xs text-[var(--color-ink-muted)]">{{ 'CLUB_DETAIL.quizzes_desc' | translate }}</p>
+        </div>
+      </a>
+      <a [routerLink]="['/clubs', id(), 'randomizer']" class="flex items-center gap-3 parchment-card p-4 hover:scale-[1.01] transition-transform">
+        <span class="text-2xl" aria-hidden="true">🎲</span>
+        <div>
+          <p class="font-semibold text-[var(--color-ink)]">{{ 'CLUB_DETAIL.randomizer_title' | translate }}</p>
+          <p class="text-xs text-[var(--color-ink-muted)]">{{ 'CLUB_DETAIL.randomizer_desc' | translate }}</p>
+        </div>
+      </a>
+      <a [routerLink]="['/clubs', id(), 'events', 'create']" class="flex items-center gap-3 parchment-card p-4 hover:scale-[1.01] transition-transform">
+        <span class="text-2xl" aria-hidden="true">📅</span>
+        <div>
+          <p class="font-semibold text-[var(--color-ink)]">{{ 'CLUB_DETAIL.create_event_title' | translate }}</p>
+          <p class="text-xs text-[var(--color-ink-muted)]">{{ 'CLUB_DETAIL.create_event_desc' | translate }}</p>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- Create chat room -->
+  <section class="parchment-card p-4">
+    <p class="text-xs font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide mb-2">
+      💬 {{ 'CLUB_DETAIL.chat_create_title' | translate }}
+    </p>
+    <div class="flex flex-col sm:flex-row gap-2">
+      <input
+        type="text"
+        [ngModel]="newRoomName()"
+        (ngModelChange)="newRoomNameChange.emit($event)"
+        [placeholder]="'CLUB_DETAIL.chat_room_placeholder' | translate"
+        [attr.aria-label]="'CLUB_DETAIL.chat_room_placeholder' | translate"
+        maxlength="50"
+        class="flex-1 rounded-lg border border-[var(--color-sepia)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+        (keyup.enter)="createRoom.emit()"
+      />
+      <button
+        hlmBtn
+        size="sm"
+        type="button"
+        (click)="createRoom.emit()"
+        [disabled]="isCreatingRoom() || !newRoomName().trim()"
+        class="bg-primary-600 hover:bg-primary-700 text-white"
+      >
+        {{ 'CLUB_DETAIL.chat_create_btn' | translate }}
+      </button>
+    </div>
+    @if (roomError()) {
+      <p class="mt-1 text-xs text-red-500">{{ roomError() }}</p>
+    }
+  </section>
+
+  <!-- Danger zone -->
+  <section class="rounded-2xl border border-red-500/40 bg-red-50/40 dark:bg-red-900/10 p-4 space-y-4">
+    <h2 class="text-sm font-semibold text-red-600 dark:text-red-400 uppercase tracking-wide">{{ 'CLUB_MANAGE.danger_title' | translate }}</h2>
+
+    <!-- Lifecycle -->
+    <div class="flex flex-wrap gap-2">
+      <button hlmBtn variant="outline" size="sm" type="button" (click)="pauseClub.emit()">
+        {{ 'CLUB_DETAIL.pause' | translate }}
+      </button>
+      <button hlmBtn variant="outline" size="sm" type="button" (click)="showRescheduleInputChange.emit(!showRescheduleInput())">
+        {{ 'CLUB_DETAIL.reschedule' | translate }}
+      </button>
+      @if (!showCancelConfirm()) {
+        <button hlmBtn variant="outline" size="sm" type="button" class="text-orange-600" (click)="showCancelConfirmChange.emit(true)">
+          {{ 'CLUB_MANAGE.cancel_club' | translate }}
+        </button>
+      } @else {
+        <span class="inline-flex items-center gap-2">
+          <button hlmBtn variant="destructive" size="sm" type="button" (click)="cancelClub.emit()">{{ 'CLUB_DETAIL.delete_club_yes' | translate }}</button>
+          <button hlmBtn variant="ghost" size="sm" type="button" (click)="showCancelConfirmChange.emit(false)">{{ 'CLUB_DETAIL.cancel' | translate }}</button>
+        </span>
+      }
+    </div>
+
+    @if (showRescheduleInput()) {
+      <div class="flex flex-wrap items-center gap-2">
+        <input
+          type="datetime-local"
+          [ngModel]="rescheduleDate()"
+          (ngModelChange)="rescheduleDateChange.emit($event)"
+          [attr.aria-label]="'CLUB_DETAIL.reschedule' | translate"
+          class="rounded-lg border border-[var(--color-sepia)] bg-[var(--color-surface)] px-3 py-2 text-sm text-[var(--color-ink)] focus:outline-none focus:ring-2 focus:ring-primary-500"
+        />
+        <button hlmBtn size="sm" type="button" [disabled]="!rescheduleDate()" (click)="reschedule.emit()" class="bg-primary-600 text-white">
+          {{ 'CLUB_DETAIL.reschedule_submit' | translate }}
+        </button>
+      </div>
+    }
+
+    <!-- Delete -->
+    <div class="border-t border-red-500/20 pt-4">
+      @if (!showDeleteConfirm()) {
+        <button hlmBtn variant="destructive" size="sm" type="button" (click)="showDeleteConfirmChange.emit(true)">
+          🗑 {{ 'CLUB_DETAIL.delete_club_btn' | translate }}
+        </button>
+      } @else {
+        <div class="space-y-2">
+          <p class="text-xs text-red-600 dark:text-red-400 font-semibold">{{ 'CLUB_DETAIL.delete_club_confirm' | translate }}</p>
+          <div class="flex gap-2">
+            <button hlmBtn variant="destructive" size="sm" type="button" [disabled]="isDeleting()" (click)="delete.emit()">
+              {{ 'CLUB_DETAIL.delete_club_yes' | translate }}
+            </button>
+            <button hlmBtn variant="outline" size="sm" type="button" (click)="showDeleteConfirmChange.emit(false)">
+              {{ 'CLUB_DETAIL.cancel' | translate }}
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+</div>
