@@ -1,5 +1,5 @@
 import { chromium, type BrowserContext, type Page } from '@playwright/test';
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 
 interface Journey {
@@ -30,6 +30,7 @@ const ALLOWLIST_DIR = path.join(import.meta.dirname, 'allowlists');
 const OUT_DIR = path.join(ROOT, 'playwright-report', 'parity');
 const AUTH_STATE = path.join(ROOT, 'e2e', '.auth', 'member.json');
 
+const VALUE_KEYS = new Set(['limit', 'offset', 'page', 'page_size', 'sort', 'order', 'q', 'search']);
 const IGNORED_PATH = /^\/(_next|_vercel|@vite|@fs|__vite)(\/|$)/;
 const STATIC_EXT = /\.(js|mjs|css|map|png|jpe?g|gif|svg|webp|avif|ico|woff2?|ttf|otf|eot|mp4|webm|json5?|txt|xml|webmanifest)$/i;
 
@@ -80,7 +81,10 @@ export function signatures(entries: HarEntry[], selfOrigin: string): string[] {
     const self = url.origin === selfOrigin;
     if (self && IGNORED_PATH.test(url.pathname)) continue;
     if (request.method === 'GET' && STATIC_EXT.test(url.pathname)) continue;
-    const keys = [...new Set(url.searchParams.keys())].sort().join(',');
+    const keys = [...new Set(url.searchParams.keys())]
+      .sort()
+      .map((k) => (VALUE_KEYS.has(k) ? `${k}=${url.searchParams.getAll(k).sort().join('|')}` : k))
+      .join(',');
     out.push(
       `${request.method} ${self ? 'self' : url.host} ${normalizePath(url.pathname)}?${keys} body=${bodyShape(request.postData)}`,
     );
@@ -94,31 +98,55 @@ function count(list: string[]): Map<string, number> {
   return m;
 }
 
-export function diff(legacy: string[], next: string[], allowed: Set<string>): string[] {
+export interface AllowEntry {
+  signature: string;
+  reason: string;
+  legacy?: number;
+  next?: number;
+}
+
+export function diff(legacy: string[], next: string[], allowed: AllowEntry[] = [], stale: string[] = []): string[] {
   const a = count(legacy);
   const b = count(next);
+  const rules = new Map(allowed.map((e) => [e.signature, e]));
+  const matched = new Set<string>();
   const problems: string[] = [];
   for (const sig of new Set([...a.keys(), ...b.keys()])) {
-    if (allowed.has(sig)) continue;
     const x = a.get(sig) ?? 0;
     const y = b.get(sig) ?? 0;
+    const rule = rules.get(sig);
+    if (rule) {
+      matched.add(sig);
+      const legacyOk = rule.legacy === undefined || rule.legacy === x;
+      const nextOk = rule.next === undefined || rule.next === y;
+      if (legacyOk && nextOk) continue;
+      problems.push(`${sig}  legacy=${x} next=${y}  (allowlist expects legacy=${rule.legacy ?? '*'} next=${rule.next ?? '*'})`);
+      continue;
+    }
     if (x !== y) problems.push(`${sig}  legacy=${x} next=${y}`);
   }
+  for (const e of allowed) if (!matched.has(e.signature)) stale.push(e.signature);
   return problems.sort();
 }
 
-function loadAllowlist(journey: string): Set<string> {
+function loadAllowlist(journey: string): AllowEntry[] {
   const file = path.join(ALLOWLIST_DIR, `${journey}.json`);
-  if (!existsSync(file)) return new Set();
-  const parsed = JSON.parse(readFileSync(file, 'utf-8')) as { ignore?: { signature: string; reason: string }[] };
+  if (!existsSync(file)) return [];
+  const parsed = JSON.parse(readFileSync(file, 'utf-8')) as { ignore?: AllowEntry[] };
   for (const item of parsed.ignore ?? []) {
     if (!item.signature || !item.reason) throw new Error(`${file}: every allowlist entry needs signature and reason`);
   }
-  return new Set((parsed.ignore ?? []).map((i) => i.signature));
+  return parsed.ignore ?? [];
 }
 
 function storageStateFor(origin: string): string {
-  if (!existsSync(AUTH_STATE)) throw new Error('e2e/.auth/member.json missing; run the parity config global setup first');
+  const hint = 'run `AUDIT_API_BASE_URL=<local api> npm run parity:setup-member` (ALLOW_PROD_SEED=1 for a non-local API)';
+  if (!existsSync(AUTH_STATE)) throw new Error(`e2e/.auth/member.json is missing: ${hint}`);
+  const maxAgeH = Number(process.env['PARITY_AUTH_MAX_AGE_H'] ?? 12);
+  const ageH = (Date.now() - statSync(AUTH_STATE).mtimeMs) / 3_600_000;
+  if (ageH > maxAgeH) {
+    throw new Error(`e2e/.auth/member.json is ${ageH.toFixed(1)}h old (max ${maxAgeH}h): ${hint}`);
+  }
   const state = JSON.parse(readFileSync(AUTH_STATE, 'utf-8')) as { origins: { origin: string }[] };
   for (const o of state.origins) o.origin = origin;
   const file = path.join(OUT_DIR, `member-${new URL(origin).port || 'default'}.json`);
@@ -153,7 +181,12 @@ async function main(): Promise<void> {
     if (!journey) throw new Error(`Unknown journey "${name}". Known: ${Object.keys(journeys).join(', ')}`);
     const legacy = await record('legacy', targets['legacy'], name, journey);
     const next = await record('next', targets['next'], name, journey);
-    const problems = diff(legacy, next, loadAllowlist(name));
+    const stale: string[] = [];
+    const problems = diff(legacy, next, loadAllowlist(name), stale);
+    if (stale.length) {
+      console.warn(`WARN ${name}: ${stale.length} stale allowlist entr${stale.length === 1 ? 'y' : 'ies'} never matched\n  ${stale.join('\n  ')}`);
+      if (process.env['PARITY_STRICT'] === '1') failed = true;
+    }
     if (problems.length) {
       failed = true;
       console.error(`FAIL ${name}: ${problems.length} difference(s)\n  ${problems.join('\n  ')}`);

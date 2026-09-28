@@ -4,6 +4,11 @@ import { defineConfig, devices } from '@playwright/test';
 // test users against the live backend, seeds a club/event/quiz, then drives
 // every page and every key backend endpoint. Heavier and slower than the
 // default e2e suite — run manually via `npm run audit:full`, not in CI.
+//
+// Setup registers accounts and seeds data, so it refuses any non-local
+// AUDIT_API_BASE_URL. Run against a local backend, e.g.
+//   AUDIT_API_BASE_URL=http://localhost:8000/api/v1 npm run audit:full
+// or opt in to the shared/live backend explicitly with ALLOW_PROD_SEED=1.
 const baseURL = process.env.AUDIT_BASE_URL ?? 'http://localhost:4200';
 const isLocal = baseURL.includes('localhost') || baseURL.includes('127.0.0.1');
 

@@ -80,11 +80,14 @@ e2e/
       guest-auth-pages.json
       guest-browse.json
       member-browse.json
+    expectations.ts
     har-diff.ts
     html-meta.ts
+    member.setup.ts
     routes.ts
   audit-helper.ts
   global-setup.ts
+  seed-guard.ts
 public/
   i18n/
     en.json
@@ -510,6 +513,7 @@ package.json
 PLAN-REACT-MIGRATION-2026-09-28.md
 PLAN-UI-STACK-2026-09-28.md
 playwright.full-audit.config.ts
+playwright.parity-setup.config.ts
 playwright.parity.config.ts
 postcss.config.json
 proxy.conf.json

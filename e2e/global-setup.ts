@@ -4,8 +4,11 @@ import { randomInt } from 'node:crypto';
 import path from 'node:path';
 import { apiBaseURL } from '../playwright.full-audit.config';
 import { newApiContext } from './fixtures/api-client';
+import { assertSeedAllowed } from './seed-guard';
 
-// Runs once before the full-audit suite:
+// Runs once before the full-audit suite. Refuses a non-local AUDIT_API_BASE_URL
+// unless ALLOW_PROD_SEED=1 is set explicitly (see assertSeedAllowed).
+//
 //  1. Warms up the (possibly sleeping) live backend.
 //  2. Registers two throwaway test users (member + organizer) via the real
 //     /auth/register endpoint — no pre-existing accounts required.
@@ -82,6 +85,7 @@ async function primeStorageState(
 }
 
 export default async function globalSetup(config: FullConfig): Promise<void> {
+  assertSeedAllowed(apiBaseURL);
   mkdirSync(AUTH_DIR, { recursive: true });
 
   const project = config.projects[0];
