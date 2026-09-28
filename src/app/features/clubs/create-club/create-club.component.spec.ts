@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CreateClubComponent } from './create-club.component';
 import { TranslateModule } from '@ngx-translate/core';
@@ -22,7 +22,7 @@ describe('CreateClubComponent', () => {
       imports: [CreateClubComponent, TranslateModule.forRoot()],
       providers: [
         provideZonelessChangeDetection(),
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: Router, useValue: routerSpy },
         { provide: ClubService, useValue: clubServiceSpy },

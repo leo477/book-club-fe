@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { RandomizerService } from './randomizer.service';
 import { AuthService } from '../auth/auth.service';
@@ -37,7 +37,7 @@ describe('RandomizerService', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         RandomizerService,
         { provide: AuthService, useValue: authSpy },
@@ -186,7 +186,7 @@ describe('RandomizerService', () => {
       TestBed.configureTestingModule({
         providers: [
           provideZonelessChangeDetection(),
-          provideHttpClient(),
+          provideHttpClient(withXhr()),
           provideHttpClientTesting(),
           RandomizerService,
           { provide: AuthService, useValue: authSpy },

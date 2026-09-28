@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { BookVoteService } from './book-vote.service';
 import { BookVoteRound } from '../models/book-vote.model';
@@ -26,7 +26,7 @@ describe('BookVoteService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [provideZonelessChangeDetection(), provideHttpClient(), provideHttpClientTesting(), BookVoteService],
+      providers: [provideZonelessChangeDetection(), provideHttpClient(withXhr()), provideHttpClientTesting(), BookVoteService],
     });
     service = TestBed.inject(BookVoteService);
     httpMock = TestBed.inject(HttpTestingController);

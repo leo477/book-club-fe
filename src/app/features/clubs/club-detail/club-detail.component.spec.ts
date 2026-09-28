@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Component, input, provideZonelessChangeDetection } from '@angular/core';
+import { Component, input, provideZonelessChangeDetection, ChangeDetectionStrategy } from '@angular/core';
 import { ClubDetailComponent } from './club-detail.component';
 import { TranslateModule, TranslateLoader, TranslateService } from '@ngx-translate/core';
 import { provideRouter } from '@angular/router';
@@ -12,7 +12,8 @@ import { ComponentFixture } from '@angular/core/testing';
 import { makeClubEvent } from '../../../../testing/event-test.helpers';
 import { BookVoteSectionComponent } from './book-vote/book-vote-section.component';
 
-@Component({ selector: 'app-book-vote-section', template: '', standalone: true })
+@Component({ selector: 'app-book-vote-section', template: '', changeDetection: ChangeDetectionStrategy.OnPush,
+ standalone: true })
 class StubBookVoteSectionComponent {
   readonly clubId = input.required<string>();
   readonly isOwner = input(false);

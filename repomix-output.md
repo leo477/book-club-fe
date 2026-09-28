@@ -54,6 +54,7 @@ The content is organized as follows:
     secret-scan.yml
     stale.yml
   copilot-instructions.md
+  dependabot.yml
   labeler.yml
 .husky/
   pre-commit

@@ -1,6 +1,6 @@
 import { EnvironmentInjector, provideZonelessChangeDetection, runInInjectionContext } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { HttpRequest, provideHttpClient, withInterceptors, HttpClient, HttpContext } from '@angular/common/http';
+import { HttpRequest, provideHttpClient, withInterceptors, HttpClient, HttpContext, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
@@ -38,7 +38,7 @@ describe('authInterceptor', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideHttpClient(withInterceptors([authInterceptor])),
+        provideHttpClient(withXhr(), withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
         { provide: Router, useValue: routerSpy },
         { provide: TokenStore, useValue: tokenStoreSpy },
