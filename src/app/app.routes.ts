@@ -1,6 +1,5 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
-import { roleGuard } from './core/auth/role.guard';
 import { ShellComponent } from './layout/shell/shell.component';
 
 export const routes: Routes = [
@@ -58,17 +57,6 @@ export const routes: Routes = [
         title: 'TITLES.support',
         canActivate: [authGuard],
         loadChildren: () => import('./features/support/support.routes').then(m => m.SUPPORT_ROUTES),
-      },
-
-      // Protected: organizer dashboard
-      {
-        path: 'manage',
-        title: 'TITLES.manage',
-        canActivate: [authGuard, roleGuard('organizer')],
-        loadComponent: () =>
-          import('./features/organizer-dashboard/organizer-dashboard.component').then(
-            m => m.OrganizerDashboardComponent,
-          ),
       },
 
       { path: '', redirectTo: 'events', pathMatch: 'full' },

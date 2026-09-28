@@ -2,8 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 
 // Full functional + API + a11y audit: registers throwaway member/organizer
 // test users against the live backend, seeds a club/event/quiz, then drives
-// every page and every key backend endpoint. Heavier and slower than
-// audit-current/audit-total — run manually via `npm run audit:full`, not in CI.
+// every page and every key backend endpoint. Heavier and slower than the
+// default e2e suite — run manually via `npm run audit:full`, not in CI.
 const baseURL = process.env.AUDIT_BASE_URL ?? 'http://localhost:4200';
 const isLocal = baseURL.includes('localhost') || baseURL.includes('127.0.0.1');
 

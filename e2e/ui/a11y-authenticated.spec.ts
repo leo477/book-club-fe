@@ -24,7 +24,6 @@ const routesAnyAuthenticatedUser = [
 ];
 
 const routesOrganizerOnly = [
-  '/manage',
   '/clubs/create',
   `/clubs/${runContext.clubId}/edit`,
   `/clubs/${runContext.clubId}/manage`,

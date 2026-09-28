@@ -93,7 +93,7 @@ describe('ChatService', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).WebSocket = MockWebSocket;
 
-    // Stub AudioContext so _playBeep() doesn't throw in browser test env
+    // Stub AudioContext so ChatAudioAlertService.playBeep() doesn't throw in browser test env
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).AudioContext = class {
       createOscillator() {

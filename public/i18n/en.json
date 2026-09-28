@@ -308,20 +308,9 @@
     "theme_toggle_dark": "Switch to dark mode",
     "theme_toggle_light": "Switch to light mode",
     "chats": "Chats",
-    "manage": "Manage",
     "support": "Support"
   },
   "ORGANIZER": {
-    "title": "Organizer Dashboard",
-    "subtitle": "Manage your reading clubs",
-    "create_club": "Створити клуб",
-    "no_clubs_title": "No clubs yet",
-    "no_clubs_desc": "Create your first reading club to get started.",
-    "manage_members": "Members",
-    "edit": "Edit",
-    "delete": "Delete",
-    "stats_show": "Statistics",
-    "stats_hide": "Hide stats",
     "attendance": "Attendance",
     "top_active": "Most active",
     "top_winners": "Top winners"
@@ -793,7 +782,6 @@
     "terms": "Terms of Use | Book Club",
     "events": "Events | Book Club",
     "support": "Support | Book Club",
-    "manage": "Manage | Book Club",
     "profile": "Profile | Book Club",
     "chats": "Chats | Book Club",
     "not_found": "Page Not Found | Book Club"

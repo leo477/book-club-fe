@@ -1,23 +1,21 @@
 import {
   ChangeDetectionStrategy,
   Component,
-  ElementRef,
-  HostListener,
   InjectionToken,
   inject,
-  input,
   output,
   signal,
 } from '@angular/core';
-import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
-import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { toObservable } from '@angular/core/rxjs-interop';
+import { ReactiveFormsModule } from '@angular/forms';
 import { SlicePipe } from '@angular/common';
 import { TranslateModule } from '@ngx-translate/core';
-import { catchError, debounceTime, filter, of, switchMap, tap } from 'rxjs';
+import { catchError, filter, of, switchMap, tap } from 'rxjs';
 import { HlmInput } from '../../spartan/input/src';
 import { HlmSpinner } from '../../spartan/spinner/src';
 import { BookSearchService } from '../../../core/services/book-search.service';
 import { BookSuggestion } from '../../../core/models/book.model';
+import { TypeaheadComboboxBase } from '../typeahead-combobox-base.component';
 
 /** Override in tests with 0 to skip the 600 ms wait. */
 export const BOOK_SEARCH_DEBOUNCE_MS = new InjectionToken<number>('BOOK_SEARCH_DEBOUNCE_MS', {
@@ -79,41 +77,34 @@ export const BOOK_SEARCH_DEBOUNCE_MS = new InjectionToken<number>('BOOK_SEARCH_D
 </div>
 `,
 })
-export class BookAutocompleteComponent {
-  readonly control = input.required<FormControl<string>>();
+export class BookAutocompleteComponent extends TypeaheadComboboxBase<BookSuggestion> {
   readonly bookSelected = output<BookSuggestion>();
 
   private readonly bookSearchService = inject(BookSearchService);
-  private readonly elRef = inject(ElementRef);
   private readonly debounceMs = inject(BOOK_SEARCH_DEBOUNCE_MS);
 
-  readonly suggestions = signal<BookSuggestion[]>([]);
-  readonly isLoading = signal(false);
-  readonly isOpen = signal(false);
-  readonly activeIndex = signal(-1);
   readonly errorState = signal(false);
   readonly bookWasSelected = signal(false);
 
   constructor() {
-    toObservable(this.control).pipe(
-      switchMap(ctrl => ctrl.valueChanges),
-      debounceTime(this.debounceMs),
-      filter(() => !this.bookWasSelected()),
-      tap(() => this.bookWasSelected.set(false)),
-      filter(v => v != null && v.length >= 3),
-      switchMap(v => {
-        this.isLoading.set(true);
+    super();
+    this.runSearch(toObservable(this.control).pipe(switchMap(ctrl => ctrl.valueChanges)), {
+      debounceMs: this.debounceMs,
+      // Length filtering happens here (not via the base's minLength clear) so
+      // a too-short query is silently dropped rather than clearing suggestions,
+      // matching the original behavior.
+      minLength: 0,
+      beforeFetch$: source$ => source$.pipe(
+        filter(() => !this.bookWasSelected()),
+        tap(() => this.bookWasSelected.set(false)),
+        filter(v => v != null && v.length >= 3),
+      ),
+      fetch$: v => {
         this.errorState.set(false);
         return this.bookSearchService.searchBooks$(v).pipe(
           catchError(() => { this.errorState.set(true); return of([] as BookSuggestion[]); }),
         );
-      }),
-      takeUntilDestroyed(),
-    ).subscribe(results => {
-      this.isLoading.set(false);
-      this.suggestions.set(results);
-      this.activeIndex.set(-1);
-      this.isOpen.set(results.length > 0);
+      },
     });
   }
 
@@ -124,29 +115,5 @@ export class BookAutocompleteComponent {
     this.suggestions.set([]);
     this.isOpen.set(false);
     this.bookSelected.emit(book);
-  }
-
-  onKeydown(event: KeyboardEvent): void {
-    if (!this.isOpen()) return;
-    const len = this.suggestions().length;
-    if (event.key === 'ArrowDown') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i + 1) % len);
-    } else if (event.key === 'ArrowUp') {
-      event.preventDefault();
-      this.activeIndex.update(i => (i - 1 + len) % len);
-    } else if (event.key === 'Enter' && this.activeIndex() >= 0) {
-      event.preventDefault();
-      this.select(this.suggestions()[this.activeIndex()]);
-    } else if (event.key === 'Escape') {
-      this.isOpen.set(false);
-    }
-  }
-
-  @HostListener('document:click', ['$event'])
-  onDocumentClick(event: MouseEvent): void {
-    if (!this.elRef.nativeElement.contains(event.target)) {
-      this.isOpen.set(false);
-    }
   }
 }

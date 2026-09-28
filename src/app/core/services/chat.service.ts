@@ -11,6 +11,7 @@ import { TokenStore } from '../auth/token.store';
 import { ClubService } from './club.service';
 import { ChatApi, ApiChatMessage } from './chat-api.service';
 import { ChatSocket } from './chat-socket.service';
+import { ChatAudioAlertService } from './chat-audio-alert.service';
 
 // ── Service ──────────────────────────────────────────────────────────────────
 
@@ -25,6 +26,7 @@ export class ChatService {
   private readonly _tokenStore = inject(TokenStore);
   private readonly _api = inject(ChatApi);
   private readonly _socket = inject(ChatSocket);
+  private readonly _audioAlert = inject(ChatAudioAlertService);
 
   // ── Private writable signals ───────────────────────────────────────────────
 
@@ -51,7 +53,6 @@ export class ChatService {
   private static readonly OLDER_PAGE_SIZE = 50;
 
   private currentUserId: string | null = null;
-  private _audioContext: AudioContext | null = null;
   private _clubsLoadTriggered = false;
 
   constructor() {
@@ -62,19 +63,6 @@ export class ChatService {
     this._destroyRef.onDestroy(() =>
       this.document.removeEventListener('visibilitychange', onVisibility)
     );
-
-    // Browsers keep a newly-created AudioContext suspended until a real user
-    // gesture unlocks it; without this, the unread-message beep silently no-ops.
-    const unlockAudio = () => {
-      this._audioContext ??= new AudioContext();
-      if (this._audioContext.state === 'suspended') void this._audioContext.resume();
-    };
-    this.document.addEventListener('click', unlockAudio, { once: true });
-    this.document.addEventListener('keydown', unlockAudio, { once: true });
-    this._destroyRef.onDestroy(() => {
-      this.document.removeEventListener('click', unlockAudio);
-      this.document.removeEventListener('keydown', unlockAudio);
-    });
 
     // Single orchestrator for "load rooms for my clubs" — previously
     // duplicated in ChatWidgetComponent and ChatsComponent, which meant the
@@ -520,7 +508,7 @@ export class ChatService {
     if (!msg.isOwn && !this._isOpen() && !this._isChatsPage()) {
       this._roomUnreadCounts.update(m => ({ ...m, [roomId]: (m[roomId] ?? 0) + 1 }));
       this._hasNewMessage.set(true);
-      this._playBeep();
+      this._audioAlert.playBeep();
     }
   }
 
@@ -533,20 +521,6 @@ export class ChatService {
         ? rooms.map(r => (r.id === room.id ? room : r))
         : [...rooms, room],
     );
-  }
-
-  private _playBeep(): void {
-    const ctx = this._audioContext ??= new AudioContext();
-    if (ctx.state === 'suspended') return; // still locked, waiting for a user gesture
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.frequency.value = 880;
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.3);
   }
 
   private notifyError(err: unknown): void {

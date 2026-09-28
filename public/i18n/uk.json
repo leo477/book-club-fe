@@ -308,20 +308,9 @@
     "theme_toggle_dark": "Темна тема",
     "theme_toggle_light": "Світла тема",
     "chats": "Чати",
-    "manage": "Керування",
     "support": "Підтримка"
   },
   "ORGANIZER": {
-    "title": "Панель організатора",
-    "subtitle": "Керуйте вашими читацькими клубами",
-    "create_club": "Створити клуб",
-    "no_clubs_title": "Клубів ще немає",
-    "no_clubs_desc": "Створіть перший читацький клуб, щоб розпочати.",
-    "manage_members": "Учасники",
-    "edit": "Редагувати",
-    "delete": "Видалити",
-    "stats_show": "Статистика",
-    "stats_hide": "Сховати",
     "attendance": "Відвідуваність",
     "top_active": "Найактивніші",
     "top_winners": "Кращі переможці"
@@ -795,7 +784,6 @@
     "terms": "Умови використання | Book Club",
     "events": "Події | Book Club",
     "support": "Підтримка | Book Club",
-    "manage": "Керування | Book Club",
     "profile": "Профіль | Book Club",
     "chats": "Чати | Book Club",
     "not_found": "Сторінку не знайдено | Book Club"
