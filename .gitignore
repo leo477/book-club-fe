@@ -88,3 +88,6 @@ mock-server/
 # Audit evidence (screenshots/results, kept on disk but not tracked)
 /audit-evidence/
 .vercel
+
+# Workspace build output
+packages/*/dist
