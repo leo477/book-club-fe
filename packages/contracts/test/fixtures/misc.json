@@ -1,0 +1,28 @@
+{
+  "randomizerSession": {
+    "id": "rs1", "clubId": "c1", "createdBy": "u1", "purpose": "Pick a book",
+    "candidates": [{ "userId": "u1", "displayName": "Olena", "avatarUrl": null }, { "userId": "u2", "displayName": "Taras" }],
+    "result": { "userId": "u2", "displayName": "Taras", "avatarUrl": null },
+    "createdAt": "2026-09-01T10:00:00+00:00"
+  },
+  "submission": {
+    "id": "sub1", "authorId": null, "type": "suggestion", "title": "Dark mode", "body": "Please",
+    "status": "in_progress", "createdAt": "2026-09-01T10:00:00+00:00", "updatedAt": "2026-09-02T10:00:00+00:00",
+    "likeCount": 3, "likedByMe": true
+  },
+  "chatRoom": { "id": "room1", "name": "General", "eventId": null },
+  "chatMessage": {
+    "id": "m1", "senderId": "u1", "senderName": "Olena", "text": "Hi",
+    "timestamp": "2026-09-01T10:00:00.5+00:00", "isSystem": false
+  },
+  "unreadCount": { "room_id": "room1", "unread_count": 4, "last_read_message_id": null },
+  "geocodeSuggestion": { "label": "Kyiv, Ukraine", "city": "Kyiv", "country": "Ukraine", "lat": 50.45, "lng": 30.52, "place_id": "ChIJ123" },
+  "walkingRoute": { "path": [{ "lat": 50.45, "lng": 30.52 }, { "lat": 50.451, "lng": 30.521 }] },
+  "mapsKeyConfig": { "mapsApiKey": "AIza-test", "mapsMapId": "map-1" },
+  "uploadResult": { "url": "https://cdn.example.com/covers/abc.png" },
+  "bookSuggestion": {
+    "id": "gb1", "title": "Dune", "authors": ["Frank Herbert"], "description": null,
+    "thumbnail": "https://books.example.com/t.jpg", "publishedDate": "1965", "publisher": null
+  },
+  "storeResult": { "name": "Yakaboo", "url": "https://yakaboo.example.com", "found": null, "product_url": null }
+}

@@ -1,0 +1,30 @@
+{
+  "userProfile": {
+    "id": "8b1f2c3e-6a41-4d55-9a2e-1c7d0f5b9e01",
+    "email": "olena@example.com",
+    "displayName": "Olena",
+    "role": "organizer",
+    "avatarUrl": null,
+    "createdAt": "2026-03-01T09:30:00+00:00",
+    "socialsPublic": true,
+    "socials": { "telegram": "olena_reads", "instagram": null, "twitter": null, "linkedin": null, "github": null, "goodreads": "olena" }
+  },
+  "authResponse": {
+    "user": {
+      "id": "8b1f2c3e-6a41-4d55-9a2e-1c7d0f5b9e01",
+      "email": "olena@example.com",
+      "displayName": "Olena",
+      "role": "user",
+      "avatarUrl": "https://cdn.example.com/a.png",
+      "createdAt": "2026-03-01T09:30:00+00:00",
+      "socialsPublic": false,
+      "socials": { "telegram": null, "instagram": null, "twitter": null, "linkedin": null, "github": null, "goodreads": null }
+    },
+    "accessToken": "eyJhbGciOiJIUzI1NiJ9.access",
+    "refreshToken": "eyJhbGciOiJIUzI1NiJ9.refresh"
+  },
+  "authTokens": { "accessToken": "access-2", "refreshToken": "refresh-2" },
+  "userStats": { "clubsJoined": 3, "quizzesTaken": 5, "quizWins": 1, "likesReceived": 12, "booksRead": 7 },
+  "sessionStatus": { "hasSession": true },
+  "wsTicket": { "ticket": "b7f0c1d2e3" }
+}

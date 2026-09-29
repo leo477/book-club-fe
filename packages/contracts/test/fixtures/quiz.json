@@ -1,0 +1,16 @@
+{
+  "quiz": { "id": "q1", "clubId": "c1", "createdBy": "u1", "title": "Dune quiz", "description": null, "isActive": true, "status": "active" },
+  "questionOrganizer": { "id": "qq1", "quizId": "q1", "question": "Who wrote Dune?", "options": ["Herbert", "Asimov"], "correctIndex": 0, "position": 1 },
+  "questionParticipant": { "id": "qq2", "quizId": "q1", "question": "Planet?", "options": ["Arrakis", "Caladan"], "correctIndex": null, "position": 2 },
+  "quizAttempt": { "id": "a1", "quizId": "q1", "userId": "u2", "score": 1, "total": 2, "answers": [0, 1] },
+  "quizSession": {
+    "id": "s1", "quizId": "q1", "eventId": null, "startedBy": "u1",
+    "startedAt": "2026-09-20T18:00:00+00:00", "closedAt": null, "participantCount": 4
+  },
+  "quizLeaderboard": {
+    "entries": [
+      { "rank": 1, "userId": "u2", "displayName": "Taras", "avatarUrl": null, "score": 2, "totalQuestions": 2, "hasAttempted": true },
+      { "rank": 2, "userId": "u3", "displayName": "Ihor", "avatarUrl": null, "score": 0, "totalQuestions": 2, "hasAttempted": false }
+    ]
+  }
+}

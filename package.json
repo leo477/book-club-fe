@@ -38,6 +38,10 @@
     ]
   },
   "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "overrides": {
     "@babel/core": "^7.29.6",
     "picomatch": "^4.0.4",
