@@ -22,6 +22,7 @@ describe('strangler manifest coverage', () => {
     const found = pages(appDir)
       .map((file) => relative(appDir, join(file, '..')).split(sep))
       .filter((segments) => !segments.some((s) => IGNORED.has(s)))
+      .map((segments) => segments.filter((s) => !/^\(.+\)$/.test(s)))
       .map((segments) => '/' + segments.map((s) => decodeURIComponent(s).replace(/^\[(.+)\]$/, ':$1')).join('/'));
     expect(found.length).toBeGreaterThan(0);
     for (const pattern of found) expect(patterns).toContain(pattern);

@@ -61,6 +61,13 @@ apps/
   web/
     src/
       app/
+        (public)/
+          privacy/
+            page.test.tsx
+            page.tsx
+          terms/
+            page.test.tsx
+            page.tsx
         %5F%5Fstrangler-probe/
           page.tsx
         strangler.json/
@@ -86,6 +93,8 @@ apps/
         request.ts
       lib/
         api.ts
+        page-metadata.test.ts
+        page-metadata.ts
         session-hint.test.ts
         session-hint.ts
         utils.ts

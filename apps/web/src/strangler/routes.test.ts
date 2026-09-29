@@ -32,8 +32,12 @@ describe('matchRoute', () => {
 });
 
 describe('manifest', () => {
-  it('owns only the strangler probe', () => {
-    expect(manifest.map((r) => [r.pattern, r.owner])).toEqual([['/__strangler-probe', 'next']]);
+  it('owns the strangler probe, privacy and terms', () => {
+    expect(manifest.map((r) => [r.pattern, r.owner])).toEqual([
+      ['/__strangler-probe', 'next'],
+      ['/privacy', 'next'],
+      ['/terms', 'next'],
+    ]);
     expect(matchRoute('/__strangler-probe')).not.toBeNull();
     expect(matchRoute('/clubs')).toBeNull();
   });
