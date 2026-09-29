@@ -4,8 +4,11 @@ import { randomInt } from 'node:crypto';
 import path from 'node:path';
 import { apiBaseURL } from '../playwright.full-audit.config';
 import { newApiContext } from './fixtures/api-client';
+import { assertSeedAllowed } from './seed-guard';
 
-// Runs once before the full-audit suite:
+// Runs once before the full-audit suite. Refuses a non-local AUDIT_API_BASE_URL
+// unless ALLOW_PROD_SEED=<hostname> is set explicitly (see assertSeedAllowed).
+//
 //  1. Warms up the (possibly sleeping) live backend.
 //  2. Registers two throwaway test users (member + organizer) via the real
 //     /auth/register endpoint — no pre-existing accounts required.
@@ -82,6 +85,7 @@ async function primeStorageState(
 }
 
 export default async function globalSetup(config: FullConfig): Promise<void> {
+  assertSeedAllowed(apiBaseURL);
   mkdirSync(AUTH_DIR, { recursive: true });
 
   const project = config.projects[0];
@@ -118,6 +122,7 @@ export default async function globalSetup(config: FullConfig): Promise<void> {
   const memberStorageStatePath = path.join(AUTH_DIR, 'member.json');
   const organizerStorageStatePath = path.join(AUTH_DIR, 'organizer.json');
   await primeStorageState(baseURL, memberAuth, memberStorageStatePath);
+  writeFileSync(path.join(AUTH_DIR, 'member.meta.json'), JSON.stringify({ apiBaseURL, createdAt: new Date().toISOString() }));
   await primeStorageState(baseURL, organizerAuth, organizerStorageStatePath);
 
   const organizerApi = await newApiContext({

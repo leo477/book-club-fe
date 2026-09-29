@@ -1,0 +1,30 @@
+{
+  "clubEvent": {
+    "id": "e0a80101-0000-4000-8000-000000000001",
+    "clubId": "c0a80101-0000-4000-8000-000000000001",
+    "clubName": "Kyiv Readers",
+    "organizerId": "8b1f2c3e-6a41-4d55-9a2e-1c7d0f5b9e01",
+    "title": "Dune night",
+    "description": "Discussion",
+    "date": "2026-10-05T16:00:00+00:00",
+    "city": "Kyiv",
+    "address": "Khreshchatyk 1",
+    "lat": 50.4501,
+    "lng": 30.5234,
+    "status": "scheduled",
+    "cancelledAt": null,
+    "coverUrl": null,
+    "bookTitle": "Dune",
+    "theme": null,
+    "tags": ["sci-fi"],
+    "durationMinutes": 90,
+    "afterMeetingVenue": null,
+    "attendeeCount": 8,
+    "isAttending": true,
+    "hasWinner": true,
+    "winnerId": "u2",
+    "winnerName": "Taras",
+    "googleBookId": "abc123"
+  },
+  "attendEventResponse": { "attendeeCount": 9, "joinRequestStatus": "member" }
+}

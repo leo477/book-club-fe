@@ -67,14 +67,102 @@ docs/
     PLAN-COOKIE-AUTH-2026-07-07.md
     PLAN-MOBILE-APP-2026-07-15.md
     REFACTOR-PLAN-2026-07-06.md
+  migration/
+    BASELINE-2026-10.md
+    cleanup-pw-audit.sql
 e2e/
   fixtures/
     api-client.ts
     api-context.fixture.ts
     auth.fixture.ts
     seed-helper.ts
+  parity/
+    allowlists/
+      guest-auth-pages.json
+      guest-browse.json
+      member-browse.json
+    expectations.ts
+    har-diff.ts
+    html-meta.ts
+    member.setup.ts
+    routes.ts
+    snapshot-guard.ts
   audit-helper.ts
   global-setup.ts
+  seed-guard.ts
+packages/
+  api-client/
+    src/
+      modules/
+        auth.ts
+        book-vote.ts
+        clubs.ts
+        events.ts
+        members.ts
+        misc.ts
+        quiz.ts
+        users.ts
+      api.ts
+      client.ts
+      errors.ts
+      index.ts
+      transports.ts
+      types.ts
+    test/
+      client.test.ts
+      modules.test.ts
+      msw.test.ts
+    eslint.config.mjs
+    package.json
+    tsconfig.json
+    vitest.config.ts
+  config/
+    eslint.mjs
+    package.json
+    tsconfig.base.json
+  contracts/
+    src/
+      api-error.ts
+      book.ts
+      club.ts
+      event.ts
+      index.ts
+      misc.ts
+      parse.ts
+      quiz.ts
+      tolerant.ts
+      user.ts
+    test/
+      fixtures/
+        book-vote.json
+        clubs.json
+        events.json
+        misc.json
+        quiz.json
+        users.json
+      contracts.test.ts
+      fixtures.test.ts
+    eslint.config.mjs
+    package.json
+    tsconfig.json
+    vitest.config.ts
+  i18n/
+    overrides/
+      en.json
+      uk.json
+    scripts/
+      build-icu.mjs
+      icu.ts
+    src/
+      index.ts
+    test/
+      icu.test.ts
+      plurals.test.ts
+    eslint.config.mjs
+    package.json
+    README.md
+    tsconfig.json
+    vitest.config.ts
 public/
   i18n/
     en.json
@@ -499,6 +587,8 @@ LICENSE
 package.json
 PLAN-UI-STACK-2026-09-28.md
 playwright.full-audit.config.ts
+playwright.parity-setup.config.ts
+playwright.parity.config.ts
 postcss.config.json
 proxy.conf.json
 README.md

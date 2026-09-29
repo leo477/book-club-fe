@@ -1,0 +1,12 @@
+{
+  "title": "Умови використання | Book Club",
+  "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+  "ogTitle": "Умови використання | Book Club",
+  "ogDescription": "Приєднуйтесь до книжкових клубів у вашому місті.",
+  "ogUrl": "{ORIGIN}/terms",
+  "ogImage": "{ORIGIN}/og-image.png",
+  "canonical": "{ORIGIN}/terms",
+  "jsonLd": [
+    "Organization+WebApplication"
+  ]
+}

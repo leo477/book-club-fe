@@ -1,0 +1,12 @@
+{
+  "title": "Конфіденційність | Book Club",
+  "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+  "ogTitle": "Конфіденційність | Book Club",
+  "ogDescription": "Приєднуйтесь до книжкових клубів у вашому місті.",
+  "ogUrl": "{ORIGIN}/privacy",
+  "ogImage": "{ORIGIN}/og-image.png",
+  "canonical": "{ORIGIN}/privacy",
+  "jsonLd": [
+    "Organization+WebApplication"
+  ]
+}

@@ -1,5 +1,6 @@
 import { request, type APIRequestContext } from '@playwright/test';
 import { apiBaseURL } from '../../playwright.full-audit.config';
+import { assertSeedAllowed } from '../seed-guard';
 
 // Every spec in this suite writes endpoint paths with a leading slash
 // (e.g. `api.post('/auth/register', ...)`), matching the backend router
@@ -23,6 +24,7 @@ export async function newApiContext(options?: {
   extraHTTPHeaders?: Record<string, string>;
   timeout?: number;
 }): Promise<APIRequestContext> {
+  assertSeedAllowed(apiBaseURL);
   // Default per-call timeout is generous (45s, vs. Playwright's normal 20s
   // actionTimeout default) because these requests hit a live, free-tier
   // Render backend that occasionally has real multi-second latency spikes

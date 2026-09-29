@@ -1,0 +1,109 @@
+@theme {
+  /* ── Fonts ──────────────────────────────────────────────────────────── */
+  --font-sans:    Inter, system-ui, 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji', sans-serif;
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-fantasy: Cinzel, serif;
+
+  /* ── Gold / Amber primary ───────────────────────────────────────────── */
+  --color-primary-50:  #fffbeb;
+  --color-primary-100: #fef3c7;
+  --color-primary-200: #fde68a;
+  --color-primary-300: #fcd34d;
+  --color-primary-400: #fbbf24;
+  --color-primary-500: #d97706;
+  --color-primary-600: #b5720a;
+  --color-primary-700: #92400e;
+  --color-primary-800: #78350f;
+  --color-primary-900: #5c2d0a;
+
+  /* ── Forest Green accent ────────────────────────────────────────────── */
+  --color-accent-50:  #ecfdf5;
+  --color-accent-100: #d1fae5;
+  --color-accent-200: #a7f3d0;
+  --color-accent-300: #6ee7b7;
+  --color-accent-400: #34d399;
+  --color-accent-500: #2d7a50;
+  --color-accent-600: #1a5c3a;
+  --color-accent-700: #064e3b;
+  --color-accent-800: #053d2e;
+  --color-accent-900: #032b20;
+}
+
+:root {
+  --color-bg:             #f2e8d5;
+  --color-surface:        #ede0c0;
+  --color-surface-raised: #f5eed8;
+  --color-surface-sunken: #ddd0a8;
+  --color-ink:            #1c0a00;
+  --color-ink-muted:      #6b4c2a;
+  --color-sepia:          rgba(139, 90, 43, 0.25);
+  --color-sepia-mid:      rgba(139, 90, 43, 0.15);
+
+  --page-max:               90rem;   /* single source of truth — change once, applies everywhere */
+
+  --shadow-parchment:       0 2px 8px rgba(92, 45, 10, 0.12), 0 1px 3px rgba(92, 45, 10, 0.08);
+  --shadow-parchment-lg:    0 8px 28px rgba(92, 45, 10, 0.18), 0 3px 10px rgba(92, 45, 10, 0.10);
+  --shadow-parchment-inset: inset 0 1px 4px rgba(92, 45, 10, 0.10);
+
+  /* Bento grid tokens */
+  --bento-gap:      1rem;
+  --bento-gap-lg:   1.5rem;
+  --bento-radius:   1rem;
+  --bento-radius-lg: 1.25rem;
+
+  /* ── Spartan UI HSL tokens — Light "Aged Manuscript" ──────────────── */
+  --background:          hsl(35deg 45% 91%);
+  --foreground:          hsl(20deg 95% 7%);
+  --card:                hsl(38deg 42% 86%);
+  --card-foreground:     hsl(20deg 95% 7%);
+  --popover:             hsl(38deg 42% 86%);
+  --popover-foreground:  hsl(20deg 95% 7%);
+  --primary:             hsl(31deg 90% 37%);
+  --primary-foreground:  hsl(38deg 100% 97%);
+  --secondary:           hsl(35deg 35% 84%);
+  --secondary-foreground: hsl(20deg 95% 7%);
+  --muted:               hsl(35deg 30% 82%);
+  --muted-foreground:    hsl(25deg 35% 50%);
+  --accent:              hsl(150deg 55% 23%);
+  --accent-foreground:   hsl(150deg 80% 96%);
+  --destructive:         hsl(0deg 84% 60%);
+  --border:              hsl(30deg 42% 58%);
+  --input:               hsl(30deg 35% 80%);
+  --ring:                hsl(31deg 90% 37%);
+  --radius:              0.75rem;
+}
+
+.dark {
+  --color-bg:             #100c07;
+  --color-surface:        #1e1509;
+  --color-surface-raised: #261b0c;
+  --color-surface-sunken: #0d0905;
+  --color-ink:            #f0ddb0;
+  --color-ink-muted:      #9a8060;
+  --color-sepia:          rgba(180, 130, 60, 0.20);
+  --color-sepia-mid:      rgba(180, 130, 60, 0.12);
+
+  --shadow-parchment:       0 2px 12px rgba(0, 0, 0, 0.50), 0 1px 4px rgba(0, 0, 0, 0.35);
+  --shadow-parchment-lg:    0 8px 32px rgba(0, 0, 0, 0.65), 0 3px 12px rgba(0, 0, 0, 0.40);
+  --shadow-parchment-inset: inset 0 1px 6px rgba(212, 144, 10, 0.08);
+
+  /* ── Spartan UI HSL tokens — Dark "Candlelit Vellum" ──────────────── */
+  --background:          hsl(25deg 60% 5%);
+  --foreground:          hsl(40deg 70% 82%);
+  --card:                hsl(28deg 65% 9%);
+  --card-foreground:     hsl(40deg 70% 82%);
+  --popover:             hsl(28deg 65% 9%);
+  --popover-foreground:  hsl(40deg 70% 82%);
+  --primary:             hsl(38deg 88% 45%);
+  --primary-foreground:  hsl(25deg 60% 5%);
+  --secondary:           hsl(28deg 55% 13%);
+  --secondary-foreground: hsl(40deg 70% 82%);
+  --muted:               hsl(28deg 45% 11%);
+  --muted-foreground:    hsl(35deg 30% 55%);
+  --accent:              hsl(150deg 45% 32%);
+  --accent-foreground:   hsl(150deg 80% 92%);
+  --destructive:         hsl(0deg 80% 65%);
+  --border:              hsl(38deg 55% 27%);
+  --input:               hsl(28deg 50% 16%);
+  --ring:                hsl(38deg 88% 45%);
+}

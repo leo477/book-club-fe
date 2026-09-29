@@ -3,6 +3,8 @@ import { randomInt } from 'node:crypto';
 import path from 'node:path';
 import type { APIRequestContext } from '@playwright/test';
 import type { RunContext } from '../global-setup';
+import { apiBaseURL } from '../../playwright.full-audit.config';
+import { assertSeedAllowed } from '../seed-guard';
 import { newApiContext } from './api-client';
 
 const RUN_CONTEXT_PATH = path.join(__dirname, '..', '.auth', 'run-context.json');
@@ -74,6 +76,7 @@ export async function apiContextFor(role: 'member' | 'organizer'): Promise<APIRe
 // organizer identity for exactly this reason — using the shared organizerApi
 // fixture for a second `POST /clubs` call 409s every time.
 export async function registerDisposableOrganizer(): Promise<APIRequestContext> {
+  assertSeedAllowed(apiBaseURL);
   const anon = await newApiContext();
   // randomInt (CSPRNG), not Math.random(), since this feeds a password below.
   const suffix = `${Date.now()}${randomInt(0, 1000)}`;

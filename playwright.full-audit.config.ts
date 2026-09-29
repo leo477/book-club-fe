@@ -4,12 +4,28 @@ import { defineConfig, devices } from '@playwright/test';
 // test users against the live backend, seeds a club/event/quiz, then drives
 // every page and every key backend endpoint. Heavier and slower than the
 // default e2e suite — run manually via `npm run audit:full`, not in CI.
+//
+// Setup registers accounts and seeds data, so AUDIT_API_BASE_URL is REQUIRED
+// (no default) and a non-local host is refused. Run against a local backend:
+//   AUDIT_API_BASE_URL=http://localhost:8000/api/v1 npm run audit:full
+// To deliberately target a shared backend, name its exact hostname:
+//   AUDIT_API_BASE_URL=https://host/api/v1 ALLOW_PROD_SEED=host npm run audit:full
 const baseURL = process.env.AUDIT_BASE_URL ?? 'http://localhost:4200';
 const isLocal = baseURL.includes('localhost') || baseURL.includes('127.0.0.1');
 
 // Backend API base URL used directly by API specs and global setup.
-// Defaults to the same live backend the frontend environments already target.
-export const apiBaseURL = process.env.AUDIT_API_BASE_URL ?? 'https://book-club-be.onrender.com/api/v1';
+// Fails closed: there is no default backend.
+function requireApiBaseURL(): string {
+  const value = process.env.AUDIT_API_BASE_URL;
+  if (!value) {
+    throw new Error(
+      'AUDIT_API_BASE_URL is required, e.g. AUDIT_API_BASE_URL=http://localhost:8000/api/v1 npm run audit:full ' +
+        '(a non-local host additionally needs ALLOW_PROD_SEED=<hostname>).',
+    );
+  }
+  return value;
+}
+export const apiBaseURL = requireApiBaseURL();
 
 // Bare origin, for the handful of backend routes mounted OUTSIDE the
 // `/api/v1` prefix (currently just /health and /ready — see app/routers/health.py,
