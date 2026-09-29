@@ -52,6 +52,7 @@ The content is organized as follows:
     scorecard.yml
     secret-scan.yml
     stale.yml
+    web.yml
   copilot-instructions.md
   dependabot.yml
   labeler.yml
@@ -121,6 +122,7 @@ apps/
     package.json
     postcss.config.mjs
     tsconfig.json
+    vercel.json
     vitest.config.ts
     vitest.empty.ts
     vitest.setup.ts
@@ -137,6 +139,7 @@ docs/
   migration/
     BASELINE-2026-10.md
     cleanup-pw-audit.sql
+    RUNBOOK-STRANGLER.md
 e2e/
   fixtures/
     api-client.ts
