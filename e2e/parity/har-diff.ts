@@ -1,5 +1,5 @@
 import { chromium, type BrowserContext, type Page } from '@playwright/test';
-import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { closeSync, fstatSync, mkdirSync, openSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { isSeedAllowed } from '../seed-guard';
 
@@ -132,8 +132,14 @@ export function diff(legacy: string[], next: string[], allowed: AllowEntry[] = [
 
 function loadAllowlist(journey: string): AllowEntry[] {
   const file = path.join(ALLOWLIST_DIR, `${journey}.json`);
-  if (!existsSync(file)) return [];
-  const parsed = JSON.parse(readFileSync(file, 'utf-8')) as { ignore?: AllowEntry[] };
+  let raw: string;
+  try {
+    raw = readFileSync(file, 'utf-8');
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === 'ENOENT') return [];
+    throw err;
+  }
+  const parsed = JSON.parse(raw) as { ignore?: AllowEntry[] };
   for (const item of parsed.ignore ?? []) {
     if (!item.signature || !item.reason) throw new Error(`${file}: every allowlist entry needs signature and reason`);
   }
@@ -142,7 +148,20 @@ function loadAllowlist(journey: string): AllowEntry[] {
 
 function storageStateFor(origin: string): string {
   const hint = 'run `AUDIT_API_BASE_URL=<local api> npm run parity:setup-member` (plus ALLOW_PROD_SEED=<hostname> for a non-local API)';
-  if (!existsSync(AUTH_STATE)) throw new Error(`e2e/.auth/member.json is missing: ${hint}`);
+  let stateRaw: string;
+  let stateMtimeMs: number;
+  let fd: number;
+  try {
+    fd = openSync(AUTH_STATE, 'r');
+  } catch {
+    throw new Error(`e2e/.auth/member.json is missing: ${hint}`);
+  }
+  try {
+    stateMtimeMs = fstatSync(fd).mtimeMs;
+    stateRaw = readFileSync(fd, 'utf-8');
+  } finally {
+    closeSync(fd);
+  }
   const metaFile = path.join(path.dirname(AUTH_STATE), 'member.meta.json');
   let backend: string | undefined;
   try {
@@ -157,11 +176,11 @@ function storageStateFor(origin: string): string {
     throw new Error(`e2e/.auth/member.json was created against non-local backend ${backend}; set ALLOW_PROD_SEED=${new URL(backend).hostname} to use it, or regenerate against a local API.`);
   }
   const maxAgeH = Number(process.env['PARITY_AUTH_MAX_AGE_H'] ?? 12);
-  const ageH = (Date.now() - statSync(AUTH_STATE).mtimeMs) / 3_600_000;
+  const ageH = (Date.now() - stateMtimeMs) / 3_600_000;
   if (ageH > maxAgeH) {
     throw new Error(`e2e/.auth/member.json is ${ageH.toFixed(1)}h old (max ${maxAgeH}h): ${hint}`);
   }
-  const state = JSON.parse(readFileSync(AUTH_STATE, 'utf-8')) as { origins: { origin: string }[] };
+  const state = JSON.parse(stateRaw) as { origins: { origin: string }[] };
   for (const o of state.origins) o.origin = origin;
   const file = path.join(OUT_DIR, `member-${new URL(origin).port || 'default'}.json`);
   writeFileSync(file, JSON.stringify(state));
