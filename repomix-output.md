@@ -135,6 +135,7 @@ src/
         seo.service.ts
         support.service.ts
         theme.service.ts
+        toast.service.ts
         upload.service.ts
       utils/
         event-attendance.util.ts
@@ -383,24 +384,6 @@ src/
               hlm-card-title.ts
               hlm-card.ts
             index.ts
-        dropdown-menu/
-          src/
-            lib/
-              hlm-dropdown-menu-checkbox-indicator.ts
-              hlm-dropdown-menu-checkbox.ts
-              hlm-dropdown-menu-group.ts
-              hlm-dropdown-menu-item-sub-indicator.ts
-              hlm-dropdown-menu-item.ts
-              hlm-dropdown-menu-label.ts
-              hlm-dropdown-menu-radio-indicator.ts
-              hlm-dropdown-menu-radio.ts
-              hlm-dropdown-menu-separator.ts
-              hlm-dropdown-menu-shortcut.ts
-              hlm-dropdown-menu-sub.ts
-              hlm-dropdown-menu-token.ts
-              hlm-dropdown-menu-trigger.ts
-              hlm-dropdown-menu.ts
-            index.ts
         field/
           src/
             lib/
@@ -514,6 +497,7 @@ components.json
 eslint.config.js
 LICENSE
 package.json
+PLAN-UI-STACK-2026-09-28.md
 playwright.full-audit.config.ts
 postcss.config.json
 proxy.conf.json

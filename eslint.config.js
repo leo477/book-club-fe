@@ -63,6 +63,23 @@ module.exports = defineConfig([
     },
   },
   {
+    files: ["src/**/*.ts"],
+    ignores: ["src/app/shared/spartan/**", "src/app/core/services/toast.service.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@spartan-ng/brain", "@spartan-ng/brain/*"],
+              message: "Import Spartan brain only inside src/app/shared/spartan or the ToastService facade.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ["src/app/shared/spartan/**/*.ts", "src/app/shared/spartan/**/*.html"],
     rules: {
       "@angular-eslint/directive-selector": "off",

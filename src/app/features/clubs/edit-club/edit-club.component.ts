@@ -18,7 +18,7 @@ import {
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
+import { ToastService } from '../../../core/services/toast.service';
 import { ClubService } from '../../../core/services/club.service';
 import { Club } from '../../../core/models/club.model';
 import { CoverUploadComponent } from '../../../shared/components/cover-upload/cover-upload.component';
@@ -58,6 +58,7 @@ export class EditClubComponent {
 
   private readonly clubService = inject(ClubService);
   private readonly router = inject(Router);
+  private readonly toast = inject(ToastService);
   private readonly translate = inject(TranslateService);
 
   private readonly _clubResource = rxResource<Club | null, string>({
@@ -160,7 +161,7 @@ export class EditClubComponent {
           ? { name: venueNameTrimmed, address: venueAddress.trim(), description: venueDescription.trim() }
           : null,
       });
-      toast.success(this.translate.instant('EDIT_CLUB.success'));
+      this.toast.success(this.translate.instant('EDIT_CLUB.success'));
       this.router.navigate(['/clubs', this.id()]);
     } catch (err) {
       this._submitErrorMessage.set(err instanceof Error ? err.message : this.translate.instant('EDIT_CLUB.update_error'));

@@ -2,7 +2,7 @@ import { Injectable, signal, computed, inject, effect, untracked, ApplicationRef
 import { DOCUMENT } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { catchError, firstValueFrom, of } from 'rxjs';
-import { toast } from '@spartan-ng/brain/sonner';
+import { ToastService } from './toast.service';
 import { ChatItem, ChatMessage, ChatRoom, UnreadDivider } from '../models/chat.model';
 import { extractApiError } from '../api/api-error.util';
 import { logError } from '../utils/logger.util';
@@ -17,6 +17,7 @@ import { ChatAudioAlertService } from './chat-audio-alert.service';
 
 @Injectable({ providedIn: 'root' })
 export class ChatService {
+  private readonly toast = inject(ToastService);
   private readonly translate = inject(TranslateService);
   private readonly document = inject(DOCUMENT);
   private readonly _appRef = inject(ApplicationRef);
@@ -524,7 +525,7 @@ export class ChatService {
   }
 
   private notifyError(err: unknown): void {
-    toast.error(this.translate.instant(extractApiError(err)) as string);
+    this.toast.error(this.translate.instant(extractApiError(err)) as string);
   }
 
   private mapMessage(m: ApiChatMessage): ChatMessage {

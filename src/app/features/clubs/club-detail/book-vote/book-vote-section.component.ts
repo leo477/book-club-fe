@@ -9,7 +9,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
+import { ToastService } from '../../../../core/services/toast.service';
 import { BookVoteService } from '../../../../core/services/book-vote.service';
 import { BookOption, BookVoteRound } from '../../../../core/models/book-vote.model';
 import { BackendHttpError, RequestTimeoutError } from '../../../../core/interceptors/auth.interceptor';
@@ -29,6 +29,7 @@ export class BookVoteSectionComponent {
   readonly isMember = input(false);
 
   private readonly voteService = inject(BookVoteService);
+  private readonly toast = inject(ToastService);
   private readonly translate = inject(TranslateService);
 
   protected readonly newTitle  = signal('');
@@ -112,7 +113,7 @@ export class BookVoteSectionComponent {
       await action();
       this.roundResource.reload();
     } catch (err) {
-      toast.error(this.formatActionError(err, 'Failed to update the vote'));
+      this.toast.error(this.formatActionError(err, 'Failed to update the vote'));
     } finally {
       this.isActionLoading.set(false);
     }

@@ -10,6 +10,7 @@ import {
 import { inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
+import { ToastService } from '../services/toast.service';
 import {
   Observable,
   TimeoutError,
@@ -126,6 +127,7 @@ async function handleHttpSideEffects(
   router: Router,
   tokenStore: TokenStore,
   translate: TranslateService,
+  toast: ToastService,
 ): Promise<void> {
   if (!skipAuthRedirect) {
     const target = resolveAuthRedirect(httpError, token, tokenStore);
@@ -139,7 +141,6 @@ async function handleHttpSideEffects(
       console.error('[HTTP] Server error', httpError.status, httpError.url, httpError);
     }
     if (!suppress) {
-      const { toast } = await import('@spartan-ng/brain/sonner');
       toast.error(translate.instant('ERRORS.serverError') as string);
     }
   }
@@ -189,6 +190,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
   const http = inject(HttpClient);
   const tokenStore = inject(TokenStore);
   const translate = inject(TranslateService);
+  const toast = inject(ToastService);
 
   const timeoutMs = MUTATION_METHODS.has(req.method.toUpperCase())
     ? MUTATION_TIMEOUT_MS
@@ -236,9 +238,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
         const skipAuthRedirect = request.context.get(SKIP_AUTH_REDIRECT);
         if (error instanceof TimeoutError) {
           if (!suppress) {
-            import('@spartan-ng/brain/sonner')
-              .then(({ toast }) => toast.error(translate.instant('ERRORS.timeout') as string))
-              .catch(() => { /* best-effort */ });
+            toast.error(translate.instant('ERRORS.timeout') as string);
           }
           return throwError(() => new RequestTimeoutError());
         }
@@ -260,7 +260,7 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
         }
 
         if (httpError) {
-          handleHttpSideEffects(httpError, activeToken, suppress, skipAuthRedirect, router, tokenStore, translate)
+          handleHttpSideEffects(httpError, activeToken, suppress, skipAuthRedirect, router, tokenStore, translate, toast)
             .catch(() => { /* navigation/side-effects best-effort */ });
           const detail = extractBackendDetail(httpError);
           let errorKey: string;

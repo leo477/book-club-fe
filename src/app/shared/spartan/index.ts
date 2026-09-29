@@ -1,7 +1,6 @@
 export * from './badge/src';
 export * from './button/src';
 export * from './card/src';
-export * from './dropdown-menu/src';
 export * from './field/src';
 export * from './icon/src';
 export * from './input/src';

@@ -12,7 +12,7 @@ import {
 import { NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslatePipe, TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
+import { ToastService } from '../../../core/services/toast.service';
 import { ClubService } from '../../../core/services/club.service';
 import { logWarn } from '../../../core/utils/logger.util';
 import {
@@ -73,6 +73,7 @@ export class ClubDetailComponent {
   private readonly chatService = inject(ChatService);
   private readonly auth = inject(AuthService);
   private readonly seo = inject(SeoService);
+  private readonly toast = inject(ToastService);
   private readonly translate = inject(TranslateService);
 
   readonly currentUser = this.auth.currentUser;
@@ -275,10 +276,10 @@ export class ClubDetailComponent {
       const status = await this.clubService.joinClub(this.id());
       if (status === 'pending' || status === 'already_requested') {
         this.joinRequestStatus.set('pending');
-        toast.success(this.translate.instant('CLUBS.join_request_sent') as string);
+        this.toast.success(this.translate.instant('CLUBS.join_request_sent') as string);
       } else {
         this.chatService.loadRooms(this.id(), this.currentUser()?.id);
-        toast.success(this.translate.instant('CHAT.club_chat_ready_toast') as string);
+        this.toast.success(this.translate.instant('CHAT.club_chat_ready_toast') as string);
       }
     } catch (err) {
       this.actionError.set(this.formatActionError(err, 'Failed to join club'));
@@ -313,7 +314,7 @@ export class ClubDetailComponent {
       await this.clubService.kickMember(this.id(), userId);
     } catch (err) {
       this.members.set(previous);
-      toast.error(this.formatActionError(err, 'Failed to remove member'));
+      this.toast.error(this.formatActionError(err, 'Failed to remove member'));
     }
   }
 
@@ -324,7 +325,7 @@ export class ClubDetailComponent {
       await this.clubService.banMember(this.id(), event.userId, event.duration);
     } catch (err) {
       this.members.set(previous);
-      toast.error(this.formatActionError(err, 'Failed to ban member'));
+      this.toast.error(this.formatActionError(err, 'Failed to ban member'));
     }
   }
 
@@ -420,7 +421,7 @@ export class ClubDetailComponent {
       this.setWinnerEventId.set(null);
     } catch (err) {
       this.pastEvents.set(previousPastEvents);
-      toast.error(this.formatActionError(err, 'Failed to set event winner'));
+      this.toast.error(this.formatActionError(err, 'Failed to set event winner'));
     } finally {
       this.setWinnerLoading.set(null);
     }
