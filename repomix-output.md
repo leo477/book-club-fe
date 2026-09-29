@@ -202,6 +202,7 @@ docs/
   migration/
     BASELINE-2026-10.md
     cleanup-pw-audit.sql
+    PARITY-R5.md
     RUNBOOK-STRANGLER.md
     UI-DELTAS.md
 e2e/

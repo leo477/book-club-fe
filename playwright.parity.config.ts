@@ -22,7 +22,17 @@ export default defineConfig({
     navigationTimeout: 30_000,
   },
   projects: [
-    { name: 'legacy', use: { ...devices['Desktop Chrome'], baseURL: parityTargets.legacy } },
-    { name: 'next', use: { ...devices['Desktop Chrome'], baseURL: parityTargets.next } },
+    {
+      name: 'legacy',
+      use: { ...devices['Desktop Chrome'], baseURL: parityTargets.legacy, bypassCSP: process.env['PARITY_LEGACY_BYPASS_CSP'] === '1' },
+    },
+    {
+      name: 'next',
+      use: {
+        ...devices['Desktop Chrome'],
+        baseURL: parityTargets.next,
+        extraHTTPHeaders: process.env['PARITY_NEXT_BYPASS'] ? { 'x-vercel-protection-bypass': process.env['PARITY_NEXT_BYPASS'] } : undefined,
+      },
+    },
   ],
 });
