@@ -6,7 +6,8 @@ import { describe, expect, it } from 'vitest';
 import { manifest } from './routes';
 
 const appDir = fileURLToPath(new URL('../app', import.meta.url));
-const IGNORED = new Set(['strangler.json', '_not-found']);
+// %5F%5Fui: dev-only design-system gallery that 404s in production, so it must never be a strangler route.
+const IGNORED = new Set(['strangler.json', '_not-found', '%5F%5Fui']);
 
 function pages(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {

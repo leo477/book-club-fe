@@ -71,6 +71,9 @@ apps/
             page.tsx
         %5F%5Fstrangler-probe/
           page.tsx
+        %5F%5Fui/
+          page.tsx
+          toast-buttons.tsx
         strangler.json/
           route.ts
         layout.tsx
@@ -79,12 +82,16 @@ apps/
           badge.tsx
           button.tsx
           card.tsx
+          field.test.tsx
+          field.tsx
           input.tsx
           label.tsx
           separator.tsx
           sheet.tsx
           skeleton.tsx
           sonner.tsx
+          spinner.test.tsx
+          spinner.tsx
           tabs.tsx
         app-link.test.tsx
         app-link.tsx
@@ -140,6 +147,7 @@ docs/
     BASELINE-2026-10.md
     cleanup-pw-audit.sql
     RUNBOOK-STRANGLER.md
+    UI-DELTAS.md
 e2e/
   fixtures/
     api-client.ts
