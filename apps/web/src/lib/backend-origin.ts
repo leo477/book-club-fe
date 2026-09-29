@@ -1,8 +1,11 @@
 const DEFAULT_ORIGIN = 'https://book-club-be.onrender.com';
 
-/** The one backend origin for the /api rewrite and server fetches; https-only in production, throws on anything invalid. */
+/** The one backend origin for the /api rewrite and server fetches; https-only in production, explicit on Vercel production, throws on anything invalid. */
 export function backendOrigin(env: Record<string, string | undefined> = process.env): string {
-  const raw = env['BACKEND_ORIGIN'] || env['BACKEND_API_URL'] || DEFAULT_ORIGIN;
+  const configured = env['BACKEND_ORIGIN'] || env['BACKEND_API_URL'];
+  // a Vercel production deploy must never silently proxy /api to the dev default backend
+  if (!configured && env['VERCEL_ENV'] === 'production') throw new Error('BACKEND_ORIGIN is required when VERCEL_ENV=production');
+  const raw = configured || DEFAULT_ORIGIN;
   let url: URL;
   try {
     url = new URL(raw);

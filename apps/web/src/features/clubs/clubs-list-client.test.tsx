@@ -6,6 +6,8 @@ import { API, clubJson, messages, parsedClub, renderWithProviders, server, userJ
 import { ClubsListClient } from './clubs-list-client';
 import { filterClubs } from './use-clubs';
 
+const track = vi.hoisted(() => vi.fn());
+vi.mock('@vercel/analytics', () => ({ track }));
 const navigate = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/navigate', () => ({ hardNavigate: navigate }));
 
@@ -129,8 +131,9 @@ describe('ClubsListClient while the session resolves', () => {
     expect(screen.queryByRole('button', { name: new RegExp(t('CLUBS.join')) })).toBeNull();
     const placeholders = screen.getAllByTestId('card-actions-pending');
     expect(placeholders).toHaveLength(2);
-    expect(placeholders[0]).toHaveAttribute('aria-hidden', 'true');
-    expect(placeholders[0]).toHaveClass('invisible', 'h-8');
+    expect(placeholders[0]).toHaveClass('h-8');
+    // the crawlable detail link is already there, the CTA slot is not
+    expect(within(placeholders[0]!).getByRole('link', { name: new RegExp(`${t('CLUBS.view')} Alpha`) })).toHaveAttribute('href', '/clubs/c1');
     expect(screen.getByTestId('tablist-placeholder')).toHaveClass('h-12');
 
     release();
@@ -212,6 +215,30 @@ describe('ClubsListClient as member', () => {
 });
 
 describe('ClubsListClient joining', () => {
+  it('emits join_club (app next + cohort bucket) only after a successful join', async () => {
+    mockApi({ session: true });
+    document.cookie = 'bc_bucket=23; path=/';
+    track.mockReset();
+    server.use(http.post(`${API}/clubs/:id/join`, () => HttpResponse.json({ status: 'pending' })));
+    const u = userEvent.setup();
+    renderWithProviders(<ClubsListClient initialClubs={[alpha]} />);
+    await u.click(await screen.findByRole('button', { name: `${t('CLUBS.join')} Alpha Readers` }));
+    await waitFor(() => expect(track).toHaveBeenCalledWith('join_club', { app: 'next', bucket: '20-29' }));
+    document.cookie = 'bc_bucket=; path=/; max-age=0';
+  });
+
+  it('does not emit join_club when the join fails', async () => {
+    mockApi({ session: true });
+    track.mockReset();
+    server.use(http.post(`${API}/clubs/:id/join`, () => HttpResponse.json({}, { status: 400 })));
+    const u = userEvent.setup();
+    renderWithProviders(<ClubsListClient initialClubs={[alpha]} />);
+    const join = await screen.findByRole('button', { name: `${t('CLUBS.join')} Alpha Readers` });
+    await u.click(join);
+    await waitFor(() => expect(join).toBeEnabled());
+    expect(track).not.toHaveBeenCalledWith('join_club', expect.anything());
+  });
+
   it('posts the join, disables only that button with a spinner while pending, then re-enables it', async () => {
     mockApi({ session: true });
     let release = () => {};

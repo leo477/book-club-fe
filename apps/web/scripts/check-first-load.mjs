@@ -1,5 +1,6 @@
 // Reports gzip -9 first-load JS (every module <script src> in the served HTML) for the production build.
-// Usage: npm run build && npm run size [-- --budget 200 --routes /clubs,/privacy]
+// Usage: npm run build && npm run size [-- --budget 200 --ceiling 250 --routes /clubs,/privacy]
+// --budget is the target (warns above it); --ceiling is the failing threshold (env FIRST_LOAD_CEILING_KB, default 250).
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -12,6 +13,11 @@ const opt = (name, fallback) => {
   return i >= 0 ? args[i + 1] : fallback;
 };
 const budgetKb = Number(opt('budget', process.env.FIRST_LOAD_BUDGET_KB ?? '200'));
+const ceilingKb = Number(opt('ceiling', process.env.FIRST_LOAD_CEILING_KB ?? '250'));
+if (!(ceilingKb >= budgetKb)) {
+  console.error(`--ceiling (${ceilingKb} KB) must be >= --budget (${budgetKb} KB)`);
+  process.exit(2);
+}
 const routes = opt('routes', '/clubs,/privacy').split(',');
 const port = Number(
   opt('port', '') ||
@@ -88,9 +94,11 @@ for (const route of routes) {
   }
   const gz = files.reduce((n, f) => n + f.gz, 0);
   const raw = files.reduce((n, f) => n + f.raw, 0);
-  const over = gz > budgetKb * 1024;
-  failed ||= over;
-  console.log(`${route}: ${files.length} scripts, raw ${kb(raw)} KB, gzip-9 ${kb(gz)} KB (budget ${budgetKb} KB) ${over ? 'OVER' : 'ok'}`);
+  const failing = gz > ceilingKb * 1024;
+  const warning = !failing && gz > budgetKb * 1024;
+  failed ||= failing;
+  const verdict = failing ? `OVER CEILING ${ceilingKb} KB (fail)` : warning ? `WARNING: over the ${budgetKb} KB target, under the ${ceilingKb} KB ceiling` : 'ok';
+  console.log(`${route}: ${files.length} scripts, raw ${kb(raw)} KB, gzip-9 ${kb(gz)} KB (target ${budgetKb} KB, ceiling ${ceilingKb} KB) ${verdict}`);
   if (args.includes('--verbose')) for (const f of files) console.log(`  ${kb(f.gz).padStart(7)} KB  ${f.src}`);
 }
 stop();

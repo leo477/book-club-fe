@@ -32,3 +32,13 @@ Reference: `src/app/shared/spartan` (read-only). Review surface: `/__ui` (dev on
 | Mobile sheet | The trigger is a plain button (`aria-haspopup="dialog"`); the Radix Dialog content is fetched on idle, pointer-enter or focus. Focus returns to the trigger on close. | First-load size. |
 | Toasts | `sonner` and the Toaster mount on the first toast (api errors, logout failure); toasts raised before that are queued and delivered on mount. | First-load size. |
 | Images | Club covers/avatars have explicit `width`/`height` and `referrerPolicy="no-referrer"`; the first row (4 cards) loads eagerly with `fetchpriority=high`. | CLS and referrer leakage to arbitrary image hosts. |
+
+## Deltas from the final react-reviewer review (apps/web)
+
+| Area | Delta | Why |
+|---|---|---|
+| Light-mode contrast (P7, intentional visual delta) | Primary button background `--primary` in light mode is `hsl(31 90% 34%)` (was `37%`): `#fff9f0` on it is 4.97:1 (was 4.33, needs 4.5). The mobile sheet title uses `--color-primary-700` in light mode: 5.94:1 on the sheet surface `#f2eade` (was 3.27 with `primary-600`). Dark theme unchanged. Overrides live in `apps/web/src/app/globals.css` only; `packages/config` and Angular are untouched, so Angular keeps 4.33 / 3.27 and the light visual snapshots of buttons and the sheet title differ slightly (a few percent darker). Angular can adopt the same two values later. | Owner decision: fix in Next only (WCAG AA). |
+| Card actions while the session resolves | The pending state now shows the (outline) view link to `/clubs/{id}`, identical for every session, plus an invisible slot where the CTA lands. The server HTML therefore has crawlable detail links; members' view link changes from outline to solid once the session resolves (style only, no CTA flash). | SEO for club detail pages. |
+| Session probe | `session-status` has a 4 s timeout; a timeout or failure resolves to guest and is cached for only 2 s (success: 30 s), so a blip cannot hide a session for 30 s and guests never wait on a hung backend to see CTAs and the header login/register buttons. | Robustness. |
+| Errors | `app/error.tsx` and `app/global-error.tsx` show a localized generic message (`ERRORS.unexpected`) and a retry button (`ERRORS.retry`, added to `packages/i18n/overrides`); no message or stack is rendered. Lazy islands (user menu, club tabs, mobile sheet, toaster) fall back to their inert/plain UI if their chunk fails. Angular has no equivalent boundary. | Version-skew and network resilience. |
+| Analytics | Custom events carry `app: 'next'` and the `bucket` cohort; see `CANARY-METRICS.md`. | Canary comparison. |

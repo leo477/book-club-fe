@@ -45,3 +45,12 @@
     @apply bg-background text-foreground font-sans antialiased;
   }
 }
+
+/* Intentional light-mode contrast fix (P7, see docs/migration/UI-DELTAS.md); unlayered so it wins over utilities, `:not(.dark)` keeps the dark theme untouched.
+   primary button: #fff9f0 on hsl(31 90% 34%) = 4.97:1 (was 4.33 on hsl(31 90% 37%)); sheet title: primary-700 on the sheet surface = 5.94:1 (was 3.27 with primary-600). */
+:root:not(.dark) {
+  --primary: hsl(31deg 90% 34%);
+}
+:root:not(.dark) [data-slot='sheet-title'] {
+  color: var(--color-primary-700);
+}

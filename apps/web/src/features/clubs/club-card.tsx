@@ -102,8 +102,13 @@ export function ClubCard({ club, isMember, isOwned, isAuthenticated, sessionPend
         <Separator />
 
         {sessionPending ? (
-          // never the guest CTA before the session resolves; the fixed height keeps the card from jumping
-          <div className="mt-auto h-8 invisible" aria-hidden="true" data-testid="card-actions-pending" />
+          // never a session-specific CTA before the session resolves; the detail link is in the server HTML for crawlers and identical for every session
+          <div className="flex items-center gap-2 mt-auto h-8" data-testid="card-actions-pending">
+            <span className="flex-1 invisible" aria-hidden="true" />
+            <Button asChild variant="outline" size="sm" className="flex-shrink-0">
+              {view}
+            </Button>
+          </div>
         ) : (
         <div className="flex items-center gap-2 mt-auto">
           {isAuthenticated && !isMember && (

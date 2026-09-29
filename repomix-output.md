@@ -85,11 +85,17 @@ apps/
           cinzel-latin.woff2
           inter-cyrillic.woff2
           inter-latin.woff2
+          OFL-Cinzel.txt
+          OFL-Inter.txt
+          OFL-PlayfairDisplay.txt
           playfair-cyrillic.woff2
           playfair-latin.woff2
         strangler.json/
           route.ts
+        error.test.tsx
+        error.tsx
         fonts.ts
+        global-error.tsx
         layout.tsx
         robots.test.ts
         robots.ts
@@ -127,18 +133,24 @@ apps/
           spinner.test.tsx
           spinner.tsx
           tabs.tsx
+        analytics-events.tsx
         app-link.test.tsx
         app-link.tsx
         empty-state.tsx
+        error-panel.tsx
+        lazy-boundary.test.tsx
+        lazy-boundary.tsx
         toaster-host.test.tsx
         toaster-host.tsx
         toaster-impl.tsx
       features/
         clubs/
+          club-card.test.tsx
           club-card.tsx
           club-tabs.tsx
           clubs-list-client.test.tsx
           clubs-list-client.tsx
+          session-timeout.test.tsx
           use-clubs.ts
           use-session.ts
       i18n/
@@ -146,6 +158,8 @@ apps/
         locale.ts
         request.ts
       lib/
+        analytics.test.ts
+        analytics.ts
         api.ts
         backend-origin.test.ts
         backend-origin.ts
@@ -190,6 +204,7 @@ apps/
     next.config.ts
     package.json
     postcss.config.mjs
+    THIRD_PARTY_NOTICES.md
     tsconfig.json
     vercel.json
     vitest.config.ts
@@ -207,6 +222,7 @@ docs/
     REFACTOR-PLAN-2026-07-06.md
   migration/
     BASELINE-2026-10.md
+    CANARY-METRICS.md
     cleanup-pw-audit.sql
     PARITY-R5.md
     RUNBOOK-STRANGLER.md

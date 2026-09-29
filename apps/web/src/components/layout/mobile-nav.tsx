@@ -3,6 +3,7 @@
 import { MenuIcon } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import { useEffect, useRef, useState } from 'react';
+import { LazyBoundary } from '@/components/lazy-boundary';
 import type { MobileNavProps } from './mobile-nav-sheet';
 
 const loadSheet = () => import('./mobile-nav-sheet');
@@ -37,7 +38,11 @@ export function MobileNav(props: MobileNavProps) {
       >
         <MenuIcon className="h-5 w-5" aria-hidden="true" />
       </button>
-      {mounted && <MobileNavSheet {...props} open={open} onOpenChange={setOpen} trigger={trigger} />}
+      {mounted && (
+        <LazyBoundary fallback={null}>
+          <MobileNavSheet {...props} open={open} onOpenChange={setOpen} trigger={trigger} />
+        </LazyBoundary>
+      )}
     </>
   );
 }

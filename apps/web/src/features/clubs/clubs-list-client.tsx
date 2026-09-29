@@ -7,7 +7,9 @@ import { lazy, Suspense, useState } from 'react';
 import { AppLink } from '@/components/app-link';
 import { EmptyState } from '@/components/empty-state';
 import { Spinner } from '@/components/ui/spinner';
+import { LazyBoundary } from '@/components/lazy-boundary';
 import { api } from '@/lib/api';
+import { trackEvent } from '@/lib/analytics';
 import { ClubCard } from './club-card';
 import type { Tab } from './club-tabs';
 import { filterClubs, myClubsKey, useMyClubs, usePublicClubs } from './use-clubs';
@@ -35,7 +37,10 @@ export function ClubsListClient({ initialClubs }: { initialClubs: readonly Club[
     mutationKey: JOIN_KEY,
     mutationFn: (id: string) => api.clubs.join(id),
     // a pending request or a direct join changes what /clubs/my returns
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: myClubsKey }),
+    onSuccess: () => {
+      trackEvent('join_club');
+      return queryClient.invalidateQueries({ queryKey: myClubsKey });
+    },
   });
 
   // one observer only tracks the latest mutate(), so concurrent joins are read from the mutation cache
@@ -126,32 +131,35 @@ export function ClubsListClient({ initialClubs }: { initialClubs: readonly Club[
             <div className="pt-6">{allPanel}</div>
           </>
         ) : isAuthenticated ? (
-          <Suspense
-            fallback={
-              <>
-                {TABLIST_PLACEHOLDER}
-                <div className="pt-6">{allPanel}</div>
-              </>
-            }
-          >
-          <ClubTabs
-            tab={tab}
-            onTabChange={setTab}
-            allLabel={t('all')}
-            myLabel={t('my_clubs')}
-            myCount={myClubs.length}
-            all={allPanel}
-            my={
-              isLoading ? (
-                spinner
-              ) : myClubsQuery.isError ? null /* the banner already reports it; an empty state would mislead */ : myClubs.length === 0 ? (
-                <EmptyState icon="📚" title={t('no_clubs')} description={t('my_clubs_empty_desc')} />
-              ) : (
-                renderList(myClubs)
-              )
-            }
-          />
-          </Suspense>
+          // if the tabs chunk cannot load, the plain list (all clubs) stays usable
+          <LazyBoundary fallback={<div className="pt-6">{allPanel}</div>}>
+            <Suspense
+              fallback={
+                <>
+                  {TABLIST_PLACEHOLDER}
+                  <div className="pt-6">{allPanel}</div>
+                </>
+              }
+            >
+              <ClubTabs
+                tab={tab}
+                onTabChange={setTab}
+                allLabel={t('all')}
+                myLabel={t('my_clubs')}
+                myCount={myClubs.length}
+                all={allPanel}
+                my={
+                  isLoading ? (
+                    spinner
+                  ) : myClubsQuery.isError ? null /* the banner already reports it; an empty state would mislead */ : myClubs.length === 0 ? (
+                    <EmptyState icon="📚" title={t('no_clubs')} description={t('my_clubs_empty_desc')} />
+                  ) : (
+                    renderList(myClubs)
+                  )
+                }
+              />
+            </Suspense>
+          </LazyBoundary>
         ) : (
           allPanel
         )}

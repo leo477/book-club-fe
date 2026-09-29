@@ -4,9 +4,22 @@ import { backendApiUrl, backendOrigin } from './backend-origin';
 const prod = { NODE_ENV: 'production' };
 
 describe('backendOrigin', () => {
-  it('defaults to the hosted backend', () => {
+  it('defaults to the hosted backend outside Vercel production', () => {
     expect(backendOrigin(prod)).toBe('https://book-club-be.onrender.com');
     expect(backendApiUrl(prod)).toBe('https://book-club-be.onrender.com/api/v1');
+  });
+
+  it('requires an explicit origin on Vercel production (no silent default)', () => {
+    const vercelProd = { ...prod, VERCEL_ENV: 'production' };
+    expect(() => backendOrigin(vercelProd)).toThrow(/BACKEND_ORIGIN is required/);
+    expect(() => backendOrigin({ ...vercelProd, BACKEND_ORIGIN: '' })).toThrow(/required/);
+    expect(backendOrigin({ ...vercelProd, BACKEND_ORIGIN: 'https://api.example.com' })).toBe('https://api.example.com');
+    expect(backendOrigin({ ...vercelProd, BACKEND_API_URL: 'https://api.example.com/api/v1' })).toBe('https://api.example.com');
+  });
+
+  it('keeps the default for Vercel preview and development', () => {
+    expect(backendOrigin({ ...prod, VERCEL_ENV: 'preview' })).toBe('https://book-club-be.onrender.com');
+    expect(backendOrigin({ NODE_ENV: 'development' })).toBe('https://book-club-be.onrender.com');
   });
 
   it('normalizes to the origin and accepts the legacy BACKEND_API_URL', () => {

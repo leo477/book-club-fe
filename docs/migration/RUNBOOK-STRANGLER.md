@@ -104,6 +104,11 @@ vercel pull --yes --environment=preview && vercel build && vercel deploy --prebu
 - The first ever deployment of a project is promoted to that project's production automatically (it got `book-club-web-blue.vercel.app`); later `vercel deploy --prebuilt` without `--prod` are previews.
 - Previews are behind Vercel SSO protection: use `vercel curl <path> --deployment <url> -- -sI`.
 
+### Version skew (note, not yet configured)
+
+- Deploys can leave a tab on the old build while the server is new: the old tab then requests chunks that no longer exist. The lazy islands (user menu, club tabs, mobile sheet, toaster) degrade to their inert fallback through `LazyBoundary`, and `app/error.tsx` offers a retry, but the clean fix is Vercel **Skew Protection** (Project Settings > Advanced > Skew Protection, enable it and set a max age at least as long as a typical session, e.g. 12 h). It pins requests from an old client to the deployment that served it.
+- Setting it is a project-settings change made by the owner in the dashboard; nothing in the repo or this runbook runs it. Keep `BACKEND_ORIGIN` set on the production environment: `backendOrigin()` fails the build/start when `VERCEL_ENV=production` and it is missing.
+
 ## Security checklist (R2 security review)
 
 Run against the front door before and after cutover; all must pass.
