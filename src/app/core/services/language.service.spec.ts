@@ -84,22 +84,22 @@ describe('LanguageService', () => {
   });
 
   describe('use', () => {
-    it('calls translate.use with the given language', async () => {
-      const service = setup();
-      await service.use('en');
-      expect(translateSpy.use).toHaveBeenCalledWith('en');
-    });
-
-    it('persists the language to localStorage', async () => {
-      const service = setup();
-      await service.use('en');
-      expect(localStorage.getItem('lang')).toBe('en');
-    });
-
-    it('sets document.documentElement.lang', async () => {
-      const service = setup();
-      await service.use('en');
-      expect(document.documentElement.lang).toBe('en');
+    it.each([
+      [
+        'calls translate.use with the given language',
+        () => expect(translateSpy.use).toHaveBeenCalledWith('en'),
+      ],
+      [
+        'persists the language to localStorage',
+        () => expect(localStorage.getItem('lang')).toBe('en'),
+      ],
+      [
+        'sets document.documentElement.lang',
+        () => expect(document.documentElement.lang).toBe('en'),
+      ],
+    ])('%s', async (_name, assertEffect) => {
+      await setup().use('en');
+      assertEffect();
     });
   });
 });
