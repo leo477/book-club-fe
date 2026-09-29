@@ -43,28 +43,20 @@ describe('LanguageService', () => {
   });
 
   describe('cookie', () => {
-    it('prefers the cookie over localStorage', () => {
-      document.cookie = 'lang=en; path=/';
-      localStorage.setItem('lang', 'uk');
-      expect(setup().initialLang).toBe('en');
+    it.each([
+      ['prefers the cookie over localStorage', 'en', 'uk', 'en'],
+      ['ignores an unsupported cookie and falls back to localStorage', 'fr', 'en', 'en'],
+      ['falls back to localStorage on a malformed cookie without throwing', '%E0%A4%A', 'en', 'en'],
+    ])('%s', (_name, cookie, stored, expected) => {
+      document.cookie = `lang=${cookie}; path=/`;
+      localStorage.setItem('lang', stored);
+      expect(setup().initialLang).toBe(expected);
     });
 
     it('migrates a localStorage-only value into the cookie', () => {
       localStorage.setItem('lang', 'en');
       setup();
       expect(readCookie('lang')).toBe('en');
-    });
-
-    it('ignores an unsupported cookie and falls back to localStorage', () => {
-      document.cookie = 'lang=fr; path=/';
-      localStorage.setItem('lang', 'en');
-      expect(setup().initialLang).toBe('en');
-    });
-
-    it('falls back to localStorage on a malformed cookie without throwing', () => {
-      document.cookie = 'lang=%E0%A4%A; path=/';
-      localStorage.setItem('lang', 'en');
-      expect(setup().initialLang).toBe('en');
     });
 
     it('falls back to the default on a malformed cookie and empty storage', () => {
