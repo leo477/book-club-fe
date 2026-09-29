@@ -42,7 +42,16 @@ export function validBucket(value: string | undefined | null): number | null {
 }
 
 export function newBucket(): number {
-  return crypto.getRandomValues(new Uint32Array(1))[0]! % 100;
+  const RANGE = 100;
+  const MAX_UINT32 = 0x1_0000_0000; // 2^32
+  const limit = MAX_UINT32 - (MAX_UINT32 % RANGE);
+
+  while (true) {
+    const value = crypto.getRandomValues(new Uint32Array(1))[0]!;
+    if (value < limit) {
+      return value % RANGE;
+    }
+  }
 }
 
 /** Fail-safe is legacy: anything other than an explicit, enabled, in-bucket `next` flag goes to Angular. */
