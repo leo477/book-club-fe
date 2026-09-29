@@ -1,0 +1,110 @@
+@let s = stats();
+@if (!s) {
+  <p class="text-sm text-[var(--color-ink-muted)] text-center py-10">{{ 'CLUB_MANAGE.no_stats' | translate }}</p>
+} @else {
+  <div class="space-y-8">
+
+    <!-- Headline stat cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="parchment-card-raised p-4 text-center">
+        <p class="text-3xl font-bold text-[var(--color-primary-500)]">{{ s.totalMembers ?? '—' }}</p>
+        <p class="text-xs text-[var(--color-ink-muted)] mt-1">{{ 'CLUB_MANAGE.stat_members' | translate }}</p>
+      </div>
+      <div class="parchment-card-raised p-4 text-center">
+        <p class="text-3xl font-bold text-[var(--color-primary-500)]">{{ s.totalEvents ?? '—' }}</p>
+        <p class="text-xs text-[var(--color-ink-muted)] mt-1">{{ 'CLUB_MANAGE.stat_events' | translate }}</p>
+      </div>
+      <div class="parchment-card-raised p-4 text-center">
+        <p class="text-3xl font-bold text-[var(--color-primary-500)]">{{ s.totalMessages ?? '—' }}</p>
+        <p class="text-xs text-[var(--color-ink-muted)] mt-1">{{ 'CLUB_MANAGE.stat_messages' | translate }}</p>
+      </div>
+      <div class="parchment-card-raised p-4 text-center">
+        <p class="text-3xl font-bold text-[var(--color-primary-500)]">{{ s.upcomingEventsCount ?? '—' }}</p>
+        <p class="text-xs text-[var(--color-ink-muted)] mt-1">{{ 'CLUB_MANAGE.stat_upcoming' | translate }}</p>
+      </div>
+    </div>
+
+    <!-- Bar charts -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      @if (s.memberGrowth && s.memberGrowth.length > 0) {
+        <div class="parchment-card p-4">
+          <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-3">👥 {{ 'CLUB_MANAGE.member_growth' | translate }}</p>
+          <div class="flex items-end gap-1 h-24">
+            @for (m of s.memberGrowth; track m.month) {
+              <div
+                class="flex-1 bg-[var(--color-primary-400)] rounded-t opacity-70 hover:opacity-100 transition-opacity min-h-[2px]"
+                [style.height.%]="(m.count / maxMemberGrowth(s)) * 100"
+                [title]="m.month + ': ' + m.count"
+              ></div>
+            }
+          </div>
+        </div>
+      }
+      @if (s.eventFrequency && s.eventFrequency.length > 0) {
+        <div class="parchment-card p-4">
+          <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-3">📅 {{ 'CLUB_MANAGE.event_frequency' | translate }}</p>
+          <div class="flex items-end gap-1 h-24">
+            @for (m of s.eventFrequency; track m.month) {
+              <div
+                class="flex-1 bg-[var(--color-primary-400)] rounded-t opacity-70 hover:opacity-100 transition-opacity min-h-[2px]"
+                [style.height.%]="(m.count / maxEventFrequency(s)) * 100"
+                [title]="m.month + ': ' + m.count"
+              ></div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    @if (s.recentAttendance.length > 0) {
+      <div class="parchment-card p-4">
+        <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-3">{{ 'ORGANIZER.attendance' | translate }}</p>
+        <div class="flex items-end gap-1 h-24">
+          @for (ev of s.recentAttendance.slice(0, 12).reverse(); track ev.eventId) {
+            <div
+              class="flex-1 bg-[var(--color-accent-500)] rounded-t opacity-70 hover:opacity-100 transition-opacity min-h-[2px]"
+              [style.height.%]="(ev.attendeeCount / (s.recentAttendance[0]?.attendeeCount || 1)) * 100"
+              [title]="ev.title + ': ' + ev.attendeeCount"
+            ></div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Leaderboards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      @if (s.topActive.length > 0) {
+        <div class="parchment-card p-4">
+          <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-2">🏃 {{ 'ORGANIZER.top_active' | translate }}</p>
+          @for (m of s.topActive; track m.userId; let i = $index) {
+            <div class="flex items-center gap-2 text-sm py-1">
+              <span class="text-[var(--color-primary-500)] font-bold w-5">{{ i + 1 }}.</span>
+              <span class="text-[var(--color-ink)]">{{ m.displayName }}</span>
+              <span class="ml-auto text-[var(--color-ink-muted)]">{{ m.count }}</span>
+            </div>
+          }
+        </div>
+      }
+      @if (s.topWinners.length > 0) {
+        <div class="parchment-card p-4">
+          <p class="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-2">🏆 {{ 'ORGANIZER.top_winners' | translate }}</p>
+          @for (m of s.topWinners; track m.userId; let i = $index) {
+            <div class="flex items-center gap-2 text-sm py-1">
+              <span class="text-[var(--color-primary-500)] font-bold w-5">{{ i + 1 }}.</span>
+              <span class="text-[var(--color-ink)]">{{ m.displayName }}</span>
+              <span class="ml-auto text-[var(--color-ink-muted)]">{{ m.count }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    @if (s.bannedUsersCount && s.bannedUsersCount > 0) {
+      <div class="flex items-center gap-2">
+        <span class="text-sm text-[var(--color-ink-muted)]">🚫 {{ 'CLUB_MANAGE.banned_users' | translate }}</span>
+        <span class="text-sm font-bold px-2.5 py-0.5 rounded-full bg-red-100 text-red-600">{{ s.bannedUsersCount }}</span>
+      </div>
+    }
+
+  </div>
+}

@@ -127,7 +127,7 @@ export class QuizService {
       );
       this._quizzes.set(raw.map(mapQuiz));
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     } finally {
       this._isLoading.set(false);
     }
@@ -149,7 +149,7 @@ export class QuizService {
       this._quizzes.update(prev => [quiz, ...prev]);
       return quiz;
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     }
   }
 
@@ -167,7 +167,7 @@ export class QuizService {
       );
       this._questions.update(prev => [...prev, mapQuestion(raw)]);
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     }
   }
 
@@ -179,7 +179,7 @@ export class QuizService {
       );
       this._questions.set(raw.map(mapQuestion));
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     } finally {
       this._isLoading.set(false);
     }
@@ -192,7 +192,7 @@ export class QuizService {
       );
       return mapAttempt(raw);
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     }
   }
 
@@ -205,7 +205,7 @@ export class QuizService {
         prev.map(q => (q.id === quizId ? { ...q, isActive } : q)),
       );
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     }
   }
 
@@ -216,7 +216,7 @@ export class QuizService {
       );
       return mapQuiz(raw);
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     }
   }
 
@@ -227,7 +227,7 @@ export class QuizService {
       );
       return raw.map(mapQuestion);
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     }
   }
 
@@ -243,7 +243,7 @@ export class QuizService {
       this._quizzes.update(prev => prev.map(q => (q.id === quizId ? quiz : q)));
       return quiz;
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     }
   }
 
@@ -260,7 +260,7 @@ export class QuizService {
         ),
       );
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     }
   }
 
@@ -272,7 +272,7 @@ export class QuizService {
         ),
       );
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     }
   }
 
@@ -284,7 +284,7 @@ export class QuizService {
         }),
       );
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     }
   }
 
@@ -300,7 +300,7 @@ export class QuizService {
       this._session.set(session);
       return session;
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     }
   }
 
@@ -329,7 +329,7 @@ export class QuizService {
       );
       return raw.entries.map(mapLeaderboardEntry);
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     }
   }
 
@@ -343,7 +343,7 @@ export class QuizService {
       );
       this._session.set(null);
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     }
   }
 
@@ -354,7 +354,7 @@ export class QuizService {
       );
       return raw.map(mapQuiz);
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     }
   }
 
@@ -364,7 +364,7 @@ export class QuizService {
         this.http.get<ClubEvent[]>(`${this.api}/clubs/${clubId}/events`),
       );
     } catch (err) {
-      throw new Error(extractApiError(err));
+      throw new Error(extractApiError(err), { cause: err });
     }
   }
 }

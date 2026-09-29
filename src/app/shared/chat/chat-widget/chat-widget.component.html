@@ -40,12 +40,7 @@
     >
       @if (shouldShowRoomList()) {
         <!-- View 1: Room List -->
-        <div class="chat-header chat-header--gradient flex items-center justify-between p-4">
-          <div>
-            <h2 class="text-white font-bold text-base">Book Club Chat</h2>
-            <p class="text-white/70 text-xs">{{ chat.rooms().length }} rooms</p>
-          </div>
-        </div>
+        <app-chat-header [roomsView]="true" [roomCount]="chat.rooms().length" />
 
         <div class="flex-1 overflow-y-auto">
           @if (chat.rooms().length === 0) {
@@ -146,144 +141,22 @@
         }
       } @else {
         <!-- View 2: Chat View -->
-        <div
-          class="chat-header flex items-center gap-3 p-3"
-          [style.border-bottom]="'1px solid var(--border)'"
-        >
-          @if (chat.rooms().length > 1) {
-            <button
-              class="back-btn flex-shrink-0"
-              (click)="goToRoomList()"
-              [attr.aria-label]="'CHAT.back' | translate"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/>
-              </svg>
-            </button>
-          }
-          <div class="flex-1 min-w-0">
-            <div class="font-semibold text-sm truncate" [style.color]="'var(--color-ink)'">{{ activeRoom?.name }}</div>
-          </div>
-          <button
-            class="flex-shrink-0 transition-colors"
-            [style.color]="'var(--color-ink-muted)'"
-            [attr.aria-label]="'CHAT.close' | translate"
-            (click)="closeAndReturnFocus()"
-          >
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/>
-            </svg>
-          </button>
-        </div>
+        <app-chat-header
+          [roomsView]="false"
+          [activeRoomName]="activeRoom?.name ?? null"
+          [showBackButton]="chat.rooms().length > 1"
+          (back)="goToRoomList()"
+          (closePanel)="closeAndReturnFocus()"
+        />
 
-        <!-- Messages Container -->
-        <div
-          #messagesScroll
-          class="flex-1 overflow-y-auto p-3 space-y-2 messages-scroll"
-          role="log"
-          aria-live="polite"
-          (scroll)="onMessagesScroll()"
-        >
-          @if (chat.isLoadingOlder()[activeRoom?.id ?? '']) {
-            <div class="flex justify-center py-2">
-              <span class="text-xs" [style.color]="'var(--color-ink-muted)'">{{ 'CHAT.loading_older' | translate }}</span>
-            </div>
-          }
-          @if (chat.rooms().length === 0) {
-            <div class="flex flex-col items-center justify-center h-full gap-2 text-center px-4">
-              <span class="text-2xl" aria-hidden="true">💬</span>
-              <p class="text-sm" [style.color]="'var(--color-ink-muted)'">{{ 'CHAT.no_rooms_hint_member' | translate }}</p>
-            </div>
-          } @else if (chat.activeMessages().length === 0) {
-            <div class="flex items-center justify-center h-full" [style.color]="'var(--color-ink-muted)'">
-              {{ 'CHAT.no_messages' | translate }}
-            </div>
-          } @else {
-            @for (item of chat.activeMessagesWithDivider(); track item.id) {
-              @if ($any(item).isDivider) {
-                <!-- Feature 5: unread divider -->
-                <div data-unread-divider class="flex items-center gap-1 my-2">
-                  <div class="flex-1 border-t border-[var(--destructive)] opacity-60"></div>
-                  <span class="text-xs font-semibold text-[var(--destructive)]">{{ 'CHAT.unread_divider' | translate }}</span>
-                  <div class="flex-1 border-t border-[var(--destructive)] opacity-60"></div>
-                </div>
-              } @else if ($any(item).isSystem) {
-                @let systemMessage = $any(item);
-                <div class="flex justify-center my-2">
-                  <span
-                    class="text-xs px-3 py-1 rounded-full text-center"
-                    [style.background]="'var(--color-surface)'"
-                    [style.color]="'var(--color-ink-muted)'"
-                  >
-                    {{ systemMessage.text }}
-                  </span>
-                </div>
-              } @else {
-                @let message = $any(item);
-                <div [ngClass]="{ 'flex justify-end': message.isOwn, 'flex justify-start': !message.isOwn }">
-                  <div class="flex flex-col max-w-[75%]">
-                    @if (!message.isOwn) {
-                      <div class="flex items-center gap-1 px-3 mb-1">
-                        <span class="text-xs" [style.color]="'var(--color-ink-muted)'">{{ message.senderName }}</span>
-                        <!-- Feature 4: online presence dot -->
-                        @if (chat.presenceMap().get(message.senderId) === 'online') {
-                          <span class="w-1.5 h-1.5 rounded-full bg-green-500 inline-block"></span>
-                        }
-                      </div>
-                    }
+        <app-chat-message-list />
 
-                    <div
-                      class="px-4 py-2 rounded-2xl"
-                      [ngClass]="{
-                        'bg-accent-500 text-white rounded-br-sm': message.isOwn
-                      }"
-                      [style.background]="!message.isOwn ? 'var(--color-surface)' : null"
-                      [style.color]="!message.isOwn ? 'var(--color-ink)' : null"
-                      [class.rounded-bl-sm]="!message.isOwn"
-                    >
-                      {{ message.text }}
-                    </div>
-
-                    <span class="text-xs px-3 mt-1 text-right" [style.color]="'var(--color-ink-muted)'">
-                      {{ message.timestamp | chatTimestamp }}
-                    </span>
-                  </div>
-                </div>
-              }
-            }
-          }
-
-          <div #messagesEnd></div>
-        </div>
-
-        <!-- Input Area -->
-        <div
-          class="p-3 flex gap-2"
-          [style.border-top]="'1px solid var(--border)'"
-        >
-          <input
-            type="text"
-            [ngModel]="messageText()"
-            (ngModelChange)="messageText.set($event)"
-            (keydown)="onKeydown($event)"
-            [placeholder]="'CHAT.placeholder' | translate"
-            [attr.aria-label]="'CHAT.placeholder' | translate"
-            class="flex-1 px-4 py-2 rounded-full focus:outline-none focus:ring-2 focus:ring-accent-500 focus:border-transparent"
-            [style.background]="'var(--color-surface)'"
-            [style.color]="'var(--color-ink)'"
-            [style.border]="'1px solid var(--border)'"
-          />
-          <button
-            class="w-10 h-10 rounded-full bg-accent-500 text-white flex items-center justify-center hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
-            [disabled]="!messageText().trim()"
-            (click)="sendMessage()"
-            [attr.aria-label]="'CHAT.send' | translate"
-          >
-            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M16.6915026,12.4744748 L3.50612381,13.2599618 C3.19218622,13.2599618 3.03521743,13.4170592 3.03521743,13.5741566 L1.15159189,20.0151496 C0.8376543,20.8006365 0.99,21.89 1.77946707,22.52 C2.41,22.99 3.50612381,23.1 4.13399899,22.8429026 L21.714504,14.0454487 C22.6563168,13.5741566 23.1272231,12.6315722 22.9702544,11.6889879 L4.13399899,1.16584166 C3.50612381,0.9087443 2.40999006,1.01484963 1.77946707,1.4861418 C0.994623095,2.11535496 0.837654326,3.20500913 1.15159189,3.9904961 L3.03521743,10.4314891 C3.03521743,10.5885864 3.19218622,10.7456838 3.50612381,10.7456838 L16.6915026,11.5311707 C16.6915026,11.5311707 17.1624089,11.5311707 17.1624089,12.0024628 C17.1624089,12.4744748 16.6915026,12.4744748 16.6915026,12.4744748 Z"/>
-            </svg>
-          </button>
-        </div>
+        <app-chat-composer
+          [value]="messageText()"
+          (valueChange)="messageText.set($event)"
+          (messageKeydown)="onKeydown($event)"
+          (send)="sendMessage()"
+        />
 
         <!-- New Room Section (below input, club organizers only) -->
         @if (isCurrentClubOrganizer()) {

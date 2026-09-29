@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection, signal, WritableSignal } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
@@ -93,7 +93,7 @@ describe('ChatService', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).WebSocket = MockWebSocket;
 
-    // Stub AudioContext so _playBeep() doesn't throw in browser test env
+    // Stub AudioContext so ChatAudioAlertService.playBeep() doesn't throw in browser test env
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).AudioContext = class {
       createOscillator() {
@@ -111,7 +111,7 @@ describe('ChatService', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         ChatService,
         { provide: TranslateService, useValue: { instant: (key: string) => key } },
@@ -1360,7 +1360,7 @@ describe('ChatService — constructor orchestrator effects', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         ChatService,
         { provide: TranslateService, useValue: { instant: (key: string) => key } },

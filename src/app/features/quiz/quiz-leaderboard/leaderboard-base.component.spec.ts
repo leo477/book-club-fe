@@ -1,10 +1,11 @@
-import { Component, provideZonelessChangeDetection } from '@angular/core';
+import { Component, provideZonelessChangeDetection, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { LeaderboardBaseComponent } from './leaderboard-base.component';
 import { QuizService } from '../../../core/services/quiz.service';
 import { QuizLeaderboardEntry, QuizSession } from '../../../core/models/quiz.model';
 
-@Component({ selector: 'app-test-leaderboard', template: '', standalone: true })
+@Component({ selector: 'app-test-leaderboard', template: '', changeDetection: ChangeDetectionStrategy.OnPush,
+ standalone: true })
 class TestLeaderboardComponent extends LeaderboardBaseComponent {
   triggerPolling(intervalMs: number): void {
     this.startPolling(intervalMs);

@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { Submission, SubmissionStatus } from '../../../core/models/support.model';
 import { SupportService } from '../../../core/services/support.service';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
@@ -18,7 +18,7 @@ const STATUS_VARIANT: Record<SubmissionStatus, BadgeVariants['variant']> = {
   selector: 'app-submission-card',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule, ...HlmCardImports, HlmBadge],
+  imports: [TranslatePipe, ...HlmCardImports, HlmBadge],
   templateUrl: './submission-card.component.html',
 })
 export class SubmissionCardComponent {

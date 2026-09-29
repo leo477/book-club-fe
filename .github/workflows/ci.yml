@@ -24,20 +24,20 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
       - name: Cache npm and Angular cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.npm
             .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          key: ${{ runner.os }}-node24-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node20-
+            ${{ runner.os }}-node24-
       - name: Install dependencies
         run: npm ci
       - name: Lint
@@ -50,27 +50,27 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
       - name: Cache npm and Angular cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.npm
             .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          key: ${{ runner.os }}-node24-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node20-
+            ${{ runner.os }}-node24-
       - name: Install dependencies
         run: npm ci
       - name: Run tests (Vitest)
         run: npm run test:ci -- --coverage
       - name: Upload coverage artifact
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: coverage
           path: coverage/
@@ -83,20 +83,20 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
       - name: Cache npm and Angular cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.npm
             .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          key: ${{ runner.os }}-node24-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node20-
+            ${{ runner.os }}-node24-
       - name: Install dependencies
         run: npm ci
       - name: Build (production)
@@ -109,20 +109,20 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
       - name: Cache npm and Angular cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.npm
             .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          key: ${{ runner.os }}-node24-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node20-
+            ${{ runner.os }}-node24-
       - name: Install dependencies
         run: npm ci
       - name: Audit dependencies
@@ -135,24 +135,24 @@ jobs:
       contents: read
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
       - name: Cache npm and Angular cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.npm
             .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          key: ${{ runner.os }}-node24-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node20-
+            ${{ runner.os }}-node24-
       - name: Install dependencies
         run: npm ci
       - name: Type check
-        run: npx tsc --noEmit -p tsconfig.app.json
+        run: npx tsc --noEmit -p tsconfig.spec.json
 
   sonarcloud:
     name: SonarCloud
@@ -168,32 +168,32 @@ jobs:
       security-events: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
         with:
           fetch-depth: 0  # Shallow clones disabled for better relevance
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
       - name: Cache npm and Angular cache
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: |
             ~/.npm
             .angular/cache
-          key: ${{ runner.os }}-node20-${{ hashFiles('package-lock.json') }}
+          key: ${{ runner.os }}-node24-${{ hashFiles('package-lock.json') }}
           restore-keys: |
-            ${{ runner.os }}-node20-
+            ${{ runner.os }}-node24-
       - name: Download coverage artifact
         continue-on-error: true
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
           name: coverage
           path: coverage
       # NOTE: Automatic Analysis must be disabled in SonarCloud project settings
       # (Administration → Analysis Method) to avoid exit-code-3 conflict with CI scanning.
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@fd88b7d7ccbaefd23d8f36f73b59db7a3d246602 # v6
+        uses: SonarSource/sonarqube-scan-action@ba9859eae8dd6bd29e412f25ddbbef3d032000f4 # v8.2.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -261,19 +261,48 @@ jobs:
           "
       - name: Upload SARIF to GitHub Code Scanning
         if: github.event_name == 'push'
-        uses: github/codeql-action/upload-sarif@02c5e83432fe5497fd85b873b6c9f16a8578e1d9 # v3
+        uses: github/codeql-action/upload-sarif@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4
         with:
           sarif_file: sonar.sarif
           category: sonarcloud
 
+  changes:
+    name: Detect legacy-relevant changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+    outputs:
+      legacy: ${{ steps.diff.outputs.legacy }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        with:
+          fetch-depth: 0
+      # apps/web-only pushes are deployed by web.yml; the Angular deploy is skipped for them.
+      # Anything else (including packages/**) still deploys. Unknown base commit => deploy.
+      - name: Diff against previous head
+        id: diff
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            echo "legacy=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if git diff --name-only "$BEFORE" "$GITHUB_SHA" | grep -qvE '^(apps/web/|\.github/workflows/web\.yml$)'; then
+            echo "legacy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "legacy=false" >> "$GITHUB_OUTPUT"
+          fi
+
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
-    needs: [lint, test, build, security, typecheck, sonarcloud]
-    # sonarcloud is skipped for dependabot[bot] — treat skipped as success so deploy still runs
-    if: |
-      github.event_name == 'push' &&
-      (needs.sonarcloud.result == 'success' || needs.sonarcloud.result == 'skipped')
+    needs: [lint, test, build, typecheck, changes]
+    # Deploy gates only on the checks that must pass to ship (lint/test/build/typecheck).
+    # SonarCloud and the npm audit scan are advisory — a dead token or a new upstream
+    # advisory in security must never block a release on their own.
+    if: github.event_name == 'push' && needs.changes.outputs.legacy == 'true'
     permissions:
       contents: read
       deployments: write
@@ -285,9 +314,9 @@ jobs:
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: 24
       - name: Install Vercel CLI

@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { ClubEvent } from '../../../core/models/event.model';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmCardImports } from '../../../shared/spartan/card/src';
@@ -19,7 +19,7 @@ import { LeaderboardBaseComponent } from '../quiz-leaderboard/leaderboard-base.c
   selector: 'app-quiz-session',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, DatePipe, TranslateModule, ...HlmCardImports, HlmButton, LeaderboardPodiumComponent, LeaderboardRestTableComponent],
+  imports: [RouterLink, DatePipe, TranslatePipe, ...HlmCardImports, HlmButton, LeaderboardPodiumComponent, LeaderboardRestTableComponent],
   templateUrl: './quiz-session.component.html',
 })
 export class QuizSessionComponent extends LeaderboardBaseComponent implements OnInit {
@@ -32,7 +32,7 @@ export class QuizSessionComponent extends LeaderboardBaseComponent implements On
   readonly errorMessage = signal('');
 
   ngOnInit(): void {
-    Promise.all([
+    void Promise.all([
       this.quizService
         .getActiveSession(this.quizId())
         .then(s => this.session.set(s)),

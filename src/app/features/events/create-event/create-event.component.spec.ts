@@ -2,14 +2,14 @@ import { TestBed } from '@angular/core/testing';
 import { ComponentFixture } from '@angular/core/testing';
 import { provideZonelessChangeDetection, NO_ERRORS_SCHEMA } from '@angular/core';
 import { provideRouter, Router } from '@angular/router';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CreateEventComponent } from './create-event.component';
 import { EventService } from '../../../core/services/event.service';
 import { GeocodingService, GeocodeSuggestion } from '../../../core/services/geocoding.service';
 import { of } from 'rxjs';
 import { makeClubEvent as makeEvent } from '../../../../testing/event-test.helpers';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 
 describe('CreateEventComponent', () => {
   let fixture: ComponentFixture<CreateEventComponent>;
@@ -25,11 +25,11 @@ describe('CreateEventComponent', () => {
     };
 
     TestBed.configureTestingModule({
-      imports: [CreateEventComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [CreateEventComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         provideRouter([]),
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: EventService, useValue: eventServiceSpy },
         { provide: GeocodingService, useValue: geocodingSpy },

@@ -5,18 +5,19 @@ import {
   computed,
   signal,
 } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterLink } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map, startWith } from 'rxjs';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideSun, lucideMoon } from '@ng-icons/lucide';
 import { AuthService } from '../../core/auth/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { LanguageService, AppLang } from '../../core/services/language.service';
-import { HlmSheetImports } from '../../shared/spartan/sheet/src';
 import { HlmButton } from '../../shared/spartan/button/src';
 import { HlmIconImports } from '../../shared/spartan/icon/src';
+import { HeaderNavLinksComponent } from './nav-links/header-nav-links.component';
+import { HeaderMobileSheetComponent } from './mobile-sheet/header-mobile-sheet.component';
 
 @Component({
   selector: 'app-header',
@@ -24,9 +25,9 @@ import { HlmIconImports } from '../../shared/spartan/icon/src';
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [provideIcons({ lucideSun, lucideMoon })],
   imports: [
-    RouterLink, RouterLinkActive, TranslateModule, NgIcon,
+    RouterLink, TranslatePipe, NgIcon,
     ...HlmIconImports,
-    ...HlmSheetImports, HlmButton,
+    HlmButton, HeaderNavLinksComponent, HeaderMobileSheetComponent,
   ],
   templateUrl: './header.component.html',
 })

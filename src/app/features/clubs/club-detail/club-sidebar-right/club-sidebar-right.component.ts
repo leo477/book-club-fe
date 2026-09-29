@@ -1,5 +1,5 @@
 import { Component, ChangeDetectionStrategy, input } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { InitialsPipe } from '../../../../shared/pipes/initials.pipe';
 import { HlmCard } from '../../../../shared/spartan/card/src';
 import { Club } from '../../../../core/models/club.model';
@@ -11,7 +11,7 @@ import { BookStoresComponent } from '../../../../shared/book-stores/book-stores.
   host: { class: 'block' },
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [TranslateModule, InitialsPipe, HlmCard, BookStoresComponent],
+  imports: [TranslatePipe, InitialsPipe, HlmCard, BookStoresComponent],
   templateUrl: './club-sidebar-right.component.html',
 })
 export class ClubSidebarRightComponent {

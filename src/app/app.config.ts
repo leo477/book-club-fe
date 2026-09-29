@@ -17,6 +17,7 @@ import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/auth/auth.service';
 import { SeoService } from './core/services/seo.service';
+import { StranglerManifestService } from './core/strangler/strangler-manifest.service';
 import { LanguageService } from './core/services/language.service';
 
 export const appConfig: ApplicationConfig = {
@@ -59,6 +60,7 @@ export const appConfig: ApplicationConfig = {
       const authService = inject(AuthService);
       return authService.init();
     }),
+    provideAppInitializer(() => inject(StranglerManifestService).load()),
     provideAppInitializer(() => {
       inject(MapsConfigService).load();
     }),

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { EventRsvpButtonComponent } from './event-rsvp-button.component';
 
 describe('EventRsvpButtonComponent', () => {
@@ -9,8 +9,8 @@ describe('EventRsvpButtonComponent', () => {
     attending: boolean; loading: boolean; closed: boolean; showCancel: boolean;
   }> = {}) {
     await TestBed.configureTestingModule({
-      imports: [EventRsvpButtonComponent, TranslateModule.forRoot()],
-      providers: [provideZonelessChangeDetection()],
+      imports: [EventRsvpButtonComponent],
+      providers: [provideTranslateService(), provideZonelessChangeDetection()],
     }).compileComponents();
 
     const fixture = TestBed.createComponent(EventRsvpButtonComponent);

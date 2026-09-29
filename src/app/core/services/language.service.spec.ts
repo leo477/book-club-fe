@@ -3,6 +3,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { of } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { LanguageService } from './language.service';
+import { readCookie } from '../utils/cookie';
 
 describe('LanguageService', () => {
   let translateSpy: { use: ReturnType<typeof vi.fn> };
@@ -20,46 +21,77 @@ describe('LanguageService', () => {
 
   beforeEach(() => {
     localStorage.clear();
+    document.cookie = 'lang=; path=/; max-age=0';
     document.documentElement.lang = '';
     translateSpy = { use: vi.fn().mockReturnValue(of(undefined)) };
   });
 
+  afterEach(() => {
+    document.cookie = 'lang=; path=/; max-age=0';
+    vi.restoreAllMocks();
+  });
+
   describe('initialLang', () => {
-    it('defaults to uk when nothing is saved', () => {
-      const service = setup();
-      expect(service.initialLang).toBe('uk');
+    it.each([
+      [null, 'uk'],
+      ['en', 'en'],
+      ['fr', 'uk'],
+    ])('resolves saved %s to %s', (saved, expected) => {
+      if (saved) localStorage.setItem('lang', saved);
+      expect(setup().initialLang).toBe(expected);
+    });
+  });
+
+  describe('cookie', () => {
+    it.each([
+      ['prefers the cookie over localStorage', 'en', 'uk', 'en'],
+      ['ignores an unsupported cookie and falls back to localStorage', 'fr', 'en', 'en'],
+      ['falls back to localStorage on a malformed cookie without throwing', '%E0%A4%A', 'en', 'en'],
+    ])('%s', (_name, cookie, stored, expected) => {
+      document.cookie = `lang=${cookie}; path=/`;
+      localStorage.setItem('lang', stored);
+      expect(setup().initialLang).toBe(expected);
     });
 
-    it('reads a previously saved supported language', () => {
+    it('migrates a localStorage-only value into the cookie', () => {
       localStorage.setItem('lang', 'en');
-      const service = setup();
-      expect(service.initialLang).toBe('en');
+      setup();
+      expect(readCookie('lang')).toBe('en');
     });
 
-    it('falls back to uk when the saved value is unsupported', () => {
-      localStorage.setItem('lang', 'fr');
-      const service = setup();
-      expect(service.initialLang).toBe('uk');
+    it('falls back to the default on a malformed cookie and empty storage', () => {
+      document.cookie = 'lang=%E0%A4%A; path=/';
+      expect(setup().initialLang).toBe('uk');
+    });
+
+    it('writes nothing when neither store has a value', () => {
+      setup();
+      expect(readCookie('lang')).toBeNull();
+    });
+
+    it('use() dual-writes the cookie', async () => {
+      await setup().use('en');
+      expect(readCookie('lang')).toBe('en');
     });
   });
 
   describe('use', () => {
-    it('calls translate.use with the given language', async () => {
-      const service = setup();
-      await service.use('en');
-      expect(translateSpy.use).toHaveBeenCalledWith('en');
-    });
-
-    it('persists the language to localStorage', async () => {
-      const service = setup();
-      await service.use('en');
-      expect(localStorage.getItem('lang')).toBe('en');
-    });
-
-    it('sets document.documentElement.lang', async () => {
-      const service = setup();
-      await service.use('en');
-      expect(document.documentElement.lang).toBe('en');
+    it.each([
+      [
+        'calls translate.use with the given language',
+        () => expect(translateSpy.use).toHaveBeenCalledWith('en'),
+      ],
+      [
+        'persists the language to localStorage',
+        () => expect(localStorage.getItem('lang')).toBe('en'),
+      ],
+      [
+        'sets document.documentElement.lang',
+        () => expect(document.documentElement.lang).toBe('en'),
+      ],
+    ])('%s', async (_name, assertEffect) => {
+      await setup().use('en');
+      assertEffect();
     });
   });
 });

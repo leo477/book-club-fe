@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormControl, Validators } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { EventService } from '../../../core/services/event.service';
 import { QuizService } from '../../../core/services/quiz.service';
 import { AddressAutocompleteComponent } from '../../../shared/components/address-autocomplete/address-autocomplete.component';
@@ -24,7 +24,7 @@ import { BookSuggestion } from '../../../core/models/book.model';
   selector: 'app-create-event',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, TranslateModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton, BookAutocompleteComponent],
+  imports: [RouterLink, ReactiveFormsModule, TranslatePipe, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton, BookAutocompleteComponent],
   templateUrl: './create-event.component.html',
 })
 export class CreateEventComponent {

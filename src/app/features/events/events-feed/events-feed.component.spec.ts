@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { ComponentFixture } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { EventsFeedComponent } from './events-feed.component';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -40,8 +40,8 @@ describe('EventsFeedComponent', () => {
     };
 
     TestBed.configureTestingModule({
-      imports: [EventsFeedComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [EventsFeedComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         { provide: EventService, useValue: eventServiceMock },
         { provide: AuthService, useValue: authSpy },

@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { QuizListComponent } from './quiz-list.component';
 import { QuizService } from '../../../core/services/quiz.service';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -33,8 +33,8 @@ describe('QuizListComponent', () => {
     authSvc = makeAuthService();
 
     await TestBed.configureTestingModule({
-      imports: [QuizListComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [QuizListComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: QuizService, useValue: quizSvc },

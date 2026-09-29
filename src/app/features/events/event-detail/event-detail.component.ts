@@ -10,9 +10,9 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SlicePipe } from '@angular/common';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { rxResource, takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { toast } from '@spartan-ng/brain/sonner';
+import { ToastService } from '../../../core/services/toast.service';
 import { EventService } from '../../../core/services/event.service';
 import { logError } from '../../../core/utils/logger.util';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -33,13 +33,14 @@ import { EventMapComponent } from '../../../shared/components/event-map/event-ma
   selector: 'app-event-detail',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, TranslateModule, FormatDatePipe, HlmButton, HlmSpinner, EventRsvpButtonComponent, BookStoresComponent, SlicePipe, EventMapComponent],
+  imports: [RouterLink, TranslatePipe, FormatDatePipe, HlmButton, HlmSpinner, EventRsvpButtonComponent, BookStoresComponent, SlicePipe, EventMapComponent],
   templateUrl: './event-detail.component.html',
 })
 export class EventDetailComponent {
   readonly id = input.required<string>();
 
   private readonly eventService = inject(EventService);
+  private readonly toast = inject(ToastService);
   private readonly translate = inject(TranslateService);
   readonly auth = inject(AuthService);
   private readonly chatService = inject(ChatService);
@@ -119,23 +120,23 @@ export class EventDetailComponent {
     try {
       const result = await this.eventService.attendEvent(this.id());
       if (result.joinRequestStatus === 'pending') {
-        toast.success(this.translate.instant('EVENTS.join_request_sent') as string);
+        this.toast.success(this.translate.instant('EVENTS.join_request_sent') as string);
       } else {
         const ev = this.event();
         if (ev) {
           const room = await this.chatService.getEventRoom(ev.id, ev.clubId);
           if (room) {
             this._eventRoom.set(room);
-            toast.success(this.translate.instant('CHAT.event_chat_ready_toast') as string);
+            this.toast.success(this.translate.instant('CHAT.event_chat_ready_toast') as string);
           }
         }
       }
       this._eventResource.reload();
     } catch (err) {
       if (err instanceof BackendHttpError && err.status === 400) {
-        toast.error(this.translate.instant('EVENTS.registration_closed') as string);
+        this.toast.error(this.translate.instant('EVENTS.registration_closed') as string);
       } else {
-        toast.error(this.formatActionError(err, 'Failed to attend event'));
+        this.toast.error(this.formatActionError(err, 'Failed to attend event'));
       }
     } finally {
       this.isActioning.set(false);
@@ -148,7 +149,7 @@ export class EventDetailComponent {
       await this.eventService.cancelAttendance(this.id());
       this._eventResource.reload();
     } catch (err) {
-      toast.error(this.formatActionError(err, 'Failed to cancel attendance'));
+      this.toast.error(this.formatActionError(err, 'Failed to cancel attendance'));
     } finally {
       this.isActioning.set(false);
     }
@@ -161,7 +162,7 @@ export class EventDetailComponent {
       await this.eventService.cancelEvent(this.id());
       this._eventResource.reload();
     } catch (err) {
-      toast.error(this.formatActionError(err, 'Failed to cancel event'));
+      this.toast.error(this.formatActionError(err, 'Failed to cancel event'));
     } finally {
       this.isActioning.set(false);
     }

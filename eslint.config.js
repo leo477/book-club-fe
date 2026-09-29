@@ -3,7 +3,7 @@ const eslint = require("@eslint/js");
 const { defineConfig } = require("eslint/config");
 const tseslint = require("typescript-eslint");
 const angular = require("angular-eslint");
-const rxjsX = require("eslint-plugin-rxjs-x");
+const rxjsX = require("eslint-plugin-rxjs-x").default;
 
 module.exports = defineConfig([
   {
@@ -60,6 +60,23 @@ module.exports = defineConfig([
       "rxjs-x/no-unbound-methods": "error",
       "rxjs-x/no-subject-value": "error",
       "rxjs-x/finnish": "error",
+    },
+  },
+  {
+    files: ["src/**/*.ts"],
+    ignores: ["src/app/shared/spartan/**", "src/app/core/services/toast.service.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["@spartan-ng/brain", "@spartan-ng/brain/*"],
+              message: "Import Spartan brain only inside src/app/shared/spartan or the ToastService facade.",
+            },
+          ],
+        },
+      ],
     },
   },
   {

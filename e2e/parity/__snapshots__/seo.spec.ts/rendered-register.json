@@ -1,0 +1,12 @@
+{
+  "title": "Реєстрація | Book Club",
+  "description": "Приєднуйтесь до книжкових клубів у вашому місті. Обговорення книг, зустрічі читачів, спільноти за інтересами.",
+  "ogTitle": "Реєстрація | Book Club",
+  "ogDescription": "Приєднуйтесь до книжкових клубів у вашому місті.",
+  "ogUrl": "{ORIGIN}/register",
+  "ogImage": "{ORIGIN}/og-image.png",
+  "canonical": "{ORIGIN}/register",
+  "jsonLd": [
+    "Organization+WebApplication"
+  ]
+}

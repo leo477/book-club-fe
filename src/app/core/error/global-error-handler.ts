@@ -1,6 +1,7 @@
 import { ErrorHandler, Injectable, inject, isDevMode } from '@angular/core';
 import { track } from '@vercel/analytics';
 import { TranslateService } from '@ngx-translate/core';
+import { ToastService } from '../services/toast.service';
 import { logError } from '../utils/logger.util';
 
 /**
@@ -11,6 +12,7 @@ import { logError } from '../utils/logger.util';
 @Injectable()
 export class GlobalErrorHandler implements ErrorHandler {
   private readonly translate = inject(TranslateService);
+  private readonly toast = inject(ToastService);
 
   handleError(error: unknown): void {
     logError(error);
@@ -24,9 +26,7 @@ export class GlobalErrorHandler implements ErrorHandler {
   }
 
   private notify(): void {
-    import('@spartan-ng/brain/sonner')
-      .then(({ toast }) => toast.error(this.translate.instant('ERRORS.unexpected') as string))
-      .catch(() => { /* best-effort */ });
+    this.toast.error(this.translate.instant('ERRORS.unexpected') as string);
   }
 
   /**

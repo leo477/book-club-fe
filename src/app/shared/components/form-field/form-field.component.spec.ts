@@ -1,24 +1,24 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { FormControl, Validators } from '@angular/forms';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { FormFieldComponent } from './form-field.component';
 import { of } from 'rxjs';
 
 describe('FormFieldComponent', () => {
-  let translateSpy: { instant: ReturnType<typeof vi.fn>; onLangChange: unknown; currentLang: string };
+  let translateSpy: { instant: ReturnType<typeof vi.fn>; onLangChange: unknown; getCurrentLang: ReturnType<typeof vi.fn> };
 
   function setup(control: FormControl<string | null>) {
     translateSpy = {
       instant: vi.fn().mockImplementation((key: string) => key),
       onLangChange: of({ lang: 'uk' }),
-      currentLang: 'uk',
+      getCurrentLang: vi.fn().mockReturnValue('uk'),
     };
 
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
-      imports: [FormFieldComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [FormFieldComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         { provide: TranslateService, useValue: translateSpy },
       ],

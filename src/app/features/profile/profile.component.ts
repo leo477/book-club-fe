@@ -7,9 +7,9 @@ import {
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { ReactiveFormsModule, FormGroup, FormControl, Validators } from '@angular/forms';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { map, startWith } from 'rxjs';
-import { toast } from '@spartan-ng/brain/sonner';
+import { ToastService } from '../../core/services/toast.service';
 import { AuthService } from '../../core/auth/auth.service';
 import { UserRole, UserSocials } from '../../core/models/user.model';
 import { SeoService } from '../../core/services/seo.service';
@@ -24,21 +24,22 @@ import { displayNameValidator } from '../../shared/utils/display-name.validator'
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, TranslateModule, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent, HlmButton, HlmInput],
+  imports: [ReactiveFormsModule, TranslatePipe, SocialLinkFieldComponent, SocialBadgesComponent, ProfileStatsComponent, ProfileRoleSelectorComponent, HlmButton, HlmInput],
   templateUrl: './profile.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProfileComponent {
   protected readonly auth = inject(AuthService);
   private readonly seo = inject(SeoService);
+  private readonly toast = inject(ToastService);
   private readonly translate = inject(TranslateService);
 
   private readonly currentLang = toSignal(
     this.translate.onLangChange.pipe(
       map(e => e.lang),
-      startWith(this.translate.currentLang ?? 'uk'),
+      startWith(this.translate.getCurrentLang() ?? 'uk'),
     ),
-    { initialValue: this.translate.currentLang ?? 'uk' },
+    { initialValue: this.translate.getCurrentLang() ?? 'uk' },
   );
 
   protected readonly socialFields = computed<SocialField[]>(() => {
@@ -178,9 +179,9 @@ export class ProfileComponent {
   protected async changeRole(role: UserRole): Promise<void> {
     try {
       await this.auth.updateRole(role);
-      toast.success(this.translate.instant('common.saved'));
+      this.toast.success(this.translate.instant('common.saved'));
     } catch {
-      toast.error(this.translate.instant('common.saveError'));
+      this.toast.error(this.translate.instant('common.saveError'));
     }
   }
 
@@ -191,9 +192,9 @@ export class ProfileComponent {
     const { displayName } = this.nameForm.getRawValue();
     try {
       await this.auth.updateDisplayName(displayName);
-      toast.success(this.translate.instant('common.saved'));
+      this.toast.success(this.translate.instant('common.saved'));
     } catch {
-      toast.error(this.translate.instant('common.saveError'));
+      this.toast.error(this.translate.instant('common.saveError'));
     } finally {
       this.isSavingName.set(false);
     }
@@ -215,9 +216,9 @@ export class ProfileComponent {
 
     try {
       await this.auth.updateSocials(socials);
-      toast.success(this.translate.instant('common.saved'));
+      this.toast.success(this.translate.instant('common.saved'));
     } catch {
-      toast.error(this.translate.instant('common.saveError'));
+      this.toast.error(this.translate.instant('common.saveError'));
     }
   }
 
@@ -225,9 +226,9 @@ export class ProfileComponent {
   protected async onSocialsPublicChange(value: boolean): Promise<void> {
     try {
       await this.auth.setSocialsPublic(value);
-      toast.success(this.translate.instant('common.saved'));
+      this.toast.success(this.translate.instant('common.saved'));
     } catch {
-      toast.error(this.translate.instant('common.saveError'));
+      this.toast.error(this.translate.instant('common.saveError'));
     }
   }
 

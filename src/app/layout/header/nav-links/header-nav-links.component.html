@@ -1,0 +1,42 @@
+<nav class="hidden md:flex items-center gap-1" aria-label="Main navigation">
+  <a
+    routerLink="/events"
+    data-testid="nav-events"
+    routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
+    [routerLinkActiveOptions]="{exact: true}"
+    class="px-4 py-2 rounded-lg text-sm font-medium
+           text-[var(--color-ink-muted)]
+           hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+           transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+  >
+    {{ 'NAV.events' | translate }}
+  </a>
+  <a
+    routerLink="/clubs"
+    data-testid="nav-clubs"
+    routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
+    [routerLinkActiveOptions]="{exact: true}"
+    class="px-4 py-2 rounded-lg text-sm font-medium
+           text-[var(--color-ink-muted)]
+           hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+           transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+  >
+    {{ 'NAV.clubs' | translate }}
+  </a>
+  @if (isAuthenticated()) {
+    <a
+      routerLink="/support"
+      data-testid="nav-support"
+      routerLinkActive="text-[var(--color-primary-600)] dark:text-[#fbbf24] bg-[var(--color-primary-100)]/80 dark:bg-[var(--color-primary-900)]/30 font-semibold"
+      class="px-4 py-2 rounded-lg text-sm font-medium
+             text-[var(--color-ink-muted)]
+             hover:text-[var(--color-ink)] hover:bg-[var(--color-surface-raised)]
+             transition-all duration-200
+             focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-500)] focus:ring-offset-2"
+    >
+      {{ 'NAV.support' | translate }}
+    </a>
+  }
+</nav>

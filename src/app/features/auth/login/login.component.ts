@@ -1,7 +1,7 @@
 import { Component, ChangeDetectionStrategy, inject, signal } from '@angular/core';
 import { ReactiveFormsModule, FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../../core/auth/auth.service';
 import { BookIntroComponent } from '../../../shared/components/book-intro/book-intro.component';
 import { SeoService } from '../../../core/services/seo.service';
@@ -19,7 +19,7 @@ interface LoginForm {
   selector: 'app-login',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, TranslateModule, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  imports: [ReactiveFormsModule, RouterLink, TranslatePipe, BookIntroComponent, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })

@@ -119,7 +119,7 @@ describe('SeoService — bootstrapLocaleSync', () => {
   let service: SeoService;
   let titleSpy: { setTitle: ReturnType<typeof vi.fn> };
   let metaSpy: { updateTag: ReturnType<typeof vi.fn> };
-  let translateSpy: { instant: ReturnType<typeof vi.fn>; getDefaultLang: ReturnType<typeof vi.fn>; currentLang: string | undefined; onLangChange: EventEmitter<LangChangeEvent> };
+  let translateSpy: { instant: ReturnType<typeof vi.fn>; fallbackLang: ReturnType<typeof vi.fn>; getCurrentLang: ReturnType<typeof vi.fn>; onLangChange: EventEmitter<LangChangeEvent> };
   let routerSpy: Pick<Router, 'navigate' | 'events'>;
   let langChangeEmitter: EventEmitter<LangChangeEvent>;
   let routerEvents$: Subject<RouterEvent>;
@@ -132,8 +132,8 @@ describe('SeoService — bootstrapLocaleSync', () => {
     metaSpy = { updateTag: vi.fn() };
     translateSpy = {
       instant: vi.fn().mockImplementation((key: string) => key),
-      getDefaultLang: vi.fn().mockReturnValue('uk'),
-      currentLang,
+      fallbackLang: vi.fn().mockReturnValue('uk'),
+      getCurrentLang: vi.fn().mockReturnValue(currentLang),
       onLangChange: langChangeEmitter,
     };
     routerSpy = {
@@ -251,8 +251,8 @@ describe('SeoService — bootstrapLocaleSync with no currentLang', () => {
     const langChangeEmitter = new EventEmitter<LangChangeEvent>();
     const translateSpy = {
       instant: vi.fn().mockImplementation((key: string) => key),
-      getDefaultLang: vi.fn().mockReturnValue('uk'),
-      currentLang: undefined,
+      fallbackLang: vi.fn().mockReturnValue('uk'),
+      getCurrentLang: vi.fn().mockReturnValue(undefined),
       onLangChange: langChangeEmitter,
     };
     const routerSpy = {
@@ -274,7 +274,7 @@ describe('SeoService — bootstrapLocaleSync with no currentLang', () => {
 
     service.bootstrapLocaleSync();
 
-    expect(translateSpy.getDefaultLang).toHaveBeenCalled();
+    expect(translateSpy.fallbackLang).toHaveBeenCalled();
     expect(document.documentElement.getAttribute('lang')).toBe('uk');
   });
 });

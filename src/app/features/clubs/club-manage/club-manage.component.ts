@@ -7,16 +7,18 @@ import {
   computed,
   effect,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
+import { TranslatePipe } from '@ngx-translate/core';
+import { ToastService } from '../../../core/services/toast.service';
 import { ClubService, JoinRequest } from '../../../core/services/club.service';
 import { ChatService } from '../../../core/services/chat.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { Club, ClubMemberDetail, BanRecord, BanDuration, ClubStats } from '../../../core/models/club.model';
-import { ClubMembersListComponent } from '../club-detail/members/club-members-list.component';
 import { EditClubComponent } from '../edit-club/edit-club.component';
+import { ClubManageDashboardComponent } from './dashboard/club-manage-dashboard.component';
+import { ClubManageMembersComponent } from './members/club-manage-members.component';
+import { ClubManageRequestsComponent } from './requests/club-manage-requests.component';
+import { ClubManageToolsComponent } from './tools/club-manage-tools.component';
 import { HlmSpinner } from '../../../shared/spartan/spinner/src';
 import { HlmButton } from '../../../shared/spartan/button/src';
 import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
@@ -26,11 +28,13 @@ import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
-    FormsModule,
     RouterLink,
-    TranslateModule,
-    ClubMembersListComponent,
+    TranslatePipe,
     EditClubComponent,
+    ClubManageDashboardComponent,
+    ClubManageMembersComponent,
+    ClubManageRequestsComponent,
+    ClubManageToolsComponent,
     HlmSpinner,
     HlmButton,
     ...HlmTabsImports,
@@ -39,6 +43,8 @@ import { HlmTabsImports } from '../../../shared/spartan/tabs/src';
 })
 export class ClubManageComponent {
   readonly id = input.required<string>();
+
+  private readonly toast = inject(ToastService);
 
   private readonly clubService = inject(ClubService);
   private readonly chatService = inject(ChatService);
@@ -104,18 +110,6 @@ export class ClubManageComponent {
     this.isLoading.set(false);
   }
 
-  maxMemberGrowth(stats: ClubStats): number {
-    return Math.max(...(stats.memberGrowth ?? []).map(m => m.count), 1);
-  }
-
-  maxEventFrequency(stats: ClubStats): number {
-    return Math.max(...(stats.eventFrequency ?? []).map(m => m.count), 1);
-  }
-
-  bannedDisplayName(ban: BanRecord): string {
-    return this.members().find(m => m.userId === ban.userId)?.displayName ?? ban.userId;
-  }
-
   async handleKick(userId: string): Promise<void> {
     await this.mutateMembers(userId, () => this.clubService.kickMember(this.id(), userId), list =>
       list.filter(m => m.userId !== userId),
@@ -149,7 +143,7 @@ export class ClubManageComponent {
       await this.clubService.unbanMember(this.id(), userId);
     } catch {
       this.bans.set(previous);
-      toast.error('Failed to unban member');
+      this.toast.error('Failed to unban member');
     } finally {
       this.processingMemberId.set(null);
     }
@@ -167,7 +161,7 @@ export class ClubManageComponent {
       await action();
     } catch {
       this.members.set(previous);
-      toast.error('Action failed');
+      this.toast.error('Action failed');
     } finally {
       this.processingMemberId.set(null);
     }
@@ -180,7 +174,7 @@ export class ClubManageComponent {
       this.joinRequests.update(list => list.filter(r => r.userId !== userId));
       this.clubService.getClubMembers(this.id()).then(m => this.members.set(m)).catch(() => { /* */ });
     } catch {
-      toast.error('Failed to approve request');
+      this.toast.error('Failed to approve request');
     } finally {
       this.processingRequestUserId.set(null);
     }
@@ -192,7 +186,7 @@ export class ClubManageComponent {
       await this.clubService.rejectJoinRequest(this.id(), userId);
       this.joinRequests.update(list => list.filter(r => r.userId !== userId));
     } catch {
-      toast.error('Failed to reject request');
+      this.toast.error('Failed to reject request');
     } finally {
       this.processingRequestUserId.set(null);
     }
@@ -219,7 +213,7 @@ export class ClubManageComponent {
       await this.clubService.pauseClub(this.id());
       this.club.update(c => (c ? { ...c, status: 'paused' } : c));
     } catch {
-      toast.error('Action failed');
+      this.toast.error('Action failed');
     }
   }
 
@@ -229,7 +223,7 @@ export class ClubManageComponent {
       await this.clubService.cancelClub(this.id());
       this.club.update(c => (c ? { ...c, status: 'cancelled', cancelledAt: new Date().toISOString() } : c));
     } catch {
-      toast.error('Action failed');
+      this.toast.error('Action failed');
     }
   }
 
@@ -243,7 +237,7 @@ export class ClubManageComponent {
       this.showRescheduleInput.set(false);
       this.rescheduleDate.set('');
     } catch {
-      toast.error('Action failed');
+      this.toast.error('Action failed');
     }
   }
 
@@ -254,7 +248,7 @@ export class ClubManageComponent {
       await this.router.navigate(['/clubs']);
     } catch {
       this.isDeleting.set(false);
-      toast.error('Failed to delete club');
+      this.toast.error('Failed to delete club');
     }
   }
 }

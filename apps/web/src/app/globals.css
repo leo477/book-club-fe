@@ -1,0 +1,56 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import '@book-club/config/tailwind-theme.css';
+@import './shell.css';
+
+/* next/font families (self-hosted) first; the shared theme's plain names remain as fallbacks */
+@theme {
+  --font-sans: var(--font-inter-latin), var(--font-inter-cyrillic), Inter, system-ui, 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji', sans-serif;
+  --font-display: var(--font-playfair-latin), var(--font-playfair-cyrillic), 'Playfair Display', Georgia, serif;
+  --font-fantasy: var(--font-cinzel), Cinzel, serif;
+}
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+}
+
+/* Intentional light-mode contrast fix (P7, see docs/migration/UI-DELTAS.md); unlayered so it wins over utilities, `:not(.dark)` keeps the dark theme untouched.
+   primary button: #fff9f0 on hsl(31 90% 34%) = 4.97:1 (was 4.33 on hsl(31 90% 37%)); sheet title: primary-700 on the sheet surface = 5.94:1 (was 3.27 with primary-600). */
+:root:not(.dark) {
+  --primary: hsl(31deg 90% 34%);
+}
+:root:not(.dark) [data-slot='sheet-title'] {
+  color: var(--color-primary-700);
+}

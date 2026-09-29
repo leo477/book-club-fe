@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, ReactiveFormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { of, throwError } from 'rxjs';
 import { CoverUploadComponent } from './cover-upload.component';
 import { UploadService } from '../../../core/services/upload.service';
@@ -19,8 +19,8 @@ describe('CoverUploadComponent', () => {
     uploadSvc = makeUploadService();
 
     await TestBed.configureTestingModule({
-      imports: [CoverUploadComponent, ReactiveFormsModule, TranslateModule.forRoot()],
-      providers: [
+      imports: [CoverUploadComponent, ReactiveFormsModule],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         { provide: UploadService, useValue: uploadSvc },
       ],

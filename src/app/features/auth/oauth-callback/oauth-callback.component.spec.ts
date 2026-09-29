@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { OAuthCallbackComponent } from './oauth-callback.component';
 import { AuthService } from '../../../core/auth/auth.service';
 
@@ -26,8 +26,8 @@ describe('OAuthCallbackComponent', () => {
   async function setup(code: string | null = null) {
     authSvc = makeAuthService();
     await TestBed.configureTestingModule({
-      imports: [OAuthCallbackComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [OAuthCallbackComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         { provide: AuthService, useValue: authSvc },
         { provide: ActivatedRoute, useValue: makeActivatedRoute(code) },
@@ -66,8 +66,8 @@ describe('OAuthCallbackComponent', () => {
     authSvc = makeAuthService();
     authSvc.exchangeOAuthCode.mockResolvedValue({ error: 'oauth_denied' });
     await TestBed.configureTestingModule({
-      imports: [OAuthCallbackComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [OAuthCallbackComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         { provide: AuthService, useValue: authSvc },
         { provide: ActivatedRoute, useValue: makeActivatedRoute('bad-code') },

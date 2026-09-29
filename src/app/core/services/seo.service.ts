@@ -46,7 +46,7 @@ export class SeoService {
     };
 
     // Apply for the lang already in effect at bootstrap.
-    const current = this.translate.currentLang ?? this.translate.getDefaultLang() ?? 'uk';
+    const current = this.translate.getCurrentLang() ?? this.translate.fallbackLang() ?? 'uk';
     apply(current);
 
     // Pass event.translations directly so applyLocalizedMeta reads from the
@@ -187,7 +187,11 @@ export class SeoService {
 
     const script = this.document.createElement('script');
     script.type = 'application/ld+json';
-    script.textContent = JSON.stringify(schema);
+    // Trusted Types gates HTMLScriptElement.textContent/text/innerText as a
+    // TrustedScript sink; appendChild of a Text node bypasses that setter
+    // entirely, so no createScript trap needs to be added to the default
+    // policy (which would otherwise permit arbitrary trusted script text).
+    script.appendChild(this.document.createTextNode(JSON.stringify(schema)));
     this.document.head.appendChild(script);
   }
 }

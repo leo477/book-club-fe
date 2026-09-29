@@ -5,10 +5,12 @@ import { ChatTimestampPipe } from './chat-timestamp.pipe';
 
 describe('ChatTimestampPipe', () => {
   let pipe: ChatTimestampPipe;
-  let mockTranslate: { instant: (k: string) => string; currentLang: string | null; defaultLang: string };
+  let currentLang: string | null;
+  let mockTranslate: { instant: (k: string) => string; getCurrentLang: () => string | null; fallbackLang: () => string };
 
   beforeEach(() => {
-    mockTranslate = { instant: (k: string) => k, currentLang: 'uk', defaultLang: 'uk' };
+    currentLang = 'uk';
+    mockTranslate = { instant: (k: string) => k, getCurrentLang: () => currentLang, fallbackLang: () => 'uk' };
 
     TestBed.configureTestingModule({
       providers: [
@@ -65,7 +67,7 @@ describe('ChatTimestampPipe', () => {
   });
 
   it('formats older date with en-US locale when currentLang is "en"', () => {
-    mockTranslate.currentLang = 'en';
+    currentLang = 'en';
     const older = new Date();
     older.setDate(older.getDate() - 10);
     const result = pipe.transform(older.toISOString());
@@ -76,7 +78,7 @@ describe('ChatTimestampPipe', () => {
   });
 
   it('falls back to defaultLang when currentLang is null', () => {
-    mockTranslate.currentLang = null;
+    currentLang = null;
     const older = new Date();
     older.setDate(older.getDate() - 10);
     const result = pipe.transform(older.toISOString());

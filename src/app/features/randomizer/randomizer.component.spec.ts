@@ -2,7 +2,7 @@ import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { provideRouter } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { RandomizerComponent } from './randomizer.component';
 import { RandomizerService } from '../../core/services/randomizer.service';
 import { AuthService } from '../../core/auth/auth.service';
@@ -48,8 +48,8 @@ describe('RandomizerComponent', () => {
     authSvc = makeAuthService();
 
     await TestBed.configureTestingModule({
-      imports: [RandomizerComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [RandomizerComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: RandomizerService, useValue: randSvc },

@@ -37,7 +37,7 @@ The content is organized as follows:
 - Files are sorted by Git change count (files with more changes are at the bottom)
 
 # Directory Structure
-```
+````
 .github/
   codeql/
     codeql-config.yml
@@ -49,36 +49,278 @@ The content is organized as follows:
     dependency-review.yml
     i18n-check.yml
     lighthouse.yml
-    pr-review.yml
     scorecard.yml
     secret-scan.yml
     stale.yml
+    web.yml
   copilot-instructions.md
+  dependabot.yml
   labeler.yml
 .husky/
   pre-commit
-audit-evidence/
-  prod/
-    login.png
-    p_chats.png
-    p_club_create.png
-    p_clubs.png
-    p_events.png
-    p_manage.png
-    p_profile.png
-    privacy.png
-    register.png
-    root.png
-    terms.png
-  audit-prod-results.json
+apps/
+  web/
+    scripts/
+      check-first-load.mjs
+    src/
+      app/
+        (public)/
+          privacy/
+            page.test.tsx
+            page.tsx
+          terms/
+            page.test.tsx
+            page.tsx
+        (shell)/
+          clubs/
+            page.test.tsx
+            page.tsx
+          layout.tsx
+        %5F%5Fstrangler-probe/
+          page.tsx
+        %5F%5Fui/
+          page.tsx
+          toast-buttons.tsx
+        fonts/
+          cinzel-latin.woff2
+          inter-cyrillic.woff2
+          inter-latin.woff2
+          OFL-Cinzel.txt
+          OFL-Inter.txt
+          OFL-PlayfairDisplay.txt
+          playfair-cyrillic.woff2
+          playfair-latin.woff2
+        strangler.json/
+          route.ts
+        error.test.tsx
+        error.tsx
+        fonts.ts
+        global-error.tsx
+        layout.tsx
+        robots.test.ts
+        robots.ts
+        sitemap.test.ts
+        sitemap.ts
+      components/
+        layout/
+          chat-link.tsx
+          error-toasts.test.tsx
+          error-toasts.tsx
+          footer.tsx
+          header.test.tsx
+          header.tsx
+          locale-switch.tsx
+          mobile-nav-sheet.tsx
+          mobile-nav.tsx
+          nav-links.tsx
+          theme-switch.tsx
+          user-avatar.tsx
+          user-menu-impl.tsx
+          user-menu.tsx
+        ui/
+          badge.tsx
+          button.tsx
+          card.tsx
+          dropdown-menu.tsx
+          field.test.tsx
+          field.tsx
+          input.tsx
+          label.tsx
+          separator.tsx
+          sheet.tsx
+          skeleton.tsx
+          sonner.tsx
+          spinner.test.tsx
+          spinner.tsx
+          tabs.tsx
+        analytics-events.tsx
+        app-link.test.tsx
+        app-link.tsx
+        empty-state.tsx
+        error-panel.tsx
+        lazy-boundary.test.tsx
+        lazy-boundary.tsx
+        toaster-host.test.tsx
+        toaster-host.tsx
+        toaster-impl.tsx
+      features/
+        clubs/
+          club-card.test.tsx
+          club-card.tsx
+          club-tabs.tsx
+          clubs-list-client.test.tsx
+          clubs-list-client.tsx
+          session-timeout.test.tsx
+          use-clubs.ts
+          use-session.ts
+      i18n/
+        locale.test.ts
+        locale.ts
+        request.ts
+      lib/
+        analytics.test.ts
+        analytics.ts
+        api.ts
+        backend-origin.test.ts
+        backend-origin.ts
+        cookie.ts
+        json-ld.test.tsx
+        json-ld.tsx
+        navigate.test.ts
+        navigate.ts
+        page-metadata.test.ts
+        page-metadata.ts
+        server-api.test.ts
+        server-api.ts
+        session-hint.test.ts
+        session-hint.ts
+        site.test.ts
+        site.ts
+        toast.ts
+        utils.ts
+        zod-locales-stub.ts
+      providers/
+        providers.tsx
+      strangler/
+        config.test.ts
+        config.ts
+        context.tsx
+        csp.test.ts
+        csp.ts
+        edge-config.ts
+        manifest-coverage.test.ts
+        proxy-handler.test.ts
+        proxy-handler.ts
+        routes.test.ts
+        routes.ts
+        server.test.ts
+        server.ts
+      test/
+        harness.tsx
+      proxy.ts
+    .gitignore
+    components.json
+    eslint.config.mjs
+    next.config.ts
+    package.json
+    postcss.config.mjs
+    THIRD_PARTY_NOTICES.md
+    tsconfig.json
+    vercel.json
+    vitest.config.ts
+    vitest.empty.ts
+    vitest.setup.ts
+docs/
+  archive/
+    ARCHITECTURE-REVIEW.md
+    AUDIT-CHECKLIST.md
+    AUDIT-FE-2026-07-06.md
+    AUDIT-REPORT.md
+    PLAN-CODE-SCANNING-2026-07-10.md
+    PLAN-COOKIE-AUTH-2026-07-07.md
+    PLAN-MOBILE-APP-2026-07-15.md
+    REFACTOR-PLAN-2026-07-06.md
+  migration/
+    BASELINE-2026-10.md
+    CANARY-METRICS.md
+    cleanup-pw-audit.sql
+    PARITY-R5.md
+    RUNBOOK-STRANGLER.md
+    UI-DELTAS.md
 e2e/
   fixtures/
     api-client.ts
     api-context.fixture.ts
     auth.fixture.ts
     seed-helper.ts
+  parity/
+    allowlists/
+      guest-auth-pages.json
+      guest-browse.json
+      member-browse.json
+    bypass.ts
+    expectations.ts
+    har-diff.ts
+    html-meta.ts
+    member.setup.ts
+    routes.ts
+    snapshot-guard.ts
   audit-helper.ts
   global-setup.ts
+  seed-guard.ts
+packages/
+  api-client/
+    src/
+      modules/
+        auth.ts
+        book-vote.ts
+        clubs.ts
+        events.ts
+        members.ts
+        misc.ts
+        quiz.ts
+        users.ts
+      api.ts
+      client.ts
+      errors.ts
+      index.ts
+      transports.ts
+      types.ts
+    test/
+      client.test.ts
+      modules.test.ts
+      msw.test.ts
+    eslint.config.mjs
+    package.json
+    tsconfig.json
+    vitest.config.ts
+  config/
+    eslint.mjs
+    package.json
+    tsconfig.base.json
+  contracts/
+    src/
+      api-error.ts
+      book.ts
+      club.ts
+      event.ts
+      index.ts
+      misc.ts
+      parse.ts
+      quiz.ts
+      tolerant.ts
+      user.ts
+    test/
+      fixtures/
+        book-vote.json
+        clubs.json
+        events.json
+        misc.json
+        quiz.json
+        users.json
+      contracts.test.ts
+      fixtures.test.ts
+    eslint.config.mjs
+    package.json
+    tsconfig.json
+    vitest.config.ts
+  i18n/
+    overrides/
+      en.json
+      uk.json
+    scripts/
+      build-icu.mjs
+      icu.ts
+    src/
+      index.ts
+    test/
+      icu.test.ts
+      plurals.test.ts
+    eslint.config.mjs
+    package.json
+    README.md
+    tsconfig.json
+    vitest.config.ts
 public/
   i18n/
     en.json
@@ -124,6 +366,7 @@ src/
         book-search.service.ts
         book-vote.service.ts
         chat-api.service.ts
+        chat-audio-alert.service.ts
         chat-socket.service.ts
         chat.service.ts
         club.service.ts
@@ -138,10 +381,16 @@ src/
         seo.service.ts
         support.service.ts
         theme.service.ts
+        toast.service.ts
         upload.service.ts
+      strangler/
+        strangler-handoff.guard.ts
+        strangler-manifest.service.ts
       utils/
+        cookie.ts
         event-attendance.util.ts
         logger.util.ts
+        ttl-cache.util.ts
     features/
       auth/
         login/
@@ -181,6 +430,18 @@ src/
           club-detail.component.html
           club-detail.component.ts
         club-manage/
+          dashboard/
+            club-manage-dashboard.component.html
+            club-manage-dashboard.component.ts
+          members/
+            club-manage-members.component.html
+            club-manage-members.component.ts
+          requests/
+            club-manage-requests.component.html
+            club-manage-requests.component.ts
+          tools/
+            club-manage-tools.component.html
+            club-manage-tools.component.ts
           club-manage.component.html
           club-manage.component.ts
         clubs-list/
@@ -218,12 +479,6 @@ src/
         events.routes.ts
       not-found/
         not-found.component.ts
-      organizer-dashboard/
-        club-create-form/
-          club-create-form.component.html
-          club-create-form.component.ts
-        organizer-dashboard.component.html
-        organizer-dashboard.component.ts
       privacy/
         privacy.component.ts
       profile/
@@ -290,6 +545,12 @@ src/
         footer.component.html
         footer.component.ts
       header/
+        mobile-sheet/
+          header-mobile-sheet.component.html
+          header-mobile-sheet.component.ts
+        nav-links/
+          header-nav-links.component.html
+          header-nav-links.component.ts
         header.component.html
         header.component.ts
       shell/
@@ -301,6 +562,15 @@ src/
         book-stores.component.ts
       chat/
         chat-widget/
+          composer/
+            chat-composer.component.html
+            chat-composer.component.ts
+          header/
+            chat-header.component.html
+            chat-header.component.ts
+          message-list/
+            chat-message-list.component.html
+            chat-message-list.component.ts
           chat-widget.component.html
           chat-widget.component.ts
       components/
@@ -336,6 +606,7 @@ src/
           social-link-field.component.html
           social-link-field.component.ts
         .gitkeep
+        typeahead-combobox-base.component.ts
       pipes/
         chat-timestamp.pipe.ts
         format-date.pipe.ts
@@ -362,24 +633,6 @@ src/
               hlm-card-header.ts
               hlm-card-title.ts
               hlm-card.ts
-            index.ts
-        dropdown-menu/
-          src/
-            lib/
-              hlm-dropdown-menu-checkbox-indicator.ts
-              hlm-dropdown-menu-checkbox.ts
-              hlm-dropdown-menu-group.ts
-              hlm-dropdown-menu-item-sub-indicator.ts
-              hlm-dropdown-menu-item.ts
-              hlm-dropdown-menu-label.ts
-              hlm-dropdown-menu-radio-indicator.ts
-              hlm-dropdown-menu-radio.ts
-              hlm-dropdown-menu-separator.ts
-              hlm-dropdown-menu-shortcut.ts
-              hlm-dropdown-menu-sub.ts
-              hlm-dropdown-menu-token.ts
-              hlm-dropdown-menu-trigger.ts
-              hlm-dropdown-menu.ts
             index.ts
         field/
           src/
@@ -489,24 +742,20 @@ supabase/
 .lighthouserc.json
 .lintstagedrc.cjs
 angular.json
-ARCHITECTURE-REVIEW.md
-AUDIT-CHECKLIST.md
-AUDIT-FE-2026-07-06.md
-AUDIT-REPORT.md
 CLAUDE.md
 components.json
 eslint.config.js
 LICENSE
 package.json
-PLAN-CODE-SCANNING-2026-07-10.md
-PLAN-COOKIE-AUTH-2026-07-07.md
-playwright.audit-current.config.ts
+PLAN-REACT-MIGRATION-2026-09-28.md
+PLAN-UI-STACK-2026-09-28.md
 playwright.full-audit.config.ts
-playwright.total-audit.config.ts
+playwright.parity-setup.config.ts
+playwright.parity.config.ts
 postcss.config.json
 proxy.conf.json
 README.md
-REFACTOR-PLAN-2026-07-06.md
+REFACTOR-PLAN-FABLE-2026-09-28.md
 repomix.config.json
 SECURITY.md
 sonar-project.properties
@@ -515,4 +764,4 @@ tsconfig.json
 tsconfig.spec.json
 vercel.json
 vitest.config.ts
-```
+````

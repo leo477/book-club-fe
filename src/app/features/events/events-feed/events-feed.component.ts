@@ -9,8 +9,8 @@ import {
 import { FormsModule } from '@angular/forms';
 import { NgTemplateOutlet } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ToastService } from '../../../core/services/toast.service';
 import { EventService } from '../../../core/services/event.service';
 import { AuthService } from '../../../core/auth/auth.service';
 import { ClubService } from '../../../core/services/club.service';
@@ -25,13 +25,14 @@ import { FormatDatePipe } from '../../../shared/pipes/format-date.pipe';
   selector: 'app-events-feed',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, FormsModule, TranslateModule, EmptyStateComponent, EventCardComponent, HlmSpinner, NgTemplateOutlet, FormatDatePipe],
+  imports: [RouterLink, FormsModule, TranslatePipe, EmptyStateComponent, EventCardComponent, HlmSpinner, NgTemplateOutlet, FormatDatePipe],
   templateUrl: './events-feed.component.html',
 })
 export class EventsFeedComponent implements OnInit {
   readonly eventService = inject(EventService);
   readonly auth = inject(AuthService);
   private readonly clubService = inject(ClubService);
+  private readonly toast = inject(ToastService);
   private readonly translate = inject(TranslateService);
 
   readonly hasSingleOwnedClub = computed(() => this.clubService.myOwnedClubs().length === 1);
@@ -64,11 +65,11 @@ export class EventsFeedComponent implements OnInit {
     try {
       const result = await this.eventService.attendEvent(event.id);
       if (result.joinRequestStatus === 'pending') {
-        toast.success(this.translate.instant('EVENTS.join_request_sent') as string);
+        this.toast.success(this.translate.instant('EVENTS.join_request_sent') as string);
       }
     } catch (err) {
       if (err instanceof BackendHttpError && err.status === 400) {
-        toast.error(this.translate.instant('EVENTS.registration_closed') as string);
+        this.toast.error(this.translate.instant('EVENTS.registration_closed') as string);
       }
     } finally {
       this.attendingEventId.set(null);

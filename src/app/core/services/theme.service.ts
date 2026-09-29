@@ -1,5 +1,8 @@
 import { Injectable, signal, computed, effect, inject } from '@angular/core';
 import { DOCUMENT } from '@angular/common';
+import { readCookie, writeCookie } from '../utils/cookie';
+
+const isTheme = (v: string | null): v is 'light' | 'dark' => v === 'light' || v === 'dark';
 
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
@@ -10,9 +13,15 @@ export class ThemeService {
   readonly isDark = computed(() => this._theme() === 'dark');
 
   constructor() {
-    const saved      = localStorage.getItem('theme') as 'light' | 'dark' | null;
+    const cookie = readCookie('theme');
+    const stored = localStorage.getItem('theme');
+    let saved: 'light' | 'dark' | null = null;
+    if (isTheme(cookie)) saved = cookie;
+    else if (isTheme(stored)) saved = stored;
     const prefersDark = globalThis.matchMedia('(prefers-color-scheme: dark)').matches;
     const initial    = saved ?? (prefersDark ? 'dark' : 'light');
+
+    if (!isTheme(cookie) && saved) writeCookie('theme', saved);
 
     this._theme.set(initial);
 
@@ -25,5 +34,6 @@ export class ThemeService {
     const next = this._theme() === 'dark' ? 'light' : 'dark';
     this._theme.set(next);
     localStorage.setItem('theme', next);
+    writeCookie('theme', next);
   }
 }

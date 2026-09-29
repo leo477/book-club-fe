@@ -1,10 +1,10 @@
 import { EnvironmentInjector, provideZonelessChangeDetection, runInInjectionContext } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { HttpRequest, provideHttpClient, withInterceptors, HttpClient, HttpContext } from '@angular/common/http';
+import { HttpRequest, provideHttpClient, withInterceptors, HttpClient, HttpContext, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
+import { ToastService } from '../services/toast.service';
 import { TimeoutError, throwError } from 'rxjs';
 import { authInterceptor, BackendHttpError, RequestTimeoutError, SUPPRESS_ERROR_TOAST } from './auth.interceptor';
 import { TokenStore } from '../auth/token.store';
@@ -38,7 +38,7 @@ describe('authInterceptor', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideHttpClient(withInterceptors([authInterceptor])),
+        provideHttpClient(withXhr(), withInterceptors([authInterceptor])),
         provideHttpClientTesting(),
         { provide: Router, useValue: routerSpy },
         { provide: TokenStore, useValue: tokenStoreSpy },
@@ -170,12 +170,12 @@ describe('authInterceptor', () => {
 
   it('shows toast on 500', async () => {
     setup('my-token');
-    vi.spyOn(toast, 'error').mockImplementation(() => '');
+    vi.spyOn(TestBed.inject(ToastService), 'error').mockImplementation(() => undefined);
     http.get('/api/test').subscribe({ error: vi.fn() });
     const req = httpMock.expectOne('/api/test');
     req.flush({ detail: 'Server Error' }, { status: 500, statusText: 'Internal Server Error' });
     await new Promise(resolve => setTimeout(resolve));
-    expect(toast.error).toHaveBeenCalledWith('ERRORS.serverError');
+    expect(TestBed.inject(ToastService).error).toHaveBeenCalledWith('ERRORS.serverError');
   });
 
   it('re-throws the error after handling', () =>
@@ -195,16 +195,16 @@ describe('authInterceptor', () => {
 
   it('does not show toast on non-5xx errors', () => {
     setup('my-token');
-    vi.spyOn(toast, 'error').mockImplementation(() => '');
+    vi.spyOn(TestBed.inject(ToastService), 'error').mockImplementation(() => undefined);
     http.get('/api/test').subscribe({ error: vi.fn() });
     const req = httpMock.expectOne('/api/test');
     req.flush({}, { status: 400, statusText: 'Bad Request' });
-    expect(toast.error).not.toHaveBeenCalled();
+    expect(TestBed.inject(ToastService).error).not.toHaveBeenCalled();
   });
 
   it('shows toast and throws RequestTimeoutError when next$ emits TimeoutError', async () => {
     setup(null);
-    vi.spyOn(toast, 'error').mockImplementation(() => '');
+    vi.spyOn(TestBed.inject(ToastService), 'error').mockImplementation(() => undefined);
     let caughtError: unknown;
 
     const injector = TestBed.inject(EnvironmentInjector);
@@ -216,7 +216,7 @@ describe('authInterceptor', () => {
     });
 
     await new Promise(resolve => setTimeout(resolve));
-    expect(toast.error).toHaveBeenCalled();
+    expect(TestBed.inject(ToastService).error).toHaveBeenCalled();
     expect(caughtError).toBeInstanceOf(RequestTimeoutError);
     expect((caughtError as RequestTimeoutError).translationKey).toBe('ERRORS.timeout');
   });
@@ -359,10 +359,10 @@ describe('authInterceptor', () => {
     it('suppresses toast when SUPPRESS_ERROR_TOAST is true', () =>
       new Promise<void>((resolve) => {
         setup();
-        vi.spyOn(toast, 'error').mockImplementation(() => '');
+        vi.spyOn(TestBed.inject(ToastService), 'error').mockImplementation(() => undefined);
         http.get('/api/test', { context: new HttpContext().set(SUPPRESS_ERROR_TOAST, true) })
           .subscribe({ error: () => {
-            expect(toast.error).not.toHaveBeenCalled();
+            expect(TestBed.inject(ToastService).error).not.toHaveBeenCalled();
             resolve();
           }});
         const req = httpMock.expectOne('/api/test');

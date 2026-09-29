@@ -1,4 +1,4 @@
-import { Component, provideZonelessChangeDetection } from '@angular/core';
+import { Component, provideZonelessChangeDetection, ChangeDetectionStrategy } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { FormControl, Validators } from '@angular/forms';
 import { QuizDetailBaseComponent } from './quiz-detail-base.component';
@@ -6,7 +6,8 @@ import { QuizService } from '../../core/services/quiz.service';
 import { Quiz, QuizQuestion } from '../../core/models/quiz.model';
 import { optionLabel, isInvalidTouched } from './quiz-form.utils';
 
-@Component({ selector: 'app-test-quiz-detail', template: '', standalone: true })
+@Component({ selector: 'app-test-quiz-detail', template: '', changeDetection: ChangeDetectionStrategy.OnPush,
+ standalone: true })
 class TestQuizDetailComponent extends QuizDetailBaseComponent {}
 
 describe('QuizDetailBaseComponent', () => {

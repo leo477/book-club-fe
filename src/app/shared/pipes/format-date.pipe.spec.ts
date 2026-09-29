@@ -4,10 +4,12 @@ import { FormatDatePipe } from './format-date.pipe';
 
 describe('FormatDatePipe', () => {
   let pipe: FormatDatePipe;
-  let translate: { currentLang: string; defaultLang: string };
+  let currentLang: string;
+  let translate: { getCurrentLang: () => string; fallbackLang: () => string };
 
   beforeEach(() => {
-    translate = { currentLang: 'uk', defaultLang: 'uk' };
+    currentLang = 'uk';
+    translate = { getCurrentLang: () => currentLang, fallbackLang: () => 'uk' };
     TestBed.configureTestingModule({
       providers: [
         FormatDatePipe,
@@ -36,7 +38,7 @@ describe('FormatDatePipe', () => {
   });
 
   it('should format in English when language is en', () => {
-    translate.currentLang = 'en';
+    currentLang = 'en';
     const result = pipe.transform('2024-01-15T10:00:00Z');
     expect(result).toContain('January');
   });

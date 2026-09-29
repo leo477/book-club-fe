@@ -1,8 +1,8 @@
-import { Component, ChangeDetectionStrategy, inject, signal, effect, computed, HostListener, ElementRef, viewChild } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, effect, computed, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
+import { ToastService } from '../../../core/services/toast.service';
 import { Router, NavigationEnd } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { filter, map, startWith } from 'rxjs';
@@ -11,13 +11,15 @@ import { ChatService } from '../../../core/services/chat.service';
 import { logError } from '../../../core/utils/logger.util';
 import { ClubService } from '../../../core/services/club.service';
 import { extractApiError } from '../../../core/api/api-error.util';
-import { ChatTimestampPipe } from '../../pipes/chat-timestamp.pipe';
+import { ChatHeaderComponent } from './header/chat-header.component';
+import { ChatMessageListComponent } from './message-list/chat-message-list.component';
+import { ChatComposerComponent } from './composer/chat-composer.component';
 
 @Component({
   selector: 'app-chat-widget',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [CommonModule, TranslateModule, FormsModule, ChatTimestampPipe],
+  imports: [CommonModule, TranslatePipe, FormsModule, ChatHeaderComponent, ChatMessageListComponent, ChatComposerComponent],
   templateUrl: './chat-widget.component.html',
   styleUrls: ['./chat-widget.component.scss'],
 })
@@ -27,6 +29,7 @@ export class ChatWidgetComponent {
   private readonly clubService = inject(ClubService);
   private readonly router = inject(Router);
   private readonly el = inject(ElementRef);
+  private readonly toast = inject(ToastService);
   private readonly translate = inject(TranslateService);
 
   private readonly currentUrl = toSignal(
@@ -62,8 +65,6 @@ export class ChatWidgetComponent {
   protected readonly roomToDelete = signal<string | null>(null);
 
   protected readonly showingRoomList = signal(false);
-
-  private readonly messagesScrollRef = viewChild<ElementRef<HTMLElement>>('messagesScroll');
 
   @HostListener('keydown.escape')
   onEscape(): void {
@@ -213,40 +214,12 @@ export class ChatWidgetComponent {
       this.isCreatingRoom.set(false);
     } catch (err) {
       logError('[ChatWidget] createRoom error', err);
-      toast.error(this.translate.instant(extractApiError(err)) as string);
+      this.toast.error(this.translate.instant(extractApiError(err)) as string);
     }
   }
 
   protected onRoomNameKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter') { event.preventDefault(); this.submitCreateRoom(); }
+    if (event.key === 'Enter') { event.preventDefault(); void this.submitCreateRoom(); }
     if (event.key === 'Escape') { this.isCreatingRoom.set(false); }
-  }
-
-  /** N-7: near-top scroll on the messages container triggers loading older history. */
-  protected onMessagesScroll(): void {
-    const el = this.messagesScrollRef()?.nativeElement;
-    if (!el || el.scrollTop > 40) return;
-    this.maybeLoadOlderMessages();
-  }
-
-  private maybeLoadOlderMessages(): void {
-    const roomId = this.chat.activeRoomId();
-    if (!roomId) return;
-    if (this.chat.isLoadingOlder()[roomId]) return;
-    if (this.chat.hasMoreOlder()[roomId] === false) return;
-
-    const el = this.messagesScrollRef()?.nativeElement;
-    if (!el) return;
-    const prevScrollHeight = el.scrollHeight;
-    const prevScrollTop = el.scrollTop;
-
-    this.chat.loadOlderMessages(roomId).then(() => {
-      requestAnimationFrame(() => {
-        const container = this.messagesScrollRef()?.nativeElement;
-        if (!container) return;
-        // Preserve visual position — prepending older messages shifts scrollHeight.
-        container.scrollTop = prevScrollTop + (container.scrollHeight - prevScrollHeight);
-      });
-    });
   }
 }

@@ -1,0 +1,16 @@
+{
+  "name": "@book-club/config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./tsconfig.base.json": "./tsconfig.base.json",
+    "./eslint": "./eslint.mjs",
+    "./tailwind-theme.css": "./tailwind-theme.css"
+  },
+  "devDependencies": {
+    "@eslint/js": "*",
+    "eslint": "*",
+    "typescript-eslint": "*"
+  }
+}

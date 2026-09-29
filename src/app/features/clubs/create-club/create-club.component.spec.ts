@@ -1,9 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { CreateClubComponent } from './create-club.component';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { Router } from '@angular/router';
 import { ClubService } from '../../../core/services/club.service';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -19,10 +19,10 @@ describe('CreateClubComponent', () => {
     clubServiceSpy = { createClub: vi.fn() };
     authSpy = { currentUser: vi.fn().mockReturnValue(null) };
     TestBed.configureTestingModule({
-      imports: [CreateClubComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [CreateClubComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         { provide: Router, useValue: routerSpy },
         { provide: ClubService, useValue: clubServiceSpy },

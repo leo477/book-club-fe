@@ -1,14 +1,14 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ProfileStatsComponent } from './profile-stats.component';
 import { UserStats } from '../../../core/models/user.model';
 
 describe('ProfileStatsComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ProfileStatsComponent, TranslateModule.forRoot()],
-      providers: [provideZonelessChangeDetection()],
+      imports: [ProfileStatsComponent],
+      providers: [provideTranslateService(), provideZonelessChangeDetection()],
     }).compileComponents();
   });
 

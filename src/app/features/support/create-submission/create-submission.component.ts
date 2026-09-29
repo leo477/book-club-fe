@@ -1,7 +1,7 @@
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslatePipe } from '@ngx-translate/core';
 import { SupportService } from '../../../core/services/support.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { SubmissionType } from '../../../core/models/support.model';
@@ -20,7 +20,7 @@ interface CreateSubmissionForm {
   selector: 'app-create-submission',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, TranslateModule, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
+  imports: [ReactiveFormsModule, TranslatePipe, ...HlmFieldImports, HlmInput, HlmButton, HlmSpinner],
   templateUrl: './create-submission.component.html',
 })
 export class CreateSubmissionComponent {

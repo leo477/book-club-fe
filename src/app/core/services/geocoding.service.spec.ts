@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
 import { GeocodingService, GeocodeSuggestion } from './geocoding.service';
@@ -21,9 +21,9 @@ describe('GeocodingService', () => {
     TestBed.configureTestingModule({
       providers: [
         provideZonelessChangeDetection(),
-        provideHttpClient(),
+        provideHttpClient(withXhr()),
         provideHttpClientTesting(),
-        { provide: TranslateService, useValue: { currentLang: 'uk', defaultLang: 'uk' } },
+        { provide: TranslateService, useValue: { getCurrentLang: () => 'uk', fallbackLang: () => 'uk' } },
         GeocodingService,
       ],
     });
@@ -87,10 +87,9 @@ describe('GeocodingService', () => {
     });
 
     it('errors the observable on network failure and does NOT reset session token', () => {
-      let tokenBefore: string | null = null;
       service.autocomplete$('test').subscribe();
       const acReq = httpMock.expectOne(r => r.url === BASE);
-      tokenBefore = acReq.request.params.get('session_token');
+      const tokenBefore = acReq.request.params.get('session_token');
       acReq.flush([]);
 
       let errored = false;
@@ -103,29 +102,26 @@ describe('GeocodingService', () => {
       expect(errored).toBe(true);
 
       // session token should be unchanged because tap (which calls resetSessionToken) only runs on success
-      let tokenAfter: string | null = null;
       service.autocomplete$('test2').subscribe();
       const acReq2 = httpMock.expectOne(r => r.url === BASE);
-      tokenAfter = acReq2.request.params.get('session_token');
+      const tokenAfter = acReq2.request.params.get('session_token');
       acReq2.flush([]);
 
       expect(tokenAfter).toBe(tokenBefore);
     });
 
     it('resets session token after response', () => {
-      let tokenBefore: string | null = null;
       service.autocomplete$('test').subscribe();
       const acReq = httpMock.expectOne(r => r.url === BASE);
-      tokenBefore = acReq.request.params.get('session_token');
+      const tokenBefore = acReq.request.params.get('session_token');
       acReq.flush([]);
 
       service.getPlaceDetails$('pid123').subscribe();
       httpMock.expectOne(r => r.url === DETAILS_BASE).flush(resolvedSuggestion);
 
-      let tokenAfter: string | null = null;
       service.autocomplete$('test2').subscribe();
       const acReq2 = httpMock.expectOne(r => r.url === BASE);
-      tokenAfter = acReq2.request.params.get('session_token');
+      const tokenAfter = acReq2.request.params.get('session_token');
       acReq2.flush([]);
 
       expect(tokenAfter).not.toBe(tokenBefore);
@@ -134,18 +130,16 @@ describe('GeocodingService', () => {
 
   describe('resetSessionToken', () => {
     it('changes the session_token used in the next autocomplete$ request', () => {
-      let tokenFirst: string | null = null;
       service.autocomplete$('a').subscribe();
       const req1 = httpMock.expectOne(r => r.url === BASE);
-      tokenFirst = req1.request.params.get('session_token');
+      const tokenFirst = req1.request.params.get('session_token');
       req1.flush([]);
 
       service.resetSessionToken();
 
-      let tokenSecond: string | null = null;
       service.autocomplete$('b').subscribe();
       const req2 = httpMock.expectOne(r => r.url === BASE);
-      tokenSecond = req2.request.params.get('session_token');
+      const tokenSecond = req2.request.params.get('session_token');
       req2.flush([]);
 
       expect(tokenSecond).not.toBe(tokenFirst);

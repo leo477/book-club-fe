@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { Router } from '@angular/router';
-import { TranslateModule } from '@ngx-translate/core';
+import { provideTranslateService } from '@ngx-translate/core';
 import { ClubManageComponent } from './club-manage.component';
 import { ClubService } from '../../../core/services/club.service';
 import { ChatService } from '../../../core/services/chat.service';
@@ -51,8 +51,8 @@ describe('ClubManageComponent', () => {
 
   async function setup(clubId = 'club-1') {
     await TestBed.configureTestingModule({
-      imports: [ClubManageComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [ClubManageComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         { provide: ClubService, useValue: clubServiceSpy },
         { provide: ChatService, useValue: chatServiceSpy },
@@ -266,29 +266,4 @@ describe('ClubManageComponent', () => {
     });
   });
 
-  describe('maxMemberGrowth / maxEventFrequency', () => {
-    it('returns at least 1 even with empty data', async () => {
-      await setup();
-      expect(component.maxMemberGrowth({ memberGrowth: [] } as unknown as ClubStats)).toBe(1);
-      expect(component.maxEventFrequency({ eventFrequency: [] } as unknown as ClubStats)).toBe(1);
-    });
-
-    it('returns the max count', async () => {
-      await setup();
-      const stats = { memberGrowth: [{ count: 3 }, { count: 7 }] } as unknown as ClubStats;
-      expect(component.maxMemberGrowth(stats)).toBe(7);
-    });
-  });
-
-  describe('bannedDisplayName', () => {
-    it('resolves the display name from members', async () => {
-      await setup();
-      expect(component.bannedDisplayName({ userId: 'u2' } as BanRecord)).toBe('User u2');
-    });
-
-    it('falls back to the userId when the member is not found', async () => {
-      await setup();
-      expect(component.bannedDisplayName({ userId: 'unknown' } as BanRecord)).toBe('unknown');
-    });
-  });
 });

@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { NO_ERRORS_SCHEMA, provideZonelessChangeDetection, signal } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { provideTranslateService, TranslateService } from '@ngx-translate/core';
 import { HeaderComponent } from './header.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { of } from 'rxjs';
@@ -26,8 +26,8 @@ describe('HeaderComponent', () => {
     };
 
     TestBed.configureTestingModule({
-      imports: [HeaderComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [HeaderComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         provideRouter([]),
         { provide: AuthService, useValue: authSpy },
@@ -71,8 +71,8 @@ describe('HeaderComponent', () => {
 
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
-        imports: [HeaderComponent, TranslateModule.forRoot()],
-        providers: [
+        imports: [HeaderComponent],
+        providers: [provideTranslateService(), 
           provideZonelessChangeDetection(),
           provideRouter([]),
           { provide: AuthService, useValue: authSpy },

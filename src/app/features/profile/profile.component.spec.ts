@@ -1,7 +1,7 @@
 import { provideZonelessChangeDetection, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
-import { TranslateModule } from '@ngx-translate/core';
-import { toast } from '@spartan-ng/brain/sonner';
+import { provideTranslateService } from '@ngx-translate/core';
+import { ToastService } from '../../core/services/toast.service';
 import { ProfileComponent } from './profile.component';
 import { AuthService } from '../../core/auth/auth.service';
 import { SeoService } from '../../core/services/seo.service';
@@ -44,8 +44,8 @@ describe('ProfileComponent', () => {
     authSvc = makeAuthService(userOverrides);
 
     await TestBed.configureTestingModule({
-      imports: [ProfileComponent, TranslateModule.forRoot()],
-      providers: [
+      imports: [ProfileComponent],
+      providers: [provideTranslateService(), 
         provideZonelessChangeDetection(),
         { provide: AuthService, useValue: authSvc },
         { provide: SeoService, useValue: makeSeoService() },
@@ -104,7 +104,7 @@ describe('ProfileComponent', () => {
 
   it('saveName() calls updateDisplayName and shows toast on success', async () => {
     await setup({ displayName: 'Alice' });
-    vi.spyOn(toast, 'success');
+    vi.spyOn(TestBed.inject(ToastService), 'success');
     const fixture = TestBed.createComponent(ProfileComponent);
     fixture.detectChanges();
     const comp = fixture.componentInstance as unknown as {
@@ -116,7 +116,7 @@ describe('ProfileComponent', () => {
     await comp.saveName();
 
     expect(authSvc.updateDisplayName).toHaveBeenCalledWith('Alice Smith');
-    expect(toast.success).toHaveBeenCalled();
+    expect(TestBed.inject(ToastService).success).toHaveBeenCalled();
   });
 
   it('constructor seeds nameForm.displayName from currentUser', async () => {

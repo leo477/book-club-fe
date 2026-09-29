@@ -11,7 +11,7 @@ import {
 import { Router, RouterLink } from '@angular/router';
 import { ReactiveFormsModule, FormBuilder, FormControl, Validators } from '@angular/forms';
 import { rxResource } from '@angular/core/rxjs-interop';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslatePipe, TranslateService } from '@ngx-translate/core';
 import { EventService } from '../../../core/services/event.service';
 import { QuizService } from '../../../core/services/quiz.service';
 import { AuthService } from '../../../core/auth/auth.service';
@@ -28,7 +28,7 @@ import { BookSuggestion } from '../../../core/models/book.model';
   selector: 'app-edit-event',
   standalone: true,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, ReactiveFormsModule, TranslateModule, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton, BookAutocompleteComponent],
+  imports: [RouterLink, ReactiveFormsModule, TranslatePipe, AddressAutocompleteComponent, CoverUploadComponent, HlmInput, HlmButton, BookAutocompleteComponent],
   templateUrl: './edit-event.component.html',
 })
 export class EditEventComponent {

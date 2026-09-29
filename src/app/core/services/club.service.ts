@@ -1,6 +1,6 @@
 import { HttpClient, HttpContext } from '@angular/common/http';
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { Observable, firstValueFrom, map, of, tap } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
 import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
@@ -8,6 +8,7 @@ import { AuthService } from '../auth/auth.service';
 import { SUPPRESS_ERROR_TOAST } from '../interceptors/auth.interceptor';
 import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStats } from '../models/club.model';
 import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
+import { TtlCache } from '../utils/ttl-cache.util';
 
 export interface JoinRequest {
   userId: string;
@@ -33,22 +34,12 @@ export class ClubService {
   private myClubsLoadedAt = 0;
 
   private readonly CLUB_CACHE_TTL_MS = 60_000;
-  private readonly clubByIdCache = new Map<string, { data: Club; fetchedAt: number }>();
-  private readonly membersCache = new Map<string, { data: ClubMemberDetail[]; fetchedAt: number }>();
-  private readonly eventsCache = new Map<string, { data: ClubEvent[]; fetchedAt: number }>();
+  private readonly clubByIdCache = new TtlCache<Club>(this.CLUB_CACHE_TTL_MS);
+  private readonly membersCache = new TtlCache<ClubMemberDetail[]>(this.CLUB_CACHE_TTL_MS);
+  private readonly eventsCache = new TtlCache<ClubEvent[]>(this.CLUB_CACHE_TTL_MS);
 
   /** Deduplicates concurrent loadMyClubs() calls — all callers share one in-flight request. */
   private _loadMyClubsInFlight: Promise<void> | null = null;
-
-  private cacheRead<T>(cache: Map<string, { data: T; fetchedAt: number }>, key: string): T | null {
-    const entry = cache.get(key);
-    if (!entry) return null;
-    if (Date.now() - entry.fetchedAt > this.CLUB_CACHE_TTL_MS) {
-      cache.delete(key);
-      return null;
-    }
-    return entry.data;
-  }
 
   readonly clubs = this._clubs.asReadonly();
   readonly myClubs = this._myClubs.asReadonly();
@@ -157,15 +148,24 @@ export class ClubService {
     await this.loadMyClubs();
   }
 
+  getClubById$(id: string): Observable<Club> {
+    const cached = this.clubByIdCache.get(id);
+    if (cached) return of(cached);
+    return this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`).pipe(
+      map(mapClub),
+      tap(club => this.clubByIdCache.set(id, club)),
+    );
+  }
+
   async getClubById(id: string): Promise<Club | null> {
-    const cached = this.cacheRead(this.clubByIdCache, id);
+    const cached = this.clubByIdCache.get(id);
     if (cached) return cached;
     try {
       const raw = await firstValueFrom(
         this.http.get<ApiClub>(`${environment.apiUrl}/clubs/${id}`),
       );
       const club = mapClub(raw);
-      this.clubByIdCache.set(id, { data: club, fetchedAt: Date.now() });
+      this.clubByIdCache.set(id, club);
       return club;
     } catch {
       return null;
@@ -231,7 +231,7 @@ export class ClubService {
     return status;
   }
 
-  async getMyMembership(
+  getMyMembership(
     clubId: string,
   ): Promise<{ isMember: boolean; role: string | null; joinRequestStatus: 'none' | 'pending' | 'rejected' }> {
     return firstValueFrom(
@@ -243,7 +243,7 @@ export class ClubService {
     );
   }
 
-  async getJoinRequests(clubId: string): Promise<JoinRequest[]> {
+  getJoinRequests(clubId: string): Promise<JoinRequest[]> {
     return firstValueFrom(
       this.http.get<JoinRequest[]>(`${environment.apiUrl}/clubs/${clubId}/join-requests`),
     );
@@ -284,13 +284,13 @@ export class ClubService {
   }
 
   async getClubMembers(clubId: string): Promise<ClubMemberDetail[]> {
-    const cached = this.cacheRead(this.membersCache, clubId);
+    const cached = this.membersCache.get(clubId);
     if (cached) return cached;
     const raw = await firstValueFrom(
       this.http.get<ApiClubMember[]>(`${environment.apiUrl}/clubs/${clubId}/members`),
     );
     const members = raw.map(mapClubMember);
-    this.membersCache.set(clubId, { data: members, fetchedAt: Date.now() });
+    this.membersCache.set(clubId, members);
     return members;
   }
 
@@ -338,7 +338,7 @@ export class ClubService {
 
   async loadClubEvents(clubId: string, includePast = false): Promise<ClubEvent[]> {
     if (!includePast) {
-      const cached = this.cacheRead(this.eventsCache, clubId);
+      const cached = this.eventsCache.get(clubId);
       if (cached) return cached;
     }
     const raw = await firstValueFrom(
@@ -348,12 +348,12 @@ export class ClubService {
     );
     const events = raw.map(mapEvent);
     if (!includePast) {
-      this.eventsCache.set(clubId, { data: events, fetchedAt: Date.now() });
+      this.eventsCache.set(clubId, events);
     }
     return events;
   }
 
-  async getClubStats(clubId: string): Promise<ClubStats> {
+  getClubStats(clubId: string): Promise<ClubStats> {
     return firstValueFrom(this.http.get<ClubStats>(`${environment.apiUrl}/clubs/${clubId}/stats`));
   }
 

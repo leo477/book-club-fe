@@ -24,7 +24,7 @@ export class ChatTimestampPipe implements PipeTransform {
       return `${this.translate.instant('CHAT.yesterday')} ${time}`;
     }
 
-    const lang = this.translate.currentLang ?? this.translate.defaultLang ?? 'uk';
+    const lang = this.translate.getCurrentLang() ?? this.translate.fallbackLang() ?? 'uk';
     const locale = lang === 'uk' ? 'uk-UA' : 'en-US';
     const shortDate = date.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
     return `${shortDate} ${time}`;

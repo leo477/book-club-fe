@@ -1,0 +1,8 @@
+{
+  "QUIZ": {
+    "create_questions_count_other": "questions"
+  },
+  "ERRORS": {
+    "retry": "Try again"
+  }
+}

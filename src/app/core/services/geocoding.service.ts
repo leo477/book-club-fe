@@ -24,7 +24,7 @@ export class GeocodingService {
   }
 
   private activeLang(): string {
-    return this.translate.currentLang ?? this.translate.defaultLang ?? 'uk';
+    return this.translate.getCurrentLang() ?? this.translate.fallbackLang() ?? 'uk';
   }
 
   autocomplete$(q: string, lang = this.activeLang(), limit = 5): Observable<GeocodeSuggestion[]> {

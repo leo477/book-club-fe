@@ -1,0 +1,74 @@
+{
+  "club": {
+    "id": "c0a80101-0000-4000-8000-000000000001",
+    "name": "Kyiv Readers",
+    "description": "Weekly fiction meetups",
+    "coverUrl": "https://cdn.example.com/covers/1.jpg",
+    "organizerId": "8b1f2c3e-6a41-4d55-9a2e-1c7d0f5b9e01",
+    "isPublic": true,
+    "memberCount": 12,
+    "memberPreviews": ["https://cdn.example.com/a.png"],
+    "createdAt": "2026-03-01T09:30:00.123456+00:00",
+    "status": "active",
+    "city": "Kyiv",
+    "nextMeetingDate": "2026-10-05T16:00:00+00:00",
+    "address": "Khreshchatyk 1",
+    "lat": 50.4501,
+    "lng": 30.5234,
+    "theme": "Sci-fi",
+    "currentBook": "Dune",
+    "tags": ["fiction", "sci-fi"],
+    "meetingDurationMinutes": 120,
+    "afterMeetingVenue": { "name": "Cafe Book", "address": "Main st 5", "description": null, "lat": 50.45, "lng": 30.52 },
+    "cancelledAt": null,
+    "currentChampion": { "userId": "8b1f2c3e-6a41-4d55-9a2e-1c7d0f5b9e02", "displayName": "Taras", "avatarUrl": null, "wins": 1, "eventTitle": "Dune night" }
+  },
+  "clubMinimal": {
+    "id": "c0a80101-0000-4000-8000-000000000002",
+    "name": "Lviv Poets",
+    "description": null,
+    "coverUrl": null,
+    "organizerId": "8b1f2c3e-6a41-4d55-9a2e-1c7d0f5b9e01",
+    "isPublic": false,
+    "memberCount": 1,
+    "createdAt": "2026-03-02T10:00:00+00:00"
+  },
+  "clubStats": {
+    "topActive": [{ "userId": "u1", "displayName": "Olena", "avatarUrl": null, "count": 9 }],
+    "topWinners": [{ "userId": "u2", "displayName": "Taras", "avatarUrl": "https://cdn.example.com/t.png", "count": 2 }],
+    "recentAttendance": [{ "eventId": "e1", "title": "Dune night", "date": "2026-09-01T16:00:00+00:00", "attendeeCount": 8 }],
+    "totalMembers": 12,
+    "totalEvents": 10,
+    "totalMessages": 240,
+    "memberGrowth": [{ "month": "2026-08", "count": 3 }],
+    "eventFrequency": [{ "month": "2026-08", "count": 2 }],
+    "bannedUsersCount": 0,
+    "upcomingEventsCount": 1
+  },
+  "clubMember": {
+    "userId": "u1",
+    "displayName": "Olena",
+    "avatarUrl": null,
+    "role": "organizer",
+    "socials": { "telegram": "olena_reads" },
+    "socialsPublic": true
+  },
+  "banRecord": {
+    "userId": "u3",
+    "clubId": "c0a80101-0000-4000-8000-000000000001",
+    "bannedAt": "2026-09-10T12:00:00+00:00",
+    "duration": "3",
+    "bannedBy": "u1"
+  },
+  "joinRequest": {
+    "userId": "u4",
+    "displayName": "Ihor",
+    "avatarUrl": null,
+    "status": "pending",
+    "source": "manual",
+    "createdAt": "2026-09-11T08:15:00+00:00"
+  },
+  "myMembership": { "isMember": false, "role": null, "joinRequestStatus": "pending" },
+  "joinClubResponse": { "status": "already_requested" },
+  "approveJoinRequestResponse": { "memberCount": 13 }
+}
