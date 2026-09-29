@@ -31,7 +31,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         baseURL: parityTargets.next,
-        extraHTTPHeaders: process.env['PARITY_NEXT_BYPASS'] ? { 'x-vercel-protection-bypass': process.env['PARITY_NEXT_BYPASS'] } : undefined,
+        // bypass header is injected per request in e2e/parity/bypass.ts, never for third-party origins
       },
     },
   ],

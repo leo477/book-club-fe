@@ -1,6 +1,7 @@
 import { chromium, type BrowserContext, type Page } from '@playwright/test';
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { addBypass } from './bypass.ts';
 import { isSeedAllowed } from '../seed-guard.ts';
 
 interface Journey {
@@ -176,11 +177,8 @@ async function record(name: string, target: string, journeyName: string, journey
     bypassCSP: name === 'legacy' && process.env['PARITY_LEGACY_BYPASS_CSP'] === '1',
     recordHar: { path: harPath, content: 'omit' },
     storageState: journey.auth ? storageStateFor(new URL(target).origin) : undefined,
-    extraHTTPHeaders:
-      name === 'next' && process.env['PARITY_NEXT_BYPASS']
-        ? { 'x-vercel-protection-bypass': process.env['PARITY_NEXT_BYPASS'] }
-        : undefined,
   });
+  if (name === 'next') await addBypass(context, new URL(target).origin, process.env['PARITY_NEXT_BYPASS']);
   await context.addInitScript(() => localStorage.setItem('lang', 'uk'));
   const page = await context.newPage();
   await journey.steps(page);

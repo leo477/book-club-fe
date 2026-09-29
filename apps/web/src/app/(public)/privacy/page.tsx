@@ -1,10 +1,14 @@
 import { AppLink } from '@/components/app-link';
+import { JsonLd } from '@/lib/json-ld';
 import { pageMetadata } from '@/lib/page-metadata';
+import { ORGANIZATION_JSON_LD } from '@/lib/site';
 
 export const generateMetadata = () => pageMetadata('TITLES.privacy', '/privacy');
 
 export default function PrivacyPage() {
   return (
+    <>
+      <JsonLd data={ORGANIZATION_JSON_LD} />
     <main lang="uk" className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 px-4">
       <div className="max-w-3xl mx-auto">
         <AppLink href="/events" className="text-sm text-primary-700 dark:text-primary-300 hover:underline cursor-pointer">
@@ -73,5 +77,6 @@ export default function PrivacyPage() {
         </div>
       </div>
     </main>
+    </>
   );
 }

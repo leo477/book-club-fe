@@ -192,6 +192,16 @@ describe('ClubsListClient as member', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(t('CLUBS.load_my_error'));
   });
 
+  it('does not show the empty state under the my-clubs error banner', async () => {
+    mockApi({ session: true });
+    server.use(http.get(`${API}/clubs/my`, () => HttpResponse.json({}, { status: 500 })));
+    const u = userEvent.setup();
+    renderWithProviders(<ClubsListClient initialClubs={initial} />);
+    await screen.findByRole('alert');
+    await u.click(await screen.findByRole('tab', { name: new RegExp(t('CLUBS.my_clubs')) }));
+    expect(screen.queryByTestId('empty-state')).toBeNull();
+  });
+
   it('treats a failing /auth/me as a guest without redirecting', async () => {
     mockApi({ session: true });
     server.use(http.get(`${API}/auth/me`, () => HttpResponse.json({}, { status: 401 })));

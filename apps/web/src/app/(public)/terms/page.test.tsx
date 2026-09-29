@@ -31,6 +31,12 @@ describe('terms page', () => {
     expect(within(document.body).queryByRole('button')).toBeNull();
   });
 
+  it('emits the site-wide Organization + WebApplication JSON-LD like legacy index.html', () => {
+    const { container } = renderPage();
+    const ld = JSON.parse(container.querySelector('script[type="application/ld+json"]')!.textContent!);
+    expect(ld['@graph'].map((n: { '@type': string }) => n['@type'])).toEqual(['Organization', 'WebApplication']);
+  });
+
   it.each(['uk', 'en'] as const)('generates localized metadata for %s', async (locale) => {
     state.locale = locale;
     const meta = await generateMetadata();

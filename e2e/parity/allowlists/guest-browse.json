@@ -1,1 +1,9 @@
-{ "ignore": [] }
+{
+  "ignore": [
+    { "signature": "GET self /api/v1/clubs? body=-", "reason": "Next renders the public club list server-side (GET /clubs from the server, not the browser); legacy fetches it client-side", "legacy": 1, "next": 0 },
+    { "signature": "GET self /api/v1/config/maps-key? body=-", "reason": "Angular shell requests the Maps key on every route (N-1); Next loads Maps only on pages that use it and /clubs does not", "next": 0 },
+    { "signature": "GET maps.googleapis.com /maps/api/js?callback,key,libraries,v body=-", "reason": "Legacy-only: follows the maps-key call above, Angular bootstraps Google Maps globally", "next": 0 },
+    { "signature": "GET maps.googleapis.com /maps/api/mapsjs/gen_204?csp_test body=-", "reason": "Legacy-only: Maps JS CSP probe emitted by the global Maps bootstrap above", "next": 0 },
+    { "signature": "GET self /api/v1/auth/session-status? body=-", "reason": "Legacy calls it on each hard navigation (/events redirect to /login, then /clubs); Next only serves /clubs, so it calls it once" }
+  ]
+}

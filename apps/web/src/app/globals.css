@@ -5,8 +5,8 @@
 
 /* next/font families (self-hosted) first; the shared theme's plain names remain as fallbacks */
 @theme {
-  --font-sans: var(--font-inter), Inter, system-ui, 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji', sans-serif;
-  --font-display: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  --font-sans: var(--font-inter-latin), var(--font-inter-cyrillic), Inter, system-ui, 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji', sans-serif;
+  --font-display: var(--font-playfair-latin), var(--font-playfair-cyrillic), 'Playfair Display', Georgia, serif;
   --font-fantasy: var(--font-cinzel), Cinzel, serif;
 }
 

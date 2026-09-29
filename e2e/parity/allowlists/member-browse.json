@@ -1,1 +1,10 @@
-{ "ignore": [] }
+{
+  "ignore": [
+    { "signature": "POST self /api/v1/auth/refresh? body=-", "reason": "Legacy-only: Angular boots by refreshing the token; Next resolves the session via session-status and /auth/me" },
+    { "signature": "GET self /api/v1/users/me/stats? body=-", "reason": "Legacy-only: the Angular shell prefetches profile stats on login; Next /clubs does not show stats" },
+    { "signature": "GET self /api/v1/clubs/my? body=-", "reason": "Legacy requests it twice (shell + clubs page); Next requests it once via a shared query cache (fewer calls, not a gap)" },
+    { "signature": "GET self /api/v1/config/maps-key? body=-", "reason": "Angular shell requests the Maps key on every route (N-1); Next /clubs does not" },
+    { "signature": "GET maps.googleapis.com /maps/api/js?callback,key,libraries,v body=-", "reason": "Legacy-only global Maps bootstrap (see maps-key)" },
+    { "signature": "GET maps.googleapis.com /maps/api/mapsjs/gen_204?csp_test body=-", "reason": "Legacy-only Maps CSP probe (see maps-key)" }
+  ]
+}

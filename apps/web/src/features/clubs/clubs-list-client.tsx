@@ -144,7 +144,7 @@ export function ClubsListClient({ initialClubs }: { initialClubs: readonly Club[
             my={
               isLoading ? (
                 spinner
-              ) : myClubs.length === 0 ? (
+              ) : myClubsQuery.isError ? null /* the banner already reports it; an empty state would mislead */ : myClubs.length === 0 ? (
                 <EmptyState icon="📚" title={t('no_clubs')} description={t('my_clubs_empty_desc')} />
               ) : (
                 renderList(myClubs)

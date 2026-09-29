@@ -2,7 +2,8 @@
 // SAFETY: every /api/v1 request is routed through `guardApi`: GETs are only let through when the test is a
 // guest test; any non-GET is fulfilled by a mock or aborted (never reaches the backend).
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test, type Page, type Route } from '@playwright/test';
+import type { Page, Route } from '@playwright/test';
+import { expect, test } from './bypass';
 import { mkdirSync } from 'node:fs';
 
 const SHOTS = 'playwright-report/parity/r5';

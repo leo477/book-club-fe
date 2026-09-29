@@ -81,6 +81,12 @@ apps/
         %5F%5Fui/
           page.tsx
           toast-buttons.tsx
+        fonts/
+          cinzel-latin.woff2
+          inter-cyrillic.woff2
+          inter-latin.woff2
+          playfair-cyrillic.woff2
+          playfair-latin.woff2
         strangler.json/
           route.ts
         fonts.ts
@@ -216,6 +222,7 @@ e2e/
       guest-auth-pages.json
       guest-browse.json
       member-browse.json
+    bypass.ts
     expectations.ts
     har-diff.ts
     html-meta.ts

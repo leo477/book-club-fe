@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './bypass';
 import { assertBaselineWritable } from './snapshot-guard';
 import { publicRoutes, slug } from './routes';
 
