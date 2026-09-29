@@ -283,7 +283,11 @@ src/
         theme.service.ts
         toast.service.ts
         upload.service.ts
+      strangler/
+        strangler-handoff.guard.ts
+        strangler-manifest.service.ts
       utils/
+        cookie.ts
         event-attendance.util.ts
         logger.util.ts
         ttl-cache.util.ts
