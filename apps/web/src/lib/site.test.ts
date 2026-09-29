@@ -8,7 +8,7 @@ describe('site constants', () => {
   });
 
   it('derives every organization URL from SITE_URL', () => {
-    const urls = JSON.stringify(ORGANIZATION_JSON_LD).match(/https?:\/\/[^"]+/g)!.filter((u) => !u.includes('schema.org'));
+    const urls = JSON.stringify(ORGANIZATION_JSON_LD).match(/https?:\/\/[^"]+/g)!.filter((u) => new URL(u).hostname !== 'schema.org');
     expect(urls.length).toBeGreaterThan(0);
     for (const url of urls) expect(url.startsWith(SITE_URL)).toBe(true);
   });
