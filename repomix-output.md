@@ -57,6 +57,64 @@ The content is organized as follows:
   labeler.yml
 .husky/
   pre-commit
+apps/
+  web/
+    src/
+      app/
+        %5F%5Fstrangler-probe/
+          page.tsx
+        strangler.json/
+          route.ts
+        layout.tsx
+      components/
+        ui/
+          badge.tsx
+          button.tsx
+          card.tsx
+          input.tsx
+          label.tsx
+          separator.tsx
+          sheet.tsx
+          skeleton.tsx
+          sonner.tsx
+          tabs.tsx
+        app-link.test.tsx
+        app-link.tsx
+      i18n/
+        locale.test.ts
+        locale.ts
+        request.ts
+      lib/
+        api.ts
+        session-hint.test.ts
+        session-hint.ts
+        utils.ts
+      providers/
+        providers.tsx
+      strangler/
+        config.test.ts
+        config.ts
+        context.tsx
+        csp.ts
+        edge-config.ts
+        manifest-coverage.test.ts
+        proxy-handler.test.ts
+        proxy-handler.ts
+        routes.test.ts
+        routes.ts
+        server.test.ts
+        server.ts
+      proxy.ts
+    .gitignore
+    components.json
+    eslint.config.mjs
+    next.config.ts
+    package.json
+    postcss.config.mjs
+    tsconfig.json
+    vitest.config.ts
+    vitest.empty.ts
+    vitest.setup.ts
 docs/
   archive/
     ARCHITECTURE-REVIEW.md
