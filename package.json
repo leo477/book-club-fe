@@ -13,7 +13,7 @@
     "extract-i18n:clean": "node scripts/extract-i18n.mjs --clean",
     "lint": "ng lint",
     "build-ctx": "npx repomix --no-files",
-    "prepare": "husky",
+    "prepare": "husky || true",
     "mock": "node mock-server/index.js",
     "dev": "concurrently --names \"ng,mock\" -c \"cyan,green\" \"npm start\" \"npm run mock\"",
     "audit:full": "npx playwright test --config=playwright.full-audit.config.ts",
