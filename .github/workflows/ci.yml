@@ -266,14 +266,43 @@ jobs:
           sarif_file: sonar.sarif
           category: sonarcloud
 
+  changes:
+    name: Detect legacy-relevant changes
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    permissions:
+      contents: read
+    outputs:
+      legacy: ${{ steps.diff.outputs.legacy }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+        with:
+          fetch-depth: 0
+      # apps/web-only pushes are deployed by web.yml; the Angular deploy is skipped for them.
+      # Anything else (including packages/**) still deploys. Unknown base commit => deploy.
+      - name: Diff against previous head
+        id: diff
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          if ! git cat-file -e "$BEFORE^{commit}" 2>/dev/null; then
+            echo "legacy=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          if git diff --name-only "$BEFORE" "$GITHUB_SHA" | grep -qvE '^(apps/web/|\.github/workflows/web\.yml$)'; then
+            echo "legacy=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "legacy=false" >> "$GITHUB_OUTPUT"
+          fi
+
   deploy:
     name: Deploy to Vercel
     runs-on: ubuntu-latest
-    needs: [lint, test, build, typecheck]
+    needs: [lint, test, build, typecheck, changes]
     # Deploy gates only on the checks that must pass to ship (lint/test/build/typecheck).
     # SonarCloud and the npm audit scan are advisory — a dead token or a new upstream
     # advisory in security must never block a release on their own.
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && needs.changes.outputs.legacy == 'true'
     permissions:
       contents: read
       deployments: write

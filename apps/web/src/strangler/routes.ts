@@ -26,4 +26,4 @@ export function matchRoute(pathname: string, routes: readonly StranglerRoute[] =
   return routes.find((route) => route.regex.test(pathname)) ?? null;
 }
 
-export const manifest: readonly StranglerRoute[] = defineRoutes(['/__strangler-probe']);
+export const manifest: readonly StranglerRoute[] = defineRoutes(['/__strangler-probe', '/privacy', '/terms']);
