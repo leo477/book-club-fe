@@ -60,6 +60,8 @@ The content is organized as follows:
   pre-commit
 apps/
   web/
+    scripts/
+      check-first-load.mjs
     src/
       app/
         (public)/
@@ -69,42 +71,121 @@ apps/
           terms/
             page.test.tsx
             page.tsx
+        (shell)/
+          clubs/
+            page.test.tsx
+            page.tsx
+          layout.tsx
         %5F%5Fstrangler-probe/
           page.tsx
+        %5F%5Fui/
+          page.tsx
+          toast-buttons.tsx
+        fonts/
+          cinzel-latin.woff2
+          inter-cyrillic.woff2
+          inter-latin.woff2
+          OFL-Cinzel.txt
+          OFL-Inter.txt
+          OFL-PlayfairDisplay.txt
+          playfair-cyrillic.woff2
+          playfair-latin.woff2
         strangler.json/
           route.ts
+        error.test.tsx
+        error.tsx
+        fonts.ts
+        global-error.tsx
         layout.tsx
+        robots.test.ts
+        robots.ts
+        sitemap.test.ts
+        sitemap.ts
       components/
+        layout/
+          chat-link.tsx
+          error-toasts.test.tsx
+          error-toasts.tsx
+          footer.tsx
+          header.test.tsx
+          header.tsx
+          locale-switch.tsx
+          mobile-nav-sheet.tsx
+          mobile-nav.tsx
+          nav-links.tsx
+          theme-switch.tsx
+          user-avatar.tsx
+          user-menu-impl.tsx
+          user-menu.tsx
         ui/
           badge.tsx
           button.tsx
           card.tsx
+          dropdown-menu.tsx
+          field.test.tsx
+          field.tsx
           input.tsx
           label.tsx
           separator.tsx
           sheet.tsx
           skeleton.tsx
           sonner.tsx
+          spinner.test.tsx
+          spinner.tsx
           tabs.tsx
+        analytics-events.tsx
         app-link.test.tsx
         app-link.tsx
+        empty-state.tsx
+        error-panel.tsx
+        lazy-boundary.test.tsx
+        lazy-boundary.tsx
+        toaster-host.test.tsx
+        toaster-host.tsx
+        toaster-impl.tsx
+      features/
+        clubs/
+          club-card.test.tsx
+          club-card.tsx
+          club-tabs.tsx
+          clubs-list-client.test.tsx
+          clubs-list-client.tsx
+          session-timeout.test.tsx
+          use-clubs.ts
+          use-session.ts
       i18n/
         locale.test.ts
         locale.ts
         request.ts
       lib/
+        analytics.test.ts
+        analytics.ts
         api.ts
+        backend-origin.test.ts
+        backend-origin.ts
+        cookie.ts
+        json-ld.test.tsx
+        json-ld.tsx
+        navigate.test.ts
+        navigate.ts
         page-metadata.test.ts
         page-metadata.ts
+        server-api.test.ts
+        server-api.ts
         session-hint.test.ts
         session-hint.ts
+        site.test.ts
+        site.ts
+        toast.ts
         utils.ts
+        zod-locales-stub.ts
       providers/
         providers.tsx
       strangler/
         config.test.ts
         config.ts
         context.tsx
+        csp.test.ts
         csp.ts
         edge-config.ts
         manifest-coverage.test.ts
@@ -114,6 +195,8 @@ apps/
         routes.ts
         server.test.ts
         server.ts
+      test/
+        harness.tsx
       proxy.ts
     .gitignore
     components.json
@@ -121,6 +204,7 @@ apps/
     next.config.ts
     package.json
     postcss.config.mjs
+    THIRD_PARTY_NOTICES.md
     tsconfig.json
     vercel.json
     vitest.config.ts
@@ -138,8 +222,11 @@ docs/
     REFACTOR-PLAN-2026-07-06.md
   migration/
     BASELINE-2026-10.md
+    CANARY-METRICS.md
     cleanup-pw-audit.sql
+    PARITY-R5.md
     RUNBOOK-STRANGLER.md
+    UI-DELTAS.md
 e2e/
   fixtures/
     api-client.ts
@@ -151,6 +238,7 @@ e2e/
       guest-auth-pages.json
       guest-browse.json
       member-browse.json
+    bypass.ts
     expectations.ts
     har-diff.ts
     html-meta.ts

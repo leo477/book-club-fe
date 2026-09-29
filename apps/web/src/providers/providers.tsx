@@ -2,7 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
-import { Toaster } from '@/components/ui/sonner';
+import { ToasterHost } from '@/components/toaster-host';
 import { StranglerProvider } from '@/strangler/context';
 
 export function Providers({
@@ -20,7 +20,7 @@ export function Providers({
   return (
     <QueryClientProvider client={queryClient}>
       <StranglerProvider value={enabledRoutes}>{children}</StranglerProvider>
-      <Toaster theme={theme} />
+      <ToasterHost theme={theme} />
     </QueryClientProvider>
   );
 }

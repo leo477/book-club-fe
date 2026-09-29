@@ -1,4 +1,6 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './bypass';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { extractSeo, jsonLdProblems, jsonLdTypes, type SeoSnapshot } from './html-meta';
 import { expectations } from './expectations';
 import { assertBaselineWritable } from './snapshot-guard';
@@ -27,14 +29,17 @@ function summarise(seo: SeoSnapshot, origins: string[]): string {
   return text;
 }
 
-function assertTarget(project: string, route: string, seo: SeoSnapshot, origin: string): void {
+// canonical/og:url are the production origin (SEO.site_url), never the deployment under test
+const SITE = (JSON.parse(readFileSync(path.join(process.cwd(), 'public', 'i18n', 'en.json'), 'utf-8')) as { SEO: { site_url: string } }).SEO.site_url;
+
+function assertTarget(project: string, route: string, seo: SeoSnapshot): void {
   const expected = expectations[project]?.[route];
   if (!expected) return;
   expect(seo.title).toMatch(expected.title);
   expect(seo.description).toMatch(expected.description);
   expect(seo.ogTitle).toMatch(expected.title);
-  expect(seo.canonical).toBe(new URL(route, origin).href);
-  expect(seo.ogUrl).toBe(new URL(route, origin).href);
+  expect(seo.canonical).toBe(new URL(route, SITE).href);
+  expect(seo.ogUrl).toBe(new URL(route, SITE).href);
   expect(jsonLdTypes(seo.jsonLd)).toEqual(expect.arrayContaining(expected.jsonLd));
 }
 
@@ -54,7 +59,7 @@ for (const route of rawRoutes) {
       const project = testInfo.project.name;
       if (expectations[project]) {
         assertComplete(seo);
-        assertTarget(project, route, seo, new URL(baseURL!).origin);
+        assertTarget(project, route, seo);
       } else {
         expect(summarise(seo, [new URL(baseURL!).origin])).toMatchSnapshot(`raw-${slug(route)}.json`);
       }
@@ -71,7 +76,7 @@ for (const route of publicRoutes) {
       const seo = extractSeo(await page.content());
       assertComplete(seo);
       const origin = new URL(baseURL!).origin;
-      assertTarget(testInfo.project.name, route, seo, origin);
+      assertTarget(testInfo.project.name, route, seo);
       expect(summarise(seo, [origin, new URL(page.url()).origin])).toMatchSnapshot(`rendered-${slug(route)}.json`);
     });
   });

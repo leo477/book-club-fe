@@ -7,6 +7,7 @@ import {
   RequestTimeoutError,
   bearerTransport,
   cookieTransport,
+  createApi,
   createApiClient,
   type ApiClientConfig,
 } from '../src';
@@ -280,6 +281,21 @@ describe('flags', () => {
     await expect(client.post('/auth/login', ok, {}, { skipAuthRedirect: true })).rejects.toMatchObject({ status: 401, detail: 'Invalid credentials' });
     expect(onUnauthenticated).not.toHaveBeenCalled();
     expect(count('/auth/refresh')).toBe(0);
+  });
+
+  it('auth.me({ skipAuthRedirect }) on 401 neither refreshes nor signs out, and without the flag it does', async () => {
+    server.use(
+      http.get(`${BASE}/auth/me`, () => HttpResponse.json({ detail: 'no' }, { status: 401 })),
+      http.post(`${BASE}/auth/refresh`, () => HttpResponse.json({}, { status: 401 })),
+    );
+    const skip = makeClient();
+    await expect(createApi(skip.client).auth.me({ skipAuthRedirect: true })).rejects.toMatchObject({ status: 401 });
+    expect(skip.onUnauthenticated).not.toHaveBeenCalled();
+    expect(count('/auth/refresh')).toBe(0);
+
+    const plain = makeClient();
+    await expect(createApi(plain.client).auth.me()).rejects.toMatchObject({ status: 401 });
+    expect(count('/auth/refresh')).toBe(1);
   });
 
   it('skipAuthRedirect suppresses onForbidden; without it 403 is reported', async () => {

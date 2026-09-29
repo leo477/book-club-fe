@@ -26,7 +26,7 @@ const isLegacy = (res: Response) => res.headers.get('x-middleware-rewrite') === 
 
 describe('handleProxy decision table', () => {
   it('passes non-manifest paths through untouched, without cookie or CSP', async () => {
-    const res = await run('/clubs', () => Promise.reject(new Error('must not be read')));
+    const res = await run('/events', () => Promise.reject(new Error('must not be read')));
     expect(res.headers.get('x-middleware-next')).toBe('1');
     expect(res.headers.get('content-security-policy')).toBeNull();
     expect(res.cookies.get('bc_bucket')).toBeUndefined();
@@ -127,7 +127,7 @@ describe('handleProxy hardening', () => {
 
   it.each([
     ['legacy rewrite', probe, off],
-    ['non-manifest path', '/clubs', off],
+    ['non-manifest path', '/events', off],
   ])('strips a client-supplied bucket header on %s', async (_n, path, cfg) => {
     const res = await run(path, cfg, 'bc_bucket=0', { headers: { 'x-bc-bucket': '99' } });
     expect(res.headers.get('x-middleware-request-x-bc-bucket')).toBeNull();
@@ -137,5 +137,29 @@ describe('handleProxy hardening', () => {
   it('marks next responses as private, no-store', async () => {
     const res = await run(probe, on, 'bc_bucket=0');
     expect(res.headers.get('cache-control')).toBe('private, no-store');
+  });
+});
+
+describe('handleProxy CSP on the shell routes', () => {
+  const routes = (flag: unknown) => parseConfig({ version: 1, enabled: true, routes: { '/clubs': flag, '/privacy': flag } });
+
+  it.each(['/clubs', '/clubs/', '/privacy'])('applies the nonce CSP and report-only Trusted Types to Next-owned %s', async (path) => {
+    const res = await run(path, async () => routes({ target: 'next', percent: 100 }), 'bc_bucket=1');
+    const csp = res.headers.get('content-security-policy')!;
+    const nonce = csp.match(/'nonce-([^']+)'/)![1];
+    expect(csp).toContain("style-src 'self' 'unsafe-inline'");
+    expect(csp).not.toContain('require-trusted-types-for');
+    expect(res.headers.get('content-security-policy-report-only')).toContain("require-trusted-types-for 'script'");
+    expect(res.headers.get('x-middleware-request-x-nonce')).toBe(nonce);
+    expect(res.headers.get('x-middleware-request-content-security-policy')).toBe(csp);
+  });
+
+  it('leaves legacy-owned responses untouched: no CSP of ours on the rewrite or the forwarded request', async () => {
+    const res = await run('/clubs', async () => routes({ target: 'legacy', percent: 100 }), 'bc_bucket=1');
+    expect(res.headers.get('x-middleware-rewrite')).toBe(`${LEGACY}/clubs`);
+    expect(res.headers.get('content-security-policy')).toBeNull();
+    expect(res.headers.get('content-security-policy-report-only')).toBeNull();
+    expect(res.headers.get('x-middleware-request-content-security-policy')).toBeNull();
+    expect(res.headers.get('x-middleware-request-x-nonce')).toBeNull();
   });
 });

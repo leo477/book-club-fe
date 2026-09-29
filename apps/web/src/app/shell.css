@@ -1,0 +1,96 @@
+/* Angular app-shell utilities from src/styles.css (same class names) used by the shell and /clubs. */
+@utility parchment-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-sepia);
+  border-radius: var(--bento-radius);
+  box-shadow: var(--shadow-parchment);
+  transition: box-shadow 0.2s;
+}
+
+@utility parchment-hero {
+  position: relative;
+  overflow: hidden;
+  background: var(--color-surface);
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(181, 114, 10, 0.28) 0%, rgba(26, 92, 58, 0.18) 100%);
+    pointer-events: none;
+    z-index: 0;
+  }
+}
+
+@utility glass-card-subtle {
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-sepia-mid);
+  border-radius: var(--bento-radius);
+  box-shadow: var(--shadow-parchment-inset);
+}
+
+@utility parchment-input {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-sepia);
+  border-radius: 0.625rem;
+  color: var(--color-ink);
+  box-shadow: 0 1px 4px rgba(92, 45, 10, 0.12);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  &:focus {
+    border-color: var(--color-primary-500);
+    box-shadow: 0 0 0 4px rgba(181, 114, 10, 0.32);
+    outline: none;
+  }
+  &::placeholder {
+    color: var(--color-ink-muted);
+    opacity: 0.6;
+  }
+}
+
+@utility avatar-gradient {
+  background: linear-gradient(135deg, #fbbf24 0%, #1a5c3a 100%);
+}
+
+@utility page-container {
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 3vw, 2rem);
+}
+
+@utility page-max-w {
+  max-width: var(--page-max);
+  margin-inline: auto;
+}
+
+@utility fab-fantasy {
+  background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-700) 100%);
+  box-shadow: 0 4px 16px rgba(181, 114, 10, 0.35);
+  transition: transform 0.2s, box-shadow 0.2s;
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 24px rgba(181, 114, 10, 0.5);
+  }
+}
+
+@utility bg-gradient-fantasy {
+  background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-700) 45%, var(--color-accent-600) 100%);
+}
+
+.shell-root {
+  min-height: 100vh;
+  color: var(--color-ink);
+  background-color: var(--color-bg);
+  background-attachment: fixed;
+  background-image:
+    radial-gradient(ellipse at 20% 30%, rgba(181, 114, 10, 0.05) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 70%, rgba(26, 92, 58, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(139, 90, 43, 0.03) 0%, transparent 80%),
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(139, 90, 43, 0.015) 2px, rgba(139, 90, 43, 0.015) 4px);
+}
+
+.dark .shell-root {
+  background-image:
+    radial-gradient(ellipse at 20% 30%, rgba(212, 144, 10, 0.06) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 70%, rgba(45, 122, 80, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(180, 130, 60, 0.03) 0%, transparent 80%),
+    repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(180, 130, 60, 0.02) 2px, rgba(180, 130, 60, 0.02) 4px);
+}

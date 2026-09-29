@@ -1,1 +1,11 @@
-{ "ignore": [] }
+{
+  "ignore": [
+    { "signature": "GET self /api/v1/clubs? body=-", "reason": "Next renders the public club list server-side (GET /clubs from the server, not the browser); legacy fetches it client-side (PARITY-R5 signed-in journey: legacy 1, next 0)", "legacy": 1, "next": 0 },
+    { "signature": "GET self /api/v1/clubs/my? body=-", "reason": "Legacy requests it twice (shell + clubs page); Next requests it once via a shared query cache (fewer calls, not a gap). PARITY-R5 count for the /clubs visit: legacy 2, next 1; /events and /profile are legacy-served on both sides", "legacy": 2, "next": 1 },
+    { "signature": "POST self /api/v1/auth/refresh? body=-", "reason": "TODO unmeasured — run the seeded journey. Legacy-only: Angular boots by refreshing the token; Next resolves the session via session-status and /auth/me" },
+    { "signature": "GET self /api/v1/users/me/stats? body=-", "reason": "TODO unmeasured — run the seeded journey. Legacy-only: the Angular shell prefetches profile stats on login; Next /clubs does not show stats" },
+    { "signature": "GET self /api/v1/config/maps-key? body=-", "reason": "TODO unmeasured — run the seeded journey. Angular shell requests the Maps key on every route (N-1); Next /clubs does not" },
+    { "signature": "GET maps.googleapis.com /maps/api/js?callback,key,libraries,v body=-", "reason": "TODO unmeasured — run the seeded journey. Legacy-only global Maps bootstrap (see maps-key)" },
+    { "signature": "GET maps.googleapis.com /maps/api/mapsjs/gen_204?csp_test body=-", "reason": "TODO unmeasured — run the seeded journey. Legacy-only Maps CSP probe (see maps-key)" }
+  ]
+}

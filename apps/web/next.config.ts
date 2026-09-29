@@ -1,7 +1,8 @@
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
+import { backendOrigin } from './src/lib/backend-origin';
 
-const BACKEND_ORIGIN = 'https://book-club-be.onrender.com';
+const BACKEND_ORIGIN = backendOrigin();
 
 function legacyOrigin(): string | null {
   const raw = process.env['LEGACY_ORIGIN'];
@@ -31,6 +32,7 @@ const SECURITY_HEADERS = [
 const nextConfig: NextConfig = {
   reactCompiler: true,
   poweredByHeader: false,
+  turbopack: { resolveAlias: { '../locales/index.js': './src/lib/zod-locales-stub.ts' } },
   transpilePackages: ['@book-club/api-client', '@book-club/contracts', '@book-club/i18n'],
   async headers() {
     return [

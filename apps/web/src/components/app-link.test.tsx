@@ -5,7 +5,7 @@ import { StranglerProvider } from '@/strangler/context';
 import { AppLink } from './app-link';
 
 vi.mock('next/link', () => ({
-  default: (props: ComponentProps<'a'>) => <a data-next-link="" {...props} />,
+  default: ({ prefetch, ...props }: ComponentProps<'a'> & { prefetch?: boolean }) => <a data-next-link="" data-prefetch={String(prefetch)} {...props} />,
 }));
 
 const PROBE = '/__strangler-probe';
@@ -21,6 +21,7 @@ describe('AppLink', () => {
     renderLink(`${PROBE}?a=1#x`, [PROBE]);
     const link = screen.getByRole('link', { name: 'go' });
     expect(link).toHaveAttribute('data-next-link');
+    expect(link).toHaveAttribute('data-prefetch', 'false');
     expect(link).toHaveAttribute('href', `${PROBE}?a=1#x`);
   });
 
