@@ -5,9 +5,11 @@ import { NextIntlClientProvider } from 'next-intl';
 import { getLocale } from 'next-intl/server';
 import { cookies, headers } from 'next/headers';
 import type { ReactNode } from 'react';
+import { cn } from '@/lib/utils';
 import { Providers } from '@/providers/providers';
 import { parseTheme, THEME_COOKIE } from '@/i18n/locale';
 import { readState, requestBucket } from '@/strangler/server';
+import { fontVariables } from './fonts';
 import './globals.css';
 
 export const metadata: Metadata = { title: 'Book Club', robots: { index: false } };
@@ -22,7 +24,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const enabledRoutes = state.routes.filter((r) => r.enabled).map((r) => r.pattern);
 
   return (
-    <html lang={locale} className={theme === 'dark' ? 'dark' : undefined} suppressHydrationWarning>
+    <html lang={locale} className={cn(fontVariables, theme === 'dark' && 'dark')} suppressHydrationWarning>
       <head>
         {theme === 'system' && <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />}
       </head>

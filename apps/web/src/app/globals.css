@@ -3,6 +3,13 @@
 @import '@book-club/config/tailwind-theme.css';
 @import './shell.css';
 
+/* next/font families (self-hosted) first; the shared theme's plain names remain as fallbacks */
+@theme {
+  --font-sans: var(--font-inter), Inter, system-ui, 'Apple Color Emoji', 'Noto Color Emoji', 'Segoe UI Emoji', sans-serif;
+  --font-display: var(--font-playfair), 'Playfair Display', Georgia, serif;
+  --font-fantasy: var(--font-cinzel), Cinzel, serif;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {

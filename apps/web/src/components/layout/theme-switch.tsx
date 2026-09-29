@@ -4,7 +4,7 @@ import { MoonIcon, SunIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useSyncExternalStore } from 'react';
 import { Button } from '@/components/ui/button';
-import { writeCookie } from '@/lib/cookie';
+import { persistPreference } from '@/lib/cookie';
 
 const root = () => document.documentElement;
 
@@ -20,18 +20,20 @@ export function useTheme(initialDark: boolean) {
   const toggle = () => {
     const next = isDark ? 'light' : 'dark';
     root().classList.toggle('dark', next === 'dark');
-    localStorage.setItem('theme', next);
-    writeCookie('theme', next);
+    persistPreference('theme', next);
   };
   return { isDark, toggle };
 }
 
-export function ThemeSwitch({ isDark, toggle }: { isDark: boolean; toggle: () => void }) {
+/** Icon and accessible name follow the `dark` class through CSS only, so a system-theme page never flips them after hydration. */
+export function ThemeSwitch({ toggle }: { toggle: () => void }) {
   const t = useTranslations('NAV');
-  const label = isDark ? t('theme_toggle_light') : t('theme_toggle_dark');
   return (
-    <Button variant="ghost" size="icon" type="button" data-testid="theme-toggle" onClick={toggle} aria-pressed={isDark} aria-label={label} title={label}>
-      {isDark ? <SunIcon /> : <MoonIcon />}
+    <Button variant="ghost" size="icon" type="button" data-testid="theme-toggle" onClick={toggle}>
+      <MoonIcon className="dark:hidden" aria-hidden="true" />
+      <SunIcon className="hidden dark:block" aria-hidden="true" />
+      <span className="sr-only dark:hidden">{t('theme_toggle_dark')}</span>
+      <span className="sr-only hidden dark:inline">{t('theme_toggle_light')}</span>
     </Button>
   );
 }

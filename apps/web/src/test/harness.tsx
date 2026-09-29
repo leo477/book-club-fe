@@ -35,13 +35,16 @@ export function setupApiServer() {
 
 export function renderWithProviders(ui: ReactElement, locale: 'uk' | 'en' = 'uk') {
   const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 60_000, retry: false } } });
-  return render(
+  return {
+    queryClient,
+    ...render(
     <QueryClientProvider client={queryClient}>
       <NextIntlClientProvider locale={locale} messages={nest(messages[locale])}>
         {ui}
       </NextIntlClientProvider>
     </QueryClientProvider>,
-  );
+    ),
+  };
 }
 
 export const userJson = (overrides: Record<string, unknown> = {}) => ({

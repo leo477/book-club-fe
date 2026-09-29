@@ -1,39 +1,45 @@
 'use client';
 
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useMutationState, useQueryClient } from '@tanstack/react-query';
 import type { Club } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { AppLink } from '@/components/app-link';
 import { EmptyState } from '@/components/empty-state';
 import { Spinner } from '@/components/ui/spinner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/lib/api';
-import { cn } from '@/lib/utils';
 import { ClubCard } from './club-card';
-import { filterClubs, useMyClubs, usePublicClubs } from './use-clubs';
+import type { Tab } from './club-tabs';
+import { filterClubs, myClubsKey, useMyClubs, usePublicClubs } from './use-clubs';
 import { useSession } from './use-session';
 
-type Tab = 'all' | 'my';
-
 const GRID = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6';
-const TAB_CLASS =
-  'relative z-10 flex-none rounded-full px-7 py-2 h-auto text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] data-[state=active]:bg-[var(--color-surface-raised)] data-[state=active]:shadow-[var(--shadow-parchment)] data-[state=active]:font-semibold data-[state=active]:text-[var(--color-primary-700)] dark:data-[state=active]:text-[#fbbf24] dark:data-[state=active]:bg-[var(--color-surface-raised)] dark:data-[state=active]:border-transparent';
+// same height as the rendered tablist (p-1 + border + py-2 triggers) so the grid does not jump when the tabs arrive
+const TABLIST_PLACEHOLDER = <div className="h-12" aria-hidden="true" data-testid="tablist-placeholder" />;
+
+// Radix Tabs is only needed by signed-in users, so its chunk is fetched after the session resolves
+const ClubTabs = lazy(() => import('./club-tabs'));
+const JOIN_KEY = ['clubs', 'join'] as const;
 
 export function ClubsListClient({ initialClubs }: { initialClubs: readonly Club[] | null }) {
   const t = useTranslations('CLUBS');
-  const { user } = useSession();
+  const queryClient = useQueryClient();
+  const { user, isPending: sessionPending } = useSession();
   const isAuthenticated = user !== null;
   const publicClubs = usePublicClubs(initialClubs);
   const myClubsQuery = useMyClubs(isAuthenticated);
   const [query, setQuery] = useState('');
   const [tab, setTab] = useState<Tab>('all');
-  const [joiningId, setJoiningId] = useState<string | null>(null);
 
   const join = useMutation({
+    mutationKey: JOIN_KEY,
     mutationFn: (id: string) => api.clubs.join(id),
-    onSettled: () => setJoiningId(null),
+    // a pending request or a direct join changes what /clubs/my returns
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: myClubsKey }),
   });
+
+  // one observer only tracks the latest mutate(), so concurrent joins are read from the mutation cache
+  const joiningIds = useMutationState({ filters: { mutationKey: JOIN_KEY, status: 'pending' }, select: (m) => m.state.variables as string });
 
   const clubs = publicClubs.data ?? [];
   const myClubs = myClubsQuery.data ?? [];
@@ -44,22 +50,19 @@ export function ClubsListClient({ initialClubs }: { initialClubs: readonly Club[
   const isLoading = publicClubs.isLoading;
   const error = publicClubs.isError ? t('load_error') : myClubsQuery.isError ? t('load_my_error') : null;
 
-  const onJoin = (club: Club) => {
-    setJoiningId(club.id);
-    join.mutate(club.id);
-  };
-
   const renderList = (list: readonly Club[]) => (
     <ul className={GRID}>
-      {list.map((club) => (
+      {list.map((club, index) => (
         <li key={club.id} data-testid="club-card">
           <ClubCard
             club={club}
             isMember={isAuthenticated && myIds.has(club.id)}
             isOwned={isAuthenticated && ownedIds.has(club.id)}
             isAuthenticated={isAuthenticated}
-            joining={joiningId === club.id}
-            onJoin={() => onJoin(club)}
+            sessionPending={sessionPending}
+            priority={index < 4}
+            joining={joiningIds.includes(club.id)}
+            onJoin={() => join.mutate(club.id)}
           />
         </li>
       ))}
@@ -117,46 +120,38 @@ export function ClubsListClient({ initialClubs }: { initialClubs: readonly Club[
           </div>
         )}
 
-        {isAuthenticated ? (
-          <Tabs value={tab} onValueChange={(value) => setTab(value as Tab)} className="gap-0">
-            <div className="flex justify-center">
-              <TabsList
-                aria-label="Club filter"
-                className="h-auto rounded-full p-1 bg-[var(--color-surface-sunken)] border border-[var(--color-sepia)] shadow-inner"
-              >
-                <TabsTrigger value="all" className={TAB_CLASS}>
-                  {t('all')}
-                </TabsTrigger>
-                <TabsTrigger value="my" className={cn(TAB_CLASS, 'gap-1.5')}>
-                  {t('my_clubs')}
-                  {myClubs.length > 0 && (
-                    <span
-                      className={cn(
-                        'inline-flex items-center justify-center h-4 min-w-[1rem] px-1 rounded-full text-[10px] font-bold leading-none',
-                        tab === 'my'
-                          ? 'bg-[var(--color-primary-600)] text-white'
-                          : 'bg-[var(--color-ink-muted)]/20 text-[var(--color-ink-muted)]',
-                      )}
-                    >
-                      {myClubs.length}
-                    </span>
-                  )}
-                </TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent value="all" className="pt-6 text-base">
-              {allPanel}
-            </TabsContent>
-            <TabsContent value="my" className="pt-6 text-base">
-              {isLoading ? (
+        {sessionPending ? (
+          <>
+            {TABLIST_PLACEHOLDER}
+            <div className="pt-6">{allPanel}</div>
+          </>
+        ) : isAuthenticated ? (
+          <Suspense
+            fallback={
+              <>
+                {TABLIST_PLACEHOLDER}
+                <div className="pt-6">{allPanel}</div>
+              </>
+            }
+          >
+          <ClubTabs
+            tab={tab}
+            onTabChange={setTab}
+            allLabel={t('all')}
+            myLabel={t('my_clubs')}
+            myCount={myClubs.length}
+            all={allPanel}
+            my={
+              isLoading ? (
                 spinner
               ) : myClubs.length === 0 ? (
                 <EmptyState icon="📚" title={t('no_clubs')} description={t('my_clubs_empty_desc')} />
               ) : (
                 renderList(myClubs)
-              )}
-            </TabsContent>
-          </Tabs>
+              )
+            }
+          />
+          </Suspense>
         ) : (
           allPanel
         )}

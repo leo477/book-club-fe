@@ -1,14 +1,17 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { sessionKey } from '@/features/clubs/use-session';
+import { setErrorTranslator } from '@/lib/api';
 import { API, messages, renderWithProviders, server, userJson, setupApiServer } from '@/test/harness';
 import { ChatLink } from './chat-link';
 import { Header } from './header';
 
-const nav = vi.hoisted(() => ({ pathname: '/clubs', refresh: vi.fn(), hardNavigate: vi.fn() }));
+const nav = vi.hoisted(() => ({ pathname: '/clubs', refresh: vi.fn(), hardNavigate: vi.fn(), toasts: [] as [string, string][] }));
 vi.mock('next/navigation', () => ({ usePathname: () => nav.pathname, useRouter: () => ({ refresh: nav.refresh }) }));
 vi.mock('@/lib/navigate', () => ({ hardNavigate: nav.hardNavigate }));
+vi.mock('@/lib/toast', () => ({ showToast: (kind: string, message: string) => nav.toasts.push([kind, message]) }));
 
 setupApiServer();
 
@@ -21,10 +24,16 @@ function mockSession(authenticated: boolean) {
   );
 }
 
+afterEach(() => {
+  setErrorTranslator((key) => key);
+  vi.restoreAllMocks();
+});
+
 beforeEach(() => {
   nav.pathname = '/clubs';
   nav.refresh.mockClear();
-  nav.hardNavigate.mockClear();
+  nav.hardNavigate.mockReset();
+  nav.toasts.length = 0;
   document.documentElement.classList.remove('dark');
   document.cookie = 'theme=; max-age=0; path=/';
   document.cookie = 'lang=; max-age=0; path=/';
@@ -53,7 +62,7 @@ describe('Header', () => {
     expect(within(screen.getByRole('navigation', { name: 'Main navigation' })).getByTestId('nav-clubs')).not.toHaveAttribute('aria-current');
   });
 
-  it('opens the user menu from the keyboard, closes on Escape and returns focus', async () => {
+  it('opens the user menu with the arrow key, moves focus between items, closes on Escape and returns focus', async () => {
     mockSession(true);
     const u = userEvent.setup();
     renderWithProviders(<Header initialDark={false} />);
@@ -61,54 +70,112 @@ describe('Header', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'false');
 
     trigger.focus();
-    await u.keyboard('{Enter}');
+    await u.keyboard('{ArrowDown}');
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
-    const menu = screen.getByRole('menu');
-    expect(within(menu).getByRole('menuitem', { name: t('NAV.chats') })).toHaveAttribute('href', '/chats');
+    const menu = await screen.findByRole('menu');
+    const chats = within(menu).getByRole('menuitem', { name: t('NAV.chats') });
+    expect(chats).toHaveAttribute('href', '/chats');
     expect(within(menu).getByRole('menuitem', { name: t('NAV.profile') })).toHaveAttribute('href', '/profile');
+    await waitFor(() => expect(chats).toHaveFocus());
 
-    await u.tab();
-    expect(within(menu).getByRole('menuitem', { name: t('NAV.chats') })).toHaveFocus();
+    await u.keyboard('{ArrowDown}');
+    expect(within(menu).getByRole('menuitem', { name: t('NAV.profile') })).toHaveFocus();
+    await u.keyboard('{ArrowDown}');
+    expect(within(menu).getByRole('menuitem', { name: t('NAV.logout') })).toHaveFocus();
+
     await u.keyboard('{Escape}');
-    expect(screen.queryByRole('menu')).toBeNull();
+    await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
     expect(trigger).toHaveFocus();
   });
 
-  it('logs out with POST /auth/logout and then hard-navigates to /login, even when the request fails', async () => {
+  it('closes the user menu on an outside click', async () => {
+    mockSession(true);
+    const u = userEvent.setup({ pointerEventsCheck: 0 }) // Radix disables body pointer events while a modal menu is open;
+    renderWithProviders(<Header initialDark={false} />);
+    await u.click(await screen.findByRole('button', { name: /User menu/ }));
+    expect(await screen.findByRole('menu')).toBeInTheDocument();
+    await u.click(document.body);
+    await waitFor(() => expect(screen.queryByRole('menu')).toBeNull());
+  });
+
+  it('logs out with POST /auth/logout, clears the session hint and cache, then hard-navigates to /login', async () => {
     mockSession(true);
     const posted: string[] = [];
     server.use(
       http.post(`${API}/auth/logout`, () => {
         posted.push('logout');
-        return HttpResponse.json({}, { status: 500 });
+        return new HttpResponse(null, { status: 204 });
       }),
     );
     const u = userEvent.setup();
-    renderWithProviders(<Header initialDark={false} />);
+    const { queryClient } = renderWithProviders(<Header initialDark={false} />);
+    let cachedAtNavigation: unknown = 'not navigated';
+    nav.hardNavigate.mockImplementation(() => {
+      cachedAtNavigation = queryClient.getQueryData(sessionKey);
+    });
     await u.click(await screen.findByRole('button', { name: /User menu/ }));
-    await u.click(screen.getByRole('menuitem', { name: t('NAV.logout') }));
+    expect(queryClient.getQueryData(sessionKey)).toMatchObject({ id: 'u1' });
+    await u.click(await screen.findByRole('menuitem', { name: t('NAV.logout') }));
     await waitFor(() => expect(nav.hardNavigate).toHaveBeenCalledWith('/login'));
     expect(posted).toEqual(['logout']);
+    expect(cachedAtNavigation).toBeUndefined();
   });
 
-  it('toggles the theme through the html class, localStorage and the theme cookie', async () => {
+  it('does not pretend to be logged out when POST /auth/logout fails: toast, no navigation', async () => {
+    mockSession(true);
+    server.use(http.post(`${API}/auth/logout`, () => HttpResponse.json({ detail: 'nope' }, { status: 400 })));
+    const u = userEvent.setup();
+    renderWithProviders(<Header initialDark={false} />);
+    await u.click(await screen.findByRole('button', { name: /User menu/ }));
+    await u.click(await screen.findByRole('menuitem', { name: t('NAV.logout') }));
+    await waitFor(() => expect(nav.toasts).toContainEqual(['error', t('ERRORS.requestFailed')]));
+    expect(nav.hardNavigate).not.toHaveBeenCalled();
+  });
+
+  it('shows the server-error toast once and stays put when logout returns 5xx', async () => {
+    mockSession(true);
+    server.use(http.post(`${API}/auth/logout`, () => HttpResponse.json({}, { status: 500 })));
+    setErrorTranslator((key) => t(key));
+    const u = userEvent.setup();
+    renderWithProviders(<Header initialDark={false} />);
+    await u.click(await screen.findByRole('button', { name: /User menu/ }));
+    await u.click(await screen.findByRole('menuitem', { name: t('NAV.logout') }));
+    await waitFor(() => expect(nav.toasts).toEqual([['error', t('ERRORS.serverError')]]));
+    expect(nav.hardNavigate).not.toHaveBeenCalled();
+  });
+
+  it('toggles the theme through the html class, the theme cookie and localStorage, with CSS-driven icons and name', async () => {
     mockSession(false);
     const u = userEvent.setup();
     renderWithProviders(<Header initialDark={false} />);
     const [toggle] = screen.getAllByTestId('theme-toggle');
-    expect(toggle).toHaveAttribute('aria-label', t('NAV.theme_toggle_dark'));
-    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+    expect(toggle).toHaveTextContent(t('NAV.theme_toggle_dark'));
+    expect(toggle).toHaveTextContent(t('NAV.theme_toggle_light'));
+    expect(toggle).not.toHaveAttribute('aria-label');
 
     await u.click(toggle!);
     expect(document.documentElement).toHaveClass('dark');
     expect(localStorage.getItem('theme')).toBe('dark');
     expect(document.cookie).toContain('theme=dark');
-    await waitFor(() => expect(screen.getAllByTestId('theme-toggle')[0]).toHaveAttribute('aria-pressed', 'true'));
-    expect(screen.getAllByTestId('theme-toggle')[0]).toHaveAttribute('aria-label', t('NAV.theme_toggle_light'));
 
     await u.click(screen.getAllByTestId('theme-toggle')[0]!);
     expect(document.documentElement).not.toHaveClass('dark');
     expect(document.cookie).toContain('theme=light');
+  });
+
+  it('still applies the theme and language through the cookie when localStorage throws', async () => {
+    mockSession(false);
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('blocked', 'SecurityError');
+    });
+    const u = userEvent.setup();
+    renderWithProviders(<Header initialDark={false} />);
+    await u.click(screen.getAllByTestId('theme-toggle')[0]!);
+    expect(document.documentElement).toHaveClass('dark');
+    expect(document.cookie).toContain('theme=dark');
+    await u.click(screen.getByRole('button', { name: 'Switch to English' }));
+    expect(document.cookie).toContain('lang=en');
+    expect(nav.refresh).toHaveBeenCalledOnce();
   });
 
   it('switches language via cookie and localStorage, then refreshes the router', async () => {

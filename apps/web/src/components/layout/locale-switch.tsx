@@ -3,15 +3,14 @@
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { writeCookie } from '@/lib/cookie';
+import { persistPreference } from '@/lib/cookie';
 
 export function useLocaleSwitch() {
   const locale = useLocale();
   const router = useRouter();
   const switchLocale = () => {
     const next = locale === 'uk' ? 'en' : 'uk';
-    localStorage.setItem('lang', next);
-    writeCookie('lang', next);
+    persistPreference('lang', next);
     router.refresh();
   };
   return { locale, switchLocale };

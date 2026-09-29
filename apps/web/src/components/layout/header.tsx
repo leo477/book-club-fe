@@ -1,11 +1,15 @@
 'use client';
 
+import { useQueryClient } from '@tanstack/react-query';
+import { BackendHttpError, ERROR_KEYS, RequestTimeoutError } from '@book-club/api-client';
 import { useTranslations } from 'next-intl';
 import { AppLink } from '@/components/app-link';
 import { Button } from '@/components/ui/button';
 import { useSession } from '@/features/clubs/use-session';
 import { api } from '@/lib/api';
 import { hardNavigate } from '@/lib/navigate';
+import { resetSessionHint } from '@/lib/session-hint';
+import { showToast } from '@/lib/toast';
 import { LocaleSwitch, useLocaleSwitch } from './locale-switch';
 import { MobileNav } from './mobile-nav';
 import { NavLinks } from './nav-links';
@@ -14,6 +18,8 @@ import { UserMenu } from './user-menu';
 
 export function Header({ initialDark }: { initialDark: boolean }) {
   const t = useTranslations('NAV');
+  const tAll = useTranslations();
+  const queryClient = useQueryClient();
   const { user, isPending } = useSession();
   const { isDark, toggle } = useTheme(initialDark);
   const { locale, switchLocale } = useLocaleSwitch();
@@ -21,9 +27,14 @@ export function Header({ initialDark }: { initialDark: boolean }) {
   const signOut = async () => {
     try {
       await api.auth.logout();
-    } catch {
-      // logout must complete even if the request fails
+    } catch (error) {
+      // 5xx and timeouts were already toasted by the api client; the session is still alive, so do not navigate away
+      const reported = error instanceof RequestTimeoutError || (error instanceof BackendHttpError && error.status >= 500);
+      if (!reported) showToast('error', tAll(error instanceof BackendHttpError ? error.translationKey : ERROR_KEYS.requestFailed));
+      return;
     }
+    resetSessionHint();
+    queryClient.clear();
     hardNavigate('/login');
   };
 
@@ -45,7 +56,7 @@ export function Header({ initialDark }: { initialDark: boolean }) {
           <NavLinks isAuthenticated={user !== null} />
 
           <div className="hidden md:flex items-center gap-1">
-            <ThemeSwitch isDark={isDark} toggle={toggle} />
+            <ThemeSwitch toggle={toggle} />
             <LocaleSwitch locale={locale} switchLocale={switchLocale} />
             {user ? (
               <UserMenu displayName={user.displayName} onSignOut={signOut} />

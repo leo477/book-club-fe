@@ -54,11 +54,12 @@ describe('ClubsListClient as guest', () => {
 
     expect(screen.getAllByTestId('club-card')).toHaveLength(2);
     expect(screen.getByRole('heading', { level: 1, name: t('CLUBS.title') })).toBeInTheDocument();
-    const cta = screen.getAllByTestId('login-to-join');
+    const cta = await screen.findAllByTestId('login-to-join');
     expect(cta).toHaveLength(2);
     expect(cta[0]).toHaveAttribute('href', '/login');
     expect(screen.getAllByRole('link', { name: new RegExp(`${t('CLUBS.view')} Alpha`) })[0]).toHaveAttribute('href', '/clubs/c1');
     expect(screen.queryByRole('tablist')).toBeNull();
+    expect(screen.queryByTestId('tablist-placeholder')).toBeNull();
 
     await waitFor(() => expect(calls).toContain('session-status'));
     expect(calls).not.toContain('me');
@@ -107,6 +108,37 @@ describe('ClubsListClient as guest', () => {
     renderWithProviders(<ClubsListClient initialClubs={null} />);
     expect(await screen.findByRole('alert')).toHaveTextContent(t('CLUBS.load_error'));
     expect(screen.getByTestId('empty-state')).toBeInTheDocument();
+  });
+});
+
+describe('ClubsListClient while the session resolves', () => {
+  it('never shows the guest login CTA to a signed-in user: invisible placeholders, then real actions and tabs', async () => {
+    mockApi({ session: true, me: userJson({ id: 'u9' }) });
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    server.use(
+      http.get(`${API}/auth/session-status`, async () => {
+        await gate;
+        return HttpResponse.json({ hasSession: true });
+      }),
+    );
+    renderWithProviders(<ClubsListClient initialClubs={initial} />);
+
+    expect(screen.getAllByTestId('club-card')).toHaveLength(2);
+    expect(screen.queryByTestId('login-to-join')).toBeNull();
+    expect(screen.queryByRole('button', { name: new RegExp(t('CLUBS.join')) })).toBeNull();
+    const placeholders = screen.getAllByTestId('card-actions-pending');
+    expect(placeholders).toHaveLength(2);
+    expect(placeholders[0]).toHaveAttribute('aria-hidden', 'true');
+    expect(placeholders[0]).toHaveClass('invisible', 'h-8');
+    expect(screen.getByTestId('tablist-placeholder')).toHaveClass('h-12');
+
+    release();
+    expect(await screen.findByRole('tablist', { name: 'Club filter' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: `${t('CLUBS.join')} Alpha Readers` })).toBeEnabled();
+    expect(screen.queryByTestId('login-to-join')).toBeNull();
+    expect(screen.queryByTestId('card-actions-pending')).toBeNull();
+    expect(screen.queryByTestId('tablist-placeholder')).toBeNull();
   });
 });
 
@@ -195,6 +227,38 @@ describe('ClubsListClient joining', () => {
     await waitFor(() => expect(join).toBeEnabled());
     expect(joined).toEqual(['c1']);
     expect(screen.getByRole('button', { name: `${t('CLUBS.join')} Alpha Readers` })).toBeInTheDocument();
+  });
+
+  it('keeps an independent spinner per club for concurrent joins and refetches /clubs/my after each success', async () => {
+    const calls = mockApi({ session: true });
+    const gates: Record<string, () => void> = {};
+    server.use(
+      http.post(`${API}/clubs/:id/join`, async ({ params }) => {
+        await new Promise<void>((resolve) => (gates[String(params['id'])] = resolve));
+        return HttpResponse.json({ status: 'pending' });
+      }),
+    );
+    const u = userEvent.setup();
+    renderWithProviders(<ClubsListClient initialClubs={[alpha, parsedClub({ id: 'c3', name: 'Gamma' })]} />);
+
+    const a = await screen.findByRole('button', { name: `${t('CLUBS.join')} Alpha Readers` });
+    const g = screen.getByRole('button', { name: `${t('CLUBS.join')} Gamma` });
+    await waitFor(() => expect(calls.filter((c) => c === 'my')).toHaveLength(1));
+    await u.click(a);
+    await u.click(g);
+    await waitFor(() => expect(a).toBeDisabled());
+    expect(g).toBeDisabled();
+    expect(within(a).getByRole('status')).toBeInTheDocument();
+    expect(within(g).getByRole('status')).toBeInTheDocument();
+
+    gates['c1']!();
+    await waitFor(() => expect(a).toBeEnabled());
+    expect(g).toBeDisabled();
+    await waitFor(() => expect(calls.filter((c) => c === 'my')).toHaveLength(2));
+
+    gates['c3']!();
+    await waitFor(() => expect(g).toBeEnabled());
+    await waitFor(() => expect(calls.filter((c) => c === 'my')).toHaveLength(3));
   });
 
   it.each(['member', 'already_requested'] as const)('handles the %s response like pending (no card change)', async (status) => {

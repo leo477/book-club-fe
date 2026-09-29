@@ -1,7 +1,8 @@
 import type { NextConfig } from 'next';
 import createNextIntlPlugin from 'next-intl/plugin';
+import { backendOrigin } from './src/lib/backend-origin';
 
-const BACKEND_ORIGIN = 'https://book-club-be.onrender.com';
+const BACKEND_ORIGIN = backendOrigin();
 
 function legacyOrigin(): string | null {
   const raw = process.env['LEGACY_ORIGIN'];

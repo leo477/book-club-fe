@@ -1,9 +1,8 @@
 import type { MetadataRoute } from 'next';
 import { serverApi } from '@/lib/server-api';
+import { SITE_URL, STATIC_LAST_MODIFIED } from '@/lib/site';
 
 export const revalidate = 3600;
-
-const SITE_URL = 'https://book-club-planer.vercel.app';
 
 const ROUTES = [
   { path: '/', changeFrequency: 'weekly', priority: 1 },
@@ -23,7 +22,7 @@ async function publicClubs() {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const lastModified = new Date().toISOString().slice(0, 10);
+  const lastModified = STATIC_LAST_MODIFIED;
   const clubs = await publicClubs();
   return [
     ...ROUTES.map(({ path, changeFrequency, priority }) => ({ url: `${SITE_URL}${path}`, lastModified, changeFrequency, priority })),

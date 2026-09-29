@@ -17,11 +17,14 @@ interface ClubCardProps {
   isMember: boolean;
   isOwned: boolean;
   isAuthenticated: boolean;
+  sessionPending: boolean;
+  /** first row: above the fold, so its cover is fetched eagerly */
+  priority?: boolean;
   joining: boolean;
   onJoin: () => void;
 }
 
-export function ClubCard({ club, isMember, isOwned, isAuthenticated, joining, onJoin }: ClubCardProps) {
+export function ClubCard({ club, isMember, isOwned, isAuthenticated, sessionPending, priority = false, joining, onJoin }: ClubCardProps) {
   const t = useTranslations('CLUBS');
   const detailHref = `/clubs/${club.id}`;
   const view = (
@@ -35,7 +38,17 @@ export function ClubCard({ club, isMember, isOwned, isAuthenticated, joining, on
       <div className="relative overflow-hidden flex-shrink-0 h-40">
         {club.coverUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- cover URLs are arbitrary hosts; no image optimizer is configured
-          <img src={club.coverUrl} alt="" aria-hidden="true" loading="lazy" className="absolute inset-0 size-full object-cover" />
+          <img
+            src={club.coverUrl}
+            alt=""
+            aria-hidden="true"
+            width={640}
+            height={160}
+            referrerPolicy="no-referrer"
+            loading={priority ? 'eager' : 'lazy'}
+            fetchPriority={priority ? 'high' : 'auto'}
+            className="absolute inset-0 size-full object-cover"
+          />
         ) : (
           <div
             className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary-600 via-accent-500 to-primary-700"
@@ -73,7 +86,7 @@ export function ClubCard({ club, isMember, isOwned, isAuthenticated, joining, on
               >
                 {url ? (
                   // eslint-disable-next-line @next/next/no-img-element -- avatar URLs are arbitrary hosts
-                  <img src={url} alt="" loading="lazy" className="absolute inset-0 size-full object-cover" />
+                  <img src={url} alt="" width={28} height={28} referrerPolicy="no-referrer" loading="lazy" className="absolute inset-0 size-full object-cover" />
                 ) : (
                   '?'
                 )}
@@ -88,6 +101,10 @@ export function ClubCard({ club, isMember, isOwned, isAuthenticated, joining, on
 
         <Separator />
 
+        {sessionPending ? (
+          // never the guest CTA before the session resolves; the fixed height keeps the card from jumping
+          <div className="mt-auto h-8 invisible" aria-hidden="true" data-testid="card-actions-pending" />
+        ) : (
         <div className="flex items-center gap-2 mt-auto">
           {isAuthenticated && !isMember && (
             <>
@@ -135,6 +152,7 @@ export function ClubCard({ club, isMember, isOwned, isAuthenticated, joining, on
             </>
           )}
         </div>
+        )}
       </div>
     </div>
   );

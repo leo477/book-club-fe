@@ -1,7 +1,9 @@
 import 'server-only';
 import { createApi, createApiClient } from '@book-club/api-client';
+import { backendApiUrl } from './backend-origin';
 
-const BACKEND_API_URL = process.env['BACKEND_API_URL'] ?? 'https://book-club-be.onrender.com/api/v1';
+// a cold or down backend must not stall the SSR of a page that can fall back to a client fetch
+const SERVER_TIMEOUT_MS = 3000;
 
 const noop = () => undefined;
 
@@ -9,7 +11,7 @@ const noop = () => undefined;
 export function serverApi(next: { revalidate: number; tags?: string[] }) {
   return createApi(
     createApiClient({
-      baseUrl: BACKEND_API_URL,
+      baseUrl: backendApiUrl(),
       transport: {
         getAccessToken: () => null,
         hasSession: () => false,
@@ -17,7 +19,10 @@ export function serverApi(next: { revalidate: number; tags?: string[] }) {
         storeTokens: noop,
         clear: noop,
       },
-      fetch: (input, init) => fetch(input, { ...init, next }),
+      fetch: (input, init) => {
+        const timeout = AbortSignal.timeout(SERVER_TIMEOUT_MS);
+        return fetch(input, { ...init, next, signal: init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout });
+      },
     }),
   );
 }

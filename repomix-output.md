@@ -60,6 +60,8 @@ The content is organized as follows:
   pre-commit
 apps/
   web/
+    scripts/
+      check-first-load.mjs
     src/
       app/
         (public)/
@@ -81,6 +83,7 @@ apps/
           toast-buttons.tsx
         strangler.json/
           route.ts
+        fonts.ts
         layout.tsx
         robots.test.ts
         robots.ts
@@ -89,19 +92,24 @@ apps/
       components/
         layout/
           chat-link.tsx
+          error-toasts.test.tsx
           error-toasts.tsx
           footer.tsx
           header.test.tsx
           header.tsx
           locale-switch.tsx
+          mobile-nav-sheet.tsx
           mobile-nav.tsx
           nav-links.tsx
           theme-switch.tsx
+          user-avatar.tsx
+          user-menu-impl.tsx
           user-menu.tsx
         ui/
           badge.tsx
           button.tsx
           card.tsx
+          dropdown-menu.tsx
           field.test.tsx
           field.tsx
           input.tsx
@@ -116,9 +124,13 @@ apps/
         app-link.test.tsx
         app-link.tsx
         empty-state.tsx
+        toaster-host.test.tsx
+        toaster-host.tsx
+        toaster-impl.tsx
       features/
         clubs/
           club-card.tsx
+          club-tabs.tsx
           clubs-list-client.test.tsx
           clubs-list-client.tsx
           use-clubs.ts
@@ -129,9 +141,12 @@ apps/
         request.ts
       lib/
         api.ts
+        backend-origin.test.ts
+        backend-origin.ts
         cookie.ts
         json-ld.test.tsx
         json-ld.tsx
+        navigate.test.ts
         navigate.ts
         page-metadata.test.ts
         page-metadata.ts
@@ -139,6 +154,9 @@ apps/
         server-api.ts
         session-hint.test.ts
         session-hint.ts
+        site.test.ts
+        site.ts
+        toast.ts
         utils.ts
         zod-locales-stub.ts
       providers/
@@ -147,6 +165,7 @@ apps/
         config.test.ts
         config.ts
         context.tsx
+        csp.test.ts
         csp.ts
         edge-config.ts
         manifest-coverage.test.ts

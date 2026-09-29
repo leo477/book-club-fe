@@ -139,3 +139,27 @@ describe('handleProxy hardening', () => {
     expect(res.headers.get('cache-control')).toBe('private, no-store');
   });
 });
+
+describe('handleProxy CSP on the shell routes', () => {
+  const routes = (flag: unknown) => parseConfig({ version: 1, enabled: true, routes: { '/clubs': flag, '/privacy': flag } });
+
+  it.each(['/clubs', '/clubs/', '/privacy'])('applies the nonce CSP and report-only Trusted Types to Next-owned %s', async (path) => {
+    const res = await run(path, async () => routes({ target: 'next', percent: 100 }), 'bc_bucket=1');
+    const csp = res.headers.get('content-security-policy')!;
+    const nonce = csp.match(/'nonce-([^']+)'/)![1];
+    expect(csp).toContain("style-src 'self' 'unsafe-inline'");
+    expect(csp).not.toContain('require-trusted-types-for');
+    expect(res.headers.get('content-security-policy-report-only')).toContain("require-trusted-types-for 'script'");
+    expect(res.headers.get('x-middleware-request-x-nonce')).toBe(nonce);
+    expect(res.headers.get('x-middleware-request-content-security-policy')).toBe(csp);
+  });
+
+  it('leaves legacy-owned responses untouched: no CSP of ours on the rewrite or the forwarded request', async () => {
+    const res = await run('/clubs', async () => routes({ target: 'legacy', percent: 100 }), 'bc_bucket=1');
+    expect(res.headers.get('x-middleware-rewrite')).toBe(`${LEGACY}/clubs`);
+    expect(res.headers.get('content-security-policy')).toBeNull();
+    expect(res.headers.get('content-security-policy-report-only')).toBeNull();
+    expect(res.headers.get('x-middleware-request-content-security-policy')).toBeNull();
+    expect(res.headers.get('x-middleware-request-x-nonce')).toBeNull();
+  });
+});

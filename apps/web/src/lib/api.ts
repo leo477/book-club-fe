@@ -1,8 +1,8 @@
 import 'client-only';
 import { cookieTransport, createApi, createApiClient } from '@book-club/api-client';
-import { toast } from 'sonner';
 import { hardNavigate } from './navigate';
 import { hasSessionHint } from './session-hint';
+import { showToast } from './toast';
 
 let translate = (key: string): string => key;
 export const setErrorTranslator = (fn: (key: string) => string): void => {
@@ -18,7 +18,7 @@ export const api = createApi(
       if (window.location.pathname !== '/clubs') hardNavigate('/clubs');
     },
     onError: (error, { suppress }) => {
-      if (!suppress) toast.error(translate(error.translationKey));
+      if (!suppress) showToast('error', translate(error.translationKey));
     },
   }),
 );

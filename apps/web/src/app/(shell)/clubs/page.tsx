@@ -4,33 +4,12 @@ import { ClubsListClient } from '@/features/clubs/clubs-list-client';
 import { JsonLd } from '@/lib/json-ld';
 import { pageMetadata } from '@/lib/page-metadata';
 import { serverApi } from '@/lib/server-api';
+import { ORGANIZATION_JSON_LD } from '@/lib/site';
 
 export const generateMetadata = () => pageMetadata('SEO.clubs_title', '/clubs', {
     descriptionKey: 'SEO.clubs_description',
     ogTitleKey: 'SEO.clubs_og_title',
   });
-
-const ORGANIZATION_JSON_LD = {
-  '@context': 'https://schema.org',
-  '@graph': [
-    {
-      '@type': 'Organization',
-      name: 'Book Club',
-      url: 'https://book-club-planer.vercel.app/',
-      description: 'Платформа для книжкових клубів України',
-      logo: 'https://book-club-planer.vercel.app/og-image.png',
-      inLanguage: 'uk',
-    },
-    {
-      '@type': 'WebApplication',
-      name: 'Book Club',
-      description: 'Платформа для книжкових клубів України',
-      url: 'https://book-club-planer.vercel.app/',
-      applicationCategory: 'SocialNetworkingApplication',
-      inLanguage: 'uk',
-    },
-  ],
-};
 
 async function loadPublicClubs(): Promise<Club[] | null> {
   try {
