@@ -231,7 +231,7 @@ export class ClubService {
     return status;
   }
 
-  async getMyMembership(
+  getMyMembership(
     clubId: string,
   ): Promise<{ isMember: boolean; role: string | null; joinRequestStatus: 'none' | 'pending' | 'rejected' }> {
     return firstValueFrom(
@@ -243,7 +243,7 @@ export class ClubService {
     );
   }
 
-  async getJoinRequests(clubId: string): Promise<JoinRequest[]> {
+  getJoinRequests(clubId: string): Promise<JoinRequest[]> {
     return firstValueFrom(
       this.http.get<JoinRequest[]>(`${environment.apiUrl}/clubs/${clubId}/join-requests`),
     );
@@ -353,7 +353,7 @@ export class ClubService {
     return events;
   }
 
-  async getClubStats(clubId: string): Promise<ClubStats> {
+  getClubStats(clubId: string): Promise<ClubStats> {
     return firstValueFrom(this.http.get<ClubStats>(`${environment.apiUrl}/clubs/${clubId}/stats`));
   }
 
