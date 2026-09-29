@@ -32,21 +32,13 @@ describe('LanguageService', () => {
   });
 
   describe('initialLang', () => {
-    it('defaults to uk when nothing is saved', () => {
-      const service = setup();
-      expect(service.initialLang).toBe('uk');
-    });
-
-    it('reads a previously saved supported language', () => {
-      localStorage.setItem('lang', 'en');
-      const service = setup();
-      expect(service.initialLang).toBe('en');
-    });
-
-    it('falls back to uk when the saved value is unsupported', () => {
-      localStorage.setItem('lang', 'fr');
-      const service = setup();
-      expect(service.initialLang).toBe('uk');
+    it.each([
+      [null, 'uk'],
+      ['en', 'en'],
+      ['fr', 'uk'],
+    ])('resolves saved %s to %s', (saved, expected) => {
+      if (saved) localStorage.setItem('lang', saved);
+      expect(setup().initialLang).toBe(expected);
     });
   });
 

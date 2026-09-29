@@ -8,13 +8,19 @@ export interface StranglerRoute {
 const UUID = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
 const TIMEOUT_MS = 1000;
 
-const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
+
+function toPattern(segment: string): string {
+  if (segment === ':id') return UUID;
+  if (segment.startsWith(':')) return '[^/]+';
+  return escapeRe(segment);
+}
 
 function compile(pattern: string): RegExp {
   const body = pattern
     .split('/')
     .filter(Boolean)
-    .map((segment) => (segment === ':id' ? UUID : segment.startsWith(':') ? '[^/]+' : escapeRe(segment)))
+    .map(toPattern)
     .join('/');
   return new RegExp(`^/${body}/?$`);
 }
