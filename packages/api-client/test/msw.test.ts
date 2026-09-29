@@ -420,6 +420,8 @@ describe('refresh failures', () => {
     );
     const { client, onError, onUnauthenticated } = makeClient();
     const p = client.get('/x', ok).catch((e: unknown) => e);
+    // The refresh timer only exists once /auth/refresh is in flight; advancing earlier would trip the GET's own timeout.
+    await vi.waitFor(() => expect(count('/auth/refresh')).toBe(1));
     await vi.advanceTimersByTimeAsync(30_000);
     expect(await p).toMatchObject({ status: 401 });
     expect(onError).toHaveBeenCalledWith(expect.any(RequestTimeoutError), expect.objectContaining({ path: '/auth/refresh' }));
@@ -427,9 +429,17 @@ describe('refresh failures', () => {
   });
 
   it.each([3, 5])('%i concurrent 401s with a failing refresh sign out exactly once, and a later cycle signs out again', async (n) => {
+    // Hold every 401 until all n requests arrived, so none can observe the failure after the refresh cycle has ended.
+    let arrived = 0;
+    let release!: () => void;
+    const allArrived = new Promise<void>((resolve) => (release = resolve));
     server.use(
       http.post(`${BASE}/auth/refresh`, () => HttpResponse.json({ detail: 'no' }, { status: 401 })),
-      http.get(`${BASE}/x`, () => HttpResponse.json({}, { status: 401 })),
+      http.get(`${BASE}/x`, async () => {
+        if (++arrived >= n) release();
+        await allArrived;
+        return HttpResponse.json({}, { status: 401 });
+      }),
     );
     const clear = vi.fn();
     const transport = { ...cookieTransport({ hasSession: () => true }), clear };
