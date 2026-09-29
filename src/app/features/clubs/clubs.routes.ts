@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from '../../core/auth/auth.guard';
 import { roleGuard } from '../../core/auth/role.guard';
+import { stranglerHandoffGuard } from '../../core/strangler/strangler-handoff.guard';
 import { ClubsListComponent } from './clubs-list/clubs-list.component';
 import { ClubDetailComponent } from './club-detail/club-detail.component';
 import { CreateClubComponent } from './create-club/create-club.component';
@@ -9,6 +10,7 @@ export const CLUBS_ROUTES: Routes = [
   {
     path: '',
     component: ClubsListComponent,
+    canMatch: [stranglerHandoffGuard],
   },
   {
     path: 'create',

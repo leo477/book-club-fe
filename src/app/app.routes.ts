@@ -1,17 +1,20 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/auth/auth.guard';
+import { stranglerHandoffGuard } from './core/strangler/strangler-handoff.guard';
 import { ShellComponent } from './layout/shell/shell.component';
 
 export const routes: Routes = [
   // ── Public static pages (no auth, no shell) ────────────────────────────
   {
     path: 'privacy',
+    canMatch: [stranglerHandoffGuard],
     title: 'TITLES.privacy',
     loadComponent: () =>
       import('./features/privacy/privacy.component').then(m => m.PrivacyComponent),
   },
   {
     path: 'terms',
+    canMatch: [stranglerHandoffGuard],
     title: 'TITLES.terms',
     loadComponent: () =>
       import('./features/terms/terms.component').then(m => m.TermsComponent),
