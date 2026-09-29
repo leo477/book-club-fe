@@ -219,7 +219,7 @@ export class ChatWidgetComponent {
   }
 
   protected onRoomNameKeydown(event: KeyboardEvent): void {
-    if (event.key === 'Enter') { event.preventDefault(); this.submitCreateRoom(); }
+    if (event.key === 'Enter') { event.preventDefault(); void this.submitCreateRoom(); }
     if (event.key === 'Escape') { this.isCreatingRoom.set(false); }
   }
 }

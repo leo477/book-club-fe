@@ -32,7 +32,7 @@ export class QuizSessionComponent extends LeaderboardBaseComponent implements On
   readonly errorMessage = signal('');
 
   ngOnInit(): void {
-    Promise.all([
+    void Promise.all([
       this.quizService
         .getActiveSession(this.quizId())
         .then(s => this.session.set(s)),
