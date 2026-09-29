@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import '@book-club/config/tailwind-theme.css';
+@import './shell.css';
 
 @custom-variant dark (&:is(.dark *));
 

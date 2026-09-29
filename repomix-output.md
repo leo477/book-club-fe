@@ -69,6 +69,11 @@ apps/
           terms/
             page.test.tsx
             page.tsx
+        (shell)/
+          clubs/
+            page.test.tsx
+            page.tsx
+          layout.tsx
         %5F%5Fstrangler-probe/
           page.tsx
         %5F%5Fui/
@@ -77,7 +82,22 @@ apps/
         strangler.json/
           route.ts
         layout.tsx
+        robots.test.ts
+        robots.ts
+        sitemap.test.ts
+        sitemap.ts
       components/
+        layout/
+          chat-link.tsx
+          error-toasts.tsx
+          footer.tsx
+          header.test.tsx
+          header.tsx
+          locale-switch.tsx
+          mobile-nav.tsx
+          nav-links.tsx
+          theme-switch.tsx
+          user-menu.tsx
         ui/
           badge.tsx
           button.tsx
@@ -95,17 +115,32 @@ apps/
           tabs.tsx
         app-link.test.tsx
         app-link.tsx
+        empty-state.tsx
+      features/
+        clubs/
+          club-card.tsx
+          clubs-list-client.test.tsx
+          clubs-list-client.tsx
+          use-clubs.ts
+          use-session.ts
       i18n/
         locale.test.ts
         locale.ts
         request.ts
       lib/
         api.ts
+        cookie.ts
+        json-ld.test.tsx
+        json-ld.tsx
+        navigate.ts
         page-metadata.test.ts
         page-metadata.ts
+        server-api.test.ts
+        server-api.ts
         session-hint.test.ts
         session-hint.ts
         utils.ts
+        zod-locales-stub.ts
       providers/
         providers.tsx
       strangler/
@@ -121,6 +156,8 @@ apps/
         routes.ts
         server.test.ts
         server.ts
+      test/
+        harness.tsx
       proxy.ts
     .gitignore
     components.json

@@ -31,6 +31,7 @@ const SECURITY_HEADERS = [
 const nextConfig: NextConfig = {
   reactCompiler: true,
   poweredByHeader: false,
+  turbopack: { resolveAlias: { '../locales/index.js': './src/lib/zod-locales-stub.ts' } },
   transpilePackages: ['@book-club/api-client', '@book-club/contracts', '@book-club/i18n'],
   async headers() {
     return [

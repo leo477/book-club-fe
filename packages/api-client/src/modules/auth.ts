@@ -18,7 +18,7 @@ export const authApi = (c: ApiClient) => ({
   refresh: () => c.post('/auth/refresh', authTokens, {}, publicCall),
   exchangeOAuthCode: (code: string) => c.post('/auth/oauth/exchange', authTokens, { code }, publicCall),
   logout: () => c.post('/auth/logout', z.void()),
-  me: () => c.get('/auth/me', userProfile),
+  me: (options?: { skipAuthRedirect?: boolean }) => c.get('/auth/me', userProfile, options),
   sessionStatus: () => c.get('/auth/session-status', sessionStatus, publicCall),
   wsTicket: () => c.post('/auth/ws-ticket', wsTicket, {}),
 });

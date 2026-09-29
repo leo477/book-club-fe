@@ -26,7 +26,7 @@ const isLegacy = (res: Response) => res.headers.get('x-middleware-rewrite') === 
 
 describe('handleProxy decision table', () => {
   it('passes non-manifest paths through untouched, without cookie or CSP', async () => {
-    const res = await run('/clubs', () => Promise.reject(new Error('must not be read')));
+    const res = await run('/events', () => Promise.reject(new Error('must not be read')));
     expect(res.headers.get('x-middleware-next')).toBe('1');
     expect(res.headers.get('content-security-policy')).toBeNull();
     expect(res.cookies.get('bc_bucket')).toBeUndefined();
@@ -127,7 +127,7 @@ describe('handleProxy hardening', () => {
 
   it.each([
     ['legacy rewrite', probe, off],
-    ['non-manifest path', '/clubs', off],
+    ['non-manifest path', '/events', off],
   ])('strips a client-supplied bucket header on %s', async (_n, path, cfg) => {
     const res = await run(path, cfg, 'bc_bucket=0', { headers: { 'x-bc-bucket': '99' } });
     expect(res.headers.get('x-middleware-request-x-bc-bucket')).toBeNull();
