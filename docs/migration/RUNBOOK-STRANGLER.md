@@ -87,6 +87,8 @@ Before the swap, make sure legacy `book-club-fe` still has its team alias `book-
 
 ## Preview / production separation
 
+Status 2026-09-29: `book-club-strangler-preview` could NOT be created: the Vercel plan allows a maximum of 1 Edge Config per team (API 400 "maximum number of edge configs (1)"). Options: upgrade the plan, or use a different isolation (e.g. an env-var-based kill switch for previews). Project settings applied: function region `fra1` (effective on next deploy), Web Analytics and Speed Insights enabled on `book-club-web`; the `vercel curl` automation bypass secret was revoked (re-created on the next `vercel curl`; revoke again afterwards).
+
 There is one store, and all three environments (production, preview, development) read the same `EDGE_CONFIG`. A flip made while testing a preview therefore also flips production. Before the first real canary, create `book-club-strangler-preview`, a second read token, and set `EDGE_CONFIG` for target `preview`/`development` only (`vercel env rm EDGE_CONFIG preview` then `vercel env add EDGE_CONFIG preview`), leaving production on `book-club-strangler`. Until then, do not test flips on previews unless the route is a probe.
 
 ## Deploy notes
