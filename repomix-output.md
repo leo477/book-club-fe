@@ -52,11 +52,80 @@ The content is organized as follows:
     scorecard.yml
     secret-scan.yml
     stale.yml
+    web.yml
   copilot-instructions.md
   dependabot.yml
   labeler.yml
 .husky/
   pre-commit
+apps/
+  web/
+    src/
+      app/
+        (public)/
+          privacy/
+            page.test.tsx
+            page.tsx
+          terms/
+            page.test.tsx
+            page.tsx
+        %5F%5Fstrangler-probe/
+          page.tsx
+        strangler.json/
+          route.ts
+        layout.tsx
+      components/
+        ui/
+          badge.tsx
+          button.tsx
+          card.tsx
+          input.tsx
+          label.tsx
+          separator.tsx
+          sheet.tsx
+          skeleton.tsx
+          sonner.tsx
+          tabs.tsx
+        app-link.test.tsx
+        app-link.tsx
+      i18n/
+        locale.test.ts
+        locale.ts
+        request.ts
+      lib/
+        api.ts
+        page-metadata.test.ts
+        page-metadata.ts
+        session-hint.test.ts
+        session-hint.ts
+        utils.ts
+      providers/
+        providers.tsx
+      strangler/
+        config.test.ts
+        config.ts
+        context.tsx
+        csp.ts
+        edge-config.ts
+        manifest-coverage.test.ts
+        proxy-handler.test.ts
+        proxy-handler.ts
+        routes.test.ts
+        routes.ts
+        server.test.ts
+        server.ts
+      proxy.ts
+    .gitignore
+    components.json
+    eslint.config.mjs
+    next.config.ts
+    package.json
+    postcss.config.mjs
+    tsconfig.json
+    vercel.json
+    vitest.config.ts
+    vitest.empty.ts
+    vitest.setup.ts
 docs/
   archive/
     ARCHITECTURE-REVIEW.md
@@ -70,6 +139,7 @@ docs/
   migration/
     BASELINE-2026-10.md
     cleanup-pw-audit.sql
+    RUNBOOK-STRANGLER.md
 e2e/
   fixtures/
     api-client.ts
@@ -225,7 +295,11 @@ src/
         theme.service.ts
         toast.service.ts
         upload.service.ts
+      strangler/
+        strangler-handoff.guard.ts
+        strangler-manifest.service.ts
       utils/
+        cookie.ts
         event-attendance.util.ts
         logger.util.ts
         ttl-cache.util.ts
@@ -585,6 +659,7 @@ components.json
 eslint.config.js
 LICENSE
 package.json
+PLAN-REACT-MIGRATION-2026-09-28.md
 PLAN-UI-STACK-2026-09-28.md
 playwright.full-audit.config.ts
 playwright.parity-setup.config.ts
