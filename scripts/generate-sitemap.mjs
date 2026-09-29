@@ -34,6 +34,24 @@ function escapeXml(value) {
     .replaceAll("'", '&apos;');
 }
 
+// Club ids are UUIDs (backend `clubs.id` is a UUID column); lastmod must be a
+// W3C date. Anything else from the network is dropped so untrusted API data can
+// never inject markup or arbitrary paths into the written sitemap.xml.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const ISO_DATE_PREFIX_RE = /^(\d{4}-\d{2}-\d{2})/;
+
+/**
+ * Maps an untrusted API club object to a validated { id, lastmod } pair,
+ * or [] when it is not public or fails validation.
+ */
+function toSitemapClub(club) {
+  if (club?.isPublic !== true || typeof club.id !== 'string' || !UUID_RE.test(club.id)) {
+    return [];
+  }
+  const dateMatch = typeof club.createdAt === 'string' ? ISO_DATE_PREFIX_RE.exec(club.createdAt) : null;
+  return [{ id: club.id.toLowerCase(), lastmod: dateMatch?.[1] ?? null }];
+}
+
 async function fetchPublicClubs() {
   try {
     const res = await fetch(`${API_URL}/clubs`, {
@@ -47,7 +65,7 @@ async function fetchPublicClubs() {
     if (!Array.isArray(clubs)) {
       throw new Error('GET /clubs returned a non-array payload');
     }
-    return clubs.filter(c => c.isPublic && c.id);
+    return clubs.flatMap(toSitemapClub);
   } catch (err) {
     console.warn(`  ⚠️ Failed to fetch clubs for sitemap (${err.message}) — emitting static routes only.`);
     return [];
@@ -68,8 +86,8 @@ const staticUrls = ROUTES.map(
 );
 
 const clubUrls = clubs.map(club => {
-  const clubLastmod = (club.createdAt ?? '').slice(0, 10) || lastmod;
-  return `  <url><loc>${escapeXml(`${SITE_URL}/clubs/${club.id}`)}</loc><lastmod>${clubLastmod}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`;
+  const clubLastmod = club.lastmod ?? lastmod;
+  return `  <url><loc>${escapeXml(`${SITE_URL}/clubs/${club.id}`)}</loc><lastmod>${escapeXml(clubLastmod)}</lastmod><changefreq>weekly</changefreq><priority>0.7</priority></url>`;
 });
 
 const xml = [
