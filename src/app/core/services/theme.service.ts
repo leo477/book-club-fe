@@ -15,7 +15,9 @@ export class ThemeService {
   constructor() {
     const cookie = readCookie('theme');
     const stored = localStorage.getItem('theme');
-    const saved = isTheme(cookie) ? cookie : isTheme(stored) ? stored : null;
+    let saved: 'light' | 'dark' | null = null;
+    if (isTheme(cookie)) saved = cookie;
+    else if (isTheme(stored)) saved = stored;
     const prefersDark = globalThis.matchMedia('(prefers-color-scheme: dark)').matches;
     const initial    = saved ?? (prefersDark ? 'dark' : 'light');
 
