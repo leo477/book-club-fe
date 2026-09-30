@@ -221,10 +221,7 @@ docs/
     PLAN-MOBILE-APP-2026-07-15.md
     REFACTOR-PLAN-2026-07-06.md
   migration/
-    BASELINE-2026-10.md
     CANARY-METRICS.md
-    cleanup-pw-audit.sql
-    GATE-G1.md
     PARITY-R5.md
     RUNBOOK-STRANGLER.md
     UI-DELTAS.md
@@ -750,8 +747,6 @@ components.json
 eslint.config.js
 LICENSE
 package.json
-PLAN-REACT-MIGRATION-2026-09-28.md
-PLAN-UI-STACK-2026-09-28.md
 playwright.full-audit.config.ts
 playwright.parity-setup.config.ts
 playwright.parity.config.ts
