@@ -123,3 +123,12 @@ Run against the front door before and after cutover; all must pass.
 4. `og-image.png` (and any other file legacy serves as static, plus `googleea44a5e89a1de9d7.html`) must be moved into `apps/web/public` before cutover is considered complete; until then they resolve through the fallback. Do not add colliding names to `apps/web/public` while Angular owns them.
 5. `LEGACY_ORIGIN` is a fixed env value; the fallback rewrite has no user-controlled host. Re-check `next.config.ts` when touching rewrites.
 6. Edge Config runtime credential is read-only (see Token hygiene).
+
+## R5 /clubs canary log
+
+| When (EEST) | Step | Edge Config | Verified |
+| --- | --- | --- | --- |
+| 2026-09-30 ~10:30 | `/clubs` 10 % (72 h) | version 5: `/clubs` next 10, `/privacy` next 10, `/terms` next 10 | `bc_bucket=5` serves Next (nonce CSP, report-only Trusted Types, title "Книжкові клуби", JSON-LD present); `bc_bucket=95` serves Angular. Next step: 50 % no earlier than 2026-10-03 ~10:30 if stop criteria hold. |
+
+Stop criteria (set `/clubs` to `legacy`, 0): JS error rate > baseline +10 %, LCP p75 mobile > 2.5 s or worse than baseline, join conversion < baseline −5 %.
+Angular emits `cohort`/`join_club`/`js_error` from #170; it must be deployed before the 50 % step so join conversion can be compared per app (see `GATE-G1.md`).
