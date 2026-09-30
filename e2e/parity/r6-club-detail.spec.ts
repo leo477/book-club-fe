@@ -54,8 +54,8 @@ test.describe('P1 URLs and status codes', () => {
       const html = await res.text();
       // nothing to index on a 404
       expect(html).toMatch(/<meta name="robots" content="noindex/);
-      // FINDING (low): the not-found panel is not in the server HTML (Next serves its `__next_error__` shell and renders
-      // not-found.tsx on the client), so a no-JS visitor gets a blank 404 body; logged, not asserted.
+      // Known limit: with a real 404 status Next serves its `__next_error__` recovery shell (by design, see PARITY-R6 finding 3)
+      // and renders not-found.tsx on the client, so a no-JS visitor gets a blank 404 body; logged, not asserted.
       console.log(`[next] 404 body has the panel in server HTML: ${/Клуб не знайдено|Club not found/i.test(html.replace(/<script[\s\S]*?<\/script>/g, ''))}`);
     } else {
       expect(res.status()).toBe(200);
@@ -158,10 +158,42 @@ test.describe('P6 SEO (raw HTML, no JS)', () => {
     expect(seo.title).toBe('Книжкові клуби | Book Club');
     expect(seo.ogImage).toBe(`${SITE}/og-image.png`);
     const head = html.match(/<head[\s\S]*?<\/head>/)![0];
-    // the body still renders the cover (an image preload hint lands in <head>), but no meta tag may carry it
+    // the body is the stub view: name and member count only, none of the club's own content
+    const body = html.replace(/<script[\s\S]*?<\/script>/g, '');
+    expect(body).toContain('Закритий клуб');
+    expect(body).toContain('data-testid="private-stub"');
+    expect(body).not.toContain('Читаємо сучасну українську прозу');
+    expect(body).not.toContain('parity.supabase.co');
+    expect(body).not.toContain('Хрещатик');
     const metas = head.match(/<meta[^>]*>/g)!.join('\n');
     expect(metas).not.toContain('Закритий клуб');
     expect(metas).not.toContain('parity.supabase.co');
+  });
+
+  test('next: private club stub: guests get the minimal view, members/organizers/admins the full club without a reload', async ({ page }, ti) => {
+    test.skip(!nextOnly(ti.project.name), 'next-only');
+    const about = page.getByText('Читаємо сучасну українську прозу');
+    const guest = await open(page, 'guest', IDS.private);
+    await expect(page.getByTestId('private-stub')).toBeVisible();
+    await expect(page.getByTestId('guest-cta')).toBeVisible();
+    await expect(about).toHaveCount(0);
+    expect(guest.log.filter((l) => new RegExp(`/clubs/${IDS.private}`).test(l.path))).toEqual([]);
+
+    const nonMember = await open(page, 'member', IDS.private, { joined: false });
+    await expect(page.getByTestId('join-button')).toBeVisible();
+    await expect(page.getByTestId('private-stub')).toBeVisible();
+    await page.getByTestId('join-button').click();
+    await expect(page.getByTestId('join-pending')).toBeVisible();
+    expect(nonMember.log.filter((l) => l.path === `/clubs/${IDS.private}/members`)).toEqual([]);
+    expect(nonMember.log.filter((l) => l.method === 'GET' && l.path === `/clubs/${IDS.private}`)).toHaveLength(1);
+
+    for (const role of ['member', 'organizer', 'admin'] as const) {
+      const errs = watchConsole(page);
+      await open(page, role, IDS.private, { joined: role === 'member' });
+      await expect(about).toBeVisible();
+      await expect(page.getByTestId('private-stub')).toHaveCount(0);
+      expect(errs, role).toEqual([]);
+    }
   });
 
   test('hostile club text cannot break out of JSON-LD or the document', async ({ request, page }) => {

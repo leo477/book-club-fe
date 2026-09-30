@@ -3,8 +3,9 @@ import { isClubStub } from '@book-club/contracts';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
 import { ClubView } from '@/features/club-detail/club-view';
+import { PrivateClubGate } from '@/features/club-detail/private-club';
+import { PrivateStub } from '@/features/club-detail/private-stub';
 import { loadClub } from '@/features/club-detail/load-club';
-import { PrivateClub } from '@/features/club-detail/private-club';
 import { clubDescription, clubJsonLd, safeHttpUrl } from '@/features/club-detail/structured-data';
 import { JsonLd } from '@/lib/json-ld';
 import { pageMetadata } from '@/lib/page-metadata';
@@ -37,7 +38,9 @@ export default async function ClubDetailPage({ params }: Props) {
   if (isClubStub(club)) {
     return (
       <NextIntlClientProvider locale={locale} messages={messages}>
-        <PrivateClub stub={club} />
+        <PrivateClubGate stub={club}>
+          <PrivateStub stub={club} />
+        </PrivateClubGate>
       </NextIntlClientProvider>
     );
   }
