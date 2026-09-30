@@ -17,11 +17,12 @@ type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { club } = await loadClub((await params).id);
+  const path = `/clubs/${club.id.toLowerCase()}`;
   // A private club's name, description and cover must not reach title/og/twitter tags (link unfurlers ignore noindex).
-  if (isClubStub(club) || !club.isPublic) return pageMetadata('SEO.clubs_title', `/clubs/${club.id}`, { ogTitleKey: 'SEO.clubs_og_title', index: false });
+  if (isClubStub(club)) return pageMetadata('SEO.clubs_title', path, { ogTitleKey: 'SEO.clubs_og_title', index: false });
   const description = clubDescription(club);
   const image = safeHttpUrl(club.coverUrl);
-  return pageMetadata('SEO.club_detail_title', `/clubs/${club.id}`, {
+  return pageMetadata('SEO.club_detail_title', path, {
     ogTitleKey: 'SEO.club_detail_og_title',
     values: { name: club.name, city: club.city ?? '' },
     ...(description ? { description } : { descriptionKey: 'SEO.club_detail_description' }),

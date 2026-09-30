@@ -17,7 +17,7 @@ export function safeHttpUrl(value: string | null | undefined): string | undefine
 }
 
 export function clubUrl(id: string): string {
-  return `${SITE_URL}/clubs/${id}`;
+  return `${SITE_URL}/clubs/${id.toLowerCase()}`;
 }
 
 export function clubDescription(club: Club): string | null {

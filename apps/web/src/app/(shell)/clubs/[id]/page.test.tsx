@@ -106,7 +106,7 @@ describe('server render', () => {
     mockApi();
     getClub.mockResolvedValue(parsedClub({ description: 'Reads classics', currentBook: 'Dune' }));
     await render();
-    expect(serverApi).toHaveBeenCalledWith({ revalidate: 600, tags: [`club:${ID}`] });
+    expect(serverApi).toHaveBeenCalledWith({ revalidate: 600, tags: [`club:${ID}`] }, { timeoutMs: 9000 });
     expect(getClub).toHaveBeenCalledWith(ID);
     expect(getEvents).toHaveBeenCalledWith(ID);
     expect(screen.getByRole('heading', { level: 1, name: 'Alpha Readers' })).toBeInTheDocument();
@@ -130,12 +130,27 @@ describe('server render', () => {
     expect(graph[1]).toMatchObject({ name: 'Dune night', startDate: '2099-05-01T18:00:00Z', url: 'https://book-club-planer.vercel.app/events/e1' });
   });
 
-  it('does not emit structured data for a private club and labels it private', async () => {
+  it('treats a full private record from an old backend as a stub: no structured data, nothing of the club rendered or in metadata', async () => {
     mockApi();
-    getClub.mockResolvedValue(parsedClub({ isPublic: false }));
+    getClub.mockResolvedValue(parsedClub({ isPublic: false, name: 'Secret Readers', description: 'hidden plans', city: 'Kyiv' }));
     const { container } = await render();
     expect(container.querySelector('script[type="application/ld+json"]')).toBeNull();
-    expect(screen.getByText(new RegExp(t('CLUB_DETAIL.private')))).toBeInTheDocument();
+    expect(screen.getByTestId('private-stub')).toBeInTheDocument();
+    expect(screen.queryByText('hidden plans')).toBeNull();
+    const meta = await generateMetadata({ params });
+    expect(JSON.stringify(meta)).not.toMatch(/Secret Readers|hidden plans|Kyiv/);
+    expect(meta.robots).toMatchObject({ index: false });
+  });
+
+  it('normalizes an upper-case id: lower-case fetch, tag and canonical', async () => {
+    mockApi();
+    const upper = Promise.resolve({ id: ID.toUpperCase() });
+    await renderWithProviders(await ClubDetailPage({ params: upper }));
+    expect(serverApi).toHaveBeenCalledWith({ revalidate: 600, tags: [`club:${ID}`] }, { timeoutMs: 9000 });
+    expect(getClub).toHaveBeenCalledWith(ID);
+    expect(getEvents).toHaveBeenCalledWith(ID);
+    const meta = await generateMetadata({ params: upper });
+    expect(meta.alternates?.canonical).toBe(`https://book-club-planer.vercel.app/clubs/${ID}`);
   });
 
   it('mirrors Angular for a missing club: 404 and invalid ids render the not-found path', async () => {
@@ -150,6 +165,13 @@ describe('server render', () => {
   it('does not turn a transient backend failure into a cacheable not-found', async () => {
     getClub.mockRejectedValue(Object.assign(new Error('down'), { status: 503 }));
     await expect(ClubDetailPage({ params })).rejects.toThrow('down');
+  });
+
+  it('rethrows a timeout of the club fetch instead of reporting the club missing', async () => {
+    getClub.mockRejectedValue(new DOMException('timed out', 'TimeoutError'));
+    const failure = await ClubDetailPage({ params }).catch((e: unknown) => e);
+    expect(failure).toBeInstanceOf(DOMException);
+    expect((failure as { digest?: string }).digest).toBeUndefined();
   });
 
   it('renders without events when only the events fetch fails', async () => {
