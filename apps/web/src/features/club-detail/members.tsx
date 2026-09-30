@@ -25,7 +25,7 @@ export function Members({ club }: { club: Pick<Club, 'id' | 'organizerId' | 'mem
 
 function MembersSkeleton() {
   return (
-    <div className="parchment-card-sunken px-6 py-8 flex flex-col gap-3" aria-busy="true">
+    <div className="parchment-card-sunken px-6 py-8 flex flex-col gap-3 text-sm" aria-busy="true">
       <div className="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
       <div className="h-20 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse mt-3" />
     </div>
@@ -35,7 +35,7 @@ function MembersSkeleton() {
 function GuestMembers({ count }: { count: number }) {
   const t = useTranslations('CLUB_DETAIL');
   return (
-    <div data-testid="guest-members-hidden" className="parchment-card-sunken px-6 py-6">
+    <div data-testid="guest-members-hidden" className="parchment-card-sunken px-6 py-6 flex flex-col gap-6 text-sm">
       <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">{t('members_title')}</h2>
       <p className="text-sm text-[var(--color-ink-muted)]">{t('guest_members_hidden', { count })}</p>
     </div>

@@ -34,7 +34,7 @@ export function qrValue(member: Pick<ClubMember, 'displayName' | 'socials'>): st
   return lines.join('\n');
 }
 
-const Card = ({ children }: { children: React.ReactNode }) => <section className="glass-card px-6 py-6 flex flex-col gap-4">{children}</section>;
+const Card = ({ children }: { children: React.ReactNode }) => <section className="glass-card px-6 py-6 flex flex-col gap-4 text-sm">{children}</section>;
 
 export function MemberList({ clubId, isOwner }: { clubId: string; isOwner: boolean }) {
   const t = useTranslations('MEMBERS');
@@ -75,7 +75,7 @@ export function MemberList({ clubId, isOwner }: { clubId: string; isOwner: boole
 
   if (query.isPending) {
     return (
-      <div className="parchment-card-sunken px-6 py-8 flex flex-col gap-3" aria-busy="true">
+      <div className="parchment-card-sunken px-6 py-8 flex flex-col gap-3 text-sm" aria-busy="true">
         <div className="h-5 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
         <div className="h-20 w-full bg-gray-200 dark:bg-gray-700 rounded animate-pulse mt-3" />
       </div>

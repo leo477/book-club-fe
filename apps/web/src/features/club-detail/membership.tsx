@@ -148,7 +148,7 @@ export function ManagePanel({ club }: { club: ClubRef }) {
   const role = useClubRole(club);
   if (!role.isOwner) return null;
   return (
-    <div className="glass-card-subtle p-4 flex flex-col gap-3">
+    <div className="glass-card-subtle p-4 flex flex-col gap-3 text-sm">
       <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{t('manage_title')}</h2>
       <Button asChild className="w-full">
         <AppLink href={`/clubs/${club.id}/manage`}>⚙️ {tManage('manage_button')}</AppLink>

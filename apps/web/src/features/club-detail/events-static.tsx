@@ -10,7 +10,7 @@ export const EVENTS_EMPTY = 'text-sm text-gray-500 dark:text-gray-400 text-cente
 export function EventsFrame({ action, children }: { action?: ReactNode; children: ReactNode }) {
   const t = useTranslations('CLUB_DETAIL');
   return (
-    <section className="parchment-card px-6 py-6 flex flex-col gap-4" aria-labelledby="club-events-title">
+    <section className="parchment-card px-6 py-6 flex flex-col gap-4 text-sm" aria-labelledby="club-events-title">
       <div className="flex items-center justify-between mb-4">
         <h2 id="club-events-title" className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
           <span aria-hidden="true">📅</span> {t('events_title')}

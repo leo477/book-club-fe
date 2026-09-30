@@ -57,7 +57,7 @@ export function About({ club }: { club: Club }) {
   const t = useTranslations('CLUB_DETAIL');
   if (!club.description) return null;
   return (
-    <section className="parchment-card-sunken px-6 py-6 flex flex-col gap-3">
+    <section className="parchment-card-sunken px-6 py-6 flex flex-col gap-3 text-sm">
       <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{t('about')}</h2>
       <p className="text-gray-700 dark:text-gray-300 leading-relaxed">{club.description}</p>
     </section>
@@ -74,7 +74,7 @@ export function nearestBook(club: Club, events: readonly ClubEvent[]): { title: 
 export function NowReading({ book }: { book: { title: string; coverUrl: string | null } }) {
   const t = useTranslations('CLUB_DETAIL');
   return (
-    <div className="parchment-card-sunken p-4 flex flex-col gap-3">
+    <div className="parchment-card-sunken p-4 flex flex-col gap-3 text-sm">
       <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">📖 {t('now_reading')}</h3>
       {book.coverUrl && (
         // eslint-disable-next-line @next/next/no-img-element -- cover URLs are arbitrary hosts
@@ -111,7 +111,7 @@ export function AfterMeetingVenue({ club }: { club: Club }) {
   const t = useTranslations('CLUB_DETAIL');
   if (!venue) return null;
   return (
-    <div className="glass-card-subtle p-4 flex flex-col gap-3">
+    <div className="glass-card-subtle p-4 flex flex-col gap-3 text-sm">
       <h3 className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-3">{t('after_meeting_title')}</h3>
       <p className="text-sm font-medium text-gray-900 dark:text-white">{venue.name}</p>
       {venue.address && <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">📍 {venue.address}</p>}

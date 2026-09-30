@@ -180,7 +180,12 @@ export function handleApi(s: MockState, method: string, path: string, query = ''
   if ((m = path.match(new RegExp(`^/clubs/(${uuid})$`))) && method === 'GET') {
     if (m[1] === IDS.broken) return { status: 503, body: { detail: 'boom' } };
     const club = CLUBS[m[1]];
-    return club ? { status: 200, body: club } : { status: 404, body: { detail: 'Club not found' } };
+    if (!club) return { status: 404, body: { detail: 'Club not found' } };
+    // backend contract: a private club is a four-key stub for anyone who is not a member, organizer or admin
+    if (!club['isPublic'] && !(isMember || s.role === 'organizer' || s.role === 'admin')) {
+      return { status: 200, body: { id: club['id'], name: club['name'], isPublic: false, memberCount: club['memberCount'] } };
+    }
+    return { status: 200, body: club };
   }
   if ((m = path.match(new RegExp(`^/clubs/(${uuid})/events$`))) && method === 'GET') {
     if (m[1] !== IDS.public) return { status: 200, body: [] };
