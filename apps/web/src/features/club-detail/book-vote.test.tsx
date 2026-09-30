@@ -62,10 +62,10 @@ describe('BookVote as member', () => {
     expect(await screen.findByText('Dune')).toBeInTheDocument();
     expect(screen.getByText('1 голос · 25%')).toBeInTheDocument();
     expect(screen.getByText('3 голоси · 75%')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: `✓ ${t('BOOK_VOTE.voted')}` })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: new RegExp(`^✓ ${t('BOOK_VOTE.voted')}`) })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.queryByRole('button', { name: t('BOOK_VOTE.close_round') })).toBeNull();
     expect(screen.queryByRole('textbox')).toBeNull();
-    expect(screen.queryByRole('button', { name: t('BOOK_VOTE.remove_option_aria') })).toBeNull();
+    expect(screen.queryByRole('button', { name: new RegExp(t('BOOK_VOTE.remove_option_aria')) })).toBeNull();
   });
 
   it('votes optimistically, then reloads the round from the server (invalidation)', async () => {
@@ -74,10 +74,10 @@ describe('BookVote as member', () => {
     server.use(http.post(`${API}/clubs/c1/book-vote/options/b1/vote`, () => new Promise<Response>((r) => (release = r))));
     const u = userEvent.setup();
     renderWithProviders(<BookVote club={club} />);
-    const [vote] = await screen.findAllByRole('button', { name: t('BOOK_VOTE.vote') });
+    const [vote] = await screen.findAllByRole('button', { name: new RegExp(`^${t('BOOK_VOTE.vote')} —`) });
     await u.click(vote!);
     expect(await screen.findByText('3 голоси · 100%')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: `✓ ${t('BOOK_VOTE.voted')}` })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: new RegExp(`^✓ ${t('BOOK_VOTE.voted')}`) })).toBeInTheDocument();
     expect(gets).toHaveLength(1);
     release(HttpResponse.json(roundJson()));
     await waitFor(() => expect(gets).toHaveLength(2));
@@ -88,11 +88,41 @@ describe('BookVote as member', () => {
     server.use(http.post(`${API}/clubs/c1/book-vote/options/b1/vote`, () => HttpResponse.json({ detail: 'Round closed' }, { status: 409 })));
     const u = userEvent.setup();
     renderWithProviders(<BookVote club={club} />);
-    const [vote] = await screen.findAllByRole('button', { name: t('BOOK_VOTE.vote') });
+    const [vote] = await screen.findAllByRole('button', { name: new RegExp(`^${t('BOOK_VOTE.vote')} —`) });
     await u.click(vote!);
     await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Round closed'));
     expect(await screen.findByText('2 голоси · 100%')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: `✓ ${t('BOOK_VOTE.voted')}` })).toBeNull();
+    expect(screen.queryByRole('button', { name: new RegExp(`^✓ ${t('BOOK_VOTE.voted')}`) })).toBeNull();
+  });
+
+  const two = (a: { votes: number; hasVoted: boolean }, b: { votes: number; hasVoted: boolean }, totalVotes: number) =>
+    roundJson({ options: [{ id: 'b1', title: 'Dune', author: '', ...a }, { id: 'b2', title: 'Emma', author: '', ...b }], totalVotes });
+
+  it('moves the vote when switching options: the other option loses it and the total stays', async () => {
+    const gets = mockApi({ rounds: [two({ votes: 2, hasVoted: true }, { votes: 1, hasVoted: false }, 3), two({ votes: 1, hasVoted: false }, { votes: 2, hasVoted: true }, 3)] });
+    let release: (r: Response) => void = () => {};
+    server.use(http.post(`${API}/clubs/c1/book-vote/options/b2/vote`, () => new Promise<Response>((r) => (release = r))));
+    const u = userEvent.setup();
+    renderWithProviders(<BookVote club={club} />);
+    await u.click(await screen.findByRole('button', { name: new RegExp(`^${t('BOOK_VOTE.vote')} — Emma`) }));
+    expect(await screen.findByText('1 голос · 33%')).toBeInTheDocument();
+    expect(screen.getByText('2 голоси · 67%')).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { pressed: true })).toHaveLength(1);
+    expect(screen.getByRole('button', { name: new RegExp(`^✓ ${t('BOOK_VOTE.voted')} — Emma`) })).toBeInTheDocument();
+    release(HttpResponse.json(two({ votes: 1, hasVoted: false }, { votes: 2, hasVoted: true }, 3)));
+    await waitFor(() => expect(gets).toHaveLength(2));
+  });
+
+  it('restores the previous vote when a switch fails', async () => {
+    mockApi({ rounds: [two({ votes: 2, hasVoted: true }, { votes: 1, hasVoted: false }, 3)] });
+    server.use(http.post(`${API}/clubs/c1/book-vote/options/b2/vote`, () => HttpResponse.json({ detail: 'Round closed' }, { status: 409 })));
+    const u = userEvent.setup();
+    renderWithProviders(<BookVote club={club} />);
+    await u.click(await screen.findByRole('button', { name: new RegExp(`^${t('BOOK_VOTE.vote')} — Emma`) }));
+    await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Round closed'));
+    expect(await screen.findByText('2 голоси · 67%')).toBeInTheDocument();
+    expect(screen.getByText('1 голос · 33%')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: new RegExp(`^✓ ${t('BOOK_VOTE.voted')} — Dune`) })).toBeInTheDocument();
   });
 
   it('removes a vote', async () => {
@@ -106,7 +136,7 @@ describe('BookVote as member', () => {
     );
     const u = userEvent.setup();
     renderWithProviders(<BookVote club={club} />);
-    await u.click(await screen.findByRole('button', { name: `✓ ${t('BOOK_VOTE.voted')}` }));
+    await u.click(await screen.findByRole('button', { name: new RegExp(`^✓ ${t('BOOK_VOTE.voted')}`) }));
     await waitFor(() => expect(deleted).toEqual(['b1']));
   });
 
@@ -164,7 +194,7 @@ describe('BookVote as organizer', () => {
     );
     const u = userEvent.setup();
     renderWithProviders(<BookVote club={club} />);
-    const remove = await screen.findAllByRole('button', { name: t('BOOK_VOTE.remove_option_aria') });
+    const remove = await screen.findAllByRole('button', { name: new RegExp(`${t('BOOK_VOTE.remove_option_aria')}: Emma`) });
     expect(remove).toHaveLength(1);
     await u.click(remove[0]!);
     await u.click(screen.getByRole('button', { name: t('BOOK_VOTE.close_round') }));

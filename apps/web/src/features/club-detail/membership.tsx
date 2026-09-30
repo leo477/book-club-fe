@@ -12,14 +12,14 @@ import { showToast } from '@/lib/toast';
 import { myClubsKey } from '@/features/clubs/use-clubs';
 import { setActionError, useActionError } from './action-error';
 import { describeError } from './describe-error';
-import { membershipKey, useClubRole, useMyMembership, type ClubRef } from './use-club-detail';
+import { clubKey, membershipKey, useClubRole, useMyMembership, type ClubRef } from './use-club-detail';
 
 const actionKey = (clubId: string) => ['club', clubId, 'membership-action'] as const;
 const NOT_MEMBER: MyMembership = { isMember: false, role: null, joinRequestStatus: 'none' };
 
 function useMembershipAction(clubId: string) {
   const busy = useIsMutating({ mutationKey: actionKey(clubId) }) > 0;
-  const error = useActionError();
+  const error = useActionError(clubId);
   return { busy, error };
 }
 
@@ -33,12 +33,13 @@ export function LeaveButton({ club }: { club: ClubRef }) {
   const leave = useMutation({
     mutationKey: [...actionKey(club.id), 'leave'],
     mutationFn: () => api.clubs.leave(club.id),
-    onMutate: () => setActionError(null),
+    onMutate: () => setActionError(club.id, null),
     onSuccess: () => {
       queryClient.setQueryData<Club[]>(myClubsKey, (list) => list?.filter((c) => c.id !== club.id));
       queryClient.setQueryData<MyMembership>(membershipKey(club.id), NOT_MEMBER);
+      void queryClient.invalidateQueries({ queryKey: clubKey(club.id) });
     },
-    onError: (err) => setActionError(describeError(err, tErrors)),
+    onError: (err) => setActionError(club.id, describeError(err, tErrors)),
   });
 
   if (!role.ready || !role.isAuthenticated || role.isOwner || !role.isMember) return null;
@@ -50,9 +51,9 @@ export function LeaveButton({ club }: { club: ClubRef }) {
   );
 }
 
-export function ActionError() {
+export function ActionError({ clubId }: { clubId: string }) {
   const tErrors = useTranslations('ERRORS');
-  const error = useActionError();
+  const error = useActionError(clubId);
   if (!error) return null;
   return (
     <div
@@ -65,7 +66,7 @@ export function ActionError() {
         type="button"
         className="ml-2 -mr-1 -my-1 inline-flex h-7 w-7 items-center justify-center rounded-md text-red-700/70 hover:text-red-700 hover:bg-red-100 dark:text-red-400/70 dark:hover:text-red-400 dark:hover:bg-red-900/30 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500"
         aria-label={tErrors('dismiss')}
-        onClick={() => setActionError(null)}
+        onClick={() => setActionError(clubId, null)}
       >
         <span aria-hidden="true">✕</span>
       </button>
@@ -89,8 +90,9 @@ export function JoinCta({ club }: { club: ClubRef }) {
   const join = useMutation({
     mutationKey: [...actionKey(club.id), 'join'],
     mutationFn: () => api.clubs.join(club.id),
-    onMutate: () => setActionError(null),
+    onMutate: () => setActionError(club.id, null),
     onSuccess: ({ status }) => {
+      void queryClient.invalidateQueries({ queryKey: clubKey(club.id) });
       if (status === 'pending' || status === 'already_requested') {
         queryClient.setQueryData<MyMembership>(membershipKey(club.id), (prev) => ({ ...(prev ?? NOT_MEMBER), joinRequestStatus: 'pending' }));
         showToast('success', tClubs('join_request_sent'));
@@ -100,7 +102,7 @@ export function JoinCta({ club }: { club: ClubRef }) {
         void queryClient.invalidateQueries({ queryKey: membershipKey(club.id) });
       }
     },
-    onError: (err) => setActionError(describeError(err, tErrors)),
+    onError: (err) => setActionError(club.id, describeError(err, tErrors)),
   });
 
   if (!role.ready) return null;

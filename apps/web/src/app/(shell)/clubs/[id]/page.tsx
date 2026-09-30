@@ -11,7 +11,7 @@ import { JsonLd } from '@/lib/json-ld';
 import { pageMetadata } from '@/lib/page-metadata';
 
 // the nested provider replaces the shell's, so it repeats the namespaces the shell already ships
-const CLIENT_NAMESPACES = ['CLUB_DETAIL', 'BOOK_VOTE', 'MEMBERS', 'BOOK_STORES', 'EVENT', 'EVENTS', 'events', 'CLUB_MANAGE', 'CLUBS', 'CHAT', 'ERRORS'] as const;
+const CLIENT_NAMESPACES = ['CLUB_DETAIL', 'BOOK_VOTE', 'MEMBERS', 'BOOK_STORES', 'EVENT', 'EVENTS', 'events', 'CLUB_MANAGE', 'CLUBS', 'CHAT', 'ERRORS', 'SEO'] as const;
 
 type Props = { params: Promise<{ id: string }> };
 

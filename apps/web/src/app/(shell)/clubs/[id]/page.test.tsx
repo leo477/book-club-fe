@@ -805,6 +805,41 @@ describe('private club stub', () => {
     expect(document.querySelector('script[type="application/ld+json"]')).toBeNull();
   });
 
+  it('sets the document title to the club name once the stub upgrades', async () => {
+    mockApi({ user: userJson({ id: 'u1' }), mine: [ID], club: { body: fullPrivate() }, members: [memberJson()] });
+    await render();
+    await waitFor(() => expect(document.title).toBe('Secret Readers | Book Club'));
+  });
+
+  it('leaving an upgraded private club drops back to the stub view', async () => {
+    mockApi({ user: userJson({ id: 'u1' }), mine: [ID], club: { body: fullPrivate() }, members: [memberJson()] });
+    let left = false;
+    server.use(
+      http.delete(`${API}/clubs/${ID}/leave`, () => {
+        left = true;
+        return new HttpResponse(null, { status: 204 });
+      }),
+      http.get(`${API}/clubs/${ID}`, () => HttpResponse.json(left ? STUB : fullPrivate())),
+    );
+    const u = userEvent.setup();
+    await render();
+    await u.click(await screen.findByTestId('leave-button'));
+    await waitFor(() => expect(screen.getByTestId('private-stub')).toBeInTheDocument());
+    expect(screen.queryByText('Secret about')).toBeNull();
+  });
+
+  it('an immediate join on the stub refetches the club so the gate can upgrade', async () => {
+    const calls = mockApi({ user: userJson({ id: 'u1' }) });
+    server.use(http.post(`${API}/clubs/${ID}/join`, () => HttpResponse.json({ status: 'member' })));
+    const u = userEvent.setup();
+    await render();
+    await waitFor(() => expect(calls.filter((c) => c === 'GET club')).toHaveLength(1));
+    await u.click(await screen.findByTestId('join-button'));
+    await waitFor(() => expect(calls.filter((c) => c === 'GET club')).toHaveLength(2));
+    expect(toast).not.toHaveBeenCalledWith('error', expect.anything());
+    expect(hardNavigate).not.toHaveBeenCalled();
+  });
+
   it('the organizer upgrades and gets the manage link', async () => {
     mockApi({ user: userJson({ id: 'o1' }), mine: [ID], club: { body: fullPrivate() }, members: [memberJson({ userId: 'o1', role: 'organizer' })] });
     await render();

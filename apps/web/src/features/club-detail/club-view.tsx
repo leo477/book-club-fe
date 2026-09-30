@@ -33,7 +33,7 @@ export function ClubView({ club, events }: { club: Club; events: readonly ClubEv
               </div>
               <LeaveButton club={ref} />
             </header>
-            <ActionError />
+            <ActionError clubId={club.id} />
             <About club={club} />
             <BookVote club={ref} />
             <ChatButton club={ref} />

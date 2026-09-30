@@ -3,7 +3,8 @@
 
 import { useQuery } from '@tanstack/react-query';
 import type { Club, ClubOrStub, ClubStub } from '@book-club/contracts';
-import { lazy, Suspense, type ReactNode } from 'react';
+import { useTranslations } from 'next-intl';
+import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { LazyBoundary } from '@/components/lazy-boundary';
 import { useSession } from '@/features/clubs/use-session';
 import { api } from '@/lib/api';
@@ -20,6 +21,7 @@ const isFull = (club: ClubOrStub): club is Club => club.organizerId !== undefine
  */
 export function PrivateClubGate({ stub, children }: { stub: ClubStub; children: ReactNode }) {
   const { user } = useSession();
+  const tSeo = useTranslations('SEO');
   const query = useQuery({
     queryKey: clubKey(stub.id),
     queryFn: () => api.clubs.get(stub.id, { skipAuthRedirect: true, suppressErrorToast: true }),
@@ -28,6 +30,10 @@ export function PrivateClubGate({ stub, children }: { stub: ClubStub; children: 
     refetchOnWindowFocus: false,
   });
   const current = query.data;
+  const upgradedName = current && isFull(current) ? current.name : null;
+  useEffect(() => {
+    if (upgradedName) document.title = tSeo('club_detail_title', { name: upgradedName });
+  }, [upgradedName, tSeo]);
   if (!current || !isFull(current)) return children;
   return (
     <LazyBoundary fallback={children}>

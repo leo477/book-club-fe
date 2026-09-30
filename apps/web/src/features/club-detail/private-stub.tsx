@@ -14,7 +14,7 @@ export function PrivateStub({ stub }: { stub: ClubStub }) {
           <div className="flex items-center gap-3 flex-wrap">
             <PrivateBadge club={stub} />
           </div>
-          <ActionError />
+          <ActionError clubId={stub.id} />
           <div data-testid="private-stub" className="parchment-card-sunken flex flex-col gap-6 px-6 py-6 text-sm">
             <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">{t('private_stub_title')}</h2>
             <p className="text-gray-700 dark:text-gray-300">{t('private_stub_desc')}</p>

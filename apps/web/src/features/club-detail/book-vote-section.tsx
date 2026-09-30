@@ -15,12 +15,16 @@ function percent(votes: number, total: number): number {
   return total > 0 ? Math.round((votes / total) * 100) : 0;
 }
 
+// the backend allows one vote per round: voting for one option moves the vote off the previously voted one
 function withVote(round: BookVoteRound, optionId: string, voted: boolean): BookVoteRound {
-  const delta = voted ? 1 : -1;
+  const hadVote = round.options.some((o) => o.hasVoted);
   return {
     ...round,
-    totalVotes: Math.max(0, round.totalVotes + delta),
-    options: round.options.map((o) => (o.id === optionId ? { ...o, hasVoted: voted, votes: Math.max(0, o.votes + delta) } : o)),
+    totalVotes: Math.max(0, round.totalVotes + (voted ? (hadVote ? 0 : 1) : -1)),
+    options: round.options.map((o) => {
+      if (o.id === optionId) return { ...o, hasVoted: voted, votes: Math.max(0, o.votes + (voted ? 1 : -1)) };
+      return voted && o.hasVoted ? { ...o, hasVoted: false, votes: Math.max(0, o.votes - 1) } : o;
+    }),
   };
 }
 
@@ -148,6 +152,8 @@ export function BookVoteSection({ clubId, isOwner, isMember }: { clubId: string;
                           className="text-xs"
                         >
                           {option.hasVoted ? `✓ ${t('voted')}` : t('vote')}
+                          {' '}
+                          <span className="sr-only">— {option.title}</span>
                         </Button>
                       )}
                       {isOwner && option.votes === 0 && (
@@ -156,7 +162,7 @@ export function BookVoteSection({ clubId, isOwner, isMember }: { clubId: string;
                           disabled={busy}
                           onClick={() => run.mutate(() => api.bookVote.removeOption(clubId, option.id))}
                           className="text-[var(--color-ink-muted)] hover:text-red-600 dark:hover:text-red-400 transition-colors duration-150 p-1 rounded focus-visible:outline-2"
-                          aria-label={t('remove_option_aria')}
+                          aria-label={`${t('remove_option_aria')}: ${option.title}`}
                         >
                           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
