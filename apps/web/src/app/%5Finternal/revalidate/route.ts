@@ -24,6 +24,8 @@ export async function POST(request: Request) {
   if (!secret) return reply(503, { error: 'disabled' });
   if (!authorized(request, secret)) return reply(401, { error: 'unauthorized' });
 
+  const declared = Number(request.headers.get('content-length') ?? 0);
+  if (declared > MAX_BODY_BYTES) return reply(413, { error: 'too_large' });
   const raw = await request.text();
   if (raw.length > MAX_BODY_BYTES) return reply(413, { error: 'too_large' });
   let body: unknown;

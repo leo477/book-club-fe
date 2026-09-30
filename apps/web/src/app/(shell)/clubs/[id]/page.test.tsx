@@ -214,7 +214,8 @@ describe('generateMetadata', () => {
     getClub.mockResolvedValue(parsedClub({ isPublic: false }));
     const meta = await generateMetadata({ params });
     expect(meta.robots).toEqual({ index: false, follow: true });
-    expect(meta.title).toBe(messages.en['SEO.club_detail_title']!.replace('{name}', 'Alpha Readers'));
+    expect(meta.title).toBe(messages.en['SEO.clubs_title']);
+    expect(JSON.stringify(meta)).not.toContain('Alpha Readers');
   });
 });
 

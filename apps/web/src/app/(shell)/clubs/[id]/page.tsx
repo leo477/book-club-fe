@@ -9,7 +9,7 @@ import { ActionError, ChatButton, JoinCta, LeaveButton, ManagePanel } from '@/fe
 import { Members } from '@/features/club-detail/members';
 import { About, AfterMeetingVenue, Champion, Created, Hero, NowReading, PrivateBadge, nearestBook } from '@/features/club-detail/sections';
 import { BookStores, OrganizerCard } from '@/features/club-detail/sidebar';
-import { clubDescription, clubJsonLd } from '@/features/club-detail/structured-data';
+import { clubDescription, clubJsonLd, safeHttpUrl } from '@/features/club-detail/structured-data';
 import { JsonLd } from '@/lib/json-ld';
 import { pageMetadata } from '@/lib/page-metadata';
 
@@ -18,20 +18,12 @@ const CLIENT_NAMESPACES = ['CLUB_DETAIL', 'BOOK_VOTE', 'MEMBERS', 'BOOK_STORES',
 
 type Props = { params: Promise<{ id: string }> };
 
-const absoluteImage = (value: string | null): string | undefined => {
-  if (!value) return undefined;
-  try {
-    const url = new URL(value);
-    return url.protocol === 'https:' || url.protocol === 'http:' ? url.href : undefined;
-  } catch {
-    return undefined;
-  }
-};
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { club } = await loadClub((await params).id);
+  // A private club's name, description and cover must not reach title/og/twitter tags (link unfurlers ignore noindex).
+  if (!club.isPublic) return pageMetadata('SEO.clubs_title', `/clubs/${club.id}`, { ogTitleKey: 'SEO.clubs_og_title', index: false });
   const description = clubDescription(club);
-  const image = absoluteImage(club.coverUrl);
+  const image = safeHttpUrl(club.coverUrl);
   return pageMetadata('SEO.club_detail_title', `/clubs/${club.id}`, {
     ogTitleKey: 'SEO.club_detail_og_title',
     values: { name: club.name, city: club.city ?? '' },
