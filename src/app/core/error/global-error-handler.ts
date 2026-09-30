@@ -1,8 +1,13 @@
-import { ErrorHandler, Injectable, inject, isDevMode } from '@angular/core';
-import { track } from '@vercel/analytics';
+import { ErrorHandler, Injectable, InjectionToken, inject, isDevMode } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastService } from '../services/toast.service';
 import { logError } from '../utils/logger.util';
+import { CANARY_TRACK } from '../services/canary-analytics.service';
+
+export const IS_DEV_MODE = new InjectionToken<() => boolean>('IS_DEV_MODE', {
+  providedIn: 'root',
+  factory: () => isDevMode,
+});
 
 /**
  * Centralises logging of uncaught client errors. Registered as the app-wide
@@ -13,10 +18,12 @@ import { logError } from '../utils/logger.util';
 export class GlobalErrorHandler implements ErrorHandler {
   private readonly translate = inject(TranslateService);
   private readonly toast = inject(ToastService);
+  private readonly isDevMode = inject(IS_DEV_MODE);
+  private readonly track = inject(CANARY_TRACK);
 
   handleError(error: unknown): void {
     logError(error);
-    if (!isDevMode()) this.notify();
+    if (!this.isDevMode()) this.notify();
 
     try {
       this.report(error);
@@ -35,9 +42,9 @@ export class GlobalErrorHandler implements ErrorHandler {
    * (e.g. Sentry), capture the error here.
    */
   private report(error: unknown): void {
-    if (isDevMode()) return;
+    if (this.isDevMode()) return;
 
-    track('client_error', {
+    this.track('client_error', {
       message: this.messageOf(error),
     });
   }
