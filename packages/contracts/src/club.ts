@@ -52,6 +52,22 @@ export const club = z.object({
 });
 export type Club = z.infer<typeof club>;
 
+/** What the backend returns for a private club to a caller who cannot view it: exactly these keys, nothing else. */
+export const clubStub = z.object({
+  id: z.string(),
+  name: z.string(),
+  isPublic: z.literal(false),
+  memberCount: z.number(),
+  organizerId: z.never().optional(),
+});
+export type ClubStub = z.infer<typeof clubStub>;
+
+/** `club` is tried first, so a full private club (organizerId present) is never mistaken for a stub. */
+export const clubOrStub = z.union([club, clubStub]);
+export type ClubOrStub = z.infer<typeof clubOrStub>;
+
+export const isClubStub = (value: ClubOrStub): value is ClubStub => value.organizerId === undefined;
+
 export const memberStatRow = z.object({
   userId: z.string(),
   displayName: z.string(),

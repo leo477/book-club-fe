@@ -4,7 +4,7 @@ import { AppLink } from '@/components/app-link';
 import { formatDate } from '@/lib/format';
 import { isUpcoming } from './structured-data';
 
-export function Hero({ club }: { club: Club }) {
+export function Hero({ club }: { club: Pick<Club, 'name' | 'coverUrl'> }) {
   const t = useTranslations('CLUB_DETAIL');
   return (
     <div className="relative parchment-hero h-64">
@@ -43,7 +43,7 @@ export function Hero({ club }: { club: Club }) {
   );
 }
 
-export function PrivateBadge({ club }: { club: Club }) {
+export function PrivateBadge({ club }: { club: Pick<Club, 'isPublic'> }) {
   const t = useTranslations('CLUB_DETAIL');
   if (club.isPublic) return null;
   return (

@@ -166,6 +166,11 @@ describe('domain modules over MSW', () => {
     await expect(api.clubs.get('c1')).rejects.toThrow(/Invalid GET \/clubs\/c1/);
   });
 
+  it('accepts the private club stub from clubs.get', async () => {
+    reply = { id: 'c1', name: 'Secret', isPublic: false, memberCount: 4 };
+    await expect(api.clubs.get('c1')).resolves.toEqual(reply);
+  });
+
   it('parses the ban duration string from the backend into a number', async () => {
     reply = [f.banRecord];
     await expect(api.members.bans('c1')).resolves.toMatchObject([{ duration: 3 }]);

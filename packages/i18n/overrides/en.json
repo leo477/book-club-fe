@@ -4,5 +4,10 @@
   },
   "ERRORS": {
     "retry": "Try again"
+  },
+  "CLUB_DETAIL": {
+    "private_stub_title": "Private club",
+    "private_stub_desc": "This club is private. Only its members and organizers can see the details. Send a join request to be let in.",
+    "private_stub_members": "Members: {{ count }}"
   }
 }

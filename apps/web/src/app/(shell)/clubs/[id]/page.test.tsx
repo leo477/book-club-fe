@@ -5,7 +5,7 @@ import { renderToString } from 'react-dom/server';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { club as clubSchema, clubEvent } from '@book-club/contracts';
+import { clubOrStub, clubEvent, club as clubSchema } from '@book-club/contracts';
 import { nest } from '@/i18n/locale';
 import { API, clubJson, eventJson, memberJson, messages, renderWithProviders, roundJson, server, setupApiServer, userJson } from '@/test/harness';
 import ClubDetailPage, { generateMetadata } from './page';
@@ -20,7 +20,8 @@ const state = vi.hoisted(() => ({ locale: 'uk' as 'uk' | 'en' }));
 const toast = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/server-api', () => ({ serverApi }));
 vi.mock('@/lib/toast', () => ({ showToast: toast }));
-vi.mock('@/lib/navigate', () => ({ hardNavigate: vi.fn() }));
+const hardNavigate = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/navigate', () => ({ hardNavigate }));
 vi.mock('qrcode', () => ({ default: { toCanvas: vi.fn().mockResolvedValue(undefined) } }));
 vi.mock('next-intl/server', async () => {
   const { messages } = await import('@/test/harness');
@@ -35,6 +36,7 @@ vi.mock('next-intl/server', async () => {
 
 setupApiServer();
 
+const STUB = { id: ID, name: 'Secret Readers', isPublic: false, memberCount: 7 };
 const t = (key: string) => messages.uk[key] ?? key;
 const parsedClub = (overrides: Record<string, unknown> = {}) => clubSchema.parse(clubJson({ id: ID, organizerId: 'o1', ...overrides }));
 const parsedEvent = (overrides: Record<string, unknown> = {}) => clubEvent.parse(eventJson({ clubId: ID, ...overrides }));
@@ -42,6 +44,7 @@ const parsedEvent = (overrides: Record<string, unknown> = {}) => clubEvent.parse
 beforeEach(() => {
   state.locale = 'uk';
   toast.mockReset();
+  hardNavigate.mockReset();
   getClub.mockReset().mockResolvedValue(parsedClub());
   getEvents.mockReset().mockResolvedValue([parsedEvent()]);
   serverApi.mockReset().mockReturnValue({ clubs: { get: getClub, events: getEvents } });
@@ -54,10 +57,13 @@ interface Scenario {
   members?: Record<string, unknown>[];
   events?: Record<string, unknown>[];
   round?: Record<string, unknown> | null;
+  /** the viewer's own answer to GET /clubs/:id (the browser refetch of a private club) */
+  club?: { status?: number; body: Record<string, unknown> };
+  membersStatus?: number;
 }
 
 /** Client-side API of the signed-in (or guest) viewer; every request is recorded as "METHOD /path". */
-function mockApi({ user = null, mine = [], membership = {}, members = [], events, round = null }: Scenario = {}) {
+function mockApi({ user = null, mine = [], membership = {}, members = [], events, round = null, club, membersStatus = 200 }: Scenario = {}) {
   const calls: string[] = [];
   const log = (method: string, path: string) => calls.push(`${method} ${path}`);
   server.use(
@@ -73,7 +79,11 @@ function mockApi({ user = null, mine = [], membership = {}, members = [], events
     }),
     http.get(`${API}/clubs/${ID}/members`, () => {
       log('GET', 'members');
-      return HttpResponse.json(members);
+      return membersStatus === 200 ? HttpResponse.json(members) : HttpResponse.json({ detail: 'Forbidden' }, { status: membersStatus });
+    }),
+    http.get(`${API}/clubs/${ID}`, () => {
+      log('GET', 'club');
+      return HttpResponse.json(club?.body ?? STUB, { status: club?.status ?? 200 });
     }),
     http.get(`${API}/clubs/${ID}/events`, ({ request }) => {
       const past = new URL(request.url).searchParams.get('include_past') === 'true';
@@ -662,5 +672,142 @@ describe('locales', () => {
     const { container } = renderWithProviders(await ClubDetailPage({ params }), 'en');
     expect(await screen.findByTestId('guest-cta')).toHaveTextContent(messages.en['CLUB_DETAIL.guest_cta_title']!);
     expect(container.querySelector('h1')).toHaveTextContent('Alpha Readers');
+  });
+});
+
+describe('private club stub', () => {
+  const asStub = () => getClub.mockResolvedValue(clubOrStub.parse(STUB));
+  const fullPrivate = (extra: Record<string, unknown> = {}) => clubJson({ id: ID, organizerId: 'o1', isPublic: false, name: 'Secret Readers', description: 'Secret about', ...extra });
+
+  beforeEach(() => {
+    getEvents.mockResolvedValue([]);
+    asStub();
+  });
+
+  it('server HTML is a minimal private view: name, member count, no structured data, no club content', async () => {
+    const html = renderToString(
+      <QueryClientProvider client={new QueryClient()}>
+        <NextIntlClientProvider locale="uk" messages={nest(messages.uk)}>
+          {await ClubDetailPage({ params })}
+        </NextIntlClientProvider>
+      </QueryClientProvider>,
+    );
+    expect(html).toContain('Secret Readers');
+    expect(html).toContain(t('CLUB_DETAIL.private_stub_title'));
+    expect(html).toContain(t('CLUB_DETAIL.private_stub_members').replace('{count}', '7'));
+    expect(html).not.toContain('application/ld+json');
+    expect(html).not.toContain('role="tablist"');
+    expect(html).not.toContain(t('CLUB_DETAIL.about'));
+  });
+
+  it('metadata is generic and noindex, driven by the stub', async () => {
+    const meta = await generateMetadata({ params });
+    expect(meta.robots).toEqual({ index: false, follow: true });
+    expect(meta.title).toBe(messages.uk['SEO.clubs_title']);
+    expect(JSON.stringify(meta)).not.toContain('Secret Readers');
+  });
+
+  it('anonymous visitor sees the private note and the login CTA, and makes no request', async () => {
+    const calls = mockApi();
+    const { container } = await render();
+    expect(screen.getByRole('heading', { level: 1, name: 'Secret Readers' })).toBeInTheDocument();
+    expect(screen.getByTestId('private-stub')).toHaveTextContent(t('CLUB_DETAIL.private_stub_desc'));
+    expect(screen.getByText(new RegExp(t('CLUB_DETAIL.private')))).toBeInTheDocument();
+    expect(await screen.findByTestId('guest-cta')).toBeInTheDocument();
+    expect(within(screen.getByTestId('guest-cta')).getByTestId('guest-cta-login')).toHaveAttribute('href', '/login');
+    expect(container.querySelector('script[type="application/ld+json"]')).toBeNull();
+    expect(screen.queryByTestId('guest-members-hidden')).toBeNull();
+    await new Promise((r) => setTimeout(r, 30));
+    expect(calls).toEqual([]);
+  });
+
+  it('signed-in non-member refetches on its own, stays on the stub and can send a join request', async () => {
+    const calls = mockApi({ user: userJson({ id: 'u1' }) });
+    const joins: unknown[] = [];
+    server.use(
+      http.post(`${API}/clubs/${ID}/join`, async ({ request }) => {
+        joins.push(await request.json());
+        return HttpResponse.json({ status: 'pending' });
+      }),
+    );
+    const u = userEvent.setup();
+    await render();
+    await waitFor(() => expect(calls).toContain('GET club'));
+    await u.click(await screen.findByTestId('join-button'));
+    expect(await screen.findByTestId('join-pending')).toBeDisabled();
+    expect(toast).toHaveBeenCalledWith('success', t('CLUBS.join_request_sent'));
+    expect(joins).toEqual([{}]);
+    expect(screen.getByTestId('private-stub')).toBeInTheDocument();
+    expect(calls).not.toContain('GET members');
+  });
+
+  it('a pending request shows the disabled pending button', async () => {
+    mockApi({ user: userJson({ id: 'u1' }), membership: { joinRequestStatus: 'pending' } });
+    await render();
+    expect(await screen.findByTestId('join-pending')).toBeDisabled();
+  });
+
+  it('a failing refetch keeps the stub without a toast, a redirect or a retry loop', async () => {
+    const calls = mockApi({ user: userJson({ id: 'u1' }), club: { status: 500, body: { detail: 'down' } } });
+    await render();
+    expect(await screen.findByTestId('join-button')).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(calls.filter((c) => c === 'GET club')).toHaveLength(1);
+    expect(toast).not.toHaveBeenCalled();
+    expect(screen.getByTestId('private-stub')).toBeInTheDocument();
+  });
+
+  it('a 403 on the refetch keeps the stub and does not navigate away', async () => {
+    mockApi({ user: userJson({ id: 'u1' }), club: { status: 403, body: { detail: 'Forbidden' } } });
+    await render();
+    expect(await screen.findByTestId('join-button')).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 30));
+    expect(hardNavigate).not.toHaveBeenCalled();
+    expect(screen.getByTestId('private-stub')).toBeInTheDocument();
+  });
+
+  it('a member upgrades to the full club without a reload', async () => {
+    const calls = mockApi({
+      user: userJson({ id: 'u1' }),
+      mine: [ID],
+      club: { body: fullPrivate() },
+      members: [memberJson({ userId: 'o1', displayName: 'Org Anizer', role: 'organizer' }), memberJson()],
+    });
+    await render();
+    expect(await screen.findByText('Secret about')).toBeInTheDocument();
+    expect(screen.queryByTestId('private-stub')).toBeNull();
+    expect(await screen.findByTestId('leave-button')).toBeEnabled();
+    expect(await screen.findByText('Grace Hopper')).toBeInTheDocument();
+    expect(screen.getByText(new RegExp(t('CLUB_DETAIL.private')))).toBeInTheDocument();
+    expect(calls).toContain('GET club');
+    expect(document.querySelector('script[type="application/ld+json"]')).toBeNull();
+  });
+
+  it('the organizer upgrades and gets the manage link', async () => {
+    mockApi({ user: userJson({ id: 'o1' }), mine: [ID], club: { body: fullPrivate() }, members: [memberJson({ userId: 'o1', role: 'organizer' })] });
+    await render();
+    expect(await screen.findByRole('link', { name: new RegExp(t('CLUB_MANAGE.manage_button')) })).toHaveAttribute('href', `/clubs/${ID}/manage`);
+    expect(screen.queryByTestId('private-stub')).toBeNull();
+    expect(screen.queryByTestId('leave-button')).toBeNull();
+  });
+
+  it('an admin who is not a member upgrades to the full view', async () => {
+    mockApi({ user: userJson({ id: 'a1', role: 'admin' }), club: { body: fullPrivate() }, members: [memberJson()] });
+    await render();
+    expect(await screen.findByText('Secret about')).toBeInTheDocument();
+    expect(screen.queryByTestId('private-stub')).toBeNull();
+    expect(await screen.findByText('Grace Hopper')).toBeInTheDocument();
+  });
+
+  it('a 403 on the member list after the upgrade neither toasts nor redirects and the page stays usable', async () => {
+    const calls = mockApi({ user: userJson({ id: 'a1', role: 'admin' }), club: { body: fullPrivate() }, membersStatus: 403 });
+    await render();
+    expect(await screen.findByText('Secret about')).toBeInTheDocument();
+    await waitFor(() => expect(calls).toContain('GET members'));
+    await waitFor(() => expect(screen.queryByLabelText(/loading/i)).toBeNull());
+    await new Promise((r) => setTimeout(r, 30));
+    expect(toast).not.toHaveBeenCalled();
+    expect(hardNavigate).not.toHaveBeenCalled();
+    expect(screen.getByRole('heading', { level: 1, name: 'Secret Readers' })).toBeInTheDocument();
   });
 });

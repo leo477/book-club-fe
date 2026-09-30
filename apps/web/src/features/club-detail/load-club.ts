@@ -1,7 +1,7 @@
 import 'server-only';
 import { notFound } from 'next/navigation';
 import { cache } from 'react';
-import type { Club, ClubEvent } from '@book-club/contracts';
+import type { ClubEvent, ClubOrStub } from '@book-club/contracts';
 import { serverApi } from '@/lib/server-api';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -13,7 +13,7 @@ const isMissing = (err: unknown): boolean => {
 };
 
 export interface ClubDetailData {
-  club: Club;
+  club: ClubOrStub;
   events: ClubEvent[];
 }
 
@@ -21,6 +21,7 @@ export interface ClubDetailData {
  * Anonymous and ISR-cached, so the backend's answer for a guest is what every visitor's HTML contains.
  * 404 is the only "missing" answer (Angular shows its not-found panel for any failure; here a transient failure
  * throws to the error boundary instead of being cached as a missing club).
+ * A private club the anonymous caller cannot view comes back as a stub (name and member count only) with no events.
  * Events are best-effort, as in Angular: a failed list renders as empty.
  */
 export const loadClub = cache(async (id: string): Promise<ClubDetailData> => {

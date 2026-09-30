@@ -12,9 +12,7 @@ import { showToast } from '@/lib/toast';
 import { myClubsKey } from '@/features/clubs/use-clubs';
 import { setActionError, useActionError } from './action-error';
 import { describeError } from './describe-error';
-import { membershipKey, useClubRole, useMyMembership } from './use-club-detail';
-
-type ClubRef = Pick<Club, 'id' | 'organizerId'>;
+import { membershipKey, useClubRole, useMyMembership, type ClubRef } from './use-club-detail';
 
 const actionKey = (clubId: string) => ['club', clubId, 'membership-action'] as const;
 const NOT_MEMBER: MyMembership = { isMember: false, role: null, joinRequestStatus: 'none' };

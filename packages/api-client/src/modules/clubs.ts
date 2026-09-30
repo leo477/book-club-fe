@@ -1,5 +1,6 @@
 import {
   club,
+  clubOrStub,
   clubEvent,
   clubStats,
   joinClubResponse,
@@ -17,7 +18,8 @@ const events = z.array(clubEvent);
 export const clubsApi = (c: ApiClient) => ({
   list: (options?: { skipAuthRedirect?: boolean }) => c.get('/clubs', clubs, options),
   mine: () => c.get('/clubs/my', clubs),
-  get: (id: string, options?: { skipAuthRedirect?: boolean }) => c.get(`/clubs/${id}`, club, options),
+  get: (id: string, options?: { skipAuthRedirect?: boolean; suppressErrorToast?: boolean }) =>
+    c.get(`/clubs/${id}`, clubOrStub, options),
   create: (body: CreateClubRequest) => c.post('/clubs', club, body),
   update: (id: string, body: UpdateClubRequest) => c.patch(`/clubs/${id}`, club, body),
   pause: (id: string) => c.patch(`/clubs/${id}/pause`, club, {}),

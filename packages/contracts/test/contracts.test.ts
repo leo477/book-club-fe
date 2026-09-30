@@ -10,9 +10,12 @@ import {
   chatWsServerMessage,
   club,
   clubEvent,
+  clubOrStub,
+  clubStub,
   clubMember,
   clubStats,
   geocodeSuggestion,
+  isClubStub,
   mapsKeyConfig,
   parse,
   quiz,
@@ -201,5 +204,31 @@ describe('tolerant response enums', () => {
 
   it('keeps strict enums for requests', () => {
     expect(safeParse(registerRequest, { email: 'e', password: 'p', displayName: 'n', role: 'superuser' }).ok).toBe(false);
+  });
+});
+
+describe('private club stub', () => {
+  const stub = { id: 'c1', name: 'Secret', isPublic: false, memberCount: 4 };
+
+  it('parses exactly the four stub keys and leaves the full schema strict about the rest', () => {
+    expect(parse(clubStub, stub)).toEqual(stub);
+    expect(safeParse(club, stub).ok).toBe(false);
+  });
+
+  it('tells a stub from a full club, including a full private club', () => {
+    const parsedStub = parse(clubOrStub, stub);
+    expect(isClubStub(parsedStub)).toBe(true);
+    const full = parse(clubOrStub, { ...clubPayload, isPublic: false });
+    expect(isClubStub(full)).toBe(false);
+    expect(full).toMatchObject({ organizerId: clubPayload.organizerId, isPublic: false });
+    expect(isClubStub(parse(clubOrStub, clubPayload))).toBe(false);
+  });
+
+  it('does not let a malformed full club through as a stub, nor a public stub', () => {
+    const incomplete = { ...clubPayload, isPublic: false, description: undefined };
+    expect(safeParse(clubOrStub, incomplete).ok).toBe(false);
+    expect(safeParse(clubOrStub, { ...stub, isPublic: true }).ok).toBe(false);
+    expect(safeParse(clubOrStub, { ...stub, memberCount: 'many' }).ok).toBe(false);
+    expect(safeParse(clubOrStub, { ...stub, organizerId: null }).ok).toBe(false);
   });
 });
