@@ -658,6 +658,7 @@ describe('events tabs', () => {
     await u.keyboard('{ArrowRight}');
     expect(history).toHaveAttribute('aria-selected', 'true');
     expect(await screen.findByText('Old night')).toBeInTheDocument();
+    expect(calls).toContain('GET events?include_past');
     expect(window.location.pathname + window.location.search).toBe(`/clubs/${ID}`);
   });
 
