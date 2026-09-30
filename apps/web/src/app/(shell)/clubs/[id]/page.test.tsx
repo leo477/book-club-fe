@@ -429,11 +429,13 @@ describe('member', () => {
   });
 
   it('cancelling attendance decrements the count', async () => {
-    mockApi(member({ events: [eventJson({ clubId: ID, attendeeCount: 2, isAttending: true })] }));
+    const events = [eventJson({ clubId: ID, attendeeCount: 2, isAttending: true })];
+    mockApi(member({ events }));
     const deleted: string[] = [];
     server.use(
       http.delete(`${API}/events/e1/attend`, () => {
         deleted.push('e1');
+        events[0] = eventJson({ clubId: ID, attendeeCount: 1, isAttending: false });
         return new HttpResponse(null, { status: 204 });
       }),
     );
@@ -516,12 +518,66 @@ describe('organizer', () => {
     expect(screen.queryByRole('button', { name: new RegExp(`${t('MEMBERS.kick')} Owner`) })).toBeNull();
   });
 
+  it('refetches the members after a failed kick, and keeps a concurrent kick removed when the other one fails', async () => {
+    const members = [memberJson({ userId: 'o1', displayName: 'Owner', role: 'organizer' }), memberJson(), memberJson({ userId: 'm2', displayName: 'Alan Turing' })];
+    const calls = mockApi(owner({ members }));
+    let failFirst: (r: Response) => void = () => {};
+    server.use(
+      http.delete(`${API}/clubs/${ID}/members/m1`, () => new Promise<Response>((r) => (failFirst = r))),
+      http.delete(`${API}/clubs/${ID}/members/m2`, () => {
+        members.splice(2, 1);
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const u = userEvent.setup();
+    await render();
+    await u.click(await screen.findByRole('button', { name: `${t('MEMBERS.kick')} Grace Hopper` }));
+    await u.click(screen.getByRole('button', { name: `${t('MEMBERS.kick')} Alan Turing` }));
+    await waitFor(() => expect(screen.queryByText('Alan Turing')).toBeNull());
+    const before = calls.filter((c) => c === 'GET members').length;
+    failFirst(HttpResponse.json({ detail: 'Cannot remove' }, { status: 400 }));
+    await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Cannot remove'));
+    expect(await screen.findByText('Grace Hopper')).toBeInTheDocument();
+    expect(screen.queryByText('Alan Turing')).toBeNull();
+    await waitFor(() => expect(calls.filter((c) => c === 'GET members').length).toBeGreaterThan(before));
+  });
+
+  it('closes the ban menu and the QR dialog on an outside click, and returns focus to the trigger on Escape', async () => {
+    mockApi(owner({ members: [memberJson({ socials: { telegram: 'grace' }, socialsPublic: true })] }));
+    const u = userEvent.setup();
+    await render();
+    const qr = await screen.findByRole('button', { name: `${t('MEMBERS.show_qr')} Grace Hopper` });
+    await u.click(qr);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await u.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(qr).toHaveFocus();
+
+    const ban = screen.getByRole('button', { name: `${t('MEMBERS.ban')} Grace Hopper` });
+    await u.click(ban);
+    expect(document.querySelector('menu')).not.toBeNull();
+    await u.keyboard('{Escape}');
+    expect(document.querySelector('menu')).toBeNull();
+    expect(ban).toHaveFocus();
+
+    await u.click(ban);
+    await u.click(document.body);
+    expect(document.querySelector('menu')).toBeNull();
+    await u.click(qr);
+    await u.click(within(screen.getByRole('dialog')).getByText('Grace Hopper'));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await u.click(document.body);
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
   it('bans through the duration menu', async () => {
-    mockApi(owner({ members: [memberJson()] }));
+    const members = [memberJson()];
+    mockApi(owner({ members }));
     const bans: unknown[] = [];
     server.use(
       http.post(`${API}/clubs/${ID}/members/m1/ban`, async ({ request }) => {
         bans.push(await request.json());
+        members.length = 0;
         return HttpResponse.json({ userId: 'm1', clubId: ID, bannedAt: '2026-01-01T00:00:00Z', duration: 3, bannedBy: 'o1' });
       }),
     );
@@ -548,6 +604,7 @@ describe('organizer', () => {
 });
 
 describe('events tabs', () => {
+  const member = (extra: Scenario = {}) => ({ user: userJson({ id: 'u1' }), mine: [ID], ...extra });
   const past = [
     eventJson({ id: 'p1', clubId: ID, title: 'Old night', date: '2020-01-01T18:00:00Z', status: 'held', hasWinner: true }),
     eventJson({ id: 'p2', clubId: ID, title: 'Older night', date: '2019-01-01T18:00:00Z', status: 'held', hasWinner: true, winnerId: 'm1', winnerName: 'Grace' }),
@@ -565,6 +622,29 @@ describe('events tabs', () => {
     return calls;
   }
 
+  it('names the tab list and the sort group apart from the heading, and puts the event in the RSVP name', async () => {
+    mockApi(member({ events: [eventJson({ clubId: ID }), eventJson({ id: 'e2', clubId: ID, title: 'Second night', date: '2099-06-01T18:00:00Z' })] }));
+    await render();
+    expect(await screen.findByRole('tablist', { name: t('CLUB_DETAIL.events_title') })).toBeInTheDocument();
+    expect(await screen.findByRole('group', { name: t('CLUB_DETAIL.events_sort_aria') })).toBeInTheDocument();
+    const buttons = await screen.findAllByTestId('event-rsvp-button');
+    expect(buttons[0]).toHaveAccessibleName(new RegExp(`${t('events.rsvp.join')} — Dune night`));
+  });
+
+  it('offers no RSVP on past events in the history tab', async () => {
+    tabsApi(member());
+    server.use(
+      http.get(`${API}/clubs/${ID}/events`, ({ request }) =>
+        HttpResponse.json(new URL(request.url).searchParams.get('include_past') === 'true' ? [eventJson({ id: 'p9', clubId: ID, title: 'Gone night', date: '2020-01-01T18:00:00Z', status: 'scheduled' })] : [eventJson({ clubId: ID })]),
+      ),
+    );
+    const u = userEvent.setup();
+    await render();
+    await u.click(await screen.findByRole('tab', { name: t('CLUB_DETAIL.events_tab_history') }));
+    expect(await screen.findByText('Gone night')).toBeInTheDocument();
+    expect(within(screen.getByRole('tabpanel')).queryByTestId('event-rsvp-button')).toBeNull();
+  });
+
   it('has the upcoming and history tabs with roving keyboard focus, and does not touch the URL', async () => {
     const calls = tabsApi();
     const u = userEvent.setup();
@@ -578,7 +658,6 @@ describe('events tabs', () => {
     await u.keyboard('{ArrowRight}');
     expect(history).toHaveAttribute('aria-selected', 'true');
     expect(await screen.findByText('Old night')).toBeInTheDocument();
-    expect(calls).toContain('GET events?include_past');
     expect(window.location.pathname + window.location.search).toBe(`/clubs/${ID}`);
   });
 

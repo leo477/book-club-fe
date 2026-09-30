@@ -12,7 +12,7 @@ export function Hero({ club }: { club: Pick<Club, 'name' | 'coverUrl'> }) {
         // eslint-disable-next-line @next/next/no-img-element -- cover URLs are arbitrary hosts; no image optimizer is configured
         <img
           src={club.coverUrl}
-          alt={`${club.name} cover`}
+          alt={t('cover_alt', { name: club.name })}
           width={1280}
           height={256}
           referrerPolicy="no-referrer"

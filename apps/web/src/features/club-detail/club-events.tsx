@@ -79,14 +79,17 @@ export function ClubEventsInteractive({ club, initialEvents }: ClubEventsProps) 
     },
     onMutate: async ({ eventId, attending }) => {
       await queryClient.cancelQueries({ queryKey: liveKey });
-      const previous = queryClient.getQueryData<ClubEvent[]>(liveKey);
-      queryClient.setQueryData<ClubEvent[]>(liveKey, patchAttendance(previous ?? [...initialEvents], eventId, attending));
-      return { previous };
+      const base = queryClient.getQueryData<ClubEvent[]>(liveKey) ?? [...initialEvents];
+      queryClient.setQueryData<ClubEvent[]>(liveKey, patchAttendance(base, eventId, attending));
+      return { before: base.find((e) => e.id === eventId) };
     },
-    onError: (err, _vars, context) => {
-      queryClient.setQueryData(liveKey, context?.previous);
+    // restore only the affected event, so a concurrent RSVP on another event is not undone
+    onError: (err, { eventId }, context) => {
+      const { before } = context ?? {};
+      if (before) queryClient.setQueryData<ClubEvent[]>(liveKey, (list) => list?.map((e) => (e.id === eventId ? before : e)));
       showToast('error', describeError(err, tErrors));
     },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: liveKey }),
   });
   const attendingId = attend.isPending ? attend.variables.eventId : null;
 
@@ -108,12 +111,12 @@ export function ClubEventsInteractive({ club, initialEvents }: ClubEventsProps) 
     },
   });
 
-  const card = (event: ClubEvent, isAttending: boolean) => {
+  const card = (event: ClubEvent, isAttending: boolean, rsvpAllowed = true) => {
     const rsvp = (attending: boolean) => attend.mutate({ eventId: event.id, attending });
     let actions: ReactNode = null;
     if (role.user?.id === event.organizerId) {
       actions = <span className="text-xs font-semibold text-[var(--color-primary-600)] dark:text-[#fbbf24]">{tEvents('organizer_badge')}</span>;
-    } else if (role.isAuthenticated && event.status !== 'cancelled' && event.status !== 'held') {
+    } else if (rsvpAllowed && role.isAuthenticated && event.status !== 'cancelled' && event.status !== 'held') {
       actions = (
         <Button
           type="button"
@@ -124,6 +127,8 @@ export function ClubEventsInteractive({ club, initialEvents }: ClubEventsProps) 
           className={event.isAttending ? 'bg-[var(--color-accent-600)] hover:bg-[var(--color-accent-700)] text-white' : 'bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white'}
         >
           {isAttending ? <Spinner className="text-xs" /> : event.isAttending ? `${tRsvp('attending')} · ${tRsvp('cancel')}` : tRsvp('join')}
+          {' '}
+          <span className="sr-only">— {event.title}</span>
         </Button>
       );
     }
@@ -142,14 +147,14 @@ export function ClubEventsInteractive({ club, initialEvents }: ClubEventsProps) 
     >
 
       <Tabs value={tab} onValueChange={(value) => setTab(value as Tab)}>
-        <TabsList className="mb-4">
+        <TabsList className="mb-4" aria-label={t('events_title')}>
           <TabsTrigger value="upcoming">{t('events_tab_upcoming')}</TabsTrigger>
           <TabsTrigger value="history">{t('events_tab_history')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="upcoming">
           {upcoming.length > 1 && (
-            <div className="flex flex-wrap gap-2 mb-5" role="group" aria-label={t('events_title')}>
+            <div className="flex flex-wrap gap-2 mb-5" role="group" aria-label={t('events_sort_aria')}>
               {SORTS.map((option) => (
                 <button
                   key={option.key}
@@ -188,7 +193,7 @@ export function ClubEventsInteractive({ club, initialEvents }: ClubEventsProps) 
             <ul className={EVENTS_GRID}>
               {past.data.map((event) => (
                 <li key={event.id} className="flex flex-col gap-2">
-                  {card(event, false)}
+                  {card(event, false, false)}
                   {event.hasWinner && event.winnerId && <p className="text-xs text-[var(--color-primary-500)] px-1">🏆 {event.winnerName}</p>}
                   {role.isOwner && event.hasWinner && !event.winnerId &&
                     (winnerEventId === event.id ? (

@@ -4,7 +4,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { BanDuration, ClubMember } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { api } from '@/lib/api';
 import { initials } from '@/lib/format';
@@ -44,16 +44,33 @@ export function MemberList({ clubId, isOwner }: { clubId: string; isOwner: boole
   const [qrFor, setQrFor] = useState<string | null>(null);
   const [banMenuFor, setBanMenuFor] = useState<string | null>(null);
 
+  const trigger = useRef<HTMLElement | null>(null);
+  const open = (setter: (id: string | null) => void, id: string | null, el: HTMLElement) => {
+    trigger.current = el;
+    setter(id);
+  };
+
   const popoverOpen = qrFor !== null || banMenuFor !== null;
   useEffect(() => {
     if (!popoverOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
+    const close = () => {
       setQrFor(null);
       setBanMenuFor(null);
     };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      close();
+      trigger.current?.focus();
+    };
+    const onPointerDown = (e: PointerEvent) => {
+      if (e.target instanceof Element && !e.target.closest('[data-popover], [data-popover-trigger]')) close();
+    };
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.removeEventListener('pointerdown', onPointerDown);
+    };
   }, [popoverOpen]);
 
   const remove = useMutation({
@@ -63,14 +80,26 @@ export function MemberList({ clubId, isOwner }: { clubId: string; isOwner: boole
     },
     onMutate: async ({ userId }) => {
       await queryClient.cancelQueries({ queryKey: membersKey(clubId) });
-      const previous = queryClient.getQueryData<ClubMember[]>(membersKey(clubId));
-      queryClient.setQueryData<ClubMember[]>(membersKey(clubId), (list) => list?.filter((m) => m.userId !== userId));
-      return { previous };
+      const list = queryClient.getQueryData<ClubMember[]>(membersKey(clubId));
+      const index = list?.findIndex((m) => m.userId === userId) ?? -1;
+      const removed = list?.[index];
+      queryClient.setQueryData<ClubMember[]>(membersKey(clubId), (current) => current?.filter((m) => m.userId !== userId));
+      return { removed, index };
     },
+    // put back only the member this call removed, never a whole snapshot that would resurrect another call's kick
     onError: (err, _vars, context) => {
-      queryClient.setQueryData(membersKey(clubId), context?.previous);
+      const { removed, index = 0 } = context ?? {};
+      if (removed) {
+        queryClient.setQueryData<ClubMember[]>(membersKey(clubId), (current) => {
+          if (!current || current.some((m) => m.userId === removed.userId)) return current;
+          const next = [...current];
+          next.splice(Math.min(index, next.length), 0, removed);
+          return next;
+        });
+      }
       toastError(err, tErrors);
     },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: membersKey(clubId) }),
   });
 
   if (query.isPending) {
@@ -134,7 +163,8 @@ export function MemberList({ clubId, isOwner }: { clubId: string; isOwner: boole
                           className="ml-1 text-xs"
                           aria-expanded={qrFor === member.userId}
                           aria-label={`${t('show_qr')} ${name}`}
-                          onClick={() => setQrFor(qrFor === member.userId ? null : member.userId)}
+                          data-popover-trigger=""
+                          onClick={(e) => open(setQrFor, qrFor === member.userId ? null : member.userId, e.currentTarget)}
                         >
                           <span aria-hidden="true">⊡</span> {t('show_qr')}
                         </Button>
@@ -142,6 +172,7 @@ export function MemberList({ clubId, isOwner }: { clubId: string; isOwner: boole
                       {qrFor === member.userId && (
                         <div
                           role="dialog"
+                          data-popover=""
                           aria-modal="false"
                           aria-label={`${member.displayName} QR`}
                           className="absolute right-0 top-full mt-2 z-20 rounded-2xl glass-card-strong shadow-xl p-4 flex flex-col items-center gap-2"
@@ -170,12 +201,14 @@ export function MemberList({ clubId, isOwner }: { clubId: string; isOwner: boole
                         className="text-orange-600 hover:text-orange-700"
                         aria-expanded={banMenuFor === member.userId}
                         aria-label={`${t('ban')} ${name}`}
-                        onClick={() => setBanMenuFor(banMenuFor === member.userId ? null : member.userId)}
+                        data-popover-trigger=""
+                        onClick={(e) => open(setBanMenuFor, banMenuFor === member.userId ? null : member.userId, e.currentTarget)}
                       >
                         {t('ban')}
                       </Button>
                       {banMenuFor === member.userId && (
                         <menu
+                          data-popover=""
                           className="absolute right-0 bottom-full mb-1 z-30 rounded-xl glass-card-strong shadow-xl py-1 min-w-36"
                         >
                           {BAN_DURATIONS.map((duration) => (
