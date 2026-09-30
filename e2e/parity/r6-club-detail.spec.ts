@@ -185,7 +185,8 @@ test.describe('P6 SEO (raw HTML, no JS)', () => {
     await page.getByTestId('join-button').click();
     await expect(page.getByTestId('join-pending')).toBeVisible();
     expect(nonMember.log.filter((l) => l.path === `/clubs/${IDS.private}/members`)).toEqual([]);
-    expect(nonMember.log.filter((l) => l.method === 'GET' && l.path === `/clubs/${IDS.private}`)).toHaveLength(1);
+    // one load, one refetch after the join so an immediate membership upgrades the gate
+    await expect.poll(() => nonMember.log.filter((l) => l.method === 'GET' && l.path === `/clubs/${IDS.private}`).length).toBe(2);
 
     for (const role of ['member', 'organizer', 'admin'] as const) {
       const errs = watchConsole(page);
@@ -227,7 +228,7 @@ test.describe('P6 SEO (raw HTML, no JS)', () => {
     await page.goto(club());
     await expect(page.getByTestId('club-name')).toHaveText(/Нічні читачі/i);
     await expect(page.getByText('Читаємо сучасну українську прозу щочетверга.')).toBeVisible();
-    await expect(page.getByText('Новорічна зустріч')).toBeVisible();
+    await expect(page.getByText('Новорічна зустріч', { exact: true })).toBeVisible();
     await expect(page.getByText('Весняна зустріч')).toBeVisible();
     await expect(page.getByText('Кав’ярня')).toBeVisible();
     await page.screenshot({ path: `${SHOTS}/no-js.png`, fullPage: true });
@@ -377,7 +378,7 @@ test.describe('P4/P3 roles, join, leave, vote (both targets)', () => {
     expect(before).toMatch(/\b1\s+голос\s/);
     expect(before).toMatch(/5\s+голосів/);
     expect(before).toMatch(/21\s+голос\s/);
-    const buttons = page.getByRole('button', { name: /^Голосувати$/ });
+    const buttons = page.getByRole('button', { name: /^Голосувати(\s—.*)?$/ });
     await buttons.first().click();
     await expect.poll(() => log.filter((l) => l.method === 'POST' && /vote$/.test(l.path)).length).toBe(1);
     expect(log.find((l) => l.method === 'POST' && /vote$/.test(l.path))!.path).toBe(`/clubs/${IDS.public}/book-vote/options/opt-1/vote`);
@@ -394,7 +395,7 @@ test.describe('P4/P3 roles, join, leave, vote (both targets)', () => {
     test.skip(!nextOnly(ti.project.name), 'next-only: the optimistic update is a stated requirement for the port');
     const { log } = await open(page, 'member', IDS.public, {}, { 'POST /clubs/:id/book-vote/options/:opt/vote': 1500 });
     const section = page.locator('section', { hasText: /Голосування/ }).first();
-    await page.getByRole('button', { name: /^Голосувати$/ }).first().click();
+    await page.getByRole('button', { name: /^Голосувати(\s—.*)?$/ }).first().click();
     await expect(section).toContainText('3 голоси', { timeout: 800 });
     expect(log.filter((l) => l.method === 'POST')).toHaveLength(1);
     await expect.poll(() => log.filter((l) => l.path.endsWith('/book-vote/round')).length, { timeout: 8000 }).toBeGreaterThan(1);
@@ -403,7 +404,7 @@ test.describe('P4/P3 roles, join, leave, vote (both targets)', () => {
     const fail = await installApiMock(failing, newState('member', { fail: { 'POST /clubs/:id/book-vote/options/:opt/vote': 503 } }));
     await failing.goto(club());
     await settle(failing);
-    await failing.getByRole('button', { name: /^Голосувати$/ }).first().click();
+    await failing.getByRole('button', { name: /^Голосувати(\s—.*)?$/ }).first().click();
     await expect(failing.locator('[data-sonner-toast]').first()).toBeVisible({ timeout: 20_000 }); // after the single 503 retry
     await expect(failing.locator('section', { hasText: /Голосування/ }).first()).toContainText('2 голоси');
     expect(fail.log.filter((l) => l.method === 'POST' && /vote$/.test(l.path)).length).toBe(2);
@@ -510,7 +511,7 @@ test.describe('P3 states', () => {
     const errs = watchConsole(page);
     await open(page, 'member', IDS.public, { fail: { 'GET /clubs/:id/my-membership': 503, 'GET /clubs/:id/members': 403 } });
     await expect(page.getByTestId('club-name')).toBeVisible();
-    await expect(page.getByText('Новорічна зустріч')).toBeVisible();
+    await expect(page.getByText('Новорічна зустріч', { exact: true })).toBeVisible();
     expect(errs).toEqual([]);
   });
 
@@ -518,7 +519,7 @@ test.describe('P3 states', () => {
     test.skip(!nextOnly(ti.project.name), 'next-only');
     await open(page, 'guest', IDS.public, { fail: { 'GET /auth/session-status': 503 } });
     await expect(page.getByTestId('club-name')).toBeVisible();
-    await expect(page.getByText('Новорічна зустріч')).toBeVisible();
+    await expect(page.getByText('Новорічна зустріч', { exact: true })).toBeVisible();
   });
 });
 

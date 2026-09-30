@@ -81,11 +81,11 @@ const journeys: Record<string, { role: Role; over?: Parameters<typeof newState>[
       await p.goto(club);
       await settle(p);
       await scrollThrough(p);
-      await p.getByRole('button', { name: /^Голосувати$/ }).first().click();
+      await p.getByRole('button', { name: /^Голосувати(\s—.*)?$/ }).first().click();
       await p.getByRole('button', { name: /Проголосовано/ }).waitFor();
       await p.waitForTimeout(800);
       await p.getByRole('button', { name: /Проголосовано/ }).click();
-      await p.getByRole('button', { name: /^Голосувати$/ }).first().waitFor();
+      await p.getByRole('button', { name: /^Голосувати(\s—.*)?$/ }).first().waitFor();
       await p.waitForTimeout(800);
     },
   },

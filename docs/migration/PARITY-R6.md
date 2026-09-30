@@ -145,3 +145,16 @@ Decisions needed from design: (a) accept gray-600 / ink-muted for all light seco
 - `repomix-output.md` shows unstaged changes produced by other commits/hooks; it is not part of this change.
 - Follow-up commits also carry a one-line `repomix-output.md` change each: the husky/lint-staged hook stages it.
 - Scratch probes (`_probe.spec.ts`, `_axe.spec.ts`, an exact-tolerance Playwright config) were used to get the exact visual ratios and axe details and deleted again.
+
+## Review fixes (react-reviewer, CHANGES REQUESTED)
+
+- B1: `loadClub` lower-cases the id once (`key`) for the backend URLs and the tag `club:<lower>`, so every casing shares one data-cache entry and the revalidate hook (which lower-cases tags) reaches it. Metadata canonical and JSON-LD url are the lower-case URL. No 308 redirect was added: it would need a second place in the strangler manifest/proxy that knows the casing rule, and the canonical already consolidates the duplicates.
+- B2: the optimistic vote follows the backend rule "one vote per round" (`vote_service` deletes the user's previous vote): switching clears `hasVoted` and decrements the old option, the total only grows when there was no prior vote. Unit tests cover the switch and the rollback.
+- F1: `serverApi(next, { timeoutMs })`; `loadClub` uses 9 s (`CLUB_FETCH_TIMEOUT_MS`), every other caller keeps 3 s. A timeout is rethrown (not 404, never cached as missing).
+- F2: join and leave invalidate `clubKey(id)` (an upgraded private club drops back to the stub after leaving; an immediate join on a stub upgrades the gate), still with `skipAuthRedirect` and `suppressErrorToast`. The spec `private club stub` therefore expects two `GET /clubs/:id` (load and the refetch after the join).
+- F3/F4: kick/ban and RSVP roll back only the affected row and invalidate on settle; history cards show no RSVP.
+- F5: `loadClub` reduces any anonymous record with `!isPublic` to the stub fields (and drops its events), so an old backend's full private record is never rendered; the data-cache entry itself still holds what the backend sent.
+- F6: QR dialog and ban menu close on outside pointer-down and on Escape, Escape returns focus to the trigger (hand-rolled, no Radix popover, to keep the budget).
+- F7/F8/F9/F13: tab list and sort group have their own labels, vote/RSVP/remove names include the option or event title (the parity specs match `Голосувати` with an optional ` — title` suffix and use exact text for event titles), the action banner is keyed by club and stays 12 s (dismiss button unchanged), cover alt and QR label are i18n keys (`CLUB_DETAIL.cover_alt|qr_code_aria|events_sort_aria`), the title switches to the club name when a stub upgrades.
+
+Results: `r6-club-detail` + `r6-dual` **89 passed, 37 skipped, 0 failed**; `r6-visual` **18/18 within 0.02**; `/clubs/:id` first-load JS **176.5 KB gzip-9** (budget 181).
