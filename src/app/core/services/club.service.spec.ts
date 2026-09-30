@@ -3,6 +3,7 @@ import { provideZonelessChangeDetection } from '@angular/core';
 import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
+import { CANARY_TRACK } from './canary-analytics.service';
 import { ClubService } from './club.service';
 import { AuthService } from '../auth/auth.service';
 import { environment } from '../../../environments/environment';
@@ -11,6 +12,7 @@ describe('ClubService', () => {
   let service: ClubService;
   let authSpy: { currentUser: ReturnType<typeof vi.fn> };
   let httpMock: HttpTestingController;
+  const track = vi.fn();
 
   beforeEach(() => {
     authSpy = {
@@ -22,6 +24,7 @@ describe('ClubService', () => {
         provideHttpClient(withXhr()),
         provideHttpClientTesting(),
         ClubService,
+        { provide: CANARY_TRACK, useValue: track },
         { provide: AuthService, useValue: authSpy },
         { provide: TranslateService, useValue: { instant: (key: string) => key } },
       ],
@@ -302,6 +305,19 @@ describe('ClubService', () => {
     expect(req.request.method).toBe('POST');
     req.flush({ status: 'pending' });
     expect(await promise).toBe('pending');
+  });
+
+  it('joinClub emits join_club only on success', async () => {
+    track.mockClear();
+    const failed = service.joinClub('club-1');
+    httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/join`).flush({}, { status: 500, statusText: 'err' });
+    await expect(failed).rejects.toBeTruthy();
+    expect(track).not.toHaveBeenCalled();
+
+    const ok = service.joinClub('club-1');
+    httpMock.expectOne(`${environment.apiUrl}/clubs/club-1/join`).flush({ status: 'member' });
+    await ok;
+    expect(track).toHaveBeenCalledWith('join_club', { app: 'angular', bucket: null });
   });
 
   it('getMyMembership fetches membership state', async () => {
