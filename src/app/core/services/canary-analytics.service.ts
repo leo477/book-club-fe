@@ -19,10 +19,12 @@ export function bucketLabel(value: string | null | undefined): string | null {
 }
 
 export function sanitizeMessage(raw: unknown): string {
-  const text = raw instanceof Error ? raw.message : typeof raw === 'string' ? raw : 'non-error';
+  let text = 'non-error';
+  if (raw instanceof Error) text = raw.message;
+  else if (typeof raw === 'string') text = raw;
   return text
     .replace(/https?:\/\/\S+/g, '<url>')
-    .replace(/[^\s@]+@[^\s@]+/g, '<email>')
+    .replace(/[^\s@]{1,64}@[^\s@]{1,255}/g, '<email>')
     .replace(/\d{5,}/g, '<n>')
     .slice(0, MAX_MESSAGE);
 }
