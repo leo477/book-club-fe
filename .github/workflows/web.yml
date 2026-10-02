@@ -5,14 +5,14 @@ name: Web
 
 on:
   push:
-    branches: [develop, main]
+    branches: [main]
     paths:
       - 'apps/web/**'
       - 'packages/**'
       - 'package-lock.json'
       - '.github/workflows/web.yml'
   pull_request:
-    branches: [develop, main]
+    branches: [main]
     paths:
       - 'apps/web/**'
       - 'packages/**'

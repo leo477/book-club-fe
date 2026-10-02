@@ -1,13 +1,13 @@
 # Angular 20 CI Workflow
-# Triggers on push to develop and pull requests targeting develop or main
+# Triggers on push to main and pull requests targeting main
 
 name: CI
 
 on:
   push:
-    branches: [develop, main]
+    branches: [main]
   pull_request:
-    branches: [develop, main]
+    branches: [main]
 
 permissions:
   contents: read
@@ -160,7 +160,7 @@ jobs:
     needs: [test]
     # Skip SonarCloud for Dependabot PRs — GitHub withholds secrets from dependabot[bot]
     # by default on `pull_request` events, causing SONAR_TOKEN to be empty (exit code 3).
-    # Analysis will still run on the merge commit once merged to develop/main.
+    # Analysis will still run on the merge commit once merged to main.
     if: github.actor != 'dependabot[bot]'
     permissions:
       contents: read
