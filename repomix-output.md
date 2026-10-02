@@ -153,6 +153,9 @@ apps/
         toaster-host.tsx
         toaster-impl.tsx
       features/
+        auth/
+          require-auth.test.tsx
+          require-auth.tsx
         club-detail/
           action-error.test.ts
           action-error.ts
@@ -213,6 +216,7 @@ apps/
         site.test.ts
         site.ts
         toast.ts
+        use-replace.ts
         utils.ts
         zod-locales-stub.ts
       providers/
