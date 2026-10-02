@@ -8,13 +8,13 @@ import { messages } from '@/test/harness';
 import GlobalError from './global-error';
 import RouteError from './error';
 
-const track = vi.hoisted(() => vi.fn());
-vi.mock('@vercel/analytics', () => ({ track }));
+const fetchMock = vi.fn();
 
 const boom = Object.assign(new Error('secret db password in stack'), { digest: 'abc' });
 
 beforeEach(() => {
-  track.mockReset();
+  fetchMock.mockReset().mockResolvedValue(new Response(null, { status: 204 }));
+  vi.stubGlobal('fetch', fetchMock);
   resetAnalyticsState();
 });
 
@@ -30,7 +30,7 @@ describe('app/error.tsx', () => {
     expect(document.body.textContent).not.toContain('secret');
     await userEvent.click(screen.getByRole('button', { name: messages[locale]['ERRORS.retry']! }));
     expect(reset).toHaveBeenCalledOnce();
-    expect(track).toHaveBeenCalledWith('js_error', expect.objectContaining({ kind: 'boundary' }));
+    expect(JSON.parse(fetchMock.mock.calls[0]![1].body)).toMatchObject({ app: 'next', name: 'js_error', kind: 'boundary' });
   });
 });
 

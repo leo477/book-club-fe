@@ -2,7 +2,7 @@ import { ErrorHandler, Injectable, InjectionToken, inject, isDevMode } from '@an
 import { TranslateService } from '@ngx-translate/core';
 import { ToastService } from '../services/toast.service';
 import { logError } from '../utils/logger.util';
-import { CANARY_TRACK } from '../services/canary-analytics.service';
+import { CanaryAnalyticsService } from '../services/canary-analytics.service';
 
 export const IS_DEV_MODE = new InjectionToken<() => boolean>('IS_DEV_MODE', {
   providedIn: 'root',
@@ -19,7 +19,7 @@ export class GlobalErrorHandler implements ErrorHandler {
   private readonly translate = inject(TranslateService);
   private readonly toast = inject(ToastService);
   private readonly isDevMode = inject(IS_DEV_MODE);
-  private readonly track = inject(CANARY_TRACK);
+  protected readonly canary = inject(CanaryAnalyticsService);
 
   handleError(error: unknown): void {
     logError(error);
@@ -36,22 +36,8 @@ export class GlobalErrorHandler implements ErrorHandler {
     this.toast.error(this.translate.instant('ERRORS.unexpected') as string);
   }
 
-  /**
-   * Single sink for client error telemetry. Forwards to Vercel Analytics, the
-   * only telemetry client the app ships with. To add richer error tracking
-   * (e.g. Sentry), capture the error here.
-   */
-  private report(error: unknown): void {
+  protected report(error: unknown): void {
     if (this.isDevMode()) return;
-
-    this.track('client_error', {
-      message: this.messageOf(error),
-    });
-  }
-
-  private messageOf(error: unknown): string {
-    if (error instanceof Error) return error.message;
-    if (typeof error === 'string') return error;
-    return String((error as { message?: unknown })?.message ?? error);
+    this.canary.reportJsError(error, 'error');
   }
 }
