@@ -49,6 +49,7 @@ The content is organized as follows:
     dependency-review.yml
     i18n-check.yml
     lighthouse.yml
+    release-source.yml
     scorecard.yml
     secret-scan.yml
     stale.yml
@@ -73,6 +74,15 @@ apps/
             page.tsx
         (shell)/
           clubs/
+            [id]/
+              not-found.tsx
+              page.test.tsx
+              page.tsx
+            page.test.tsx
+            page.tsx
+          events/
+            [id]/
+              page.tsx
             page.test.tsx
             page.tsx
           layout.tsx
@@ -81,6 +91,10 @@ apps/
         %5F%5Fui/
           page.tsx
           toast-buttons.tsx
+        %5Finternal/
+          revalidate/
+            route.test.ts
+            route.ts
         fonts/
           cinzel-latin.woff2
           inter-cyrillic.woff2
@@ -97,6 +111,8 @@ apps/
         fonts.ts
         global-error.tsx
         layout.tsx
+        page.test.tsx
+        page.tsx
         robots.test.ts
         robots.ts
         sitemap.test.ts
@@ -144,6 +160,34 @@ apps/
         toaster-host.tsx
         toaster-impl.tsx
       features/
+        auth/
+          require-auth.test.tsx
+          require-auth.tsx
+        club-detail/
+          action-error.test.ts
+          action-error.ts
+          book-vote-section.tsx
+          book-vote.test.tsx
+          book-vote.tsx
+          club-events.tsx
+          club-view.tsx
+          describe-error.test.ts
+          describe-error.ts
+          event-card.tsx
+          events-section.tsx
+          events-static.tsx
+          load-club.ts
+          member-list.tsx
+          members.tsx
+          membership.tsx
+          private-club.tsx
+          private-stub.tsx
+          qr-code.tsx
+          sections.tsx
+          sidebar.tsx
+          structured-data.test.ts
+          structured-data.ts
+          use-club-detail.ts
         clubs/
           club-card.test.tsx
           club-card.tsx
@@ -153,6 +197,22 @@ apps/
           session-timeout.test.tsx
           use-clubs.ts
           use-session.ts
+        events/
+          countdown.test.tsx
+          countdown.tsx
+          event-card.tsx
+          event-data.test.ts
+          event-data.ts
+          event-detail.test.tsx
+          event-detail.tsx
+          event-map.test.tsx
+          event-map.tsx
+          events-feed.test.tsx
+          events-feed.tsx
+          events-intl.tsx
+          rsvp-button.tsx
+          use-events.ts
+          use-venue.ts
       i18n/
         locale.test.ts
         locale.ts
@@ -164,6 +224,8 @@ apps/
         backend-origin.test.ts
         backend-origin.ts
         cookie.ts
+        format.test.ts
+        format.ts
         json-ld.test.tsx
         json-ld.tsx
         navigate.test.ts
@@ -177,6 +239,7 @@ apps/
         site.test.ts
         site.ts
         toast.ts
+        use-replace.ts
         utils.ts
         zod-locales-stub.ts
       providers/
@@ -226,7 +289,10 @@ docs/
     cleanup-pw-audit.sql
     GATE-G1.md
     PARITY-R5.md
+    PARITY-R6.md
+    R6-DEPLOY-SETTINGS.md
     RUNBOOK-STRANGLER.md
+    SECURITY-R6.md
     UI-DELTAS.md
 e2e/
   fixtures/
@@ -239,9 +305,20 @@ e2e/
       guest-auth-pages.json
       guest-browse.json
       member-browse.json
+      r6-guest-history-tab.json
+      r6-guest-view.json
+      r6-join.json
+      r6-leave.json
+      r6-member-vote.json
+      r6-organizer-view.json
+    r6/
+      fixtures.ts
+      helpers.ts
+      mock-backend.ts
     bypass.ts
     expectations.ts
     har-diff.ts
+    har-signature.ts
     html-meta.ts
     member.setup.ts
     routes.ts
