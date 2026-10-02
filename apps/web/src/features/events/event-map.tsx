@@ -3,7 +3,7 @@
 import type { AfterMeetingVenue } from '@book-club/contracts';
 import { AdvancedMarker, APIProvider, Map, Polyline, useMap } from '@vis.gl/react-google-maps';
 import { useTranslations } from 'next-intl';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useMapsConfig, useVenuePosition, useWalkingRoute, type LatLng } from './use-venue';
 
 // Google's documented placeholder id: advanced markers refuse to render on a map without one
@@ -34,6 +34,12 @@ export default function EventMap({ lat, lng, address, afterMeetingVenue }: Props
   const center: LatLng = { lat, lng };
   const venue = useVenuePosition(config.data ? afterMeetingVenue : null);
   const route = useWalkingRoute(center, venue);
+  const venueLat = venue?.lat;
+  const venueLng = venue?.lng;
+  const fitPoints = useMemo<LatLng[] | null>(
+    () => (venueLat === undefined || venueLng === undefined ? null : (route ?? [{ lat, lng }, { lat: venueLat, lng: venueLng }])),
+    [lat, lng, venueLat, venueLng, route],
+  );
 
   if (!config.data) return null;
   return (
@@ -51,7 +57,7 @@ export default function EventMap({ lat, lng, address, afterMeetingVenue }: Props
           <AdvancedMarker position={center} title={address ?? ''} />
           {venue && <AdvancedMarker position={venue} title={afterMeetingVenue?.name ?? ''} />}
           {route && <Polyline path={route} strokeColor="#4f46e5" strokeWeight={4} strokeOpacity={0.8} />}
-          <FitBounds points={venue ? (route ?? [center, venue]) : null} />
+          <FitBounds points={fitPoints} />
         </Map>
       </APIProvider>
       <a
