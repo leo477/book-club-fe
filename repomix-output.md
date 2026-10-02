@@ -80,6 +80,11 @@ apps/
               page.tsx
             page.test.tsx
             page.tsx
+          events/
+            [id]/
+              page.tsx
+            page.test.tsx
+            page.tsx
           layout.tsx
         %5F%5Fstrangler-probe/
           page.tsx
@@ -106,6 +111,8 @@ apps/
         fonts.ts
         global-error.tsx
         layout.tsx
+        page.test.tsx
+        page.tsx
         robots.test.ts
         robots.ts
         sitemap.test.ts
@@ -190,6 +197,22 @@ apps/
           session-timeout.test.tsx
           use-clubs.ts
           use-session.ts
+        events/
+          countdown.test.tsx
+          countdown.tsx
+          event-card.tsx
+          event-data.test.ts
+          event-data.ts
+          event-detail.test.tsx
+          event-detail.tsx
+          event-map.test.tsx
+          event-map.tsx
+          events-feed.test.tsx
+          events-feed.tsx
+          events-intl.tsx
+          rsvp-button.tsx
+          use-events.ts
+          use-venue.ts
       i18n/
         locale.test.ts
         locale.ts

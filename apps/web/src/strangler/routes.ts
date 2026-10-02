@@ -43,4 +43,4 @@ export function isLegacyShadowed(pathname: string, routes: readonly StranglerRou
   return !matchRoute(pathname, routes) && routes.some((route) => route.pattern.includes(':') && compileLoose(route.pattern).test(pathname));
 }
 
-export const manifest: readonly StranglerRoute[] = defineRoutes(['/__strangler-probe', '/privacy', '/terms', '/clubs', '/clubs/:id']);
+export const manifest: readonly StranglerRoute[] = defineRoutes(['/__strangler-probe', '/privacy', '/terms', '/clubs', '/clubs/:id', '/', '/events', '/events/:id']);

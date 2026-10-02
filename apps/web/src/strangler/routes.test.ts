@@ -32,13 +32,16 @@ describe('matchRoute', () => {
 });
 
 describe('manifest', () => {
-  it('owns the strangler probe, privacy, terms, clubs and club detail', () => {
+  it('owns the strangler probe, privacy, terms, clubs, club detail, the root redirect and events', () => {
     expect(manifest.map((r) => [r.pattern, r.owner])).toEqual([
       ['/__strangler-probe', 'next'],
       ['/privacy', 'next'],
       ['/terms', 'next'],
       ['/clubs', 'next'],
       ['/clubs/:id', 'next'],
+      ['/', 'next'],
+      ['/events', 'next'],
+      ['/events/:id', 'next'],
     ]);
     expect(matchRoute('/__strangler-probe')).not.toBeNull();
     expect(matchRoute('/clubs')?.pattern).toBe('/clubs');
@@ -46,6 +49,12 @@ describe('manifest', () => {
     expect(matchRoute(`/clubs/${UUID}`)?.pattern).toBe('/clubs/:id');
     expect(matchRoute(`/clubs/${UUID}/manage`)).toBeNull();
     expect(matchRoute(`/clubs/${UUID}/events/create`)).toBeNull();
+    expect(matchRoute('/')?.pattern).toBe('/');
+    expect(matchRoute('/events')?.pattern).toBe('/events');
+    expect(matchRoute(`/events/${UUID}`)?.pattern).toBe('/events/:id');
+    expect(matchRoute(`/events/${UUID}/edit`)).toBeNull();
+    expect(matchRoute('/events/abc')).toBeNull();
+    expect(matchRoute('/login')).toBeNull();
   });
 });
 
@@ -60,6 +69,8 @@ describe('isLegacyShadowed', () => {
     expect(isLegacyShadowed(`/clubs/${UUID}`)).toBe(false);
     expect(isLegacyShadowed(`/clubs/${UUID}/manage`)).toBe(false);
     expect(isLegacyShadowed('/clubs')).toBe(false);
-    expect(isLegacyShadowed('/events/abc')).toBe(false);
+    expect(isLegacyShadowed('/events/abc')).toBe(true);
+    expect(isLegacyShadowed(`/events/${UUID}/edit`)).toBe(false);
+    expect(isLegacyShadowed('/login')).toBe(false);
   });
 });
