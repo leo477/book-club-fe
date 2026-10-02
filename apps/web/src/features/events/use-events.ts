@@ -34,6 +34,13 @@ export function useRsvp() {
   const tErrors = useTranslations('ERRORS');
   const tEvents = useTranslations('EVENTS');
 
+  const restoreSnapshot = (eventId: string, snapshot: Snapshot | undefined) => {
+    const restore = (before: ClubEvent | undefined) => (list: ClubEvent[] | undefined) => (before ? list?.map((e) => (e.id === eventId ? before : e)) : list);
+    queryClient.setQueryData<ClubEvent[]>(eventsKey, restore(snapshot?.all));
+    queryClient.setQueryData<ClubEvent[]>(myEventsKey, restore(snapshot?.mine));
+    if (snapshot?.detail) queryClient.setQueryData<ClubEvent>(eventKey(eventId), snapshot.detail);
+  };
+
   const mutation = useMutation({
     mutationKey: RSVP_KEY,
     mutationFn: async ({ eventId, attending }: { eventId: string; attending: boolean }) => {
@@ -54,18 +61,20 @@ export function useRsvp() {
       queryClient.setQueryData<ClubEvent>(eventKey(eventId), (e) => patchAttendance(e && [e], eventId, attending)?.[0]);
       return snapshot;
     },
-    onSuccess: (result) => {
-      if (result?.joinRequestStatus === 'pending') showToast('success', tEvents('join_request_sent'));
+    onSuccess: (result, { eventId }, snapshot) => {
+      // a pending join request means the user is not attending yet
+      if (result?.joinRequestStatus === 'pending') {
+        restoreSnapshot(eventId, snapshot);
+        showToast('success', tEvents('join_request_sent'));
+      }
     },
     onError: (err, { eventId, attending }, snapshot) => {
-      const restore = (before: ClubEvent | undefined) => (list: ClubEvent[] | undefined) => (before ? list?.map((e) => (e.id === eventId ? before : e)) : list);
-      queryClient.setQueryData<ClubEvent[]>(eventsKey, restore(snapshot?.all));
-      queryClient.setQueryData<ClubEvent[]>(myEventsKey, restore(snapshot?.mine));
-      if (snapshot?.detail) queryClient.setQueryData<ClubEvent>(eventKey(eventId), snapshot.detail);
+      restoreSnapshot(eventId, snapshot);
       // attend is called with the toast suppressed so a closed registration can get its own message; cancel is toasted by the client
       if (attending) showToast('error', isBadRequest(err) ? tEvents('registration_closed') : describeError(err, tErrors));
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['events'] }),
+    // refetch once the last concurrent RSVP settled so a stale response cannot undo another event's optimistic patch
+    onSettled: () => (queryClient.isMutating({ mutationKey: RSVP_KEY }) === 1 ? queryClient.invalidateQueries({ queryKey: ['events'] }) : undefined),
   });
 
   const pendingIds = useMutationState({ filters: { mutationKey: RSVP_KEY, status: 'pending' }, select: (m) => (m.state.variables as { eventId: string }).eventId });

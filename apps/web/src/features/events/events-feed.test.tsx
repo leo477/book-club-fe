@@ -224,4 +224,52 @@ describe('EventsFeed RSVP', () => {
     await waitFor(() => expect(rsvp()).toHaveTextContent(t('events.rsvp.attending')));
     expect(screen.getByText(`2 ${t('EVENTS.attending')}`)).toBeInTheDocument();
   });
+
+  it('rolls back only the failed row while a concurrent RSVP stays optimistic', async () => {
+    let releaseOk: () => void = () => undefined;
+    const gateOk = new Promise<void>((r) => (releaseOk = r));
+    mockApi({
+      all: [eventJson({ id: 'e1', title: 'First', date: '2099-05-01T18:00:00Z' }), eventJson({ id: 'e2', title: 'Second', date: '2099-05-02T18:00:00Z' })],
+    });
+    server.use(
+      http.post(`${API}/events/e1/attend`, () => HttpResponse.json({ detail: 'Event is full' }, { status: 409 })),
+      http.post(`${API}/events/e2/attend`, async () => {
+        await gateOk;
+        return HttpResponse.json({ attendeeCount: 3, joinRequestStatus: 'member' });
+      }),
+    );
+    renderWithProviders(<EventsFeed />);
+    await screen.findByText('First');
+    const card = (title: string) => screen.getByText(title).closest('[data-testid="event-card"]') as HTMLElement;
+    await userEvent.click(within(card('Second')).getByTestId('event-rsvp-button'));
+    await userEvent.click(within(card('First')).getByTestId('event-rsvp-button'));
+    await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Event is full'));
+    await waitFor(() => expect(within(card('First')).getByTestId('event-rsvp-button')).toHaveTextContent(t('events.rsvp.join')));
+    expect(within(card('First')).getByText(`2 ${t('EVENTS.attending')}`)).toBeInTheDocument();
+    expect(within(card('Second')).getByText(`3 ${t('EVENTS.attending')}`)).toBeInTheDocument();
+    expect(within(card('Second')).getByTestId('event-rsvp-button')).toBeDisabled();
+    releaseOk();
+    await waitFor(() => expect(within(card('Second')).getByTestId('event-rsvp-button')).toBeEnabled());
+  });
+
+  it('does not leave the attending state after a pending join request', async () => {
+    let release: () => void = () => undefined;
+    let loads = 0;
+    const gate = new Promise<void>((r) => (release = r));
+    mockApi({ all: [eventJson()] });
+    server.use(
+      http.post(`${API}/events/e1/attend`, () => HttpResponse.json({ attendeeCount: 3, joinRequestStatus: 'pending' })),
+      http.get(`${API}/events`, async () => {
+        if (++loads > 1) await gate;
+        return HttpResponse.json([eventJson()]);
+      }),
+    );
+    renderWithProviders(<EventsFeed />);
+    await screen.findByText('Dune night');
+    await userEvent.click(rsvp());
+    await waitFor(() => expect(toast).toHaveBeenCalledWith('success', t('EVENTS.join_request_sent')));
+    expect(screen.getByText(`2 ${t('EVENTS.attending')}`)).toBeInTheDocument();
+    release();
+    await waitFor(() => expect(rsvp()).toHaveTextContent(t('events.rsvp.join')));
+  });
 });

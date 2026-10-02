@@ -137,6 +137,29 @@ describe('EventDetail', () => {
       expect(screen.getByText(new RegExp(`2 ${t('EVENTS.attending')}`))).toBeInTheDocument();
     });
 
+    it('patches the list caches with the detail RSVP and restores them on failure', async () => {
+      let release: () => void = () => undefined;
+      const gate = new Promise<void>((r) => (release = r));
+      mockApi(eventJson());
+      server.use(
+        http.post(`${API}/events/e1/attend`, async () => {
+          await gate;
+          return HttpResponse.json({ detail: 'Event is full' }, { status: 409 });
+        }),
+      );
+      const { queryClient } = renderWithProviders(<EventDetail id="e1" />);
+      queryClient.setQueryData(['events', 'all'], [eventJson()]);
+      queryClient.setQueryData(['events', 'mine'], [eventJson()]);
+      const attendance = (key: string) => (queryClient.getQueryData<{ isAttending: boolean; attendeeCount: number }[]>(['events', key]) ?? [])[0];
+      await userEvent.click(await screen.findByTestId('event-rsvp-button'));
+      expect(attendance('all')).toMatchObject({ isAttending: true, attendeeCount: 3 });
+      expect(attendance('mine')).toMatchObject({ isAttending: true, attendeeCount: 3 });
+      release();
+      await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Event is full'));
+      expect(attendance('all')).toMatchObject({ isAttending: false, attendeeCount: 2 });
+      expect(attendance('mine')).toMatchObject({ isAttending: false, attendeeCount: 2 });
+    });
+
     it('cancels attendance', async () => {
       const api = mockApi(eventJson({ isAttending: true, attendeeCount: 3 }));
       const del = vi.fn(() => {
