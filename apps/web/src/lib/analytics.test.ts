@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const track = vi.hoisted(() => vi.fn());
-vi.mock('@vercel/analytics', () => ({ track }));
+const fetchMock = vi.fn();
+vi.mock('@vercel/analytics', () => ({ track: () => expect.unreachable('Vercel track must not be used') }));
+
+const sent = (n = 0) => JSON.parse(fetchMock.mock.calls[n]![1].body);
 
 import { bucketLabel, installErrorReporter, MAX_ERRORS_PER_PAGE, reportJsError, resetAnalyticsState, sanitizeMessage, trackCohortOnce, trackEvent } from './analytics';
 
@@ -10,7 +12,8 @@ const setCookie = (value: string) => {
 };
 
 beforeEach(() => {
-  track.mockReset();
+  fetchMock.mockReset().mockResolvedValue(new Response(null, { status: 204 }));
+  vi.stubGlobal('fetch', fetchMock);
   resetAnalyticsState();
   document.cookie = 'bc_bucket=; path=/; max-age=0';
 });
@@ -28,19 +31,32 @@ describe('bucketLabel', () => {
 });
 
 describe('trackEvent', () => {
-  it('tags app and the cohort bucket from the cookie', () => {
+  it('posts the exact body to the first-party endpoint', () => {
     setCookie('42');
     trackEvent('join_club');
-    expect(track).toHaveBeenCalledWith('join_club', { app: 'next', bucket: '40-49' });
+    expect(fetchMock).toHaveBeenCalledWith('/api/v1/analytics/event', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ app: 'next', name: 'join_club', bucket: '40-49' }),
+      keepalive: true,
+      credentials: 'omit',
+    });
   });
 
-  it('sends a null bucket without the cookie and never throws', () => {
-    trackEvent('x');
-    expect(track).toHaveBeenCalledWith('x', { app: 'next', bucket: null });
-    track.mockImplementation(() => {
+  it('sends a null bucket without the cookie', () => {
+    trackEvent('cohort');
+    expect(sent()).toEqual({ app: 'next', name: 'cohort', bucket: null });
+  });
+
+  it('swallows sync throws and rejections without retrying', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('offline'));
+    expect(() => trackEvent('cohort')).not.toThrow();
+    await Promise.resolve();
+    fetchMock.mockImplementationOnce(() => {
       throw new Error('boom');
     });
-    expect(() => trackEvent('y')).not.toThrow();
+    expect(() => trackEvent('cohort')).not.toThrow();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -49,8 +65,8 @@ describe('trackCohortOnce', () => {
     setCookie('7');
     trackCohortOnce();
     trackCohortOnce();
-    expect(track).toHaveBeenCalledTimes(1);
-    expect(track).toHaveBeenCalledWith('cohort', { app: 'next', bucket: '0-9' });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(sent()).toEqual({ app: 'next', name: 'cohort', bucket: '0-9' });
   });
 });
 
@@ -68,13 +84,13 @@ describe('js_error reporter', () => {
     const rejection = new Event('unhandledrejection') as PromiseRejectionEvent;
     Object.assign(rejection, { reason: new Error('nope') });
     window.dispatchEvent(rejection);
-    expect(track).toHaveBeenNthCalledWith(1, 'js_error', { app: 'next', bucket: null, message: 'bad thing', kind: 'error' });
-    expect(track).toHaveBeenNthCalledWith(2, 'js_error', { app: 'next', bucket: null, message: 'nope', kind: 'unhandledrejection' });
+    expect(sent(0)).toEqual({ app: 'next', name: 'js_error', bucket: null, kind: 'error', message: 'bad thing' });
+    expect(sent(1)).toEqual({ app: 'next', name: 'js_error', bucket: null, kind: 'unhandledrejection', message: 'nope' });
 
     for (let i = 0; i < 20; i++) reportJsError(`e${i}`);
-    expect(track).toHaveBeenCalledTimes(MAX_ERRORS_PER_PAGE);
+    expect(fetchMock).toHaveBeenCalledTimes(MAX_ERRORS_PER_PAGE);
     off();
     window.dispatchEvent(new ErrorEvent('error', { message: 'after cleanup' }));
-    expect(track).toHaveBeenCalledTimes(MAX_ERRORS_PER_PAGE);
+    expect(fetchMock).toHaveBeenCalledTimes(MAX_ERRORS_PER_PAGE);
   });
 });

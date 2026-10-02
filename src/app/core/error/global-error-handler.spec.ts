@@ -77,24 +77,27 @@ describe('GlobalErrorHandler', () => {
       expect(TestBed.inject(ToastService).error).toHaveBeenCalledWith('ERRORS.unexpected');
     });
 
-    it('reports the Error message', () => {
-      handler.handleError(new Error('boom'));
-      expect(track).toHaveBeenCalledWith('client_error', { message: 'boom' });
+    it('reports a sanitised js_error with kind error', () => {
+      handler.handleError(new Error('boom at https://x.io/a for me@x.com'));
+      expect(track).toHaveBeenCalledTimes(1);
+      expect(track).toHaveBeenCalledWith('js_error', {
+        app: 'angular',
+        bucket: null,
+        message: 'boom at <url> for <email>',
+        kind: 'error',
+      });
     });
 
-    it('reports a string error verbatim', () => {
+    it('reports string, object and primitive errors', () => {
       handler.handleError('string failure');
-      expect(track).toHaveBeenCalledWith('client_error', { message: 'string failure' });
-    });
-
-    it('reports the message property of object errors', () => {
       handler.handleError({ message: 'object failure' });
-      expect(track).toHaveBeenCalledWith('client_error', { message: 'object failure' });
+      expect(track).toHaveBeenNthCalledWith(1, 'js_error', expect.objectContaining({ message: 'string failure' }));
+      expect(track).toHaveBeenNthCalledWith(2, 'js_error', expect.objectContaining({ message: 'non-error' }));
     });
 
-    it('stringifies errors with no message', () => {
-      handler.handleError(42);
-      expect(track).toHaveBeenCalledWith('client_error', { message: '42' });
+    it('never sends a name outside the contract', () => {
+      handler.handleError(new Error('x'));
+      expect(track.mock.calls.every(([name]) => name === 'js_error')).toBe(true);
     });
   });
 });
