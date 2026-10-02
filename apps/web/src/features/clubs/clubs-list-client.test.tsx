@@ -6,12 +6,21 @@ import { API, clubJson, messages, parsedClub, renderWithProviders, server, userJ
 import { ClubsListClient } from './clubs-list-client';
 import { filterClubs } from './use-clubs';
 
-const track = vi.hoisted(() => vi.fn());
-vi.mock('@vercel/analytics', () => ({ track }));
 const navigate = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/navigate', () => ({ hardNavigate: navigate }));
 
 setupApiServer();
+
+const events: unknown[] = [];
+const captureEvents = () => {
+  events.length = 0;
+  server.use(
+    http.post('*/api/v1/analytics/event', async ({ request }) => {
+      events.push(await request.json());
+      return new HttpResponse(null, { status: 204 });
+    }),
+  );
+};
 
 const t = (key: string) => messages.uk[key] ?? key;
 
@@ -218,25 +227,25 @@ describe('ClubsListClient joining', () => {
   it('emits join_club (app next + cohort bucket) only after a successful join', async () => {
     mockApi({ session: true });
     document.cookie = 'bc_bucket=23; path=/';
-    track.mockReset();
+    captureEvents();
     server.use(http.post(`${API}/clubs/:id/join`, () => HttpResponse.json({ status: 'pending' })));
     const u = userEvent.setup();
     renderWithProviders(<ClubsListClient initialClubs={[alpha]} />);
     await u.click(await screen.findByRole('button', { name: `${t('CLUBS.join')} Alpha Readers` }));
-    await waitFor(() => expect(track).toHaveBeenCalledWith('join_club', { app: 'next', bucket: '20-29' }));
+    await waitFor(() => expect(events).toEqual([{ app: 'next', name: 'join_club', bucket: '20-29' }]));
     document.cookie = 'bc_bucket=; path=/; max-age=0';
   });
 
   it('does not emit join_club when the join fails', async () => {
     mockApi({ session: true });
-    track.mockReset();
+    captureEvents();
     server.use(http.post(`${API}/clubs/:id/join`, () => HttpResponse.json({}, { status: 400 })));
     const u = userEvent.setup();
     renderWithProviders(<ClubsListClient initialClubs={[alpha]} />);
     const join = await screen.findByRole('button', { name: `${t('CLUBS.join')} Alpha Readers` });
     await u.click(join);
     await waitFor(() => expect(join).toBeEnabled());
-    expect(track).not.toHaveBeenCalledWith('join_club', expect.anything());
+    expect(events).toEqual([]);
   });
 
   it('posts the join, disables only that button with a spinner while pending, then re-enables it', async () => {

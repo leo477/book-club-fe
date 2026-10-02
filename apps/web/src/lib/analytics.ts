@@ -1,7 +1,4 @@
-import { track } from '@vercel/analytics';
 import { BUCKET_COOKIE, validBucket } from '@/strangler/config';
-
-type Props = Record<string, string | number | boolean | null>;
 
 /** bc_bucket (0-99) as a coarse cohort label such as "0-9"; null when the cookie is absent or invalid. */
 export function bucketLabel(value: string | null | undefined): string | null {
@@ -19,10 +16,22 @@ function readBucketCookie(): string | undefined {
   }
 }
 
-/** Every custom event carries the front (`app: 'next'`) and the rollout cohort so Vercel Analytics can split canary vs control. */
-export function trackEvent(name: string, props: Props = {}): void {
+type EventName = 'cohort' | 'join_club' | 'js_error';
+type Props = { kind?: 'error' | 'unhandledrejection' | 'boundary'; message?: string };
+
+const ENDPOINT = '/api/v1/analytics/event';
+
+/** First-party transport (Vercel custom events need a paid plan); every event carries the front (`app: 'next'`) and the rollout cohort. */
+export function trackEvent(name: EventName, props: Props = {}): void {
   try {
-    track(name, { app: 'next', bucket: bucketLabel(readBucketCookie()), ...props });
+    const body = JSON.stringify({ app: 'next', name, bucket: bucketLabel(readBucketCookie()), ...props });
+    void fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body,
+      keepalive: true,
+      credentials: 'omit',
+    }).catch(() => {});
   } catch {
     // analytics must never break the page
   }
