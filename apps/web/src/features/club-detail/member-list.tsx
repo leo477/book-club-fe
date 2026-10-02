@@ -198,7 +198,7 @@ export function MemberList({ clubId, isOwner }: { clubId: string; isOwner: boole
                         type="button"
                         variant="ghost"
                         size="xs"
-                        className="text-orange-600 hover:text-orange-700"
+                        className="text-orange-800 hover:text-orange-900 dark:text-orange-600 dark:hover:text-orange-700"
                         aria-expanded={banMenuFor === member.userId}
                         aria-label={`${t('ban')} ${name}`}
                         data-popover-trigger=""
