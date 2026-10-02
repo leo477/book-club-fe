@@ -1,16 +1,12 @@
 import { TestBed } from '@angular/core/testing';
-import { isDevMode, provideZonelessChangeDetection } from '@angular/core';
-import { track } from '@vercel/analytics';
+import { provideZonelessChangeDetection } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
 import { ToastService } from '../services/toast.service';
-import { GlobalErrorHandler } from './global-error-handler';
+import { CANARY_TRACK } from '../services/canary-analytics.service';
+import { GlobalErrorHandler, IS_DEV_MODE } from './global-error-handler';
 
-vi.mock('@vercel/analytics', () => ({ track: vi.fn() }));
-vi.mock('@angular/core', async (importActual) => {
-  const actual = await importActual<typeof import('@angular/core')>();
-  return { ...actual, isDevMode: vi.fn(() => true) };
-});
-
+const track = vi.fn();
+const isDevMode = vi.fn(() => true);
 const mockTranslateService = { instant: (key: string) => key };
 
 describe('GlobalErrorHandler', () => {
@@ -22,14 +18,16 @@ describe('GlobalErrorHandler', () => {
       providers: [
         provideZonelessChangeDetection(),
         GlobalErrorHandler,
+        { provide: IS_DEV_MODE, useValue: isDevMode },
+        { provide: CANARY_TRACK, useValue: track },
         { provide: TranslateService, useValue: mockTranslateService },
       ],
     });
     handler = TestBed.inject(GlobalErrorHandler);
     consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     vi.spyOn(TestBed.inject(ToastService), 'error').mockImplementation(() => undefined);
-    vi.mocked(track).mockClear();
-    vi.mocked(isDevMode).mockReturnValue(true);
+    track.mockClear();
+    isDevMode.mockReturnValue(true);
   });
 
   afterEach(() => {
@@ -70,7 +68,7 @@ describe('GlobalErrorHandler', () => {
 
   describe('in production', () => {
     beforeEach(() => {
-      vi.mocked(isDevMode).mockReturnValue(false);
+      isDevMode.mockReturnValue(false);
     });
 
     it('shows a generic toast instead of nothing', async () => {

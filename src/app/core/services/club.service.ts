@@ -5,6 +5,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { environment } from '../../../environments/environment';
 import { ApiClub, ApiClubMember, ApiBanRecord, ApiEvent, mapClub, mapClubMember, mapBanRecord, mapEvent } from '../api/api-mappers';
 import { AuthService } from '../auth/auth.service';
+import { CanaryAnalyticsService } from './canary-analytics.service';
 import { SUPPRESS_ERROR_TOAST } from '../interceptors/auth.interceptor';
 import { BanDuration, BanRecord, Club, ClubMemberDetail, ClubStats } from '../models/club.model';
 import { AfterMeetingVenue, ClubEvent } from '../models/event.model';
@@ -24,6 +25,7 @@ export class ClubService {
   private readonly http = inject(HttpClient);
   private readonly auth = inject(AuthService);
   private readonly translate = inject(TranslateService);
+  private readonly canary = inject(CanaryAnalyticsService);
 
   private readonly _clubs = signal<Club[]>([]);
   private readonly _myClubs = signal<Club[]>([]);
@@ -228,6 +230,7 @@ export class ClubService {
       ),
     );
     this.clubByIdCache.delete(clubId);
+    this.canary.trackEvent('join_club');
     return status;
   }
 

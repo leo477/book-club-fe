@@ -224,6 +224,7 @@ docs/
     BASELINE-2026-10.md
     CANARY-METRICS.md
     cleanup-pw-audit.sql
+    GATE-G1.md
     PARITY-R5.md
     RUNBOOK-STRANGLER.md
     UI-DELTAS.md
@@ -346,6 +347,7 @@ src/
         role.guard.ts
         token.store.ts
       error/
+        canary-error-handler.ts
         global-error-handler.ts
       interceptors/
         auth.interceptor.ts
@@ -365,6 +367,7 @@ src/
         book-cover.service.ts
         book-search.service.ts
         book-vote.service.ts
+        canary-analytics.service.ts
         chat-api.service.ts
         chat-audio-alert.service.ts
         chat-socket.service.ts

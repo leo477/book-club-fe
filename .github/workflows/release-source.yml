@@ -1,0 +1,23 @@
+# main is production; it only accepts releases coming from develop (the staging branch).
+name: Release source
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  release-source:
+    name: Release source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require develop as head branch
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [ "$HEAD_REF" != "develop" ]; then
+            echo "PRs into main must come from develop (got '$HEAD_REF'). Merge into develop, test, then release."
+            exit 1
+          fi

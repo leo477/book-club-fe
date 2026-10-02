@@ -4,12 +4,18 @@ updates:
   # Angular/npm dependencies at the repo root
   - package-ecosystem: "npm"
     directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
     labels:
       - "dependencies"
       - "build"
+    ignore:
+      # Types must match the CI runtime major (Node 24). This also blocks
+      # 24 -> 25 and later majors; revisit when CI moves to Node 26 LTS (Oct 2026).
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       # Bundle low-risk minor/patch bumps into a single weekly PR to cut noise.
       # Majors are excluded so breaking changes stay visible and reviewable
@@ -23,6 +29,7 @@ updates:
   # with a `# vX` comment, so these need explicit bumps to stay in sync).
   - package-ecosystem: "github-actions"
     directory: "/.github/workflows"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5

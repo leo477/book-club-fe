@@ -1,5 +1,5 @@
 import { ApplicationConfig, ApplicationRef, ErrorHandler, provideBrowserGlobalErrorListeners, provideZonelessChangeDetection, provideAppInitializer, inject } from '@angular/core';
-import { GlobalErrorHandler } from './core/error/global-error-handler';
+import { CanaryErrorHandler } from './core/error/canary-error-handler';
 import { MapsConfigService } from './core/services/maps-config.service';
 import {
   provideRouter,
@@ -18,12 +18,13 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { AuthService } from './core/auth/auth.service';
 import { SeoService } from './core/services/seo.service';
 import { StranglerManifestService } from './core/strangler/strangler-manifest.service';
+import { CanaryAnalyticsService } from './core/services/canary-analytics.service';
 import { LanguageService } from './core/services/language.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    { provide: ErrorHandler, useClass: GlobalErrorHandler },
+    { provide: ErrorHandler, useClass: CanaryErrorHandler },
     provideZonelessChangeDetection(),
     provideRouter(
       routes,
@@ -39,6 +40,9 @@ export const appConfig: ApplicationConfig = {
     ),
     provideTranslateService({ fallbackLang: 'uk' }),
     ...provideTranslateHttpLoader({ prefix: '/i18n/', suffix: '.json' }),
+    provideAppInitializer(() => {
+      inject(CanaryAnalyticsService).start();
+    }),
     provideAppInitializer(async () => {
       const translate = inject(TranslateService);
       const seo = inject(SeoService);
