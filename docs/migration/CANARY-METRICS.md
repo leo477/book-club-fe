@@ -1,6 +1,6 @@
 # Canary metrics: events both fronts must emit
 
-Goal: compare the Next canary against Angular in Vercel Analytics with identical event names and properties. The Next side is implemented in `apps/web/src/lib/analytics.ts` (`@vercel/analytics` `track`). The Angular side must emit the same events; this file is the contract (do not change Angular from this repo's migration work without the owner's go-ahead).
+Goal: compare the Next canary against Angular with identical event names and properties. Vercel Hobby has no custom events, so both fronts send them to a first-party endpoint and the backend stores them in `analytics_events`. Vercel Analytics page views (`inject()` in `src/main.ts`) are unchanged.
 
 ## Cohort tag
 
@@ -18,13 +18,54 @@ Goal: compare the Next canary against Angular in Vercel Analytics with identical
 
 No user ids, emails, club names or stack traces are sent.
 
-## Angular implementation sketch (for the Angular owner)
+## Transport (both fronts)
 
-- Inject `track` from `@vercel/analytics` (already loaded on Angular via the platform script if Web Analytics is enabled on the project).
-- `cohort`: on app bootstrap. `join_club`: in `ClubService.joinClub` success path. `js_error`: an Angular `ErrorHandler` plus `window.addEventListener('unhandledrejection', ...)`, with the same scrubbing and per-page cap.
-- Set `app: 'angular'`.
+- `POST /api/v1/analytics/event`, same-origin relative URL, answers `204`, no auth, no cookies.
+- Body: `{ "app": "angular"|"next", "name": "cohort"|"join_club"|"js_error", "bucket": "40-49"|null, "kind"?: "error"|"unhandledrejection"|"boundary", "message"?: string }`. `kind` and `message` (max 120) only for `js_error`.
+- Angular sends with `fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body, keepalive: true, credentials: 'omit' })`, never through HttpClient or its interceptors, never retried, failures swallowed (so a failing call cannot loop through the global error handler). Code: `src/app/core/services/canary-analytics.service.ts` (`CANARY_TRACK`).
+- Angular: `cohort` on bootstrap, `join_club` in `ClubService.joinClub`, `js_error` from the global `ErrorHandler` and `window` `unhandledrejection`, capped at 5 per page load.
 
-## Reading it in Vercel Analytics
+## Reading it (backend DB, table `analytics_events`)
 
-- Compare `join_club` per `cohort` session between `app = next` and `app = angular`, and `js_error` rate per page view, for the same bucket range as the canary percent (e.g. canary 10 % = buckets `0-9`).
-- Vercel Analytics only records events in production deployments; previews will not show them.
+Columns assumed: `app`, `name`, `bucket`, `kind`, `message`, `created_at`. For a canary at 10 % use buckets `0-9`.
+
+```sql
+-- events per app / bucket
+SELECT app, bucket, name, count(*) AS events
+FROM analytics_events
+WHERE created_at > now() - interval '7 days'
+GROUP BY app, bucket, name
+ORDER BY app, bucket, name;
+
+-- join conversion per app / bucket (join_club / cohort)
+SELECT app, bucket,
+  count(*) FILTER (WHERE name = 'cohort') AS cohorts,
+  count(*) FILTER (WHERE name = 'join_club') AS joins,
+  round(count(*) FILTER (WHERE name = 'join_club')::numeric
+        / NULLIF(count(*) FILTER (WHERE name = 'cohort'), 0), 4) AS join_rate
+FROM analytics_events
+WHERE created_at > now() - interval '7 days'
+GROUP BY app, bucket
+ORDER BY app, bucket;
+
+-- js_error rate per app / bucket (js_error / cohort)
+SELECT app, bucket,
+  count(*) FILTER (WHERE name = 'cohort') AS cohorts,
+  count(*) FILTER (WHERE name = 'js_error') AS js_errors,
+  round(count(*) FILTER (WHERE name = 'js_error')::numeric
+        / NULLIF(count(*) FILTER (WHERE name = 'cohort'), 0), 4) AS error_rate
+FROM analytics_events
+WHERE created_at > now() - interval '7 days'
+GROUP BY app, bucket
+ORDER BY app, bucket;
+
+-- top js_error messages
+SELECT app, kind, message, count(*) AS n
+FROM analytics_events
+WHERE name = 'js_error' AND created_at > now() - interval '7 days'
+GROUP BY app, kind, message
+ORDER BY n DESC
+LIMIT 20;
+```
+
+`bucket` is NULL when the `bc_bucket` cookie is missing; those rows group together.
