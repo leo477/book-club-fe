@@ -115,7 +115,7 @@ export function ClubEventsInteractive({ club, initialEvents }: ClubEventsProps) 
     const rsvp = (attending: boolean) => attend.mutate({ eventId: event.id, attending });
     let actions: ReactNode = null;
     if (role.user?.id === event.organizerId) {
-      actions = <span className="text-xs font-semibold text-[var(--color-primary-600)] dark:text-[#fbbf24]">{tEvents('organizer_badge')}</span>;
+      actions = <span className="text-xs font-semibold text-[var(--color-primary-700)] dark:text-[#fbbf24]">{tEvents('organizer_badge')}</span>;
     } else if (rsvpAllowed && role.isAuthenticated && event.status !== 'cancelled' && event.status !== 'held') {
       actions = (
         <Button
