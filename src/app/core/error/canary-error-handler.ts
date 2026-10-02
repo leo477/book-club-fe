@@ -1,13 +1,9 @@
-import { Injectable, inject } from '@angular/core';
-import { CanaryAnalyticsService } from '../services/canary-analytics.service';
+import { Injectable } from '@angular/core';
 import { GlobalErrorHandler } from './global-error-handler';
 
 @Injectable()
 export class CanaryErrorHandler extends GlobalErrorHandler {
-  private readonly canary = inject(CanaryAnalyticsService);
-
-  override handleError(error: unknown): void {
-    super.handleError(error);
+  protected override report(error: unknown): void {
     this.canary.reportJsError(error, 'error');
   }
 }

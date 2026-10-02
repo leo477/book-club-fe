@@ -1,12 +1,27 @@
 import { DOCUMENT, Injectable, InjectionToken, PLATFORM_ID, inject } from '@angular/core';
-import { track } from '@vercel/analytics';
 
 type Props = Record<string, string | number | boolean | null>;
 export type JsErrorKind = 'error' | 'unhandledrejection' | 'boundary';
 
-export const CANARY_TRACK = new InjectionToken<typeof track>('CANARY_TRACK', {
+export const CANARY_ENDPOINT = '/api/v1/analytics/event';
+
+function sendEvent(name: string, props: Props = {}): void {
+  try {
+    fetch(CANARY_ENDPOINT, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ ...props, name }),
+      keepalive: true,
+      credentials: 'omit',
+    }).catch(() => undefined);
+  } catch {
+    // analytics must never break the page
+  }
+}
+
+export const CANARY_TRACK = new InjectionToken<(name: string, props?: Props) => void>('CANARY_TRACK', {
   providedIn: 'root',
-  factory: () => track,
+  factory: () => sendEvent,
 });
 
 export const MAX_ERRORS_PER_PAGE = 5;
