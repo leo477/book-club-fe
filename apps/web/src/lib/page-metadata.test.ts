@@ -56,3 +56,19 @@ describe('pageMetadata', () => {
     expect((uk as Record<string, string>)['SEO.site_url']).toBe((en as Record<string, string>)['SEO.site_url']);
   });
 });
+
+describe('pageMetadata overrides', () => {
+  it('passes ICU values, takes a literal description for og and twitter, a custom image, and noindex', async () => {
+    const meta = await pageMetadata('SEO.club_detail_title', '/clubs/x', {
+      ogTitleKey: 'SEO.club_detail_og_title',
+      values: { name: 'Alpha' },
+      description: 'Literal <b>text</b>',
+      image: 'https://img.example/c.jpg',
+      index: false,
+    });
+    expect(meta.robots).toEqual({ index: false, follow: true });
+    expect(meta.description).toBe('Literal <b>text</b>');
+    expect(meta.openGraph).toMatchObject({ description: 'Literal <b>text</b>', images: ['https://img.example/c.jpg'] });
+    expect(meta.twitter).toMatchObject({ description: 'Literal <b>text</b>', images: ['https://img.example/c.jpg'] });
+  });
+});

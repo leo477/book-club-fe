@@ -73,3 +73,49 @@ export const clubJson = (overrides: Record<string, unknown> = {}) => ({
 });
 
 export const parsedClub = (overrides: Record<string, unknown> = {}) => clubSchema.parse(clubJson(overrides));
+
+export const eventJson = (overrides: Record<string, unknown> = {}) => ({
+  id: 'e1',
+  clubId: 'c1',
+  clubName: 'Alpha Readers',
+  organizerId: 'o1',
+  title: 'Dune night',
+  description: null,
+  date: '2099-05-01T18:00:00Z',
+  city: 'Kyiv',
+  address: null,
+  lat: null,
+  lng: null,
+  status: 'scheduled',
+  cancelledAt: null,
+  theme: null,
+  tags: [],
+  durationMinutes: null,
+  afterMeetingVenue: null,
+  attendeeCount: 2,
+  isAttending: false,
+  ...overrides,
+});
+
+export const memberJson = (overrides: Record<string, unknown> = {}) => ({
+  userId: 'm1',
+  displayName: 'Grace Hopper',
+  avatarUrl: null,
+  role: 'member',
+  socials: null,
+  socialsPublic: false,
+  ...overrides,
+});
+
+export const roundJson = (overrides: Record<string, unknown> = {}) => ({
+  id: 'r1',
+  clubId: 'c1',
+  status: 'open',
+  options: [
+    { id: 'b1', title: 'Dune', author: 'Herbert', votes: 2, hasVoted: false },
+    { id: 'b2', title: 'Emma', author: 'Austen', votes: 0, hasVoted: false },
+  ],
+  totalVotes: 2,
+  winnerId: null,
+  ...overrides,
+});

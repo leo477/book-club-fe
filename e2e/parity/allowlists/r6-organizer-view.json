@@ -1,0 +1,40 @@
+{
+  "ignore": [
+    {
+      "signature": "GET self /api/v1/clubs/:id? body=-",
+      "reason": "Next renders the club on the server (anonymous GET /clubs/{id}, ISR 600 s, tag club:{id}); Angular fetches it in the browser",
+      "legacy": 1,
+      "next": 0
+    },
+    {
+      "signature": "GET self /api/v1/config/maps-key? body=-",
+      "reason": "Angular shell requests the Maps key on every route (N-1); Next loads Maps only on pages that use it and the club detail page does not",
+      "legacy": 1,
+      "next": 0
+    },
+    {
+      "signature": "GET self /api/v1/clubs/:id/chat/rooms? body=-",
+      "reason": "Chat widget is not ported until R12: Angular preloads the club's rooms for members; Next shows a link to legacy /chats instead",
+      "legacy": 1,
+      "next": 0
+    },
+    {
+      "signature": "GET self /api/v1/users/me/stats? body=-",
+      "reason": "Angular shell prefetches profile stats after login; the Next shell does not show stats",
+      "legacy": 1,
+      "next": 0
+    },
+    {
+      "signature": "POST self /api/v1/auth/refresh? body={}",
+      "reason": "Angular boots a signed-in session with a token refresh; Next resolves it through session-status and /auth/me (same as PARITY-R5)",
+      "legacy": 1,
+      "next": 0
+    },
+    {
+      "signature": "GET self /api/v1/clubs/:id/bans? body=-",
+      "reason": "Dropped on purpose: Next does not load the ban list on the detail page (organizer bans are managed on the legacy manage screen)",
+      "legacy": 1,
+      "next": 0
+    }
+  ]
+}

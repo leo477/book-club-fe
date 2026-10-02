@@ -1,5 +1,6 @@
 // Reports gzip -9 first-load JS (every module <script src> in the served HTML) for the production build.
-// Usage: npm run build && npm run size [-- --budget 200 --ceiling 250 --routes /clubs,/privacy]
+// Usage: npm run build && npm run size [-- --budget 200 --ceiling 250 --routes /clubs,/privacy,/clubs/:id=/clubs/<uuid>]
+// A route may be written `pattern=path` when the served path differs from the manifest pattern (dynamic segments).
 // --budget is the target (warns above it); --ceiling is the failing threshold (env FIRST_LOAD_CEILING_KB, default 250).
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
@@ -18,7 +19,12 @@ if (!(ceilingKb >= budgetKb)) {
   console.error(`--ceiling (${ceilingKb} KB) must be >= --budget (${budgetKb} KB)`);
   process.exit(2);
 }
-const routes = opt('routes', '/clubs,/privacy').split(',');
+const routes = opt('routes', '/clubs,/privacy')
+  .split(',')
+  .map((spec) => {
+    const [pattern, path = pattern] = spec.split('=');
+    return { pattern, path };
+  });
 const port = Number(
   opt('port', '') ||
     (await new Promise((resolve) => {
@@ -35,7 +41,7 @@ if (!existsSync('.next/BUILD_ID')) {
 }
 
 // Serves the strangler flags so the proxy hands the routes to Next instead of rewriting to the legacy app.
-const flags = { version: 1, enabled: true, routes: Object.fromEntries(routes.map((r) => [r, { target: 'next', percent: 100 }])) };
+const flags = { version: 1, enabled: true, routes: Object.fromEntries(routes.map((r) => [r.pattern, { target: 'next', percent: 100 }])) };
 const edge = createServer((req, res) => {
   res.setHeader('content-type', 'application/json');
   res.end(req.url?.includes('/item/strangler') ? JSON.stringify(flags) : 'null');
@@ -78,7 +84,7 @@ for (let i = 0; ; i++) {
 
 const kb = (n) => (n / 1024).toFixed(1);
 let failed = false;
-for (const route of routes) {
+for (const { path: route } of routes) {
   const res = await get(route);
   const html = await res.text();
   if (!res.ok || !html.includes('/_next/')) {

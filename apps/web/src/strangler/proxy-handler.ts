@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { BUCKET_COOKIE, BUCKET_HEADER, BUCKET_MAX_AGE, decide, newBucket, validBucket, type StranglerConfig } from './config';
 import { buildCsp, newNonce, TRUSTED_TYPES_REPORT_ONLY } from './csp';
-import { matchRoute } from './routes';
+import { isLegacyShadowed, matchRoute } from './routes';
 
 export interface ProxyDeps {
   readConfig: () => Promise<StranglerConfig | null>;
@@ -25,11 +25,12 @@ export async function handleProxy(request: NextRequest, deps: ProxyDeps): Promis
   cleanHeaders.delete(BUCKET_HEADER);
 
   const route = matchRoute(pathname);
-  if (!route) return NextResponse.next({ request: { headers: cleanHeaders } });
+  const shadowed = route === null && isLegacyShadowed(pathname);
+  if (!route && !shadowed) return NextResponse.next({ request: { headers: cleanHeaders } });
 
   const existing = validBucket(request.cookies.get(BUCKET_COOKIE)?.value);
   const bucket = existing ?? newBucket();
-  const decision = decide(await deps.readConfig(), route.pattern, bucket);
+  const decision = route ? decide(await deps.readConfig(), route.pattern, bucket) : 'legacy';
   const legacyOrigin = resolveOrigin(deps.legacyOrigin);
 
   if (decision === 'legacy' && !legacyOrigin && !deps.dev) {
