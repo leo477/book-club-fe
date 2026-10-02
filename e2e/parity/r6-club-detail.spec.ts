@@ -11,6 +11,9 @@ import { extractSeo, jsonLdProblems, jsonLdTypes } from './html-meta';
 import { IDS, newState, type Role } from './r6/fixtures';
 import { installApiMock, LANG_COOKIE, settle, watchConsole } from './r6/helpers';
 
+// test-only: drop <script> blocks (any case, `</script >` too) so assertions see the server-rendered markup; split/join leaves no partial tags behind
+const withoutScripts = (html: string): string => html.split(/<script\b[\s\S]*?<\/script\s*>/i).join('');
+
 const SHOTS = 'playwright-report/parity/r6';
 mkdirSync(SHOTS, { recursive: true });
 const SITE = 'https://book-club-planer.vercel.app';
@@ -56,7 +59,7 @@ test.describe('P1 URLs and status codes', () => {
       expect(html).toMatch(/<meta name="robots" content="noindex/);
       // Known limit: with a real 404 status Next serves its `__next_error__` recovery shell (by design, see PARITY-R6 finding 3)
       // and renders not-found.tsx on the client, so a no-JS visitor gets a blank 404 body; logged, not asserted.
-      console.log(`[next] 404 body has the panel in server HTML: ${/Клуб не знайдено|Club not found/i.test(html.replace(/<script[\s\S]*?<\/script>/g, ''))}`);
+      console.log(`[next] 404 body has the panel in server HTML: ${/Клуб не знайдено|Club not found/i.test(withoutScripts(html))}`);
     } else {
       expect(res.status()).toBe(200);
     }
@@ -159,7 +162,7 @@ test.describe('P6 SEO (raw HTML, no JS)', () => {
     expect(seo.ogImage).toBe(`${SITE}/og-image.png`);
     const head = html.match(/<head[\s\S]*?<\/head>/)![0];
     // the body is the stub view: name and member count only, none of the club's own content
-    const body = html.replace(/<script[\s\S]*?<\/script>/g, '');
+    const body = withoutScripts(html);
     expect(body).toContain('Закритий клуб');
     expect(body).toContain('data-testid="private-stub"');
     expect(body).not.toContain('Читаємо сучасну українську прозу');
