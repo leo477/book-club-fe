@@ -12,7 +12,7 @@ import { IDS, newState, type Role } from './r6/fixtures';
 import { installApiMock, LANG_COOKIE, settle, watchConsole } from './r6/helpers';
 
 // test-only: drop <script> blocks (any case, `</script >` too) so assertions see the server-rendered markup; split/join leaves no partial tags behind
-const withoutScripts = (html: string): string => html.split(/<script\b[\s\S]*?<\/script\s*>/i).join('');
+const withoutScripts = (html: string): string => html.split(/<script\b[\s\S]*?<\/script[^>]*>/i).join('');
 
 const SHOTS = 'playwright-report/parity/r6';
 mkdirSync(SHOTS, { recursive: true });
