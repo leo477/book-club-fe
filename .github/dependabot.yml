@@ -4,6 +4,7 @@ updates:
   # Angular/npm dependencies at the repo root
   - package-ecosystem: "npm"
     directory: "/"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
@@ -28,6 +29,7 @@ updates:
   # with a `# vX` comment, so these need explicit bumps to stay in sync).
   - package-ecosystem: "github-actions"
     directory: "/.github/workflows"
+    target-branch: "develop"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5

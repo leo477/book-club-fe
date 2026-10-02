@@ -29,6 +29,12 @@ This project uses **Repomix** to provide a full map of the codebase.
 - The pre-commit hook updates `repomix-output.md` using `lint-staged`.
 - No Python-specific formatting or linting tools are involved in the pre-commit process.
 
+## Branching (develop = staging, main = production)
+- `main` is the default, protected, production branch: merging deploys to production (ci.yml, web.yml). It accepts PRs only from `develop` (check `Release source`).
+- `develop` is the pre-production testing branch: feature/fix PRs target `develop`; every push deploys a Vercel preview that is tested (CI, parity/e2e, canary checks) before the release PR `develop` -> `main`.
+- Release PRs `develop` -> `main` use a **merge commit**, never squash (squash made `main` diverge and caused conflicts). Squash merging is disabled repo-wide.
+- Dependabot version updates target `develop`.
+
 ## Notes
 - Always check `repomix-output.md` for the latest project map.
 - If a file is not in repomix-output.md, assume it doesn't exist yet.
