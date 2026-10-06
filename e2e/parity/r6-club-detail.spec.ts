@@ -500,8 +500,7 @@ test.describe('P7 a11y: tabs, keyboard, focus, contrast', () => {
           const r = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
           const serious = r.violations.filter((v) => ['serious', 'critical'].includes(v.impact ?? ''));
           console.log(`axe [${ti.project.name}] ${role} ${theme} ${width}: ${r.violations.map((v) => `${v.impact}:${v.id}(${v.nodes.length}) ${v.nodes.slice(0, 2).map((n) => n.target.join(' ')).join(' | ')}`).join('; ') || 'none'}`);
-          // Pre-existing token contrast issue shared with legacy (see r6-dual.spec.ts 'axe parity'): anything else on Next fails here
-          if (nextOnly(ti.project.name)) expect(serious.filter((v) => v.id !== 'color-contrast').map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
+          if (nextOnly(ti.project.name)) expect(serious.map((v) => `${v.id}: ${v.nodes.map((n) => n.target.join(' ')).join(' | ')}`)).toEqual([]);
         });
       }
     }

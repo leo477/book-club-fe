@@ -11,7 +11,7 @@
   --color-primary-300: #fcd34d;
   --color-primary-400: #fbbf24;
   --color-primary-500: #d97706;
-  --color-primary-600: #b5720a;
+  --color-primary-600: #9f6509;
   --color-primary-700: #92400e;
   --color-primary-800: #78350f;
   --color-primary-900: #5c2d0a;
@@ -27,6 +27,10 @@
   --color-accent-700: #064e3b;
   --color-accent-800: #053d2e;
   --color-accent-900: #032b20;
+
+  /* Secondary text greys: gray-400/500 collapse to gray-600 on parchment (AA); .dark restores gray-400 and lifts gray-500 */
+  --color-gray-400: #4a5565;
+  --color-gray-500: #4a5565;
 }
 
 :root {
@@ -66,7 +70,7 @@
   --muted-foreground:    hsl(25deg 35% 50%);
   --accent:              hsl(150deg 55% 23%);
   --accent-foreground:   hsl(150deg 80% 96%);
-  --destructive:         hsl(0deg 84% 60%);
+  --destructive:         hsl(0deg 72% 36%);
   --border:              hsl(30deg 42% 58%);
   --input:               hsl(30deg 35% 80%);
   --ring:                hsl(31deg 90% 37%);
@@ -74,6 +78,8 @@
 }
 
 .dark {
+  --color-gray-400: #99a1af;
+  --color-gray-500: #838b99;
   --color-bg:             #100c07;
   --color-surface:        #1e1509;
   --color-surface-raised: #261b0c;
@@ -102,7 +108,7 @@
   --muted-foreground:    hsl(35deg 30% 55%);
   --accent:              hsl(150deg 45% 32%);
   --accent-foreground:   hsl(150deg 80% 92%);
-  --destructive:         hsl(0deg 80% 65%);
+  --destructive:         hsl(0deg 91% 71%);
   --border:              hsl(38deg 55% 27%);
   --input:               hsl(28deg 50% 16%);
   --ring:                hsl(38deg 88% 45%);
