@@ -293,7 +293,6 @@ docs/
     PARITY-R6.md
     PARITY-R7.md
     R6-DEPLOY-SETTINGS.md
-    R7-size-script.patch
     RUNBOOK-STRANGLER.md
     SECURITY-R6.md
     SECURITY-R7.md
