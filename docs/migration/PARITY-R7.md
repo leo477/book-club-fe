@@ -51,4 +51,10 @@ None found in the code under test. Observations, not filed as bugs:
 
 1. **Process gap, medium**: there is no R7 parity/e2e spec (`e2e/parity/r7-*`) or mock backend, and `e2e/ui/events.spec.ts` cannot run without seeded personas. P1/P2/P5/P7/P8/P12 for R7 stay unverified against a real Angular/Next pair. Suggest a follow-up task to add `r7-events.spec.ts` on the R6 `installApiMock` pattern.
 2. **Tooling, low**: `npm run size` (`apps/web/scripts/check-first-load.mjs`) did not terminate here, so the 181 KB budget for the events routes is unverified; re-run in CI or locally.
-3. **Delta to note, low**: Angular prints the raw status string (`active`) in the detail badge; Next matches it (parity), so untranslated status text is a pre-existing legacy defect carried over.
+3. **Delta to note, low**: Angular prints the raw status string (`active`) in the detail badge; Next now translates it like the card does (`EVENTS.status_*`, raw string when no key exists), so the legacy defect is not carried over.
+
+## Accepted deltas
+
+- Feed `now` is captured once at mount and never refreshed, so a long-open feed does not move events into the "started" state until reload (same as the Angular snapshot; accepted).
+- Event-chat buttons and the "chat ready" toast on the detail page are absent until R12 (chat); documented delta, not a regression.
+- Detail status badge: Angular shows the raw status string; Next shows the translated label and falls back to the raw string for statuses without a key (e.g. `held`).

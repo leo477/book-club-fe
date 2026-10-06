@@ -100,6 +100,38 @@ describe('EventsFeed', () => {
     expect(tab).toHaveAttribute('aria-selected', 'true');
   });
 
+  it('exposes the filter as a tab list with a roving tabindex and arrow-key navigation', async () => {
+    mockApi({ all: [eventJson()] });
+    renderWithProviders(<EventsFeed />);
+    await screen.findByText('Dune night');
+    expect(screen.getByRole('tablist', { name: t('EVENTS.filter_tabs') })).toBeInTheDocument();
+    const upcoming = screen.getByRole('tab', { name: t('EVENTS.tab_upcoming') });
+    const mine = screen.getByRole('tab', { name: new RegExp(t('EVENTS.tab_my')) });
+    const panel = screen.getByRole('tabpanel');
+    expect(upcoming).toHaveAttribute('tabindex', '0');
+    expect(mine).toHaveAttribute('tabindex', '-1');
+    expect(upcoming).toHaveAttribute('aria-controls', panel.id);
+    expect(mine).toHaveAttribute('aria-controls', panel.id);
+    expect(panel).toHaveAttribute('aria-labelledby', upcoming.id);
+
+    upcoming.focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(mine).toHaveFocus();
+    expect(mine).toHaveAttribute('aria-selected', 'true');
+    expect(mine).toHaveAttribute('tabindex', '0');
+    expect(upcoming).toHaveAttribute('tabindex', '-1');
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', mine.id);
+    await userEvent.keyboard('{ArrowRight}');
+    expect(upcoming).toHaveFocus();
+    await userEvent.keyboard('{ArrowLeft}');
+    expect(mine).toHaveFocus();
+    await userEvent.keyboard('{Home}');
+    expect(upcoming).toHaveFocus();
+    await userEvent.keyboard('{End}');
+    expect(mine).toHaveFocus();
+    expect(mine).toHaveAttribute('aria-selected', 'true');
+  });
+
   it('shows the My events empty state', async () => {
     mockApi({ all: [eventJson()] });
     renderWithProviders(<EventsFeed />);
@@ -131,6 +163,7 @@ describe('EventsFeed', () => {
     renderWithProviders(<EventsFeed />);
     await screen.findByText('Soon');
     expect(screen.getAllByText(/^\d+d \d+h \d+m \d+s$/)).toHaveLength(1);
+    expect(screen.getByRole('timer')).toHaveAccessibleName(`${t('EVENTS.countdown_label').replace('{title}', 'Soon')}`);
     const started = screen.getByText('Started').closest('article')!;
     expect(within(started).getByTestId('event-rsvp-button')).toBeDisabled();
     expect(within(started).getByTestId('event-rsvp-button')).toHaveTextContent(t('EVENTS.registration_closed'));
@@ -178,6 +211,8 @@ describe('EventsFeed RSVP', () => {
     await userEvent.click(rsvp());
     expect(screen.getByText(`3 ${t('EVENTS.attending')}`)).toBeInTheDocument();
     expect(rsvp()).toBeDisabled();
+    expect(rsvp()).toHaveAttribute('aria-busy', 'true');
+    expect(rsvp()).toHaveTextContent(t('EVENTS.rsvp_loading'));
     release();
     await waitFor(() => expect(rsvp()).toHaveTextContent(t('events.rsvp.attending')));
     expect(rsvp()).toBeEnabled();

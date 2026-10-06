@@ -421,7 +421,10 @@
     "open_in_maps": "Відкрити в Google Maps",
     "route_to_venue": "Маршрут до місця після події",
     "load_error": "Не вдалося завантажити події",
-    "load_my_error": "Не вдалося завантажити мої події"
+    "load_my_error": "Не вдалося завантажити мої події",
+    "filter_tabs": "Фільтр подій",
+    "rsvp_loading": "Оновлення відповіді…",
+    "countdown_label": "До початку: {{ title }}"
   },
   "EVENT": {
     "event_chat_btn": "Чат події",

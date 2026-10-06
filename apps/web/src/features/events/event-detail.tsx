@@ -3,7 +3,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { AppLink } from '@/components/app-link';
 import { LazyBoundary } from '@/components/lazy-boundary';
 import { Button } from '@/components/ui/button';
@@ -82,6 +82,17 @@ export function EventDetail({ id: rawId }: { id: string }) {
   const { rsvp, pendingIds } = useRsvp();
   const [bookOpen, setBookOpen] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const cancelTrigger = useRef<HTMLButtonElement>(null);
+  const confirmButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (confirmCancel) confirmButton.current?.focus();
+  }, [confirmCancel]);
+
+  const dismissConfirm = () => {
+    setConfirmCancel(false);
+    cancelTrigger.current?.focus();
+  };
 
   const cancelEvent = useMutation({
     mutationFn: () => api.events.cancel(id),
@@ -133,7 +144,7 @@ export function EventDetail({ id: rawId }: { id: string }) {
                 event.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
               }`}
             >
-              {event.status}
+              {t.has(`status_${event.status}`) ? t(`status_${event.status}`) : event.status}
             </span>
           )}
         </div>
@@ -179,7 +190,7 @@ export function EventDetail({ id: rawId }: { id: string }) {
               // eslint-disable-next-line @next/next/no-img-element -- cover URLs are arbitrary hosts
               <img
                 src={event.coverUrl}
-                alt={event.bookTitle ?? 'Book cover'}
+                alt=""
                 width={64}
                 height={96}
                 referrerPolicy="no-referrer"
@@ -215,6 +226,7 @@ export function EventDetail({ id: rawId }: { id: string }) {
               {t('editEvent')}
             </AppLink>
             <button
+              ref={cancelTrigger}
               type="button"
               disabled={actioning}
               onClick={() => setConfirmCancel(true)}
@@ -228,6 +240,7 @@ export function EventDetail({ id: rawId }: { id: string }) {
               <span className="text-xs text-red-700 dark:text-red-300">{t('cancel_confirm')}</span>
               <div className="flex gap-2 flex-shrink-0">
                 <button
+                  ref={confirmButton}
                   type="button"
                   disabled={actioning}
                   onClick={() => {
@@ -238,7 +251,7 @@ export function EventDetail({ id: rawId }: { id: string }) {
                 >
                   {t('cancel_event')}
                 </button>
-                <button type="button" onClick={() => setConfirmCancel(false)} className="rounded-lg bg-white dark:bg-gray-700 px-3 py-1 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors">
+                <button type="button" onClick={dismissConfirm} className="rounded-lg bg-white dark:bg-gray-700 px-3 py-1 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors">
                   {tNew('cancel')}
                 </button>
               </div>

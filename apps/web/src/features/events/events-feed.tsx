@@ -1,10 +1,10 @@
 'use client';
 'use no memo';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import type { Club, ClubEvent } from '@book-club/contracts';
 import { useLocale, useTranslations } from 'next-intl';
-import { useState } from 'react';
+import { useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
 import { AppLink } from '@/components/app-link';
 import { EmptyState } from '@/components/empty-state';
 import { Spinner } from '@/components/ui/spinner';
@@ -18,10 +18,25 @@ import { useAllEvents, useMyEvents, useRsvp } from './use-events';
 
 type Tab = 'upcoming' | 'my';
 
+const TABS: readonly Tab[] = ['upcoming', 'my'];
+const tabId = (tab: Tab) => `events-tab-${tab}`;
+const PANEL_ID = 'events-tabpanel';
+
+const EMPTY_CLUBS: Club[] = [];
 const GRID = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6';
 const TAB_BASE = 'relative z-10 px-7 py-2 rounded-full text-sm font-medium transition-colors duration-300 select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--color-primary-500)] focus-visible:ring-offset-1';
 const TAB_ON = 'text-[var(--color-primary-700)] dark:text-[#fbbf24] font-semibold';
 const TAB_OFF = 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]';
+
+/** Like Angular, the single-club shortcut only knows clubs the /clubs page has already loaded; it never fetches them. */
+function useLoadedClubs(): Club[] {
+  const queryClient = useQueryClient();
+  return useSyncExternalStore(
+    (notify) => queryClient.getQueryCache().subscribe(notify),
+    () => queryClient.getQueryData<Club[]>(clubsKey) ?? EMPTY_CLUBS,
+    () => EMPTY_CLUBS,
+  );
+}
 
 export function EventsFeed() {
   const t = useTranslations('EVENTS');
@@ -31,21 +46,34 @@ export function EventsFeed() {
   const { user } = useSession();
   const all = useAllEvents();
   const mine = useMyEvents();
-  // like Angular, the single-club shortcut only knows clubs the /clubs page has already loaded; it never fetches them
-  const loadedClubs = useQuery<Club[]>({ queryKey: clubsKey, queryFn: () => [], enabled: false });
+  const loadedClubs = useLoadedClubs();
   const { rsvp, pendingIds } = useRsvp();
   const [tab, setTab] = useState<Tab>('upcoming');
   const [city, setCity] = useState('');
   const [now] = useState(Date.now);
+  const tabRefs = useRef<Partial<Record<Tab, HTMLButtonElement | null>>>({});
 
   const events = all.data ?? [];
   const myEvents = mine.data ?? [];
   const cities = availableCities(events);
   const grouped = groupByDate(filterByCity(events, city));
   const dates = Object.keys(grouped).sort((a, b) => a.localeCompare(b));
-  const ownedClubs = (loadedClubs.data ?? []).filter((c) => c.organizerId === user?.id);
+  const ownedClubs = loadedClubs.filter((c) => c.organizerId === user?.id);
   const singleOwned = ownedClubs.length === 1 ? ownedClubs[0] : undefined;
   const error = all.isError ? t('load_error') : mine.isError ? t('load_my_error') : null;
+
+  const selectTab = (next: Tab) => {
+    setTab(next);
+    tabRefs.current[next]?.focus();
+  };
+
+  const onTabKeyDown = (e: KeyboardEvent) => {
+    const at = TABS.indexOf(tab);
+    const target = { ArrowRight: TABS[(at + 1) % TABS.length], ArrowLeft: TABS[(at + TABS.length - 1) % TABS.length], Home: TABS[0], End: TABS[TABS.length - 1] }[e.key];
+    if (!target) return;
+    e.preventDefault();
+    selectTab(target);
+  };
 
   const card = (event: ClubEvent) => (
     <li key={event.id} data-testid="event-card">
@@ -144,17 +172,39 @@ export function EventsFeed() {
           </div>
         )}
 
-        <div className="flex justify-center" role="tablist" aria-label="Event filter">
+        <div className="flex justify-center" role="tablist" aria-label={t('filter_tabs')} onKeyDown={onTabKeyDown}>
           <div className="relative flex rounded-full p-1 bg-[var(--color-surface-sunken)] border border-[var(--color-sepia)] shadow-inner">
             <div
               className="absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full bg-[var(--color-surface-raised)] shadow-[var(--shadow-parchment)] transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
               style={{ left: tab === 'upcoming' ? '4px' : '50%' }}
               aria-hidden="true"
             />
-            <button role="tab" type="button" aria-selected={tab === 'upcoming'} onClick={() => setTab('upcoming')} className={cn(TAB_BASE, tab === 'upcoming' ? TAB_ON : TAB_OFF)}>
+            <button
+              ref={(el) => {
+                tabRefs.current.upcoming = el;
+              }}
+              id={tabId('upcoming')}
+              role="tab"
+              type="button"
+              aria-selected={tab === 'upcoming'}
+              aria-controls={PANEL_ID}
+              tabIndex={tab === 'upcoming' ? 0 : -1}
+              onClick={() => setTab('upcoming')}
+              className={cn(TAB_BASE, tab === 'upcoming' ? TAB_ON : TAB_OFF)}>
               {t('tab_upcoming')}
             </button>
-            <button role="tab" type="button" aria-selected={tab === 'my'} onClick={() => setTab('my')} className={cn(TAB_BASE, 'flex items-center gap-1.5', tab === 'my' ? TAB_ON : TAB_OFF)}>
+            <button
+              ref={(el) => {
+                tabRefs.current.my = el;
+              }}
+              id={tabId('my')}
+              role="tab"
+              type="button"
+              aria-selected={tab === 'my'}
+              aria-controls={PANEL_ID}
+              tabIndex={tab === 'my' ? 0 : -1}
+              onClick={() => setTab('my')}
+              className={cn(TAB_BASE, 'flex items-center gap-1.5', tab === 'my' ? TAB_ON : TAB_OFF)}>
               {t('tab_my')}
               {myEvents.length > 0 && (
                 <span
@@ -170,7 +220,7 @@ export function EventsFeed() {
           </div>
         </div>
 
-        <div className="pt-6" role="tabpanel">
+        <div id={PANEL_ID} className="pt-6" role="tabpanel" aria-labelledby={tabId(tab)}>
           {tab === 'upcoming' ? upcoming : myPanel}
         </div>
       </div>

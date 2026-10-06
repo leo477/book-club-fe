@@ -17,11 +17,15 @@ function subscribe(onTick: () => void) {
 }
 
 /** The text is derived from the clock on every tick; it is empty once the event has started. */
-export function EventCountdown({ eventDate }: { eventDate: string }) {
+export function EventCountdown({ eventDate, label }: { eventDate: string; label?: string }) {
   const text = useSyncExternalStore(
     subscribe,
     () => formatCountdown(new Date(eventDate).getTime() - Date.now()),
     () => '',
   );
-  return <span className="text-sm font-mono text-destructive">{text}</span>;
+  return (
+    <span role="timer" aria-label={label} className="text-sm font-mono text-destructive">
+      {text}
+    </span>
+  );
 }

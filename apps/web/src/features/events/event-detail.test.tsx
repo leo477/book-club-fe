@@ -210,11 +210,26 @@ describe('EventDetail', () => {
     expect(screen.queryByTestId('event-rsvp-button')).not.toBeInTheDocument();
   });
 
-  it.each(['active', 'cancelled'])('shows the raw %s status badge, none for a scheduled event', async (status) => {
+  it.each(['active', 'cancelled'])('shows a translated %s status badge, none for a scheduled event', async (status) => {
     mockApi(eventJson({ status }));
     renderWithProviders(<EventDetail id="e1" />);
     await screen.findByText('Dune night');
-    expect(screen.getByText(status)).toBeInTheDocument();
+    expect(screen.getByText(t(`EVENTS.status_${status}`))).toBeInTheDocument();
+    expect(screen.queryByText(status)).not.toBeInTheDocument();
+  });
+
+  it('falls back to the raw status when it has no translation', async () => {
+    mockApi(eventJson({ status: 'held' }));
+    renderWithProviders(<EventDetail id="e1" />);
+    expect(await screen.findByText('held')).toBeInTheDocument();
+  });
+
+  it('renders the book cover as decorative since the title sits next to it', async () => {
+    mockApi(eventJson({ coverUrl: 'https://img.example/c.jpg', bookTitle: 'Dune' }));
+    const { container } = renderWithProviders(<EventDetail id="e1" />);
+    await screen.findByText('Dune night');
+    expect(container.querySelector('img')).toHaveAttribute('alt', '');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 
   describe('organizer', () => {
@@ -243,12 +258,16 @@ describe('EventDetail', () => {
       await waitFor(() => expect(screen.queryByText(t('EVENTS.organizer_controls'))).not.toBeInTheDocument());
     });
 
-    it('dismisses the confirmation without cancelling', async () => {
+    it('dismisses the confirmation without cancelling, moving focus into it and back out', async () => {
       mockApi(eventJson(), { id: 'o1' });
       renderWithProviders(<EventDetail id="e1" />);
-      await userEvent.click(await screen.findByRole('button', { name: t('EVENTS.cancel_event') }));
+      const trigger = await screen.findByRole('button', { name: t('EVENTS.cancel_event') });
+      await userEvent.click(trigger);
+      const [, confirm] = screen.getAllByRole('button', { name: t('EVENTS.cancel_event') });
+      expect(confirm).toHaveFocus();
       await userEvent.click(screen.getByRole('button', { name: t('CREATE_EVENT.cancel') }));
       expect(screen.queryByText(t('EVENTS.cancel_confirm'))).not.toBeInTheDocument();
+      expect(trigger).toHaveFocus();
     });
   });
 });

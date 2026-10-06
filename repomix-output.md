@@ -209,6 +209,7 @@ apps/
           event-map.tsx
           events-feed.test.tsx
           events-feed.tsx
+          events-intl.test.ts
           events-intl.tsx
           rsvp-button.tsx
           use-events.ts
