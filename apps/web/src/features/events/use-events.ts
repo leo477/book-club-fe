@@ -1,7 +1,7 @@
 'use client';
 'use no memo';
 
-import { useMutation, useMutationState, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useMutationState, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import type { ClubEvent } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
 import { describeError } from '@/features/club-detail/describe-error';
@@ -13,6 +13,13 @@ export const eventsKey = ['events', 'all'] as const;
 export const myEventsKey = ['events', 'mine'] as const;
 export const eventKey = (id: string) => ['events', 'detail', id] as const;
 const RSVP_KEY = ['events', 'rsvp'] as const;
+
+/** Event lists, the detail cache and every club page's events (keys owned by features/club-detail). */
+export const invalidateEvents = (queryClient: QueryClient) =>
+  Promise.all([
+    queryClient.invalidateQueries({ queryKey: ['events'] }),
+    queryClient.invalidateQueries({ queryKey: ['club'], predicate: (q) => q.queryKey[2] === 'events' }),
+  ]);
 
 const noRefocus = { refetchOnWindowFocus: false } as const;
 
@@ -73,8 +80,10 @@ export function useRsvp() {
       // attend is called with the toast suppressed so a closed registration can get its own message; cancel is toasted by the client
       if (attending) showToast('error', isBadRequest(err) ? tEvents('registration_closed') : describeError(err, tErrors));
     },
-    // refetch once the last concurrent RSVP settled so a stale response cannot undo another event's optimistic patch
-    onSettled: () => (queryClient.isMutating({ mutationKey: RSVP_KEY }) === 1 ? queryClient.invalidateQueries({ queryKey: ['events'] }) : undefined),
+    // the settling mutation is still pending here, so 1 means it is the last concurrent RSVP; refetching earlier lets a stale response undo another event's optimistic patch
+    onSettled: () => {
+      if (queryClient.isMutating({ mutationKey: RSVP_KEY }) === 1) void invalidateEvents(queryClient);
+    },
   });
 
   const pendingIds = useMutationState({ filters: { mutationKey: RSVP_KEY, status: 'pending' }, select: (m) => (m.state.variables as { eventId: string }).eventId });

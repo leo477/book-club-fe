@@ -272,4 +272,44 @@ describe('EventsFeed RSVP', () => {
     release();
     await waitFor(() => expect(rsvp()).toHaveTextContent(t('events.rsvp.join')));
   });
+
+  it('refetches once after two concurrent RSVPs on different events settle, and marks club event lists stale', async () => {
+    const server_ = { e1: false, e2: false };
+    let listCalls = 0;
+    mockApi({
+      all: [eventJson({ id: 'e1', title: 'First', date: '2099-05-01T18:00:00Z' }), eventJson({ id: 'e2', title: 'Second', date: '2099-05-02T18:00:00Z' })],
+    });
+    const row = (id: 'e1' | 'e2', title: string, date: string) => eventJson({ id, title, date, isAttending: server_[id], attendeeCount: server_[id] ? 3 : 2 });
+    server.use(
+      http.get(`${API}/events`, () => {
+        listCalls++;
+        return HttpResponse.json([row('e1', 'First', '2099-05-01T18:00:00Z'), row('e2', 'Second', '2099-05-02T18:00:00Z')]);
+      }),
+      http.post(`${API}/events/e1/attend`, async () => {
+        await new Promise((r) => setTimeout(r, 30));
+        server_.e1 = true;
+        return HttpResponse.json({ attendeeCount: 3, joinRequestStatus: 'member' });
+      }),
+      http.post(`${API}/events/e2/attend`, async () => {
+        await new Promise((r) => setTimeout(r, 90));
+        server_.e2 = true;
+        return HttpResponse.json({ attendeeCount: 3, joinRequestStatus: 'member' });
+      }),
+    );
+    const { queryClient } = renderWithProviders(<EventsFeed />);
+    await screen.findByText('First');
+    expect(listCalls).toBe(1);
+    queryClient.setQueryData(['club', 'c1', 'events', 'authed'], []);
+    const card = (title: string) => screen.getByText(title).closest('[data-testid="event-card"]') as HTMLElement;
+    await userEvent.click(within(card('First')).getByTestId('event-rsvp-button'));
+    await userEvent.click(within(card('Second')).getByTestId('event-rsvp-button'));
+    await waitFor(() => expect(listCalls).toBe(2));
+    await waitFor(() => expect(within(card('Second')).getByTestId('event-rsvp-button')).toHaveTextContent(t('events.rsvp.attending')));
+    expect(within(card('First')).getByTestId('event-rsvp-button')).toHaveTextContent(t('events.rsvp.attending'));
+    expect(within(card('First')).getByText(`3 ${t('EVENTS.attending')}`)).toBeInTheDocument();
+    expect(within(card('Second')).getByText(`3 ${t('EVENTS.attending')}`)).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(listCalls).toBe(2);
+    expect(queryClient.getQueryState(['club', 'c1', 'events', 'authed'])?.isInvalidated).toBe(true);
+  });
 });

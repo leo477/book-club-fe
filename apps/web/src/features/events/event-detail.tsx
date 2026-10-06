@@ -13,7 +13,7 @@ import { useSession } from '@/features/clubs/use-session';
 import { api } from '@/lib/api';
 import { formatDate } from '@/lib/format';
 import { RsvpButton } from './rsvp-button';
-import { useEvent, useRsvp } from './use-events';
+import { invalidateEvents, useEvent, useRsvp } from './use-events';
 
 // the Maps loader and its key request only matter on events that have coordinates
 const EventMap = lazy(() => import('./event-map'));
@@ -70,7 +70,9 @@ function BookDetails({ bookId }: { bookId: string }) {
   );
 }
 
-export function EventDetail({ id }: { id: string }) {
+export function EventDetail({ id: rawId }: { id: string }) {
+  // ids are lowercase everywhere else; an uppercase URL must hit the same cache entry the RSVP patches
+  const id = rawId.toLowerCase();
   const t = useTranslations('EVENTS');
   const tNew = useTranslations('CREATE_EVENT');
   const locale = useLocale();
@@ -83,7 +85,7 @@ export function EventDetail({ id }: { id: string }) {
 
   const cancelEvent = useMutation({
     mutationFn: () => api.events.cancel(id),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['events'] }),
+    onSettled: () => invalidateEvents(queryClient),
   });
 
   if (query.isPending) {

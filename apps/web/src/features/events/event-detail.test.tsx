@@ -160,6 +160,27 @@ describe('EventDetail', () => {
       expect(attendance('mine')).toMatchObject({ isAttending: false, attendeeCount: 2 });
     });
 
+    it('flips and rolls back the visible cache entry when the URL id is uppercase', async () => {
+      let release: () => void = () => undefined;
+      const gate = new Promise<void>((r) => (release = r));
+      mockApi(eventJson({ attendeeCount: 2 }));
+      server.use(
+        http.post(`${API}/events/e1/attend`, async () => {
+          await gate;
+          return HttpResponse.json({ detail: 'Event is full' }, { status: 409 });
+        }),
+      );
+      const { queryClient } = renderWithProviders(<EventDetail id="E1" />);
+      const button = await screen.findByTestId('event-rsvp-button');
+      expect(queryClient.getQueryData(['events', 'detail', 'e1'])).toBeDefined();
+      expect(queryClient.getQueryData(['events', 'detail', 'E1'])).toBeUndefined();
+      await userEvent.click(button);
+      expect(screen.getByText(new RegExp(`3 ${t('EVENTS.attending')}`))).toBeInTheDocument();
+      release();
+      await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Event is full'));
+      await waitFor(() => expect(screen.getByText(new RegExp(`2 ${t('EVENTS.attending')}`))).toBeInTheDocument());
+    });
+
     it('cancels attendance', async () => {
       const api = mockApi(eventJson({ isAttending: true, attendeeCount: 3 }));
       const del = vi.fn(() => {
