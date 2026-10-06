@@ -293,6 +293,7 @@ docs/
     R6-DEPLOY-SETTINGS.md
     RUNBOOK-STRANGLER.md
     SECURITY-R6.md
+    SECURITY-R7.md
     UI-DELTAS.md
 e2e/
   fixtures/

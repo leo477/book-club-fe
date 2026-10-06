@@ -46,6 +46,25 @@ describe('EventMap', () => {
     expect(screen.queryByTestId('polyline')).not.toBeInTheDocument();
   });
 
+  it('renders nothing, and does not hold back its siblings, while the key is still pending', async () => {
+    const hits = vi.fn();
+    server.use(http.get(`${API}/config/maps-key`, async () => {
+      hits();
+      await new Promise((r) => setTimeout(r, 150));
+      return HttpResponse.json({ mapsApiKey: 'KEY', mapsMapId: 'MID' });
+    }));
+    renderWithProviders(
+      <>
+        <h1>Event title</h1>
+        <EventMap {...props} />
+      </>,
+    );
+    expect(screen.getByRole('heading', { name: 'Event title' })).toBeInTheDocument();
+    expect(screen.queryByTestId('map')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('map')).toBeInTheDocument();
+    expect(hits).toHaveBeenCalledTimes(1);
+  });
+
   it('falls back to Google\'s demo map id when the backend has none', async () => {
     mockKey({ mapsApiKey: 'KEY', mapsMapId: '' });
     renderWithProviders(<EventMap {...props} />);

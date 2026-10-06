@@ -181,6 +181,21 @@ describe('EventDetail', () => {
     });
   });
 
+  it('offers no RSVP to a guest', async () => {
+    mockApi(eventJson());
+    server.use(http.get(`${API}/auth/session-status`, () => HttpResponse.json({ hasSession: false })));
+    renderWithProviders(<EventDetail id="e1" />);
+    await screen.findByText('Dune night');
+    expect(screen.queryByTestId('event-rsvp-button')).not.toBeInTheDocument();
+  });
+
+  it.each(['active', 'cancelled'])('shows the raw %s status badge, none for a scheduled event', async (status) => {
+    mockApi(eventJson({ status }));
+    renderWithProviders(<EventDetail id="e1" />);
+    await screen.findByText('Dune night');
+    expect(screen.getByText(status)).toBeInTheDocument();
+  });
+
   describe('organizer', () => {
     it('hides the controls from other users', async () => {
       mockApi(eventJson());
