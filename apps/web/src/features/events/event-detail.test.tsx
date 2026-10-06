@@ -256,6 +256,33 @@ describe('EventDetail', () => {
       await userEvent.click(confirm!);
       await waitFor(() => expect(cancel).toHaveBeenCalledTimes(1));
       await waitFor(() => expect(screen.queryByText(t('EVENTS.organizer_controls'))).not.toBeInTheDocument());
+      expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
+    });
+
+    it('keeps focus on the page heading while a confirmed cancel is in flight', async () => {
+      mockApi(eventJson(), { id: 'o1' });
+      server.use(http.patch(`${API}/events/e1/cancel`, () => new Promise(() => undefined)));
+      renderWithProviders(<EventDetail id="e1" />);
+      await userEvent.click(await screen.findByRole('button', { name: t('EVENTS.cancel_event') }));
+      const [, confirm] = screen.getAllByRole('button', { name: t('EVENTS.cancel_event') });
+      await userEvent.click(confirm!);
+      expect(screen.queryByText(t('EVENTS.cancel_confirm'))).not.toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
+    });
+
+    it('dismisses the confirmation on Escape and returns focus to the trigger', async () => {
+      const api = mockApi(eventJson(), { id: 'o1' });
+      const cancel = vi.fn();
+      server.use(http.patch(`${API}/events/e1/cancel`, cancel));
+      renderWithProviders(<EventDetail id="e1" />);
+      const trigger = await screen.findByRole('button', { name: t('EVENTS.cancel_event') });
+      await userEvent.click(trigger);
+      expect(screen.getByText(t('EVENTS.cancel_confirm'))).toBeInTheDocument();
+      await userEvent.keyboard('{Escape}');
+      expect(screen.queryByText(t('EVENTS.cancel_confirm'))).not.toBeInTheDocument();
+      expect(trigger).toHaveFocus();
+      expect(cancel).not.toHaveBeenCalled();
+      expect(api.gets).toHaveLength(1);
     });
 
     it('dismisses the confirmation without cancelling, moving focus into it and back out', async () => {

@@ -4,7 +4,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { Club, ClubEvent } from '@book-club/contracts';
 import { useLocale, useTranslations } from 'next-intl';
-import { useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
+import { useCallback, useRef, useState, useSyncExternalStore, type KeyboardEvent } from 'react';
 import { AppLink } from '@/components/app-link';
 import { EmptyState } from '@/components/empty-state';
 import { Spinner } from '@/components/ui/spinner';
@@ -31,8 +31,9 @@ const TAB_OFF = 'text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]';
 /** Like Angular, the single-club shortcut only knows clubs the /clubs page has already loaded; it never fetches them. */
 function useLoadedClubs(): Club[] {
   const queryClient = useQueryClient();
+  const subscribe = useCallback((notify: () => void) => queryClient.getQueryCache().subscribe(notify), [queryClient]);
   return useSyncExternalStore(
-    (notify) => queryClient.getQueryCache().subscribe(notify),
+    subscribe,
     () => queryClient.getQueryData<Club[]>(clubsKey) ?? EMPTY_CLUBS,
     () => EMPTY_CLUBS,
   );
@@ -68,6 +69,7 @@ export function EventsFeed() {
   };
 
   const onTabKeyDown = (e: KeyboardEvent) => {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
     const at = TABS.indexOf(tab);
     const target = { ArrowRight: TABS[(at + 1) % TABS.length], ArrowLeft: TABS[(at + TABS.length - 1) % TABS.length], Home: TABS[0], End: TABS[TABS.length - 1] }[e.key];
     if (!target) return;

@@ -84,6 +84,7 @@ export function EventDetail({ id: rawId }: { id: string }) {
   const [confirmCancel, setConfirmCancel] = useState(false);
   const cancelTrigger = useRef<HTMLButtonElement>(null);
   const confirmButton = useRef<HTMLButtonElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     if (confirmCancel) confirmButton.current?.focus();
@@ -137,7 +138,7 @@ export function EventDetail({ id: rawId }: { id: string }) {
 
       <div className={`${CARD} space-y-3`}>
         <div className="flex items-start justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{event.title}</h1>
+          <h1 ref={heading} tabIndex={-1} className="text-2xl focus:outline-none font-bold text-gray-900 dark:text-white">{event.title}</h1>
           {event.status !== 'scheduled' && (
             <span
               className={`text-xs rounded-full px-2.5 py-1 shrink-0 ${
@@ -236,7 +237,12 @@ export function EventDetail({ id: rawId }: { id: string }) {
             </button>
           </div>
           {confirmCancel && (
-            <div className="flex items-center justify-between gap-3 mt-3 px-3 py-2 rounded-lg bg-red-100 dark:bg-red-900/30">
+            <div
+              className="flex items-center justify-between gap-3 mt-3 px-3 py-2 rounded-lg bg-red-100 dark:bg-red-900/30"
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') dismissConfirm();
+              }}
+            >
               <span className="text-xs text-red-700 dark:text-red-300">{t('cancel_confirm')}</span>
               <div className="flex gap-2 flex-shrink-0">
                 <button
@@ -245,6 +251,8 @@ export function EventDetail({ id: rawId }: { id: string }) {
                   disabled={actioning}
                   onClick={() => {
                     setConfirmCancel(false);
+                    // the trigger is disabled while cancelling and unmounts once the event is cancelled, the heading always stays
+                    heading.current?.focus();
                     cancelEvent.mutate();
                   }}
                   className="rounded-lg bg-red-600 hover:bg-red-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-60 transition-colors"

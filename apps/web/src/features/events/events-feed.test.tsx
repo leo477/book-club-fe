@@ -132,6 +132,19 @@ describe('EventsFeed', () => {
     expect(mine).toHaveAttribute('aria-selected', 'true');
   });
 
+  it('leaves modified arrow keys to the browser', async () => {
+    mockApi({ all: [eventJson()] });
+    renderWithProviders(<EventsFeed />);
+    await screen.findByText('Dune night');
+    const upcoming = screen.getByRole('tab', { name: t('EVENTS.tab_upcoming') });
+    upcoming.focus();
+    for (const mod of ['Alt', 'Control', 'Meta', 'Shift']) {
+      await userEvent.keyboard(`{${mod}>}{ArrowRight}{/${mod}}`);
+      expect(upcoming).toHaveFocus();
+      expect(upcoming).toHaveAttribute('aria-selected', 'true');
+    }
+  });
+
   it('shows the My events empty state', async () => {
     mockApi({ all: [eventJson()] });
     renderWithProviders(<EventsFeed />);
@@ -217,6 +230,38 @@ describe('EventsFeed RSVP', () => {
     await waitFor(() => expect(rsvp()).toHaveTextContent(t('events.rsvp.attending')));
     expect(rsvp()).toBeEnabled();
     expect(toast).not.toHaveBeenCalled();
+  });
+
+  it('settles the mutation while the follow-up refetch is still pending, then shows the server state', async () => {
+    let releaseRefetch: () => void = () => undefined;
+    const refetchGate = new Promise<void>((r) => (releaseRefetch = r));
+    let attending = false;
+    let refetchStarted = false;
+    mockApi();
+    server.use(
+      http.get(`${API}/events`, async () => {
+        if (attending) {
+          refetchStarted = true;
+          await refetchGate;
+        }
+        return HttpResponse.json([eventJson({ attendeeCount: attending ? 5 : 2, isAttending: attending })]);
+      }),
+      http.post(`${API}/events/e1/attend`, () => {
+        attending = true;
+        return HttpResponse.json({ attendeeCount: 3, joinRequestStatus: 'member' });
+      }),
+    );
+    renderWithProviders(<EventsFeed />);
+    await screen.findByText('Dune night');
+    await userEvent.click(rsvp());
+    await waitFor(() => expect(refetchStarted).toBe(true));
+    await waitFor(() => expect(rsvp()).toBeEnabled());
+    expect(rsvp()).not.toHaveAttribute('aria-busy', 'true');
+    expect(rsvp()).toHaveTextContent(t('events.rsvp.attending'));
+    expect(screen.getByText(`3 ${t('EVENTS.attending')}`)).toBeInTheDocument();
+    releaseRefetch();
+    expect(await screen.findByText(`5 ${t('EVENTS.attending')}`)).toBeInTheDocument();
+    expect(rsvp()).toBeEnabled();
   });
 
   it('rolls back and shows the registration-closed toast on a 400', async () => {
