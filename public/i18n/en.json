@@ -421,7 +421,10 @@
     "open_in_maps": "Open in Google Maps",
     "route_to_venue": "Route to after-event venue",
     "load_error": "Failed to load events",
-    "load_my_error": "Failed to load my events"
+    "load_my_error": "Failed to load my events",
+    "filter_tabs": "Event filter",
+    "rsvp_loading": "Updating RSVP…",
+    "countdown_label": "Time until {{ title }}"
   },
   "EVENT": {
     "event_chat_btn": "Event Chat",

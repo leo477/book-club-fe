@@ -46,11 +46,11 @@ describe('/events pages', () => {
     expect(await screen.findByText('Dune night')).toBeInTheDocument();
   });
 
-  it('pass the route id to the detail', async () => {
+  it('pass the lower-cased route id to the detail', async () => {
     server.use(
       http.get(`${API}/auth/session-status`, () => HttpResponse.json({ hasSession: true })),
       http.get(`${API}/auth/me`, () => HttpResponse.json(userJson())),
-      http.get(`${API}/events/${UUID}`, () => HttpResponse.json(eventJson({ id: UUID, title: 'By id' }))),
+      http.get(`${API}/events/${UUID.toLowerCase()}`, () => HttpResponse.json(eventJson({ id: UUID.toLowerCase(), title: 'By id' }))),
       http.get(`${API}/books/stores`, () => HttpResponse.json([])),
     );
     renderWithProviders(await DetailPage({ params: Promise.resolve({ id: UUID }) }));

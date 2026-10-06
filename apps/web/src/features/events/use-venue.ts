@@ -25,6 +25,9 @@ export function useMapsConfig() {
   });
 }
 
+// the map degrades silently (no pin, straight line), so a failed lookup must not raise a toast
+const quiet = { suppressErrorToast: true } as const;
+
 const hasCoords = <T extends { lat?: number | null | undefined; lng?: number | null | undefined }>(v: T | null | undefined): v is T & LatLng => v?.lat != null && v.lng != null;
 
 /** Coordinates of the after-meeting venue: its own, else the first geocoder suggestion for its address. */
@@ -36,9 +39,9 @@ export function useVenuePosition(venue: AfterMeetingVenue | null): LatLng | null
   const query = useQuery({
     queryKey: ['geocode', 'venue', address, locale],
     queryFn: async (): Promise<LatLng | null> => {
-      const [first] = await api.geocode.autocomplete(address ?? '', sessionToken, locale, 1);
+      const [first] = await api.geocode.autocomplete(address ?? '', sessionToken, locale, 1, quiet);
       if (!first) return null;
-      const resolved = hasCoords(first) ? first : first.place_id ? await api.geocode.placeDetails(first.place_id, sessionToken, locale).catch(() => first) : first;
+      const resolved = hasCoords(first) ? first : first.place_id ? await api.geocode.placeDetails(first.place_id, sessionToken, locale, quiet).catch(() => first) : first;
       return hasCoords(resolved) ? { lat: resolved.lat, lng: resolved.lng } : null;
     },
     enabled: !direct && !!address,
@@ -52,7 +55,7 @@ export function useWalkingRoute(origin: LatLng, dest: LatLng | null): LatLng[] |
   const query = useQuery({
     queryKey: ['route', 'walking', origin, dest],
     queryFn: async () => {
-      const { path } = await api.geocode.walkingRoute(origin, dest as LatLng);
+      const { path } = await api.geocode.walkingRoute(origin, dest as LatLng, quiet);
       return path.length > 1 ? path : [origin, dest as LatLng];
     },
     enabled: dest !== null,

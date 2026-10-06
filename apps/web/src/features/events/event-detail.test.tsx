@@ -160,6 +160,27 @@ describe('EventDetail', () => {
       expect(attendance('mine')).toMatchObject({ isAttending: false, attendeeCount: 2 });
     });
 
+    it('flips and rolls back the visible cache entry when the URL id is uppercase', async () => {
+      let release: () => void = () => undefined;
+      const gate = new Promise<void>((r) => (release = r));
+      mockApi(eventJson({ attendeeCount: 2 }));
+      server.use(
+        http.post(`${API}/events/e1/attend`, async () => {
+          await gate;
+          return HttpResponse.json({ detail: 'Event is full' }, { status: 409 });
+        }),
+      );
+      const { queryClient } = renderWithProviders(<EventDetail id="E1" />);
+      const button = await screen.findByTestId('event-rsvp-button');
+      expect(queryClient.getQueryData(['events', 'detail', 'e1'])).toBeDefined();
+      expect(queryClient.getQueryData(['events', 'detail', 'E1'])).toBeUndefined();
+      await userEvent.click(button);
+      expect(screen.getByText(new RegExp(`3 ${t('EVENTS.attending')}`))).toBeInTheDocument();
+      release();
+      await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Event is full'));
+      await waitFor(() => expect(screen.getByText(new RegExp(`2 ${t('EVENTS.attending')}`))).toBeInTheDocument());
+    });
+
     it('cancels attendance', async () => {
       const api = mockApi(eventJson({ isAttending: true, attendeeCount: 3 }));
       const del = vi.fn(() => {
@@ -179,6 +200,36 @@ describe('EventDetail', () => {
       await screen.findByText('Dune night');
       expect(screen.queryByTestId('event-rsvp-button')).not.toBeInTheDocument();
     });
+  });
+
+  it('offers no RSVP to a guest', async () => {
+    mockApi(eventJson());
+    server.use(http.get(`${API}/auth/session-status`, () => HttpResponse.json({ hasSession: false })));
+    renderWithProviders(<EventDetail id="e1" />);
+    await screen.findByText('Dune night');
+    expect(screen.queryByTestId('event-rsvp-button')).not.toBeInTheDocument();
+  });
+
+  it.each(['active', 'cancelled'])('shows a translated %s status badge, none for a scheduled event', async (status) => {
+    mockApi(eventJson({ status }));
+    renderWithProviders(<EventDetail id="e1" />);
+    await screen.findByText('Dune night');
+    expect(screen.getByText(t(`EVENTS.status_${status}`))).toBeInTheDocument();
+    expect(screen.queryByText(status)).not.toBeInTheDocument();
+  });
+
+  it('falls back to the raw status when it has no translation', async () => {
+    mockApi(eventJson({ status: 'held' }));
+    renderWithProviders(<EventDetail id="e1" />);
+    expect(await screen.findByText('held')).toBeInTheDocument();
+  });
+
+  it('renders the book cover as decorative since the title sits next to it', async () => {
+    mockApi(eventJson({ coverUrl: 'https://img.example/c.jpg', bookTitle: 'Dune' }));
+    const { container } = renderWithProviders(<EventDetail id="e1" />);
+    await screen.findByText('Dune night');
+    expect(container.querySelector('img')).toHaveAttribute('alt', '');
+    expect(screen.queryByRole('img')).not.toBeInTheDocument();
   });
 
   describe('organizer', () => {
@@ -205,14 +256,45 @@ describe('EventDetail', () => {
       await userEvent.click(confirm!);
       await waitFor(() => expect(cancel).toHaveBeenCalledTimes(1));
       await waitFor(() => expect(screen.queryByText(t('EVENTS.organizer_controls'))).not.toBeInTheDocument());
+      expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
     });
 
-    it('dismisses the confirmation without cancelling', async () => {
+    it('keeps focus on the page heading while a confirmed cancel is in flight', async () => {
       mockApi(eventJson(), { id: 'o1' });
+      server.use(http.patch(`${API}/events/e1/cancel`, () => new Promise(() => undefined)));
       renderWithProviders(<EventDetail id="e1" />);
       await userEvent.click(await screen.findByRole('button', { name: t('EVENTS.cancel_event') }));
+      const [, confirm] = screen.getAllByRole('button', { name: t('EVENTS.cancel_event') });
+      await userEvent.click(confirm!);
+      expect(screen.queryByText(t('EVENTS.cancel_confirm'))).not.toBeInTheDocument();
+      expect(screen.getByRole('heading', { level: 1 })).toHaveFocus();
+    });
+
+    it('dismisses the confirmation on Escape and returns focus to the trigger', async () => {
+      const api = mockApi(eventJson(), { id: 'o1' });
+      const cancel = vi.fn();
+      server.use(http.patch(`${API}/events/e1/cancel`, cancel));
+      renderWithProviders(<EventDetail id="e1" />);
+      const trigger = await screen.findByRole('button', { name: t('EVENTS.cancel_event') });
+      await userEvent.click(trigger);
+      expect(screen.getByText(t('EVENTS.cancel_confirm'))).toBeInTheDocument();
+      await userEvent.keyboard('{Escape}');
+      expect(screen.queryByText(t('EVENTS.cancel_confirm'))).not.toBeInTheDocument();
+      expect(trigger).toHaveFocus();
+      expect(cancel).not.toHaveBeenCalled();
+      expect(api.gets).toHaveLength(1);
+    });
+
+    it('dismisses the confirmation without cancelling, moving focus into it and back out', async () => {
+      mockApi(eventJson(), { id: 'o1' });
+      renderWithProviders(<EventDetail id="e1" />);
+      const trigger = await screen.findByRole('button', { name: t('EVENTS.cancel_event') });
+      await userEvent.click(trigger);
+      const [, confirm] = screen.getAllByRole('button', { name: t('EVENTS.cancel_event') });
+      expect(confirm).toHaveFocus();
       await userEvent.click(screen.getByRole('button', { name: t('CREATE_EVENT.cancel') }));
       expect(screen.queryByText(t('EVENTS.cancel_confirm'))).not.toBeInTheDocument();
+      expect(trigger).toHaveFocus();
     });
   });
 });

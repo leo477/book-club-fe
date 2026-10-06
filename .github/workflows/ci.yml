@@ -125,6 +125,8 @@ jobs:
             ${{ runner.os }}-node24-
       - name: Install dependencies
         run: npm ci
+      # Production deps only: the remaining high advisory (braces, no patched release yet)
+      # is reachable solely via dev tooling (eslint-config-next, @spartan-ng/cli). SCRUM-78.
       - name: Audit dependencies
         run: npm audit --omit=dev --audit-level=high
       - name: Audit dev dependencies (informational)

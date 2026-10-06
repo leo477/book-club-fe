@@ -209,6 +209,7 @@ apps/
           event-map.tsx
           events-feed.test.tsx
           events-feed.tsx
+          events-intl.test.ts
           events-intl.tsx
           rsvp-button.tsx
           use-events.ts
@@ -290,9 +291,11 @@ docs/
     GATE-G1.md
     PARITY-R5.md
     PARITY-R6.md
+    PARITY-R7.md
     R6-DEPLOY-SETTINGS.md
     RUNBOOK-STRANGLER.md
     SECURITY-R6.md
+    SECURITY-R7.md
     UI-DELTAS.md
 e2e/
   fixtures/
@@ -315,6 +318,8 @@ e2e/
       fixtures.ts
       helpers.ts
       mock-backend.ts
+    r7/
+      fixtures.ts
     bypass.ts
     expectations.ts
     har-diff.ts
