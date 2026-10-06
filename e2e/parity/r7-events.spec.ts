@@ -364,8 +364,11 @@ test.describe('detail', () => {
     const errors = watchConsole(page, [
       /maps\.googleapis|Google Maps JavaScript API|ERR_FAILED|net::/,
     ]);
-    await page.route(/maps\.googleapis\.com|maps\.gstatic\.com/, (route) =>
-      route.abort(),
+    await page.route(
+      (url) =>
+        url.hostname === 'maps.googleapis.com' ||
+        url.hostname === 'maps.gstatic.com',
+      (route) => route.abort(),
     );
     const mock = await open(page, 'member', `/events/${EVENT_IDS.withMap}`, {
       mapsKey: 'key',
