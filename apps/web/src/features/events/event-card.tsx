@@ -70,7 +70,7 @@ export function EventCard({ event, isAuthenticated, attending, isOrganizer, now,
           </div>
         )}
 
-        {days > 0 && days <= 3 && <EventCountdown eventDate={event.date} />}
+        {days > 0 && days <= 3 && <EventCountdown eventDate={event.date} label={t('countdown_label', { title: event.title })} />}
 
         <div className="flex items-center justify-between mt-auto pt-2 border-t border-[var(--color-sepia-mid)] pr-16 sm:pr-0">
           <span className="text-xs text-[var(--color-ink-muted)]">

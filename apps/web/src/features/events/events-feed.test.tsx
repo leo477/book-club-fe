@@ -100,6 +100,51 @@ describe('EventsFeed', () => {
     expect(tab).toHaveAttribute('aria-selected', 'true');
   });
 
+  it('exposes the filter as a tab list with a roving tabindex and arrow-key navigation', async () => {
+    mockApi({ all: [eventJson()] });
+    renderWithProviders(<EventsFeed />);
+    await screen.findByText('Dune night');
+    expect(screen.getByRole('tablist', { name: t('EVENTS.filter_tabs') })).toBeInTheDocument();
+    const upcoming = screen.getByRole('tab', { name: t('EVENTS.tab_upcoming') });
+    const mine = screen.getByRole('tab', { name: new RegExp(t('EVENTS.tab_my')) });
+    const panel = screen.getByRole('tabpanel');
+    expect(upcoming).toHaveAttribute('tabindex', '0');
+    expect(mine).toHaveAttribute('tabindex', '-1');
+    expect(upcoming).toHaveAttribute('aria-controls', panel.id);
+    expect(mine).toHaveAttribute('aria-controls', panel.id);
+    expect(panel).toHaveAttribute('aria-labelledby', upcoming.id);
+
+    upcoming.focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(mine).toHaveFocus();
+    expect(mine).toHaveAttribute('aria-selected', 'true');
+    expect(mine).toHaveAttribute('tabindex', '0');
+    expect(upcoming).toHaveAttribute('tabindex', '-1');
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('aria-labelledby', mine.id);
+    await userEvent.keyboard('{ArrowRight}');
+    expect(upcoming).toHaveFocus();
+    await userEvent.keyboard('{ArrowLeft}');
+    expect(mine).toHaveFocus();
+    await userEvent.keyboard('{Home}');
+    expect(upcoming).toHaveFocus();
+    await userEvent.keyboard('{End}');
+    expect(mine).toHaveFocus();
+    expect(mine).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('leaves modified arrow keys to the browser', async () => {
+    mockApi({ all: [eventJson()] });
+    renderWithProviders(<EventsFeed />);
+    await screen.findByText('Dune night');
+    const upcoming = screen.getByRole('tab', { name: t('EVENTS.tab_upcoming') });
+    upcoming.focus();
+    for (const mod of ['Alt', 'Control', 'Meta', 'Shift']) {
+      await userEvent.keyboard(`{${mod}>}{ArrowRight}{/${mod}}`);
+      expect(upcoming).toHaveFocus();
+      expect(upcoming).toHaveAttribute('aria-selected', 'true');
+    }
+  });
+
   it('shows the My events empty state', async () => {
     mockApi({ all: [eventJson()] });
     renderWithProviders(<EventsFeed />);
@@ -131,6 +176,7 @@ describe('EventsFeed', () => {
     renderWithProviders(<EventsFeed />);
     await screen.findByText('Soon');
     expect(screen.getAllByText(/^\d+d \d+h \d+m \d+s$/)).toHaveLength(1);
+    expect(screen.getByRole('timer')).toHaveAccessibleName(`${t('EVENTS.countdown_label').replace('{title}', 'Soon')}`);
     const started = screen.getByText('Started').closest('article')!;
     expect(within(started).getByTestId('event-rsvp-button')).toBeDisabled();
     expect(within(started).getByTestId('event-rsvp-button')).toHaveTextContent(t('EVENTS.registration_closed'));
@@ -178,10 +224,44 @@ describe('EventsFeed RSVP', () => {
     await userEvent.click(rsvp());
     expect(screen.getByText(`3 ${t('EVENTS.attending')}`)).toBeInTheDocument();
     expect(rsvp()).toBeDisabled();
+    expect(rsvp()).toHaveAttribute('aria-busy', 'true');
+    expect(rsvp()).toHaveTextContent(t('EVENTS.rsvp_loading'));
     release();
     await waitFor(() => expect(rsvp()).toHaveTextContent(t('events.rsvp.attending')));
     expect(rsvp()).toBeEnabled();
     expect(toast).not.toHaveBeenCalled();
+  });
+
+  it('settles the mutation while the follow-up refetch is still pending, then shows the server state', async () => {
+    let releaseRefetch: () => void = () => undefined;
+    const refetchGate = new Promise<void>((r) => (releaseRefetch = r));
+    let attending = false;
+    let refetchStarted = false;
+    mockApi();
+    server.use(
+      http.get(`${API}/events`, async () => {
+        if (attending) {
+          refetchStarted = true;
+          await refetchGate;
+        }
+        return HttpResponse.json([eventJson({ attendeeCount: attending ? 5 : 2, isAttending: attending })]);
+      }),
+      http.post(`${API}/events/e1/attend`, () => {
+        attending = true;
+        return HttpResponse.json({ attendeeCount: 3, joinRequestStatus: 'member' });
+      }),
+    );
+    renderWithProviders(<EventsFeed />);
+    await screen.findByText('Dune night');
+    await userEvent.click(rsvp());
+    await waitFor(() => expect(refetchStarted).toBe(true));
+    await waitFor(() => expect(rsvp()).toBeEnabled());
+    expect(rsvp()).not.toHaveAttribute('aria-busy', 'true');
+    expect(rsvp()).toHaveTextContent(t('events.rsvp.attending'));
+    expect(screen.getByText(`3 ${t('EVENTS.attending')}`)).toBeInTheDocument();
+    releaseRefetch();
+    expect(await screen.findByText(`5 ${t('EVENTS.attending')}`)).toBeInTheDocument();
+    expect(rsvp()).toBeEnabled();
   });
 
   it('rolls back and shows the registration-closed toast on a 400', async () => {
@@ -271,5 +351,45 @@ describe('EventsFeed RSVP', () => {
     expect(screen.getByText(`2 ${t('EVENTS.attending')}`)).toBeInTheDocument();
     release();
     await waitFor(() => expect(rsvp()).toHaveTextContent(t('events.rsvp.join')));
+  });
+
+  it('refetches once after two concurrent RSVPs on different events settle, and marks club event lists stale', async () => {
+    const server_ = { e1: false, e2: false };
+    let listCalls = 0;
+    mockApi({
+      all: [eventJson({ id: 'e1', title: 'First', date: '2099-05-01T18:00:00Z' }), eventJson({ id: 'e2', title: 'Second', date: '2099-05-02T18:00:00Z' })],
+    });
+    const row = (id: 'e1' | 'e2', title: string, date: string) => eventJson({ id, title, date, isAttending: server_[id], attendeeCount: server_[id] ? 3 : 2 });
+    server.use(
+      http.get(`${API}/events`, () => {
+        listCalls++;
+        return HttpResponse.json([row('e1', 'First', '2099-05-01T18:00:00Z'), row('e2', 'Second', '2099-05-02T18:00:00Z')]);
+      }),
+      http.post(`${API}/events/e1/attend`, async () => {
+        await new Promise((r) => setTimeout(r, 250));
+        server_.e1 = true;
+        return HttpResponse.json({ attendeeCount: 3, joinRequestStatus: 'member' });
+      }),
+      http.post(`${API}/events/e2/attend`, async () => {
+        await new Promise((r) => setTimeout(r, 400));
+        server_.e2 = true;
+        return HttpResponse.json({ attendeeCount: 3, joinRequestStatus: 'member' });
+      }),
+    );
+    const { queryClient } = renderWithProviders(<EventsFeed />);
+    await screen.findByText('First');
+    expect(listCalls).toBe(1);
+    queryClient.setQueryData(['club', 'c1', 'events', 'authed'], []);
+    const card = (title: string) => screen.getByText(title).closest('[data-testid="event-card"]') as HTMLElement;
+    await userEvent.click(within(card('First')).getByTestId('event-rsvp-button'));
+    await userEvent.click(within(card('Second')).getByTestId('event-rsvp-button'));
+    await waitFor(() => expect(listCalls).toBe(2));
+    await waitFor(() => expect(within(card('Second')).getByTestId('event-rsvp-button')).toHaveTextContent(t('events.rsvp.attending')));
+    expect(within(card('First')).getByTestId('event-rsvp-button')).toHaveTextContent(t('events.rsvp.attending'));
+    expect(within(card('First')).getByText(`3 ${t('EVENTS.attending')}`)).toBeInTheDocument();
+    expect(within(card('Second')).getByText(`3 ${t('EVENTS.attending')}`)).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(listCalls).toBe(2);
+    expect(queryClient.getQueryState(['club', 'c1', 'events', 'authed'])?.isInvalidated).toBe(true);
   });
 });

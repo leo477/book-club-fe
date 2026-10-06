@@ -4,7 +4,9 @@
 // --budget is the target (warns above it); --ceiling is the failing threshold (env FIRST_LOAD_CEILING_KB, default 250).
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { createServer } from 'node:http';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createServer as createTcpServer } from 'node:net';
 import { gzipSync } from 'node:zlib';
 
@@ -42,15 +44,26 @@ if (!existsSync('.next/BUILD_ID')) {
 
 // Serves the strangler flags so the proxy hands the routes to Next instead of rewriting to the legacy app.
 const flags = { version: 1, enabled: true, routes: Object.fromEntries(routes.map((r) => [r.pattern, { target: 'next', percent: 100 }])) };
-const edge = createServer((req, res) => {
-  res.setHeader('content-type', 'application/json');
-  res.end(req.url?.includes('/item/strangler') ? JSON.stringify(flags) : 'null');
-});
-await new Promise((resolve) => edge.listen(0, '127.0.0.1', resolve));
-const edgeUrl = `http://127.0.0.1:${edge.address().port}/ecfg_local?token=local`;
-
+// @vercel/edge-config only accepts https://edge-config.vercel.com/<id> connection strings, so a local http stub is rejected, the proxy
+// then reads "no config" and rewrites every route to the (unreachable) legacy origin. Intercept that one host in the child instead.
+const preload = join(mkdtempSync(join(tmpdir(), 'size-')), 'edge-preload.cjs');
+writeFileSync(
+  preload,
+  `const real = globalThis.fetch;
+globalThis.fetch = (input, init) => {
+  const url = new URL(typeof input === 'string' ? input : (input.url ?? String(input)));
+  if (url.host !== 'edge-config.vercel.com') return real(input, init);
+  return Promise.resolve(new Response(${JSON.stringify(JSON.stringify(flags))}, { status: 200, headers: { 'content-type': 'application/json', etag: '"1"' } }));
+};`,
+);
 const next = spawn('npx', ['next', 'start', '-p', String(port)], {
-  env: { ...process.env, EDGE_CONFIG: edgeUrl, LEGACY_ORIGIN: process.env.LEGACY_ORIGIN ?? 'https://legacy.invalid' },
+  detached: true, // own process group: killing only the npx wrapper leaves next-server holding the inherited stderr pipe open
+  env: {
+    ...process.env,
+    NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --require ${preload}`.trim(),
+    EDGE_CONFIG: 'https://edge-config.vercel.com/ecfg_local?token=local',
+    LEGACY_ORIGIN: process.env.LEGACY_ORIGIN ?? 'https://legacy.invalid',
+  },
   stdio: ['ignore', 'ignore', 'inherit'],
 });
 next.on('exit', (code) => {
@@ -60,18 +73,21 @@ next.on('exit', (code) => {
   }
 });
 const stop = () => {
-  next.kill();
-  edge.close();
+  try {
+    process.kill(-next.pid, 'SIGTERM');
+  } catch {
+    // already gone
+  }
 };
 process.on('exit', stop);
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => process.exit(130));
 
 const base = `http://127.0.0.1:${port}`;
-const get = (path) => fetch(`${base}${path}`, { headers: { cookie: 'bc_bucket=0', 'accept-encoding': 'identity' } });
+const get = (path) => fetch(`${base}${path}`, { signal: AbortSignal.timeout(10_000), headers: { cookie: 'bc_bucket=0', 'accept-encoding': 'identity' } });
 
 for (let i = 0; ; i++) {
   try {
-    if ((await get('/privacy')).status < 500) break;
+    if ((await get(routes[0].path)).status < 500) break;
   } catch {
     // not listening yet
   }

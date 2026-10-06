@@ -24,6 +24,13 @@ describe('formatCountdown', () => {
 });
 
 describe('EventCountdown', () => {
+  it('is a labelled timer that does not announce every tick', () => {
+    render(<EventCountdown eventDate={at(61_000)} label="Time until Dune night" />);
+    const timer = screen.getByRole('timer', { name: 'Time until Dune night' });
+    expect(timer).not.toHaveAttribute('aria-live');
+    expect(timer.closest('[aria-live]')).toBeNull();
+  });
+
   it('renders the remaining time and ticks every second', () => {
     const { container } = render(<EventCountdown eventDate={at(3 * 1000 + 61_000)} />);
     const text = () => container.textContent;

@@ -3,7 +3,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocale, useTranslations } from 'next-intl';
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { AppLink } from '@/components/app-link';
 import { LazyBoundary } from '@/components/lazy-boundary';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,7 @@ import { useSession } from '@/features/clubs/use-session';
 import { api } from '@/lib/api';
 import { formatDate } from '@/lib/format';
 import { RsvpButton } from './rsvp-button';
-import { useEvent, useRsvp } from './use-events';
+import { invalidateEvents, useEvent, useRsvp } from './use-events';
 
 // the Maps loader and its key request only matter on events that have coordinates
 const EventMap = lazy(() => import('./event-map'));
@@ -70,7 +70,9 @@ function BookDetails({ bookId }: { bookId: string }) {
   );
 }
 
-export function EventDetail({ id }: { id: string }) {
+export function EventDetail({ id: rawId }: { id: string }) {
+  // ids are lowercase everywhere else; an uppercase URL must hit the same cache entry the RSVP patches
+  const id = rawId.toLowerCase();
   const t = useTranslations('EVENTS');
   const tNew = useTranslations('CREATE_EVENT');
   const locale = useLocale();
@@ -80,10 +82,22 @@ export function EventDetail({ id }: { id: string }) {
   const { rsvp, pendingIds } = useRsvp();
   const [bookOpen, setBookOpen] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const cancelTrigger = useRef<HTMLButtonElement>(null);
+  const confirmButton = useRef<HTMLButtonElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (confirmCancel) confirmButton.current?.focus();
+  }, [confirmCancel]);
+
+  const dismissConfirm = () => {
+    setConfirmCancel(false);
+    cancelTrigger.current?.focus();
+  };
 
   const cancelEvent = useMutation({
     mutationFn: () => api.events.cancel(id),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['events'] }),
+    onSettled: () => invalidateEvents(queryClient),
   });
 
   if (query.isPending) {
@@ -124,14 +138,14 @@ export function EventDetail({ id }: { id: string }) {
 
       <div className={`${CARD} space-y-3`}>
         <div className="flex items-start justify-between gap-4">
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{event.title}</h1>
+          <h1 ref={heading} tabIndex={-1} className="text-2xl focus:outline-none font-bold text-gray-900 dark:text-white">{event.title}</h1>
           {event.status !== 'scheduled' && (
             <span
               className={`text-xs rounded-full px-2.5 py-1 shrink-0 ${
                 event.status === 'cancelled' ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
               }`}
             >
-              {event.status}
+              {t.has(`status_${event.status}`) ? t(`status_${event.status}`) : event.status}
             </span>
           )}
         </div>
@@ -177,7 +191,7 @@ export function EventDetail({ id }: { id: string }) {
               // eslint-disable-next-line @next/next/no-img-element -- cover URLs are arbitrary hosts
               <img
                 src={event.coverUrl}
-                alt={event.bookTitle ?? 'Book cover'}
+                alt=""
                 width={64}
                 height={96}
                 referrerPolicy="no-referrer"
@@ -213,6 +227,7 @@ export function EventDetail({ id }: { id: string }) {
               {t('editEvent')}
             </AppLink>
             <button
+              ref={cancelTrigger}
               type="button"
               disabled={actioning}
               onClick={() => setConfirmCancel(true)}
@@ -222,21 +237,29 @@ export function EventDetail({ id }: { id: string }) {
             </button>
           </div>
           {confirmCancel && (
-            <div className="flex items-center justify-between gap-3 mt-3 px-3 py-2 rounded-lg bg-red-100 dark:bg-red-900/30">
+            <div
+              className="flex items-center justify-between gap-3 mt-3 px-3 py-2 rounded-lg bg-red-100 dark:bg-red-900/30"
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') dismissConfirm();
+              }}
+            >
               <span className="text-xs text-red-700 dark:text-red-300">{t('cancel_confirm')}</span>
               <div className="flex gap-2 flex-shrink-0">
                 <button
+                  ref={confirmButton}
                   type="button"
                   disabled={actioning}
                   onClick={() => {
                     setConfirmCancel(false);
+                    // the trigger is disabled while cancelling and unmounts once the event is cancelled, the heading always stays
+                    heading.current?.focus();
                     cancelEvent.mutate();
                   }}
                   className="rounded-lg bg-red-600 hover:bg-red-700 px-3 py-1 text-xs font-semibold text-white disabled:opacity-60 transition-colors"
                 >
                   {t('cancel_event')}
                 </button>
-                <button type="button" onClick={() => setConfirmCancel(false)} className="rounded-lg bg-white dark:bg-gray-700 px-3 py-1 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors">
+                <button type="button" onClick={dismissConfirm} className="rounded-lg bg-white dark:bg-gray-700 px-3 py-1 text-xs font-semibold text-gray-700 dark:text-gray-200 transition-colors">
                   {tNew('cancel')}
                 </button>
               </div>

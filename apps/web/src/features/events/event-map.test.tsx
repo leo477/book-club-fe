@@ -1,13 +1,18 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { API, messages, renderWithProviders, server, setupApiServer } from '@/test/harness';
 import EventMap from './event-map';
 
-const maps = vi.hoisted(() => ({ fitBounds: vi.fn() }));
+const maps = vi.hoisted(() => ({ fitBounds: vi.fn(), onError: undefined as undefined | (() => void) }));
+const toast = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/toast', () => ({ showToast: toast }));
 vi.mock('@vis.gl/react-google-maps', () => ({
-  APIProvider: ({ apiKey, children }: { apiKey: string; children: ReactNode }) => <div data-testid="provider" data-key={apiKey}>{children}</div>,
+  APIProvider: ({ apiKey, onError, children }: { apiKey: string; onError?: () => void; children: ReactNode }) => {
+    maps.onError = onError;
+    return <div data-testid="provider" data-key={apiKey}>{children}</div>;
+  },
   Map: ({ mapId, children }: { mapId: string; children: ReactNode }) => <div data-testid="map" data-map-id={mapId}>{children}</div>,
   AdvancedMarker: ({ position, title }: { position: { lat: number; lng: number }; title: string }) => <i data-testid="marker" data-title={title}>{`${position.lat},${position.lng}`}</i>,
   Polyline: ({ path }: { path: unknown[] }) => <b data-testid="polyline">{path.length}</b>,
@@ -15,7 +20,11 @@ vi.mock('@vis.gl/react-google-maps', () => ({
 }));
 
 setupApiServer();
-beforeEach(() => maps.fitBounds.mockReset());
+beforeEach(() => {
+  maps.fitBounds.mockReset();
+  toast.mockReset();
+  maps.onError = undefined;
+});
 
 const t = (key: string) => messages.uk[key] ?? key;
 const CENTER = { lat: 50.45, lng: 30.52 };
@@ -44,6 +53,25 @@ describe('EventMap', () => {
     expect(screen.getByRole('link', { name: t('EVENTS.open_in_maps') })).toHaveAttribute('href', 'https://www.google.com/maps?q=50.45,30.52');
     expect(hits).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId('polyline')).not.toBeInTheDocument();
+  });
+
+  it('renders nothing, and does not hold back its siblings, while the key is still pending', async () => {
+    const hits = vi.fn();
+    server.use(http.get(`${API}/config/maps-key`, async () => {
+      hits();
+      await new Promise((r) => setTimeout(r, 150));
+      return HttpResponse.json({ mapsApiKey: 'KEY', mapsMapId: 'MID' });
+    }));
+    renderWithProviders(
+      <>
+        <h1>Event title</h1>
+        <EventMap {...props} />
+      </>,
+    );
+    expect(screen.getByRole('heading', { name: 'Event title' })).toBeInTheDocument();
+    expect(screen.queryByTestId('map')).not.toBeInTheDocument();
+    expect(await screen.findByTestId('map')).toBeInTheDocument();
+    expect(hits).toHaveBeenCalledTimes(1);
   });
 
   it('falls back to Google\'s demo map id when the backend has none', async () => {
@@ -110,5 +138,30 @@ describe('EventMap', () => {
     expect(screen.getAllByTestId('marker')).toHaveLength(1);
     expect(route).not.toHaveBeenCalled();
     expect(maps.fitBounds).not.toHaveBeenCalled();
+  });
+
+  it('shows no error toast when geocoding, place details or the route fail', async () => {
+    mockKey();
+    server.use(
+      http.get(`${API}/geocode/autocomplete`, () => HttpResponse.json([{ label: 'Beer st', place_id: 'p1' }])),
+      http.get(`${API}/geocode/place-details`, () => new HttpResponse(null, { status: 500 })),
+      http.get(`${API}/routes/walking`, () => new HttpResponse(null, { status: 500 })),
+    );
+    renderWithProviders(<EventMap {...props} afterMeetingVenue={{ name: 'Pub', address: 'Beer st', lat: 50.47, lng: 30.54 }} />);
+    await screen.findByTestId('map');
+    await waitFor(() => expect(maps.fitBounds).toHaveBeenCalled());
+    server.use(http.get(`${API}/geocode/autocomplete`, () => new HttpResponse(null, { status: 502 })));
+    renderWithProviders(<EventMap {...props} afterMeetingVenue={{ name: 'Pub', address: 'Elsewhere' }} />);
+    await new Promise((r) => setTimeout(r, 100));
+    expect(toast).not.toHaveBeenCalled();
+  });
+
+  it('renders nothing when the Maps script fails to load', async () => {
+    mockKey();
+    renderWithProviders(<EventMap {...props} />);
+    await screen.findByTestId('map');
+    act(() => maps.onError?.());
+    expect(screen.queryByTestId('map')).not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: t('EVENTS.open_in_maps') })).not.toBeInTheDocument();
   });
 });

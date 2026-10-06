@@ -1,9 +1,9 @@
 'use client';
 
 import type { AfterMeetingVenue } from '@book-club/contracts';
-import { AdvancedMarker, APIProvider, Map, Polyline, useMap } from '@vis.gl/react-google-maps';
+import { AdvancedMarker, APIProvider, Map as GoogleMap, Polyline, useMap } from '@vis.gl/react-google-maps';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useMapsConfig, useVenuePosition, useWalkingRoute, type LatLng } from './use-venue';
 
 // Google's documented placeholder id: advanced markers refuse to render on a map without one
@@ -31,6 +31,7 @@ interface Props {
 export default function EventMap({ lat, lng, address, afterMeetingVenue }: Props) {
   const t = useTranslations('EVENTS');
   const config = useMapsConfig();
+  const [loadFailed, setLoadFailed] = useState(false);
   const center: LatLng = { lat, lng };
   const venue = useVenuePosition(config.data ? afterMeetingVenue : null);
   const route = useWalkingRoute(center, venue);
@@ -41,11 +42,12 @@ export default function EventMap({ lat, lng, address, afterMeetingVenue }: Props
     [lat, lng, venueLat, venueLng, route],
   );
 
-  if (!config.data) return null;
+  // like Angular, a script that fails to load (bad key, blocked) just leaves the page without a map
+  if (!config.data || loadFailed) return null;
   return (
     <div className="flex flex-col gap-3 mt-3">
-      <APIProvider apiKey={config.data.apiKey} version="weekly">
-        <Map
+      <APIProvider apiKey={config.data.apiKey} version="weekly" onError={() => setLoadFailed(true)}>
+        <GoogleMap
           defaultCenter={center}
           defaultZoom={15}
           mapId={config.data.mapId || FALLBACK_MAP_ID}
@@ -58,7 +60,7 @@ export default function EventMap({ lat, lng, address, afterMeetingVenue }: Props
           {venue && <AdvancedMarker position={venue} title={afterMeetingVenue?.name ?? ''} />}
           {route && <Polyline path={route} strokeColor="#4f46e5" strokeWeight={4} strokeOpacity={0.8} />}
           <FitBounds points={fitPoints} />
-        </Map>
+        </GoogleMap>
       </APIProvider>
       <a
         href={`https://www.google.com/maps?q=${lat},${lng}`}

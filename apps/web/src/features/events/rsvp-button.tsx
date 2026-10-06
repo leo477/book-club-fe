@@ -23,9 +23,12 @@ export function RsvpButton({ attending, loading = false, closed = false, showCan
     ? 'bg-[var(--color-accent-600)] hover:bg-[var(--color-accent-700)] text-white'
     : 'bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-700)] text-white';
   return (
-    <Button type="button" size={size} data-testid="event-rsvp-button" disabled={loading || closed} onClick={onClick} className={tone}>
+    <Button type="button" size={size} data-testid="event-rsvp-button" disabled={loading || closed} aria-busy={loading || undefined} onClick={onClick} className={tone}>
       {loading ? (
-        <Spinner className="text-xs" />
+        <>
+          <Spinner aria-hidden="true" className="text-xs" />
+          <span className="sr-only">{tEvents('rsvp_loading')}</span>
+        </>
       ) : closed ? (
         tEvents('registration_closed')
       ) : attending ? (

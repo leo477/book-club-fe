@@ -83,7 +83,7 @@ describe('conversion rules', () => {
 
   it('keeps interpolations found in the source', () => {
     const count = (o: Record<string, string>) => Object.values(o).filter((v) => v.includes('{{')).length;
-    expect(count(flatten(en))).toBe(10);
+    expect(count(flatten(en))).toBe(11);
     expect(Object.values(built.en.messages).some((m) => m.includes('{{'))).toBe(false);
   });
 
