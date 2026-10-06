@@ -43,10 +43,25 @@ const make = (id: string, over: Record<string, unknown>) => ({
 });
 
 export const freshEvents = (): Record<string, ReturnType<typeof make>> => ({
-  [EVENT_IDS.soon]: make(EVENT_IDS.soon, { title: 'Скоро зустріч', date: inHours(36) }),
-  [EVENT_IDS.far]: make(EVENT_IDS.far, { title: 'Далека зустріч', date: inHours(240), city: 'Львів' }),
-  [EVENT_IDS.started]: make(EVENT_IDS.started, { title: 'Вже почалась', date: inHours(-2) }),
-  [EVENT_IDS.withMap]: make(EVENT_IDS.withMap, { title: 'Зустріч з картою', date: inHours(480), lat: 50.45, lng: 30.52 }),
+  [EVENT_IDS.soon]: make(EVENT_IDS.soon, {
+    title: 'Скоро зустріч',
+    date: inHours(36),
+  }),
+  [EVENT_IDS.far]: make(EVENT_IDS.far, {
+    title: 'Далека зустріч',
+    date: inHours(240),
+    city: 'Львів',
+  }),
+  [EVENT_IDS.started]: make(EVENT_IDS.started, {
+    title: 'Вже почалась',
+    date: inHours(-2),
+  }),
+  [EVENT_IDS.withMap]: make(EVENT_IDS.withMap, {
+    title: 'Зустріч з картою',
+    date: inHours(480),
+    lat: 50.45,
+    lng: 30.52,
+  }),
 });
 
 export interface EventsMock {
@@ -61,9 +76,19 @@ export interface EventsMock {
 export async function installEventsMock(
   page: Page,
   role: Role,
-  opts: { latency?: Record<string, number>; fail?: Record<string, number>; mapsKey?: 'none' | 'key' } = {},
+  opts: {
+    latency?: Record<string, number>;
+    fail?: Record<string, number>;
+    mapsKey?: 'none' | 'key';
+  } = {},
 ): Promise<EventsMock> {
-  const mock: EventsMock = { state: newState(role), events: freshEvents(), log: [], fail: opts.fail ?? {}, mapsKey: opts.mapsKey ?? 'none' };
+  const mock: EventsMock = {
+    state: newState(role),
+    events: freshEvents(),
+    log: [],
+    fail: opts.fail ?? {},
+    mapsKey: opts.mapsKey ?? 'none',
+  };
   await page.route('**/api/v1/**', async (route) => {
     const req = route.request();
     const url = new URL(req.url());
@@ -72,20 +97,35 @@ export async function installEventsMock(
     const generic = `${req.method()} ${path.replace(/[0-9a-f-]{36}/g, ':id')}`;
     const wait = opts.latency?.[generic];
     if (wait) await new Promise((r) => setTimeout(r, wait));
-    const reply = handleEvents(mock, req.method(), path) ?? handleApi(mock.state, req.method(), path, url.search, req.postData());
-    await route.fulfill({ status: reply.status, contentType: 'application/json', body: reply.body === undefined ? '' : JSON.stringify(reply.body) });
+    const reply =
+      handleEvents(mock, req.method(), path) ??
+      handleApi(mock.state, req.method(), path, url.search, req.postData());
+    await route.fulfill({
+      status: reply.status,
+      contentType: 'application/json',
+      body: reply.body === undefined ? '' : JSON.stringify(reply.body),
+    });
   });
   await page.routeWebSocket(/^(?!.*_next).*$/, (ws) => void ws.close());
   return mock;
 }
 
-function handleEvents(m: EventsMock, method: string, path: string): { status: number; body?: unknown } | null {
+function handleEvents(
+  m: EventsMock,
+  method: string,
+  path: string,
+): { status: number; body?: unknown } | null {
   const authed = m.state.role !== 'guest';
   const all = Object.values(m.events);
   if (method === 'GET' && path === '/events') return { status: 200, body: all };
-  if (method === 'GET' && path === '/events/my') return authed ? { status: 200, body: all.filter((e) => e.isAttending) } : { status: 401, body: { detail: 'no' } };
+  if (method === 'GET' && path === '/events/my')
+    return authed
+      ? { status: 200, body: all.filter((e) => e.isAttending) }
+      : { status: 401, body: { detail: 'no' } };
   if (method === 'GET' && path === '/config/maps-key') {
-    return m.mapsKey === 'key' ? { status: 200, body: { mapsApiKey: 'parity-fake-key', mapsMapId: '' } } : { status: 404, body: { detail: 'no key in tests' } };
+    return m.mapsKey === 'key'
+      ? { status: 200, body: { mapsApiKey: 'parity-fake-key', mapsMapId: '' } }
+      : { status: 404, body: { detail: 'no key in tests' } };
   }
   const match = path.match(/^\/events\/([0-9a-f-]{36})(\/attend)?$/);
   if (!match) return null;
@@ -93,11 +133,15 @@ function handleEvents(m: EventsMock, method: string, path: string): { status: nu
   if (!event) return { status: 404, body: { detail: 'Event not found' } };
   if (!match[2]) return method === 'GET' ? { status: 200, body: event } : null;
   const forced = m.fail[`${method} /events/:id/attend`];
-  if (forced) return { status: forced, body: { detail: 'Registration is closed' } };
+  if (forced)
+    return { status: forced, body: { detail: 'Registration is closed' } };
   if (method === 'POST') {
     event.isAttending = true;
     event.attendeeCount += 1;
-    return { status: 200, body: { attendeeCount: event.attendeeCount, joinRequestStatus: 'none' } };
+    return {
+      status: 200,
+      body: { attendeeCount: event.attendeeCount, joinRequestStatus: 'none' },
+    };
   }
   if (method === 'DELETE') {
     event.isAttending = false;
