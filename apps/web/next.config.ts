@@ -30,6 +30,7 @@ const SECURITY_HEADERS = [
 ];
 
 const nextConfig: NextConfig = {
+  agentRules: false,
   reactCompiler: true,
   poweredByHeader: false,
   turbopack: { resolveAlias: { '../locales/index.js': './src/lib/zod-locales-stub.ts' } },
