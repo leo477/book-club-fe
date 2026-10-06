@@ -321,12 +321,12 @@ describe('EventsFeed RSVP', () => {
         return HttpResponse.json([row('e1', 'First', '2099-05-01T18:00:00Z'), row('e2', 'Second', '2099-05-02T18:00:00Z')]);
       }),
       http.post(`${API}/events/e1/attend`, async () => {
-        await new Promise((r) => setTimeout(r, 30));
+        await new Promise((r) => setTimeout(r, 250));
         server_.e1 = true;
         return HttpResponse.json({ attendeeCount: 3, joinRequestStatus: 'member' });
       }),
       http.post(`${API}/events/e2/attend`, async () => {
-        await new Promise((r) => setTimeout(r, 90));
+        await new Promise((r) => setTimeout(r, 400));
         server_.e2 = true;
         return HttpResponse.json({ attendeeCount: 3, joinRequestStatus: 'member' });
       }),
