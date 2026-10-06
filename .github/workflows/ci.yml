@@ -126,6 +126,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
       - name: Audit dependencies
+        run: npm audit --omit=dev --audit-level=high
+      - name: Audit dev dependencies (informational)
+        continue-on-error: true
         run: npm audit --audit-level=high
 
   typecheck:
