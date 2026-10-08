@@ -14,7 +14,7 @@ export function buildCsp(nonce: string, dev = false): string {
   ].join('; ');
 }
 
-export const TRUSTED_TYPES_REPORT_ONLY = "require-trusted-types-for 'script'; trusted-types default nextjs#bundler 'allow-duplicates'";
+export const TRUSTED_TYPES_REPORT_ONLY = "require-trusted-types-for 'script'; trusted-types default nextjs#bundler dompurify-internal @googlemaps/js-api-loader google-maps-api-loader google-maps-api#html lit-html 'allow-duplicates'";
 
 export function newNonce(): string {
   return btoa(crypto.randomUUID());

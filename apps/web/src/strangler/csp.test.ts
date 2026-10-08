@@ -28,6 +28,12 @@ describe('buildCsp', () => {
     expect(TRUSTED_TYPES_REPORT_ONLY).toContain("require-trusted-types-for 'script'");
   });
 
+  it('lists the Maps and sanitizer Trusted Types policies in Report-Only', () => {
+    for (const name of ['nextjs#bundler', 'dompurify-internal', '@googlemaps/js-api-loader', 'google-maps-api-loader', 'google-maps-api#html', 'lit-html']) {
+      expect(TRUSTED_TYPES_REPORT_ONLY.split(' ')).toContain(name);
+    }
+  });
+
   it('generates unpredictable nonces', () => {
     expect(newNonce()).not.toBe(newNonce());
   });

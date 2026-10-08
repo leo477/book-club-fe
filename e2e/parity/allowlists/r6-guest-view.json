@@ -1,0 +1,22 @@
+{
+  "ignore": [
+    {
+      "signature": "GET self /api/v1/clubs/:id? body=-",
+      "reason": "Next renders the club on the server (anonymous GET /clubs/{id}, ISR 600 s, tag club:{id}); Angular fetches it in the browser",
+      "legacy": 1,
+      "next": 0
+    },
+    {
+      "signature": "GET self /api/v1/clubs/:id/events?include_past body=-",
+      "reason": "Next renders the upcoming events on the server; Angular fetches them in the browser. A signed-in Next viewer refetches once, see the per-journey note",
+      "legacy": 1,
+      "next": 0
+    },
+    {
+      "signature": "GET self /api/v1/config/maps-key? body=-",
+      "reason": "Angular shell requests the Maps key on every route (N-1); Next loads Maps only on pages that use it and the club detail page does not",
+      "legacy": 1,
+      "next": 0
+    }
+  ]
+}

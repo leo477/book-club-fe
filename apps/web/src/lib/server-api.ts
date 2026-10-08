@@ -8,7 +8,8 @@ const SERVER_TIMEOUT_MS = 3000;
 const noop = () => undefined;
 
 /** Anonymous backend client for server code: never carries user cookies, so cached data is public-only. */
-export function serverApi(next: { revalidate: number; tags?: string[] }) {
+export function serverApi(next: { revalidate: number; tags?: string[] }, options: { timeoutMs?: number } = {}) {
+  const timeoutMs = options.timeoutMs ?? SERVER_TIMEOUT_MS;
   return createApi(
     createApiClient({
       baseUrl: backendApiUrl(),
@@ -20,7 +21,7 @@ export function serverApi(next: { revalidate: number; tags?: string[] }) {
         clear: noop,
       },
       fetch: (input, init) => {
-        const timeout = AbortSignal.timeout(SERVER_TIMEOUT_MS);
+        const timeout = AbortSignal.timeout(timeoutMs);
         return fetch(input, { ...init, next, signal: init?.signal ? AbortSignal.any([init.signal, timeout]) : timeout });
       },
     }),

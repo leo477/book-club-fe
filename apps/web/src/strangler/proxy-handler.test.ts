@@ -26,7 +26,7 @@ const isLegacy = (res: Response) => res.headers.get('x-middleware-rewrite') === 
 
 describe('handleProxy decision table', () => {
   it('passes non-manifest paths through untouched, without cookie or CSP', async () => {
-    const res = await run('/events', () => Promise.reject(new Error('must not be read')));
+    const res = await run('/login', () => Promise.reject(new Error('must not be read')));
     expect(res.headers.get('x-middleware-next')).toBe('1');
     expect(res.headers.get('content-security-policy')).toBeNull();
     expect(res.cookies.get('bc_bucket')).toBeUndefined();
@@ -161,5 +161,38 @@ describe('handleProxy CSP on the shell routes', () => {
     expect(res.headers.get('content-security-policy-report-only')).toBeNull();
     expect(res.headers.get('x-middleware-request-content-security-policy')).toBeNull();
     expect(res.headers.get('x-middleware-request-x-nonce')).toBeNull();
+  });
+});
+
+describe('legacy-shadowed paths', () => {
+  const UUID = '3f2b8c1e-9a4d-4e7b-8c5f-1a2b3c4d5e6f';
+  const on = async () => parseConfig({ version: 1, enabled: true, routes: { '/clubs/:id': { target: 'next', percent: 100 } } });
+  const rewrittenTo = (res: Response, path: string) => res.headers.get('x-middleware-rewrite') === `${LEGACY}${path}`;
+
+  it('sends /clubs/create to legacy even with /clubs/:id fully on next', async () => {
+    const res = await run('/clubs/create', on, 'bc_bucket=0');
+    expect(rewrittenTo(res, '/clubs/create')).toBe(true);
+    expect(res.headers.get('content-security-policy')).toBeNull();
+  });
+
+  it('does not read the flags for a shadowed path', async () => {
+    const res = await run('/clubs/create', () => Promise.reject(new Error('must not be read')), 'bc_bucket=0');
+    expect(rewrittenTo(res, '/clubs/create')).toBe(true);
+  });
+
+  it('still serves a UUID from next when on, and from legacy when the flag is off', async () => {
+    expect(rewrittenTo(await run(`/clubs/${UUID}`, on, 'bc_bucket=0'), `/clubs/${UUID}`)).toBe(false);
+    const off = async () => parseConfig({ version: 1, enabled: true, routes: { '/clubs/:id': { target: 'legacy', percent: 100 } } });
+    expect(rewrittenTo(await run(`/clubs/${UUID}`, off, 'bc_bucket=0'), `/clubs/${UUID}`)).toBe(true);
+  });
+
+  it('leaves deeper legacy paths to the framework fallback', async () => {
+    const res = await run(`/clubs/${UUID}/manage`, on, 'bc_bucket=0');
+    expect(res.headers.get('x-middleware-next')).toBe('1');
+  });
+
+  it('returns 503 for a shadowed path when there is no legacy origin in production', async () => {
+    const res = await run('/clubs/create', on, 'bc_bucket=0', { legacyOrigin: undefined, dev: false });
+    expect(res.status).toBe(503);
   });
 });

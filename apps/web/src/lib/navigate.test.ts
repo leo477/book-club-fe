@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { hardNavigate } from './navigate';
+import { hardNavigate, replaceNavigate } from './navigate';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -16,5 +16,21 @@ describe('hardNavigate', () => {
     vi.stubGlobal('location', loc);
     expect(() => hardNavigate(path)).toThrow(/refusing/);
     expect(loc.href).toBe('/here');
+  });
+});
+
+describe('replaceNavigate', () => {
+  it('replaces the history entry for a local path', () => {
+    const replace = vi.fn();
+    vi.stubGlobal('location', { replace });
+    replaceNavigate('/login');
+    expect(replace).toHaveBeenCalledWith('/login');
+  });
+
+  it.each(['//evil.com', 'https://evil.com', '/\\evil.com', '/\t/evil.com'])('refuses %j', (path) => {
+    const replace = vi.fn();
+    vi.stubGlobal('location', { replace });
+    expect(() => replaceNavigate(path)).toThrow(/refusing/);
+    expect(replace).not.toHaveBeenCalled();
   });
 });

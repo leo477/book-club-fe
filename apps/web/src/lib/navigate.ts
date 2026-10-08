@@ -8,3 +8,9 @@ export function hardNavigate(path: string): void {
   if (!SAFE_PATH.test(path) || CONTROL_CHARS.test(path)) throw new Error(`hardNavigate: refusing non-local path ${JSON.stringify(path)}`);
   window.location.href = path;
 }
+
+// like hardNavigate but the guard's origin page leaves no history entry (Angular's createUrlTree redirect)
+export function replaceNavigate(path: string): void {
+  if (!SAFE_PATH.test(path) || CONTROL_CHARS.test(path)) throw new Error(`replaceNavigate: refusing non-local path ${JSON.stringify(path)}`);
+  window.location.replace(path);
+}

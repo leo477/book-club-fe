@@ -7,12 +7,17 @@ import {
   banRecord,
   bookVoteRound,
   chatMessage,
+  createSubmissionForm,
+  displayNameForm,
   chatWsServerMessage,
   club,
   clubEvent,
+  clubOrStub,
+  clubStub,
   clubMember,
   clubStats,
   geocodeSuggestion,
+  isClubStub,
   mapsKeyConfig,
   parse,
   quiz,
@@ -201,5 +206,67 @@ describe('tolerant response enums', () => {
 
   it('keeps strict enums for requests', () => {
     expect(safeParse(registerRequest, { email: 'e', password: 'p', displayName: 'n', role: 'superuser' }).ok).toBe(false);
+  });
+});
+
+describe('private club stub', () => {
+  const stub = { id: 'c1', name: 'Secret', isPublic: false, memberCount: 4 };
+
+  it('parses exactly the four stub keys and leaves the full schema strict about the rest', () => {
+    expect(parse(clubStub, stub)).toEqual(stub);
+    expect(safeParse(club, stub).ok).toBe(false);
+  });
+
+  it('tells a stub from a full club, including a full private club', () => {
+    const parsedStub = parse(clubOrStub, stub);
+    expect(isClubStub(parsedStub)).toBe(true);
+    const full = parse(clubOrStub, { ...clubPayload, isPublic: false });
+    expect(isClubStub(full)).toBe(false);
+    expect(full).toMatchObject({ organizerId: clubPayload.organizerId, isPublic: false });
+    expect(isClubStub(parse(clubOrStub, clubPayload))).toBe(false);
+  });
+
+  it('does not let a malformed full club through as a stub, nor a public stub', () => {
+    const incomplete = { ...clubPayload, isPublic: false, description: undefined };
+    expect(safeParse(clubOrStub, incomplete).ok).toBe(false);
+    expect(safeParse(clubOrStub, { ...stub, isPublic: true }).ok).toBe(false);
+    expect(safeParse(clubOrStub, { ...stub, memberCount: 'many' }).ok).toBe(false);
+    expect(safeParse(clubOrStub, { ...stub, organizerId: null }).ok).toBe(false);
+  });
+});
+
+describe('form schemas', () => {
+  const first = (r: { success: boolean; error?: { issues: { message: string }[] } }) => r.error?.issues[0]?.message;
+
+  it('displayNameForm reports the first failing rule', () => {
+    expect(first(displayNameForm.safeParse({ displayName: '' }))).toBe('PROFILE.display_name_required');
+    expect(first(displayNameForm.safeParse({ displayName: 'a' }))).toBe('PROFILE.display_name_min');
+    expect(first(displayNameForm.safeParse({ displayName: 'a'.repeat(51) }))).toBe('SECURITY.invalid_display_name');
+    expect(first(displayNameForm.safeParse({ displayName: '<script>' }))).toBe('SECURITY.invalid_display_name');
+    expect(first(displayNameForm.safeParse({ displayName: 'a&b' }))).toBe('SECURITY.invalid_display_name');
+  });
+
+  it('displayNameForm trims, so whitespace-only fails like empty and padding is dropped', () => {
+    expect(first(displayNameForm.safeParse({ displayName: '   ' }))).toBe('PROFILE.display_name_required');
+    expect(displayNameForm.parse({ displayName: '  Ada  ' })).toEqual({ displayName: 'Ada' });
+    expect(first(displayNameForm.safeParse({ displayName: ' a ' }))).toBe('PROFILE.display_name_min');
+  });
+
+  it('displayNameForm accepts latin, cyrillic, digits and . \' - _', () => {
+    for (const displayName of ['Ada Lovelace', 'Олена Пчілка', "O'Brien-Smith_2.0", 'ab', 'a'.repeat(50)]) {
+      expect(displayNameForm.safeParse({ displayName }).success).toBe(true);
+    }
+  });
+
+  it('createSubmissionForm applies the form limits and maps them to SUPPORT keys', () => {
+    const base = { type: 'comment', title: 'Hello', body: 'long enough body' } as const;
+    expect(createSubmissionForm.safeParse(base).success).toBe(true);
+    expect(first(createSubmissionForm.safeParse({ ...base, title: '' }))).toBe('SUPPORT.title_required');
+    expect(first(createSubmissionForm.safeParse({ ...base, title: 'ab' }))).toBe('SUPPORT.title_min');
+    expect(first(createSubmissionForm.safeParse({ ...base, title: 'a'.repeat(121) }))).toBe('SUPPORT.title_max');
+    expect(first(createSubmissionForm.safeParse({ ...base, body: '' }))).toBe('SUPPORT.body_required');
+    expect(first(createSubmissionForm.safeParse({ ...base, body: 'short' }))).toBe('SUPPORT.body_min');
+    expect(first(createSubmissionForm.safeParse({ ...base, body: 'a'.repeat(2001) }))).toBe('SUPPORT.body_max');
+    expect(createSubmissionForm.safeParse({ ...base, type: 'bug' }).success).toBe(false);
   });
 });

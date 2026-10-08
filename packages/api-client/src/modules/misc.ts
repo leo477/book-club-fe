@@ -64,16 +64,19 @@ export const booksApi = (c: ApiClient) => ({
 });
 
 export const geocodeApi = (c: ApiClient) => ({
-  autocomplete: (q: string, sessionToken?: string, lang = 'uk', limit = 5) =>
+  autocomplete: (q: string, sessionToken?: string, lang = 'uk', limit = 5, options?: { suppressErrorToast?: boolean }) =>
     c.get('/geocode/autocomplete', z.array(geocodeSuggestion), {
+      ...options,
       query: { q, lang, limit, session_token: sessionToken },
     }),
-  placeDetails: (placeId: string, sessionToken: string, lang = 'uk') =>
+  placeDetails: (placeId: string, sessionToken: string, lang = 'uk', options?: { suppressErrorToast?: boolean }) =>
     c.get('/geocode/place-details', geocodeSuggestion, {
+      ...options,
       query: { place_id: placeId, session_token: sessionToken, lang },
     }),
-  walkingRoute: (origin: { lat: number; lng: number }, dest: { lat: number; lng: number }) =>
+  walkingRoute: (origin: { lat: number; lng: number }, dest: { lat: number; lng: number }, options?: { suppressErrorToast?: boolean }) =>
     c.get('/routes/walking', walkingRoute, {
+      ...options,
       query: { origin_lat: origin.lat, origin_lng: origin.lng, dest_lat: dest.lat, dest_lng: dest.lng },
     }),
 });

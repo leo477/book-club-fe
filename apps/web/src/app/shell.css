@@ -94,3 +94,41 @@
     radial-gradient(ellipse at 50% 50%, rgba(180, 130, 60, 0.03) 0%, transparent 80%),
     repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(180, 130, 60, 0.02) 2px, rgba(180, 130, 60, 0.02) 4px);
 }
+
+@utility parchment-card-raised {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-sepia);
+  border-radius: var(--bento-radius-lg);
+  box-shadow: var(--shadow-parchment-lg);
+}
+
+@utility parchment-card-sunken {
+  background: var(--color-surface-sunken);
+  border: 1px solid var(--color-sepia-mid);
+  border-radius: var(--bento-radius);
+  box-shadow: var(--shadow-parchment-inset);
+}
+
+@utility glass-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-sepia);
+  border-radius: var(--bento-radius);
+  box-shadow: var(--shadow-parchment);
+}
+
+@utility glass-card-strong {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-sepia);
+  border-radius: var(--bento-radius-lg);
+  box-shadow: var(--shadow-parchment-lg);
+}
+
+@utility bg-gradient-brand {
+  background: linear-gradient(135deg, var(--color-primary-600) 0%, var(--color-primary-700) 45%, var(--color-accent-600) 100%);
+}
+
+@utility heading-display {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--color-ink);
+}

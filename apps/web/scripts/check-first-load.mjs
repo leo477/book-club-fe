@@ -1,9 +1,12 @@
 // Reports gzip -9 first-load JS (every module <script src> in the served HTML) for the production build.
-// Usage: npm run build && npm run size [-- --budget 200 --ceiling 250 --routes /clubs,/privacy]
+// Usage: npm run build && npm run size [-- --budget 200 --ceiling 250 --routes /clubs,/privacy,/clubs/:id=/clubs/<uuid>]
+// A route may be written `pattern=path` when the served path differs from the manifest pattern (dynamic segments).
 // --budget is the target (warns above it); --ceiling is the failing threshold (env FIRST_LOAD_CEILING_KB, default 250).
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { createServer } from 'node:http';
+import { mkdtempSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { createServer as createTcpServer } from 'node:net';
 import { gzipSync } from 'node:zlib';
 
@@ -18,7 +21,12 @@ if (!(ceilingKb >= budgetKb)) {
   console.error(`--ceiling (${ceilingKb} KB) must be >= --budget (${budgetKb} KB)`);
   process.exit(2);
 }
-const routes = opt('routes', '/clubs,/privacy').split(',');
+const routes = opt('routes', '/clubs,/privacy')
+  .split(',')
+  .map((spec) => {
+    const [pattern, path = pattern] = spec.split('=');
+    return { pattern, path };
+  });
 const port = Number(
   opt('port', '') ||
     (await new Promise((resolve) => {
@@ -35,16 +43,27 @@ if (!existsSync('.next/BUILD_ID')) {
 }
 
 // Serves the strangler flags so the proxy hands the routes to Next instead of rewriting to the legacy app.
-const flags = { version: 1, enabled: true, routes: Object.fromEntries(routes.map((r) => [r, { target: 'next', percent: 100 }])) };
-const edge = createServer((req, res) => {
-  res.setHeader('content-type', 'application/json');
-  res.end(req.url?.includes('/item/strangler') ? JSON.stringify(flags) : 'null');
-});
-await new Promise((resolve) => edge.listen(0, '127.0.0.1', resolve));
-const edgeUrl = `http://127.0.0.1:${edge.address().port}/ecfg_local?token=local`;
-
+const flags = { version: 1, enabled: true, routes: Object.fromEntries(routes.map((r) => [r.pattern, { target: 'next', percent: 100 }])) };
+// @vercel/edge-config only accepts https://edge-config.vercel.com/<id> connection strings, so a local http stub is rejected, the proxy
+// then reads "no config" and rewrites every route to the (unreachable) legacy origin. Intercept that one host in the child instead.
+const preload = join(mkdtempSync(join(tmpdir(), 'size-')), 'edge-preload.cjs');
+writeFileSync(
+  preload,
+  `const real = globalThis.fetch;
+globalThis.fetch = (input, init) => {
+  const url = new URL(typeof input === 'string' ? input : (input.url ?? String(input)));
+  if (url.host !== 'edge-config.vercel.com') return real(input, init);
+  return Promise.resolve(new Response(${JSON.stringify(JSON.stringify(flags))}, { status: 200, headers: { 'content-type': 'application/json', etag: '"1"' } }));
+};`,
+);
 const next = spawn('npx', ['next', 'start', '-p', String(port)], {
-  env: { ...process.env, EDGE_CONFIG: edgeUrl, LEGACY_ORIGIN: process.env.LEGACY_ORIGIN ?? 'https://legacy.invalid' },
+  detached: true, // own process group: killing only the npx wrapper leaves next-server holding the inherited stderr pipe open
+  env: {
+    ...process.env,
+    NODE_OPTIONS: `${process.env.NODE_OPTIONS ?? ''} --require ${preload}`.trim(),
+    EDGE_CONFIG: 'https://edge-config.vercel.com/ecfg_local?token=local',
+    LEGACY_ORIGIN: process.env.LEGACY_ORIGIN ?? 'https://legacy.invalid',
+  },
   stdio: ['ignore', 'ignore', 'inherit'],
 });
 next.on('exit', (code) => {
@@ -54,18 +73,21 @@ next.on('exit', (code) => {
   }
 });
 const stop = () => {
-  next.kill();
-  edge.close();
+  try {
+    process.kill(-next.pid, 'SIGTERM');
+  } catch {
+    // already gone
+  }
 };
 process.on('exit', stop);
 for (const signal of ['SIGINT', 'SIGTERM']) process.on(signal, () => process.exit(130));
 
 const base = `http://127.0.0.1:${port}`;
-const get = (path) => fetch(`${base}${path}`, { headers: { cookie: 'bc_bucket=0', 'accept-encoding': 'identity' } });
+const get = (path) => fetch(`${base}${path}`, { signal: AbortSignal.timeout(10_000), headers: { cookie: 'bc_bucket=0', 'accept-encoding': 'identity' } });
 
 for (let i = 0; ; i++) {
   try {
-    if ((await get('/privacy')).status < 500) break;
+    if ((await get(routes[0].path)).status < 500) break;
   } catch {
     // not listening yet
   }
@@ -78,7 +100,7 @@ for (let i = 0; ; i++) {
 
 const kb = (n) => (n / 1024).toFixed(1);
 let failed = false;
-for (const route of routes) {
+for (const { path: route } of routes) {
   const res = await get(route);
   const html = await res.text();
   if (!res.ok || !html.includes('/_next/')) {

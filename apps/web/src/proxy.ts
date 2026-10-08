@@ -11,5 +11,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/((?!api/|_next/|_vercel/|strangler\\.json).*)'],
+  matcher: ['/((?!api/|_next/|_vercel/|_internal/|strangler\\.json).*)'],
 };

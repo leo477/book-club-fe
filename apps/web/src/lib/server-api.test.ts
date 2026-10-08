@@ -67,4 +67,34 @@ describe('serverApi', () => {
     await expect(serverApi({ revalidate: 1 }).clubs.list()).rejects.toMatchObject({ status: 401 });
     expect(spy).toHaveBeenCalledTimes(1);
   });
+  describe('per-call timeout', () => {
+    const slow = (ms: number) =>
+      vi.fn(
+        (_url: string, init: Init) =>
+          new Promise<Response>((resolve, reject) => {
+            const timer = setTimeout(() => resolve(Response.json([])), ms);
+            init.signal?.addEventListener('abort', () => {
+              clearTimeout(timer);
+              reject(init.signal?.reason);
+            });
+          }),
+      );
+
+    it('honours a longer timeout for a slow backend', async () => {
+      vi.stubGlobal('fetch', slow(80));
+      await expect(serverApi({ revalidate: 1 }, { timeoutMs: 1000 }).clubs.list()).resolves.toEqual([]);
+    });
+
+    it('still aborts once the given timeout elapses', async () => {
+      vi.stubGlobal('fetch', slow(500));
+      await expect(serverApi({ revalidate: 1 }, { timeoutMs: 20 }).clubs.list()).rejects.toSatisfy((e: { status?: number }) => e.status !== 404 && e.status !== 422);
+    });
+
+    it('keeps 3 s for callers that pass no override', async () => {
+      const timeout = vi.spyOn(AbortSignal, 'timeout');
+      vi.stubGlobal('fetch', vi.fn(async () => Response.json([])));
+      await serverApi({ revalidate: 1 }).clubs.list();
+      expect(timeout).toHaveBeenCalledWith(3000);
+    });
+  });
 });
