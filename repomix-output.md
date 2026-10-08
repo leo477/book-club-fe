@@ -85,6 +85,12 @@ apps/
               page.tsx
             page.test.tsx
             page.tsx
+          profile/
+            page.tsx
+          support/
+            new/
+              page.tsx
+            page.tsx
           layout.tsx
         %5F%5Fstrangler-probe/
           page.tsx
@@ -142,6 +148,7 @@ apps/
           field.tsx
           input.tsx
           label.tsx
+          native-select.tsx
           separator.tsx
           sheet.tsx
           skeleton.tsx
@@ -149,13 +156,20 @@ apps/
           spinner.test.tsx
           spinner.tsx
           tabs.tsx
+          textarea.tsx
         analytics-events.tsx
         app-link.test.tsx
         app-link.tsx
         empty-state.tsx
         error-panel.tsx
+        form-field.test.tsx
+        form-field.tsx
         lazy-boundary.test.tsx
         lazy-boundary.tsx
+        namespaces-intl.tsx
+        social-badges.tsx
+        social-icon-paths.ts
+        social-link-field.tsx
         toaster-host.test.tsx
         toaster-host.tsx
         toaster-impl.tsx
@@ -214,6 +228,19 @@ apps/
           rsvp-button.tsx
           use-events.ts
           use-venue.ts
+        profile/
+          display-name-form.tsx
+          profile-stats.tsx
+          profile-view.test.tsx
+          profile-view.tsx
+          role-selector.tsx
+          socials-section.tsx
+          use-profile.ts
+        support/
+          create-submission.tsx
+          submission-card.tsx
+          support-board.tsx
+          use-support.ts
       i18n/
         locale.test.ts
         locale.ts
@@ -240,6 +267,7 @@ apps/
         site.test.ts
         site.ts
         toast.ts
+        use-push.ts
         use-replace.ts
         utils.ts
         zod-locales-stub.ts
