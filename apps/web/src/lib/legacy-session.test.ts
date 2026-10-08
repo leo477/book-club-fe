@@ -1,5 +1,5 @@
 import { HttpResponse, http } from 'msw';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { API, server, setupApiServer } from '@/test/harness';
 import { migrateLegacySession } from './legacy-session';
 
