@@ -177,14 +177,31 @@ describe('SupportBoard', () => {
     });
 
     it('keeps the cards mounted while the list refetches after a like', async () => {
-      mockApi([sub({ id: 'c1', type: 'complaint', likeCount: 2 })]);
-      server.use(http.post(`${API}/support/c1/like`, () => HttpResponse.json(sub({ id: 'c1', type: 'complaint', likeCount: 3, likedByMe: true }), { status: 201 })));
+      let gets = 0;
+      let releaseRefetch!: () => void;
+      const refetchGate = new Promise<void>((resolve) => (releaseRefetch = resolve));
+      server.use(
+        http.get(`${API}/auth/session-status`, () => HttpResponse.json({ hasSession: true })),
+        http.get(`${API}/auth/me`, () => HttpResponse.json(userJson())),
+        http.get(`${API}/support`, async () => {
+          gets += 1;
+          if (gets > 1) await refetchGate;
+          return HttpResponse.json([sub({ id: 'c1', type: 'complaint', likeCount: gets > 1 ? 3 : 2, likedByMe: gets > 1 })]);
+        }),
+        http.post(`${API}/support/c1/like`, () => HttpResponse.json(sub({ id: 'c1', type: 'complaint', likeCount: 3, likedByMe: true }), { status: 201 })),
+      );
       const user = userEvent.setup();
-      await renderBoard();
+      const { queryClient } = await renderBoard();
       const like = screen.getByTestId('support-like');
       await user.click(like);
+      await waitFor(() => expect(gets).toBe(2));
+      await waitFor(() => expect(queryClient.isFetching()).toBe(1));
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
       expect(screen.getByTestId('support-like')).toBe(like);
+      releaseRefetch();
+      await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+      expect(screen.getByTestId('support-like')).toBe(like);
+      expect(like).toHaveTextContent('3');
     });
 
     it('rolls an unlike back when the server fails', async () => {
