@@ -70,7 +70,7 @@ export function SupportBoard() {
         </AppLink>
       </header>
 
-      {query.isFetching ? (
+      {query.isPending ? (
         <div className="flex justify-center py-16">
           <Spinner aria-label={t('loading')} />
         </div>

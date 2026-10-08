@@ -168,6 +168,19 @@ describe('CreateSubmission', () => {
     expect(nav.push).not.toHaveBeenCalled();
   });
 
+  it('toasts before a hard navigation to a legacy-owned board (the toast cannot outlive the page load)', async () => {
+    mockCreate();
+    const user = userEvent.setup();
+    renderWithProviders(<CreateSubmission />);
+    await user.type(title(), 'Valid title');
+    await user.type(body(), 'A body that is long enough');
+    await user.click(submit());
+    await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/support'));
+    expect(nav.toast).toHaveBeenCalledWith('success', t('SUPPORT.submit_success'));
+    expect(nav.toast.mock.invocationCallOrder[0]).toBeLessThan(nav.hard.mock.invocationCallOrder[0]!);
+    expect(nav.push).not.toHaveBeenCalled();
+  });
+
   it('renders in English', () => {
     renderWithProviders(<CreateSubmission />, 'en');
     expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(messages.en['SUPPORT.create_title']!);

@@ -111,10 +111,13 @@ describe('SupportBoard', () => {
     it('likes optimistically, then keeps the state once the server confirms', async () => {
       mockApi([sub({ id: 'c1', type: 'complaint', likeCount: 2 })]);
       let release!: () => void;
+      let confirmed = false;
       const gate = new Promise<void>((resolve) => (release = resolve));
       server.use(
+        http.get(`${API}/support`, () => HttpResponse.json([sub({ id: 'c1', type: 'complaint', likeCount: confirmed ? 3 : 2, likedByMe: confirmed })])),
         http.post(`${API}/support/c1/like`, async () => {
           await gate;
+          confirmed = true;
           return HttpResponse.json(sub({ id: 'c1', type: 'complaint', likeCount: 3, likedByMe: true }), { status: 201 });
         }),
       );
@@ -131,6 +134,7 @@ describe('SupportBoard', () => {
       mockApi([sub({ id: 'm1', type: 'comment', likeCount: 4, likedByMe: true })]);
       let deleted = false;
       server.use(
+        http.get(`${API}/support`, () => HttpResponse.json([sub({ id: 'm1', type: 'comment', likeCount: deleted ? 3 : 4, likedByMe: !deleted })])),
         http.delete(`${API}/support/m1/like`, () => {
           deleted = true;
           return new HttpResponse(null, { status: 204 });
@@ -152,6 +156,35 @@ describe('SupportBoard', () => {
       await user.click(screen.getByTestId('support-like'));
       await waitFor(() => expect(screen.getByTestId('support-like')).toHaveAttribute('aria-pressed', 'false'));
       expect(screen.getByTestId('support-like')).toHaveTextContent('2');
+    });
+
+    it('ends in the server state when the like is refused as already liked', async () => {
+      let liked = false;
+      server.use(
+        http.get(`${API}/auth/session-status`, () => HttpResponse.json({ hasSession: true })),
+        http.get(`${API}/auth/me`, () => HttpResponse.json(userJson())),
+        http.get(`${API}/support`, () => HttpResponse.json([sub({ id: 'c1', type: 'complaint', likeCount: liked ? 3 : 2, likedByMe: liked })])),
+        http.post(`${API}/support/c1/like`, () => {
+          liked = true;
+          return HttpResponse.json({ detail: 'Already liked' }, { status: 409 });
+        }),
+      );
+      const user = userEvent.setup();
+      await renderBoard();
+      await user.click(screen.getByTestId('support-like'));
+      await waitFor(() => expect(screen.getByTestId('support-like')).toHaveAttribute('aria-pressed', 'true'));
+      expect(screen.getByTestId('support-like')).toHaveTextContent('3');
+    });
+
+    it('keeps the cards mounted while the list refetches after a like', async () => {
+      mockApi([sub({ id: 'c1', type: 'complaint', likeCount: 2 })]);
+      server.use(http.post(`${API}/support/c1/like`, () => HttpResponse.json(sub({ id: 'c1', type: 'complaint', likeCount: 3, likedByMe: true }), { status: 201 })));
+      const user = userEvent.setup();
+      await renderBoard();
+      const like = screen.getByTestId('support-like');
+      await user.click(like);
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      expect(screen.getByTestId('support-like')).toBe(like);
     });
 
     it('rolls an unlike back when the server fails', async () => {
