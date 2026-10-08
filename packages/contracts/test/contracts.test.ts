@@ -7,6 +7,8 @@ import {
   banRecord,
   bookVoteRound,
   chatMessage,
+  createSubmissionForm,
+  displayNameForm,
   chatWsServerMessage,
   club,
   clubEvent,
@@ -230,5 +232,35 @@ describe('private club stub', () => {
     expect(safeParse(clubOrStub, { ...stub, isPublic: true }).ok).toBe(false);
     expect(safeParse(clubOrStub, { ...stub, memberCount: 'many' }).ok).toBe(false);
     expect(safeParse(clubOrStub, { ...stub, organizerId: null }).ok).toBe(false);
+  });
+});
+
+describe('form schemas', () => {
+  const first = (r: { success: boolean; error?: { issues: { message: string }[] } }) => r.error?.issues[0]?.message;
+
+  it('displayNameForm reports the first failing rule', () => {
+    expect(first(displayNameForm.safeParse({ displayName: '' }))).toBe('PROFILE.display_name_required');
+    expect(first(displayNameForm.safeParse({ displayName: 'a' }))).toBe('PROFILE.display_name_min');
+    expect(first(displayNameForm.safeParse({ displayName: 'a'.repeat(51) }))).toBe('SECURITY.invalid_display_name');
+    expect(first(displayNameForm.safeParse({ displayName: '<script>' }))).toBe('SECURITY.invalid_display_name');
+    expect(first(displayNameForm.safeParse({ displayName: 'a&b' }))).toBe('SECURITY.invalid_display_name');
+  });
+
+  it('displayNameForm accepts latin, cyrillic, digits and . \' - _', () => {
+    for (const displayName of ['Ada Lovelace', 'Олена Пчілка', "O'Brien-Smith_2.0", 'ab', 'a'.repeat(50)]) {
+      expect(displayNameForm.safeParse({ displayName }).success).toBe(true);
+    }
+  });
+
+  it('createSubmissionForm applies the form limits and maps them to SUPPORT keys', () => {
+    const base = { type: 'comment', title: 'Hello', body: 'long enough body' } as const;
+    expect(createSubmissionForm.safeParse(base).success).toBe(true);
+    expect(first(createSubmissionForm.safeParse({ ...base, title: '' }))).toBe('SUPPORT.title_required');
+    expect(first(createSubmissionForm.safeParse({ ...base, title: 'ab' }))).toBe('SUPPORT.title_min');
+    expect(first(createSubmissionForm.safeParse({ ...base, title: 'a'.repeat(121) }))).toBe('SUPPORT.title_max');
+    expect(first(createSubmissionForm.safeParse({ ...base, body: '' }))).toBe('SUPPORT.body_required');
+    expect(first(createSubmissionForm.safeParse({ ...base, body: 'short' }))).toBe('SUPPORT.body_min');
+    expect(first(createSubmissionForm.safeParse({ ...base, body: 'a'.repeat(2001) }))).toBe('SUPPORT.body_max');
+    expect(createSubmissionForm.safeParse({ ...base, type: 'bug' }).success).toBe(false);
   });
 });
