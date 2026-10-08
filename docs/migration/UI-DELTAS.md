@@ -42,3 +42,12 @@ Reference: `src/app/shared/spartan` (read-only). Review surface: `/__ui` (dev on
 | Session probe | `session-status` has a 4 s timeout; a timeout or failure resolves to guest and is cached for only 2 s (success: 30 s), so a blip cannot hide a session for 30 s and guests never wait on a hung backend to see CTAs and the header login/register buttons. | Robustness. |
 | Errors | `app/error.tsx` and `app/global-error.tsx` show a localized generic message (`ERRORS.unexpected`) and a retry button (`ERRORS.retry`, added to `packages/i18n/overrides`); no message or stack is rendered. Lazy islands (user menu, club tabs, mobile sheet, toaster) fall back to their inert/plain UI if their chunk fails. Angular has no equivalent boundary. | Version-skew and network resilience. |
 | Analytics | Custom events carry `app: 'next'` and the `bucket` cohort; see `CANARY-METRICS.md`. | Canary comparison. |
+
+## Deltas from the R8 review (apps/web, /profile and /support)
+
+| Area | Delta | Why |
+|---|---|---|
+| Clearing social links | `PATCH /users/me/socials` sends `null` for a saved link whose input is now empty (Angular omits it, so a link could never be removed); values are trimmed and a leading `@` is stripped from Telegram. Never-set fields are still omitted. | Owner-approved bug fix (reviewer M1). |
+| Admin profile | Role selector hidden for `admin`; the hero badge shows `PROFILE.role_admin`. | Admin cannot change role through this endpoint. |
+| Form hygiene | Display name is trimmed before validation; the visibility checkbox reverts when saving fails; the support board spinner appears on the first load only. | Reviewer m1, m3, m5. |
+| Support toast | The create-submission success toast is lost when `/support` is legacy-owned (hard navigation reloads the page). | Unavoidable until `/support` is Next-owned. |

@@ -232,7 +232,7 @@ for (const lang of ['uk', 'en'] as const) {
       ).toHaveAttribute('aria-pressed', 'true');
     });
 
-    test('socials: empty inputs are left out of PATCH /users/me/socials; visibility toggle sends {socialsPublic}', async ({
+    test('socials: never-set empty inputs are left out of PATCH /users/me/socials (a cleared saved one is null on Next, omitted on Angular); visibility toggle sends {socialsPublic}', async ({
       page,
     }) => {
       const mock = await open(page, 'member', '/profile', {}, lang);
@@ -242,7 +242,12 @@ for (const lang of ['uk', 'en'] as const) {
       await expect(toast(page, L.saved[lang])).toBeVisible();
       const socials = calls(mock, 'PATCH', '/users/me/socials');
       expect(socials).toHaveLength(1);
-      expect(JSON.parse(socials[0]!.body!)).toEqual({ github: 'maxim-gh' });
+      // intentional delta (UI-DELTAS.md): Angular cannot clear a saved link, Next sends null for it
+      expect(JSON.parse(socials[0]!.body!)).toEqual(
+        test.info().project.name === 'next'
+          ? { github: 'maxim-gh', telegram: null }
+          : { github: 'maxim-gh' },
+      );
 
       const box = page.getByRole('checkbox');
       await expect(box).not.toBeChecked();
