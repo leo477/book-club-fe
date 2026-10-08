@@ -168,6 +168,7 @@ apps/
         form-field.tsx
         lazy-boundary.test.tsx
         lazy-boundary.tsx
+        lazy-page.tsx
         namespaces-intl.tsx
         social-badges.tsx
         social-icon-paths.ts
@@ -232,6 +233,7 @@ apps/
           use-venue.ts
         profile/
           display-name-form.tsx
+          profile-page.tsx
           profile-stats.tsx
           profile-view.test.tsx
           profile-view.tsx
@@ -239,6 +241,7 @@ apps/
           socials-section.tsx
           use-profile.ts
         support/
+          create-submission-page.tsx
           create-submission.test.tsx
           create-submission.tsx
           submission-card.tsx
