@@ -42,6 +42,14 @@ describe('FormField', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Minimum 8 characters required.');
   });
 
+  it('keeps an explicit id on the input and points the label at it', () => {
+    render(provider('en', <FormField label="Email" id="login-email" error="FORM_ERRORS.required" errorTestId="email-error" />));
+    const input = screen.getByLabelText('Email');
+    expect(input).toHaveAttribute('id', 'login-email');
+    expect(screen.getByText('Email')).toHaveAttribute('for', 'login-email');
+    expect(screen.getByTestId('email-error')).toHaveAttribute('id', input.getAttribute('aria-describedby'));
+  });
+
   it('forwards react-hook-form registration to the input', async () => {
     function Host() {
       const { register, watch } = useForm({ defaultValues: { name: 'x' } });

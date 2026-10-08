@@ -263,6 +263,8 @@ apps/
         format.ts
         json-ld.test.tsx
         json-ld.tsx
+        legacy-session.test.ts
+        legacy-session.ts
         navigate.test.ts
         navigate.ts
         page-metadata.test.ts
