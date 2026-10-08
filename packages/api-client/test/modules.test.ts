@@ -178,4 +178,15 @@ describe('domain modules over MSW', () => {
     reply = [f.banRecord];
     await expect(api.members.bans('c1')).resolves.toMatchObject([{ duration: 3 }]);
   });
+
+  it('hands callers no token keys from the cookie-session auth calls', async () => {
+    const tokens = { accessToken: 'jwt-access', refreshToken: 'jwt-refresh' };
+    reply = tokens;
+    await expect(api.auth.exchangeOAuthSession('c1')).resolves.toEqual({});
+    reply = { ...tokens, user: f.userProfile };
+    for (const result of [await api.auth.loginSession({ email: 'a@b.c', password: 'p' }), await api.auth.registerSession({ email: 'a@b.c', password: 'p', displayName: 'A' })]) {
+      expect(Object.keys(result)).toEqual(['user']);
+      expect(JSON.stringify(result)).not.toContain('jwt-');
+    }
+  });
 });

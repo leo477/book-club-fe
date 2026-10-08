@@ -20,7 +20,7 @@ export const authApi = (c: ApiClient) => ({
   /** Web variants: the cookies carry the session, and the parsed result holds the user only (token fields are stripped); register may instead answer 202 `EMAIL_CONFIRMATION_REQUIRED`. */
   loginSession: (body: LoginRequest) => c.post('/auth/login', sessionResponse, body, publicCall),
   registerSession: (body: RegisterRequest) => c.post('/auth/register', registerResponse, body, publicCall),
-  exchangeOAuthSession: (code: string) => c.post('/auth/oauth/exchange', z.unknown(), { code }, publicCall),
+  exchangeOAuthSession: (code: string) => c.post('/auth/oauth/exchange', z.object({}), { code }, publicCall),
   refresh: () => c.post('/auth/refresh', authTokens, {}, publicCall),
   exchangeOAuthCode: (code: string) => c.post('/auth/oauth/exchange', authTokens, { code }, publicCall),
   logout: () => c.post('/auth/logout', z.void()),
