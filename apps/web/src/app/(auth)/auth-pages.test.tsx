@@ -35,7 +35,7 @@ describe('auth pages', () => {
   it('renders the login form without the shell, after its lazy chunk loads', async () => {
     server.use(http.get(`${API}/auth/session-status`, () => HttpResponse.json({ hasSession: false })));
     renderWithProviders(LoginPage());
-    expect(await screen.findByRole('heading', { level: 2, name: messages.uk['AUTH.sign_in_h2'] })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: messages.uk['AUTH.sign_in_h2']! })).toBeInTheDocument();
     expect(screen.queryByRole('banner')).toBeNull();
     expect(screen.queryByRole('contentinfo')).toBeNull();
   });
@@ -43,7 +43,7 @@ describe('auth pages', () => {
   it('renders the register form without the shell', async () => {
     server.use(http.get(`${API}/auth/session-status`, () => HttpResponse.json({ hasSession: false })));
     renderWithProviders(RegisterPage());
-    expect(await screen.findByRole('heading', { level: 2, name: messages.uk['AUTH.create_account_h2'] })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 2, name: messages.uk['AUTH.create_account_h2']! })).toBeInTheDocument();
     expect(screen.queryByRole('banner')).toBeNull();
   });
 });
