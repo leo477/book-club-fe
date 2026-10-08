@@ -246,6 +246,12 @@ describe('form schemas', () => {
     expect(first(displayNameForm.safeParse({ displayName: 'a&b' }))).toBe('SECURITY.invalid_display_name');
   });
 
+  it('displayNameForm trims, so whitespace-only fails like empty and padding is dropped', () => {
+    expect(first(displayNameForm.safeParse({ displayName: '   ' }))).toBe('PROFILE.display_name_required');
+    expect(displayNameForm.parse({ displayName: '  Ada  ' })).toEqual({ displayName: 'Ada' });
+    expect(first(displayNameForm.safeParse({ displayName: ' a ' }))).toBe('PROFILE.display_name_min');
+  });
+
   it('displayNameForm accepts latin, cyrillic, digits and . \' - _', () => {
     for (const displayName of ['Ada Lovelace', 'Олена Пчілка', "O'Brien-Smith_2.0", 'ab', 'a'.repeat(50)]) {
       expect(displayNameForm.safeParse({ displayName }).success).toBe(true);

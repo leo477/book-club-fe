@@ -74,10 +74,11 @@ export const DISPLAY_NAME_PATTERN = /^[\p{L}\p{N} .'\-_]{2,50}$/u;
 /** Messages are i18n keys; the first failing rule (required, min, max, pattern) is the one shown. */
 export const displayNameField = z
   .string()
+  .trim()
   .min(1, 'PROFILE.display_name_required')
   .min(2, 'PROFILE.display_name_min')
   .max(50, 'SECURITY.invalid_display_name')
   .regex(DISPLAY_NAME_PATTERN, 'SECURITY.invalid_display_name');
 
 export const displayNameForm = z.object({ displayName: displayNameField });
-export type DisplayNameForm = z.infer<typeof displayNameForm>;
+export type DisplayNameForm = z.input<typeof displayNameForm>;
