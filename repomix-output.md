@@ -358,6 +358,7 @@ docs/
     RUNBOOK-STRANGLER.md
     SECURITY-R6.md
     SECURITY-R7.md
+    SECURITY-R9.md
     UI-DELTAS.md
 e2e/
   fixtures/
@@ -383,6 +384,8 @@ e2e/
     r7/
       fixtures.ts
     r8/
+      fixtures.ts
+    r9/
       fixtures.ts
     bypass.ts
     expectations.ts
