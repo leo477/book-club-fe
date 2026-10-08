@@ -354,6 +354,7 @@ docs/
     PARITY-R6.md
     PARITY-R7.md
     PARITY-R8.md
+    PARITY-R9.md
     R6-DEPLOY-SETTINGS.md
     RUNBOOK-STRANGLER.md
     SECURITY-R6.md
