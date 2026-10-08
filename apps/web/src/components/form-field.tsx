@@ -10,7 +10,7 @@ type Props = Omit<ComponentProps<typeof Input>, 'children'> & {
   /** i18n key of the message (zod issues carry keys such as `FORM_ERRORS.required`); shown while set */
   error?: string | undefined;
   /** ICU arguments for the key, e.g. `{ requiredLength: 8 }` for `FORM_ERRORS.minlength` */
-  errorValues?: Record<string, string | number>;
+  errorValues?: Record<string, string | number> | undefined;
 };
 
 /** Label + input + error with the a11y wiring (`aria-invalid`, `aria-describedby`) done by Field. */

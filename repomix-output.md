@@ -86,10 +86,12 @@ apps/
             page.test.tsx
             page.tsx
           profile/
+            page.test.tsx
             page.tsx
           support/
             new/
               page.tsx
+            page.test.tsx
             page.tsx
           layout.tsx
         %5F%5Fstrangler-probe/
@@ -237,8 +239,10 @@ apps/
           socials-section.tsx
           use-profile.ts
         support/
+          create-submission.test.tsx
           create-submission.tsx
           submission-card.tsx
+          support-board.test.tsx
           support-board.tsx
           use-support.ts
       i18n/
