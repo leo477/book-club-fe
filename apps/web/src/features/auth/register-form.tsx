@@ -43,6 +43,7 @@ export function RegisterView() {
   const {
     register,
     handleSubmit,
+    getValues,
     setValue,
     trigger,
     control,
@@ -57,7 +58,9 @@ export function RegisterView() {
   const strength = passwordStrength(password ?? '');
 
   const signUp = useMutation({
-    mutationFn: async ({ displayName, email, password, role: chosen }: RegisterForm) => {
+    // no variables: the typed password would otherwise sit in the mutation cache until it is collected
+    mutationFn: async () => {
+      const { displayName, email, password, role: chosen } = getValues();
       const result = await api.auth.registerSession({ displayName, email, password, role: chosen });
       // 202: the account exists but the backend issued no session until the e-mail is confirmed
       return { user: 'user' in result ? result.user : null, email, displayName };
@@ -100,7 +103,7 @@ export function RegisterView() {
     <AuthFrame subtitle={t('AUTH.create_account_subtitle')}>
       <div className="glass-card-strong light-island p-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">{t('AUTH.create_account_h2')}</h2>
-        <form onSubmit={handleSubmit((values) => signUp.mutate(values))} className="space-y-4" noValidate>
+        <form onSubmit={handleSubmit(() => signUp.mutate())} className="space-y-4" noValidate>
           <fieldset className="border-0 p-0 m-0 flex flex-col gap-4">
             <legend className="sr-only">{t('AUTH.create_account_h2')}</legend>
             <FormField
@@ -189,7 +192,7 @@ export function RegisterView() {
             <Button type="submit" disabled={signUp.isPending} className="mt-2 w-full bg-gradient-brand text-white border-0 hover:opacity-90 focus-visible:ring-primary-500">
               {signUp.isPending ? (
                 <>
-                  <Spinner aria-label="Loading" />
+                  <Spinner aria-hidden="true" />
                   {t('AUTH.creating_account')}
                 </>
               ) : (

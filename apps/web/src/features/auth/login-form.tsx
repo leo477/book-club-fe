@@ -29,6 +29,7 @@ export function LoginView() {
   const {
     register,
     handleSubmit,
+    getValues,
     formState: { errors },
   } = useForm<LoginForm>({ resolver: zodResolver(loginForm), mode: 'onTouched' });
 
@@ -43,7 +44,8 @@ export function LoginView() {
   }, [t]);
 
   const signIn = useMutation({
-    mutationFn: async (values: LoginForm) => (await api.auth.loginSession(values)).user,
+    // no variables: the typed password would otherwise sit in the mutation cache until it is collected
+    mutationFn: async () => (await api.auth.loginSession(getValues())).user,
     onSuccess: (profile) => {
       queryClient.setQueryData(sessionKey, profile);
       hardNavigate('/events');
@@ -57,7 +59,7 @@ export function LoginView() {
     <AuthFrame subtitle={t('AUTH.welcome_back')}>
       <div className="glass-card-strong light-island p-8">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">{t('AUTH.sign_in_h2')}</h2>
-        <form onSubmit={handleSubmit((values) => signIn.mutate(values))} className="space-y-4" noValidate>
+        <form onSubmit={handleSubmit(() => signIn.mutate())} className="space-y-4" noValidate>
           <fieldset className="border-0 p-0 m-0 flex flex-col gap-4">
             <legend className="sr-only">{t('AUTH.sign_in_h2')}</legend>
             <FormField
@@ -89,7 +91,7 @@ export function LoginView() {
           <Button type="submit" disabled={busy} className="mt-2 w-full bg-gradient-brand text-white border-0 hover:opacity-90 focus-visible:ring-primary-500">
             {busy ? (
               <>
-                <Spinner aria-label="Loading" />
+                <Spinner aria-hidden="true" />
                 {t('AUTH.signing_in')}
               </>
             ) : (

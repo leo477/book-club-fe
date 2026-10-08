@@ -52,7 +52,7 @@ The three routes are one flow (the backend redirects Google sign-in to `/auth/ca
 vercel edge-config update book-club-strangler --patch '{"items":[{"operation":"upsert","key":"strangler","value":{"version":4,"enabled":true,"routes":{"/login":{"target":"next","percent":100},"/register":{"target":"next","percent":100},"/auth/callback":{"target":"next","percent":100}}}}]}'
 ```
 
-(Send the whole `routes` object including the already-live routes, as above.) The Next build needs `NEXT_PUBLIC_OAUTH_BASE_URL` (absolute backend API origin, e.g. `https://book-club-be.onrender.com/api/v1`) at build time; it is inlined, so a missing value only shows on the Google button.
+(Send the whole `routes` object including the already-live routes, as above.) The Next build needs `NEXT_PUBLIC_OAUTH_BASE_URL` (absolute backend API origin, e.g. `https://book-club-be.onrender.com/api/v1`) at build time and the production build fails without it (`checkOAuthBaseUrl`, build phase only; dev, test and `next start` are unaffected). It is set in both build paths of `.github/workflows/web.yml` (the `build` job and the `deploy` job that runs `vercel build`), so merging does not depend on the Vercel dashboard; a build that does not go through that workflow (a manual `vercel build`, another CI) must export it too.
 
 ## Global kill (everything to legacy)
 

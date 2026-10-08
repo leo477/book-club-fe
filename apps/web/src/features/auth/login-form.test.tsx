@@ -105,6 +105,25 @@ describe('LoginView', () => {
     setItem.mockRestore();
   });
 
+  it.each([
+    ['success', undefined],
+    ['failure', () => HttpResponse.json({ detail: 'Invalid credentials' }, { status: 401 })],
+  ])('keeps the typed password out of the mutation and query caches and the console after %s', async (_name, login) => {
+    const log = ['log', 'info', 'warn', 'error'].map((level) => vi.spyOn(console, level as 'log').mockImplementation(() => undefined));
+    mockApi(login ? { login } : {});
+    const { queryClient } = renderWithProviders(<LoginView />);
+    await userEvent.type(email(), 'ada@example.com');
+    await userEvent.type(password(), 'hunter2-secret');
+    await userEvent.click(submit());
+    await waitFor(() => expect(nav.hard.mock.calls.length + screen.queryAllByTestId('login-error').length).toBeGreaterThan(0));
+
+    const cached = JSON.stringify([queryClient.getMutationCache().getAll().map((m) => m.state), queryClient.getQueryCache().getAll().map((q) => q.state.data)]);
+    expect(cached).not.toContain('hunter2-secret');
+    expect(cached).not.toContain('jwt-');
+    expect(log.flatMap((spy) => spy.mock.calls).flat().join(' ')).not.toMatch(/hunter2-secret|jwt-/);
+    log.forEach((spy) => spy.mockRestore());
+  });
+
   it('ignores redirect and returnUrl parameters', async () => {
     window.history.replaceState({}, '', '/login?redirect=https://evil.example&returnUrl=//evil.example&next=/clubs');
     mockApi();

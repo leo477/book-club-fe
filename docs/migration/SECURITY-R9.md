@@ -4,7 +4,7 @@ Scope: `git diff develop..HEAD` plus the backend at /home/dmytr/angular/book-clu
 
 ## Verdict: ALLOW MERGE (no Critical or High finding in the diff)
 
-Conditions before the Edge Config flip, not before merge: set `NEXT_PUBLIC_OAUTH_BASE_URL` in the Vercel build env for book-club-web (F-3), and confirm the CORS_ORIGIN_REGEX hosts are all owned by the team (F-6).
+Update (round 3): `NEXT_PUBLIC_OAUTH_BASE_URL` is now a merge-time requirement of the production build (F-3 fixed: the build fails without it). It is satisfied by the workflow env in `.github/workflows/web.yml` (`build` and `deploy` jobs), not by the Vercel dashboard. Condition before the Edge Config flip, not before merge: confirm the CORS_ORIGIN_REGEX hosts are all owned by the team (F-6).
 
 ## Findings
 

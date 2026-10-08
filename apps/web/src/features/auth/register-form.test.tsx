@@ -155,6 +155,20 @@ describe('RegisterView', () => {
     setItem.mockRestore();
   });
 
+  it.each([
+    ['success', undefined],
+    ['failure', () => HttpResponse.json({ detail: 'Email already registered' }, { status: 409 })],
+  ])('keeps the typed password out of the mutation and query caches after %s', async (_name, register) => {
+    mockApi(register);
+    const { queryClient } = renderWithProviders(<RegisterView />);
+    await fillValid({ password: 'hunter2-Secret' });
+    await userEvent.click(submit());
+    await screen.findByTestId('register-feedback');
+    const cached = JSON.stringify([queryClient.getMutationCache().getAll().map((m) => m.state), queryClient.getQueryCache().getAll().map((q) => q.state.data)]);
+    expect(cached).not.toContain('hunter2-Secret');
+    expect(cached).not.toContain('jwt-');
+  });
+
   it('shows the backend message in a register-feedback alert and keeps the form editable', async () => {
     mockApi(() => HttpResponse.json({ detail: 'Email already registered' }, { status: 409 }));
     const { queryClient } = renderWithProviders(<RegisterView />);

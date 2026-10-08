@@ -10,7 +10,7 @@
   --font-fantasy: var(--font-cinzel), Cinzel, serif;
 }
 
-@custom-variant dark (&:is(.dark *):not(:is(.light-island, .light-island *)));
+@custom-variant dark (&:is(.dark *):not(:where(.light-island, .light-island *)));
 
 @theme inline {
   --color-background: var(--background);
@@ -56,6 +56,8 @@
 .light-island {
   color: var(--foreground);
   color-scheme: light;
+  /* placeholder text on the cream card: 4.73:1 (the page token is 3.25:1) */
+  --muted-foreground: hsl(25deg 35% 40%);
 }
 :root:not(.dark) [data-slot='sheet-title'] {
   color: var(--color-primary-700);

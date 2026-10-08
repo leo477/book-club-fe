@@ -155,6 +155,54 @@ describe('OAuthCallback', () => {
     expect(sessionStorage.getItem('bc_flash')).toBe('oauth_failed');
   });
 
+  it('does not navigate or flash when the page went away before the exchange settled', async () => {
+    visit('?code=slow-code');
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const calls = mockApi({ exchange: () => HttpResponse.json(TOKENS) });
+    server.use(
+      http.post(`${API}/auth/oauth/exchange`, async () => {
+        await gate;
+        return HttpResponse.json(TOKENS);
+      }),
+    );
+    const { unmount } = renderWithProviders(<OAuthCallback />);
+    await waitFor(() => expect(window.location.search).toBe(''));
+    unmount();
+    release();
+    await waitFor(() => expect(calls.me).toBe(1));
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(nav.hard).not.toHaveBeenCalled();
+    expect(nav.replaceHard).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('bc_flash')).toBeNull();
+  });
+
+  it('starts its own exchange for a different code instead of joining one still running', async () => {
+    visit('?code=first-code');
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const calls = mockApi();
+    server.use(
+      http.post(`${API}/auth/oauth/exchange`, async ({ request }) => {
+        const { code } = (await request.json()) as { code: string };
+        calls.exchange.push({ code });
+        if (code === 'first-code') await gate;
+        return HttpResponse.json(TOKENS);
+      }),
+    );
+    const first = renderWithProviders(<OAuthCallback />);
+    await waitFor(() => expect(calls.exchange).toEqual([{ code: 'first-code' }]));
+    first.unmount();
+
+    visit('?code=second-code');
+    renderWithProviders(<OAuthCallback />);
+    await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/events'));
+    expect(calls.exchange).toEqual([{ code: 'first-code' }, { code: 'second-code' }]);
+    release();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(nav.hard).toHaveBeenCalledTimes(1);
+  });
+
   it('never persists the code or a token and never follows a redirect parameter', async () => {
     visit('?code=one-time-code&redirect=https://evil.example&returnUrl=//evil.example');
     const setItem = vi.spyOn(Storage.prototype, 'setItem');
