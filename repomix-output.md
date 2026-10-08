@@ -65,6 +65,16 @@ apps/
       check-first-load.mjs
     src/
       app/
+        (auth)/
+          auth/
+            callback/
+              page.tsx
+          login/
+            page.tsx
+          register/
+            page.tsx
+          auth-pages.test.tsx
+          layout.tsx
         (public)/
           privacy/
             page.test.tsx
@@ -178,6 +188,19 @@ apps/
         toaster-impl.tsx
       features/
         auth/
+          auth-divider.tsx
+          auth-error.ts
+          auth-frame.tsx
+          google-button.test.tsx
+          google-button.tsx
+          login-form.test.tsx
+          login-form.tsx
+          login-page.tsx
+          oauth-callback.test.tsx
+          oauth-callback.tsx
+          register-form.test.tsx
+          register-form.tsx
+          register-page.tsx
           require-auth.test.tsx
           require-auth.tsx
         club-detail/
@@ -298,6 +321,7 @@ apps/
         server.ts
       test/
         harness.tsx
+      env.d.ts
       proxy.ts
     .gitignore
     components.json
