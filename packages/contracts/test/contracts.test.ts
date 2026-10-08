@@ -9,6 +9,9 @@ import {
   chatMessage,
   createSubmissionForm,
   displayNameForm,
+  loginForm,
+  registerForm,
+  sessionResponse,
   chatWsServerMessage,
   club,
   clubEvent,
@@ -256,6 +259,39 @@ describe('form schemas', () => {
     for (const displayName of ['Ada Lovelace', 'Олена Пчілка', "O'Brien-Smith_2.0", 'ab', 'a'.repeat(50)]) {
       expect(displayNameForm.safeParse({ displayName }).success).toBe(true);
     }
+  });
+
+  it('loginForm reports required, email and minlength keys', () => {
+    expect(first(loginForm.safeParse({ email: '', password: 'longenough' }))).toBe('FORM_ERRORS.required');
+    expect(first(loginForm.safeParse({ email: 'nope', password: 'longenough' }))).toBe('FORM_ERRORS.email');
+    expect(first(loginForm.safeParse({ email: 'a@b.co', password: '' }))).toBe('FORM_ERRORS.required');
+    expect(first(loginForm.safeParse({ email: 'a@b.co', password: 'short' }))).toBe('FORM_ERRORS.minlength');
+    expect(loginForm.safeParse({ email: 'a@b.co', password: 'longenough' }).success).toBe(true);
+  });
+
+  it('registerForm keeps the Angular keys and flags a mismatch on confirmPassword', () => {
+    const base = { displayName: 'Ada', email: 'a@b.co', password: 'longenough', confirmPassword: 'longenough', role: 'user' } as const;
+    const issue = (patch: object) => registerForm.safeParse({ ...base, ...patch }).error?.issues[0];
+    expect(registerForm.safeParse(base).success).toBe(true);
+    expect(issue({ displayName: '' })?.message).toBe('FORM_ERRORS.required');
+    expect(issue({ displayName: 'a' })?.message).toBe('FORM_ERRORS.minlength');
+    expect(issue({ displayName: '<b>' })?.message).toBe('SECURITY.invalid_display_name');
+    expect(issue({ displayName: 'a'.repeat(51) })?.message).toBe('SECURITY.invalid_display_name');
+    expect(issue({ confirmPassword: '' })?.message).toBe('FORM_ERRORS.required');
+    expect(issue({ confirmPassword: 'other-pass' })).toMatchObject({ path: ['confirmPassword'], message: 'AUTH.passwords_no_match' });
+    expect(issue({ role: 'admin' })?.path).toEqual(['role']);
+  });
+
+  it('registerForm still reports the mismatch next to another field error', () => {
+    const paths = registerForm.safeParse({ displayName: '', email: 'a@b.co', password: 'longenough', confirmPassword: 'x', role: 'user' }).error?.issues.map((i) => i.path[0]);
+    expect(paths).toContain('displayName');
+    expect(paths).toContain('confirmPassword');
+  });
+
+  it('sessionResponse keeps the user and drops token fields', () => {
+    const { id } = user;
+    expect(sessionResponse.parse({ accessToken: "a", refreshToken: "r", user })).toEqual({ user: expect.objectContaining({ id }) });
+    expect(sessionResponse.parse({ user })).not.toHaveProperty('accessToken');
   });
 
   it('createSubmissionForm applies the form limits and maps them to SUPPORT keys', () => {
