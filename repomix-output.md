@@ -327,6 +327,7 @@ docs/
     PARITY-R5.md
     PARITY-R6.md
     PARITY-R7.md
+    PARITY-R8.md
     R6-DEPLOY-SETTINGS.md
     RUNBOOK-STRANGLER.md
     SECURITY-R6.md
@@ -354,6 +355,8 @@ e2e/
       helpers.ts
       mock-backend.ts
     r7/
+      fixtures.ts
+    r8/
       fixtures.ts
     bypass.ts
     expectations.ts
