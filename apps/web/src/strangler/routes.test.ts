@@ -32,7 +32,7 @@ describe('matchRoute', () => {
 });
 
 describe('manifest', () => {
-  it('owns the strangler probe, privacy, terms, clubs, club detail, the root redirect and events', () => {
+  it('owns the strangler probe, privacy, terms, clubs, club detail, the root redirect, events, profile and support', () => {
     expect(manifest.map((r) => [r.pattern, r.owner])).toEqual([
       ['/__strangler-probe', 'next'],
       ['/privacy', 'next'],
@@ -42,6 +42,9 @@ describe('manifest', () => {
       ['/', 'next'],
       ['/events', 'next'],
       ['/events/:id', 'next'],
+      ['/profile', 'next'],
+      ['/support', 'next'],
+      ['/support/new', 'next'],
     ]);
     expect(matchRoute('/__strangler-probe')).not.toBeNull();
     expect(matchRoute('/clubs')?.pattern).toBe('/clubs');
@@ -54,6 +57,10 @@ describe('manifest', () => {
     expect(matchRoute(`/events/${UUID}`)?.pattern).toBe('/events/:id');
     expect(matchRoute(`/events/${UUID}/edit`)).toBeNull();
     expect(matchRoute('/events/abc')).toBeNull();
+    expect(matchRoute('/profile')?.pattern).toBe('/profile');
+    expect(matchRoute('/support/')?.pattern).toBe('/support');
+    expect(matchRoute('/support/new')?.pattern).toBe('/support/new');
+    expect(matchRoute('/support/other')).toBeNull();
     expect(matchRoute('/login')).toBeNull();
   });
 });
