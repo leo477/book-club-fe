@@ -70,6 +70,16 @@ describe('ProfileView', () => {
     expect(within(hero).getByText(new RegExp(t('PROFILE.role_organizer')))).toBeInTheDocument();
   });
 
+  it('labels an admin as administrator and offers no role selector', async () => {
+    mockApi({ role: 'admin' });
+    await renderProfile();
+    const hero = screen.getByRole('heading', { level: 1 }).closest('section')!;
+    expect(within(hero).getByText(new RegExp(t('PROFILE.role_admin')))).toBeInTheDocument();
+    expect(screen.queryByTestId('role-user')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('role-organizer')).not.toBeInTheDocument();
+    expect(screen.queryByText(t('PROFILE.role_subtitle'))).not.toBeInTheDocument();
+  });
+
   it('shows the five stats from /users/me/stats', async () => {
     mockApi();
     await renderProfile();
@@ -163,6 +173,28 @@ describe('ProfileView', () => {
       expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Ada Lovelace');
     });
 
+    it('treats a whitespace-only name like an empty one', async () => {
+      const calls = mockApi();
+      const user = userEvent.setup();
+      await renderProfile();
+      await user.clear(nameInput());
+      await user.type(nameInput(), '   ');
+      await user.tab();
+      expect(await screen.findByRole('alert')).toHaveTextContent(t('PROFILE.display_name_required'));
+      expect(calls.patches).toEqual([]);
+    });
+
+    it('sends the trimmed name', async () => {
+      const calls = mockApi();
+      const user = userEvent.setup();
+      await renderProfile();
+      await user.clear(nameInput());
+      await user.type(nameInput(), '  Grace Hopper  ');
+      await user.click(saveName());
+      await waitFor(() => expect(calls.patches).toHaveLength(1));
+      expect(calls.patches[0]?.body).toEqual({ displayName: 'Grace Hopper' });
+    });
+
     it('does not submit an invalid name', async () => {
       const calls = mockApi();
       const user = userEvent.setup();
@@ -253,7 +285,30 @@ describe('ProfileView', () => {
       expect(await screen.findByRole('link', { name: 'GitHub: lovelace' })).toBeInTheDocument();
     });
 
-    it('sends an empty object when every input is blank', async () => {
+    it('sends null for a cleared saved link, omits never-set ones, and trims', async () => {
+      const calls = mockApi({ socials: { github: 'ada', telegram: 'old' } });
+      const user = userEvent.setup();
+      await renderProfile();
+      await user.clear(screen.getByTestId('social-github'));
+      await user.clear(screen.getByTestId('social-telegram'));
+      await user.type(screen.getByTestId('social-telegram'), '   ');
+      await user.type(screen.getByTestId('social-twitter'), '  ada_x  ');
+      await user.click(screen.getByRole('button', { name: t('PROFILE.save') }));
+      await waitFor(() => expect(calls.patches).toHaveLength(1));
+      expect(calls.patches[0]).toEqual({ path: '/users/me/socials', body: { github: null, telegram: null, twitter: 'ada_x' } });
+    });
+
+    it('strips a leading @ from the telegram handle', async () => {
+      const calls = mockApi();
+      const user = userEvent.setup();
+      await renderProfile();
+      await user.type(screen.getByTestId('social-telegram'), ' @ada ');
+      await user.click(screen.getByRole('button', { name: t('PROFILE.save') }));
+      await waitFor(() => expect(calls.patches).toHaveLength(1));
+      expect(calls.patches[0]?.body).toEqual({ telegram: 'ada' });
+    });
+
+    it('sends an empty object when every input is blank and nothing was saved', async () => {
       const calls = mockApi();
       const user = userEvent.setup();
       await renderProfile();
@@ -289,6 +344,16 @@ describe('ProfileView', () => {
       await renderProfile();
       await user.click(screen.getByRole('checkbox'));
       await waitFor(() => expect(toast).toHaveBeenCalledWith('error', t('common.saveError')));
+    });
+
+    it('reverts the checkbox to the session value when the call fails', async () => {
+      mockApi({ socialsPublic: true });
+      server.use(http.patch(`${API}/users/me/socials-visibility`, () => new HttpResponse(null, { status: 400 })));
+      const user = userEvent.setup();
+      await renderProfile();
+      await user.click(screen.getByRole('checkbox'));
+      await waitFor(() => expect(toast).toHaveBeenCalledWith('error', t('common.saveError')));
+      expect(screen.getByRole('checkbox')).toBeChecked();
     });
   });
 });

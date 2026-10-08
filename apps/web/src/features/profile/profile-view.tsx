@@ -26,6 +26,7 @@ export function ProfileView() {
   const changeRole = useUpdateRole();
   if (!user) return null;
 
+  const admin = user.role === 'admin';
   const organizer = user.role === 'organizer';
   const initials = user.displayName
     .split(' ')
@@ -50,12 +51,12 @@ export function ProfileView() {
           </h1>
           <span
             className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium ${
-              organizer
+              organizer || admin
                 ? 'bg-accent-100/80 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
                 : 'bg-primary-100/80 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
             }`}
           >
-            {organizer ? '🎯' : '📖'} {organizer ? t('role_organizer') : t('role_reader')}
+            {admin ? '🛡️' : organizer ? '🎯' : '📖'} {admin ? t('role_admin') : organizer ? t('role_organizer') : t('role_reader')}
           </span>
           {joined && (
             <p className="mt-3 text-sm text-gray-400 dark:text-gray-500">
@@ -71,13 +72,16 @@ export function ProfileView() {
           <DisplayNameForm displayName={user.displayName} />
         </section>
 
-        <section aria-labelledby="role-heading" className={SECTION} style={{ '--stagger': 2 } as CSSProperties}>
-          <h2 id="role-heading" className={`${HEADING} mb-1`}>
-            <span aria-hidden="true">🔖</span> {t('role_title')}
-          </h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">{t('role_subtitle')}</p>
-          <RoleSelector currentRole={user.role} onChange={changeRole.mutate} />
-        </section>
+        {/* the backend only moves users between reader and organizer, so an admin has nothing to pick */}
+        {!admin && (
+          <section aria-labelledby="role-heading" className={SECTION} style={{ '--stagger': 2 } as CSSProperties}>
+            <h2 id="role-heading" className={`${HEADING} mb-1`}>
+              <span aria-hidden="true">🔖</span> {t('role_title')}
+            </h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-5">{t('role_subtitle')}</p>
+            <RoleSelector currentRole={user.role} onChange={changeRole.mutate} />
+          </section>
+        )}
 
         <section aria-labelledby="stats-heading" className={SECTION} style={{ '--stagger': 3 } as CSSProperties}>
           <h2 id="stats-heading" className={HEADING}>

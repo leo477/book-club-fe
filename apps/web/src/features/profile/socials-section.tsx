@@ -27,15 +27,27 @@ export function SocialsSection({ user }: { user: UserProfile }) {
   const saveSocials = useUpdateSocials();
   const saveVisibility = useUpdateSocialsVisibility();
   const [isPublic, setIsPublic] = useState(user.socialsPublic);
+  const [seenPublic, setSeenPublic] = useState(user.socialsPublic);
+  // the session user is the source of truth: follow it whenever it changes
+  if (seenPublic !== user.socialsPublic) {
+    setSeenPublic(user.socialsPublic);
+    setIsPublic(user.socialsPublic);
+  }
   const { register, handleSubmit } = useForm<Values>({
     defaultValues: Object.fromEntries(KEYS.map((k) => [k, user.socials[k] ?? ''])) as Values,
   });
   const fields = fieldsFor(t('social_placeholder_at'), t('social_placeholder_url'));
   const hasAny = KEYS.some((k) => user.socials[k]);
 
-  // empty inputs are left out, as in Angular
+  // filled inputs are sent trimmed; a cleared one that was saved before is sent as null so the backend drops it; never-set ones are omitted
   const submit = (values: Values) => {
-    const socials: UserSocials = Object.fromEntries(KEYS.filter((k) => values[k]).map((k) => [k, values[k]]));
+    const socials: UserSocials = {};
+    for (const k of KEYS) {
+      const trimmed = values[k].trim();
+      const value = k === 'telegram' ? trimmed.replace(/^@+/, '') : trimmed;
+      if (value) socials[k] = value;
+      else if (user.socials[k]) socials[k] = null;
+    }
     saveSocials.mutate(socials);
   };
 
@@ -48,7 +60,7 @@ export function SocialsSection({ user }: { user: UserProfile }) {
             checked={isPublic}
             onChange={(e) => {
               setIsPublic(e.target.checked);
-              saveVisibility.mutate(e.target.checked);
+              saveVisibility.mutate(e.target.checked, { onError: () => setIsPublic(user.socialsPublic) });
             }}
             className="h-4 w-4 rounded border-gray-300 text-primary-600 focus-visible:ring-primary-500"
           />
