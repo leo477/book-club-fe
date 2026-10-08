@@ -52,6 +52,14 @@ export const createSubmissionRequest = z.object({
 });
 export type CreateSubmissionRequest = z.input<typeof createSubmissionRequest>;
 
+/** Form-side limits (tighter than the request schema); messages are i18n keys. */
+export const createSubmissionForm = z.object({
+  type: submissionType,
+  title: z.string().min(1, 'SUPPORT.title_required').min(3, 'SUPPORT.title_min').max(120, 'SUPPORT.title_max'),
+  body: z.string().min(1, 'SUPPORT.body_required').min(10, 'SUPPORT.body_min').max(2000, 'SUPPORT.body_max'),
+});
+export type CreateSubmissionForm = z.input<typeof createSubmissionForm>;
+
 export const updateSubmissionStatusRequest = z.object({
   status: z.enum(['approved', 'rejected', 'in_progress', 'done']),
 });

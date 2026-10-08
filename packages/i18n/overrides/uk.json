@@ -13,5 +13,8 @@
     "cover_alt": "Обкладинка клубу {{ name }}",
     "qr_code_aria": "QR-код",
     "events_sort_aria": "Сортування подій"
+  },
+  "SUPPORT": {
+    "loading": "Завантаження…"
   }
 }

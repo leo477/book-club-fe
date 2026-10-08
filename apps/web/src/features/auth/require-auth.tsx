@@ -15,7 +15,7 @@ const ALLOWED: Record<UserRole, readonly UserRole[]> = {
   admin: ['admin'],
 };
 
-function Pending() {
+export function Pending() {
   return (
     <div className="min-h-screen flex justify-center pt-24" aria-busy="true">
       <Spinner />

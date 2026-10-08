@@ -26,7 +26,7 @@ const isLegacy = (res: Response) => res.headers.get('x-middleware-rewrite') === 
 
 describe('handleProxy decision table', () => {
   it('passes non-manifest paths through untouched, without cookie or CSP', async () => {
-    const res = await run('/profile', () => Promise.reject(new Error('must not be read')));
+    const res = await run('/login', () => Promise.reject(new Error('must not be read')));
     expect(res.headers.get('x-middleware-next')).toBe('1');
     expect(res.headers.get('content-security-policy')).toBeNull();
     expect(res.cookies.get('bc_bucket')).toBeUndefined();

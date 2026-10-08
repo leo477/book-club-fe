@@ -12,5 +12,8 @@
     "cover_alt": "{{ name }} cover",
     "qr_code_aria": "QR code",
     "events_sort_aria": "Sort events"
+  },
+  "SUPPORT": {
+    "loading": "Loading…"
   }
 }
