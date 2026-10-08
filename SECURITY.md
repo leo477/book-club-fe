@@ -41,3 +41,17 @@ Please do not publicly disclose the issue until a fix has been released.
 ## Preferred Languages
 
 We accept reports in English or Ukrainian.
+
+## Accepted Dependency Risks
+
+CI blocks on `npm audit --omit=dev --audit-level=high` (shipped dependencies). The full
+audit including dev dependencies runs as a non-blocking informational step and is written to
+the job summary. The blocking audit does not cover build-time tooling (devDependencies such as
+`typescript` or `tailwindcss`) that produces the shipped bundle; those are reviewed through the
+informational audit and Dependabot.
+
+| Advisory | Package chain | Why accepted |
+| --- | --- | --- |
+| GHSA-vfj7-8cjw-p6xm (high, stack-exhaustion DoS in `braces` <=3.0.3) | `eslint-config-next` -> `fast-glob` -> `micromatch` -> `braces`; `@spartan-ng/cli` -> `ts-morph` -> `@ts-morph/common` -> `fast-glob`; `@spartan-ng/cli` -> `@nx/rspack` -> `ts-checker-rspack-plugin` -> `chokidar` -> `braces` (among others, all through the same dev-only tools) | Dev tooling only (lint and code generation on trusted local files); never bundled or deployed. No patched release exists (3.0.3 is latest). The `eslint-config-next` "fix" is a semver-major downgrade and is not applied. |
+
+Review by: 2026-11-05 (re-run `npm audit`; drop this entry once `braces` is patched). Tracked in SCRUM-76.
