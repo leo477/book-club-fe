@@ -87,6 +87,12 @@ export type DisplayNameForm = z.input<typeof displayNameForm>;
 export const sessionResponse = z.object({ user: userProfile });
 export type SessionResponse = z.infer<typeof sessionResponse>;
 
+/** Register answers 202 with this instead of a session when the backend wants the e-mail confirmed first. */
+export const emailConfirmationRequired = z.object({ code: z.literal('EMAIL_CONFIRMATION_REQUIRED') });
+
+export const registerResponse = z.union([sessionResponse, emailConfirmationRequired]);
+export type RegisterResponse = z.infer<typeof registerResponse>;
+
 const requiredText = z.string().min(1, 'FORM_ERRORS.required');
 const emailField = requiredText.pipe(z.email('FORM_ERRORS.email'));
 const passwordField = requiredText.min(8, 'FORM_ERRORS.minlength');

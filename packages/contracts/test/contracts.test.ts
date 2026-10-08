@@ -11,6 +11,7 @@ import {
   displayNameForm,
   loginForm,
   registerForm,
+  registerResponse,
   sessionResponse,
   chatWsServerMessage,
   club,
@@ -286,6 +287,13 @@ describe('form schemas', () => {
     const paths = registerForm.safeParse({ displayName: '', email: 'a@b.co', password: 'longenough', confirmPassword: 'x', role: 'user' }).error?.issues.map((i) => i.path[0]);
     expect(paths).toContain('displayName');
     expect(paths).toContain('confirmPassword');
+  });
+
+  it('registerResponse accepts a session or the e-mail confirmation 202 and nothing else', () => {
+    expect(registerResponse.parse({ accessToken: 'a', refreshToken: 'r', user })).toEqual({ user: expect.objectContaining({ id: user.id }) });
+    expect(registerResponse.parse({ message: 'Check your email', code: 'EMAIL_CONFIRMATION_REQUIRED' })).toEqual({ code: 'EMAIL_CONFIRMATION_REQUIRED' });
+    expect(registerResponse.safeParse({ code: 'SOMETHING_ELSE' }).success).toBe(false);
+    expect(registerResponse.safeParse({}).success).toBe(false);
   });
 
   it('sessionResponse keeps the user and drops token fields', () => {

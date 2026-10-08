@@ -203,7 +203,8 @@ export function createApiClient(config: ApiClientConfig) {
       throw error;
     };
 
-    return run(await transport.hasSession(), null);
+    // skipAuthRedirect requests never refresh or sign out, so whether a session exists cannot change their handling
+    return run(skip ? false : await transport.hasSession(), null);
   }
 
   async function send<S extends z.ZodType>(
