@@ -51,6 +51,13 @@ describe('RequireAuth', () => {
     expect(nav.replace).not.toHaveBeenCalled();
   });
 
+  it('stays in the router for a guest once /login is Next-owned, and hard-replaces while it is legacy', async () => {
+    session(null);
+    renderWithProviders(withRoutes(['/login'], <RequireAuth>secret</RequireAuth>));
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/login'));
+    expect(nav.hard).not.toHaveBeenCalled();
+  });
+
   it('treats a failing /auth/me as a guest', async () => {
     server.use(
       http.get(`${API}/auth/session-status`, () => HttpResponse.json({ hasSession: true })),

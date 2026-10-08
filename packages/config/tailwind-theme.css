@@ -33,7 +33,9 @@
   --color-gray-500: #4a5565;
 }
 
-:root {
+/* .light-island re-applies the light tokens inside a dark page (the auth card stays cream, as in Angular) */
+:root,
+.light-island {
   --color-bg:             #f2e8d5;
   --color-surface:        #ede0c0;
   --color-surface-raised: #f5eed8;
@@ -75,6 +77,11 @@
   --input:               hsl(30deg 35% 80%);
   --ring:                hsl(31deg 90% 37%);
   --radius:              0.75rem;
+}
+
+.light-island {
+  --color-gray-400: #4a5565;
+  --color-gray-500: #4a5565;
 }
 
 .dark {

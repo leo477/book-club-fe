@@ -56,6 +56,9 @@ interface Row {
 const rows: Row[] = [
   { name: 'auth.login', call: (a) => a.auth.login({ email: 'a@b.c', password: 'p' }), method: 'POST', path: '/auth/login', body: { email: 'a@b.c', password: 'p' }, res: f.authResponse },
   { name: 'auth.register', call: (a) => a.auth.register({ email: 'a@b.c', password: 'p', displayName: 'A' }), method: 'POST', path: '/auth/register', body: { email: 'a@b.c', password: 'p', displayName: 'A' }, res: f.authResponse },
+  { name: 'auth.loginSession', call: (a) => a.auth.loginSession({ email: 'a@b.c', password: 'p' }), method: 'POST', path: '/auth/login', body: { email: 'a@b.c', password: 'p' }, res: f.authResponse },
+  { name: 'auth.registerSession', call: (a) => a.auth.registerSession({ email: 'a@b.c', password: 'p', displayName: 'A', role: 'organizer' }), method: 'POST', path: '/auth/register', body: { email: 'a@b.c', password: 'p', displayName: 'A', role: 'organizer' }, res: f.authResponse },
+  { name: 'auth.exchangeOAuthSession', call: (a) => a.auth.exchangeOAuthSession('c1'), method: 'POST', path: '/auth/oauth/exchange', body: { code: 'c1' }, res: f.authTokens },
   { name: 'auth.refresh', call: (a) => a.auth.refresh(), method: 'POST', path: '/auth/refresh', body: {}, res: f.authTokens },
   { name: 'auth.exchangeOAuthCode', call: (a) => a.auth.exchangeOAuthCode('c1'), method: 'POST', path: '/auth/oauth/exchange', body: { code: 'c1' }, res: f.authTokens },
   { name: 'auth.logout', call: (a) => a.auth.logout(), method: 'POST', path: '/auth/logout' },
@@ -174,5 +177,16 @@ describe('domain modules over MSW', () => {
   it('parses the ban duration string from the backend into a number', async () => {
     reply = [f.banRecord];
     await expect(api.members.bans('c1')).resolves.toMatchObject([{ duration: 3 }]);
+  });
+
+  it('hands callers no token keys from the cookie-session auth calls', async () => {
+    const tokens = { accessToken: 'jwt-access', refreshToken: 'jwt-refresh' };
+    reply = tokens;
+    await expect(api.auth.exchangeOAuthSession('c1')).resolves.toEqual({});
+    reply = { ...tokens, user: f.userProfile };
+    for (const result of [await api.auth.loginSession({ email: 'a@b.c', password: 'p' }), await api.auth.registerSession({ email: 'a@b.c', password: 'p', displayName: 'A' })]) {
+      expect(Object.keys(result)).toEqual(['user']);
+      expect(JSON.stringify(result)).not.toContain('jwt-');
+    }
   });
 });

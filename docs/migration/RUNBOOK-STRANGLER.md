@@ -44,6 +44,16 @@ Route to legacy = `{"target":"legacy","percent":0}`.
 
 Same command, e.g. `"/privacy":{"target":"next","percent":10}`. Raise 10 -> 50 -> 100 while watching error rate and Speed Insights against `BASELINE-2026-10.md`.
 
+## Auth routes (R9): flip `/login`, `/register`, `/auth/callback` in one write
+
+The three routes are one flow (the backend redirects Google sign-in to `/auth/callback`, which hands over to `/events`, and `RequireAuth` sends guests to `/login`). Edge Config has one item, so a single `upsert` flips all of them atomically; never write them in separate calls, and roll back the same way (all three `{"target":"legacy","percent":0}`, or `enabled:false`). Both sides use the same httpOnly cookies, so a user who lands on the other app mid-flow keeps the session. Keep them at the same percent: the `bc_bucket` cookie is shared, so equal percents put a user on one side for all three.
+
+```sh
+vercel edge-config update book-club-strangler --patch '{"items":[{"operation":"upsert","key":"strangler","value":{"version":4,"enabled":true,"routes":{"/login":{"target":"next","percent":100},"/register":{"target":"next","percent":100},"/auth/callback":{"target":"next","percent":100}}}}]}'
+```
+
+(Send the whole `routes` object including the already-live routes, as above.) The Next build needs `NEXT_PUBLIC_OAUTH_BASE_URL` (absolute backend API origin, e.g. `https://book-club-be.onrender.com/api/v1`) at build time and the production build fails without it (`checkOAuthBaseUrl`, build phase only; dev, test and `next start` are unaffected). It is set in both build paths of `.github/workflows/web.yml` (the `build` job and the `deploy` job that runs `vercel build`), so merging does not depend on the Vercel dashboard; a build that does not go through that workflow (a manual `vercel build`, another CI) must export it too.
+
 ## Global kill (everything to legacy)
 
 ```sh

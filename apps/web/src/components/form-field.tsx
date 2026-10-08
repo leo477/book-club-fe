@@ -11,18 +11,19 @@ type Props = Omit<ComponentProps<typeof Input>, 'children'> & {
   error?: string | undefined;
   /** ICU arguments for the key, e.g. `{ requiredLength: 8 }` for `FORM_ERRORS.minlength` */
   errorValues?: Record<string, string | number> | undefined;
+  errorTestId?: string | undefined;
 };
 
-/** Label + input + error with the a11y wiring (`aria-invalid`, `aria-describedby`) done by Field. */
-export function FormField({ label, error, errorValues, ...input }: Props) {
+/** Label + input + error with the a11y wiring (`aria-invalid`, `aria-describedby`) done by Field; an explicit `id` (e2e hooks) replaces the generated one on both label and input. */
+export function FormField({ label, error, errorValues, errorTestId, ...input }: Props) {
   const t = useTranslations();
   return (
     <Field invalid={!!error} className="gap-1">
-      <FieldLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</FieldLabel>
+      <FieldLabel {...(input.id ? { htmlFor: input.id } : {})} className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</FieldLabel>
       <FieldControl>
         <Input {...input} />
       </FieldControl>
-      <FieldError className="text-xs">{error ? t(error, errorValues) : null}</FieldError>
+      <FieldError className="text-xs" data-testid={errorTestId}>{error ? t(error, errorValues) : null}</FieldError>
     </Field>
   );
 }
