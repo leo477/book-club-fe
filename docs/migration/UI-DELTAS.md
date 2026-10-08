@@ -51,3 +51,15 @@ Reference: `src/app/shared/spartan` (read-only). Review surface: `/__ui` (dev on
 | Admin profile | Role selector hidden for `admin`; the hero badge shows `PROFILE.role_admin`. | Admin cannot change role through this endpoint. |
 | Form hygiene | Display name is trimmed before validation; the visibility checkbox reverts when saving fails; the support board spinner appears on the first load only. | Reviewer m1, m3, m5. |
 | Support toast | The create-submission success toast is lost when `/support` is legacy-owned (hard navigation reloads the page). | Unavoidable until `/support` is Next-owned. |
+
+## Deltas from R9 (apps/web, /login, /register, /auth/callback)
+
+| Area | Delta | Why |
+|---|---|---|
+| Book intro | No book-opening animation and no 300 ms form delay. Login navigates at once; register shows its welcome card for 1.5 s, then hard-navigates to `/events`. | Not ported; the hard navigation replaces Angular's router hop. |
+| Auth card theme | The card is a `light-island` (light tokens re-applied inside `.dark`, `dark:` variants disabled below it), so it stays cream in dark mode exactly as in Angular. Footer links use `primary-700` and the strength labels `green-700`/`yellow-800`/`red-700` for AA contrast. | Parity with Angular; fixes the 1.55:1 Google button and 4.17:1 link seen on the first Next build (PARITY-R9 D-2). |
+| Submit state | The button stays disabled after a successful sign-in/registration until the page navigates. | Angular re-enabled it, allowing a second POST (or a 409 flash on register). |
+| Error text | Timeouts, network failures and 5xx without a backend message show a localized message; Angular printed the raw key (`ERRORS.timeout`). Backend `detail` is shown verbatim as before. | Bug fix. |
+| Register 202 | When the backend wants the e-mail confirmed (`202 EMAIL_CONFIRMATION_REQUIRED`) a "check your email" card (`AUTH.check_email`, `confirmation_sent`, `activate_account`) is shown; no session, no navigation. Angular fails to parse that response and shows a generic error. | Bug fix (security review F-7). |
+| OAuth failure notice | A failed callback stores the fixed flash key `oauth_failed` (the only value ever kept in sessionStorage by auth code) and replaces to `/login`, which shows the `AUTH.oauth_failed` toast once and deletes the key. `/login?oauth=failed` (the backend's own redirect) shows the same toast and the parameter is stripped. No parameter selects a destination. When `/login` is still Angular-owned the flash has no reader, so no message appears (the three routes are flipped together, so this is transient). | PARITY-R9 D-1 and F-7. |
+| Email validation | `z.email` instead of Angular's lenient `Validators.email` (`a@b` is rejected); the too-short display name error shows its real minimum (2), Angular printed 8. | Stricter, correct. |

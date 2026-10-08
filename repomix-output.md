@@ -282,6 +282,8 @@ apps/
         backend-origin.test.ts
         backend-origin.ts
         cookie.ts
+        flash.test.ts
+        flash.ts
         format.test.ts
         format.ts
         json-ld.test.tsx
@@ -290,6 +292,8 @@ apps/
         legacy-session.ts
         navigate.test.ts
         navigate.ts
+        oauth-base-url.test.ts
+        oauth-base-url.ts
         page-metadata.test.ts
         page-metadata.ts
         server-api.test.ts

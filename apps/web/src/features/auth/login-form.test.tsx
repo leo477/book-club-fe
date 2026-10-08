@@ -1,12 +1,18 @@
-import { screen, waitFor } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, screen, waitFor, within } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
+import { hydrateRoot } from 'react-dom/client';
+import { renderToString } from 'react-dom/server';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { API, messages, renderWithProviders, server, setupApiServer, userJson } from '@/test/harness';
+import { nest } from '@/i18n/locale';
 import { sessionKey } from '@/features/clubs/use-session';
 import { LoginView } from './login-form';
 
-const nav = vi.hoisted(() => ({ hard: vi.fn() }));
+const nav = vi.hoisted(() => ({ hard: vi.fn(), toast: vi.fn() }));
+vi.mock('@/lib/toast', () => ({ showToast: nav.toast }));
 vi.mock('@/lib/navigate', () => ({ hardNavigate: nav.hard, replaceNavigate: vi.fn() }));
 
 setupApiServer();
@@ -33,6 +39,7 @@ const submit = () => screen.getByRole('button', { name: t('AUTH.submit_login') }
 
 beforeEach(() => {
   nav.hard.mockReset();
+  nav.toast.mockReset();
   localStorage.clear();
   sessionStorage.clear();
   window.history.replaceState({}, '', '/login');
@@ -167,6 +174,35 @@ describe('LoginView', () => {
     await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/events'));
   });
 
+  it('shows the OAuth failure the callback page left behind, once, and clears it', async () => {
+    sessionStorage.setItem('bc_flash', 'oauth_failed');
+    mockApi();
+    renderWithProviders(<LoginView />);
+    await waitFor(() => expect(nav.toast).toHaveBeenCalledWith('error', t('AUTH.oauth_failed')));
+    expect(nav.toast).toHaveBeenCalledTimes(1);
+    expect(sessionStorage.getItem('bc_flash')).toBeNull();
+  });
+
+  it('shows the same message for the backend redirect /login?oauth=failed and strips the parameter', async () => {
+    window.history.replaceState({}, '', '/login?oauth=failed');
+    mockApi();
+    renderWithProviders(<LoginView />);
+    await waitFor(() => expect(nav.toast).toHaveBeenCalledWith('error', t('AUTH.oauth_failed')));
+    expect(window.location.search).toBe('');
+    expect(nav.hard).not.toHaveBeenCalled();
+  });
+
+  it('shows no message for other values, and a stray flash value is discarded without a toast', async () => {
+    window.history.replaceState({}, '', '/login?oauth=%3Cb%3E&redirect=//evil.example');
+    sessionStorage.setItem('bc_flash', 'anything else');
+    mockApi();
+    renderWithProviders(<LoginView />);
+    await screen.findByRole('heading', { level: 2 });
+    expect(nav.toast).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('bc_flash')).toBeNull();
+    expect(nav.hard).not.toHaveBeenCalled();
+  });
+
   it('offers a way back home to a signed-in visitor', async () => {
     mockApi({ guest: false });
     renderWithProviders(<LoginView />);
@@ -193,5 +229,34 @@ describe('LoginView', () => {
     expect(order).toEqual(['refresh:{"refreshToken":"legacy-token"}', 'probe']);
     expect(localStorage.getItem('bc_refresh_token')).toBeNull();
     expect(localStorage.getItem('bc_has_session')).toBeNull();
+  });
+});
+
+describe('LoginView hydration', () => {
+  it('keeps text typed into the server-rendered inputs before React attached', async () => {
+    const posts = mockApi();
+    const client = () => new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    const tree = (c: QueryClient) => (
+      <QueryClientProvider client={c}>
+        <NextIntlClientProvider locale="uk" messages={nest(messages.uk)}>
+          <LoginView />
+        </NextIntlClientProvider>
+      </QueryClientProvider>
+    );
+    const container = document.body.appendChild(document.createElement('div'));
+    container.innerHTML = renderToString(tree(client()));
+    container.querySelector<HTMLInputElement>('#login-email')!.value = 'early@example.com';
+    container.querySelector<HTMLInputElement>('#login-password')!.value = 'typed-before-hydration';
+
+    let root!: ReturnType<typeof hydrateRoot>;
+    await act(async () => {
+      root = hydrateRoot(container, tree(client()));
+    });
+    expect(container.querySelector<HTMLInputElement>('#login-email')!.value).toBe('early@example.com');
+
+    await userEvent.click(within(container).getByRole('button', { name: t('AUTH.submit_login') }));
+    await waitFor(() => expect(posts).toEqual([{ email: 'early@example.com', password: 'typed-before-hydration' }]));
+    act(() => root.unmount());
+    container.remove();
   });
 });

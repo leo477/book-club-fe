@@ -3,12 +3,13 @@ import { screen, waitFor } from '@testing-library/react';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { API, messages, renderWithProviders, server, setupApiServer, userJson } from '@/test/harness';
+import { StranglerProvider } from '@/strangler/context';
 import { sessionKey } from '@/features/clubs/use-session';
 import { OAuthCallback } from './oauth-callback';
 
-const nav = vi.hoisted(() => ({ hard: vi.fn(), toast: vi.fn() }));
-vi.mock('@/lib/navigate', () => ({ hardNavigate: nav.hard, replaceNavigate: vi.fn() }));
-vi.mock('@/lib/toast', () => ({ showToast: nav.toast }));
+const nav = vi.hoisted(() => ({ hard: vi.fn(), replaceHard: vi.fn(), router: vi.fn() }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: nav.router }) }));
+vi.mock('@/lib/navigate', () => ({ hardNavigate: nav.hard, replaceNavigate: nav.replaceHard }));
 
 setupApiServer();
 
@@ -16,9 +17,12 @@ const t = (key: string) => (messages.uk[key] ?? key).replace(/''/g, "'");
 const TOKENS = { accessToken: 'jwt-access-secret', refreshToken: 'jwt-refresh-secret' };
 
 function mockApi({ exchange, me }: { exchange?: () => Response; me?: () => Response } = {}) {
-  const calls = { exchange: [] as unknown[], me: 0, refresh: 0 };
+  const calls = { exchange: [] as unknown[], me: 0, refresh: 0, probe: 0 };
   server.use(
-    http.get(`${API}/auth/session-status`, () => HttpResponse.json({ hasSession: true })),
+    http.get(`${API}/auth/session-status`, () => {
+      calls.probe += 1;
+      return HttpResponse.json({ hasSession: true });
+    }),
     http.post(`${API}/auth/oauth/exchange`, async ({ request }) => {
       calls.exchange.push(await request.json());
       return exchange ? exchange() : HttpResponse.json(TOKENS);
@@ -39,7 +43,8 @@ const visit = (search: string) => window.history.replaceState({}, '', `/auth/cal
 
 beforeEach(() => {
   nav.hard.mockReset();
-  nav.toast.mockReset();
+  nav.replaceHard.mockReset();
+  nav.router.mockReset();
   localStorage.clear();
   sessionStorage.clear();
   vi.restoreAllMocks();
@@ -55,8 +60,9 @@ describe('OAuthCallback', () => {
     await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/events'));
     expect(calls.exchange).toEqual([{ code: 'one-time-code' }]);
     expect(calls.me).toBe(1);
+    expect(calls.probe).toBe(0);
     expect(queryClient.getQueryData(sessionKey)).toMatchObject({ id: 'u1' });
-    expect(nav.toast).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('bc_flash')).toBeNull();
   });
 
   it('strips the code from the URL and history before the exchange completes', async () => {
@@ -88,23 +94,23 @@ describe('OAuthCallback', () => {
     expect(calls.exchange).toEqual([{ code: 'single-use' }]);
     expect(nav.hard).toHaveBeenCalledTimes(1);
     expect(nav.hard).toHaveBeenCalledWith('/events');
-    expect(nav.toast).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('bc_flash')).toBeNull();
   });
 
   it('treats a missing code as a failed attempt: toast and /login without any request', async () => {
     visit('');
     const calls = mockApi();
     renderWithProviders(<OAuthCallback />);
-    await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/login'));
-    expect(nav.toast).toHaveBeenCalledWith('error', t('AUTH.oauth_failed'));
-    expect(calls).toEqual({ exchange: [], me: 0, refresh: 0 });
+    await waitFor(() => expect(nav.replaceHard).toHaveBeenCalledWith('/login'));
+    expect(sessionStorage.getItem('bc_flash')).toBe('oauth_failed');
+    expect(calls).toEqual({ exchange: [], me: 0, refresh: 0, probe: 0 });
   });
 
   it('treats an empty code like a missing one', async () => {
     visit('?code=');
     const calls = mockApi();
     renderWithProviders(<OAuthCallback />);
-    await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/login'));
+    await waitFor(() => expect(nav.replaceHard).toHaveBeenCalledWith('/login'));
     expect(calls.exchange).toEqual([]);
   });
 
@@ -116,9 +122,10 @@ describe('OAuthCallback', () => {
     visit('?code=bad');
     const calls = mockApi({ exchange });
     const { queryClient } = renderWithProviders(<OAuthCallback />);
-    await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/login'));
-    expect(nav.toast).toHaveBeenCalledWith('error', t('AUTH.oauth_failed'));
-    expect(nav.hard).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(nav.replaceHard).toHaveBeenCalledWith('/login'));
+    expect(sessionStorage.getItem('bc_flash')).toBe('oauth_failed');
+    expect(nav.replaceHard).toHaveBeenCalledTimes(1);
+    expect(nav.hard).not.toHaveBeenCalled();
     expect(calls.me).toBe(0);
     expect(queryClient.getQueryData(sessionKey)).toBeUndefined();
     expect(window.location.search).toBe('');
@@ -128,10 +135,24 @@ describe('OAuthCallback', () => {
     visit('?code=ok-code');
     const calls = mockApi({ me: () => HttpResponse.json({ detail: 'nope' }, { status: 401 }) });
     const { queryClient } = renderWithProviders(<OAuthCallback />);
-    await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/login'));
-    expect(nav.toast).toHaveBeenCalledWith('error', t('AUTH.oauth_failed'));
+    await waitFor(() => expect(nav.replaceHard).toHaveBeenCalledWith('/login'));
+    expect(sessionStorage.getItem('bc_flash')).toBe('oauth_failed');
     expect(calls.refresh).toBe(0);
     expect(queryClient.getQueryData(sessionKey)).toBeUndefined();
+  });
+
+  it('stays in the router (no reload, so the message survives in memory) when /login is Next-owned', async () => {
+    visit('?code=bad');
+    mockApi({ exchange: () => new HttpResponse(null, { status: 400 }) });
+    renderWithProviders(
+      <StranglerProvider value={['/login']}>
+        <OAuthCallback />
+      </StranglerProvider>,
+    );
+    await waitFor(() => expect(nav.router).toHaveBeenCalledWith('/login'));
+    expect(nav.replaceHard).not.toHaveBeenCalled();
+    expect(nav.hard).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('bc_flash')).toBe('oauth_failed');
   });
 
   it('never persists the code or a token and never follows a redirect parameter', async () => {

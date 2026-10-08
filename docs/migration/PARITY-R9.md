@@ -66,3 +66,18 @@ No non-test source in `apps/web` or `src/` was modified.
 
 - `e2e/parity/r9/fixtures.ts`: cookie-session mock (`installAuthMock`), `/events` stub, Google start-URL capture, token policy per target.
 - `e2e/parity/r9-auth.spec.ts` (64 tests per target): login uk/en x8 (render and counts, validation, success payload, in-flight and double click, wrong credentials and retry, 500, Google URL, signed-in visitor), register uk/en x8 (render, validation, strength, role toggle, success payload and welcome, in-flight, 409, Google URL), callback (code success, no code, exchange failure uk/en, `/auth/me` failure), P4 storage (3), axe x8, screenshots x12, P2 journeys x4.
+
+
+## Round 2 (SCRUM-41 fixes after the parity and security reports)
+
+| Item | Status | What changed |
+| --- | --- | --- |
+| D-1 OAuth failure message lost | FIXED | `/auth/callback` no longer toasts. On failure it sets the one-shot flash key `bc_flash=oauth_failed` (`lib/flash.ts`, fixed enum only) and replaces to `/login` through `useReplace` (router when `/login` is Next-owned and enabled, else a hard replace). `/login` reads and deletes the key and raises the `AUTH.oauth_failed` toast. The two `test.fail` markers in `r9-auth.spec.ts` are removed; both tests now pass on Next. Limit: while `/login` is Angular the flash has no reader (the three routes flip together, so only transient). |
+| F-7 register 202 | FIXED | `registerResponse` (session or `EMAIL_CONFIRMATION_REQUIRED`) in contracts; register shows a localized "check your email" card, no session, no navigation. Angular fails on this response. |
+| F-7 `/login?oauth=failed` | FIXED | Login shows the same `AUTH.oauth_failed` toast and strips the parameter. Only the literal value `failed` is recognised; nothing in the URL selects a navigation target. |
+| D-2 contrast / dark card | FIXED | Auth card is a `light-island` (tokens re-applied, `dark:` variants disabled inside, colour set from the island's `--foreground`), cream in both themes like Angular. Links `primary-700`. Axe on Next: 8/8 runs with no violations incl. `color-contrast` (the spec now blocks on contrast by default; `PARITY_STRICT_CONTRAST=0` only reports). `/auth/callback` is not covered by the axe tests (spinner and one line of text). |
+| D-4 text lost before hydration | FIXED | No `defaultValues` for the text fields, so react-hook-form adopts the DOM value when the ref attaches. Unit test hydrates server-rendered HTML after text was typed and posts it. `e2e/ui/public-pages.spec.ts` was not re-run (needs the temporary config from round 1). |
+| F-3 OAuth base URL | FIXED | `checkOAuthBaseUrl` runs in the production build phase (`next.config.ts`): missing value, relative or non-https value, trailing slash or query fail the build. Dev, test and `next start` are unaffected. `web.yml` build job sets it; **the Vercel project (production and preview) must define `NEXT_PUBLIC_OAUTH_BASE_URL=https://book-club-be.onrender.com/api/v1` or `vercel build` fails by design.** |
+| D-3 extra session-status probe | FIXED | api-client skips `transport.hasSession()` for `skipAuthRedirect` requests (their handling never depends on it); additive, mobile unaffected. Callback now makes 0 `/auth/session-status` calls (was 1). |
+
+Round 2 run: `PARITY_NEXT_URL=http://localhost:3100 npx playwright test --config=playwright.parity.config.ts e2e/parity/r9-auth.spec.ts --project=next` (dev server, `NEXT_PUBLIC_OAUTH_BASE_URL=https://backend.example.test/api/v1`): 63 passed, 1 skipped on the last full run. One earlier full run had 1 failure (`?code=good ...` right after a CSS change; passed when rerun alone and in the next full run). The Angular project was not re-run (frozen app, no change).

@@ -488,12 +488,7 @@ test.describe('/auth/callback', () => {
           type: 'toast',
           description: `oauth_failed toast visible on /login after redirect: ${visible}`,
         });
-      // D-1 (medium): Next raises the toast and then hard-navigates, which reloads the page and drops it; Angular's SPA navigation keeps it.
-      // Marked as an expected failure on next so the suite flips (and demands removal of this line) once the message survives the navigation.
-      test.fail(
-        proj() === 'next',
-        'D-1: oauth_failed toast is lost by the hard navigation to /login',
-      );
+      // D-1 fixed: /login raises the message itself (router replace keeps the in-memory toast; a reload uses a one-shot flash key)
       expect(visible).toBe(true);
     });
   }
@@ -631,10 +626,10 @@ for (const lang of ['uk', 'en'] as const) {
             (v.impact === 'serious' || v.impact === 'critical'),
         );
         expect(structural.map((v) => v.id)).toEqual([]);
-        // colour contrast is reported (axe-*.txt) and only blocks with PARITY_STRICT_CONTRAST=1: known defect, see PARITY-R9.md
+        // D-2 fixed: the auth card is a light island, so Next must be contrast-clean (PARITY_STRICT_CONTRAST=0 only reports)
         if (
           ti.project.name === 'next' &&
-          process.env['PARITY_STRICT_CONTRAST'] === '1'
+          process.env['PARITY_STRICT_CONTRAST'] !== '0'
         )
           expect(
             results.violations

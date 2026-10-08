@@ -124,6 +124,23 @@ describe('RegisterView', () => {
     expect(nav.hard).toHaveBeenCalledTimes(1);
   });
 
+  it('treats the 202 e-mail confirmation as success with the confirm-your-email card, no session and no navigation', async () => {
+    mockApi(() => HttpResponse.json({ message: 'Check your email to confirm registration', code: 'EMAIL_CONFIRMATION_REQUIRED' }, { status: 202 }));
+    const { queryClient } = renderWithProviders(<RegisterView />);
+    await fillValid();
+    await userEvent.click(submit());
+
+    const card = await screen.findByTestId('register-feedback');
+    expect(card).toHaveTextContent(t('AUTH.check_email'));
+    expect(card).toHaveTextContent(t('AUTH.confirmation_sent'));
+    expect(card).toHaveTextContent('ada@example.com');
+    expect(card).not.toHaveTextContent(t('AUTH.account_created'));
+    expect(screen.getByRole('link', { name: t('AUTH.back_to_login') })).toHaveAttribute('href', '/login');
+    expect(queryClient.getQueryData(sessionKey) ?? null).toBeNull();
+    await new Promise((resolve) => setTimeout(resolve, 1800));
+    expect(nav.hard).not.toHaveBeenCalled();
+  });
+
   it('never writes a token to storage, cookies or the query cache', async () => {
     const setItem = vi.spyOn(Storage.prototype, 'setItem');
     mockApi();

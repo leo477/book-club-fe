@@ -49,16 +49,21 @@ export function RegisterView() {
     formState: { errors, touchedFields },
   } = useForm<RegisterForm>({
     resolver: zodResolver(registerForm),
-    defaultValues: { displayName: '', email: '', password: '', confirmPassword: '', role: 'user' },
+    // only the role has a default: RHF adopts text already in the DOM for the others (typed before hydration)
+    defaultValues: { role: 'user' },
     mode: 'onTouched',
   });
   const [role, password] = useWatch({ control, name: ['role', 'password'] });
-  const strength = passwordStrength(password);
+  const strength = passwordStrength(password ?? '');
 
   const signUp = useMutation({
-    mutationFn: async ({ displayName, email, password, role: chosen }: RegisterForm) =>
-      (await api.auth.registerSession({ displayName, email, password, role: chosen })).user,
-    onSuccess: (profile) => {
+    mutationFn: async ({ displayName, email, password, role: chosen }: RegisterForm) => {
+      const result = await api.auth.registerSession({ displayName, email, password, role: chosen });
+      // 202: the account exists but the backend issued no session until the e-mail is confirmed
+      return { user: 'user' in result ? result.user : null, email, displayName };
+    },
+    onSuccess: ({ user: profile }) => {
+      if (!profile) return;
       queryClient.setQueryData(sessionKey, profile);
       setTimeout(() => hardNavigate('/events'), WELCOME_MS);
     },
@@ -66,15 +71,24 @@ export function RegisterView() {
   const failure = signUp.error;
 
   if (signUp.isSuccess) {
+    const { user: profile, email, displayName } = signUp.data;
     return (
       <AuthFrame subtitle={t('AUTH.create_account_subtitle')}>
-        <div data-testid="register-feedback" className="glass-card-strong p-8 text-center">
-          <div className="text-5xl mb-4">🎉</div>
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">{t('AUTH.account_created')}</h2>
-          <p className="text-gray-600 dark:text-gray-400 text-sm">
-            {t('AUTH.welcome_message')} <strong>{signUp.data.displayName}</strong>.
+        <div data-testid="register-feedback" className="glass-card-strong light-island p-8 text-center">
+          <div className="text-5xl mb-4">{profile ? '🎉' : '✉️'}</div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">{profile ? t('AUTH.account_created') : t('AUTH.check_email')}</h2>
+          <p className="text-gray-600 text-sm">
+            {profile ? (
+              <>
+                {t('AUTH.welcome_message')} <strong>{displayName}</strong>.
+              </>
+            ) : (
+              <>
+                {t('AUTH.confirmation_sent')} <strong>{email}</strong>. {t('AUTH.activate_account')}
+              </>
+            )}
           </p>
-          <AppLink href="/login" className="mt-6 inline-block text-sm text-primary-600 dark:text-primary-400 hover:underline font-medium">
+          <AppLink href="/login" className="mt-6 inline-block text-sm text-primary-700 hover:underline font-medium">
             {t('AUTH.back_to_login')}
           </AppLink>
         </div>
@@ -84,8 +98,8 @@ export function RegisterView() {
 
   return (
     <AuthFrame subtitle={t('AUTH.create_account_subtitle')}>
-      <div className="glass-card-strong p-8">
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">{t('AUTH.create_account_h2')}</h2>
+      <div className="glass-card-strong light-island p-8">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">{t('AUTH.create_account_h2')}</h2>
         <form onSubmit={handleSubmit((values) => signUp.mutate(values))} className="space-y-4" noValidate>
           <fieldset className="border-0 p-0 m-0 flex flex-col gap-4">
             <legend className="sr-only">{t('AUTH.create_account_h2')}</legend>
@@ -126,7 +140,7 @@ export function RegisterView() {
                   <div className={cn('h-1 flex-1 rounded-full transition-colors', strength === 'weak' ? 'bg-gray-200' : 'bg-yellow-400')} />
                   <div className={cn('h-1 flex-1 rounded-full transition-colors', strength === 'strong' ? 'bg-green-500' : 'bg-gray-200')} />
                 </div>
-                <span className={cn('text-xs font-medium', strength === 'strong' ? 'text-green-600' : strength === 'medium' ? 'text-yellow-600' : 'text-red-500')}>
+                <span className={cn('text-xs font-medium', strength === 'strong' ? 'text-green-700' : strength === 'medium' ? 'text-yellow-800' : 'text-red-700')}>
                   {t(`AUTH.password_${strength}`)}
                 </span>
               </div>
@@ -141,7 +155,7 @@ export function RegisterView() {
               {...register('confirmPassword')}
             />
             <fieldset className="border-0 p-0 m-0">
-              <legend className="text-sm font-medium text-gray-700 dark:text-gray-300 block mb-1.5">{t('AUTH.want_to')}</legend>
+              <legend className="text-sm font-medium text-gray-700 block mb-1.5">{t('AUTH.want_to')}</legend>
               <div className="grid grid-cols-2 gap-3">
                 {ROLES.map((option) => (
                   <button
@@ -155,19 +169,19 @@ export function RegisterView() {
                     )}
                   >
                     <div className="text-2xl mb-1">{option.emoji}</div>
-                    <div className="font-medium text-sm text-gray-900 dark:text-white">{t(`AUTH.${option.label}`)}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{t(`AUTH.${option.desc}`)}</div>
+                    <div className="font-medium text-sm text-gray-900">{t(`AUTH.${option.label}`)}</div>
+                    <div className="text-xs text-gray-500">{t(`AUTH.${option.desc}`)}</div>
                   </button>
                 ))}
               </div>
               {errors.role && (
-                <p role="alert" className="text-xs text-red-500 mt-0.5">
+                <p role="alert" className="text-xs text-red-700 mt-0.5">
                   {t('AUTH.select_role_error')}
                 </p>
               )}
             </fieldset>
             {failure && (
-              <div data-testid="register-feedback" className="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
+              <div data-testid="register-feedback" className="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700" role="alert">
                 <span className="mt-0.5 shrink-0">⚠️</span>
                 <span>{authErrorMessage(failure, t)}</span>
               </div>
@@ -186,9 +200,9 @@ export function RegisterView() {
         </form>
         <AuthDivider />
         <GoogleButton />
-        <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
+        <p className="mt-6 text-center text-sm text-gray-600">
           {t('AUTH.have_account')}{' '}
-          <AppLink href="/login" className="text-primary-600 dark:text-primary-400 hover:underline font-medium">
+          <AppLink href="/login" className="text-primary-700 hover:underline font-medium">
             {t('AUTH.sign_in_h2')}
           </AppLink>
         </p>
