@@ -1,9 +1,10 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { API, memberJson, renderWithProviders, server, setupApiServer } from '@/test/harness';
 import { Bans } from './bans';
+import { bansKey } from './use-club-manage';
 import { banJson, gate, ID, mockManageReads, t } from './test-support';
 
 const toast = vi.hoisted(() => vi.fn());
@@ -20,7 +21,18 @@ function backend(bans: ReturnType<typeof banJson>[]) {
   };
 }
 
+const releases: (() => void)[] = [];
+const openGate = () => {
+  const g = gate();
+  releases.push(g.release);
+  return g;
+};
+
 describe('Bans', () => {
+  afterEach(() => {
+    releases.splice(0).forEach((r) => r());
+  });
+
   it('shows the empty state with a zero count', async () => {
     mockManageReads();
     renderWithProviders(<Bans clubId={ID} />);
@@ -102,9 +114,50 @@ describe('Bans', () => {
     await screen.findByText(/b1/);
     await user.click(screen.getAllByRole('button', { name: t('CLUB_MANAGE.unban') })[0]!);
     await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Not allowed'));
-    const rows = screen.getAllByRole('listitem').map((li) => li.textContent);
-    expect(rows[0]).toContain('b1');
-    expect(rows[1]).toContain('b2');
+    const rows = await screen.findAllByRole('listitem');
+    expect(rows[0]).toHaveTextContent(/b1/);
+    expect(rows[1]).toHaveTextContent(/b2/);
+  });
+
+  it('restores the ban at the position of the list as it is when the unban starts, not as it was rendered', async () => {
+    mockManageReads();
+    backend([banJson(), banJson({ userId: 'b2' }), banJson({ userId: 'b3' })]);
+    server.use(http.delete(`${API}/clubs/${ID}/bans/b2`, () => HttpResponse.json({ detail: 'Not allowed' }, { status: 403 })));
+    const { queryClient } = renderWithProviders(<Bans clubId={ID} />);
+    await screen.findByText(/b3/);
+    const { open } = openGate();
+    server.use(http.get(`${API}/clubs/${ID}/bans`, async () => {
+      await open;
+      return HttpResponse.json([]);
+    }));
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole('button', { name: t('CLUB_MANAGE.unban') })[1]!);
+      queryClient.setQueryData(bansKey(ID), (list: ReturnType<typeof banJson>[]) => list.filter((b) => b.userId !== 'b1'));
+    });
+    await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Not allowed'));
+    const rows = await screen.findAllByRole('listitem');
+    expect(rows).toHaveLength(2);
+    expect(rows[0]).toHaveTextContent(/b2/);
+    expect(rows[1]).toHaveTextContent(/b3/);
+  });
+
+  it('appends the ban when it was already missing from the list at the moment the unban started', async () => {
+    mockManageReads();
+    backend([banJson(), banJson({ userId: 'b2' }), banJson({ userId: 'b3' })]);
+    server.use(http.delete(`${API}/clubs/${ID}/bans/b2`, () => HttpResponse.json({ detail: 'Not allowed' }, { status: 403 })));
+    const { queryClient } = renderWithProviders(<Bans clubId={ID} />);
+    await screen.findByText(/b3/);
+    const { open } = openGate();
+    server.use(http.get(`${API}/clubs/${ID}/bans`, async () => {
+      await open;
+      return HttpResponse.json([]);
+    }));
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole('button', { name: t('CLUB_MANAGE.unban') })[1]!);
+      queryClient.setQueryData(bansKey(ID), (list: ReturnType<typeof banJson>[]) => list.filter((b) => b.userId !== 'b2'));
+    });
+    await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Not allowed'));
+    expect(queryClient.getQueryData<ReturnType<typeof banJson>[]>(bansKey(ID))?.map((b) => b.userId)).toEqual(['b1', 'b3', 'b2']);
   });
 
   it('sends one request for two clicks while the first is in flight', async () => {
