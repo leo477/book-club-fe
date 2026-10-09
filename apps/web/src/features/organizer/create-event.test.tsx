@@ -240,6 +240,57 @@ describe('CreateEvent', () => {
   });
 });
 
+describe('CreateEvent: double submit and error wiring', () => {
+  it('sends one request when Enter is pressed in the address field while the save is pending', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    let posts = 0;
+    server.use(
+      http.post(`${API}/clubs/${CLUB}/events`, async () => {
+        posts += 1;
+        await gate;
+        return created();
+      }),
+    );
+    const user = userEvent.setup();
+    setup();
+    await user.type(title(), 'Dune night');
+    await user.type(date(), '2099-05-01T18:30');
+    await pickAddress(user);
+    await user.click(submit());
+    await waitFor(() => expect(submit()).toBeDisabled());
+    await user.click(address());
+    await user.keyboard('{Enter}{Enter}');
+    release();
+    await waitFor(() => expect(nav.push).toHaveBeenCalledWith(`/events/${EVENT}`));
+    expect(posts).toBe(1);
+  });
+
+  it('links the location error to the address field and names the cover URL input', async () => {
+    const user = userEvent.setup();
+    setup();
+    await user.click(submit());
+    const message = await screen.findByText(t('CREATE_EVENT.location_required'));
+    expect(message.id).not.toBe('');
+    expect(address().getAttribute('aria-describedby')).toBe(message.id);
+    await user.click(screen.getByRole('button', { name: t('COVER_UPLOAD.enter_url') }));
+    expect(screen.getByLabelText(t('CREATE_EVENT.cover_label'))).toBe(screen.getByTestId('cover-url-input'));
+  });
+
+  it('links the after-venue address error to its field', async () => {
+    const user = userEvent.setup();
+    setup();
+    await user.type(title(), 'Dune night');
+    await user.type(date(), '2099-05-01T18:30');
+    await pickAddress(user);
+    await user.click(screen.getByRole('button', { name: t('CREATE_EVENT.after_venue_add') }));
+    await user.type(screen.getByLabelText(new RegExp(t('CREATE_EVENT.after_venue_name_label'))), 'Pub');
+    await user.click(submit());
+    const message = await screen.findByText(t('CLUB_MANAGE.venue_address_required'));
+    expect(screen.getByRole('combobox', { name: t('CREATE_EVENT.after_venue_address_label') }).getAttribute('aria-describedby')).toBe(message.id);
+  });
+});
+
 describe('CreateEvent behind RequireRole', () => {
   const gated = () => (
     <StranglerProvider value={NEXT_ROUTES}>

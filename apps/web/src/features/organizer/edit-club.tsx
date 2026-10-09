@@ -66,6 +66,7 @@ function EditClubFormView({ club }: { club: Club }) {
   const [isPublic, coverUrl] = useWatch({ control, name: ['isPublic', 'coverUrl'] });
 
   const submit = async (values: EditClubForm) => {
+    if (update.isPending) return;
     const venueName = values.venueName.trim();
     const duration = values.meetingDurationMinutes.trim();
     try {
@@ -145,9 +146,15 @@ function EditClubFormView({ club }: { club: Club }) {
 
       <div>
         <p className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">{t('cover_url_label')}</p>
-        <CoverUpload value={coverUrl} onChange={(url) => setValue('coverUrl', url, { shouldValidate: true })} invalid={!!errors.coverUrl} />
+        <CoverUpload
+          value={coverUrl}
+          onChange={(url) => setValue('coverUrl', url, { shouldValidate: true })}
+          invalid={!!errors.coverUrl}
+          label={t('cover_url_label')}
+          urlInputProps={errors.coverUrl ? { 'aria-describedby': 'club-cover-error' } : {}}
+        />
         {errors.coverUrl?.message ? (
-          <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+          <p id="club-cover-error" role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
             {tAll(errors.coverUrl.message)}
           </p>
         ) : null}

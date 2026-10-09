@@ -47,6 +47,7 @@ export function CreateClub() {
   }, [ownsClub, push]);
 
   const submit = async (values: CreateClubForm) => {
+    if (create.isPending) return;
     const eventTitle = values.firstEventTitle.trim();
     const eventCity = values.firstEventCity.trim();
     const withEvent = showFirstEvent && eventTitle !== '' && values.firstEventDate !== '' && eventCity !== '';

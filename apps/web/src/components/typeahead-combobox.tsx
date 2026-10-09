@@ -119,10 +119,12 @@ export function TypeaheadCombobox<T>({
     if (dedupe && lastQuery.current === query) return;
     lastQuery.current = query;
     if (query.length < minLength) {
+      controller.current?.abort();
       if (shortQuery === 'clear') {
-        controller.current?.abort();
         latest.current.onFailedChange?.(false);
         show([]);
+      } else {
+        setLoading(false);
       }
       return;
     }
@@ -144,6 +146,8 @@ export function TypeaheadCombobox<T>({
       show(results);
     } catch {
       if (current.signal.aborted) return;
+      // the same text must be searchable again after a failure
+      lastQuery.current = null;
       latest.current.onFailedChange?.(true);
       show([]);
     }
@@ -169,7 +173,10 @@ export function TypeaheadCombobox<T>({
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key !== 'Enter' || expanded || event.nativeEvent.isComposing) return;
     event.preventDefault();
-    input.current?.form?.requestSubmit();
+    const form = input.current?.form;
+    // requestSubmit bypasses a disabled submit button, so honour it here
+    const blocked = form?.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled ?? false;
+    if (!blocked) form?.requestSubmit();
   };
 
   return (

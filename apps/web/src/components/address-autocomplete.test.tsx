@@ -132,4 +132,26 @@ describe('AddressAutocomplete', () => {
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     expect(input()).toHaveValue('Ки');
   });
+
+  it('drops a place-details answer that arrives after the user typed again', async () => {
+    mockAutocomplete([partial]);
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    server.use(
+      http.get(`${API}/geocode/place-details`, async () => {
+        await gate;
+        return HttpResponse.json({ ...partial, city: 'Київ', lat: 50.4, lng: 30.5 });
+      }),
+    );
+    const onSelected = vi.fn();
+    const user = userEvent.setup();
+    renderWithProviders(<Harness onSelected={onSelected} />);
+    await user.type(input(), 'Caf');
+    await user.click(await option('Cafe Pushkin'));
+    await user.type(input(), 'e');
+    release();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(onSelected).not.toHaveBeenCalled();
+    expect(input()).toHaveValue('Cafe Pushkine');
+  });
 });

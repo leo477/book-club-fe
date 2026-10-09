@@ -26,27 +26,42 @@ export function AddressAutocomplete({ value, onChange, onSelected, label, placeh
   const lang = useLocale();
   const [resolving, setResolving] = useState(false);
   const mounted = useRef(true);
+  const resolution = useRef<AbortController | null>(null);
 
   useEffect(() => {
     mounted.current = true;
     return () => {
       mounted.current = false;
+      resolution.current?.abort();
     };
   }, []);
+
+  // typing while a place is being resolved supersedes it: its late answer must not overwrite what the user typed
+  const type = (text: string) => {
+    resolution.current?.abort();
+    resolution.current = null;
+    setResolving(false);
+    onChange(text);
+  };
 
   const select = async (suggestion: GeocodeSuggestion) => {
     onChange(suggestion.label);
     if (suggestion.place_id && suggestion.lat == null) {
+      resolution.current?.abort();
+      const current = new AbortController();
+      resolution.current = current;
       setResolving(true);
+      let result = suggestion;
       try {
-        const resolved = await api.geocode.placeDetails(suggestion.place_id, geocodeSessionToken(), lang);
+        result = await api.geocode.placeDetails(suggestion.place_id, geocodeSessionToken(), lang, { signal: current.signal });
         resetGeocodeSession();
-        if (mounted.current) onSelected(resolved);
       } catch {
-        if (mounted.current) onSelected(suggestion);
-      } finally {
-        if (mounted.current) setResolving(false);
+        // falls back to the suggestion as picked
       }
+      if (current.signal.aborted || !mounted.current) return;
+      resolution.current = null;
+      setResolving(false);
+      onSelected(result);
       return;
     }
     resetGeocodeSession();
@@ -56,7 +71,7 @@ export function AddressAutocomplete({ value, onChange, onSelected, label, placeh
   return (
     <TypeaheadCombobox<GeocodeSuggestion>
       value={value}
-      onValueChange={onChange}
+      onValueChange={type}
       onSelect={(suggestion) => void select(suggestion)}
       search={(query, signal) => api.geocode.autocomplete(query, geocodeSessionToken(), lang, 5, { signal })}
       getKey={(s) => s.place_id ?? s.label}

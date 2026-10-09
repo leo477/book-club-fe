@@ -24,9 +24,10 @@ interface HarnessProps {
   onSelect?: (item: Item) => void;
   onFailedChange?: (failed: boolean) => void;
   onSubmit?: () => void;
+  submitDisabled?: boolean;
 }
 
-function Harness({ search, minLength = 2, shortQuery = 'clear', dedupe = false, ttlMs, onSelect, onFailedChange, onSubmit }: HarnessProps) {
+function Harness({ search, minLength = 2, shortQuery = 'clear', dedupe = false, ttlMs, onSelect, onFailedChange, onSubmit, submitDisabled }: HarnessProps) {
   const [value, setValue] = useState('');
   return (
     <form
@@ -54,6 +55,11 @@ function Harness({ search, minLength = 2, shortQuery = 'clear', dedupe = false, 
         {...(onFailedChange ? { onFailedChange } : {})}
         errorMessage={null}
       />
+      {submitDisabled === undefined ? null : (
+        <button type="submit" disabled={submitDisabled}>
+          go
+        </button>
+      )}
     </form>
   );
 }
@@ -281,5 +287,45 @@ describe('TypeaheadCombobox', () => {
     unmount();
     await settle(1000);
     expect(search).not.toHaveBeenCalled();
+  });
+
+  it('searches the same text again after a failure, even with dedupe on', async () => {
+    const search = vi.fn().mockRejectedValueOnce(new Error('boom')).mockResolvedValue(items);
+    const user = setup();
+    render(<Harness search={search} dedupe />);
+    const input = screen.getByRole('combobox');
+    await user.type(input, 'Al');
+    await settle(300);
+    expect(search).toHaveBeenCalledTimes(1);
+    await user.type(input, 'x{Backspace}');
+    await settle(300);
+    expect(search).toHaveBeenCalledTimes(2);
+    expect(screen.getAllByRole('option')).toHaveLength(3);
+  });
+
+  it('aborts the in-flight search when the query drops below the minimum (ignore mode)', async () => {
+    const signals: AbortSignal[] = [];
+    const search = vi.fn((_q: string, signal: AbortSignal) => {
+      signals.push(signal);
+      return new Promise<Item[]>(() => undefined);
+    });
+    const user = setup();
+    render(<Harness search={search} minLength={3} shortQuery="ignore" />);
+    const input = screen.getByRole('combobox');
+    await user.type(input, 'Alp');
+    await settle(300);
+    expect(signals[0]?.aborted).toBe(false);
+    await user.type(input, '{Backspace}');
+    await settle(300);
+    expect(signals[0]?.aborted).toBe(true);
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('does not submit through Enter while the submit button is disabled', async () => {
+    const onSubmit = vi.fn();
+    const user = setup();
+    render(<Harness onSubmit={onSubmit} submitDisabled />);
+    await user.type(screen.getByRole('combobox'), 'A{Enter}');
+    expect(onSubmit).not.toHaveBeenCalled();
   });
 });

@@ -108,7 +108,9 @@ export function EventFormView({ defaultValues, heading, backHref, backLabel, sub
           </div>
         ) : null}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
+        <form onSubmit={handleSubmit((values) => {
+          if (!pending) onSubmit(values);
+        })} className="space-y-5" noValidate>
           <FormField
             id="title"
             type="text"
@@ -162,10 +164,10 @@ export function EventFormView({ defaultValues, heading, backHref, backLabel, sub
               label={t('location_label')}
               placeholder={t('address_placeholder')}
               invalid={!!errors.city}
-              inputProps={{ 'data-testid': 'address-input' }}
+              inputProps={{ 'data-testid': 'address-input', ...(errors.city ? { 'aria-describedby': 'event-location-error' } : {}) }}
             />
             {errors.city?.message ? (
-              <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+              <p id="event-location-error" role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
                 {tAll(errors.city.message)}
               </p>
             ) : null}
@@ -189,7 +191,7 @@ export function EventFormView({ defaultValues, heading, backHref, backLabel, sub
 
           <div>
             <p className={`${LABEL} mb-2`}>{t('cover_label')}</p>
-            <CoverUpload value={coverUrl} onChange={(url) => setValue('coverUrl', url)} />
+            <CoverUpload value={coverUrl} onChange={(url) => setValue('coverUrl', url)} label={t('cover_label')} />
           </div>
 
           <div>
@@ -219,9 +221,10 @@ export function EventFormView({ defaultValues, heading, backHref, backLabel, sub
                     label={t('after_venue_address_label')}
                     placeholder={t('after_venue_address_placeholder')}
                     invalid={!!errors.afterVenueAddress}
+                    inputProps={errors.afterVenueAddress ? { 'aria-describedby': 'event-after-address-error' } : {}}
                   />
                   {errors.afterVenueAddress?.message ? (
-                    <p role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+                    <p id="event-after-address-error" role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
                       {tAll(errors.afterVenueAddress.message)}
                     </p>
                   ) : null}

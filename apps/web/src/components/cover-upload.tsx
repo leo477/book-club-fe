@@ -15,12 +15,14 @@ interface Props {
   value: string;
   onChange: (url: string) => void;
   invalid?: boolean;
+  /** Accessible name of the URL input, which has no visible label of its own. */
+  label: string;
   urlInputProps?: { id?: string; 'aria-describedby'?: string };
 }
 
 const isWebUrl = (src: string) => /^https?:\/\//i.test(src);
 
-export function CoverUpload({ value, onChange, invalid = false, urlInputProps }: Props) {
+export function CoverUpload({ value, onChange, invalid = false, label, urlInputProps }: Props) {
   const t = useTranslations('COVER_UPLOAD');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -31,6 +33,8 @@ export function CoverUpload({ value, onChange, invalid = false, urlInputProps }:
   const fileInput = useRef<HTMLInputElement>(null);
   const mounted = useRef(true);
   const previewRef = useRef<string | null>(null);
+  // typing a URL or removing the cover supersedes an upload still in flight; its late answer is ignored
+  const uploadSeq = useRef(0);
 
   useEffect(() => {
     mounted.current = true;
@@ -46,8 +50,14 @@ export function CoverUpload({ value, onChange, invalid = false, urlInputProps }:
     setPreview(next);
   };
 
-  const clear = () => {
+  const supersede = () => {
+    uploadSeq.current += 1;
+    setUploading(false);
     setLocalPreview(null);
+  };
+
+  const clear = () => {
+    supersede();
     onChange('');
   };
 
@@ -57,21 +67,22 @@ export function CoverUpload({ value, onChange, invalid = false, urlInputProps }:
       setError(t('upload_failed'));
       return;
     }
+    const seq = ++uploadSeq.current;
     setLocalPreview(URL.createObjectURL(file));
     setUploading(true);
     const form = new FormData();
     form.append('file', file);
     try {
       const { url } = await api.upload.cover(form);
-      if (!mounted.current) return;
+      if (!mounted.current || seq !== uploadSeq.current) return;
       setUploadedUrl(url);
+      setUploading(false);
       onChange(url);
     } catch {
-      if (!mounted.current) return;
+      if (!mounted.current || seq !== uploadSeq.current) return;
       setError(t('upload_failed'));
       setLocalPreview(null);
-    } finally {
-      if (mounted.current) setUploading(false);
+      setUploading(false);
     }
   };
 
@@ -114,10 +125,11 @@ export function CoverUpload({ value, onChange, invalid = false, urlInputProps }:
           type="url"
           value={value}
           onChange={(e) => {
-            setLocalPreview(null);
+            supersede();
             onChange(e.target.value);
           }}
           placeholder="https://example.com/cover.jpg"
+          aria-label={label}
           aria-invalid={invalid || undefined}
           data-testid="cover-url-input"
           {...urlInputProps}

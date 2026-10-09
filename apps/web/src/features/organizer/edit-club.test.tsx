@@ -208,6 +208,45 @@ describe('EditClub', () => {
   });
 });
 
+describe('EditClub: cover URL wiring', () => {
+  it('names the cover URL input and links its error', async () => {
+    const user = userEvent.setup();
+    setup();
+    await loaded();
+    await user.click(screen.getByRole('button', { name: t('COVER_UPLOAD.enter_url') }));
+    const url = screen.getByLabelText(t('EDIT_CLUB.cover_url_label'));
+    expect(url).toBe(screen.getByTestId('cover-url-input'));
+    await user.clear(url);
+    await user.type(url, 'nope');
+    await user.click(save());
+    const message = await screen.findByText(t('CREATE_CLUB.cover_url_invalid'));
+    expect(url.getAttribute('aria-describedby')).toBe(message.id);
+    expect(url).toHaveAttribute('aria-invalid', 'true');
+  });
+
+  it('sends one request when saved twice quickly', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    let patches = 0;
+    server.use(
+      http.patch(`${API}/clubs/${ID}`, async () => {
+        patches += 1;
+        await gate;
+        return HttpResponse.json(existing());
+      }),
+    );
+    const user = userEvent.setup();
+    setup();
+    const name = await loaded();
+    await user.click(save());
+    await waitFor(() => expect(save()).toBeDisabled());
+    await user.type(name, '{Enter}');
+    release();
+    await waitFor(() => expect(nav.push).toHaveBeenCalledWith(`/clubs/${ID}`));
+    expect(patches).toBe(1);
+  });
+});
+
 describe('EditClub behind RequireRole', () => {
   it('turns a plain reader away before the club is even requested', async () => {
     const requested = vi.fn();

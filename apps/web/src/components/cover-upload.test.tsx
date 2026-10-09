@@ -35,6 +35,7 @@ function Harness({ initial = '', onChange }: { initial?: string; onChange?: (v: 
   return (
     <>
       <CoverUpload
+        label="Обкладинка"
         value={value}
         onChange={(v) => {
           setValue(v);
@@ -184,5 +185,38 @@ describe('CoverUpload', () => {
     await waitFor(() => expect(screen.getByTestId('value')).not.toBeEmptyDOMElement());
     unmount();
     expect(revoked).toContain(objectUrls[0]);
+  });
+
+  it('names the URL input', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<Harness />);
+    await user.click(screen.getByRole('button', { name: t('enter_url') }));
+    expect(screen.getByLabelText('Обкладинка')).toBe(screen.getByTestId('cover-url-input'));
+  });
+
+  it.each(['typing a URL', 'Remove'])('ignores an upload that %s superseded', async (how) => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    mockUpload(async () => {
+      await gate;
+      return Response.json({ url: 'https://x.supabase.co/late.png' });
+    });
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    renderWithProviders(<Harness onChange={onChange} />);
+    await user.upload(fileInput(), file());
+    await screen.findByRole('button', { name: new RegExp(t('uploading')) });
+    if (how === 'Remove') {
+      await user.click(screen.getByRole('button', { name: t('remove') }));
+    } else {
+      await user.click(screen.getByRole('button', { name: t('enter_url') }));
+      await user.type(screen.getByTestId('cover-url-input'), 'https://typed.example/c.png');
+    }
+    onChange.mockClear();
+    await act(async () => release());
+    await new Promise((r) => setTimeout(r, 30));
+    expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByTestId('value')).toHaveTextContent(how === 'Remove' ? '' : 'https://typed.example/c.png');
+    expect(screen.getByRole('button', { name: t('upload_image') })).toBeEnabled();
   });
 });
