@@ -1,7 +1,7 @@
 'use client';
 'use no memo';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { registerForm, type RegisterForm } from '@book-club/contracts';
@@ -74,18 +74,20 @@ export function RegisterView() {
   const failure = signUp.error;
   const welcomed = signUp.isSuccess && signUp.data.user !== null;
 
+  const [continued, setContinued] = useState(false);
+
   // an effect so leaving the welcome card (unmount) cancels the redirect
   useEffect(() => {
-    if (!welcomed) return;
+    if (!welcomed || continued) return;
     const timer = setTimeout(() => hardNavigate('/events'), WELCOME_MS);
     return () => clearTimeout(timer);
-  }, [welcomed]);
+  }, [welcomed, continued]);
 
   if (signUp.isSuccess) {
     const { user: profile, email, displayName } = signUp.data;
     return (
       <AuthFrame subtitle={t('AUTH.create_account_subtitle')}>
-        <div data-testid="register-feedback" className="glass-card-strong light-island p-8 text-center">
+        <div data-testid="register-feedback" role="status" className="glass-card-strong light-island p-8 text-center">
           <div className="text-5xl mb-4">{profile ? '🎉' : '✉️'}</div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">{profile ? t('AUTH.account_created') : t('AUTH.check_email')}</h2>
           <p className="text-gray-600 text-sm">
@@ -99,7 +101,19 @@ export function RegisterView() {
               </>
             )}
           </p>
-          <AppLink href="/login" className="mt-6 inline-block text-sm text-primary-700 hover:underline font-medium">
+          {profile && (
+            <Button
+              type="button"
+              onClick={() => {
+                setContinued(true);
+                hardNavigate('/events');
+              }}
+              className="mt-6 w-full bg-gradient-brand text-white border-0 hover:opacity-90 focus-visible:ring-primary-500"
+            >
+              {t('AUTH.continue')}
+            </Button>
+          )}
+          <AppLink href="/login" className={cn('inline-block text-sm text-primary-700 hover:underline font-medium', profile ? 'mt-3' : 'mt-6')}>
             {t('AUTH.back_to_login')}
           </AppLink>
         </div>

@@ -18,5 +18,8 @@
   },
   "RANDOMIZER": {
     "breadcrumb_aria": "Breadcrumb"
+  },
+  "AUTH": {
+    "continue": "Continue"
   }
 }

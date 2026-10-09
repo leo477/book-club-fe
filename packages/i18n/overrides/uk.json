@@ -19,5 +19,8 @@
   },
   "RANDOMIZER": {
     "breadcrumb_aria": "Навігація"
+  },
+  "AUTH": {
+    "continue": "Продовжити"
   }
 }

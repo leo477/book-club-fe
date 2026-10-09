@@ -169,6 +169,24 @@ describe('RegisterView', () => {
     }
   });
 
+  it('announces the welcome card and continues immediately without navigating again when the timer would fire', async () => {
+    mockApi();
+    renderWithProviders(<RegisterView />);
+    await fillValid();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      fireEvent.click(submit());
+      const card = await screen.findByRole('status');
+      expect(card).toHaveTextContent(t('AUTH.account_created'));
+      fireEvent.click(screen.getByRole('button', { name: t('AUTH.continue') }));
+      expect(nav.hard).toHaveBeenCalledExactlyOnceWith('/events');
+      vi.advanceTimersByTime(WELCOME_MS * 2);
+      expect(nav.hard).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('cancels the welcome redirect when the user leaves before the delay', async () => {
     mockApi();
     const { unmount } = renderWithProviders(<RegisterView />);
@@ -198,6 +216,8 @@ describe('RegisterView', () => {
       expect(card).toHaveTextContent(t('AUTH.confirmation_sent'));
       expect(card).toHaveTextContent('ada@example.com');
       expect(card).not.toHaveTextContent(t('AUTH.account_created'));
+      expect(screen.getByRole('status')).toBe(card);
+      expect(screen.queryByRole('button', { name: t('AUTH.continue') })).toBeNull();
       expect(screen.getByRole('link', { name: t('AUTH.back_to_login') })).toHaveAttribute('href', '/login');
       expect(queryClient.getQueryData(sessionKey) ?? null).toBeNull();
       expect(scheduled.mock.calls.some(([, ms]) => ms === WELCOME_MS)).toBe(false);
