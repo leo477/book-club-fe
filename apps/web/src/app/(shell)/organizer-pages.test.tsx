@@ -13,7 +13,12 @@ import CreateEventPage, { generateMetadata as createEventMeta } from './clubs/[i
 import EditEventPage, { generateMetadata as editEventMeta } from './events/[id]/edit/page';
 
 const nav = vi.hoisted(() => ({ replace: vi.fn(), hard: vi.fn(), toast: vi.fn(), missing: [] as string[] }));
-vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn(), replace: nav.replace }) }));
+vi.mock('next/navigation', () => ({
+  useRouter: () => ({ push: vi.fn(), replace: nav.replace }),
+  notFound: () => {
+    throw new Error('NEXT_NOT_FOUND');
+  },
+}));
 vi.mock('@/lib/navigate', () => ({ hardNavigate: vi.fn(), replaceNavigate: nav.hard }));
 vi.mock('@/lib/toast', () => ({ showToast: nav.toast }));
 // like the real wrapper, ship only the listed namespaces, so a form that needs another one reports a missing message
@@ -109,5 +114,16 @@ describe.each(pages)('$name page', ({ element, heading, field }) => {
     server.use(http.get(`${API}/auth/session-status`, () => HttpResponse.json({ hasSession: false })));
     renderWithProviders(await element());
     await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/login'));
+  });
+});
+
+describe('organizer pages: id parameter', () => {
+  it.each([
+    ['/clubs/:id/edit', (id: string) => EditClubPage(params(id))],
+    ['/clubs/:id/events/create', (id: string) => CreateEventPage(params(id))],
+    ['/events/:id/edit', (id: string) => EditEventPage(params(id))],
+  ])('%s answers 404 for an id that is not a UUID', async (_name, page) => {
+    await expect(page('create')).rejects.toThrow('NEXT_NOT_FOUND');
+    await expect(page('../../auth/me')).rejects.toThrow('NEXT_NOT_FOUND');
   });
 });
