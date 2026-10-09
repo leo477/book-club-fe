@@ -30,12 +30,13 @@ beforeEach(() => {
 });
 afterEach(() => vi.restoreAllMocks());
 
-function Harness({ initial = '', onChange }: { initial?: string; onChange?: (v: string) => void }) {
+function Harness({ initial = '', onChange, invalid = false }: { initial?: string; onChange?: (v: string) => void; invalid?: boolean }) {
   const [value, setValue] = useState(initial);
   return (
     <>
       <CoverUpload
         label="Обкладинка"
+        invalid={invalid}
         value={value}
         onChange={(v) => {
           setValue(v);
@@ -218,5 +219,21 @@ describe('CoverUpload', () => {
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.getByTestId('value')).toHaveTextContent(how === 'Remove' ? '' : 'https://typed.example/c.png');
     expect(screen.getByRole('button', { name: t('upload_image') })).toBeEnabled();
+  });
+
+  it('starts with the URL input open when the field already has a value', () => {
+    renderWithProviders(<Harness initial="https://example.com/c.jpg" />);
+    expect(screen.getByTestId('cover-url-input')).toHaveValue('https://example.com/c.jpg');
+    expect(screen.getByRole('button', { name: t('hide_url') })).toBeInTheDocument();
+  });
+
+  it('starts collapsed for an empty valid field', () => {
+    renderWithProviders(<Harness />);
+    expect(screen.queryByTestId('cover-url-input')).not.toBeInTheDocument();
+  });
+
+  it('opens the URL input when the field is in error, so the message never points at a hidden input', () => {
+    renderWithProviders(<Harness invalid />);
+    expect(screen.getByTestId('cover-url-input')).toHaveAttribute('aria-invalid', 'true');
   });
 });

@@ -4,7 +4,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { eventForm, type EventForm } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
-import { useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { AddressAutocomplete } from '@/components/address-autocomplete';
 import { AppLink } from '@/components/app-link';
@@ -46,7 +46,8 @@ interface Props {
   submitLabel: string;
   pending: boolean;
   error: string | null;
-  onSubmit: (values: EventForm) => void;
+  /** Resolves true once saved, false on failure; a submit that arrives before then, or after a save, is dropped. */
+  onSubmit: (values: EventForm) => Promise<boolean>;
   /** Only an existing event can be marked as having a winner: the create endpoint has no such field. */
   showHasWinner?: boolean;
   /** Debounce of the book search; tests shorten it. */
@@ -80,6 +81,16 @@ export function EventFormView({ defaultValues, heading, backHref, backLabel, sub
   } = useForm<EventForm>({ resolver: zodResolver(eventForm), defaultValues, mode: 'onTouched' });
   const [address, bookTitle, coverUrl, afterVenueAddress] = useWatch({ control, name: ['address', 'bookTitle', 'coverUrl', 'afterVenueAddress'] });
 
+  // a ref, not `pending`: a second submit can arrive before the render that disables the button
+  const submitting = useRef(false);
+
+  const submit = async (values: EventForm) => {
+    if (submitting.current) return;
+    submitting.current = true;
+    // a saved event navigates away, so only a failed save may be submitted again
+    if (!(await onSubmit(values))) submitting.current = false;
+  };
+
   const toggleAfterVenue = () => {
     if (showAfterVenue) {
       setValue('afterVenueName', '');
@@ -108,9 +119,7 @@ export function EventFormView({ defaultValues, heading, backHref, backLabel, sub
           </div>
         ) : null}
 
-        <form onSubmit={handleSubmit((values) => {
-          if (!pending) onSubmit(values);
-        })} className="space-y-5" noValidate>
+        <form onSubmit={(e) => void handleSubmit(submit)(e)} className="space-y-5" noValidate>
           <FormField
             id="title"
             type="text"
@@ -155,6 +164,11 @@ export function EventFormView({ defaultValues, heading, backHref, backLabel, sub
             <AddressAutocomplete
               value={address}
               onChange={(text) => setValue('address', text)}
+              onTyped={() => {
+                setValue('city', '');
+                setValue('lat', null);
+                setValue('lng', null);
+              }}
               onSelected={(s) => {
                 setValue('city', s.city ?? s.label, { shouldValidate: true });
                 setValue('address', s.label);
@@ -191,7 +205,18 @@ export function EventFormView({ defaultValues, heading, backHref, backLabel, sub
 
           <div>
             <p className={`${LABEL} mb-2`}>{t('cover_label')}</p>
-            <CoverUpload value={coverUrl} onChange={(url) => setValue('coverUrl', url)} label={t('cover_label')} />
+            <CoverUpload
+              value={coverUrl}
+              onChange={(url) => setValue('coverUrl', url, { shouldValidate: true })}
+              invalid={!!errors.coverUrl}
+              label={t('cover_label')}
+              urlInputProps={errors.coverUrl ? { 'aria-describedby': 'event-cover-error' } : {}}
+            />
+            {errors.coverUrl?.message ? (
+              <p id="event-cover-error" role="alert" className="mt-1 text-xs text-red-600 dark:text-red-400">
+                {tAll(errors.coverUrl.message)}
+              </p>
+            ) : null}
           </div>
 
           <div>
@@ -213,6 +238,10 @@ export function EventFormView({ defaultValues, heading, backHref, backLabel, sub
                   <AddressAutocomplete
                     value={afterVenueAddress}
                     onChange={(text) => setValue('afterVenueAddress', text)}
+                    onTyped={() => {
+                      setValue('afterVenueLat', null);
+                      setValue('afterVenueLng', null);
+                    }}
                     onSelected={(s) => {
                       setValue('afterVenueAddress', s.label, { shouldValidate: true });
                       setValue('afterVenueLat', s.lat ?? null);

@@ -21,7 +21,16 @@ export function CreateEvent({ clubId }: { clubId: string }) {
       submitLabel={t('submit')}
       pending={create.isPending}
       error={create.isError ? t('save_error') : null}
-      onSubmit={(values) => create.mutate(toCreateRequest(values), { onSuccess: (created) => push(`/events/${created.id}`) })}
+      onSubmit={async (values) => {
+        try {
+          const created = await create.mutateAsync(toCreateRequest(values));
+          push(`/events/${created.id}`);
+          return true;
+        } catch {
+          // surfaced through create.isError
+          return false;
+        }
+      }}
     />
   );
 }

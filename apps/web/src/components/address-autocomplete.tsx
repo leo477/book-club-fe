@@ -16,13 +16,15 @@ interface Props {
   onChange: (text: string) => void;
   /** The picked suggestion; one that came without coordinates is resolved through place details first (falling back to itself). */
   onSelected: (suggestion: GeocodeSuggestion) => void;
+  /** Called for keystrokes only (not for the label written on select): the picked place no longer matches the text. */
+  onTyped?: () => void;
   label: string;
   placeholder?: string;
   invalid?: boolean;
   inputProps?: ComponentProps<typeof TypeaheadCombobox<GeocodeSuggestion>>['inputProps'];
 }
 
-export function AddressAutocomplete({ value, onChange, onSelected, label, placeholder, invalid, inputProps }: Props) {
+export function AddressAutocomplete({ value, onChange, onSelected, onTyped, label, placeholder, invalid, inputProps }: Props) {
   const lang = useLocale();
   const [resolving, setResolving] = useState(false);
   const mounted = useRef(true);
@@ -41,6 +43,7 @@ export function AddressAutocomplete({ value, onChange, onSelected, label, placeh
     resolution.current?.abort();
     resolution.current = null;
     setResolving(false);
+    onTyped?.();
     onChange(text);
   };
 

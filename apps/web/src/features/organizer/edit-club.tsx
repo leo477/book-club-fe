@@ -4,6 +4,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { editClubForm, isClubStub, splitTags, type Club, type EditClubForm } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
+import { useRef } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { CoverUpload } from '@/components/cover-upload';
 import { FormField } from '@/components/form-field';
@@ -56,6 +57,8 @@ function EditClubFormView({ club }: { club: Club }) {
   const tErrors = useTranslations('ERRORS');
   const push = usePush();
   const update = useUpdateClub(club.id);
+  // a ref, not isPending: a second submit can arrive before the render that disables the button
+  const submitting = useRef(false);
   const {
     register,
     handleSubmit,
@@ -66,7 +69,8 @@ function EditClubFormView({ club }: { club: Club }) {
   const [isPublic, coverUrl] = useWatch({ control, name: ['isPublic', 'coverUrl'] });
 
   const submit = async (values: EditClubForm) => {
-    if (update.isPending) return;
+    if (submitting.current) return;
+    submitting.current = true;
     const venueName = values.venueName.trim();
     const duration = values.meetingDurationMinutes.trim();
     try {
@@ -83,12 +87,13 @@ function EditClubFormView({ club }: { club: Club }) {
       showToast('success', t('success'));
       push(`/clubs/${club.id}`);
     } catch {
-      // surfaced through update.error
+      // surfaced through update.error; only a failed save may be submitted again
+      submitting.current = false;
     }
   };
 
   return (
-    <form onSubmit={handleSubmit(submit)} className="space-y-5" noValidate>
+    <form onSubmit={(e) => void handleSubmit(submit)(e)} className="space-y-5" noValidate>
       <FormField
         id="club-name"
         type="text"

@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -288,6 +288,78 @@ describe('CreateEvent: double submit and error wiring', () => {
     await user.click(submit());
     const message = await screen.findByText(t('CLUB_MANAGE.venue_address_required'));
     expect(screen.getByRole('combobox', { name: t('CREATE_EVENT.after_venue_address_label') }).getAttribute('aria-describedby')).toBe(message.id);
+  });
+});
+
+describe('CreateEvent: picked places and cover', () => {
+  it('forgets the picked place when the address text is edited afterwards', async () => {
+    const bodies = capture('post', `/clubs/${CLUB}/events`, created);
+    const user = userEvent.setup();
+    setup();
+    await user.type(title(), 'Dune night');
+    await user.type(date(), '2099-05-01T18:30');
+    await pickAddress(user);
+    await user.type(address(), 'x');
+    await user.click(submit());
+    expect(await screen.findByText(t('CREATE_EVENT.location_required'))).toBeInTheDocument();
+    expect(bodies).toEqual([]);
+  });
+
+  it('drops the coordinates of the after-meeting venue when its address text is edited', async () => {
+    const bodies = capture('post', `/clubs/${CLUB}/events`, created);
+    const user = userEvent.setup();
+    setup();
+    await user.type(title(), 'Dune night');
+    await user.type(date(), '2099-05-01T18:30');
+    await pickAddress(user);
+    await user.click(screen.getByRole('button', { name: t('CREATE_EVENT.after_venue_add') }));
+    await user.type(screen.getByLabelText(new RegExp(t('CREATE_EVENT.after_venue_name_label'))), 'Pub');
+    const venue = screen.getByRole('combobox', { name: t('CREATE_EVENT.after_venue_address_label') });
+    await user.type(venue, 'Хре');
+    await user.click(await screen.findByRole('option', { name: kyiv.label }, { timeout: 3000 }));
+    await user.type(venue, ' 2');
+    await user.click(submit());
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect((bodies[0] as { afterMeetingVenue: object }).afterMeetingVenue).toEqual({ name: 'Pub', address: `${kyiv.label} 2` });
+  });
+
+  it('rejects a cover URL that is not http(s), with a visible linked message', async () => {
+    const bodies = capture('post', `/clubs/${CLUB}/events`, created);
+    const user = userEvent.setup();
+    setup();
+    await user.type(title(), 'Dune night');
+    await user.type(date(), '2099-05-01T18:30');
+    await pickAddress(user);
+    await user.click(screen.getByRole('button', { name: t('COVER_UPLOAD.enter_url') }));
+    const url = screen.getByLabelText(t('CREATE_EVENT.cover_label'));
+    await user.type(url, 'javascript:alert(1)');
+    await user.click(submit());
+    const message = await screen.findByText(t('CREATE_CLUB.cover_url_invalid'));
+    expect(url.getAttribute('aria-describedby')).toBe(message.id);
+    expect(bodies).toEqual([]);
+  });
+
+  it('sends one request when the form is submitted twice before it re-renders', async () => {
+    let posts = 0;
+    server.use(
+      http.post(`${API}/clubs/${CLUB}/events`, async () => {
+        posts += 1;
+        await new Promise((r) => setTimeout(r, 100));
+        return created();
+      }),
+    );
+    const user = userEvent.setup();
+    setup();
+    await user.type(title(), 'Dune night');
+    await user.type(date(), '2099-05-01T18:30');
+    await pickAddress(user);
+    const form = submit().closest('form') as HTMLFormElement;
+    await act(async () => {
+      fireEvent.submit(form);
+      fireEvent.submit(form);
+    });
+    await waitFor(() => expect(nav.push).toHaveBeenCalledWith(`/events/${EVENT}`));
+    expect(posts).toBe(1);
   });
 });
 

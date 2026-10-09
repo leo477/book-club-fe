@@ -68,7 +68,16 @@ function EditEventForm({ event }: { event: ClubEvent }) {
       showHasWinner
       pending={update.isPending}
       error={update.isError ? t('save_error') : null}
-      onSubmit={(values) => update.mutate(toUpdateRequest(values), { onSuccess: () => push(`/events/${event.id}`) })}
+      onSubmit={async (values) => {
+        try {
+          await update.mutateAsync(toUpdateRequest(values));
+          push(`/events/${event.id}`);
+          return true;
+        } catch {
+          // surfaced through update.isError
+          return false;
+        }
+      }}
     />
   );
 }

@@ -4,7 +4,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { createClubForm, type CreateClubForm } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { FormField } from '@/components/form-field';
 import { Button } from '@/components/ui/button';
@@ -31,6 +31,8 @@ export function CreateClub() {
   const create = useCreateClub();
   const [showFirstEvent, setShowFirstEvent] = useState(false);
   const [created, setCreated] = useState(false);
+  // a ref, not isPending: a second submit can arrive before the render that disables the button
+  const submitting = useRef(false);
   const {
     register,
     handleSubmit,
@@ -47,7 +49,8 @@ export function CreateClub() {
   }, [ownsClub, push]);
 
   const submit = async (values: CreateClubForm) => {
-    if (create.isPending) return;
+    if (submitting.current) return;
+    submitting.current = true;
     const eventTitle = values.firstEventTitle.trim();
     const eventCity = values.firstEventCity.trim();
     const withEvent = showFirstEvent && eventTitle !== '' && values.firstEventDate !== '' && eventCity !== '';
@@ -59,13 +62,14 @@ export function CreateClub() {
       setCreated(true);
       push(`/clubs/${club.id}`);
     } catch {
-      // surfaced through create.error
+      // surfaced through create.error; only a failed save may be submitted again
+      submitting.current = false;
     }
   };
 
   return (
     <FormCard subtitle={t('subtitle')} title={t('title')}>
-      <form onSubmit={handleSubmit(submit)} className="space-y-5" noValidate>
+      <form onSubmit={(e) => void handleSubmit(submit)(e)} className="space-y-5" noValidate>
         <FormField
           id="club-name"
           type="text"

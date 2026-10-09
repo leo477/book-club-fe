@@ -26,7 +26,8 @@ export function CoverUpload({ value, onChange, invalid = false, label, urlInputP
   const t = useTranslations('COVER_UPLOAD');
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showUrl, setShowUrl] = useState(false);
+  // open from the start when there is a URL to show, and whenever the field is in error, so a message never points at a hidden input
+  const [showUrlChoice, setShowUrl] = useState(() => value !== '');
   const [preview, setPreview] = useState<string | null>(null);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const [brokenSrc, setBrokenSrc] = useState<string | null>(null);
@@ -86,6 +87,7 @@ export function CoverUpload({ value, onChange, invalid = false, label, urlInputP
     }
   };
 
+  const showUrl = showUrlChoice || invalid;
   // the local preview stands in for the uploaded file only while the field still holds that upload
   const local = preview !== null && (uploading || value === uploadedUrl) ? preview : null;
   const src = local ?? (isWebUrl(value) ? value : '');
@@ -116,7 +118,7 @@ export function CoverUpload({ value, onChange, invalid = false, label, urlInputP
             t('upload_image')
           )}
         </Button>
-        <Button type="button" variant="outline" aria-expanded={showUrl} onClick={() => setShowUrl((v) => !v)}>
+        <Button type="button" variant="outline" aria-expanded={showUrl} onClick={() => setShowUrl(!showUrl)}>
           {showUrl ? t('hide_url') : t('enter_url')}
         </Button>
       </div>

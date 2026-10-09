@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -115,9 +115,9 @@ describe('CreateClub', () => {
     expect(events).toEqual([{ title: 'Kick-off', date: new Date('2099-05-01T18:30').toISOString(), city: 'Kyiv' }]);
   });
 
-  it('skips the first meeting when a field is missing, and tolerates it failing', async () => {
+  it('skips the first meeting when a field is missing', async () => {
     capture('post', '/clubs', () => HttpResponse.json(clubJson({ id: NEW_ID }), { status: 201 }));
-    const events = capture('post', `/clubs/${NEW_ID}/events`, () => HttpResponse.json({ detail: 'no' }, { status: 422 }));
+    const events = capture('post', `/clubs/${NEW_ID}/events`, () => HttpResponse.json(eventJson(), { status: 201 }));
     const user = userEvent.setup();
     setup();
     await user.type(name(), 'Night Owls');
@@ -126,8 +126,16 @@ describe('CreateClub', () => {
     await user.click(submit());
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith(`/clubs/${NEW_ID}`));
     expect(events).toEqual([]);
+  });
 
-    nav.push.mockReset();
+  it('still opens the club when the first meeting cannot be created', async () => {
+    capture('post', '/clubs', () => HttpResponse.json(clubJson({ id: NEW_ID }), { status: 201 }));
+    const events = capture('post', `/clubs/${NEW_ID}/events`, () => HttpResponse.json({ detail: 'no' }, { status: 422 }));
+    const user = userEvent.setup();
+    setup();
+    await user.type(name(), 'Night Owls');
+    await user.click(screen.getByRole('button', { name: t('CREATE_CLUB.add_first_meeting') }));
+    await user.type(screen.getByLabelText(t('CREATE_CLUB.first_meeting_title_label')), 'Kick-off');
     await user.type(screen.getByLabelText(t('CREATE_CLUB.first_meeting_date_label')), '2099-05-01T18:30');
     await user.type(screen.getByLabelText(t('CREATE_CLUB.first_meeting_city_label')), 'Kyiv');
     await user.click(submit());
@@ -205,6 +213,29 @@ describe('CreateClub', () => {
     await screen.findByTestId('club-name-input');
     await new Promise((r) => setTimeout(r, 50));
     expect(nav.push).not.toHaveBeenCalled();
+  });
+});
+
+describe('CreateClub: double submit', () => {
+  it('sends one request when the form is submitted twice before it re-renders', async () => {
+    let posts = 0;
+    server.use(
+      http.post(`${API}/clubs`, async () => {
+        posts += 1;
+        await new Promise((r) => setTimeout(r, 100));
+        return HttpResponse.json(clubJson({ id: NEW_ID }), { status: 201 });
+      }),
+    );
+    const user = userEvent.setup();
+    setup();
+    await user.type(name(), 'Night Owls');
+    const form = submit().closest('form') as HTMLFormElement;
+    await act(async () => {
+      fireEvent.submit(form);
+      fireEvent.submit(form);
+    });
+    await waitFor(() => expect(nav.push).toHaveBeenCalledWith(`/clubs/${NEW_ID}`));
+    expect(posts).toBe(1);
   });
 });
 

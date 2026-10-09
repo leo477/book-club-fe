@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -115,7 +115,6 @@ describe('EditClub', () => {
     const user = userEvent.setup();
     setup();
     await loaded();
-    await user.click(screen.getByRole('button', { name: t('COVER_UPLOAD.enter_url') }));
     const url = screen.getByTestId('cover-url-input');
     await user.clear(url);
     await user.type(url, 'nope');
@@ -213,7 +212,6 @@ describe('EditClub: cover URL wiring', () => {
     const user = userEvent.setup();
     setup();
     await loaded();
-    await user.click(screen.getByRole('button', { name: t('COVER_UPLOAD.enter_url') }));
     const url = screen.getByLabelText(t('EDIT_CLUB.cover_url_label'));
     expect(url).toBe(screen.getByTestId('cover-url-input'));
     await user.clear(url);
@@ -224,7 +222,7 @@ describe('EditClub: cover URL wiring', () => {
     expect(url).toHaveAttribute('aria-invalid', 'true');
   });
 
-  it('sends one request when saved twice quickly', async () => {
+  it('sends one request when the form is submitted twice before it re-renders', async () => {
     let release!: () => void;
     const gate = new Promise<void>((resolve) => (release = resolve));
     let patches = 0;
@@ -235,12 +233,13 @@ describe('EditClub: cover URL wiring', () => {
         return HttpResponse.json(existing());
       }),
     );
-    const user = userEvent.setup();
     setup();
-    const name = await loaded();
-    await user.click(save());
-    await waitFor(() => expect(save()).toBeDisabled());
-    await user.type(name, '{Enter}');
+    await loaded();
+    const form = save().closest('form') as HTMLFormElement;
+    await act(async () => {
+      fireEvent.submit(form);
+      fireEvent.submit(form);
+    });
     release();
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith(`/clubs/${ID}`));
     expect(patches).toBe(1);
