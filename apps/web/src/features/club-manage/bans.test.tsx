@@ -1,7 +1,7 @@
 import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { API, memberJson, renderWithProviders, server, setupApiServer } from '@/test/harness';
 import { Bans } from './bans';
 import { bansKey } from './use-club-manage';
@@ -21,7 +21,18 @@ function backend(bans: ReturnType<typeof banJson>[]) {
   };
 }
 
+const releases: (() => void)[] = [];
+const openGate = () => {
+  const g = gate();
+  releases.push(g.release);
+  return g;
+};
+
 describe('Bans', () => {
+  afterEach(() => {
+    releases.splice(0).forEach((r) => r());
+  });
+
   it('shows the empty state with a zero count', async () => {
     mockManageReads();
     renderWithProviders(<Bans clubId={ID} />);
@@ -114,7 +125,7 @@ describe('Bans', () => {
     server.use(http.delete(`${API}/clubs/${ID}/bans/b2`, () => HttpResponse.json({ detail: 'Not allowed' }, { status: 403 })));
     const { queryClient } = renderWithProviders(<Bans clubId={ID} />);
     await screen.findByText(/b3/);
-    const { open, release } = gate();
+    const { open } = openGate();
     server.use(http.get(`${API}/clubs/${ID}/bans`, async () => {
       await open;
       return HttpResponse.json([]);
@@ -128,7 +139,6 @@ describe('Bans', () => {
     expect(rows).toHaveLength(2);
     expect(rows[0]).toHaveTextContent(/b2/);
     expect(rows[1]).toHaveTextContent(/b3/);
-    release();
   });
 
   it('appends the ban when it was already missing from the list at the moment the unban started', async () => {
@@ -137,7 +147,7 @@ describe('Bans', () => {
     server.use(http.delete(`${API}/clubs/${ID}/bans/b2`, () => HttpResponse.json({ detail: 'Not allowed' }, { status: 403 })));
     const { queryClient } = renderWithProviders(<Bans clubId={ID} />);
     await screen.findByText(/b3/);
-    const { open, release } = gate();
+    const { open } = openGate();
     server.use(http.get(`${API}/clubs/${ID}/bans`, async () => {
       await open;
       return HttpResponse.json([]);
@@ -148,7 +158,6 @@ describe('Bans', () => {
     });
     await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Not allowed'));
     expect(queryClient.getQueryData<ReturnType<typeof banJson>[]>(bansKey(ID))?.map((b) => b.userId)).toEqual(['b1', 'b3', 'b2']);
-    release();
   });
 
   it('sends one request for two clicks while the first is in flight', async () => {

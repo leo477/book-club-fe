@@ -8,7 +8,13 @@ import { ID, mockManageReads, statsJson, t } from './test-support';
 
 setupApiServer();
 
-const list = (items: string[]) => new Intl.ListFormat('uk').format(items);
+const LOCALE = 'uk';
+const list = (items: string[]) => new Intl.ListFormat(LOCALE).format(items);
+const month = (key: string) => {
+  const [y, m] = key.split('-').map(Number);
+  return new Intl.DateTimeFormat(LOCALE, { month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(y!, m! - 1, 1)));
+};
+const num = (n: number) => new Intl.NumberFormat(LOCALE).format(n);
 
 describe('Dashboard', () => {
   it('shows the headline numbers, charts and leaderboards', async () => {
@@ -18,8 +24,8 @@ describe('Dashboard', () => {
     expect(screen.getByText(t('CLUB_MANAGE.stat_upcoming'))).toBeInTheDocument();
     expect(screen.getByText('Grace Hopper')).toBeInTheDocument();
     expect(screen.getByText('Alan Turing')).toBeInTheDocument();
-    expect(screen.getByTitle('2099-02: 6')).toHaveStyle({ height: '100%' });
-    expect(screen.getByTitle('2099-01: 3')).toHaveStyle({ height: '50%' });
+    expect(screen.getByTitle(`${month('2099-02')}: 6`)).toHaveStyle({ height: '100%' });
+    expect(screen.getByTitle(`${month('2099-01')}: 3`)).toHaveStyle({ height: '50%' });
     expect(screen.getByTitle('Dune night: 8')).toHaveStyle({ height: '100%' });
     expect(screen.getByTitle('Emma talk: 4')).toHaveStyle({ height: '50%' });
     expect(screen.getByText(new RegExp(t('CLUB_MANAGE.banned_users')))).toBeInTheDocument();
@@ -66,7 +72,7 @@ describe('Dashboard', () => {
     mockManageReads();
     renderWithProviders(<Dashboard clubId={ID} />);
     await screen.findByText('340');
-    expect(screen.getByRole('img', { name: `${t('CLUB_MANAGE.member_growth')}: ${list(['2099-01: 3', '2099-02: 6'])}` })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: `${t('CLUB_MANAGE.member_growth')}: ${list([`${month('2099-01')}: 3`, `${month('2099-02')}: 6`])}` })).toBeInTheDocument();
     expect(screen.getByRole('img', { name: `${t('ORGANIZER.attendance')}: ${list(['Emma talk: 4', 'Dune night: 8'])}` })).toBeInTheDocument();
   });
 
@@ -76,7 +82,7 @@ describe('Dashboard', () => {
     await screen.findByText('340');
     const name = screen.getByTitle(/Club 7, part 2/).parentElement!.getAttribute('aria-label')!;
     expect(name).toBe(`${t('ORGANIZER.attendance')}: ${screen.getByTitle(/Club 7, part 2/).getAttribute('title')}`);
-    expect(name).toMatch(/Club 7, part 2: 1.200$/);
+    expect(name).toBe(`${t('ORGANIZER.attendance')}: Club 7, part 2: ${num(1200)}`);
   });
 
   it('draws zero height for a negative count in a rendered chart', async () => {

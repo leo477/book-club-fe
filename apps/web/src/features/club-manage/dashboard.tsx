@@ -7,6 +7,8 @@ import { ErrorPanel } from '@/components/error-panel';
 import { Spinner } from '@/components/ui/spinner';
 import { useClubStats } from './use-club-manage';
 
+const MONTH_KEY = /^(\d{4})-(0[1-9]|1[0-2])$/;
+
 export const heightOf = (count: number, max: number) => {
   const safeMax = Number.isFinite(max) && max > 0 ? max : 1;
   const safeCount = Number.isFinite(count) ? Math.max(0, count) : 0;
@@ -17,7 +19,11 @@ function Bars({ label, icon, rows, tone }: { label: string; icon?: string; rows:
   const t = useTranslations('CLUB_MANAGE');
   const format = useFormatter();
   const max = Math.max(...rows.map((r) => r.count).filter(Number.isFinite), 1);
-  const items = rows.map((r) => t('chart_summary_item', { title: r.title, count: format.number(r.count) }));
+  const titleOf = (title: string) => {
+    const m = MONTH_KEY.exec(title);
+    return m ? format.dateTime(new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, 1)), { month: 'long', year: 'numeric', timeZone: 'UTC' }) : title;
+  };
+  const items = rows.map((r) => t('chart_summary_item', { title: titleOf(r.title), count: format.number(r.count) }));
   const summary = t('chart_summary', { label, items: format.list(items) });
   return (
     <div className="parchment-card p-4">
