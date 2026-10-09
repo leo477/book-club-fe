@@ -85,13 +85,22 @@ apps/
         (shell)/
           clubs/
             [id]/
+              edit/
+                page.tsx
+              events/
+                create/
+                  page.tsx
               not-found.tsx
               page.test.tsx
+              page.tsx
+            create/
               page.tsx
             page.test.tsx
             page.tsx
           events/
             [id]/
+              edit/
+                page.tsx
               page.tsx
             page.test.tsx
             page.tsx
@@ -155,12 +164,14 @@ apps/
           badge.tsx
           button.tsx
           card.tsx
+          command.tsx
           dropdown-menu.tsx
           field.test.tsx
           field.tsx
           input.tsx
           label.tsx
           native-select.tsx
+          popover.tsx
           separator.tsx
           sheet.tsx
           skeleton.tsx
@@ -169,9 +180,12 @@ apps/
           spinner.tsx
           tabs.tsx
           textarea.tsx
+        address-autocomplete.tsx
         analytics-events.tsx
         app-link.test.tsx
         app-link.tsx
+        book-autocomplete.tsx
+        cover-upload.tsx
         empty-state.tsx
         error-panel.tsx
         form-field.test.tsx
@@ -186,6 +200,7 @@ apps/
         toaster-host.test.tsx
         toaster-host.tsx
         toaster-impl.tsx
+        typeahead-combobox.tsx
       features/
         auth/
           auth-divider.tsx
@@ -254,6 +269,17 @@ apps/
           rsvp-button.tsx
           use-events.ts
           use-venue.ts
+        organizer/
+          club-form-parts.tsx
+          cover-preview.tsx
+          create-club.tsx
+          create-event.tsx
+          edit-club.tsx
+          edit-event.tsx
+          event-form.tsx
+          event-payload.ts
+          lazy.tsx
+          use-organizer.ts
         profile/
           display-name-form.tsx
           profile-page.tsx
@@ -286,6 +312,7 @@ apps/
         flash.ts
         format.test.ts
         format.ts
+        geocode-session.ts
         json-ld.test.tsx
         json-ld.tsx
         legacy-session.test.ts
@@ -303,6 +330,8 @@ apps/
         site.test.ts
         site.ts
         toast.ts
+        ttl-cache.test.ts
+        ttl-cache.ts
         use-push.ts
         use-replace.ts
         utils.ts
