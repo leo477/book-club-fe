@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api';
+import { safeImageUrl } from '@/lib/safe-image-url';
 
 /** What the picker offers and what the backend would accept (it also allows gif, which the picker never has). */
 const ACCEPT = ['image/jpeg', 'image/png', 'image/webp'];
@@ -19,8 +20,6 @@ interface Props {
   label: string;
   urlInputProps?: { id?: string; 'aria-describedby'?: string };
 }
-
-const isWebUrl = (src: string) => /^https?:\/\//i.test(src);
 
 export function CoverUpload({ value, onChange, invalid = false, label, urlInputProps }: Props) {
   const t = useTranslations('COVER_UPLOAD');
@@ -90,7 +89,7 @@ export function CoverUpload({ value, onChange, invalid = false, label, urlInputP
   const showUrl = showUrlChoice || invalid;
   // the local preview stands in for the uploaded file only while the field still holds that upload
   const local = preview !== null && (uploading || value === uploadedUrl) ? preview : null;
-  const src = local ?? (isWebUrl(value) ? value : '');
+  const src = local ? safeImageUrl(local, { allowBlob: true }) : safeImageUrl(value);
 
   return (
     <div className="space-y-2">

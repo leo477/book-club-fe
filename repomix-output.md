@@ -366,6 +366,8 @@ apps/
         oauth-base-url.ts
         page-metadata.test.ts
         page-metadata.ts
+        safe-image-url.test.ts
+        safe-image-url.ts
         server-api.test.ts
         server-api.ts
         session-hint.test.ts

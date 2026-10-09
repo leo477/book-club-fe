@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import { TypeaheadCombobox } from '@/components/typeahead-combobox';
 import { api } from '@/lib/api';
+import { safeImageUrl } from '@/lib/safe-image-url';
 
 const DEBOUNCE_MS = 600;
 const MIN_LENGTH = 3;
@@ -37,9 +38,9 @@ export function BookAutocomplete({ value, onChange, onSelected, label, placehold
       getKey={(book) => book.id}
       renderItem={(book) => (
         <>
-          {book.thumbnail ? (
+          {safeImageUrl(book.thumbnail ?? '') ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={book.thumbnail} alt="" width={32} height={48} referrerPolicy="no-referrer" className="h-12 w-8 shrink-0 rounded object-cover shadow-sm" />
+            <img src={safeImageUrl(book.thumbnail ?? '')} alt="" width={32} height={48} referrerPolicy="no-referrer" className="h-12 w-8 shrink-0 rounded object-cover shadow-sm" />
           ) : (
             <div aria-hidden="true" className="flex h-12 w-8 shrink-0 items-center justify-center rounded bg-muted text-lg">
               📚
