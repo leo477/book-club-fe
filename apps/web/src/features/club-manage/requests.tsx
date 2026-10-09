@@ -54,28 +54,28 @@ export function Requests({ clubId }: { clubId: string }) {
           {requests.map((req) => {
             const avatar = req.avatarUrl ? safeImageUrl(req.avatarUrl) : '';
             return (
-            <li key={req.userId} className="flex items-center gap-3 rounded-xl border border-[var(--color-sepia)] bg-[var(--color-surface)] p-3">
-              {avatar ? (
-                // eslint-disable-next-line @next/next/no-img-element -- avatar hosts are arbitrary; only http(s) URLs are rendered
-                <img src={avatar} width={40} height={40} alt={req.displayName} referrerPolicy="no-referrer" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
-              ) : (
-                <div className="h-10 w-10 rounded-full bg-gradient-fantasy flex items-center justify-center text-white font-semibold flex-shrink-0" aria-hidden="true">
-                  {req.displayName.charAt(0)}
+              <li key={req.userId} className="flex items-center gap-3 rounded-xl border border-[var(--color-sepia)] bg-[var(--color-surface)] p-3">
+                {avatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- avatar hosts are arbitrary; only http(s) URLs are rendered
+                  <img src={avatar} width={40} height={40} alt="" referrerPolicy="no-referrer" className="h-10 w-10 rounded-full object-cover flex-shrink-0" />
+                ) : (
+                  <div className="h-10 w-10 rounded-full bg-gradient-fantasy flex items-center justify-center text-white font-semibold flex-shrink-0" aria-hidden="true">
+                    {req.displayName.charAt(0)}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-[var(--color-ink)] truncate">{req.displayName}</p>
+                  <span className="inline-block mt-0.5 rounded-full bg-[var(--color-surface-raised)] px-2 py-0.5 text-xs text-[var(--color-ink-muted)] border border-[var(--color-sepia)]">{req.source}</span>
                 </div>
-              )}
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-[var(--color-ink)] truncate">{req.displayName}</p>
-                <span className="inline-block mt-0.5 rounded-full bg-[var(--color-surface-raised)] px-2 py-0.5 text-xs text-[var(--color-ink-muted)] border border-[var(--color-sepia)]">{req.source}</span>
-              </div>
-              <div className="flex items-center gap-2 flex-shrink-0">
-                <Button type="button" size="sm" className="bg-gradient-fantasy text-white" disabled={busy.has(req.userId)} onClick={() => void resolve(req.userId, () => api.members.approveJoinRequest(clubId, req.userId))}>
-                  {t('approve')}
-                </Button>
-                <Button type="button" variant="outline" size="sm" disabled={busy.has(req.userId)} onClick={() => void resolve(req.userId, () => api.members.rejectJoinRequest(clubId, req.userId))}>
-                  {t('reject')}
-                </Button>
-              </div>
-            </li>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Button type="button" size="sm" className="bg-gradient-fantasy text-white" disabled={busy.has(req.userId)} onClick={() => void resolve(req.userId, () => api.members.approveJoinRequest(clubId, req.userId))}>
+                    {t('approve')}
+                  </Button>
+                  <Button type="button" variant="outline" size="sm" disabled={busy.has(req.userId)} onClick={() => void resolve(req.userId, () => api.members.rejectJoinRequest(clubId, req.userId))}>
+                    {t('reject')}
+                  </Button>
+                </div>
+              </li>
             );
           })}
         </ul>

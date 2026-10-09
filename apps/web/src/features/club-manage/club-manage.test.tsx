@@ -5,7 +5,6 @@ import { nest } from '@/i18n/locale';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { RequireRole } from '@/features/auth/require-auth';
 import { NEXT_ROUTES, mockSession } from '@/features/organizer/test-support';
 import { StranglerProvider } from '@/strangler/context';
 import { API, clubJson, memberJson, messages, renderWithProviders, server, setupApiServer } from '@/test/harness';
@@ -204,20 +203,41 @@ describe('ClubManage', () => {
   });
 });
 
-it('turns a plain reader away before anything of the club is requested', async () => {
-    const requested = vi.fn();
-    mockSession({ role: 'user' });
-    server.use(http.get(`${API}/clubs/${ID}`, () => (requested(), HttpResponse.json(club()))));
+  it('shows organizers only, not a spinner, when there is no signed-in user', async () => {
+    mockSession(null);
+    mockManageReads();
+    server.use(http.get(`${API}/clubs/${ID}`, () => HttpResponse.json(club())));
     renderWithProviders(
       <StranglerProvider value={NEXT_ROUTES}>
-        <RequireRole role="organizer">
-          <ClubManage id={ID} />
-        </RequireRole>
+        <ClubManage id={ID} />
       </StranglerProvider>,
     );
-    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
-    expect(nav.toast).toHaveBeenCalledWith('error', t('ERRORS.organizers_only'));
-    expect(requested).not.toHaveBeenCalled();
+    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.organizers_only'));
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
+
+  it('does not show a cached club before this visit has re-fetched it', async () => {
+    mockSession({ id: 'u1', role: 'user' });
+    mockManageReads();
+    server.use(
+      http.get(`${API}/clubs/${ID}`, async () => {
+        await new Promise((r) => setTimeout(r, 100));
+        return HttpResponse.json({ detail: 'x' }, { status: 404 });
+      }),
+    );
+    const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 60_000 } } });
+    queryClient.setQueryData(['club', ID, 'detail'], club(), { updatedAt: Date.now() - 1000 });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <NextIntlClientProvider locale="uk" messages={nest(messages.uk)}>
+          <StranglerProvider value={NEXT_ROUTES}>
+            <ClubManage id={ID} />
+          </StranglerProvider>
+        </NextIntlClientProvider>
+      </QueryClientProvider>,
+    );
+    expect(screen.queryByRole('heading', { level: 1, name: 'Alpha Readers' })).not.toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(t('CLUB_DETAIL.not_found'));
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
 });

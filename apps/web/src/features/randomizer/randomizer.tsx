@@ -114,7 +114,7 @@ function RandomizerView({ clubId }: { clubId: string }) {
             </h1>
             <p className="text-primary-300 mt-1">{t('subtitle')}</p>
           </div>
-          <nav aria-label="Breadcrumb">
+          <nav aria-label={t('breadcrumb_aria')}>
             <AppLink href={`/clubs/${clubId}`} className="text-primary-300 hover:text-white transition-colors text-sm">
               {t('back_to_club')}
             </AppLink>

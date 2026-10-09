@@ -7,7 +7,6 @@ import { toastError } from '@/features/club-detail/use-club-detail';
 
 export const isAbort = (err: unknown): boolean => typeof err === 'object' && err !== null && (err as { name?: unknown }).name === 'AbortError';
 
-/** Whether the component is still on screen, for async code that must not toast or set state after it left. */
 export function useMounted(): () => boolean {
   const mounted = useRef(true);
   useEffect(() => {
@@ -19,10 +18,7 @@ export function useMounted(): () => boolean {
   return useCallback(() => mounted.current, []);
 }
 
-/**
- * Runs one request per key at a time. The guard is a ref, not state: a second click can arrive before the render
- * that disables the button. A failure toasts unless the request was aborted or the component is already gone.
- */
+// the guard is a ref: a second click can arrive before the render that disables the button
 export function useGuardedRunner() {
   const tErrors = useTranslations('ERRORS');
   const isMounted = useMounted();

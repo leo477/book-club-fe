@@ -29,16 +29,16 @@ describe('Requests', () => {
     renderWithProviders(<Requests clubId={ID} />);
     expect(await screen.findByText('Katherine Johnson')).toBeInTheDocument();
     expect(screen.getAllByText('link')).toHaveLength(3);
-    expect(screen.getByAltText('Mary Jackson')).toHaveAttribute('src', 'https://example.com/a.png');
-    expect(screen.queryByAltText('Evil')).not.toBeInTheDocument();
+    expect(screen.getByText('Mary Jackson').closest('li')!.querySelector('img')).toHaveAttribute('src', 'https://example.com/a.png');
+    expect(screen.getByText('Evil').closest('li')!.querySelector('img')).toBeNull();
     expect(document.querySelector('[src^="javascript"]')).toBeNull();
   });
 
   it('renders the normalized URL, never the raw text, as the avatar source', async () => {
     mockManageReads({ requests: [requestJson({ avatarUrl: 'HTTPS://Example.com/a b.png' }), requestJson({ userId: 'r9', displayName: 'Data', avatarUrl: 'data:image/svg+xml,<svg onload=alert(1)>' })] });
     renderWithProviders(<Requests clubId={ID} />);
-    expect(await screen.findByAltText('Katherine Johnson')).toHaveAttribute('src', 'https://example.com/a%20b.png');
-    expect(screen.queryByAltText('Data')).not.toBeInTheDocument();
+    expect((await screen.findByText('Katherine Johnson')).closest('li')!.querySelector('img')).toHaveAttribute('src', 'https://example.com/a%20b.png');
+    expect(screen.getByText('Data').closest('li')!.querySelector('img')).toBeNull();
   });
 
   it('asks for the largest page and warns when a full page may hide more requests', async () => {

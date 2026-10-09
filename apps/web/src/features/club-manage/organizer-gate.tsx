@@ -35,20 +35,17 @@ function Notice({ title, back }: { title: string; back: { href: string; label: s
   );
 }
 
-/**
- * Client-side gate for one club's organizer tools: the club's owner or a member with the organizer role in THIS club.
- * It only decides what is shown; the backend refuses everyone else.
- */
+// only decides what is shown; the backend refuses everyone else
 export function OrganizerOfClub({ clubId, children }: { clubId: string; children: (club: Club) => ReactNode }) {
   const tDetail = useTranslations('CLUB_DETAIL');
   const tErrors = useTranslations('ERRORS');
-  const { user } = useSession();
+  const { user, isPending: sessionPending } = useSession();
   const query = useClubForEdit(clubId);
+  // a cached club or role from an earlier visit is shown only after this visit has re-checked it
+  const [mountedAt] = useState(() => Date.now());
   const club = query.data && !isClubStub(query.data) ? query.data : null;
   const isOwner = club !== null && user !== null && club.organizerId === user.id;
   const membership = useMyMembership(clubId, club !== null && user !== null && !isOwner, true);
-  // a cached role from an earlier visit is shown only after this visit has re-checked it
-  const [mountedAt] = useState(() => Date.now());
   const checked = membership.dataUpdatedAt >= mountedAt;
 
   const missing = <Notice title={tDetail('not_found')} back={{ href: '/clubs', label: tDetail('back') }} />;
@@ -61,7 +58,9 @@ export function OrganizerOfClub({ clubId, children }: { clubId: string; children
     if (status === 403) return denied;
     return <ErrorPanel onRetry={() => void query.refetch()} />;
   }
+  if (query.dataUpdatedAt < mountedAt) return <Busy />;
   if (!club) return missing;
+  if (user === null) return sessionPending ? <Busy /> : denied;
   if (!isOwner) {
     if (membership.isError) return <ErrorPanel onRetry={() => void membership.refetch()} />;
     if (membership.isPending || !checked) return <Busy />;

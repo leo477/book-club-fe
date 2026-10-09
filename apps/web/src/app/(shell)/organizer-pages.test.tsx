@@ -167,12 +167,28 @@ describe.each([
     expect(nav.missing).toEqual([]);
   });
 
-  it('turns a plain reader away with the organizers-only toast', async () => {
+  const asMemberOfOther = (role: string) => {
     session('user');
+    reads();
+    server.use(
+      http.get(`${API}/clubs/${CLUB}`, () => HttpResponse.json(clubJson({ id: CLUB, organizerId: 'owner' }))),
+      http.get(`${API}/clubs/${CLUB}/my-membership`, () => HttpResponse.json({ isMember: true, role, joinRequestStatus: 'none' })),
+    );
+  };
+
+  it('admits a global user who is an organizer of this club', async () => {
+    asMemberOfOther('organizer');
     renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
-    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
-    expect(nav.toast).toHaveBeenCalledWith('error', messages.uk['ERRORS.organizers_only']);
+    await screen.findByRole('heading', { level: 1, name: name.endsWith('manage') ? 'Alpha Readers' : new RegExp(messages.uk['RANDOMIZER.title'] ?? '') });
+    expect(nav.replace).not.toHaveBeenCalled();
+  });
+
+  it('denies a plain member of the club through the per-club gate', async () => {
+    asMemberOfOther('member');
+    renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
+    expect(await screen.findByRole('alert')).toHaveTextContent(messages.uk['ERRORS.organizers_only'] ?? '');
     expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
+    expect(nav.replace).not.toHaveBeenCalled();
   });
 
   it('sends a guest to /login', async () => {

@@ -15,5 +15,8 @@
   },
   "SUPPORT": {
     "loading": "Loading…"
+  },
+  "RANDOMIZER": {
+    "breadcrumb_aria": "Breadcrumb"
   }
 }

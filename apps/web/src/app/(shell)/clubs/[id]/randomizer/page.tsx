@@ -1,5 +1,5 @@
 import { NamespacesIntl } from '@/components/namespaces-intl';
-import { RequireRole } from '@/features/auth/require-auth';
+import { RequireAuth } from '@/features/auth/require-auth';
 import { LazyRandomizer } from '@/features/randomizer/lazy';
 import { notFound } from 'next/navigation';
 import { pageMetadata } from '@/lib/page-metadata';
@@ -16,9 +16,9 @@ export default async function RandomizerPage({ params }: Props) {
   if (!isUuid(id)) notFound();
   return (
     <NamespacesIntl namespaces={['RANDOMIZER', 'CLUB_DETAIL', 'ERRORS']}>
-      <RequireRole role="organizer">
+      <RequireAuth>
         <LazyRandomizer clubId={id.toLowerCase()} />
-      </RequireRole>
+      </RequireAuth>
     </NamespacesIntl>
   );
 }
