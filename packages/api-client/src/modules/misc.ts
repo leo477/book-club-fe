@@ -19,10 +19,13 @@ import {
 } from '@book-club/contracts';
 import { z } from 'zod';
 import type { ApiClient } from '../client';
+import type { RequestOptions } from '../types';
+
+type CallOptions = Pick<RequestOptions, 'signal' | 'skipAuthRedirect' | 'suppressErrorToast'>;
 
 export const randomizerApi = (c: ApiClient) => ({
-  history: (clubId: string, page: { skip?: number; limit?: number } = {}) =>
-    c.get(`/clubs/${clubId}/randomizer/history`, z.array(randomizerSession), { query: { ...page } }),
+  history: (clubId: string, page: { skip?: number; limit?: number } = {}, options?: CallOptions) =>
+    c.get(`/clubs/${clubId}/randomizer/history`, z.array(randomizerSession), { ...options, query: { ...page } }),
   createSession: (clubId: string, body: CreateRandomizerSessionRequest) =>
     c.post(`/clubs/${clubId}/randomizer/sessions`, randomizerSession, body),
 });
@@ -58,18 +61,19 @@ export const chatApi = (c: ApiClient) => ({
 });
 
 export const booksApi = (c: ApiClient) => ({
-  search: (q: string, limit = 5) => c.get('/books/search', z.array(bookSuggestion), { query: { q, limit } }),
+  search: (q: string, limit = 5, options?: CallOptions) =>
+    c.get('/books/search', z.array(bookSuggestion), { ...options, query: { q, limit } }),
   details: (bookId: string) => c.get(`/books/details/${bookId}`, bookDetails),
   stores: (title: string) => c.get('/books/stores', z.array(storeResult), { query: { title } }),
 });
 
 export const geocodeApi = (c: ApiClient) => ({
-  autocomplete: (q: string, sessionToken?: string, lang = 'uk', limit = 5, options?: { suppressErrorToast?: boolean }) =>
+  autocomplete: (q: string, sessionToken?: string, lang = 'uk', limit = 5, options?: CallOptions) =>
     c.get('/geocode/autocomplete', z.array(geocodeSuggestion), {
       ...options,
       query: { q, lang, limit, session_token: sessionToken },
     }),
-  placeDetails: (placeId: string, sessionToken: string, lang = 'uk', options?: { suppressErrorToast?: boolean }) =>
+  placeDetails: (placeId: string, sessionToken: string, lang = 'uk', options?: CallOptions) =>
     c.get('/geocode/place-details', geocodeSuggestion, {
       ...options,
       query: { place_id: placeId, session_token: sessionToken, lang },

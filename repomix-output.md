@@ -85,13 +85,26 @@ apps/
         (shell)/
           clubs/
             [id]/
+              edit/
+                page.tsx
+              events/
+                create/
+                  page.tsx
+              manage/
+                page.tsx
+              randomizer/
+                page.tsx
               not-found.tsx
               page.test.tsx
+              page.tsx
+            create/
               page.tsx
             page.test.tsx
             page.tsx
           events/
             [id]/
+              edit/
+                page.tsx
               page.tsx
             page.test.tsx
             page.tsx
@@ -104,6 +117,7 @@ apps/
             page.test.tsx
             page.tsx
           layout.tsx
+          organizer-pages.test.tsx
         %5F%5Fstrangler-probe/
           page.tsx
         %5F%5Fui/
@@ -155,12 +169,14 @@ apps/
           badge.tsx
           button.tsx
           card.tsx
+          command.tsx
           dropdown-menu.tsx
           field.test.tsx
           field.tsx
           input.tsx
           label.tsx
           native-select.tsx
+          popover.tsx
           separator.tsx
           sheet.tsx
           skeleton.tsx
@@ -169,9 +185,15 @@ apps/
           spinner.tsx
           tabs.tsx
           textarea.tsx
+        address-autocomplete.test.tsx
+        address-autocomplete.tsx
         analytics-events.tsx
         app-link.test.tsx
         app-link.tsx
+        book-autocomplete.test.tsx
+        book-autocomplete.tsx
+        cover-upload.test.tsx
+        cover-upload.tsx
         empty-state.tsx
         error-panel.tsx
         form-field.test.tsx
@@ -186,6 +208,8 @@ apps/
         toaster-host.test.tsx
         toaster-host.tsx
         toaster-impl.tsx
+        typeahead-combobox.test.tsx
+        typeahead-combobox.tsx
       features/
         auth/
           auth-divider.tsx
@@ -209,6 +233,7 @@ apps/
           book-vote-section.tsx
           book-vote.test.tsx
           book-vote.tsx
+          can-manage-links.test.tsx
           club-events.tsx
           club-view.tsx
           describe-error.test.ts
@@ -228,6 +253,36 @@ apps/
           structured-data.test.ts
           structured-data.ts
           use-club-detail.ts
+        club-manage/
+          bans.test.tsx
+          bans.tsx
+          chat-room-form.test.tsx
+          chat-room-form.tsx
+          club-manage.test.tsx
+          club-manage.tsx
+          dashboard.test.tsx
+          dashboard.tsx
+          delete-club.test.tsx
+          delete-club.tsx
+          lazy.tsx
+          members.test.tsx
+          organizer-gate.tsx
+          requests.test.tsx
+          requests.tsx
+          status-actions.test.tsx
+          status-actions.tsx
+          test-support.ts
+          tools.tsx
+          use-club-manage.ts
+        club-shared/
+          bundle-boundary.test.ts
+          club-actions.ts
+          guarded-runner.test.tsx
+          guarded-runner.ts
+          invalidate-club.ts
+          list-limit.ts
+          organizer-lazy-boundary.test.ts
+          use-member-actions.ts
         clubs/
           club-card.test.tsx
           club-card.tsx
@@ -254,6 +309,22 @@ apps/
           rsvp-button.tsx
           use-events.ts
           use-venue.ts
+        organizer/
+          club-form-parts.tsx
+          cover-preview.tsx
+          create-club.test.tsx
+          create-club.tsx
+          create-event.test.tsx
+          create-event.tsx
+          edit-club.test.tsx
+          edit-club.tsx
+          edit-event.test.tsx
+          edit-event.tsx
+          event-form.tsx
+          event-payload.ts
+          lazy.tsx
+          test-support.ts
+          use-organizer.ts
         profile/
           display-name-form.tsx
           profile-page.tsx
@@ -263,6 +334,13 @@ apps/
           role-selector.tsx
           socials-section.tsx
           use-profile.ts
+        randomizer/
+          lazy.tsx
+          pick.test.ts
+          pick.ts
+          randomizer.test.tsx
+          randomizer.tsx
+          use-randomizer.ts
         support/
           create-submission-page.tsx
           create-submission.test.tsx
@@ -286,6 +364,7 @@ apps/
         flash.ts
         format.test.ts
         format.ts
+        geocode-session.ts
         json-ld.test.tsx
         json-ld.tsx
         legacy-session.test.ts
@@ -296,6 +375,8 @@ apps/
         oauth-base-url.ts
         page-metadata.test.ts
         page-metadata.ts
+        safe-image-url.test.ts
+        safe-image-url.ts
         server-api.test.ts
         server-api.ts
         session-hint.test.ts
@@ -303,9 +384,13 @@ apps/
         site.test.ts
         site.ts
         toast.ts
+        ttl-cache.test.ts
+        ttl-cache.ts
         use-push.ts
         use-replace.ts
         utils.ts
+        uuid.test.ts
+        uuid.ts
         zod-locales-stub.ts
       providers/
         providers.tsx
@@ -325,6 +410,9 @@ apps/
         server.ts
       test/
         harness.tsx
+      test-support/
+        import-graph.test.ts
+        import-graph.ts
       env.d.ts
       proxy.ts
     .gitignore
@@ -441,6 +529,7 @@ packages/
       event.ts
       index.ts
       misc.ts
+      organizer-forms.ts
       parse.ts
       quiz.ts
       tolerant.ts
@@ -455,6 +544,7 @@ packages/
         users.json
       contracts.test.ts
       fixtures.test.ts
+      organizer-forms.test.ts
     eslint.config.mjs
     package.json
     tsconfig.json

@@ -6,6 +6,7 @@ import type { Club, MyMembership } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
 import { AppLink } from '@/components/app-link';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api';
 import { showToast } from '@/lib/toast';
@@ -147,8 +148,9 @@ export function JoinCta({ club }: { club: ClubRef }) {
 export function ManagePanel({ club }: { club: ClubRef }) {
   const t = useTranslations('CLUB_DETAIL');
   const tManage = useTranslations('CLUB_MANAGE');
-  const role = useClubRole(club);
-  if (!role.isOwner) return null;
+  const role = useClubRole(club, true);
+  if (role.manageUnknown) return <Skeleton aria-hidden data-testid="manage-placeholder" className="h-28 w-full" />;
+  if (!role.canManage) return null;
   return (
     <div className="glass-card-subtle p-4 flex flex-col gap-3 text-sm">
       <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{t('manage_title')}</h2>

@@ -3,6 +3,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import type { ClubEvent } from '@book-club/contracts';
+import { LIST_LIMIT } from '@/features/club-shared/list-limit';
 import { api } from '@/lib/api';
 import { showToast } from '@/lib/toast';
 import { useMyClubs } from '@/features/clubs/use-clubs';
@@ -29,17 +30,28 @@ export interface ClubRef {
 export const clubKey = (clubId: string) => ['club', clubId, 'detail'] as const;
 
 /** Who the viewer is relative to this club; `ready` is false until the session and (when signed in) /clubs/my resolve. */
-export function useClubRole(club: ClubRef) {
+export function useClubRole(club: ClubRef, revalidateRole = false) {
   const { user, isPending } = useSession();
   const mine = useMyClubs(user !== null);
   const isOwner = user !== null && club.organizerId !== undefined && user.id === club.organizerId;
   const isMember = user !== null && (mine.data?.some((c) => c.id === club.id) ?? false);
   const ready = !isPending && (user === null || !mine.isPending);
-  return { user, isAuthenticated: user !== null, ready, isOwner, isMember };
+  const needsMembership = user !== null && !isOwner;
+  const membership = useMyMembership(club.id, needsMembership, revalidateRole);
+  const canManage = isOwner || membership.data?.role === 'organizer';
+  const manageUnknown = needsMembership && membership.isPending;
+  return { user, isAuthenticated: user !== null, ready, isOwner, isMember, canManage, manageUnknown };
 }
 
-export function useMyMembership(clubId: string, enabled: boolean) {
-  return useQuery({ queryKey: membershipKey(clubId), queryFn: () => api.clubs.myMembership(clubId), enabled, ...noRefocus });
+/** `fresh` is for gates and the manage links: no retry delay on failure, and a cached answer is re-checked on mount. */
+export function useMyMembership(clubId: string, enabled: boolean, fresh = false) {
+  return useQuery({
+    queryKey: membershipKey(clubId),
+    queryFn: () => api.clubs.myMembership(clubId),
+    enabled,
+    ...(fresh ? { retry: false, staleTime: 0, refetchOnMount: 'always' as const } : {}),
+    ...noRefocus,
+  });
 }
 
 /** `initial` is the anonymous server list; a signed-in viewer refetches once because isAttending is per user. */
@@ -57,7 +69,7 @@ export function useClubMembers(clubId: string, enabled: boolean) {
   return useQuery({
     queryKey: membersKey(clubId),
     // a non-member may be refused; that must neither redirect nor break the page
-    queryFn: () => api.members.list(clubId, {}, { skipAuthRedirect: true }),
+    queryFn: ({ signal }) => api.members.list(clubId, { limit: LIST_LIMIT }, { skipAuthRedirect: true, signal }),
     enabled,
     retry: false,
     ...noRefocus,

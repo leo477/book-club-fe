@@ -1,4 +1,5 @@
-import { screen, waitFor } from '@testing-library/react';
+import { StrictMode } from 'react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -106,39 +107,112 @@ describe('RegisterView', () => {
     expect(screen.getByText(t('AUTH.password_strong'))).toBeInTheDocument();
   });
 
-  it('registers with the chosen role, primes the session, shows the welcome card and then hard-navigates to /events', async () => {
+  it('registers with the chosen role, primes the session, shows the welcome card and does not navigate on its own', async () => {
     const posts = mockApi();
     const { queryClient } = renderWithProviders(<RegisterView />);
     await userEvent.click(screen.getByRole('button', { name: new RegExp(t('AUTH.role_organizer_label')) }));
     expect(screen.getByRole('button', { name: new RegExp(t('AUTH.role_organizer_label')) })).toHaveAttribute('aria-pressed', 'true');
     await fillValid();
-    await userEvent.click(submit());
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      fireEvent.click(submit());
+      const feedback = await screen.findByTestId('register-feedback');
+      expect(feedback).toHaveTextContent(t('AUTH.account_created'));
+      expect(feedback).toHaveTextContent('Ada Lovelace');
+      expect(screen.getByRole('link', { name: t('AUTH.back_to_login') })).toHaveAttribute('href', '/login');
+      expect(posts).toEqual([{ displayName: 'Ada Lovelace', email: 'ada@example.com', password: 'Correct-horse1', role: 'organizer' }]);
+      expect(queryClient.getQueryData(sessionKey)).toMatchObject({ id: 'u1' });
+      expect(nav.hard).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(60_000);
+      expect(nav.hard).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 
-    const feedback = await screen.findByTestId('register-feedback');
-    expect(feedback).toHaveTextContent(t('AUTH.account_created'));
-    expect(feedback).toHaveTextContent('Ada Lovelace');
-    expect(screen.getByRole('link', { name: t('AUTH.back_to_login') })).toHaveAttribute('href', '/login');
-    expect(posts).toEqual([{ displayName: 'Ada Lovelace', email: 'ada@example.com', password: 'Correct-horse1', role: 'organizer' }]);
-    expect(queryClient.getQueryData(sessionKey)).toMatchObject({ id: 'u1' });
-    await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/events'), { timeout: 4000 });
-    expect(nav.hard).toHaveBeenCalledTimes(1);
+  it('renders under Strict Mode without navigating', async () => {
+    mockApi();
+    renderWithProviders(
+      <StrictMode>
+        <RegisterView />
+      </StrictMode>,
+    );
+    await fillValid();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      fireEvent.click(submit());
+      await screen.findByText(t('AUTH.account_created'));
+      vi.advanceTimersByTime(60_000);
+      expect(nav.hard).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('moves focus to the welcome heading, then Continue is the next tab stop', async () => {
+    mockApi();
+    renderWithProviders(<RegisterView />);
+    await fillValid();
+    await userEvent.click(submit());
+    const heading = await screen.findByRole('heading', { name: t('AUTH.account_created') });
+    await waitFor(() => expect(document.activeElement).toBe(heading));
+    await userEvent.tab();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: t('AUTH.continue') }));
+  });
+
+  it('calls the navigation once on a double click of Continue', async () => {
+    mockApi();
+    renderWithProviders(<RegisterView />);
+    await fillValid();
+    await userEvent.click(submit());
+    const cont = await screen.findByRole('button', { name: t('AUTH.continue') });
+    fireEvent.click(cont);
+    fireEvent.click(cont);
+    expect(nav.hard).toHaveBeenCalledExactlyOnceWith('/events');
+    expect(cont).toBeDisabled();
+  });
+
+  it('navigates once when Continue is clicked, long after the card appeared', async () => {
+    mockApi();
+    renderWithProviders(<RegisterView />);
+    await fillValid();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      fireEvent.click(submit());
+      await screen.findByTestId('register-feedback');
+      vi.advanceTimersByTime(60_000);
+      expect(nav.hard).not.toHaveBeenCalled();
+      fireEvent.click(screen.getByRole('button', { name: t('AUTH.continue') }));
+      expect(nav.hard).toHaveBeenCalledExactlyOnceWith('/events');
+      vi.advanceTimersByTime(60_000);
+      expect(nav.hard).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('treats the 202 e-mail confirmation as success with the confirm-your-email card, no session and no navigation', async () => {
     mockApi(() => HttpResponse.json({ message: 'Check your email to confirm registration', code: 'EMAIL_CONFIRMATION_REQUIRED' }, { status: 202 }));
     const { queryClient } = renderWithProviders(<RegisterView />);
     await fillValid();
-    await userEvent.click(submit());
-
-    const card = await screen.findByTestId('register-feedback');
-    expect(card).toHaveTextContent(t('AUTH.check_email'));
-    expect(card).toHaveTextContent(t('AUTH.confirmation_sent'));
-    expect(card).toHaveTextContent('ada@example.com');
-    expect(card).not.toHaveTextContent(t('AUTH.account_created'));
-    expect(screen.getByRole('link', { name: t('AUTH.back_to_login') })).toHaveAttribute('href', '/login');
-    expect(queryClient.getQueryData(sessionKey) ?? null).toBeNull();
-    await new Promise((resolve) => setTimeout(resolve, 1800));
-    expect(nav.hard).not.toHaveBeenCalled();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      fireEvent.click(submit());
+      const card = await screen.findByTestId('register-feedback');
+      expect(card).toHaveTextContent(t('AUTH.check_email'));
+      expect(card).toHaveTextContent(t('AUTH.confirmation_sent'));
+      expect(card).toHaveTextContent('ada@example.com');
+      expect(card).not.toHaveTextContent(t('AUTH.account_created'));
+      await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('heading', { name: t('AUTH.check_email') })));
+      expect(screen.queryByRole('button', { name: t('AUTH.continue') })).toBeNull();
+      expect(screen.getByRole('link', { name: t('AUTH.back_to_login') })).toHaveAttribute('href', '/login');
+      expect(queryClient.getQueryData(sessionKey) ?? null).toBeNull();
+      expect(nav.hard).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(60_000);
+      expect(nav.hard).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('never writes a token to storage, cookies or the query cache', async () => {

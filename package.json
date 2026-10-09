@@ -104,7 +104,7 @@
     "@vitest/ui": "^5.0.3",
     "angular-eslint": "22.5.0",
     "autoprefixer": "^10.6.1",
-    "concurrently": "^10.0.3",
+    "concurrently": "^10.0.6",
     "cors": "^2.8.6",
     "@eslint/js": "^10.0.1",
     "eslint": "^10.12.0",

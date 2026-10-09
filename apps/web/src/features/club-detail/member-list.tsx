@@ -1,15 +1,15 @@
 'use client';
 'use no memo';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { BanDuration, ClubMember } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
 import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { api } from '@/lib/api';
 import { initials } from '@/lib/format';
 import { QrCode } from './qr-code';
-import { membersKey, toastError, useClubMembers } from './use-club-detail';
+import { mayBeTruncated } from '@/features/club-shared/list-limit';
+import { useMemberActions } from '@/features/club-shared/use-member-actions';
+import { useClubMembers } from './use-club-detail';
 
 const BAN_DURATIONS: readonly BanDuration[] = [1, 3, 5, 'permanent'];
 const BAN_LABEL = { 1: 'ban_1', 3: 'ban_3', 5: 'ban_5', permanent: 'ban_permanent' } as const;
@@ -36,10 +36,15 @@ export function qrValue(member: Pick<ClubMember, 'displayName' | 'socials'>): st
 
 const Card = ({ children }: { children: React.ReactNode }) => <section className="glass-card px-6 py-6 flex flex-col gap-4 text-sm">{children}</section>;
 
-export function MemberList({ clubId, isOwner }: { clubId: string; isOwner: boolean }) {
+interface RoleControls {
+  ownerId: string | null;
+  currentUserId: string | null;
+}
+
+/** `roleControls` adds the promote/demote buttons of the manage screen; the club page shows only kick and ban. */
+export function MemberList({ clubId, isOwner, roleControls }: { clubId: string; isOwner: boolean; roleControls?: RoleControls }) {
   const t = useTranslations('MEMBERS');
-  const tErrors = useTranslations('ERRORS');
-  const queryClient = useQueryClient();
+  const tManage = useTranslations('CLUB_MANAGE');
   const query = useClubMembers(clubId, true);
   const [qrFor, setQrFor] = useState<string | null>(null);
   const [banMenuFor, setBanMenuFor] = useState<string | null>(null);
@@ -73,34 +78,7 @@ export function MemberList({ clubId, isOwner }: { clubId: string; isOwner: boole
     };
   }, [popoverOpen]);
 
-  const remove = useMutation({
-    mutationFn: async ({ userId, duration }: { userId: string; duration?: BanDuration }): Promise<void> => {
-      if (duration === undefined) await api.members.remove(clubId, userId);
-      else await api.members.ban(clubId, userId, duration);
-    },
-    onMutate: async ({ userId }) => {
-      await queryClient.cancelQueries({ queryKey: membersKey(clubId) });
-      const list = queryClient.getQueryData<ClubMember[]>(membersKey(clubId));
-      const index = list?.findIndex((m) => m.userId === userId) ?? -1;
-      const removed = list?.[index];
-      queryClient.setQueryData<ClubMember[]>(membersKey(clubId), (current) => current?.filter((m) => m.userId !== userId));
-      return { removed, index };
-    },
-    // put back only the member this call removed, never a whole snapshot that would resurrect another call's kick
-    onError: (err, _vars, context) => {
-      const { removed, index = 0 } = context ?? {};
-      if (removed) {
-        queryClient.setQueryData<ClubMember[]>(membersKey(clubId), (current) => {
-          if (!current || current.some((m) => m.userId === removed.userId)) return current;
-          const next = [...current];
-          next.splice(Math.min(index, next.length), 0, removed);
-          return next;
-        });
-      }
-      toastError(err, tErrors);
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: membersKey(clubId) }),
-  });
+  const actions = useMemberActions(clubId);
 
   if (query.isPending) {
     return (
@@ -117,6 +95,11 @@ export function MemberList({ clubId, isOwner }: { clubId: string; isOwner: boole
       <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
         {t('title')} ({members.length})
       </h2>
+      {mayBeTruncated(members.length) && (
+        <p role="note" className="text-xs text-amber-700 dark:text-amber-400">
+          {t('list_truncated')}
+        </p>
+      )}
       {members.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('empty')}</p>
       ) : (
@@ -189,9 +172,20 @@ export function MemberList({ clubId, isOwner }: { clubId: string; isOwner: boole
                     </span>
                   )}
 
+                  {isOwner && roleControls && member.role !== 'organizer' && (
+                    <Button type="button" variant="outline" size="xs" className="ml-2 text-accent-600 dark:text-accent-400" disabled={actions.busy.has(member.userId)} onClick={() => void actions.changeRole(member.userId, 'organizer')}>
+                      {tManage('promote')}
+                    </Button>
+                  )}
+                  {isOwner && roleControls && member.role === 'organizer' && member.userId !== roleControls.ownerId && member.userId !== roleControls.currentUserId && (
+                    <Button type="button" variant="outline" size="xs" className="ml-2" disabled={actions.busy.has(member.userId)} onClick={() => void actions.changeRole(member.userId, 'member')}>
+                      {tManage('demote')}
+                    </Button>
+                  )}
+
                   {isOwner && member.role !== 'organizer' && (
                     <div className="flex items-center gap-1 ml-2 flex-shrink-0 relative">
-                      <Button type="button" variant="destructive" size="xs" aria-label={`${t('kick')} ${name}`} onClick={() => remove.mutate({ userId: member.userId })}>
+                      <Button type="button" variant="destructive" size="xs" aria-label={`${t('kick')} ${name}`} disabled={actions.busy.has(member.userId)} onClick={() => void actions.kick(member.userId)}>
                         {t('kick')}
                       </Button>
                       <Button
@@ -199,6 +193,7 @@ export function MemberList({ clubId, isOwner }: { clubId: string; isOwner: boole
                         variant="ghost"
                         size="xs"
                         className="text-orange-800 hover:text-orange-900 dark:text-orange-600 dark:hover:text-orange-700"
+                        disabled={actions.busy.has(member.userId)}
                         aria-expanded={banMenuFor === member.userId}
                         aria-label={`${t('ban')} ${name}`}
                         data-popover-trigger=""
@@ -219,7 +214,7 @@ export function MemberList({ clubId, isOwner }: { clubId: string; isOwner: boole
                                 className="w-full justify-start px-4 text-sm"
                                 onClick={() => {
                                   setBanMenuFor(null);
-                                  remove.mutate({ userId: member.userId, duration });
+                                  void actions.ban(member.userId, duration);
                                 }}
                               >
                                 {t(BAN_LABEL[duration])}

@@ -1,10 +1,10 @@
 import 'server-only';
 import { notFound } from 'next/navigation';
+import { isUuid } from '@/lib/uuid';
 import { cache } from 'react';
 import { isClubStub, type ClubEvent, type ClubOrStub } from '@book-club/contracts';
 import { serverApi } from '@/lib/server-api';
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const CLUB_REVALIDATE_SECONDS = 600;
 // the club page has no client fallback for a failed fetch, and a cold Render backend needs 30-60 s to wake
 export const CLUB_FETCH_TIMEOUT_MS = 9000;
@@ -27,7 +27,7 @@ export interface ClubDetailData {
  * Events are best-effort, as in Angular: a failed list renders as empty.
  */
 export const loadClub = cache(async (id: string): Promise<ClubDetailData> => {
-  if (!UUID.test(id)) notFound();
+  if (!isUuid(id)) notFound();
   const key = id.toLowerCase();
   const api = serverApi({ revalidate: CLUB_REVALIDATE_SECONDS, tags: [`club:${key}`] }, { timeoutMs: CLUB_FETCH_TIMEOUT_MS });
   const [club, events] = await Promise.allSettled([api.clubs.get(key), api.clubs.events(key)]);

@@ -15,5 +15,15 @@
   },
   "SUPPORT": {
     "loading": "Loading…"
+  },
+  "RANDOMIZER": {
+    "breadcrumb_aria": "Breadcrumb"
+  },
+  "AUTH": {
+    "continue": "Continue"
+  },
+  "CLUB_MANAGE": {
+    "chart_summary": "{{ label }}: {{ items }}",
+    "chart_summary_item": "{{ title }}: {{ count }}"
   }
 }
