@@ -49,7 +49,9 @@ function RandomizerView({ clubId }: { clubId: string }) {
   const [excluded, setExcluded] = useState<ReadonlySet<string>>(() => new Set());
   const [result, setResult] = useState<ClubMember | null>(null);
   const [spinning, setSpinning] = useState(false);
-  const [saved, setSaved] = useState(false);
+  // each draw has its own number, so a save is tied to the draw it was made for even when the same member is drawn again
+  const [draw, setDraw] = useState(0);
+  const [savedDraw, setSavedDraw] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const spinGuard = useRef(false);
 
@@ -78,12 +80,12 @@ function RandomizerView({ clubId }: { clubId: string }) {
     spinGuard.current = true;
     setSpinning(true);
     setResult(null);
-    setSaved(false);
     const pool = selected;
     timer.current = setTimeout(() => {
       spinGuard.current = false;
       if (!isMounted()) return;
       setResult(pool[pickIndex(pool.length)] ?? null);
+      setDraw((n) => n + 1);
       setSpinning(false);
     }, SPIN_MS);
   };
@@ -91,13 +93,14 @@ function RandomizerView({ clubId }: { clubId: string }) {
   const save = () =>
     run('save', async () => {
       if (!result) return;
+      const target = draw;
       const session = await api.randomizer.createSession(clubId, {
         purpose,
         candidates: selected.map((m) => ({ userId: m.userId, displayName: m.displayName, avatarUrl: m.avatarUrl })),
         result: { userId: result.userId, displayName: result.displayName, avatarUrl: result.avatarUrl },
       });
       queryClient.setQueryData<RandomizerSession[]>(historyKey(clubId), (list) => [session, ...(list ?? [])]);
-      if (isMounted()) setSaved(true);
+      if (isMounted()) setSavedDraw(target);
     });
 
   return (
@@ -228,7 +231,7 @@ function RandomizerView({ clubId }: { clubId: string }) {
               ) : null}
 
               {result && !spinning ? (
-                <Button type="button" variant="outline" onClick={() => void save()} disabled={busy.has('save') || saved} className="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3 h-auto">
+                <Button type="button" variant="outline" onClick={() => void save()} disabled={busy.has('save') || savedDraw === draw} className="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3 h-auto">
                   {busy.has('save') ? t('saving') : t('save')}
                 </Button>
               ) : null}

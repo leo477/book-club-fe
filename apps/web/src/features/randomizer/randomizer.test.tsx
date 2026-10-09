@@ -200,6 +200,29 @@ describe('Randomizer', () => {
     expect(screen.getByRole('button', { name: t('RANDOMIZER.save') })).toBeEnabled();
   });
 
+  it('keeps Save enabled on a new draw when the save of the previous draw resolves during the next spin', async () => {
+    const user = userEvent.setup();
+    const { open, release } = gate();
+    let posts = 0;
+    server.use(
+      http.post(`${API}/clubs/${ID}/randomizer/sessions`, async () => {
+        posts += 1;
+        await open;
+        return HttpResponse.json(sessionJson(), { status: 201 });
+      }),
+    );
+    setup();
+    await ready();
+    await spin(user);
+    await user.click(screen.getByRole('button', { name: t('RANDOMIZER.save') }));
+    await user.click(spinButton());
+    release();
+    const result = await screen.findByTestId('randomizer-result', {}, { timeout: 4000 });
+    expect(result).toHaveTextContent('Ada Lovelace');
+    expect(posts).toBe(1);
+    expect(screen.getByRole('button', { name: t('RANDOMIZER.save') })).toBeEnabled();
+  });
+
   it('limits the purpose to the 200 characters the backend stores', async () => {
     setup();
     await ready();

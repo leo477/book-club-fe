@@ -275,6 +275,7 @@ apps/
           use-club-manage.ts
         club-shared/
           bundle-boundary.test.ts
+          club-actions.ts
           guarded-runner.test.tsx
           guarded-runner.ts
           invalidate-club.ts
