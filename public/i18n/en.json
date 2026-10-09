@@ -659,7 +659,8 @@
     "uploading": "Uploading…",
     "enter_url": "🔗 Enter URL",
     "hide_url": "🔗 Hide URL",
-    "upload_failed": "Upload failed. Please try again or use a URL."
+    "upload_failed": "Upload failed. Please try again or use a URL.",
+    "remove": "Remove cover"
   },
   "SEO": {
     "clubs_title": "Book Clubs | Book Club",

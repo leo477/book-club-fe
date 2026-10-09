@@ -146,6 +146,7 @@ const rows: Row[] = [
   { name: 'chat.markRead', call: (a) => a.chat.markRead('r1', 'm1'), method: 'POST', path: '/chat/rooms/r1/read', body: { last_read_message_id: 'm1' } },
   { name: 'chat.unreadCount', call: (a) => a.chat.unreadCount('r1'), method: 'GET', path: '/chat/rooms/r1/unread-count', res: f.unreadCount },
   { name: 'books.search', call: (a) => a.books.search('dune'), method: 'GET', path: '/books/search', search: '?q=dune&limit=5', res: [f.bookSuggestion] },
+  { name: 'books.search with call options', call: (a) => a.books.search('dune', 3, { suppressErrorToast: true, skipAuthRedirect: true, signal: new AbortController().signal }), method: 'GET', path: '/books/search', search: '?q=dune&limit=3', res: [f.bookSuggestion] },
   { name: 'books.details', call: (a) => a.books.details('gb1'), method: 'GET', path: '/books/details/gb1', res: f.bookSuggestion },
   { name: 'books.stores', call: (a) => a.books.stores('Dune'), method: 'GET', path: '/books/stores', search: '?title=Dune', res: [f.storeResult] },
   { name: 'geocode.autocomplete', call: (a) => a.geocode.autocomplete('kyiv', 'tok'), method: 'GET', path: '/geocode/autocomplete', search: '?q=kyiv&lang=uk&limit=5&session_token=tok', res: [f.geocodeSuggestion] },
