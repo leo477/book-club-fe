@@ -1,11 +1,14 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { render, screen, waitFor, within } from '@testing-library/react';
+import { NextIntlClientProvider } from 'next-intl';
+import { nest } from '@/i18n/locale';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { RequireRole } from '@/features/auth/require-auth';
 import { NEXT_ROUTES, mockSession } from '@/features/organizer/test-support';
 import { StranglerProvider } from '@/strangler/context';
-import { API, clubJson, memberJson, renderWithProviders, server, setupApiServer } from '@/test/harness';
+import { API, clubJson, memberJson, messages, renderWithProviders, server, setupApiServer } from '@/test/harness';
 import { ClubManage } from './club-manage';
 import { ID, mockManageReads, requestJson, t } from './test-support';
 
@@ -142,6 +145,56 @@ describe('ClubManage', () => {
   it('shows organizers only to a global organizer with no membership', async () => {
     asViewer('other', 'member', { isMember: false, role: null });
     expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.organizers_only'));
+  });
+
+  it('shows the error panel without retry delays, and re-checks a cached role on mount', async () => {
+    mockSession({ id: 'other', role: 'organizer' });
+    mockManageReads();
+    let reads = 0;
+    server.use(
+      http.get(`${API}/clubs/${ID}`, () => HttpResponse.json(club())),
+      http.get(`${API}/clubs/${ID}/my-membership`, () => (reads++, HttpResponse.json({ detail: 'x' }, { status: 400 }))),
+    );
+    // the defaults a real app has: three retries with growing delays
+    const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 60_000 } } });
+    queryClient.setQueryData(['club', ID, 'membership'], { isMember: true, role: 'organizer', joinRequestStatus: 'none' }, { updatedAt: Date.now() - 1000 });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <NextIntlClientProvider locale="uk" messages={nest(messages.uk)}>
+          <StranglerProvider value={NEXT_ROUTES}>
+            <ClubManage id={ID} />
+          </StranglerProvider>
+        </NextIntlClientProvider>
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByRole('alert', {}, { timeout: 500 })).toHaveTextContent(t('ERRORS.unexpected'));
+    expect(reads).toBe(1);
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
+
+  it('does not show the controls from a cached organizer role while the role is being re-checked', async () => {
+    mockSession({ id: 'other', role: 'organizer' });
+    mockManageReads();
+    server.use(
+      http.get(`${API}/clubs/${ID}`, () => HttpResponse.json(club())),
+      http.get(`${API}/clubs/${ID}/my-membership`, async () => {
+        await new Promise((r) => setTimeout(r, 100));
+        return HttpResponse.json({ isMember: true, role: 'member', joinRequestStatus: 'none' });
+      }),
+    );
+    const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 60_000 } } });
+    queryClient.setQueryData(['club', ID, 'membership'], { isMember: true, role: 'organizer', joinRequestStatus: 'none' }, { updatedAt: Date.now() - 1000 });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <NextIntlClientProvider locale="uk" messages={nest(messages.uk)}>
+          <StranglerProvider value={NEXT_ROUTES}>
+            <ClubManage id={ID} />
+          </StranglerProvider>
+        </NextIntlClientProvider>
+      </QueryClientProvider>,
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.organizers_only'));
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
 
   it('shows an error state when the membership cannot be read', async () => {

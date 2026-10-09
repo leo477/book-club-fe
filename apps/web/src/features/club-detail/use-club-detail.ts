@@ -39,8 +39,15 @@ export function useClubRole(club: ClubRef) {
   return { user, isAuthenticated: user !== null, ready, isOwner, isMember };
 }
 
-export function useMyMembership(clubId: string, enabled: boolean) {
-  return useQuery({ queryKey: membershipKey(clubId), queryFn: () => api.clubs.myMembership(clubId), enabled, ...noRefocus });
+/** `fresh` is for gates: no retry delay on failure, and a cached answer is re-checked on mount. */
+export function useMyMembership(clubId: string, enabled: boolean, fresh = false) {
+  return useQuery({
+    queryKey: membershipKey(clubId),
+    queryFn: () => api.clubs.myMembership(clubId),
+    enabled,
+    ...(fresh ? { retry: false, staleTime: 0, refetchOnMount: 'always' as const } : {}),
+    ...noRefocus,
+  });
 }
 
 /** `initial` is the anonymous server list; a signed-in viewer refetches once because isAttending is per user. */

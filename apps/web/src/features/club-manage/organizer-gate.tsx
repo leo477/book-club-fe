@@ -3,7 +3,7 @@
 
 import { isClubStub, type Club } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { AppLink } from '@/components/app-link';
 import { ErrorPanel } from '@/components/error-panel';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,10 @@ export function OrganizerOfClub({ clubId, children }: { clubId: string; children
   const query = useClubForEdit(clubId);
   const club = query.data && !isClubStub(query.data) ? query.data : null;
   const isOwner = club !== null && user !== null && club.organizerId === user.id;
-  const membership = useMyMembership(clubId, club !== null && user !== null && !isOwner);
+  const membership = useMyMembership(clubId, club !== null && user !== null && !isOwner, true);
+  // a cached role from an earlier visit is shown only after this visit has re-checked it
+  const [mountedAt] = useState(() => Date.now());
+  const checked = membership.dataUpdatedAt >= mountedAt;
 
   const missing = <Notice title={tDetail('not_found')} back={{ href: '/clubs', label: tDetail('back') }} />;
   const denied = <Notice title={tErrors('organizers_only')} back={{ href: `/clubs/${clubId}`, label: tDetail('back_short') }} />;
@@ -60,8 +63,8 @@ export function OrganizerOfClub({ clubId, children }: { clubId: string; children
   }
   if (!club) return missing;
   if (!isOwner) {
-    if (membership.isPending) return <Busy />;
     if (membership.isError) return <ErrorPanel onRetry={() => void membership.refetch()} />;
+    if (membership.isPending || !checked) return <Busy />;
     if (membership.data?.role !== 'organizer') return denied;
   }
   return children(club);
