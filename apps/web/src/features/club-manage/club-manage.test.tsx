@@ -201,7 +201,6 @@ describe('ClubManage', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.unexpected'));
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
-});
 
   it('shows organizers only, not a spinner, when there is no signed-in user', async () => {
     mockSession(null);
@@ -239,5 +238,6 @@ describe('ClubManage', () => {
     expect(screen.queryByRole('heading', { level: 1, name: 'Alpha Readers' })).not.toBeInTheDocument();
     expect(await screen.findByRole('alert')).toHaveTextContent(t('CLUB_DETAIL.not_found'));
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
   });
 });
