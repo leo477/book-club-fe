@@ -65,6 +65,7 @@ export function TypeaheadCombobox<T>({
   const [items, setItems] = useState<T[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
+  const [list, setList] = useState<HTMLElement | null>(null);
   const [cache] = useState(() => new TtlCache<T[]>(ttlMs));
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const controller = useRef<AbortController | null>(null);
@@ -77,10 +78,28 @@ export function TypeaheadCombobox<T>({
   });
 
   const expanded = open && items.length > 0;
-  // cmdk hard-codes aria-expanded="true" on its input; ARIA 1.2 wants it to follow the popup
+  // cmdk hard-codes aria-expanded="true" on its input and reads aria-activedescendant before the first option is marked selected;
+  // ARIA 1.2 wants the first to follow the popup and the second to name the highlighted option
   useLayoutEffect(() => {
     input.current?.setAttribute('aria-expanded', String(expanded));
   }, [expanded]);
+
+  useEffect(() => {
+    const el = input.current;
+    if (!el || !list) return;
+    const sync = () => {
+      const id = list.querySelector('[cmdk-item][aria-selected="true"]')?.id;
+      if (id) el.setAttribute('aria-activedescendant', id);
+      else el.removeAttribute('aria-activedescendant');
+    };
+    sync();
+    const observer = new MutationObserver(sync);
+    observer.observe(list, { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-selected'] });
+    return () => {
+      observer.disconnect();
+      el.removeAttribute('aria-activedescendant');
+    };
+  }, [list]);
 
   useEffect(
     () => () => {
@@ -174,6 +193,7 @@ export function TypeaheadCombobox<T>({
           </PopoverAnchor>
           <PopoverContent
             align="start"
+            role="presentation"
             className="w-(--radix-popover-trigger-width) min-w-48 overflow-hidden p-0"
             onOpenAutoFocus={(event) => event.preventDefault()}
             onCloseAutoFocus={(event) => event.preventDefault()}
@@ -183,7 +203,7 @@ export function TypeaheadCombobox<T>({
             // keep the caret in the input while the pointer picks an option
             onMouseDown={(event) => event.preventDefault()}
           >
-            <CommandList label={label}>
+            <CommandList label={label} ref={setList}>
               {items.map((item, index) => (
                 <CommandItem key={`${index}:${getKey(item)}`} value={`${index}:${getKey(item)}`} onSelect={() => pick(item)}>
                   {renderItem(item)}

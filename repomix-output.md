@@ -180,11 +180,14 @@ apps/
           spinner.tsx
           tabs.tsx
           textarea.tsx
+        address-autocomplete.test.tsx
         address-autocomplete.tsx
         analytics-events.tsx
         app-link.test.tsx
         app-link.tsx
+        book-autocomplete.test.tsx
         book-autocomplete.tsx
+        cover-upload.test.tsx
         cover-upload.tsx
         empty-state.tsx
         error-panel.tsx
@@ -200,6 +203,7 @@ apps/
         toaster-host.test.tsx
         toaster-host.tsx
         toaster-impl.tsx
+        typeahead-combobox.test.tsx
         typeahead-combobox.tsx
       features/
         auth/
