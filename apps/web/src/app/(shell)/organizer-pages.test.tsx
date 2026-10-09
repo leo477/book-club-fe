@@ -73,10 +73,10 @@ const session = (role: string) =>
 const params = (id: string) => ({ params: Promise.resolve({ id }) });
 
 const pages = [
-  { name: '/clubs/create', element: () => CreateClubPage(), heading: 'CREATE_CLUB.title', field: 'club-name-input' },
-  { name: '/clubs/:id/edit', element: async () => EditClubPage(params(UPPER)), heading: 'EDIT_CLUB.title', field: 'club-name-input' },
-  { name: '/clubs/:id/events/create', element: async () => CreateEventPage(params(UPPER)), heading: 'CREATE_EVENT.heading', field: 'event-title-input' },
-  { name: '/events/:id/edit', element: async () => EditEventPage(params(EVENT)), heading: 'EVENTS.editEvent', field: 'event-title-input' },
+  { name: '/clubs/create', element: () => CreateClubPage(), heading: 'CREATE_CLUB.title', field: 'club-name-input', perClub: false },
+  { name: '/clubs/:id/edit', element: async () => EditClubPage(params(UPPER)), heading: 'EDIT_CLUB.title', field: 'club-name-input', perClub: true },
+  { name: '/clubs/:id/events/create', element: async () => CreateEventPage(params(UPPER)), heading: 'CREATE_EVENT.heading', field: 'event-title-input', perClub: true },
+  { name: '/events/:id/edit', element: async () => EditEventPage(params(EVENT)), heading: 'EVENTS.editEvent', field: 'event-title-input', perClub: false },
 ];
 
 describe('organizer pages: metadata', () => {
@@ -95,7 +95,7 @@ describe('organizer pages: metadata', () => {
   });
 });
 
-describe.each(pages)('$name page', ({ element, heading, field }) => {
+describe.each(pages)('$name page', ({ element, heading, field, perClub }) => {
   it('shows the form to an organizer with every message it needs in the shipped namespaces', async () => {
     session('organizer');
     renderWithProviders(
@@ -106,7 +106,7 @@ describe.each(pages)('$name page', ({ element, heading, field }) => {
     expect(nav.missing).toEqual([]);
   });
 
-  it('turns a plain reader away with the organizers-only toast', async () => {
+  it.skipIf(perClub)('turns a plain reader away with the organizers-only toast', async () => {
     session('user');
     renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
     await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
@@ -119,6 +119,34 @@ describe.each(pages)('$name page', ({ element, heading, field }) => {
     server.use(http.get(`${API}/auth/session-status`, () => HttpResponse.json({ hasSession: false })));
     renderWithProviders(await element());
     await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/login'));
+  });
+});
+
+describe.each(pages.filter((p) => p.perClub))('$name page per-club gate', ({ element, heading, field }) => {
+  const asMemberOfOther = (role: string) => {
+    session('user');
+    server.use(
+      http.get(`${API}/clubs/${CLUB}`, () => HttpResponse.json(clubJson({ id: CLUB, organizerId: 'owner' }))),
+      http.get(`${API}/clubs/${CLUB}/my-membership`, () => HttpResponse.json({ isMember: true, role, joinRequestStatus: 'none' })),
+    );
+  };
+
+  it('admits a global user who is an organizer of this club', async () => {
+    asMemberOfOther('organizer');
+    renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
+    await screen.findByRole('heading', { level: 1, name: messages.uk[heading] ?? heading });
+    await screen.findByTestId(field);
+    expect(nav.replace).not.toHaveBeenCalled();
+    expect(nav.missing).toEqual([]);
+  });
+
+  it('denies a plain member of the club', async () => {
+    asMemberOfOther('member');
+    renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
+    expect(await screen.findByRole('alert')).toHaveTextContent(messages.uk['ERRORS.organizers_only'] ?? '');
+    expect(screen.queryByTestId(field)).not.toBeInTheDocument();
+    expect(nav.replace).not.toHaveBeenCalled();
+    expect(nav.missing).toEqual([]);
   });
 });
 
