@@ -253,15 +253,25 @@ apps/
           structured-data.ts
           use-club-detail.ts
         club-manage/
+          bans.test.tsx
           bans.tsx
+          chat-room-form.test.tsx
           chat-room-form.tsx
+          club-manage.test.tsx
           club-manage.tsx
+          dashboard.test.tsx
           dashboard.tsx
+          delete-club.test.tsx
           delete-club.tsx
           lazy.tsx
+          members.test.tsx
+          requests.test.tsx
           requests.tsx
+          status-actions.test.tsx
           status-actions.tsx
+          test-support.ts
           tools.tsx
+          use-club-manage.test.tsx
           use-club-manage.ts
           use-member-actions.ts
         clubs/
