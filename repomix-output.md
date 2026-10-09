@@ -113,6 +113,7 @@ apps/
             page.test.tsx
             page.tsx
           layout.tsx
+          organizer-pages.test.tsx
         %5F%5Fstrangler-probe/
           page.tsx
         %5F%5Fui/
