@@ -1,4 +1,5 @@
 import { screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
@@ -11,6 +12,8 @@ import CreateClubPage, { generateMetadata as createClubMeta } from './clubs/crea
 import EditClubPage, { generateMetadata as editClubMeta } from './clubs/[id]/edit/page';
 import CreateEventPage, { generateMetadata as createEventMeta } from './clubs/[id]/events/create/page';
 import EditEventPage, { generateMetadata as editEventMeta } from './events/[id]/edit/page';
+import ManagePage, { generateMetadata as manageMeta } from './clubs/[id]/manage/page';
+import RandomizerPage, { generateMetadata as randomizerMeta } from './clubs/[id]/randomizer/page';
 
 const nav = vi.hoisted(() => ({ replace: vi.fn(), hard: vi.fn(), toast: vi.fn(), missing: [] as string[] }));
 vi.mock('next/navigation', () => ({
@@ -82,6 +85,8 @@ describe('organizer pages: metadata', () => {
     ['/clubs/:id/edit', () => editClubMeta(params(UPPER)), 'SEO.clubs_title', `/clubs/${CLUB}/edit`],
     ['/clubs/:id/events/create', () => createEventMeta(params(UPPER)), 'TITLES.events', `/clubs/${CLUB}/events/create`],
     ['/events/:id/edit', () => editEventMeta(params(EVENT)), 'TITLES.events', `/events/${EVENT}/edit`],
+    ['/clubs/:id/manage', () => manageMeta(params(UPPER)), 'SEO.clubs_title', `/clubs/${CLUB}/manage`],
+    ['/clubs/:id/randomizer', () => randomizerMeta(params(UPPER)), 'SEO.clubs_title', `/clubs/${CLUB}/randomizer`],
   ])('%s is titled, never indexed and canonical in lower case', async (_name, meta, titleKey, path) => {
     const metadata = await meta();
     expect(metadata.title).toBe(messages.uk[titleKey]);
@@ -122,8 +127,57 @@ describe('organizer pages: id parameter', () => {
     ['/clubs/:id/edit', (id: string) => EditClubPage(params(id))],
     ['/clubs/:id/events/create', (id: string) => CreateEventPage(params(id))],
     ['/events/:id/edit', (id: string) => EditEventPage(params(id))],
+    ['/clubs/:id/manage', (id: string) => ManagePage(params(id))],
+    ['/clubs/:id/randomizer', (id: string) => RandomizerPage(params(id))],
   ])('%s answers 404 for an id that is not a UUID', async (_name, page) => {
     await expect(page('create')).rejects.toThrow('NEXT_NOT_FOUND');
     await expect(page('../../auth/me')).rejects.toThrow('NEXT_NOT_FOUND');
+  });
+});
+
+describe.each([
+  { name: '/clubs/:id/manage', element: () => ManagePage(params(UPPER)) },
+  { name: '/clubs/:id/randomizer', element: () => RandomizerPage(params(UPPER)) },
+])('$name page', ({ name, element }) => {
+  const reads = () =>
+    server.use(
+      http.get(`${API}/clubs/${CLUB}/members`, () => HttpResponse.json([{ userId: 'm1', displayName: 'Grace', avatarUrl: null, role: 'member', socials: { telegram: 'g' }, socialsPublic: true }, { userId: 'm2', displayName: 'Alan', avatarUrl: null, role: 'member', socials: null, socialsPublic: false }])),
+      http.get(`${API}/clubs/${CLUB}/bans`, () => HttpResponse.json([{ userId: 'm1', clubId: CLUB, bannedAt: '2099-01-01T00:00:00Z', duration: 3, bannedBy: 'u1' }])),
+      http.get(`${API}/clubs/${CLUB}/join-requests`, () => HttpResponse.json([{ userId: 'r1', displayName: 'Kat', avatarUrl: null, status: 'pending', source: 'link', createdAt: '2099-01-01T00:00:00Z' }])),
+      http.get(`${API}/clubs/${CLUB}/stats`, () => HttpResponse.json({ topActive: [], topWinners: [], recentAttendance: [], totalMembers: 1, totalEvents: 0, totalMessages: 0, memberGrowth: [], eventFrequency: [], bannedUsersCount: 0, upcomingEventsCount: 0 })),
+      http.get(`${API}/clubs/${CLUB}/randomizer/history`, () => HttpResponse.json([])),
+    );
+
+  it('renders for an organizer with every message it needs in the shipped namespaces', async () => {
+    session('organizer');
+    reads();
+    renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
+    if (name.endsWith('manage')) {
+      await screen.findByRole('heading', { level: 1, name: 'Alpha Readers' });
+      const user = userEvent.setup();
+      for (const tab of ['members', 'requests', 'settings', 'tools']) {
+        await user.click(screen.getByRole('tab', { name: new RegExp(messages.uk[`CLUB_MANAGE.tab_${tab}`] ?? tab) }));
+        await screen.findByRole('tabpanel');
+      }
+      await screen.findByText(messages.uk['CLUB_DETAIL.chat_create_title'] ?? '');
+    } else {
+      await screen.findByRole('heading', { level: 1, name: new RegExp(messages.uk['RANDOMIZER.title'] ?? '') });
+      await screen.findByText('Grace');
+    }
+    expect(nav.missing).toEqual([]);
+  });
+
+  it('turns a plain reader away with the organizers-only toast', async () => {
+    session('user');
+    renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
+    expect(nav.toast).toHaveBeenCalledWith('error', messages.uk['ERRORS.organizers_only']);
+    expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
+  });
+
+  it('sends a guest to /login', async () => {
+    server.use(http.get(`${API}/auth/session-status`, () => HttpResponse.json({ hasSession: false })));
+    renderWithProviders(await element());
+    await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/login'));
   });
 });

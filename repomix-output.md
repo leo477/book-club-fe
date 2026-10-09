@@ -327,7 +327,9 @@ apps/
           use-profile.ts
         randomizer/
           lazy.tsx
+          pick.test.ts
           pick.ts
+          randomizer.test.tsx
           randomizer.tsx
           use-randomizer.ts
         support/
