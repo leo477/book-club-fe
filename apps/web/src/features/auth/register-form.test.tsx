@@ -169,14 +169,37 @@ describe('RegisterView', () => {
     }
   });
 
-  it('announces the welcome card and continues immediately without navigating again when the timer would fire', async () => {
+  it('moves focus to the welcome heading, then Continue is the next tab stop', async () => {
+    mockApi();
+    renderWithProviders(<RegisterView />);
+    await fillValid();
+    await userEvent.click(submit());
+    const heading = await screen.findByRole('heading', { name: t('AUTH.account_created') });
+    await waitFor(() => expect(document.activeElement).toBe(heading));
+    await userEvent.tab();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: t('AUTH.continue') }));
+  });
+
+  it('calls the navigation once on a double click of Continue', async () => {
+    mockApi();
+    renderWithProviders(<RegisterView />);
+    await fillValid();
+    await userEvent.click(submit());
+    const cont = await screen.findByRole('button', { name: t('AUTH.continue') });
+    fireEvent.click(cont);
+    fireEvent.click(cont);
+    expect(nav.hard).toHaveBeenCalledExactlyOnceWith('/events');
+    expect(cont).toBeDisabled();
+  });
+
+  it('continues immediately without navigating again when the timer would fire', async () => {
     mockApi();
     renderWithProviders(<RegisterView />);
     await fillValid();
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       fireEvent.click(submit());
-      const card = await screen.findByRole('status');
+      const card = await screen.findByTestId('register-feedback');
       expect(card).toHaveTextContent(t('AUTH.account_created'));
       fireEvent.click(screen.getByRole('button', { name: t('AUTH.continue') }));
       expect(nav.hard).toHaveBeenCalledExactlyOnceWith('/events');
@@ -216,7 +239,7 @@ describe('RegisterView', () => {
       expect(card).toHaveTextContent(t('AUTH.confirmation_sent'));
       expect(card).toHaveTextContent('ada@example.com');
       expect(card).not.toHaveTextContent(t('AUTH.account_created'));
-      expect(screen.getByRole('status')).toBe(card);
+      await waitFor(() => expect(document.activeElement).toBe(screen.getByRole('heading', { name: t('AUTH.check_email') })));
       expect(screen.queryByRole('button', { name: t('AUTH.continue') })).toBeNull();
       expect(screen.getByRole('link', { name: t('AUTH.back_to_login') })).toHaveAttribute('href', '/login');
       expect(queryClient.getQueryData(sessionKey) ?? null).toBeNull();
