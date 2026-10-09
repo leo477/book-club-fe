@@ -52,7 +52,7 @@ export function ClubEventsInteractive({ club, initialEvents }: ClubEventsProps) 
   const tRsvp = useTranslations('events.rsvp');
   const tErrors = useTranslations('ERRORS');
   const queryClient = useQueryClient();
-  const role = useClubRole(club, true);
+  const role = useClubRole(club);
   const [tab, setTab] = useState<Tab>('upcoming');
   const [sort, setSort] = useState<SortKey>('date');
   const [winnerEventId, setWinnerEventId] = useState<string | null>(null);
@@ -140,7 +140,7 @@ export function ClubEventsInteractive({ club, initialEvents }: ClubEventsProps) 
     <EventsFrame
       action={
         role.manageUnknown ? (
-          <Skeleton data-testid="create-event-placeholder" className="h-8 w-32" />
+          <Skeleton aria-hidden data-testid="create-event-placeholder" className="h-8 w-32" />
         ) : (
           role.canManage && (
             <Button asChild size="sm">

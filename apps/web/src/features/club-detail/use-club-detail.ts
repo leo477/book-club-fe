@@ -43,7 +43,7 @@ export function useClubRole(club: ClubRef, revalidateRole = false) {
   return { user, isAuthenticated: user !== null, ready, isOwner, isMember, canManage, manageUnknown };
 }
 
-/** `fresh` is for gates: no retry delay on failure, and a cached answer is re-checked on mount. */
+/** `fresh` is for gates and the manage links: no retry delay on failure, and a cached answer is re-checked on mount. */
 export function useMyMembership(clubId: string, enabled: boolean, fresh = false) {
   return useQuery({
     queryKey: membershipKey(clubId),

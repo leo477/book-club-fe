@@ -149,7 +149,7 @@ export function ManagePanel({ club }: { club: ClubRef }) {
   const t = useTranslations('CLUB_DETAIL');
   const tManage = useTranslations('CLUB_MANAGE');
   const role = useClubRole(club, true);
-  if (role.manageUnknown) return <Skeleton data-testid="manage-placeholder" className="h-[7.5rem] w-full" />;
+  if (role.manageUnknown) return <Skeleton aria-hidden data-testid="manage-placeholder" className="h-28 w-full" />;
   if (!role.canManage) return null;
   return (
     <div className="glass-card-subtle p-4 flex flex-col gap-3 text-sm">

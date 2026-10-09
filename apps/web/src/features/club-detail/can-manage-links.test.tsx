@@ -3,7 +3,8 @@ import { HttpResponse, delay, http } from 'msw';
 import { describe, expect, it, vi } from 'vitest';
 import { API, clubJson, messages, renderWithProviders, server, setupApiServer, userJson } from '@/test/harness';
 import { ClubEventsInteractive } from './club-events';
-import { ManagePanel } from './membership';
+import { sessionKey } from '@/features/clubs/use-session';
+import { JoinCta, ManagePanel } from './membership';
 import { membershipKey } from './use-club-detail';
 
 vi.mock('@/lib/toast', () => ({ showToast: vi.fn() }));
@@ -50,18 +51,38 @@ describe('canManage links', () => {
   });
 
   it('hides the links when a cached organizer role is refetched as member', async () => {
-    const hits = mockApi({ role: 'member', wait: 40 });
-    const view = renderWithProviders(<ManagePanel club={club} />);
-    view.queryClient.setQueryData(membershipKey('c1'), { isMember: true, role: 'organizer', joinRequestStatus: 'none' });
+    const hits = mockApi({ role: 'member', wait: 60 });
+    const view = renderWithProviders(<ManagePanel club={club} />, 'uk', (qc) =>
+      qc.setQueryData(membershipKey('c1'), { isMember: true, role: 'organizer', joinRequestStatus: 'none' }),
+    );
+    await waitFor(() => expect(view.queryClient.getQueryState(sessionKey)?.status).toBe('success'));
+    const link = await screen.findByRole('link', { name: new RegExp(manageLabel) });
+    expect(link).toBeInTheDocument();
     await waitFor(() => expect(hits.membership).toBe(1));
     await waitFor(() => expect(screen.queryByRole('link', { name: new RegExp(manageLabel) })).toBeNull());
     expect(view.container).toBeEmptyDOMElement();
+    expect(hits.membership).toBe(1);
+  });
+
+  it('makes a single membership request across the panel, the join prompt and the create-event island', async () => {
+    const hits = mockApi({ role: 'organizer', wait: 30 });
+    renderWithProviders(
+      <>
+        <ManagePanel club={club} />
+        <JoinCta club={club} />
+        <ClubEventsInteractive club={club} initialEvents={[]} />
+      </>,
+    );
+    expect(await screen.findByText(createLabel)).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: new RegExp(manageLabel) })).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(hits.membership).toBe(1);
   });
 
   it('makes no membership request and shows no placeholder for guests', async () => {
     const guest = mockApi({ user: null, role: null });
     const first = renderWithProviders(<ManagePanel club={club} />);
-    await new Promise((r) => setTimeout(r, 40));
+    await waitFor(() => expect(first.queryClient.getQueryState(sessionKey)?.status).toBe('success'));
     expect(first.container).toBeEmptyDOMElement();
     expect(guest.membership).toBe(0);
   });
