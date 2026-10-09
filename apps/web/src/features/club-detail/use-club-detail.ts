@@ -57,7 +57,7 @@ export function useClubMembers(clubId: string, enabled: boolean) {
   return useQuery({
     queryKey: membersKey(clubId),
     // a non-member may be refused; that must neither redirect nor break the page
-    queryFn: () => api.members.list(clubId, {}, { skipAuthRedirect: true }),
+    queryFn: ({ signal }) => api.members.list(clubId, {}, { skipAuthRedirect: true, signal }),
     enabled,
     retry: false,
     ...noRefocus,

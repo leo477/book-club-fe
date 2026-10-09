@@ -22,7 +22,7 @@ const noRefocus = { refetchOnWindowFocus: false } as const;
 
 /** The club behind the edit form; a private club the viewer cannot see arrives as a stub and is treated as missing by the caller. */
 export const useClubForEdit = (clubId: string) =>
-  useQuery({ queryKey: clubKey(clubId), queryFn: () => api.clubs.get(clubId), retry: false, staleTime: 0, ...noRefocus });
+  useQuery({ queryKey: clubKey(clubId), queryFn: ({ signal }) => api.clubs.get(clubId, { signal }), retry: false, staleTime: 0, ...noRefocus });
 
 interface CreateClubInput {
   club: CreateClubRequest;

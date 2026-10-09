@@ -31,22 +31,26 @@ const valuesOf = (club: Club): EditClubForm => ({
   venueDescription: club.afterMeetingVenue?.description ?? '',
 });
 
-export function EditClub({ id }: { id: string }) {
+/** `embedded` drops the standalone page frame, for the settings tab of the manage screen. */
+export function EditClub({ id, embedded = false }: { id: string; embedded?: boolean }) {
   const t = useTranslations('EDIT_CLUB');
   const query = useClubForEdit(id);
   const club = query.data && !isClubStub(query.data) ? query.data : null;
 
+  const content = query.isPending ? (
+    <div className="flex justify-center py-12">
+      <Spinner />
+    </div>
+  ) : club ? (
+    <EditClubFormView club={club} />
+  ) : (
+    <ErrorAlert>{t('not_found')}</ErrorAlert>
+  );
+
+  if (embedded) return <div className="mx-auto w-full max-w-lg">{content}</div>;
   return (
     <FormCard subtitle={t('subtitle')} title={t('title')}>
-      {query.isPending ? (
-        <div className="flex justify-center py-12">
-          <Spinner />
-        </div>
-      ) : club ? (
-        <EditClubFormView club={club} />
-      ) : (
-        <ErrorAlert>{t('not_found')}</ErrorAlert>
-      )}
+      {content}
     </FormCard>
   );
 }
