@@ -280,6 +280,7 @@ apps/
           guarded-runner.ts
           invalidate-club.ts
           list-limit.ts
+          organizer-lazy-boundary.test.ts
           use-member-actions.ts
         clubs/
           club-card.test.tsx

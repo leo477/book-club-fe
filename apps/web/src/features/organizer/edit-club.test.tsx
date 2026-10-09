@@ -2,10 +2,11 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { RequireRole } from '@/features/auth/require-auth';
+import { RequireAuth } from '@/features/auth/require-auth';
 import { StranglerProvider } from '@/strangler/context';
 import { API, clubJson, messages, renderWithProviders, server, setupApiServer } from '@/test/harness';
 import { EditClub } from './edit-club';
+import { LazyEditClub } from './lazy';
 import { NEXT_ROUTES, capture, mockSession } from './test-support';
 
 const nav = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), hard: vi.fn(), replaceHard: vi.fn(), toast: vi.fn() }));
@@ -246,26 +247,37 @@ describe('EditClub: cover URL wiring', () => {
   });
 });
 
-describe('EditClub behind RequireRole', () => {
-  it('turns a plain reader away before the club is even requested', async () => {
-    const requested = vi.fn();
-    mockSession({ role: 'user' });
+describe('EditClub behind the per-club gate', () => {
+  const asViewer = (user: Record<string, unknown> | null, membership: Record<string, unknown> = {}) => {
+    mockSession(user);
     server.use(
-      http.get(`${API}/clubs/${ID}`, () => {
-        requested();
-        return HttpResponse.json(existing());
-      }),
+      http.get(`${API}/clubs/${ID}`, () => HttpResponse.json(existing())),
+      http.get(`${API}/clubs/${ID}/my-membership`, () => HttpResponse.json({ isMember: true, role: 'member', joinRequestStatus: 'none', ...membership })),
     );
     renderWithProviders(
       <StranglerProvider value={NEXT_ROUTES}>
-        <RequireRole role="organizer">
-          <EditClub id={ID} />
-        </RequireRole>
+        <RequireAuth>
+          <LazyEditClub id={ID} />
+        </RequireAuth>
       </StranglerProvider>,
     );
-    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
-    expect(nav.toast).toHaveBeenCalledWith('error', t('ERRORS.organizers_only'));
-    expect(requested).not.toHaveBeenCalled();
+  };
+
+  it('admits a co-organizer of this club whose global role is user', async () => {
+    asViewer({ id: 'co', role: 'user' }, { role: 'organizer' });
+    expect(await screen.findByTestId('club-name-input')).toBeInTheDocument();
+    expect(nav.toast).not.toHaveBeenCalled();
+  });
+
+  it('turns a plain member away', async () => {
+    asViewer({ id: 'co', role: 'user' });
+    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.organizers_only'));
+    expect(screen.queryByTestId('club-name-input')).not.toBeInTheDocument();
+  });
+
+  it('sends a guest to /login', async () => {
+    asViewer(null);
+    await waitFor(() => expect(nav.replaceHard).toHaveBeenCalledWith('/login'));
     expect(screen.queryByTestId('club-name-input')).not.toBeInTheDocument();
   });
 });

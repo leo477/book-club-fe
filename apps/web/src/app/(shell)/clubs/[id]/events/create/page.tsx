@@ -1,5 +1,5 @@
 import { NamespacesIntl } from '@/components/namespaces-intl';
-import { RequireRole } from '@/features/auth/require-auth';
+import { RequireAuth } from '@/features/auth/require-auth';
 import { LazyCreateEvent } from '@/features/organizer/lazy';
 import { notFound } from 'next/navigation';
 import { pageMetadata } from '@/lib/page-metadata';
@@ -15,10 +15,10 @@ export default async function CreateEventPage({ params }: Props) {
   const { id } = await params;
   if (!isUuid(id)) notFound();
   return (
-    <NamespacesIntl namespaces={['CREATE_EVENT', 'CREATE_CLUB', 'EVENT', 'CLUB_MANAGE', 'COVER_UPLOAD', 'BOOK_AUTOCOMPLETE', 'FORM_ERRORS', 'ERRORS']}>
-      <RequireRole role="organizer">
+    <NamespacesIntl namespaces={['CREATE_EVENT', 'CREATE_CLUB', 'EVENT', 'CLUB_MANAGE', 'COVER_UPLOAD', 'BOOK_AUTOCOMPLETE', 'FORM_ERRORS', 'CLUB_DETAIL', 'ERRORS']}>
+      <RequireAuth>
         <LazyCreateEvent clubId={id.toLowerCase()} />
-      </RequireRole>
+      </RequireAuth>
     </NamespacesIntl>
   );
 }

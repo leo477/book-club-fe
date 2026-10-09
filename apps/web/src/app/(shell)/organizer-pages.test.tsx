@@ -73,10 +73,10 @@ const session = (role: string) =>
 const params = (id: string) => ({ params: Promise.resolve({ id }) });
 
 const pages = [
-  { name: '/clubs/create', element: () => CreateClubPage(), heading: 'CREATE_CLUB.title', field: 'club-name-input' },
-  { name: '/clubs/:id/edit', element: async () => EditClubPage(params(UPPER)), heading: 'EDIT_CLUB.title', field: 'club-name-input' },
-  { name: '/clubs/:id/events/create', element: async () => CreateEventPage(params(UPPER)), heading: 'CREATE_EVENT.heading', field: 'event-title-input' },
-  { name: '/events/:id/edit', element: async () => EditEventPage(params(EVENT)), heading: 'EVENTS.editEvent', field: 'event-title-input' },
+  { name: '/clubs/create', element: () => CreateClubPage(), heading: 'CREATE_CLUB.title', field: 'club-name-input', perClub: false as boolean },
+  { name: '/clubs/:id/edit', element: async () => EditClubPage(params(UPPER)), heading: 'EDIT_CLUB.title', field: 'club-name-input', perClub: true as boolean },
+  { name: '/clubs/:id/events/create', element: async () => CreateEventPage(params(UPPER)), heading: 'CREATE_EVENT.heading', field: 'event-title-input', perClub: true as boolean },
+  { name: '/events/:id/edit', element: async () => EditEventPage(params(EVENT)), heading: 'EVENTS.editEvent', field: 'event-title-input', perClub: false as boolean },
 ];
 
 describe('organizer pages: metadata', () => {
@@ -106,6 +106,14 @@ describe.each(pages)('$name page', ({ element, heading, field }) => {
     expect(nav.missing).toEqual([]);
   });
 
+  it('sends a guest to /login', async () => {
+    server.use(http.get(`${API}/auth/session-status`, () => HttpResponse.json({ hasSession: false })));
+    renderWithProviders(await element());
+    await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/login'));
+  });
+});
+
+describe.each(pages.filter((p) => !p.perClub))('$name page role gate', ({ element }) => {
   it('turns a plain reader away with the organizers-only toast', async () => {
     session('user');
     renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
@@ -114,11 +122,73 @@ describe.each(pages)('$name page', ({ element, heading, field }) => {
     expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
     expect(nav.missing).toEqual([]);
   });
+});
 
-  it('sends a guest to /login', async () => {
-    server.use(http.get(`${API}/auth/session-status`, () => HttpResponse.json({ hasSession: false })));
-    renderWithProviders(await element());
-    await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/login'));
+describe.each(pages.filter((p) => p.perClub))('$name page per-club gate', ({ element, heading, field }) => {
+  const asMemberOfOther = (role: string) => {
+    session('user');
+    server.use(
+      http.get(`${API}/clubs/${CLUB}`, () => HttpResponse.json(clubJson({ id: CLUB, organizerId: 'owner' }))),
+      http.get(`${API}/clubs/${CLUB}/my-membership`, () => HttpResponse.json({ isMember: true, role, joinRequestStatus: 'none' })),
+    );
+  };
+
+  it('admits a global user who is an organizer of this club', async () => {
+    asMemberOfOther('organizer');
+    renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
+    await screen.findByRole('heading', { level: 1, name: messages.uk[heading] ?? heading });
+    await screen.findByTestId(field);
+    expect(nav.replace).not.toHaveBeenCalled();
+    expect(nav.missing).toEqual([]);
+  });
+
+  it('denies a plain member of the club', async () => {
+    asMemberOfOther('member');
+    renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
+    expect(await screen.findByRole('alert')).toHaveTextContent(messages.uk['ERRORS.organizers_only'] ?? '');
+    expect(screen.queryByTestId(field)).not.toBeInTheDocument();
+    expect(nav.replace).not.toHaveBeenCalled();
+    expect(nav.missing).toEqual([]);
+  });
+
+  it('admits the owner who has the global role user without asking for a membership', async () => {
+    session('user');
+    let membershipCalls = 0;
+    server.use(
+      http.get(`${API}/clubs/${CLUB}/my-membership`, () => {
+        membershipCalls += 1;
+        return HttpResponse.json({ isMember: false, role: null, joinRequestStatus: 'none' });
+      }),
+    );
+    renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
+    await screen.findByRole('heading', { level: 1, name: messages.uk[heading] ?? heading });
+    await screen.findByTestId(field);
+    expect(membershipCalls).toBe(0);
+    expect(nav.replace).not.toHaveBeenCalled();
+  });
+
+  it.each([['organizer'], ['admin']])('denies a global %s who is not a member of this club', async (role) => {
+    session(role);
+    server.use(
+      http.get(`${API}/clubs/${CLUB}`, () => HttpResponse.json(clubJson({ id: CLUB, organizerId: 'owner' }))),
+      http.get(`${API}/clubs/${CLUB}/my-membership`, () => HttpResponse.json({ isMember: false, role: null, joinRequestStatus: 'none' })),
+    );
+    renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
+    expect(await screen.findByRole('alert')).toHaveTextContent(messages.uk['ERRORS.organizers_only'] ?? '');
+    expect(screen.queryByTestId(field)).not.toBeInTheDocument();
+    expect(nav.replace).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['a 404', () => HttpResponse.json({ detail: 'Not found' }, { status: 404 }), 'CLUB_DETAIL.not_found'],
+    ['a 403', () => HttpResponse.json({ detail: 'Forbidden' }, { status: 403 }), 'ERRORS.organizers_only'],
+    ['a private stub', () => HttpResponse.json({ id: CLUB, name: 'Secret', isPublic: false, memberCount: 3 }), 'CLUB_DETAIL.not_found'],
+  ])('shows the notice, not the form, when the club answers %s', async (_label, respond, key) => {
+    session('organizer');
+    server.use(http.get(`${API}/clubs/${CLUB}`, respond));
+    renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
+    expect(await screen.findByRole('alert')).toHaveTextContent(messages.uk[key] ?? key);
+    expect(screen.queryByTestId(field)).not.toBeInTheDocument();
   });
 });
 

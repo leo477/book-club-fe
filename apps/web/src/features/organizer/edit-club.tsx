@@ -31,10 +31,10 @@ const valuesOf = (club: Club): EditClubForm => ({
   venueDescription: club.afterMeetingVenue?.description ?? '',
 });
 
-/** `embedded` drops the standalone page frame, for the settings tab of the manage screen. */
-export function EditClub({ id, embedded = false }: { id: string; embedded?: boolean }) {
+/** `embedded` drops the standalone page frame, for the settings tab of the manage screen; `gated` means a gate above already fetched the club this visit. */
+export function EditClub({ id, embedded = false, gated = false }: { id: string; embedded?: boolean; gated?: boolean }) {
   const t = useTranslations('EDIT_CLUB');
-  const query = useClubForEdit(id);
+  const query = useClubForEdit(id, gated ? false : 'always');
   const club = query.data && !isClubStub(query.data) ? query.data : null;
 
   const content = query.isPending ? (
