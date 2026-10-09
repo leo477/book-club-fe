@@ -1,7 +1,7 @@
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { API, messages, renderWithProviders, server, setupApiServer, userJson } from '@/test/harness';
 import { sessionKey } from '@/features/clubs/use-session';
 import { RegisterView } from './register-form';
@@ -36,10 +36,25 @@ async function fillValid(overrides: Partial<Record<'name' | 'email' | 'password'
   await userEvent.type(field('reg-confirm-password'), overrides.confirm ?? overrides.password ?? 'Correct-horse1');
 }
 
+// The welcome redirect timer outlives the test that started it and would call the next test's navigation mock.
+const timers = new Set<ReturnType<typeof setTimeout>>();
+const realSetTimeout = globalThis.setTimeout;
+
 beforeEach(() => {
+  vi.spyOn(globalThis, 'setTimeout').mockImplementation(((...args: Parameters<typeof setTimeout>) => {
+    const id = realSetTimeout(...args);
+    timers.add(id);
+    return id;
+  }) as typeof setTimeout);
   nav.hard.mockReset();
   localStorage.clear();
   sessionStorage.clear();
+});
+
+afterEach(() => {
+  vi.mocked(globalThis.setTimeout).mockRestore();
+  for (const id of timers) clearTimeout(id);
+  timers.clear();
 });
 
 describe('RegisterView', () => {
@@ -137,7 +152,7 @@ describe('RegisterView', () => {
     expect(card).not.toHaveTextContent(t('AUTH.account_created'));
     expect(screen.getByRole('link', { name: t('AUTH.back_to_login') })).toHaveAttribute('href', '/login');
     expect(queryClient.getQueryData(sessionKey) ?? null).toBeNull();
-    await new Promise((resolve) => setTimeout(resolve, 1800));
+    expect(vi.mocked(globalThis.setTimeout).mock.calls.some(([, ms]) => ms === 1500)).toBe(false);
     expect(nav.hard).not.toHaveBeenCalled();
   });
 
