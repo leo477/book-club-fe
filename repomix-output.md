@@ -276,13 +276,16 @@ apps/
         organizer/
           club-form-parts.tsx
           cover-preview.tsx
+          create-club.test.tsx
           create-club.tsx
           create-event.tsx
+          edit-club.test.tsx
           edit-club.tsx
           edit-event.tsx
           event-form.tsx
           event-payload.ts
           lazy.tsx
+          test-support.ts
           use-organizer.ts
         profile/
           display-name-form.tsx
