@@ -33,8 +33,9 @@ export function setupApiServer() {
   afterAll(() => server.close());
 }
 
-export function renderWithProviders(ui: ReactElement, locale: 'uk' | 'en' = 'uk') {
+export function renderWithProviders(ui: ReactElement, locale: 'uk' | 'en' = 'uk', prefill?: (queryClient: QueryClient) => void) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { staleTime: 60_000, retry: false } } });
+  prefill?.(queryClient);
   return {
     queryClient,
     ...render(

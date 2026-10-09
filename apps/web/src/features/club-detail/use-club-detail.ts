@@ -30,18 +30,20 @@ export interface ClubRef {
 export const clubKey = (clubId: string) => ['club', clubId, 'detail'] as const;
 
 /** Who the viewer is relative to this club; `ready` is false until the session and (when signed in) /clubs/my resolve. */
-export function useClubRole(club: ClubRef) {
+export function useClubRole(club: ClubRef, revalidateRole = false) {
   const { user, isPending } = useSession();
   const mine = useMyClubs(user !== null);
   const isOwner = user !== null && club.organizerId !== undefined && user.id === club.organizerId;
   const isMember = user !== null && (mine.data?.some((c) => c.id === club.id) ?? false);
   const ready = !isPending && (user === null || !mine.isPending);
-  const membership = useMyMembership(club.id, user !== null && !isOwner);
+  const needsMembership = user !== null && !isOwner;
+  const membership = useMyMembership(club.id, needsMembership, revalidateRole);
   const canManage = isOwner || membership.data?.role === 'organizer';
-  return { user, isAuthenticated: user !== null, ready, isOwner, isMember, canManage };
+  const manageUnknown = needsMembership && membership.isPending;
+  return { user, isAuthenticated: user !== null, ready, isOwner, isMember, canManage, manageUnknown };
 }
 
-/** `fresh` is for gates: no retry delay on failure, and a cached answer is re-checked on mount. */
+/** `fresh` is for gates and the manage links: no retry delay on failure, and a cached answer is re-checked on mount. */
 export function useMyMembership(clubId: string, enabled: boolean, fresh = false) {
   return useQuery({
     queryKey: membershipKey(clubId),

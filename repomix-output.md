@@ -233,6 +233,7 @@ apps/
           book-vote-section.tsx
           book-vote.test.tsx
           book-vote.tsx
+          can-manage-links.test.tsx
           club-events.tsx
           club-view.tsx
           describe-error.test.ts
