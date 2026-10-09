@@ -56,7 +56,7 @@ Reference: `src/app/shared/spartan` (read-only). Review surface: `/__ui` (dev on
 
 | Area | Delta | Why |
 |---|---|---|
-| Book intro | No book-opening animation and no 300 ms form delay. Login navigates at once; register shows its welcome card for 1.5 s, then hard-navigates to `/events`. | Not ported; the hard navigation replaces Angular's router hop. |
+| Book intro | No book-opening animation and no 300 ms form delay. Login navigates at once; register shows its welcome card until the user presses Continue (no automatic redirect, WCAG 2.2.1), then hard-navigates to `/events`. | Not ported; the hard navigation replaces Angular's router hop. |
 | Auth card theme | The card is a `light-island` (light tokens re-applied inside `.dark`, `dark:` variants disabled below it), so it stays cream in dark mode exactly as in Angular. Footer links use `primary-700` and the strength labels `green-700`/`yellow-800`/`red-700` for AA contrast. | Parity with Angular; fixes the 1.55:1 Google button and 4.17:1 link seen on the first Next build (PARITY-R9 D-2). |
 | Submit state | The button stays disabled after a successful sign-in/registration until the page navigates. | Angular re-enabled it, allowing a second POST (or a 409 flash on register). |
 | Error text | Timeouts, network failures and 5xx without a backend message show a localized message; Angular printed the raw key (`ERRORS.timeout`). Backend `detail` is shown verbatim as before. | Bug fix. |

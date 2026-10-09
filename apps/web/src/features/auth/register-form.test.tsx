@@ -2,10 +2,10 @@ import { StrictMode } from 'react';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { API, messages, renderWithProviders, server, setupApiServer, userJson } from '@/test/harness';
 import { sessionKey } from '@/features/clubs/use-session';
-import { RegisterView, WELCOME_MS } from './register-form';
+import { RegisterView } from './register-form';
 
 const nav = vi.hoisted(() => ({ hard: vi.fn() }));
 vi.mock('@/lib/navigate', () => ({ hardNavigate: nav.hard, replaceNavigate: vi.fn() }));
@@ -37,25 +37,10 @@ async function fillValid(overrides: Partial<Record<'name' | 'email' | 'password'
   await userEvent.type(field('reg-confirm-password'), overrides.confirm ?? overrides.password ?? 'Correct-horse1');
 }
 
-// The welcome redirect timer outlives the test that started it and would call the next test's navigation mock.
-const timers = new Set<ReturnType<typeof setTimeout>>();
-const realSetTimeout = globalThis.setTimeout;
-
 beforeEach(() => {
-  vi.spyOn(globalThis, 'setTimeout').mockImplementation(((...args: Parameters<typeof setTimeout>) => {
-    const id = realSetTimeout(...args);
-    if (args[1] === WELCOME_MS) timers.add(id);
-    return id;
-  }) as typeof setTimeout);
   nav.hard.mockReset();
   localStorage.clear();
   sessionStorage.clear();
-});
-
-afterEach(() => {
-  vi.mocked(globalThis.setTimeout).mockRestore();
-  for (const id of timers) clearTimeout(id);
-  timers.clear();
 });
 
 describe('RegisterView', () => {
@@ -122,7 +107,7 @@ describe('RegisterView', () => {
     expect(screen.getByText(t('AUTH.password_strong'))).toBeInTheDocument();
   });
 
-  it('registers with the chosen role, primes the session, shows the welcome card and then hard-navigates to /events', async () => {
+  it('registers with the chosen role, primes the session, shows the welcome card and does not navigate on its own', async () => {
     const posts = mockApi();
     const { queryClient } = renderWithProviders(<RegisterView />);
     await userEvent.click(screen.getByRole('button', { name: new RegExp(t('AUTH.role_organizer_label')) }));
@@ -138,16 +123,14 @@ describe('RegisterView', () => {
       expect(posts).toEqual([{ displayName: 'Ada Lovelace', email: 'ada@example.com', password: 'Correct-horse1', role: 'organizer' }]);
       expect(queryClient.getQueryData(sessionKey)).toMatchObject({ id: 'u1' });
       expect(nav.hard).not.toHaveBeenCalled();
-      vi.advanceTimersByTime(WELCOME_MS);
-      expect(nav.hard).toHaveBeenCalledWith('/events');
-      vi.advanceTimersByTime(WELCOME_MS * 2);
-      expect(nav.hard).toHaveBeenCalledTimes(1);
+      vi.advanceTimersByTime(60_000);
+      expect(nav.hard).not.toHaveBeenCalled();
     } finally {
       vi.useRealTimers();
     }
   });
 
-  it('navigates exactly once under Strict Mode, after the delay', async () => {
+  it('renders under Strict Mode without navigating', async () => {
     mockApi();
     renderWithProviders(
       <StrictMode>
@@ -159,11 +142,8 @@ describe('RegisterView', () => {
     try {
       fireEvent.click(submit());
       await screen.findByText(t('AUTH.account_created'));
+      vi.advanceTimersByTime(60_000);
       expect(nav.hard).not.toHaveBeenCalled();
-      vi.advanceTimersByTime(WELCOME_MS);
-      expect(nav.hard).toHaveBeenCalledExactlyOnceWith('/events');
-      vi.advanceTimersByTime(WELCOME_MS * 2);
-      expect(nav.hard).toHaveBeenCalledTimes(1);
     } finally {
       vi.useRealTimers();
     }
@@ -192,35 +172,20 @@ describe('RegisterView', () => {
     expect(cont).toBeDisabled();
   });
 
-  it('continues immediately without navigating again when the timer would fire', async () => {
+  it('navigates once when Continue is clicked, long after the card appeared', async () => {
     mockApi();
     renderWithProviders(<RegisterView />);
     await fillValid();
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       fireEvent.click(submit());
-      const card = await screen.findByTestId('register-feedback');
-      expect(card).toHaveTextContent(t('AUTH.account_created'));
+      await screen.findByTestId('register-feedback');
+      vi.advanceTimersByTime(60_000);
+      expect(nav.hard).not.toHaveBeenCalled();
       fireEvent.click(screen.getByRole('button', { name: t('AUTH.continue') }));
       expect(nav.hard).toHaveBeenCalledExactlyOnceWith('/events');
-      vi.advanceTimersByTime(WELCOME_MS * 2);
+      vi.advanceTimersByTime(60_000);
       expect(nav.hard).toHaveBeenCalledTimes(1);
-    } finally {
-      vi.useRealTimers();
-    }
-  });
-
-  it('cancels the welcome redirect when the user leaves before the delay', async () => {
-    mockApi();
-    const { unmount } = renderWithProviders(<RegisterView />);
-    await fillValid();
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    try {
-      fireEvent.click(submit());
-      await screen.findByText(t('AUTH.account_created'));
-      unmount();
-      vi.advanceTimersByTime(WELCOME_MS * 2);
-      expect(nav.hard).not.toHaveBeenCalled();
     } finally {
       vi.useRealTimers();
     }
@@ -231,7 +196,6 @@ describe('RegisterView', () => {
     const { queryClient } = renderWithProviders(<RegisterView />);
     await fillValid();
     vi.useFakeTimers({ shouldAdvanceTime: true });
-    const scheduled = vi.spyOn(globalThis, 'setTimeout');
     try {
       fireEvent.click(submit());
       const card = await screen.findByTestId('register-feedback');
@@ -243,12 +207,10 @@ describe('RegisterView', () => {
       expect(screen.queryByRole('button', { name: t('AUTH.continue') })).toBeNull();
       expect(screen.getByRole('link', { name: t('AUTH.back_to_login') })).toHaveAttribute('href', '/login');
       expect(queryClient.getQueryData(sessionKey) ?? null).toBeNull();
-      expect(scheduled.mock.calls.some(([, ms]) => ms === WELCOME_MS)).toBe(false);
       expect(nav.hard).not.toHaveBeenCalled();
-      vi.advanceTimersByTime(WELCOME_MS * 2);
+      vi.advanceTimersByTime(60_000);
       expect(nav.hard).not.toHaveBeenCalled();
     } finally {
-      scheduled.mockRestore();
       vi.useRealTimers();
     }
   });

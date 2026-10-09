@@ -379,6 +379,12 @@ for (const lang of ['uk', 'en'] as const) {
         password: 'Sup3rSecret!',
         role: 'organizer',
       });
+      // Next keeps the welcome card until Continue (WCAG 2.2.1); Angular still hops after its book animation
+      if (proj() === 'next') {
+        await page.waitForTimeout(3_000);
+        await expect(page).toHaveURL(/\/register$/);
+        await card.getByRole('button').click();
+      }
       await expect(page).toHaveURL(/\/events$/, { timeout: 15_000 });
     });
 
@@ -524,6 +530,7 @@ test.describe('P4 session / storage (no tokens in JS-reachable storage)', () => 
     await submit(page).click();
     await expect(page.getByTestId('register-feedback')).toBeVisible();
     expect(await tokenLeaks(page)).toEqual([]);
+    if (proj() === 'next') await page.getByTestId('register-feedback').getByRole('button').click();
     await expect(page).toHaveURL(/\/events$/, { timeout: 15_000 });
     expect(await tokenLeaks(page)).toEqual([]);
 

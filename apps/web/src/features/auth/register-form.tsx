@@ -20,9 +20,6 @@ import { authErrorMessage } from './auth-error';
 import { AuthFrame } from './auth-frame';
 import { GoogleButton } from './google-button';
 
-// the welcome card stays readable for a moment before the hard navigation, standing in for Angular's book animation
-export const WELCOME_MS = 1500;
-
 type Strength = 'weak' | 'medium' | 'strong';
 
 function passwordStrength(password: string): Strength | null {
@@ -72,8 +69,8 @@ export function RegisterView() {
     },
   });
   const failure = signUp.error;
-  const welcomed = signUp.isSuccess && signUp.data.user !== null;
 
+  // no automatic redirect (WCAG 2.2.1): the welcome card stays until the user presses Continue
   const [continued, setContinued] = useState(false);
   const cardHeading = useRef<HTMLHeadingElement>(null);
 
@@ -81,13 +78,6 @@ export function RegisterView() {
   useEffect(() => {
     if (signUp.isSuccess) cardHeading.current?.focus({ preventScroll: true });
   }, [signUp.isSuccess]);
-
-  // an effect so leaving the welcome card (unmount) cancels the redirect
-  useEffect(() => {
-    if (!welcomed || continued) return;
-    const timer = setTimeout(() => hardNavigate('/events'), WELCOME_MS);
-    return () => clearTimeout(timer);
-  }, [welcomed, continued]);
 
   if (signUp.isSuccess) {
     const { user: profile, email, displayName } = signUp.data;
