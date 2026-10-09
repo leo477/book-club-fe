@@ -2,6 +2,7 @@
 // and `next`). Every /api/v1 call is fulfilled by e2e/parity/r9/fixtures.ts through page.route (cookie-session mock: a boolean
 // stands in for the httpOnly cookie). No backend, no real credential, no real account: the deployed Angular site is only used as
 // a front end, and its API and Google start URL are intercepted. /events (the hard-navigation target) is a stub document.
+// After sign-up, next needs a Continue click on the welcome card (no automatic redirect, WCAG 2.2.1); legacy redirects by itself.
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
@@ -379,6 +380,11 @@ for (const lang of ['uk', 'en'] as const) {
         password: 'Sup3rSecret!',
         role: 'organizer',
       });
+      // Next keeps the welcome card until Continue (WCAG 2.2.1; the unit test covers the no-timer guarantee); Angular still hops after its book animation
+      if (proj() === 'next') {
+        await expect(page).toHaveURL(/\/register(\?.*)?$/);
+        await card.getByRole('button').click();
+      }
       await expect(page).toHaveURL(/\/events$/, { timeout: 15_000 });
     });
 
@@ -524,6 +530,7 @@ test.describe('P4 session / storage (no tokens in JS-reachable storage)', () => 
     await submit(page).click();
     await expect(page.getByTestId('register-feedback')).toBeVisible();
     expect(await tokenLeaks(page)).toEqual([]);
+    await page.getByTestId('register-feedback').getByRole('button').click();
     await expect(page).toHaveURL(/\/events$/, { timeout: 15_000 });
     expect(await tokenLeaks(page)).toEqual([]);
 
@@ -700,6 +707,11 @@ test.describe('P2 request journeys', () => {
     const mock = await open(page, '/register');
     await fillRegister(page);
     await submit(page).click();
+    if (proj() === 'next') {
+      const card = page.getByTestId('register-feedback');
+      await expect(card).toBeVisible();
+      await card.getByRole('button').click();
+    }
     await expect(page).toHaveURL(/\/events$/, { timeout: 15_000 });
     await page.waitForTimeout(1000);
     dump(mock, 'register', ti.project.name);
