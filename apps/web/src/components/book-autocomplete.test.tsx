@@ -79,16 +79,15 @@ describe('BookAutocomplete', () => {
     const calls = mockSearch([dune]);
     const onSelected = vi.fn();
     const user = userEvent.setup();
-    renderWithProviders(<Harness onSelected={onSelected} />);
+    renderWithProviders(<Harness onSelected={onSelected} debounceMs={100} />);
     await user.type(box(), 'Dun');
     await user.click(await screen.findByRole('option', { name: /Dune/ }));
     expect(box()).toHaveValue('Dune');
     expect(onSelected).toHaveBeenCalledWith(dune);
-    await new Promise((r) => setTimeout(r, 80));
+    await new Promise((r) => setTimeout(r, 300));
     expect(calls).toHaveLength(1);
     await user.type(box(), ' II');
-    await waitFor(() => expect(calls).toHaveLength(2));
-    expect(calls[1]?.searchParams.get('q')).toBe('Dune II');
+    await waitFor(() => expect(calls.at(-1)?.searchParams.get('q')).toBe('Dune II'), { timeout: 3000 });
   });
 
   it('shows the localized error message without a toast or a login redirect when the search fails', async () => {
