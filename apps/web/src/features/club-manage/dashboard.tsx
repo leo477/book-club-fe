@@ -3,17 +3,22 @@
 
 import type { ClubStats } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
+import { ErrorPanel } from '@/components/error-panel';
 import { Spinner } from '@/components/ui/spinner';
 import { useClubStats } from './use-club-manage';
 
 const heightOf = (count: number, max: number) => `${Math.min(100, (count / max) * 100)}%`;
 
-function Bars({ label, rows, tone }: { label: string; rows: readonly { key: string; title: string; count: number }[]; tone: string }) {
+function Bars({ label, icon, rows, tone }: { label: string; icon?: string; rows: readonly { key: string; title: string; count: number }[]; tone: string }) {
   const max = Math.max(...rows.map((r) => r.count), 1);
+  const summary = `${label}: ${rows.map((r) => `${r.title} ${r.count}`).join(', ')}`;
   return (
     <div className="parchment-card p-4">
-      <p className="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-3">{label}</p>
-      <div className="flex items-end gap-1 h-24">
+      <p className="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-3">
+        {icon && <span aria-hidden="true">{icon} </span>}
+        {label}
+      </p>
+      <div role="img" aria-label={summary} className="flex items-end gap-1 h-24">
         {rows.map((row) => (
           <div key={row.key} className={`flex-1 ${tone} rounded-t opacity-70 hover:opacity-100 transition-opacity min-h-[2px]`} style={{ height: heightOf(row.count, max) }} title={`${row.title}: ${row.count}`} />
         ))}
@@ -49,6 +54,7 @@ export function Dashboard({ clubId }: { clubId: string }) {
       </div>
     );
   }
+  if (query.isError) return <ErrorPanel onRetry={() => void query.refetch()} />;
   const s = query.data;
   if (!s) return <p className="text-sm text-[var(--color-ink-muted)] text-center py-10">{t('no_stats')}</p>;
 
@@ -59,7 +65,6 @@ export function Dashboard({ clubId }: { clubId: string }) {
     [s.upcomingEventsCount, 'stat_upcoming'],
   ] as const;
   const attendance = s.recentAttendance.slice(0, 12).reverse();
-  const attendanceMax = s.recentAttendance[0]?.attendeeCount || 1;
 
   return (
     <div className="space-y-8">
@@ -73,20 +78,11 @@ export function Dashboard({ clubId }: { clubId: string }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {s.memberGrowth.length > 0 && <Bars label={`👥 ${t('member_growth')}`} rows={s.memberGrowth.map((m) => ({ key: m.month, title: m.month, count: m.count }))} tone="bg-[var(--color-primary-400)]" />}
-        {s.eventFrequency.length > 0 && <Bars label={`📅 ${t('event_frequency')}`} rows={s.eventFrequency.map((m) => ({ key: m.month, title: m.month, count: m.count }))} tone="bg-[var(--color-primary-400)]" />}
+        {s.memberGrowth.length > 0 && <Bars icon="👥" label={t('member_growth')} rows={s.memberGrowth.map((m) => ({ key: m.month, title: m.month, count: m.count }))} tone="bg-[var(--color-primary-400)]" />}
+        {s.eventFrequency.length > 0 && <Bars icon="📅" label={t('event_frequency')} rows={s.eventFrequency.map((m) => ({ key: m.month, title: m.month, count: m.count }))} tone="bg-[var(--color-primary-400)]" />}
       </div>
 
-      {attendance.length > 0 && (
-        <div className="parchment-card p-4">
-          <p className="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-3">{tOrg('attendance')}</p>
-          <div className="flex items-end gap-1 h-24">
-            {attendance.map((ev) => (
-              <div key={ev.eventId} className="flex-1 bg-[var(--color-accent-500)] rounded-t opacity-70 hover:opacity-100 transition-opacity min-h-[2px]" style={{ height: heightOf(ev.attendeeCount, attendanceMax) }} title={`${ev.title}: ${ev.attendeeCount}`} />
-            ))}
-          </div>
-        </div>
-      )}
+      {attendance.length > 0 && <Bars label={tOrg('attendance')} rows={attendance.map((ev) => ({ key: ev.eventId, title: ev.title, count: ev.attendeeCount }))} tone="bg-[var(--color-accent-500)]" />}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {s.topActive.length > 0 && <Leaders label={`🏃 ${tOrg('top_active')}`} rows={s.topActive} />}

@@ -1,4 +1,5 @@
 import { screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { describe, expect, it } from 'vitest';
 import { API, renderWithProviders, server, setupApiServer } from '@/test/harness';
@@ -38,9 +39,32 @@ describe('Dashboard', () => {
     expect(document.querySelector('img')).toBeNull();
   });
 
-  it('says there are no statistics when the request fails', async () => {
-    server.use(http.get(`${API}/clubs/${ID}/stats`, () => HttpResponse.json({ detail: 'x' }, { status: 404 })));
+  it('shows a retryable error, not the empty message, when the request fails', async () => {
+    let fail = true;
+    server.use(http.get(`${API}/clubs/${ID}/stats`, () => (fail ? HttpResponse.json({ detail: 'x' }, { status: 500 }) : HttpResponse.json(statsJson()))));
+    const user = userEvent.setup();
     renderWithProviders(<Dashboard clubId={ID} />);
-    expect(await screen.findByText(t('CLUB_MANAGE.no_stats'))).toBeInTheDocument();
+    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.unexpected'));
+    expect(screen.queryByText(t('CLUB_MANAGE.no_stats'))).not.toBeInTheDocument();
+    fail = false;
+    await user.click(screen.getByRole('button', { name: t('ERRORS.retry') }));
+    expect(await screen.findByText('340')).toBeInTheDocument();
+  });
+
+  it('scales attendance by the largest value, not the newest', async () => {
+    const at = (n: number, attendeeCount: number) => ({ eventId: `e${n}`, title: `Event ${n}`, date: '2099-01-01T00:00:00Z', attendeeCount });
+    mockManageReads({ stats: statsJson({ recentAttendance: [at(3, 2), at(2, 20), at(1, 10)] }) });
+    renderWithProviders(<Dashboard clubId={ID} />);
+    expect(await screen.findByTitle('Event 2: 20')).toHaveStyle({ height: '100%' });
+    expect(screen.getByTitle('Event 1: 10')).toHaveStyle({ height: '50%' });
+    expect(screen.getByTitle('Event 3: 2')).toHaveStyle({ height: '10%' });
+  });
+
+  it('gives each chart a text alternative with its values', async () => {
+    mockManageReads();
+    renderWithProviders(<Dashboard clubId={ID} />);
+    await screen.findByText('340');
+    expect(screen.getByRole('img', { name: `${t('CLUB_MANAGE.member_growth')}: 2099-01 3, 2099-02 6` })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: `${t('ORGANIZER.attendance')}: Emma talk 4, Dune night 8` })).toBeInTheDocument();
   });
 });

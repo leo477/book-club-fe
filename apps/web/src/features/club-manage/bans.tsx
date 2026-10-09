@@ -29,7 +29,7 @@ export function Bans({ clubId }: { clubId: string }) {
     run(ban.userId, () =>
       trackClubAction(queryClient, clubId, async () => {
         await queryClient.cancelQueries({ queryKey: bansKey(clubId) });
-        const index = bans.findIndex((b) => b.userId === ban.userId);
+        const index = (queryClient.getQueryData<BanRecord[]>(bansKey(clubId)) ?? []).findIndex((b) => b.userId === ban.userId);
         queryClient.setQueryData<BanRecord[]>(bansKey(clubId), (list) => list?.filter((b) => b.userId !== ban.userId));
         try {
           await api.members.unban(clubId, ban.userId);
