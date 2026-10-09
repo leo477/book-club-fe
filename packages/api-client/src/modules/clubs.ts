@@ -11,6 +11,7 @@ import {
 } from '@book-club/contracts';
 import { z } from 'zod';
 import type { ApiClient } from '../client';
+import type { RequestOptions } from '../types';
 
 const clubs = z.array(club);
 const events = z.array(clubEvent);
@@ -18,7 +19,7 @@ const events = z.array(clubEvent);
 export const clubsApi = (c: ApiClient) => ({
   list: (options?: { skipAuthRedirect?: boolean }) => c.get('/clubs', clubs, options),
   mine: () => c.get('/clubs/my', clubs),
-  get: (id: string, options?: { skipAuthRedirect?: boolean; suppressErrorToast?: boolean }) =>
+  get: (id: string, options?: Pick<RequestOptions, 'signal' | 'skipAuthRedirect' | 'suppressErrorToast'>) =>
     c.get(`/clubs/${id}`, clubOrStub, options),
   create: (body: CreateClubRequest) => c.post('/clubs', club, body),
   update: (id: string, body: UpdateClubRequest) => c.patch(`/clubs/${id}`, club, body),
@@ -29,7 +30,7 @@ export const clubsApi = (c: ApiClient) => ({
   join: (id: string) => c.post(`/clubs/${id}/join`, joinClubResponse, {}),
   leave: (id: string) => c.delete(`/clubs/${id}/leave`, z.void()),
   myMembership: (id: string) => c.get(`/clubs/${id}/my-membership`, myMembership),
-  stats: (id: string) => c.get(`/clubs/${id}/stats`, clubStats),
+  stats: (id: string, options?: Pick<RequestOptions, 'signal'>) => c.get(`/clubs/${id}/stats`, clubStats, options),
   events: (id: string, includePast = false) =>
     c.get(`/clubs/${id}/events`, events, { query: { include_past: includePast } }),
   createEvent: (id: string, body: CreateEventRequest) => c.post(`/clubs/${id}/events`, clubEvent, body),

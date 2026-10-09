@@ -8,6 +8,9 @@ import {
 } from '@book-club/contracts';
 import { z } from 'zod';
 import type { ApiClient } from '../client';
+import type { RequestOptions } from '../types';
+
+type ReadOptions = Pick<RequestOptions, 'signal' | 'skipAuthRedirect'>;
 
 export interface Page {
   skip?: number;
@@ -15,7 +18,7 @@ export interface Page {
 }
 
 export const membersApi = (c: ApiClient) => ({
-  list: (clubId: string, page: Page = {}, options?: { skipAuthRedirect?: boolean }) =>
+  list: (clubId: string, page: Page = {}, options?: ReadOptions) =>
     c.get(`/clubs/${clubId}/members`, z.array(clubMember), { ...options, query: { ...page } }),
   remove: (clubId: string, userId: string) => c.delete(`/clubs/${clubId}/members/${userId}`, z.void()),
   ban: (clubId: string, userId: string, duration: BanDuration) =>
@@ -23,10 +26,10 @@ export const membersApi = (c: ApiClient) => ({
   unban: (clubId: string, userId: string) => c.delete(`/clubs/${clubId}/bans/${userId}`, z.void()),
   changeRole: (clubId: string, userId: string, role: MemberRole) =>
     c.patch(`/clubs/${clubId}/members/${userId}/role`, clubMember, { role }),
-  bans: (clubId: string, page: Page = {}) =>
-    c.get(`/clubs/${clubId}/bans`, z.array(banRecord), { query: { ...page } }),
-  joinRequests: (clubId: string, page: Page = {}) =>
-    c.get(`/clubs/${clubId}/join-requests`, z.array(joinRequest), { query: { ...page } }),
+  bans: (clubId: string, page: Page = {}, options?: ReadOptions) =>
+    c.get(`/clubs/${clubId}/bans`, z.array(banRecord), { ...options, query: { ...page } }),
+  joinRequests: (clubId: string, page: Page = {}, options?: ReadOptions) =>
+    c.get(`/clubs/${clubId}/join-requests`, z.array(joinRequest), { ...options, query: { ...page } }),
   approveJoinRequest: (clubId: string, userId: string) =>
     c.post(`/clubs/${clubId}/join-requests/${userId}/approve`, approveJoinRequestResponse, {}),
   rejectJoinRequest: (clubId: string, userId: string) =>
