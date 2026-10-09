@@ -9,6 +9,8 @@ import { StranglerProvider } from '@/strangler/context';
 import { API, clubJson, memberJson, renderWithProviders, server, setupApiServer } from '@/test/harness';
 import { Randomizer } from './randomizer';
 
+// mirrors the spin duration in randomizer.tsx
+const SPIN_MS = 2000;
 const ID = '3f2b8c1e-9a4d-4e7b-8c5f-1a2b3c4d5e6f';
 const nav = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), hard: vi.fn(), toast: vi.fn(), pick: vi.fn((count: number) => count - 1) }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: nav.push, replace: nav.replace }) }));
@@ -57,9 +59,10 @@ const spinButton = () => screen.getByTestId('spin-button');
 const ready = () => screen.findByText('Grace Hopper');
 const member = (name: string) => screen.getByRole('button', { name });
 
-async function spin(user: ReturnType<typeof userEvent.setup>) {
+async function spin(user: ReturnType<typeof userEvent.setup>, skipSpin = false) {
   await user.click(spinButton());
   expect(screen.getByText(t('RANDOMIZER.spinning'))).toBeInTheDocument();
+  if (skipSpin) await act(() => vi.advanceTimersByTimeAsync(SPIN_MS));
   return screen.findByTestId('randomizer-result', {}, { timeout: 4000 });
 }
 
@@ -118,12 +121,18 @@ describe('Randomizer', () => {
   });
 
   it('draws nothing when the page is left during the spin', async () => {
-    const { unmount } = setup();
-    await screen.findByText('Grace Hopper');
-    fireEvent.click(spinButton());
-    unmount();
-    await new Promise((r) => setTimeout(r, 2300));
-    expect(nav.pick).not.toHaveBeenCalled();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const { unmount } = setup();
+      await ready();
+      fireEvent.click(spinButton());
+      unmount();
+      await vi.advanceTimersByTimeAsync(SPIN_MS * 2);
+      expect(nav.pick).not.toHaveBeenCalled();
+      expect(screen.queryByTestId('randomizer-result')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('saves the session with full candidate objects and the winner, and prepends it to the history', async () => {
@@ -186,18 +195,24 @@ describe('Randomizer', () => {
   });
 
   it('keeps Save disabled after a successful save until the next spin', async () => {
-    const user = userEvent.setup();
-    const bodies = capture('post', `/clubs/${ID}/randomizer/sessions`, () => HttpResponse.json(sessionJson(), { status: 201 }));
-    setup();
-    await ready();
-    await spin(user);
-    await user.click(screen.getByRole('button', { name: t('RANDOMIZER.save') }));
-    await waitFor(() => expect(bodies).toHaveLength(1));
-    expect(screen.getByRole('button', { name: t('RANDOMIZER.save') })).toBeDisabled();
-    await user.click(screen.getByRole('button', { name: t('RANDOMIZER.save') }));
-    expect(bodies).toHaveLength(1);
-    await spin(user);
-    expect(screen.getByRole('button', { name: t('RANDOMIZER.save') })).toBeEnabled();
+    // two real 2s spins would eat most of the 5s test budget under load; without shouldAdvanceTime findBy/waitFor hang (RTL only drives jest fake timers)
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      const bodies = capture('post', `/clubs/${ID}/randomizer/sessions`, () => HttpResponse.json(sessionJson(), { status: 201 }));
+      setup();
+      await ready();
+      await spin(user, true);
+      await user.click(screen.getByRole('button', { name: t('RANDOMIZER.save') }));
+      await waitFor(() => expect(bodies).toHaveLength(1));
+      expect(screen.getByRole('button', { name: t('RANDOMIZER.save') })).toBeDisabled();
+      await user.click(screen.getByRole('button', { name: t('RANDOMIZER.save') }));
+      expect(bodies).toHaveLength(1);
+      await spin(user, true);
+      expect(screen.getByRole('button', { name: t('RANDOMIZER.save') })).toBeEnabled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('keeps Save enabled on a new draw when the save of the previous draw resolves during the next spin', async () => {

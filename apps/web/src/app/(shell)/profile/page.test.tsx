@@ -36,7 +36,8 @@ describe('/profile page', () => {
       http.get(`${API}/users/me/stats`, () => HttpResponse.json({ clubsJoined: 1, quizzesTaken: 0, quizWins: 0, likesReceived: 0, booksRead: 0 })),
     );
     renderWithProviders(ProfilePage());
-    expect(await screen.findByRole('heading', { level: 1, name: 'Ada' })).toBeInTheDocument();
+    // the first render in this file pays the cold lazy import and ICU parsing (~0.5s idle), so the 1s default is too tight under load
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ada' }, { timeout: 5000 })).toBeInTheDocument();
   });
 
   it('sends a guest to /login without rendering the profile (authGuard parity)', async () => {

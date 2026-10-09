@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactNode } from 'react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { nest } from '@/i18n/locale';
 import { API, clubJson, eventJson, messages, renderWithProviders, server, setupApiServer, userJson } from '@/test/harness';
 import { StranglerProvider } from '@/strangler/context';
@@ -50,6 +50,17 @@ vi.mock('next-intl/server', async () => {
 });
 
 setupApiServer();
+// each page lazy-loads its form chunk; a cold transform under load would otherwise eat the 1s findBy budget
+beforeAll(async () => {
+  await Promise.all([
+    import('@/features/organizer/create-club'),
+    import('@/features/organizer/edit-club'),
+    import('@/features/organizer/create-event'),
+    import('@/features/organizer/edit-event'),
+    import('@/features/club-manage/club-manage'),
+    import('@/features/randomizer/randomizer'),
+  ]);
+}, 30_000);
 beforeEach(() => {
   nav.replace.mockReset();
   nav.hard.mockReset();
@@ -101,8 +112,8 @@ describe.each(pages)('$name page', ({ element, heading, field }) => {
     renderWithProviders(
       <StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>,
     );
-    await screen.findByRole('heading', { level: 1, name: messages.uk[heading] ?? heading });
-    await screen.findByTestId(field);
+    await screen.findByRole('heading', { level: 1, name: messages.uk[heading] ?? heading }, { timeout: 5000 });
+    await screen.findByTestId(field, {}, { timeout: 5000 });
     expect(nav.missing).toEqual([]);
   });
 

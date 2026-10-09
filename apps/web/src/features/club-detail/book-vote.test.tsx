@@ -1,8 +1,11 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { API, clubJson, messages, renderWithProviders, roundJson, server, setupApiServer, userJson } from '@/test/harness';
+import { myClubsKey } from '@/features/clubs/use-clubs';
+import { sessionKey } from '@/features/clubs/use-session';
+import { resetSessionHint } from '@/lib/session-hint';
 import { BookVote } from './book-vote';
 
 const toast = vi.hoisted(() => vi.fn());
@@ -10,6 +13,8 @@ vi.mock('@/lib/toast', () => ({ showToast: toast }));
 vi.mock('@/lib/navigate', () => ({ hardNavigate: vi.fn() }));
 
 setupApiServer();
+// The first lazy import of the vote section is slow on a loaded box and would eat the waitFor budget.
+beforeAll(() => import('./book-vote-section'), 30_000);
 beforeEach(() => toast.mockReset());
 
 const t = (key: string) => messages.uk[key] ?? key;
@@ -32,25 +37,42 @@ function mockApi({ user = 'u1', mine = true, rounds }: { user?: string | null; m
   return gets;
 }
 
+// the lazy section mounts a few hundred ms after the queries settle, so a negative assertion has to outwait it
+const settle = () => act(() => new Promise<void>((r) => setTimeout(r, 1000)));
+
 describe('BookVote visibility', () => {
   it('renders nothing for guests and for signed-in non-members, without fetching the round', async () => {
     const gets = mockApi({ user: null, rounds: [roundJson()] });
-    const { container, unmount } = renderWithProviders(<BookVote club={club} />);
-    await new Promise((r) => setTimeout(r, 30));
-    expect(container).toBeEmptyDOMElement();
-    unmount();
-    mockApi({ mine: false, rounds: [roundJson()] });
+    const first = renderWithProviders(<BookVote club={club} />);
+    await waitFor(() => expect(first.queryClient.getQueryState(sessionKey)?.status).toBe('success'));
+    expect(first.container).toBeEmptyDOMElement();
+    first.unmount();
+    // the guest answer is cached for 30s and would otherwise hide the signed-in non-member below
+    resetSessionHint();
+    const gets2 = mockApi({ mine: false, rounds: [roundJson()] });
     const again = renderWithProviders(<BookVote club={club} />);
-    await new Promise((r) => setTimeout(r, 50));
+    await waitFor(() => expect(again.queryClient.getQueryState(myClubsKey)?.status).toBe('success'));
+    await waitFor(() => expect(again.queryClient.isFetching()).toBe(0));
+    await settle();
     expect(again.container).toBeEmptyDOMElement();
     expect(gets).toEqual([]);
+    expect(gets2).toEqual([]);
+  });
+
+  it('fetches the round and renders the section for a signed-in member (control for the test above)', async () => {
+    const gets = mockApi({ mine: true, rounds: [roundJson()] });
+    const { container, queryClient } = renderWithProviders(<BookVote club={club} />);
+    await waitFor(() => expect(gets).toHaveLength(1));
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    expect(gets).toHaveLength(1);
+    expect(container).not.toBeEmptyDOMElement();
   });
 
   it('renders nothing for a member when there is no round', async () => {
     const gets = mockApi({ rounds: [null] });
-    const { container } = renderWithProviders(<BookVote club={club} />);
+    const { container, queryClient } = renderWithProviders(<BookVote club={club} />);
     await waitFor(() => expect(gets).toHaveLength(1));
-    await new Promise((r) => setTimeout(r, 20));
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
     expect(container).toBeEmptyDOMElement();
   });
 });

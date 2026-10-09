@@ -41,9 +41,15 @@ const address = () => screen.getByTestId('address-input');
 const submit = () => screen.getByTestId('event-submit');
 const created = () => HttpResponse.json(eventJson({ id: EVENT, clubId: CLUB }), { status: 201 });
 
+// one paste event instead of a keystroke each: the long forms below blew the test timeout when typed under load
+async function fill(user: ReturnType<typeof userEvent.setup>, field: HTMLElement, text: string) {
+  await user.click(field);
+  await user.paste(text);
+}
+
 async function pickAddress(user: ReturnType<typeof userEvent.setup>) {
   server.use(http.get(`${API}/geocode/autocomplete`, () => HttpResponse.json([kyiv])));
-  await user.type(address(), 'Хре');
+  await fill(user, address(), 'Хре');
   await user.click(await screen.findByRole('option', { name: kyiv.label }, { timeout: 3000 }));
 }
 
@@ -130,21 +136,21 @@ describe('CreateEvent', () => {
     const user = userEvent.setup();
     const { queryClient } = setup();
     const invalidate = vi.spyOn(queryClient, 'invalidateQueries');
-    await user.type(title(), 'Dune night');
-    await user.type(screen.getByRole('combobox', { name: t('CREATE_EVENT.book_title_label') }), 'Dun');
+    await fill(user, title(), 'Dune night');
+    await fill(user, screen.getByRole('combobox', { name: t('CREATE_EVENT.book_title_label') }), 'Dun');
     await user.click(await screen.findByRole('option', { name: /Dune/ }, { timeout: 3000 }));
     expect(screen.getByRole('combobox', { name: t('CREATE_EVENT.book_title_label') })).toHaveValue('Dune');
     expect(document.querySelector('img[src="https://books.example/dune.jpg"]')).toBeInTheDocument();
-    await user.type(screen.getByLabelText(t('CREATE_EVENT.description_label')), 'Bring snacks');
-    await user.type(date(), '2099-05-01T18:30');
+    await fill(user, screen.getByLabelText(t('CREATE_EVENT.description_label')), 'Bring snacks');
+    await fill(user, date(), '2099-05-01T18:30');
     await pickAddress(user);
-    await user.type(screen.getByLabelText(t('CREATE_EVENT.duration_label')), '120');
-    await user.type(screen.getByLabelText(t('CREATE_EVENT.theme_label')), 'Sci-fi');
-    await user.type(screen.getByLabelText(t('CREATE_EVENT.tags_label')), ' a, ,b ');
+    await fill(user, screen.getByLabelText(t('CREATE_EVENT.duration_label')), '120');
+    await fill(user, screen.getByLabelText(t('CREATE_EVENT.theme_label')), 'Sci-fi');
+    await fill(user, screen.getByLabelText(t('CREATE_EVENT.tags_label')), ' a, ,b ');
     await user.click(screen.getByRole('button', { name: t('CREATE_EVENT.after_venue_add') }));
-    await user.type(screen.getByLabelText(new RegExp(t('CREATE_EVENT.after_venue_name_label'))), 'Pub');
-    await user.type(screen.getByRole('combobox', { name: t('CREATE_EVENT.after_venue_address_label') }), 'Beer st 2');
-    await user.type(screen.getByLabelText(t('CREATE_EVENT.after_venue_notes_label')), 'Cosy');
+    await fill(user, screen.getByLabelText(new RegExp(t('CREATE_EVENT.after_venue_name_label'))), 'Pub');
+    await fill(user, screen.getByRole('combobox', { name: t('CREATE_EVENT.after_venue_address_label') }), 'Beer st 2');
+    await fill(user, screen.getByLabelText(t('CREATE_EVENT.after_venue_notes_label')), 'Cosy');
     await user.click(submit());
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith(`/events/${EVENT}`));
     expect(bodies).toEqual([
@@ -169,24 +175,24 @@ describe('CreateEvent', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['events'] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['club', CLUB] });
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['clubs'] });
-  });
+  }, 20_000);
 
   it('requires an address for the after-meeting venue and forgets the venue when it is removed', async () => {
     const bodies = capture('post', `/clubs/${CLUB}/events`, created);
     const user = userEvent.setup();
     setup();
-    await user.type(title(), 'Dune night');
-    await user.type(date(), '2099-05-01T18:30');
+    await fill(user, title(), 'Dune night');
+    await fill(user, date(), '2099-05-01T18:30');
     await pickAddress(user);
     await user.click(screen.getByRole('button', { name: t('CREATE_EVENT.after_venue_add') }));
-    await user.type(screen.getByLabelText(new RegExp(t('CREATE_EVENT.after_venue_name_label'))), 'Pub');
+    await fill(user, screen.getByLabelText(new RegExp(t('CREATE_EVENT.after_venue_name_label'))), 'Pub');
     await user.click(submit());
     expect(await screen.findByText(t('CLUB_MANAGE.venue_address_required'))).toBeInTheDocument();
     expect(bodies).toEqual([]);
     await user.click(screen.getByRole('button', { name: t('CREATE_EVENT.after_venue_remove') }));
     expect(screen.queryByText(t('CLUB_MANAGE.venue_address_required'))).not.toBeInTheDocument();
     await user.click(submit());
-    await waitFor(() => expect(bodies).toHaveLength(1));
+    await waitFor(() => expect(bodies).toHaveLength(1), { timeout: 3000 });
     expect(bodies[0]).not.toHaveProperty('afterMeetingVenue');
   });
 
