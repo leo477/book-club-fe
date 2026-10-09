@@ -1,5 +1,7 @@
 {
   "CLUB_MANAGE": {
+    "list_truncated": "Only the first 200 entries are shown; the list may be truncated.",
+    "banned_user": "User",
     "manage_button": "Manage club",
     "back_to_club": "Back to club",
     "subtitle": "Manage members, requests, settings and tools",
@@ -280,6 +282,7 @@
     "backHome": "Back to events"
   },
   "MEMBERS": {
+    "list_truncated": "Only the first 200 members are shown; the list may be truncated.",
     "empty": "No members yet",
     "member": "Member",
     "organizer": "Organizer",
@@ -356,6 +359,7 @@
     "social_placeholder_url": "username or full URL"
   },
   "RANDOMIZER": {
+    "members_truncated": "The member list may be truncated (200 shown), so the draw would not be fair. Spinning is disabled.",
     "back_to_club": "← Back to club",
     "history_title": "Previous results",
     "members_title": "Members",

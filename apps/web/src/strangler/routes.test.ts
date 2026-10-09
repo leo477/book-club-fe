@@ -21,7 +21,7 @@ describe('matchRoute', () => {
   });
 
   it('does not match extra segments or prefixes', () => {
-    expect(matchRoute(`/clubs/${UUID}/manage`, routes)).toBeNull();
+    expect(matchRoute(`/clubs/${UUID}/members`, routes)).toBeNull();
     expect(matchRoute('/privacy-policy', routes)).toBeNull();
     expect(matchRoute('/x/privacy', routes)).toBeNull();
   });
@@ -49,6 +49,8 @@ describe('manifest', () => {
       ['/clubs/:id/edit', 'next'],
       ['/clubs/:id/events/create', 'next'],
       ['/events/:id/edit', 'next'],
+      ['/clubs/:id/manage', 'next'],
+      ['/clubs/:id/randomizer', 'next'],
       ['/login', 'next'],
       ['/register', 'next'],
       ['/auth/callback', 'next'],
@@ -59,7 +61,10 @@ describe('manifest', () => {
     expect(matchRoute(`/clubs/${UUID}/edit`)?.pattern).toBe('/clubs/:id/edit');
     expect(matchRoute('/clubs/create/edit')).toBeNull();
     expect(matchRoute(`/clubs/${UUID}`)?.pattern).toBe('/clubs/:id');
-    expect(matchRoute(`/clubs/${UUID}/manage`)).toBeNull();
+    expect(matchRoute(`/clubs/${UUID}/manage`)?.pattern).toBe('/clubs/:id/manage');
+    expect(matchRoute(`/clubs/${UUID}/randomizer/`)?.pattern).toBe('/clubs/:id/randomizer');
+    expect(matchRoute('/clubs/abc/manage')).toBeNull();
+    expect(matchRoute(`/clubs/${UUID}/manage/extra`)).toBeNull();
     expect(matchRoute(`/clubs/${UUID}/events/create`)?.pattern).toBe('/clubs/:id/events/create');
     expect(matchRoute(`/clubs/${UUID}/events`)).toBeNull();
     expect(matchRoute('/')?.pattern).toBe('/');
@@ -86,6 +91,8 @@ describe('isLegacyShadowed', () => {
     expect(isLegacyShadowed('/clubs/other/')).toBe(true);
     expect(isLegacyShadowed('/clubs/abc/events/create')).toBe(true);
     expect(isLegacyShadowed('/events/abc/edit')).toBe(true);
+    expect(isLegacyShadowed('/clubs/abc/manage')).toBe(true);
+    expect(isLegacyShadowed('/clubs/abc/randomizer')).toBe(true);
     expect(isLegacyShadowed('/clubs/123')).toBe(true);
   });
 

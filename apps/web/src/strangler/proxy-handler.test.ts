@@ -193,7 +193,7 @@ describe('legacy-shadowed paths', () => {
   });
 
   it('leaves deeper legacy paths to the framework fallback', async () => {
-    const res = await run(`/clubs/${UUID}/manage`, on, 'bc_bucket=0');
+    const res = await run(`/clubs/${UUID}/quizzes`, on, 'bc_bucket=0');
     expect(res.headers.get('x-middleware-next')).toBe('1');
   });
 

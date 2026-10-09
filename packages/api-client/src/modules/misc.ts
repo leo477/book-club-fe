@@ -24,8 +24,8 @@ import type { RequestOptions } from '../types';
 type CallOptions = Pick<RequestOptions, 'signal' | 'skipAuthRedirect' | 'suppressErrorToast'>;
 
 export const randomizerApi = (c: ApiClient) => ({
-  history: (clubId: string, page: { skip?: number; limit?: number } = {}) =>
-    c.get(`/clubs/${clubId}/randomizer/history`, z.array(randomizerSession), { query: { ...page } }),
+  history: (clubId: string, page: { skip?: number; limit?: number } = {}, options?: CallOptions) =>
+    c.get(`/clubs/${clubId}/randomizer/history`, z.array(randomizerSession), { ...options, query: { ...page } }),
   createSession: (clubId: string, body: CreateRandomizerSessionRequest) =>
     c.post(`/clubs/${clubId}/randomizer/sessions`, randomizerSession, body),
 });

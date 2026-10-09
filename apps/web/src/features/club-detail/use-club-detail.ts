@@ -3,6 +3,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import type { ClubEvent } from '@book-club/contracts';
+import { LIST_LIMIT } from '@/features/club-shared/list-limit';
 import { api } from '@/lib/api';
 import { showToast } from '@/lib/toast';
 import { useMyClubs } from '@/features/clubs/use-clubs';
@@ -38,8 +39,15 @@ export function useClubRole(club: ClubRef) {
   return { user, isAuthenticated: user !== null, ready, isOwner, isMember };
 }
 
-export function useMyMembership(clubId: string, enabled: boolean) {
-  return useQuery({ queryKey: membershipKey(clubId), queryFn: () => api.clubs.myMembership(clubId), enabled, ...noRefocus });
+/** `fresh` is for gates: no retry delay on failure, and a cached answer is re-checked on mount. */
+export function useMyMembership(clubId: string, enabled: boolean, fresh = false) {
+  return useQuery({
+    queryKey: membershipKey(clubId),
+    queryFn: () => api.clubs.myMembership(clubId),
+    enabled,
+    ...(fresh ? { retry: false, staleTime: 0, refetchOnMount: 'always' as const } : {}),
+    ...noRefocus,
+  });
 }
 
 /** `initial` is the anonymous server list; a signed-in viewer refetches once because isAttending is per user. */
@@ -57,7 +65,7 @@ export function useClubMembers(clubId: string, enabled: boolean) {
   return useQuery({
     queryKey: membersKey(clubId),
     // a non-member may be refused; that must neither redirect nor break the page
-    queryFn: () => api.members.list(clubId, {}, { skipAuthRedirect: true }),
+    queryFn: ({ signal }) => api.members.list(clubId, { limit: LIST_LIMIT }, { skipAuthRedirect: true, signal }),
     enabled,
     retry: false,
     ...noRefocus,

@@ -16,5 +16,8 @@
   },
   "SUPPORT": {
     "loading": "Завантаження…"
+  },
+  "RANDOMIZER": {
+    "breadcrumb_aria": "Навігація"
   }
 }

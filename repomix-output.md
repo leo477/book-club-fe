@@ -90,6 +90,10 @@ apps/
               events/
                 create/
                   page.tsx
+              manage/
+                page.tsx
+              randomizer/
+                page.tsx
               not-found.tsx
               page.test.tsx
               page.tsx
@@ -248,6 +252,35 @@ apps/
           structured-data.test.ts
           structured-data.ts
           use-club-detail.ts
+        club-manage/
+          bans.test.tsx
+          bans.tsx
+          chat-room-form.test.tsx
+          chat-room-form.tsx
+          club-manage.test.tsx
+          club-manage.tsx
+          dashboard.test.tsx
+          dashboard.tsx
+          delete-club.test.tsx
+          delete-club.tsx
+          lazy.tsx
+          members.test.tsx
+          organizer-gate.tsx
+          requests.test.tsx
+          requests.tsx
+          status-actions.test.tsx
+          status-actions.tsx
+          test-support.ts
+          tools.tsx
+          use-club-manage.ts
+        club-shared/
+          bundle-boundary.test.ts
+          club-actions.ts
+          guarded-runner.test.tsx
+          guarded-runner.ts
+          invalidate-club.ts
+          list-limit.ts
+          use-member-actions.ts
         clubs/
           club-card.test.tsx
           club-card.tsx
@@ -299,6 +332,13 @@ apps/
           role-selector.tsx
           socials-section.tsx
           use-profile.ts
+        randomizer/
+          lazy.tsx
+          pick.test.ts
+          pick.ts
+          randomizer.test.tsx
+          randomizer.tsx
+          use-randomizer.ts
         support/
           create-submission-page.tsx
           create-submission.test.tsx

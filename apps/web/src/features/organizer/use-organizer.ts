@@ -1,28 +1,18 @@
 'use client';
 'use no memo';
 
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Club, ClubEvent, CreateClubRequest, CreateEventRequest, UpdateClubRequest, UpdateEventRequest } from '@book-club/contracts';
 import { clubKey } from '@/features/club-detail/use-club-detail';
 import { invalidateEvents, eventKey } from '@/features/events/use-events';
+import { invalidateClub } from '@/features/club-shared/invalidate-club';
 import { api } from '@/lib/api';
-
-/**
- * The browser never calls `/_internal/revalidate`: that route needs REVALIDATE_SECRET, which must not reach client code.
- * The backend already posts `["clubs","club:<id>"]` to it after create/update of a club and create/update of a club event,
- * so only the browser-side query cache is refreshed here.
- */
-export const invalidateClub = (queryClient: QueryClient, clubId: string) =>
-  Promise.all([
-    queryClient.invalidateQueries({ queryKey: ['clubs'] }),
-    queryClient.invalidateQueries({ queryKey: ['club', clubId] }),
-  ]);
 
 const noRefocus = { refetchOnWindowFocus: false } as const;
 
 /** The club behind the edit form; a private club the viewer cannot see arrives as a stub and is treated as missing by the caller. */
 export const useClubForEdit = (clubId: string) =>
-  useQuery({ queryKey: clubKey(clubId), queryFn: () => api.clubs.get(clubId), retry: false, staleTime: 0, ...noRefocus });
+  useQuery({ queryKey: clubKey(clubId), queryFn: ({ signal }) => api.clubs.get(clubId, { signal }), retry: false, staleTime: 0, refetchOnMount: 'always', ...noRefocus });
 
 interface CreateClubInput {
   club: CreateClubRequest;
