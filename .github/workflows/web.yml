@@ -92,6 +92,8 @@ jobs:
     env:
       # next.config.ts refuses to build for production without it; the value is not deployed from here.
       LEGACY_ORIGIN: https://book-club-fe-dmytros-projects-ad22eb22.vercel.app
+      # the production build refuses to run without it (inlined into the client bundle; public, not a secret)
+      NEXT_PUBLIC_OAUTH_BASE_URL: https://book-club-be.onrender.com/api/v1
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
@@ -127,6 +129,8 @@ jobs:
     env:
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
+      # `vercel build` runs the production build here, which refuses to run without it (public value, not a secret)
+      NEXT_PUBLIC_OAUTH_BASE_URL: https://book-club-be.onrender.com/api/v1
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4

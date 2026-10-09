@@ -82,3 +82,35 @@ export const displayNameField = z
 
 export const displayNameForm = z.object({ displayName: displayNameField });
 export type DisplayNameForm = z.input<typeof displayNameForm>;
+
+/** Cookie-session responses: the body's token fields are dropped at parse time, so web callers can never reach them. */
+export const sessionResponse = z.object({ user: userProfile });
+export type SessionResponse = z.infer<typeof sessionResponse>;
+
+/** Register answers 202 with this instead of a session when the backend wants the e-mail confirmed first. */
+export const emailConfirmationRequired = z.object({ code: z.literal('EMAIL_CONFIRMATION_REQUIRED') });
+
+export const registerResponse = z.union([sessionResponse, emailConfirmationRequired]);
+export type RegisterResponse = z.infer<typeof registerResponse>;
+
+const requiredText = z.string().min(1, 'FORM_ERRORS.required');
+const emailField = requiredText.pipe(z.email('FORM_ERRORS.email'));
+const passwordField = requiredText.min(8, 'FORM_ERRORS.minlength');
+
+export const loginForm = z.object({ email: emailField, password: passwordField });
+export type LoginForm = z.input<typeof loginForm>;
+
+/** Same rules and message keys as the Angular register form; the display name is not trimmed, as there. */
+export const registerForm = z
+  .object({
+    displayName: requiredText
+      .min(2, 'FORM_ERRORS.minlength')
+      .max(50, 'SECURITY.invalid_display_name')
+      .regex(DISPLAY_NAME_PATTERN, 'SECURITY.invalid_display_name'),
+    email: emailField,
+    password: passwordField,
+    confirmPassword: requiredText,
+    role: updateRoleRequest.shape.role,
+  })
+  .refine((v) => v.password === v.confirmPassword, { path: ['confirmPassword'], message: 'AUTH.passwords_no_match' });
+export type RegisterForm = z.input<typeof registerForm>;

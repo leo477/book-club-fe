@@ -211,6 +211,15 @@ describe('createApiClient', () => {
       expect(f.onForbidden).not.toHaveBeenCalled();
     });
 
+    it('does not ask the transport whether a session exists for skipAuthRedirect requests', async () => {
+      const hasSession = vi.fn(() => true);
+      const s = setup(() => json(200, { ok: true }), { transport: cookieTransport({ hasSession }) });
+      await s.client.post('/auth/oauth/exchange', ok, { code: 'c' }, { skipAuthRedirect: true });
+      expect(hasSession).not.toHaveBeenCalled();
+      await s.client.get('/x', ok);
+      expect(hasSession).toHaveBeenCalledTimes(1);
+    });
+
     it('calls onForbidden on 403', async () => {
       const s = setup(() => json(403, { detail: 'no' }));
       await expect(s.client.get('/x', ok)).rejects.toMatchObject({ status: 403 });

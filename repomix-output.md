@@ -65,6 +65,16 @@ apps/
       check-first-load.mjs
     src/
       app/
+        (auth)/
+          auth/
+            callback/
+              page.tsx
+          login/
+            page.tsx
+          register/
+            page.tsx
+          auth-pages.test.tsx
+          layout.tsx
         (public)/
           privacy/
             page.test.tsx
@@ -178,6 +188,19 @@ apps/
         toaster-impl.tsx
       features/
         auth/
+          auth-divider.tsx
+          auth-error.ts
+          auth-frame.tsx
+          google-button.test.tsx
+          google-button.tsx
+          login-form.test.tsx
+          login-form.tsx
+          login-page.tsx
+          oauth-callback.test.tsx
+          oauth-callback.tsx
+          register-form.test.tsx
+          register-form.tsx
+          register-page.tsx
           require-auth.test.tsx
           require-auth.tsx
         club-detail/
@@ -259,12 +282,18 @@ apps/
         backend-origin.test.ts
         backend-origin.ts
         cookie.ts
+        flash.test.ts
+        flash.ts
         format.test.ts
         format.ts
         json-ld.test.tsx
         json-ld.tsx
+        legacy-session.test.ts
+        legacy-session.ts
         navigate.test.ts
         navigate.ts
+        oauth-base-url.test.ts
+        oauth-base-url.ts
         page-metadata.test.ts
         page-metadata.ts
         server-api.test.ts
@@ -296,6 +325,7 @@ apps/
         server.ts
       test/
         harness.tsx
+      env.d.ts
       proxy.ts
     .gitignore
     components.json
@@ -328,10 +358,12 @@ docs/
     PARITY-R6.md
     PARITY-R7.md
     PARITY-R8.md
+    PARITY-R9.md
     R6-DEPLOY-SETTINGS.md
     RUNBOOK-STRANGLER.md
     SECURITY-R6.md
     SECURITY-R7.md
+    SECURITY-R9.md
     UI-DELTAS.md
 e2e/
   fixtures/
@@ -357,6 +389,8 @@ e2e/
     r7/
       fixtures.ts
     r8/
+      fixtures.ts
+    r9/
       fixtures.ts
     bypass.ts
     expectations.ts
