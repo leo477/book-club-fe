@@ -278,8 +278,6 @@ apps/
           club-actions.ts
           guarded-runner.test.tsx
           guarded-runner.ts
-          import-graph.test.ts
-          import-graph.ts
           invalidate-club.ts
           list-limit.ts
           organizer-lazy-boundary.test.ts
@@ -411,6 +409,9 @@ apps/
         server.ts
       test/
         harness.tsx
+      test-support/
+        import-graph.test.ts
+        import-graph.ts
       env.d.ts
       proxy.ts
     .gitignore

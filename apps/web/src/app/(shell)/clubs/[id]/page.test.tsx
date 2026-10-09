@@ -257,7 +257,7 @@ describe('guest', () => {
     const { queryClient } = await render();
     const cta = await screen.findByTestId('guest-cta');
     expect(within(cta).getByTestId('guest-cta-login')).toHaveAttribute('href', '/login');
-    expect(screen.getByTestId('guest-members-hidden')).toHaveTextContent('3');
+    expect(await screen.findByTestId('guest-members-hidden')).toHaveTextContent('3');
     expect(screen.queryByTestId('join-button')).toBeNull();
     expect(screen.queryByTestId('leave-button')).toBeNull();
     expect(screen.queryByTestId('event-rsvp-button')).toBeNull();
