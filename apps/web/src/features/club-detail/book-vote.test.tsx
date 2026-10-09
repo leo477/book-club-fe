@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -37,6 +37,9 @@ function mockApi({ user = 'u1', mine = true, rounds }: { user?: string | null; m
   return gets;
 }
 
+// the lazy section mounts a few hundred ms after the queries settle, so a negative assertion has to outwait it
+const settle = () => act(() => new Promise<void>((r) => setTimeout(r, 1000)));
+
 describe('BookVote visibility', () => {
   it('renders nothing for guests and for signed-in non-members, without fetching the round', async () => {
     const gets = mockApi({ user: null, rounds: [roundJson()] });
@@ -49,9 +52,20 @@ describe('BookVote visibility', () => {
     const gets2 = mockApi({ mine: false, rounds: [roundJson()] });
     const again = renderWithProviders(<BookVote club={club} />);
     await waitFor(() => expect(again.queryClient.getQueryState(myClubsKey)?.status).toBe('success'));
+    await waitFor(() => expect(again.queryClient.isFetching()).toBe(0));
+    await settle();
     expect(again.container).toBeEmptyDOMElement();
     expect(gets).toEqual([]);
     expect(gets2).toEqual([]);
+  });
+
+  it('fetches the round and renders the section for a signed-in member (control for the test above)', async () => {
+    const gets = mockApi({ mine: true, rounds: [roundJson()] });
+    const { container, queryClient } = renderWithProviders(<BookVote club={club} />);
+    await waitFor(() => expect(gets).toHaveLength(1));
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    expect(gets).toHaveLength(1);
+    expect(container).not.toBeEmptyDOMElement();
   });
 
   it('renders nothing for a member when there is no round', async () => {

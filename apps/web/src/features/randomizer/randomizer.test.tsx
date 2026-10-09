@@ -121,12 +121,18 @@ describe('Randomizer', () => {
   });
 
   it('draws nothing when the page is left during the spin', async () => {
-    const { unmount } = setup();
-    await screen.findByText('Grace Hopper');
-    fireEvent.click(spinButton());
-    unmount();
-    await new Promise((r) => setTimeout(r, 2300));
-    expect(nav.pick).not.toHaveBeenCalled();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const { unmount } = setup();
+      await ready();
+      fireEvent.click(spinButton());
+      unmount();
+      await vi.advanceTimersByTimeAsync(SPIN_MS * 2);
+      expect(nav.pick).not.toHaveBeenCalled();
+      expect(screen.queryByTestId('randomizer-result')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('saves the session with full candidate objects and the winner, and prepends it to the history', async () => {
@@ -189,7 +195,7 @@ describe('Randomizer', () => {
   });
 
   it('keeps Save disabled after a successful save until the next spin', async () => {
-    // two real 2s spins would eat most of the 5s test budget under load
+    // two real 2s spins would eat most of the 5s test budget under load; without shouldAdvanceTime findBy/waitFor hang (RTL only drives jest fake timers)
     vi.useFakeTimers({ shouldAdvanceTime: true });
     try {
       const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
