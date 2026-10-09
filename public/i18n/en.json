@@ -642,7 +642,6 @@
     "invalid_display_name": "Display name can contain only letters, digits, spaces and . ' - _ (2–50 characters)."
   },
   "ERRORS": {
-    "retry": "Try again",
     "timeout": "The server is taking too long to respond. Please try again.",
     "serverError": "The server returned an error. Please try again later.",
     "requestFailed": "The request failed. Please try again.",
