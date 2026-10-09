@@ -262,8 +262,10 @@ describe('guest', () => {
     expect(screen.queryByTestId('leave-button')).toBeNull();
     expect(screen.queryByTestId('event-rsvp-button')).toBeNull();
     expect(screen.queryByRole('link', { name: new RegExp(t('CLUB_MANAGE.manage_button')) })).toBeNull();
+    expect(screen.queryByRole('link', { name: t('CLUB_DETAIL.create_event') })).toBeNull();
     expect(screen.queryByText(t('BOOK_VOTE.section_title'), { exact: false })).toBeNull();
     await new Promise((r) => setTimeout(r, 30));
+    expect(calls).not.toContain('GET my-membership');
     expect(calls).toEqual([]);
   });
 
@@ -382,6 +384,7 @@ describe('member', () => {
     expect(screen.queryByTestId('join-button')).toBeNull();
     expect(screen.queryByTestId('guest-cta')).toBeNull();
     expect(screen.queryByRole('link', { name: new RegExp(t('CLUB_MANAGE.manage_button')) })).toBeNull();
+    expect(screen.queryByRole('link', { name: t('CLUB_DETAIL.create_event') })).toBeNull();
     expect(screen.queryByTestId('guest-members-hidden')).toBeNull();
     expect(screen.queryByRole('button', { name: new RegExp(t('MEMBERS.kick')) })).toBeNull();
     const rsvp = await screen.findByTestId('event-rsvp-button');
@@ -497,6 +500,7 @@ describe('organizer', () => {
     mockApi({ user: userJson({ id: 'co' }), mine: [ID], membership: { role: 'organizer' } });
     await render();
     expect(await screen.findByRole('link', { name: new RegExp(t('CLUB_MANAGE.manage_button')) })).toHaveAttribute('href', `/clubs/${ID}/manage`);
+    expect(await screen.findByRole('link', { name: t('CLUB_DETAIL.create_event') })).toHaveAttribute('href', `/clubs/${ID}/events/create`);
   });
 
   it('can start a voting round when there is none', async () => {

@@ -138,7 +138,7 @@ export function ClubEventsInteractive({ club, initialEvents }: ClubEventsProps) 
   return (
     <EventsFrame
       action={
-        role.isOwner && (
+        role.canManage && (
           <Button asChild size="sm">
             <AppLink href={`/clubs/${club.id}/events/create`}>{t('create_event')}</AppLink>
           </Button>

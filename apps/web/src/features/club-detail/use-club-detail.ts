@@ -36,7 +36,9 @@ export function useClubRole(club: ClubRef) {
   const isOwner = user !== null && club.organizerId !== undefined && user.id === club.organizerId;
   const isMember = user !== null && (mine.data?.some((c) => c.id === club.id) ?? false);
   const ready = !isPending && (user === null || !mine.isPending);
-  return { user, isAuthenticated: user !== null, ready, isOwner, isMember };
+  const membership = useMyMembership(club.id, user !== null && !isOwner);
+  const canManage = isOwner || membership.data?.role === 'organizer';
+  return { user, isAuthenticated: user !== null, ready, isOwner, isMember, canManage };
 }
 
 /** `fresh` is for gates: no retry delay on failure, and a cached answer is re-checked on mount. */

@@ -148,8 +148,7 @@ export function ManagePanel({ club }: { club: ClubRef }) {
   const t = useTranslations('CLUB_DETAIL');
   const tManage = useTranslations('CLUB_MANAGE');
   const role = useClubRole(club);
-  const membership = useMyMembership(club.id, role.isAuthenticated);
-  if (!role.isOwner && membership.data?.role !== 'organizer') return null;
+  if (!role.canManage) return null;
   return (
     <div className="glass-card-subtle p-4 flex flex-col gap-3 text-sm">
       <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">{t('manage_title')}</h2>

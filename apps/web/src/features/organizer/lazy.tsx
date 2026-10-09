@@ -20,7 +20,7 @@ export const LazyEditClub = ({ id }: { id: string }) => (
   <OrganizerOfClub clubId={id}>
     {() => (
       <LazyPage>
-        <EditClub id={id} />
+        <EditClub id={id} gated />
       </LazyPage>
     )}
   </OrganizerOfClub>
