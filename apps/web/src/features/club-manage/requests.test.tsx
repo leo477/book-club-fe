@@ -69,7 +69,7 @@ describe('Requests', () => {
     expect(await screen.findByText(t('CLUBS.no_join_requests'))).toBeInTheDocument();
   });
 
-  it('approves a request, drops it from the list and refreshes members and club lists', async () => {
+  it('approves a request, drops it from the list and refreshes club lists and everything under the club', async () => {
     mockManageReads();
     const resolve = backend(two());
     const approved = vi.fn();
@@ -89,7 +89,7 @@ describe('Requests', () => {
     expect(approved).toHaveBeenCalledTimes(1);
     expect(screen.getByText('Mary Jackson')).toBeInTheDocument();
     const keys = spy.mock.calls.map((c) => JSON.stringify(c[0]?.queryKey));
-    expect(keys).toEqual(expect.arrayContaining([JSON.stringify(['clubs']), JSON.stringify(['club', ID]), JSON.stringify(['club', ID, 'members'])]));
+    expect(keys).toEqual(expect.arrayContaining([JSON.stringify(['clubs']), JSON.stringify(['club', ID])]));
   });
 
   it('rejects a request', async () => {

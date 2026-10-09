@@ -2,10 +2,9 @@
 'use no memo';
 
 import { useQueryClient } from '@tanstack/react-query';
-import { useRef } from 'react';
 import type { BanDuration, ClubMember, MemberRole } from '@book-club/contracts';
 import { membersKey } from '@/features/club-detail/use-club-detail';
-import { invalidateClub } from '@/features/club-shared/invalidate-club';
+import { trackClubAction } from '@/features/club-shared/club-actions';
 import { api } from '@/lib/api';
 import { useGuardedRunner } from './guarded-runner';
 
@@ -13,13 +12,10 @@ import { useGuardedRunner } from './guarded-runner';
 export function useMemberActions(clubId: string) {
   const queryClient = useQueryClient();
   const { run, busy } = useGuardedRunner();
-  // a refetch while another member's request is still open would return the server's older view and undo that optimistic change
-  const open = useRef(0);
 
   const apply = (userId: string, call: () => Promise<unknown>, next: (member: ClubMember) => ClubMember | null) =>
-    run(userId, async () => {
-      open.current += 1;
-      try {
+    run(userId, () =>
+      trackClubAction(queryClient, clubId, async () => {
         await queryClient.cancelQueries({ queryKey: membersKey(clubId) });
         const before = queryClient.getQueryData<ClubMember[]>(membersKey(clubId));
         const index = before?.findIndex((m) => m.userId === userId) ?? -1;
@@ -45,11 +41,8 @@ export function useMemberActions(clubId: string) {
           }
           throw err;
         }
-      } finally {
-        open.current -= 1;
-        if (open.current === 0) void invalidateClub(queryClient, clubId);
-      }
-    });
+      }),
+    );
 
   return {
     busy,

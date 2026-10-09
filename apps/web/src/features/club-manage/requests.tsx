@@ -6,8 +6,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
-import { membersKey } from '@/features/club-detail/use-club-detail';
-import { invalidateClub } from '@/features/club-shared/invalidate-club';
+import { trackClubAction } from '@/features/club-shared/club-actions';
 import { mayBeTruncated } from '@/features/club-shared/list-limit';
 import { describeError } from '@/features/club-detail/describe-error';
 import { api } from '@/lib/api';
@@ -24,12 +23,12 @@ export function Requests({ clubId }: { clubId: string }) {
   const { run, busy } = useGuardedRunner();
 
   const resolve = (userId: string, call: () => Promise<unknown>) =>
-    run(userId, async () => {
-      await call();
-      queryClient.setQueryData<JoinRequest[]>(requestsKey(clubId), (list) => list?.filter((r) => r.userId !== userId));
-      void invalidateClub(queryClient, clubId);
-      void queryClient.invalidateQueries({ queryKey: membersKey(clubId) });
-    });
+    run(userId, () =>
+      trackClubAction(queryClient, clubId, async () => {
+        await call();
+        queryClient.setQueryData<JoinRequest[]>(requestsKey(clubId), (list) => list?.filter((r) => r.userId !== userId));
+      }),
+    );
 
   const requests = query.data ?? [];
   return (

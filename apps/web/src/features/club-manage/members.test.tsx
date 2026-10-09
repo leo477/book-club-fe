@@ -277,3 +277,46 @@ describe('MemberList with role controls', () => {
     expect(calls).toBe(1);
   });
 });
+
+describe('club actions across components', () => {
+  it('does not bring a kicked member back when a join request is approved while the kick is pending', async () => {
+    const { Requests } = await import('./requests');
+    const hold = gate();
+    let reads = 0;
+    server.use(
+      http.get(`${API}/clubs/${ID}/members`, () => {
+        reads += 1;
+        return HttpResponse.json(roster().filter((m) => !backendGone.has(m.userId)));
+      }),
+      // the server applies the kick only when its request is released
+      http.delete(`${API}/clubs/${ID}/members/m1`, async () => {
+        await hold.open;
+        backendGone.add('m1');
+        return new HttpResponse(null, { status: 204 });
+      }),
+      http.get(`${API}/clubs/${ID}/join-requests`, () =>
+        HttpResponse.json([{ userId: 'r1', displayName: 'Katherine Johnson', avatarUrl: null, status: 'pending', source: 'link', createdAt: '2099-01-01T00:00:00Z' }]),
+      ),
+      http.post(`${API}/clubs/${ID}/join-requests/r1/approve`, () => HttpResponse.json({ memberCount: 6 })),
+    );
+    const user = userEvent.setup();
+    renderWithProviders(
+      <>
+        <MemberList clubId={ID} isOwner roleControls={{ ownerId: 'owner', currentUserId: 'me' }} />
+        <Requests clubId={ID} />
+      </>,
+    );
+    await screen.findByText('Grace Hopper');
+    await screen.findByText('Katherine Johnson');
+    const before = reads;
+    await user.click(within(row('Grace Hopper')).getByRole('button', { name: new RegExp(t('MEMBERS.kick')) }));
+    await user.click(screen.getByRole('button', { name: t('CLUBS.approve') }));
+    await waitFor(() => expect(screen.queryByText('Katherine Johnson')).not.toBeInTheDocument());
+    await new Promise((r) => setTimeout(r, 100));
+    expect(reads).toBe(before);
+    expect(screen.queryByText('Grace Hopper')).not.toBeInTheDocument();
+    hold.release();
+    await waitFor(() => expect(reads).toBe(before + 1));
+    expect(screen.queryByText('Grace Hopper')).not.toBeInTheDocument();
+  });
+});

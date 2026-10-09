@@ -6,7 +6,7 @@ import type { BanRecord } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useClubMembers } from '@/features/club-detail/use-club-detail';
-import { invalidateClub } from '@/features/club-shared/invalidate-club';
+import { trackClubAction } from '@/features/club-shared/club-actions';
 import { mayBeTruncated } from '@/features/club-shared/list-limit';
 import { describeError } from '@/features/club-detail/describe-error';
 import { api } from '@/lib/api';
@@ -26,24 +26,24 @@ export function Bans({ clubId }: { clubId: string }) {
   const nameOf = (ban: BanRecord) => members?.find((m) => m.userId === ban.userId)?.displayName ?? `${t('banned_user')} ${ban.userId.slice(0, 8)}`;
 
   const unban = (ban: BanRecord) =>
-    run(ban.userId, async () => {
-      await queryClient.cancelQueries({ queryKey: bansKey(clubId) });
-      const index = bans.findIndex((b) => b.userId === ban.userId);
-      queryClient.setQueryData<BanRecord[]>(bansKey(clubId), (list) => list?.filter((b) => b.userId !== ban.userId));
-      try {
-        await api.members.unban(clubId, ban.userId);
-      } catch (err) {
-        queryClient.setQueryData<BanRecord[]>(bansKey(clubId), (list) => {
-          if (!list || list.some((b) => b.userId === ban.userId)) return list;
-          const restored = [...list];
-          restored.splice(Math.min(index, restored.length), 0, ban);
-          return restored;
-        });
-        throw err;
-      } finally {
-        void invalidateClub(queryClient, clubId);
-      }
-    });
+    run(ban.userId, () =>
+      trackClubAction(queryClient, clubId, async () => {
+        await queryClient.cancelQueries({ queryKey: bansKey(clubId) });
+        const index = bans.findIndex((b) => b.userId === ban.userId);
+        queryClient.setQueryData<BanRecord[]>(bansKey(clubId), (list) => list?.filter((b) => b.userId !== ban.userId));
+        try {
+          await api.members.unban(clubId, ban.userId);
+        } catch (err) {
+          queryClient.setQueryData<BanRecord[]>(bansKey(clubId), (list) => {
+            if (!list || list.some((b) => b.userId === ban.userId)) return list;
+            const restored = [...list];
+            restored.splice(Math.min(index, restored.length), 0, ban);
+            return restored;
+          });
+          throw err;
+        }
+      }),
+    );
 
   return (
     <section className="parchment-card px-6 py-5">
