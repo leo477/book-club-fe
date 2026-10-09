@@ -10,6 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { useClubMembers } from '@/features/club-detail/use-club-detail';
+import { OrganizerOfClub } from '@/features/club-manage/organizer-gate';
+import { mayBeTruncated } from '@/features/club-shared/list-limit';
 import { useGuardedRunner, useMounted } from '@/features/club-shared/guarded-runner';
 import { api } from '@/lib/api';
 import { initials } from '@/lib/format';
@@ -20,6 +22,7 @@ import { historyKey, useRandomizerHistory } from './use-randomizer';
 const SPIN_MS = 2000;
 const MIN_PARTICIPANTS = 2;
 const HISTORY_SHOWN = 5;
+const PURPOSE_MAX = 200;
 const LOCALES: Record<string, string> = { uk: 'uk-UA', en: 'en-US' };
 const TIME_ZONE = 'Europe/Kyiv';
 
@@ -30,6 +33,10 @@ const stamp = (value: string, locale: string) => {
 };
 
 export function Randomizer({ clubId }: { clubId: string }) {
+  return <OrganizerOfClub clubId={clubId}>{() => <RandomizerView clubId={clubId} />}</OrganizerOfClub>;
+}
+
+function RandomizerView({ clubId }: { clubId: string }) {
   const t = useTranslations('RANDOMIZER');
   const locale = useLocale();
   const queryClient = useQueryClient();
@@ -42,6 +49,7 @@ export function Randomizer({ clubId }: { clubId: string }) {
   const [excluded, setExcluded] = useState<ReadonlySet<string>>(() => new Set());
   const [result, setResult] = useState<ClubMember | null>(null);
   const [spinning, setSpinning] = useState(false);
+  const [saved, setSaved] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const spinGuard = useRef(false);
 
@@ -49,7 +57,9 @@ export function Randomizer({ clubId }: { clubId: string }) {
 
   const candidates = useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
   const selected = useMemo(() => candidates.filter((m) => !excluded.has(m.userId)), [candidates, excluded]);
-  const canSpin = selected.length >= MIN_PARTICIPANTS;
+  // a full page may hide more members, and drawing from part of the club would not be fair
+  const truncated = mayBeTruncated(candidates.length);
+  const canSpin = selected.length >= MIN_PARTICIPANTS && !truncated;
 
   const toggle = (userId: string) =>
     setExcluded((prev) => {
@@ -68,6 +78,7 @@ export function Randomizer({ clubId }: { clubId: string }) {
     spinGuard.current = true;
     setSpinning(true);
     setResult(null);
+    setSaved(false);
     const pool = selected;
     timer.current = setTimeout(() => {
       spinGuard.current = false;
@@ -86,6 +97,7 @@ export function Randomizer({ clubId }: { clubId: string }) {
         result: { userId: result.userId, displayName: result.displayName, avatarUrl: result.avatarUrl },
       });
       queryClient.setQueryData<RandomizerSession[]>(historyKey(clubId), (list) => [session, ...(list ?? [])]);
+      if (isMounted()) setSaved(true);
     });
 
   return (
@@ -110,7 +122,7 @@ export function Randomizer({ clubId }: { clubId: string }) {
           <label htmlFor="purpose" className="block text-white font-medium text-sm mb-2">
             {t('purpose_label')}
           </label>
-          <Input id="purpose" type="text" value={purpose} onChange={(e) => setPurpose(e.target.value)} placeholder={t('purpose_placeholder')} className="w-full rounded-xl bg-white/10 border-white/20 text-white placeholder-white/40 px-4" />
+          <Input id="purpose" type="text" value={purpose} onChange={(e) => setPurpose(e.target.value)} maxLength={PURPOSE_MAX} placeholder={t('purpose_placeholder')} className="w-full rounded-xl bg-white/10 border-white/20 text-white placeholder-white/40 px-4" />
         </div>
 
         <div className="grid lg:grid-cols-2 gap-8">
@@ -207,10 +219,16 @@ export function Randomizer({ clubId }: { clubId: string }) {
                 {spinning ? t('spinning_btn') : t('spin')}
               </Button>
 
-              {!canSpin && !spinning ? <p className="text-center text-white/50 text-xs">{t('error_min')}</p> : null}
+              {truncated ? (
+                <p role="note" className="text-center text-amber-300 text-xs">
+                  {t('members_truncated')}
+                </p>
+              ) : !canSpin && !spinning ? (
+                <p className="text-center text-white/50 text-xs">{t('error_min')}</p>
+              ) : null}
 
               {result && !spinning ? (
-                <Button type="button" variant="outline" onClick={() => void save()} disabled={busy.has('save')} className="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3 h-auto">
+                <Button type="button" variant="outline" onClick={() => void save()} disabled={busy.has('save') || saved} className="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3 h-auto">
                   {busy.has('save') ? t('saving') : t('save')}
                 </Button>
               ) : null}

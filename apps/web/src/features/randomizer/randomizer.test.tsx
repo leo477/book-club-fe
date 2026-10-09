@@ -6,7 +6,7 @@ import { RequireRole } from '@/features/auth/require-auth';
 import { gate, t } from '@/features/club-manage/test-support';
 import { NEXT_ROUTES, capture, mockSession } from '@/features/organizer/test-support';
 import { StranglerProvider } from '@/strangler/context';
-import { API, memberJson, renderWithProviders, server, setupApiServer } from '@/test/harness';
+import { API, clubJson, memberJson, renderWithProviders, server, setupApiServer } from '@/test/harness';
 import { Randomizer } from './randomizer';
 
 const ID = '3f2b8c1e-9a4d-4e7b-8c5f-1a2b3c4d5e6f';
@@ -42,6 +42,7 @@ const sessionJson = (overrides: Record<string, unknown> = {}) => ({
 function setup(list: unknown[] = members(), history: unknown[] = []) {
   mockSession({ id: 'u1', role: 'organizer' });
   server.use(
+    http.get(`${API}/clubs/${ID}`, () => HttpResponse.json(clubJson({ id: ID, organizerId: 'u1' }))),
     http.get(`${API}/clubs/${ID}/members`, () => HttpResponse.json(list)),
     http.get(`${API}/clubs/${ID}/randomizer/history`, () => HttpResponse.json(history)),
   );
@@ -53,6 +54,7 @@ function setup(list: unknown[] = members(), history: unknown[] = []) {
 }
 
 const spinButton = () => screen.getByTestId('spin-button');
+const ready = () => screen.findByText('Grace Hopper');
 const member = (name: string) => screen.getByRole('button', { name });
 
 async function spin(user: ReturnType<typeof userEvent.setup>) {
@@ -179,8 +181,53 @@ describe('Randomizer', () => {
       fireEvent.click(save);
     });
     release();
-    await waitFor(() => expect(screen.getByRole('button', { name: t('RANDOMIZER.save') })).toBeEnabled());
+    await waitFor(() => expect(screen.getByRole('button', { name: t('RANDOMIZER.save') })).toBeDisabled());
     expect(posts).toBe(1);
+  });
+
+  it('keeps Save disabled after a successful save until the next spin', async () => {
+    const user = userEvent.setup();
+    const bodies = capture('post', `/clubs/${ID}/randomizer/sessions`, () => HttpResponse.json(sessionJson(), { status: 201 }));
+    setup();
+    await ready();
+    await spin(user);
+    await user.click(screen.getByRole('button', { name: t('RANDOMIZER.save') }));
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect(screen.getByRole('button', { name: t('RANDOMIZER.save') })).toBeDisabled();
+    await user.click(screen.getByRole('button', { name: t('RANDOMIZER.save') }));
+    expect(bodies).toHaveLength(1);
+    await spin(user);
+    expect(screen.getByRole('button', { name: t('RANDOMIZER.save') })).toBeEnabled();
+  });
+
+  it('limits the purpose to the 200 characters the backend stores', async () => {
+    setup();
+    await ready();
+    expect(screen.getByLabelText(t('RANDOMIZER.purpose_label'))).toHaveAttribute('maxlength', '200');
+  });
+
+  it('asks for up to 200 members', async () => {
+    const urls: string[] = [];
+    setup();
+    server.use(http.get(`${API}/clubs/${ID}/members`, ({ request }) => (urls.push(new URL(request.url).search), HttpResponse.json(members()))));
+    await ready();
+    expect(urls).toEqual(['?limit=200']);
+  });
+
+  it('refuses to spin and says why when a full page of 200 members may hide more', async () => {
+    const many = Array.from({ length: 200 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` }));
+    setup(many);
+    await screen.findByText('Member 0');
+    expect(screen.getByText(t('RANDOMIZER.members_truncated'))).toBeInTheDocument();
+    expect(spinButton()).toBeDisabled();
+  });
+
+  it('spins with 199 members and shows no note', async () => {
+    const many = Array.from({ length: 199 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` }));
+    setup(many);
+    await screen.findByText('Member 0');
+    expect(screen.queryByText(t('RANDOMIZER.members_truncated'))).not.toBeInTheDocument();
+    expect(spinButton()).toBeEnabled();
   });
 
   it('shows at most five past results, as text', async () => {
@@ -189,6 +236,35 @@ describe('Randomizer', () => {
     expect(await screen.findByText('Round 0 <b>x</b>')).toBeInTheDocument();
     expect(screen.queryByText('Round 5 <b>x</b>')).not.toBeInTheDocument();
     expect(document.querySelector('b')).toBeNull();
+  });
+
+  it('shows organizers only, and loads no members, to someone who is not an organizer of this club', async () => {
+    const requested = vi.fn();
+    mockSession({ id: 'u9', role: 'organizer' });
+    server.use(
+      http.get(`${API}/clubs/${ID}`, () => HttpResponse.json(clubJson({ id: ID, organizerId: 'u1' }))),
+      http.get(`${API}/clubs/${ID}/my-membership`, () => HttpResponse.json({ isMember: true, role: 'member', joinRequestStatus: 'none' })),
+      http.get(`${API}/clubs/${ID}/members`, () => (requested(), HttpResponse.json([]))),
+    );
+    renderWithProviders(
+      <StranglerProvider value={NEXT_ROUTES}>
+        <Randomizer clubId={ID} />
+      </StranglerProvider>,
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.organizers_only'));
+    expect(requested).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('spin-button')).not.toBeInTheDocument();
+  });
+
+  it('shows a real error for a failing club request', async () => {
+    mockSession({ id: 'u1', role: 'organizer' });
+    server.use(http.get(`${API}/clubs/${ID}`, () => HttpResponse.json({ detail: 'x' }, { status: 500 })));
+    renderWithProviders(
+      <StranglerProvider value={NEXT_ROUTES}>
+        <Randomizer clubId={ID} />
+      </StranglerProvider>,
+    );
+    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.unexpected'));
   });
 
   it('is behind the organizer gate', async () => {

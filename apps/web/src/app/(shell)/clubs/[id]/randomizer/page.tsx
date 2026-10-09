@@ -15,7 +15,7 @@ export default async function RandomizerPage({ params }: Props) {
   const { id } = await params;
   if (!isUuid(id)) notFound();
   return (
-    <NamespacesIntl namespaces={['RANDOMIZER', 'ERRORS']}>
+    <NamespacesIntl namespaces={['RANDOMIZER', 'CLUB_DETAIL', 'ERRORS']}>
       <RequireRole role="organizer">
         <LazyRandomizer clubId={id.toLowerCase()} />
       </RequireRole>
