@@ -26,6 +26,8 @@ export function Requests({ clubId }: { clubId: string }) {
     run(userId, () =>
       trackClubAction(queryClient, clubId, async () => {
         await call();
+        // an older in-flight list fetch must not land after the removal and bring the resolved request back
+        await queryClient.cancelQueries({ queryKey: requestsKey(clubId) });
         queryClient.setQueryData<JoinRequest[]>(requestsKey(clubId), (list) => list?.filter((r) => r.userId !== userId));
       }),
     );

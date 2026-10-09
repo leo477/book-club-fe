@@ -1,9 +1,12 @@
 import { act, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 import { showToast } from '@/lib/toast';
 import { ToasterHost } from './toaster-host';
 
 describe('ToasterHost', () => {
+  // The first lazy import of sonner is slow on a loaded CI box and would eat the findBy budget.
+  beforeAll(() => import('./toaster-impl'), 30_000);
+
   it('mounts nothing until the first toast, then shows it (and later ones) through sonner', async () => {
     const { container } = render(<ToasterHost theme="light" />);
     expect(container.querySelector('[data-sonner-toaster]')).toBeNull();
