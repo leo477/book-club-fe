@@ -265,6 +265,7 @@ apps/
           delete-club.tsx
           lazy.tsx
           members.test.tsx
+          organizer-gate.tsx
           requests.test.tsx
           requests.tsx
           status-actions.test.tsx

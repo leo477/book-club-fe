@@ -11,7 +11,11 @@ const toast = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/toast', () => ({ showToast: toast }));
 
 setupApiServer();
-beforeEach(() => toast.mockReset());
+const backendGone = new Set<string>();
+beforeEach(() => {
+  toast.mockReset();
+  backendGone.clear();
+});
 
 const roster = () => [
   memberJson({ userId: 'owner', displayName: 'Olga Owner', role: 'organizer' }),
@@ -82,15 +86,85 @@ describe('MemberList with role controls', () => {
     expect(demoted).toEqual([{ role: 'member' }]);
   });
 
-  it('puts the old role back and toasts the backend detail when a role change fails', async () => {
+  it('shows the new role at once, then puts the old one back and toasts the detail when the change fails', async () => {
     serve();
-    server.use(http.patch(`${API}/clubs/${ID}/members/m1/role`, () => HttpResponse.json({ detail: 'Only the owner may do this' }, { status: 400 })));
+    const { open, release } = gate();
+    server.use(
+      http.patch(`${API}/clubs/${ID}/members/m1/role`, async () => {
+        await open;
+        return HttpResponse.json({ detail: 'Only the owner may do this' }, { status: 400 });
+      }),
+    );
     const user = userEvent.setup();
     view();
     await screen.findByText('Grace Hopper');
     await user.click(within(row('Grace Hopper')).getByRole('button', { name: t('CLUB_MANAGE.promote') }));
+    expect(await within(row('Grace Hopper')).findByRole('button', { name: t('CLUB_MANAGE.demote') })).toBeInTheDocument();
+    release();
     await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Only the owner may do this'));
-    expect(within(row('Grace Hopper')).getByRole('button', { name: t('CLUB_MANAGE.promote') })).toBeEnabled();
+    await waitFor(() => expect(within(row('Grace Hopper')).getByRole('button', { name: t('CLUB_MANAGE.promote') })).toBeEnabled());
+    expect(within(row('Grace Hopper')).queryByRole('button', { name: t('CLUB_MANAGE.demote') })).not.toBeInTheDocument();
+  });
+
+  it('asks for the largest page and warns when a full page may hide more members', async () => {
+    const urls: string[] = [];
+    server.use(
+      http.get(`${API}/clubs/${ID}/members`, ({ request }) => {
+        urls.push(new URL(request.url).search);
+        return HttpResponse.json(Array.from({ length: 200 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` })));
+      }),
+    );
+    view();
+    expect(await screen.findByText(t('MEMBERS.list_truncated'))).toBeInTheDocument();
+    expect(urls).toEqual(['?limit=200']);
+  });
+
+  it('shows no members warning below a full page', async () => {
+    serve();
+    view();
+    await screen.findByText('Grace Hopper');
+    expect(screen.queryByText(t('MEMBERS.list_truncated'))).not.toBeInTheDocument();
+  });
+
+  it('does not refetch while another member request is open, so a late server-side delete cannot bring the member back', async () => {
+    const backend = serve();
+    const a = gate();
+    const b = gate();
+    let reads = 0;
+    server.use(
+      http.get(`${API}/clubs/${ID}/members`, ({ request }) => {
+        reads += 1;
+        return HttpResponse.json(roster().filter((m) => !backendGone.has(m.userId)), { headers: { 'x-url': request.url } });
+      }),
+      http.delete(`${API}/clubs/${ID}/members/m1`, async () => {
+        backendGone.add('m1');
+        await a.open;
+        return new HttpResponse(null, { status: 204 });
+      }),
+      // the server applies this delete only when its request is released, as with a slow transaction
+      http.delete(`${API}/clubs/${ID}/members/m2`, async () => {
+        await b.open;
+        backendGone.add('m2');
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    void backend;
+    const user = userEvent.setup();
+    view();
+    await screen.findByText('Grace Hopper');
+    const initialReads = reads;
+    await user.click(within(row('Grace Hopper')).getByRole('button', { name: new RegExp(t('MEMBERS.kick')) }));
+    await user.click(within(row('Alan Turing')).getByRole('button', { name: new RegExp(t('MEMBERS.kick')) }));
+    expect(screen.queryByText('Grace Hopper')).not.toBeInTheDocument();
+    expect(screen.queryByText('Alan Turing')).not.toBeInTheDocument();
+    a.release();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(reads).toBe(initialReads);
+    expect(screen.queryByText('Alan Turing')).not.toBeInTheDocument();
+    b.release();
+    await waitFor(() => expect(reads).toBe(initialReads + 1));
+    expect(screen.queryByText('Alan Turing')).not.toBeInTheDocument();
+    expect(screen.queryByText('Grace Hopper')).not.toBeInTheDocument();
   });
 
   it('kicks at once without a confirmation step', async () => {
