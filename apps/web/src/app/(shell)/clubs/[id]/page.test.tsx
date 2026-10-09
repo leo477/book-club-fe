@@ -254,7 +254,7 @@ describe('generateMetadata', () => {
 describe('guest', () => {
   it('sees the login CTA and a hidden member list, and makes no authenticated request', async () => {
     const calls = mockApi();
-    await render();
+    const { queryClient } = await render();
     const cta = await screen.findByTestId('guest-cta');
     expect(within(cta).getByTestId('guest-cta-login')).toHaveAttribute('href', '/login');
     expect(screen.getByTestId('guest-members-hidden')).toHaveTextContent('3');
@@ -264,7 +264,12 @@ describe('guest', () => {
     expect(screen.queryByRole('link', { name: new RegExp(t('CLUB_MANAGE.manage_button')) })).toBeNull();
     expect(screen.queryByRole('link', { name: t('CLUB_DETAIL.create_event') })).toBeNull();
     expect(screen.queryByText(t('BOOK_VOTE.section_title'), { exact: false })).toBeNull();
-    await new Promise((r) => setTimeout(r, 30));
+    await waitFor(() => {
+      const queries = queryClient.getQueryCache().getAll();
+      expect(queries.some((q) => q.state.status !== 'pending')).toBe(true);
+      expect(queries.every((q) => q.state.fetchStatus === 'idle')).toBe(true);
+      expect(queryClient.isFetching()).toBe(0);
+    });
     expect(calls).not.toContain('GET my-membership');
     expect(calls).toEqual([]);
   });
