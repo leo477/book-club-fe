@@ -7,9 +7,10 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { membersKey } from '@/features/club-detail/use-club-detail';
-import { invalidateClub } from '@/features/organizer/use-organizer';
+import { invalidateClub } from '@/features/club-shared/invalidate-club';
 import { api } from '@/lib/api';
-import { requestsKey, useGuardedRunner, useJoinRequests } from './use-club-manage';
+import { useGuardedRunner } from '@/features/club-shared/guarded-runner';
+import { requestsKey, useJoinRequests } from './use-club-manage';
 
 export function Requests({ clubId }: { clubId: string }) {
   const t = useTranslations('CLUBS');

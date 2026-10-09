@@ -6,9 +6,10 @@ import type { BanRecord } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useClubMembers } from '@/features/club-detail/use-club-detail';
-import { invalidateClub } from '@/features/organizer/use-organizer';
+import { invalidateClub } from '@/features/club-shared/invalidate-club';
 import { api } from '@/lib/api';
-import { bansKey, useBans, useGuardedRunner } from './use-club-manage';
+import { useGuardedRunner } from '@/features/club-shared/guarded-runner';
+import { bansKey, useBans } from './use-club-manage';
 
 export function Bans({ clubId }: { clubId: string }) {
   const t = useTranslations('CLUB_MANAGE');

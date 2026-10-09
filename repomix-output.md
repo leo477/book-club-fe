@@ -271,8 +271,13 @@ apps/
           status-actions.tsx
           test-support.ts
           tools.tsx
-          use-club-manage.test.tsx
           use-club-manage.ts
+        club-shared/
+          bundle-boundary.test.ts
+          guarded-runner.test.tsx
+          guarded-runner.ts
+          invalidate-club.ts
+          list-limit.ts
           use-member-actions.ts
         clubs/
           club-card.test.tsx

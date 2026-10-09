@@ -4,9 +4,9 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { BanDuration, ClubMember, MemberRole } from '@book-club/contracts';
 import { membersKey } from '@/features/club-detail/use-club-detail';
-import { invalidateClub } from '@/features/organizer/use-organizer';
+import { invalidateClub } from '@/features/club-shared/invalidate-club';
 import { api } from '@/lib/api';
-import { useGuardedRunner } from './use-club-manage';
+import { useGuardedRunner } from './guarded-runner';
 
 /** Kick, ban and role changes: the list updates at once, and only the member this call touched is put back when it fails. */
 export function useMemberActions(clubId: string) {

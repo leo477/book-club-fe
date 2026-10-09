@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { invalidateEvents } from '@/features/events/use-events';
 import { api } from '@/lib/api';
 import { usePush } from '@/lib/use-push';
-import { useGuardedRunner } from './use-club-manage';
+import { useGuardedRunner } from '@/features/club-shared/guarded-runner';
 
 /** Deleting asks for an inline confirmation; once the club is gone the button stays disabled while the page leaves. */
 export function DeleteClub({ clubId }: { clubId: string }) {

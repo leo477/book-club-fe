@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { initials } from '@/lib/format';
 import { QrCode } from './qr-code';
-import { useMemberActions } from '@/features/club-manage/use-member-actions';
+import { useMemberActions } from '@/features/club-shared/use-member-actions';
 import { useClubMembers } from './use-club-detail';
 
 const BAN_DURATIONS: readonly BanDuration[] = [1, 3, 5, 'permanent'];

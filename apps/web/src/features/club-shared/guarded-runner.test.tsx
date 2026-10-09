@@ -4,8 +4,8 @@ import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { nest } from '@/i18n/locale';
 import { messages } from '@/test/harness';
-import { gate } from './test-support';
-import { isAbort, useGuardedRunner } from './use-club-manage';
+import { gate } from '@/features/club-manage/test-support';
+import { isAbort, useGuardedRunner } from './guarded-runner';
 
 const toast = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/toast', () => ({ showToast: toast }));

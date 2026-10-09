@@ -9,9 +9,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { clubKey } from '@/features/club-detail/use-club-detail';
 import { invalidateEvents } from '@/features/events/use-events';
-import { invalidateClub } from '@/features/organizer/use-organizer';
+import { invalidateClub } from '@/features/club-shared/invalidate-club';
 import { api } from '@/lib/api';
-import { useGuardedRunner } from './use-club-manage';
+import { useGuardedRunner } from '@/features/club-shared/guarded-runner';
 
 /** Pause, reschedule and cancel; cancelling asks for an inline confirmation first, as in the Angular screen. */
 export function StatusActions({ clubId }: { clubId: string }) {

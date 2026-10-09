@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { useClubMembers } from '@/features/club-detail/use-club-detail';
-import { useGuardedRunner, useMounted } from '@/features/club-manage/use-club-manage';
+import { useGuardedRunner, useMounted } from '@/features/club-shared/guarded-runner';
 import { api } from '@/lib/api';
 import { initials } from '@/lib/format';
 import { cn } from '@/lib/utils';

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { describeError } from '@/features/club-detail/describe-error';
 import { api } from '@/lib/api';
-import { isAbort, useMounted } from './use-club-manage';
+import { isAbort, useMounted } from '@/features/club-shared/guarded-runner';
 
 const ROOM_NAME_MAX = 40;
 
