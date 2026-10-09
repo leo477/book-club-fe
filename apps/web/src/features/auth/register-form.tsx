@@ -1,6 +1,7 @@
 'use client';
 'use no memo';
 
+import { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { registerForm, type RegisterForm } from '@book-club/contracts';
@@ -20,7 +21,7 @@ import { AuthFrame } from './auth-frame';
 import { GoogleButton } from './google-button';
 
 // the welcome card stays readable for a moment before the hard navigation, standing in for Angular's book animation
-const WELCOME_MS = 1500;
+export const WELCOME_MS = 1500;
 
 type Strength = 'weak' | 'medium' | 'strong';
 
@@ -68,10 +69,17 @@ export function RegisterView() {
     onSuccess: ({ user: profile }) => {
       if (!profile) return;
       queryClient.setQueryData(sessionKey, profile);
-      setTimeout(() => hardNavigate('/events'), WELCOME_MS);
     },
   });
   const failure = signUp.error;
+  const welcomed = signUp.isSuccess && signUp.data.user !== null;
+
+  // an effect so leaving the welcome card (unmount) cancels the redirect
+  useEffect(() => {
+    if (!welcomed) return;
+    const timer = setTimeout(() => hardNavigate('/events'), WELCOME_MS);
+    return () => clearTimeout(timer);
+  }, [welcomed]);
 
   if (signUp.isSuccess) {
     const { user: profile, email, displayName } = signUp.data;

@@ -1,10 +1,10 @@
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { API, messages, renderWithProviders, server, setupApiServer, userJson } from '@/test/harness';
 import { sessionKey } from '@/features/clubs/use-session';
-import { RegisterView } from './register-form';
+import { RegisterView, WELCOME_MS } from './register-form';
 
 const nav = vi.hoisted(() => ({ hard: vi.fn() }));
 vi.mock('@/lib/navigate', () => ({ hardNavigate: nav.hard, replaceNavigate: vi.fn() }));
@@ -43,7 +43,7 @@ const realSetTimeout = globalThis.setTimeout;
 beforeEach(() => {
   vi.spyOn(globalThis, 'setTimeout').mockImplementation(((...args: Parameters<typeof setTimeout>) => {
     const id = realSetTimeout(...args);
-    timers.add(id);
+    if (args[1] === WELCOME_MS) timers.add(id);
     return id;
   }) as typeof setTimeout);
   nav.hard.mockReset();
@@ -127,16 +127,38 @@ describe('RegisterView', () => {
     await userEvent.click(screen.getByRole('button', { name: new RegExp(t('AUTH.role_organizer_label')) }));
     expect(screen.getByRole('button', { name: new RegExp(t('AUTH.role_organizer_label')) })).toHaveAttribute('aria-pressed', 'true');
     await fillValid();
-    await userEvent.click(submit());
-
-    const feedback = await screen.findByTestId('register-feedback');
-    expect(feedback).toHaveTextContent(t('AUTH.account_created'));
-    expect(feedback).toHaveTextContent('Ada Lovelace');
-    expect(screen.getByRole('link', { name: t('AUTH.back_to_login') })).toHaveAttribute('href', '/login');
-    expect(posts).toEqual([{ displayName: 'Ada Lovelace', email: 'ada@example.com', password: 'Correct-horse1', role: 'organizer' }]);
-    expect(queryClient.getQueryData(sessionKey)).toMatchObject({ id: 'u1' });
-    await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/events'), { timeout: 4000 });
-    expect(nav.hard).toHaveBeenCalledTimes(1);
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      fireEvent.click(submit());
+      const feedback = await screen.findByTestId('register-feedback');
+      expect(feedback).toHaveTextContent(t('AUTH.account_created'));
+      expect(feedback).toHaveTextContent('Ada Lovelace');
+      expect(screen.getByRole('link', { name: t('AUTH.back_to_login') })).toHaveAttribute('href', '/login');
+      expect(posts).toEqual([{ displayName: 'Ada Lovelace', email: 'ada@example.com', password: 'Correct-horse1', role: 'organizer' }]);
+      expect(queryClient.getQueryData(sessionKey)).toMatchObject({ id: 'u1' });
+      expect(nav.hard).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(WELCOME_MS);
+      expect(nav.hard).toHaveBeenCalledWith('/events');
+      vi.advanceTimersByTime(WELCOME_MS * 2);
+      expect(nav.hard).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it('cancels the welcome redirect when the user leaves before the delay', async () => {
+    mockApi();
+    const { unmount } = renderWithProviders(<RegisterView />);
+    await fillValid();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      fireEvent.click(submit());
+      await screen.findByText(t('AUTH.account_created'));
+      unmount();
+      vi.advanceTimersByTime(WELCOME_MS * 2);
+      expect(nav.hard).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('treats the 202 e-mail confirmation as success with the confirm-your-email card, no session and no navigation', async () => {
@@ -152,7 +174,7 @@ describe('RegisterView', () => {
     expect(card).not.toHaveTextContent(t('AUTH.account_created'));
     expect(screen.getByRole('link', { name: t('AUTH.back_to_login') })).toHaveAttribute('href', '/login');
     expect(queryClient.getQueryData(sessionKey) ?? null).toBeNull();
-    expect(vi.mocked(globalThis.setTimeout).mock.calls.some(([, ms]) => ms === 1500)).toBe(false);
+    expect(vi.mocked(globalThis.setTimeout).mock.calls.some(([, ms]) => ms === WELCOME_MS)).toBe(false);
     expect(nav.hard).not.toHaveBeenCalled();
   });
 
