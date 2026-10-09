@@ -1,5 +1,6 @@
-import { screen, waitFor } from '@testing-library/react';
+import { act, screen, waitFor } from '@testing-library/react';
 import { HttpResponse, delay, http } from 'msw';
+import { useEffect, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { API, clubJson, messages, renderWithProviders, server, setupApiServer, userJson } from '@/test/harness';
 import { ClubEventsInteractive } from './club-events';
@@ -15,6 +16,18 @@ setupApiServer();
 const club = { id: 'c1', organizerId: 'o1' };
 const manageLabel = (messages.uk['CLUB_MANAGE.manage_button'] ?? '').trim();
 const createLabel = messages.uk['CLUB_DETAIL.create_event'] ?? '';
+
+function LateIsland({ withJoin = false, expose }: { withJoin?: boolean; expose: (show: () => void) => void }) {
+  const [show, setShow] = useState(false);
+  useEffect(() => expose(() => setShow(true)), [expose]);
+  return (
+    <>
+      <ManagePanel club={club} />
+      {withJoin ? <JoinCta club={club} /> : null}
+      {show ? <ClubEventsInteractive club={club} initialEvents={[]} /> : null}
+    </>
+  );
+}
 
 function mockApi({ user = 'u1', role, wait = 0 }: { user?: string | null; role: string | null; wait?: number }) {
   const hits = { membership: 0 };
@@ -64,6 +77,20 @@ describe('canManage links', () => {
     expect(hits.membership).toBe(1);
   });
 
+  it('re-checks a seeded organizer role on mount even when the session is already cached', async () => {
+    const hits = mockApi({ role: 'member', wait: 60 });
+    const view = renderWithProviders(<ManagePanel club={club} />, 'uk', (qc) => {
+      qc.setQueryData(sessionKey, userJson({ id: 'u1' }));
+      qc.setQueryData(membershipKey('c1'), { isMember: true, role: 'organizer', joinRequestStatus: 'none' });
+    });
+    expect(screen.getByRole('link', { name: new RegExp(manageLabel) })).toBeInTheDocument();
+    await waitFor(() => expect(hits.membership).toBe(1));
+    expect(screen.getByRole('link', { name: new RegExp(manageLabel) })).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('link', { name: new RegExp(manageLabel) })).toBeNull());
+    expect(view.container).toBeEmptyDOMElement();
+    expect(hits.membership).toBe(1);
+  });
+
   it('makes a single membership request across the panel, the join prompt and the create-event island', async () => {
     const hits = mockApi({ role: 'organizer', wait: 30 });
     renderWithProviders(
@@ -81,10 +108,36 @@ describe('canManage links', () => {
 
   it('makes no membership request and shows no placeholder for guests', async () => {
     const guest = mockApi({ user: null, role: null });
-    const first = renderWithProviders(<ManagePanel club={club} />);
-    await waitFor(() => expect(first.queryClient.getQueryState(sessionKey)?.status).toBe('success'));
-    expect(first.container).toBeEmptyDOMElement();
+    const view = renderWithProviders(<ManagePanel club={club} />);
+    await waitFor(() => expect(view.queryClient.getQueryState(sessionKey)?.status).toBe('success'));
+    await waitFor(() => expect(view.container).toBeEmptyDOMElement());
+    await waitFor(() => expect(view.queryClient.isFetching()).toBe(0));
     expect(guest.membership).toBe(0);
+  });
+
+  it('makes one membership request when the island mounts while the panel request is in flight', async () => {
+    const hits = mockApi({ role: 'organizer', wait: 100 });
+    let showIsland = () => {};
+    const view = renderWithProviders(<LateIsland expose={(show) => (showIsland = show)} />);
+    await waitFor(() => expect(hits.membership).toBe(1));
+    expect(view.queryClient.isFetching()).toBe(1);
+    act(() => showIsland());
+    expect(await screen.findByText(createLabel)).toBeInTheDocument();
+    await waitFor(() => expect(view.queryClient.isFetching()).toBe(0));
+    expect(hits.membership).toBe(1);
+  });
+
+  it('makes one membership request when the island mounts after the request settled', async () => {
+    const hits = mockApi({ role: 'organizer' });
+    let showIsland = () => {};
+    const view = renderWithProviders(<LateIsland withJoin expose={(show) => (showIsland = show)} />);
+    expect(await screen.findByRole('link', { name: new RegExp(manageLabel) })).toBeInTheDocument();
+    await waitFor(() => expect(view.queryClient.isFetching()).toBe(0));
+    expect(hits.membership).toBe(1);
+    act(() => showIsland());
+    expect(await screen.findByText(createLabel)).toBeInTheDocument();
+    await waitFor(() => expect(view.queryClient.isFetching()).toBe(0));
+    expect(hits.membership).toBe(1);
   });
 
   it('makes no membership request and shows no placeholder for the owner', async () => {
