@@ -3,6 +3,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import type { ClubEvent } from '@book-club/contracts';
+import { LIST_LIMIT } from '@/features/club-shared/list-limit';
 import { api } from '@/lib/api';
 import { showToast } from '@/lib/toast';
 import { useMyClubs } from '@/features/clubs/use-clubs';
@@ -57,7 +58,7 @@ export function useClubMembers(clubId: string, enabled: boolean) {
   return useQuery({
     queryKey: membersKey(clubId),
     // a non-member may be refused; that must neither redirect nor break the page
-    queryFn: ({ signal }) => api.members.list(clubId, {}, { skipAuthRedirect: true, signal }),
+    queryFn: ({ signal }) => api.members.list(clubId, { limit: LIST_LIMIT }, { skipAuthRedirect: true, signal }),
     enabled,
     retry: false,
     ...noRefocus,

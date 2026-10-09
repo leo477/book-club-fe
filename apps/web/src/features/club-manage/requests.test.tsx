@@ -34,6 +34,35 @@ describe('Requests', () => {
     expect(document.querySelector('[src^="javascript"]')).toBeNull();
   });
 
+  it('renders the normalized URL, never the raw text, as the avatar source', async () => {
+    mockManageReads({ requests: [requestJson({ avatarUrl: 'HTTPS://Example.com/a b.png' }), requestJson({ userId: 'r9', displayName: 'Data', avatarUrl: 'data:image/svg+xml,<svg onload=alert(1)>' })] });
+    renderWithProviders(<Requests clubId={ID} />);
+    expect(await screen.findByAltText('Katherine Johnson')).toHaveAttribute('src', 'https://example.com/a%20b.png');
+    expect(screen.queryByAltText('Data')).not.toBeInTheDocument();
+  });
+
+  it('asks for the largest page and warns when a full page may hide more requests', async () => {
+    const urls: string[] = [];
+    mockManageReads();
+    server.use(
+      http.get(`${API}/clubs/${ID}/join-requests`, ({ request }) => {
+        urls.push(new URL(request.url).search);
+        return HttpResponse.json(Array.from({ length: 200 }, (_, i) => requestJson({ userId: `r${i}`, displayName: `Reader ${i}` })));
+      }),
+    );
+    renderWithProviders(<Requests clubId={ID} />);
+    expect(await screen.findByText(t('CLUB_MANAGE.list_truncated'))).toBeInTheDocument();
+    expect(urls).toEqual(['?limit=200']);
+  });
+
+  it('shows an error, not "no pending requests", when the list is refused', async () => {
+    mockManageReads();
+    server.use(http.get(`${API}/clubs/${ID}/join-requests`, () => HttpResponse.json({ detail: 'Not authorized' }, { status: 403 })));
+    renderWithProviders(<Requests clubId={ID} />);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Not authorized');
+    expect(screen.queryByText(t('CLUBS.no_join_requests'))).not.toBeInTheDocument();
+  });
+
   it('shows the empty state', async () => {
     mockManageReads();
     renderWithProviders(<Requests clubId={ID} />);

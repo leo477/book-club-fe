@@ -28,13 +28,51 @@ describe('Bans', () => {
     expect(screen.getByRole('heading', { name: new RegExp(`${t('CLUB_MANAGE.bans_title')} \\(0\\)`) })).toBeInTheDocument();
   });
 
-  it('names a banned user from the members list and falls back to the id', async () => {
+  it('labels a banned user by a short id, since the ban carries no name and the user left the members', async () => {
+    mockManageReads();
+    backend([banJson({ userId: '3f2b8c1e-9a4d-4e7b-8c5f-1a2b3c4d5e6f' })]);
+    renderWithProviders(<Bans clubId={ID} />);
+    expect(await screen.findByText(`${t('CLUB_MANAGE.banned_user')} 3f2b8c1e`)).toBeInTheDocument();
+    expect(screen.queryByText(/3f2b8c1e-9a4d/)).not.toBeInTheDocument();
+  });
+
+  it('uses the member name when the user is still listed as a member', async () => {
     mockManageReads({ members: [memberJson({ userId: 'b1', displayName: 'Grace Hopper' })] });
-    backend([banJson(), banJson({ userId: 'ghost' })]);
+    backend([banJson(), banJson({ userId: 'ghost-user-id-1234' })]);
     renderWithProviders(<Bans clubId={ID} />);
     expect(await screen.findByText('Grace Hopper')).toBeInTheDocument();
-    expect(screen.getByText('ghost')).toBeInTheDocument();
+    expect(screen.getByText(`${t('CLUB_MANAGE.banned_user')} ghost-us`)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /\(2\)/ })).toBeInTheDocument();
+  });
+
+  it('asks for the largest page and warns when a full page may hide more bans', async () => {
+    mockManageReads();
+    const urls: string[] = [];
+    server.use(
+      http.get(`${API}/clubs/${ID}/bans`, ({ request }) => {
+        urls.push(new URL(request.url).search);
+        return HttpResponse.json(Array.from({ length: 200 }, (_, i) => banJson({ userId: `user-${i}-xxxxxxxx` })));
+      }),
+    );
+    renderWithProviders(<Bans clubId={ID} />);
+    expect(await screen.findByText(t('CLUB_MANAGE.list_truncated'))).toBeInTheDocument();
+    expect(urls).toEqual(['?limit=200']);
+  });
+
+  it('shows no warning below a full page', async () => {
+    mockManageReads();
+    backend([banJson()]);
+    renderWithProviders(<Bans clubId={ID} />);
+    await screen.findByText(/b1/);
+    expect(screen.queryByText(t('CLUB_MANAGE.list_truncated'))).not.toBeInTheDocument();
+  });
+
+  it('shows an error, not the empty state, when the list is refused', async () => {
+    mockManageReads();
+    server.use(http.get(`${API}/clubs/${ID}/bans`, () => HttpResponse.json({ detail: 'Not authorized' }, { status: 403 })));
+    renderWithProviders(<Bans clubId={ID} />);
+    expect(await screen.findByRole('alert')).toHaveTextContent('Not authorized');
+    expect(screen.queryByText(t('CLUB_MANAGE.no_bans'))).not.toBeInTheDocument();
   });
 
   it('unbans and removes the row', async () => {
@@ -61,7 +99,7 @@ describe('Bans', () => {
     server.use(http.delete(`${API}/clubs/${ID}/bans/b1`, () => HttpResponse.json({ detail: 'Not allowed' }, { status: 403 })));
     const user = userEvent.setup();
     renderWithProviders(<Bans clubId={ID} />);
-    await screen.findByText('b1');
+    await screen.findByText(/b1/);
     await user.click(screen.getAllByRole('button', { name: t('CLUB_MANAGE.unban') })[0]!);
     await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Not allowed'));
     const rows = screen.getAllByRole('listitem').map((li) => li.textContent);

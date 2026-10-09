@@ -7,19 +7,23 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { useClubMembers } from '@/features/club-detail/use-club-detail';
 import { invalidateClub } from '@/features/club-shared/invalidate-club';
+import { mayBeTruncated } from '@/features/club-shared/list-limit';
+import { describeError } from '@/features/club-detail/describe-error';
 import { api } from '@/lib/api';
 import { useGuardedRunner } from '@/features/club-shared/guarded-runner';
 import { bansKey, useBans } from './use-club-manage';
 
 export function Bans({ clubId }: { clubId: string }) {
   const t = useTranslations('CLUB_MANAGE');
+  const tErrors = useTranslations('ERRORS');
   const queryClient = useQueryClient();
   const bansQuery = useBans(clubId);
   const members = useClubMembers(clubId, true).data;
   const { run, busy } = useGuardedRunner();
   const bans = bansQuery.data ?? [];
 
-  const nameOf = (ban: BanRecord) => members?.find((m) => m.userId === ban.userId)?.displayName ?? ban.userId;
+  // the ban record carries no name, and a banned user has left the member list, so the row shows a short id
+  const nameOf = (ban: BanRecord) => members?.find((m) => m.userId === ban.userId)?.displayName ?? `${t('banned_user')} ${ban.userId.slice(0, 8)}`;
 
   const unban = (ban: BanRecord) =>
     run(ban.userId, async () => {
@@ -46,7 +50,16 @@ export function Bans({ clubId }: { clubId: string }) {
       <h2 className="text-sm font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide mb-4">
         {t('bans_title')} ({bans.length})
       </h2>
-      {bans.length === 0 ? (
+      {mayBeTruncated(bans.length) && (
+        <p role="note" className="mb-3 text-xs text-amber-700 dark:text-amber-400">
+          {t('list_truncated')}
+        </p>
+      )}
+      {bansQuery.isError ? (
+        <p role="alert" className="text-sm text-red-600 dark:text-red-400">
+          {describeError(bansQuery.error, tErrors)}
+        </p>
+      ) : bans.length === 0 ? (
         <p className="text-sm text-[var(--color-ink-muted)]">{t('no_bans')}</p>
       ) : (
         <ul className="divide-y divide-[var(--color-sepia)]">
