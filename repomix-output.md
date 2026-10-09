@@ -409,6 +409,9 @@ apps/
         server.ts
       test/
         harness.tsx
+      test-support/
+        import-graph.test.ts
+        import-graph.ts
       env.d.ts
       proxy.ts
     .gitignore
