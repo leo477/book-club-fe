@@ -46,11 +46,12 @@ describe('BookVote visibility', () => {
     first.unmount();
     // the guest answer is cached for 30s and would otherwise hide the signed-in non-member below
     resetSessionHint();
-    mockApi({ mine: false, rounds: [roundJson()] });
+    const gets2 = mockApi({ mine: false, rounds: [roundJson()] });
     const again = renderWithProviders(<BookVote club={club} />);
     await waitFor(() => expect(again.queryClient.getQueryState(myClubsKey)?.status).toBe('success'));
     expect(again.container).toBeEmptyDOMElement();
     expect(gets).toEqual([]);
+    expect(gets2).toEqual([]);
   });
 
   it('renders nothing for a member when there is no round', async () => {
@@ -222,8 +223,6 @@ describe('BookVote as organizer', () => {
     await u.click(await screen.findByRole('button', { name: t('BOOK_VOTE.start_round') }));
     await waitFor(() => expect(created).toBe(1));
     first.unmount();
-    // the guest answer is cached for 30s and would otherwise hide the signed-in non-member below
-    resetSessionHint();
 
     mockApi({ ...owner, rounds: [roundJson({ status: 'closed', winnerId: 'b1' })] });
     renderWithProviders(<BookVote club={club} />);
