@@ -4,6 +4,7 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { API, renderWithProviders, server, setupApiServer } from '@/test/harness';
 import { Requests } from './requests';
+import { requestsKey } from './use-club-manage';
 import { gate, ID, mockManageReads, requestJson, t } from './test-support';
 
 const toast = vi.hoisted(() => vi.fn());
@@ -149,5 +150,43 @@ describe('Requests', () => {
     release();
     await waitFor(() => expect(screen.queryByText('Katherine Johnson')).not.toBeInTheDocument());
     expect(posts).toBe(1);
+  });
+
+  it('does not let a list fetch started before an approval bring the approved request back', async () => {
+    mockManageReads();
+    const stale = gate();
+    const delayed = gate();
+    let gets = 0;
+    server.use(
+      http.get(`${API}/clubs/${ID}/join-requests`, async () => {
+        gets += 1;
+        if (gets === 1) return HttpResponse.json(two());
+        if (gets === 2) {
+          await stale.open;
+          return HttpResponse.json(two());
+        }
+        return HttpResponse.json([two()[1]]);
+      }),
+      http.post(`${API}/clubs/${ID}/join-requests/r1/approve`, () => HttpResponse.json({ memberCount: 4 })),
+      http.post(`${API}/clubs/${ID}/join-requests/r2/approve`, async () => {
+        await delayed.open;
+        return HttpResponse.json({ memberCount: 5 });
+      }),
+    );
+    const { queryClient } = renderWithProviders(<Requests clubId={ID} />);
+    await screen.findByText('Katherine Johnson');
+    void queryClient.refetchQueries({ queryKey: requestsKey(ID) });
+    await waitFor(() => expect(gets).toBe(2));
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole('button', { name: t('CLUBS.approve') })[1]!);
+    });
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole('button', { name: t('CLUBS.approve') })[0]!);
+    });
+    await waitFor(() => expect(screen.queryByText('Katherine Johnson')).not.toBeInTheDocument());
+    stale.release();
+    await waitFor(() => expect(queryClient.getQueryState(requestsKey(ID))?.fetchStatus).toBe('idle'));
+    expect(screen.queryByText('Katherine Johnson')).not.toBeInTheDocument();
+    delayed.release();
   });
 });

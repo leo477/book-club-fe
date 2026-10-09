@@ -22,5 +22,9 @@
   },
   "AUTH": {
     "continue": "Продовжити"
+  },
+  "CLUB_MANAGE": {
+    "chart_summary": "{{ label }}: {{ items }}",
+    "chart_summary_item": "{{ title }}: {{ count }}"
   }
 }
