@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
@@ -145,6 +146,29 @@ describe('RegisterView', () => {
       vi.useRealTimers();
     }
   });
+
+  it('navigates exactly once under Strict Mode, after the delay', async () => {
+    mockApi();
+    renderWithProviders(
+      <StrictMode>
+        <RegisterView />
+      </StrictMode>,
+    );
+    await fillValid();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      fireEvent.click(submit());
+      await screen.findByText(t('AUTH.account_created'));
+      expect(nav.hard).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(WELCOME_MS);
+      expect(nav.hard).toHaveBeenCalledExactlyOnceWith('/events');
+      vi.advanceTimersByTime(WELCOME_MS * 2);
+      expect(nav.hard).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('cancels the welcome redirect when the user leaves before the delay', async () => {
     mockApi();
     const { unmount } = renderWithProviders(<RegisterView />);
@@ -165,17 +189,25 @@ describe('RegisterView', () => {
     mockApi(() => HttpResponse.json({ message: 'Check your email to confirm registration', code: 'EMAIL_CONFIRMATION_REQUIRED' }, { status: 202 }));
     const { queryClient } = renderWithProviders(<RegisterView />);
     await fillValid();
-    await userEvent.click(submit());
-
-    const card = await screen.findByTestId('register-feedback');
-    expect(card).toHaveTextContent(t('AUTH.check_email'));
-    expect(card).toHaveTextContent(t('AUTH.confirmation_sent'));
-    expect(card).toHaveTextContent('ada@example.com');
-    expect(card).not.toHaveTextContent(t('AUTH.account_created'));
-    expect(screen.getByRole('link', { name: t('AUTH.back_to_login') })).toHaveAttribute('href', '/login');
-    expect(queryClient.getQueryData(sessionKey) ?? null).toBeNull();
-    expect(vi.mocked(globalThis.setTimeout).mock.calls.some(([, ms]) => ms === WELCOME_MS)).toBe(false);
-    expect(nav.hard).not.toHaveBeenCalled();
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const scheduled = vi.spyOn(globalThis, 'setTimeout');
+    try {
+      fireEvent.click(submit());
+      const card = await screen.findByTestId('register-feedback');
+      expect(card).toHaveTextContent(t('AUTH.check_email'));
+      expect(card).toHaveTextContent(t('AUTH.confirmation_sent'));
+      expect(card).toHaveTextContent('ada@example.com');
+      expect(card).not.toHaveTextContent(t('AUTH.account_created'));
+      expect(screen.getByRole('link', { name: t('AUTH.back_to_login') })).toHaveAttribute('href', '/login');
+      expect(queryClient.getQueryData(sessionKey) ?? null).toBeNull();
+      expect(scheduled.mock.calls.some(([, ms]) => ms === WELCOME_MS)).toBe(false);
+      expect(nav.hard).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(WELCOME_MS * 2);
+      expect(nav.hard).not.toHaveBeenCalled();
+    } finally {
+      scheduled.mockRestore();
+      vi.useRealTimers();
+    }
   });
 
   it('never writes a token to storage, cookies or the query cache', async () => {
