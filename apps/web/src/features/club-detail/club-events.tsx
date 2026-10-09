@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/lib/api';
 import { showToast } from '@/lib/toast';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { cn } from '@/lib/utils';
 import { describeError } from './describe-error';
@@ -51,7 +52,7 @@ export function ClubEventsInteractive({ club, initialEvents }: ClubEventsProps) 
   const tRsvp = useTranslations('events.rsvp');
   const tErrors = useTranslations('ERRORS');
   const queryClient = useQueryClient();
-  const role = useClubRole(club);
+  const role = useClubRole(club, true);
   const [tab, setTab] = useState<Tab>('upcoming');
   const [sort, setSort] = useState<SortKey>('date');
   const [winnerEventId, setWinnerEventId] = useState<string | null>(null);
@@ -138,10 +139,14 @@ export function ClubEventsInteractive({ club, initialEvents }: ClubEventsProps) 
   return (
     <EventsFrame
       action={
-        role.canManage && (
-          <Button asChild size="sm">
-            <AppLink href={`/clubs/${club.id}/events/create`}>{t('create_event')}</AppLink>
-          </Button>
+        role.manageUnknown ? (
+          <Skeleton data-testid="create-event-placeholder" className="h-8 w-32" />
+        ) : (
+          role.canManage && (
+            <Button asChild size="sm">
+              <AppLink href={`/clubs/${club.id}/events/create`}>{t('create_event')}</AppLink>
+            </Button>
+          )
         )
       }
     >
