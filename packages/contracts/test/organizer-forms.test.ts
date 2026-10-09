@@ -81,6 +81,10 @@ describe('eventForm', () => {
     expect(eventForm.safeParse(event).success).toBe(true);
   });
 
+  it.each([[''], ['https://example.com/c.jpg'], ['http://example.com/c.jpg']])('accepts the cover %j', (coverUrl) => {
+    expect(eventForm.safeParse({ ...event, coverUrl }).success).toBe(true);
+  });
+
   it.each([
     [{ title: '' }, 'CREATE_EVENT.title_required'],
     [{ title: 'ab' }, 'FORM_ERRORS.minlength'],
@@ -90,6 +94,9 @@ describe('eventForm', () => {
     [{ durationMinutes: '14' }, 'FORM_ERRORS.invalid'],
     [{ durationMinutes: '481' }, 'FORM_ERRORS.invalid'],
     [{ afterVenueName: 'Bar' }, 'CLUB_MANAGE.venue_address_required'],
+    [{ coverUrl: 'not a url' }, 'CREATE_CLUB.cover_url_invalid'],
+    [{ coverUrl: 'ftp://a.b/c.png' }, 'CREATE_CLUB.cover_url_invalid'],
+    [{ coverUrl: 'javascript:alert(1)' }, 'CREATE_CLUB.cover_url_invalid'],
   ])('reports %j as %s', (patch, key) => {
     expect(keys(eventForm.safeParse({ ...event, ...patch }))).toEqual([key]);
   });

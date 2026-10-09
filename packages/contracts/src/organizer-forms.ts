@@ -64,7 +64,7 @@ export const eventForm = z
     afterVenueLat: z.number().nullable(),
     afterVenueLng: z.number().nullable(),
     afterVenueDescription: z.string(),
-    coverUrl: z.string(),
+    coverUrl: coverUrlField,
     bookTitle: z.string(),
     googleBookId: z.string().nullable(),
     hasWinner: z.boolean(),
