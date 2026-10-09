@@ -1,19 +1,17 @@
 'use client';
 'use no memo';
 
-import { isClubStub } from '@book-club/contracts';
+import type { Club } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import { AppLink } from '@/components/app-link';
-import { Button } from '@/components/ui/button';
-import { Spinner } from '@/components/ui/spinner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { MemberList } from '@/features/club-detail/member-list';
 import { useSession } from '@/features/clubs/use-session';
 import { EditClub } from '@/features/organizer/edit-club';
-import { useClubForEdit } from '@/features/organizer/use-organizer';
+import { AppLink } from '@/components/app-link';
 import { Bans } from './bans';
 import { Dashboard } from './dashboard';
+import { OrganizerOfClub } from './organizer-gate';
 import { Requests } from './requests';
 import { Tools } from './tools';
 import { useJoinRequests } from './use-club-manage';
@@ -28,35 +26,15 @@ const STATUS_BADGE = {
 } as const;
 
 export function ClubManage({ id }: { id: string }) {
+  return <OrganizerOfClub clubId={id}>{(club) => <ClubManageView club={club} />}</OrganizerOfClub>;
+}
+
+function ClubManageView({ club }: { club: Club }) {
   const t = useTranslations('CLUB_MANAGE');
   const tAll = useTranslations();
-  const tDetail = useTranslations('CLUB_DETAIL');
-  const query = useClubForEdit(id);
-  const requests = useJoinRequests(id);
+  const requests = useJoinRequests(club.id);
   const { user } = useSession();
   const [tab, setTab] = useState<Tab>('dashboard');
-  const club = query.data && !isClubStub(query.data) ? query.data : null;
-
-  if (query.isPending) {
-    return (
-      <div className="page-container py-16 flex justify-center" aria-busy="true">
-        <Spinner />
-      </div>
-    );
-  }
-  if (!club) {
-    return (
-      <div className="page-container py-16 text-center" role="alert">
-        <p className="text-6xl mb-4" aria-hidden="true">
-          😕
-        </p>
-        <h2 className="text-2xl font-semibold text-[var(--color-ink)] mb-2">{tDetail('not_found')}</h2>
-        <Button asChild className="bg-primary-600 hover:bg-primary-700 text-white">
-          <AppLink href="/clubs">← {tDetail('back')}</AppLink>
-        </Button>
-      </div>
-    );
-  }
 
   const [badgeKey, badgeTone] = STATUS_BADGE[club.status];
   const pending = requests.data?.length ?? 0;
@@ -87,6 +65,7 @@ export function ClubManage({ id }: { id: string }) {
         </TabsContent>
         <TabsContent value="members">
           <div className="space-y-6">
+            {/* the gate above admits only an organizer of this club; the backend enforces it */}
             <MemberList clubId={club.id} isOwner roleControls={{ ownerId: club.organizerId, currentUserId: user?.id ?? null }} />
             <Bans clubId={club.id} />
           </div>

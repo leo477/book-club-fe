@@ -50,10 +50,26 @@ describe('ClubManage', () => {
     expect(await screen.findByText(t(key))).toBeInTheDocument();
   });
 
-  it.each([404, 403])('says the club is missing when it answers %s', async (status) => {
-    setup(status);
+  it('says the club is missing when it answers 404', async () => {
+    setup(404);
     expect(await screen.findByRole('alert')).toHaveTextContent(t('CLUB_DETAIL.not_found'));
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
+
+  it('says organizers only when the club answers 403', async () => {
+    setup(403);
+    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.organizers_only'));
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
+
+  it('shows a real error state, not "club not found", for a server failure, and retries', async () => {
+    setup(500);
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(t('ERRORS.unexpected'));
+    expect(alert).not.toHaveTextContent(t('CLUB_DETAIL.not_found'));
+    server.use(http.get(`${API}/clubs/${ID}`, () => HttpResponse.json(club())));
+    await userEvent.setup().click(screen.getByRole('button', { name: t('ERRORS.retry') }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Alpha Readers' })).toBeInTheDocument();
   });
 
   it('treats the stub of a private club as missing', async () => {
@@ -93,7 +109,49 @@ describe('ClubManage', () => {
     expect(screen.getByRole('heading', { name: t('CLUB_MANAGE.danger_title') })).toBeInTheDocument();
   });
 
-  it('turns a plain reader away before anything of the club is requested', async () => {
+  describe('ClubManage per-club gate', () => {
+  const asViewer = (userId: string, role: string, membership: Record<string, unknown> | number) => {
+    mockSession({ id: userId, role: 'organizer' });
+    const stats = vi.fn();
+    mockManageReads();
+    server.use(
+      http.get(`${API}/clubs/${ID}`, () => HttpResponse.json(club())),
+      http.get(`${API}/clubs/${ID}/stats`, () => (stats(), HttpResponse.json({}))),
+      http.get(`${API}/clubs/${ID}/my-membership`, () => (typeof membership === 'number' ? HttpResponse.json({ detail: 'x' }, { status: membership }) : HttpResponse.json({ isMember: true, role, joinRequestStatus: 'none', ...membership }))),
+    );
+    renderWithProviders(
+      <StranglerProvider value={NEXT_ROUTES}>
+        <ClubManage id={ID} />
+      </StranglerProvider>,
+    );
+    return stats;
+  };
+
+  it('admits an organizer of this club who is not its owner', async () => {
+    asViewer('co', 'organizer', {});
+    expect(await screen.findByRole('heading', { level: 1, name: 'Alpha Readers' })).toBeInTheDocument();
+  });
+
+  it('shows organizers only, and loads none of the tools, to a global organizer who is a plain member of this club', async () => {
+    const stats = asViewer('other', 'member', {});
+    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.organizers_only'));
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(stats).not.toHaveBeenCalled();
+  });
+
+  it('shows organizers only to a global organizer with no membership', async () => {
+    asViewer('other', 'member', { isMember: false, role: null });
+    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.organizers_only'));
+  });
+
+  it('shows an error state when the membership cannot be read', async () => {
+    asViewer('other', 'member', 500);
+    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.unexpected'));
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
+});
+
+it('turns a plain reader away before anything of the club is requested', async () => {
     const requested = vi.fn();
     mockSession({ role: 'user' });
     server.use(http.get(`${API}/clubs/${ID}`, () => (requested(), HttpResponse.json(club()))));
