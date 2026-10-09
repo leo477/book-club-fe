@@ -169,15 +169,21 @@ describe('legacy-shadowed paths', () => {
   const on = async () => parseConfig({ version: 1, enabled: true, routes: { '/clubs/:id': { target: 'next', percent: 100 } } });
   const rewrittenTo = (res: Response, path: string) => res.headers.get('x-middleware-rewrite') === `${LEGACY}${path}`;
 
-  it('sends /clubs/create to legacy even with /clubs/:id fully on next', async () => {
-    const res = await run('/clubs/create', on, 'bc_bucket=0');
-    expect(rewrittenTo(res, '/clubs/create')).toBe(true);
+  it('sends a look-alike of /clubs/:id to legacy even with /clubs/:id fully on next', async () => {
+    const res = await run('/clubs/other', on, 'bc_bucket=0');
+    expect(rewrittenTo(res, '/clubs/other')).toBe(true);
     expect(res.headers.get('content-security-policy')).toBeNull();
   });
 
   it('does not read the flags for a shadowed path', async () => {
-    const res = await run('/clubs/create', () => Promise.reject(new Error('must not be read')), 'bc_bucket=0');
-    expect(rewrittenTo(res, '/clubs/create')).toBe(true);
+    const res = await run('/clubs/other', () => Promise.reject(new Error('must not be read')), 'bc_bucket=0');
+    expect(rewrittenTo(res, '/clubs/other')).toBe(true);
+  });
+
+  it('keeps /clubs/create on legacy until its own flag is on, whatever /clubs/:id says', async () => {
+    expect(rewrittenTo(await run('/clubs/create', on, 'bc_bucket=0'), '/clubs/create')).toBe(true);
+    const own = async () => parseConfig({ version: 1, enabled: true, routes: { '/clubs/create': { target: 'next', percent: 100 } } });
+    expect(rewrittenTo(await run('/clubs/create', own, 'bc_bucket=0'), '/clubs/create')).toBe(false);
   });
 
   it('still serves a UUID from next when on, and from legacy when the flag is off', async () => {

@@ -32,7 +32,7 @@ describe('matchRoute', () => {
 });
 
 describe('manifest', () => {
-  it('owns the strangler probe, privacy, terms, clubs, club detail, the root redirect, events, profile, support and auth', () => {
+  it('owns the strangler probe, privacy, terms, clubs, club detail, the organizer forms, the root redirect, events, profile, support and auth', () => {
     expect(manifest.map((r) => [r.pattern, r.owner])).toEqual([
       ['/__strangler-probe', 'next'],
       ['/privacy', 'next'],
@@ -45,20 +45,27 @@ describe('manifest', () => {
       ['/profile', 'next'],
       ['/support', 'next'],
       ['/support/new', 'next'],
+      ['/clubs/create', 'next'],
+      ['/clubs/:id/edit', 'next'],
+      ['/clubs/:id/events/create', 'next'],
+      ['/events/:id/edit', 'next'],
       ['/login', 'next'],
       ['/register', 'next'],
       ['/auth/callback', 'next'],
     ]);
     expect(matchRoute('/__strangler-probe')).not.toBeNull();
     expect(matchRoute('/clubs')?.pattern).toBe('/clubs');
-    expect(matchRoute('/clubs/create')).toBeNull();
+    expect(matchRoute('/clubs/create')?.pattern).toBe('/clubs/create');
+    expect(matchRoute(`/clubs/${UUID}/edit`)?.pattern).toBe('/clubs/:id/edit');
+    expect(matchRoute('/clubs/create/edit')).toBeNull();
     expect(matchRoute(`/clubs/${UUID}`)?.pattern).toBe('/clubs/:id');
     expect(matchRoute(`/clubs/${UUID}/manage`)).toBeNull();
-    expect(matchRoute(`/clubs/${UUID}/events/create`)).toBeNull();
+    expect(matchRoute(`/clubs/${UUID}/events/create`)?.pattern).toBe('/clubs/:id/events/create');
+    expect(matchRoute(`/clubs/${UUID}/events`)).toBeNull();
     expect(matchRoute('/')?.pattern).toBe('/');
     expect(matchRoute('/events')?.pattern).toBe('/events');
     expect(matchRoute(`/events/${UUID}`)?.pattern).toBe('/events/:id');
-    expect(matchRoute(`/events/${UUID}/edit`)).toBeNull();
+    expect(matchRoute(`/events/${UUID}/edit`)?.pattern).toBe('/events/:id/edit');
     expect(matchRoute('/events/abc')).toBeNull();
     expect(matchRoute('/profile')?.pattern).toBe('/profile');
     expect(matchRoute('/support/')?.pattern).toBe('/support');
@@ -75,8 +82,10 @@ describe('manifest', () => {
 
 describe('isLegacyShadowed', () => {
   it('flags single-segment look-alikes the UUID constraint excludes, which Next would otherwise serve', () => {
-    expect(isLegacyShadowed('/clubs/create')).toBe(true);
-    expect(isLegacyShadowed('/clubs/create/')).toBe(true);
+    expect(isLegacyShadowed('/clubs/other')).toBe(true);
+    expect(isLegacyShadowed('/clubs/other/')).toBe(true);
+    expect(isLegacyShadowed('/clubs/abc/events/create')).toBe(true);
+    expect(isLegacyShadowed('/events/abc/edit')).toBe(true);
     expect(isLegacyShadowed('/clubs/123')).toBe(true);
   });
 
@@ -86,6 +95,7 @@ describe('isLegacyShadowed', () => {
     expect(isLegacyShadowed('/clubs')).toBe(false);
     expect(isLegacyShadowed('/events/abc')).toBe(true);
     expect(isLegacyShadowed(`/events/${UUID}/edit`)).toBe(false);
+    expect(isLegacyShadowed('/clubs/create')).toBe(false);
     expect(isLegacyShadowed('/login')).toBe(false);
   });
 });
