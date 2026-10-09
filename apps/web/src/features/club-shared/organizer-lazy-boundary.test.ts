@@ -7,7 +7,6 @@ describe('organizer lazy boundary', () => {
     const { files, packages } = staticGraph(join(SRC, 'features/organizer/lazy.tsx'));
     const names = [...files].map((f) => f.slice(SRC.length));
     expect(names).toContain('/features/club-manage/organizer-gate.tsx');
-    expect(packages.size).toBeGreaterThan(0);
     expect([...packages]).toContain('react');
     expect(names.filter((f) => /\/(create-club|edit-club|create-event|edit-event|event-form)\.tsx?$/.test(f))).toEqual([]);
     expect([...packages].filter((p) => p.startsWith('react-hook-form') || p.startsWith('@hookform/'))).toEqual([]);

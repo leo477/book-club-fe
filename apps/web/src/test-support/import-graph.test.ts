@@ -29,10 +29,12 @@ describe('static import walker', () => {
     expect(staticSpecifiers(source)).toEqual([]);
   });
 
-  it('treats an import of only inline type specifiers as type-only, but keeps a mixed one', () => {
-    expect(staticSpecifiers('import { type A, type B } from "react-hook-form";')).toEqual([]);
+  it('keeps inline-type imports and re-exports, exempting only top-level type forms', () => {
+    expect(staticSpecifiers('import { type A, type B } from "react-hook-form";')).toEqual(['react-hook-form']);
     expect(staticSpecifiers('import { type A, b } from "react-hook-form";')).toEqual(['react-hook-form']);
-    expect(staticSpecifiers('import d, { type A } from "react-hook-form";')).toEqual(['react-hook-form']);
+    expect(staticSpecifiers('export { type A } from "x";')).toEqual(['x']);
+    expect(staticSpecifiers('export * as ns from "x";')).toEqual(['x']);
+    expect(staticSpecifiers('import type * as ns from "x"; export type * from "y";')).toEqual([]);
   });
 });
 
@@ -53,6 +55,10 @@ describe('graph resolution', () => {
     expect(resolveImport(at('a/y.ts'), './c.js', exists)).toBe(at('a/c.tsx'));
     expect(resolveImport(at('a/y.ts'), 'zod', exists)).toBeNull();
     expect(resolveImport(at('a/y.ts'), './styles.css', exists)).toBeNull();
+    for (const spec of ['./a.svg?url', './a.svg?raw', './a.css#x', './n.mdx', './t.txt', './m.webmanifest', './f.woff', './i.ico', './p.webp', './p.avif', './p.jpg', './p.jpeg', './p.gif', './s.scss']) {
+      expect(resolveImport(at('a/y.ts'), spec, exists), spec).toBeNull();
+    }
+    expect(resolveImport(at('a/y.ts'), './c?x', exists)).toBe(at('a/c.tsx'));
   });
 
   it('throws naming the importer and specifier when a local specifier does not resolve', () => {

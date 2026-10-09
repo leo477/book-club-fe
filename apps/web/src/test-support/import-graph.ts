@@ -1,34 +1,29 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 
-export const SRC = resolve(__dirname, '..');
+// not `new URL('..', import.meta.url)`: vite rewrites that literal form into an asset URL and fileURLToPath then throws "The URL must be of scheme file"
+export const SRC = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 
-const ASSET = /\.(css|scss|json|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|md)$/i;
+const ASSET = /\.(css|scss|json|svg|png|jpe?g|gif|webp|avif|ico|woff2?|ttf|otf|md|mdx|txt|webmanifest)$/i;
 
-function isTypeOnlyImport(node: ts.ImportDeclaration): boolean {
-  const clause = node.importClause;
-  if (!clause) return false;
-  if (clause.isTypeOnly) return true;
-  // `import { type A, type B }` is erased entirely; a default or namespace binding or any value specifier keeps the edge
-  const named = clause.namedBindings;
-  return !clause.name && !!named && ts.isNamedImports(named) && named.elements.length > 0 && named.elements.every((e) => e.isTypeOnly);
-}
-
+// only top-level `import type` / `export type` are exempt: under verbatimModuleSyntax `import { type A }` still emits a side-effect import
 export function staticSpecifiers(source: string): string[] {
   const sf = ts.createSourceFile('x.tsx', source, ts.ScriptTarget.Latest, false, ts.ScriptKind.TSX);
   const specs: string[] = [];
   for (const node of sf.statements) {
-    if (ts.isImportDeclaration(node) && !isTypeOnlyImport(node) && ts.isStringLiteral(node.moduleSpecifier)) specs.push(node.moduleSpecifier.text);
+    if (ts.isImportDeclaration(node) && !node.importClause?.isTypeOnly && ts.isStringLiteral(node.moduleSpecifier)) specs.push(node.moduleSpecifier.text);
     else if (ts.isExportDeclaration(node) && !node.isTypeOnly && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) specs.push(node.moduleSpecifier.text);
   }
   return specs;
 }
 
 export function resolveImport(from: string, spec: string, exists: (file: string) => boolean = existsSync): string | null {
-  const base = spec.startsWith('@/') ? join(SRC, spec.slice(2)) : spec.startsWith('.') ? join(dirname(from), spec) : null;
+  const path = spec.replace(/[?#].*$/, '');
+  const base = path.startsWith('@/') ? join(SRC, path.slice(2)) : path.startsWith('.') ? join(dirname(from), path) : null;
   if (!base) return null;
-  if (ASSET.test(spec)) return null;
+  if (ASSET.test(path)) return null;
   const stem = base.replace(/\.[cm]?jsx?$/, '');
   const found = [base, ...['.ts', '.tsx', '/index.ts', '/index.tsx'].flatMap((ext) => [base + ext, stem + ext])].find((c) => /\.tsx?$/.test(c) && exists(c));
   // a silently dropped edge would let a forbidden import hide behind an unresolvable specifier
