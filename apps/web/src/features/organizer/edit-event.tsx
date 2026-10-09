@@ -65,6 +65,7 @@ function EditEventForm({ event }: { event: ClubEvent }) {
       backHref={`/events/${event.id}`}
       backLabel={tEvents('back_to_events')}
       submitLabel={tEvents('saveChanges')}
+      showHasWinner
       pending={update.isPending}
       error={update.isError ? t('save_error') : null}
       onSubmit={(values) => update.mutate(toUpdateRequest(values), { onSuccess: () => push(`/events/${event.id}`) })}

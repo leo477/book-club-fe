@@ -278,9 +278,11 @@ apps/
           cover-preview.tsx
           create-club.test.tsx
           create-club.tsx
+          create-event.test.tsx
           create-event.tsx
           edit-club.test.tsx
           edit-club.tsx
+          edit-event.test.tsx
           edit-event.tsx
           event-form.tsx
           event-payload.ts

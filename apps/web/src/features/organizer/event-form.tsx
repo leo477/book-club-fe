@@ -47,6 +47,8 @@ interface Props {
   pending: boolean;
   error: string | null;
   onSubmit: (values: EventForm) => void;
+  /** Only an existing event can be marked as having a winner: the create endpoint has no such field. */
+  showHasWinner?: boolean;
   /** Debounce of the book search; tests shorten it. */
   bookDebounceMs?: number;
 }
@@ -65,7 +67,7 @@ function Required({ children }: { children: ReactNode }) {
 const LABEL = 'block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1';
 
 /** The form create-event and edit-event share; the owner decides what a valid submit does. */
-export function EventFormView({ defaultValues, heading, backHref, backLabel, submitLabel, pending, error, onSubmit, bookDebounceMs }: Props) {
+export function EventFormView({ defaultValues, heading, backHref, backLabel, submitLabel, pending, error, onSubmit, showHasWinner = false, bookDebounceMs }: Props) {
   const t = useTranslations('CREATE_EVENT');
   const tAll = useTranslations();
   const [showAfterVenue, setShowAfterVenue] = useState(defaultValues.afterVenueName !== '');
@@ -235,13 +237,15 @@ export function EventFormView({ defaultValues, heading, backHref, backLabel, sub
             ) : null}
           </div>
 
-          <label htmlFor="hasWinner" className="flex items-center gap-3 cursor-pointer select-none">
-            <span className="relative inline-flex items-center">
-              <input type="checkbox" id="hasWinner" className="sr-only peer" {...register('hasWinner')} />
-              <div className="w-11 h-6 bg-gray-200 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600" />
-            </span>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{tAll('EVENT.has_winner_label')}</span>
-          </label>
+          {showHasWinner ? (
+            <label htmlFor="hasWinner" className="flex items-center gap-3 cursor-pointer select-none">
+              <span className="relative inline-flex items-center">
+                <input type="checkbox" id="hasWinner" className="sr-only peer" {...register('hasWinner')} />
+                <div className="w-11 h-6 bg-gray-200 peer-focus-visible:ring-2 peer-focus-visible:ring-primary-500 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-primary-600" />
+              </span>
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{tAll('EVENT.has_winner_label')}</span>
+            </label>
+          ) : null}
 
           <div className="flex justify-end gap-3 pt-2">
             <Button asChild variant="outline">
