@@ -441,6 +441,7 @@ packages/
       event.ts
       index.ts
       misc.ts
+      organizer-forms.ts
       parse.ts
       quiz.ts
       tolerant.ts
@@ -455,6 +456,7 @@ packages/
         users.json
       contracts.test.ts
       fixtures.test.ts
+      organizer-forms.test.ts
     eslint.config.mjs
     package.json
     tsconfig.json
