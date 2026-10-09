@@ -103,9 +103,9 @@ describe('Bans', () => {
     await screen.findByText(/b1/);
     await user.click(screen.getAllByRole('button', { name: t('CLUB_MANAGE.unban') })[0]!);
     await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Not allowed'));
-    const rows = screen.getAllByRole('listitem').map((li) => li.textContent);
-    expect(rows[0]).toContain('b1');
-    expect(rows[1]).toContain('b2');
+    const rows = await screen.findAllByRole('listitem');
+    expect(rows[0]).toHaveTextContent(/b1/);
+    expect(rows[1]).toHaveTextContent(/b2/);
   });
 
   it('restores the ban at the position of the list as it is when the unban starts, not as it was rendered', async () => {
@@ -124,10 +124,30 @@ describe('Bans', () => {
       queryClient.setQueryData(bansKey(ID), (list: ReturnType<typeof banJson>[]) => list.filter((b) => b.userId !== 'b1'));
     });
     await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Not allowed'));
-    const rows = screen.getAllByRole('listitem').map((li) => li.textContent);
+    const rows = await screen.findAllByRole('listitem');
     expect(rows).toHaveLength(2);
-    expect(rows[0]).toContain('b2');
-    expect(rows[1]).toContain('b3');
+    expect(rows[0]).toHaveTextContent(/b2/);
+    expect(rows[1]).toHaveTextContent(/b3/);
+    release();
+  });
+
+  it('appends the ban when it was already missing from the list at the moment the unban started', async () => {
+    mockManageReads();
+    backend([banJson(), banJson({ userId: 'b2' }), banJson({ userId: 'b3' })]);
+    server.use(http.delete(`${API}/clubs/${ID}/bans/b2`, () => HttpResponse.json({ detail: 'Not allowed' }, { status: 403 })));
+    const { queryClient } = renderWithProviders(<Bans clubId={ID} />);
+    await screen.findByText(/b3/);
+    const { open, release } = gate();
+    server.use(http.get(`${API}/clubs/${ID}/bans`, async () => {
+      await open;
+      return HttpResponse.json([]);
+    }));
+    await act(async () => {
+      fireEvent.click(screen.getAllByRole('button', { name: t('CLUB_MANAGE.unban') })[1]!);
+      queryClient.setQueryData(bansKey(ID), (list: ReturnType<typeof banJson>[]) => list.filter((b) => b.userId !== 'b2'));
+    });
+    await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Not allowed'));
+    expect(queryClient.getQueryData<ReturnType<typeof banJson>[]>(bansKey(ID))?.map((b) => b.userId)).toEqual(['b1', 'b3', 'b2']);
     release();
   });
 

@@ -2,16 +2,23 @@
 'use no memo';
 
 import type { ClubStats } from '@book-club/contracts';
-import { useTranslations } from 'next-intl';
+import { useFormatter, useTranslations } from 'next-intl';
 import { ErrorPanel } from '@/components/error-panel';
 import { Spinner } from '@/components/ui/spinner';
 import { useClubStats } from './use-club-manage';
 
-const heightOf = (count: number, max: number) => `${Math.min(100, (count / max) * 100)}%`;
+export const heightOf = (count: number, max: number) => {
+  const safeMax = Number.isFinite(max) && max > 0 ? max : 1;
+  const safeCount = Number.isFinite(count) ? Math.max(0, count) : 0;
+  return `${Math.min(100, (safeCount / safeMax) * 100)}%`;
+};
 
 function Bars({ label, icon, rows, tone }: { label: string; icon?: string; rows: readonly { key: string; title: string; count: number }[]; tone: string }) {
-  const max = Math.max(...rows.map((r) => r.count), 1);
-  const summary = `${label}: ${rows.map((r) => `${r.title} ${r.count}`).join(', ')}`;
+  const t = useTranslations('CLUB_MANAGE');
+  const format = useFormatter();
+  const max = Math.max(...rows.map((r) => r.count).filter(Number.isFinite), 1);
+  const items = rows.map((r) => t('chart_summary_item', { title: r.title, count: format.number(r.count) }));
+  const summary = t('chart_summary', { label, items: format.list(items) });
   return (
     <div className="parchment-card p-4">
       <p className="text-xs uppercase tracking-widest text-[var(--color-ink-muted)] mb-3">
@@ -19,8 +26,8 @@ function Bars({ label, icon, rows, tone }: { label: string; icon?: string; rows:
         {label}
       </p>
       <div role="img" aria-label={summary} className="flex items-end gap-1 h-24">
-        {rows.map((row) => (
-          <div key={row.key} className={`flex-1 ${tone} rounded-t opacity-70 hover:opacity-100 transition-opacity min-h-[2px]`} style={{ height: heightOf(row.count, max) }} title={`${row.title}: ${row.count}`} />
+        {rows.map((row, i) => (
+          <div key={row.key} className={`flex-1 ${tone} rounded-t opacity-70 hover:opacity-100 transition-opacity min-h-[2px]`} style={{ height: heightOf(row.count, max) }} title={items[i]} />
         ))}
       </div>
     </div>
@@ -54,7 +61,7 @@ export function Dashboard({ clubId }: { clubId: string }) {
       </div>
     );
   }
-  if (query.isError) return <ErrorPanel onRetry={() => void query.refetch()} />;
+  if (query.isError) return <ErrorPanel compact onRetry={() => void query.refetch()} />;
   const s = query.data;
   if (!s) return <p className="text-sm text-[var(--color-ink-muted)] text-center py-10">{t('no_stats')}</p>;
 

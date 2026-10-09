@@ -37,7 +37,8 @@ export function Bans({ clubId }: { clubId: string }) {
           queryClient.setQueryData<BanRecord[]>(bansKey(clubId), (list) => {
             if (!list || list.some((b) => b.userId === ban.userId)) return list;
             const restored = [...list];
-            restored.splice(Math.min(index, restored.length), 0, ban);
+            if (index >= 0) restored.splice(Math.min(index, restored.length), 0, ban);
+            else restored.push(ban);
             return restored;
           });
           throw err;
