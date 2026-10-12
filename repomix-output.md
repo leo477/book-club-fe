@@ -133,6 +133,7 @@ apps/
             page.test.tsx
             page.tsx
           layout.tsx
+          not-found.tsx
           organizer-pages.test.tsx
           quiz-pages.test.tsx
         %5F%5Fstrangler-probe/
@@ -221,6 +222,7 @@ apps/
         lazy-boundary.tsx
         lazy-page.tsx
         namespaces-intl.tsx
+        not-found-view.tsx
         social-badges.tsx
         social-icon-paths.ts
         social-link-field.tsx
