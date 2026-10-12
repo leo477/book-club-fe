@@ -144,7 +144,7 @@ export function JoinCta({ club }: { club: ClubRef }) {
   );
 }
 
-/** Organizer-only entry to the legacy manage screen. */
+/** Organizer-only entry to the manage screen. */
 export function ManagePanel({ club }: { club: ClubRef }) {
   const t = useTranslations('CLUB_DETAIL');
   const tManage = useTranslations('CLUB_MANAGE');
@@ -161,7 +161,7 @@ export function ManagePanel({ club }: { club: ClubRef }) {
   );
 }
 
-/** Members open the club chat; the chat widget is not ported yet, so this lands on the legacy chat page. */
+/** Members open the chats page (the floating widget is gated separately by `shell.chatWidget`). */
 export function ChatButton({ club }: { club: ClubRef }) {
   const t = useTranslations('CHAT');
   const role = useClubRole(club);

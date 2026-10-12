@@ -530,6 +530,7 @@ docs/
     SECURITY-R6.md
     SECURITY-R7.md
     SECURITY-R9.md
+    SHIM-INVENTORY-R13.md
     UI-DELTAS.md
 e2e/
   fixtures/
