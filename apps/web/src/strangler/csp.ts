@@ -1,3 +1,6 @@
+/** The one origin the chat socket may reach; `NEXT_PUBLIC_WS_URL` must point at it (checked at build time). */
+export const CSP_WS_ORIGIN = 'wss://book-club-be.onrender.com';
+
 export function buildCsp(nonce: string, dev = false): string {
   return [
     "default-src 'self'",
@@ -6,7 +9,7 @@ export function buildCsp(nonce: string, dev = false): string {
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https://covers.openlibrary.org https://maps.gstatic.com https://maps.googleapis.com https://*.supabase.co",
-    "connect-src 'self' data: https://vercel.live wss://book-club-be.onrender.com https://openlibrary.org https://maps.googleapis.com https://maps.gstatic.com https://www.gstatic.com",
+    `connect-src 'self' data: https://vercel.live ${CSP_WS_ORIGIN} https://openlibrary.org https://maps.googleapis.com https://maps.gstatic.com https://www.gstatic.com`,
     'frame-src https://vercel.live',
     "frame-ancestors 'none'",
     "base-uri 'self'",
