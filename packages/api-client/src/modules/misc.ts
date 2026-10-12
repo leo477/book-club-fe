@@ -41,13 +41,14 @@ export const supportApi = (c: ApiClient) => ({
 });
 
 export const chatApi = (c: ApiClient) => ({
-  clubRooms: (clubId: string) => c.get(`/clubs/${clubId}/chat/rooms`, z.array(chatRoom)),
+  clubRooms: (clubId: string, options?: CallOptions) => c.get(`/clubs/${clubId}/chat/rooms`, z.array(chatRoom), options),
   createClubRoom: (clubId: string, name: string) => c.post(`/clubs/${clubId}/chat/rooms`, chatRoom, { name }),
   eventRoom: (eventId: string) => c.get(`/events/${eventId}/chat/room`, chatRoom),
   createEventRoom: (eventId: string) => c.post(`/events/${eventId}/chat/room`, chatRoom, {}),
   deleteRoom: (roomId: string) => c.delete(`/chat/rooms/${roomId}`, z.void()),
-  messages: (roomId: string, page: { beforeId?: string; limit?: number } = {}) =>
+  messages: (roomId: string, page: { beforeId?: string; limit?: number } = {}, options?: CallOptions) =>
     c.get(`/chat/rooms/${roomId}/messages`, z.array(chatMessage), {
+      ...options,
       query: { before_id: page.beforeId, limit: page.limit },
     }),
   send: (roomId: string, text: string) => c.post(`/chat/rooms/${roomId}/messages`, chatMessage, { text }),
@@ -55,9 +56,9 @@ export const chatApi = (c: ApiClient) => ({
     c.delete(`/chat/rooms/${roomId}/messages/${messageId}`, z.void()),
   ban: (roomId: string, userId: string, durationSeconds: number) =>
     c.post(`/chat/rooms/${roomId}/ban`, z.void(), { user_id: userId, duration_seconds: durationSeconds }),
-  markRead: (roomId: string, lastReadMessageId: string) =>
-    c.post(`/chat/rooms/${roomId}/read`, z.void(), { last_read_message_id: lastReadMessageId }),
-  unreadCount: (roomId: string) => c.get(`/chat/rooms/${roomId}/unread-count`, unreadCount),
+  markRead: (roomId: string, lastReadMessageId: string, options?: CallOptions) =>
+    c.post(`/chat/rooms/${roomId}/read`, z.void(), { last_read_message_id: lastReadMessageId }, options),
+  unreadCount: (roomId: string, options?: CallOptions) => c.get(`/chat/rooms/${roomId}/unread-count`, unreadCount, options),
 });
 
 export const booksApi = (c: ApiClient) => ({

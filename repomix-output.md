@@ -83,6 +83,8 @@ apps/
             page.test.tsx
             page.tsx
         (shell)/
+          chats/
+            page.tsx
           clubs/
             [id]/
               edit/
@@ -242,6 +244,26 @@ apps/
           register-page.tsx
           require-auth.test.tsx
           require-auth.tsx
+        chat/
+          chat-audio-alert.test.ts
+          chat-audio-alert.ts
+          chat-composer.tsx
+          chat-header.tsx
+          chat-message-list.tsx
+          chat-model.test.ts
+          chat-model.ts
+          chat-provider.tsx
+          chat-slot.tsx
+          chat-ticket.ts
+          chat-timestamp.test.ts
+          chat-timestamp.ts
+          chat-widget.test.tsx
+          chat-widget.tsx
+          chats-page.test.tsx
+          chats-page.tsx
+          new-room-form.tsx
+          test-support.ts
+          use-chat-data.ts
         club-detail/
           action-error.test.ts
           action-error.ts
@@ -438,6 +460,7 @@ apps/
         csp.test.ts
         csp.ts
         edge-config.ts
+        flags.ts
         manifest-coverage.test.ts
         proxy-handler.test.ts
         proxy-handler.ts
