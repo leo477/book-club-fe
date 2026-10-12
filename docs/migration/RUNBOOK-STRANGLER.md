@@ -60,6 +60,19 @@ vercel edge-config update book-club-strangler --patch '{"items":[{"operation":"u
 
 The browser opens the socket straight to `NEXT_PUBLIC_WS_URL` (required at build time by the production build, set in both build paths of `.github/workflows/web.yml`, e.g. `wss://book-club-be.onrender.com/api/v1`; dev falls back to `ws://localhost:8000/api/v1`; Vercel does not proxy WebSockets), so the CSP `connect-src` must list that origin (`wss://book-club-be.onrender.com` is there; a different backend host needs `buildCsp` and `vercel.json` updated too). Each connection and reconnection first calls `POST /api/v1/auth/ws-ticket` (single use) and sends it as the first frame.
 
+## Preview without the legacy fallback (R13): `DISABLE_LEGACY_FALLBACK`
+
+Runs the whole app on Next so `audit:full` can prove every route is served by React. Set `DISABLE_LEGACY_FALLBACK=1` (or `true`) in the **Preview** environment of the `book-club-web` Vercel project (never Production), then redeploy the preview branch (the value is read at build for `next.config.ts` and at runtime for the proxy).
+
+Effect: `rewrites.fallback` is empty (the `/api` rewrite stays), the proxy renders every manifest route on Next regardless of Edge Config or bucket and never proxies to `LEGACY_ORIGIN`, `/strangler.json` and `AppLink` report every manifest route enabled (shell flags such as `shell.chatWidget` still follow Edge Config). Unknown paths and files that only legacy serves (`/og-image.png`, the Google verification file) return the Next 404 (`app/not-found.tsx`) until they move into `apps/web/public` (R14).
+
+Why it cannot reach production (decision):
+- `src/lib/legacy-fallback.ts` allows the flag only when `VERCEL_ENV=preview`, or when `VERCEL_ENV` is unset and `NODE_ENV` is not `production` (local dev). `vercel build --prod` runs with `VERCEL_ENV=production`; a bare `next build` has `NODE_ENV=production` and no `VERCEL_ENV`; both are refused.
+- Build time: `next.config.ts` calls `assertLegacyFallbackAllowed()`, so a build with the flag set on production (or any non-preview production build) throws and the deploy fails before anything ships.
+- Runtime: `legacyFallbackDisabled()` returns false in the same cases, so a flag added to the Production environment after a build is inert (the proxy and `readState` keep using Edge Config and legacy).
+- Covered by `src/lib/legacy-fallback.test.ts` and `src/next-config.test.ts`.
+- Remove the variable from Preview after the audit; the preview then behaves like production again.
+
 ## Global kill (everything to legacy)
 
 ```sh

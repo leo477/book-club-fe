@@ -211,3 +211,31 @@ describe('handleProxy unknown paths (global not-found)', () => {
     expect(res.cookies.get('bc_bucket')).toBeUndefined();
   });
 });
+
+describe('handleProxy with the legacy fallback disabled (preview)', () => {
+  const read = () => Promise.reject(new Error('config must not be read'));
+  const disabled = { legacyDisabled: true } as const;
+  const runDisabled = (path: string, extra: { legacyOrigin?: string | undefined } = {}) =>
+    handleProxy(new NextRequest(`https://app.example.com${path}`, { headers: { cookie: 'bc_bucket=99' } }), {
+      readConfig: read,
+      legacyOrigin: LEGACY,
+      ...extra,
+      ...disabled,
+    });
+
+  it('renders every manifest route on next regardless of config or bucket, never rewriting to legacy', async () => {
+    const res = await runDisabled(probe);
+    expect(isLegacy(res)).toBe(false);
+    expect(res.headers.get('x-middleware-rewrite')).toBeNull();
+    expect(res.headers.get('content-security-policy')).toMatch(/nonce-/);
+  });
+
+  it('does not 503 without a legacy origin', async () => {
+    expect((await runDisabled(probe, { legacyOrigin: undefined })).status).not.toBe(503);
+  });
+
+  it('lets a UUID-shaped miss reach next instead of legacy', async () => {
+    const res = await runDisabled('/clubs/create-not-uuid');
+    expect(res.headers.get('x-middleware-rewrite')).toBeNull();
+  });
+});

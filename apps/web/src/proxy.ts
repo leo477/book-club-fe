@@ -1,5 +1,6 @@
 import type { NextRequest } from 'next/server';
 import { handleProxy } from '@/strangler/proxy-handler';
+import { legacyFallbackDisabled } from '@/lib/legacy-fallback';
 import { readStranglerConfig } from '@/strangler/edge-config';
 
 export function proxy(request: NextRequest) {
@@ -7,6 +8,7 @@ export function proxy(request: NextRequest) {
     readConfig: readStranglerConfig,
     legacyOrigin: process.env['LEGACY_ORIGIN'],
     dev: process.env.NODE_ENV !== 'production',
+    legacyDisabled: legacyFallbackDisabled(),
   });
 }
 

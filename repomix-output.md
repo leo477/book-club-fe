@@ -434,6 +434,8 @@ apps/
         geocode-session.ts
         json-ld.test.tsx
         json-ld.tsx
+        legacy-fallback.test.ts
+        legacy-fallback.ts
         legacy-session.test.ts
         legacy-session.ts
         navigate.test.ts
@@ -475,6 +477,7 @@ apps/
         manifest-coverage.test.ts
         proxy-handler.test.ts
         proxy-handler.ts
+        read-state.test.ts
         routes.test.ts
         routes.ts
         server.test.ts
@@ -485,6 +488,7 @@ apps/
         import-graph.test.ts
         import-graph.ts
       env.d.ts
+      next-config.test.ts
       proxy.ts
     .gitignore
     components.json

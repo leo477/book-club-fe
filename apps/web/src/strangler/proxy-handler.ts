@@ -7,6 +7,8 @@ export interface ProxyDeps {
   readConfig: () => Promise<StranglerConfig | null>;
   legacyOrigin: string | undefined;
   dev?: boolean | undefined;
+  /** preview-only: every manifest route renders on Next and nothing is proxied to legacy */
+  legacyDisabled?: boolean | undefined;
 }
 
 function resolveOrigin(raw: string | undefined): string | null {
@@ -25,12 +27,12 @@ export async function handleProxy(request: NextRequest, deps: ProxyDeps): Promis
   cleanHeaders.delete(BUCKET_HEADER);
 
   const route = matchRoute(pathname);
-  const shadowed = route === null && isLegacyShadowed(pathname);
+  const shadowed = route === null && !deps.legacyDisabled && isLegacyShadowed(pathname);
   if (!route && !shadowed) return NextResponse.next({ request: { headers: cleanHeaders } });
 
   const existing = validBucket(request.cookies.get(BUCKET_COOKIE)?.value);
   const bucket = existing ?? newBucket();
-  const decision = route ? decide(await deps.readConfig(), route.pattern, bucket) : 'legacy';
+  const decision = !route ? 'legacy' : deps.legacyDisabled ? 'next' : decide(await deps.readConfig(), route.pattern, bucket);
   const legacyOrigin = resolveOrigin(deps.legacyOrigin);
 
   if (decision === 'legacy' && !legacyOrigin && !deps.dev) {
