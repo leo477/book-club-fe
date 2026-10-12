@@ -14,6 +14,9 @@ import { mergeIncoming, mergeLatest, type ChatRoomView, type MessagesPage, type 
 import { fetchWsTicket, wsBaseUrl } from './chat-ticket';
 import { useChatRooms, useUnreadCounts } from './use-chat-data';
 
+/** A burst of messages sounds once, not once per message. */
+export const BEEP_MIN_GAP_MS = 3_000;
+
 export interface RoomsSnapshot {
   rooms: readonly ChatRoomView[];
   clubs: readonly Club[];
@@ -25,6 +28,7 @@ export interface RoomsSnapshot {
 }
 
 interface Props {
+  userId: string;
   activeRoomId: string | null;
   chatVisible: boolean;
   pageVisible: boolean;
@@ -40,6 +44,7 @@ interface Props {
 
 /** Everything that talks to the network for chat; mounted (and loaded) only while the chat is active. Renders nothing. */
 export function ChatRuntime({
+  userId,
   activeRoomId,
   chatVisible,
   pageVisible,
@@ -57,6 +62,7 @@ export function ChatRuntime({
   const { rooms, clubs, isPending, isError, refetch } = useChatRooms(true);
   const { byRoom, total } = useUnreadCounts(rooms.map((r) => r.id), true);
   const audioRef = useRef<ChatAudioAlert | null>(null);
+  const lastBeepAt = useRef(0);
   const refetchRef = useRef<() => void>(() => undefined);
   const retry = useCallback(() => refetchRef.current(), []);
 
@@ -70,14 +76,14 @@ export function ChatRuntime({
 
   useEffect(() => () => onSnapshot((prev) => ({ ...prev, rooms: [], clubs: [], unread: {}, total: 0, pending: true })), [onSnapshot]);
 
-  const newestId = lastConfirmedId(useQuery<MessagesPage>({ queryKey: messagesKey(activeRoomId ?? ''), queryFn: skipToken }).data);
+  const newestId = lastConfirmedId(useQuery<MessagesPage>({ queryKey: messagesKey(userId, activeRoomId ?? ''), queryFn: skipToken }).data);
 
   // The room on screen is read as it arrives; the divider keeps pointing at the old marker until the viewer leaves or sends.
   useEffect(() => {
     if (!activeRoomId || !chatVisible || !pageVisible) return;
-    queryClient.setQueryData<UnreadState>(unreadKey(activeRoomId), (u) => ({ count: 0, lastReadId: u?.lastReadId ?? null }));
+    queryClient.setQueryData<UnreadState>(unreadKey(userId, activeRoomId), (u) => ({ count: 0, lastReadId: u?.lastReadId ?? null }));
     if (newestId) postRead(activeRoomId, newestId);
-  }, [activeRoomId, chatVisible, pageVisible, newestId, queryClient, postRead]);
+  }, [userId, activeRoomId, chatVisible, pageVisible, newestId, queryClient, postRead]);
 
   useEffect(() => {
     let disposed = false;
@@ -97,7 +103,7 @@ export function ChatRuntime({
   useEffect(() => {
     if (!activeRoomId) return;
     const roomId = activeRoomId;
-    const key = messagesKey(roomId);
+    const key = messagesKey(userId, roomId);
     let hasOpened = false;
     let disposed = false;
     let socket: ChatSocket | null = null;
@@ -139,9 +145,13 @@ export function ChatRuntime({
           seen.add(message.id);
           const { userId: me, watching } = live.current;
           if (!added || message.senderId === me || watching) return;
-          queryClient.setQueryData<UnreadState>(unreadKey(roomId), (u) => ({ count: (u?.count ?? 0) + 1, lastReadId: u?.lastReadId ?? null }));
+          queryClient.setQueryData<UnreadState>(unreadKey(userId, roomId), (u) => ({ count: (u?.count ?? 0) + 1, lastReadId: u?.lastReadId ?? null }));
           setHasNewMessage(true);
-          audioRef.current?.playBeep();
+          const now = Date.now();
+          if (now - lastBeepAt.current >= BEEP_MIN_GAP_MS) {
+            lastBeepAt.current = now;
+            audioRef.current?.playBeep();
+          }
         },
       });
       socketRef.current = socket;
@@ -154,7 +164,7 @@ export function ChatRuntime({
       setPresence(new Map());
       setConnection('idle');
     };
-  }, [activeRoomId, queryClient, t, live, socketRef, setConnection, setPresence, setHasNewMessage]);
+  }, [userId, activeRoomId, queryClient, t, live, socketRef, setConnection, setPresence, setHasNewMessage]);
 
   useEffect(() => {
     let hiddenAt: number | null = null;

@@ -205,6 +205,20 @@ describe('ChatWidget failures', () => {
     expect(sockets()[0]?.sent[0]).toEqual({ type: 'auth', ticket: 'ticket-2' });
   });
 
+  it('ends in a terminal notice when the server closes an authenticated session with 1008, without reconnecting by itself', async () => {
+    const mock = mockChat();
+    const user = userEvent.setup();
+    renderWidget();
+    const socket = await connected();
+    await user.click(await fab());
+    act(() => socket.drop(1008));
+    expect(await screen.findByText(new RegExp(t('CHAT.connection_stopped')))).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: t('CHAT.retry') })).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 100));
+    expect(mock.tickets.n).toBe(1);
+    expect(sockets()).toHaveLength(0);
+  });
+
   it('shows a retry once the client gave up, and the retry reconnects', async () => {
     const mock = mockChat();
     const user = userEvent.setup();
@@ -264,6 +278,17 @@ describe('ChatWidget unread and live messages', () => {
     act(() => socket.push({ type: 'message', payload: msg('m5', 'while nobody looked') }));
     act(() => socket.push({ type: 'message', payload: msg('m5', 'while nobody looked') }));
     expect(await screen.findByRole('button', { name: unreadLabel(1) })).toBeInTheDocument();
+    expect(nav.beep).toHaveBeenCalledTimes(1);
+  });
+
+  it('sounds once for a burst of messages, while every one still counts', async () => {
+    mockChat();
+    renderWidget();
+    const socket = await connected();
+    act(() => {
+      for (const id of ['b1', 'b2', 'b3']) socket.push({ type: 'message', payload: msg(id, id) });
+    });
+    expect(await screen.findByRole('button', { name: unreadLabel(3) })).toBeInTheDocument();
     expect(nav.beep).toHaveBeenCalledTimes(1);
   });
 
@@ -335,6 +360,14 @@ describe('ChatWidget sending', () => {
 });
 
 describe('ChatWidget panel', () => {
+  it('caps the draft at 2000 characters', async () => {
+    mockChat();
+    const user = userEvent.setup();
+    renderWidget();
+    await user.click(await fab());
+    expect(await screen.findByRole('textbox', { name: t('CHAT.placeholder') })).toHaveAttribute('maxlength', '2000');
+  });
+
   it('is a labelled modal dialog that puts focus in the composer', async () => {
     mockChat();
     const user = userEvent.setup();

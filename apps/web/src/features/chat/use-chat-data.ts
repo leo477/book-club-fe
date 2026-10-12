@@ -15,14 +15,12 @@ import {
   TEMP_PREFIX,
   isTemp,
   mergeLatest,
-  messagesKey,
   prependOlder,
-  roomsKey,
-  unreadKey,
   type ChatRoomView,
   type MessagesPage,
   type UnreadState,
 } from './chat-model';
+import { messagesKey, roomsKey, unreadKey } from './chat-keys';
 
 const NO_ROOMS: readonly ChatRoomView[] = [];
 const NO_CLUBS: readonly Club[] = [];
@@ -31,11 +29,13 @@ const NO_UNREAD: Readonly<Record<string, UnreadState>> = {};
 
 /** Rooms of every club the viewer belongs to; with several clubs a room reads "Club · Room". */
 export function useChatRooms(enabled: boolean) {
+  const { user } = useSession();
+  const userId = user?.id ?? '';
   const myClubs = useMyClubs(enabled);
   const clubs = myClubs.data ?? NO_CLUBS;
   const ids = clubs.map((c) => c.id).join(',');
   const rooms = useQuery({
-    queryKey: [...roomsKey, ids],
+    queryKey: [...roomsKey(userId), ids],
     enabled: enabled && clubs.length > 0,
     refetchOnWindowFocus: false,
     queryFn: async ({ signal }): Promise<ChatRoomView[]> => {
@@ -64,9 +64,10 @@ export function useChatRooms(enabled: boolean) {
 
 /** Server-backed unread counts, fetched once per room; a failing endpoint just means "nothing unread". */
 export function useUnreadCounts(roomIds: readonly string[], enabled: boolean) {
+  const userId = useSession().user?.id ?? '';
   return useQueries({
     queries: roomIds.map((id) => ({
-      queryKey: unreadKey(id),
+      queryKey: unreadKey(userId, id),
       enabled,
       staleTime: Infinity,
       retry: false,
@@ -94,7 +95,8 @@ export function useChatRoom(roomId: string | null) {
   const queryClient = useQueryClient();
   const { user } = useSession();
   const tErrors = useTranslations('ERRORS');
-  const key = messagesKey(roomId ?? '');
+  const userId = user?.id ?? '';
+  const key = messagesKey(userId, roomId ?? '');
   const olderInFlight = useRef(false);
   const [isLoadingOlder, setLoadingOlder] = useState(false);
 
@@ -171,7 +173,8 @@ export function useChatRoom(roomId: string | null) {
 export function useRoomActions() {
   const queryClient = useQueryClient();
   const tErrors = useTranslations('ERRORS');
-  const refresh = () => queryClient.invalidateQueries({ queryKey: roomsKey });
+  const userId = useSession().user?.id ?? '';
+  const refresh = () => queryClient.invalidateQueries({ queryKey: roomsKey(userId) });
   const onError = (err: unknown) => showToast('error', describeError(err, tErrors));
   const create = useMutation({
     mutationFn: ({ clubId, name }: { clubId: string; name: string }) => api.chat.createClubRoom(clubId, name),

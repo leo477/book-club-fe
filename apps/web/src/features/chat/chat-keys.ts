@@ -2,9 +2,11 @@ import type { MessagesPage } from './chat-model';
 
 export const TEMP_PREFIX = 'temp-';
 
-export const roomsKey = ['chat', 'rooms'] as const;
-export const messagesKey = (roomId: string) => ['chat', 'messages', roomId] as const;
-export const unreadKey = (roomId: string) => ['chat', 'unread', roomId] as const;
+/** Every chat cache entry is scoped by the viewer, so one user's rooms, messages and counts can never be read as another's. */
+export const CHAT_ROOT = ['chat'] as const;
+export const roomsKey = (userId: string) => ['chat', userId, 'rooms'] as const;
+export const messagesKey = (userId: string, roomId: string) => ['chat', userId, 'messages', roomId] as const;
+export const unreadKey = (userId: string, roomId: string) => ['chat', userId, 'unread', roomId] as const;
 
 export const isTemp = (message: { id: string }): boolean => message.id.startsWith(TEMP_PREFIX);
 

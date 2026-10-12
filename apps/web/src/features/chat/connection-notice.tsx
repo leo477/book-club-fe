@@ -13,10 +13,10 @@ export function ConnectionNotice({ status, onRetry, className }: { status: ChatS
       </p>
     );
   }
-  if (status !== 'closed') return null;
+  if (status !== 'closed' && status !== 'stopped') return null;
   return (
     <p role="status" className={className}>
-      {t('connection_lost')}{' '}
+      {t(status === 'stopped' ? 'connection_stopped' : 'connection_lost')}{' '}
       <button type="button" onClick={onRetry} className="underline font-medium">
         {t('retry')}
       </button>

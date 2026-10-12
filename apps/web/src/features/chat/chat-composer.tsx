@@ -3,6 +3,7 @@
 import { SendIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState, type KeyboardEvent } from 'react';
+import { MAX_MESSAGE_LENGTH } from '@book-club/api-client/ws';
 import { cn } from '@/lib/utils';
 
 export function ChatComposer({ onSend, variant = 'widget', autoFocus = false }: { onSend: (text: string) => void; variant?: 'widget' | 'page'; autoFocus?: boolean }) {
@@ -26,6 +27,7 @@ export function ChatComposer({ onSend, variant = 'widget', autoFocus = false }: 
       <input
         type="text"
         autoFocus={autoFocus}
+        maxLength={MAX_MESSAGE_LENGTH}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={onKeyDown}

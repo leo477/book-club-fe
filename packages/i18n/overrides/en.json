@@ -59,6 +59,7 @@
     "connection_lost": "Live updates are off.",
     "retry": "Retry",
     "error_banned": "You are banned from this room.",
-    "error_rate_limited": "You are sending messages too fast."
+    "error_rate_limited": "You are sending messages too fast.",
+    "connection_stopped": "The server ended this chat session. You may have lost access."
   }
 }

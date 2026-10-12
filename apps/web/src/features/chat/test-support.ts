@@ -48,10 +48,10 @@ export class FakeWebSocket {
   push(frame: unknown) {
     this.onmessage?.({ data: JSON.stringify(frame) });
   }
-  drop() {
+  drop(code?: number) {
     this.closed = true;
     this.readyState = 3;
-    this.onclose?.({});
+    this.onclose?.({ code });
   }
 }
 

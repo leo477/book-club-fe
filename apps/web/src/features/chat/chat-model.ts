@@ -23,7 +23,7 @@ export type ChatItem =
 
 export const OLDER_PAGE_SIZE = 50;
 
-export { TEMP_PREFIX, isTemp, messagesKey, roomsKey, unreadKey } from './chat-keys';
+export { TEMP_PREFIX, isTemp } from './chat-keys';
 
 /** Senders may come back as an email; only the local part is shown. */
 export function senderLabel(name: string): string {

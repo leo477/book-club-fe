@@ -3,14 +3,14 @@
 
 import { useQueryClient } from '@tanstack/react-query';
 import { usePathname } from 'next/navigation';
-import { createContext, lazy, Suspense, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { createContext, lazy, Suspense, useCallback, useContext, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { Club } from '@book-club/contracts';
 import type { ChatSocket, ChatSocketStatus, PresenceStatus } from '@book-club/api-client/ws';
 import { useSession } from '@/features/clubs/use-session';
 import { api } from '@/lib/api';
 import { SHELL_CHAT_WIDGET } from '@/strangler/flags';
 import { useEnabledRoutes } from '@/strangler/context';
-import { lastConfirmedId, messagesKey, unreadKey } from './chat-keys';
+import { CHAT_ROOT, lastConfirmedId, messagesKey, unreadKey } from './chat-keys';
 
 export { RESUME_RECONNECT_MS } from './chat-keys';
 import type { ChatRoomView, MessagesPage, UnreadState } from './chat-model';
@@ -71,6 +71,18 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const [pageVisible, setPageVisible] = useState(true);
   const [snapshot, setSnapshot] = useState<RoomsSnapshot>(EMPTY);
 
+  // a different viewer in the same tab (sign-in after expiry): nothing of the previous one's chat state may carry over
+  const [seenUser, setSeenUser] = useState(userId);
+  if (seenUser !== userId) {
+    setSeenUser(userId);
+    setOpen(false);
+    setPicked(null);
+    setHasNewMessage(false);
+    setPresence(new Map());
+    setConnection('idle');
+    setSnapshot(EMPTY);
+  }
+
   const { rooms } = snapshot;
   const activeRoomId = rooms.some((r) => r.id === picked) ? picked : (rooms[0]?.id ?? null);
   if (isChatsPage && open) setOpen(false);
@@ -81,19 +93,25 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   const socketRef = useRef<ChatSocket | null>(null);
   const postedRead = useRef(new Map<string, string>());
 
-  useEffect(() => {
+  const previousUser = useRef(userId);
+  useLayoutEffect(() => {
     live.current = { userId, watching: chatVisible && pageVisible };
+    if (previousUser.current === userId) return;
+    previousUser.current = userId;
+    queryClient.removeQueries({ queryKey: CHAT_ROOT });
+    postedRead.current.clear();
   });
 
-  function postRead(roomId: string, messageId: string) {
+  const postRead = useCallback((roomId: string, messageId: string) => {
     if (postedRead.current.get(roomId) === messageId) return;
     postedRead.current.set(roomId, messageId);
     api.chat.markRead(roomId, messageId, { skipAuthRedirect: true, suppressErrorToast: true }).catch(() => postedRead.current.delete(roomId));
-  }
+  }, []);
 
   function markRoomRead(roomId: string) {
-    const newest = lastConfirmedId(queryClient.getQueryData<MessagesPage>(messagesKey(roomId)));
-    queryClient.setQueryData<UnreadState>(unreadKey(roomId), (u) => ({ count: 0, lastReadId: newest ?? u?.lastReadId ?? null }));
+    if (!userId) return;
+    const newest = lastConfirmedId(queryClient.getQueryData<MessagesPage>(messagesKey(userId, roomId)));
+    queryClient.setQueryData<UnreadState>(unreadKey(userId, roomId), (u) => ({ count: 0, lastReadId: newest ?? u?.lastReadId ?? null }));
     if (newest) postRead(roomId, newest);
   }
 
@@ -128,9 +146,10 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   return (
     <ChatContext.Provider value={value}>
       {children}
-      {active && (
+      {active && userId && (
         <Suspense fallback={null}>
           <ChatRuntime
+            userId={userId}
             activeRoomId={activeRoomId}
             chatVisible={chatVisible}
             pageVisible={pageVisible}
