@@ -47,5 +47,14 @@
   "CLUB_MANAGE": {
     "chart_summary": "{{ label }}: {{ items }}",
     "chart_summary_item": "{{ title }}: {{ count }}"
+  },
+  "CHAT": {
+    "widget_title": "Чат книжкового клубу",
+    "rooms_count": "Кімнат: {{ count }}",
+    "delete": "Видалити",
+    "delete_room_aria": "Видалити кімнату {{ name }}",
+    "delete_room_confirm": "Видалити цю кімнату?",
+    "unread_aria": "Непрочитаних повідомлень: {{ count }}",
+    "reconnecting": "Перепідключення…"
   }
 }
