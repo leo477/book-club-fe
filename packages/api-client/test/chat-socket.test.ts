@@ -1,7 +1,7 @@
 import type { AddressInfo } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocketServer, type WebSocket as ServerSocket } from 'ws';
-import { MAX_MESSAGE_LENGTH, backoffDelay, createChatSocket, type ChatSocket, type ChatSocketOptions, type ChatSocketStatus } from '../src/ws';
+import { MAX_MESSAGE_LENGTH, backoffDelay, isSendableText, createChatSocket, type ChatSocket, type ChatSocketOptions, type ChatSocketStatus } from '../src/ws';
 
 const message = (id: string, text = 'hi') => ({ type: 'message', payload: { id, senderId: 'u2', senderName: 'Grace', text, timestamp: '2026-01-01T10:00:00Z', isSystem: false } });
 
@@ -176,6 +176,18 @@ describe('createChatSocket', () => {
     await until(() => conns[0]?.frames.length === 2);
   });
 
+  it('keeps reconnecting after an authenticated 1006 or 1012 close: only 1008 is terminal', async () => {
+    onConnect = ({ ws }) => ws.send(JSON.stringify({ type: 'presence_snapshot', payload: [] }));
+    const { socket, getTicket } = start();
+    await until(() => socket.status === 'open');
+    conns[0]?.ws.close(1012);
+    await until(() => conns.length === 2 && socket.status === 'open');
+    conns[1]?.ws.terminate();
+    await until(() => conns.length === 3 && socket.status === 'open');
+    expect(getTicket).toHaveBeenCalledTimes(3);
+    expect(socket.status).toBe('open');
+  });
+
   it('drops an oversized live frame', async () => {
     onConnect = ({ ws }) => {
       ws.send(JSON.stringify(message('big', 'x'.repeat(4001))));
@@ -240,5 +252,23 @@ describe('createChatSocket', () => {
     release('late');
     await new Promise((r) => setTimeout(r, 80));
     expect(conns).toHaveLength(0);
+  });
+});
+
+describe('isSendableText', () => {
+  it.each([
+    ['plain text', 'hello', true],
+    ['text with emoji and a tab', 'hi 👋\tthere', true],
+    ['blank', '   ', false],
+    ['zero-width only', '\u200B\u200D\uFEFF', false],
+    ['invisible fillers and blanks', ' \u2800\u3164\u115F\u1160\u180E\u00AD\u2060', false],
+    ['invisible beside real text', 'a\u200Bb', true],
+    ['NUL', 'a\u0000b', false],
+    ['C1 control (NEL)', 'a\u0085b', false],
+    ['DEL', 'a\u007Fb', false],
+    ['exactly the limit', 'x'.repeat(MAX_MESSAGE_LENGTH), true],
+    ['over the limit', 'x'.repeat(MAX_MESSAGE_LENGTH + 1), false],
+  ])('%s', (_name, text, ok) => {
+    expect(isSendableText(text)).toBe(ok);
   });
 });

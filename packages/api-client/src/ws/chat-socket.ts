@@ -1,3 +1,4 @@
+import { isSendableText } from './chat-text';
 import { chatWsServerMessage, type ChatMessage, type ChatWsServerMessage } from '@book-club/contracts';
 
 export type PresenceStatus = 'online' | 'offline';
@@ -45,7 +46,6 @@ export interface ChatSocket {
 const OPEN = 1;
 const NORMAL_CLOSURE = 1000;
 const POLICY_VIOLATION = 1008;
-export const MAX_MESSAGE_LENGTH = 2000;
 
 export const backoffDelay = (attempt: number, base: number, max: number, random: number): number =>
   Math.round(Math.min(max, base * 2 ** attempt) * (0.5 + random * 0.5));
@@ -206,7 +206,7 @@ export function createChatSocket(options: ChatSocketOptions): ChatSocket {
       start();
     },
     send(text) {
-      if (!text.trim() || text.length > MAX_MESSAGE_LENGTH) return false;
+      if (!isSendableText(text)) return false;
       if (!socket || socket.readyState !== OPEN || status !== 'open') return false;
       socket.send(JSON.stringify({ text }));
       return true;

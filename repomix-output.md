@@ -576,6 +576,7 @@ packages/
         users.ts
       ws/
         chat-socket.ts
+        chat-text.ts
         index.ts
       api.ts
       client.ts

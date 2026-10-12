@@ -104,7 +104,7 @@ export const chatWsServerMessage = z.discriminatedUnion('type', [
   }),
   z.object({
     type: z.literal('error'),
-    payload: z.object({ code: z.enum(['RATE_LIMITED', 'ROOM_BANNED']), message: z.string() }),
+    payload: z.object({ code: z.string(), message: z.string() }),
   }),
 ]);
 export type ChatWsServerMessage = z.infer<typeof chatWsServerMessage>;

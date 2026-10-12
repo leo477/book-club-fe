@@ -181,6 +181,12 @@ describe('contracts parse backend payloads', () => {
     expect(parse(z.array(chatMessage), [row, { ...row, id: 'n', text: 'ok' }])).toHaveLength(2);
   });
 
+  it('parses any error frame code, so a code added by the backend is not silently dropped', () => {
+    for (const code of ['RATE_LIMITED', 'ROOM_BANNED', 'INVALID_MESSAGE', 'SOMETHING_NEW']) {
+      expect(chatWsServerMessage.safeParse({ type: 'error', payload: { code, message: 'm' } }).success).toBe(true);
+    }
+  });
+
   it('api error body covers string, object and validation-array details', () => {
     expect(parse(apiErrorBody, { detail: 'x' }).detail).toBe('x');
     expect(parse(apiErrorBody, { detail: { error: 'x', code: 'C' } }).detail).toEqual({ error: 'x', code: 'C' });

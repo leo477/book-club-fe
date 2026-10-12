@@ -1,6 +1,5 @@
 export {
   backoffDelay,
-  MAX_MESSAGE_LENGTH,
   createChatSocket,
   type ChatSocket,
   type ChatSocketError,
@@ -9,3 +8,4 @@ export {
   type ChatSocketStatus,
   type PresenceStatus,
 } from './chat-socket';
+export { MAX_MESSAGE_LENGTH, isSendableText } from './chat-text';
