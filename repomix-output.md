@@ -160,6 +160,8 @@ apps/
         fonts.ts
         global-error.tsx
         layout.tsx
+        not-found.test.tsx
+        not-found.tsx
         page.test.tsx
         page.tsx
         robots.test.ts

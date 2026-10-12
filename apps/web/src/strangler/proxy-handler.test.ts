@@ -202,3 +202,12 @@ describe('legacy-shadowed paths', () => {
     expect(res.status).toBe(503);
   });
 });
+
+describe('handleProxy unknown paths (global not-found)', () => {
+  it.each(['/definitely/not/a/page', '/clubs/not-a-uuid/extra', '/a.b'])('%s passes through unchanged', async (path) => {
+    const res = await run(path, () => Promise.reject(new Error('must not be read')));
+    expect(res.headers.get('x-middleware-next')).toBe('1');
+    expect(res.headers.get('x-middleware-rewrite')).toBeNull();
+    expect(res.cookies.get('bc_bucket')).toBeUndefined();
+  });
+});
