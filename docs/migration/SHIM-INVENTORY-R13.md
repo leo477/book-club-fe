@@ -7,13 +7,13 @@ Scope: every piece of code, config or ops state that exists only because Angular
 | Shim | Used by | Verdict |
 |---|---|---|
 | `next.config.ts` `rewrites.fallback` -> `LEGACY_ORIGIN` | every path the manifest does not own (unknown URLs, `/og-image.png`, Google verification file, any route not yet 100 %) | R14 (plan: remove after 30 days at 100 %) |
-| `DISABLE_LEGACY_FALLBACK` (`lib/legacy-fallback.ts`, proxy, `readState`) | R13 preview audit | R14 (delete together with the fallback) |
+| `DISABLE_LEGACY_FALLBACK` (`lib/legacy-fallback.ts`, proxy, `readState`, build marker `LEGACY_FALLBACK_DISABLED_AT_BUILD` and its 503 guard in `proxy.ts`) | R13 preview audit | R14 (delete together with the fallback) |
 | `src/proxy.ts` + `strangler/proxy-handler.ts` (decide next/legacy, `bc_bucket`, legacy rewrite, 503 without origin) | every request | R14 keeps only the CSP/nonce part |
 | `strangler/config.ts` (`decide`, `parseConfig`, `loadConfig`, `computeState`, bucket helpers), `strangler/edge-config.ts` | proxy, `readState`, `/strangler.json`, `layout.tsx` | R14 simplified to a global `enabled` or deleted |
 | `strangler/routes.ts` (`manifest`, `matchRoute`, `isLegacyShadowed`, `compilePattern`) | `AppLink`, `use-push`, `use-replace`, proxy, coverage script and test | R14 (`isLegacyShadowed` goes first; the manifest is also the coverage script input until Angular is deleted) |
 | `strangler/context.tsx` (`StranglerProvider`, `useEnabledRoutes`) and `layout.tsx` `enabledRoutes` | `AppLink`, `use-push`, `use-replace`, `chat-provider` | R14 (every link becomes a plain `Link`) |
-| `components/app-link.tsx` `<a>` vs `<Link>` switch, `prefetch={false}` | 35 files | R14 (collapse to `Link`, re-enable prefetch) |
-| `lib/use-push.ts`, `lib/use-replace.ts` router-vs-hard-navigation split | 17 call sites | R14 |
+| `components/app-link.tsx` `<a>` vs `<Link>` switch, `prefetch={false}` | 34 non-test files (33 importers plus the component itself) | R14 (collapse to `Link`, re-enable prefetch) |
+| `lib/use-push.ts`, `lib/use-replace.ts` router-vs-hard-navigation split | 12 importing files, 14 call sites | R14 |
 | `lib/navigate.ts` `hardNavigate`/`replaceNavigate` | `api.ts` (401 redirect), login/register/oauth forms, header | R14 for the "target may be legacy" reason; the safe-path validation is a security control and stays (rename only) |
 | `app/strangler.json/route.ts` | Angular `StranglerManifestService` (fetched at boot) | R14 (only consumer is Angular) |
 | `strangler/flags.ts` `shell.chatWidget` | `chat-provider`, `chat-slot` | Not a shim: a product rollout flag. Needs a rollout decision (flip to 100 %, then drop the flag), independent of R14 |
