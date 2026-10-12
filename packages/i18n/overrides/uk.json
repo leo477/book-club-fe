@@ -1,7 +1,28 @@
 {
   "QUIZ": {
     "create_questions_count_few": "запитання",
-    "create_questions_count_other": "запитань"
+    "create_questions_count_other": "запитань",
+    "breadcrumb_aria": "Навігаційний ланцюжок",
+    "edit_step_questions": "Редагувати питання",
+    "questions_heading": "Питання ({{ count }})",
+    "question_saved": "збережено",
+    "question_new": "нове",
+    "remove_question_aria": "Видалити питання {{ number }}",
+    "option_aria": "Варіант {{ label }}",
+    "correct_option_aria": "Правильна відповідь {{ label }}",
+    "save_error": "Не вдалося зберегти квіз. Спробуйте ще раз.",
+    "result_percent": "{{ percent }}% правильних",
+    "result_great": "🌟 Чудова робота!",
+    "result_good": "👍 Непогано!",
+    "result_keep_reading": "📖 Читайте далі!",
+    "result_try_again": "💪 Наступного разу вийде краще!",
+    "result_your_answer": "Ваша відповідь",
+    "result_incorrect": "Неправильно",
+    "error_not_found": "Квіз не знайдено.",
+    "error_no_questions": "У цьому квізі ще немає питань.",
+    "leaderboard_status": "Статус",
+    "session_refresh_hint": "Оновлюється кожні 15 секунд",
+    "session_event_option": "{{ title }} — {{ date }}"
   },
   "ERRORS": {
     "retry": "Спробувати ще раз"

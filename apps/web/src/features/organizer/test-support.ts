@@ -2,7 +2,7 @@ import { HttpResponse, http } from 'msw';
 import { API, server, userJson } from '@/test/harness';
 
 /** Routes the strangler serves from Next, so in-app navigation stays in the router. */
-export const NEXT_ROUTES = ['/clubs', '/clubs/:id', '/events', '/events/:id', '/clubs/create', '/clubs/:id/edit', '/clubs/:id/events/create', '/events/:id/edit', '/clubs/:id/manage', '/clubs/:id/randomizer'];
+export const NEXT_ROUTES = ['/clubs', '/clubs/:id', '/events', '/events/:id', '/clubs/create', '/clubs/:id/edit', '/clubs/:id/events/create', '/events/:id/edit', '/clubs/:id/manage', '/clubs/:id/randomizer', '/clubs/:id/quizzes', '/clubs/:id/quizzes/create', '/clubs/:id/quizzes/:quizId', '/clubs/:id/quizzes/:quizId/edit', '/clubs/:id/quizzes/:quizId/preview', '/clubs/:id/quizzes/:quizId/session', '/clubs/:id/quizzes/:quizId/leaderboard'];
 
 export function mockSession(user: Record<string, unknown> | null) {
   server.use(

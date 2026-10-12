@@ -7,3 +7,4 @@ export * from './parse';
 export * from './quiz';
 export * from './user';
 export * from './organizer-forms';
+export * from './quiz-forms';
