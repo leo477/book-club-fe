@@ -63,6 +63,7 @@ apps/
   web/
     scripts/
       check-first-load.mjs
+      check-legacy-guard.mjs
     src/
       app/
         (auth)/
@@ -133,6 +134,7 @@ apps/
             page.test.tsx
             page.tsx
           layout.tsx
+          not-found.tsx
           organizer-pages.test.tsx
           quiz-pages.test.tsx
         %5F%5Fstrangler-probe/
@@ -160,6 +162,8 @@ apps/
         fonts.ts
         global-error.tsx
         layout.tsx
+        not-found.test.tsx
+        not-found.tsx
         page.test.tsx
         page.tsx
         robots.test.ts
@@ -219,6 +223,7 @@ apps/
         lazy-boundary.tsx
         lazy-page.tsx
         namespaces-intl.tsx
+        not-found-view.tsx
         social-badges.tsx
         social-icon-paths.ts
         social-link-field.tsx
@@ -432,6 +437,8 @@ apps/
         geocode-session.ts
         json-ld.test.tsx
         json-ld.tsx
+        legacy-fallback.test.ts
+        legacy-fallback.ts
         legacy-session.test.ts
         legacy-session.ts
         navigate.test.ts
@@ -470,9 +477,12 @@ apps/
         csp.ts
         edge-config.ts
         flags.ts
+        legacy-guard-script.test.ts
         manifest-coverage.test.ts
         proxy-handler.test.ts
         proxy-handler.ts
+        read-state.test.ts
+        route-coverage.test.ts
         routes.test.ts
         routes.ts
         server.test.ts
@@ -483,6 +493,8 @@ apps/
         import-graph.test.ts
         import-graph.ts
       env.d.ts
+      next-config.test.ts
+      proxy.test.ts
       proxy.ts
     .gitignore
     components.json
@@ -523,6 +535,7 @@ docs/
     SECURITY-R6.md
     SECURITY-R7.md
     SECURITY-R9.md
+    SHIM-INVENTORY-R13.md
     UI-DELTAS.md
 e2e/
   fixtures/
@@ -660,6 +673,7 @@ public/
   robots.txt
   sitemap.xml
 scripts/
+  check-route-coverage.mjs
   extract-i18n.mjs
   generate-sitemap.mjs
 src/

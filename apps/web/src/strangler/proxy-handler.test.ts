@@ -202,3 +202,84 @@ describe('legacy-shadowed paths', () => {
     expect(res.status).toBe(503);
   });
 });
+
+describe('handleProxy unknown paths (global not-found)', () => {
+  it.each(['/definitely/not/a/page', '/clubs/not-a-uuid/extra', '/a.b'])('%s passes through unchanged', async (path) => {
+    const res = await run(path, () => Promise.reject(new Error('must not be read')));
+    expect(res.headers.get('x-middleware-next')).toBe('1');
+    expect(res.headers.get('x-middleware-rewrite')).toBeNull();
+    expect(res.cookies.get('bc_bucket')).toBeUndefined();
+  });
+});
+
+describe('handleProxy with the legacy fallback disabled (preview)', () => {
+  const read = () => Promise.reject(new Error('config must not be read'));
+  const disabled = { legacyDisabled: true } as const;
+  const runDisabled = (path: string, extra: { legacyOrigin?: string | undefined } = {}) =>
+    handleProxy(new NextRequest(`https://app.example.com${path}`, { headers: { cookie: 'bc_bucket=99' } }), {
+      readConfig: read,
+      legacyOrigin: LEGACY,
+      ...extra,
+      ...disabled,
+    });
+
+  it('renders every manifest route on next regardless of config or bucket, never rewriting to legacy', async () => {
+    const res = await runDisabled(probe);
+    expect(isLegacy(res)).toBe(false);
+    expect(res.headers.get('x-middleware-rewrite')).toBeNull();
+    expect(res.headers.get('content-security-policy')).toMatch(/nonce-/);
+  });
+
+  it('does not 503 without a legacy origin', async () => {
+    expect((await runDisabled(probe, { legacyOrigin: undefined })).status).not.toBe(503);
+  });
+
+  it('lets a UUID-shaped miss reach next instead of legacy', async () => {
+    const res = await runDisabled('/clubs/create-not-uuid');
+    expect(res.headers.get('x-middleware-rewrite')).toBeNull();
+  });
+});
+
+describe('handleProxy request header hygiene and 404 CSP', () => {
+  const forged = { 'x-nonce': 'forged', 'content-security-policy': "script-src 'unsafe-inline'" };
+  const reqHeader = (res: Response, name: string) => res.headers.get(`x-middleware-request-${name}`);
+  const never = () => Promise.reject(new Error('config must not be read'));
+
+  it('strips a client-supplied x-nonce and CSP on untouched pass-through (legacy fallback active)', async () => {
+    const res = await run('/not-yet-migrated', never, undefined, { headers: forged });
+    expect(res.headers.get('x-middleware-override-headers') ?? '').not.toMatch(/x-nonce|content-security-policy/);
+    expect(reqHeader(res, 'x-nonce')).toBeNull();
+    expect(res.headers.get('content-security-policy')).toBeNull();
+  });
+
+  it('strips them and issues its own nonce + CSP for a Next-rendered 404 when the fallback is disabled', async () => {
+    const res = await handleProxy(new NextRequest('https://app.example.com/nope', { headers: forged }), { readConfig: never, legacyOrigin: undefined, legacyDisabled: true });
+    const nonce = reqHeader(res, 'x-nonce')!;
+    expect(nonce).not.toBe('forged');
+    expect(res.headers.get('content-security-policy')).toContain(`'nonce-${nonce}'`);
+    expect(reqHeader(res, 'content-security-policy')).toBe(res.headers.get('content-security-policy'));
+    expect(res.headers.get('content-security-policy-report-only')).toContain("require-trusted-types-for 'script'");
+    expect(res.cookies.get('bc_bucket')).toBeUndefined();
+  });
+
+  it('strips a forged nonce on a Next-rendered manifest route and on a legacy rewrite', async () => {
+    const next = await run(probe, async () => config({ target: 'next', percent: 100 }), 'bc_bucket=1', { headers: forged });
+    expect(reqHeader(next, 'x-nonce')).not.toBe('forged');
+    const legacy = await run(probe, async () => config({ target: 'legacy', percent: 0 }), 'bc_bucket=1', { headers: forged });
+    expect(isLegacy(legacy)).toBe(true);
+    expect(reqHeader(legacy, 'x-nonce')).toBeNull();
+    expect(legacy.headers.get('content-security-policy')).toBeNull();
+  });
+
+  it('leaves public/ files untouched under the flag (no CSP, no no-store), but still covers HTML requests for them', async () => {
+    const req = (path: string, accept: string) =>
+      handleProxy(new NextRequest(`https://app.example.com${path}`, { headers: { accept } }), { readConfig: never, legacyOrigin: undefined, legacyDisabled: true });
+    for (const [path, accept] of [['/og-image.png', 'image/avif,image/webp,*/*'], ['/googleea44.js', '*/*'], ['/favicon.ico', '*/*']] as const) {
+      const res = await req(path, accept);
+      expect(res.headers.get('cache-control')).toBeNull();
+      expect(res.headers.get('content-security-policy')).toBeNull();
+    }
+    expect((await req('/old.html', 'text/html,*/*')).headers.get('content-security-policy')).toMatch(/nonce-/);
+    expect((await req('/nope', '*/*')).headers.get('cache-control')).toBe('private, no-store');
+  });
+});

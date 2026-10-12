@@ -2,15 +2,19 @@ import type { NextConfig } from 'next';
 import { PHASE_PRODUCTION_BUILD } from 'next/constants.js';
 import createNextIntlPlugin from 'next-intl/plugin';
 import { backendOrigin } from './src/lib/backend-origin';
+import { BUILD_MARKER, assertLegacyFallbackAllowed, fallbackRewrites, legacyFallbackDisabled } from './src/lib/legacy-fallback';
 import { checkOAuthBaseUrl } from './src/lib/oauth-base-url';
 import { checkWsBaseUrl } from './src/lib/ws-base-url';
 
 const BACKEND_ORIGIN = backendOrigin();
 
+assertLegacyFallbackAllowed();
+const fallbackDisabled = legacyFallbackDisabled();
+
 function legacyOrigin(): string | null {
   const raw = process.env['LEGACY_ORIGIN'];
   if (!raw) {
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NODE_ENV === 'production' && !fallbackDisabled) {
       throw new Error('LEGACY_ORIGIN is required in production (origin of the legacy Angular deployment)');
     }
     return null;
@@ -36,6 +40,7 @@ const nextConfig: NextConfig = {
   agentRules: false,
   reactCompiler: true,
   poweredByHeader: false,
+  env: { [BUILD_MARKER]: fallbackDisabled ? '1' : '' },
   turbopack: { resolveAlias: { '../locales/index.js': './src/lib/zod-locales-stub.ts' } },
   transpilePackages: ['@book-club/api-client', '@book-club/contracts', '@book-club/i18n'],
   async headers() {
@@ -48,7 +53,7 @@ const nextConfig: NextConfig = {
     return {
       beforeFiles: [{ source: '/api/:path*', destination: `${BACKEND_ORIGIN}/api/:path*` }],
       afterFiles: [],
-      fallback: legacy ? [{ source: '/:path*', destination: `${legacy}/:path*` }] : [],
+      fallback: fallbackRewrites(legacy, fallbackDisabled),
     };
   },
 };
