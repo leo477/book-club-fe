@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { assertLegacyFallbackAllowed, fallbackRewrites, legacyFallbackDisabled } from './legacy-fallback';
+import { assertLegacyFallbackAllowed, fallbackRewrites, flaggedBuildOnProduction, legacyFallbackDisabled } from './legacy-fallback';
 
 const on = { DISABLE_LEGACY_FALLBACK: '1' };
 
@@ -37,5 +37,18 @@ describe('fallbackRewrites', () => {
     expect(fallbackRewrites('https://l.example', false)).toEqual([{ source: '/:path*', destination: 'https://l.example/:path*' }]);
     expect(fallbackRewrites('https://l.example', true)).toEqual([]);
     expect(fallbackRewrites(null, false)).toEqual([]);
+  });
+});
+
+describe('flaggedBuildOnProduction', () => {
+  it.each([
+    ['1', { VERCEL_ENV: 'production' }, null, true],
+    ['1', { VERCEL_ENV: 'preview', VERCEL_PROJECT_PRODUCTION_URL: 'p.example.com' }, 'P.example.com', true],
+    ['1', { VERCEL_ENV: 'preview', VERCEL_PROJECT_PRODUCTION_URL: 'p.example.com' }, 'x.vercel.app', false],
+    ['1', { VERCEL_ENV: 'preview' }, 'p.example.com', false],
+    ['', { VERCEL_ENV: 'production' }, null, false],
+    [undefined, { VERCEL_ENV: 'production' }, null, false],
+  ])('marker=%s %j host=%s -> %s', (marker, env, host, expected) => {
+    expect(flaggedBuildOnProduction(marker, env, host)).toBe(expected);
   });
 });

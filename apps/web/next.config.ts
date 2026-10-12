@@ -2,7 +2,7 @@ import type { NextConfig } from 'next';
 import { PHASE_PRODUCTION_BUILD } from 'next/constants.js';
 import createNextIntlPlugin from 'next-intl/plugin';
 import { backendOrigin } from './src/lib/backend-origin';
-import { assertLegacyFallbackAllowed, fallbackRewrites, legacyFallbackDisabled } from './src/lib/legacy-fallback';
+import { BUILD_MARKER, assertLegacyFallbackAllowed, fallbackRewrites, legacyFallbackDisabled } from './src/lib/legacy-fallback';
 import { checkOAuthBaseUrl } from './src/lib/oauth-base-url';
 import { checkWsBaseUrl } from './src/lib/ws-base-url';
 
@@ -40,6 +40,7 @@ const nextConfig: NextConfig = {
   agentRules: false,
   reactCompiler: true,
   poweredByHeader: false,
+  env: { [BUILD_MARKER]: fallbackDisabled ? '1' : '' },
   turbopack: { resolveAlias: { '../locales/index.js': './src/lib/zod-locales-stub.ts' } },
   transpilePackages: ['@book-club/api-client', '@book-club/contracts', '@book-club/i18n'],
   async headers() {

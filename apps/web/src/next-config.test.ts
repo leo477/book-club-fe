@@ -27,6 +27,11 @@ describe('next.config rewrites', () => {
     expect(rewrites.beforeFiles.map((r) => r.source)).toEqual(['/api/:path*']);
   });
 
+  it('stamps the build marker only for a flagged build', async () => {
+    expect((await load(base)).env).toEqual({ LEGACY_FALLBACK_DISABLED_AT_BUILD: '' });
+    expect((await load({ ...base, DISABLE_LEGACY_FALLBACK: '1', VERCEL_ENV: 'preview' })).env).toEqual({ LEGACY_FALLBACK_DISABLED_AT_BUILD: '1' });
+  });
+
   it('refuses to load when the flag is set for production', async () => {
     await expect(load({ ...base, BACKEND_ORIGIN: 'https://api.example.com', DISABLE_LEGACY_FALLBACK: '1', VERCEL_ENV: 'production', NODE_ENV: 'production' })).rejects.toThrow(/preview-only/);
   });
