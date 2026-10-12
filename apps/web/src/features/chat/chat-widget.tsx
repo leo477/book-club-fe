@@ -80,7 +80,6 @@ export function ChatWidget() {
       {chat.isOpen && (
         <div
           role="dialog"
-          aria-modal="true"
           aria-label={t('title')}
           className={cn(
             'fixed z-40 right-6 w-[calc(100vw-3rem)] max-w-80 max-h-[480px] flex flex-col rounded-2xl shadow-2xl overflow-hidden bg-[var(--color-surface-raised)] border border-[var(--border)]',
@@ -97,12 +96,13 @@ export function ChatWidget() {
                     <p className="text-sm text-[var(--color-ink-muted)]">{t('no_rooms_hint_member')}</p>
                   </div>
                 ) : (
-                  chat.rooms.map((room) => (
+                  chat.rooms.map((room, index) => (
                     <div key={room.id} className="flex flex-col">
                       <div className="flex items-center">
                         <button
                           type="button"
                           onClick={() => pick(room.id)}
+                          autoFocus={index === 0}
                           className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3 border-b border-[var(--border)] hover:bg-[var(--color-surface)] text-left"
                         >
                           <span className="size-10 shrink-0 rounded-full bg-primary-500 text-white flex items-center justify-center font-bold" aria-hidden="true">

@@ -465,6 +465,7 @@ apps/
         config.test.ts
         config.ts
         context.tsx
+        csp-vercel.test.ts
         csp.test.ts
         csp.ts
         edge-config.ts

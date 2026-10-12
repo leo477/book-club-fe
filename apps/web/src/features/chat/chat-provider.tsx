@@ -6,11 +6,12 @@ import { usePathname } from 'next/navigation';
 import { createContext, lazy, Suspense, useCallback, useContext, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import type { Club } from '@book-club/contracts';
 import type { ChatSocket, ChatSocketStatus, PresenceStatus } from '@book-club/api-client/ws';
+import { myClubsKey } from '@/features/clubs/use-clubs';
 import { useSession } from '@/features/clubs/use-session';
 import { api } from '@/lib/api';
 import { SHELL_CHAT_WIDGET } from '@/strangler/flags';
 import { useEnabledRoutes } from '@/strangler/context';
-import { CHAT_ROOT, lastConfirmedId, messagesKey, unreadKey } from './chat-keys';
+import { lastConfirmedId, messagesKey, unreadKey } from './chat-keys';
 
 export { RESUME_RECONNECT_MS } from './chat-keys';
 import type { ChatRoomView, MessagesPage, UnreadState } from './chat-model';
@@ -97,8 +98,11 @@ export function ChatProvider({ children }: { children: ReactNode }) {
   useLayoutEffect(() => {
     live.current = { userId, watching: chatVisible && pageVisible };
     if (previousUser.current === userId) return;
+    const previous = previousUser.current ?? '';
     previousUser.current = userId;
-    queryClient.removeQueries({ queryKey: CHAT_ROOT });
+    // the previous viewer's chat entries go; the club list is viewer-specific too and is re-read for the new one
+    queryClient.removeQueries({ queryKey: ['chat', previous] });
+    void queryClient.resetQueries({ queryKey: myClubsKey });
     postedRead.current.clear();
   });
 

@@ -5,10 +5,10 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { t } from '@/features/club-manage/test-support';
 import { SHELL_CHAT_WIDGET } from '@/strangler/flags';
 import { StranglerProvider } from '@/strangler/context';
-import { API, renderWithProviders, server, setupApiServer } from '@/test/harness';
+import { API, clubJson, renderWithProviders, server, setupApiServer } from '@/test/harness';
 import { ChatProvider, RESUME_RECONNECT_MS } from './chat-provider';
 import { ChatSlot } from './chat-slot';
-import { FakeWebSocket, ME, ROOM, ROOM_2, mockChat, msg, sockets } from './test-support';
+import { CLUB, FakeWebSocket, ME, ROOM, ROOM_2, mockChat, msg, sockets } from './test-support';
 
 const nav = vi.hoisted(() => ({ pathname: '/clubs', toast: vi.fn(), beep: vi.fn(), disposed: vi.fn(), hard: vi.fn() }));
 vi.mock('next/navigation', () => ({ usePathname: () => nav.pathname, useRouter: () => ({ push: vi.fn(), replace: vi.fn() }) }));
@@ -238,6 +238,53 @@ describe('ChatWidget failures', () => {
   });
 });
 
+describe('ChatWidget server errors', () => {
+  it.each([
+    ['ROOM_BANNED', 'error_banned'],
+    ['RATE_LIMITED', 'error_rate_limited'],
+    ['INVALID_MESSAGE', 'error_invalid'],
+    ['SOMETHING_NEW', 'error_generic'],
+  ])('maps the %s frame to its own toast', async (code, key) => {
+    mockChat();
+    renderWidget();
+    const socket = await connected();
+    act(() => socket.push({ type: 'error', payload: { code, message: 'server text' } }));
+    await waitFor(() => expect(nav.toast).toHaveBeenCalledWith('error', t(`CHAT.${key}`)));
+  });
+
+  it('on a 422 from the REST send removes the optimistic message and says why', async () => {
+    mockChat();
+    server.use(http.post(`${API}/chat/rooms/${ROOM}/messages`, () => HttpResponse.json({ detail: [{ msg: 'invalid' }] }, { status: 422 })));
+    const user = userEvent.setup();
+    renderWidget();
+    await user.click(await fab());
+    await user.type(await screen.findByRole('textbox', { name: t('CHAT.placeholder') }), 'rejected{Enter}');
+    await waitFor(() => expect(nav.toast).toHaveBeenCalledWith('error', t('CHAT.error_invalid')));
+    expect(screen.queryByText('rejected')).not.toBeInTheDocument();
+  });
+
+  it('after a server-ended session refreshes rooms and clubs, so a room the viewer lost disappears', async () => {
+    mockChat({ rooms: [{ id: ROOM, name: 'General' }, { id: ROOM_2, name: 'Plot talk' }] });
+    const user = userEvent.setup();
+    renderWidget();
+    const socket = await connected();
+    await user.click(await fab());
+    await user.click(await screen.findByRole('button', { name: t('CHAT.back') }));
+    expect(await screen.findByRole('button', { name: 'Plot talk' })).toBeInTheDocument();
+    const hits = { clubs: 0 };
+    server.use(
+      http.get(`${API}/clubs/my`, () => {
+        hits.clubs += 1;
+        return HttpResponse.json([clubJson({ id: CLUB, name: 'Alpha Readers', organizerId: 'someone' })]);
+      }),
+      http.get(`${API}/clubs/${CLUB}/chat/rooms`, () => HttpResponse.json([{ id: ROOM, name: 'General' }])),
+    );
+    act(() => socket.drop(1008));
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Plot talk' })).not.toBeInTheDocument());
+    expect(hits.clubs).toBeGreaterThan(0);
+  });
+});
+
 describe('ChatWidget unread and live messages', () => {
   it('shows the server unread total on the button, capped at 9+', async () => {
     mockChat({
@@ -368,12 +415,26 @@ describe('ChatWidget panel', () => {
     expect(await screen.findByRole('textbox', { name: t('CHAT.placeholder') })).toHaveAttribute('maxlength', '2000');
   });
 
-  it('is a labelled modal dialog that puts focus in the composer', async () => {
+  it('does not offer to send invisible-only or control-character text', async () => {
     mockChat();
     const user = userEvent.setup();
     renderWidget();
     await user.click(await fab());
-    expect(await screen.findByRole('dialog')).toHaveAttribute('aria-modal', 'true');
+    const input = await screen.findByRole('textbox', { name: t('CHAT.placeholder') });
+    fireEvent.change(input, { target: { value: '\u200B\u200D\u2800\u3164' } });
+    expect(screen.getByRole('button', { name: t('CHAT.send') })).toBeDisabled();
+    fireEvent.change(input, { target: { value: 'a\u0085b' } });
+    expect(screen.getByRole('button', { name: t('CHAT.send') })).toBeDisabled();
+    fireEvent.change(input, { target: { value: 'real' } });
+    expect(screen.getByRole('button', { name: t('CHAT.send') })).toBeEnabled();
+  });
+
+  it('is a labelled dialog that puts focus in the composer', async () => {
+    mockChat();
+    const user = userEvent.setup();
+    renderWidget();
+    await user.click(await fab());
+    expect(await screen.findByRole('dialog', { name: t('CHAT.title') })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByRole('textbox', { name: t('CHAT.placeholder') })).toHaveFocus());
   });
 

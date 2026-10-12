@@ -3,17 +3,17 @@
 import { SendIcon } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useState, type KeyboardEvent } from 'react';
-import { MAX_MESSAGE_LENGTH } from '@book-club/api-client/ws';
+import { MAX_MESSAGE_LENGTH, isSendableText } from '@book-club/api-client/ws';
 import { cn } from '@/lib/utils';
 
 export function ChatComposer({ onSend, variant = 'widget', autoFocus = false }: { onSend: (text: string) => void; variant?: 'widget' | 'page'; autoFocus?: boolean }) {
   const t = useTranslations('CHAT');
   const [text, setText] = useState('');
-  const trimmed = text.trim();
+  const sendable = isSendableText(text);
 
   const submit = () => {
-    if (!trimmed) return;
-    onSend(trimmed);
+    if (!sendable) return;
+    onSend(text.trim());
     setText('');
   };
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
@@ -41,7 +41,7 @@ export function ChatComposer({ onSend, variant = 'widget', autoFocus = false }: 
       <button
         type="button"
         onClick={submit}
-        disabled={!trimmed}
+        disabled={!sendable}
         aria-label={t('send')}
         className="size-10 shrink-0 rounded-full bg-accent-500 text-white flex items-center justify-center hover:shadow-md transition-shadow disabled:opacity-50 disabled:cursor-not-allowed"
       >

@@ -3,7 +3,7 @@
 
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import type { ChatMessage, Club } from '@book-club/contracts';
 import { describeError } from '@/features/club-detail/describe-error';
 import { useMyClubs } from '@/features/clubs/use-clubs';
@@ -21,6 +21,9 @@ import {
   type UnreadState,
 } from './chat-model';
 import { messagesKey, roomsKey, unreadKey } from './chat-keys';
+
+const statusOf = (err: unknown): number | null =>
+  typeof err === 'object' && err !== null && typeof (err as { status?: unknown }).status === 'number' ? (err as { status: number }).status : null;
 
 const NO_ROOMS: readonly ChatRoomView[] = [];
 const NO_CLUBS: readonly Club[] = [];
@@ -62,10 +65,13 @@ export function useChatRooms(enabled: boolean) {
   };
 }
 
+/** Module-level so the combined array keeps its identity (and structural sharing) across renders. */
+const pickData = (results: { data: UnreadState | undefined }[]) => results.map((r) => r.data);
+
 /** Server-backed unread counts, fetched once per room; a failing endpoint just means "nothing unread". */
 export function useUnreadCounts(roomIds: readonly string[], enabled: boolean) {
   const userId = useSession().user?.id ?? '';
-  return useQueries({
+  const datas = useQueries({
     queries: roomIds.map((id) => ({
       queryKey: unreadKey(userId, id),
       enabled,
@@ -77,24 +83,27 @@ export function useUnreadCounts(roomIds: readonly string[], enabled: boolean) {
         return { count: data.unread_count, lastReadId: data.last_read_message_id ?? null };
       },
     })),
-    combine: (results) => {
-      const byRoom: Record<string, UnreadState> = {};
-      let total = 0;
-      results.forEach((r, i) => {
-        const id = roomIds[i];
-        if (id === undefined || !r.data) return;
-        byRoom[id] = r.data;
-        total += r.data.count;
-      });
-      return { byRoom: roomIds.length === 0 ? NO_UNREAD : byRoom, total };
-    },
+    combine: pickData,
   });
+  const idsKey = roomIds.join(',');
+  return useMemo(() => {
+    const byRoom: Record<string, UnreadState> = {};
+    let total = 0;
+    idsKey.split(',').forEach((id, i) => {
+      const data = datas[i];
+      if (!id || !data) return;
+      byRoom[id] = data;
+      total += data.count;
+    });
+    return { byRoom: idsKey === '' ? NO_UNREAD : byRoom, total };
+  }, [idsKey, datas]);
 }
 
 export function useChatRoom(roomId: string | null) {
   const queryClient = useQueryClient();
   const { user } = useSession();
   const tErrors = useTranslations('ERRORS');
+  const tChat = useTranslations('CHAT');
   const userId = user?.id ?? '';
   const key = messagesKey(userId, roomId ?? '');
   const olderInFlight = useRef(false);
@@ -132,7 +141,7 @@ export function useChatRoom(roomId: string | null) {
       ),
     onError: (err, _text, ctx) => {
       if (ctx) edit((items) => items.filter((m) => m.id !== ctx.tempId));
-      showToast('error', describeError(err, tErrors));
+      showToast('error', statusOf(err) === 422 ? tChat('error_invalid') : describeError(err, tErrors));
     },
   });
 

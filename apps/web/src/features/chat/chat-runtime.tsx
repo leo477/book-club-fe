@@ -9,10 +9,17 @@ import type { ChatSocket, ChatSocketStatus, PresenceStatus } from '@book-club/ap
 import { api } from '@/lib/api';
 import { showToast } from '@/lib/toast';
 import type { ChatAudioAlert } from './chat-audio-alert';
-import { RESUME_RECONNECT_MS, lastConfirmedId, messagesKey, unreadKey } from './chat-keys';
+import { RESUME_RECONNECT_MS, lastConfirmedId, messagesKey, roomsKey, unreadKey } from './chat-keys';
+import { myClubsKey } from '@/features/clubs/use-clubs';
 import { mergeIncoming, mergeLatest, type ChatRoomView, type MessagesPage, type UnreadState } from './chat-model';
 import { fetchWsTicket, wsBaseUrl } from './chat-ticket';
 import { useChatRooms, useUnreadCounts } from './use-chat-data';
+
+const FRAME_ERRORS: Readonly<Record<string, 'error_banned' | 'error_rate_limited' | 'error_invalid'>> = {
+  ROOM_BANNED: 'error_banned',
+  RATE_LIMITED: 'error_rate_limited',
+  INVALID_MESSAGE: 'error_invalid',
+};
 
 /** A burst of messages sounds once, not once per message. */
 export const BEEP_MIN_GAP_MS = 3_000;
@@ -125,13 +132,18 @@ export function ChatRuntime({
         getTicket: fetchWsTicket,
         onStatus: (status) => {
           setConnection(status);
+          if (status === 'stopped') {
+            // kicked, banned or removed: refresh what the viewer may still see so a lost room disappears
+            void queryClient.invalidateQueries({ queryKey: roomsKey(userId) });
+            void queryClient.invalidateQueries({ queryKey: myClubsKey });
+          }
           if (status !== 'open') return;
           if (hasOpened) fillGap();
           hasOpened = true;
         },
         onPresence: (id, status) => setPresence((prev) => new Map(prev).set(id, status)),
         onPresenceSnapshot: (entries) => setPresence(new Map(entries.map((e) => [e.userId, e.status] as const))),
-        onError: (error) => showToast('error', t(error.code === 'ROOM_BANNED' ? 'error_banned' : 'error_rate_limited')),
+        onError: (error) => showToast('error', t(FRAME_ERRORS[error.code] ?? 'error_generic')),
         onMessage: (message) => {
           const page = queryClient.getQueryData<MessagesPage>(key);
           let added: boolean;
