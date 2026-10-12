@@ -174,6 +174,13 @@ describe('contracts parse backend payloads', () => {
     expect(parse(chatWsServerMessage, { type: 'presence', payload: { userId: 'u', status: 'online' } }).type).toBe('presence');
   });
 
+  it('drops an oversized live message frame but still parses an oversized history row', () => {
+    const row = { id: 'm', senderId: 'u', senderName: 'n', text: 'x'.repeat(5000), timestamp: '2026-01-01T00:00:00Z' };
+    expect(chatWsServerMessage.safeParse({ type: 'message', payload: row }).success).toBe(false);
+    expect(chatWsServerMessage.safeParse({ type: 'message', payload: { ...row, text: 'x'.repeat(4000) } }).success).toBe(true);
+    expect(parse(z.array(chatMessage), [row, { ...row, id: 'n', text: 'ok' }])).toHaveLength(2);
+  });
+
   it('api error body covers string, object and validation-array details', () => {
     expect(parse(apiErrorBody, { detail: 'x' }).detail).toBe('x');
     expect(parse(apiErrorBody, { detail: { error: 'x', code: 'C' } }).detail).toEqual({ error: 'x', code: 'C' });

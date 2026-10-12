@@ -1,5 +1,6 @@
 export {
   backoffDelay,
+  MAX_MESSAGE_LENGTH,
   createChatSocket,
   type ChatSocket,
   type ChatSocketError,

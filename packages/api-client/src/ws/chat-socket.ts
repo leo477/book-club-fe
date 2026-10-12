@@ -1,7 +1,8 @@
 import { chatWsServerMessage, type ChatMessage, type ChatWsServerMessage } from '@book-club/contracts';
 
 export type PresenceStatus = 'online' | 'offline';
-export type ChatSocketStatus = 'idle' | 'connecting' | 'open' | 'reconnecting' | 'closed';
+/** `closed`: gave up or no session; `stopped`: the server ended an authenticated session with 1008 (kicked, banned, removed). Both are terminal until `reconnect()`. */
+export type ChatSocketStatus = 'idle' | 'connecting' | 'open' | 'reconnecting' | 'closed' | 'stopped';
 export type ChatSocketError = Extract<ChatWsServerMessage, { type: 'error' }>['payload'];
 
 export interface ChatSocketLike {
@@ -43,6 +44,8 @@ export interface ChatSocket {
 
 const OPEN = 1;
 const NORMAL_CLOSURE = 1000;
+const POLICY_VIOLATION = 1008;
+export const MAX_MESSAGE_LENGTH = 2000;
 
 export const backoffDelay = (attempt: number, base: number, max: number, random: number): number =>
   Math.round(Math.min(max, base * 2 ** attempt) * (0.5 + random * 0.5));
@@ -166,9 +169,14 @@ export function createChatSocket(options: ChatSocketOptions): ChatSocket {
     ws.onerror = () => {
       if (socket === ws) ws.close();
     };
-    ws.onclose = () => {
+    ws.onclose = (event: { code?: number }) => {
       if (socket !== ws) return;
       socket = null;
+      if (authenticated && event.code === POLICY_VIOLATION) {
+        stopped = true;
+        setStatus('stopped');
+        return;
+      }
       if (!authenticated) {
         authFailures += 1;
         if (authFailures >= maxAuthFailures) {
@@ -198,6 +206,7 @@ export function createChatSocket(options: ChatSocketOptions): ChatSocket {
       start();
     },
     send(text) {
+      if (!text.trim() || text.length > MAX_MESSAGE_LENGTH) return false;
       if (!socket || socket.readyState !== OPEN || status !== 'open') return false;
       socket.send(JSON.stringify({ text }));
       return true;

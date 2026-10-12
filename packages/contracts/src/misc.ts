@@ -90,9 +90,13 @@ export const unreadCount = z.object({
 });
 export type UnreadCount = z.infer<typeof unreadCount>;
 
+/** A live frame this large is not a real message; capping only frames keeps one oversized row from failing a whole history page. */
+export const MAX_WS_MESSAGE_TEXT = 4000;
+const wsChatMessage = chatMessage.extend({ text: z.string().max(MAX_WS_MESSAGE_TEXT) });
+
 const presenceStatus = z.enum(['online', 'offline']);
 export const chatWsServerMessage = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('message'), payload: chatMessage }),
+  z.object({ type: z.literal('message'), payload: wsChatMessage }),
   z.object({ type: z.literal('presence'), payload: z.object({ userId: z.string(), status: presenceStatus }) }),
   z.object({
     type: z.literal('presence_snapshot'),

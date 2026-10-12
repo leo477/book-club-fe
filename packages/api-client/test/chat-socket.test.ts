@@ -1,7 +1,7 @@
 import type { AddressInfo } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocketServer, type WebSocket as ServerSocket } from 'ws';
-import { backoffDelay, createChatSocket, type ChatSocket, type ChatSocketOptions, type ChatSocketStatus } from '../src/ws';
+import { MAX_MESSAGE_LENGTH, backoffDelay, createChatSocket, type ChatSocket, type ChatSocketOptions, type ChatSocketStatus } from '../src/ws';
 
 const message = (id: string, text = 'hi') => ({ type: 'message', payload: { id, senderId: 'u2', senderName: 'Grace', text, timestamp: '2026-01-01T10:00:00Z', isSystem: false } });
 
@@ -147,6 +147,43 @@ describe('createChatSocket', () => {
     const gaps = stamps.slice(1).map((t, i) => t - (stamps[i] ?? 0));
     expect(gaps[1]).toBeGreaterThan(gaps[0] ?? 0);
     expect(gaps[2]).toBeGreaterThan(gaps[1] ?? 0);
+  });
+
+  it('treats a 1008 after authentication as terminal (kicked or banned), not as a reason to loop', async () => {
+    onConnect = ({ ws }) => {
+      ws.send(JSON.stringify({ type: 'presence_snapshot', payload: [] }));
+      setTimeout(() => ws.close(1008), 20);
+    };
+    const { socket, getTicket, statuses } = start();
+    await until(() => socket.status === 'stopped');
+    await new Promise((r) => setTimeout(r, 120));
+    expect(getTicket).toHaveBeenCalledTimes(1);
+    expect(conns).toHaveLength(1);
+    expect(statuses).toEqual(['connecting', 'open', 'stopped']);
+    onConnect = ({ ws }) => ws.send(JSON.stringify({ type: 'presence_snapshot', payload: [] }));
+    socket.reconnect();
+    await until(() => socket.status === 'open');
+    expect(conns).toHaveLength(2);
+  });
+
+  it('refuses to send blank or oversized text', async () => {
+    onConnect = ({ ws }) => ws.send(JSON.stringify({ type: 'presence_snapshot', payload: [] }));
+    const { socket } = start();
+    await until(() => socket.status === 'open');
+    expect(socket.send('   ')).toBe(false);
+    expect(socket.send('x'.repeat(MAX_MESSAGE_LENGTH + 1))).toBe(false);
+    expect(socket.send('x'.repeat(MAX_MESSAGE_LENGTH))).toBe(true);
+    await until(() => conns[0]?.frames.length === 2);
+  });
+
+  it('drops an oversized live frame', async () => {
+    onConnect = ({ ws }) => {
+      ws.send(JSON.stringify(message('big', 'x'.repeat(4001))));
+      ws.send(JSON.stringify(message('ok')));
+    };
+    const { events } = start();
+    await until(() => events.length === 1);
+    expect(events).toEqual([['message', 'ok', 'hi']]);
   });
 
   it('stops without a socket when there is no ticket (logged out)', async () => {
