@@ -1,4 +1,5 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { act, renderHook, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,6 +8,7 @@ import { NEXT_ROUTES } from '@/features/organizer/test-support';
 import { StranglerProvider } from '@/strangler/context';
 import { API, renderWithProviders, server, setupApiServer } from '@/test/harness';
 import { QuizEdit } from './quiz-edit';
+import { draftsOf, newDraftKey, useSaveQuiz } from './use-quiz';
 import { CLUB, QUIZ, questionJson, quizJson } from './test-support';
 
 const nav = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), hard: vi.fn(), toast: vi.fn() }));
@@ -36,6 +38,19 @@ function setup(quiz: Record<string, unknown> = quizJson(), list: unknown[] = que
 
 const title = () => screen.findByTestId('quiz-title-input');
 
+async function addQuestion(user: ReturnType<typeof userEvent.setup>, text: string) {
+  await user.click(screen.getByLabelText(/^Запитання/));
+  await user.paste(text);
+  for (const [i, label] of ['A', 'B', 'C', 'D'].entries()) {
+    await user.click(screen.getByLabelText(`Варіант ${label}`));
+    await user.paste(`o${i}`);
+  }
+  await user.click(screen.getByRole('button', { name: t('QUIZ.create_add_question') }));
+  await screen.findByText(text);
+}
+
+const saveButton = () => screen.getByRole('button', { name: new RegExp(`^${t('QUIZ.edit_save')}`) });
+
 describe('QuizEdit', () => {
   it('prefills the details of a draft and lists its questions as saved', async () => {
     const user = userEvent.setup();
@@ -51,7 +66,7 @@ describe('QuizEdit', () => {
     expect(screen.getByRole('button', { name: new RegExp(`^${t('QUIZ.edit_save')}`) })).toBeEnabled();
   });
 
-  it('saves the details, removals, changes and additions in that order, then returns to the list', async () => {
+  it('saves the details, removals and additions in that order, sending nothing for an unchanged question, then returns to the list', async () => {
     const user = userEvent.setup();
     const calls: [string, string, unknown][] = [];
     server.use(
@@ -92,7 +107,6 @@ describe('QuizEdit', () => {
     expect(calls).toEqual([
       ['patch', 'quiz', { title: 'Renamed', description: 'About Arrakis' }],
       ['delete', 'q1', null],
-      ['patch', 'q2', { question: 'What is spice?', options: ['Salt', 'Melange', 'Water', 'Sand'], correctIndex: 1 }],
       ['post', 'new', { question: 'Added later?', options: ['o0', 'o1', 'o2', 'o3'], correctIndex: 0 }],
     ]);
   });
@@ -117,7 +131,7 @@ describe('QuizEdit', () => {
   it('retries after a failure part-way without duplicating or hitting a deleted question again', async () => {
     const user = userEvent.setup();
     const calls: string[] = [];
-    let failQ2 = true;
+    let failPost = true;
     server.use(
       http.patch(`${API}/quizzes/${QUIZ}`, () => {
         calls.push('patch quiz');
@@ -127,100 +141,150 @@ describe('QuizEdit', () => {
         calls.push('delete q1');
         return calls.filter((c) => c === 'delete q1').length > 1 ? HttpResponse.json({ detail: 'gone' }, { status: 404 }) : new HttpResponse(null, { status: 204 });
       }),
-      http.patch(`${API}/quizzes/${QUIZ}/questions/q2`, () => {
-        calls.push('patch q2');
-        return failQ2 ? new HttpResponse(null, { status: 500 }) : HttpResponse.json(questionJson({ id: 'q2' }));
-      }),
       http.post(`${API}/quizzes/${QUIZ}/questions`, () => {
         calls.push('post');
-        return HttpResponse.json(questionJson({ id: 'q3' }), { status: 201 });
-      }),
-      http.patch(`${API}/quizzes/${QUIZ}/questions/q3`, () => {
-        calls.push('patch q3');
-        return HttpResponse.json(questionJson({ id: 'q3' }));
+        return failPost ? new HttpResponse(null, { status: 500 }) : HttpResponse.json(questionJson({ id: 'q3' }), { status: 201 });
       }),
     );
     setup();
     await title();
     await user.click(screen.getByTestId('next-button'));
     await user.click(await screen.findByRole('button', { name: 'Видалити питання 1' }));
-    await user.click(screen.getByLabelText(/^Запитання/));
-    await user.paste('Added later?');
-    for (const [i, label] of ['A', 'B', 'C', 'D'].entries()) {
-      await user.click(screen.getByLabelText(`Варіант ${label}`));
-      await user.paste(`o${i}`);
-    }
-    await user.click(screen.getByRole('button', { name: t('QUIZ.create_add_question') }));
-    await screen.findByText('Added later?');
-    const save = screen.getByRole('button', { name: new RegExp(`^${t('QUIZ.edit_save')}`) });
+    await addQuestion(user, 'Added later?');
+    const save = saveButton();
     await user.click(save);
     expect(await screen.findByRole('alert')).toHaveTextContent(t('QUIZ.save_error'));
-    expect(calls).toEqual(['patch quiz', 'delete q1', 'patch q2']);
-    failQ2 = false;
+    expect(calls).toEqual(['patch quiz', 'delete q1', 'post']);
+    failPost = false;
     await waitFor(() => expect(save).toBeEnabled());
     await user.click(save);
     await waitFor(() => expect(nav.push).toHaveBeenCalledTimes(1));
-    expect(calls.slice(3)).toEqual(['patch quiz', 'patch q2', 'post']);
+    expect(calls.slice(3)).toEqual(['patch quiz', 'post']);
   });
 
-  it('retries a save whose earlier question add succeeded as an update, not a second add', async () => {
+  it('retries a save whose earlier add succeeded without adding or updating it again', async () => {
     const user = userEvent.setup();
     const calls: string[] = [];
-    let failTail = true;
+    let posts = 0;
     server.use(
       http.patch(`${API}/quizzes/${QUIZ}`, () => HttpResponse.json(quizJson())),
       http.patch(`${API}/quizzes/${QUIZ}/questions/:id`, ({ params }) => {
-        calls.push(`patch ${String(params["id"])}`);
-        return failTail && params["id"] === 'q2' ? new HttpResponse(null, { status: 500 }) : HttpResponse.json(questionJson({ id: String(params["id"]) }));
+        calls.push(`patch ${String(params['id'])}`);
+        return HttpResponse.json(questionJson({ id: String(params['id']) }));
+      }),
+      http.post(`${API}/quizzes/${QUIZ}/questions`, () => {
+        posts += 1;
+        calls.push(`post ${posts}`);
+        return posts === 2 ? new HttpResponse(null, { status: 500 }) : HttpResponse.json(questionJson({ id: `q${posts + 10}` }), { status: 201 });
+      }),
+    );
+    setup(quizJson(), [questionJson({ id: 'q1' })]);
+    await title();
+    await user.click(screen.getByTestId('next-button'));
+    await addQuestion(user, 'First new?');
+    await addQuestion(user, 'Second new?');
+    const save = saveButton();
+    await user.click(save);
+    await screen.findByRole('alert');
+    expect(calls).toEqual(['post 1', 'post 2']);
+    await waitFor(() => expect(save).toBeEnabled());
+    await user.click(save);
+    await waitFor(() => expect(nav.push).toHaveBeenCalledTimes(1));
+    expect(calls).toEqual(['post 1', 'post 2', 'post 3']);
+  });
+
+  it('treats a delete answered 404 (its response was lost) as done and still saves', async () => {
+    const user = userEvent.setup();
+    const calls: string[] = [];
+    server.use(
+      http.patch(`${API}/quizzes/${QUIZ}`, () => HttpResponse.json(quizJson())),
+      http.delete(`${API}/quizzes/${QUIZ}/questions/q1`, () => {
+        calls.push('delete q1');
+        return HttpResponse.json({ detail: 'gone' }, { status: 404 });
       }),
       http.post(`${API}/quizzes/${QUIZ}/questions`, () => {
         calls.push('post');
         return HttpResponse.json(questionJson({ id: 'q3' }), { status: 201 });
       }),
     );
-    setup(quizJson(), [questionJson({ id: 'q1' })]);
+    setup();
     await title();
     await user.click(screen.getByTestId('next-button'));
-    await user.click(await screen.findByLabelText(/^Запитання/));
-    await user.paste('Added later?');
-    for (const [i, label] of ['A', 'B', 'C', 'D'].entries()) {
-      await user.click(screen.getByLabelText(`Варіант ${label}`));
-      await user.paste(`o${i}`);
-    }
-    await user.click(screen.getByRole('button', { name: t('QUIZ.create_add_question') }));
-    await screen.findByText('Added later?');
-    server.use(
-      http.patch(`${API}/quizzes/${QUIZ}/questions/q1`, () => {
-        calls.push('patch q1');
-        return failTail ? new HttpResponse(null, { status: 500 }) : HttpResponse.json(questionJson());
-      }),
-    );
-    const save = screen.getByRole('button', { name: new RegExp(`^${t('QUIZ.edit_save')}`) });
-    await user.click(save);
-    await screen.findByRole('alert');
-    failTail = false;
-    await waitFor(() => expect(save).toBeEnabled());
-    await user.click(save);
+    await user.click(await screen.findByRole('button', { name: 'Видалити питання 1' }));
+    await addQuestion(user, 'Added later?');
+    await user.click(saveButton());
     await waitFor(() => expect(nav.push).toHaveBeenCalledTimes(1));
-    expect(calls.filter((c) => c === 'post')).toHaveLength(1);
+    expect(calls).toEqual(['delete q1', 'post']);
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
-  it('keeps an answer the backend did not reveal: the question is sent without a correct index and nothing is invented', async () => {
-    const user = userEvent.setup();
-    const bodies: unknown[] = [];
+  it('adds a question again when it was deleted elsewhere (update answers 404), and a retry does not add it twice', async () => {
+    const calls: string[] = [];
+    let failTail = true;
     server.use(
       http.patch(`${API}/quizzes/${QUIZ}`, () => HttpResponse.json(quizJson())),
-      http.patch(`${API}/quizzes/${QUIZ}/questions/q1`, async ({ request }) => {
-        bodies.push(await request.json());
-        return HttpResponse.json(questionJson());
+      http.patch(`${API}/quizzes/${QUIZ}/questions/q1`, () => {
+        calls.push('patch q1');
+        return HttpResponse.json({ detail: 'gone' }, { status: 404 });
+      }),
+      http.post(`${API}/quizzes/${QUIZ}/questions`, async ({ request }) => {
+        const body = (await request.json()) as { question: string };
+        calls.push(`post ${body.question}`);
+        return body.question === 'Tail?' && failTail ? new HttpResponse(null, { status: 500 }) : HttpResponse.json(questionJson({ id: body.question === 'Tail?' ? 'q4' : 'q3' }), { status: 201 });
       }),
     );
-    setup(quizJson(), [questionJson({ id: 'q1', correctIndex: null })]);
+    const held = draftsOf([questionJson({ id: 'q1' }) as never]);
+    const changed = { ...held[0]!, correctIndex: 2 };
+    const tail = { key: newDraftKey(), question: 'Tail?', options: ['a', 'b', 'c', 'd'], correctIndex: 0 };
+    const values = { title: 'T', description: 'D', questions: [changed, tail], removedIds: [] };
+    const { result } = renderHook(() => useSaveQuiz(QUIZ, CLUB, held), { wrapper: ({ children }) => <QueryClientProvider client={new QueryClient()}>{children}</QueryClientProvider> });
+    await act(async () => {
+      await expect(result.current.mutateAsync(values)).rejects.toBeDefined();
+    });
+    expect(calls).toEqual(['patch q1', 'post Who rules Arrakis?', 'post Tail?']);
+    failTail = false;
+    await act(() => result.current.mutateAsync(values));
+    expect(calls.slice(3)).toEqual(['post Tail?']);
+  });
+
+  it('sends an update only for a question that differs from the server, so an unchanged save makes no question requests', async () => {
+    const user = userEvent.setup();
+    const calls: string[] = [];
+    server.use(
+      http.patch(`${API}/quizzes/${QUIZ}`, () => HttpResponse.json(quizJson())),
+      http.patch(`${API}/quizzes/${QUIZ}/questions/:id`, () => {
+        calls.push('patch');
+        return HttpResponse.json(questionJson());
+      }),
+      http.post(`${API}/quizzes/${QUIZ}/questions`, () => {
+        calls.push('post');
+        return HttpResponse.json(questionJson(), { status: 201 });
+      }),
+    );
+    setup(quizJson(), [...questions(), questionJson({ id: 'q9', correctIndex: null })]);
     await title();
     await user.click(screen.getByTestId('next-button'));
     await user.click(await screen.findByRole('button', { name: new RegExp(`^${t('QUIZ.edit_save')}`) }));
+    await waitFor(() => expect(nav.push).toHaveBeenCalledTimes(1));
+    expect(calls).toEqual([]);
+  });
+
+  it('disables Cancel while the save is in flight', async () => {
+    const user = userEvent.setup();
+    let release: () => void = () => undefined;
+    server.use(http.patch(`${API}/quizzes/${QUIZ}`, async () => {
+      await new Promise<void>((r) => (release = r));
+      return HttpResponse.json(quizJson());
+    }));
+    setup();
+    await title();
+    await user.click(screen.getByTestId('next-button'));
+    expect(screen.getByRole('link', { name: t('QUIZ.create_cancel') })).toBeInTheDocument();
+    await user.click(await screen.findByRole('button', { name: new RegExp(`^${t('QUIZ.edit_save')}`) }));
+    await waitFor(() => expect(screen.queryByRole('link', { name: t('QUIZ.create_cancel') })).not.toBeInTheDocument());
+    expect(screen.getByText(t('QUIZ.create_cancel'))).toHaveAttribute('aria-disabled', 'true');
+    release();
     await waitFor(() => expect(nav.push).toHaveBeenCalled());
-    expect(bodies).toEqual([{ question: 'Who rules Arrakis?', options: ['Harkonnen', 'Atreides', 'Corrino', 'Fremen'] }]);
   });
 
   it.each([['live'], ['active'], ['closed']])('is read-only for a %s quiz', async (status) => {

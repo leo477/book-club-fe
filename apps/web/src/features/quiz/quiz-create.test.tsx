@@ -240,7 +240,7 @@ describe('QuizCreate', () => {
     await user.click(publish());
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith(`/clubs/${CLUB}/quizzes`));
     expect(calls).toEqual([
-      ['update', { title: 'Renamed', description: '' }],
+      ['update', { title: 'Renamed', description: null }],
       ['delete', 's1'],
       ['question', { question: 'What is spice?', options: ['Salt', 'Melange', 'Water', 'Sand'], correctIndex: 3 }],
       ['active', { isActive: true }],

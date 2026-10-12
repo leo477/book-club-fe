@@ -134,9 +134,29 @@ interface SyncState {
   /** draft key -> server id, for questions this hook added */
   created: Map<string, string>;
   deleted: Set<string>;
+  /** server id -> what the server holds for it, as far as this hook knows */
+  held: Map<string, QuestionFields>;
 }
 
-const newSync = (): SyncState => ({ created: new Map(), deleted: new Set() });
+type QuestionFields = Pick<DraftQuestion, 'question' | 'options' | 'correctIndex'>;
+
+const newSync = (): SyncState => ({ created: new Map(), deleted: new Set(), held: new Map() });
+
+const fieldsOf = (q: DraftQuestion): QuestionFields => ({ question: q.question, options: [...q.options], correctIndex: q.correctIndex });
+
+/** An answer the backend did not reveal (null) is sent without one, so it cannot make a question differ. */
+const unchanged = (q: DraftQuestion, held: QuestionFields | undefined) =>
+  held !== undefined &&
+  q.question === held.question &&
+  q.options.length === held.options.length &&
+  q.options.every((o, i) => o === held.options[i]) &&
+  (q.correctIndex === null || q.correctIndex === held.correctIndex);
+
+const addDraft = async (quizId: string, q: DraftQuestion, state: SyncState) => {
+  const { id } = await api.quiz.addQuestion(quizId, { question: q.question, options: q.options, correctIndex: q.correctIndex ?? 0 });
+  state.created.set(q.key, id);
+  state.held.set(id, fieldsOf(q));
+};
 
 const deleteOnce = async (quizId: string, id: string, state: SyncState) => {
   if (state.deleted.has(id)) return;
@@ -161,9 +181,20 @@ async function syncQuestions(quizId: string, questions: readonly DraftQuestion[]
     state.created.delete(key);
   }
   for (const q of questions) {
-    const id = q.id ?? state.created.get(q.key);
-    if (id) await api.quiz.updateQuestion(quizId, id, body(q));
-    else state.created.set(q.key, (await api.quiz.addQuestion(quizId, { question: q.question, options: q.options, correctIndex: q.correctIndex ?? 0 })).id);
+    const id = state.created.get(q.key) ?? q.id;
+    if (!id) {
+      await addDraft(quizId, q, state);
+      continue;
+    }
+    if (unchanged(q, state.held.get(id))) continue;
+    try {
+      await api.quiz.updateQuestion(quizId, id, body(q));
+      state.held.set(id, fieldsOf(q));
+    } catch (err) {
+      if (statusOf(err) !== 404) throw err;
+      // deleted elsewhere while still in the draft: add it again (what the draft dropped was already deleted above)
+      await addDraft(quizId, q, state);
+    }
   }
 }
 
@@ -173,11 +204,12 @@ async function syncQuestions(quizId: string, questions: readonly DraftQuestion[]
  */
 export function usePublishQuiz(clubId: string) {
   const queryClient = useQueryClient();
-  const progress = useRef<{ quizId: string | null; active: boolean; sync: SyncState }>({ quizId: null, active: false, sync: newSync() }).current;
+  const ref = useRef<{ quizId: string | null; active: boolean; sync: SyncState } | null>(null);
+  const progress = (ref.current ??= { quizId: null, active: false, sync: newSync() });
   return useMutation({
     mutationFn: async ({ title, description, questions }: { title: string; description: string; questions: readonly DraftQuestion[] }) => {
       if (progress.quizId === null) progress.quizId = (await api.quiz.create(clubId, { title, description: description || null })).id;
-      else await api.quiz.update(progress.quizId, { title, description });
+      else await api.quiz.update(progress.quizId, { title, description: description || null });
       const quizId = progress.quizId;
       await syncQuestions(quizId, questions, [], progress.sync);
       if (!progress.active) {
@@ -191,9 +223,13 @@ export function usePublishQuiz(clubId: string) {
 }
 
 /** Update the quiz, delete the removed questions, then update or add the rest, in the order the editor shows them. */
-export function useSaveQuiz(quizId: string, clubId: string) {
+export function useSaveQuiz(quizId: string, clubId: string, loaded: readonly DraftQuestion[]) {
   const queryClient = useQueryClient();
-  const sync = useRef(newSync()).current;
+  const [sync] = useState(() => {
+    const state = newSync();
+    for (const q of loaded) if (q.id) state.held.set(q.id, fieldsOf(q));
+    return state;
+  });
   return useMutation({
     mutationFn: async ({ title, description, questions, removedIds }: { title: string; description: string; questions: readonly DraftQuestion[]; removedIds: readonly string[] }) => {
       await api.quiz.update(quizId, { title, description });

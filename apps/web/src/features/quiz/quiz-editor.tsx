@@ -74,6 +74,7 @@ export function QuizEditor({ heading, backHref, questionsStepLabel, submitLabel,
   const correct = useWatch({ control: questionForm.control, name: 'correctIndex' });
 
   const addQuestion = questionForm.handleSubmit((values) => {
+    if (busy) return;
     const options = [values.option0, values.option1, values.option2, values.option3].map((o) => o.trim());
     setQuestions((prev) => [...prev, { key: newDraftKey(), question: values.question.trim(), options, correctIndex: Number(values.correctIndex) }]);
     questionForm.reset(EMPTY_QUIZ_QUESTION);
@@ -127,9 +128,15 @@ export function QuizEditor({ heading, backHref, questionsStepLabel, submitLabel,
             {t('create_step_of', { step })} — {stepName}
           </p>
         </div>
-        <AppLink href={backHref} className="text-sm text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors">
-          {t('create_cancel')}
-        </AppLink>
+        {pending ? (
+          <span aria-disabled="true" className="text-sm text-[var(--color-ink-muted)] opacity-50 cursor-not-allowed">
+            {t('create_cancel')}
+          </span>
+        ) : (
+          <AppLink href={backHref} className="text-sm text-[var(--color-ink-muted)] hover:text-[var(--color-ink)] transition-colors">
+            {t('create_cancel')}
+          </AppLink>
+        )}
       </header>
 
       <div className="flex gap-3" aria-hidden="true">

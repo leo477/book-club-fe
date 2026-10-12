@@ -3,6 +3,7 @@
 
 import type { Quiz, QuizQuestion } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
+import { useState } from 'react';
 import { usePush } from '@/lib/use-push';
 import { QuizEditor } from './quiz-editor';
 import { QuizDetail } from './quiz-ui';
@@ -15,7 +16,8 @@ export function QuizEdit({ clubId, quizId }: { clubId: string; quizId: string })
 function EditForm({ clubId, quiz, questions }: { clubId: string; quiz: Quiz; questions: readonly QuizQuestion[] }) {
   const t = useTranslations('QUIZ');
   const push = usePush();
-  const save = useSaveQuiz(quiz.id, clubId);
+  const [loaded] = useState(() => draftsOf(questions));
+  const save = useSaveQuiz(quiz.id, clubId, loaded);
   const list = `/clubs/${clubId}/quizzes`;
 
   return (
@@ -26,7 +28,7 @@ function EditForm({ clubId, quiz, questions }: { clubId: string; quiz: Quiz; que
       submitLabel={t('edit_save')}
       savingLabel={t('edit_saving')}
       initialMeta={{ title: quiz.title, description: quiz.description ?? '' }}
-      initialQuestions={draftsOf(questions)}
+      initialQuestions={loaded}
       locked={quiz.status !== 'draft'}
       lockedNotice={t('edit_active_warning')}
       pending={save.isPending}
