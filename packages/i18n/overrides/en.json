@@ -62,6 +62,7 @@
     "error_rate_limited": "You are sending messages too fast.",
     "connection_stopped": "The server ended this chat session. You may have lost access.",
     "error_invalid": "Message not sent: it is empty, too long or has unsupported characters.",
-    "error_generic": "The chat reported an error."
+    "error_generic": "The chat reported an error.",
+    "messages_log": "Chat messages"
   }
 }

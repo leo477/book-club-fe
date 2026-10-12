@@ -68,9 +68,11 @@ export function ChatMessageList({ roomId, variant = 'widget' }: { roomId: string
     <div
       ref={scroller}
       role="log"
+      tabIndex={0}
+      aria-label={t('messages_log')}
       aria-live="polite"
       onScroll={onScroll}
-      className={cn('flex-1 overflow-y-auto', page ? 'px-4 py-4 flex flex-col' : 'p-3 space-y-2 min-h-40')}
+      className={cn('flex-1 overflow-y-auto focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-accent-500', page ? 'px-4 py-4 flex flex-col' : 'p-3 space-y-2 min-h-40')}
     >
       {room.isLoadingOlder && (
         <div className="flex justify-center py-2">

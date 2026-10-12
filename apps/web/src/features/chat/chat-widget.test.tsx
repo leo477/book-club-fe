@@ -429,6 +429,17 @@ describe('ChatWidget panel', () => {
     expect(screen.getByRole('button', { name: t('CHAT.send') })).toBeEnabled();
   });
 
+  it('makes the scrollable message log keyboard-focusable and named', async () => {
+    mockChat();
+    const user = userEvent.setup();
+    renderWidget();
+    await user.click(await fab());
+    const log = await screen.findByRole('log', { name: t('CHAT.messages_log') });
+    expect(log).toHaveAttribute('tabindex', '0');
+    log.focus();
+    expect(log).toHaveFocus();
+  });
+
   it('is a labelled dialog that puts focus in the composer', async () => {
     mockChat();
     const user = userEvent.setup();
