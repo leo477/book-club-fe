@@ -10,3 +10,4 @@ export {
   translationKeyForStatus,
 } from './errors';
 export type { ApiClientConfig, ApiClientError, RequestOptions, Transport } from './types';
+export * from './ws';

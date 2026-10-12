@@ -543,6 +543,9 @@ packages/
         misc.ts
         quiz.ts
         users.ts
+      ws/
+        chat-socket.ts
+        index.ts
       api.ts
       client.ts
       errors.ts
@@ -550,6 +553,7 @@ packages/
       transports.ts
       types.ts
     test/
+      chat-socket.test.ts
       client.test.ts
       modules.test.ts
       msw.test.ts
