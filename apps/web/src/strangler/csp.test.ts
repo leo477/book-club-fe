@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { WS_BASE_URL } from '@/features/chat/chat-ticket';
 import { buildCsp, newNonce, TRUSTED_TYPES_REPORT_ONLY } from './csp';
 
 const directive = (csp: string, name: string) => csp.split('; ').find((d) => d.startsWith(`${name} `)) ?? '';
@@ -16,6 +17,13 @@ describe('buildCsp', () => {
 
   it('keeps inline styles allowed for Sonner and Next style injection', () => {
     expect(directive(csp, 'style-src')).toContain("'unsafe-inline'");
+  });
+
+  it('lets the chat socket reach the backend directly and nothing broader', () => {
+    const connect = directive(csp, 'connect-src').split(' ');
+    expect(connect).toContain(new URL(WS_BASE_URL).origin);
+    expect(connect).not.toContain('wss:');
+    expect(connect).not.toContain('*');
   });
 
   it('allows eval in dev only', () => {
