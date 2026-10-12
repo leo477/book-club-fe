@@ -98,7 +98,7 @@ export function RestTable({ entries }: { entries: readonly QuizLeaderboardEntry[
                 <span className="text-[var(--color-ink-muted)]">/{entry.totalQuestions}</span>
               </td>
               <td className="px-4 py-3 text-right">
-                <span className="inline-flex rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs text-[var(--color-ink-muted)]">
+                <span className="inline-flex rounded-full bg-gray-100 dark:bg-gray-800 px-2 py-0.5 text-xs text-[var(--color-ink-muted)] dark:text-gray-300">
                   {entry.hasAttempted ? t('leaderboard_completed') : t('leaderboard_pending')}
                 </span>
               </td>
