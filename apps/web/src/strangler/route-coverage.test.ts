@@ -63,6 +63,21 @@ describe('collectAngularRoutes', () => {
   });
 });
 
+describe('non-literal paths', () => {
+  it.each([
+    ['an identifier', `const P = 'x'; export const routes = [{ path: P, component: A }];`],
+    ['a template with a substitution', 'export const routes = [{ path: `a/${P}`, component: A }];'],
+    ['a concatenation', `export const routes = [{ path: 'a' + b, component: A }];`],
+  ])('throws on %s instead of treating it as the empty path', (_name, source) => {
+    expect(() => script.collectAngularRoutes(write(`bad-${_name.length}.routes.ts`, source))).toThrow(/not a string literal/);
+  });
+
+  it('still reads an empty path and a plain template literal', () => {
+    const routes = script.collectAngularRoutes(write('ok.routes.ts', 'export const routes = [{ path: \'\', component: A }, { path: `b`, component: B }];'));
+    expect(routes.map((r) => r.path)).toEqual(['/', '/b']);
+  });
+});
+
 describe('checkCoverage', () => {
   const routes = script.collectAngularRoutes(FIXTURE);
   const full = ['/login', '/clubs', '/clubs/:id', '/clubs/:id/edit', '/', '/events', '/__probe'];

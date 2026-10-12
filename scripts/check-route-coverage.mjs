@@ -51,7 +51,9 @@ function walk(array, file, base) {
   const out = [];
   for (const el of array.elements) {
     if (!ts.isObjectLiteralExpression(el)) throw new Error(`${file}: non-literal route entry`);
-    const segment = str(prop(el, 'path')?.initializer) ?? '';
+    const pathProp = prop(el, 'path');
+    const segment = pathProp ? str(pathProp.initializer) : '';
+    if (segment === undefined) throw new Error(`${file}: route path is not a string literal (${pathProp.initializer.getText()}); the coverage check cannot resolve it`);
     if (segment === '**') {
       out.push({ kind: 'wildcard', path: join(base, '*'), file });
       continue;
