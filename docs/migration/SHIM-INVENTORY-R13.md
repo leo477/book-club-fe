@@ -17,7 +17,7 @@ Scope: every piece of code, config or ops state that exists only because Angular
 | `lib/navigate.ts` `hardNavigate`/`replaceNavigate` | `api.ts` (401 redirect), login/register/oauth forms, header | R14 for the "target may be legacy" reason; the safe-path validation is a security control and stays (rename only) |
 | `app/strangler.json/route.ts` | Angular `StranglerManifestService` (fetched at boot) | R14 (only consumer is Angular) |
 | `strangler/flags.ts` `shell.chatWidget` | `chat-provider`, `chat-slot` | Not a shim: a product rollout flag. Needs a rollout decision (flip to 100 %, then drop the flag), independent of R14 |
-| `app/__strangler-probe/page.tsx` + manifest entry `/__strangler-probe` | `proxy-handler.test.ts`, `routes.test.ts`, runbook canary smoke, parity specs | R14 (still the only route usable to smoke-test the front door without touching a real page) |
+| `app/__strangler-probe/page.tsx` + manifest entry `/__strangler-probe` | `proxy-handler.test.ts`, `routes.test.ts`, runbook canary smoke, `e2e/parity/r12/edge-config-server.mjs` | R14 (still the only route usable to smoke-test the front door without touching a real page) |
 | `lib/legacy-session.ts` (`migrateLegacySession`, called from `features/clubs/use-session.ts`) | every first session probe in a browser that still holds `bc_refresh_token`/`bc_has_session` | R14 or later: time-based, remove once the oldest refresh token issued before cookie auth has expired and canary events show no `/auth/refresh` calls from it; cannot be proven unused from code |
 | `strangler/csp.ts`, `lib/ws-base-url.ts`, `vercel.json` CSP | Next front door | Not a shim; stays |
 | `_internal/revalidate` | backend cache invalidation | Not a shim; stays |
