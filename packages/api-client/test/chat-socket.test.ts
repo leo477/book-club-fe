@@ -1,7 +1,7 @@
 import type { AddressInfo } from 'node:net';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { WebSocketServer, type WebSocket as ServerSocket } from 'ws';
-import { backoffDelay, createChatSocket, type ChatSocket, type ChatSocketOptions, type ChatSocketStatus } from '../src';
+import { backoffDelay, createChatSocket, type ChatSocket, type ChatSocketOptions, type ChatSocketStatus } from '../src/ws';
 
 const message = (id: string, text = 'hi') => ({ type: 'message', payload: { id, senderId: 'u2', senderName: 'Grace', text, timestamp: '2026-01-01T10:00:00Z', isSystem: false } });
 

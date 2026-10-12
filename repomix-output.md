@@ -249,10 +249,12 @@ apps/
           chat-audio-alert.ts
           chat-composer.tsx
           chat-header.tsx
+          chat-keys.ts
           chat-message-list.tsx
           chat-model.test.ts
           chat-model.ts
           chat-provider.tsx
+          chat-runtime.tsx
           chat-slot.tsx
           chat-ticket.ts
           chat-timestamp.test.ts
@@ -261,6 +263,7 @@ apps/
           chat-widget.tsx
           chats-page.test.tsx
           chats-page.tsx
+          connection-notice.tsx
           new-room-form.tsx
           test-support.ts
           use-chat-data.ts
@@ -450,6 +453,8 @@ apps/
         utils.ts
         uuid.test.ts
         uuid.ts
+        ws-base-url.test.ts
+        ws-base-url.ts
         zod-locales-stub.ts
       providers/
         providers.tsx
