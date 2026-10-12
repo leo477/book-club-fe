@@ -41,7 +41,7 @@ export function useChatRooms(enabled: boolean) {
       const perClub = await Promise.all(
         clubs.map((club) =>
           api.chat
-            .clubRooms(club.id, { signal, suppressErrorToast: true })
+            .clubRooms(club.id, { signal, skipAuthRedirect: true, suppressErrorToast: true })
             .then((list) =>
               list.map((r) => ({ ...r, name: several ? `${club.name} · ${r.name}` : r.name, clubId: club.id, clubName: club.name })),
             )
@@ -70,7 +70,7 @@ export function useUnreadCounts(roomIds: readonly string[], enabled: boolean) {
       retry: false,
       refetchOnWindowFocus: false,
       queryFn: async ({ signal }: { signal: AbortSignal }): Promise<UnreadState> => {
-        const data = await api.chat.unreadCount(id, { signal, suppressErrorToast: true });
+        const data = await api.chat.unreadCount(id, { signal, skipAuthRedirect: true, suppressErrorToast: true });
         return { count: data.unread_count, lastReadId: data.last_read_message_id ?? null };
       },
     })),
@@ -105,7 +105,7 @@ export function useChatRoom(roomId: string | null) {
     queryFn: async ({ signal }): Promise<MessagesPage> => {
       const fresh = await api.chat.messages(roomId ?? '', {}, { signal, suppressErrorToast: true });
       const prev = queryClient.getQueryData<MessagesPage>(key);
-      return { items: mergeLatest(prev?.items ?? [], fresh), hasMoreOlder: prev?.hasMoreOlder ?? true };
+      return { items: mergeLatest(prev?.items ?? [], fresh), hasMoreOlder: prev?.hasMoreOlder ?? fresh.length >= OLDER_PAGE_SIZE };
     },
   });
 
@@ -156,7 +156,7 @@ export function useChatRoom(roomId: string | null) {
 
   return {
     messages: query.data?.items ?? [],
-    hasMoreOlder: query.data?.hasMoreOlder ?? true,
+    hasMoreOlder: query.data?.hasMoreOlder ?? false,
     isPending: roomId !== null && query.isPending,
     isError: query.isError && query.data === undefined,
     refetch: () => void query.refetch(),

@@ -1,4 +1,5 @@
 import type { ChatMessage, ChatRoom } from '@book-club/contracts';
+import { isTemp } from './chat-keys';
 
 export interface ChatRoomView extends ChatRoom {
   clubId: string;
@@ -7,7 +8,7 @@ export interface ChatRoomView extends ChatRoom {
 
 export interface MessagesPage {
   items: ChatMessage[];
-  /** Unknown until a page comes back shorter than OLDER_PAGE_SIZE. */
+  /** False once a page comes back shorter than OLDER_PAGE_SIZE. */
   hasMoreOlder: boolean;
 }
 
@@ -21,13 +22,8 @@ export type ChatItem =
   | { kind: 'message'; id: string; message: ChatMessage; isOwn: boolean; isGroupFirst: boolean; isGroupLast: boolean };
 
 export const OLDER_PAGE_SIZE = 50;
-export const TEMP_PREFIX = 'temp-';
 
-export const roomsKey = ['chat', 'rooms'] as const;
-export const messagesKey = (roomId: string) => ['chat', 'messages', roomId] as const;
-export const unreadKey = (roomId: string) => ['chat', 'unread', roomId] as const;
-
-export const isTemp = (message: ChatMessage): boolean => message.id.startsWith(TEMP_PREFIX);
+export { TEMP_PREFIX, isTemp, messagesKey, roomsKey, unreadKey } from './chat-keys';
 
 /** Senders may come back as an email; only the local part is shown. */
 export function senderLabel(name: string): string {
