@@ -253,9 +253,12 @@ apps/
           chat-message-list.tsx
           chat-model.test.ts
           chat-model.ts
+          chat-provider.test.tsx
           chat-provider.tsx
+          chat-render-loop.test.tsx
           chat-runtime.tsx
           chat-slot.tsx
+          chat-ticket.test.ts
           chat-ticket.ts
           chat-timestamp.test.ts
           chat-timestamp.ts

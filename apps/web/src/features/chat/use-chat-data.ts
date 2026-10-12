@@ -4,7 +4,7 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useRef, useState } from 'react';
-import type { ChatMessage } from '@book-club/contracts';
+import type { ChatMessage, Club } from '@book-club/contracts';
 import { describeError } from '@/features/club-detail/describe-error';
 import { useMyClubs } from '@/features/clubs/use-clubs';
 import { useSession } from '@/features/clubs/use-session';
@@ -25,12 +25,14 @@ import {
 } from './chat-model';
 
 const NO_ROOMS: readonly ChatRoomView[] = [];
+const NO_CLUBS: readonly Club[] = [];
+const NO_MESSAGES: ChatMessage[] = [];
 const NO_UNREAD: Readonly<Record<string, UnreadState>> = {};
 
 /** Rooms of every club the viewer belongs to; with several clubs a room reads "Club · Room". */
 export function useChatRooms(enabled: boolean) {
   const myClubs = useMyClubs(enabled);
-  const clubs = myClubs.data ?? [];
+  const clubs = myClubs.data ?? NO_CLUBS;
   const ids = clubs.map((c) => c.id).join(',');
   const rooms = useQuery({
     queryKey: [...roomsKey, ids],
@@ -155,7 +157,7 @@ export function useChatRoom(roomId: string | null) {
   }
 
   return {
-    messages: query.data?.items ?? [],
+    messages: query.data?.items ?? NO_MESSAGES,
     hasMoreOlder: query.data?.hasMoreOlder ?? false,
     isPending: roomId !== null && query.isPending,
     isError: query.isError && query.data === undefined,
