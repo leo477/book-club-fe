@@ -54,6 +54,11 @@
     "delete_room_aria": "Delete room {{ name }}",
     "delete_room_confirm": "Delete this room?",
     "unread_aria": "{{ count }} unread messages",
-    "reconnecting": "Reconnecting…"
+    "reconnecting": "Reconnecting…",
+    "open_unread": "Open chat, {{ count }} unread",
+    "connection_lost": "Live updates are off.",
+    "retry": "Retry",
+    "error_banned": "You are banned from this room.",
+    "error_rate_limited": "You are sending messages too fast."
   }
 }

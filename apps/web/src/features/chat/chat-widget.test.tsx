@@ -10,16 +10,22 @@ import { ChatProvider, RESUME_RECONNECT_MS } from './chat-provider';
 import { ChatSlot } from './chat-slot';
 import { FakeWebSocket, ME, ROOM, ROOM_2, mockChat, msg, sockets } from './test-support';
 
-const nav = vi.hoisted(() => ({ pathname: '/clubs', toast: vi.fn(), beep: vi.fn(), disposed: vi.fn() }));
+const nav = vi.hoisted(() => ({ pathname: '/clubs', toast: vi.fn(), beep: vi.fn(), disposed: vi.fn(), hard: vi.fn() }));
 vi.mock('next/navigation', () => ({ usePathname: () => nav.pathname, useRouter: () => ({ push: vi.fn(), replace: vi.fn() }) }));
-vi.mock('@/lib/navigate', () => ({ hardNavigate: vi.fn(), replaceNavigate: vi.fn() }));
+vi.mock('@/lib/navigate', () => ({ hardNavigate: nav.hard, replaceNavigate: vi.fn() }));
 vi.mock('@/lib/toast', () => ({ showToast: nav.toast }));
+vi.mock('@book-club/api-client/ws', async (importActual) => {
+  const actual = await importActual<typeof import('@book-club/api-client/ws')>();
+  return { ...actual, createChatSocket: (o: Parameters<typeof actual.createChatSocket>[0]) => actual.createChatSocket({ ...o, baseDelayMs: 5, maxDelayMs: 20 }) };
+});
 vi.mock('./chat-audio-alert', () => ({ createChatAudioAlert: () => ({ playBeep: nav.beep, dispose: nav.disposed }) }));
 
 setupApiServer();
 beforeEach(() => {
   FakeWebSocket.reset();
   vi.stubGlobal('WebSocket', FakeWebSocket);
+  vi.stubEnv('NEXT_PUBLIC_WS_URL', 'wss://book-club-be.onrender.com/api/v1');
+  nav.hard.mockReset();
   nav.pathname = '/clubs';
   nav.toast.mockReset();
   nav.beep.mockReset();
@@ -43,6 +49,7 @@ async function connected(index = 0) {
 }
 
 const fab = () => screen.findByRole('button', { name: t('CHAT.open') });
+const unreadLabel = (n: number) => t('CHAT.open_unread').replace('{count}', String(n));
 
 describe('ChatSlot', () => {
   it('with the flag off keeps the R5 link to /chats and opens nothing', async () => {
@@ -171,6 +178,52 @@ describe('ChatWidget connection', () => {
   });
 });
 
+describe('ChatWidget failures', () => {
+  it('stops quietly on a 403 ticket: no socket, no redirect', async () => {
+    mockChat();
+    server.use(http.post(`${API}/auth/ws-ticket`, () => HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })));
+    renderWidget();
+    await fab();
+    await new Promise((r) => setTimeout(r, 150));
+    expect(sockets()).toHaveLength(0);
+    expect(nav.hard).not.toHaveBeenCalled();
+  });
+
+  it('ignores a late frame from the socket of the room that was left, and uses a fresh ticket for the next', async () => {
+    const mock = mockChat({ rooms: [{ id: ROOM, name: 'General' }, { id: ROOM_2, name: 'Plot talk' }] });
+    const user = userEvent.setup();
+    renderWidget();
+    const old = await connected();
+    await user.click(await fab());
+    await user.click(await screen.findByRole('button', { name: t('CHAT.back') }));
+    await user.click(await screen.findByRole('button', { name: 'Plot talk' }));
+    await connected();
+    act(() => old.push({ type: 'message', payload: msg('late', 'from the old room') }));
+    await new Promise((r) => setTimeout(r, 30));
+    expect(screen.queryByText('from the old room')).not.toBeInTheDocument();
+    expect(mock.tickets.n).toBe(2);
+    expect(sockets()[0]?.sent[0]).toEqual({ type: 'auth', ticket: 'ticket-2' });
+  });
+
+  it('shows a retry once the client gave up, and the retry reconnects', async () => {
+    const mock = mockChat();
+    const user = userEvent.setup();
+    renderWidget();
+    await user.click(await fab());
+    for (let round = 1; round <= 6; round++) {
+      await waitFor(() => expect(sockets()).toHaveLength(1), { timeout: 5_000 });
+      const socket = sockets()[0]!;
+      await waitFor(() => expect(socket.readyState).toBe(0));
+      act(() => socket.drop());
+    }
+    const retry = await screen.findByRole('button', { name: t('CHAT.retry') }, { timeout: 5_000 });
+    const before = mock.tickets.n;
+    await user.click(retry);
+    await waitFor(() => expect(mock.tickets.n).toBe(before + 1));
+    await waitFor(() => expect(sockets()).toHaveLength(1));
+  });
+});
+
 describe('ChatWidget unread and live messages', () => {
   it('shows the server unread total on the button, capped at 9+', async () => {
     mockChat({
@@ -181,7 +234,8 @@ describe('ChatWidget unread and live messages', () => {
       unread: { [ROOM]: { unread_count: 4, last_read_message_id: null }, [ROOM_2]: { unread_count: 3, last_read_message_id: null } },
     });
     renderWidget();
-    expect(await screen.findByRole('status', { name: t('CHAT.unread_aria').replace('{count}', '7') })).toHaveTextContent('7');
+    const button = await screen.findByRole('button', { name: unreadLabel(7) });
+    expect(button).toHaveTextContent('7');
   });
 
   it('counts a message from someone else while closed, beeps once, and clears the badge when opened', async () => {
@@ -195,13 +249,22 @@ describe('ChatWidget unread and live messages', () => {
 
     act(() => socket.push({ type: 'message', payload: msg('m2', 'ping') }));
     act(() => socket.push({ type: 'message', payload: msg('m2', 'ping') }));
-    const badge = await screen.findByRole('status', { name: t('CHAT.unread_aria').replace('{count}', '1') });
-    expect(badge).toHaveTextContent('1');
+    expect(await screen.findByRole('button', { name: unreadLabel(1) })).toHaveTextContent('1');
     expect(nav.beep).toHaveBeenCalledTimes(1);
 
-    await user.click(await fab());
-    await waitFor(() => expect(screen.queryByRole('status', { name: /./ })).not.toBeInTheDocument());
+    await user.click(await screen.findByRole('button', { name: unreadLabel(1) }));
+    await waitFor(() => expect(screen.queryByRole('button', { name: unreadLabel(1) })).not.toBeInTheDocument());
     expect(await screen.findByText('ping')).toBeInTheDocument();
+  });
+
+  it('counts and beeps once for a message that arrives before the widget was ever opened (no cached history)', async () => {
+    mockChat();
+    renderWidget();
+    const socket = await connected();
+    act(() => socket.push({ type: 'message', payload: msg('m5', 'while nobody looked') }));
+    act(() => socket.push({ type: 'message', payload: msg('m5', 'while nobody looked') }));
+    expect(await screen.findByRole('button', { name: unreadLabel(1) })).toBeInTheDocument();
+    expect(nav.beep).toHaveBeenCalledTimes(1);
   });
 
   it('never counts or beeps for the viewer own message', async () => {
@@ -272,6 +335,15 @@ describe('ChatWidget sending', () => {
 });
 
 describe('ChatWidget panel', () => {
+  it('is a labelled modal dialog that puts focus in the composer', async () => {
+    mockChat();
+    const user = userEvent.setup();
+    renderWidget();
+    await user.click(await fab());
+    expect(await screen.findByRole('dialog')).toHaveAttribute('aria-modal', 'true');
+    await waitFor(() => expect(screen.getByRole('textbox', { name: t('CHAT.placeholder') })).toHaveFocus());
+  });
+
   it('closes on Escape and returns focus to the button', async () => {
     mockChat();
     const user = userEvent.setup();

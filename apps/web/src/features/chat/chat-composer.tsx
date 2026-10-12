@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useState, type KeyboardEvent } from 'react';
 import { cn } from '@/lib/utils';
 
-export function ChatComposer({ onSend, variant = 'widget' }: { onSend: (text: string) => void; variant?: 'widget' | 'page' }) {
+export function ChatComposer({ onSend, variant = 'widget', autoFocus = false }: { onSend: (text: string) => void; variant?: 'widget' | 'page'; autoFocus?: boolean }) {
   const t = useTranslations('CHAT');
   const [text, setText] = useState('');
   const trimmed = text.trim();
@@ -25,6 +25,7 @@ export function ChatComposer({ onSend, variant = 'widget' }: { onSend: (text: st
     <div className={cn('flex gap-2 border-t border-[var(--border)]', variant === 'widget' ? 'p-3' : 'px-3 py-3 border-[var(--color-sepia)]')}>
       <input
         type="text"
+        autoFocus={autoFocus}
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={onKeyDown}

@@ -11,6 +11,7 @@ import { badgeLabel } from './chat-model';
 import { ChatComposer } from './chat-composer';
 import { ChatHeader } from './chat-header';
 import { ChatMessageList } from './chat-message-list';
+import { ConnectionNotice } from './connection-notice';
 import { useChat } from './chat-provider';
 import { NewRoomForm } from './new-room-form';
 import { useChatRoom, useRoomActions } from './use-chat-data';
@@ -57,7 +58,7 @@ export function ChatWidget() {
           ref={fab}
           type="button"
           onClick={chat.toggle}
-          aria-label={chat.isOpen ? t('close') : t('open')}
+          aria-label={chat.isOpen ? t('close') : chat.totalUnread > 0 ? t('open_unread', { count: chat.totalUnread }) : t('open')}
           className={cn(
             'fixed z-50 right-6 size-14 rounded-full bg-accent-500 shadow-lg hover:shadow-xl transition-shadow duration-200 flex items-center justify-center text-white',
             shift ? 'bottom-24' : 'bottom-6',
@@ -67,8 +68,7 @@ export function ChatWidget() {
           {chat.isOpen ? <XIcon className="size-6" aria-hidden="true" /> : <MessageSquareIcon className="size-6" fill="currentColor" aria-hidden="true" />}
           {chat.totalUnread > 0 && (
             <span
-              role="status"
-              aria-label={t('unread_aria', { count: chat.totalUnread })}
+              aria-hidden="true"
               className="absolute top-0 right-0 min-w-5 h-5 rounded-full border-2 border-[var(--color-surface-raised)] bg-[var(--destructive)] flex items-center justify-center text-white text-xs font-bold px-1"
             >
               {badgeLabel(chat.totalUnread)}
@@ -80,6 +80,7 @@ export function ChatWidget() {
       {chat.isOpen && (
         <div
           role="dialog"
+          aria-modal="true"
           aria-label={t('title')}
           className={cn(
             'fixed z-40 right-6 w-[calc(100vw-3rem)] max-w-80 max-h-[480px] flex flex-col rounded-2xl shadow-2xl overflow-hidden bg-[var(--color-surface-raised)] border border-[var(--border)]',
@@ -102,7 +103,6 @@ export function ChatWidget() {
                         <button
                           type="button"
                           onClick={() => pick(room.id)}
-                          aria-label={room.name}
                           className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3 border-b border-[var(--border)] hover:bg-[var(--color-surface)] text-left"
                         >
                           <span className="size-10 shrink-0 rounded-full bg-primary-500 text-white flex items-center justify-center font-bold" aria-hidden="true">
@@ -110,9 +110,12 @@ export function ChatWidget() {
                           </span>
                           <span className="flex-1 min-w-0 truncate font-semibold text-sm text-[var(--color-ink)]">{room.name}</span>
                           {(chat.unread[room.id]?.count ?? 0) > 0 && (
-                            <span className="min-w-5 h-5 rounded-full bg-[var(--destructive)] text-white text-xs font-bold px-1 flex items-center justify-center">
-                              {badgeLabel(chat.unread[room.id]?.count ?? 0)}
-                            </span>
+                            <>
+                              <span aria-hidden="true" className="min-w-5 h-5 rounded-full bg-[var(--destructive)] text-white text-xs font-bold px-1 flex items-center justify-center">
+                                {badgeLabel(chat.unread[room.id]?.count ?? 0)}
+                              </span>
+                              <span className="sr-only">{t('unread_aria', { count: chat.unread[room.id]?.count ?? 0 })}</span>
+                            </>
                           )}
                           <ChevronRightIcon className="size-4 shrink-0 text-[var(--color-ink-muted)]" aria-hidden="true" />
                         </button>
@@ -166,11 +169,11 @@ export function ChatWidget() {
                 onBack={() => setRoomListRequested(true)}
                 onClose={closeAndFocus}
               />
-              {chat.connection === 'reconnecting' && (
-                <p role="status" className="px-3 py-1 text-xs text-center bg-[var(--color-surface)] text-[var(--color-ink-muted)]">
-                  {t('reconnecting')}
-                </p>
-              )}
+              <ConnectionNotice
+                status={chat.connection}
+                onRetry={chat.reconnect}
+                className="px-3 py-1 text-xs text-center bg-[var(--color-surface)] text-[var(--color-ink-muted)]"
+              />
               {chat.activeRoomId ? (
                 <>
                   <ChatMessageList roomId={chat.activeRoomId} />
@@ -196,6 +199,7 @@ function WidgetComposer({ roomId }: { roomId: string }) {
   const { markRoomRead } = useChat();
   return (
     <ChatComposer
+      autoFocus
       onSend={(text) => {
         send(text);
         markRoomRead(roomId);

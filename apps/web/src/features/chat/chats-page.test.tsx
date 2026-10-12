@@ -21,6 +21,7 @@ beforeEach(() => {
   FakeWebSocket.reset();
   nav.beep.mockReset();
   vi.stubGlobal('WebSocket', FakeWebSocket);
+  vi.stubEnv('NEXT_PUBLIC_WS_URL', 'wss://book-club-be.onrender.com/api/v1');
 });
 
 const TWO_ROOMS = [
@@ -75,6 +76,7 @@ describe('ChatsPage', () => {
     renderPage();
     const other = await screen.findByRole('button', { name: /Plot talk/ });
     expect(await within(other).findByText('9+')).toBeInTheDocument();
+    expect(other).toHaveAccessibleName(/Plot talk.*12/);
     const log = await screen.findByRole('log');
     const divider = await waitFor(() => {
       const node = log.querySelector('[data-unread-divider]');
@@ -124,7 +126,7 @@ describe('ChatsPage', () => {
   });
 
   it('loads older history when scrolled to the top, once, and stops after a short page', async () => {
-    const page = Array.from({ length: 3 }, (_, i) => msg(`n${i}`, `newer ${i}`));
+    const page = Array.from({ length: OLDER_PAGE_SIZE }, (_, i) => msg(`n${String(i).padStart(2, '0')}`, `newer ${i}`));
     const mock = mockChat({ messages: { [ROOM]: page } });
     server.use(
       http.get(`${API}/chat/rooms/${ROOM}/messages`, ({ request }) => {
@@ -140,13 +142,23 @@ describe('ChatsPage', () => {
     fireEvent.scroll(log);
     fireEvent.scroll(log);
     expect(await screen.findByText('older 1')).toBeInTheDocument();
-    expect(mock.messageFetches.filter((f) => f.before !== null)).toEqual([{ roomId: ROOM, before: 'n0' }]);
-    expect(OLDER_PAGE_SIZE).toBe(50);
+    expect(mock.messageFetches.filter((f) => f.before !== null)).toEqual([{ roomId: ROOM, before: 'n00' }]);
     fireEvent.scroll(log);
     await new Promise((r) => setTimeout(r, 50));
     expect(mock.messageFetches.filter((f) => f.before !== null)).toHaveLength(1);
     const order = within(log).getAllByText(/older|newer/).map((n) => n.textContent);
-    expect(order).toEqual(['older 1', 'older 2', 'newer 0', 'newer 1', 'newer 2']);
+    expect(order.slice(0, 4)).toEqual(['older 1', 'older 2', 'newer 0', 'newer 1']);
+  });
+
+  it('does not offer older history when the first page is short', async () => {
+    const mock = mockChat({ messages: { [ROOM]: [msg('a', 'only one')] } });
+    renderPage();
+    const log = await screen.findByRole('log');
+    await screen.findByText('only one');
+    Object.defineProperty(log, 'scrollTop', { configurable: true, value: 0, writable: true });
+    fireEvent.scroll(log);
+    await new Promise((r) => setTimeout(r, 50));
+    expect(mock.messageFetches.filter((f) => f.before !== null)).toHaveLength(0);
   });
 
   it('keeps going when the message feed fails, with a retry', async () => {
