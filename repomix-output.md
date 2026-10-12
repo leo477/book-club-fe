@@ -542,6 +542,9 @@ e2e/
       r6-organizer-view.json
     r11/
       fixtures.ts
+    r12/
+      edge-config-server.mjs
+      fixtures.ts
     r6/
       fixtures.ts
       helpers.ts
