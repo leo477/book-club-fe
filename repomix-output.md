@@ -478,6 +478,7 @@ apps/
         proxy-handler.test.ts
         proxy-handler.ts
         read-state.test.ts
+        route-coverage.test.ts
         routes.test.ts
         routes.ts
         server.test.ts
@@ -666,6 +667,7 @@ public/
   robots.txt
   sitemap.xml
 scripts/
+  check-route-coverage.mjs
   extract-i18n.mjs
   generate-sitemap.mjs
 src/
