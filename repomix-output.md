@@ -92,6 +92,20 @@ apps/
                   page.tsx
               manage/
                 page.tsx
+              quizzes/
+                [quizId]/
+                  edit/
+                    page.tsx
+                  leaderboard/
+                    page.tsx
+                  preview/
+                    page.tsx
+                  session/
+                    page.tsx
+                  page.tsx
+                create/
+                  page.tsx
+                page.tsx
               randomizer/
                 page.tsx
               not-found.tsx
@@ -118,6 +132,7 @@ apps/
             page.tsx
           layout.tsx
           organizer-pages.test.tsx
+          quiz-pages.test.tsx
         %5F%5Fstrangler-probe/
           page.tsx
         %5F%5Fui/
@@ -334,6 +349,28 @@ apps/
           role-selector.tsx
           socials-section.tsx
           use-profile.ts
+        quiz/
+          lazy-boundary.test.ts
+          lazy.tsx
+          leaderboard.tsx
+          quiz-create.test.tsx
+          quiz-create.tsx
+          quiz-edit.test.tsx
+          quiz-edit.tsx
+          quiz-editor.tsx
+          quiz-leaderboard.test.tsx
+          quiz-leaderboard.tsx
+          quiz-list.test.tsx
+          quiz-list.tsx
+          quiz-preview.test.tsx
+          quiz-preview.tsx
+          quiz-session.test.tsx
+          quiz-session.tsx
+          quiz-take.test.tsx
+          quiz-take.tsx
+          quiz-ui.tsx
+          test-support.ts
+          use-quiz.ts
         randomizer/
           lazy.tsx
           pick.test.ts
@@ -531,6 +568,7 @@ packages/
       misc.ts
       organizer-forms.ts
       parse.ts
+      quiz-forms.ts
       quiz.ts
       tolerant.ts
       user.ts
@@ -545,6 +583,7 @@ packages/
       contracts.test.ts
       fixtures.test.ts
       organizer-forms.test.ts
+      quiz-forms.test.ts
     eslint.config.mjs
     package.json
     tsconfig.json

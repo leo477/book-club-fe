@@ -1,6 +1,28 @@
 {
   "QUIZ": {
-    "create_questions_count_other": "questions"
+    "create_questions_count_other": "questions",
+    "breadcrumb_aria": "Breadcrumb",
+    "edit_step_questions": "Edit questions",
+    "questions_heading": "Questions ({{ count }})",
+    "question_saved": "saved",
+    "question_new": "new",
+    "remove_question_aria": "Remove question {{ number }}",
+    "option_aria": "Option {{ label }}",
+    "correct_option_aria": "Correct answer {{ label }}",
+    "save_error": "Could not save the quiz. Please try again.",
+    "result_percent": "{{ percent }}% correct",
+    "result_great": "🌟 Great job!",
+    "result_good": "👍 Good effort!",
+    "result_keep_reading": "📖 Keep reading!",
+    "result_try_again": "💪 Better luck next time!",
+    "result_your_answer": "Your answer",
+    "result_incorrect": "Incorrect",
+    "error_not_found": "Quiz not found.",
+    "error_no_questions": "This quiz has no questions yet.",
+    "leaderboard_status": "Status",
+    "session_refresh_hint": "Auto-refreshes every 15 seconds",
+    "session_event_option": "{{ title }} — {{ date }}",
+    "submit_error": "Could not submit your answers. Please try again."
   },
   "ERRORS": {
     "retry": "Try again"
