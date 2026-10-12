@@ -21,14 +21,33 @@ function resolveOrigin(raw: string | undefined): string | null {
   }
 }
 
+function withCsp(headers: Headers, dev: boolean | undefined, bucket?: number): NextResponse {
+  const nonce = newNonce();
+  const csp = buildCsp(nonce, dev);
+  headers.set('x-nonce', nonce);
+  if (bucket !== undefined) headers.set(BUCKET_HEADER, String(bucket));
+  headers.set('content-security-policy', csp);
+  const response = NextResponse.next({ request: { headers } });
+  response.headers.set('Cache-Control', 'private, no-store');
+  response.headers.set('Content-Security-Policy', csp);
+  response.headers.set('Content-Security-Policy-Report-Only', TRUSTED_TYPES_REPORT_ONLY);
+  return response;
+}
+
 export async function handleProxy(request: NextRequest, deps: ProxyDeps): Promise<NextResponse> {
   const { pathname, search } = request.nextUrl;
   const cleanHeaders = new Headers(request.headers);
   cleanHeaders.delete(BUCKET_HEADER);
+  // set only by this proxy; a client-supplied nonce or CSP must never reach the app
+  cleanHeaders.delete('x-nonce');
+  cleanHeaders.delete('content-security-policy');
 
   const route = matchRoute(pathname);
   const shadowed = route === null && !deps.legacyDisabled && isLegacyShadowed(pathname);
-  if (!route && !shadowed) return NextResponse.next({ request: { headers: cleanHeaders } });
+  if (!route && !shadowed) {
+    // without the legacy fallback every pass-through is rendered by Next (its 404 included), so it gets the same CSP; with it, the request may still be rewritten to legacy and must stay untouched
+    return deps.legacyDisabled ? withCsp(cleanHeaders, deps.dev) : NextResponse.next({ request: { headers: cleanHeaders } });
+  }
 
   const existing = validBucket(request.cookies.get(BUCKET_COOKIE)?.value);
   const bucket = existing ?? newBucket();
@@ -46,16 +65,7 @@ export async function handleProxy(request: NextRequest, deps: ProxyDeps): Promis
     target.search = search;
     response = NextResponse.rewrite(target, { request: { headers: cleanHeaders } });
   } else {
-    const nonce = newNonce();
-    const csp = buildCsp(nonce, deps.dev);
-    const headers = cleanHeaders;
-    headers.set('x-nonce', nonce);
-    headers.set(BUCKET_HEADER, String(bucket));
-    headers.set('content-security-policy', csp);
-    response = NextResponse.next({ request: { headers } });
-    response.headers.set('Cache-Control', 'private, no-store');
-    response.headers.set('Content-Security-Policy', csp);
-    response.headers.set('Content-Security-Policy-Report-Only', TRUSTED_TYPES_REPORT_ONLY);
+    response = withCsp(cleanHeaders, deps.dev, bucket);
   }
 
   if (existing === null) {

@@ -239,3 +239,35 @@ describe('handleProxy with the legacy fallback disabled (preview)', () => {
     expect(res.headers.get('x-middleware-rewrite')).toBeNull();
   });
 });
+
+describe('handleProxy request header hygiene and 404 CSP', () => {
+  const forged = { 'x-nonce': 'forged', 'content-security-policy': "script-src 'unsafe-inline'" };
+  const reqHeader = (res: Response, name: string) => res.headers.get(`x-middleware-request-${name}`);
+  const never = () => Promise.reject(new Error('config must not be read'));
+
+  it('strips a client-supplied x-nonce and CSP on untouched pass-through (legacy fallback active)', async () => {
+    const res = await run('/not-yet-migrated', never, undefined, { headers: forged });
+    expect(res.headers.get('x-middleware-override-headers') ?? '').not.toMatch(/x-nonce|content-security-policy/);
+    expect(reqHeader(res, 'x-nonce')).toBeNull();
+    expect(res.headers.get('content-security-policy')).toBeNull();
+  });
+
+  it('strips them and issues its own nonce + CSP for a Next-rendered 404 when the fallback is disabled', async () => {
+    const res = await handleProxy(new NextRequest('https://app.example.com/nope', { headers: forged }), { readConfig: never, legacyOrigin: undefined, legacyDisabled: true });
+    const nonce = reqHeader(res, 'x-nonce')!;
+    expect(nonce).not.toBe('forged');
+    expect(res.headers.get('content-security-policy')).toContain(`'nonce-${nonce}'`);
+    expect(reqHeader(res, 'content-security-policy')).toBe(res.headers.get('content-security-policy'));
+    expect(res.headers.get('content-security-policy-report-only')).toContain("require-trusted-types-for 'script'");
+    expect(res.cookies.get('bc_bucket')).toBeUndefined();
+  });
+
+  it('strips a forged nonce on a Next-rendered manifest route and on a legacy rewrite', async () => {
+    const next = await run(probe, async () => config({ target: 'next', percent: 100 }), 'bc_bucket=1', { headers: forged });
+    expect(reqHeader(next, 'x-nonce')).not.toBe('forged');
+    const legacy = await run(probe, async () => config({ target: 'legacy', percent: 0 }), 'bc_bucket=1', { headers: forged });
+    expect(isLegacy(legacy)).toBe(true);
+    expect(reqHeader(legacy, 'x-nonce')).toBeNull();
+    expect(legacy.headers.get('content-security-policy')).toBeNull();
+  });
+});

@@ -492,6 +492,7 @@ apps/
         import-graph.ts
       env.d.ts
       next-config.test.ts
+      proxy.test.ts
       proxy.ts
     .gitignore
     components.json
