@@ -131,7 +131,7 @@ describe('createChatSocket', () => {
     conns[0]?.ws.terminate();
     await until(() => conns.length === 2);
     conns[1]?.ws.terminate();
-    await until(() => conns.length === 3);
+    await until(() => conns.length === 3 && conns.every((c) => c.frames.length > 0));
     expect(getTicket).toHaveBeenCalledTimes(3);
     expect(conns.map((c) => (c.frames[0] as { ticket: string }).ticket)).toEqual(['t1', 't2', 't3']);
     expect(statuses).toContain('reconnecting');
