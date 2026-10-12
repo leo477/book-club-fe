@@ -512,6 +512,7 @@ docs/
     cleanup-pw-audit.sql
     GATE-G1.md
     PARITY-R11.md
+    PARITY-R12.md
     PARITY-R5.md
     PARITY-R6.md
     PARITY-R7.md

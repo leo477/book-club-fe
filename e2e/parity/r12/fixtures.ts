@@ -232,7 +232,10 @@ function handle(m: ChatMock, method: string, path: string, q: URLSearchParams, r
   if (method === 'GET' && path === '/auth/me') return authed ? { status: 200, body: user(m.viewer) } : { status: 401, body: { detail: 'no' } };
   if (method === 'POST' && path === '/auth/refresh') return authed ? { status: 200, body: { accessToken: 'mock', refreshToken: 'mock', user: user(m.viewer) } } : { status: 401, body: { detail: 'no' } };
   if (method === 'GET' && path === '/auth/session-status') return { status: 200, body: { hasSession: authed } };
-  if (method === 'POST' && path === '/auth/logout') return { status: 204 };
+  if (method === 'POST' && path === '/auth/logout') {
+    m.viewer = 'guest';
+    return { status: 204 };
+  }
   if (method === 'POST' && path === '/auth/ws-ticket') {
     if (!authed) return { status: 401, body: { detail: 'no' } };
     const ticket = `ticket-${m.tickets.length + 1}`;
