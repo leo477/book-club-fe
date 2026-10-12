@@ -140,6 +140,16 @@ jobs:
         run: npm ci
       - name: Build (apps/web)
         run: npm run build -w @book-club/web
+      - name: Promotion guard is absent from a normal build
+        run: node apps/web/scripts/check-legacy-guard.mjs absent apps/web/.next/server
+      # The guard only exists in the artifact when the flag is on (dead-code-eliminated otherwise), so build once more as a preview with it.
+      - name: Rebuild as a flagged preview (DISABLE_LEGACY_FALLBACK)
+        run: npm run build -w @book-club/web
+        env:
+          DISABLE_LEGACY_FALLBACK: '1'
+          VERCEL_ENV: preview
+      - name: Promotion guard is baked into the flagged build
+        run: node apps/web/scripts/check-legacy-guard.mjs present apps/web/.next/server
 
   deploy:
     name: Deploy to Vercel (book-club-web)

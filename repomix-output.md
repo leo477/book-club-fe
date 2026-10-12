@@ -63,6 +63,7 @@ apps/
   web/
     scripts/
       check-first-load.mjs
+      check-legacy-guard.mjs
     src/
       app/
         (auth)/
@@ -476,6 +477,7 @@ apps/
         csp.ts
         edge-config.ts
         flags.ts
+        legacy-guard-script.test.ts
         manifest-coverage.test.ts
         proxy-handler.test.ts
         proxy-handler.ts
