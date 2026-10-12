@@ -30,8 +30,17 @@ export const BUILD_MARKER = 'LEGACY_FALLBACK_DISABLED_AT_BUILD';
  * Rewrites are baked at build, so a preview built with the flag and then promoted would serve production without legacy.
  * Fail closed there: `VERCEL_ENV=production`, or the request arrives on the project's production domain (a promoted preview keeps its build-time env).
  */
+const bareHost = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/^[a-z]+:\/\//, '')
+    .replace(/[/?#].*$/, '')
+    .replace(/:\d+$/, '')
+    .replace(/\.$/, '')
+    .replace(/^www\./, '');
+
 export function flaggedBuildOnProduction(marker: string | undefined, env: Env, host: string | null): boolean {
   if (marker !== '1') return false;
   const production = env['VERCEL_PROJECT_PRODUCTION_URL'];
-  return env['VERCEL_ENV'] === 'production' || (!!production && host?.toLowerCase() === production.toLowerCase());
+  return env['VERCEL_ENV'] === 'production' || (!!production && !!host && bareHost(host) === bareHost(production));
 }

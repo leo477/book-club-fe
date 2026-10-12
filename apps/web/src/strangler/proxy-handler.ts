@@ -21,6 +21,11 @@ function resolveOrigin(raw: string | undefined): string | null {
   }
 }
 
+/** Files from public/ (extension, not asked for as HTML) keep their own caching and get no CSP. */
+function isDocumentRequest(pathname: string, accept: string | null): boolean {
+  return !/\.[A-Za-z0-9]+$/.test(pathname) || (accept?.includes('text/html') ?? false);
+}
+
 function withCsp(headers: Headers, dev: boolean | undefined, bucket?: number): NextResponse {
   const nonce = newNonce();
   const csp = buildCsp(nonce, dev);
@@ -46,7 +51,9 @@ export async function handleProxy(request: NextRequest, deps: ProxyDeps): Promis
   const shadowed = route === null && !deps.legacyDisabled && isLegacyShadowed(pathname);
   if (!route && !shadowed) {
     // without the legacy fallback every pass-through is rendered by Next (its 404 included), so it gets the same CSP; with it, the request may still be rewritten to legacy and must stay untouched
-    return deps.legacyDisabled ? withCsp(cleanHeaders, deps.dev) : NextResponse.next({ request: { headers: cleanHeaders } });
+    return deps.legacyDisabled && isDocumentRequest(pathname, request.headers.get('accept'))
+      ? withCsp(cleanHeaders, deps.dev)
+      : NextResponse.next({ request: { headers: cleanHeaders } });
   }
 
   const existing = validBucket(request.cookies.get(BUCKET_COOKIE)?.value);

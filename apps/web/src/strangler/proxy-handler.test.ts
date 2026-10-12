@@ -270,4 +270,16 @@ describe('handleProxy request header hygiene and 404 CSP', () => {
     expect(reqHeader(legacy, 'x-nonce')).toBeNull();
     expect(legacy.headers.get('content-security-policy')).toBeNull();
   });
+
+  it('leaves public/ files untouched under the flag (no CSP, no no-store), but still covers HTML requests for them', async () => {
+    const req = (path: string, accept: string) =>
+      handleProxy(new NextRequest(`https://app.example.com${path}`, { headers: { accept } }), { readConfig: never, legacyOrigin: undefined, legacyDisabled: true });
+    for (const [path, accept] of [['/og-image.png', 'image/avif,image/webp,*/*'], ['/googleea44.js', '*/*'], ['/favicon.ico', '*/*']] as const) {
+      const res = await req(path, accept);
+      expect(res.headers.get('cache-control')).toBeNull();
+      expect(res.headers.get('content-security-policy')).toBeNull();
+    }
+    expect((await req('/old.html', 'text/html,*/*')).headers.get('content-security-policy')).toMatch(/nonce-/);
+    expect((await req('/nope', '*/*')).headers.get('cache-control')).toBe('private, no-store');
+  });
 });
