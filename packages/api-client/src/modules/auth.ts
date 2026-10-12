@@ -26,5 +26,5 @@ export const authApi = (c: ApiClient) => ({
   logout: () => c.post('/auth/logout', z.void()),
   me: (options?: { skipAuthRedirect?: boolean }) => c.get('/auth/me', userProfile, options),
   sessionStatus: () => c.get('/auth/session-status', sessionStatus, publicCall),
-  wsTicket: () => c.post('/auth/ws-ticket', wsTicket, {}),
+  wsTicket: (options?: { skipAuthRedirect?: boolean; suppressErrorToast?: boolean }) => c.post('/auth/ws-ticket', wsTicket, {}, options),
 });

@@ -83,6 +83,8 @@ apps/
             page.test.tsx
             page.tsx
         (shell)/
+          chats/
+            page.tsx
           clubs/
             [id]/
               edit/
@@ -242,6 +244,32 @@ apps/
           register-page.tsx
           require-auth.test.tsx
           require-auth.tsx
+        chat/
+          chat-audio-alert.test.ts
+          chat-audio-alert.ts
+          chat-composer.tsx
+          chat-header.tsx
+          chat-keys.ts
+          chat-message-list.tsx
+          chat-model.test.ts
+          chat-model.ts
+          chat-provider.test.tsx
+          chat-provider.tsx
+          chat-render-loop.test.tsx
+          chat-runtime.tsx
+          chat-slot.tsx
+          chat-ticket.test.ts
+          chat-ticket.ts
+          chat-timestamp.test.ts
+          chat-timestamp.ts
+          chat-widget.test.tsx
+          chat-widget.tsx
+          chats-page.test.tsx
+          chats-page.tsx
+          connection-notice.tsx
+          new-room-form.tsx
+          test-support.ts
+          use-chat-data.ts
         club-detail/
           action-error.test.ts
           action-error.ts
@@ -428,6 +456,8 @@ apps/
         utils.ts
         uuid.test.ts
         uuid.ts
+        ws-base-url.test.ts
+        ws-base-url.ts
         zod-locales-stub.ts
       providers/
         providers.tsx
@@ -435,9 +465,11 @@ apps/
         config.test.ts
         config.ts
         context.tsx
+        csp-vercel.test.ts
         csp.test.ts
         csp.ts
         edge-config.ts
+        flags.ts
         manifest-coverage.test.ts
         proxy-handler.test.ts
         proxy-handler.ts
@@ -480,6 +512,7 @@ docs/
     cleanup-pw-audit.sql
     GATE-G1.md
     PARITY-R11.md
+    PARITY-R12.md
     PARITY-R5.md
     PARITY-R6.md
     PARITY-R7.md
@@ -509,6 +542,9 @@ e2e/
       r6-member-vote.json
       r6-organizer-view.json
     r11/
+      fixtures.ts
+    r12/
+      edge-config-server.mjs
       fixtures.ts
     r6/
       fixtures.ts
@@ -543,6 +579,10 @@ packages/
         misc.ts
         quiz.ts
         users.ts
+      ws/
+        chat-socket.ts
+        chat-text.ts
+        index.ts
       api.ts
       client.ts
       errors.ts
@@ -550,6 +590,7 @@ packages/
       transports.ts
       types.ts
     test/
+      chat-socket.test.ts
       client.test.ts
       modules.test.ts
       msw.test.ts

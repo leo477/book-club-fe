@@ -46,5 +46,23 @@
   "CLUB_MANAGE": {
     "chart_summary": "{{ label }}: {{ items }}",
     "chart_summary_item": "{{ title }}: {{ count }}"
+  },
+  "CHAT": {
+    "widget_title": "Book Club Chat",
+    "rooms_count": "Rooms: {{ count }}",
+    "delete": "Delete",
+    "delete_room_aria": "Delete room {{ name }}",
+    "delete_room_confirm": "Delete this room?",
+    "unread_aria": "{{ count }} unread messages",
+    "reconnecting": "Reconnecting…",
+    "open_unread": "Open chat, {{ count }} unread",
+    "connection_lost": "Live updates are off.",
+    "retry": "Retry",
+    "error_banned": "You are banned from this room.",
+    "error_rate_limited": "You are sending messages too fast.",
+    "connection_stopped": "The server ended this chat session. You may have lost access.",
+    "error_invalid": "Message not sent: it is empty, too long or has unsupported characters.",
+    "error_generic": "The chat reported an error.",
+    "messages_log": "Chat messages"
   }
 }

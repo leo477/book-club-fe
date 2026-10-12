@@ -3,6 +3,7 @@ import { PHASE_PRODUCTION_BUILD } from 'next/constants.js';
 import createNextIntlPlugin from 'next-intl/plugin';
 import { backendOrigin } from './src/lib/backend-origin';
 import { checkOAuthBaseUrl } from './src/lib/oauth-base-url';
+import { checkWsBaseUrl } from './src/lib/ws-base-url';
 
 const BACKEND_ORIGIN = backendOrigin();
 
@@ -56,7 +57,10 @@ const withIntl = createNextIntlPlugin('./src/i18n/request.ts');
 
 // the value is inlined at build time, so only a production build needs it (not `next start` or dev)
 const config = (phase: string): NextConfig => {
-  if (phase === PHASE_PRODUCTION_BUILD) checkOAuthBaseUrl();
+  if (phase === PHASE_PRODUCTION_BUILD) {
+    checkOAuthBaseUrl();
+    checkWsBaseUrl();
+  }
   return withIntl(nextConfig);
 };
 

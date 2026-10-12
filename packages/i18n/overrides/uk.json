@@ -47,5 +47,23 @@
   "CLUB_MANAGE": {
     "chart_summary": "{{ label }}: {{ items }}",
     "chart_summary_item": "{{ title }}: {{ count }}"
+  },
+  "CHAT": {
+    "widget_title": "Чат книжкового клубу",
+    "rooms_count": "Кімнат: {{ count }}",
+    "delete": "Видалити",
+    "delete_room_aria": "Видалити кімнату {{ name }}",
+    "delete_room_confirm": "Видалити цю кімнату?",
+    "unread_aria": "Непрочитаних повідомлень: {{ count }}",
+    "reconnecting": "Перепідключення…",
+    "open_unread": "Відкрити чат, непрочитаних: {{ count }}",
+    "connection_lost": "Оновлення в реальному часі вимкнено.",
+    "retry": "Повторити",
+    "error_banned": "Вас заблоковано в цій кімнаті.",
+    "error_rate_limited": "Ви надсилаєте повідомлення надто швидко.",
+    "connection_stopped": "Сервер завершив сеанс чату. Можливо, ви втратили доступ.",
+    "error_invalid": "Повідомлення не надіслано: воно порожнє, задовге або містить непідтримувані символи.",
+    "error_generic": "Чат повідомив про помилку.",
+    "messages_log": "Повідомлення чату"
   }
 }

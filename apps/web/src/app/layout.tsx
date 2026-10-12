@@ -9,6 +9,7 @@ import { AnalyticsEvents } from '@/components/analytics-events';
 import { cn } from '@/lib/utils';
 import { Providers } from '@/providers/providers';
 import { parseTheme, THEME_COOKIE } from '@/i18n/locale';
+import { SHELL_FLAGS } from '@/strangler/flags';
 import { readState, requestBucket } from '@/strangler/server';
 import { fontVariables } from './fonts';
 import './globals.css';
@@ -21,7 +22,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
   const [locale, jar, h, bucket, messages] = await Promise.all([getLocale(), cookies(), headers(), requestBucket(), getMessages()]);
   const theme = parseTheme(jar.get(THEME_COOKIE)?.value);
   const nonce = h.get('x-nonce') ?? undefined;
-  const state = await readState(bucket ?? 100);
+  const state = await readState(bucket ?? 100, SHELL_FLAGS);
   const enabledRoutes = state.routes.filter((r) => r.enabled).map((r) => r.pattern);
 
   return (
