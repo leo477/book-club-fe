@@ -74,7 +74,11 @@ describe('QuizLeaderboard', () => {
     expect(hits.n).toBe(1);
     await tick(1);
     await vi.waitFor(() => expect(hits.n).toBe(2));
-    await tick(POLL_MS * 3);
+    await tick(POLL_MS);
+    await vi.waitFor(() => expect(hits.n).toBe(3));
+    await tick(POLL_MS);
+    await vi.waitFor(() => expect(hits.n).toBe(4));
+    await tick(POLL_MS);
     await vi.waitFor(() => expect(hits.n).toBe(5));
   });
 
