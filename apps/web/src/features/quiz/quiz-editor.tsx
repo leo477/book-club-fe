@@ -4,7 +4,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { EMPTY_QUIZ_QUESTION, quizMetaForm, quizQuestionForm, type QuizMetaForm, type QuizQuestionForm } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
-import { useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { AppLink } from '@/components/app-link';
 import { FormField } from '@/components/form-field';
@@ -14,7 +14,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
 import { optionLabel } from './quiz-ui';
-import type { DraftQuestion } from './use-quiz';
+import { newDraftKey, type DraftQuestion } from './use-quiz';
 
 const OPTIONS = [0, 1, 2, 3] as const;
 
@@ -62,6 +62,12 @@ export function QuizEditor({ heading, backHref, questionsStepLabel, submitLabel,
   const [questions, setQuestions] = useState<readonly DraftQuestion[]>(initialQuestions);
   const [removedIds, setRemovedIds] = useState<readonly string[]>([]);
   const submitting = useRef(false);
+  const stepRef = useRef<HTMLParagraphElement>(null);
+  const listRef = useRef<HTMLOListElement>(null);
+  const addHeadingRef = useRef<HTMLHeadingElement>(null);
+  const focusRemoved = useRef<number | null>(null);
+  const stepMoved = useRef(false);
+  const busy = pending || locked;
 
   const metaForm = useForm<QuizMetaForm>({ resolver: zodResolver(quizMetaForm), defaultValues: initialMeta, mode: 'onTouched' });
   const questionForm = useForm<QuizQuestionForm>({ resolver: zodResolver(quizQuestionForm), defaultValues: EMPTY_QUIZ_QUESTION, mode: 'onTouched' });
@@ -69,15 +75,37 @@ export function QuizEditor({ heading, backHref, questionsStepLabel, submitLabel,
 
   const addQuestion = questionForm.handleSubmit((values) => {
     const options = [values.option0, values.option1, values.option2, values.option3].map((o) => o.trim());
-    setQuestions((prev) => [...prev, { question: values.question.trim(), options, correctIndex: Number(values.correctIndex) }]);
+    setQuestions((prev) => [...prev, { key: newDraftKey(), question: values.question.trim(), options, correctIndex: Number(values.correctIndex) }]);
     questionForm.reset(EMPTY_QUIZ_QUESTION);
     questionForm.setFocus('question');
   });
 
   const removeQuestion = (index: number) => {
+    if (busy) return;
+    focusRemoved.current = index;
     const id = questions[index]?.id;
     if (id) setRemovedIds((prev) => [...prev, id]);
     setQuestions((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  useEffect(() => {
+    const index = focusRemoved.current;
+    if (index === null) return;
+    focusRemoved.current = null;
+    const buttons = listRef.current?.querySelectorAll<HTMLButtonElement>('[data-remove]');
+    const target = buttons?.length ? buttons[Math.min(index, buttons.length - 1)] : addHeadingRef.current;
+    target?.focus();
+  }, [questions]);
+
+  useEffect(() => {
+    if (!stepMoved.current) return;
+    stepMoved.current = false;
+    stepRef.current?.focus();
+  }, [step]);
+
+  const goTo = (next: 1 | 2) => {
+    stepMoved.current = true;
+    setStep(next);
   };
 
   const save = async () => {
@@ -95,7 +123,7 @@ export function QuizEditor({ heading, backHref, questionsStepLabel, submitLabel,
       <header className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="font-fantasy text-2xl font-bold tracking-wide text-[var(--color-ink)]">{heading}</h1>
-          <p className="text-sm text-[var(--color-ink-muted)] mt-0.5" aria-live="polite">
+          <p ref={stepRef} tabIndex={-1} className="text-sm text-[var(--color-ink-muted)] mt-0.5 outline-none" aria-live="polite">
             {t('create_step_of', { step })} — {stepName}
           </p>
         </div>
@@ -117,7 +145,7 @@ export function QuizEditor({ heading, backHref, questionsStepLabel, submitLabel,
       ) : null}
 
       {step === 1 ? (
-        <form onSubmit={(e) => void metaForm.handleSubmit((values) => { setMeta({ title: values.title.trim(), description: values.description.trim() }); setStep(2); })(e)} noValidate className="parchment-card p-6 space-y-5">
+        <form onSubmit={(e) => void metaForm.handleSubmit((values) => { setMeta({ title: values.title.trim(), description: values.description.trim() }); goTo(2); })(e)} noValidate className="parchment-card p-6 space-y-5">
           <fieldset disabled={locked} className="space-y-5 min-w-0">
             <FormField
               id="quiz-title"
@@ -147,23 +175,25 @@ export function QuizEditor({ heading, backHref, questionsStepLabel, submitLabel,
           {questions.length > 0 ? (
             <div className="space-y-3">
               <h2 className="text-sm font-semibold uppercase tracking-widest text-[var(--color-ink-muted)]">{t('questions_heading', { count: questions.length })}</h2>
-              <ol className="space-y-3">
+              <ol ref={listRef} className="space-y-3">
                 {questions.map((q, index) => (
-                  <li key={q.id ?? `new-${index}`} className="parchment-card px-5 py-4 flex items-start gap-3">
+                  <li key={q.key} className="parchment-card px-5 py-4 flex items-start gap-3">
                     <span aria-hidden="true" className="size-7 rounded-full bg-primary-100 dark:bg-primary-900/40 text-primary-700 dark:text-primary-300 text-xs font-bold flex items-center justify-center shrink-0">
                       {index + 1}
                     </span>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-[var(--color-ink)] break-words">{q.question}</p>
-                      <p className="text-green-700 dark:text-green-400 text-xs mt-1 break-words">
-                        <span aria-hidden="true">✓ </span>
-                        <span className="sr-only">{t('result_correct')}: </span>
-                        {q.options[q.correctIndex]}
-                      </p>
+                      {q.correctIndex === null ? null : (
+                        <p className="text-green-700 dark:text-green-400 text-xs mt-1 break-words">
+                          <span aria-hidden="true">✓ </span>
+                          <span className="sr-only">{t('result_correct')}: </span>
+                          {q.options[q.correctIndex]}
+                        </p>
+                      )}
                       {initialQuestions.length > 0 ? <p className="text-[10px] uppercase font-bold mt-1 text-[var(--color-ink-muted)]">{q.id ? t('question_saved') : t('question_new')}</p> : null}
                     </div>
                     {locked ? null : (
-                      <Button type="button" variant="ghost" size="icon-sm" aria-label={t('remove_question_aria', { number: index + 1 })} onClick={() => removeQuestion(index)}>
+                      <Button type="button" variant="ghost" size="icon-sm" data-remove disabled={busy} aria-label={t('remove_question_aria', { number: index + 1 })} onClick={() => removeQuestion(index)}>
                         <span aria-hidden="true">✕</span>
                       </Button>
                     )}
@@ -175,7 +205,7 @@ export function QuizEditor({ heading, backHref, questionsStepLabel, submitLabel,
 
           {locked ? null : (
             <form onSubmit={(e) => void addQuestion(e)} noValidate className="parchment-card p-6 space-y-5">
-              <h2 className="font-semibold text-[var(--color-ink)]">{questions.length === 0 ? t('create_first_question') : t('create_another_question')}</h2>
+              <h2 ref={addHeadingRef} tabIndex={-1} className="font-semibold text-[var(--color-ink)] outline-none">{questions.length === 0 ? t('create_first_question') : t('create_another_question')}</h2>
               <Field invalid={!!questionForm.formState.errors.question}>
                 <FieldLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   <Required>{t('create_question_label')}</Required>
@@ -221,7 +251,7 @@ export function QuizEditor({ heading, backHref, questionsStepLabel, submitLabel,
                 ))}
               </fieldset>
 
-              <Button type="submit" variant="outline" className="w-full border-dashed">
+              <Button type="submit" variant="outline" disabled={pending} className="w-full border-dashed">
                 {t('create_add_question')}
               </Button>
             </form>
@@ -234,7 +264,7 @@ export function QuizEditor({ heading, backHref, questionsStepLabel, submitLabel,
           ) : null}
 
           <div className="flex justify-between items-center pb-8">
-            <Button type="button" variant="ghost" onClick={() => setStep(1)}>
+            <Button type="button" variant="ghost" disabled={pending} onClick={() => goTo(1)}>
               {t('create_back')}
             </Button>
             <Button type="button" data-testid="quiz-save" disabled={questions.length === 0 || pending || locked} onClick={() => void save()} className="bg-primary-600 hover:bg-primary-700 text-white font-bold px-6">

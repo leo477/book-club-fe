@@ -22,8 +22,7 @@
     "error_no_questions": "У цьому квізі ще немає питань.",
     "leaderboard_status": "Статус",
     "session_refresh_hint": "Оновлюється кожні 15 секунд",
-    "session_event_option": "{{ title }} — {{ date }}",
-    "submit_error": "Не вдалося надіслати відповіді. Спробуйте ще раз."
+    "session_event_option": "{{ title }} — {{ date }}"
   },
   "ERRORS": {
     "retry": "Спробувати ще раз"

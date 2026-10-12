@@ -144,6 +144,32 @@ describe('QuizTake', () => {
     expect(await screen.findByRole('status')).toHaveTextContent('0/1');
   });
 
+  it('keeps the answers when a background refetch fails, and starts over when the question set changes', async () => {
+    const user = userEvent.setup();
+    let mode: 'ok' | 'fail' | 'three' = 'ok';
+    server.use(
+      http.get(`${API}/quizzes/${QUIZ}`, () => HttpResponse.json(quizJson({ status: 'active', isActive: true }))),
+      http.get(`${API}/quizzes/${QUIZ}/questions`, () => {
+        if (mode === 'fail') return new HttpResponse(null, { status: 500 });
+        return HttpResponse.json(mode === 'three' ? [...two(), hidden({ id: 'q3', question: 'Third?' })] : two());
+      }),
+    );
+    const { queryClient } = renderWithProviders(
+      <StranglerProvider value={NEXT_ROUTES}>
+        <QuizTake clubId={CLUB} quizId={QUIZ} />
+      </StranglerProvider>,
+    );
+    await user.click(await screen.findByRole('radio', { name: /Harkonnen/ }));
+    mode = 'fail';
+    await queryClient.refetchQueries({ queryKey: ['quiz', QUIZ, 'questions'] });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /Harkonnen/ })).toBeChecked();
+    mode = 'three';
+    await queryClient.refetchQueries({ queryKey: ['quiz', QUIZ, 'questions'] });
+    expect(await screen.findByText(/1 з 3/)).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /Harkonnen/ })).not.toBeChecked();
+  });
+
   it('says so when the quiz has no questions, and when it belongs to another club', async () => {
     const first = setup([]);
     expect(await screen.findByRole('alert')).toHaveTextContent(t('QUIZ.error_no_questions'));

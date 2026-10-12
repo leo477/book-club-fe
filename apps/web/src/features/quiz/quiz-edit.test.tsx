@@ -114,6 +114,115 @@ describe('QuizEdit', () => {
     await waitFor(() => expect(nav.push).toHaveBeenCalledTimes(1));
   });
 
+  it('retries after a failure part-way without duplicating or hitting a deleted question again', async () => {
+    const user = userEvent.setup();
+    const calls: string[] = [];
+    let failQ2 = true;
+    server.use(
+      http.patch(`${API}/quizzes/${QUIZ}`, () => {
+        calls.push('patch quiz');
+        return HttpResponse.json(quizJson());
+      }),
+      http.delete(`${API}/quizzes/${QUIZ}/questions/q1`, () => {
+        calls.push('delete q1');
+        return calls.filter((c) => c === 'delete q1').length > 1 ? HttpResponse.json({ detail: 'gone' }, { status: 404 }) : new HttpResponse(null, { status: 204 });
+      }),
+      http.patch(`${API}/quizzes/${QUIZ}/questions/q2`, () => {
+        calls.push('patch q2');
+        return failQ2 ? new HttpResponse(null, { status: 500 }) : HttpResponse.json(questionJson({ id: 'q2' }));
+      }),
+      http.post(`${API}/quizzes/${QUIZ}/questions`, () => {
+        calls.push('post');
+        return HttpResponse.json(questionJson({ id: 'q3' }), { status: 201 });
+      }),
+      http.patch(`${API}/quizzes/${QUIZ}/questions/q3`, () => {
+        calls.push('patch q3');
+        return HttpResponse.json(questionJson({ id: 'q3' }));
+      }),
+    );
+    setup();
+    await title();
+    await user.click(screen.getByTestId('next-button'));
+    await user.click(await screen.findByRole('button', { name: 'Видалити питання 1' }));
+    await user.click(screen.getByLabelText(/^Запитання/));
+    await user.paste('Added later?');
+    for (const [i, label] of ['A', 'B', 'C', 'D'].entries()) {
+      await user.click(screen.getByLabelText(`Варіант ${label}`));
+      await user.paste(`o${i}`);
+    }
+    await user.click(screen.getByRole('button', { name: t('QUIZ.create_add_question') }));
+    await screen.findByText('Added later?');
+    const save = screen.getByRole('button', { name: new RegExp(`^${t('QUIZ.edit_save')}`) });
+    await user.click(save);
+    expect(await screen.findByRole('alert')).toHaveTextContent(t('QUIZ.save_error'));
+    expect(calls).toEqual(['patch quiz', 'delete q1', 'patch q2']);
+    failQ2 = false;
+    await waitFor(() => expect(save).toBeEnabled());
+    await user.click(save);
+    await waitFor(() => expect(nav.push).toHaveBeenCalledTimes(1));
+    expect(calls.slice(3)).toEqual(['patch quiz', 'patch q2', 'post']);
+  });
+
+  it('retries a save whose earlier question add succeeded as an update, not a second add', async () => {
+    const user = userEvent.setup();
+    const calls: string[] = [];
+    let failTail = true;
+    server.use(
+      http.patch(`${API}/quizzes/${QUIZ}`, () => HttpResponse.json(quizJson())),
+      http.patch(`${API}/quizzes/${QUIZ}/questions/:id`, ({ params }) => {
+        calls.push(`patch ${String(params["id"])}`);
+        return failTail && params["id"] === 'q2' ? new HttpResponse(null, { status: 500 }) : HttpResponse.json(questionJson({ id: String(params["id"]) }));
+      }),
+      http.post(`${API}/quizzes/${QUIZ}/questions`, () => {
+        calls.push('post');
+        return HttpResponse.json(questionJson({ id: 'q3' }), { status: 201 });
+      }),
+    );
+    setup(quizJson(), [questionJson({ id: 'q1' })]);
+    await title();
+    await user.click(screen.getByTestId('next-button'));
+    await user.click(await screen.findByLabelText(/^Запитання/));
+    await user.paste('Added later?');
+    for (const [i, label] of ['A', 'B', 'C', 'D'].entries()) {
+      await user.click(screen.getByLabelText(`Варіант ${label}`));
+      await user.paste(`o${i}`);
+    }
+    await user.click(screen.getByRole('button', { name: t('QUIZ.create_add_question') }));
+    await screen.findByText('Added later?');
+    server.use(
+      http.patch(`${API}/quizzes/${QUIZ}/questions/q1`, () => {
+        calls.push('patch q1');
+        return failTail ? new HttpResponse(null, { status: 500 }) : HttpResponse.json(questionJson());
+      }),
+    );
+    const save = screen.getByRole('button', { name: new RegExp(`^${t('QUIZ.edit_save')}`) });
+    await user.click(save);
+    await screen.findByRole('alert');
+    failTail = false;
+    await waitFor(() => expect(save).toBeEnabled());
+    await user.click(save);
+    await waitFor(() => expect(nav.push).toHaveBeenCalledTimes(1));
+    expect(calls.filter((c) => c === 'post')).toHaveLength(1);
+  });
+
+  it('keeps an answer the backend did not reveal: the question is sent without a correct index and nothing is invented', async () => {
+    const user = userEvent.setup();
+    const bodies: unknown[] = [];
+    server.use(
+      http.patch(`${API}/quizzes/${QUIZ}`, () => HttpResponse.json(quizJson())),
+      http.patch(`${API}/quizzes/${QUIZ}/questions/q1`, async ({ request }) => {
+        bodies.push(await request.json());
+        return HttpResponse.json(questionJson());
+      }),
+    );
+    setup(quizJson(), [questionJson({ id: 'q1', correctIndex: null })]);
+    await title();
+    await user.click(screen.getByTestId('next-button'));
+    await user.click(await screen.findByRole('button', { name: new RegExp(`^${t('QUIZ.edit_save')}`) }));
+    await waitFor(() => expect(nav.push).toHaveBeenCalled());
+    expect(bodies).toEqual([{ question: 'Who rules Arrakis?', options: ['Harkonnen', 'Atreides', 'Corrino', 'Fremen'] }]);
+  });
+
   it.each([['live'], ['active'], ['closed']])('is read-only for a %s quiz', async (status) => {
     const user = userEvent.setup();
     setup(quizJson({ status, isActive: status !== 'closed' }));

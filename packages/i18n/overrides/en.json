@@ -21,8 +21,7 @@
     "error_no_questions": "This quiz has no questions yet.",
     "leaderboard_status": "Status",
     "session_refresh_hint": "Auto-refreshes every 15 seconds",
-    "session_event_option": "{{ title }} — {{ date }}",
-    "submit_error": "Could not submit your answers. Please try again."
+    "session_event_option": "{{ title }} — {{ date }}"
   },
   "ERRORS": {
     "retry": "Try again"

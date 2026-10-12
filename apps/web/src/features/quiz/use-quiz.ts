@@ -2,7 +2,7 @@
 'use no memo';
 
 import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import { isClubStub, type AddQuestionRequest, type Quiz, type QuizQuestion, type QuizSession, type UpdateQuestionRequest } from '@book-club/contracts';
+import { isClubStub, type Quiz, type QuizQuestion, type QuizSession, type UpdateQuestionRequest } from '@book-club/contracts';
 import { eventsKey, useMyMembership } from '@/features/club-detail/use-club-detail';
 import { useSession } from '@/features/clubs/use-session';
 import { useClubForEdit } from '@/features/organizer/use-organizer';
@@ -35,6 +35,8 @@ export function useQuizDetail(quizId: string, withQuestions = true) {
     quiz: quiz.data,
     questions: questions.data ?? [],
     isPending: quiz.isPending || (withQuestions && questions.isPending),
+    /** everything needed is loaded; a failed refetch after that must not take the page down */
+    ready: quiz.data !== undefined && (!withQuestions || questions.data !== undefined),
     error: quiz.error ?? questions.error,
     isError: quiz.isError || questions.isError,
     retry: () => void Promise.all([quiz.isError ? quiz.refetch() : null, questions.isError ? questions.refetch() : null]),
@@ -106,33 +108,78 @@ export function useEndSession(quizId: string, clubId: string) {
 }
 
 export interface DraftQuestion {
+  /** stable identity of the draft entry, saved or not */
+  key: string;
   /** absent on a question that is not saved yet */
   id?: string;
   question: string;
   options: string[];
-  correctIndex: number;
+  /** null when the backend did not reveal it; such a question is sent without it, so the stored answer stays */
+  correctIndex: number | null;
 }
 
-export const draftsOf = (questions: readonly QuizQuestion[]): DraftQuestion[] =>
-  questions.map((q) => ({ id: q.id, question: q.question, options: [...q.options], correctIndex: q.correctIndex ?? 0 }));
+let draftSeq = 0;
+export const newDraftKey = (): string => `new-${(draftSeq += 1)}`;
 
-const body = (q: DraftQuestion): AddQuestionRequest & UpdateQuestionRequest => ({ question: q.question, options: q.options, correctIndex: q.correctIndex });
+export const draftsOf = (questions: readonly QuizQuestion[]): DraftQuestion[] =>
+  questions.map((q) => ({ key: q.id, id: q.id, question: q.question, options: [...q.options], correctIndex: q.correctIndex ?? null }));
+
+const body = (q: DraftQuestion): UpdateQuestionRequest => ({
+  question: q.question,
+  options: q.options,
+  ...(q.correctIndex === null ? {} : { correctIndex: q.correctIndex }),
+});
+
+interface SyncState {
+  /** draft key -> server id, for questions this hook added */
+  created: Map<string, string>;
+  deleted: Set<string>;
+}
+
+const newSync = (): SyncState => ({ created: new Map(), deleted: new Set() });
+
+const deleteOnce = async (quizId: string, id: string, state: SyncState) => {
+  if (state.deleted.has(id)) return;
+  try {
+    await api.quiz.deleteQuestion(quizId, id);
+  } catch (err) {
+    if (statusOf(err) !== 404) throw err;
+  }
+  state.deleted.add(id);
+};
+
+/**
+ * Make the server's questions match the draft, safe to repeat after any failure: what was removed is deleted (a 404 means it is gone),
+ * what an earlier attempt added is updated rather than added again, and what the draft no longer holds is deleted.
+ */
+async function syncQuestions(quizId: string, questions: readonly DraftQuestion[], removedIds: readonly string[], state: SyncState) {
+  for (const id of removedIds) await deleteOnce(quizId, id, state);
+  const keys = new Set(questions.map((q) => q.key));
+  for (const [key, id] of state.created) {
+    if (keys.has(key)) continue;
+    await deleteOnce(quizId, id, state);
+    state.created.delete(key);
+  }
+  for (const q of questions) {
+    const id = q.id ?? state.created.get(q.key);
+    if (id) await api.quiz.updateQuestion(quizId, id, body(q));
+    else state.created.set(q.key, (await api.quiz.addQuestion(quizId, { question: q.question, options: q.options, correctIndex: q.correctIndex ?? 0 })).id);
+  }
+}
 
 /**
  * Create, then add every question, then activate. The backend has no transaction for this, so a failure part-way leaves a quiz behind:
- * the retry resumes on that quiz instead of creating a second one.
+ * the retry resumes on that quiz instead of creating a second one, and reconciles it with the draft as it is now.
  */
 export function usePublishQuiz(clubId: string) {
   const queryClient = useQueryClient();
-  const progress = useRef<{ quizId: string | null; added: number; active: boolean }>({ quizId: null, added: 0, active: false }).current;
+  const progress = useRef<{ quizId: string | null; active: boolean; sync: SyncState }>({ quizId: null, active: false, sync: newSync() }).current;
   return useMutation({
     mutationFn: async ({ title, description, questions }: { title: string; description: string; questions: readonly DraftQuestion[] }) => {
       if (progress.quizId === null) progress.quizId = (await api.quiz.create(clubId, { title, description: description || null })).id;
+      else await api.quiz.update(progress.quizId, { title, description });
       const quizId = progress.quizId;
-      for (const q of questions.slice(progress.added)) {
-        await api.quiz.addQuestion(quizId, body(q));
-        progress.added += 1;
-      }
+      await syncQuestions(quizId, questions, [], progress.sync);
       if (!progress.active) {
         await api.quiz.setActive(quizId, true);
         progress.active = true;
@@ -146,14 +193,11 @@ export function usePublishQuiz(clubId: string) {
 /** Update the quiz, delete the removed questions, then update or add the rest, in the order the editor shows them. */
 export function useSaveQuiz(quizId: string, clubId: string) {
   const queryClient = useQueryClient();
+  const sync = useRef(newSync()).current;
   return useMutation({
     mutationFn: async ({ title, description, questions, removedIds }: { title: string; description: string; questions: readonly DraftQuestion[]; removedIds: readonly string[] }) => {
       await api.quiz.update(quizId, { title, description });
-      for (const id of removedIds) await api.quiz.deleteQuestion(quizId, id);
-      for (const q of questions) {
-        if (q.id) await api.quiz.updateQuestion(quizId, q.id, body(q));
-        else await api.quiz.addQuestion(quizId, body(q));
-      }
+      await syncQuestions(quizId, questions, removedIds, sync);
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: quizzesKey(clubId) });

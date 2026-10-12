@@ -61,6 +61,14 @@ function mockApi(overrides: { addQuestion?: () => Response | Promise<Response> }
       calls.push(['question', await request.json()]);
       return overrides.addQuestion ? overrides.addQuestion() : HttpResponse.json(questionJson(), { status: 201 });
     }),
+    http.patch(`${API}/quizzes/${QUIZ}`, async ({ request }) => {
+      calls.push(['update', await request.json()]);
+      return HttpResponse.json(quizJson());
+    }),
+    http.delete(`${API}/quizzes/${QUIZ}/questions/:id`, ({ params }) => {
+      calls.push(['delete', params["id"]]);
+      return new HttpResponse(null, { status: 204 });
+    }),
     http.patch(`${API}/quizzes/${QUIZ}/active`, async ({ request }) => {
       calls.push(['active', await request.json()]);
       return HttpResponse.json(quizJson({ isActive: true, status: 'active' }));
@@ -200,6 +208,73 @@ describe('QuizCreate', () => {
     await waitFor(() => expect(publish()).toBeEnabled());
     await user.click(publish());
     await waitFor(() => expect(nav.push).toHaveBeenCalledWith(`/clubs/${CLUB}/quizzes`));
-    expect(calls.map(([name]) => name)).toEqual(['create', 'question', 'question', 'active']);
+    expect(calls.map(([name]) => name)).toEqual(['create', 'question', 'update', 'question', 'active']);
+  });
+
+  it('reconciles a retried publish with the draft: a question removed after it was saved is deleted and a new title is sent', async () => {
+    const user = userEvent.setup();
+    let posts = 0;
+    const calls = mockApi({
+      addQuestion: () => {
+        posts += 1;
+        return posts === 2 ? HttpResponse.json({ detail: 'Nope' }, { status: 500 }) : HttpResponse.json(questionJson({ id: `s${posts}` }), { status: 201 });
+      },
+    });
+    setup();
+    await toStepTwo(user);
+    await addQuestion(user, 'Who rules Arrakis?', ANSWERS);
+    await addQuestion(user, 'What is spice?', ['Salt', 'Melange', 'Water', 'Sand'], 3);
+    const publish = () => screen.getByRole('button', { name: new RegExp(`^${t('QUIZ.create_save_draft')}`) });
+    await user.click(publish());
+    expect(await screen.findByRole('alert')).toHaveTextContent(t('QUIZ.save_error'));
+    await waitFor(() => expect(publish()).toBeEnabled());
+
+    await user.click(screen.getByRole('button', { name: 'Видалити питання 1' }));
+    await user.click(screen.getByRole('button', { name: t('QUIZ.create_back') }));
+    const field = screen.getByTestId('quiz-title-input');
+    await user.clear(field);
+    await fill(user, field, 'Renamed');
+    await user.click(screen.getByTestId('next-button'));
+    await screen.findByRole('heading', { level: 2, name: t('QUIZ.create_another_question') });
+    calls.length = 0;
+    await user.click(publish());
+    await waitFor(() => expect(nav.push).toHaveBeenCalledWith(`/clubs/${CLUB}/quizzes`));
+    expect(calls).toEqual([
+      ['update', { title: 'Renamed', description: '' }],
+      ['delete', 's1'],
+      ['question', { question: 'What is spice?', options: ['Salt', 'Melange', 'Water', 'Sand'], correctIndex: 3 }],
+      ['active', { isActive: true }],
+    ]);
+    expect(posts).toBe(3);
+  });
+
+  it('locks add, remove and back while the publish is pending', async () => {
+    const user = userEvent.setup();
+    const hold = gate();
+    mockApi({ addQuestion: async () => { await hold.open; return HttpResponse.json(questionJson(), { status: 201 }); } });
+    setup();
+    await toStepTwo(user);
+    await addQuestion(user, 'Who rules Arrakis?', ANSWERS);
+    await user.click(screen.getByRole('button', { name: new RegExp(`^${t('QUIZ.create_save_draft')}`) }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Видалити питання 1' })).toBeDisabled());
+    expect(screen.getByRole('button', { name: t('QUIZ.create_add_question') })).toBeDisabled();
+    expect(screen.getByRole('button', { name: t('QUIZ.create_back') })).toBeDisabled();
+    hold.release();
+    await waitFor(() => expect(nav.push).toHaveBeenCalled());
+  });
+
+  it('moves focus to the step label on the step change, and to the next remove button or the add heading after a removal', async () => {
+    const user = userEvent.setup();
+    setup();
+    await toStepTwo(user);
+    expect(screen.getByText(/Крок 2 з 2/)).toHaveFocus();
+    await addQuestion(user, 'Who rules Arrakis?', ANSWERS);
+    await addQuestion(user, 'What is spice?', ['Salt', 'Melange', 'Water', 'Sand'], 3);
+    await user.click(screen.getByRole('button', { name: 'Видалити питання 1' }));
+    expect(screen.getByRole('button', { name: 'Видалити питання 1' })).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: 'Видалити питання 1' }));
+    expect(screen.getByRole('heading', { level: 2, name: t('QUIZ.create_first_question') })).toHaveFocus();
+    await user.click(screen.getByRole('button', { name: t('QUIZ.create_back') }));
+    expect(screen.getByText(/Крок 1 з 2/)).toHaveFocus();
   });
 });

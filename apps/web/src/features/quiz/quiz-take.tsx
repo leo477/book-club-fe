@@ -20,7 +20,7 @@ export function QuizTake({ clubId, quizId }: { clubId: string; quizId: string })
         questions.length === 0 ? (
           <Notice title={t('error_no_questions')} back={{ href: `/clubs/${clubId}/quizzes`, label: t('error_return') }} />
         ) : (
-          <Taking clubId={clubId} quizId={quiz.id} title={quiz.title} questions={questions} />
+          <Taking key={questions.map((q) => q.id).join()} clubId={clubId} quizId={quiz.id} title={quiz.title} questions={questions} />
         )
       }
     </QuizDetail>

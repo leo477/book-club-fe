@@ -42,7 +42,7 @@ export function QuizDetail({ clubId, quizId, withQuestions = true, children }: {
   const detail = useQuizDetail(quizId, withQuestions);
   const back = { href: `/clubs/${clubId}/quizzes`, label: t('error_return') };
 
-  if (detail.isError) {
+  if (detail.isError && !detail.ready) {
     const status = statusOf(detail.error);
     if (status === 404 || status === 422) return <Notice title={t('error_not_found')} back={back} />;
     return <ErrorPanel onRetry={detail.retry} />;
