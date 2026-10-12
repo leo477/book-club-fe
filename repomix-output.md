@@ -479,6 +479,7 @@ docs/
     CANARY-METRICS.md
     cleanup-pw-audit.sql
     GATE-G1.md
+    PARITY-R11.md
     PARITY-R5.md
     PARITY-R6.md
     PARITY-R7.md
@@ -507,6 +508,8 @@ e2e/
       r6-leave.json
       r6-member-vote.json
       r6-organizer-view.json
+    r11/
+      fixtures.ts
     r6/
       fixtures.ts
       helpers.ts
