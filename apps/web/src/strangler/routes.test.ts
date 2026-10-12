@@ -33,7 +33,7 @@ describe('matchRoute', () => {
 });
 
 describe('manifest', () => {
-  it('owns the strangler probe, privacy, terms, clubs, club detail, the organizer forms, the root redirect, events, profile, support and auth', () => {
+  it('owns the strangler probe, privacy, terms, clubs, club detail, the organizer forms, the root redirect, events, profile, support, chats and auth', () => {
     expect(manifest.map((r) => [r.pattern, r.owner])).toEqual([
       ['/__strangler-probe', 'next'],
       ['/privacy', 'next'],
@@ -59,6 +59,7 @@ describe('manifest', () => {
       ['/clubs/:id/quizzes/:quizId/preview', 'next'],
       ['/clubs/:id/quizzes/:quizId/session', 'next'],
       ['/clubs/:id/quizzes/:quizId/leaderboard', 'next'],
+      ['/chats', 'next'],
       ['/login', 'next'],
       ['/register', 'next'],
       ['/auth/callback', 'next'],

@@ -54,6 +54,12 @@ vercel edge-config update book-club-strangler --patch '{"items":[{"operation":"u
 
 (Send the whole `routes` object including the already-live routes, as above.) The Next build needs `NEXT_PUBLIC_OAUTH_BASE_URL` (absolute backend API origin, e.g. `https://book-club-be.onrender.com/api/v1`) at build time and the production build fails without it (`checkOAuthBaseUrl`, build phase only; dev, test and `next start` are unaffected). It is set in both build paths of `.github/workflows/web.yml` (the `build` job and the `deploy` job that runs `vercel build`), so merging does not depend on the Vercel dashboard; a build that does not go through that workflow (a manual `vercel build`, another CI) must export it too.
 
+## Chat (R12): `/chats` route and the `shell.chatWidget` flag
+
+`/chats` is an ordinary manifest route. The floating chat widget is gated separately by a **flag key in the same `routes` object**: `"shell.chatWidget":{"target":"next","percent":N}`. It is evaluated exactly like a route (same `bc_bucket`, same fail-safe: missing, `legacy`, out of bucket or Edge Config down means off) but it is not in the manifest and never appears in `/strangler.json`. Off = the R5 round link to `/chats` and no chat requests on other pages; `/chats` itself always runs the chat. Roll back with `{"target":"legacy","percent":0}` (or remove the key); propagation is the same as for routes. Keep `/chats` and the flag at the same percent unless you want the widget visible on a page tree whose `/chats` still renders in legacy.
+
+The browser opens the socket straight to `NEXT_PUBLIC_WS_URL` (default `wss://book-club-be.onrender.com/api/v1`; Vercel does not proxy WebSockets), so the CSP `connect-src` must list that origin (`wss://book-club-be.onrender.com` is there; a different backend host needs `buildCsp` and `vercel.json` updated too). Each connection and reconnection first calls `POST /api/v1/auth/ws-ticket` (single use) and sends it as the first frame.
+
 ## Global kill (everything to legacy)
 
 ```sh
