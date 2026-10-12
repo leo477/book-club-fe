@@ -8,12 +8,14 @@ export interface StranglerRoute {
 
 const escape = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-/** `:id` matches a UUID only, so a literal sibling such as `/clubs/create` never matches `/clubs/:id`. */
+const UUID_PARAMS = new Set([':id', ':quizId']);
+
+/** `:id` and `:quizId` match a UUID only, so a literal sibling such as `/clubs/create` never matches `/clubs/:id`. */
 export function compilePattern(pattern: string): RegExp {
   const body = pattern
     .split('/')
     .filter(Boolean)
-    .map((segment) => (segment === ':id' ? UUID : segment.startsWith(':') ? '[^/]+' : escape(segment)))
+    .map((segment) => (UUID_PARAMS.has(segment) ? UUID : segment.startsWith(':') ? '[^/]+' : escape(segment)))
     .join('/');
   return new RegExp(`^/${body}/?$`);
 }
@@ -43,4 +45,4 @@ export function isLegacyShadowed(pathname: string, routes: readonly StranglerRou
   return !matchRoute(pathname, routes) && routes.some((route) => route.pattern.includes(':') && compileLoose(route.pattern).test(pathname));
 }
 
-export const manifest: readonly StranglerRoute[] = defineRoutes(['/__strangler-probe', '/privacy', '/terms', '/clubs', '/clubs/:id', '/', '/events', '/events/:id', '/profile', '/support', '/support/new', '/clubs/create', '/clubs/:id/edit', '/clubs/:id/events/create', '/events/:id/edit', '/clubs/:id/manage', '/clubs/:id/randomizer', '/login', '/register', '/auth/callback']);
+export const manifest: readonly StranglerRoute[] = defineRoutes(['/__strangler-probe', '/privacy', '/terms', '/clubs', '/clubs/:id', '/', '/events', '/events/:id', '/profile', '/support', '/support/new', '/clubs/create', '/clubs/:id/edit', '/clubs/:id/events/create', '/events/:id/edit', '/clubs/:id/manage', '/clubs/:id/randomizer', '/clubs/:id/quizzes', '/clubs/:id/quizzes/create', '/clubs/:id/quizzes/:quizId', '/clubs/:id/quizzes/:quizId/edit', '/clubs/:id/quizzes/:quizId/preview', '/clubs/:id/quizzes/:quizId/session', '/clubs/:id/quizzes/:quizId/leaderboard', '/login', '/register', '/auth/callback']);
