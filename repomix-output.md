@@ -139,6 +139,7 @@ apps/
             page.test.tsx
             page.tsx
           layout.tsx
+          not-found-titles.test.ts
           not-found.tsx
           organizer-pages.test.tsx
           quiz-pages.test.tsx
