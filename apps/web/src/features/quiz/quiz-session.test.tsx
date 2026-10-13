@@ -1,4 +1,5 @@
 import { act, screen, waitFor, within } from '@testing-library/react';
+import type { QueryClient } from '@tanstack/react-query';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -43,6 +44,12 @@ function setup({ session = sessionJson() as unknown, rows = entries(5) as unknow
 
 // intervals only: the network, MSW and TanStack's own scheduling keep running on real timers
 const fakeIntervals = () => vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+// a request reaching MSW is not it settling, and the button may still read "refresh" until React renders the fetch;
+// the query client knows synchronously, so wait on it before the next tick or click
+const settled = async (queryClient: QueryClient) => {
+  await vi.waitFor(() => expect(queryClient.isFetching()).toBe(0));
+  return screen.findByRole('button', { name: t('QUIZ.session_refresh') });
+};
 const tick = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
 const setVisibility = (state: 'visible' | 'hidden') => {
   vi.spyOn(document, 'visibilityState', 'get').mockReturnValue(state);
@@ -121,29 +128,31 @@ describe('QuizSession running', () => {
   it('refreshes the leaderboard every 15 seconds and on demand', async () => {
     fakeIntervals();
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    const { hits } = setup();
+    const { hits, queryClient } = setup();
     await screen.findByRole('table');
     expect(hits.n).toBe(1);
     await tick(POLL_MS - 1);
     expect(hits.n).toBe(1);
     await tick(1);
     await vi.waitFor(() => expect(hits.n).toBe(2));
+    await settled(queryClient);
     await tick(POLL_MS);
     await vi.waitFor(() => expect(hits.n).toBe(3));
-    await user.click(screen.getByRole('button', { name: t('QUIZ.session_refresh') }));
+    await user.click(await settled(queryClient));
     await vi.waitFor(() => expect(hits.n).toBe(4));
-    await screen.findByRole('button', { name: t('QUIZ.session_refresh') });
+    await settled(queryClient);
   });
 
   it('pauses while the tab is hidden and catches up once when it is visible again', async () => {
     fakeIntervals();
-    const { hits } = setup();
+    const { hits, queryClient } = setup();
     await screen.findByRole('table');
     setVisibility('hidden');
     await tick(POLL_MS * 4);
     expect(hits.n).toBe(1);
     setVisibility('visible');
     await vi.waitFor(() => expect(hits.n).toBe(2));
+    await settled(queryClient);
     await tick(POLL_MS);
     await vi.waitFor(() => expect(hits.n).toBe(3));
   });
@@ -191,6 +200,6 @@ describe('QuizSession running', () => {
     await user.click(await screen.findByRole('button', { name: t('QUIZ.session_end') }));
     await waitFor(() => expect(nav.toast).toHaveBeenCalledWith('error', 'Already closed'));
     expect(nav.push).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: t('QUIZ.session_end') })).toBeEnabled();
+    await waitFor(() => expect(screen.getByRole('button', { name: t('QUIZ.session_end') })).toBeEnabled());
   });
 });
