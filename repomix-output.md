@@ -166,6 +166,7 @@ apps/
         error.tsx
         fonts.ts
         global-error.tsx
+        layout.test.ts
         layout.tsx
         not-found.test.tsx
         not-found.tsx
