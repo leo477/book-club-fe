@@ -15,13 +15,13 @@ import { useClubForEdit } from '@/features/organizer/use-organizer';
 const statusOf = (err: unknown): number | null =>
   typeof err === 'object' && err !== null && typeof (err as { status?: unknown }).status === 'number' ? (err as { status: number }).status : null;
 
-const Busy = () => (
+export const Busy = () => (
   <div className="page-container py-16 flex justify-center" aria-busy="true">
     <Spinner />
   </div>
 );
 
-function Notice({ title, back }: { title: string; back: { href: string; label: string } }) {
+export function Notice({ title, back }: { title: string; back: { href: string; label: string } }) {
   return (
     <div className="page-container py-16 text-center" role="alert">
       <p className="text-6xl mb-4" aria-hidden="true">

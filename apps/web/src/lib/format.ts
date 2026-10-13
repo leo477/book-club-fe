@@ -16,3 +16,10 @@ export function initials(name: string | null | undefined): string {
   const [first, second] = parts;
   return first && second ? ((first[0] ?? '') + (second[0] ?? '')).toUpperCase() : name.slice(0, 2).toUpperCase();
 }
+
+export function formatDateTime(value: string | null | undefined, locale: string): string {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '—';
+  return date.toLocaleString(LOCALES[locale] ?? 'en-US', { dateStyle: 'medium', timeStyle: 'short', timeZone: TIME_ZONE });
+}

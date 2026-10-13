@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, initials } from './format';
+import { formatDate, formatDateTime, initials } from './format';
 
 describe('formatDate', () => {
   it('formats in the locale and the fixed zone so server and browser agree', () => {
@@ -9,6 +9,17 @@ describe('formatDate', () => {
 
   it.each([[null], [undefined], [''], ['not a date']])('returns a dash for %s', (value) => {
     expect(formatDate(value, 'uk')).toBe('—');
+  });
+});
+
+describe('formatDateTime', () => {
+  it('adds the time in the same fixed zone', () => {
+    expect(formatDateTime('2026-03-05T22:30:00Z', 'en')).toBe('Mar 6, 2026, 12:30 AM');
+    expect(formatDateTime('2026-03-05T22:30:00Z', 'uk')).toBe('6 бер. 2026 р., 00:30');
+  });
+
+  it.each([[null], [undefined], [''], ['not a date']])('returns a dash for %s', (value) => {
+    expect(formatDateTime(value, 'uk')).toBe('—');
   });
 });
 

@@ -18,6 +18,13 @@ describe('buildCsp', () => {
     expect(directive(csp, 'style-src')).toContain("'unsafe-inline'");
   });
 
+  it('lets the chat socket reach the backend directly and nothing broader', () => {
+    const connect = directive(csp, 'connect-src').split(' ');
+    expect(connect).toContain('wss://book-club-be.onrender.com');
+    expect(connect).not.toContain('wss:');
+    expect(connect).not.toContain('*');
+  });
+
   it('allows eval in dev only', () => {
     expect(directive(buildCsp('abc', true), 'script-src')).toContain("'unsafe-eval'");
   });

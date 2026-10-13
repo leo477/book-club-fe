@@ -63,6 +63,7 @@ apps/
   web/
     scripts/
       check-first-load.mjs
+      check-legacy-guard.mjs
     src/
       app/
         (auth)/
@@ -83,6 +84,8 @@ apps/
             page.test.tsx
             page.tsx
         (shell)/
+          chats/
+            page.tsx
           clubs/
             [id]/
               edit/
@@ -91,6 +94,20 @@ apps/
                 create/
                   page.tsx
               manage/
+                page.tsx
+              quizzes/
+                [quizId]/
+                  edit/
+                    page.tsx
+                  leaderboard/
+                    page.tsx
+                  preview/
+                    page.tsx
+                  session/
+                    page.tsx
+                  page.tsx
+                create/
+                  page.tsx
                 page.tsx
               randomizer/
                 page.tsx
@@ -117,7 +134,9 @@ apps/
             page.test.tsx
             page.tsx
           layout.tsx
+          not-found.tsx
           organizer-pages.test.tsx
+          quiz-pages.test.tsx
         %5F%5Fstrangler-probe/
           page.tsx
         %5F%5Fui/
@@ -143,6 +162,8 @@ apps/
         fonts.ts
         global-error.tsx
         layout.tsx
+        not-found.test.tsx
+        not-found.tsx
         page.test.tsx
         page.tsx
         robots.test.ts
@@ -202,6 +223,7 @@ apps/
         lazy-boundary.tsx
         lazy-page.tsx
         namespaces-intl.tsx
+        not-found-view.tsx
         social-badges.tsx
         social-icon-paths.ts
         social-link-field.tsx
@@ -227,6 +249,32 @@ apps/
           register-page.tsx
           require-auth.test.tsx
           require-auth.tsx
+        chat/
+          chat-audio-alert.test.ts
+          chat-audio-alert.ts
+          chat-composer.tsx
+          chat-header.tsx
+          chat-keys.ts
+          chat-message-list.tsx
+          chat-model.test.ts
+          chat-model.ts
+          chat-provider.test.tsx
+          chat-provider.tsx
+          chat-render-loop.test.tsx
+          chat-runtime.tsx
+          chat-slot.tsx
+          chat-ticket.test.ts
+          chat-ticket.ts
+          chat-timestamp.test.ts
+          chat-timestamp.ts
+          chat-widget.test.tsx
+          chat-widget.tsx
+          chats-page.test.tsx
+          chats-page.tsx
+          connection-notice.tsx
+          new-room-form.tsx
+          test-support.ts
+          use-chat-data.ts
         club-detail/
           action-error.test.ts
           action-error.ts
@@ -334,6 +382,28 @@ apps/
           role-selector.tsx
           socials-section.tsx
           use-profile.ts
+        quiz/
+          lazy-boundary.test.ts
+          lazy.tsx
+          leaderboard.tsx
+          quiz-create.test.tsx
+          quiz-create.tsx
+          quiz-edit.test.tsx
+          quiz-edit.tsx
+          quiz-editor.tsx
+          quiz-leaderboard.test.tsx
+          quiz-leaderboard.tsx
+          quiz-list.test.tsx
+          quiz-list.tsx
+          quiz-preview.test.tsx
+          quiz-preview.tsx
+          quiz-session.test.tsx
+          quiz-session.tsx
+          quiz-take.test.tsx
+          quiz-take.tsx
+          quiz-ui.tsx
+          test-support.ts
+          use-quiz.ts
         randomizer/
           lazy.tsx
           pick.test.ts
@@ -367,6 +437,8 @@ apps/
         geocode-session.ts
         json-ld.test.tsx
         json-ld.tsx
+        legacy-fallback.test.ts
+        legacy-fallback.ts
         legacy-session.test.ts
         legacy-session.ts
         navigate.test.ts
@@ -391,6 +463,8 @@ apps/
         utils.ts
         uuid.test.ts
         uuid.ts
+        ws-base-url.test.ts
+        ws-base-url.ts
         zod-locales-stub.ts
       providers/
         providers.tsx
@@ -398,12 +472,17 @@ apps/
         config.test.ts
         config.ts
         context.tsx
+        csp-vercel.test.ts
         csp.test.ts
         csp.ts
         edge-config.ts
+        flags.ts
+        legacy-guard-script.test.ts
         manifest-coverage.test.ts
         proxy-handler.test.ts
         proxy-handler.ts
+        read-state.test.ts
+        route-coverage.test.ts
         routes.test.ts
         routes.ts
         server.test.ts
@@ -414,6 +493,8 @@ apps/
         import-graph.test.ts
         import-graph.ts
       env.d.ts
+      next-config.test.ts
+      proxy.test.ts
       proxy.ts
     .gitignore
     components.json
@@ -442,6 +523,8 @@ docs/
     CANARY-METRICS.md
     cleanup-pw-audit.sql
     GATE-G1.md
+    PARITY-R11.md
+    PARITY-R12.md
     PARITY-R5.md
     PARITY-R6.md
     PARITY-R7.md
@@ -452,6 +535,7 @@ docs/
     SECURITY-R6.md
     SECURITY-R7.md
     SECURITY-R9.md
+    SHIM-INVENTORY-R13.md
     UI-DELTAS.md
 e2e/
   fixtures/
@@ -470,6 +554,11 @@ e2e/
       r6-leave.json
       r6-member-vote.json
       r6-organizer-view.json
+    r11/
+      fixtures.ts
+    r12/
+      edge-config-server.mjs
+      fixtures.ts
     r6/
       fixtures.ts
       helpers.ts
@@ -503,6 +592,10 @@ packages/
         misc.ts
         quiz.ts
         users.ts
+      ws/
+        chat-socket.ts
+        chat-text.ts
+        index.ts
       api.ts
       client.ts
       errors.ts
@@ -510,6 +603,7 @@ packages/
       transports.ts
       types.ts
     test/
+      chat-socket.test.ts
       client.test.ts
       modules.test.ts
       msw.test.ts
@@ -531,6 +625,7 @@ packages/
       misc.ts
       organizer-forms.ts
       parse.ts
+      quiz-forms.ts
       quiz.ts
       tolerant.ts
       user.ts
@@ -545,6 +640,7 @@ packages/
       contracts.test.ts
       fixtures.test.ts
       organizer-forms.test.ts
+      quiz-forms.test.ts
     eslint.config.mjs
     package.json
     tsconfig.json
@@ -577,6 +673,7 @@ public/
   robots.txt
   sitemap.xml
 scripts/
+  check-route-coverage.mjs
   extract-i18n.mjs
   generate-sitemap.mjs
 src/

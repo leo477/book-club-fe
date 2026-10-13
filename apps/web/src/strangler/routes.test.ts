@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { compilePattern, defineRoutes, isLegacyShadowed, manifest, matchRoute } from './routes';
 
 const UUID = '3f2b8c1e-9a4d-4e7b-8c5f-1a2b3c4d5e6f';
+const QUIZ = '9d0e1f2a-3b4c-4d5e-8f60-718293a4b5c6';
 const routes = defineRoutes(['/clubs', '/clubs/:id', '/privacy']);
 
 describe('matchRoute', () => {
@@ -32,7 +33,7 @@ describe('matchRoute', () => {
 });
 
 describe('manifest', () => {
-  it('owns the strangler probe, privacy, terms, clubs, club detail, the organizer forms, the root redirect, events, profile, support and auth', () => {
+  it('owns the strangler probe, privacy, terms, clubs, club detail, the organizer forms, the root redirect, events, profile, support, chats and auth', () => {
     expect(manifest.map((r) => [r.pattern, r.owner])).toEqual([
       ['/__strangler-probe', 'next'],
       ['/privacy', 'next'],
@@ -51,6 +52,14 @@ describe('manifest', () => {
       ['/events/:id/edit', 'next'],
       ['/clubs/:id/manage', 'next'],
       ['/clubs/:id/randomizer', 'next'],
+      ['/clubs/:id/quizzes', 'next'],
+      ['/clubs/:id/quizzes/create', 'next'],
+      ['/clubs/:id/quizzes/:quizId', 'next'],
+      ['/clubs/:id/quizzes/:quizId/edit', 'next'],
+      ['/clubs/:id/quizzes/:quizId/preview', 'next'],
+      ['/clubs/:id/quizzes/:quizId/session', 'next'],
+      ['/clubs/:id/quizzes/:quizId/leaderboard', 'next'],
+      ['/chats', 'next'],
       ['/login', 'next'],
       ['/register', 'next'],
       ['/auth/callback', 'next'],
@@ -64,6 +73,12 @@ describe('manifest', () => {
     expect(matchRoute(`/clubs/${UUID}/manage`)?.pattern).toBe('/clubs/:id/manage');
     expect(matchRoute(`/clubs/${UUID}/randomizer/`)?.pattern).toBe('/clubs/:id/randomizer');
     expect(matchRoute('/clubs/abc/manage')).toBeNull();
+    expect(matchRoute(`/clubs/${UUID}/quizzes`)?.pattern).toBe('/clubs/:id/quizzes');
+    expect(matchRoute(`/clubs/${UUID}/quizzes/create`)?.pattern).toBe('/clubs/:id/quizzes/create');
+    expect(matchRoute(`/clubs/${UUID}/quizzes/${QUIZ}`)?.pattern).toBe('/clubs/:id/quizzes/:quizId');
+    for (const leaf of ['edit', 'preview', 'session', 'leaderboard']) expect(matchRoute(`/clubs/${UUID}/quizzes/${QUIZ}/${leaf}/`)?.pattern).toBe(`/clubs/:id/quizzes/:quizId/${leaf}`);
+    expect(matchRoute(`/clubs/${UUID}/quizzes/other`)).toBeNull();
+    expect(matchRoute(`/clubs/${UUID}/quizzes/${QUIZ}/extra`)).toBeNull();
     expect(matchRoute(`/clubs/${UUID}/manage/extra`)).toBeNull();
     expect(matchRoute(`/clubs/${UUID}/events/create`)?.pattern).toBe('/clubs/:id/events/create');
     expect(matchRoute(`/clubs/${UUID}/events`)).toBeNull();
@@ -93,12 +108,17 @@ describe('isLegacyShadowed', () => {
     expect(isLegacyShadowed('/events/abc/edit')).toBe(true);
     expect(isLegacyShadowed('/clubs/abc/manage')).toBe(true);
     expect(isLegacyShadowed('/clubs/abc/randomizer')).toBe(true);
+    expect(isLegacyShadowed('/clubs/abc/quizzes')).toBe(true);
+    expect(isLegacyShadowed(`/clubs/${UUID}/quizzes/not-a-uuid`)).toBe(true);
+    expect(isLegacyShadowed(`/clubs/${UUID}/quizzes/not-a-uuid/edit`)).toBe(true);
     expect(isLegacyShadowed('/clubs/123')).toBe(true);
   });
 
   it('does not flag UUIDs, other depths or unrelated paths', () => {
     expect(isLegacyShadowed(`/clubs/${UUID}`)).toBe(false);
     expect(isLegacyShadowed(`/clubs/${UUID}/manage`)).toBe(false);
+    expect(isLegacyShadowed(`/clubs/${UUID}/quizzes/create`)).toBe(false);
+    expect(isLegacyShadowed(`/clubs/${UUID}/quizzes/${QUIZ}/session`)).toBe(false);
     expect(isLegacyShadowed('/clubs')).toBe(false);
     expect(isLegacyShadowed('/events/abc')).toBe(true);
     expect(isLegacyShadowed(`/events/${UUID}/edit`)).toBe(false);
