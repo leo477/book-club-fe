@@ -43,6 +43,8 @@ function setup({ session = sessionJson() as unknown, rows = entries(5) as unknow
 
 // intervals only: the network, MSW and TanStack's own scheduling keep running on real timers
 const fakeIntervals = () => vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+// the refresh button reads "refreshing" while a request is in flight; a request being sent is not it being settled
+const settled = () => screen.findByRole('button', { name: t('QUIZ.session_refresh') });
 const tick = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
 const setVisibility = (state: 'visible' | 'hidden') => {
   vi.spyOn(document, 'visibilityState', 'get').mockReturnValue(state);
@@ -128,11 +130,12 @@ describe('QuizSession running', () => {
     expect(hits.n).toBe(1);
     await tick(1);
     await vi.waitFor(() => expect(hits.n).toBe(2));
+    await settled();
     await tick(POLL_MS);
     await vi.waitFor(() => expect(hits.n).toBe(3));
-    await user.click(screen.getByRole('button', { name: t('QUIZ.session_refresh') }));
+    await user.click(await settled());
     await vi.waitFor(() => expect(hits.n).toBe(4));
-    await screen.findByRole('button', { name: t('QUIZ.session_refresh') });
+    await settled();
   });
 
   it('pauses while the tab is hidden and catches up once when it is visible again', async () => {
@@ -144,6 +147,7 @@ describe('QuizSession running', () => {
     expect(hits.n).toBe(1);
     setVisibility('visible');
     await vi.waitFor(() => expect(hits.n).toBe(2));
+    await settled();
     await tick(POLL_MS);
     await vi.waitFor(() => expect(hits.n).toBe(3));
   });
@@ -191,6 +195,6 @@ describe('QuizSession running', () => {
     await user.click(await screen.findByRole('button', { name: t('QUIZ.session_end') }));
     await waitFor(() => expect(nav.toast).toHaveBeenCalledWith('error', 'Already closed'));
     expect(nav.push).not.toHaveBeenCalled();
-    expect(screen.getByRole('button', { name: t('QUIZ.session_end') })).toBeEnabled();
+    await waitFor(() => expect(screen.getByRole('button', { name: t('QUIZ.session_end') })).toBeEnabled());
   });
 });
