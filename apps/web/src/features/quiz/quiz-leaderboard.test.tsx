@@ -1,4 +1,5 @@
 import { act, screen } from '@testing-library/react';
+import type { QueryClient } from '@tanstack/react-query';
 import { HttpResponse, http } from 'msw';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { t } from '@/features/club-manage/test-support';
@@ -37,6 +38,8 @@ function setup({ session = sessionJson() as unknown, rows = [entryJson(1), entry
 }
 
 const fakeIntervals = () => vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+// a request reaching MSW is not it settling; the query client reports an in-flight fetch synchronously
+const settled = (queryClient: QueryClient) => vi.waitFor(() => expect(queryClient.isFetching()).toBe(0));
 const tick = (ms: number) => act(() => vi.advanceTimersByTimeAsync(ms));
 const setVisibility = (state: 'visible' | 'hidden') => {
   vi.spyOn(document, 'visibilityState', 'get').mockReturnValue(state);
@@ -67,17 +70,20 @@ describe('QuizLeaderboard', () => {
 
   it('polls every 30 seconds, one request per period', async () => {
     fakeIntervals();
-    const { hits } = setup();
+    const { hits, queryClient } = setup();
     await screen.findByText('Player 1');
     expect(hits.n).toBe(1);
     await tick(POLL_MS - 1);
     expect(hits.n).toBe(1);
     await tick(1);
     await vi.waitFor(() => expect(hits.n).toBe(2));
+    await settled(queryClient);
     await tick(POLL_MS);
     await vi.waitFor(() => expect(hits.n).toBe(3));
+    await settled(queryClient);
     await tick(POLL_MS);
     await vi.waitFor(() => expect(hits.n).toBe(4));
+    await settled(queryClient);
     await tick(POLL_MS);
     await vi.waitFor(() => expect(hits.n).toBe(5));
   });
