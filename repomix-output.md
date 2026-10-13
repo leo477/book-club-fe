@@ -61,6 +61,11 @@ The content is organized as follows:
   pre-commit
 apps/
   web/
+    public/
+      favicon.ico
+      favicon.svg
+      googleea44a5e89a1de9d7.html
+      og-image.png
     scripts/
       check-first-load.mjs
       check-legacy-guard.mjs
@@ -496,6 +501,7 @@ apps/
       next-config.test.ts
       proxy.test.ts
       proxy.ts
+      static-files.test.ts
     .gitignore
     components.json
     eslint.config.mjs
