@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
@@ -58,10 +59,27 @@ describe('ClubManage', () => {
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
 
-  it('says organizers only when the club answers 403', async () => {
+  it('sends the viewer to /clubs with the organizers-only toast when the club answers 403', async () => {
     setup(403);
-    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.organizers_only'));
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
+    expect(nav.toast).toHaveBeenCalledWith('error', t('ERRORS.organizers_only'));
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+  });
+
+  it('toasts and replaces exactly once under StrictMode when the viewer does not organize the club', async () => {
+    mockSession({ id: 'u1', role: 'organizer' });
+    mockManageReads({});
+    server.use(http.get(`${API}/clubs/${ID}`, () => HttpResponse.json({ detail: 'x' }, { status: 403 })));
+    renderWithProviders(
+      <StrictMode>
+        <StranglerProvider value={NEXT_ROUTES}>
+          <ClubManage id={ID} />
+        </StranglerProvider>
+      </StrictMode>,
+    );
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
+    expect(nav.replace).toHaveBeenCalledTimes(1);
+    expect(nav.toast).toHaveBeenCalledTimes(1);
   });
 
   it('shows a real error state, not "club not found", for a server failure, and retries', async () => {
@@ -132,18 +150,47 @@ describe('ClubManage', () => {
   it('admits an organizer of this club who is not its owner', async () => {
     asViewer('co', 'organizer', {});
     expect(await screen.findByRole('heading', { level: 1, name: 'Alpha Readers' })).toBeInTheDocument();
+    expect(nav.replace).not.toHaveBeenCalled();
+    expect(nav.toast).not.toHaveBeenCalled();
   });
 
-  it('shows organizers only, and loads none of the tools, to a global organizer who is a plain member of this club', async () => {
+  it('keeps a spinner, with no redirect and no controls, while the membership is still loading', async () => {
+    let release: () => void = () => undefined;
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    mockSession({ id: 'other', role: 'organizer' });
+    mockManageReads();
+    server.use(
+      http.get(`${API}/clubs/${ID}`, () => HttpResponse.json(club())),
+      http.get(`${API}/clubs/${ID}/my-membership`, async () => {
+        await gate;
+        return HttpResponse.json({ isMember: true, role: 'organizer', joinRequestStatus: 'none' });
+      }),
+    );
+    renderWithProviders(
+      <StranglerProvider value={NEXT_ROUTES}>
+        <ClubManage id={ID} />
+      </StranglerProvider>,
+    );
+    await waitFor(() => expect(screen.getByRole('status')).toBeInTheDocument());
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(nav.replace).not.toHaveBeenCalled();
+    release();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Alpha Readers' })).toBeInTheDocument();
+    expect(nav.replace).not.toHaveBeenCalled();
+  });
+
+  it('redirects, and loads none of the tools for, a global organizer who is a plain member of this club', async () => {
     const stats = asViewer('other', 'member', {});
-    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.organizers_only'));
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
+    expect(nav.toast).toHaveBeenCalledWith('error', t('ERRORS.organizers_only'));
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
     expect(stats).not.toHaveBeenCalled();
   });
 
-  it('shows organizers only to a global organizer with no membership', async () => {
+  it('redirects a global organizer with no membership', async () => {
     asViewer('other', 'member', { isMember: false, role: null });
-    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.organizers_only'));
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
+    expect(nav.toast).toHaveBeenCalledWith('error', t('ERRORS.organizers_only'));
   });
 
   it('shows the error panel without retry delays, and re-checks a cached role on mount', async () => {
@@ -192,7 +239,8 @@ describe('ClubManage', () => {
         </NextIntlClientProvider>
       </QueryClientProvider>,
     );
-    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.organizers_only'));
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
+    expect(nav.toast).toHaveBeenCalledWith('error', t('ERRORS.organizers_only'));
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
 
@@ -200,9 +248,11 @@ describe('ClubManage', () => {
     asViewer('other', 'member', 500);
     expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.unexpected'));
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(nav.replace).not.toHaveBeenCalled();
+    expect(nav.toast).not.toHaveBeenCalledWith('error', t('ERRORS.organizers_only'));
   });
 
-  it('shows organizers only, not a spinner, when there is no signed-in user', async () => {
+  it('redirects instead of spinning when there is no signed-in user', async () => {
     mockSession(null);
     mockManageReads();
     server.use(http.get(`${API}/clubs/${ID}`, () => HttpResponse.json(club())));
@@ -211,7 +261,8 @@ describe('ClubManage', () => {
         <ClubManage id={ID} />
       </StranglerProvider>,
     );
-    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.organizers_only'));
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
+    expect(nav.toast).toHaveBeenCalledWith('error', t('ERRORS.organizers_only'));
     expect(screen.queryByRole('tab')).not.toBeInTheDocument();
   });
 
