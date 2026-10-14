@@ -2,13 +2,16 @@ import { NamespacesIntl } from '@/components/namespaces-intl';
 import { RequireAuth } from '@/features/auth/require-auth';
 import { LazyCreateEvent } from '@/features/organizer/lazy';
 import { notFound } from 'next/navigation';
+import { notFoundMetadata } from '@/components/not-found-view';
 import { pageMetadata } from '@/lib/page-metadata';
 import { isUuid } from '@/lib/uuid';
 
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props) {
-  return pageMetadata('TITLES.events', `/clubs/${(await params).id.toLowerCase()}/events/create`, { index: false });
+  const { id } = await params;
+  if (!isUuid(id)) return notFoundMetadata();
+  return pageMetadata('TITLES.events', `/clubs/${id.toLowerCase()}/events/create`, { index: false });
 }
 
 export default async function CreateEventPage({ params }: Props) {

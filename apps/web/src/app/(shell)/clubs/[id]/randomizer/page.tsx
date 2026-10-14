@@ -2,13 +2,16 @@ import { NamespacesIntl } from '@/components/namespaces-intl';
 import { RequireAuth } from '@/features/auth/require-auth';
 import { LazyRandomizer } from '@/features/randomizer/lazy';
 import { notFound } from 'next/navigation';
+import { notFoundMetadata } from '@/components/not-found-view';
 import { pageMetadata } from '@/lib/page-metadata';
 import { isUuid } from '@/lib/uuid';
 
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props) {
-  return pageMetadata('SEO.clubs_title', `/clubs/${(await params).id.toLowerCase()}/randomizer`, { index: false });
+  const { id } = await params;
+  if (!isUuid(id)) return notFoundMetadata();
+  return pageMetadata('SEO.clubs_title', `/clubs/${id.toLowerCase()}/randomizer`, { index: false });
 }
 
 export default async function RandomizerPage({ params }: Props) {

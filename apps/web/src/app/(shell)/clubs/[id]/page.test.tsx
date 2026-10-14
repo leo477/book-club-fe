@@ -156,7 +156,7 @@ describe('server render', () => {
   it('mirrors Angular for a missing club: 404 and invalid ids render the not-found path', async () => {
     getClub.mockRejectedValue(Object.assign(new Error('nope'), { status: 404 }));
     await expect(ClubDetailPage({ params })).rejects.toMatchObject({ digest: expect.stringContaining('404') });
-    await expect(generateMetadata({ params })).rejects.toMatchObject({ digest: expect.stringContaining('404') });
+    expect((await generateMetadata({ params })).title).toBe(t('TITLES.not_found'));
     getClub.mockClear();
     await expect(ClubDetailPage({ params: Promise.resolve({ id: 'create' }) })).rejects.toMatchObject({ digest: expect.stringContaining('404') });
     expect(getClub).not.toHaveBeenCalled();
