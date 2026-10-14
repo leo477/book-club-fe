@@ -61,6 +61,11 @@ The content is organized as follows:
   pre-commit
 apps/
   web/
+    public/
+      favicon.ico
+      favicon.svg
+      googleea44a5e89a1de9d7.html
+      og-image.png
     scripts/
       check-first-load.mjs
       check-legacy-guard.mjs
@@ -134,6 +139,7 @@ apps/
             page.test.tsx
             page.tsx
           layout.tsx
+          not-found-titles.test.ts
           not-found.tsx
           organizer-pages.test.tsx
           quiz-pages.test.tsx
@@ -161,6 +167,7 @@ apps/
         error.tsx
         fonts.ts
         global-error.tsx
+        layout.test.ts
         layout.tsx
         not-found.test.tsx
         not-found.tsx
@@ -496,6 +503,7 @@ apps/
       next-config.test.ts
       proxy.test.ts
       proxy.ts
+      static-files.test.ts
     .gitignore
     components.json
     eslint.config.mjs
@@ -519,7 +527,7 @@ docs/
     PLAN-MOBILE-APP-2026-07-15.md
     REFACTOR-PLAN-2026-07-06.md
   migration/
-    AUDIT-R13-FULL.md
+    AUDIT-R13.md
     BASELINE-2026-10.md
     CANARY-METRICS.md
     cleanup-pw-audit.sql

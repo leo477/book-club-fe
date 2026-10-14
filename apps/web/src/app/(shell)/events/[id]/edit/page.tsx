@@ -2,13 +2,16 @@ import { NamespacesIntl } from '@/components/namespaces-intl';
 import { RequireRole } from '@/features/auth/require-auth';
 import { LazyEditEvent } from '@/features/organizer/lazy';
 import { notFound } from 'next/navigation';
+import { notFoundMetadata } from '@/components/not-found-view';
 import { pageMetadata } from '@/lib/page-metadata';
 import { isUuid } from '@/lib/uuid';
 
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props) {
-  return pageMetadata('TITLES.events', `/events/${(await params).id.toLowerCase()}/edit`, { index: false });
+  const { id } = await params;
+  if (!isUuid(id)) return notFoundMetadata();
+  return pageMetadata('TITLES.events', `/events/${id.toLowerCase()}/edit`, { index: false });
 }
 
 export default async function EditEventPage({ params }: Props) {

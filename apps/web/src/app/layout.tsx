@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { NextIntlClientProvider } from 'next-intl';
@@ -14,7 +14,21 @@ import { readState, requestBucket } from '@/strangler/server';
 import { fontVariables } from './fonts';
 import './globals.css';
 
-export const metadata: Metadata = { title: 'Book Club', robots: { index: false } };
+export const metadata: Metadata = {
+  title: 'Book Club',
+  robots: { index: false },
+  keywords: 'книжковий клуб, читацький клуб, обговорення книг, Україна',
+  verification: { google: 'hRDiW-8Es2YiXt4pzpnEGdfQmHv5w-nKNEUs0zYy4Js' },
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', type: 'image/x-icon' },
+    ],
+  },
+  other: { 'mobile-web-app-capable': 'yes' },
+};
+
+export const viewport: Viewport = { themeColor: '#d97706' };
 
 const THEME_SCRIPT = `try{if(matchMedia('(prefers-color-scheme: dark)').matches)document.documentElement.classList.add('dark')}catch(e){}`;
 

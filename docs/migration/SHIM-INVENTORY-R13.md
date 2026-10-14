@@ -6,7 +6,7 @@ Scope: every piece of code, config or ops state that exists only because Angular
 
 | Shim | Used by | Verdict |
 |---|---|---|
-| `next.config.ts` `rewrites.fallback` -> `LEGACY_ORIGIN` | every path the manifest does not own (unknown URLs, `/og-image.png`, Google verification file, any route not yet 100 %) | R14 (plan: remove after 30 days at 100 %) |
+| `next.config.ts` `rewrites.fallback` -> `LEGACY_ORIGIN` | every path the manifest does not own (unknown URLs, any route not yet 100 %; `/favicon.*`, `/og-image.png` and the Google verification file are served by Next from `apps/web/public` since SCRUM-129) | R14 (plan: remove after 30 days at 100 %) |
 | `DISABLE_LEGACY_FALLBACK` (`lib/legacy-fallback.ts`, proxy, `readState`, build marker `LEGACY_FALLBACK_DISABLED_AT_BUILD` and its 503 guard in `proxy.ts`) | R13 preview audit | R14 (delete together with the fallback) |
 | `src/proxy.ts` + `strangler/proxy-handler.ts` (decide next/legacy, `bc_bucket`, legacy rewrite, 503 without origin) | every request | R14 keeps only the CSP/nonce part |
 | `strangler/config.ts` (`decide`, `parseConfig`, `loadConfig`, `computeState`, bucket helpers), `strangler/edge-config.ts` | proxy, `readState`, `/strangler.json`, `layout.tsx` | R14 simplified to a global `enabled` or deleted |
