@@ -8,12 +8,15 @@ import { capture } from '@/features/organizer/test-support';
 import { gate, ID, t } from './test-support';
 
 const toast = vi.hoisted(() => vi.fn());
+const hardNavigate = vi.hoisted(() => vi.fn());
 vi.mock('@/lib/toast', () => ({ showToast: toast }));
+vi.mock('@/lib/navigate', () => ({ hardNavigate, replaceNavigate: vi.fn() }));
 
 setupApiServer();
 const backendGone = new Set<string>();
 beforeEach(() => {
   toast.mockReset();
+  hardNavigate.mockReset();
   backendGone.clear();
 });
 
@@ -41,20 +44,73 @@ function serve(members = roster()) {
   };
 }
 
-const view = () => renderWithProviders(<MemberList clubId={ID} isOwner roleControls={{ ownerId: 'owner', currentUserId: 'me' }} />);
+// the viewer 'me' is a non-owner organizer by default; pass 'owner' to view as the club owner
+const view = (currentUserId = 'me') => renderWithProviders(<MemberList clubId={ID} isOwner roleControls={{ ownerId: 'owner', currentUserId }} />);
 const row = (name: string) => screen.getByText(name).closest('li') as HTMLElement;
 
 describe('MemberList with role controls', () => {
-  it('offers promote on members, demote only on other organizers than the owner and the viewer, kick and ban only on members', async () => {
+  it('as a non-owner organizer: promote, kick and ban on members only, nothing on any organizer row', async () => {
     serve();
     view();
     await screen.findByText('Olga Owner');
     expect(within(row('Grace Hopper')).getByRole('button', { name: t('CLUB_MANAGE.promote') })).toBeInTheDocument();
     expect(within(row('Grace Hopper')).getByRole('button', { name: new RegExp(t('MEMBERS.kick')) })).toBeInTheDocument();
+    expect(within(row('Grace Hopper')).getByRole('button', { name: new RegExp(t('MEMBERS.ban')) })).toBeInTheDocument();
+    for (const name of ['Olga Owner', 'Me Self', 'Co Organizer']) expect(within(row(name)).queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('as the owner: demote, kick and ban on other organizers, nothing on the owner row', async () => {
+    serve();
+    view('owner');
+    await screen.findByText('Olga Owner');
     expect(within(row('Co Organizer')).getByRole('button', { name: t('CLUB_MANAGE.demote') })).toBeInTheDocument();
+    expect(within(row('Co Organizer')).getByRole('button', { name: new RegExp(t('MEMBERS.kick')) })).toBeInTheDocument();
+    expect(within(row('Co Organizer')).getByRole('button', { name: new RegExp(t('MEMBERS.ban')) })).toBeInTheDocument();
+    expect(within(row('Grace Hopper')).getByRole('button', { name: t('CLUB_MANAGE.promote') })).toBeInTheDocument();
     expect(within(row('Olga Owner')).queryByRole('button')).not.toBeInTheDocument();
-    expect(within(row('Me Self')).queryByRole('button')).not.toBeInTheDocument();
-    expect(within(row('Co Organizer')).queryByRole('button', { name: new RegExp(t('MEMBERS.kick')) })).not.toBeInTheDocument();
+  });
+
+  it('stays on the page and toasts the owner-only message when the backend answers 403 OWNER_ONLY to a kick', async () => {
+    serve();
+    server.use(http.delete(`${API}/clubs/${ID}/members/m1`, () => HttpResponse.json({ detail: { error: 'Only the club owner may do this', code: 'OWNER_ONLY' } }, { status: 403 })));
+    const user = userEvent.setup();
+    view();
+    await screen.findByText('Grace Hopper');
+    await user.click(within(row('Grace Hopper')).getByRole('button', { name: new RegExp(t('MEMBERS.kick')) }));
+    await waitFor(() => expect(toast).toHaveBeenCalledWith('error', t('ERRORS.owner_only_action')));
+    await waitFor(() => expect(within(row('Grace Hopper')).getByRole('button', { name: new RegExp(t('MEMBERS.kick')) })).toBeEnabled());
+    expect(hardNavigate).not.toHaveBeenCalled();
+  });
+
+  it('toasts the owner-only message, without leaving the page, on 403 OWNER_ONLY for a ban and a demote', async () => {
+    serve();
+    const body = { detail: { error: 'Only the club owner may do this', code: 'OWNER_ONLY' } };
+    server.use(
+      http.post(`${API}/clubs/${ID}/members/m1/ban`, () => HttpResponse.json(body, { status: 403 })),
+      http.patch(`${API}/clubs/${ID}/members/co/role`, () => HttpResponse.json(body, { status: 403 })),
+    );
+    const user = userEvent.setup();
+    view('owner');
+    await screen.findByText('Grace Hopper');
+    await user.click(within(row('Grace Hopper')).getByRole('button', { name: new RegExp(t('MEMBERS.ban')) }));
+    await user.click(screen.getByRole('button', { name: t('MEMBERS.ban_permanent') }));
+    await waitFor(() => expect(toast).toHaveBeenCalledTimes(1));
+    await user.click(within(row('Co Organizer')).getByRole('button', { name: t('CLUB_MANAGE.demote') }));
+    await waitFor(() => expect(toast).toHaveBeenCalledTimes(2));
+    expect(toast).toHaveBeenNthCalledWith(1, 'error', t('ERRORS.owner_only_action'));
+    expect(toast).toHaveBeenNthCalledWith(2, 'error', t('ERRORS.owner_only_action'));
+    expect(hardNavigate).not.toHaveBeenCalled();
+    await waitFor(() => expect(within(row('Co Organizer')).getByRole('button', { name: t('CLUB_MANAGE.demote') })).toBeEnabled());
+  });
+
+  it('still sends the viewer away on a 403 FORBIDDEN (access lost mid-session)', async () => {
+    serve();
+    server.use(http.delete(`${API}/clubs/${ID}/members/m1`, () => HttpResponse.json({ detail: { error: 'Forbidden', code: 'FORBIDDEN' } }, { status: 403 })));
+    const user = userEvent.setup();
+    view();
+    await screen.findByText('Grace Hopper');
+    await user.click(within(row('Grace Hopper')).getByRole('button', { name: new RegExp(t('MEMBERS.kick')) }));
+    await waitFor(() => expect(hardNavigate).toHaveBeenCalledWith('/clubs'));
   });
 
   it('shows no role controls without roleControls, and no moderation to a non-owner', async () => {
@@ -76,7 +132,7 @@ describe('MemberList with role controls', () => {
       return HttpResponse.json(memberJson({ userId: 'co' }));
     });
     const user = userEvent.setup();
-    view();
+    view('owner');
     await screen.findByText('Grace Hopper');
     await user.click(within(row('Grace Hopper')).getByRole('button', { name: t('CLUB_MANAGE.promote') }));
     await waitFor(() => expect(within(row('Grace Hopper')).getByRole('button', { name: t('CLUB_MANAGE.demote') })).toBeInTheDocument());
@@ -96,7 +152,7 @@ describe('MemberList with role controls', () => {
       }),
     );
     const user = userEvent.setup();
-    view();
+    view('owner');
     await screen.findByText('Grace Hopper');
     await user.click(within(row('Grace Hopper')).getByRole('button', { name: t('CLUB_MANAGE.promote') }));
     expect(await within(row('Grace Hopper')).findByRole('button', { name: t('CLUB_MANAGE.demote') })).toBeInTheDocument();

@@ -1,6 +1,6 @@
 import { authTokens, parse } from '@book-club/contracts';
 import type { z } from 'zod';
-import { BackendHttpError, ERROR_KEYS, RequestTimeoutError, extractBackendDetail, translationKeyForStatus } from './errors';
+import { BackendHttpError, ERROR_KEYS, RequestTimeoutError, extractBackendCode, extractBackendDetail, translationKeyForStatus } from './errors';
 import type { ApiClientConfig, RequestOptions } from './types';
 
 const GET_TIMEOUT_MS = 15_000;
@@ -180,7 +180,8 @@ export function createApiClient(config: ApiClientConfig) {
       }
       if (raw.ok) return raw.status === 204 || raw.text === '' ? undefined : parseJson(raw.text);
 
-      const detail = extractBackendDetail(parseJson(raw.text));
+      const errorBody = parseJson(raw.text);
+      const detail = extractBackendDetail(errorBody);
 
       if (raw.status === 401 && sessionActive && !skip && !cycle) {
         // Another request already rotated the token while this one was in flight: replay without refreshing.
@@ -192,10 +193,11 @@ export function createApiClient(config: ApiClientConfig) {
         throw new BackendHttpError(401, detail, ERROR_KEYS.requestFailed);
       }
 
-      const error = new BackendHttpError(raw.status, detail, translationKeyForStatus(raw.status));
+      const error = new BackendHttpError(raw.status, detail, translationKeyForStatus(raw.status), extractBackendCode(errorBody));
       if (!skip && raw.status === 401 && sessionActive) {
         await signOut(cycle ?? { ok: false, signedOut: false });
-      } else if (!skip && raw.status === 403) {
+      } else if (!skip && raw.status === 403 && error.code !== 'OWNER_ONLY') {
+        // OWNER_ONLY is a refused action the caller reports itself; any other 403 means the viewer lost access
         onForbidden?.();
       } else if (raw.status >= 500) {
         report(error);

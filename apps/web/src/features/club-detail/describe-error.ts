@@ -2,6 +2,7 @@ interface ErrorLike {
   name?: unknown;
   status?: unknown;
   detail?: unknown;
+  code?: unknown;
   translationKey?: unknown;
   message?: unknown;
 }
@@ -19,6 +20,9 @@ export function describeError(err: unknown, t: (key: string) => string): string 
   const e = asError(err);
   if (e.name === 'RequestTimeoutError') return t('timeout');
   if (typeof e.status === 'number') {
+    if (e.status === 403 && e.code === 'OWNER_ONLY') return t('owner_only_action');
+    if (e.status === 400 && e.code === 'OWNER_CANNOT_LEAVE') return t('owner_cannot_leave');
+    if (e.status === 400 && e.code === 'CANNOT_BAN_SELF') return t('cannot_ban_self');
     if (typeof e.detail === 'string' && e.detail) return e.detail;
     if (typeof e.translationKey === 'string') return t(e.translationKey.replace(/^ERRORS\./, ''));
   }
