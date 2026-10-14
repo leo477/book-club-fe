@@ -127,6 +127,24 @@ describe('ClubManage', () => {
     expect(screen.getByRole('link', { name: new RegExp(t('CLUB_DETAIL.quizzes_title')) })).toHaveAttribute('href', `/clubs/${ID}/quizzes`);
     expect(screen.getByRole('link', { name: new RegExp(t('CLUB_DETAIL.create_event_title')) })).toHaveAttribute('href', `/clubs/${ID}/events/create`);
     expect(screen.getByRole('heading', { name: t('CLUB_MANAGE.danger_title') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: new RegExp(t('CLUB_DETAIL.delete_club_btn')) })).toBeInTheDocument();
+  });
+
+  it('hides delete-club from an organizer who is not the owner', async () => {
+    mockSession({ id: 'co', role: 'organizer' });
+    mockManageReads();
+    server.use(
+      http.get(`${API}/clubs/${ID}`, () => HttpResponse.json(club())),
+      http.get(`${API}/clubs/${ID}/my-membership`, () => HttpResponse.json({ isMember: true, role: 'organizer', joinRequestStatus: 'none' })),
+    );
+    renderWithProviders(
+      <StranglerProvider value={NEXT_ROUTES}>
+        <ClubManage id={ID} />
+      </StranglerProvider>,
+    );
+    await userEvent.setup().click(await tab('CLUB_MANAGE.tab_tools'));
+    expect(await screen.findByRole('heading', { name: t('CLUB_MANAGE.danger_title') })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: new RegExp(t('CLUB_DETAIL.delete_club_btn')) })).not.toBeInTheDocument();
   });
 
   describe('ClubManage per-club gate', () => {

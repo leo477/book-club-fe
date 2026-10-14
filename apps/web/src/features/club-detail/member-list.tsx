@@ -41,6 +41,12 @@ interface RoleControls {
   currentUserId: string | null;
 }
 
+/** Only the club owner may demote, kick or ban an organizer, and nobody may do so to the owner or to themselves. */
+function canModerateOrganizer(roleControls: RoleControls | undefined, userId: string): boolean {
+  if (!roleControls || roleControls.ownerId === null) return false;
+  return roleControls.currentUserId === roleControls.ownerId && userId !== roleControls.ownerId;
+}
+
 /** `roleControls` adds the promote/demote buttons of the manage screen; the club page shows only kick and ban. */
 export function MemberList({ clubId, isOwner, roleControls }: { clubId: string; isOwner: boolean; roleControls?: RoleControls }) {
   const t = useTranslations('MEMBERS');
@@ -177,13 +183,13 @@ export function MemberList({ clubId, isOwner, roleControls }: { clubId: string; 
                       {tManage('promote')}
                     </Button>
                   )}
-                  {isOwner && roleControls && member.role === 'organizer' && member.userId !== roleControls.ownerId && member.userId !== roleControls.currentUserId && (
+                  {isOwner && member.role === 'organizer' && canModerateOrganizer(roleControls, member.userId) && (
                     <Button type="button" variant="outline" size="xs" className="ml-2" disabled={actions.busy.has(member.userId)} onClick={() => void actions.changeRole(member.userId, 'member')}>
                       {tManage('demote')}
                     </Button>
                   )}
 
-                  {isOwner && member.role !== 'organizer' && (
+                  {isOwner && (member.role !== 'organizer' || canModerateOrganizer(roleControls, member.userId)) && (
                     <div className="flex items-center gap-1 ml-2 flex-shrink-0 relative">
                       <Button type="button" variant="destructive" size="xs" aria-label={`${t('kick')} ${name}`} disabled={actions.busy.has(member.userId)} onClick={() => void actions.kick(member.userId)}>
                         {t('kick')}

@@ -12,7 +12,7 @@ const TILES = [
   { path: 'events/create', icon: '📅', title: 'create_event_title', desc: 'create_event_desc' },
 ] as const;
 
-export function Tools({ clubId }: { clubId: string }) {
+export function Tools({ clubId, isOwner }: { clubId: string; isOwner: boolean }) {
   const t = useTranslations('CLUB_DETAIL');
   const tManage = useTranslations('CLUB_MANAGE');
   return (
@@ -41,7 +41,7 @@ export function Tools({ clubId }: { clubId: string }) {
           {tManage('danger_title')}
         </h2>
         <StatusActions clubId={clubId} />
-        <DeleteClub clubId={clubId} />
+        {isOwner && <DeleteClub clubId={clubId} />}
       </section>
     </div>
   );

@@ -220,6 +220,41 @@ describe('createApiClient', () => {
       expect(hasSession).toHaveBeenCalledTimes(1);
     });
 
+    it.each([
+      ['a structured detail', () => json(403, { detail: { error: 'Only the club owner', code: 'OWNER_ONLY' } }), 'OWNER_ONLY'],
+      ['a string detail', () => json(403, { detail: 'nope' }), null],
+      ['a validation array (422)', () => json(422, { detail: [{ msg: 'bad', loc: ['body'] }] }), null],
+      ['a non-JSON body', () => new Response('<html>', { status: 403 }), null],
+      ['a detail without code', () => json(403, { detail: { error: 'x' } }), null],
+      ['a non-string code', () => json(403, { detail: { error: 'x', code: 123 } }), null],
+    ])('extracts the error code from %s', async (_name, respond, code) => {
+      const s = setup(respond);
+      await expect(s.client.get('/x', ok)).rejects.toMatchObject({ code });
+    });
+
+    it('does not redirect on 403 OWNER_ONLY but still redirects on 403 FORBIDDEN', async () => {
+      const owner = setup(() => json(403, { detail: { error: 'Only the club owner', code: 'OWNER_ONLY' } }));
+      await expect(owner.client.delete('/clubs/1', z.void())).rejects.toMatchObject({ status: 403, code: 'OWNER_ONLY' });
+      expect(owner.onForbidden).not.toHaveBeenCalled();
+      const other = setup(() => json(403, { detail: { error: 'Forbidden', code: 'FORBIDDEN' } }));
+      await expect(other.client.delete('/clubs/1', z.void())).rejects.toMatchObject({ status: 403, code: 'FORBIDDEN' });
+      expect(other.onForbidden).toHaveBeenCalledTimes(1);
+    });
+
+    it('refreshes and replays a 401 on a member kick', async () => {
+      let refreshed = false;
+      const s = setup((url) => {
+        if (url.endsWith('/auth/refresh')) {
+          refreshed = true;
+          return json(200, tokens);
+        }
+        return refreshed ? json(204) : json(401, { detail: 'expired' });
+      });
+      await expect(s.client.delete('/clubs/1/members/u', z.void())).resolves.toBeUndefined();
+      expect(s.calls.filter((c) => c.url.endsWith('/auth/refresh'))).toHaveLength(1);
+      expect(s.onUnauthenticated).not.toHaveBeenCalled();
+    });
+
     it('calls onForbidden on 403', async () => {
       const s = setup(() => json(403, { detail: 'no' }));
       await expect(s.client.get('/x', ok)).rejects.toMatchObject({ status: 403 });
