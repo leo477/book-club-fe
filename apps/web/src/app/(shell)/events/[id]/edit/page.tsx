@@ -1,5 +1,5 @@
 import { NamespacesIntl } from '@/components/namespaces-intl';
-import { RequireRole } from '@/features/auth/require-auth';
+import { RequireAuth } from '@/features/auth/require-auth';
 import { LazyEditEvent } from '@/features/organizer/lazy';
 import { notFound } from 'next/navigation';
 import { notFoundMetadata } from '@/components/not-found-view';
@@ -19,9 +19,9 @@ export default async function EditEventPage({ params }: Props) {
   if (!isUuid(id)) notFound();
   return (
     <NamespacesIntl namespaces={['CREATE_EVENT', 'CREATE_CLUB', 'EVENTS', 'EVENT', 'CLUB_MANAGE', 'COVER_UPLOAD', 'BOOK_AUTOCOMPLETE', 'FORM_ERRORS', 'ERRORS']}>
-      <RequireRole role="organizer">
+      <RequireAuth>
         <LazyEditEvent id={id.toLowerCase()} />
-      </RequireRole>
+      </RequireAuth>
     </NamespacesIntl>
   );
 }

@@ -140,9 +140,9 @@ describe.each(pages)('$name page', ({ el, organizer, heading }) => {
       mockViewer(viewer, role);
       mockData();
       await render(el);
-      expect(await screen.findByRole('alert')).toHaveTextContent(messages.uk['ERRORS.organizers_only'] ?? '');
+      await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
+      expect(nav.toast).toHaveBeenCalledWith('error', messages.uk['ERRORS.organizers_only'] ?? '');
       expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
-      expect(nav.replace).not.toHaveBeenCalled();
     });
 
     it('admits a member who organizes this club', async () => {

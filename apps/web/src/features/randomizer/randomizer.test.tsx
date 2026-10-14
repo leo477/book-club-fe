@@ -289,7 +289,8 @@ describe('Randomizer', () => {
         <Randomizer clubId={ID} />
       </StranglerProvider>,
     );
-    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.organizers_only'));
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
+    expect(nav.toast).toHaveBeenCalledWith('error', t('ERRORS.organizers_only'));
     expect(requested).not.toHaveBeenCalled();
     expect(screen.queryByTestId('spin-button')).not.toBeInTheDocument();
   });

@@ -15,9 +15,9 @@ import EditEventPage, { generateMetadata as editEventMeta } from './events/[id]/
 import ManagePage, { generateMetadata as manageMeta } from './clubs/[id]/manage/page';
 import RandomizerPage, { generateMetadata as randomizerMeta } from './clubs/[id]/randomizer/page';
 
-const nav = vi.hoisted(() => ({ replace: vi.fn(), hard: vi.fn(), toast: vi.fn(), missing: [] as string[] }));
+const nav = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), hard: vi.fn(), toast: vi.fn(), missing: [] as string[] }));
 vi.mock('next/navigation', () => ({
-  useRouter: () => ({ push: vi.fn(), replace: nav.replace }),
+  useRouter: () => ({ push: nav.push, replace: nav.replace }),
   notFound: () => {
     throw new Error('NEXT_NOT_FOUND');
   },
@@ -62,6 +62,7 @@ beforeAll(async () => {
   ]);
 }, 30_000);
 beforeEach(() => {
+  nav.push.mockReset();
   nav.replace.mockReset();
   nav.hard.mockReset();
   nav.toast.mockReset();
@@ -124,7 +125,7 @@ describe.each(pages)('$name page', ({ element, heading, field }) => {
   });
 });
 
-describe.each(pages.filter((p) => !p.perClub))('$name page role gate', ({ element }) => {
+describe.each(pages.filter((p) => !p.perClub && p.name === '/clubs/create'))('$name page role gate', ({ element }) => {
   it('turns a plain reader away with the organizers-only toast', async () => {
     session('user');
     renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
@@ -156,9 +157,9 @@ describe.each(pages.filter((p) => p.perClub))('$name page per-club gate', ({ ele
   it('denies a plain member of the club', async () => {
     asMemberOfOther('member');
     renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
-    expect(await screen.findByRole('alert')).toHaveTextContent(messages.uk['ERRORS.organizers_only'] ?? '');
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
+    expect(nav.toast).toHaveBeenCalledWith('error', messages.uk['ERRORS.organizers_only'] ?? '');
     expect(screen.queryByTestId(field)).not.toBeInTheDocument();
-    expect(nav.replace).not.toHaveBeenCalled();
     expect(nav.missing).toEqual([]);
   });
 
@@ -185,14 +186,22 @@ describe.each(pages.filter((p) => p.perClub))('$name page per-club gate', ({ ele
       http.get(`${API}/clubs/${CLUB}/my-membership`, () => HttpResponse.json({ isMember: false, role: null, joinRequestStatus: 'none' })),
     );
     renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
-    expect(await screen.findByRole('alert')).toHaveTextContent(messages.uk['ERRORS.organizers_only'] ?? '');
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
+    expect(nav.toast).toHaveBeenCalledWith('error', messages.uk['ERRORS.organizers_only'] ?? '');
     expect(screen.queryByTestId(field)).not.toBeInTheDocument();
-    expect(nav.replace).not.toHaveBeenCalled();
+  });
+
+  it('sends the viewer to /clubs with the organizers-only toast when the club answers 403', async () => {
+    session('organizer');
+    server.use(http.get(`${API}/clubs/${CLUB}`, () => HttpResponse.json({ detail: 'Forbidden' }, { status: 403 })));
+    renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
+    expect(nav.toast).toHaveBeenCalledWith('error', messages.uk['ERRORS.organizers_only'] ?? '');
+    expect(screen.queryByTestId(field)).not.toBeInTheDocument();
   });
 
   it.each([
     ['a 404', () => HttpResponse.json({ detail: 'Not found' }, { status: 404 }), 'CLUB_DETAIL.not_found'],
-    ['a 403', () => HttpResponse.json({ detail: 'Forbidden' }, { status: 403 }), 'ERRORS.organizers_only'],
     ['a private stub', () => HttpResponse.json({ id: CLUB, name: 'Secret', isPublic: false, memberCount: 3 }), 'CLUB_DETAIL.not_found'],
   ])('shows the notice, not the form, when the club answers %s', async (_label, respond, key) => {
     session('organizer');
@@ -200,6 +209,18 @@ describe.each(pages.filter((p) => p.perClub))('$name page per-club gate', ({ ele
     renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
     expect(await screen.findByRole('alert')).toHaveTextContent(messages.uk[key] ?? key);
     expect(screen.queryByTestId(field)).not.toBeInTheDocument();
+  });
+});
+
+describe('/events/:id/edit page', () => {
+  it('sends a plain user who does not own the event to /events, without the organizers-only toast', async () => {
+    session('user');
+    server.use(http.get(`${API}/events/${EVENT}`, () => HttpResponse.json(eventJson({ id: EVENT, clubId: CLUB, organizerId: 'someone-else', date: '2099-05-01T18:30:00.000Z' }))));
+    renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await EditEventPage(params(EVENT))}</StranglerProvider>);
+    await waitFor(() => expect(nav.push).toHaveBeenCalledWith('/events'));
+    expect(nav.replace).not.toHaveBeenCalled();
+    expect(nav.toast).not.toHaveBeenCalled();
+    expect(screen.queryByTestId('event-title-input')).not.toBeInTheDocument();
   });
 });
 
@@ -267,9 +288,9 @@ describe.each([
   it('denies a plain member of the club through the per-club gate', async () => {
     asMemberOfOther('member');
     renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await element()}</StranglerProvider>);
-    expect(await screen.findByRole('alert')).toHaveTextContent(messages.uk['ERRORS.organizers_only'] ?? '');
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
+    expect(nav.toast).toHaveBeenCalledWith('error', messages.uk['ERRORS.organizers_only'] ?? '');
     expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument();
-    expect(nav.replace).not.toHaveBeenCalled();
   });
 
   it('sends a guest to /login', async () => {
