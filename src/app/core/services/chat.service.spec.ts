@@ -11,6 +11,7 @@ import { AuthService } from '../auth/auth.service';
 import { TokenStore } from '../auth/token.store';
 import { ClubService } from './club.service';
 import { ChatSocket } from './chat-socket.service';
+import { ToastService } from './toast.service';
 
 function makeAuthService(currentUser: { id: string } | null = null, getWsTicket$ = () => of<string | null>('tok')) {
   return { currentUser: signal(currentUser), getWsTicket$ };
@@ -950,6 +951,44 @@ describe('ChatService', () => {
       expect(service.presenceMap().get('u1')).toBe('online');
       ws.simulateClose(1008);
       expect(service.presenceMap().size).toBe(0);
+    });
+
+    describe('terminal 1008 stop', () => {
+      const stopActiveRoom = () => {
+        (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
+        TestBed.flushEffects();
+        const ws = MockWebSocket.instance;
+        if (!ws) throw new Error('MockWebSocket not instantiated');
+        ws.simulateMessage({ type: 'presence_snapshot', payload: [] });
+        ws.simulateClose(1008);
+        return ws;
+      };
+
+      it('clears the active room and shows a notice', () => {
+        const info = vi.spyOn(TestBed.inject(ToastService), 'info');
+        stopActiveRoom();
+        expect(getActiveRoomId(service)).toBeNull();
+        expect(info).toHaveBeenCalledWith('CHAT.room_closed_toast');
+      });
+
+      it('reconnects when the same room is opened again', () => {
+        const ws1 = stopActiveRoom();
+        (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
+        TestBed.flushEffects();
+        expect(MockWebSocket.instance).not.toBe(ws1);
+      });
+
+      it('refreshes the room list without re-selecting a room', async () => {
+        (TestBed.inject(ClubService).myClubs as unknown as WritableSignal<{ id: string; name: string }[]>).set([{ id: 'club-1', name: 'C' }]);
+        (service as unknown as { _rooms: WritableSignal<ChatRoom[]> })._rooms.set([
+          { id: 'room-42', name: 'Gone', clubId: 'club-1' },
+        ]);
+        stopActiveRoom();
+        httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([{ id: 'room-42', name: 'Still', eventId: null }]);
+        await new Promise(r => setTimeout(r));
+        expect(getRooms(service).map(r => r.name)).toEqual(['Still']);
+        expect(getActiveRoomId(service)).toBeNull();
+      });
     });
 
     it('disconnectRoom calls ws.close()', () => {

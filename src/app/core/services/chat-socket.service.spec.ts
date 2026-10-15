@@ -300,6 +300,84 @@ describe('ChatSocket', () => {
     expect(wsB?.close).not.toHaveBeenCalled();
   });
 
+  it('goes terminal after 3 consecutive pre-frame 1008 closes', () => {
+    vi.useFakeTimers();
+    const handlers = makeHandlers();
+    socket.connect('room-1', ticketGetter('tik'), handlers);
+    for (let i = 0; i < 2; i++) {
+      MockWebSocket.instance?.simulateClose(1008);
+      expect(handlers.onStopped).not.toHaveBeenCalled();
+      vi.advanceTimersByTime(30_000);
+    }
+    const last = MockWebSocket.instance;
+    last?.simulateClose(1008);
+    expect(handlers.onStopped).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(60_000);
+    expect(MockWebSocket.instance).toBe(last);
+  });
+
+  it('resets the pre-frame 1008 streak on the first server frame', () => {
+    vi.useFakeTimers();
+    const handlers = makeHandlers();
+    socket.connect('room-1', ticketGetter('tik'), handlers);
+    for (let i = 0; i < 2; i++) {
+      MockWebSocket.instance?.simulateClose(1008);
+      vi.advanceTimersByTime(30_000);
+    }
+    MockWebSocket.instance?.simulateMessage({ type: 'presence_snapshot', payload: [] });
+    MockWebSocket.instance?.simulateClose(1006);
+    vi.advanceTimersByTime(30_000);
+    for (let i = 0; i < 2; i++) {
+      MockWebSocket.instance?.simulateClose(1008);
+      vi.advanceTimersByTime(30_000);
+    }
+    expect(handlers.onStopped).not.toHaveBeenCalled();
+  });
+
+  it('does not count non-1008 pre-frame closes toward the cap', () => {
+    vi.useFakeTimers();
+    const handlers = makeHandlers();
+    socket.connect('room-1', ticketGetter('tik'), handlers);
+    for (let i = 0; i < 5; i++) {
+      MockWebSocket.instance?.simulateClose(1006);
+      vi.advanceTimersByTime(30_000);
+    }
+    expect(handlers.onStopped).not.toHaveBeenCalled();
+  });
+
+  it.each(['room-1', 'room-2'])('a fresh connect() to %s restarts the pre-frame 1008 streak', room => {
+    vi.useFakeTimers();
+    const handlers = makeHandlers();
+    socket.connect('room-1', ticketGetter('tik'), handlers);
+    for (let i = 0; i < 2; i++) {
+      MockWebSocket.instance?.simulateClose(1008);
+      vi.advanceTimersByTime(30_000);
+    }
+    socket.disconnect();
+    socket.connect(room, ticketGetter('tik'), handlers);
+    const ws = MockWebSocket.instance;
+    ws?.simulateClose(1008);
+    expect(handlers.onStopped).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1_100);
+    expect(MockWebSocket.instance).not.toBe(ws);
+  });
+
+  it('a fresh connect() resets the reconnect backoff to 1s', () => {
+    vi.useFakeTimers();
+    const handlers = makeHandlers();
+    socket.connect('room-1', ticketGetter('tik'), handlers);
+    for (let i = 0; i < 2; i++) {
+      MockWebSocket.instance?.simulateClose(1008);
+      vi.advanceTimersByTime(30_000);
+    }
+    socket.disconnect();
+    socket.connect('room-1', ticketGetter('tik'), handlers);
+    const ws = MockWebSocket.instance;
+    ws?.simulateClose(1006);
+    vi.advanceTimersByTime(1_100);
+    expect(MockWebSocket.instance).not.toBe(ws);
+  });
+
   it('a fresh connect() to the same room works after a terminal 1008 stop', () => {
     socket.connect('room-1', ticketGetter('tik'), makeHandlers());
     const ws1 = MockWebSocket.instance;
