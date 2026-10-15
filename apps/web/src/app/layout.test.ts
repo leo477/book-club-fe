@@ -22,8 +22,8 @@ describe('root layout head tags', () => {
     expect(viewport.themeColor).toBe('#d97706');
   });
 
-  it('is indexable by default, like Angular index.html (private pages opt out per page)', () => {
-    expect(metadata.robots).toEqual({ index: true, follow: true });
+  it('sets no robots, so every page owns its decision', () => {
+    expect(metadata.robots).toBeUndefined();
   });
 
   it('has every icon the metadata links in apps/web/public', () => {

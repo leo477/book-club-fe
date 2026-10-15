@@ -2,18 +2,12 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-/**
- * The root layout is `index, follow`, so every page inherits "indexable" unless it opts out.
- * Each page must therefore either make an explicit robots decision in its own source
- * (`robots` in metadata, or `pageMetadata(..., { index: false })`), or be on the allowlist
- * of pages that are intentionally indexable.
- */
+// The root sets no robots, so a page without a decision is indexable: each must decide explicitly or be allowlisted.
 const INTENTIONALLY_INDEXABLE: Record<string, string> = {
   '/': 'only redirects to /events',
   '/privacy': 'public legal page, listed in the sitemap',
   '/terms': 'public legal page, listed in the sitemap',
   '/clubs': 'public clubs directory, listed in the sitemap',
-  '/clubs/[id]': 'indexes public clubs only; stubs/private clubs return index: false',
 };
 
 const APP_DIR = __dirname;
@@ -22,7 +16,7 @@ function findPages(dir: string): string[] {
   return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const full = join(dir, entry.name);
     if (entry.isDirectory()) return findPages(full);
-    return entry.name === 'page.tsx' ? [full] : [];
+    return /^page\.(tsx?|jsx?|mdx?)$/.test(entry.name) ? [full] : [];
   });
 }
 
@@ -33,7 +27,12 @@ function routeOf(file: string): string {
   return `/${route}`;
 }
 
-const makesRobotsDecision = (src: string) => /\brobots\b/.test(src) || /\bindex:\s*(false|true)\b/.test(src);
+const stripComments = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+
+const makesRobotsDecision = (src: string) => {
+  const code = stripComments(src);
+  return /\brobots\s*:/.test(code) || /\bindex:\s*(true|false)\b/.test(code);
+};
 
 describe('robots coverage', () => {
   const pages = findPages(APP_DIR);
@@ -48,7 +47,7 @@ describe('robots coverage', () => {
     const decided = makesRobotsDecision(readFileSync(file, 'utf8'));
     expect(
       allowed || decided,
-      `${rel} (${route}) inherits the indexable root robots. Add \`robots: { index: false }\` / ` +
+      `${rel} (${route}) has no robots decision and would be indexable. Add \`robots: { index: false }\` / ` +
         '`pageMetadata(..., { index: false })`, or add it to INTENTIONALLY_INDEXABLE with a reason.',
     ).toBe(true);
   });
