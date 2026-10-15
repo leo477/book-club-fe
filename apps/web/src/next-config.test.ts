@@ -36,3 +36,19 @@ describe('next.config rewrites', () => {
     await expect(load({ ...base, BACKEND_ORIGIN: 'https://api.example.com', DISABLE_LEGACY_FALLBACK: '1', VERCEL_ENV: 'production', NODE_ENV: 'production' })).rejects.toThrow(/preview-only/);
   });
 });
+
+describe('next.config headers', () => {
+  it('sets content type and skips the Vercel toolbar for sitemap.xml and robots.txt', async () => {
+    const headers = await (await load(base)).headers!();
+    const forSource = (source: string) => headers.find((h) => h.source === source)?.headers;
+    expect(forSource('/sitemap.xml')).toEqual([
+      { key: 'Content-Type', value: 'application/xml; charset=utf-8' },
+      { key: 'x-vercel-skip-toolbar', value: '1' },
+    ]);
+    expect(forSource('/robots.txt')).toEqual([
+      { key: 'Content-Type', value: 'text/plain; charset=utf-8' },
+      { key: 'x-vercel-skip-toolbar', value: '1' },
+    ]);
+    expect(forSource('/:path*')).toContainEqual({ key: 'X-Content-Type-Options', value: 'nosniff' });
+  });
+});

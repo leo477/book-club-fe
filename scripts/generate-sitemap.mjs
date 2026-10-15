@@ -19,7 +19,6 @@ const API_URL = process.env.SITEMAP_API_URL ?? 'https://book-club-be.onrender.co
 const OUTPUT_DIR = './dist/book-club-fe/browser';
 
 const ROUTES = [
-  { path: '/', changefreq: 'weekly', priority: '1.0' },
   { path: '/clubs', changefreq: 'daily', priority: '0.8' },
   { path: '/privacy', changefreq: 'yearly', priority: '0.2' },
   { path: '/terms', changefreq: 'yearly', priority: '0.2' },

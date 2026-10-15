@@ -36,6 +36,8 @@ const SECURITY_HEADERS = [
   { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
 ];
 
+const SKIP_TOOLBAR = { key: 'x-vercel-skip-toolbar', value: '1' };
+
 const nextConfig: NextConfig = {
   agentRules: false,
   reactCompiler: true,
@@ -47,6 +49,8 @@ const nextConfig: NextConfig = {
     return [
       { source: '/:path*', headers: SECURITY_HEADERS },
       { source: '/api/:path*', headers: [{ key: 'Cache-Control', value: 'private, no-store' }] },
+      { source: '/sitemap.xml', headers: [{ key: 'Content-Type', value: 'application/xml; charset=utf-8' }, SKIP_TOOLBAR] },
+      { source: '/robots.txt', headers: [{ key: 'Content-Type', value: 'text/plain; charset=utf-8' }, SKIP_TOOLBAR] },
     ];
   },
   async rewrites() {
