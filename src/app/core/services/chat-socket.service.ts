@@ -8,6 +8,7 @@ export interface ChatSocketHandlers {
   onMessage: (payload: unknown) => void;
   onPresence: (userId: string, status: 'online' | 'offline') => void;
   onPresenceSnapshot: (entries: { userId: string; status: 'online' | 'offline' }[]) => void;
+  onStopped?: () => void;
 }
 
 /**
@@ -39,7 +40,10 @@ export class ChatSocket {
     const ws = new WebSocket(environment.wsUrl + '/chat/rooms/' + roomId);
     this._ws = ws;
 
+    let opened = false;
+
     ws.onopen = () => {
+      opened = true;
       this._reconnectDelay = 1_000;
       getTicket()
         .then(ticket => {
@@ -78,8 +82,16 @@ export class ChatSocket {
       }
     };
 
-    this._ws.onclose = () => {
+    this._ws.onclose = (event: CloseEvent) => {
       if (!this._activeRoom) return;
+      // 1008 after the socket opened means the server ended the session
+      // (banned/removed/un-attended): terminal, a retry would be rejected again.
+      if (opened && event?.code === 1008) {
+        this._activeRoom = null;
+        this._ws = null;
+        handlers.onStopped?.();
+        return;
+      }
       this._reconnectTimer = setTimeout(() => {
         const active = this._activeRoom;
         if (!active) return;

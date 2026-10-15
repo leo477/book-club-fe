@@ -273,6 +273,7 @@ export class ChatService {
         for (const e of entries) map.set(e.userId, e.status);
         this._presenceMap.set(map);
       },
+      onStopped: () => this._presenceMap.set(new Map()),
     });
   }
 
