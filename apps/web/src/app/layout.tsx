@@ -16,7 +16,6 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'Book Club',
-  robots: { index: false },
   keywords: 'книжковий клуб, читацький клуб, обговорення книг, Україна',
   verification: { google: 'hRDiW-8Es2YiXt4pzpnEGdfQmHv5w-nKNEUs0zYy4Js' },
   icons: {

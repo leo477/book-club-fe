@@ -22,6 +22,10 @@ describe('root layout head tags', () => {
     expect(viewport.themeColor).toBe('#d97706');
   });
 
+  it('sets no robots, so every page owns its decision', () => {
+    expect(metadata.robots).toBeUndefined();
+  });
+
   it('has every icon the metadata links in apps/web/public', () => {
     const icons = metadata.icons as { icon: { url: string }[] };
     expect(icons.icon.length).toBeGreaterThan(0);
