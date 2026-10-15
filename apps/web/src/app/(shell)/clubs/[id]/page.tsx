@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { isClubStub } from '@book-club/contracts';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages, getTranslations } from 'next-intl/server';
+import { notFoundMetadata } from '@/components/not-found-view';
 import { ClubView } from '@/features/club-detail/club-view';
 import { PrivateClubGate } from '@/features/club-detail/private-club';
 import { PrivateStub } from '@/features/club-detail/private-stub';
@@ -13,10 +14,19 @@ import { pageMetadata } from '@/lib/page-metadata';
 // the nested provider replaces the shell's, so it repeats the namespaces the shell already ships
 const CLIENT_NAMESPACES = ['CLUB_DETAIL', 'BOOK_VOTE', 'MEMBERS', 'BOOK_STORES', 'EVENT', 'EVENTS', 'events', 'CLUB_MANAGE', 'CLUBS', 'CHAT', 'ERRORS', 'SEO'] as const;
 
+// Digest of the error notFound() throws; next/navigation exposes no public predicate for it (the helper is an internal next/dist path).
+const NOT_FOUND_DIGEST = 'NEXT_HTTP_ERROR_FALLBACK;404';
+
 type Props = { params: Promise<{ id: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { club } = await loadClub((await params).id);
+  // Next drops a nested not-found's metadata and keeps the generic title, so a missing club answers with it directly; the page render still raises the 404.
+  const loaded = await loadClub((await params).id).catch((err: unknown) => {
+    if ((err as { digest?: unknown } | null)?.digest === NOT_FOUND_DIGEST) return null;
+    throw err;
+  });
+  if (!loaded) return notFoundMetadata();
+  const { club } = loaded;
   const path = `/clubs/${club.id.toLowerCase()}`;
   // A private club's name, description and cover must not reach title/og/twitter tags (link unfurlers ignore noindex).
   if (isClubStub(club)) return pageMetadata('SEO.clubs_title', path, { ogTitleKey: 'SEO.clubs_og_title', index: false });

@@ -34,6 +34,8 @@ function ClubManageView({ club }: { club: Club }) {
   const tAll = useTranslations();
   const requests = useJoinRequests(club.id);
   const { user } = useSession();
+  // the club owner is super-admin: other organizers cannot delete the club or moderate fellow organizers
+  const isOwner = user?.id === club.organizerId;
   const [tab, setTab] = useState<Tab>('dashboard');
 
   const [badgeKey, badgeTone] = STATUS_BADGE[club.status];
@@ -77,7 +79,7 @@ function ClubManageView({ club }: { club: Club }) {
           <EditClub id={club.id} embedded />
         </TabsContent>
         <TabsContent value="tools">
-          <Tools clubId={club.id} />
+          <Tools clubId={club.id} isOwner={isOwner} />
         </TabsContent>
       </Tabs>
     </div>

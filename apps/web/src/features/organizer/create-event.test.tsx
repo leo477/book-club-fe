@@ -393,7 +393,8 @@ describe('CreateEvent behind the per-club gate', () => {
 
   it('turns a plain member away', async () => {
     asViewer({ id: 'co', role: 'user' });
-    expect(await screen.findByRole('alert')).toHaveTextContent(t('ERRORS.organizers_only'));
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
+    expect(nav.toast).toHaveBeenCalledWith('error', t('ERRORS.organizers_only'));
     expect(screen.queryByTestId('event-title-input')).not.toBeInTheDocument();
   });
 

@@ -648,6 +648,9 @@
     "network": "Network unavailable. Check your connection and try again.",
     "dismiss": "Dismiss",
     "organizers_only": "Organizers only",
+    "owner_only_action": "Only the club owner can do this.",
+    "owner_cannot_leave": "The club owner cannot leave the club.",
+    "cannot_ban_self": "You cannot ban yourself.",
     "unexpected": "Something went wrong. Please try again."
   },
   "META": {

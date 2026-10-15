@@ -3,7 +3,7 @@
 
 import { isClubStub, type Club } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { AppLink } from '@/components/app-link';
 import { ErrorPanel } from '@/components/error-panel';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,8 @@ import { Spinner } from '@/components/ui/spinner';
 import { useMyMembership } from '@/features/club-detail/use-club-detail';
 import { useSession } from '@/features/clubs/use-session';
 import { useClubForEdit } from '@/features/organizer/use-organizer';
+import { showToast } from '@/lib/toast';
+import { useReplace } from '@/lib/use-replace';
 
 const statusOf = (err: unknown): number | null =>
   typeof err === 'object' && err !== null && typeof (err as { status?: unknown }).status === 'number' ? (err as { status: number }).status : null;
@@ -35,10 +37,25 @@ export function Notice({ title, back }: { title: string; back: { href: string; l
   );
 }
 
+/** roleGuard parity: a viewer who does not organize the club gets the "organizers only" toast and lands on /clubs. */
+function Denied() {
+  const t = useTranslations('ERRORS');
+  const replace = useReplace();
+  const sent = useRef(false);
+
+  useEffect(() => {
+    if (sent.current) return;
+    sent.current = true;
+    showToast('error', t('organizers_only'));
+    replace('/clubs');
+  }, [replace, t]);
+
+  return <Busy />;
+}
+
 // only decides what is shown; the backend refuses everyone else
 export function OrganizerOfClub({ clubId, children }: { clubId: string; children: (club: Club) => ReactNode }) {
   const tDetail = useTranslations('CLUB_DETAIL');
-  const tErrors = useTranslations('ERRORS');
   const { user, isPending: sessionPending } = useSession();
   const query = useClubForEdit(clubId);
   // a cached club or role from an earlier visit is shown only after this visit has re-checked it
@@ -49,7 +66,7 @@ export function OrganizerOfClub({ clubId, children }: { clubId: string; children
   const checked = membership.dataUpdatedAt >= mountedAt;
 
   const missing = <Notice title={tDetail('not_found')} back={{ href: '/clubs', label: tDetail('back') }} />;
-  const denied = <Notice title={tErrors('organizers_only')} back={{ href: `/clubs/${clubId}`, label: tDetail('back_short') }} />;
+  const denied = <Denied />;
 
   if (query.isPending) return <Busy />;
   if (query.isError) {

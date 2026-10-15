@@ -65,6 +65,26 @@ describe('DeleteClub', () => {
     expect(open('CLUB_DETAIL.delete_club_yes')).toBeEnabled();
   });
 
+  it('toasts the owner-only message and stays on the page on 403 OWNER_ONLY', async () => {
+    server.use(http.delete(`${API}/clubs/${ID}`, () => HttpResponse.json({ detail: { error: 'Only the club owner may do this', code: 'OWNER_ONLY' } }, { status: 403 })));
+    const user = userEvent.setup();
+    view();
+    await user.click(open('CLUB_DETAIL.delete_club_btn'));
+    await user.click(open('CLUB_DETAIL.delete_club_yes'));
+    await waitFor(() => expect(nav.toast).toHaveBeenCalledWith('error', t('ERRORS.owner_only_action')));
+    expect(nav.hard).not.toHaveBeenCalled();
+    expect(nav.push).not.toHaveBeenCalled();
+  });
+
+  it('sends the viewer to /clubs on a plain 403 FORBIDDEN', async () => {
+    server.use(http.delete(`${API}/clubs/${ID}`, () => HttpResponse.json({ detail: { error: 'Forbidden', code: 'FORBIDDEN' } }, { status: 403 })));
+    const user = userEvent.setup();
+    view();
+    await user.click(open('CLUB_DETAIL.delete_club_btn'));
+    await user.click(open('CLUB_DETAIL.delete_club_yes'));
+    await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/clubs'));
+  });
+
   it('sends one DELETE for two confirmations before the button re-renders', async () => {
     const gateway = gate();
     let calls = 0;

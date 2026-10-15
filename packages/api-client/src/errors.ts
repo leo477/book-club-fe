@@ -25,12 +25,15 @@ export class BackendHttpError extends Error {
   readonly status: number;
   readonly detail: string | null;
   readonly translationKey: string;
-  constructor(status: number, detail: string | null, translationKey: string) {
+  /** Machine code of a structured detail (`{error, code}`), e.g. OWNER_ONLY. */
+  readonly code: string | null;
+  constructor(status: number, detail: string | null, translationKey: string, code: string | null = null) {
     super(detail ?? translationKey);
     this.name = 'BackendHttpError';
     this.status = status;
     this.detail = detail;
     this.translationKey = translationKey;
+    this.code = code;
   }
 }
 
@@ -51,6 +54,13 @@ export function extractBackendDetail(body: unknown): string | null {
     return nonEmpty(c.error ?? c.message);
   }
   return null;
+}
+
+export function extractBackendCode(body: unknown): string | null {
+  if (typeof body !== 'object' || body === null) return null;
+  const detail = (body as { detail?: unknown }).detail;
+  if (typeof detail !== 'object' || detail === null) return null;
+  return nonEmpty((detail as { code?: unknown }).code);
 }
 
 /** Message or translation key suitable for surfacing to the user. */

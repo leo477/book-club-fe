@@ -12,6 +12,18 @@ describe('describeError', () => {
     expect(describeError(http(0, null, 'ERRORS.network'), t)).toBe(t('network'));
   });
 
+  it('maps a 403 OWNER_ONLY to the owner-only message, and other 403s to their detail', () => {
+    const owner = Object.assign(http(403, 'Only the club owner may do this'), { code: 'OWNER_ONLY' });
+    expect(describeError(owner, t)).toBe(t('owner_only_action'));
+    expect(describeError(Object.assign(http(403, 'Forbidden'), { code: 'FORBIDDEN' }), t)).toBe('Forbidden');
+  });
+
+  it('maps the 400 owner-leave and self-ban codes', () => {
+    expect(describeError(Object.assign(http(400, 'x'), { code: 'OWNER_CANNOT_LEAVE' }), t)).toBe(t('owner_cannot_leave'));
+    expect(describeError(Object.assign(http(400, 'x'), { code: 'CANNOT_BAN_SELF' }), t)).toBe(t('cannot_ban_self'));
+    expect(describeError(Object.assign(http(400, 'Last organizer'), { code: 'LAST_ORGANIZER' }), t)).toBe('Last organizer');
+  });
+
   it('maps a timeout and falls back to a plain message or the generic error', () => {
     expect(describeError(Object.assign(new Error('t'), { name: 'RequestTimeoutError' }), t)).toBe(t('timeout'));
     expect(describeError(new Error('boom'), t)).toBe('boom');
