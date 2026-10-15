@@ -20,13 +20,14 @@ beforeEach(() => toast.mockReset());
 const t = (key: string) => messages.uk[key] ?? key;
 const club = { id: 'c1', organizerId: 'o1' };
 
-function mockApi({ user = 'u1', mine = true, rounds }: { user?: string | null; mine?: boolean; rounds: (Record<string, unknown> | null)[] }) {
+function mockApi({ user = 'u1', mine = true, role = 'member', rounds }: { user?: string | null; mine?: boolean; role?: 'member' | 'organizer'; rounds: (Record<string, unknown> | null)[] }) {
   const gets: number[] = [];
   let i = 0;
   server.use(
     http.get(`${API}/auth/session-status`, () => HttpResponse.json({ hasSession: user !== null })),
     http.get(`${API}/auth/me`, () => HttpResponse.json(userJson({ id: user }))),
     http.get(`${API}/clubs/my`, () => HttpResponse.json(mine ? [clubJson({ id: 'c1' })] : [])),
+    http.get(`${API}/clubs/c1/my-membership`, () => HttpResponse.json({ isMember: mine, role: mine ? role : null, joinRequestStatus: 'none' })),
     http.get(`${API}/clubs/c1/book-vote/round`, () => {
       gets.push(i);
       const round = rounds[Math.min(i, rounds.length - 1)] ?? null;
@@ -251,5 +252,51 @@ describe('BookVote as organizer', () => {
     renderWithProviders(<BookVote club={club} />);
     await u.click(await screen.findByRole('button', { name: t('BOOK_VOTE.start_round') }));
     await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Not allowed'));
+  });
+});
+
+describe('BookVote management controls', () => {
+  const controls = () => ({
+    close: screen.queryByRole('button', { name: t('BOOK_VOTE.close_round') }),
+    add: screen.queryByRole('button', { name: t('BOOK_VOTE.add_button') }),
+    remove: screen.queryAllByRole('button', { name: new RegExp(t('BOOK_VOTE.remove_option_aria')) }),
+  });
+
+  it.each([
+    ['a co-organizer', { user: 'u1', role: 'organizer' as const }],
+    ['the owner', { user: 'o1', role: 'organizer' as const }],
+  ])('shows close, add and remove to %s', async (_, who) => {
+    mockApi({ ...who, rounds: [roundJson()] });
+    renderWithProviders(<BookVote club={club} />);
+    await screen.findByText('Dune');
+    await waitFor(() => expect(controls().close).not.toBeNull());
+    expect(controls().add).not.toBeNull();
+    expect(controls().remove).toHaveLength(1);
+  });
+
+  it('hides them from a plain member', async () => {
+    mockApi({ user: 'u1', role: 'member', rounds: [roundJson()] });
+    const { queryClient } = renderWithProviders(<BookVote club={club} />);
+    await screen.findByText('Dune');
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    const c = controls();
+    expect(c.close).toBeNull();
+    expect(c.add).toBeNull();
+    expect(c.remove).toHaveLength(0);
+  });
+
+  it.each([
+    ['a co-organizer', { user: 'u1', role: 'organizer' as const }, true],
+    ['the owner', { user: 'o1', role: 'organizer' as const }, true],
+    ['a plain member', { user: 'u1', role: 'member' as const }, false],
+  ])('start-round with no round for %s: shown=%s', async (_, who, shown) => {
+    mockApi({ ...who, rounds: [null] });
+    const { container, queryClient } = renderWithProviders(<BookVote club={club} />);
+    await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+    if (shown) expect(await screen.findByRole('button', { name: t('BOOK_VOTE.start_round') })).toBeInTheDocument();
+    else {
+      await settle();
+      expect(container).toBeEmptyDOMElement();
+    }
   });
 });

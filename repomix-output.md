@@ -304,6 +304,7 @@ apps/
           private-stub.tsx
           qr-code.tsx
           sections.tsx
+          set-winner-visibility.test.tsx
           sidebar.tsx
           structured-data.test.ts
           structured-data.ts
@@ -527,6 +528,7 @@ docs/
     PLAN-MOBILE-APP-2026-07-15.md
     REFACTOR-PLAN-2026-07-06.md
   migration/
+    AUDIT-R13-FULL.md
     AUDIT-R13.md
     BASELINE-2026-10.md
     CANARY-METRICS.md

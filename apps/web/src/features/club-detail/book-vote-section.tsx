@@ -28,7 +28,7 @@ function withVote(round: BookVoteRound, optionId: string, voted: boolean): BookV
   };
 }
 
-export function BookVoteSection({ clubId, isOwner, isMember }: { clubId: string; isOwner: boolean; isMember: boolean }) {
+export function BookVoteSection({ clubId, canManage, isMember }: { clubId: string; canManage: boolean; isMember: boolean }) {
   const t = useTranslations('BOOK_VOTE');
   const tErrors = useTranslations('ERRORS');
   const queryClient = useQueryClient();
@@ -89,7 +89,7 @@ export function BookVoteSection({ clubId, isOwner, isMember }: { clubId: string;
       </section>
     );
   }
-  if (!round && !isOwner) return null;
+  if (!round && !canManage) return null;
 
   const total = round?.totalVotes ?? 0;
   const newRound = () => run.mutate(() => api.bookVote.createRound(clubId));
@@ -106,12 +106,12 @@ export function BookVoteSection({ clubId, isOwner, isMember }: { clubId: string;
         <h2 id="book-vote-title" className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
           📚 {t('section_title')}
         </h2>
-        {isOwner && round?.status === 'open' && (
+        {canManage && round?.status === 'open' && (
           <Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => run.mutate(() => api.bookVote.closeRound(clubId, round.id))}>
             {t('close_round')}
           </Button>
         )}
-        {isOwner && round?.status === 'closed' && (
+        {canManage && round?.status === 'closed' && (
           <Button type="button" size="sm" disabled={busy} onClick={newRound}>
             {t('new_round')}
           </Button>
@@ -141,7 +141,7 @@ export function BookVoteSection({ clubId, isOwner, isMember }: { clubId: string;
                       {option.author && <p className="text-xs text-[var(--color-ink-muted)] mt-0.5">{option.author}</p>}
                     </div>
                     <div className="flex items-center gap-2 flex-shrink-0">
-                      {(isMember || isOwner) && (
+                      {(isMember || canManage) && (
                         <Button
                           type="button"
                           size="sm"
@@ -156,7 +156,7 @@ export function BookVoteSection({ clubId, isOwner, isMember }: { clubId: string;
                           <span className="sr-only">— {option.title}</span>
                         </Button>
                       )}
-                      {isOwner && option.votes === 0 && (
+                      {canManage && option.votes === 0 && (
                         <button
                           type="button"
                           disabled={busy}
@@ -180,7 +180,7 @@ export function BookVoteSection({ clubId, isOwner, isMember }: { clubId: string;
             </ul>
           )}
 
-          {isOwner && (
+          {canManage && (
             <form onSubmit={addOption} className="border-t border-[var(--color-sepia)] pt-4 flex flex-col gap-2" noValidate>
               <p className="text-xs font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide">{t('add_book_heading')}</p>
               <div className="flex flex-col sm:flex-row gap-2">
