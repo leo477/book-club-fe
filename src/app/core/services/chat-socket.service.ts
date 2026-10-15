@@ -2,6 +2,9 @@ import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { logError } from '../utils/logger.util';
 
+// Mirrors packages/api-client's maxAuthFailures: stop hammering a backend that keeps rejecting auth.
+const MAX_AUTH_FAILURES = 3;
+
 interface WsEnvelope { type: string; payload: unknown; }
 
 export interface ChatSocketHandlers {
@@ -22,6 +25,7 @@ export class ChatSocket {
   private _ws: WebSocket | null = null;
   private _reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private _reconnectDelay = 1_000;
+  private _authFailures = 0;
   private _activeRoom: { roomId: string; getTicket: () => Promise<string | null> } | null = null;
 
   connect(roomId: string, getTicket: () => Promise<string | null>, handlers: ChatSocketHandlers): void {
@@ -35,7 +39,10 @@ export class ChatSocket {
     ) {
       return;
     }
+    // A reconnect-timer call keeps the failure streak; a fresh/other-room connect restarts it.
+    const continuing = this._activeRoom?.roomId === roomId;
     this.disconnect();
+    if (!continuing) this._authFailures = 0;
     this._activeRoom = { roomId, getTicket };
     const ws = new WebSocket(environment.wsUrl + '/chat/rooms/' + roomId);
     this._ws = ws;
@@ -62,6 +69,7 @@ export class ChatSocket {
       if (this._ws !== ws) return;
       if (!authenticated) {
         authenticated = true;
+        this._authFailures = 0;
         this._reconnectDelay = 1_000;
       }
       try {
@@ -89,6 +97,12 @@ export class ChatSocket {
       if (this._ws !== ws || !this._activeRoom) return;
       // 1008 after the first frame = server ended the session (kick/ban/room closed); before it = auth rejection, retry.
       if (authenticated && event?.code === 1008) {
+        this._activeRoom = null;
+        this._ws = null;
+        handlers.onStopped();
+        return;
+      }
+      if (!authenticated && event?.code === 1008 && ++this._authFailures >= MAX_AUTH_FAILURES) {
         this._activeRoom = null;
         this._ws = null;
         handlers.onStopped();
