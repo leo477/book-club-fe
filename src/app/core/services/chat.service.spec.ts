@@ -11,6 +11,7 @@ import { AuthService } from '../auth/auth.service';
 import { TokenStore } from '../auth/token.store';
 import { ClubService } from './club.service';
 import { ChatSocket } from './chat-socket.service';
+import { ToastService } from './toast.service';
 
 function makeAuthService(currentUser: { id: string } | null = null, getWsTicket$ = () => of<string | null>('tok')) {
   return { currentUser: signal(currentUser), getWsTicket$ };
@@ -34,7 +35,7 @@ class MockWebSocket {
   static readonly CLOSED = 3;
   onopen: (() => void) | null = null;
   onmessage: ((e: MessageEvent) => void) | null = null;
-  onclose: (() => void) | null = null;
+  onclose: ((e: { code?: number }) => void) | null = null;
   onerror: (() => void) | null = null;
   readyState = MockWebSocket.CONNECTING;
   close = vi.fn(() => { this.readyState = MockWebSocket.CLOSED; });
@@ -43,7 +44,7 @@ class MockWebSocket {
   simulateMessage(data: object) {
     this.onmessage?.(new MessageEvent('message', { data: JSON.stringify(data) }));
   }
-  simulateClose() { this.readyState = MockWebSocket.CLOSED; this.onclose?.(); }
+  simulateClose(code = 1006) { this.readyState = MockWebSocket.CLOSED; this.onclose?.({ code }); }
   simulateError() { this.onerror?.(); }
 }
 
@@ -277,6 +278,53 @@ describe('ChatService', () => {
       const msgs = getActiveMessages(service);
       expect(msgs).toHaveLength(2);
       expect(msgs[0].id).toBe('msg-3-1');
+    });
+
+    it('reconnects a new socket when the already-active room is reopened', () => {
+      service.openRoom('room-2');
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-2/messages`).flush([]);
+      const first = MockWebSocket.instance;
+      expect(first).not.toBeNull();
+
+      service.openRoom('room-2');
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-2/messages`).flush([]);
+
+      expect(first?.close).toHaveBeenCalled();
+      expect(MockWebSocket.instance).not.toBe(first);
+      expect(MockWebSocket.instance?.readyState).toBe(MockWebSocket.CONNECTING);
+    });
+
+    it('opening a different room connects exactly one socket for it', () => {
+      service.openRoom('room-2');
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-2/messages`).flush([]);
+      const created: MockWebSocket[] = [];
+      const orig = (window as any).WebSocket; // eslint-disable-line @typescript-eslint/no-explicit-any
+      (window as any).WebSocket = class extends orig { constructor(u: string) { super(u); created.push(this as unknown as MockWebSocket); } }; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      service.openRoom('room-3');
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-3/messages`).flush([]);
+
+      expect(created).toHaveLength(1);
+      expect(created[0].url).toContain('/chat/rooms/room-3');
+    });
+
+    it('reopening the active room creates exactly one new socket', () => {
+      service.openRoom('room-2');
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-2/messages`).flush([]);
+      const created: MockWebSocket[] = [];
+      const orig = (window as any).WebSocket; // eslint-disable-line @typescript-eslint/no-explicit-any
+      (window as any).WebSocket = class extends orig { constructor(u: string) { super(u); created.push(this as unknown as MockWebSocket); } }; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      service.openRoom('room-2');
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-2/messages`).flush([]);
+
+      expect(created).toHaveLength(1);
     });
   });
 
@@ -784,6 +832,21 @@ describe('ChatService', () => {
 
       httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([]);
     });
+
+    it('reconnects when the already-active room is refocused', () => {
+      const room: ChatRoom = { id: 'room-1', name: 'General', clubId: 'club-1' };
+      service.openAndFocusRoom(room);
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([]);
+      const first = MockWebSocket.instance;
+
+      service.openAndFocusRoom(room);
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([]);
+
+      expect(first?.close).toHaveBeenCalled();
+      expect(MockWebSocket.instance).not.toBe(first);
+    });
   });
 
   describe('getEventRoom()', () => {
@@ -942,6 +1005,54 @@ describe('ChatService', () => {
       expect(getHasNewMessage(service)).toBe(false);
     });
 
+    it('clears presence when the server ends an authenticated session with 1008', () => {
+      service.connectRoom('room-42');
+      const ws = MockWebSocket.instance;
+      if (!ws) throw new Error('MockWebSocket not instantiated');
+      ws.simulateMessage({ type: 'presence_snapshot', payload: [{ userId: 'u1', status: 'online' }] });
+      expect(service.presenceMap().get('u1')).toBe('online');
+      ws.simulateClose(1008);
+      expect(service.presenceMap().size).toBe(0);
+    });
+
+    describe('terminal 1008 stop', () => {
+      const stopActiveRoom = () => {
+        (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
+        TestBed.flushEffects();
+        const ws = MockWebSocket.instance;
+        if (!ws) throw new Error('MockWebSocket not instantiated');
+        ws.simulateMessage({ type: 'presence_snapshot', payload: [] });
+        ws.simulateClose(1008);
+        return ws;
+      };
+
+      it('clears the active room and shows a notice', () => {
+        const info = vi.spyOn(TestBed.inject(ToastService), 'info');
+        stopActiveRoom();
+        expect(getActiveRoomId(service)).toBeNull();
+        expect(info).toHaveBeenCalledWith('CHAT.room_closed_toast');
+      });
+
+      it('reconnects when the same room is opened again', () => {
+        const ws1 = stopActiveRoom();
+        (service as unknown as ChatServicePrivate)._activeRoomId.set('room-42');
+        TestBed.flushEffects();
+        expect(MockWebSocket.instance).not.toBe(ws1);
+      });
+
+      it('refreshes the room list without re-selecting a room', async () => {
+        (TestBed.inject(ClubService).myClubs as unknown as WritableSignal<{ id: string; name: string }[]>).set([{ id: 'club-1', name: 'C' }]);
+        (service as unknown as { _rooms: WritableSignal<ChatRoom[]> })._rooms.set([
+          { id: 'room-42', name: 'Gone', clubId: 'club-1' },
+        ]);
+        stopActiveRoom();
+        httpMock.expectOne(`${API}/clubs/club-1/chat/rooms`).flush([{ id: 'room-42', name: 'Still', eventId: null }]);
+        await new Promise(r => setTimeout(r));
+        expect(getRooms(service).map(r => r.name)).toEqual(['Still']);
+        expect(getActiveRoomId(service)).toBeNull();
+      });
+    });
+
     it('disconnectRoom calls ws.close()', () => {
       service.connectRoom('room-42');
       const ws = MockWebSocket.instance;
@@ -1041,7 +1152,7 @@ describe('ChatService', () => {
       vi.useRealTimers();
     });
 
-    it('onopen resets the socket reconnect delay to 1000', () => {
+    it('the first server frame resets the socket reconnect delay to 1000', () => {
       service.connectRoom('room-42');
       const ws = MockWebSocket.instance;
       if (!ws) throw new Error('MockWebSocket not instantiated');
@@ -1050,6 +1161,7 @@ describe('ChatService', () => {
       // Simulate a previous backoff that doubled the delay
       (socket as unknown as { _reconnectDelay: number })._reconnectDelay = 8_000;
       ws.onopen?.();
+      ws.simulateMessage({ type: 'presence_snapshot', payload: [] });
 
       expect((socket as unknown as { _reconnectDelay: number })._reconnectDelay).toBe(1_000);
     });
