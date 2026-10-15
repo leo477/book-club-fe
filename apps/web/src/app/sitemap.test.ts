@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { STATIC_LAST_MODIFIED } from '@/lib/site';
+import robots from './robots';
 import sitemap, { revalidate } from './sitemap';
 
 const list = vi.hoisted(() => vi.fn());
@@ -22,12 +23,26 @@ describe('sitemap', () => {
     list.mockResolvedValue([]);
     const entries = await sitemap();
     expect(entries.map((e) => [e.url, e.changeFrequency, e.priority])).toEqual([
-      [`${SITE}/`, 'weekly', 1],
       [`${SITE}/clubs`, 'daily', 0.8],
       [`${SITE}/privacy`, 'yearly', 0.2],
       [`${SITE}/terms`, 'yearly', 0.2],
     ]);
-    expect(entries.map((e) => e.lastModified)).toEqual(Array(4).fill(STATIC_LAST_MODIFIED));
+    expect(entries.map((e) => e.lastModified)).toEqual(Array(3).fill(STATIC_LAST_MODIFIED));
+  });
+
+  it('lists no redirecting or robots-disallowed route', async () => {
+    list.mockResolvedValue([{ id: 'a1', isPublic: true, createdAt: '2025-03-04T10:00:00Z' }]);
+    const { rules } = robots();
+    const rule = Array.isArray(rules) ? rules[0]! : rules;
+    const blocked = [rule.disallow ?? []].flat().map((d) => {
+      const anchored = d.endsWith('$');
+      const body = (anchored ? d.slice(0, -1) : d).replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+      return new RegExp(`^${body}${anchored ? '$' : ''}`);
+    });
+    const paths = (await sitemap()).map((e) => e.url.slice(SITE.length));
+    expect(paths).not.toContain('');
+    expect(paths).not.toContain('/');
+    for (const path of paths) expect(blocked.some((re) => re.test(path))).toBe(false);
   });
 
   it('adds public clubs with their creation date and skips non-public ones', async () => {
@@ -52,6 +67,6 @@ describe('sitemap', () => {
   it('degrades to the static routes when the backend fails', async () => {
     list.mockRejectedValue(new Error('down'));
     const entries = await sitemap();
-    expect(entries).toHaveLength(4);
+    expect(entries).toHaveLength(3);
   });
 });

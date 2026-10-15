@@ -19,9 +19,9 @@ let open: ChatSocket[];
 const url = () => `ws://127.0.0.1:${(wss.address() as AddressInfo).port}`;
 
 async function until(check: () => boolean, ms = 3_000) {
-  const end = Date.now() + ms;
+  const end = performance.now() + ms;
   while (!check()) {
-    if (Date.now() > end) throw new Error('timed out');
+    if (performance.now() > end) throw new Error('timed out');
     await new Promise((r) => setTimeout(r, 5));
   }
 }
@@ -66,6 +66,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   for (const s of open) s.close();
   for (const c of wss.clients) c.terminate();
   await new Promise<void>((resolve) => wss.close(() => resolve()));
@@ -130,6 +131,8 @@ describe('createChatSocket', () => {
     await until(() => statuses.includes('open'));
     conns[0]?.ws.terminate();
     await until(() => conns.length === 2);
+    // the server 'connection' event can fire before the client's onopen has sent the auth frame
+    await until(() => conns[1]?.frames.length === 1);
     conns[1]?.ws.terminate();
     await until(() => conns.length === 3 && conns.every((c) => c.frames.length > 0));
     expect(getTicket).toHaveBeenCalledTimes(3);
@@ -139,14 +142,18 @@ describe('createChatSocket', () => {
 
   it('backs off exponentially while the connection never authenticates, then gives up', async () => {
     onConnect = ({ ws }) => ws.close(1008);
-    const stamps: number[] = [];
-    wss.on('connection', () => stamps.push(Date.now()));
-    const { socket, getTicket } = start({ maxAuthFailures: 4, baseDelayMs: 40, maxDelayMs: 1_000 });
+    const delays: number[] = [];
+    const realSetTimeout = globalThis.setTimeout;
+    // random 0.5 gives 75% of 40·2^n
+    const expected = [30, 60, 120];
+    vi.spyOn(globalThis, 'setTimeout').mockImplementation(((fn: () => void, ms?: number, ...args: unknown[]) => {
+      if (ms !== undefined && expected.includes(ms)) delays.push(ms);
+      return realSetTimeout(fn, ms, ...args);
+    }) as typeof setTimeout);
+    const { socket, getTicket } = start({ maxAuthFailures: 4, baseDelayMs: 40, maxDelayMs: 1_000, random: () => 0.5 });
     await until(() => socket.status === 'closed');
     expect(getTicket).toHaveBeenCalledTimes(4);
-    const gaps = stamps.slice(1).map((t, i) => t - (stamps[i] ?? 0));
-    expect(gaps[1]).toBeGreaterThan(gaps[0] ?? 0);
-    expect(gaps[2]).toBeGreaterThan(gaps[1] ?? 0);
+    expect(delays).toEqual(expected);
   });
 
   it('treats a 1008 after authentication as terminal (kicked or banned), not as a reason to loop', async () => {

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -33,7 +34,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-// Dev-only visual review surface; a 404 in production keeps it off the public site.
+// dev-only gallery (404s in production); never index it.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
+
 export default function UiGallery() {
   if (process.env.NODE_ENV === 'production') notFound();
 

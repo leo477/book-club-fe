@@ -5,7 +5,6 @@ import { SITE_URL, STATIC_LAST_MODIFIED } from '@/lib/site';
 export const revalidate = 3600;
 
 const ROUTES = [
-  { path: '/', changeFrequency: 'weekly', priority: 1 },
   { path: '/clubs', changeFrequency: 'daily', priority: 0.8 },
   { path: '/privacy', changeFrequency: 'yearly', priority: 0.2 },
   { path: '/terms', changeFrequency: 'yearly', priority: 0.2 },
