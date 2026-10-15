@@ -625,7 +625,8 @@
     "offline": "Offline",
     "page_title": "Chats",
     "club_chat_ready_toast": "You're in! The club chat is now open for you.",
-    "event_chat_ready_toast": "You're in! The event chat is now open for you."
+    "event_chat_ready_toast": "You're in! The event chat is now open for you.",
+    "room_closed_toast": "This chat is no longer available to you."
   },
   "CHATS": {
     "title": "Chats",
