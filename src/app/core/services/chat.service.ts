@@ -181,7 +181,7 @@ export class ChatService {
   }
 
   /** Fetch rooms for all user clubs in parallel and merge into one flat list. */
-  loadAllClubRooms(clubs: { id: string; name: string }[], userId?: string): void {
+  loadAllClubRooms(clubs: { id: string; name: string }[], userId?: string, autoSelect = true): void {
     if (userId !== undefined) this.currentUserId = userId;
 
     const multipleClubs = clubs.length > 1;
@@ -199,7 +199,7 @@ export class ChatService {
     Promise.all(requests).then(results => {
       const allRooms = results.flat();
       this._rooms.set(allRooms);
-      this._autoSelectFirstRoom(allRooms);
+      if (autoSelect) this._autoSelectFirstRoom(allRooms);
     }).catch((err: unknown) => {
       logError('[ChatService] loadAllClubRooms error', err);
       this.notifyError(err);
@@ -273,8 +273,19 @@ export class ChatService {
         for (const e of entries) map.set(e.userId, e.status);
         this._presenceMap.set(map);
       },
-      onStopped: () => this._presenceMap.set(new Map()),
+      onStopped: () => this._onRoomStopped(roomId),
     });
+  }
+
+  /** Terminal socket stop (kick/ban/room deleted/auth rejected): leave the dead room so reopening it reconnects. */
+  private _onRoomStopped(roomId: string): void {
+    this._presenceMap.set(new Map());
+    if (this._activeRoomId() !== roomId) return;
+    this._activeRoomId.set(null);
+    this.toast.info(this.translate.instant('CHAT.room_closed_toast') as string);
+    const clubs = this._clubService.myClubs();
+    // No auto-select: a still-listed room would be re-picked and loop.
+    if (clubs.length > 0) this.loadAllClubRooms(clubs, undefined, false);
   }
 
   disconnectRoom(): void {
