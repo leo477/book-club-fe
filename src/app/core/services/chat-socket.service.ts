@@ -8,7 +8,7 @@ export interface ChatSocketHandlers {
   onMessage: (payload: unknown) => void;
   onPresence: (userId: string, status: 'online' | 'offline') => void;
   onPresenceSnapshot: (entries: { userId: string; status: 'online' | 'offline' }[]) => void;
-  onStopped?: () => void;
+  onStopped: () => void;
 }
 
 /**
@@ -87,13 +87,11 @@ export class ChatSocket {
 
     this._ws.onclose = (event: CloseEvent) => {
       if (this._ws !== ws || !this._activeRoom) return;
-      // 1008 after the first server frame (auth succeeded) means the server
-      // ended the session (banned/removed/un-attended): terminal. A 1008 before
-      // that is an auth-phase rejection and is retried with a fresh ticket.
+      // 1008 after the first frame = server ended the session (kick/ban/room closed); before it = auth rejection, retry.
       if (authenticated && event?.code === 1008) {
         this._activeRoom = null;
         this._ws = null;
-        handlers.onStopped?.();
+        handlers.onStopped();
         return;
       }
       this._reconnectTimer = setTimeout(() => {
