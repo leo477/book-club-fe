@@ -22,6 +22,10 @@ describe('root layout head tags', () => {
     expect(viewport.themeColor).toBe('#d97706');
   });
 
+  it('is indexable by default, like Angular index.html (private pages opt out per page)', () => {
+    expect(metadata.robots).toEqual({ index: true, follow: true });
+  });
+
   it('has every icon the metadata links in apps/web/public', () => {
     const icons = metadata.icons as { icon: { url: string }[] };
     expect(icons.icon.length).toBeGreaterThan(0);
