@@ -8,6 +8,7 @@ export interface ChatSocketHandlers {
   onMessage: (payload: unknown) => void;
   onPresence: (userId: string, status: 'online' | 'offline') => void;
   onPresenceSnapshot: (entries: { userId: string; status: 'online' | 'offline' }[]) => void;
+  onStopped?: () => void;
 }
 
 /**
@@ -39,8 +40,9 @@ export class ChatSocket {
     const ws = new WebSocket(environment.wsUrl + '/chat/rooms/' + roomId);
     this._ws = ws;
 
+    let authenticated = false;
+
     ws.onopen = () => {
-      this._reconnectDelay = 1_000;
       getTicket()
         .then(ticket => {
           if (this._ws !== ws) return;
@@ -57,6 +59,11 @@ export class ChatSocket {
     };
 
     this._ws.onmessage = (event: MessageEvent) => {
+      if (this._ws !== ws) return;
+      if (!authenticated) {
+        authenticated = true;
+        this._reconnectDelay = 1_000;
+      }
       try {
         const envelope = JSON.parse(event.data as string) as WsEnvelope;
 
@@ -78,8 +85,17 @@ export class ChatSocket {
       }
     };
 
-    this._ws.onclose = () => {
-      if (!this._activeRoom) return;
+    this._ws.onclose = (event: CloseEvent) => {
+      if (this._ws !== ws || !this._activeRoom) return;
+      // 1008 after the first server frame (auth succeeded) means the server
+      // ended the session (banned/removed/un-attended): terminal. A 1008 before
+      // that is an auth-phase rejection and is retried with a fresh ticket.
+      if (authenticated && event?.code === 1008) {
+        this._activeRoom = null;
+        this._ws = null;
+        handlers.onStopped?.();
+        return;
+      }
       this._reconnectTimer = setTimeout(() => {
         const active = this._activeRoom;
         if (!active) return;
@@ -91,7 +107,7 @@ export class ChatSocket {
       }, this._reconnectDelay);
     };
 
-    this._ws.onerror = () => this._ws?.close();
+    this._ws.onerror = () => { if (this._ws === ws) ws.close(); };
   }
 
   disconnect(): void {

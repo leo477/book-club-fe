@@ -11,7 +11,7 @@ class MockWebSocket {
   static readonly CLOSED = 3;
   onopen: (() => void) | null = null;
   onmessage: ((e: MessageEvent) => void) | null = null;
-  onclose: (() => void) | null = null;
+  onclose: ((e: { code?: number }) => void) | null = null;
   onerror: (() => void) | null = null;
   readyState = MockWebSocket.CONNECTING;
   close = vi.fn(() => { this.readyState = MockWebSocket.CLOSED; });
@@ -20,7 +20,7 @@ class MockWebSocket {
   simulateMessage(data: object) {
     this.onmessage?.(new MessageEvent('message', { data: JSON.stringify(data) }));
   }
-  simulateClose() { this.readyState = MockWebSocket.CLOSED; this.onclose?.(); }
+  simulateClose(code = 1006) { this.readyState = MockWebSocket.CLOSED; this.onclose?.({ code }); }
   simulateError() { this.onerror?.(); }
 }
 
@@ -40,6 +40,8 @@ function ticketGetter(ticket: string | null) {
 describe('ChatSocket', () => {
   let socket: ChatSocket;
   const WS_BASE = environment.wsUrl;
+
+  afterEach(() => vi.useRealTimers());
 
   beforeEach(() => {
     MockWebSocket.instance = null;
@@ -208,11 +210,81 @@ describe('ChatSocket', () => {
     vi.useRealTimers();
   });
 
-  it('onopen resets the reconnect delay back to 1000ms', () => {
+  it('the first server frame resets the reconnect delay back to 1000ms', () => {
     socket.connect('room-1', ticketGetter('tik'), makeHandlers());
     const ws = MockWebSocket.instance;
     (socket as unknown as { _reconnectDelay: number })._reconnectDelay = 8_000;
     ws?.onopen?.();
+    expect((socket as unknown as { _reconnectDelay: number })._reconnectDelay).toBe(8_000);
+    ws?.simulateMessage({ type: 'presence_snapshot', payload: [] });
     expect((socket as unknown as { _reconnectDelay: number })._reconnectDelay).toBe(1_000);
+  });
+
+  it('does not reconnect after a 1008 close on an opened socket and clears the active room', () => {
+    vi.useFakeTimers();
+    const handlers = makeHandlers();
+    handlers.onStopped = vi.fn();
+    socket.connect('room-1', ticketGetter('tik'), handlers);
+    const ws = MockWebSocket.instance;
+    ws?.onopen?.();
+    ws?.simulateMessage({ type: 'presence_snapshot', payload: [] });
+    ws?.simulateClose(1008);
+
+    vi.advanceTimersByTime(60_000);
+    expect(MockWebSocket.instance).toBe(ws);
+    expect((socket as unknown as { _activeRoom: unknown })._activeRoom).toBeNull();
+    expect(handlers.onStopped).toHaveBeenCalled();
+    vi.useRealTimers();
+  });
+
+  it('keeps reconnecting with doubling backoff after a 1006 close on an opened socket', () => {
+    vi.useFakeTimers();
+    socket.connect('room-1', ticketGetter('tik'), makeHandlers());
+    const ws1 = MockWebSocket.instance;
+    ws1?.simulateClose(1006);
+    vi.advanceTimersByTime(1_100);
+    const ws2 = MockWebSocket.instance;
+    expect(ws2).not.toBe(ws1);
+    ws2?.simulateClose(1006);
+    vi.advanceTimersByTime(1_000);
+    expect(MockWebSocket.instance).toBe(ws2);
+    vi.advanceTimersByTime(1_100);
+    expect(MockWebSocket.instance).not.toBe(ws2);
+    vi.useRealTimers();
+  });
+
+  it('still reconnects with backoff on 1008 after onopen but before any frame', () => {
+    vi.useFakeTimers();
+    socket.connect('room-1', ticketGetter('tik'), makeHandlers());
+    const ws1 = MockWebSocket.instance;
+    ws1?.onopen?.();
+    ws1?.simulateClose(1008);
+    vi.advanceTimersByTime(1_100);
+    const ws2 = MockWebSocket.instance;
+    expect(ws2).not.toBe(ws1);
+    ws2?.onopen?.();
+    ws2?.simulateClose(1008);
+    vi.advanceTimersByTime(1_000);
+    expect(MockWebSocket.instance).toBe(ws2);
+    vi.advanceTimersByTime(1_100);
+    expect(MockWebSocket.instance).not.toBe(ws2);
+  });
+
+  it('ignores a late 1008 close from a superseded socket', () => {
+    vi.useFakeTimers();
+    const handlers = makeHandlers();
+    handlers.onStopped = vi.fn();
+    socket.connect('room-A', ticketGetter('tik'), handlers);
+    const wsA = MockWebSocket.instance;
+    wsA?.onopen?.();
+    wsA?.simulateMessage({ type: 'presence_snapshot', payload: [] });
+    socket.connect('room-B', ticketGetter('tik'), handlers);
+    const wsB = MockWebSocket.instance;
+    wsA?.simulateClose(1008);
+
+    vi.advanceTimersByTime(60_000);
+    expect(MockWebSocket.instance).toBe(wsB);
+    expect((socket as unknown as { _activeRoom: { roomId: string } | null })._activeRoom?.roomId).toBe('room-B');
+    expect(handlers.onStopped).not.toHaveBeenCalled();
   });
 });
