@@ -279,6 +279,53 @@ describe('ChatService', () => {
       expect(msgs).toHaveLength(2);
       expect(msgs[0].id).toBe('msg-3-1');
     });
+
+    it('reconnects a new socket when the already-active room is reopened', () => {
+      service.openRoom('room-2');
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-2/messages`).flush([]);
+      const first = MockWebSocket.instance;
+      expect(first).not.toBeNull();
+
+      service.openRoom('room-2');
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-2/messages`).flush([]);
+
+      expect(first?.close).toHaveBeenCalled();
+      expect(MockWebSocket.instance).not.toBe(first);
+      expect(MockWebSocket.instance?.readyState).toBe(MockWebSocket.CONNECTING);
+    });
+
+    it('opening a different room connects exactly one socket for it', () => {
+      service.openRoom('room-2');
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-2/messages`).flush([]);
+      const created: MockWebSocket[] = [];
+      const orig = (window as any).WebSocket; // eslint-disable-line @typescript-eslint/no-explicit-any
+      (window as any).WebSocket = class extends orig { constructor(u: string) { super(u); created.push(this as unknown as MockWebSocket); } }; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      service.openRoom('room-3');
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-3/messages`).flush([]);
+
+      expect(created).toHaveLength(1);
+      expect(created[0].url).toContain('/chat/rooms/room-3');
+    });
+
+    it('reopening the active room creates exactly one new socket', () => {
+      service.openRoom('room-2');
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-2/messages`).flush([]);
+      const created: MockWebSocket[] = [];
+      const orig = (window as any).WebSocket; // eslint-disable-line @typescript-eslint/no-explicit-any
+      (window as any).WebSocket = class extends orig { constructor(u: string) { super(u); created.push(this as unknown as MockWebSocket); } }; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+      service.openRoom('room-2');
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-2/messages`).flush([]);
+
+      expect(created).toHaveLength(1);
+    });
   });
 
   describe('markAsRead()', () => {
@@ -784,6 +831,21 @@ describe('ChatService', () => {
       expect(getUnreadCount(service)).toBe(0);
 
       httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([]);
+    });
+
+    it('reconnects when the already-active room is refocused', () => {
+      const room: ChatRoom = { id: 'room-1', name: 'General', clubId: 'club-1' };
+      service.openAndFocusRoom(room);
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([]);
+      const first = MockWebSocket.instance;
+
+      service.openAndFocusRoom(room);
+      TestBed.flushEffects();
+      httpMock.expectOne(`${API}/chat/rooms/room-1/messages`).flush([]);
+
+      expect(first?.close).toHaveBeenCalled();
+      expect(MockWebSocket.instance).not.toBe(first);
     });
   });
 
