@@ -42,7 +42,10 @@ export class ChatSocket {
     // A reconnect-timer call keeps the failure streak; a fresh/other-room connect restarts it.
     const continuing = this._activeRoom?.roomId === roomId;
     this.disconnect();
-    if (!continuing) this._authFailures = 0;
+    if (!continuing) {
+      this._authFailures = 0;
+      this._reconnectDelay = 1_000;
+    }
     this._activeRoom = { roomId, getTicket };
     const ws = new WebSocket(environment.wsUrl + '/chat/rooms/' + roomId);
     this._ws = ws;
@@ -95,7 +98,7 @@ export class ChatSocket {
 
     this._ws.onclose = (event: CloseEvent) => {
       if (this._ws !== ws || !this._activeRoom) return;
-      // 1008 after the first frame = server ended the session (kick/ban/room closed); before it = auth rejection, retry.
+      // 1008 after the first frame = server ended the session (kick/ban/room closed); before it = auth rejection, retried up to MAX_AUTH_FAILURES.
       if (authenticated && event?.code === 1008) {
         this._activeRoom = null;
         this._ws = null;

@@ -345,6 +345,39 @@ describe('ChatSocket', () => {
     expect(handlers.onStopped).not.toHaveBeenCalled();
   });
 
+  it.each(['room-1', 'room-2'])('a fresh connect() to %s restarts the pre-frame 1008 streak', room => {
+    vi.useFakeTimers();
+    const handlers = makeHandlers();
+    socket.connect('room-1', ticketGetter('tik'), handlers);
+    for (let i = 0; i < 2; i++) {
+      MockWebSocket.instance?.simulateClose(1008);
+      vi.advanceTimersByTime(30_000);
+    }
+    socket.disconnect();
+    socket.connect(room, ticketGetter('tik'), handlers);
+    const ws = MockWebSocket.instance;
+    ws?.simulateClose(1008);
+    expect(handlers.onStopped).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1_100);
+    expect(MockWebSocket.instance).not.toBe(ws);
+  });
+
+  it('a fresh connect() resets the reconnect backoff to 1s', () => {
+    vi.useFakeTimers();
+    const handlers = makeHandlers();
+    socket.connect('room-1', ticketGetter('tik'), handlers);
+    for (let i = 0; i < 2; i++) {
+      MockWebSocket.instance?.simulateClose(1008);
+      vi.advanceTimersByTime(30_000);
+    }
+    socket.disconnect();
+    socket.connect('room-1', ticketGetter('tik'), handlers);
+    const ws = MockWebSocket.instance;
+    ws?.simulateClose(1006);
+    vi.advanceTimersByTime(1_100);
+    expect(MockWebSocket.instance).not.toBe(ws);
+  });
+
   it('a fresh connect() to the same room works after a terminal 1008 stop', () => {
     socket.connect('room-1', ticketGetter('tik'), makeHandlers());
     const ws1 = MockWebSocket.instance;
