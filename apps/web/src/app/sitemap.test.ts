@@ -32,8 +32,13 @@ describe('sitemap', () => {
 
   it('lists no redirecting or robots-disallowed route', async () => {
     list.mockResolvedValue([{ id: 'a1', isPublic: true, createdAt: '2025-03-04T10:00:00Z' }]);
-    const rules = robots().rules as { disallow: string[] };
-    const blocked = rules.disallow.map((d) => new RegExp(`^${d.replace(/\*/g, '[^/]+')}`));
+    const { rules } = robots();
+    const rule = Array.isArray(rules) ? rules[0]! : rules;
+    const blocked = [rule.disallow ?? []].flat().map((d) => {
+      const anchored = d.endsWith('$');
+      const body = (anchored ? d.slice(0, -1) : d).replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+      return new RegExp(`^${body}${anchored ? '$' : ''}`);
+    });
     const paths = (await sitemap()).map((e) => e.url.slice(SITE.length));
     expect(paths).not.toContain('');
     expect(paths).not.toContain('/');
