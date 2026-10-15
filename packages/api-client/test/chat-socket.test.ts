@@ -128,8 +128,10 @@ describe('createChatSocket', () => {
     const { getTicket, statuses } = start();
     await until(() => conns.length === 1);
     await until(() => statuses.includes('open'));
+    await until(() => conns[0]?.frames.length === 1);
     conns[0]?.ws.terminate();
     await until(() => conns.length === 2);
+    await until(() => conns[1]?.frames.length === 1);
     conns[1]?.ws.terminate();
     await until(() => conns.length === 3 && conns.every((c) => c.frames.length > 0));
     expect(getTicket).toHaveBeenCalledTimes(3);
