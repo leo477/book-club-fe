@@ -293,6 +293,17 @@ export class ChatService {
     this._socket.disconnect();
   }
 
+  /** Setting an unchanged signal won't rerun the connect effect, so reconnect the already-active room directly. */
+  private _switchActiveRoom(roomId: string): void {
+    const wasActive = this._activeRoomId() === roomId;
+    this.disconnectRoom();
+    if (wasActive) {
+      if (this._tokenStore.token()) this.connectRoom(roomId);
+    } else {
+      this._activeRoomId.set(roomId);
+    }
+  }
+
   toggleOpen(): void {
     this._isOpen.update(v => !v);
     if (this._isOpen()) {
@@ -303,8 +314,7 @@ export class ChatService {
   }
 
   openRoom(roomId: string): void {
-    this.disconnectRoom();
-    this._activeRoomId.set(roomId);
+    this._switchActiveRoom(roomId);
     this.loadMessages(roomId);
     this.markRoomRead(roomId);
     this.markAsRead();
@@ -467,8 +477,7 @@ export class ChatService {
   }
 
   openAndFocusRoom(room: ChatRoom): void {
-    this.disconnectRoom();
-    this._activeRoomId.set(room.id);
+    this._switchActiveRoom(room.id);
     this.loadMessages(room.id);
     this._isOpen.set(true);
     this.markRoomRead(room.id);
