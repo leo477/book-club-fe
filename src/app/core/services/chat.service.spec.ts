@@ -34,7 +34,7 @@ class MockWebSocket {
   static readonly CLOSED = 3;
   onopen: (() => void) | null = null;
   onmessage: ((e: MessageEvent) => void) | null = null;
-  onclose: (() => void) | null = null;
+  onclose: ((e: { code?: number }) => void) | null = null;
   onerror: (() => void) | null = null;
   readyState = MockWebSocket.CONNECTING;
   close = vi.fn(() => { this.readyState = MockWebSocket.CLOSED; });
@@ -43,7 +43,7 @@ class MockWebSocket {
   simulateMessage(data: object) {
     this.onmessage?.(new MessageEvent('message', { data: JSON.stringify(data) }));
   }
-  simulateClose() { this.readyState = MockWebSocket.CLOSED; this.onclose?.(); }
+  simulateClose(code = 1006) { this.readyState = MockWebSocket.CLOSED; this.onclose?.({ code }); }
   simulateError() { this.onerror?.(); }
 }
 
@@ -942,6 +942,16 @@ describe('ChatService', () => {
       expect(getHasNewMessage(service)).toBe(false);
     });
 
+    it('clears presence when the server ends an authenticated session with 1008', () => {
+      service.connectRoom('room-42');
+      const ws = MockWebSocket.instance;
+      if (!ws) throw new Error('MockWebSocket not instantiated');
+      ws.simulateMessage({ type: 'presence_snapshot', payload: [{ userId: 'u1', status: 'online' }] });
+      expect(service.presenceMap().get('u1')).toBe('online');
+      ws.simulateClose(1008);
+      expect(service.presenceMap().size).toBe(0);
+    });
+
     it('disconnectRoom calls ws.close()', () => {
       service.connectRoom('room-42');
       const ws = MockWebSocket.instance;
@@ -1041,7 +1051,7 @@ describe('ChatService', () => {
       vi.useRealTimers();
     });
 
-    it('onopen resets the socket reconnect delay to 1000', () => {
+    it('the first server frame resets the socket reconnect delay to 1000', () => {
       service.connectRoom('room-42');
       const ws = MockWebSocket.instance;
       if (!ws) throw new Error('MockWebSocket not instantiated');
@@ -1050,6 +1060,7 @@ describe('ChatService', () => {
       // Simulate a previous backoff that doubled the delay
       (socket as unknown as { _reconnectDelay: number })._reconnectDelay = 8_000;
       ws.onopen?.();
+      ws.simulateMessage({ type: 'presence_snapshot', payload: [] });
 
       expect((socket as unknown as { _reconnectDelay: number })._reconnectDelay).toBe(1_000);
     });
