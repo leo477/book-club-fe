@@ -144,17 +144,16 @@ describe('createChatSocket', () => {
     onConnect = ({ ws }) => ws.close(1008);
     const delays: number[] = [];
     const realSetTimeout = globalThis.setTimeout;
-    const expected = [0, 1, 2].map((a) => backoffDelay(a, 40, 1_000, 1));
+    // random 0.5 gives 75% of 40·2^n
+    const expected = [30, 60, 120];
     vi.spyOn(globalThis, 'setTimeout').mockImplementation(((fn: () => void, ms?: number, ...args: unknown[]) => {
       if (ms !== undefined && expected.includes(ms)) delays.push(ms);
       return realSetTimeout(fn, ms, ...args);
     }) as typeof setTimeout);
-    const { socket, getTicket } = start({ maxAuthFailures: 4, baseDelayMs: 40, maxDelayMs: 1_000 });
+    const { socket, getTicket } = start({ maxAuthFailures: 4, baseDelayMs: 40, maxDelayMs: 1_000, random: () => 0.5 });
     await until(() => socket.status === 'closed');
     expect(getTicket).toHaveBeenCalledTimes(4);
     expect(delays).toEqual(expected);
-    expect(expected).toEqual([...expected].sort((x, y) => x - y));
-    expect(new Set(expected).size).toBe(3);
   });
 
   it('treats a 1008 after authentication as terminal (kicked or banned), not as a reason to loop', async () => {
