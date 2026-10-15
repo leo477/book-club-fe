@@ -71,7 +71,7 @@ export function ClubEventsInteractive({ club, initialEvents }: ClubEventsProps) 
       return all.filter((e) => e.date < now).sort((a, b) => b.date.localeCompare(a.date));
     },
   });
-  const members = useClubMembers(club.id, role.isOwner && tab === 'history');
+  const members = useClubMembers(club.id, role.canManage && tab === 'history');
 
   const attend = useMutation({
     mutationFn: async ({ eventId, attending }: { eventId: string; attending: boolean }): Promise<void> => {
@@ -200,7 +200,7 @@ export function ClubEventsInteractive({ club, initialEvents }: ClubEventsProps) 
                 <li key={event.id} className="flex flex-col gap-2">
                   {card(event, false, false)}
                   {event.hasWinner && event.winnerId && <p className="text-xs text-[var(--color-primary-500)] px-1">🏆 {event.winnerName}</p>}
-                  {role.isOwner && event.hasWinner && !event.winnerId &&
+                  {role.canManage && event.hasWinner && !event.winnerId &&
                     (winnerEventId === event.id ? (
                       <div className="flex flex-col gap-1 px-1">
                         <select
