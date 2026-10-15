@@ -45,7 +45,6 @@
   ],
   "overrides": {
     "@babel/core": "^7.29.6",
-    "zod": "4.6.6",
     "picomatch": "^4.0.4",
     "axios": "^1.20.0",
     "tmp": ">=0.2.6",
@@ -64,6 +63,9 @@
     "smol-toml": ">=1.9.0",
     "@angular/build": {
       "undici": "^7.28.0"
+    },
+    "@angular/cli": {
+      "zod": "4.6.6"
     }
   },
   "dependencies": {
