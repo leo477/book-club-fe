@@ -454,6 +454,19 @@ describe('AuthService', () => {
       );
     });
 
+    it('ignores a second call while the first is pending', async () => {
+      const { service } = buildService();
+      Object.defineProperty(window, 'location', {
+        value: { ...window.location, href: '' },
+        writable: true,
+        configurable: true,
+      });
+      const setItem = vi.spyOn(Storage.prototype, 'setItem');
+      await Promise.all([service.loginWithGoogle(), service.loginWithGoogle()]);
+      expect(setItem).toHaveBeenCalledTimes(1);
+      vi.restoreAllMocks();
+    });
+
     it('falls back to the unbound flow when sessionStorage is unavailable', async () => {
       const { service } = buildService();
       Object.defineProperty(window, 'location', {

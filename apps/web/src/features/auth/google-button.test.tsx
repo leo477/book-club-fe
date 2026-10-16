@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { deriveChallenge } from '@/lib/pkce';
 import { messages, renderWithProviders } from '@/test/harness';
-import { GoogleButton } from './google-button';
+import { GoogleButton, startGoogleLogin } from './google-button';
 
 afterEach(() => vi.unstubAllEnvs());
 
@@ -33,6 +33,16 @@ describe('GoogleButton', () => {
     await userEvent.click(screen.getByRole('button', { name: messages.uk['AUTH.continue_with_google']! }));
     await waitFor(() => expect(location.href).not.toBe('http://localhost:3000/login'));
     expect(location.href).toBe('https://api.example.test/api/v1/auth/oauth/google?origin=http%3A%2F%2Flocalhost%3A3000');
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
+
+  it('ignores a second call while the first is pending', async () => {
+    const location = { href: 'http://localhost:3000/login', origin: 'http://localhost:3000' };
+    vi.stubGlobal('location', location);
+    const setItem = vi.spyOn(Storage.prototype, 'setItem');
+    await Promise.all([startGoogleLogin(), startGoogleLogin()]);
+    expect(setItem).toHaveBeenCalledTimes(1);
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
   });

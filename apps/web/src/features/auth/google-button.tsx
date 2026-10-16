@@ -5,13 +5,21 @@ import { Button } from '@/components/ui/button';
 import { beginPkce } from '@/lib/pkce';
 
 /** The backend owns the OAuth dance, so this is a full-page redirect to its absolute URL carrying our origin. */
+let starting = false;
+
 export async function startGoogleLogin(): Promise<void> {
-  const backend = process.env.NEXT_PUBLIC_OAUTH_BASE_URL ?? '';
-  const challenge = await beginPkce();
-  const bound = challenge ? `&challenge=${challenge}` : '';
-  const target = `${backend}/auth/oauth/google?origin=${encodeURIComponent(window.location.origin)}${bound}`;
-  // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- an absolute backend URL, not an internal page
-  window.location.href = target;
+  if (starting) return;
+  starting = true;
+  try {
+    const backend = process.env.NEXT_PUBLIC_OAUTH_BASE_URL ?? '';
+    const challenge = await beginPkce();
+    const bound = challenge ? `&challenge=${challenge}` : '';
+    const target = `${backend}/auth/oauth/google?origin=${encodeURIComponent(window.location.origin)}${bound}`;
+    // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- an absolute backend URL, not an internal page
+    window.location.href = target;
+  } finally {
+    starting = false;
+  }
 }
 
 export function GoogleButton() {

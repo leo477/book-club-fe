@@ -22,6 +22,7 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
   private readonly tokenStore = inject(TokenStore);
+  private googleStarting = false;
 
   private readonly _currentUser = signal<UserProfile | null>(null);
   private readonly _isLoading = signal<boolean>(true);
@@ -124,9 +125,15 @@ export class AuthService {
 
   /** Starts the Google OAuth flow via a full-page redirect to the backend. */
   async loginWithGoogle(): Promise<void> {
-    const challenge = await beginPkce();
-    const bound = challenge ? `&challenge=${challenge}` : '';
-    globalThis.location.href = `${environment.oauthBaseUrl}/auth/oauth/google?origin=${encodeURIComponent(globalThis.location.origin)}${bound}`;
+    if (this.googleStarting) return;
+    this.googleStarting = true;
+    try {
+      const challenge = await beginPkce();
+      const bound = challenge ? `&challenge=${challenge}` : '';
+      globalThis.location.href = `${environment.oauthBaseUrl}/auth/oauth/google?origin=${encodeURIComponent(globalThis.location.origin)}${bound}`;
+    } finally {
+      this.googleStarting = false;
+    }
   }
 
   /** Fetches a one-time, short-lived ticket used to authenticate the chat WebSocket. */
