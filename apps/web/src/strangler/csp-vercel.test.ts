@@ -41,6 +41,14 @@ describe('chat socket origin in every CSP', () => {
     }
   });
 
+  it('keeps the img-src hosts of csp.ts and the root vercel.json identical', () => {
+    const hosts = (img: string[]) => img.slice(1).filter((h) => !h.startsWith("'nonce-")).sort();
+    const next = (buildCsp('n').split('; ').find((d) => d.startsWith('img-src ')) ?? '').split(' ');
+    const root = imgSrcs(FILES[1]!);
+    expect(root.length).toBeGreaterThan(0);
+    for (const img of root) expect(hosts(img)).toEqual(hosts(next));
+  });
+
   it('at least one vercel.json declares a CSP, so the check above is not vacuous', () => {
     expect(FILES.flatMap(connectSrcs).length).toBeGreaterThan(0);
   });

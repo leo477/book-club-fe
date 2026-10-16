@@ -30,7 +30,7 @@ function BookThumb({ src }: { src: string }) {
       </div>
     );
   }
-  // eslint-disable-next-line @next/next/no-img-element
+  // eslint-disable-next-line @next/next/no-img-element -- cover URLs are arbitrary hosts
   return <img src={src} alt="" width={32} height={48} referrerPolicy="no-referrer" onError={() => setBroken(true)} className="h-12 w-8 shrink-0 rounded object-cover shadow-sm" />;
 }
 
@@ -51,7 +51,7 @@ export function BookAutocomplete({ value, onChange, onSelected, label, placehold
       getKey={(book) => book.id}
       renderItem={(book) => (
         <>
-          <BookThumb src={safeImageUrl(book.thumbnail ?? '')} />
+          <BookThumb key={safeImageUrl(book.thumbnail ?? '')} src={safeImageUrl(book.thumbnail ?? '')} />
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{book.title}</p>
             <p className="truncate text-xs text-muted-foreground">{book.authors.join(', ')}</p>
