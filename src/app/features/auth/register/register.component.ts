@@ -70,7 +70,7 @@ export class RegisterComponent {
   }
 
   onGoogleLogin(): void {
-    this.auth.loginWithGoogle();
+    void this.auth.loginWithGoogle();
   }
 
   readonly form = new FormGroup<RegisterForm>(

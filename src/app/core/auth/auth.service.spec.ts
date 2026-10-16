@@ -5,6 +5,7 @@ import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { Router } from '@angular/router';
 import { AuthService } from './auth.service';
+import { deriveChallenge } from './pkce';
 import { TokenStore } from './token.store';
 import { environment } from '../../../environments/environment';
 
@@ -438,7 +439,7 @@ describe('AuthService', () => {
   describe('loginWithGoogle', () => {
     beforeEach(() => { setupTestbed(); });
 
-    it('sets window.location.href to the Google OAuth endpoint', () => {
+    it('sets window.location.href to the Google OAuth endpoint with a PKCE challenge', async () => {
       const { service } = buildService();
       const original = window.location.href;
       Object.defineProperty(window, 'location', {
@@ -446,7 +447,38 @@ describe('AuthService', () => {
         writable: true,
         configurable: true,
       });
-      service.loginWithGoogle();
+      await service.loginWithGoogle();
+      const verifier = sessionStorage.getItem('bc_pkce_verifier') ?? '';
+      expect((window.location as { href: string }).href).toBe(
+        `${environment.oauthBaseUrl}/auth/oauth/google?origin=${encodeURIComponent(window.location.origin)}&challenge=${await deriveChallenge(verifier)}`,
+      );
+    });
+
+    it('ignores a second call while the first is pending', async () => {
+      const { service } = buildService();
+      Object.defineProperty(window, 'location', {
+        value: { ...window.location, href: '' },
+        writable: true,
+        configurable: true,
+      });
+      const setItem = vi.spyOn(Storage.prototype, 'setItem');
+      await Promise.all([service.loginWithGoogle(), service.loginWithGoogle()]);
+      expect(setItem).toHaveBeenCalledTimes(1);
+      vi.restoreAllMocks();
+    });
+
+    it('falls back to the unbound flow when sessionStorage is unavailable', async () => {
+      const { service } = buildService();
+      Object.defineProperty(window, 'location', {
+        value: { ...window.location, href: '' },
+        writable: true,
+        configurable: true,
+      });
+      vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+        throw new Error('blocked');
+      });
+      await service.loginWithGoogle();
+      vi.restoreAllMocks();
       expect((window.location as { href: string }).href).toBe(
         `${environment.oauthBaseUrl}/auth/oauth/google?origin=${encodeURIComponent(window.location.origin)}`,
       );
@@ -455,6 +487,7 @@ describe('AuthService', () => {
 
   describe('exchangeOAuthCode', () => {
     beforeEach(() => {
+      sessionStorage.removeItem('bc_pkce_verifier');
       localStorage.removeItem('bc_has_session');
       setupTestbed();
     });
@@ -477,6 +510,17 @@ describe('AuthService', () => {
       expect(tokenStoreSpy.setRefreshToken).not.toHaveBeenCalled();
       expect(localStorage.getItem('bc_has_session')).toBeNull();
       expect(service.currentUser()?.id).toBe('u1');
+    });
+
+    it('sends the stored PKCE verifier and removes it', async () => {
+      const { service } = buildService();
+      sessionStorage.setItem('bc_pkce_verifier', 'v'.repeat(43));
+      const p = service.exchangeOAuthCode('handoff');
+      const req = httpMock.expectOne(`${API}/auth/oauth/exchange`);
+      expect(req.request.body).toEqual({ code: 'handoff', code_verifier: 'v'.repeat(43) });
+      expect(sessionStorage.getItem('bc_pkce_verifier')).toBeNull();
+      req.flush({}, { status: 400, statusText: 'Bad Request' });
+      expect(await p).toEqual({ error: 'OAUTH_FAILED' });
     });
 
     it('returns OAUTH_FAILED when exchange rejects', async () => {

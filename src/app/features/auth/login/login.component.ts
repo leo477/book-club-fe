@@ -48,7 +48,7 @@ export class LoginComponent {
   }
 
   onGoogleLogin(): void {
-    this.auth.loginWithGoogle();
+    void this.auth.loginWithGoogle();
   }
 
   readonly form = new FormGroup<LoginForm>({

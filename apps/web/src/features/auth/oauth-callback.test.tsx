@@ -65,6 +65,25 @@ describe('OAuthCallback', () => {
     expect(sessionStorage.getItem('bc_flash')).toBeNull();
   });
 
+  it('sends the stored PKCE verifier with the code and removes it', async () => {
+    visit('?code=one-time-code');
+    sessionStorage.setItem('bc_pkce_verifier', 'v'.repeat(43));
+    const calls = mockApi();
+    renderWithProviders(<OAuthCallback />);
+    await waitFor(() => expect(nav.hard).toHaveBeenCalledWith('/events'));
+    expect(calls.exchange).toEqual([{ code: 'one-time-code', code_verifier: 'v'.repeat(43) }]);
+    expect(sessionStorage.getItem('bc_pkce_verifier')).toBeNull();
+  });
+
+  it('removes the PKCE verifier when the exchange fails', async () => {
+    visit('?code=bad');
+    sessionStorage.setItem('bc_pkce_verifier', 'v'.repeat(43));
+    mockApi({ exchange: () => new HttpResponse(null, { status: 400 }) });
+    renderWithProviders(<OAuthCallback />);
+    await waitFor(() => expect(nav.replaceHard).toHaveBeenCalledWith('/login'));
+    expect(sessionStorage.getItem('bc_pkce_verifier')).toBeNull();
+  });
+
   it('strips the code from the URL and history before the exchange completes', async () => {
     visit('?code=one-time-code&other=1');
     const replace = vi.spyOn(window.history, 'replaceState');
