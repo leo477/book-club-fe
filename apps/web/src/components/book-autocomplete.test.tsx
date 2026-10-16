@@ -86,6 +86,18 @@ describe('BookAutocomplete', () => {
     expect(option).toHaveTextContent('📚');
   });
 
+  it('renders the image again once the thumbnail URL changes after an error', async () => {
+    mockSearch([dune]);
+    const user = userEvent.setup();
+    renderWithProviders(<Harness onSelected={vi.fn()} />);
+    await user.type(box(), 'Dun');
+    fireEvent.error((await screen.findByRole('option', { name: /Dune/ })).querySelector('img')!);
+    expect(screen.getByRole('option', { name: /Dune/ }).querySelector('img')).toBeNull();
+    mockSearch([{ ...dune, thumbnail: 'https://books.example/dune-2.jpg' }]);
+    await user.type(box(), 'e');
+    await waitFor(() => expect(screen.getByRole('option', { name: /Dune/ }).querySelector('img')).toHaveAttribute('src', 'https://books.example/dune-2.jpg'));
+  });
+
   it('writes the title into the field and emits the book; a later edit searches again', async () => {
     const calls = mockSearch([dune]);
     const onSelected = vi.fn();

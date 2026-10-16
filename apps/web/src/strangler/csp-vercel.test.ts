@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { CSP_WS_ORIGIN, buildCsp } from './csp';
 
 const FILES = ['../../vercel.json', '../../../../vercel.json'].map((rel) => fileURLToPath(new URL(rel, import.meta.url)));
+const ROOT_VERCEL = FILES[1]!;
 
 const connectSrcs = (file: string): string[] => {
   const json = JSON.parse(readFileSync(file, 'utf8')) as { headers?: { headers?: { key: string; value: string }[] }[] };
@@ -44,7 +45,7 @@ describe('chat socket origin in every CSP', () => {
   it('keeps the img-src hosts of csp.ts and the root vercel.json identical', () => {
     const hosts = (img: string[]) => img.slice(1).filter((h) => !h.startsWith("'nonce-")).sort();
     const next = (buildCsp('n').split('; ').find((d) => d.startsWith('img-src ')) ?? '').split(' ');
-    const root = imgSrcs(FILES[1]!);
+    const root = imgSrcs(ROOT_VERCEL);
     expect(root.length).toBeGreaterThan(0);
     for (const img of root) expect(hosts(img)).toEqual(hosts(next));
   });
