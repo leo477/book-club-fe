@@ -269,7 +269,8 @@ for (const lang of ['uk', 'en'] as const) {
       const u = new URL(mock.googleUrls[0]!);
       expect(u.pathname).toMatch(/\/auth\/oauth\/google$/);
       expect(u.searchParams.get('origin')).toBe(new URL(baseURL!).origin);
-      expect([...u.searchParams.keys()]).toEqual(['origin']);
+      expect([...u.searchParams.keys()]).toEqual(['origin', 'challenge']);
+      expect(u.searchParams.get('challenge')).toMatch(/^[A-Za-z0-9_-]{43}$/);
       test
         .info()
         .annotations.push({ type: 'google', description: mock.googleUrls[0]! });

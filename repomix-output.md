@@ -457,6 +457,8 @@ apps/
         oauth-base-url.ts
         page-metadata.test.ts
         page-metadata.ts
+        pkce.test.ts
+        pkce.ts
         safe-image-url.test.ts
         safe-image-url.ts
         server-api.test.ts
@@ -698,6 +700,7 @@ src/
       auth/
         auth.guard.ts
         auth.service.ts
+        pkce.ts
         role.guard.ts
         token.store.ts
       error/
