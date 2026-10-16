@@ -31,3 +31,7 @@ No High or Critical findings. R7 is not blocked.
 - F1: confirm the browser key has HTTP-referrer restrictions (prod + preview origins) and an API allowlist (Maps JavaScript API, optionally Places/Geocoding only if used from the browser), and that it differs from `MAPS_SERVER_API_KEY`. Set budget/quota alerts.
 - F2: add `can_view_club` check to `attend_event_service` and `cancel_attendance` (404 for non-visible club).
 - F3/F4: review collected TT/CSP reports, then tighten the allowlist before moving to enforcement.
+
+## SCRUM-90 addendum: Google Books covers
+
+`img-src` (Next CSP `apps/web/src/strangler/csp.ts`, root and `apps/web` `vercel.json`) now adds exactly `https://books.google.com` (the `imageLinks.thumbnail` host returned by the backend Google Books service, forced to https) and `https://books.googleusercontent.com` (its redirect target; CSP applies to redirects). No blanket `https:`. Arbitrary typed cover URLs stay blocked by design; `BookAutocomplete` now shows the placeholder when the image errors. F4 (`https://*.supabase.co`) is left as is: the project host is not set in any env/config in this repo, so it cannot be pinned without risking uploads.

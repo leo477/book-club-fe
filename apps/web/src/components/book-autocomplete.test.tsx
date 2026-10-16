@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { useState } from 'react';
@@ -73,6 +73,17 @@ describe('BookAutocomplete', () => {
     expect(second).toHaveTextContent('Jane Austen, Editor');
     expect(second.querySelector('img')).toBeNull();
     expect(second).toHaveTextContent('📚');
+  });
+
+  it('falls back to the placeholder when the thumbnail fails to load (host blocked by CSP)', async () => {
+    mockSearch([dune]);
+    const user = userEvent.setup();
+    renderWithProviders(<Harness onSelected={vi.fn()} />);
+    await user.type(box(), 'Dun');
+    const option = await screen.findByRole('option', { name: /Dune/ });
+    fireEvent.error(option.querySelector('img')!);
+    expect(option.querySelector('img')).toBeNull();
+    expect(option).toHaveTextContent('📚');
   });
 
   it('writes the title into the field and emits the book; a later edit searches again', async () => {

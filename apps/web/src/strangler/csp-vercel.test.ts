@@ -13,6 +13,14 @@ const connectSrcs = (file: string): string[] => {
     .map((h) => h.value.split('; ').find((d) => d.startsWith('connect-src ')) ?? '');
 };
 
+const imgSrcs = (file: string): string[][] => {
+  const json = JSON.parse(readFileSync(file, 'utf8')) as { headers?: { headers?: { key: string; value: string }[] }[] };
+  return (json.headers ?? [])
+    .flatMap((h) => h.headers ?? [])
+    .filter((h) => h.key === 'Content-Security-Policy')
+    .map((h) => (h.value.split('; ').find((d) => d.startsWith('img-src ')) ?? '').split(' '));
+};
+
 describe('chat socket origin in every CSP', () => {
   it('is allowed by the Next CSP', () => {
     expect(buildCsp('n').split('; ').find((d) => d.startsWith('connect-src '))?.split(' ')).toContain(CSP_WS_ORIGIN);
@@ -21,6 +29,16 @@ describe('chat socket origin in every CSP', () => {
   it.each(FILES)('is allowed by each CSP declared in %s', (file) => {
     const sources = connectSrcs(file);
     for (const connect of sources) expect(connect.split(' ')).toContain(CSP_WS_ORIGIN);
+  });
+
+  it('allows the Google Books cover hosts, and no blanket https:, in every declared img-src', () => {
+    const imgs = FILES.flatMap(imgSrcs);
+    expect(imgs.length).toBeGreaterThan(0);
+    for (const img of imgs) {
+      expect(img).toContain('https://books.google.com');
+      expect(img).toContain('https://books.googleusercontent.com');
+      expect(img).not.toContain('https:');
+    }
   });
 
   it('at least one vercel.json declares a CSP, so the check above is not vacuous', () => {
