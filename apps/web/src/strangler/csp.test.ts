@@ -25,6 +25,14 @@ describe('buildCsp', () => {
     expect(connect).not.toContain('*');
   });
 
+  it('allows Google Books cover hosts in img-src through an explicit allowlist', () => {
+    const img = directive(csp, 'img-src').split(' ');
+    expect(img).toContain('https://books.google.com');
+    expect(img).toContain('https://books.googleusercontent.com');
+    expect(img).not.toContain('https:');
+    expect(img).not.toContain('*');
+  });
+
   it('allows eval in dev only', () => {
     expect(directive(buildCsp('abc', true), 'script-src')).toContain("'unsafe-eval'");
   });

@@ -21,6 +21,19 @@ interface Props {
   debounceMs?: number;
 }
 
+function BookThumb({ src }: { src: string }) {
+  const [broken, setBroken] = useState(false);
+  if (!src || broken) {
+    return (
+      <div aria-hidden="true" className="flex h-12 w-8 shrink-0 items-center justify-center rounded bg-muted text-lg">
+        📚
+      </div>
+    );
+  }
+  // eslint-disable-next-line @next/next/no-img-element -- cover URLs are arbitrary hosts
+  return <img src={src} alt="" width={32} height={48} referrerPolicy="no-referrer" onError={() => setBroken(true)} className="h-12 w-8 shrink-0 rounded object-cover shadow-sm" />;
+}
+
 export function BookAutocomplete({ value, onChange, onSelected, label, placeholder, debounceMs = DEBOUNCE_MS }: Props) {
   const t = useTranslations('BOOK_AUTOCOMPLETE');
   const [failed, setFailed] = useState(false);
@@ -38,14 +51,7 @@ export function BookAutocomplete({ value, onChange, onSelected, label, placehold
       getKey={(book) => book.id}
       renderItem={(book) => (
         <>
-          {safeImageUrl(book.thumbnail ?? '') ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={safeImageUrl(book.thumbnail ?? '')} alt="" width={32} height={48} referrerPolicy="no-referrer" className="h-12 w-8 shrink-0 rounded object-cover shadow-sm" />
-          ) : (
-            <div aria-hidden="true" className="flex h-12 w-8 shrink-0 items-center justify-center rounded bg-muted text-lg">
-              📚
-            </div>
-          )}
+          <BookThumb key={safeImageUrl(book.thumbnail ?? '')} src={safeImageUrl(book.thumbnail ?? '')} />
           <div className="min-w-0">
             <p className="truncate text-sm font-medium">{book.title}</p>
             <p className="truncate text-xs text-muted-foreground">{book.authors.join(', ')}</p>

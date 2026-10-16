@@ -8,7 +8,7 @@ export function buildCsp(nonce: string, dev = false): string {
     "worker-src 'self' blob:",
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     "font-src 'self' https://fonts.gstatic.com",
-    "img-src 'self' data: blob: https://covers.openlibrary.org https://maps.gstatic.com https://maps.googleapis.com https://*.supabase.co",
+    "img-src 'self' data: blob: https://covers.openlibrary.org https://books.google.com https://books.googleusercontent.com https://maps.gstatic.com https://maps.googleapis.com https://*.supabase.co",
     `connect-src 'self' data: https://vercel.live ${CSP_WS_ORIGIN} https://openlibrary.org https://maps.googleapis.com https://maps.gstatic.com https://www.gstatic.com`,
     'frame-src https://vercel.live',
     "frame-ancestors 'none'",
