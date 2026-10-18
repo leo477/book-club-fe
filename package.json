@@ -23,7 +23,8 @@
     "parity": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON e2e/parity/har-diff.ts",
     "parity:setup-member": "playwright test --config=playwright.parity-setup.config.ts",
     "parity:seo": "playwright test --config=playwright.parity.config.ts e2e/parity/seo.spec.ts",
-    "parity:visual": "playwright test --config=playwright.parity.config.ts e2e/parity/visual.spec.ts"
+    "parity:visual": "playwright test --config=playwright.parity.config.ts e2e/parity/visual.spec.ts",
+    "parity:visual:baselines": "playwright test --config=playwright.parity.config.ts --project=legacy e2e/parity/visual.spec.ts --update-snapshots=missing"
   },
   "engines": {
     "node": ">=22.18"

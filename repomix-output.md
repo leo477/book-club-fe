@@ -49,6 +49,7 @@ The content is organized as follows:
     dependency-review.yml
     i18n-check.yml
     lighthouse.yml
+    parity.yml
     release-source.yml
     scorecard.yml
     secret-scan.yml
