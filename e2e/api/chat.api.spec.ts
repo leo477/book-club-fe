@@ -106,24 +106,77 @@ test.describe('chat WebSocket', () => {
   // the other option the plan called out, and Playwright's `page` fixture is
   // already available for free since api-context.fixture.ts only adds fixtures
   // on top of the base `@playwright/test` test.
-  test('connecting and sending the {type:"auth"} frame is accepted, not closed with 1008', async ({ page }) => {
+  type WsOutcome = { ok: boolean; detail: string; code?: number; reason?: string };
+
+  const createThrowawayRoom = async (): Promise<{ id: string }> => {
     const runContext = loadRunContext();
     const organizerApi = await apiContextFor('organizer');
-    const room = await (
-      await organizerApi.post(`/clubs/${runContext.clubId}/chat/rooms`, { data: { name: `pw-audit-ws-${Date.now()}` } })
-    ).json();
-    await organizerApi.dispose();
+    try {
+      const resp = await organizerApi.post(`/clubs/${runContext.clubId}/chat/rooms`, {
+        data: { name: `pw-audit-ws-${Date.now()}` },
+      });
+      return await resp.json();
+    } finally {
+      await organizerApi.dispose();
+    }
+  };
 
-    const result = await page.evaluate(
+  test('the legacy {type:"auth", token} frame is rejected with close code 1008 (ws-ticket required)', async ({
+    page,
+  }) => {
+    const runContext = loadRunContext();
+    const room = await createThrowawayRoom();
+
+    const result: WsOutcome = await page.evaluate(
       ([wsUrl, token]) =>
-        new Promise<{ ok: boolean; detail: string }>((resolve) => {
+        new Promise<WsOutcome>((resolve) => {
+          const socket = new WebSocket(wsUrl);
+          const timer = setTimeout(() => resolve({ ok: false, detail: 'timed out waiting for close' }), 10_000);
+          socket.addEventListener('open', () => {
+            socket.send(JSON.stringify({ type: 'auth', token }));
+          });
+          socket.addEventListener('message', (event) => {
+            clearTimeout(timer);
+            resolve({ ok: false, detail: `unexpected message: ${String(event.data)}` });
+          });
+          socket.addEventListener('close', (event) => {
+            clearTimeout(timer);
+            resolve({ ok: true, detail: 'closed', code: event.code, reason: event.reason });
+          });
+          socket.addEventListener('error', () => {
+            // 'close' always follows and carries the code.
+          });
+        }),
+      [`${wsBaseURL}/chat/rooms/${room.id}`, runContext.member.accessToken] as const,
+    );
+
+    expect(result.ok, result.detail).toBe(true);
+    expect(result.code).toBe(1008);
+    expect(result.reason ?? '').toMatch(/ws-ticket/i);
+  });
+
+  test('connecting and sending the {type:"auth", ticket} frame is accepted, not closed with 1008', async ({
+    page,
+    memberApi,
+  }) => {
+    const room = await createThrowawayRoom();
+
+    // One-time ticket (consumed server-side on first use) from the member's authenticated context.
+    const ticketResp = await memberApi.post('/auth/ws-ticket', { data: {} });
+    expect(ticketResp.status()).toBe(200);
+    const { ticket } = (await ticketResp.json()) as { ticket: string };
+    expect(ticket).toBeTruthy();
+
+    const result: WsOutcome = await page.evaluate(
+      ([wsUrl, ticketValue]) =>
+        new Promise<WsOutcome>((resolve) => {
           const socket = new WebSocket(wsUrl);
           const timer = setTimeout(
             () => resolve({ ok: false, detail: 'timed out waiting for a server message' }),
             10_000,
           );
           socket.addEventListener('open', () => {
-            socket.send(JSON.stringify({ type: 'auth', token }));
+            socket.send(JSON.stringify({ type: 'auth', ticket: ticketValue }));
           });
           socket.addEventListener('message', (event) => {
             clearTimeout(timer);
@@ -138,7 +191,7 @@ test.describe('chat WebSocket', () => {
             resolve({ ok: false, detail: 'WebSocket error' });
           });
         }),
-      [`${wsBaseURL}/chat/rooms/${room.id}`, runContext.member.accessToken] as const,
+      [`${wsBaseURL}/chat/rooms/${room.id}`, ticket] as const,
     );
 
     expect(result.ok, result.detail).toBe(true);
