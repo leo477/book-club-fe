@@ -30,8 +30,5 @@ Source: architectural analysis run via a claude-fable-5 agent against `src/app/*
 - `audit-evidence/*.png` and `audit-evidence/audit-prod-results.json` are tracked but are throwaway manual-audit output.
 - `git rm -r --cached audit-evidence` and add `/audit-evidence/` to `.gitignore`.
 
-### Item 9 — Archive mobile app plan
-- Move `PLAN-MOBILE-APP-2026-07-15.md` to `docs/archive/` to match the existing convention (it's an untracked historical plan, not yet acted on — confirm with repo owner before archiving if still active).
-
 ## Execution model
 3–5 rounds of `dev` (implement/fix) → `reviewer` (review) via the book-club-agents MCP server, orchestrated by Claude. Items 5 and 6 carry real behavior-change risk (async timing, template restructuring) so extra rounds are expected there. Commit after final approval, under the repo owner's git identity.
