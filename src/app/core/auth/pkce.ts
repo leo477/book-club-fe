@@ -1,7 +1,7 @@
 const KEY = 'bc_pkce_verifier';
 
 function base64url(bytes: Uint8Array): string {
-  return btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return btoa(String.fromCodePoint(...bytes)).replaceAll('+', '-').replaceAll('/', '_').replaceAll('=', '');
 }
 
 export async function deriveChallenge(verifier: string): Promise<string> {
