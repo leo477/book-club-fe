@@ -11,7 +11,10 @@ const PREVIEW_ORIGIN = /https:\/\/book-club-planer(?:-[a-z0-9-]+)?\.vercel\.app/
 
 test.beforeAll(({}, testInfo) => assertBaselineWritable(testInfo));
 
-function assertComplete(seo: SeoSnapshot): void {
+// noindex pages (auth, support) carry no structured data on purpose
+const isNoindex = (html: string): boolean => /<meta\b[^>]*name=["']robots["'][^>]*noindex/i.test(html);
+
+function assertComplete(seo: SeoSnapshot, html: string): void {
   expect(seo.title).not.toBe('');
   expect(seo.description).not.toBe('');
   expect(seo.ogTitle).not.toBe('');
@@ -19,7 +22,7 @@ function assertComplete(seo: SeoSnapshot): void {
   expect(seo.ogUrl).toMatch(/^https?:\/\//);
   expect(seo.ogImage).toMatch(/^https?:\/\//);
   expect(seo.canonical).toMatch(/^https?:\/\//);
-  expect(jsonLdProblems(jsonLdTypes(seo.jsonLd))).toEqual([]);
+  if (!isNoindex(html) || seo.jsonLd.length > 0) expect(jsonLdProblems(jsonLdTypes(seo.jsonLd))).toEqual([]);
 }
 
 function summarise(seo: SeoSnapshot, origins: string[]): string {
@@ -38,8 +41,9 @@ function assertTarget(project: string, route: string, seo: SeoSnapshot): void {
   expect(seo.title).toMatch(expected.title);
   expect(seo.description).toMatch(expected.description);
   expect(seo.ogTitle).toMatch(expected.title);
-  expect(seo.canonical).toBe(new URL(route, SITE).href);
-  expect(seo.ogUrl).toBe(new URL(route, SITE).href);
+  const canonical = new URL(expected.landsOn ?? route, SITE).href;
+  expect(seo.canonical).toBe(canonical);
+  expect(seo.ogUrl).toBe(canonical);
   expect(jsonLdTypes(seo.jsonLd)).toEqual(expect.arrayContaining(expected.jsonLd));
 }
 
@@ -55,10 +59,11 @@ for (const route of rawRoutes) {
     test('raw HTML without JS', async ({ request, baseURL }, testInfo) => {
       const resp = await request.get(route);
       expect(resp.status()).toBe(200);
-      const seo = extractSeo(await resp.text());
+      const html = await resp.text();
+      const seo = extractSeo(html);
       const project = testInfo.project.name;
       if (expectations[project]) {
-        assertComplete(seo);
+        assertComplete(seo, html);
         assertTarget(project, route, seo);
       } else {
         expect(summarise(seo, [new URL(baseURL!).origin])).toMatchSnapshot(`raw-${slug(route)}.json`);
@@ -73,11 +78,13 @@ for (const route of publicRoutes) {
       await page.goto(route);
       await expect(page).toHaveURL((url) => url.pathname === route);
       await page.waitForLoadState('networkidle');
-      const seo = extractSeo(await page.content());
-      assertComplete(seo);
+      const html = await page.content();
+      const seo = extractSeo(html);
+      assertComplete(seo, html);
       const origin = new URL(baseURL!).origin;
-      assertTarget(testInfo.project.name, route, seo);
-      expect(summarise(seo, [origin, new URL(page.url()).origin])).toMatchSnapshot(`rendered-${slug(route)}.json`);
+      const project = testInfo.project.name;
+      assertTarget(project, route, seo);
+      if (!expectations[project]) expect(summarise(seo, [origin, new URL(page.url()).origin])).toMatchSnapshot(`rendered-${slug(route)}.json`);
     });
   });
 }

@@ -49,6 +49,7 @@ The content is organized as follows:
     dependency-review.yml
     i18n-check.yml
     lighthouse.yml
+    parity.yml
     release-source.yml
     scorecard.yml
     secret-scan.yml
@@ -436,10 +437,13 @@ apps/
       lib/
         analytics.test.ts
         analytics.ts
+        api-impl.ts
+        api.test.ts
         api.ts
         backend-origin.test.ts
         backend-origin.ts
         cookie.ts
+        error-translator.ts
         flash.test.ts
         flash.ts
         format.test.ts

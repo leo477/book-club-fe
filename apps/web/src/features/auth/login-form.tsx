@@ -57,12 +57,13 @@ export function LoginView() {
 
   return (
     <AuthFrame subtitle={t('AUTH.welcome_back')}>
-      <div className="glass-card-strong light-island p-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-6">{t('AUTH.sign_in_h2')}</h2>
+      <div className="glass-card-strong p-8">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-6">{t('AUTH.sign_in_h2')}</h2>
         <form onSubmit={handleSubmit(() => signIn.mutate())} className="space-y-4" noValidate>
-          <fieldset className="border-0 p-0 m-0 flex flex-col gap-4">
+          <fieldset className="border-0 p-0 m-0">
             <legend className="sr-only">{t('AUTH.sign_in_h2')}</legend>
             <FormField
+              fieldClassName="gap-3 [&>label]:leading-snug"
               id="login-email"
               label={t('AUTH.email')}
               type="email"
@@ -72,6 +73,7 @@ export function LoginView() {
               {...register('email')}
             />
             <FormField
+              fieldClassName="gap-3 [&>label]:leading-snug"
               id="login-password"
               label={t('AUTH.password')}
               type="password"
@@ -83,7 +85,7 @@ export function LoginView() {
             />
           </fieldset>
           {failure && (
-            <div data-testid="login-error" className="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700" role="alert">
+            <div data-testid="login-error" className="flex items-start gap-2 glass-card-subtle px-4 py-3 text-sm text-red-700 dark:text-red-400" role="alert">
               <span className="mt-0.5 shrink-0">⚠️</span>
               <span>{failure instanceof BackendHttpError && failure.detail === 'Invalid credentials' ? t('AUTH.error_invalid_credentials') : authErrorMessage(failure, t)}</span>
             </div>
@@ -101,9 +103,9 @@ export function LoginView() {
         </form>
         <AuthDivider />
         <GoogleButton />
-        <p className="mt-6 text-center text-sm text-gray-600">
+        <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
           {t('AUTH.no_account')}{' '}
-          <AppLink href="/register" className="text-primary-700 hover:underline font-medium">
+          <AppLink href="/register" className="text-primary-700 dark:text-primary-400 hover:underline font-medium">
             {t('AUTH.register_title')}
           </AppLink>
         </p>
