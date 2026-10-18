@@ -39,12 +39,14 @@ jobs:
       BACKEND_ORIGIN: https://localhost:9922
       REVALIDATE_SECRET: parity-secret
       EDGE_CONFIG: http://localhost:9944/ecfg_parity?token=t
-      MOCK_BACKEND_CERT: ${{ runner.temp }}/mock-backend-cert.pem
       # preview-only flag: every manifest route renders on Next and nothing is proxied to the legacy app
       VERCEL_ENV: preview
       DISABLE_LEGACY_FALLBACK: '1'
       PARITY_NEXT_URL: http://localhost:3000
     steps:
+      - name: Set mock backend cert path
+        # the runner context is not available in job-level env, so export it for the later steps here
+        run: echo "MOCK_BACKEND_CERT=$RUNNER_TEMP/mock-backend-cert.pem" >> "$GITHUB_ENV"
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - name: Setup Node.js
