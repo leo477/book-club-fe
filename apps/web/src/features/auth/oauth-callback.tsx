@@ -8,6 +8,7 @@ import { sessionKey } from '@/features/clubs/use-session';
 import { api } from '@/lib/api';
 import { setFlash } from '@/lib/flash';
 import { hardNavigate } from '@/lib/navigate';
+import { takeVerifier } from '@/lib/pkce';
 import { resetSessionHint } from '@/lib/session-hint';
 import { useReplace } from '@/lib/use-replace';
 
@@ -26,7 +27,7 @@ let current: Attempt | null = null;
 async function exchange(queryClient: QueryClient, code: string | null): Promise<boolean> {
   if (!code) return false;
   try {
-    await api.auth.exchangeOAuthSession(code);
+    await api.auth.exchangeOAuthSession(code, takeVerifier());
     queryClient.setQueryData(sessionKey, await api.auth.me({ skipAuthRedirect: true }));
     return true;
   } catch {

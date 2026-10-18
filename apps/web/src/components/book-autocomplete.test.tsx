@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react';
+import { fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { useState } from 'react';
@@ -73,6 +73,29 @@ describe('BookAutocomplete', () => {
     expect(second).toHaveTextContent('Jane Austen, Editor');
     expect(second.querySelector('img')).toBeNull();
     expect(second).toHaveTextContent('📚');
+  });
+
+  it('falls back to the placeholder when the thumbnail fails to load (host blocked by CSP)', async () => {
+    mockSearch([dune]);
+    const user = userEvent.setup();
+    renderWithProviders(<Harness onSelected={vi.fn()} />);
+    await user.type(box(), 'Dun');
+    const option = await screen.findByRole('option', { name: /Dune/ });
+    fireEvent.error(option.querySelector('img')!);
+    expect(option.querySelector('img')).toBeNull();
+    expect(option).toHaveTextContent('📚');
+  });
+
+  it('renders the image again once the thumbnail URL changes after an error', async () => {
+    mockSearch([dune]);
+    const user = userEvent.setup();
+    renderWithProviders(<Harness onSelected={vi.fn()} />);
+    await user.type(box(), 'Dun');
+    fireEvent.error((await screen.findByRole('option', { name: /Dune/ })).querySelector('img')!);
+    expect(screen.getByRole('option', { name: /Dune/ }).querySelector('img')).toBeNull();
+    mockSearch([{ ...dune, thumbnail: 'https://books.example/dune-2.jpg' }]);
+    await user.type(box(), 'e');
+    await waitFor(() => expect(screen.getByRole('option', { name: /Dune/ }).querySelector('img')).toHaveAttribute('src', 'https://books.example/dune-2.jpg'));
   });
 
   it('writes the title into the field and emits the book; a later edit searches again', async () => {

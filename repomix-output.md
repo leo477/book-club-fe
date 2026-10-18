@@ -144,6 +144,7 @@ apps/
           organizer-pages.test.tsx
           quiz-pages.test.tsx
         %5F%5Fstrangler-probe/
+          page.test.tsx
           page.tsx
         %5F%5Fui/
           page.tsx
@@ -173,6 +174,7 @@ apps/
         not-found.tsx
         page.test.tsx
         page.tsx
+        robots-coverage.test.ts
         robots.test.ts
         robots.ts
         sitemap.test.ts
@@ -455,6 +457,8 @@ apps/
         oauth-base-url.ts
         page-metadata.test.ts
         page-metadata.ts
+        pkce.test.ts
+        pkce.ts
         safe-image-url.test.ts
         safe-image-url.ts
         server-api.test.ts
@@ -696,6 +700,7 @@ src/
       auth/
         auth.guard.ts
         auth.service.ts
+        pkce.ts
         role.guard.ts
         token.store.ts
       error/
