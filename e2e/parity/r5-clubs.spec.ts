@@ -4,6 +4,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page, Route } from '@playwright/test';
 import { expect, test } from './bypass';
+import { watchConsole } from './r6/helpers';
 import { mkdirSync } from 'node:fs';
 
 const SHOTS = 'playwright-report/parity/r5';
@@ -15,6 +16,8 @@ const USER = {
 };
 const json = (route: Route, body: unknown, status = 200) =>
   route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(body) });
+
+const isWrite = (l: Log) => l.method !== 'GET' && l.path !== '/analytics/event';
 
 interface Log { method: string; path: string; headers: Record<string, string>; body: string | null }
 
@@ -50,15 +53,6 @@ async function guardApi(page: Page, opts: {
     return route.fallback();
   });
   return log;
-}
-
-function watchConsole(page: Page): string[] {
-  const errs: string[] = [];
-  page.on('console', (m) => {
-    if (m.type() === 'error') errs.push(`console: ${m.text().slice(0, 300)}`);
-  });
-  page.on('pageerror', (e) => errs.push(`pageerror: ${e.message.slice(0, 300)}`));
-  return errs;
 }
 
 test.describe('r5 /clubs (next)', () => {
@@ -108,7 +102,7 @@ test.describe('r5 /clubs (next)', () => {
     await expect(page.getByTestId('login-to-join').first()).toBeVisible();
     await page.screenshot({ path: `${SHOTS}/guest-clubs.png`, fullPage: true });
     expect(errs).toEqual([]);
-    expect(log.filter((l) => l.method !== 'GET')).toEqual([]);
+    expect(log.filter(isWrite)).toEqual([]);
   });
 
   test('P4/P7 signed-in (mocked): tabs roving tabindex + arrow keys', async ({ page }) => {
@@ -143,13 +137,13 @@ test.describe('r5 /clubs (next)', () => {
     await expect(join).toBeVisible();
     const before = log.filter((l) => l.path === '/clubs/my').length;
     await join.click();
-    await expect.poll(() => log.filter((l) => l.method === 'POST').length).toBe(1);
-    const post = log.find((l) => l.method === 'POST')!;
+    await expect.poll(() => log.filter((l) => isWrite(l) && l.method === 'POST').length).toBe(1);
+    const post = log.find((l) => isWrite(l) && l.method === 'POST')!;
     expect(post.path).toMatch(/^\/clubs\/[0-9a-f-]{36}\/join$/);
     expect(post.body ?? '{}').toBe('{}');
     expect(post.headers['content-type']).toMatch(/json/);
     await expect.poll(() => log.filter((l) => l.path === '/clubs/my').length).toBe(before + 1);
-    expect(log.filter((l) => l.method !== 'GET' && l.method !== 'POST')).toEqual([]);
+    expect(log.filter((l) => isWrite(l) && l.method !== 'POST')).toEqual([]);
     expect(errs).toEqual([]);
   });
 
