@@ -436,10 +436,12 @@ apps/
       lib/
         analytics.test.ts
         analytics.ts
+        api-impl.ts
         api.ts
         backend-origin.test.ts
         backend-origin.ts
         cookie.ts
+        error-translator.ts
         flash.test.ts
         flash.ts
         format.test.ts

@@ -1,24 +1,26 @@
 import 'client-only';
-import { cookieTransport, createApi, createApiClient } from '@book-club/api-client';
-import { hardNavigate } from './navigate';
-import { hasSessionHint } from './session-hint';
-import { showToast } from './toast';
+import type { Api } from '@book-club/api-client';
 
-let translate = (key: string): string => key;
-export const setErrorTranslator = (fn: (key: string) => string): void => {
-  translate = fn;
-};
+export { setErrorTranslator } from './error-translator';
 
-export const api = createApi(
-  createApiClient({
-    baseUrl: '/api/v1',
-    transport: cookieTransport({ hasSession: () => hasSessionHint() }),
-    onUnauthenticated: () => hardNavigate('/login'),
-    onForbidden: () => {
-      if (window.location.pathname !== '/clubs') hardNavigate('/clubs');
+// The client, its zod schemas and every endpoint module load on the first call instead of in every page's first-load JS.
+const loadApi = () => import('./api-impl').then((m) => m.api);
+
+type Call = (...args: unknown[]) => Promise<unknown>;
+
+const lazyModule = (name: string): object =>
+  new Proxy(
+    {},
+    {
+      get:
+        (_target, method: string): Call =>
+        async (...args) => {
+          const target = (await loadApi())[name as keyof Api] as unknown as Record<string, Call>;
+          return target[method]!(...args);
+        },
     },
-    onError: (error, { suppress }) => {
-      if (!suppress) showToast('error', translate(error.translationKey));
-    },
-  }),
-);
+  );
+
+export const api = new Proxy({} as Api, {
+  get: (_target, name) => (typeof name === 'string' ? lazyModule(name) : undefined),
+});
