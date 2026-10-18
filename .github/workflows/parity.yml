@@ -84,9 +84,7 @@ jobs:
         run: npx playwright test --config=playwright.parity.config.ts --project=next e2e/parity/seo.spec.ts
       - name: Visual (privacy, terms)
         run: npx playwright test --config=playwright.parity.config.ts --project=next e2e/parity/visual.spec.ts -g "privacy|terms"
-      # Angular baselines exist, but the React auth pages still differ visually (UI deltas not yet closed): report, do not block.
-      - name: Visual (login, register; informational)
-        continue-on-error: true
+      - name: Visual (login, register)
         run: npx playwright test --config=playwright.parity.config.ts --project=next e2e/parity/visual.spec.ts -g "login|register"
       - name: Mocked journeys (events, profile/support, auth)
         run: npx playwright test --config=playwright.parity.config.ts --project=next e2e/parity/r7-events.spec.ts e2e/parity/r8-profile-support.spec.ts e2e/parity/r9-auth.spec.ts

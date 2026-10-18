@@ -3,6 +3,7 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { Field, FieldControl, FieldError, FieldLabel } from '@/components/ui/field';
+import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 
 type Props = Omit<ComponentProps<typeof Input>, 'children'> & {
@@ -12,13 +13,14 @@ type Props = Omit<ComponentProps<typeof Input>, 'children'> & {
   /** ICU arguments for the key, e.g. `{ requiredLength: 8 }` for `FORM_ERRORS.minlength` */
   errorValues?: Record<string, string | number> | undefined;
   errorTestId?: string | undefined;
+  fieldClassName?: string | undefined;
 };
 
 /** Label + input + error with the a11y wiring (`aria-invalid`, `aria-describedby`) done by Field; an explicit `id` (e2e hooks) replaces the generated one on both label and input. */
-export function FormField({ label, error, errorValues, errorTestId, ...input }: Props) {
+export function FormField({ label, error, errorValues, errorTestId, fieldClassName, ...input }: Props) {
   const t = useTranslations();
   return (
-    <Field invalid={!!error} className="gap-1">
+    <Field invalid={!!error} className={cn('gap-1', fieldClassName)}>
       <FieldLabel {...(input.id ? { htmlFor: input.id } : {})} className="text-sm font-medium text-gray-700 dark:text-gray-300">{label}</FieldLabel>
       <FieldControl>
         <Input {...input} />
