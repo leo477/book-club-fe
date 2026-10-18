@@ -1,8 +1,10 @@
 # План: міграція book-club-fe з Angular на React (strangler, route-by-route) — 2026-09-28
 
+RM (mobile) track cancelled 2026-10-18: the mobile app was dropped.
+
 > Статус: **лише план**. Вихідний код не змінювався.
 > Автор: MCP-агент `react-migration`. Оркестрація: Claude (усі зміни коду роблять MCP-агенти `book-club-agents`).
-> Виконавці: `react-dev`, `react-tester`, `react-reviewer`, `ui`, `devops`, `security`, `dev` (Angular-шими, лише за потреби), `tester`, `python-backend-dev` (лише якщо parity вимагає змін бекенду), `react-native-dev/-tester/-reviewer` (трек мобільного шарингу).
+> Виконавці: `react-dev`, `react-tester`, `react-reviewer`, `ui`, `devops`, `security`, `dev` (Angular-шими, лише за потреби), `tester`, `python-backend-dev` (лише якщо parity вимагає змін бекенду).
 > Мова: пояснення українською, **task-промпти для агентів — англійською** (системні промпти агентів англійські; вставляти як є в `run_agent`).
 
 ---
@@ -11,24 +13,23 @@
 
 - **Ніякого big-bang.** Next.js App Router стає «вхідними дверима» на Vercel; усе, що ще не перенесено, прозоро проксюється (fallback rewrite) на існуючий Angular-деплой. Кожен маршрут вмикається/вимикається **прапорцем у Vercel Edge Config** (з canary-відсотком) — rollback = зміна значення, без деплою, ≤ 60 с.
 - **Стек**: React 19 + React Compiler, Next.js (поточний стабільний мажор, App Router), shadcn/ui + Radix + Tailwind 4, next-intl (ICU), TanStack Query v5, react-hook-form + zod, Vitest + RTL + MSW, **той самий Playwright-набір** (`e2e/`). FastAPI не змінюється.
-- **Монорепо** в межах `book-club-fe` (npm workspaces): Angular лишається в корені до виведення з експлуатації; нове — `apps/web` (Next), `packages/contracts` (zod), `packages/api-client`, `packages/i18n`, `packages/config`. `book-club-mobile` підключається як `apps/mobile` окремим треком.
+- **Монорепо** в межах `book-club-fe` (npm workspaces): Angular лишається в корені до виведення з експлуатації; нове — `apps/web` (Next), `packages/contracts` (zod), `packages/api-client`, `packages/i18n`, `packages/config`.
 - **Пілот**: shell (header/footer) + **`/clubs`** (список клубів) — публічний, read-mostly (одна мутація «join»), SEO-значущий, репрезентативний (SSR + клієнтська авторизаційна персоналізація + i18n + форми пошуку/фільтра). Не auth, не чат. Перед ним — «walking skeleton» `/privacy` + `/terms`.
-- **Go/no-go gate G1** після пілоту з вимірюваними критеріями (§7). Якщо no-go — вимикаємо прапорці, Angular лишається, спільні пакети (контракти/api/i18n) лишаються корисними для мобільного — втрати обмежені ~15–18 pd.
-- **Оцінка повної міграції**: ~75–95 person-days (агентно-асистованих), 14 раундів + мобільний трек. Узгоджено з оцінкою варіанта C у `PLAN-UI-STACK-2026-09-28.md` (50–80 pd + SSR 5–10).
+- **Go/no-go gate G1** після пілоту з вимірюваними критеріями (§7). Якщо no-go — вимикаємо прапорці, Angular лишається, спільні пакети (контракти/api/i18n) лишаються корисними — втрати обмежені ~15–18 pd.
+- **Оцінка повної міграції**: ~75–95 person-days (агентно-асистованих), 14 раундів. Узгоджено з оцінкою варіанта C у `PLAN-UI-STACK-2026-09-28.md` (50–80 pd + SSR 5–10).
 
 ---
 
 ## 1. Бізнес-драйвери (записані; власник підтверджує цифри на R0)
 
-Рішення про React ухвалене власником продукту. `PLAN-UI-STACK-2026-09-28.md` §3 відхилив варіант C як «не окупається лише заради мобільного» — цей план **не суперечить** тій оцінці вартості, а фіксує інші драйвери, які її виправдовують, і робить міграцію відкличною на кожному кроці.
+Рішення про React ухвалене власником продукту. `PLAN-UI-STACK-2026-09-28.md` §3 відхилив варіант C як «не окупається» — цей план **не суперечить** тій оцінці вартості, а фіксує інші драйвери, які її виправдовують, і робить міграцію відкличною на кожному кроці.
 
 | # | Драйвер | Як вимірюємо | Ціль |
 |---|---|---|---|
 | D1 | **SEO гостьового режиму.** Зараз CSR-only: `/clubs` і `/clubs/:id` віддають порожній `index.html` з мета-тегами головної; SSR «відкладено» (memory: SEO guest-mode 2026-07-14); `sitemap.xml` генерується **під час білду** (`scripts/generate-sitemap.mjs`) і в проді не має URL клубів. | Search Console: проіндексовані сторінки `/clubs/*`; server-HTML містить назви клубів; Rich Results валідні | ≥ 80 % публічних клубів проіндексовано за 60 днів після R6 |
-| D2 | **Один стек з мобільним (Expo).** `book-club-mobile` уже має `src/api/*`, `src/models/*`, zod, TanStack Query, RHF — фактично дублює контракти вебу. | к-сть дубльованих моделей/клієнтів | 0 дублікатів моделей/API-клієнта між web і mobile після RM |
-| D3 | **Швидкість розробки та екосистема.** Один mental model (React/TanStack/RHF/zod) для web+mobile+агентів; react-* агенти вже існують. | lead time фічі, яка є і на web, і на mobile | −30 % після R10 (базлайн фіксується в R0) |
-| D4 | **Прибрати апгрейд-блокер Angular↔Spartan brain** (`peer @angular/* <23`, `PLAN-UI-STACK` §6) і стек з двома UI-бібліотеками. | — | Angular+Spartan видалено в R14 |
-| D5 | **Perf на мобільних мережах** (LCP публічних сторінок завдяки SSR/streaming). | Speed Insights p75 LCP mobile | `/clubs`, `/clubs/[id]` ≤ 2.5 s і не гірше базлайну |
+| D2 | **Швидкість розробки та екосистема.** Один mental model (React/TanStack/RHF/zod) для web+агентів; react-* агенти вже існують. | lead time фічі | −30 % після R10 (базлайн фіксується в R0) |
+| D3 | **Прибрати апгрейд-блокер Angular↔Spartan brain** (`peer @angular/* <23`, `PLAN-UI-STACK` §5) і стек з двома UI-бібліотеками. | — | Angular+Spartan видалено в R14 |
+| D4 | **Perf на мобільних мережах** (LCP публічних сторінок завдяки SSR/streaming). | Speed Insights p75 LCP mobile | `/clubs`, `/clubs/[id]` ≤ 2.5 s і не гірше базлайну |
 
 Не-драйвери (свідомо): «React модніший», «Angular повільний» — не аргументи; розмір бандла Spartan (≤ 15 KB gz) — не аргумент.
 
@@ -44,7 +45,7 @@
 | Guards | `authGuard` → `/login` (без returnUrl); `roleGuard('organizer')` → toast `ERRORS.organizers_only` + `/clubs`; admin задовольняє все | Семантика відтворюється 1:1 (включно з відсутністю returnUrl — parity) |
 | Shell | `ShellComponent`: header (424 рядки, mobile-sheet, nav-links), footer, **`@defer (on idle)` chat-widget** (WebSocket) | Пілотний React-shell **без** чат-віджета (див. §6 R5) |
 | Auth | Cookie-auth частково реалізовано: `/api/*` через Vercel rewrite (first-party), refresh — httpOnly `SameSite=Lax` `path=/api/v1/auth`, BE ставить `access_token` cookie (`path=/api/v1`) і читає її без Bearer (`book-club-be/app/dependencies.py:30-48`); SPA все ще тримає access-токен у пам'яті (`TokenStore`) і шле Bearer; `/auth/session-status`; `/auth/ws-ticket` для WS; CSRF-перевірка Origin на BE; `CORS_ORIGIN_REGEX = ^https://book-club-[a-z0-9-]+\.vercel\.app$` | React-клієнт працює **чисто на куках** (без Bearer, без токена в JS). Нові Vercel-проєкти мають називатися `book-club-*`, щоб preview-домени проходили CORS/CSRF/OAuth-allowlist **без змін бекенду** |
-| Interceptor | 15 s GET / 30 s мутації, 503 retry, single-flight refresh, `SUPPRESS_ERROR_TOAST`, `SKIP_AUTH_REDIRECT`, мапінг статус→`ERRORS.*`, 401→`/login`, 403→`/clubs` | Портується в `packages/api-client` (той самий контракт, що вже має mobile `src/api/client.ts`) |
+| Interceptor | 15 s GET / 30 s мутації, 503 retry, single-flight refresh, `SUPPRESS_ERROR_TOAST`, `SKIP_AUTH_REDIRECT`, мапінг статус→`ERRORS.*`, 401→`/login`, 403→`/clubs` | Портується в `packages/api-client` |
 | WS | `chat-socket.service.ts`, `wss://book-club-be.onrender.com` напряму (Vercel не проксює WS) + ws-ticket | Чат — останній функціональний раунд (R12) |
 | Google Maps | `@angular/google-maps` у `shared/components/event-map`, `core/services/routing.service.ts`; ключ з `GET /config/maps-key` (`MapsConfigService` в app-initializer); CSP/Trusted Types мають винятки для `@googlemaps/js-api-loader` | React: `@vis.gl/react-google-maps`, ключ так само з бекенду, лінива ініціалізація (закриває N-1 «Maps blocks bootstrap») |
 | i18n | `public/i18n/{en,uk}.json` — 715 / 717 ключів, 32 неймспейси; 10 інтерполяцій `{{ x }}`; плюрали суфіксами (`votes_one/_few/_many/_other`, `create_questions_count_*`); default `uk`, fallback `uk`; мова в `localStorage.lang` | next-intl потребує ICU → **генератор** ICU з поточного формату (джерело правди не змінюємо до R14); мову для SSR треба мати в **cookie** |
@@ -54,7 +55,6 @@
 | Аналітика | `@vercel/analytics` + `@vercel/speed-insights` у `main.ts` | Має збиратись **одним** проєктом (front door) — перевірити в R2 |
 | E2E | `e2e/ui/*` (7 файлів, ~23 describe/test), `e2e/api/*` (10), `playwright.full-audit.config.ts`, axe у `audit-helper.ts`; запускається вручну проти живого бекенду; лише **3** Angular-специфічні селектори (`hlm-field-error[validator=…]`, `app-event-rsvp-button button`, `app-address-autocomplete input`); 22 файли з `data-testid` | Набір майже framework-agnostic → після R0 ганяємо **той самий** набір проти обох таргетів |
 | CI | `ci.yml` (lint/test/build/typecheck/sonar/deploy), `bundle-size.yml`, `lighthouse.yml` (статичний dist), `i18n-check.yml`, CodeQL, scorecard | Додаються jobs для `apps/web` і `parity` |
-| Mobile | `book-club-mobile` **вже реалізований** значною мірою (expo-router, 30+ екранів, `src/api/*.api.ts`, `src/models/*`, i18next, zod 4, TanStack Query 5, React 19.2.3) | Mobile — перший споживач спільних пакетів; його `src/api/client.ts` і `src/models/*` — стартова точка для `packages/*` |
 
 ---
 
@@ -66,14 +66,13 @@
 | **Cookie-auth через Vercel rewrites** | `rewrites()` у `next.config` (`beforeFiles`: `/api/:path*` → onrender) — ідентично нинішньому `vercel.json`; куки лишаються first-party; RSC для публічних сторінок робить **неавторизований** fetch на сервері, персоналізація — на клієнті через `/api/v1` з куками | Працює так само (vercel.json rewrites) — паритет, але без SSR |
 | **Strangler** | Нативний `rewrites.fallback` на Angular-деплой + middleware/proxy з Edge Config для per-route kill switch і canary-бакетів | Потрібна Vercel Routing Middleware окремо; fallback через vercel.json — можливо, але два SPA з різними index.html на одному origin складніше маршрутизувати |
 | Складність | Вища (server/client boundary, кешування, CSP з nonce) | Нижча |
-| Шаринг з Expo | Однаковий (TS-пакети без DOM) | Однаковий |
 
 **Рішення: Next.js App Router.** Вирішальні аргументи — D1 (SEO — єдиний драйвер, який Vite SPA не закриває) і вбудований strangler-механізм (`rewrites.fallback` + middleware + Edge Config). Складність стримуємо правилами:
 - RSC лише для **публічних read-сторінок** (SSR/ISR з гостьовими даними); усі авторизовані сторінки — Client Components з TanStack Query (фактично SPA-режим усередині Next). Жодних Server Actions для мутацій — мутації йдуть у FastAPI через `/api/v1` (один бекенд-контракт для web і mobile).
 - Серверний fetch **ніколи** не форвардить куки користувача на бекенд (access-кука має `path=/api/v1` і не приходить на сторінкові запити — це зручно і безпечно: SSR-кеш не може містити персональних даних).
 - Мова/тема на сервері — з cookie (`lang`, `theme`), без i18n-префіксів у URL (URL-паритет).
 
-Версії фіксуємо на R1: Next — поточний стабільний мажор (на 2026-09 — 16.x; у 16 `middleware.ts` перейменовано на `proxy.ts` — використовувати актуальну назву), React = **та сама** версія, що в Expo SDK мобільного (зараз 19.2.3), щоб у монорепо був один React.
+Версії фіксуємо на R1: Next — поточний стабільний мажор (на 2026-09 — 16.x; у 16 `middleware.ts` перейменовано на `proxy.ts` — використовувати актуальну назву), React = поточна стабільна 19.x.
 
 ---
 
@@ -194,7 +193,7 @@ Review branch chore/parity-harness in /home/dmytr/angular/book-club-fe against P
 ---
 
 ### R1 — Монорепо та спільні пакети (`contracts`, `api-client`, `i18n`, `config`)
-- **Scope**: npm workspaces у корені `book-club-fe` **без переміщення Angular** (корінь лишається Angular-застосунком до R14 — мінімальний churn для CI/Sonar/Husky/repomix). Пакети — framework-agnostic TS (без DOM/React), придатні для Next і Expo.
+- **Scope**: npm workspaces у корені `book-club-fe` **без переміщення Angular** (корінь лишається Angular-застосунком до R14 — мінімальний churn для CI/Sonar/Husky/repomix). Пакети — framework-agnostic TS (без DOM/React), придатні для Next.
 - **Структура**:
   ```
   book-club-fe/
@@ -202,14 +201,13 @@ Review branch chore/parity-harness in /home/dmytr/angular/book-club-fe against P
   ├─ src/, angular.json, …   # Angular (legacy) — не переміщується
   ├─ e2e/                    # єдиний Playwright-набір для обох таргетів
   ├─ apps/web/               # Next.js (R2)
-  ├─ apps/mobile/            # book-club-mobile (трек RM, git subtree)
   └─ packages/
      ├─ contracts/           # zod-схеми + z.infer типи: user, club, event, book, book-vote, quiz, randomizer, support, chat, geocode; ApiError
-     ├─ api-client/          # createApiClient({ baseUrl, transport }) — fetch; transports: cookieTransport (web: credentials 'include', no Bearer), bearerTransport (mobile: token getter/setter); single-flight refresh; 15s/30s timeouts; 503 retry x1; status→ERRORS.* mapping; domain modules clubs/events/users/...
+     ├─ api-client/          # createApiClient({ baseUrl, transport }) — fetch; transports: cookieTransport (web: credentials 'include', no Bearer), bearerTransport (token getter/setter); single-flight refresh; 15s/30s timeouts; 503 retry x1; status→ERRORS.* mapping; domain modules clubs/events/users/...
      ├─ i18n/                # locales ← public/i18n/{en,uk}.json (джерело правди лишається там до R14); build: ICU-генератор для next-intl; key-parity тест en↔uk
      └─ config/              # tsconfig.base.json, eslint preset для React/TS, Tailwind 4 theme tokens (CSS variables з src/styles)
   ```
-- **Джерела для портування**: `src/app/core/models/*.model.ts`, `src/app/core/api/api-mappers.ts` + `api-error.util.ts`, `src/app/core/interceptors/auth.interceptor.ts` (семантика), `book-club-mobile/src/models/*`, `book-club-mobile/src/api/{client,errors,*.api}.ts` (вже майже потрібна форма); схеми звіряти з `book-club-be/app/schemas/*.py` (Pydantic v2 — джерело правди контракту).
+- **Джерела для портування**: `src/app/core/models/*.model.ts`, `src/app/core/api/api-mappers.ts` + `api-error.util.ts`, `src/app/core/interceptors/auth.interceptor.ts` (семантика); схеми звіряти з `book-club-be/app/schemas/*.py` (Pydantic v2 — джерело правди контракту).
 - **ICU-генератор**: `{{ name }}` → `{name}`; групи `key_one/_few/_many/_other` → `key: "{count, plural, one {…} few {…} many {…} other {…}}"` (для `create_questions_count_*` параметр визначити за використанням у шаблоні); екранування `'`/`{`; тест — round-trip на всіх 715/717 ключах, CI падає на незгенерованих ключах.
 - **Агенти**: `react-dev`, `react-tester`, `react-reviewer`.
 - **Acceptance**: `npm ci` у корені ставить і Angular, і workspaces; `npm run build`/`test:ci`/`lint` Angular — без змін результатів; `npm -w packages/contracts test` (zod-схеми парсять фікстури з `e2e/fixtures` і реальні відповіді — записані JSON з прод-бекенду); `api-client` тести: N конкурентних 401 → рівно 1 refresh; 503 → 1 retry; 500 → 0 retry; timeout → `TimeoutError` з `ERRORS.timeout`; cookie-транспорт ніколи не ставить `Authorization`; i18n key-parity en↔uk + ICU-валідатор (`intl-messageformat` парсить усі повідомлення).
@@ -223,8 +221,8 @@ Repo: /home/dmytr/angular/book-club-fe (branch off develop: feat/monorepo-packag
 Create npm workspaces WITHOUT moving the Angular app: root package.json gets "workspaces": ["apps/*","packages/*"]; Angular stays at the root and its build/test/lint must behave exactly as before.
 Create:
 - packages/config: tsconfig.base.json (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes, moduleResolution bundler), eslint flat preset for TS/React, tailwind theme CSS variables extracted (copied, not moved) from the Angular global styles.
-- packages/contracts: zod 4 schemas + inferred types for user, club, club member/join request/ban, event, book, book-vote, quiz (+session/leaderboard), randomizer, support, chat room/message, geocode, maps-key config, ApiError. Sources: src/app/core/models, src/app/core/api/api-mappers.ts, /home/dmytr/angular/book-club-mobile/src/models, and the Pydantic schemas in /home/dmytr/angular/book-club-be/app/schemas (backend is the source of truth; API is camelCase). Export parse helpers; no runtime deps other than zod.
-- packages/api-client: fetch-based createApiClient({ baseUrl, transport, onUnauthenticated, onError }) reproducing src/app/core/interceptors/auth.interceptor.ts semantics exactly: 15s GET / 30s mutations via AbortController, one retry on 503 after ~3s, single-flight POST /auth/refresh on 401 then replay once, SKIP_AUTH_REDIRECT and SUPPRESS_ERROR_TOAST as per-request options, status->ERRORS.* translation key mapping (copy the table), BackendHttpError/RequestTimeoutError equivalents. Two transports: cookieTransport (credentials:'include', never sets Authorization, refresh body {}) for web; bearerTransport (getToken/setTokens, refresh with body {refreshToken}) for mobile — mirror /home/dmytr/angular/book-club-mobile/src/api/client.ts. Domain modules (clubs, events, users, auth, members, bookVote, quiz, randomizer, support, chat, books, geocode, upload, config) returning zod-parsed data.
+- packages/contracts: zod 4 schemas + inferred types for user, club, club member/join request/ban, event, book, book-vote, quiz (+session/leaderboard), randomizer, support, chat room/message, geocode, maps-key config, ApiError. Sources: src/app/core/models, src/app/core/api/api-mappers.ts, and the Pydantic schemas in /home/dmytr/angular/book-club-be/app/schemas (backend is the source of truth; API is camelCase). Export parse helpers; no runtime deps other than zod.
+- packages/api-client: fetch-based createApiClient({ baseUrl, transport, onUnauthenticated, onError }) reproducing src/app/core/interceptors/auth.interceptor.ts semantics exactly: 15s GET / 30s mutations via AbortController, one retry on 503 after ~3s, single-flight POST /auth/refresh on 401 then replay once, SKIP_AUTH_REDIRECT and SUPPRESS_ERROR_TOAST as per-request options, status->ERRORS.* translation key mapping (copy the table), BackendHttpError/RequestTimeoutError equivalents. Two transports: cookieTransport (credentials:'include', never sets Authorization, refresh body {}) for web. Domain modules (clubs, events, users, auth, members, bookVote, quiz, randomizer, support, chat, books, geocode, upload, config) returning zod-parsed data.
 - packages/i18n: re-export public/i18n/en.json and uk.json (do NOT move them), plus scripts/build-icu.mjs that emits dist/{en,uk}.icu.json for next-intl: `{{ x }}`→`{x}`, suffix plural groups (_one/_few/_many/_other) → ICU plural; tests: every key present in both locales, every generated message parses with intl-messageformat, round-trip count equals source count.
 Use Vitest for all packages. Pin React-free deps only. Do not touch src/app/shared/spartan, toast.service.ts, eslint.config.js (root Angular lint config).
 Acceptance: root `npm ci && npm run lint && npm run test:ci && npm run build` unchanged; `npm -ws test` green. Report the package public APIs.
@@ -236,7 +234,7 @@ Harden tests for packages/api-client, packages/contracts, packages/i18n: MSW (no
 ```
 Промпт `react-reviewer`:
 ```
-Review feat/monorepo-packages in /home/dmytr/angular/book-club-fe against PLAN-REACT-MIGRATION-2026-09-28.md R1. Focus: packages are DOM/React-free and usable from Expo (no Node-only APIs, no window access at import time); api-client semantics match src/app/core/interceptors/auth.interceptor.ts (diff them explicitly: timeouts, retry, refresh single-flight, redirect/toast flags, error mapping); zod schemas match book-club-be/app/schemas; workspaces did not change Angular build/test output or lockfile resolution of Angular deps; no secrets. Blocking vs non-blocking findings.
+Review feat/monorepo-packages in /home/dmytr/angular/book-club-fe against PLAN-REACT-MIGRATION-2026-09-28.md R1. Focus: packages are DOM/React-free and usable from any runtime (no Node-only APIs, no window access at import time); api-client semantics match src/app/core/interceptors/auth.interceptor.ts (diff them explicitly: timeouts, retry, refresh single-flight, redirect/toast flags, error mapping); zod schemas match book-club-be/app/schemas; workspaces did not change Angular build/test output or lockfile resolution of Angular deps; no secrets. Blocking vs non-blocking findings.
 ```
 
 ---
@@ -254,7 +252,7 @@ Review feat/monorepo-packages in /home/dmytr/angular/book-club-fe against PLAN-R
 Промпт `react-dev`:
 ```
 Repo: /home/dmytr/angular/book-club-fe (branch feat/web-skeleton). Read PLAN-REACT-MIGRATION-2026-09-28.md §3, §4, R2.
-Create apps/web: Next.js (current stable major, App Router, TypeScript strict, React Compiler on), React pinned to the exact version used by /home/dmytr/angular/book-club-mobile (19.2.3) so the monorepo has one React. Tailwind 4 using packages/config tokens; shadcn/ui initialised (components.json) with only button/card/input/label/badge/separator/sheet/tabs/sonner/skeleton for now; next-intl WITHOUT i18n routing: locale from cookie `lang` (fallback `uk`), messages from packages/i18n ICU build; theme from cookie `theme` (fallback prefers-color-scheme via a tiny inline script with nonce), `<html lang class>` set on the server.
+Create apps/web: Next.js (current stable major, App Router, TypeScript strict, React Compiler on), React current stable 19.x. Tailwind 4 using packages/config tokens; shadcn/ui initialised (components.json) with only button/card/input/label/badge/separator/sheet/tabs/sonner/skeleton for now; next-intl WITHOUT i18n routing: locale from cookie `lang` (fallback `uk`), messages from packages/i18n ICU build; theme from cookie `theme` (fallback prefers-color-scheme via a tiny inline script with nonce), `<html lang class>` set on the server.
 Providers: TanStack Query v5 (staleTime 60s, retry false — retries live in api-client), Sonner toaster, api-client with cookieTransport and baseUrl '/api/v1'; onUnauthenticated → hard navigate to /login (legacy until R9).
 Strangler:
 - next.config: rewrites.beforeFiles `/api/:path*` → `https://book-club-be.onrender.com/api/:path*`; rewrites.fallback `/:path*` → `${process.env.LEGACY_ORIGIN}/:path*`.
@@ -412,7 +410,7 @@ Pilot rollout for /clubs per PLAN-REACT-MIGRATION-2026-09-28.md R5: Edge Config 
 
 - **GO** → R6+ за планом; темп: один раунд у роботі, наступний — у підготовці.
 - **GO з умовами** (1–2 пороги пропущено незначно) → ≤ 2 ітерації фіксів, повторний замір 7 днів.
-- **NO-GO** (структурні проблеми strangler/auth/perf або delivery > 2×): `/clubs`, `/privacy`, `/terms` → legacy, front door лишається прозорим проксі або домен повертається на `book-club-legacy`; `packages/*` лишаються і переходять у мобільний трек (RM); Angular продовжує жити за `PLAN-UI-STACK` (раунд 4 знову актуальний). Втрати ≈ R2–R5 (~13–17 pd).
+- **NO-GO** (структурні проблеми strangler/auth/perf або delivery > 2×): `/clubs`, `/privacy`, `/terms` → legacy, front door лишається прозорим проксі або домен повертається на `book-club-legacy`; `packages/*` лишаються; Angular продовжує жити за `PLAN-UI-STACK` (раунд 4 знову актуальний). Втрати ≈ R2–R5 (~13–17 pd).
 
 ---
 
@@ -517,7 +515,7 @@ Repo /home/dmytr/angular/book-club-fe, branch feat/web-quiz. Read PLAN-REACT-MIG
 ---
 
 ### R12 — `/chats` і chat-widget у shell (realtime)
-- **Scope**: `chat-socket.service` → `packages/api-client/ws` (framework-agnostic WS-клієнт: ws-ticket перед кожним connect/reconnect, backoff, presence/presence_snapshot/message, send `{text}`) — **той самий** модуль бере mobile; React-хуки поверх нього; злиття повідомлень у query-кеш; `chat-audio-alert.service`, `chat-timestamp.pipe`; chat-widget у React-shell (замінює заглушку R5), `/chats` сторінка. `wss://book-club-be.onrender.com` напряму (CSP `connect-src`).
+- **Scope**: `chat-socket.service` → `packages/api-client/ws` (framework-agnostic WS-клієнт: ws-ticket перед кожним connect/reconnect, backoff, presence/presence_snapshot/message, send `{text}`); React-хуки поверх нього; злиття повідомлень у query-кеш; `chat-audio-alert.service`, `chat-timestamp.pipe`; chat-widget у React-shell (замінює заглушку R5), `/chats` сторінка. `wss://book-club-be.onrender.com` напряму (CSP `connect-src`).
 - **Агенти**: `react-dev`, `react-tester`, `security` (ws-ticket, XSS у повідомленнях), `react-reviewer`, `devops`.
 - **Acceptance**: P-чекліст; `chats.spec.ts` + `e2e/api/chat.api.spec.ts` зелені; reconnect після offline/online і після sleep вкладки; бейдж непрочитаних; немає витоків сокетів при навігації (перевірка в DevTools/Playwright CDP).
 - **Rollback**: прапорець `/chats` + прапорець `shell.chatWidget` (Edge Config) → повернення до заглушки. **Effort**: 6–8 pd. **Залежності**: R11.
@@ -542,8 +540,8 @@ Repo /home/dmytr/angular/book-club-fe, branch feat/web-tail. Read PLAN-REACT-MIG
 ---
 
 ### R14 — Виведення Angular з експлуатації
-- **Scope**: 30 днів на 100 % для всіх маршрутів → прибрати `rewrites.fallback`, Edge Config-логіку спростити до глобального `enabled` (або видалити middleware-гілку legacy), видалити Angular (`src/`, `angular.json`, Angular deps, `tsconfig.app/spec`, `vitest.config.ts` для Angular, `scripts/generate-sitemap.mjs`, `postbuild`, `public/` → `apps/web/public` для `favicon`, `og-image`, Google verification file), перенести `public/i18n` у `packages/i18n/locales` і **перевести джерело на ICU** (mobile додає `i18next-icu`), `extract-i18n.mjs`/`i18n-check.yml` → під ICU; CI: прибрати legacy-джоби, Sonar → `apps/web`+`packages`; `lighthouse.yml` → проти preview Next; оновити `CLAUDE.md`, `repomix.config.json`, husky/lint-staged; архівувати проєкт `book-club-legacy` (не видаляти ще 30 днів — страховка).
-- **Backend**: без змін (mobile все ще використовує Bearer + body-токени; web — куки). Рішення щодо `PLAN-COOKIE-AUTH` «Реліз 2» (прибрати токени з JSON) — **не застосовується**, поки mobile їх потребує; альтернатива — віддавати токени в body лише для клієнтів без Origin (окреме рішення `security` + `python-backend-dev`, поза цим планом).
+- **Scope**: 30 днів на 100 % для всіх маршрутів → прибрати `rewrites.fallback`, Edge Config-логіку спростити до глобального `enabled` (або видалити middleware-гілку legacy), видалити Angular (`src/`, `angular.json`, Angular deps, `tsconfig.app/spec`, `vitest.config.ts` для Angular, `scripts/generate-sitemap.mjs`, `postbuild`, `public/` → `apps/web/public` для `favicon`, `og-image`, Google verification file), перенести `public/i18n` у `packages/i18n/locales` і **перевести джерело на ICU**, `extract-i18n.mjs`/`i18n-check.yml` → під ICU; CI: прибрати legacy-джоби, Sonar → `apps/web`+`packages`; `lighthouse.yml` → проти preview Next; оновити `CLAUDE.md`, `repomix.config.json`, husky/lint-staged; архівувати проєкт `book-club-legacy` (не видаляти ще 30 днів — страховка).
+- **Backend**: без змін (web — куки). Рішення щодо `PLAN-COOKIE-AUTH` «Реліз 2» (прибрати токени з JSON) — можна розглядати окремим рішенням `security` + `python-backend-dev`, поза цим планом.
 - **Агенти**: `devops`, `react-dev`, `react-reviewer`, `security`.
 - **Acceptance**: `audit:full` зелений проти прод; жодного запиту до `book-club-legacy` за 7 днів (логи Vercel); репо без `@angular/*`, `@spartan-ng/*`, `@ngx-translate/*`.
 - **Rollback**: до видалення `book-club-legacy` — повернути `rewrites.fallback` (revert) + прапорці; після — лише git revert + передеплой legacy з тегу `angular-final`.
@@ -555,22 +553,10 @@ Repo /home/dmytr/angular/book-club-fe, branch chore/decommission-angular. Read P
 ```
 Промпт `react-dev`:
 ```
-Same branch. Remove the Angular application (src/, angular.json, tsconfig.app.json, tsconfig.spec.json, Angular vitest config, Angular/Spartan/ngx-translate deps, scripts/generate-sitemap.mjs and postbuild, extract-i18n for Angular), move public/i18n/{en,uk}.json into packages/i18n/locales and convert the source of truth to ICU (update packages/i18n tests; provide a migration note for apps/mobile to add i18next-icu), move favicon/og-image/google verification file to apps/web/public, remove rewrites.fallback and the legacy branch of the strangler middleware, update CLAUDE.md and repomix config. All workspace builds/tests/e2e green.
+Same branch. Remove the Angular application (src/, angular.json, tsconfig.app.json, tsconfig.spec.json, Angular vitest config, Angular/Spartan/ngx-translate deps, scripts/generate-sitemap.mjs and postbuild, extract-i18n for Angular), move public/i18n/{en,uk}.json into packages/i18n/locales and convert the source of truth to ICU (update packages/i18n tests), move favicon/og-image/google verification file to apps/web/public, remove rewrites.fallback and the legacy branch of the strangler middleware, update CLAUDE.md and repomix config. All workspace builds/tests/e2e green.
 ```
 
 ---
-
-### RM — Трек мобільного шарингу (паралельно після G1; не блокує web)
-- **Scope**: `git subtree add --prefix=apps/mobile` (зі збереженням історії) `book-club-mobile`; Metro/Expo monorepo-конфіг (watchFolders, `nodeModulesPaths`, один React); mobile переходить на `@book-club/contracts`, `@book-club/api-client` (bearerTransport), `@book-club/i18n` (i18next споживає ті самі JSON; після R14 — `i18next-icu`); видалити дублікати `apps/mobile/src/models/*`, `src/api/client.ts`, `src/api/errors.ts`; CI: jest-expo для `apps/mobile` на змінах `packages/**`.
-- **Агенти**: `react-native-dev`, `react-native-tester`, `react-native-reviewer`, `devops`.
-- **Acceptance**: `npx expo run:android` працює з монорепо; усі mobile-тести зелені; 0 дубльованих моделей; зміна схеми в `packages/contracts` ламає typecheck і web, і mobile в одному PR.
-- **Rollback**: mobile-репо лишається джерелом до мерджу; після — revert subtree-мерджу. **Effort**: 3–4 pd. **Залежності**: R1 (технічно), G1 (рекомендовано).
-
-Промпт `react-native-dev`:
-```
-Read /home/dmytr/angular/book-club-fe/PLAN-REACT-MIGRATION-2026-09-28.md RM. Bring /home/dmytr/angular/book-club-mobile into /home/dmytr/angular/book-club-fe as apps/mobile via git subtree (preserve history), configure Expo/Metro for npm workspaces (single React version shared with apps/web, watchFolders for packages/*), then replace apps/mobile/src/models/*, src/api/client.ts, src/api/errors.ts and per-domain api modules with @book-club/contracts and @book-club/api-client (bearerTransport backed by expo-secure-store; keep the existing single-flight refresh behaviour and tests passing), and load i18n resources from @book-club/i18n. Keep app behaviour identical; jest-expo suite green; expo run:android works.
-```
-Промпти `react-native-tester`/`react-native-reviewer`: перевірити паритет поведінки клієнта (401/503/timeouts), відсутність Node-only імпортів у бандлі Metro, дублікатів React.
 
 ---
 
@@ -594,7 +580,6 @@ Read /home/dmytr/angular/book-club-fe/PLAN-REACT-MIGRATION-2026-09-28.md RM. Bri
 | R12 | чат (WS) | 6–8 | R11 |
 | R13 | 404 + повнота | 1.5–2 | R12 |
 | R14 | виведення Angular | 3–4 | R13 + 30 днів |
-| RM | mobile у монорепо | 3–4 | R1 (реком. G1) |
 | **Разом** | | **≈ 73–94** | |
 
 До гейту G1: ~19–23 pd — це і є «ціна експерименту».
@@ -602,8 +587,7 @@ Read /home/dmytr/angular/book-club-fe/PLAN-REACT-MIGRATION-2026-09-28.md RM. Bri
 ## 9. Межі з паралельними треками
 - **Spartan-ізоляція (`refactor/spartan-isolation`, `ToastService` facade)**: цей план не редагує `src/app/shared/spartan/**`, `src/app/core/services/toast.service.ts`, `eslint.config.js`, dependency-піни Spartan. R0 стартує після мерджу гілки в `develop`. `PLAN-UI-STACK` раунди 2–3 (alias-імпорти, axe-тести sheet/tabs/field, Dependabot-група) **продовжуються** — їхні axe-тести стають P7-еталоном; раунд 4 (B-lite) **скасовується**, якщо G1 = GO (Angular буде видалено), і відновлюється, якщо NO-GO.
 - **`REFACTOR-PLAN-FABLE-2026-09-28.md` Phase 2**: items 5–6 (rxResource у club-detail/event-detail/edit-club; розбиття club-manage/chat-widget/header) — рекомендація: **заморозити** для компонентів, що мігрують у R5–R12 (роботу буде викинуто), дозволити лише для того, що потрібне до G1; item 7 (тест event-countdown) — корисний як еталон поведінки для R7, лишити.
-- **Cookie-auth**: R2/R5/R9 спираються на вже реалізовану частину; React не використовує Bearer. `PLAN-COOKIE-AUTH` «Реліз 2» блокується мобільним (див. R14).
-- **Mobile Phase 2/3**: WS-клієнт з R12 — спільний; до RM мобільний продовжує розвиватися у своєму репо.
+- **Cookie-auth**: R2/R5/R9 спираються на вже реалізовану частину; React не використовує Bearer.
 
 ## 10. Ризики та мітигації
 | Ризик | Ймовірність / вплив | Мітигація |
