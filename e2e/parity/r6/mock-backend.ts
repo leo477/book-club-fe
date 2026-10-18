@@ -2,10 +2,11 @@
 // `POST /__mutate` {id, patch} edits a club (revalidation test).
 //   node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON e2e/parity/r6/mock-backend.ts [port=9922]
 // It speaks https with a throwaway self-signed certificate because `next build`/`next start` refuse an http BACKEND_ORIGIN.
-// Start Next with BACKEND_ORIGIN=https://localhost:<port> and NODE_TLS_REJECT_UNAUTHORIZED=0 (rewrites + server fetches).
+// Start Next with BACKEND_ORIGIN=https://localhost:<port>. Server fetches accept the certificate with NODE_TLS_REJECT_UNAUTHORIZED=0, but the
+// /api rewrite proxy always verifies it: set MOCK_BACKEND_CERT=<file> to write the certificate there and start Next with NODE_EXTRA_CA_CERTS=<file>.
 // `GET /__requests` returns the paths the server was asked for (proves guests cause no browser-side calls and how often ISR refetches).
 import { execFileSync } from 'node:child_process';
-import { mkdtempSync, readFileSync } from 'node:fs';
+import { copyFileSync, mkdtempSync, readFileSync } from 'node:fs';
 import { createServer } from 'node:https';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -16,6 +17,8 @@ const dir = mkdtempSync(path.join(tmpdir(), 'r6-mock-'));
 const key = path.join(dir, 'key.pem');
 const cert = path.join(dir, 'cert.pem');
 execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-keyout', key, '-out', cert, '-subj', '/CN=localhost', '-days', '2', '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1'], { stdio: 'ignore' });
+
+if (process.env['MOCK_BACKEND_CERT']) copyFileSync(cert, process.env['MOCK_BACKEND_CERT']);
 
 const seen: string[] = [];
 const state = newState('guest');
