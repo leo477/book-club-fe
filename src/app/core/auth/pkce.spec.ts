@@ -12,4 +12,8 @@ describe('pkce', () => {
     expect(await deriveChallenge(takeVerifier() ?? '')).toBe(challenge);
     expect(takeVerifier()).toBeUndefined();
   });
+
+  it('encodes url-unsafe base64 characters without padding', async () => {
+    expect(await deriveChallenge('')).toBe('47DEQpj8HBSa-_TImW-5JCeuQeRkm5NMpJWZG3hSuFU');
+  });
 });
