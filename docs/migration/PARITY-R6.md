@@ -158,3 +158,11 @@ Decisions needed from design: (a) accept gray-600 / ink-muted for all light seco
 - F7/F8/F9/F13: tab list and sort group have their own labels, vote/RSVP/remove names include the option or event title (the parity specs match `Голосувати` with an optional ` — title` suffix and use exact text for event titles), the action banner is keyed by club and stays 12 s (dismiss button unchanged), cover alt and QR label are i18n keys (`CLUB_DETAIL.cover_alt|qr_code_aria|events_sort_aria`), the title switches to the club name when a stub upgrades.
 
 Results: `r6-club-detail` + `r6-dual` **89 passed, 37 skipped, 0 failed**; `r6-visual` **18/18 within 0.02**; `/clubs/:id` first-load JS **176.5 KB gzip-9** (budget 181).
+
+## Follow-up SCRUM-165: r6-dual and r6-visual run in CI
+
+Both run against the local production Angular build (see PARITY-R11 follow-up) and the mock backend.
+
+- `r6-dual.spec.ts`: 14 passed, 3 consecutive runs. Six HAR diffs failed against current code because of drift since the allowlists were written, now allowlisted per journey: canary events (`POST /analytics/event`, Angular `bucket:null` vs Next with a cohort label) and `GET /clubs/:id/members` (Next sends `limit=200`). `chat/rooms` on Next became 0 or 1 per journey once the R12 widget was ported, so the entries no longer pin `next`.
+- Finding F-1 (Next, low): the `join` journey shows Angular emitting two canary events (`cohort`, `join_club`) and Next one: `trackEvent('join_club')` is only called in `features/clubs/clubs-list-client.tsx`, not for a join on `/clubs/:id`. The join conversion metric from the club page is missing on Next. Not fixed (app code is out of scope for this task).
+- `r6-visual.spec.ts`: no baselines are committed (they depend on the machine's fonts). The workflow records them from the legacy server in the same job (`--project=legacy --update-snapshots=all`) and then compares Next: 18/18 within 0.02 locally.
