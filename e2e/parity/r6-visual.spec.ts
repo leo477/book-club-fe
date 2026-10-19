@@ -21,7 +21,7 @@ test.use({ timezoneId: 'Europe/Kyiv' });
 for (const c of cases) {
   for (const theme of ['light', 'dark'] as const) {
     for (const vp of viewports) {
-      test(`club-detail ${c.role} ${theme} ${vp.name}`, async ({ page, context, baseURL }) => {
+      test(`club-detail ${c.role} ${theme} ${vp.name}`, async ({ page, context, baseURL }, testInfo) => {
         await context.addCookies(LANG_COOKIE(baseURL!, lang as 'uk' | 'en', theme));
         await page.addInitScript(([t, l]) => { localStorage.setItem('theme', t); localStorage.setItem('lang', l); }, [theme, lang]);
         await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: theme });
@@ -38,6 +38,11 @@ for (const c of cases) {
           window.scrollTo(0, 0);
         });
         await page.waitForTimeout(500);
+        if (testInfo.project.name === 'legacy') {
+          const heading = page.getByRole('heading', { level: 1 }).first();
+          await expect(heading).toBeVisible();
+          await expect(heading).not.toHaveText('');
+        }
         await expect(page).toHaveScreenshot(`club-detail-${c.role}-${theme}-${vp.name}${suffix}.png`, {
           fullPage: true,
           // the chat link stand-in (documented delta) and transient UI

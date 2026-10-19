@@ -55,8 +55,10 @@ jobs:
       LEGACY_API_ORIGIN: https://localhost:9922
     steps:
       - name: Set mock backend cert path
-        # the runner context is not available in job-level env, so export it for the later steps here
-        run: echo "MOCK_BACKEND_CERT=$RUNNER_TEMP/mock-backend-cert.pem" >> "$GITHUB_ENV"
+        # the runner context is not available in job-level env, so export it for the later steps here; NODE_EXTRA_CA_CERTS makes the Next server and the legacy server trust the mock backend's throwaway certificate
+        run: |
+          echo "MOCK_BACKEND_CERT=$RUNNER_TEMP/mock-backend-cert.pem" >> "$GITHUB_ENV"
+          echo "NODE_EXTRA_CA_CERTS=$RUNNER_TEMP/mock-backend-cert.pem" >> "$GITHUB_ENV"
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - name: Setup Node.js
@@ -96,13 +98,8 @@ jobs:
           cat mock-backend.log edge-config.log
           exit 1
       - name: Build (apps/web)
-        env:
-          NODE_EXTRA_CA_CERTS: ${{ runner.temp }}/mock-backend-cert.pem
         run: npm run build -w @book-club/web
       - name: Start Next
-        env:
-          # the /api rewrite proxy verifies the mock backend's throwaway certificate
-          NODE_EXTRA_CA_CERTS: ${{ runner.temp }}/mock-backend-cert.pem
         run: |
           nohup npm run start -w @book-club/web -- -p 3000 > next-server.log 2>&1 &
           for _ in $(seq 1 60); do
@@ -130,12 +127,10 @@ jobs:
       - name: Build Angular app (production configuration)
         run: npm run build -- --configuration=production
       - name: Start legacy server
-        env:
-          NODE_EXTRA_CA_CERTS: ${{ runner.temp }}/mock-backend-cert.pem
         run: |
           nohup env PORT=4200 node e2e/parity/legacy-server.mjs > legacy-server.log 2>&1 &
           for _ in $(seq 1 30); do
-            curl -fsS -o /dev/null http://localhost:4200/login && exit 0
+            curl -fsS -o /dev/null http://localhost:4200/login && asset=$(curl -fsS http://localhost:4200/ | grep -oE 'main-[A-Za-z0-9]+\.js' | head -1) && [ -n "$asset" ] && curl -fsS -o /dev/null "http://localhost:4200/$asset" && exit 0
             sleep 1
           done
           cat legacy-server.log
@@ -158,6 +153,7 @@ jobs:
           path: |
             playwright-report/parity
             test-results
+            e2e/parity/__snapshots__
             next-server.log
             mock-backend.log
             edge-config.log

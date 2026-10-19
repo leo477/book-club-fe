@@ -9,35 +9,66 @@ import path from 'node:path';
 const root = path.resolve(process.env.LEGACY_DIST ?? 'dist/book-club-fe/browser');
 const apiOrigin = new URL(process.env.LEGACY_API_ORIGIN ?? 'https://localhost:9922');
 const config = JSON.parse(readFileSync('vercel.json', 'utf8'));
-const headerRules = config.headers.map((rule) => ({ pattern: new RegExp(`^${rule.source.replace('(.*)', '.*')}$`), headers: rule.headers }));
+const escapeRegex = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const headerRules = config.headers.map((rule) => ({
+  pattern: new RegExp(`^${rule.source.split('(.*)').map(escapeRegex).join('.*')}$`),
+  headers: rule.headers,
+}));
+const hopByHop = new Set(['connection', 'keep-alive', 'transfer-encoding', 'upgrade', 'te', 'trailer']);
+const forwardable = (headers) => Object.fromEntries(Object.entries(headers).filter(([name]) => !hopByHop.has(name) && !name.startsWith('proxy-')));
 const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon', '.txt': 'text/plain; charset=utf-8', '.xml': 'application/xml; charset=utf-8', '.woff2': 'font/woff2', '.webmanifest': 'application/manifest+json' };
 
 function applyHeaders(res, pathname) {
   for (const rule of headerRules) if (rule.pattern.test(pathname)) for (const h of rule.headers) res.setHeader(h.key, h.value);
 }
 
-createServer((req, res) => {
-  const url = new URL(req.url ?? '/', 'http://localhost');
-  if (url.pathname.startsWith('/api/')) {
-    const send = apiOrigin.protocol === 'https:' ? httpsRequest : httpRequest;
-    const upstream = send({ host: apiOrigin.hostname, port: apiOrigin.port, path: req.url, method: req.method, headers: { ...req.headers, host: apiOrigin.host } }, (up) => {
-      res.writeHead(up.statusCode ?? 502, up.headers);
-      up.pipe(res);
-    });
-    upstream.on('error', () => {
+function proxy(req, res) {
+  const send = apiOrigin.protocol === 'https:' ? httpsRequest : httpRequest;
+  const upstream = send({ host: apiOrigin.hostname, port: apiOrigin.port, path: req.url, method: req.method, headers: { ...forwardable(req.headers), host: apiOrigin.host } }, (up) => {
+    res.writeHead(up.statusCode ?? 502, forwardable(up.headers));
+    up.pipe(res);
+  });
+  upstream.on('error', () => {
+    if (res.headersSent) res.destroy();
+    else {
       res.statusCode = 502;
       res.end();
-    });
-    return void req.pipe(upstream);
+    }
+  });
+  res.on('close', () => upstream.destroy());
+  req.pipe(upstream);
+}
+
+function serve(req, res) {
+  const url = new URL(req.url ?? '/', 'http://localhost');
+  if (url.pathname.startsWith('/api/')) return proxy(req, res);
+  let decoded;
+  try {
+    decoded = decodeURIComponent(url.pathname);
+  } catch {
+    res.statusCode = 400;
+    return void res.end();
   }
-  let file = path.join(root, decodeURIComponent(url.pathname));
-  const isFile = file.startsWith(root) && existsSync(file) && statSync(file).isFile();
-  if (!isFile) file = /\.[a-zA-Z0-9]+$/.test(url.pathname) ? '' : path.join(root, 'index.html');
+  let file = path.resolve(root, `.${decoded}`);
+  const isFile = (file === root || file.startsWith(root + path.sep)) && existsSync(file) && statSync(file).isFile();
+  if (!isFile) file = /\.[a-zA-Z0-9]+$/.test(decoded) ? '' : path.join(root, 'index.html');
   applyHeaders(res, url.pathname);
   if (!file) {
     res.statusCode = 404;
     return void res.end();
   }
-  res.setHeader('content-type', types[path.extname(file)] ?? 'application/octet-stream');
+  if (!res.hasHeader('content-type')) res.setHeader('content-type', types[path.extname(file)] ?? 'application/octet-stream');
   createReadStream(file).pipe(res);
+}
+
+createServer((req, res) => {
+  try {
+    serve(req, res);
+  } catch {
+    if (res.headersSent) res.destroy();
+    else {
+      res.statusCode = 500;
+      res.end();
+    }
+  }
 }).listen(Number(process.env.PORT ?? 4200), () => console.log('legacy server on', process.env.PORT ?? 4200));

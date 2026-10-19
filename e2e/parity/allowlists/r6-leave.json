@@ -15,7 +15,8 @@
     {
       "signature": "GET self /api/v1/clubs/:id/chat/rooms? body=-",
       "reason": "The R12 chat widget loads the club rooms on Next once the viewer is a member; whether that fetch lands inside the journey is timing dependent (0 or 1), Angular always preloads them",
-      "legacy": 1
+      "legacy": 1,
+      "nextMax": 1
     },
     {
       "signature": "GET self /api/v1/users/me/stats? body=-",

@@ -458,7 +458,7 @@ test.describe('socket lifecycle', () => {
     const m = await open(page, 'member', '/clubs', { wsMode: 'kick' });
     await openWidget(page);
     await expect.poll(() => m.sockets.some((s) => s.closeCode === 1008)).toBe(true);
-    if (isNext()) await page.waitForTimeout(3_500);
+    await page.waitForTimeout(3_500);
     ti.annotations.push({ type: '1008', description: `sockets=${m.sockets.length} tickets=${m.tickets.length}` });
     if (isNext()) {
       await expect(page.getByText(NOTICE.stopped)).toBeVisible();
@@ -471,7 +471,6 @@ test.describe('socket lifecycle', () => {
       expectTicketsFresh(m);
     } else {
       // D-N4 (since SCRUM-146): Angular stops on a 1008 after auth too (no reconnect, no Retry); the room-closed toast is racy, so it is only recorded
-      await expect.poll(() => page.getByText(NOTICE.roomClosed).count(), { timeout: 1_500 }).toBeGreaterThan(0).catch(() => undefined);
       ti.annotations.push({ type: 'toast', description: `room-closed toast seen: ${(await page.getByText(NOTICE.roomClosed).count()) > 0}` });
       expect(m.sockets).toHaveLength(1);
       await expect(retry(page)).toHaveCount(0);

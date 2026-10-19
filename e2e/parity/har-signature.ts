@@ -72,6 +72,7 @@ export interface AllowEntry {
   reason: string;
   legacy?: number;
   next?: number;
+  nextMax?: number;
 }
 
 export function diff(legacy: string[], next: string[], allowed: AllowEntry[] = [], stale: string[] = []): string[] {
@@ -87,9 +88,9 @@ export function diff(legacy: string[], next: string[], allowed: AllowEntry[] = [
     if (rule) {
       matched.add(sig);
       const legacyOk = rule.legacy === undefined || rule.legacy === x;
-      const nextOk = rule.next === undefined || rule.next === y;
+      const nextOk = (rule.next === undefined || rule.next === y) && (rule.nextMax === undefined || y <= rule.nextMax);
       if (legacyOk && nextOk) continue;
-      problems.push(`${sig}  legacy=${x} next=${y}  (allowlist expects legacy=${rule.legacy ?? '*'} next=${rule.next ?? '*'})`);
+      problems.push(`${sig}  legacy=${x} next=${y}  (allowlist expects legacy=${rule.legacy ?? '*'} next=${rule.next ?? (rule.nextMax === undefined ? '*' : `<=${rule.nextMax}`)})`);
       continue;
     }
     if (x !== y) problems.push(`${sig}  legacy=${x} next=${y}`);
