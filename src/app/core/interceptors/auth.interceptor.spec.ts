@@ -155,9 +155,14 @@ describe('authInterceptor', () => {
   it('does not try to refresh a 401 for a visitor without a session', () =>
     new Promise<void>((resolve) => {
       setup(null);
-      http.get('/api/test').subscribe({ error: () => resolve() });
+      http.get('/api/test').subscribe({
+        error: (err: unknown) => {
+          expect(err).toBeInstanceOf(BackendHttpError);
+          resolve();
+        },
+      });
       httpMock.expectOne('/api/test').flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
-      httpMock.expectNone('/api/v1/auth/refresh');
+      expect(httpMock.match('/api/v1/auth/refresh')).toHaveLength(0);
     }));
 
   it('clears token and navigates to /login when the refresh attempt itself fails', () =>
