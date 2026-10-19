@@ -541,6 +541,7 @@ docs/
     CANARY-METRICS.md
     cleanup-pw-audit.sql
     GATE-G1.md
+    OWNER-ROLLOUT-CHECKLIST.md
     PARITY-R11.md
     PARITY-R12.md
     PARITY-R5.md
@@ -549,6 +550,7 @@ docs/
     PARITY-R8.md
     PARITY-R9.md
     PLAN-SCRUM-81-COOKIE-ONLY-WEB.md
+    R14-DECOMMISSION-PREP.md
     R6-DEPLOY-SETTINGS.md
     RUNBOOK-STRANGLER.md
     SECURITY-R6.md
