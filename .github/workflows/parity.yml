@@ -130,7 +130,7 @@ jobs:
         run: |
           nohup env PORT=4200 node e2e/parity/legacy-server.mjs > legacy-server.log 2>&1 &
           for _ in $(seq 1 30); do
-            curl -fsS -o /dev/null http://localhost:4200/login && asset=$(curl -fsS http://localhost:4200/ | grep -oE 'main-[A-Za-z0-9]+\.js' | head -1) && [ -n "$asset" ] && curl -fsS -o /dev/null "http://localhost:4200/$asset" && exit 0
+            curl -fsS -o /dev/null http://localhost:4200/login && asset=$(curl -fsS http://localhost:4200/ | grep -oE 'main-[A-Za-z0-9_-]+\.js' | head -1) && [ -n "$asset" ] && curl -fsS -o /dev/null "http://localhost:4200/$asset" && exit 0
             sleep 1
           done
           cat legacy-server.log

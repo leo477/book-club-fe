@@ -58,7 +58,15 @@ function serve(req, res) {
     return void res.end();
   }
   if (!res.hasHeader('content-type')) res.setHeader('content-type', types[path.extname(file)] ?? 'application/octet-stream');
-  createReadStream(file).pipe(res);
+  const stream = createReadStream(file);
+  stream.on('error', () => {
+    if (res.headersSent) res.destroy();
+    else {
+      res.statusCode = 500;
+      res.end();
+    }
+  });
+  stream.pipe(res);
 }
 
 createServer((req, res) => {
