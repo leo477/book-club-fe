@@ -287,6 +287,7 @@ const NOTICE = {
   reconnecting: /Reconnecting|Перепідключення/,
   lost: /Live updates are off|Оновлення в реальному часі вимкнено/,
   stopped: /server ended this chat session|Сервер завершив сеанс чату/,
+  roomClosed: /no longer available to you|більше недоступний/,
 };
 const retry = (page: Page) => page.getByRole('button', { name: L.retry });
 
@@ -457,7 +458,7 @@ test.describe('socket lifecycle', () => {
     const m = await open(page, 'member', '/clubs', { wsMode: 'kick' });
     await openWidget(page);
     await expect.poll(() => m.sockets.some((s) => s.closeCode === 1008)).toBe(true);
-    await page.waitForTimeout(isNext() ? 3_500 : 6_000);
+    await page.waitForTimeout(3_500);
     ti.annotations.push({ type: '1008', description: `sockets=${m.sockets.length} tickets=${m.tickets.length}` });
     if (isNext()) {
       await expect(page.getByText(NOTICE.stopped)).toBeVisible();
@@ -469,8 +470,9 @@ test.describe('socket lifecycle', () => {
       await expect(page.getByText(NOTICE.stopped)).toHaveCount(0);
       expectTicketsFresh(m);
     } else {
-      // D-N4: Angular treats a 1008 like any close and reconnects at once, so a removed or banned user keeps hitting the server
-      expect(m.sockets.length).toBeGreaterThan(1);
+      // D-N4 (since SCRUM-146): Angular stops on a 1008 after auth too (no reconnect, no Retry); the room-closed toast is racy, so it is only recorded
+      ti.annotations.push({ type: 'toast', description: `room-closed toast seen: ${(await page.getByText(NOTICE.roomClosed).count()) > 0}` });
+      expect(m.sockets).toHaveLength(1);
       await expect(retry(page)).toHaveCount(0);
     }
   });

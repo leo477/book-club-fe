@@ -1,7 +1,9 @@
 # Hermetic parity e2e: the Next app (production build, legacy fallback off) driven by the Playwright `next` project.
 # Every /api/v1 call is either fulfilled by page.route mocks in the specs or answered by the local mock backend; nothing talks to production.
-# A hermetic mock backend (https://localhost:9922, throwaway cert) and an Edge Config stub (http://localhost:9944) back the Next server, so r5, r6-club-detail, r11 and r12 run here (next project only).
-# Not run here (need a deployed legacy app or a real backend): the legacy project, r6-dual, r6-visual, r6-real-backend, the /clubs visual baselines (recorded with an unreachable backend) and the HAR diff.
+# A hermetic mock backend (https://localhost:9922, throwaway cert) and an Edge Config stub (http://localhost:9944) back the Next server, so r5, r6-club-detail, r11 and r12 run here (next project).
+# The Angular app is built with the production configuration and served by e2e/parity/legacy-server.mjs (vercel.json rewrites and headers, /api proxied to the mock backend), so the legacy project
+# runs r6-club-detail, r11 and r12 here too, r6-dual compares both targets, and r6-visual records its baselines from the legacy server in this job and compares Next to them.
+# Not run here (need a deployed app or a real backend): r6-real-backend, the /clubs visual baselines (recorded with an unreachable backend) and the HAR diff.
 
 name: Parity
 
@@ -11,6 +13,10 @@ on:
     paths:
       - 'apps/web/**'
       - 'packages/**'
+      - 'src/**'
+      - 'public/**'
+      - 'angular.json'
+      - 'vercel.json'
       - 'e2e/parity/**'
       - 'playwright.parity.config.ts'
       - 'package-lock.json'
@@ -25,9 +31,9 @@ concurrency:
 
 jobs:
   parity:
-    name: Parity e2e (next)
+    name: Parity e2e (next and legacy)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     permissions:
       contents: read
     env:
@@ -43,10 +49,16 @@ jobs:
       VERCEL_ENV: preview
       DISABLE_LEGACY_FALLBACK: '1'
       PARITY_NEXT_URL: http://localhost:3000
+      # the production Angular build, served locally; its response CSP blocks Playwright's injected scripts, so the legacy contexts bypass it
+      PARITY_LEGACY_URL: http://localhost:4200
+      PARITY_LEGACY_BYPASS_CSP: '1'
+      LEGACY_API_ORIGIN: https://localhost:9922
     steps:
       - name: Set mock backend cert path
-        # the runner context is not available in job-level env, so export it for the later steps here
-        run: echo "MOCK_BACKEND_CERT=$RUNNER_TEMP/mock-backend-cert.pem" >> "$GITHUB_ENV"
+        # the runner context is not available in job-level env, so export it for the later steps here; NODE_EXTRA_CA_CERTS makes the Next server and the legacy server trust the mock backend's throwaway certificate
+        run: |
+          echo "MOCK_BACKEND_CERT=$RUNNER_TEMP/mock-backend-cert.pem" >> "$GITHUB_ENV"
+          echo "NODE_EXTRA_CA_CERTS=$RUNNER_TEMP/mock-backend-cert.pem" >> "$GITHUB_ENV"
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
       - name: Setup Node.js
@@ -86,13 +98,8 @@ jobs:
           cat mock-backend.log edge-config.log
           exit 1
       - name: Build (apps/web)
-        env:
-          NODE_EXTRA_CA_CERTS: ${{ runner.temp }}/mock-backend-cert.pem
         run: npm run build -w @book-club/web
       - name: Start Next
-        env:
-          # the /api rewrite proxy verifies the mock backend's throwaway certificate
-          NODE_EXTRA_CA_CERTS: ${{ runner.temp }}/mock-backend-cert.pem
         run: |
           nohup npm run start -w @book-club/web -- -p 3000 > next-server.log 2>&1 &
           for _ in $(seq 1 60); do
@@ -117,6 +124,27 @@ jobs:
         run: npx playwright test --config=playwright.parity.config.ts --project=next e2e/parity/r11-quizzes.spec.ts
       - name: Chat (r12)
         run: npx playwright test --config=playwright.parity.config.ts --project=next e2e/parity/r12-chat.spec.ts
+      - name: Build Angular app (production configuration)
+        run: npm run build -- --configuration=production
+      - name: Start legacy server
+        run: |
+          nohup env PORT=4200 node e2e/parity/legacy-server.mjs > legacy-server.log 2>&1 &
+          for _ in $(seq 1 30); do
+            curl -fsS -o /dev/null http://localhost:4200/login && asset=$(curl -fsS http://localhost:4200/ | grep -oE 'main-[A-Za-z0-9_-]+\.js' | head -1) && [ -n "$asset" ] && curl -fsS -o /dev/null "http://localhost:4200/$asset" && exit 0
+            sleep 1
+          done
+          cat legacy-server.log
+          exit 1
+      - name: Club detail and quizzes (legacy)
+        run: npx playwright test --config=playwright.parity.config.ts --project=legacy e2e/parity/r6-club-detail.spec.ts e2e/parity/r11-quizzes.spec.ts
+      - name: Chat (legacy)
+        run: npx playwright test --config=playwright.parity.config.ts --project=legacy e2e/parity/r12-chat.spec.ts
+      - name: Club detail request diff and rendered head (legacy vs next)
+        run: npx playwright test --config=playwright.parity.config.ts --project=next e2e/parity/r6-dual.spec.ts
+      - name: Club detail visual (record legacy baselines, compare next)
+        run: |
+          npx playwright test --config=playwright.parity.config.ts --project=legacy e2e/parity/r6-visual.spec.ts --update-snapshots=all
+          npx playwright test --config=playwright.parity.config.ts --project=next e2e/parity/r6-visual.spec.ts
       - name: Upload report and traces
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -125,8 +153,10 @@ jobs:
           path: |
             playwright-report/parity
             test-results
+            e2e/parity/__snapshots__
             next-server.log
             mock-backend.log
             edge-config.log
+            legacy-server.log
           retention-days: 7
           if-no-files-found: ignore

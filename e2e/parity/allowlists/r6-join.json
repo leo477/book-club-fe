@@ -23,6 +23,30 @@
       "reason": "Angular boots a signed-in session with a token refresh; Next resolves it through session-status and /auth/me (same as PARITY-R5)",
       "legacy": 1,
       "next": 0
+    },
+    {
+      "signature": "POST self /api/v1/analytics/event? body={\"app\":\"string\",\"bucket\":\"null\",\"name\":\"string\"}",
+      "reason": "Canary events (SCRUM-5x): Angular sends app=angular with bucket null because the strangler bucket cookie is not set when Angular is served directly and also emits join_club on a club-detail join, which Next does not (finding F-1 in PARITY-R6.md)",
+      "legacy": 2,
+      "next": 0
+    },
+    {
+      "signature": "POST self /api/v1/analytics/event? body={\"app\":\"string\",\"bucket\":\"string\",\"name\":\"string\"}",
+      "reason": "Canary events: Next sends app=next with the cohort bucket label from the bc_bucket cookie",
+      "legacy": 0,
+      "next": 1
+    },
+    {
+      "signature": "GET self /api/v1/clubs/:id/members? body=-",
+      "reason": "Angular lists members without a limit; Next passes an explicit limit to detect truncation",
+      "legacy": 1,
+      "next": 0
+    },
+    {
+      "signature": "GET self /api/v1/clubs/:id/members?limit=200 body=-",
+      "reason": "Next passes limit=LIST_LIMIT (apps/web/src/features/club-shared/list-limit.ts) so a truncated list can be flagged",
+      "legacy": 0,
+      "next": 1
     }
   ]
 }

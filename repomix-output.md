@@ -592,6 +592,7 @@ e2e/
     har-diff.ts
     har-signature.ts
     html-meta.ts
+    legacy-server.mjs
     member.setup.ts
     routes.ts
     snapshot-guard.ts
