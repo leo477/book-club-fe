@@ -52,6 +52,11 @@ import DOMPurify, { type Config } from 'dompurify';
 // what DOMPurify's parse step already needs. Its name is allowlisted in
 // vercel.json's `trusted-types` directive as a single, narrowly-scoped
 // addition (see the comment there) — approved specifically for this fix.
+//
+// `@ng-icons/core` also tries to register its own passthrough policy named
+// `ng-icons`; that name is allowlisted in vercel.json too (SCRUM-172) so the
+// attempt no longer logs a CSP violation. It only wraps SVG bundled at build
+// time (no icon loader is configured), and is never reachable from app code.
 const DOMPURIFY_INTERNAL_POLICY_NAME = 'dompurify-internal';
 
 export interface TrustedTypesWindow {
