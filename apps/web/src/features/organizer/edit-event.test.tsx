@@ -106,7 +106,8 @@ describe('EditEvent', () => {
 
   it('sends someone else’s event back to the feed without showing the form', async () => {
     setup(stored({ organizerId: 'other' }));
-    await waitFor(() => expect(nav.push).toHaveBeenCalledWith('/events'));
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/events'));
+    expect(nav.push).not.toHaveBeenCalled();
     expect(screen.queryByTestId('event-title-input')).not.toBeInTheDocument();
   });
 
