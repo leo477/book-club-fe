@@ -17,6 +17,18 @@
       "reason": "Angular shell requests the Maps key on every route (N-1); Next loads Maps only on pages that use it and the club detail page does not",
       "legacy": 1,
       "next": 0
+    },
+    {
+      "signature": "POST self /api/v1/analytics/event? body={\"app\":\"string\",\"bucket\":\"null\",\"name\":\"string\"}",
+      "reason": "Canary events (SCRUM-5x): Angular sends app=angular with bucket null because the strangler bucket cookie is not set when Angular is served directly",
+      "legacy": 1,
+      "next": 0
+    },
+    {
+      "signature": "POST self /api/v1/analytics/event? body={\"app\":\"string\",\"bucket\":\"string\",\"name\":\"string\"}",
+      "reason": "Canary events: Next sends app=next with the cohort bucket label from the bc_bucket cookie",
+      "legacy": 0,
+      "next": 1
     }
   ]
 }
