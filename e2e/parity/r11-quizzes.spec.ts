@@ -155,12 +155,7 @@ test.describe('role gates on create/edit/preview/session (P4)', () => {
         } else {
           await expect(page).toHaveURL(/\/clubs$/);
           const toast = page.getByText(L.organizersOnly).first();
-          if (isNext()) await expect(toast).toBeVisible();
-          else {
-            // Angular: the toast is dropped on some hard loads under CPU load (L-2 in PARITY-R11.md), so it is only recorded; the redirect and the absence of writes stay strict
-            const seen = await toast.waitFor({ state: 'visible', timeout: 3_000 }).then(() => true, () => false);
-            test.info().annotations.push({ type: 'toast', description: `organizers_only toast seen: ${seen}` });
-          }
+          await expect(toast).toBeVisible();
           expect(calls(mock, 'POST', /\/quizzes/)).toEqual([]);
           expect(calls(mock, 'PATCH', /\/quizzes/)).toEqual([]);
         }
