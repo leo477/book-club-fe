@@ -60,4 +60,27 @@ describe('TokenStore', () => {
       expect(store.refreshToken()).toBeNull();
     });
   });
+
+  it('has no session until a token or an established session exists', () => {
+    expect(store.hasSession()).toBe(false);
+    store.set('t');
+    expect(store.hasSession()).toBe(true);
+    store.clear();
+    expect(store.hasSession()).toBe(false);
+  });
+
+  it('establish() without a token keeps the session (cookie-only) and drops a stale token', () => {
+    store.set('stale');
+    store.establish(undefined);
+    expect(store.token()).toBeNull();
+    expect(store.hasSession()).toBe(true);
+    store.clear();
+    expect(store.hasSession()).toBe(false);
+  });
+
+  it('establish() with a token holds it', () => {
+    store.establish('fresh');
+    expect(store.token()).toBe('fresh');
+    expect(store.hasSession()).toBe(true);
+  });
 });

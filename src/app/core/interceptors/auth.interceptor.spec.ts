@@ -20,6 +20,8 @@ describe('authInterceptor', () => {
     refreshToken: ReturnType<typeof vi.fn>;
     setRefreshToken: ReturnType<typeof vi.fn>;
     set: ReturnType<typeof vi.fn>;
+    establish: ReturnType<typeof vi.fn>;
+    hasSession: ReturnType<typeof vi.fn>;
   };
   let translateSpy: { instant: ReturnType<typeof vi.fn> };
 
@@ -32,6 +34,12 @@ describe('authInterceptor', () => {
       refreshToken: vi.fn().mockReturnValue(null),
       setRefreshToken: vi.fn(),
       set: vi.fn(),
+      // mirrors TokenStore: a session exists after a login/restore even when no token is held in memory
+      hasSession: vi.fn().mockReturnValue(token !== null),
+      establish: vi.fn().mockImplementation((next?: string | null) => {
+        tokenStoreSpy.snapshot.mockReturnValue(next ?? null);
+        tokenStoreSpy.hasSession.mockReturnValue(true);
+      }),
     };
     translateSpy = { instant: vi.fn().mockImplementation((key: string) => key) };
 
@@ -111,6 +119,45 @@ describe('authInterceptor', () => {
       expect(retried.request.headers.get('Authorization')).toBe('Bearer fresh-token');
       expect(tokenStoreSpy.setRefreshToken).not.toHaveBeenCalled();
       retried.flush({ ok: true });
+    }));
+
+  it('refreshes on 401 and replays with the cookie alone when the response carries no tokens (SCRUM-81)', () =>
+    new Promise<void>((resolve) => {
+      setup('stale-token');
+      http.get('/api/test').subscribe({ next: () => resolve() });
+
+      const first = httpMock.expectOne('/api/test');
+      expect(first.request.headers.get('Authorization')).toBe('Bearer stale-token');
+      first.flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+      httpMock.expectOne('/api/v1/auth/refresh').flush({});
+
+      const retried = httpMock.expectOne('/api/test');
+      // the stale in-memory token must not shadow the renewed cookie
+      expect(retried.request.headers.has('Authorization')).toBe(false);
+      retried.flush({ ok: true });
+    }));
+
+  it('refreshes on 401 for a cookie-only session that holds no token in memory', () =>
+    new Promise<void>((resolve) => {
+      setup(null);
+      tokenStoreSpy.hasSession.mockReturnValue(true);
+      http.get('/api/test').subscribe({ next: () => resolve() });
+
+      const first = httpMock.expectOne('/api/test');
+      expect(first.request.headers.has('Authorization')).toBe(false);
+      first.flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+
+      httpMock.expectOne('/api/v1/auth/refresh').flush({});
+      httpMock.expectOne('/api/test').flush({ ok: true });
+    }));
+
+  it('does not try to refresh a 401 for a visitor without a session', () =>
+    new Promise<void>((resolve) => {
+      setup(null);
+      http.get('/api/test').subscribe({ error: () => resolve() });
+      httpMock.expectOne('/api/test').flush({ detail: 'Unauthorized' }, { status: 401, statusText: 'Unauthorized' });
+      httpMock.expectNone('/api/v1/auth/refresh');
     }));
 
   it('clears token and navigates to /login when the refresh attempt itself fails', () =>

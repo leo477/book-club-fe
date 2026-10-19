@@ -44,22 +44,23 @@ const IS_REFRESH_RETRY = new HttpContextToken<boolean>(() => false);
 // Module-scoped so concurrent 401s across the app share a single in-flight
 // refresh instead of each racing the backend's refresh-token rotation.
 // eslint-disable-next-line rxjs-x/finnish
-let refreshInFlight: Observable<string | null> | null = null;
+let refreshInFlight: Observable<boolean> | null = null;
 
-function refreshAccessToken$(http: HttpClient, tokenStore: TokenStore): Observable<string | null> {
+/** Emits true when the session was renewed (new cookies, and a token only if the body carried one). */
+function refreshSession$(http: HttpClient, tokenStore: TokenStore): Observable<boolean> {
   if (refreshInFlight) return refreshInFlight;
   refreshInFlight = http
-    .post<{ accessToken: string; refreshToken: string }>(
+    .post<{ accessToken?: string; refreshToken?: string }>(
       `${environment.apiUrl}/auth/refresh`,
       {},
       { withCredentials: true, context: new HttpContext().set(SKIP_AUTH_REDIRECT, true) },
     )
     .pipe(
       map(resp => {
-        tokenStore.set(resp.accessToken);
-        return resp.accessToken as string | null;
+        tokenStore.establish(resp.accessToken);
+        return true;
       }),
-      catchError(() => of(null)),
+      catchError(() => of(false)),
       finalize(() => {
         refreshInFlight = null;
       }),
@@ -106,10 +107,10 @@ function isFirstPartyRequest(url: string): boolean {
 
 function resolveAuthRedirect(
   httpError: HttpErrorResponse,
-  token: string | null,
+  signedIn: boolean,
   tokenStore: TokenStore,
 ): string | null {
-  if (httpError.status === 401 && token) {
+  if (httpError.status === 401 && signedIn) {
     tokenStore.clear();
     return '/login';
   }
@@ -121,7 +122,7 @@ function resolveAuthRedirect(
 
 async function handleHttpSideEffects(
   httpError: HttpErrorResponse,
-  token: string | null,
+  signedIn: boolean,
   suppress: boolean,
   skipAuthRedirect: boolean,
   router: Router,
@@ -130,7 +131,7 @@ async function handleHttpSideEffects(
   toast: ToastService,
 ): Promise<void> {
   if (!skipAuthRedirect) {
-    const target = resolveAuthRedirect(httpError, token, tokenStore);
+    const target = resolveAuthRedirect(httpError, signedIn, tokenStore);
     if (target) {
       await router.navigate([target]);
       return;
@@ -206,17 +207,17 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
   // invoked here after the closure is fully initialized.
   // eslint-disable-next-line rxjs-x/finnish
   const handleTokenRefreshResult = (
-    newToken: string | null,
+    refreshed: boolean,
     request: HttpRequest<unknown>,
     httpError: HttpErrorResponse,
   ): Observable<HttpEvent<unknown>> => {
-    if (!newToken) {
+    if (!refreshed) {
       tokenStore.clear();
       router.navigate(['/login']).catch(() => { /* best-effort */ });
       return throwError(() => new BackendHttpError(401, extractBackendDetail(httpError), 'ERRORS.requestFailed'));
     }
     const retriedReq = request.clone({ context: request.context.set(IS_REFRESH_RETRY, true) });
-    return run(retriedReq, newToken);
+    return run(retriedReq, tokenStore.snapshot());
   };
 
   // eslint-disable-next-line rxjs-x/finnish
@@ -249,18 +250,18 @@ export const authInterceptor: HttpInterceptorFn = (req, next$) => {
         // replayed request's own 401 falls straight through to logout.
         const shouldRetryAfterRefresh =
           httpError?.status === 401 &&
-          !!activeToken &&
+          tokenStore.hasSession() &&
           !skipAuthRedirect &&
           !request.context.get(IS_REFRESH_RETRY);
 
         if (shouldRetryAfterRefresh) {
-          return refreshAccessToken$(http, tokenStore).pipe(
-            switchMap(newToken => handleTokenRefreshResult(newToken, request, httpError)),
+          return refreshSession$(http, tokenStore).pipe(
+            switchMap(refreshed => handleTokenRefreshResult(refreshed, request, httpError)),
           );
         }
 
         if (httpError) {
-          handleHttpSideEffects(httpError, activeToken, suppress, skipAuthRedirect, router, tokenStore, translate, toast)
+          handleHttpSideEffects(httpError, tokenStore.hasSession(), suppress, skipAuthRedirect, router, tokenStore, translate, toast)
             .catch(() => { /* navigation/side-effects best-effort */ });
           const detail = extractBackendDetail(httpError);
           let errorKey: string;

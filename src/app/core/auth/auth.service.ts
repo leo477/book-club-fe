@@ -11,9 +11,10 @@ import { TokenStore } from './token.store';
 import { beginPkce, takeVerifier } from './pkce';
 import { UserProfile, UserRole, UserSocials, UserStats } from '../models/user.model';
 
+// the tokens are optional: the backend can leave them out for web clients, the httpOnly cookies carry the session
 interface AuthResponse {
-  accessToken: string;
-  refreshToken: string;
+  accessToken?: string;
+  refreshToken?: string;
   user: ApiUserProfile;
 }
 
@@ -105,7 +106,7 @@ export class AuthService {
     const persistedRefresh = this.tokenStore.refreshToken();
     const refreshResp = await firstValueFrom(
       this.http
-        .post<{ accessToken: string; refreshToken: string }>(
+        .post<{ accessToken?: string; refreshToken?: string }>(
           `${environment.apiUrl}/auth/refresh`,
           persistedRefresh ? { refreshToken: persistedRefresh } : {},
           { withCredentials: true, context: skipCtx },
@@ -113,12 +114,13 @@ export class AuthService {
         .pipe(catchError(() => of(null))),
     );
     if (!refreshResp) return false;
-    this.tokenStore.set(refreshResp.accessToken);
+    this.tokenStore.establish(refreshResp.accessToken);
     const raw = await firstValueFrom(
       this.http
         .get<ApiUserProfile>(`${environment.apiUrl}/auth/me`, { context: skipCtx })
         .pipe(catchError(() => of(null))),
     );
+    if (!raw) this.tokenStore.clear();
     this._currentUser.set(raw ? mapUserProfile(raw) : null);
     return raw !== null;
   }
@@ -153,13 +155,13 @@ export class AuthService {
     const codeVerifier = takeVerifier();
     try {
       const resp = await firstValueFrom(
-        this.http.post<{ accessToken: string; refreshToken: string }>(
+        this.http.post<{ accessToken?: string; refreshToken?: string }>(
           `${environment.apiUrl}/auth/oauth/exchange`,
           { code, code_verifier: codeVerifier },
           { withCredentials: true, context: skipCtx },
         ),
       );
-      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.establish(resp.accessToken);
       const raw = await firstValueFrom(
         this.http
           .get<ApiUserProfile>(`${environment.apiUrl}/auth/me`, { context: skipCtx })
@@ -197,7 +199,7 @@ export class AuthService {
           { withCredentials: true },
         ),
       );
-      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.establish(resp.accessToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
@@ -214,7 +216,7 @@ export class AuthService {
           { withCredentials: true },
         ),
       );
-      this.tokenStore.set(resp.accessToken);
+      this.tokenStore.establish(resp.accessToken);
       this._currentUser.set(mapUserProfile(resp.user));
       return { error: null };
     } catch (err) {
