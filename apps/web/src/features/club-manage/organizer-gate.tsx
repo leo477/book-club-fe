@@ -56,7 +56,7 @@ function Denied() {
 // only decides what is shown; the backend refuses everyone else
 export function OrganizerOfClub({ clubId, children }: { clubId: string; children: (club: Club) => ReactNode }) {
   const tDetail = useTranslations('CLUB_DETAIL');
-  const { user, isPending: sessionPending } = useSession();
+  const { user } = useSession();
   const query = useClubForEdit(clubId);
   // a cached club or role from an earlier visit is shown only after this visit has re-checked it
   const [mountedAt] = useState(() => Date.now());
@@ -77,7 +77,8 @@ export function OrganizerOfClub({ clubId, children }: { clubId: string; children
   }
   if (query.dataUpdatedAt < mountedAt) return <Busy />;
   if (!club) return missing;
-  if (user === null) return sessionPending ? <Busy /> : denied;
+  // a signed-out visitor is sent to /login by RequireAuth around this gate; no organizers-only toast for them
+  if (user === null) return <Busy />;
   if (!isOwner) {
     if (membership.isError) return <ErrorPanel onRetry={() => void membership.refetch()} />;
     if (membership.isPending || !checked) return <Busy />;
