@@ -93,8 +93,8 @@ export class ChatService {
       // Read the token untracked so this effect only re-runs when the active
       // room changes — not on every token re-emit (e.g. after refresh), which
       // would tear down and reopen a still-connecting socket.
-      const token = untracked(() => this._tokenStore.token());
-      if (roomId && token) {
+      const signedIn = untracked(() => this._tokenStore.hasSession());
+      if (roomId && signedIn) {
         this.connectRoom(roomId);
       } else if (!roomId) {
         this.disconnectRoom();
@@ -298,7 +298,7 @@ export class ChatService {
     const wasActive = this._activeRoomId() === roomId;
     this.disconnectRoom();
     if (wasActive) {
-      if (this._tokenStore.token()) this.connectRoom(roomId);
+      if (this._tokenStore.hasSession()) this.connectRoom(roomId);
     } else {
       this._activeRoomId.set(roomId);
     }

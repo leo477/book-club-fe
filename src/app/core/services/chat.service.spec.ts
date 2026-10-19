@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { provideZonelessChangeDetection, signal, WritableSignal } from '@angular/core';
+import { computed, provideZonelessChangeDetection, signal, WritableSignal } from '@angular/core';
 import { provideHttpClient, withXhr } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateService } from '@ngx-translate/core';
@@ -22,7 +22,8 @@ function makeClubService(myClubs: { id: string; name: string }[] = []) {
 }
 
 function makeTokenStore(token: string | null = 'tok') {
-  return { token: signal(token) };
+  const tokenSignal = signal(token);
+  return { token: tokenSignal, hasSession: computed(() => tokenSignal() !== null) };
 }
 
 // ── MockWebSocket ─────────────────────────────────────────────────────────────
@@ -118,7 +119,7 @@ describe('ChatService', () => {
         { provide: TranslateService, useValue: { instant: (key: string) => key } },
         { provide: AuthService, useValue: makeAuthService(null, () => of(wsTicket)) },
         { provide: ClubService, useValue: makeClubService([]) },
-        { provide: TokenStore, useValue: { token: tokenSignal } },
+        { provide: TokenStore, useValue: { token: tokenSignal, hasSession: computed(() => tokenSignal() !== null) } },
       ],
     });
     service = TestBed.inject(ChatService);
@@ -1525,7 +1526,7 @@ describe('ChatService — constructor orchestrator effects', () => {
     http.verify();
   });
 
-  it('does not connect when there is no token', () => {
+  it('does not connect when there is no session', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (window as any).WebSocket = MockWebSocket;
     MockWebSocket.instance = null;

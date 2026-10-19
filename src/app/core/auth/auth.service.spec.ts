@@ -36,6 +36,7 @@ describe('AuthService', () => {
   let tokenStoreSpy: {
     snapshot: ReturnType<typeof vi.fn>;
     set: ReturnType<typeof vi.fn>;
+    establish: ReturnType<typeof vi.fn>;
     clear: ReturnType<typeof vi.fn>;
     token: ReturnType<typeof vi.fn>;
     refreshToken: ReturnType<typeof vi.fn>;
@@ -54,6 +55,7 @@ describe('AuthService', () => {
       token: vi.fn().mockReturnValue(tokenValue),
       snapshot: vi.fn().mockReturnValue(tokenValue),
       set: vi.fn(),
+      establish: vi.fn(),
       clear: vi.fn(),
       refreshToken: vi.fn().mockReturnValue(null),
       setRefreshToken: vi.fn(),
@@ -138,7 +140,7 @@ describe('AuthService', () => {
       await Promise.resolve(); // flush microtask so firstValueFrom continuation runs before /auth/me is expected
       httpMock.expectOne(`${API}/auth/me`).flush(rawProfile);
       await p;
-      expect(tokenStoreSpy.set).toHaveBeenCalledWith('refreshed-token');
+      expect(tokenStoreSpy.establish).toHaveBeenCalledWith('refreshed-token');
       expect(service.currentUser()?.id).toBe('u1');
       expect(service.isLoading()).toBe(false);
     });
@@ -227,7 +229,17 @@ describe('AuthService', () => {
       req.flush({ accessToken: 'new-token', refreshToken: 'refresh-token', user: rawProfile });
       const result = await p;
       expect(result.error).toBeNull();
-      expect(tokenStoreSpy.set).toHaveBeenCalledWith('new-token');
+      expect(tokenStoreSpy.establish).toHaveBeenCalledWith('new-token');
+      expect(service.currentUser()?.id).toBe('u1');
+    });
+
+    it('signs in when the response carries no tokens (cookie-only session, SCRUM-81)', async () => {
+      const { service } = buildService();
+      const p = service.signIn('test@test.com', 'password');
+      httpMock.expectOne(`${API}/auth/login`).flush({ user: rawProfile });
+      const result = await p;
+      expect(result.error).toBeNull();
+      expect(tokenStoreSpy.establish).toHaveBeenCalledWith(undefined);
       expect(service.currentUser()?.id).toBe('u1');
     });
 
@@ -280,7 +292,7 @@ describe('AuthService', () => {
       req.flush({ accessToken: 'new-token', refreshToken: 'refresh-token', user: rawProfile });
       const result = await p;
       expect(result.error).toBeNull();
-      expect(tokenStoreSpy.set).toHaveBeenCalledWith('new-token');
+      expect(tokenStoreSpy.establish).toHaveBeenCalledWith('new-token');
     });
 
     it('does not persist a refresh token or legacy marker (backend cookies handle the session)', async () => {
@@ -506,7 +518,7 @@ describe('AuthService', () => {
       httpMock.expectOne(`${API}/auth/me`).flush(rawProfile);
       const result = await p;
       expect(result).toEqual({ error: null });
-      expect(tokenStoreSpy.set).toHaveBeenCalledWith('acc');
+      expect(tokenStoreSpy.establish).toHaveBeenCalledWith('acc');
       expect(tokenStoreSpy.setRefreshToken).not.toHaveBeenCalled();
       expect(localStorage.getItem('bc_has_session')).toBeNull();
       expect(service.currentUser()?.id).toBe('u1');

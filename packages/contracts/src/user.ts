@@ -36,7 +36,8 @@ export const userStats = z.object({
 });
 export type UserStats = z.infer<typeof userStats>;
 
-export const authTokens = z.object({ accessToken: z.string(), refreshToken: z.string() });
+// optional: for trusted web origins the backend leaves the tokens out of the body (httpOnly cookies carry them, SCRUM-81)
+export const authTokens = z.object({ accessToken: z.string().optional(), refreshToken: z.string().optional() });
 export type AuthTokens = z.infer<typeof authTokens>;
 
 export const authResponse = authTokens.extend({ user: userProfile });

@@ -1,4 +1,3 @@
-import type { AuthTokens } from '@book-club/contracts';
 import type { Transport } from './types';
 
 export interface CookieTransportOptions {
@@ -21,7 +20,7 @@ export function cookieTransport(options: CookieTransportOptions): Transport {
 export interface BearerTransportOptions {
   getToken: () => string | null | Promise<string | null>;
   getRefreshToken: () => string | null | Promise<string | null>;
-  setTokens: (tokens: AuthTokens) => void | Promise<void>;
+  setTokens: (tokens: { accessToken: string; refreshToken: string }) => void | Promise<void>;
   clearTokens: () => void | Promise<void>;
 }
 
@@ -34,7 +33,8 @@ export function bearerTransport(options: BearerTransportOptions): Transport {
       const refreshToken = await options.getRefreshToken();
       return refreshToken ? { refreshToken } : null;
     },
-    storeTokens: options.setTokens,
+    // a refresh response without tokens (cookie-only backend mode) leaves the stored pair untouched
+    storeTokens: ({ accessToken, refreshToken }) => (accessToken && refreshToken ? options.setTokens({ accessToken, refreshToken }) : undefined),
     clear: options.clearTokens,
   };
 }
