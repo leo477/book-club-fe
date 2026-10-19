@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Spinner } from '@/components/ui/spinner';
 import { api } from '@/lib/api';
+import { trackEvent } from '@/lib/analytics';
 import { showToast } from '@/lib/toast';
 import { myClubsKey } from '@/features/clubs/use-clubs';
 import { setActionError, useActionError } from './action-error';
@@ -93,6 +94,7 @@ export function JoinCta({ club }: { club: ClubRef }) {
     mutationFn: () => api.clubs.join(club.id),
     onMutate: () => setActionError(club.id, null),
     onSuccess: ({ status }) => {
+      trackEvent('join_club');
       void queryClient.invalidateQueries({ queryKey: clubKey(club.id) });
       if (status === 'pending' || status === 'already_requested') {
         queryClient.setQueryData<MyMembership>(membershipKey(club.id), (prev) => ({ ...(prev ?? NOT_MEMBER), joinRequestStatus: 'pending' }));
