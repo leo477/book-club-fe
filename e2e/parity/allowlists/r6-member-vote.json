@@ -49,7 +49,7 @@
       "next": 0
     },
     {
-      "signature": "GET self /api/v1/clubs/:id/members?skip=0&limit=100 body=-",
+      "signature": "GET self /api/v1/clubs/:id/members?limit=100,skip body=-",
       "reason": "Next pages the member list with skip/limit (apps/web/src/features/club-shared/paged-list.ts) and reads X-Total-Count",
       "legacy": 0,
       "next": 1
