@@ -7,7 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { initials } from '@/lib/format';
 import { QrCode } from './qr-code';
-import { mayBeTruncated } from '@/features/club-shared/list-limit';
+import { LoadMore } from '@/features/club-shared/load-more';
 import { useMemberActions } from '@/features/club-shared/use-member-actions';
 import { useClubMembers } from './use-club-detail';
 
@@ -95,17 +95,12 @@ export function MemberList({ clubId, isOwner, roleControls }: { clubId: string; 
     );
   }
 
-  const members = query.data ?? [];
+  const members = query.data?.items ?? [];
   return (
     <Card>
       <h2 className="text-sm font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">
-        {t('title')} ({members.length})
+        {t('title')} ({query.data?.total ?? members.length})
       </h2>
-      {mayBeTruncated(members.length) && (
-        <p role="note" className="text-xs text-amber-700 dark:text-amber-400">
-          {t('list_truncated')}
-        </p>
-      )}
       {members.length === 0 ? (
         <p className="text-sm text-gray-500 dark:text-gray-400">{t('empty')}</p>
       ) : (
@@ -237,6 +232,7 @@ export function MemberList({ clubId, isOwner, roleControls }: { clubId: string; 
           })}
         </ul>
       )}
+      <LoadMore hasNextPage={query.hasNextPage} isFetching={query.isFetchingNextPage} failed={query.isFetchNextPageError} onLoadMore={() => void query.fetchNextPage()} />
     </Card>
   );
 }

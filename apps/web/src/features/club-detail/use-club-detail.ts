@@ -1,9 +1,9 @@
 'use client';
 'use no memo';
 
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import type { ClubEvent } from '@book-club/contracts';
-import { LIST_LIMIT } from '@/features/club-shared/list-limit';
+import { PAGE_SIZE, flatten, nextSkip } from '@/features/club-shared/paged-list';
 import { api } from '@/lib/api';
 import { showToast } from '@/lib/toast';
 import { useMyClubs } from '@/features/clubs/use-clubs';
@@ -66,10 +66,13 @@ export function useClubEvents(clubId: string, initial: readonly ClubEvent[], aut
 }
 
 export function useClubMembers(clubId: string, enabled: boolean) {
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: membersKey(clubId),
     // a non-member may be refused; that must neither redirect nor break the page
-    queryFn: ({ signal }) => api.members.list(clubId, { limit: LIST_LIMIT }, { skipAuthRedirect: true, signal }),
+    queryFn: ({ pageParam, signal }) => api.members.list(clubId, { skip: pageParam, limit: PAGE_SIZE }, { skipAuthRedirect: true, signal }),
+    initialPageParam: 0,
+    getNextPageParam: nextSkip,
+    select: flatten,
     enabled,
     retry: false,
     ...noRefocus,

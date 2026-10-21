@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { useClubMembers } from '@/features/club-detail/use-club-detail';
 import { OrganizerOfClub } from '@/features/club-manage/organizer-gate';
-import { mayBeTruncated } from '@/features/club-shared/list-limit';
 import { useGuardedRunner, useMounted } from '@/features/club-shared/guarded-runner';
 import { api } from '@/lib/api';
 import { initials } from '@/lib/format';
@@ -57,11 +56,18 @@ function RandomizerView({ clubId }: { clubId: string }) {
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
-  const candidates = useMemo(() => membersQuery.data ?? [], [membersQuery.data]);
+  const { hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage } = membersQuery;
+  const loaded = membersQuery.data?.items.length ?? 0;
+  // a draw from part of the club would not be fair, so every page is loaded before spinning is allowed
+  // `loaded` re-runs this after each page lands, since the fetching flag can flip and flip back within one render
+  useEffect(() => {
+    if (hasNextPage && !isFetchingNextPage && !isFetchNextPageError) void fetchNextPage();
+  }, [hasNextPage, isFetchingNextPage, isFetchNextPageError, loaded, fetchNextPage]);
+
+  const candidates = useMemo(() => membersQuery.data?.items ?? [], [membersQuery.data]);
   const selected = useMemo(() => candidates.filter((m) => !excluded.has(m.userId)), [candidates, excluded]);
-  // a full page may hide more members, and drawing from part of the club would not be fair
-  const truncated = mayBeTruncated(candidates.length);
-  const canSpin = selected.length >= MIN_PARTICIPANTS && !truncated;
+  const loadingAll = hasNextPage && !isFetchNextPageError;
+  const canSpin = selected.length >= MIN_PARTICIPANTS && !hasNextPage;
 
   const toggle = (userId: string) =>
     setExcluded((prev) => {
@@ -222,10 +228,17 @@ function RandomizerView({ clubId }: { clubId: string }) {
                 {spinning ? t('spinning_btn') : t('spin')}
               </Button>
 
-              {truncated ? (
-                <p role="note" className="text-center text-amber-300 text-xs">
-                  {t('members_truncated')}
+              {loadingAll ? (
+                <p role="status" className="text-center text-white/70 text-xs">
+                  {t('members_loading')}
                 </p>
+              ) : hasNextPage ? (
+                <div role="alert" className="flex flex-col items-center gap-2 text-center text-amber-300 text-xs">
+                  <p>{t('members_load_failed')}</p>
+                  <Button type="button" variant="outline" size="sm" onClick={() => void fetchNextPage()}>
+                    {t('members_retry')}
+                  </Button>
+                </div>
               ) : !canSpin && !spinning ? (
                 <p className="text-center text-white/50 text-xs">{t('error_min')}</p>
               ) : null}

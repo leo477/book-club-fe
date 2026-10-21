@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemberList } from '@/features/club-detail/member-list';
-import { API, memberJson, renderWithProviders, server, setupApiServer } from '@/test/harness';
+import { API, memberJson, pageOf, renderWithProviders, server, setupApiServer } from '@/test/harness';
 import { capture } from '@/features/organizer/test-support';
 import { gate, ID, t } from './test-support';
 
@@ -162,24 +162,53 @@ describe('MemberList with role controls', () => {
     expect(within(row('Grace Hopper')).queryByRole('button', { name: t('CLUB_MANAGE.demote') })).not.toBeInTheDocument();
   });
 
-  it('asks for the largest page and warns when a full page may hide more members', async () => {
+  it('loads the members a page at a time and shows the full count', async () => {
     const urls: string[] = [];
+    const all = Array.from({ length: 230 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` }));
     server.use(
       http.get(`${API}/clubs/${ID}/members`, ({ request }) => {
         urls.push(new URL(request.url).search);
-        return HttpResponse.json(Array.from({ length: 200 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` })));
+        return pageOf(all, request);
       }),
     );
+    const user = userEvent.setup();
     view();
-    expect(await screen.findByText(t('MEMBERS.list_truncated'))).toBeInTheDocument();
-    expect(urls).toEqual(['?limit=200']);
+    await screen.findByText('Member 0');
+    expect(urls).toEqual(['?skip=0&limit=100']);
+    expect(screen.getByRole('heading', { name: /\(230\)/ })).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(100);
+    await user.click(screen.getByRole('button', { name: t('PAGINATION.load_more') }));
+    await screen.findByText('Member 150');
+    await user.click(screen.getByRole('button', { name: t('PAGINATION.load_more') }));
+    await screen.findByText('Member 229');
+    expect(urls).toEqual(['?skip=0&limit=100', '?skip=100&limit=100', '?skip=200&limit=100']);
+    expect(screen.queryByRole('button', { name: t('PAGINATION.load_more') })).not.toBeInTheDocument();
   });
 
-  it('shows no members warning below a full page', async () => {
+  it('shows an error and keeps load more available when a page fails', async () => {
+    const all = Array.from({ length: 150 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` }));
+    let fail = true;
+    server.use(
+      http.get(`${API}/clubs/${ID}/members`, ({ request }) => {
+        if (fail && new URL(request.url).searchParams.get('skip') === '100') return HttpResponse.json({ detail: 'boom' }, { status: 400 });
+        return pageOf(all, request);
+      }),
+    );
+    const user = userEvent.setup();
+    view();
+    await screen.findByText('Member 0');
+    await user.click(screen.getByRole('button', { name: t('PAGINATION.load_more') }));
+    expect(await screen.findByText(t('PAGINATION.load_failed'))).toBeInTheDocument();
+    fail = false;
+    await user.click(screen.getByRole('button', { name: t('PAGINATION.load_more') }));
+    await screen.findByText('Member 149');
+  });
+
+  it('offers no load more once every member is shown', async () => {
     serve();
     view();
     await screen.findByText('Grace Hopper');
-    expect(screen.queryByText(t('MEMBERS.list_truncated'))).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: t('PAGINATION.load_more') })).not.toBeInTheDocument();
   });
 
   it('does not refetch while another member request is open, so a late server-side delete cannot bring the member back', async () => {

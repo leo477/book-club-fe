@@ -6,7 +6,7 @@ import { RequireRole } from '@/features/auth/require-auth';
 import { gate, t } from '@/features/club-manage/test-support';
 import { NEXT_ROUTES, capture, mockSession } from '@/features/organizer/test-support';
 import { StranglerProvider } from '@/strangler/context';
-import { API, clubJson, memberJson, renderWithProviders, server, setupApiServer } from '@/test/harness';
+import { API, clubJson, memberJson, pageOf, renderWithProviders, server, setupApiServer } from '@/test/harness';
 import { Randomizer } from './randomizer';
 
 // mirrors the spin duration in randomizer.tsx
@@ -45,7 +45,7 @@ function setup(list: unknown[] = members(), history: unknown[] = []) {
   mockSession({ id: 'u1', role: 'organizer' });
   server.use(
     http.get(`${API}/clubs/${ID}`, () => HttpResponse.json(clubJson({ id: ID, organizerId: 'u1' }))),
-    http.get(`${API}/clubs/${ID}/members`, () => HttpResponse.json(list)),
+    http.get(`${API}/clubs/${ID}/members`, ({ request }) => pageOf(list, request)),
     http.get(`${API}/clubs/${ID}/randomizer/history`, () => HttpResponse.json(history)),
   );
   return renderWithProviders(
@@ -244,28 +244,60 @@ describe('Randomizer', () => {
     expect(screen.getByLabelText(t('RANDOMIZER.purpose_label'))).toHaveAttribute('maxlength', '200');
   });
 
-  it('asks for up to 200 members', async () => {
+  it('loads every page of a club with more than 200 members before spinning is enabled', async () => {
     const urls: string[] = [];
-    setup();
-    server.use(http.get(`${API}/clubs/${ID}/members`, ({ request }) => (urls.push(new URL(request.url).search), HttpResponse.json(members()))));
-    await ready();
-    expect(urls).toEqual(['?limit=200']);
+    const many = Array.from({ length: 230 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` }));
+    setup(many);
+    server.use(
+      http.get(`${API}/clubs/${ID}/members`, ({ request }) => {
+        urls.push(new URL(request.url).search);
+        return pageOf(many, request);
+      }),
+    );
+    await screen.findByText('Member 0');
+    await screen.findByText('Member 229');
+    await waitFor(() => expect(spinButton()).toBeEnabled());
+    expect(urls).toEqual(['?skip=0&limit=100', '?skip=100&limit=100', '?skip=200&limit=100']);
+    expect(screen.getByRole('heading', { name: /230 \/ 230/ })).toBeInTheDocument();
   });
 
-  it('refuses to spin and says why when a full page of 200 members may hide more', async () => {
-    const many = Array.from({ length: 200 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` }));
+  it('keeps spinning disabled and says why while more members are still loading', async () => {
+    const many = Array.from({ length: 150 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` }));
+    const { open, release } = gate();
     setup(many);
+    server.use(
+      http.get(`${API}/clubs/${ID}/members`, async ({ request }) => {
+        if (new URL(request.url).searchParams.get('skip') === '100') await open;
+        return pageOf(many, request);
+      }),
+    );
     await screen.findByText('Member 0');
-    expect(screen.getByText(t('RANDOMIZER.members_truncated'))).toBeInTheDocument();
+    expect(await screen.findByText(t('RANDOMIZER.members_loading'))).toBeInTheDocument();
     expect(spinButton()).toBeDisabled();
+    release();
+    await screen.findByText('Member 149');
+    await waitFor(() => expect(spinButton()).toBeEnabled());
+    expect(screen.queryByText(t('RANDOMIZER.members_loading'))).not.toBeInTheDocument();
   });
 
-  it('spins with 199 members and shows no note', async () => {
-    const many = Array.from({ length: 199 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` }));
+  it('never enables spinning on a partial list when a page fails, and retries on request', async () => {
+    const many = Array.from({ length: 150 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` }));
+    let fail = true;
     setup(many);
-    await screen.findByText('Member 0');
-    expect(screen.queryByText(t('RANDOMIZER.members_truncated'))).not.toBeInTheDocument();
-    expect(spinButton()).toBeEnabled();
+    server.use(
+      http.get(`${API}/clubs/${ID}/members`, ({ request }) => {
+        if (fail && new URL(request.url).searchParams.get('skip') === '100') return HttpResponse.json({ detail: 'boom' }, { status: 400 });
+        return pageOf(many, request);
+      }),
+    );
+    const user = userEvent.setup();
+    expect(await screen.findByText(t('RANDOMIZER.members_load_failed'))).toBeInTheDocument();
+    expect(spinButton()).toBeDisabled();
+    fail = false;
+    await user.click(screen.getByRole('button', { name: t('RANDOMIZER.members_retry') }));
+    await screen.findByText('Member 149');
+    await waitFor(() => expect(spinButton()).toBeEnabled());
+    expect(screen.queryByText(t('RANDOMIZER.members_load_failed'))).not.toBeInTheDocument();
   });
 
   it('shows at most five past results, as text', async () => {

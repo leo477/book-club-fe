@@ -44,13 +44,13 @@
     },
     {
       "signature": "GET self /api/v1/clubs/:id/members? body=-",
-      "reason": "Angular lists members without a limit; Next passes an explicit limit to detect truncation",
+      "reason": "Angular lists members without a limit; Next passes an explicit skip and limit",
       "legacy": 1,
       "next": 0
     },
     {
-      "signature": "GET self /api/v1/clubs/:id/members?limit=200 body=-",
-      "reason": "Next passes limit=LIST_LIMIT (apps/web/src/features/club-shared/list-limit.ts) so a truncated list can be flagged",
+      "signature": "GET self /api/v1/clubs/:id/members?skip=0&limit=100 body=-",
+      "reason": "Next pages the member list with skip/limit (apps/web/src/features/club-shared/paged-list.ts) and reads X-Total-Count",
       "legacy": 0,
       "next": 1
     }

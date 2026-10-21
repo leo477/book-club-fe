@@ -20,7 +20,7 @@ export function OrganizerCard({ club }: { club: Pick<Club, 'id' | 'organizerId'>
   const t = useTranslations('CLUB_DETAIL');
   const role = useClubRole(club);
   const members = useClubMembers(club.id, role.isAuthenticated);
-  const organizer = members.data?.find((m) => m.role === 'organizer');
+  const organizer = members.data?.items.find((m) => m.role === 'organizer');
   if (!role.isAuthenticated || !organizer) return null;
   const links = organizer.socialsPublic ? SOCIALS.filter((s) => organizer.socials?.[s.key]) : [];
   return (

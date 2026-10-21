@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import { NextIntlClientProvider } from 'next-intl';
 import type { ReactElement } from 'react';
 import { afterAll, afterEach, beforeAll, beforeEach, vi } from 'vitest';
+import { HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { club as clubSchema } from '@book-club/contracts';
 import uk from '@book-club/i18n/uk.icu.json';
@@ -97,6 +98,14 @@ export const eventJson = (overrides: Record<string, unknown> = {}) => ({
   isAttending: false,
   ...overrides,
 });
+
+/** Answers a list read the way the backend does: the requested skip/limit slice plus the full count in X-Total-Count. */
+export function pageOf(list: unknown[], request: Request) {
+  const params = new URL(request.url).searchParams;
+  const skip = Number(params.get('skip') ?? 0);
+  const limit = Number(params.get('limit') ?? 50);
+  return HttpResponse.json(list.slice(skip, skip + limit), { headers: { 'X-Total-Count': String(list.length) } });
+}
 
 export const memberJson = (overrides: Record<string, unknown> = {}) => ({
   userId: 'm1',

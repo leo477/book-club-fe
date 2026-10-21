@@ -18,6 +18,7 @@ import { describeError } from './describe-error';
 import { EventCard } from './event-card';
 import { EVENTS_EMPTY, EVENTS_GRID, EventsFrame } from './events-static';
 import { isUpcoming } from './structured-data';
+import { LoadMore } from '@/features/club-shared/load-more';
 import { eventsKey, pastEventsKey, toastError, useClubEvents, useClubMembers, useClubRole } from './use-club-detail';
 
 type Tab = 'upcoming' | 'history';
@@ -99,7 +100,7 @@ export function ClubEventsInteractive({ club, initialEvents }: ClubEventsProps) 
     onMutate: async ({ eventId, memberId }) => {
       await queryClient.cancelQueries({ queryKey: pastEventsKey(club.id) });
       const previous = queryClient.getQueryData<ClubEvent[]>(pastEventsKey(club.id));
-      const name = members.data?.find((m) => m.userId === memberId)?.displayName ?? null;
+      const name = members.data?.items.find((m) => m.userId === memberId)?.displayName ?? null;
       queryClient.setQueryData<ClubEvent[]>(pastEventsKey(club.id), (list) =>
         list?.map((e) => (e.id === eventId ? { ...e, winnerId: memberId, winnerName: name } : e)),
       );
@@ -211,12 +212,13 @@ export function ClubEventsInteractive({ club, initialEvents }: ClubEventsProps) 
                           onChange={(e) => e.target.value && setWinner.mutate({ eventId: event.id, memberId: e.target.value })}
                         >
                           <option value="">— {tEvent('set_winner')} —</option>
-                          {members.data?.map((member) => (
+                          {members.data?.items.map((member) => (
                             <option key={member.userId} value={member.userId}>
                               {member.displayName}
                             </option>
                           ))}
                         </select>
+                        <LoadMore hasNextPage={members.hasNextPage} isFetching={members.isFetchingNextPage} failed={members.isFetchNextPageError} onLoadMore={() => void members.fetchNextPage()} />
                         <Button type="button" variant="ghost" size="sm" className="self-start text-xs text-[var(--color-ink-muted)]" aria-label={tErrors('dismiss')} onClick={() => setWinnerEventId(null)}>
                           ✕
                         </Button>
