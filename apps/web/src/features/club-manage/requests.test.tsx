@@ -2,7 +2,7 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { API, renderWithProviders, server, setupApiServer } from '@/test/harness';
+import { API, pageOf, renderWithProviders, server, setupApiServer } from '@/test/harness';
 import { Requests } from './requests';
 import { requestsKey } from './use-club-manage';
 import { gate, ID, mockManageReads, requestJson, t } from './test-support';
@@ -42,18 +42,24 @@ describe('Requests', () => {
     expect(screen.getByText('Data').closest('li')!.querySelector('img')).toBeNull();
   });
 
-  it('asks for the largest page and warns when a full page may hide more requests', async () => {
+  it('loads the requests a page at a time', async () => {
     const urls: string[] = [];
+    const all = Array.from({ length: 130 }, (_, i) => requestJson({ userId: `r${i}`, displayName: `Reader ${i}` }));
     mockManageReads();
     server.use(
       http.get(`${API}/clubs/${ID}/join-requests`, ({ request }) => {
         urls.push(new URL(request.url).search);
-        return HttpResponse.json(Array.from({ length: 200 }, (_, i) => requestJson({ userId: `r${i}`, displayName: `Reader ${i}` })));
+        return pageOf(all, request);
       }),
     );
+    const user = userEvent.setup();
     renderWithProviders(<Requests clubId={ID} />);
-    expect(await screen.findByText(t('CLUB_MANAGE.list_truncated'))).toBeInTheDocument();
-    expect(urls).toEqual(['?limit=200']);
+    await screen.findByText('Reader 0');
+    expect(urls).toEqual(['?skip=0&limit=100']);
+    await user.click(screen.getByRole('button', { name: t('PAGINATION.load_more') }));
+    await screen.findByText('Reader 129');
+    expect(urls).toEqual(['?skip=0&limit=100', '?skip=100&limit=100']);
+    expect(screen.queryByRole('button', { name: t('PAGINATION.load_more') })).not.toBeInTheDocument();
   });
 
   it('shows an error, not "no pending requests", when the list is refused', async () => {

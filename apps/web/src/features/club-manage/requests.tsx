@@ -7,7 +7,8 @@ import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { trackClubAction } from '@/features/club-shared/club-actions';
-import { mayBeTruncated } from '@/features/club-shared/list-limit';
+import { LoadMore } from '@/features/club-shared/load-more';
+import { editItems, type PagedData } from '@/features/club-shared/paged-list';
 import { describeError } from '@/features/club-detail/describe-error';
 import { api } from '@/lib/api';
 import { safeImageUrl } from '@/lib/safe-image-url';
@@ -16,7 +17,6 @@ import { requestsKey, useJoinRequests } from './use-club-manage';
 
 export function Requests({ clubId }: { clubId: string }) {
   const t = useTranslations('CLUBS');
-  const tManage = useTranslations('CLUB_MANAGE');
   const tErrors = useTranslations('ERRORS');
   const queryClient = useQueryClient();
   const query = useJoinRequests(clubId);
@@ -28,19 +28,14 @@ export function Requests({ clubId }: { clubId: string }) {
         await call();
         // an older in-flight list fetch must not land after the removal and bring the resolved request back
         await queryClient.cancelQueries({ queryKey: requestsKey(clubId) });
-        queryClient.setQueryData<JoinRequest[]>(requestsKey(clubId), (list) => list?.filter((r) => r.userId !== userId));
+        queryClient.setQueryData<PagedData<JoinRequest>>(requestsKey(clubId), (data) => editItems(data, (list) => list.filter((r) => r.userId !== userId)));
       }),
     );
 
-  const requests = query.data ?? [];
+  const requests = query.data?.items ?? [];
   return (
     <section className="parchment-card px-6 py-5">
       <h2 className="text-sm font-semibold text-[var(--color-ink-muted)] uppercase tracking-wide mb-4">{t('join_requests_title')}</h2>
-      {mayBeTruncated(requests.length) && (
-        <p role="note" className="mb-3 text-xs text-amber-700 dark:text-amber-400">
-          {tManage('list_truncated')}
-        </p>
-      )}
       {query.isPending ? (
         <div className="flex justify-center py-6" aria-busy="true">
           <Spinner />
@@ -82,6 +77,7 @@ export function Requests({ clubId }: { clubId: string }) {
           })}
         </ul>
       )}
+      <LoadMore hasNextPage={query.hasNextPage} isFetching={query.isFetchingNextPage} failed={query.isFetchNextPageError} onLoadMore={() => void query.fetchNextPage()} />
     </section>
   );
 }

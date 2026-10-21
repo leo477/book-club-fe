@@ -1,9 +1,9 @@
 'use client';
 'use no memo';
 
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { LIST_LIMIT } from '@/features/club-shared/list-limit';
+import { PAGE_SIZE, flatten, nextSkip } from '@/features/club-shared/paged-list';
 
 const noRefocus = { refetchOnWindowFocus: false } as const;
 
@@ -15,8 +15,24 @@ export const useClubStats = (clubId: string) =>
   useQuery({ queryKey: statsKey(clubId), queryFn: ({ signal }) => api.clubs.stats(clubId, { signal }), retry: false, ...noRefocus });
 
 export const useBans = (clubId: string) =>
-  useQuery({ queryKey: bansKey(clubId), queryFn: ({ signal }) => api.members.bans(clubId, { limit: LIST_LIMIT }, { signal }), retry: false, ...noRefocus });
+  useInfiniteQuery({
+    queryKey: bansKey(clubId),
+    queryFn: ({ pageParam, signal }) => api.members.bans(clubId, { skip: pageParam, limit: PAGE_SIZE }, { signal }),
+    initialPageParam: 0,
+    getNextPageParam: nextSkip,
+    select: flatten,
+    retry: false,
+    ...noRefocus,
+  });
 
 export const useJoinRequests = (clubId: string) =>
-  useQuery({ queryKey: requestsKey(clubId), queryFn: ({ signal }) => api.members.joinRequests(clubId, { limit: LIST_LIMIT }, { signal }), retry: false, ...noRefocus });
+  useInfiniteQuery({
+    queryKey: requestsKey(clubId),
+    queryFn: ({ pageParam, signal }) => api.members.joinRequests(clubId, { skip: pageParam, limit: PAGE_SIZE }, { signal }),
+    initialPageParam: 0,
+    getNextPageParam: nextSkip,
+    select: flatten,
+    retry: false,
+    ...noRefocus,
+  });
 

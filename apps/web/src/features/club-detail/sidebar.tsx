@@ -2,11 +2,15 @@
 'use no memo';
 
 import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import type { Club } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
+import { PAGE_SIZE } from '@/features/club-shared/paged-list';
 import { api } from '@/lib/api';
 import { initials } from '@/lib/format';
 import { useClubMembers, useClubRole } from './use-club-detail';
+
+const MAX_ORGANIZER_PAGES = 3;
 
 const SOCIALS = [
   { key: 'telegram', base: 'https://t.me/', icon: '✈️', label: 'Telegram', color: 'text-blue-500 hover:text-blue-600' },
@@ -20,7 +24,15 @@ export function OrganizerCard({ club }: { club: Pick<Club, 'id' | 'organizerId'>
   const t = useTranslations('CLUB_DETAIL');
   const role = useClubRole(club);
   const members = useClubMembers(club.id, role.isAuthenticated);
-  const organizer = members.data?.find((m) => m.role === 'organizer');
+  const items = members.data?.items;
+  const { hasNextPage, isFetching, isFetchNextPageError, fetchNextPage } = members;
+  // a co-organizer on an early page must not stand in for the owner while more pages may still hold them
+  const organizer = items?.find((m) => m.userId === club.organizerId) ?? (hasNextPage ? undefined : items?.find((m) => m.role === 'organizer'));
+  const searching = Boolean(club.organizerId) && !organizer && hasNextPage && !isFetching && !isFetchNextPageError && (items?.length ?? 0) < PAGE_SIZE * MAX_ORGANIZER_PAGES;
+  // the organizer may sit beyond the first page, so a few more pages are read until they show up
+  useEffect(() => {
+    if (searching) void fetchNextPage();
+  }, [searching, items?.length, fetchNextPage]);
   if (!role.isAuthenticated || !organizer) return null;
   const links = organizer.socialsPublic ? SOCIALS.filter((s) => organizer.socials?.[s.key]) : [];
   return (

@@ -39,7 +39,7 @@ function ClubManageView({ club }: { club: Club }) {
   const [tab, setTab] = useState<Tab>('dashboard');
 
   const [badgeKey, badgeTone] = STATUS_BADGE[club.status];
-  const pending = requests.data?.length ?? 0;
+  const pending = requests.data?.total ?? requests.data?.items.length ?? 0;
   return (
     <div className="page-container page-max-w py-8 space-y-6">
       <header>

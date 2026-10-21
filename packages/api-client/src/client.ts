@@ -12,6 +12,7 @@ interface RawResponse {
   status: number;
   ok: boolean;
   text: string;
+  total: number | null;
 }
 
 export type ApiClient = ReturnType<typeof createApiClient>;
@@ -31,6 +32,11 @@ function parseJson(text: string): unknown {
   } catch {
     return text;
   }
+}
+
+function parseTotal(header: string | null): number | null {
+  if (header === null || !/^\d+$/.test(header)) return null;
+  return Number(header);
 }
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {
@@ -108,7 +114,7 @@ export function createApiClient(config: ApiClientConfig) {
       if (transport.credentials) init.credentials = transport.credentials;
       if (options.body !== undefined) init.body = isForm ? (options.body as FormData) : JSON.stringify(options.body);
       const res = await doFetch(buildUrl(baseUrl, path, options.query), init);
-      return { status: res.status, ok: res.ok, text: await res.text() };
+      return { status: res.status, ok: res.ok, text: await res.text(), total: parseTotal(res.headers.get('X-Total-Count')) };
     } catch (err) {
       if (timedOut) throw new RequestTimeoutError();
       if (options.signal?.aborted) throw err;
@@ -161,7 +167,7 @@ export function createApiClient(config: ApiClientConfig) {
     return refreshInFlight;
   }
 
-  async function request(method: string, path: string, options: RequestOptions = {}): Promise<unknown> {
+  async function requestWithTotal(method: string, path: string, options: RequestOptions = {}): Promise<{ data: unknown; total: number | null }> {
     const verb = method.toUpperCase();
     const timeoutMs = MUTATION_METHODS.has(verb) ? mutationTimeout : getTimeout;
     const skip = options.skipAuthRedirect === true;
@@ -169,7 +175,7 @@ export function createApiClient(config: ApiClientConfig) {
     const report = (error: BackendHttpError | RequestTimeoutError) =>
       notifyError(error, { suppress, path, method: verb });
 
-    const run = async (sessionActive: boolean, cycle: RefreshCycle | null): Promise<unknown> => {
+    const run = async (sessionActive: boolean, cycle: RefreshCycle | null): Promise<{ data: unknown; total: number | null }> => {
       const token = await transport.getAccessToken();
       let raw: RawResponse;
       try {
@@ -178,7 +184,7 @@ export function createApiClient(config: ApiClientConfig) {
         if (err instanceof RequestTimeoutError) report(err);
         throw err;
       }
-      if (raw.ok) return raw.status === 204 || raw.text === '' ? undefined : parseJson(raw.text);
+      if (raw.ok) return { data: raw.status === 204 || raw.text === '' ? undefined : parseJson(raw.text), total: raw.total };
 
       const errorBody = parseJson(raw.text);
       const detail = extractBackendDetail(errorBody);
@@ -209,6 +215,10 @@ export function createApiClient(config: ApiClientConfig) {
     return run(skip ? false : await transport.hasSession(), null);
   }
 
+  async function request(method: string, path: string, options: RequestOptions = {}): Promise<unknown> {
+    return (await requestWithTotal(method, path, options)).data;
+  }
+
   async function send<S extends z.ZodType>(
     method: string,
     path: string,
@@ -218,9 +228,19 @@ export function createApiClient(config: ApiClientConfig) {
     return parse(schema, await request(method, path, options), `${method} ${path}`);
   }
 
+  async function getPage<S extends z.ZodType<unknown[]>>(
+    path: string,
+    schema: S,
+    options?: Omit<RequestOptions, 'body'>,
+  ): Promise<{ items: z.output<S>; total: number | null }> {
+    const { data, total } = await requestWithTotal('GET', path, options);
+    return { items: parse(schema, data, `GET ${path}`), total };
+  }
+
   return {
     request,
     send,
+    getPage,
     get: <S extends z.ZodType>(path: string, schema: S, options?: Omit<RequestOptions, 'body'>) =>
       send('GET', path, schema, options),
     post: <S extends z.ZodType>(path: string, schema: S, body?: unknown, options?: Omit<RequestOptions, 'body'>) =>
