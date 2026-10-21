@@ -181,7 +181,7 @@ describe('domain modules over MSW', () => {
 
   it('parses the ban duration string from the backend into a number', async () => {
     reply = [f.banRecord];
-    await expect(api.members.bans('c1')).resolves.toMatchObject([{ duration: 3 }]);
+    await expect(api.members.bans('c1')).resolves.toMatchObject({ items: [{ duration: 3 }], total: null });
   });
 
   it('hands callers no token keys from the cookie-session auth calls', async () => {

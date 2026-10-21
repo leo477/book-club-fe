@@ -339,8 +339,10 @@ apps/
           guarded-runner.test.tsx
           guarded-runner.ts
           invalidate-club.ts
-          list-limit.ts
+          load-more.tsx
           organizer-lazy-boundary.test.ts
+          paged-list.test.ts
+          paged-list.ts
           use-member-actions.ts
         clubs/
           club-card.test.tsx

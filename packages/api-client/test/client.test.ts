@@ -51,6 +51,23 @@ describe('createApiClient', () => {
     expect(calls[0]?.url).toBe('/api/v1/x?a=1&c=false');
   });
 
+  it('getPage returns the parsed items with the X-Total-Count header', async () => {
+    const { client } = setup(() => new Response(JSON.stringify([{ ok: true }]), { status: 200, headers: { 'X-Total-Count': '230' } }));
+    await expect(client.getPage('/x', z.array(ok))).resolves.toEqual({ items: [{ ok: true }], total: 230 });
+  });
+
+  it('getPage reports a missing or malformed X-Total-Count as null', async () => {
+    const missing = setup(() => json(200, [{ ok: true }]));
+    await expect(missing.client.getPage('/x', z.array(ok))).resolves.toEqual({ items: [{ ok: true }], total: null });
+    const malformed = setup(() => new Response('[]', { status: 200, headers: { 'X-Total-Count': 'lots' } }));
+    await expect(malformed.client.getPage('/x', z.array(ok))).resolves.toEqual({ items: [], total: null });
+  });
+
+  it('getPage rejects items that violate the schema', async () => {
+    const { client } = setup(() => json(200, [{ ok: 'yes' }]));
+    await expect(client.getPage('/x', z.array(ok))).rejects.toThrow(/Invalid GET \/x/);
+  });
+
   it('returns undefined for 204 and rejects payloads that violate the schema', async () => {
     const empty = setup(() => json(204));
     await expect(empty.client.delete('/x', z.void())).resolves.toBeUndefined();
