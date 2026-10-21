@@ -14,9 +14,9 @@
     },
     {
       "signature": "GET self /api/v1/clubs/:id/chat/rooms? body=-",
-      "reason": "Chat widget is not ported until R12: Angular preloads the club's rooms for members; Next shows a link to legacy /chats instead",
+      "reason": "The R12 chat widget loads the club rooms on Next once the viewer is a member; whether that fetch lands inside the journey is timing dependent (0 or 1), Angular always preloads them",
       "legacy": 1,
-      "next": 0
+      "nextMax": 1
     },
     {
       "signature": "GET self /api/v1/users/me/stats? body=-",
@@ -29,6 +29,30 @@
       "reason": "Angular boots a signed-in session with a token refresh; Next resolves it through session-status and /auth/me (same as PARITY-R5)",
       "legacy": 1,
       "next": 0
+    },
+    {
+      "signature": "POST self /api/v1/analytics/event? body={\"app\":\"string\",\"bucket\":\"null\",\"name\":\"string\"}",
+      "reason": "Canary events (SCRUM-5x): Angular sends app=angular with bucket null because the strangler bucket cookie is not set when Angular is served directly",
+      "legacy": 1,
+      "next": 0
+    },
+    {
+      "signature": "POST self /api/v1/analytics/event? body={\"app\":\"string\",\"bucket\":\"string\",\"name\":\"string\"}",
+      "reason": "Canary events: Next sends app=next with the cohort bucket label from the bc_bucket cookie",
+      "legacy": 0,
+      "next": 1
+    },
+    {
+      "signature": "GET self /api/v1/clubs/:id/members? body=-",
+      "reason": "Angular lists members without a limit; Next passes an explicit limit to detect truncation",
+      "legacy": 1,
+      "next": 0
+    },
+    {
+      "signature": "GET self /api/v1/clubs/:id/members?limit=200 body=-",
+      "reason": "Next passes limit=LIST_LIMIT (apps/web/src/features/club-shared/list-limit.ts) so a truncated list can be flagged",
+      "legacy": 0,
+      "next": 1
     }
   ]
 }

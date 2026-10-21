@@ -19,6 +19,8 @@ export async function installApiMock(target: Page | BrowserContext, state: MockS
     const req = route.request();
     const url = new URL(req.url());
     const path = url.pathname.replace(/^\/api\/v1/, '');
+    // first-party canary beacon (Next only): not part of the journey under test, so it is neither logged nor answered by the fixtures
+    if (path === '/analytics/event') return route.fulfill({ status: 204 });
     log.push({ method: req.method(), path, query: url.search, body: req.postData(), headers: req.headers() });
     const wait = latencyMs[`${req.method()} ${path.replace(/[0-9a-f-]{36}/g, ':id').replace(/\/opt-\d+/g, '/:opt')}`];
     if (wait) await new Promise((r) => setTimeout(r, wait));

@@ -153,10 +153,9 @@ test.describe('role gates on create/edit/preview/session (P4)', () => {
           await expect(page.getByText(L.organizersOnly)).toHaveCount(0);
           await expect(page).toHaveURL(new RegExp(`${path}$`));
         } else {
-          await expect(page.getByText(L.organizersOnly).first()).toBeVisible();
-          // Angular redirects to /clubs, Next shows the notice in place (D-2)
-          if (isNext()) await expect(page).toHaveURL(new RegExp(`${path}$`));
-          else await expect(page).toHaveURL(/\/clubs$/);
+          await expect(page).toHaveURL(/\/clubs$/);
+          const toast = page.getByText(L.organizersOnly).first();
+          await expect(toast).toBeVisible();
           expect(calls(mock, 'POST', /\/quizzes/)).toEqual([]);
           expect(calls(mock, 'PATCH', /\/quizzes/)).toEqual([]);
         }

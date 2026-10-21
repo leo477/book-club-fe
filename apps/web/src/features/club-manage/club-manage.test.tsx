@@ -270,7 +270,7 @@ describe('ClubManage', () => {
     expect(nav.toast).not.toHaveBeenCalledWith('error', t('ERRORS.organizers_only'));
   });
 
-  it('redirects instead of spinning when there is no signed-in user', async () => {
+  it('leaves a signed-out visitor to RequireAuth: no organizers-only toast, no /clubs redirect, no manage tabs', async () => {
     mockSession(null);
     mockManageReads();
     server.use(http.get(`${API}/clubs/${ID}`, () => HttpResponse.json(club())));
@@ -279,9 +279,9 @@ describe('ClubManage', () => {
         <ClubManage id={ID} />
       </StranglerProvider>,
     );
-    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/clubs'));
-    expect(nav.toast).toHaveBeenCalledWith('error', t('ERRORS.organizers_only'));
-    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole('tab')).not.toBeInTheDocument());
+    expect(nav.toast).not.toHaveBeenCalled();
+    expect(nav.replace).not.toHaveBeenCalledWith('/clubs');
   });
 
   it('does not show a cached club before this visit has re-fetched it', async () => {

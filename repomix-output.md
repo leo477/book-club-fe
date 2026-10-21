@@ -533,7 +533,6 @@ docs/
     AUDIT-REPORT.md
     PLAN-CODE-SCANNING-2026-07-10.md
     PLAN-COOKIE-AUTH-2026-07-07.md
-    PLAN-MOBILE-APP-2026-07-15.md
     REFACTOR-PLAN-2026-07-06.md
   migration/
     AUDIT-R13-FULL.md
@@ -542,6 +541,7 @@ docs/
     CANARY-METRICS.md
     cleanup-pw-audit.sql
     GATE-G1.md
+    OWNER-ROLLOUT-CHECKLIST.md
     PARITY-R11.md
     PARITY-R12.md
     PARITY-R5.md
@@ -549,6 +549,8 @@ docs/
     PARITY-R7.md
     PARITY-R8.md
     PARITY-R9.md
+    PLAN-SCRUM-81-COOKIE-ONLY-WEB.md
+    R14-DECOMMISSION-PREP.md
     R6-DEPLOY-SETTINGS.md
     RUNBOOK-STRANGLER.md
     SECURITY-R6.md
@@ -593,6 +595,7 @@ e2e/
     har-diff.ts
     har-signature.ts
     html-meta.ts
+    legacy-server.mjs
     member.setup.ts
     routes.ts
     snapshot-guard.ts

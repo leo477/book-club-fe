@@ -82,6 +82,7 @@ test.describe('P1 URLs and status codes', () => {
   });
 
   test('ids that are not UUIDs (create, junk, manage sub-route) are served by legacy on both targets', async ({ request }, ti) => {
+    test.skip(nextOnly(ti.project.name) && process.env['DISABLE_LEGACY_FALLBACK'] === '1', 'the Next server runs with the legacy fallback off');
     for (const p of ['/clubs/create', '/clubs/not-a-uuid', `${club()}/manage`]) {
       const res = await request.get(p);
       expect(res.status(), p).toBe(200);

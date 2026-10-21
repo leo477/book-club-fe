@@ -325,6 +325,22 @@ describe('signed-in non-member (also an admin, who has no special club-detail co
     expect(joins).toEqual([{}]);
   });
 
+  it('emits join_club (app next) after a successful join', async () => {
+    mockApi({ user: userJson({ id: 'u1' }) });
+    const events: unknown[] = [];
+    server.use(
+      http.post('*/api/v1/analytics/event', async ({ request }) => {
+        events.push(await request.json());
+        return new HttpResponse(null, { status: 204 });
+      }),
+      http.post(`${API}/clubs/${ID}/join`, () => HttpResponse.json({ status: 'pending' })),
+    );
+    const u = userEvent.setup();
+    await render();
+    await u.click(await screen.findByTestId('join-button'));
+    await waitFor(() => expect(events).toEqual([expect.objectContaining({ app: 'next', name: 'join_club' })]));
+  });
+
   it('already_requested is treated as pending', async () => {
     mockApi({ user: userJson({ id: 'u1' }) });
     server.use(http.post(`${API}/clubs/${ID}/join`, () => HttpResponse.json({ status: 'already_requested' })));

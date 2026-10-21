@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 
 // Access token lives in memory only (in-memory signal).
 // On page reload, it is recovered via silent refresh using the httpOnly refresh cookie.
@@ -15,14 +15,27 @@ export class TokenStore {
 
   private readonly _token = signal<string | null>(null);
 
+  // True once a login/restore succeeded, with or without a token in the response body: the backend may keep
+  // tokens out of the body for web clients (SCRUM-81), in which case the httpOnly cookies carry the session.
+  private readonly _sessionActive = signal(false);
+
   readonly token = this._token.asReadonly();
+  readonly hasSession = computed(() => this._sessionActive() || this._token() !== null);
 
   set(token: string): void {
     this._token.set(token);
+    this._sessionActive.set(true);
+  }
+
+  /** Records a session from an auth response; a missing token also drops a stale one so it cannot shadow the cookie. */
+  establish(token?: string | null): void {
+    this._token.set(token ?? null);
+    this._sessionActive.set(true);
   }
 
   clear(): void {
     this._token.set(null);
+    this._sessionActive.set(false);
   }
 
   snapshot(): string | null {

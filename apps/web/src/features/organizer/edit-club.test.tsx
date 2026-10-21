@@ -280,5 +280,6 @@ describe('EditClub behind the per-club gate', () => {
     asViewer(null);
     await waitFor(() => expect(nav.replaceHard).toHaveBeenCalledWith('/login'));
     expect(screen.queryByTestId('club-name-input')).not.toBeInTheDocument();
+    expect(nav.toast).not.toHaveBeenCalledWith('error', t('ERRORS.organizers_only'));
   });
 });

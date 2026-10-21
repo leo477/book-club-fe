@@ -55,8 +55,8 @@ interface Case {
 
 const cases: Case[] = [
   { name: 'userProfile', schema: userProfile, data: users.userProfile, required: ['id', 'email', 'displayName', 'role', 'createdAt', 'socialsPublic', 'socials'] },
-  { name: 'authResponse', schema: authResponse, data: users.authResponse, required: ['user', 'accessToken', 'refreshToken'] },
-  { name: 'authTokens', schema: authTokens, data: users.authTokens, required: ['accessToken', 'refreshToken'] },
+  { name: 'authResponse', schema: authResponse, data: users.authResponse, required: ['user'] },
+  { name: 'authTokens', schema: authTokens, data: users.authTokens, required: [] },
   { name: 'userStats', schema: userStats, data: users.userStats, required: ['clubsJoined', 'quizzesTaken', 'quizWins', 'likesReceived', 'booksRead'] },
   { name: 'sessionStatus', schema: sessionStatus, data: users.sessionStatus, required: ['hasSession'] },
   { name: 'wsTicket', schema: wsTicket, data: users.wsTicket, required: ['ticket'] },
@@ -88,6 +88,16 @@ const cases: Case[] = [
   { name: 'bookSuggestion', schema: bookSuggestion, data: misc.bookSuggestion, required: ['id', 'title', 'authors'] },
   { name: 'storeResult', schema: storeResult, data: misc.storeResult, required: ['name', 'url', 'found'] },
 ];
+
+describe('token-less auth responses (cookie-only web sessions, SCRUM-81)', () => {
+  it('authTokens accepts a body without tokens', () => {
+    expect(safeParse(authTokens, {}).ok).toBe(true);
+  });
+
+  it('authResponse accepts a body with only the user', () => {
+    expect(safeParse(authResponse, { user: users.authResponse.user }).ok).toBe(true);
+  });
+});
 
 const without = (data: Record<string, unknown>, key: string) => Object.fromEntries(Object.entries(data).filter(([k]) => k !== key));
 

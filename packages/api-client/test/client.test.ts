@@ -307,6 +307,20 @@ describe('createApiClient', () => {
       expect(s.calls[0]?.init.credentials).toBeUndefined();
     });
 
+    it('keeps the stored pair when a refresh response carries no tokens (cookie-only backend mode)', async () => {
+      let refreshed = false;
+      const s = bearer((url) => {
+        if (url.endsWith('/auth/refresh')) {
+          refreshed = true;
+          return json(200, {});
+        }
+        return refreshed ? json(200, { ok: true }) : json(401);
+      });
+      await expect(s.client.get('/x', ok)).resolves.toEqual({ ok: true });
+      expect(refreshed).toBe(true);
+      expect(s.store.setTokens).not.toHaveBeenCalled();
+    });
+
     it('clears tokens and signs out when refresh fails or no refresh token exists', async () => {
       const s = bearer((url) => (url.endsWith('/auth/refresh') ? json(401) : json(401)));
       await expect(s.client.get('/x', ok)).rejects.toMatchObject({ status: 401 });

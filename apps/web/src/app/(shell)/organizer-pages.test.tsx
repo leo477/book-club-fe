@@ -217,8 +217,8 @@ describe('/events/:id/edit page', () => {
     session('user');
     server.use(http.get(`${API}/events/${EVENT}`, () => HttpResponse.json(eventJson({ id: EVENT, clubId: CLUB, organizerId: 'someone-else', date: '2099-05-01T18:30:00.000Z' }))));
     renderWithProviders(<StranglerProvider value={NEXT_ROUTES}>{await EditEventPage(params(EVENT))}</StranglerProvider>);
-    await waitFor(() => expect(nav.push).toHaveBeenCalledWith('/events'));
-    expect(nav.replace).not.toHaveBeenCalled();
+    await waitFor(() => expect(nav.replace).toHaveBeenCalledWith('/events'));
+    expect(nav.push).not.toHaveBeenCalled();
     expect(nav.toast).not.toHaveBeenCalled();
     expect(screen.queryByTestId('event-title-input')).not.toBeInTheDocument();
   });

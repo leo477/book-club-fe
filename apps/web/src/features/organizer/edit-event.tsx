@@ -9,6 +9,7 @@ import { Pending } from '@/features/auth/require-auth';
 import { useSession } from '@/features/clubs/use-session';
 import { useEvent } from '@/features/events/use-events';
 import { usePush } from '@/lib/use-push';
+import { useReplace } from '@/lib/use-replace';
 import { EventFormView } from './event-form';
 import { toDatetimeLocal, toUpdateRequest } from './event-payload';
 import { useUpdateEvent } from './use-organizer';
@@ -41,11 +42,12 @@ export function EditEvent({ id }: { id: string }) {
   const event = query.data;
   // only the event's organizer edits it; anyone else is sent to the feed (admins included, as in Angular)
   const foreign = event !== undefined && user !== null && event.organizerId !== user.id;
-  const push = usePush();
+  const replace = useReplace();
 
+  // replace, not push: Back from the feed would otherwise land on this page and redirect again
   useEffect(() => {
-    if (foreign) push('/events');
-  }, [foreign, push]);
+    if (foreign) replace('/events');
+  }, [foreign, replace]);
 
   if (query.isError) return <ErrorPanel onRetry={() => void query.refetch()} />;
   if (!event || foreign) return <Pending />;
