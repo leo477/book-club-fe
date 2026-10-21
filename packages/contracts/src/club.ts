@@ -114,6 +114,8 @@ export const banRecord = z.object({
   bannedAt: z.string(),
   duration: banDurationWire,
   bannedBy: z.string(),
+  displayName: z.string().nullish(),
+  avatarUrl: z.string().nullish(),
 });
 export type BanRecord = z.infer<typeof banRecord>;
 

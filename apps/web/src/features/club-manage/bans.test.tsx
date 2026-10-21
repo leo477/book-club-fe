@@ -2,8 +2,9 @@ import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { HttpResponse, http } from 'msw';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { API, memberJson, renderWithProviders, server, setupApiServer } from '@/test/harness';
+import { API, pageOf, renderWithProviders, server, setupApiServer } from '@/test/harness';
 import { Bans } from './bans';
+import { editItems, type PagedData } from '@/features/club-shared/paged-list';
 import { bansKey } from './use-club-manage';
 import { banJson, gate, ID, mockManageReads, t } from './test-support';
 
@@ -48,35 +49,45 @@ describe('Bans', () => {
     expect(screen.queryByText(/3f2b8c1e-9a4d/)).not.toBeInTheDocument();
   });
 
-  it('uses the member name when the user is still listed as a member', async () => {
-    mockManageReads({ members: [memberJson({ userId: 'b1', displayName: 'Grace Hopper' })] });
-    backend([banJson(), banJson({ userId: 'ghost-user-id-1234' })]);
+  it('uses the display name the ban carries', async () => {
+    mockManageReads();
+    backend([banJson({ displayName: 'Grace Hopper' }), banJson({ userId: 'ghost-user-id-1234' })]);
     renderWithProviders(<Bans clubId={ID} />);
     expect(await screen.findByText('Grace Hopper')).toBeInTheDocument();
     expect(screen.getByText(`${t('CLUB_MANAGE.banned_user')} ghost-us`)).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /\(2\)/ })).toBeInTheDocument();
   });
 
-  it('asks for the largest page and warns when a full page may hide more bans', async () => {
+  it('loads the bans a page at a time and shows the full count', async () => {
     mockManageReads();
     const urls: string[] = [];
+    const all = Array.from({ length: 230 }, (_, i) => banJson({ userId: `user-${i}-xxxxxxxx` }));
     server.use(
       http.get(`${API}/clubs/${ID}/bans`, ({ request }) => {
         urls.push(new URL(request.url).search);
-        return HttpResponse.json(Array.from({ length: 200 }, (_, i) => banJson({ userId: `user-${i}-xxxxxxxx` })));
+        return pageOf(all, request);
       }),
     );
+    const user = userEvent.setup();
     renderWithProviders(<Bans clubId={ID} />);
-    expect(await screen.findByText(t('CLUB_MANAGE.list_truncated'))).toBeInTheDocument();
-    expect(urls).toEqual(['?limit=200']);
+    await screen.findByText(`${t('CLUB_MANAGE.banned_user')} user-0-x`);
+    expect(urls).toEqual(['?skip=0&limit=100']);
+    expect(screen.getByRole('heading', { name: new RegExp(`\\(230\\)`) })).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(100);
+    await user.click(screen.getByRole('button', { name: t('PAGINATION.load_more') }));
+    await waitFor(() => expect(screen.getAllByRole('listitem')).toHaveLength(200));
+    await user.click(screen.getByRole('button', { name: t('PAGINATION.load_more') }));
+    await waitFor(() => expect(screen.getAllByRole('listitem')).toHaveLength(230));
+    expect(urls).toEqual(['?skip=0&limit=100', '?skip=100&limit=100', '?skip=200&limit=100']);
+    expect(screen.queryByRole('button', { name: t('PAGINATION.load_more') })).not.toBeInTheDocument();
   });
 
-  it('shows no warning below a full page', async () => {
+  it('offers no load more once every ban is shown', async () => {
     mockManageReads();
     backend([banJson()]);
     renderWithProviders(<Bans clubId={ID} />);
     await screen.findByText(/b1/);
-    expect(screen.queryByText(t('CLUB_MANAGE.list_truncated'))).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: t('PAGINATION.load_more') })).not.toBeInTheDocument();
   });
 
   it('shows an error, not the empty state, when the list is refused', async () => {
@@ -132,7 +143,7 @@ describe('Bans', () => {
     }));
     await act(async () => {
       fireEvent.click(screen.getAllByRole('button', { name: t('CLUB_MANAGE.unban') })[1]!);
-      queryClient.setQueryData(bansKey(ID), (list: ReturnType<typeof banJson>[]) => list.filter((b) => b.userId !== 'b1'));
+      queryClient.setQueryData(bansKey(ID), (data: PagedData<ReturnType<typeof banJson>>) => editItems(data, (list) => list.filter((b) => b.userId !== 'b1')));
     });
     await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Not allowed'));
     const rows = await screen.findAllByRole('listitem');
@@ -154,10 +165,10 @@ describe('Bans', () => {
     }));
     await act(async () => {
       fireEvent.click(screen.getAllByRole('button', { name: t('CLUB_MANAGE.unban') })[1]!);
-      queryClient.setQueryData(bansKey(ID), (list: ReturnType<typeof banJson>[]) => list.filter((b) => b.userId !== 'b2'));
+      queryClient.setQueryData(bansKey(ID), (data: PagedData<ReturnType<typeof banJson>>) => editItems(data, (list) => list.filter((b) => b.userId !== 'b2')));
     });
     await waitFor(() => expect(toast).toHaveBeenCalledWith('error', 'Not allowed'));
-    expect(queryClient.getQueryData<ReturnType<typeof banJson>[]>(bansKey(ID))?.map((b) => b.userId)).toEqual(['b1', 'b3', 'b2']);
+    expect(queryClient.getQueryData<PagedData<ReturnType<typeof banJson>>>(bansKey(ID))?.pages.flatMap((page) => page.items).map((b) => b.userId)).toEqual(['b1', 'b3', 'b2']);
   });
 
   it('sends one request for two clicks while the first is in flight', async () => {

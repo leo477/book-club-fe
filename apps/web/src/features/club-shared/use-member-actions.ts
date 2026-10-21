@@ -4,6 +4,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { BanDuration, ClubMember, MemberRole } from '@book-club/contracts';
 import { membersKey } from '@/features/club-detail/use-club-detail';
+import { editItems, type PagedData } from '@/features/club-shared/paged-list';
 import { trackClubAction } from '@/features/club-shared/club-actions';
 import { api } from '@/lib/api';
 import { useGuardedRunner } from './guarded-runner';
@@ -17,27 +18,30 @@ export function useMemberActions(clubId: string) {
     run(userId, () =>
       trackClubAction(queryClient, clubId, async () => {
         await queryClient.cancelQueries({ queryKey: membersKey(clubId) });
-        const before = queryClient.getQueryData<ClubMember[]>(membersKey(clubId));
+        const before = queryClient.getQueryData<PagedData<ClubMember>>(membersKey(clubId))?.pages.flatMap((page) => page.items);
         const index = before?.findIndex((m) => m.userId === userId) ?? -1;
         const original = before?.[index];
-        queryClient.setQueryData<ClubMember[]>(membersKey(clubId), (list) =>
-          list?.flatMap((m) => {
-            if (m.userId !== userId) return [m];
-            const updated = next(m);
-            return updated ? [updated] : [];
-          }),
+        queryClient.setQueryData<PagedData<ClubMember>>(membersKey(clubId), (data) =>
+          editItems(data, (list) =>
+            list.flatMap((m) => {
+              if (m.userId !== userId) return [m];
+              const updated = next(m);
+              return updated ? [updated] : [];
+            }),
+          ),
         );
         try {
           await call();
         } catch (err) {
           if (original) {
-            queryClient.setQueryData<ClubMember[]>(membersKey(clubId), (list) => {
-              if (!list) return list;
-              if (list.some((m) => m.userId === userId)) return list.map((m) => (m.userId === userId ? original : m));
-              const restored = [...list];
-              restored.splice(Math.min(index, restored.length), 0, original);
-              return restored;
-            });
+            queryClient.setQueryData<PagedData<ClubMember>>(membersKey(clubId), (data) =>
+              editItems(data, (list) => {
+                if (list.some((m) => m.userId === userId)) return list.map((m) => (m.userId === userId ? original : m));
+                const restored = [...list];
+                restored.splice(Math.min(index, restored.length), 0, original);
+                return restored;
+              }),
+            );
           }
           throw err;
         }

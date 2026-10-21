@@ -308,6 +308,7 @@ apps/
           qr-code.tsx
           sections.tsx
           set-winner-visibility.test.tsx
+          sidebar.test.tsx
           sidebar.tsx
           structured-data.test.ts
           structured-data.ts
@@ -339,8 +340,11 @@ apps/
           guarded-runner.test.tsx
           guarded-runner.ts
           invalidate-club.ts
-          list-limit.ts
+          load-more.test.tsx
+          load-more.tsx
           organizer-lazy-boundary.test.ts
+          paged-list.test.ts
+          paged-list.ts
           use-member-actions.ts
         clubs/
           club-card.test.tsx
