@@ -17,17 +17,25 @@ export function nextSkip<T>(last: Page<T>, all: Page<T>[]): number | undefined {
   return last.items.length >= PAGE_SIZE ? loaded : undefined;
 }
 
-export function flatten<T>(data: PagedData<T>): { items: T[]; total: number | null } {
-  const items = data.pages.flatMap((page) => page.items);
-  const total = data.pages.at(-1)?.total ?? null;
-  return { items, total: total === null ? null : Math.max(total, items.length) };
+/** A joiner or leaver during a multi-page load can shift rows across a page boundary, so a row may arrive twice. */
+export function flatten<T extends { userId: string }>(data: PagedData<T>): { items: T[]; total: number | null } {
+  const seen = new Set<string>();
+  const items = data.pages.flatMap((page) => page.items).filter((item) => !seen.has(item.userId) && seen.add(item.userId));
+  return { items, total: data.pages.at(-1)?.total ?? null };
 }
 
-/** Applies a local edit to the loaded rows and keeps the total in step; the pages collapse into one, the next offset is the loaded count. */
+/** Applies a local edit to the loaded rows and keeps every page's size and the total in step, so a later refetch still asks for each page by its original skip. */
 export function editItems<T>(data: PagedData<T> | undefined, edit: (items: T[]) => T[]): PagedData<T> | undefined {
   if (!data) return data;
   const before = data.pages.flatMap((page) => page.items);
   const items = edit(before);
-  const total = data.pages.at(-1)?.total ?? null;
-  return { pages: [{ items, total: total === null ? null : Math.max(0, total + items.length - before.length) }], pageParams: [0] };
+  const delta = items.length - before.length;
+  let start = 0;
+  const pages = data.pages.map((page, index) => {
+    const end = index === data.pages.length - 1 ? items.length : start + page.items.length;
+    const chunk = items.slice(start, end);
+    start = end;
+    return { items: chunk, total: page.total === null ? null : Math.max(0, page.total + delta) };
+  });
+  return { pages, pageParams: data.pageParams };
 }

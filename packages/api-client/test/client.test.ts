@@ -59,6 +59,10 @@ describe('createApiClient', () => {
   it('getPage reports a missing or malformed X-Total-Count as null', async () => {
     const missing = setup(() => json(200, [{ ok: true }]));
     await expect(missing.client.getPage('/x', z.array(ok))).resolves.toEqual({ items: [{ ok: true }], total: null });
+    const zero = setup(() => new Response('[]', { status: 200, headers: { 'X-Total-Count': '0' } }));
+    await expect(zero.client.getPage('/x', z.array(ok))).resolves.toEqual({ items: [], total: 0 });
+    const empty = setup(() => new Response('[]', { status: 200, headers: { 'X-Total-Count': '' } }));
+    await expect(empty.client.getPage('/x', z.array(ok))).resolves.toEqual({ items: [], total: null });
     const malformed = setup(() => new Response('[]', { status: 200, headers: { 'X-Total-Count': 'lots' } }));
     await expect(malformed.client.getPage('/x', z.array(ok))).resolves.toEqual({ items: [], total: null });
   });

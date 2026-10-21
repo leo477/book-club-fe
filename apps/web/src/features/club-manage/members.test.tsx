@@ -4,6 +4,7 @@ import { HttpResponse, http } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemberList } from '@/features/club-detail/member-list';
 import { API, memberJson, pageOf, renderWithProviders, server, setupApiServer } from '@/test/harness';
+import { membersKey } from '@/features/club-detail/use-club-detail';
 import { capture } from '@/features/organizer/test-support';
 import { gate, ID, t } from './test-support';
 
@@ -183,6 +184,36 @@ describe('MemberList with role controls', () => {
     await screen.findByText('Member 229');
     expect(urls).toEqual(['?skip=0&limit=100', '?skip=100&limit=100', '?skip=200&limit=100']);
     expect(screen.queryByRole('button', { name: t('PAGINATION.load_more') })).not.toBeInTheDocument();
+  });
+
+  it('keeps the rows of a later page after a kick and the refetch that follows it', async () => {
+    let all = Array.from({ length: 130 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` }));
+    const urls: string[] = [];
+    server.use(
+      http.get(`${API}/clubs/${ID}/members`, ({ request }) => {
+        urls.push(new URL(request.url).search);
+        return pageOf(all, request);
+      }),
+      http.delete(`${API}/clubs/${ID}/members/m1`, () => {
+        all = all.filter((m) => m.userId !== 'm1');
+        return new HttpResponse(null, { status: 204 });
+      }),
+    );
+    const user = userEvent.setup();
+    const { queryClient } = view();
+    await screen.findByText('Member 0');
+    await user.click(screen.getByRole('button', { name: t('PAGINATION.load_more') }));
+    await screen.findByText('Member 129');
+    await user.click(within(row('Member 1')).getByRole('button', { name: new RegExp(t('MEMBERS.kick')) }));
+    await waitFor(() => expect(screen.queryByText('Member 1')).not.toBeInTheDocument());
+    urls.length = 0;
+    await act(async () => {
+      await queryClient.invalidateQueries({ queryKey: membersKey(ID) });
+    });
+    expect(urls).toEqual(['?skip=0&limit=100', '?skip=100&limit=100']);
+    expect(screen.getByText('Member 129')).toBeInTheDocument();
+    expect(screen.queryByText('Member 1')).not.toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /\(129\)/ })).toBeInTheDocument();
   });
 
   it('shows an error and keeps load more available when a page fails', async () => {

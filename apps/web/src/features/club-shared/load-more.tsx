@@ -15,7 +15,10 @@ export function LoadMore({ hasNextPage, isFetching, failed, onLoadMore }: LoadMo
   const t = useTranslations('PAGINATION');
   if (!hasNextPage) return null;
   return (
-    <div className="mt-4 flex flex-col items-center gap-2">
+    <div className="mt-4 flex flex-col items-center gap-2" aria-busy={isFetching}>
+      <p role="status" className="sr-only">
+        {isFetching ? t('loading') : ''}
+      </p>
       {failed && (
         <p role="alert" className="text-sm text-red-600 dark:text-red-400">
           {t('load_failed')}

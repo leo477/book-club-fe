@@ -339,6 +339,7 @@ apps/
           guarded-runner.test.tsx
           guarded-runner.ts
           invalidate-club.ts
+          load-more.test.tsx
           load-more.tsx
           organizer-lazy-boundary.test.ts
           paged-list.test.ts

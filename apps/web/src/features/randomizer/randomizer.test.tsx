@@ -7,6 +7,7 @@ import { gate, t } from '@/features/club-manage/test-support';
 import { NEXT_ROUTES, capture, mockSession } from '@/features/organizer/test-support';
 import { StranglerProvider } from '@/strangler/context';
 import { API, clubJson, memberJson, pageOf, renderWithProviders, server, setupApiServer } from '@/test/harness';
+import { membersKey } from '@/features/club-detail/use-club-detail';
 import { Randomizer } from './randomizer';
 
 // mirrors the spin duration in randomizer.tsx
@@ -278,6 +279,41 @@ describe('Randomizer', () => {
     await screen.findByText('Member 149');
     await waitFor(() => expect(spinButton()).toBeEnabled());
     expect(screen.queryByText(t('RANDOMIZER.members_loading'))).not.toBeInTheDocument();
+  });
+
+  it('does not start or cancel a page fetch because of a background refetch, and still ends with every member', async () => {
+    const many = Array.from({ length: 230 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` }));
+    const { open, release } = gate();
+    const { queryClient } = setup(many);
+    server.use(
+      http.get(`${API}/clubs/${ID}/members`, async ({ request }) => {
+        if (new URL(request.url).searchParams.get('skip') === '100') await open;
+        return pageOf(many, request);
+      }),
+    );
+    await screen.findByText('Member 0');
+    await act(async () => {
+      void queryClient.invalidateQueries({ queryKey: membersKey(ID) });
+    });
+    release();
+    await screen.findByText('Member 229');
+    await waitFor(() => expect(spinButton()).toBeEnabled());
+  });
+
+  it('rereads the list when a joiner during the load leaves it short of the total, and blocks spinning if it stays so', async () => {
+    const all = Array.from({ length: 150 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` }));
+    let reads = 0;
+    setup(all);
+    server.use(
+      http.get(`${API}/clubs/${ID}/members`, ({ request }) => {
+        reads += 1;
+        const page = new URL(request.url).searchParams.get('skip') === '100' ? [all[99]!, ...all.slice(101)] : all.slice(0, 100);
+        return HttpResponse.json(page, { headers: { 'X-Total-Count': '150' } });
+      }),
+    );
+    expect(await screen.findByText(t('RANDOMIZER.members_load_failed'))).toBeInTheDocument();
+    expect(reads).toBeGreaterThanOrEqual(4);
+    expect(spinButton()).toBeDisabled();
   });
 
   it('never enables spinning on a partial list when a page fails, and retries on request', async () => {

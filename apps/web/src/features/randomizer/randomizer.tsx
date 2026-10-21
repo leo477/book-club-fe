@@ -56,18 +56,29 @@ function RandomizerView({ clubId }: { clubId: string }) {
 
   useEffect(() => () => clearTimeout(timer.current), []);
 
-  const { hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage } = membersQuery;
+  const { hasNextPage, isFetching, isFetchNextPageError, fetchNextPage, refetch } = membersQuery;
   const loaded = membersQuery.data?.items.length ?? 0;
   // a draw from part of the club would not be fair, so every page is loaded before spinning is allowed
   // `loaded` re-runs this after each page lands, since the fetching flag can flip and flip back within one render
   useEffect(() => {
-    if (hasNextPage && !isFetchingNextPage && !isFetchNextPageError) void fetchNextPage();
-  }, [hasNextPage, isFetchingNextPage, isFetchNextPageError, loaded, fetchNextPage]);
+    if (hasNextPage && !isFetching && !isFetchNextPageError) void fetchNextPage();
+  }, [hasNextPage, isFetching, isFetchNextPageError, loaded, fetchNextPage]);
+
+  // rows that moved across a page boundary while loading leave the list short or doubled, so it is read again once before it is trusted
+  const total = membersQuery.data?.total ?? null;
+  const mismatch = !hasNextPage && total !== null && loaded !== total;
+  const reread = useRef(false);
+  useEffect(() => {
+    if (!mismatch || isFetching || reread.current) return;
+    reread.current = true;
+    void refetch();
+  }, [mismatch, isFetching, refetch]);
 
   const candidates = useMemo(() => membersQuery.data?.items ?? [], [membersQuery.data]);
   const selected = useMemo(() => candidates.filter((m) => !excluded.has(m.userId)), [candidates, excluded]);
-  const loadingAll = hasNextPage && !isFetchNextPageError;
-  const canSpin = selected.length >= MIN_PARTICIPANTS && !hasNextPage;
+  const loadingAll = (hasNextPage && !isFetchNextPageError) || (mismatch && isFetching);
+  const incomplete = isFetchNextPageError || (mismatch && !isFetching);
+  const canSpin = selected.length >= MIN_PARTICIPANTS && !hasNextPage && !mismatch;
 
   const toggle = (userId: string) =>
     setExcluded((prev) => {
@@ -232,10 +243,10 @@ function RandomizerView({ clubId }: { clubId: string }) {
                 <p role="status" className="text-center text-white/70 text-xs">
                   {t('members_loading')}
                 </p>
-              ) : hasNextPage ? (
+              ) : incomplete ? (
                 <div role="alert" className="flex flex-col items-center gap-2 text-center text-amber-300 text-xs">
                   <p>{t('members_load_failed')}</p>
-                  <Button type="button" variant="outline" size="sm" onClick={() => void fetchNextPage()}>
+                  <Button type="button" variant="outline" size="sm" onClick={() => void (hasNextPage ? fetchNextPage() : refetch())}>
                     {t('members_retry')}
                   </Button>
                 </div>

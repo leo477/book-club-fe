@@ -2,6 +2,7 @@
 'use no memo';
 
 import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import type { Club } from '@book-club/contracts';
 import { useTranslations } from 'next-intl';
 import { api } from '@/lib/api';
@@ -20,7 +21,13 @@ export function OrganizerCard({ club }: { club: Pick<Club, 'id' | 'organizerId'>
   const t = useTranslations('CLUB_DETAIL');
   const role = useClubRole(club);
   const members = useClubMembers(club.id, role.isAuthenticated);
-  const organizer = members.data?.items.find((m) => m.role === 'organizer');
+  const items = members.data?.items;
+  const organizer = items?.find((m) => m.userId === club.organizerId) ?? items?.find((m) => m.role === 'organizer');
+  const { hasNextPage, isFetching, isFetchNextPageError, fetchNextPage } = members;
+  // the organizer may sit beyond the first page, so more pages are read until they show up
+  useEffect(() => {
+    if (!organizer && hasNextPage && !isFetching && !isFetchNextPageError) void fetchNextPage();
+  }, [organizer, hasNextPage, isFetching, isFetchNextPageError, items?.length, fetchNextPage]);
   if (!role.isAuthenticated || !organizer) return null;
   const links = organizer.socialsPublic ? SOCIALS.filter((s) => organizer.socials?.[s.key]) : [];
   return (
