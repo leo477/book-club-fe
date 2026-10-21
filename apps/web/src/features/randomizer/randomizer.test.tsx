@@ -281,38 +281,55 @@ describe('Randomizer', () => {
     expect(screen.queryByText(t('RANDOMIZER.members_loading'))).not.toBeInTheDocument();
   });
 
-  it('does not start or cancel a page fetch because of a background refetch, and still ends with every member', async () => {
+  it('does not start a page fetch while a background refetch is running, and still ends with every member', async () => {
     const many = Array.from({ length: 230 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` }));
-    const { open, release } = gate();
+    const nextPage = gate();
+    const refetch = gate();
     const { queryClient } = setup(many);
+    const skips: string[] = [];
     server.use(
       http.get(`${API}/clubs/${ID}/members`, async ({ request }) => {
-        if (new URL(request.url).searchParams.get('skip') === '100') await open;
+        const skip = new URL(request.url).searchParams.get('skip') ?? '';
+        skips.push(skip);
+        if (skip === '100' && skips.filter((s) => s === '100').length === 1) await nextPage.open;
+        if (skip === '0' && skips.filter((s) => s === '0').length === 2) await refetch.open;
         return pageOf(many, request);
       }),
     );
     await screen.findByText('Member 0');
+    await waitFor(() => expect(skips).toEqual(['0', '100']));
     await act(async () => {
       void queryClient.invalidateQueries({ queryKey: membersKey(ID) });
     });
-    release();
+    await waitFor(() => expect(skips).toEqual(['0', '100', '0']));
+    await new Promise((r) => setTimeout(r, 200));
+    expect(skips).toEqual(['0', '100', '0']);
+    refetch.release();
+    nextPage.release();
     await screen.findByText('Member 229');
     await waitFor(() => expect(spinButton()).toBeEnabled());
   });
 
-  it('rereads the list when a joiner during the load leaves it short of the total, and blocks spinning if it stays so', async () => {
+  it('rereads the list when a joiner during the load leaves it short of the total, shows no failure while it does, and blocks spinning if it stays so', async () => {
     const all = Array.from({ length: 150 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` }));
-    let reads = 0;
+    const reread = gate();
+    let firstReads = 0;
     setup(all);
     server.use(
-      http.get(`${API}/clubs/${ID}/members`, ({ request }) => {
-        reads += 1;
-        const page = new URL(request.url).searchParams.get('skip') === '100' ? [all[99]!, ...all.slice(101)] : all.slice(0, 100);
+      http.get(`${API}/clubs/${ID}/members`, async ({ request }) => {
+        const first = new URL(request.url).searchParams.get('skip') === '0';
+        if (first && (firstReads += 1) === 2) await reread.open;
+        const page = first ? all.slice(0, 100) : [all[99]!, ...all.slice(101)];
         return HttpResponse.json(page, { headers: { 'X-Total-Count': '150' } });
       }),
     );
+    expect(await screen.findByText(t('RANDOMIZER.members_loading'))).toBeInTheDocument();
+    await waitFor(() => expect(firstReads).toBe(2));
+    expect(screen.queryByText(t('RANDOMIZER.members_load_failed'))).not.toBeInTheDocument();
+    expect(screen.getByText(t('RANDOMIZER.members_loading'))).toBeInTheDocument();
+    expect(spinButton()).toBeDisabled();
+    reread.release();
     expect(await screen.findByText(t('RANDOMIZER.members_load_failed'))).toBeInTheDocument();
-    expect(reads).toBeGreaterThanOrEqual(4);
     expect(spinButton()).toBeDisabled();
   });
 

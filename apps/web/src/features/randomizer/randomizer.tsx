@@ -67,17 +67,18 @@ function RandomizerView({ clubId }: { clubId: string }) {
   // rows that moved across a page boundary while loading leave the list short or doubled, so it is read again once before it is trusted
   const total = membersQuery.data?.total ?? null;
   const mismatch = !hasNextPage && total !== null && loaded !== total;
-  const reread = useRef(false);
+  const rereadStarted = useRef(false);
+  const [reread, setReread] = useState(false);
   useEffect(() => {
-    if (!mismatch || isFetching || reread.current) return;
-    reread.current = true;
-    void refetch();
+    if (!mismatch || isFetching || rereadStarted.current) return;
+    rereadStarted.current = true;
+    void refetch().then(() => setReread(true));
   }, [mismatch, isFetching, refetch]);
 
   const candidates = useMemo(() => membersQuery.data?.items ?? [], [membersQuery.data]);
   const selected = useMemo(() => candidates.filter((m) => !excluded.has(m.userId)), [candidates, excluded]);
-  const loadingAll = (hasNextPage && !isFetchNextPageError) || (mismatch && isFetching);
-  const incomplete = isFetchNextPageError || (mismatch && !isFetching);
+  const loadingAll = (hasNextPage && !isFetchNextPageError) || (mismatch && (isFetching || !reread));
+  const incomplete = isFetchNextPageError || (mismatch && reread && !isFetching);
   const canSpin = selected.length >= MIN_PARTICIPANTS && !hasNextPage && !mismatch;
 
   const toggle = (userId: string) =>

@@ -43,4 +43,19 @@ describe('flatten and editItems', () => {
     const shifted: PagedData<{ userId: string }> = { pages: [page(2, 4), page(2, 4, 1)], pageParams: [0, 2] };
     expect(flatten(shifted).items.map((i) => i.userId)).toEqual(['u0', 'u1', 'u2']);
   });
+
+  it('keeps a null total null and puts added rows on the last page', () => {
+    const unknown: PagedData<{ userId: string }> = { pages: [page(2, null), page(1, null, 2)], pageParams: [0, 2] };
+    const edited = editItems(unknown, (items) => [...items, { userId: 'new' }]);
+    expect(edited!.pages.map((p) => p.total)).toEqual([null, null]);
+    expect(edited!.pages.map((p) => p.items.length)).toEqual([2, 2]);
+  });
+
+  it('continues from the loaded count after a local removal, before any refetch', () => {
+    const edited = editItems(data, (items) => items.filter((n) => n.userId !== 'u1'))!;
+    const bigger: PagedData<{ userId: string }> = { pages: [page(PAGE_SIZE, 230)], pageParams: [0] };
+    const removed = editItems(bigger, (items) => items.slice(1))!;
+    expect(nextSkip(removed.pages.at(-1)!, removed.pages)).toBe(PAGE_SIZE - 1);
+    expect(edited.pages).toHaveLength(2);
+  });
 });

@@ -308,6 +308,7 @@ apps/
           qr-code.tsx
           sections.tsx
           set-winner-visibility.test.tsx
+          sidebar.test.tsx
           sidebar.tsx
           structured-data.test.ts
           structured-data.ts
