@@ -159,6 +159,27 @@ describe('Randomizer', () => {
     expect(screen.getByText('Older')).toBeInTheDocument();
   });
 
+  it('still spins but blocks saving, with a note, when more than 1000 members are selected, and allows it again at exactly 1000', async () => {
+    const user = userEvent.setup();
+    const bodies = capture('post', `/clubs/${ID}/randomizer/sessions`, () => HttpResponse.json(sessionJson(), { status: 201 }));
+    setup(Array.from({ length: 1001 }, (_, i) => memberJson({ userId: `m${i}`, displayName: `Member ${i}` })));
+    await screen.findByText('Member 1000', {}, { timeout: 10000 });
+    await waitFor(() => expect(spinButton()).toBeEnabled());
+    await spin(user);
+    const save = screen.getByRole('button', { name: t('RANDOMIZER.save') });
+    expect(save).toBeDisabled();
+    const note = screen.getByRole('status');
+    expect(note).toHaveTextContent(t('RANDOMIZER.save_too_many').replace('{max}', '1000'));
+    expect(save).toHaveAttribute('aria-describedby', note.id);
+    await user.click(member('Member 0'));
+    expect(screen.queryByText(t('RANDOMIZER.save_too_many').replace('{max}', '1000'))).not.toBeInTheDocument();
+    expect(save).toBeEnabled();
+    expect(save).not.toHaveAttribute('aria-describedby');
+    await user.click(save);
+    await waitFor(() => expect(bodies).toHaveLength(1));
+    expect((bodies[0] as { candidates: unknown[] }).candidates).toHaveLength(1000);
+  }, 30000);
+
   it('toasts the backend detail and keeps the result when saving fails', async () => {
     const user = userEvent.setup();
     server.use(http.post(`${API}/clubs/${ID}/randomizer/sessions`, () => HttpResponse.json({ detail: 'Not a member' }, { status: 400 })));
