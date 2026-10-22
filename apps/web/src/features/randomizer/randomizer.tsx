@@ -22,6 +22,8 @@ const SPIN_MS = 2000;
 const MIN_PARTICIPANTS = 2;
 const HISTORY_SHOWN = 5;
 const PURPOSE_MAX = 200;
+// the backend rejects a saved session with more candidates than this, and in production only as a generic 422
+const MAX_SAVED_CANDIDATES = 1000;
 const LOCALES: Record<string, string> = { uk: 'uk-UA', en: 'en-US' };
 const TIME_ZONE = 'Europe/Kyiv';
 
@@ -79,6 +81,7 @@ function RandomizerView({ clubId }: { clubId: string }) {
   const selected = useMemo(() => candidates.filter((m) => !excluded.has(m.userId)), [candidates, excluded]);
   const loadingAll = (hasNextPage && !isFetchNextPageError) || (mismatch && (isFetching || !reread));
   const incomplete = isFetchNextPageError || (mismatch && reread && !isFetching);
+  const tooManyToSave = selected.length > MAX_SAVED_CANDIDATES;
   const canSpin = selected.length >= MIN_PARTICIPANTS && !hasNextPage && !mismatch;
 
   const toggle = (userId: string) =>
@@ -110,7 +113,7 @@ function RandomizerView({ clubId }: { clubId: string }) {
 
   const save = () =>
     run('save', async () => {
-      if (!result) return;
+      if (!result || tooManyToSave) return;
       const target = draw;
       const session = await api.randomizer.createSession(clubId, {
         purpose,
@@ -255,8 +258,14 @@ function RandomizerView({ clubId }: { clubId: string }) {
                 <p className="text-center text-white/50 text-xs">{t('error_min')}</p>
               ) : null}
 
+              {tooManyToSave ? (
+                <p id="save-too-many" role="status" className="text-center text-amber-300 text-xs">
+                  {t('save_too_many', { max: MAX_SAVED_CANDIDATES })}
+                </p>
+              ) : null}
+
               {result && !spinning ? (
-                <Button type="button" variant="outline" onClick={() => void save()} disabled={busy.has('save') || savedDraw === draw} className="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3 h-auto">
+                <Button type="button" variant="outline" onClick={() => void save()} aria-describedby={tooManyToSave ? 'save-too-many' : undefined} disabled={busy.has('save') || savedDraw === draw || tooManyToSave} className="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3 h-auto">
                   {busy.has('save') ? t('saving') : t('save')}
                 </Button>
               ) : null}
