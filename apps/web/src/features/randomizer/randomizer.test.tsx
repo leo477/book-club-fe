@@ -168,10 +168,13 @@ describe('Randomizer', () => {
     await spin(user);
     const save = screen.getByRole('button', { name: t('RANDOMIZER.save') });
     expect(save).toBeDisabled();
-    expect(screen.getByRole('status')).toHaveTextContent(t('RANDOMIZER.save_too_many').replace('{max}', '1000'));
+    const note = screen.getByRole('status');
+    expect(note).toHaveTextContent(t('RANDOMIZER.save_too_many').replace('{max}', '1000'));
+    expect(save).toHaveAttribute('aria-describedby', note.id);
     await user.click(member('Member 0'));
     expect(screen.queryByText(t('RANDOMIZER.save_too_many').replace('{max}', '1000'))).not.toBeInTheDocument();
     expect(save).toBeEnabled();
+    expect(save).not.toHaveAttribute('aria-describedby');
     await user.click(save);
     await waitFor(() => expect(bodies).toHaveLength(1));
     expect((bodies[0] as { candidates: unknown[] }).candidates).toHaveLength(1000);

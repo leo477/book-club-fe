@@ -259,13 +259,13 @@ function RandomizerView({ clubId }: { clubId: string }) {
               ) : null}
 
               {tooManyToSave ? (
-                <p role="status" className="text-center text-amber-300 text-xs">
+                <p id="save-too-many" role="status" className="text-center text-amber-300 text-xs">
                   {t('save_too_many', { max: MAX_SAVED_CANDIDATES })}
                 </p>
               ) : null}
 
               {result && !spinning ? (
-                <Button type="button" variant="outline" onClick={() => void save()} disabled={busy.has('save') || savedDraw === draw || tooManyToSave} className="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3 h-auto">
+                <Button type="button" variant="outline" onClick={() => void save()} aria-describedby={tooManyToSave ? 'save-too-many' : undefined} disabled={busy.has('save') || savedDraw === draw || tooManyToSave} className="w-full rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-medium py-3 h-auto">
                   {busy.has('save') ? t('saving') : t('save')}
                 </Button>
               ) : null}
