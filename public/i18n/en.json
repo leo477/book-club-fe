@@ -381,7 +381,8 @@
     "no_result_error": "No result to save",
     "members_loading": "Loading all members so the draw is fair…",
     "members_load_failed": "Could not load every member, so the draw would not be fair. Spinning is disabled.",
-    "members_retry": "Retry"
+    "members_retry": "Retry",
+    "save_too_many": "A draw can be saved for at most {max} selected members. Deselect some to save it."
   },
   "EVENTS": {
     "subtitle": "Discover and join upcoming book club gatherings",
