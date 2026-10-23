@@ -774,7 +774,7 @@
   "CHAT.error_invalid": "Message not sent: it is empty, too long or has unsupported characters.",
   "CHAT.error_generic": "The chat reported an error.",
   "CHAT.messages_log": "Chat messages",
-  "RANDOMIZER.save_too": "{count, plural, many {A draw can be saved for at most '{'max'}' selected members. Deselect some to save it.} other {A draw can be saved for at most '{'max'}' selected members. Deselect some to save it.}}",
+  "RANDOMIZER.save_limit": "A draw can be saved for at most {max} selected members. Deselect some to save it.",
   "QUIZ.create_questions_count": "{count, plural, one {question} many {questions} other {questions}}",
   "BOOK_VOTE.votes": "{count, plural, one {vote} other {votes}}"
 }

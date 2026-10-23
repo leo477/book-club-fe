@@ -159,6 +159,8 @@ describe('Randomizer', () => {
     expect(screen.getByText('Older')).toBeInTheDocument();
   });
 
+  const LIMIT_NOTE = 'Жеребкування можна зберегти щонайбільше для 1000 вибраних учасників. Приберіть частину, щоб зберегти.';
+
   it('still spins but blocks saving, with a note, when more than 1000 members are selected, and allows it again at exactly 1000', async () => {
     const user = userEvent.setup();
     const bodies = capture('post', `/clubs/${ID}/randomizer/sessions`, () => HttpResponse.json(sessionJson(), { status: 201 }));
@@ -169,10 +171,10 @@ describe('Randomizer', () => {
     const save = screen.getByRole('button', { name: t('RANDOMIZER.save') });
     expect(save).toBeDisabled();
     const note = screen.getByRole('status');
-    expect(note).toHaveTextContent(t('RANDOMIZER.save_too_many').replace('{max}', '1000'));
+    expect(note).toHaveTextContent(LIMIT_NOTE);
     expect(save).toHaveAttribute('aria-describedby', note.id);
     await user.click(member('Member 0'));
-    expect(screen.queryByText(t('RANDOMIZER.save_too_many').replace('{max}', '1000'))).not.toBeInTheDocument();
+    expect(screen.queryByText(LIMIT_NOTE)).not.toBeInTheDocument();
     expect(save).toBeEnabled();
     expect(save).not.toHaveAttribute('aria-describedby');
     await user.click(save);
