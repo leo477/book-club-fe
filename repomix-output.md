@@ -539,6 +539,13 @@ docs/
     PLAN-COOKIE-AUTH-2026-07-07.md
     REFACTOR-PLAN-2026-07-06.md
   migration/
+    rollout-payloads/
+      README.md
+      wave-1.json
+      wave-2.json
+      wave-3.json
+      wave-4.json
+      wave-5.json
     AUDIT-R13-FULL.md
     AUDIT-R13.md
     BASELINE-2026-10.md

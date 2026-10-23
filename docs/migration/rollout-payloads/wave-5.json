@@ -1,0 +1,130 @@
+{
+  "items": [
+    {
+      "operation": "upsert",
+      "key": "strangler",
+      "value": {
+        "version": 15,
+        "enabled": true,
+        "routes": {
+          "/__strangler-probe": {
+            "target": "next",
+            "percent": 100
+          },
+          "/privacy": {
+            "target": "next",
+            "percent": 100
+          },
+          "/terms": {
+            "target": "next",
+            "percent": 100
+          },
+          "/clubs": {
+            "target": "next",
+            "percent": 100
+          },
+          "/clubs/:id": {
+            "target": "next",
+            "percent": 100
+          },
+          "/": {
+            "target": "next",
+            "percent": 100
+          },
+          "/events": {
+            "target": "next",
+            "percent": 100
+          },
+          "/events/:id": {
+            "target": "next",
+            "percent": 100
+          },
+          "/profile": {
+            "target": "next",
+            "percent": 100
+          },
+          "/support": {
+            "target": "next",
+            "percent": 100
+          },
+          "/support/new": {
+            "target": "next",
+            "percent": 100
+          },
+          "/login": {
+            "target": "next",
+            "percent": 100
+          },
+          "/register": {
+            "target": "next",
+            "percent": 100
+          },
+          "/auth/callback": {
+            "target": "next",
+            "percent": 100
+          },
+          "/clubs/create": {
+            "target": "next",
+            "percent": 100
+          },
+          "/clubs/:id/edit": {
+            "target": "next",
+            "percent": 100
+          },
+          "/clubs/:id/events/create": {
+            "target": "next",
+            "percent": 100
+          },
+          "/events/:id/edit": {
+            "target": "next",
+            "percent": 100
+          },
+          "/clubs/:id/manage": {
+            "target": "next",
+            "percent": 100
+          },
+          "/clubs/:id/randomizer": {
+            "target": "next",
+            "percent": 100
+          },
+          "/clubs/:id/quizzes": {
+            "target": "next",
+            "percent": 100
+          },
+          "/clubs/:id/quizzes/create": {
+            "target": "next",
+            "percent": 100
+          },
+          "/clubs/:id/quizzes/:quizId": {
+            "target": "next",
+            "percent": 100
+          },
+          "/clubs/:id/quizzes/:quizId/edit": {
+            "target": "next",
+            "percent": 100
+          },
+          "/clubs/:id/quizzes/:quizId/preview": {
+            "target": "next",
+            "percent": 100
+          },
+          "/clubs/:id/quizzes/:quizId/session": {
+            "target": "next",
+            "percent": 100
+          },
+          "/clubs/:id/quizzes/:quizId/leaderboard": {
+            "target": "next",
+            "percent": 100
+          },
+          "/chats": {
+            "target": "next",
+            "percent": 100
+          },
+          "shell.chatWidget": {
+            "target": "next",
+            "percent": 100
+          }
+        }
+      }
+    }
+  ]
+}
