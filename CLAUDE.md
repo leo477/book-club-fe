@@ -10,7 +10,7 @@ This project uses **Repomix** to provide a full map of the codebase.
 - `src/app/core/` — Core services, guards, interceptors, models
 - `src/app/shared/` — Shared UI components, pipes, directives
 - `src/app/layout/` — Shell, header, footer
-- `public/i18n/` — Translation files (en.json, uk.json)
+- `packages/i18n/locales/` — Translation files (ICU; en.json, uk.json). `public/i18n/` is generated for Angular and gitignored
 - `supabase/migrations/` — SQL migrations for backend
 
 ## How to Run

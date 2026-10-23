@@ -2,14 +2,10 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { IntlMessageFormat } from 'intl-messageformat';
 import { describe, expect, it } from 'vitest';
-import { applyOverrides, buildIcu, type Tree } from '../scripts/icu.ts';
 
-const load = (locale: string): Tree =>
-  JSON.parse(readFileSync(resolve(__dirname, '../../../public/i18n', `${locale}.json`), 'utf8'));
-const loadOverrides = (locale: string): Tree =>
-  JSON.parse(readFileSync(resolve(__dirname, '../overrides', `${locale}.json`), 'utf8'));
-const built = (locale: string) => buildIcu(applyOverrides(load(locale), loadOverrides(locale)).merged);
-const messages = { en: built('en').messages, uk: built('uk').messages };
+const load = (locale: string): Record<string, string> =>
+  JSON.parse(readFileSync(resolve(__dirname, '../locales', `${locale}.json`), 'utf8'));
+const messages = { en: load('en'), uk: load('uk') };
 const render = (locale: 'en' | 'uk', key: string, count: number) =>
   new IntlMessageFormat(messages[locale][key] as string, locale).format({ count });
 
@@ -28,7 +24,7 @@ describe('uk BOOK_VOTE.votes', () => {
   });
 });
 
-describe('uk QUIZ.create_questions_count (override adds few and other)', () => {
+describe('uk QUIZ.create_questions_count', () => {
   it.each([
     [0, 'запитань'],
     [1, 'запитання'],
