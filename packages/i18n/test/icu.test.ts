@@ -14,6 +14,12 @@ describe('locale parity', () => {
     expect(Object.keys(messages.en).sort()).toEqual(Object.keys(messages.uk).sort());
   });
 
+  it('has no plural-suffixed keys (they would be read as CLDR forms by the ngx generator)', () => {
+    for (const locale of Object.values(messages)) {
+      expect(Object.keys(locale).filter((k) => /_(zero|one|two|few|many|other)$/.test(k))).toEqual([]);
+    }
+  });
+
   it('has no empty values', () => {
     for (const locale of Object.values(messages)) {
       for (const [key, value] of Object.entries(locale)) expect(value.trim(), key).not.toBe('');
