@@ -20,7 +20,7 @@ style:
 i18n:
   - changed-files:
       - any-glob-to-any-file:
-          - public/i18n/**
+          - packages/i18n/locales/**
           - scripts/**
 
 ci:

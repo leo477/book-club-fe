@@ -1,22 +1,22 @@
 /**
- * Extracts translation keys from Angular templates and TypeScript files.
- * Scans for:
- *   - '{{ "KEY" | translate }}' and '[attr]="\'KEY\' | translate"' in HTML
- *   - translate.instant('KEY') and translate.get('KEY') in TS
+ * Extracts translation keys from Angular templates and TypeScript files (src/) and adds the ones
+ * missing from packages/i18n/locales/{uk,en}.json with an empty value, to be filled in manually.
+ * Existing values are never touched. There is no --clean: the locale files are shared with apps/web,
+ * and this scan only sees the Angular app, so it cannot tell which keys are unused.
  *
- * Merges keys into existing JSON files, preserving existing values.
- * New keys get an empty string value (to be filled in manually).
- * Use --clean flag to remove keys no longer found in source.
- *
- * Usage: node scripts/extract-i18n.mjs [--clean]
+ * Usage: node scripts/extract-i18n.mjs
  */
 
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
 import { join, extname } from 'path';
 
-const CLEAN = process.argv.includes('--clean');
+if (process.argv.includes('--clean')) {
+  console.error('--clean is not supported: the locale files are shared with apps/web (SCRUM-74).');
+  process.exit(1);
+}
+
 const SRC_DIR = './src';
-const OUTPUT_FILES = ['./public/i18n/uk.json', './public/i18n/en.json'];
+const OUTPUT_FILES = ['./packages/i18n/locales/uk.json', './packages/i18n/locales/en.json'];
 
 // Patterns to extract keys from templates and TS files
 const PATTERNS = [
@@ -53,44 +53,6 @@ function extractKeys(content) {
   return keys;
 }
 
-function toNested(keys) {
-  const result = {};
-  for (const key of [...keys].sort()) {
-    const parts = key.split('.');
-    let current = result;
-    for (let i = 0; i < parts.length - 1; i++) {
-      if (!current[parts[i]] || typeof current[parts[i]] !== 'object') {
-        current[parts[i]] = {};
-      }
-      current = current[parts[i]];
-    }
-    const leaf = parts[parts.length - 1];
-    if (current[leaf] === undefined) {
-      current[leaf] = '';
-    }
-  }
-  return result;
-}
-
-function mergeDeep(existing, extracted) {
-  const result = {};
-  for (const [key, val] of Object.entries(extracted)) {
-    if (typeof val === 'object') {
-      result[key] = mergeDeep(existing[key] ?? {}, val);
-    } else {
-      result[key] = existing[key] !== undefined ? existing[key] : '';
-    }
-  }
-  if (!CLEAN) {
-    for (const [key, val] of Object.entries(existing)) {
-      if (result[key] === undefined) {
-        result[key] = val;
-      }
-    }
-  }
-  return result;
-}
-
 const files = collectFiles(SRC_DIR);
 const allKeys = new Set();
 
@@ -103,17 +65,11 @@ for (const file of files) {
 
 console.log(`Found ${allKeys.size} translation keys in ${files.length} files.`);
 
-const extractedNested = toNested(allKeys);
-
 for (const outputPath of OUTPUT_FILES) {
-  let existing = {};
-  try {
-    existing = JSON.parse(readFileSync(outputPath, 'utf8'));
-  } catch {
-    console.warn(`  Could not read ${outputPath}, creating fresh.`);
-  }
-
-  const merged = mergeDeep(existing, extractedNested);
-  writeFileSync(outputPath, JSON.stringify(merged, null, 2) + '\n', 'utf8');
-  console.log(`  ✅ Updated ${outputPath}${CLEAN ? ' (cleaned)' : ''}`);
+  const messages = JSON.parse(readFileSync(outputPath, 'utf8'));
+  const base = (key) => key.replace(/_(zero|one|two|few|many|other)$/, '');
+  const added = [...allKeys].filter((key) => !(key in messages) && !(base(key) in messages)).sort();
+  for (const key of added) messages[key] = '';
+  writeFileSync(outputPath, JSON.stringify(messages, null, 2) + '\n', 'utf8');
+  console.log(`  Updated ${outputPath} (${added.length} added)`);
 }

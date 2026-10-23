@@ -1,5 +1,5 @@
-import en from '../../../public/i18n/en.json';
-import uk from '../../../public/i18n/uk.json';
+import en from '../locales/en.json';
+import uk from '../locales/uk.json';
 
 export const locales = { en, uk } as const;
 export type Locale = keyof typeof locales;

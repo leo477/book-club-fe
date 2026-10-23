@@ -672,11 +672,11 @@ packages/
     tsconfig.json
     vitest.config.ts
   i18n/
-    overrides/
+    locales/
       en.json
       uk.json
     scripts/
-      build-icu.mjs
+      build-ngx.mjs
       icu.ts
     src/
       index.ts
@@ -689,9 +689,6 @@ packages/
     tsconfig.json
     vitest.config.ts
 public/
-  i18n/
-    en.json
-    uk.json
   favicon.ico
   favicon.svg
   googleea44a5e89a1de9d7.html

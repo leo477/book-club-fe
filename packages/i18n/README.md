@@ -1,8 +1,8 @@
 # @book-club/i18n
 
-Converts the Angular i18n JSON (`../../public/i18n/{en,uk}.json`, read via the relative path `../../../public/i18n` from `src/` and `test/`) into ICU MessageFormat.
+`locales/{en,uk}.json` are the source of truth for both apps: flat ICU MessageFormat (`"QUIZ.create_questions_count": "{count, plural, ...}"`).
 
-- `dist/` is generated and gitignored: build it before anything imports `@book-club/i18n/*.icu.json`:
-  `npm run build -w @book-club/i18n` (`npm test` runs it automatically via `pretest`).
-- Moving or renaming `public/i18n` breaks this package.
-- `overrides/{en,uk}.json` add keys missing from the frozen source (currently the uk `few`/`other` forms of `QUIZ.create_questions_count`). Overrides never replace source keys; the build warns when the source gains a key, and the tests fail. Delete the override entry then.
+- `apps/web` imports them as `@book-club/i18n/{en,uk}.icu.json`.
+- The Angular app (until R14) loads ngx-translate JSON from `public/i18n/`, which is gitignored and generated from the locales by `npm run build:ngx -w @book-club/i18n` (root `prestart`/`prebuild`/`prewatch` run it). Never edit `public/i18n`.
+- Add keys to both locale files; `test/icu.test.ts` enforces identical key sets and that the ngx output round-trips.
+- `scripts/extract-i18n.mjs` (root) only adds missing Angular keys; it has no `--clean`.

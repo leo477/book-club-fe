@@ -1,3 +1,5 @@
+import { parse, TYPE, type MessageFormatElement } from '@formatjs/icu-messageformat-parser';
+
 const PLURAL_SUFFIX = /^(.*)_(zero|one|two|few|many|other)$/;
 const CATEGORY_ORDER = ['zero', 'one', 'two', 'few', 'many', 'other'];
 
@@ -11,24 +13,6 @@ export function flatten(obj: Tree, prefix = ''): Record<string, string> {
     else out[path] = String(value);
   }
   return out;
-}
-
-/**
- * Adds override keys that the source lacks (the Angular i18n JSON is frozen). Keys the source already
- * defines are never replaced; they are returned in `redundant` so the override can be deleted.
- */
-export function applyOverrides(source: Tree, overrides: Tree) {
-  const flat = flatten(source);
-  const added: string[] = [];
-  const redundant: string[] = [];
-  for (const [key, value] of Object.entries(flatten(overrides))) {
-    if (key in flat) redundant.push(key);
-    else {
-      flat[key] = value;
-      added.push(key);
-    }
-  }
-  return { merged: flat as Tree, added, redundant };
 }
 
 function escapeIcu(text: string): string {
@@ -68,4 +52,39 @@ export function buildIcu(source: Tree, { pluralArg = 'count' } = {}) {
     messages[base] = `{${pluralArg}, plural, ${body}}`;
   }
   return { messages, sourceKeyCount: Object.keys(flat).length, pluralGroups: groups.size };
+}
+
+function ngxBody(elements: MessageFormatElement[]): string {
+  return elements
+    .map((el) => {
+      if (el.type === TYPE.literal) return el.value;
+      if (el.type === TYPE.argument) return `{{ ${el.value} }}`;
+      throw new Error(`unsupported ICU element type ${el.type}`);
+    })
+    .join('');
+}
+
+// Inverse of buildIcu for the ngx-translate JSON the Angular app loads until R14: nested keys, `_<category>` plural suffixes.
+export function toNgx(messages: Record<string, string>): Tree {
+  const tree: Tree = {};
+  const put = (key: string, value: string) => {
+    const path = key.split('.');
+    const leaf = path.pop() as string;
+    let node = tree;
+    for (const part of path) {
+      const next = (node[part] ??= {});
+      if (typeof next === 'string') throw new Error(`key ${key} collides with ${part}`);
+      node = next;
+    }
+    if (leaf in node) throw new Error(`duplicate key ${key}`);
+    node[leaf] = value;
+  };
+  for (const [key, message] of Object.entries(messages)) {
+    const ast = parse(message);
+    const [first] = ast;
+    if (ast.length === 1 && first?.type === TYPE.plural) {
+      for (const [category, option] of Object.entries(first.options)) put(`${key}_${category}`, ngxBody(option.value));
+    } else put(key, ngxBody(ast));
+  }
+  return tree;
 }
