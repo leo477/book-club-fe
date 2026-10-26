@@ -39,6 +39,9 @@ The content is organized as follows:
 # Directory Structure
 ````
 .github/
+  actions/
+    parity-setup/
+      action.yml
   codeql/
     codeql-config.yml
   workflows/
