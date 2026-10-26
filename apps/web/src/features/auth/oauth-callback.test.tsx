@@ -7,6 +7,9 @@ import { StranglerProvider } from '@/strangler/context';
 import { sessionKey } from '@/features/clubs/use-session';
 import { OAuthCallback } from './oauth-callback';
 
+const track = vi.hoisted(() => vi.fn());
+vi.mock('@/lib/analytics', () => ({ trackEvent: track }));
+
 const nav = vi.hoisted(() => ({ hard: vi.fn(), replaceHard: vi.fn(), router: vi.fn() }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ replace: nav.router }) }));
 vi.mock('@/lib/navigate', () => ({ hardNavigate: nav.hard, replaceNavigate: nav.replaceHard }));
@@ -45,6 +48,7 @@ beforeEach(() => {
   nav.hard.mockReset();
   nav.replaceHard.mockReset();
   nav.router.mockReset();
+  track.mockReset();
   localStorage.clear();
   sessionStorage.clear();
   vi.restoreAllMocks();
@@ -233,5 +237,60 @@ describe('OAuthCallback', () => {
     expect(localStorage.length + sessionStorage.length).toBe(0);
     expect(document.cookie).toBe('');
     expect(JSON.stringify(queryClient.getQueryCache().getAll().map((q) => q.state.data))).not.toContain('jwt-');
+  });
+
+  describe('failure diagnostics', () => {
+    const reported = (message: string) => expect(track).toHaveBeenCalledWith('js_error', { kind: 'error', message });
+    const invalidCode = () => HttpResponse.json({ detail: { error: 'Invalid or expired OAuth code', code: 'INVALID_OAUTH_CODE' } }, { status: 400 });
+
+    it('classifies INVALID_OAUTH_CODE without a stored verifier', async () => {
+      visit('?code=secret-code');
+      mockApi({ exchange: invalidCode });
+      renderWithProviders(<OAuthCallback />);
+      await waitFor(() => expect(nav.replaceHard).toHaveBeenCalled());
+      reported('oauth_exchange:invalid_code;verifier=0');
+    });
+
+    it('classifies INVALID_OAUTH_CODE with a stored verifier', async () => {
+      visit('?code=secret-code');
+      sessionStorage.setItem('bc_pkce_verifier', 'secret-verifier'.padEnd(43, 'v'));
+      mockApi({ exchange: invalidCode });
+      renderWithProviders(<OAuthCallback />);
+      await waitFor(() => expect(nav.replaceHard).toHaveBeenCalled());
+      reported('oauth_exchange:invalid_code;verifier=1');
+      expect(JSON.stringify(track.mock.calls)).not.toMatch(/secret/);
+    });
+
+    it('classifies a network failure', async () => {
+      visit('?code=c');
+      mockApi({ exchange: () => HttpResponse.error() });
+      renderWithProviders(<OAuthCallback />);
+      await waitFor(() => expect(nav.replaceHard).toHaveBeenCalled());
+      reported('oauth_exchange:network;verifier=0');
+    });
+
+    it('classifies another HTTP status', async () => {
+      visit('?code=c');
+      mockApi({ exchange: () => new HttpResponse(null, { status: 500 }) });
+      renderWithProviders(<OAuthCallback />);
+      await waitFor(() => expect(nav.replaceHard).toHaveBeenCalled());
+      reported('oauth_exchange:http_500;verifier=0');
+    });
+
+    it('classifies a profile failure after a successful exchange', async () => {
+      visit('?code=c');
+      mockApi({ me: () => HttpResponse.json({ detail: 'nope' }, { status: 401 }) });
+      renderWithProviders(<OAuthCallback />);
+      await waitFor(() => expect(nav.replaceHard).toHaveBeenCalled());
+      reported('oauth_exchange:me_failed;verifier=0');
+    });
+
+    it('reports nothing on success', async () => {
+      visit('?code=c');
+      mockApi();
+      renderWithProviders(<OAuthCallback />);
+      await waitFor(() => expect(nav.hard).toHaveBeenCalled());
+      expect(track).not.toHaveBeenCalled();
+    });
   });
 });
