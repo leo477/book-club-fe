@@ -33,7 +33,7 @@ function summarise(seo: SeoSnapshot, origins: string[]): string {
 }
 
 // canonical/og:url are the production origin (SEO.site_url), never the deployment under test
-const SITE = (JSON.parse(readFileSync(path.join(process.cwd(), 'public', 'i18n', 'en.json'), 'utf-8')) as { SEO: { site_url: string } }).SEO.site_url;
+const SITE = (JSON.parse(readFileSync(path.join(process.cwd(), 'packages', 'i18n', 'locales', 'en.json'), 'utf-8')) as Record<string, string>)['SEO.site_url'];
 
 function assertTarget(project: string, route: string, seo: SeoSnapshot): void {
   const expected = expectations[project]?.[route];
