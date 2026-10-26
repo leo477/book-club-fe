@@ -66,7 +66,7 @@ jobs:
         env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
-          if git diff --name-only "$BASE_SHA" HEAD | grep -qE '^(src/|public/|packages/|e2e/parity/|angular\.json$|vercel\.json$|playwright\.parity\.config\.ts$|package-lock\.json$|\.github/workflows/parity\.yml$|\.github/actions/parity-setup/)'; then
+          if git diff --name-only --no-renames "$BASE_SHA" HEAD | grep -qE '^(src/|public/|packages/|e2e/parity/|angular\.json$|vercel\.json$|playwright\.parity\.config\.ts$|package-lock\.json$|package\.json$|tsconfig[^/]*\.json$|postcss\.config\.json$|proxy\.conf\.json$|\.github/workflows/parity\.yml$|\.github/actions/parity-setup/)'; then
             echo "legacy=true" >> "$GITHUB_OUTPUT"
           else
             echo "legacy=false" >> "$GITHUB_OUTPUT"
@@ -248,11 +248,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Require every parity job to pass (a skipped legacy job counts as passed)
+      - name: Require every parity job to pass (only the legacy job may be skipped)
         env:
-          RESULTS: ${{ join(needs.*.result, ' ') }}
+          CHANGES: ${{ needs.changes.result }}
+          NEXT: ${{ needs.next.result }}
+          LEGACY: ${{ needs.legacy.result }}
+          COMPARE: ${{ needs.compare.result }}
         run: |
-          echo "$RESULTS"
-          case " $RESULTS " in
-            *" failure "*|*" cancelled "*) exit 1 ;;
-          esac
+          echo "changes=$CHANGES next=$NEXT legacy=$LEGACY compare=$COMPARE"
+          [ "$CHANGES" = success ] && [ "$NEXT" = success ] && [ "$COMPARE" = success ] || exit 1
+          [ "$LEGACY" = success ] || [ "$LEGACY" = skipped ] || exit 1
