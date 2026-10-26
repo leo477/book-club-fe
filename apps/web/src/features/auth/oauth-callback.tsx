@@ -1,10 +1,12 @@
 'use client';
 
+import { BackendHttpError, RequestTimeoutError } from '@book-club/api-client';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useTranslations } from 'next-intl';
 import { useEffect } from 'react';
 import { Spinner } from '@/components/ui/spinner';
 import { sessionKey } from '@/features/clubs/use-session';
+import { trackEvent } from '@/lib/analytics';
 import { api } from '@/lib/api';
 import { setFlash } from '@/lib/flash';
 import { hardNavigate } from '@/lib/navigate';
@@ -24,14 +26,28 @@ interface Attempt {
 // must join the running attempt (the URL is empty by then) instead of bouncing to /login; a different code starts its own.
 let current: Attempt | null = null;
 
+function exchangeFailure(err: unknown): string {
+  if (err instanceof RequestTimeoutError) return 'timeout';
+  if (err instanceof BackendHttpError) {
+    if (err.status === 0) return 'network';
+    return err.code === 'INVALID_OAUTH_CODE' ? 'invalid_code' : `http_${err.status}`;
+  }
+  return 'unknown';
+}
+
 async function exchange(queryClient: QueryClient, code: string | null): Promise<boolean> {
   if (!code) return false;
+  const verifier = takeVerifier();
+  let stage = 'exchange';
   try {
-    await api.auth.exchangeOAuthSession(code, takeVerifier());
+    await api.auth.exchangeOAuthSession(code, verifier);
+    stage = 'me';
     queryClient.setQueryData(sessionKey, await api.auth.me({ skipAuthRedirect: true }));
     return true;
-  } catch {
-    // any failure of the exchange or of the profile load is the same "OAuth failed" outcome
+  } catch (err) {
+    // class and verifier presence only: never the code, the verifier or the response body
+    const cause = stage === 'me' ? 'me_failed' : exchangeFailure(err);
+    trackEvent('js_error', { kind: 'error', message: `oauth_exchange:${cause};verifier=${verifier ? 1 : 0}` });
     return false;
   }
 }
