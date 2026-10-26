@@ -24,19 +24,14 @@ runs:
         path: ~/.cache/ms-playwright
         key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
     - name: Install Chromium and system dependencies
-      # azure.archive.ubuntu.com sometimes stalls a download; the apt timeouts turn an idle stall into a fast retry. A slow-but-moving download (the 25.7 kB/s, 13 min one) is not rescued: it now fails at about 10 min instead of finishing late and timing the job out; no step timeout-minutes (not allowed in composite actions), the loop is bounded to about 11 min worst case and the job timeouts remain
+      # the azure Ubuntu mirror serves ~45 kB/s, so a full apt install takes 6-13 min: the jobs get enough time instead of killing apt (an unprivileged timeout cannot stop root apt and leaves the dpkg lock held)
       shell: bash
       env:
         PW_INSTALL: ${{ steps.pw-cache.outputs.cache-hit == 'true' && 'install-deps' || 'install --with-deps' }}
       run: |
         printf 'Acquire::Retries "3";\nAcquire::http::Timeout "20";\nAcquire::https::Timeout "20";\nDPkg::Lock::Timeout "60";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-timeouts > /dev/null
-        for attempt in 1 2; do
-          # shellcheck disable=SC2086
-          timeout --kill-after=15 -s TERM 300 npx playwright $PW_INSTALL chromium && exit 0
-          echo "Playwright $PW_INSTALL failed (attempt $attempt)"
-          sudo dpkg --configure -a || true
-        done
-        exit 1
+        # shellcheck disable=SC2086
+        npx playwright $PW_INSTALL chromium
     - name: Start mock backend and Edge Config stub
       shell: bash
       run: |
