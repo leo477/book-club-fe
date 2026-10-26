@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers';
 import { getRequestConfig } from 'next-intl/server';
-import { LOCALE_COOKIE, nest, parseLocale } from './locale';
+import { LOCALE_COOKIE, parseLocale } from './locale';
 
 const loaders = {
   uk: () => import('@book-club/i18n/uk.icu.json'),
@@ -9,6 +9,5 @@ const loaders = {
 
 export default getRequestConfig(async () => {
   const locale = parseLocale((await cookies()).get(LOCALE_COOKIE)?.value);
-  const flat = (await loaders[locale]()).default as Record<string, string>;
-  return { locale, messages: nest(flat) };
+  return { locale, messages: (await loaders[locale]()).default };
 });

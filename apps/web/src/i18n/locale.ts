@@ -31,3 +31,11 @@ export function nest(flat: Record<string, string>): Tree {
   }
   return root;
 }
+
+/** Reads a static (argument-free) message from a catalog that is flat in tests and nested + precompiled in the build; those compile to plain strings. */
+export function staticMessage(catalog: unknown, key: string): string | undefined {
+  const flat = (catalog as Record<string, unknown>)[key];
+  if (typeof flat === 'string') return flat;
+  const leaf = key.split('.').reduce<unknown>((node, part) => (node && typeof node === 'object' ? (node as Record<string, unknown>)[part] : undefined), catalog);
+  return typeof leaf === 'string' ? leaf : undefined;
+}
