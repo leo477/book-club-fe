@@ -260,7 +260,7 @@ function RandomizerView({ clubId }: { clubId: string }) {
 
               {tooManyToSave ? (
                 <p id="save-too-many" role="status" className="text-center text-amber-300 text-xs">
-                  {t('save_too_many', { max: MAX_SAVED_CANDIDATES })}
+                  {t('save_limit', { max: MAX_SAVED_CANDIDATES })}
                 </p>
               ) : null}
 
