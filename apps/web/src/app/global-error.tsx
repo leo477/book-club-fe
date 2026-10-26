@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { staticMessage } from '@/i18n/locale';
 import { reportJsError } from '@/lib/analytics';
 
 type Copy = { message: string; retry: string };
@@ -25,8 +26,9 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
     let live = true;
     loaders[locale]()
       .then((m) => {
-        const flat = m.default as Record<string, string>;
-        if (live && flat['ERRORS.unexpected'] && flat['ERRORS.retry']) setCopy({ message: flat['ERRORS.unexpected'], retry: flat['ERRORS.retry'] });
+        const message = staticMessage(m.default, 'ERRORS.unexpected');
+        const retry = staticMessage(m.default, 'ERRORS.retry');
+        if (live && message && retry) setCopy({ message, retry });
       })
       .catch(() => {
         // the built-in copy stays

@@ -1,5 +1,5 @@
 // Reports gzip -9 first-load JS (every module <script src> in the served HTML) for the production build.
-// Usage: npm run build && npm run size [-- --budget 200 --ceiling 250 --routes /clubs,/privacy,/clubs/:id=/clubs/<uuid>]
+// Usage: npm run build && npm run size [-- --budget 190 --ceiling 250 --routes /clubs,/privacy,/clubs/:id=/clubs/<uuid>]
 // A route may be written `pattern=path` when the served path differs from the manifest pattern (dynamic segments).
 // --budget is the target (warns above it); --ceiling is the failing threshold (env FIRST_LOAD_CEILING_KB, default 250).
 import { spawn } from 'node:child_process';
@@ -15,7 +15,8 @@ const opt = (name, fallback) => {
   const i = args.indexOf(`--${name}`);
   return i >= 0 ? args[i + 1] : fallback;
 };
-const budgetKb = Number(opt('budget', process.env.FIRST_LOAD_BUDGET_KB ?? '200'));
+// 190 = /clubs measured 186.2 KB gzip-9 after precompiling the ICU messages (SCRUM-193; was 194.8) plus ~4 KB headroom; the 181 KB goal is not met yet.
+const budgetKb = Number(opt('budget', process.env.FIRST_LOAD_BUDGET_KB ?? '190'));
 const ceilingKb = Number(opt('ceiling', process.env.FIRST_LOAD_CEILING_KB ?? '250'));
 if (!(ceilingKb >= budgetKb)) {
   console.error(`--ceiling (${ceilingKb} KB) must be >= --budget (${budgetKb} KB)`);

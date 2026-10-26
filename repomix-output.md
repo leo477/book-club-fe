@@ -440,6 +440,7 @@ apps/
       i18n/
         locale.test.ts
         locale.ts
+        precompile.test.ts
         request.ts
       lib/
         analytics.test.ts
