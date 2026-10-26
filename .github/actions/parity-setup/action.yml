@@ -24,8 +24,7 @@ runs:
         path: ~/.cache/ms-playwright
         key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
     - name: Install Chromium and system dependencies
-      # azure.archive.ubuntu.com sometimes stalls a download; the apt timeouts turn an idle stall into a fast retry. A slow-but-moving download (the 25.7 kB/s, 13 min one) is not rescued: it now fails at about 10 min instead of finishing late and timing the job out
-      timeout-minutes: 12
+      # azure.archive.ubuntu.com sometimes stalls a download; the apt timeouts turn an idle stall into a fast retry. A slow-but-moving download (the 25.7 kB/s, 13 min one) is not rescued: it now fails at about 10 min instead of finishing late and timing the job out; no step timeout-minutes (not allowed in composite actions), the loop is bounded to about 11 min worst case and the job timeouts remain
       shell: bash
       env:
         PW_INSTALL: ${{ steps.pw-cache.outputs.cache-hit == 'true' && 'install-deps' || 'install --with-deps' }}
