@@ -1,0 +1,34 @@
+name: Playwright cache warm
+
+# PRs can only read caches from their base branch and the default branch, so the browser and apt caches are saved here, on develop/main pushes, instead of on the PR merge ref. The install logic lives only in .github/actions/parity-setup (warm input).
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - package-lock.json
+      - .github/actions/parity-setup/**
+      - .github/workflows/playwright-cache.yml
+  schedule:
+    # caches not accessed for 7 days are evicted
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: playwright-cache-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  warm:
+    name: Warm Playwright and apt caches
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v4
+      - name: Parity setup (warm)
+        uses: ./.github/actions/parity-setup
+        with:
+          warm: 'true'

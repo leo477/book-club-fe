@@ -1,5 +1,9 @@
 name: Parity setup
 description: Node, dependencies, Chromium and the hermetic mock backend plus Edge Config stub shared by every Parity job.
+inputs:
+  warm:
+    description: "'true' only from .github/workflows/playwright-cache.yml: save the apt and Playwright caches and skip starting the mock servers."
+    default: 'false'
 runs:
   using: composite
   steps:
@@ -17,22 +21,58 @@ runs:
     - name: Install dependencies
       shell: bash
       run: npm ci
+    - name: Export image id for the apt cache key
+      shell: bash
+      run: echo "APT_IMAGE=${ImageVersion:-unknown}" >> "$GITHUB_ENV"
+    - name: Restore apt packages
+      # restore-only outside the warm job: pull_request caches are scoped to the PR merge ref and no one else can read them
+      if: inputs.warm != 'true'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/apt-archives/*.deb
+        key: ${{ runner.os }}-apt-${{ env.APT_IMAGE }}-${{ hashFiles('package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-apt-${{ env.APT_IMAGE }}-
+          ${{ runner.os }}-apt-
+    - name: Cache apt packages
+      if: inputs.warm == 'true'
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/apt-archives/*.deb
+        key: ${{ runner.os }}-apt-${{ env.APT_IMAGE }}-${{ hashFiles('package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-apt-${{ env.APT_IMAGE }}-
+          ${{ runner.os }}-apt-
+    - name: Restore Playwright browsers
+      id: pw-restore
+      if: inputs.warm != 'true'
+      uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-playwright-
     - name: Cache Playwright browsers
       id: pw-cache
+      if: inputs.warm == 'true'
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ~/.cache/ms-playwright
         key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-playwright-
     - name: Install Chromium and system dependencies
-      # the azure Ubuntu mirror serves ~45 kB/s, so a full apt install takes 6-13 min: the jobs get enough time instead of killing apt (an unprivileged timeout cannot stop root apt and leaves the dpkg lock held)
+      # the azure Ubuntu mirror serves ~45 kB/s, so a full apt install takes 6-13 min: the jobs get enough time instead of killing apt (an unprivileged timeout cannot stop root apt and leaves the dpkg lock held); the .deb archive is cached so only packages missing from it are downloaded
       shell: bash
       env:
-        PW_INSTALL: ${{ steps.pw-cache.outputs.cache-hit == 'true' && 'install-deps' || 'install --with-deps' }}
+        PW_INSTALL: ${{ (steps.pw-restore.outputs.cache-hit == 'true' || steps.pw-cache.outputs.cache-hit == 'true') && 'install-deps' || 'install --with-deps' }}
       run: |
-        printf 'Acquire::Retries "3";\nAcquire::http::Timeout "20";\nAcquire::https::Timeout "20";\nDPkg::Lock::Timeout "60";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-timeouts > /dev/null
+        mkdir -p "$HOME/apt-archives/partial"
+        printf 'Acquire::Retries "3";\nAcquire::http::Timeout "20";\nAcquire::https::Timeout "20";\nDPkg::Lock::Timeout "60";\nDir::Cache::Archives "%s/apt-archives/";\nAPT::Keep-Downloaded-Packages "true";\n' "$HOME" | sudo tee /etc/apt/apt.conf.d/99-ci-timeouts > /dev/null
         # shellcheck disable=SC2086
         npx playwright $PW_INSTALL chromium
     - name: Start mock backend and Edge Config stub
+      if: inputs.warm != 'true'
       shell: bash
       run: |
         nohup node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON e2e/parity/r6/mock-backend.ts 9922 > mock-backend.log 2>&1 &
