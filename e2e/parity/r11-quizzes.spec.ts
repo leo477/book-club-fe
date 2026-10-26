@@ -3,7 +3,7 @@
 // no seeded persona is involved. Locators are shared by both DOMs (data-testid values that exist in both, roles, labels, uk/en
 // text); expectations that differ by design are written per target and listed in docs/migration/PARITY-R11.md (D-1..).
 import AxeBuilder from '@axe-core/playwright';
-import type { Locator, Page } from '@playwright/test';
+import type { Locator, Page, Request } from '@playwright/test';
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { expect, test } from './bypass';
 import { LANG_COOKIE, watchConsole } from './r6/helpers';
@@ -697,6 +697,29 @@ test.describe('leaderboard', () => {
   });
 });
 
+/** Board requests that left the page and have not settled yet; the mock logs a request on receipt, before the client has handled the reply. */
+function trackBoard(page: Page): () => number {
+  let pending = 0;
+  const isBoard = (r: Request) => /\/leaderboard$/.test(new URL(r.url()).pathname);
+  page.on('request', (r) => isBoard(r) && pending++);
+  page.on('requestfinished', (r) => isBoard(r) && pending--);
+  page.on('requestfailed', (r) => isBoard(r) && pending--);
+  return () => pending;
+}
+
+/** Waits until no board request is in flight and the page has run a task after the last reply, so the next poll tick is not swallowed by an in-flight fetch. */
+async function boardSettled(page: Page, pending: () => number): Promise<void> {
+  await expect.poll(pending).toBe(0);
+  await page.evaluate(
+    () =>
+      new Promise<void>((done) => {
+        const { port1, port2 } = new MessageChannel();
+        port1.onmessage = () => done();
+        port2.postMessage(0);
+      }),
+  );
+}
+
 test.describe('polling (P2): one request per period, none while the tab is hidden', () => {
   for (const [name, path, period, viewer] of [
     ['leaderboard', `${base}/${QZ.live}/leaderboard`, 30_000, 'member'],
@@ -704,16 +727,20 @@ test.describe('polling (P2): one request per period, none while the tab is hidde
   ] as const) {
     test(`${name}: ${period / 1000} s period`, async ({ page }, ti) => {
       await page.clock.install();
+      const pending = trackBoard(page);
       const mock = await open(page, viewer, path);
       await expect(page.getByText('Гравець 1').first()).toBeVisible();
       await expect.poll(() => boardCalls(mock)).toBe(1);
+      await boardSettled(page, pending);
       const sessionGets = calls(mock, 'GET', `/quizzes/${QZ.live}/sessions/active`).length;
 
       // visible: exactly one board GET per period, nothing else polled
       await page.clock.runFor(period);
       await expect.poll(() => boardCalls(mock)).toBe(2);
+      await boardSettled(page, pending);
       await page.clock.runFor(period);
       await expect.poll(() => boardCalls(mock)).toBe(3);
+      await boardSettled(page, pending);
       await page.waitForTimeout(300);
       expect(boardCalls(mock), 'no duplicate request inside a period').toBe(3);
       expect(calls(mock, 'GET', `/quizzes/${QZ.live}/sessions/active`).length, 'the session is not re-polled').toBe(sessionGets);
@@ -730,6 +757,7 @@ test.describe('polling (P2): one request per period, none while the tab is hidde
       // back in view: at most one catch-up request, then the normal rhythm
       await hide(page, 'visible');
       await page.waitForTimeout(500);
+      await boardSettled(page, pending);
       const afterShow = boardCalls(mock);
       if (isNext()) expect(afterShow - whileHidden, 'one refetch when the tab returns').toBeLessThanOrEqual(1);
       await page.clock.runFor(period);
