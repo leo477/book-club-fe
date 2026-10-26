@@ -9,7 +9,7 @@ Nothing here is to be executed before SCRUM-115 passes (every manifest route at 
 | `.github/workflows/ci.yml` | jobs `lint`, `test`, `build`, `security`, `typecheck`, `sonarcloud`, `changes` (legacy-relevant diff), `deploy` (legacy Vercel deploy) | remove, or keep only what also covers `apps/web`/`packages`; `web.yml` already has `lint`, `typecheck`, `test`, `route-coverage`, `build`, `deploy` |
 | `.github/workflows/bundle-size.yml` | measures the Angular build | retarget to `apps/web` first-load JS (`npm run size` in `apps/web`) or remove |
 | `.github/workflows/lighthouse.yml` + `.lighthouserc.json` | `staticDistDir ./dist/book-club-fe/browser` | retarget to a `book-club-web` preview URL |
-| `.github/workflows/i18n-check.yml` | checks Angular `public/i18n` parity | move to `packages/i18n` (see R14.4) |
+| `.github/workflows/i18n-check.yml` | checks Angular `public/i18n` parity | moved to `packages/i18n/locales` (SCRUM-118) |
 | `.github/workflows/parity.yml` | `legacy` Playwright project and the local production Angular build | remove the legacy project and `r6-dual`; keep Next-only specs |
 | `sonar-project.properties` | `sonar.sources=src` and `sonar.tests=src` (Angular only) | point at `apps/web/src` and `packages/*/src` |
 | Vercel project `book-club-fe` | legacy deployment | tag `angular-final` first; archive the project (owner, SCRUM-122), delete only after 30 more days |
@@ -25,8 +25,8 @@ Tag before anything is deleted: `git tag angular-final <last Angular commit>` an
 
 ## R14.4 i18n (SCRUM-118, covers SCRUM-74)
 
-- `public/i18n/{en,uk}.json` is the source of truth for both apps today (715/717 keys). Move to `packages/i18n/locales`, switch the source format to ICU (the package has a generator from the current format), keep the key-parity test, and re-point `i18n-check.yml`.
-- `scripts/extract-i18n.mjs --clean` scans only `src/` and must not run on the shared file in the meantime (SCRUM-74).
+- Done in SCRUM-118: `packages/i18n/locales/{en,uk}.json` are the ICU source of truth; `public/i18n` is generated from them for Angular (`npm run build:ngx -w @book-club/i18n`, wired into root `prestart`/`prebuild`/`prewatch`) and gitignored. `extract-i18n.mjs` has no `--clean` (SCRUM-74).
+- At R14.3: delete the root `i18n:ngx`/`pre*` scripts, `build-ngx.mjs`, `toNgx` and its round-trip test (and the `@formatjs/icu-messageformat-parser` devDependency if unused).
 
 ## R14.5 Static files and routing (SCRUM-119)
 
