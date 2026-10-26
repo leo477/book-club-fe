@@ -10,7 +10,7 @@ on:
       - .github/workflows/playwright-cache.yml
   schedule:
     # caches not accessed for 7 days are evicted
-    - cron: '17 3 * * 1'
+    - cron: '17 3 * * 1,4'
   workflow_dispatch:
 
 permissions:

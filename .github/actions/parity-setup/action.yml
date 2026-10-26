@@ -26,11 +26,12 @@ runs:
       run: echo "APT_IMAGE=${ImageVersion:-unknown}" >> "$GITHUB_ENV"
     - name: Restore apt packages
       # restore-only outside the warm job: pull_request caches are scoped to the PR merge ref and no one else can read them
+      # the key is only a prefix that never matches exactly, so restore-keys picks the newest saved entry
       if: inputs.warm != 'true'
       uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ~/apt-archives/*.deb
-        key: ${{ runner.os }}-apt-${{ env.APT_IMAGE }}-${{ hashFiles('package-lock.json') }}
+        key: ${{ runner.os }}-apt-${{ env.APT_IMAGE }}-
         restore-keys: |
           ${{ runner.os }}-apt-${{ env.APT_IMAGE }}-
           ${{ runner.os }}-apt-
@@ -39,7 +40,7 @@ runs:
       uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
       with:
         path: ~/apt-archives/*.deb
-        key: ${{ runner.os }}-apt-${{ env.APT_IMAGE }}-${{ hashFiles('package-lock.json') }}
+        key: ${{ runner.os }}-apt-${{ env.APT_IMAGE }}-${{ github.run_id }}
         restore-keys: |
           ${{ runner.os }}-apt-${{ env.APT_IMAGE }}-
           ${{ runner.os }}-apt-
