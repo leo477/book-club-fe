@@ -171,6 +171,47 @@ describe('RandomizerService', () => {
       expect(service.history()[0].id).toBe('s1');
     });
 
+    it('sends candidate objects and a result object, not bare ids', async () => {
+      const p = service.saveSession('c1');
+      const req = httpMock.expectOne(`${API}/clubs/c1/randomizer/sessions`);
+      const winner = service.result();
+      expect(req.request.body).toEqual({
+        purpose: '',
+        candidates: [
+          { userId: 'u1', displayName: 'Alice', avatarUrl: null },
+          { userId: 'u2', displayName: 'Bob', avatarUrl: null },
+        ],
+        result: { userId: winner?.userId, displayName: winner?.displayName, avatarUrl: null },
+      });
+      req.flush(rawSession);
+      await p;
+    });
+
+    it('sends only the selected subset and keeps a present avatar', async () => {
+      service.reset();
+      const loadP = service.loadClubMembers('c1');
+      httpMock.expectOne(`${API}/clubs/c1/members`).flush([
+        { ...rawMember('u1', 'Alice'), avatarUrl: 'https://img/a.png' },
+        rawMember('u2', 'Bob'),
+        rawMember('u3', 'Cy'),
+      ]);
+      await loadP;
+      service.toggleMember('u3');
+      const spinP = service.spin();
+      vi.advanceTimersByTime(2001);
+      await spinP;
+
+      const p = service.saveSession('c1');
+      const req = httpMock.expectOne(`${API}/clubs/c1/randomizer/sessions`);
+      expect(req.request.body.candidates).toEqual([
+        { userId: 'u1', displayName: 'Alice', avatarUrl: 'https://img/a.png' },
+        { userId: 'u2', displayName: 'Bob', avatarUrl: null },
+      ]);
+      expect(['u1', 'u2']).toContain(req.request.body.result.userId);
+      req.flush(rawSession);
+      await p;
+    });
+
     it('throws when no result to save', async () => {
       service.reset();
       await expect(service.saveSession('c1')).rejects.toThrow('RANDOMIZER.no_result_error');

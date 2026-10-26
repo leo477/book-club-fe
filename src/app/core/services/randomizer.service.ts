@@ -31,6 +31,10 @@ function mapMemberCandidate(raw: ApiMemberCandidate): MemberCandidate {
   };
 }
 
+function toCandidateBody(m: MemberCandidate): ApiMemberCandidate {
+  return { userId: m.userId, displayName: m.displayName, avatarUrl: m.avatarUrl };
+}
+
 function mapRandomizerSession(raw: ApiRandomizerSession): RandomizerSession {
   return {
     id: raw.id,
@@ -125,8 +129,8 @@ export class RandomizerService {
       purpose: this._purpose(),
       candidates: this._candidates()
         .filter(m => this._selectedIds().has(m.userId))
-        .map(m => m.userId),
-      result: result.userId,
+        .map(toCandidateBody),
+      result: toCandidateBody(result),
     };
 
     const raw = await firstValueFrom(
