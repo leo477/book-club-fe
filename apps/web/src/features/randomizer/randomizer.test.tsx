@@ -12,6 +12,7 @@ import { Randomizer } from './randomizer';
 
 // mirrors the spin duration in randomizer.tsx
 const SPIN_MS = 2000;
+const OVER_LIMIT_NOTE = 'Жеребкування можна зберегти щонайбільше для 1000 вибраних учасників. Приберіть частину, щоб зберегти.';
 const ID = '3f2b8c1e-9a4d-4e7b-8c5f-1a2b3c4d5e6f';
 const nav = vi.hoisted(() => ({ push: vi.fn(), replace: vi.fn(), hard: vi.fn(), toast: vi.fn(), pick: vi.fn((count: number) => count - 1) }));
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: nav.push, replace: nav.replace }) }));
@@ -169,10 +170,10 @@ describe('Randomizer', () => {
     const save = screen.getByRole('button', { name: t('RANDOMIZER.save') });
     expect(save).toBeDisabled();
     const note = screen.getByRole('status');
-    expect(note).toHaveTextContent(t('RANDOMIZER.save_too_many').replace('{max}', '1000'));
+    expect(note).toHaveTextContent(OVER_LIMIT_NOTE);
     expect(save).toHaveAttribute('aria-describedby', note.id);
     await user.click(member('Member 0'));
-    expect(screen.queryByText(t('RANDOMIZER.save_too_many').replace('{max}', '1000'))).not.toBeInTheDocument();
+    expect(screen.queryByText(OVER_LIMIT_NOTE)).not.toBeInTheDocument();
     expect(save).toBeEnabled();
     expect(save).not.toHaveAttribute('aria-describedby');
     await user.click(save);
