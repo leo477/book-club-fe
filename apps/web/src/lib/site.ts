@@ -1,9 +1,8 @@
 import uk from '@book-club/i18n/uk.icu.json';
-
-const messages = uk as Record<string, string>;
+import { staticMessage } from '@/i18n/locale';
 
 /** Single source for absolute URLs outside a request (sitemap, robots, JSON-LD); equals SEO.site_url in every locale. */
-export const SITE_URL = messages['SEO.site_url']!.replace(/\/$/, '');
+export const SITE_URL = staticMessage(uk, 'SEO.site_url')!.replace(/\/$/, '');
 
 /** Bump when the static pages' content changes: a build-time "now" would tell crawlers everything changed on every deploy. */
 export const STATIC_LAST_MODIFIED = '2026-09-29';

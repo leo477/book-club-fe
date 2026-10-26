@@ -92,6 +92,9 @@ mock-server/
 # Workspace build output
 packages/*/dist
 
+# Generated from packages/i18n/locales for the Angular app (until R14)
+/public/i18n/
+
 # workspace packages
 packages/*/node_modules/
 packages/*/coverage/

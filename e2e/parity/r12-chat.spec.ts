@@ -244,6 +244,7 @@ test.describe('widget', () => {
         el.scrollTop = 0;
         return el.scrollHeight > el.clientHeight;
       });
+      await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBeGreaterThan(40);
       expect(await toTop()).toBe(true);
       const pagedCalls = () => m.log.filter((r) => r.method === 'GET' && /\/messages$/.test(r.path) && /before/.test(r.query));
       await expect.poll(() => pagedCalls().length).toBeGreaterThanOrEqual(1);
@@ -650,14 +651,17 @@ test.describe('/chats page', () => {
   }
 
   test('older history on the page keeps the viewport anchored (scroll position stays near the old top)', async ({ page }) => {
-    await open(page, 'member', '/chats', { messages: { [ROOM_A]: history(ROOM_A, 120), [ROOM_B]: [] } });
+    const m = await open(page, 'member', '/chats', { messages: { [ROOM_A]: history(ROOM_A, 120), [ROOM_B]: [] } });
     const scroller = page.locator('[role=log], .chats-main [aria-live=polite]').first();
     await expect(page.getByText('Повідомлення A-120', { exact: true })).toBeVisible();
-    await scroller.evaluate((el) => (el.scrollTop = 0));
-    await expect(page.getByText('Повідомлення A-70', { exact: true })).toHaveCount(1);
-    await page.waitForTimeout(500);
-    const st = await scroller.evaluate((el) => el.scrollTop);
-    expect(st).toBeGreaterThan(40);
+    // the initial jump to the bottom lands after first paint (Angular defers it by 80 ms): scrolling to the top before that is a no-op, so no scroll event fires
+    await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBeGreaterThan(40);
+    const olderCalls = () => m.calls('GET', `/chat/rooms/${ROOM_A}/messages`).filter((r) => /before/.test(r.query));
+    await expect(async () => {
+      if (olderCalls().length === 0) await scroller.evaluate((el) => (el.scrollTop = 0));
+      await expect(page.getByText('Повідомлення A-70', { exact: true })).toHaveCount(1, { timeout: 1_000 });
+    }).toPass({ timeout: 15_000 });
+    await expect.poll(() => scroller.evaluate((el) => el.scrollTop)).toBeGreaterThan(40);
   });
 });
 

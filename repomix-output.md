@@ -39,6 +39,9 @@ The content is organized as follows:
 # Directory Structure
 ````
 .github/
+  actions/
+    parity-setup/
+      action.yml
   codeql/
     codeql-config.yml
   workflows/
@@ -437,6 +440,7 @@ apps/
       i18n/
         locale.test.ts
         locale.ts
+        precompile.test.ts
         request.ts
       lib/
         analytics.test.ts
@@ -539,6 +543,13 @@ docs/
     PLAN-COOKIE-AUTH-2026-07-07.md
     REFACTOR-PLAN-2026-07-06.md
   migration/
+    rollout-payloads/
+      README.md
+      wave-1.json
+      wave-2.json
+      wave-3.json
+      wave-4.json
+      wave-5.json
     AUDIT-R13-FULL.md
     AUDIT-R13.md
     BASELINE-2026-10.md
@@ -672,11 +683,11 @@ packages/
     tsconfig.json
     vitest.config.ts
   i18n/
-    overrides/
+    locales/
       en.json
       uk.json
     scripts/
-      build-icu.mjs
+      build-ngx.mjs
       icu.ts
     src/
       index.ts
@@ -689,9 +700,6 @@ packages/
     tsconfig.json
     vitest.config.ts
 public/
-  i18n/
-    en.json
-    uk.json
   favicon.ico
   favicon.svg
   googleea44a5e89a1de9d7.html

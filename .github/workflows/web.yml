@@ -66,9 +66,6 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
-      # Other workspaces import the generated ICU messages.
-      - name: Build i18n package
-        run: npm run build -w @book-club/i18n
       - name: Type check (apps/web + packages/*)
         run: npm run typecheck --workspaces --if-present
 

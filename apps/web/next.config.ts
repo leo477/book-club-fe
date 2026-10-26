@@ -62,7 +62,11 @@ const nextConfig: NextConfig = {
   },
 };
 
-const withIntl = createNextIntlPlugin('./src/i18n/request.ts');
+// Messages are compiled to icu-minify JSON at build time and formatted by the format-only runtime (no ICU parser in the client bundle).
+const withIntl = createNextIntlPlugin({
+  requestConfig: './src/i18n/request.ts',
+  experimental: { messages: { path: '../../packages/i18n/locales', format: 'json', locales: 'infer', sourceLocale: 'uk', precompile: true } },
+});
 
 // the value is inlined at build time, so only a production build needs it (not `next start` or dev)
 const config = (phase: string): NextConfig => {

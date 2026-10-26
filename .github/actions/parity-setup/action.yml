@@ -1,0 +1,45 @@
+name: Parity setup
+description: Node, dependencies, Chromium and the hermetic mock backend plus Edge Config stub shared by every Parity job.
+runs:
+  using: composite
+  steps:
+    - name: Set mock backend cert path
+      # the runner context is not available in job-level env, so export it for the later steps here; NODE_EXTRA_CA_CERTS makes the Next server and the legacy server trust the mock backend's throwaway certificate
+      shell: bash
+      run: |
+        echo "MOCK_BACKEND_CERT=$RUNNER_TEMP/mock-backend-cert.pem" >> "$GITHUB_ENV"
+        echo "NODE_EXTRA_CA_CERTS=$RUNNER_TEMP/mock-backend-cert.pem" >> "$GITHUB_ENV"
+    - name: Setup Node.js
+      uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+      with:
+        node-version: 24
+        cache: npm
+    - name: Install dependencies
+      shell: bash
+      run: npm ci
+    - name: Cache Playwright browsers
+      id: pw-cache
+      uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+      with:
+        path: ~/.cache/ms-playwright
+        key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+    - name: Install Chromium and system dependencies
+      # the azure Ubuntu mirror serves ~45 kB/s, so a full apt install takes 6-13 min: the jobs get enough time instead of killing apt (an unprivileged timeout cannot stop root apt and leaves the dpkg lock held)
+      shell: bash
+      env:
+        PW_INSTALL: ${{ steps.pw-cache.outputs.cache-hit == 'true' && 'install-deps' || 'install --with-deps' }}
+      run: |
+        printf 'Acquire::Retries "3";\nAcquire::http::Timeout "20";\nAcquire::https::Timeout "20";\nDPkg::Lock::Timeout "60";\n' | sudo tee /etc/apt/apt.conf.d/99-ci-timeouts > /dev/null
+        # shellcheck disable=SC2086
+        npx playwright $PW_INSTALL chromium
+    - name: Start mock backend and Edge Config stub
+      shell: bash
+      run: |
+        nohup node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON e2e/parity/r6/mock-backend.ts 9922 > mock-backend.log 2>&1 &
+        nohup env PORT=9944 node e2e/parity/r12/edge-config-server.mjs > edge-config.log 2>&1 &
+        for _ in $(seq 1 30); do
+          [ -s "$MOCK_BACKEND_CERT" ] && curl -fsS -o /dev/null --cacert "$MOCK_BACKEND_CERT" https://localhost:9922/__requests && curl -fsS -o /dev/null http://localhost:9944/ecfg_parity/items && exit 0
+          sleep 1
+        done
+        cat mock-backend.log edge-config.log
+        exit 1
