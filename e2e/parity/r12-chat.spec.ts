@@ -68,6 +68,31 @@ const chatCalls = (m: ChatMock) => m.log.filter((r) => /\/chat\/|ws-ticket|\/unr
 /** The mock sockets that are still open and answered auth. */
 const live = (m: ChatMock, roomId?: string) => m.open(roomId).filter((s) => s.authed);
 
+/** Resolves after the page ran a task of its own, so events the mock already sent (a close, a frame) have been dispatched to the client. */
+const pageTick = (page: Page) =>
+  page.evaluate(
+    () =>
+      new Promise<void>((done) => {
+        const { port1, port2 } = new MessageChannel();
+        port1.onmessage = () => done();
+        port2.postMessage(0);
+      }),
+  );
+
+/** The mock logs the auth frame on receipt; a frame pushed back and rendered proves the client finished the handshake and holds a connected socket, so the fake clock may move. */
+async function socketReady(page: Page, m: ChatMock): Promise<void> {
+  await expect.poll(() => live(m, ROOM_A).length).toBe(1);
+  const text = `ready-${m.sockets.length}`;
+  m.push(ROOM_A, { text });
+  await expect(page.getByText(text)).toBeVisible();
+}
+
+/** The last failed attempt is fully over (socket closed, its ticket used, the close dispatched to the client), so its retry timer is armed before the fake clock moves. */
+async function attemptSettled(page: Page, m: ChatMock): Promise<void> {
+  await expect.poll(() => m.sockets.length > 0 && m.sockets.every((s) => s.closed) && m.tickets.length === m.sockets.length).toBe(true);
+  await pageTick(page);
+}
+
 test.beforeEach(() => {
   test.skip(isNext() && !FLAG_AVAILABLE, 'PARITY_R12_FLAG=0: the Next server has no Edge Config stub');
 });
@@ -383,7 +408,7 @@ test.describe('socket lifecycle', () => {
     await page.clock.install();
     const m = await open(page, 'member', '/clubs');
     await openWidget(page);
-    await expect.poll(() => live(m).length).toBe(1);
+    await socketReady(page, m);
     const first = live(m)[0]!;
     await setHidden(page, true);
     await page.clock.fastForward(31_000);
@@ -404,7 +429,7 @@ test.describe('socket lifecycle', () => {
     await page.clock.install();
     const m = await open(page, 'member', '/clubs');
     await openWidget(page);
-    await expect.poll(() => live(m).length).toBe(1);
+    await socketReady(page, m);
     await setHidden(page, true);
     await page.clock.fastForward(5_000);
     await setHidden(page, false);
@@ -430,8 +455,8 @@ test.describe('socket lifecycle', () => {
     const m = await open(page, 'member', '/clubs', { wsMode: 'refuse' });
     await openWidget(page);
     for (let i = 0; i < 80 && !(isNext() ? (await page.getByText(NOTICE.lost).count()) > 0 : i > 40); i++) {
+      await attemptSettled(page, m);
       await page.clock.fastForward(10_000);
-      await page.waitForTimeout(120);
     }
     ti.annotations.push({ type: 'give-up', description: `sockets=${m.sockets.length} tickets=${m.tickets.length}` });
     if (isNext()) {
