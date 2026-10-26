@@ -1,3 +1,4 @@
+import { afterEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
@@ -51,6 +52,35 @@ describe('ChatTimestampPipe', () => {
     yesterday.setDate(yesterday.getDate() - 1);
     const result = pipe.transform(yesterday.toISOString());
     expect(result).toMatch(/^CHAT\.yesterday \d{2}:\d{2}$/);
+  });
+
+  describe('calendar-day arithmetic', () => {
+    const env = (globalThis as unknown as { process: { env: Record<string, string | undefined> } }).process.env;
+    const originalTz = env['TZ'];
+
+    afterEach(() => {
+      vi.useRealTimers();
+      if (originalTz === undefined) delete env['TZ'];
+      else env['TZ'] = originalTz;
+    });
+
+    it.each(['Europe/Kyiv', 'America/New_York', 'UTC'])(
+      'returns CHAT.yesterday the day after the autumn DST change in %s',
+      (tz) => {
+        env['TZ'] = tz;
+        const [y, m, d] = tz === 'America/New_York' ? [2026, 10, 2] : [2026, 9, 26];
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date(y, m, d, 12, 0));
+        const msg = new Date(y, m, d - 1, 12, 0);
+        expect(pipe.transform(msg)).toMatch(/^CHAT\.yesterday \d{2}:\d{2}$/);
+      },
+    );
+
+    it('returns CHAT.yesterday across a month boundary', () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date(2026, 2, 1, 12, 0));
+      expect(pipe.transform(new Date(2026, 1, 28, 9, 0))).toMatch(/^CHAT\.yesterday /);
+    });
   });
 
   it('formats older date with uk-UA locale when currentLang is "uk"', () => {

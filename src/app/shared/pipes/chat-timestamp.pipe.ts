@@ -14,7 +14,7 @@ export class ChatTimestampPipe implements PipeTransform {
 
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const yesterday = new Date(today.getTime() - 86_400_000);
+    const yesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
     const msgDay = new Date(date.getFullYear(), date.getMonth(), date.getDate());
 
     if (msgDay.getTime() === today.getTime()) {
