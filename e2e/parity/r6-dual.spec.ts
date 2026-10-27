@@ -205,7 +205,7 @@ test.describe('r6 dual-target', () => {
     expect(got['legacy/Kyiv']).toBe(got['next/Kyiv']);
   });
 
-  // SCRUM-34: Next's nav sat 116 px (guest) / 121 px (member) right of Angular's at 1280
+  // Angular's header row has a 4th, empty flex item; Next must keep the same justify-between gaps (SCRUM-34)
   for (const role of ['guest', 'member'] as const) {
     test(`shell header geometry at 1280: logo and nav links at the same x (${role})`, async ({ browser }) => {
       const read = async (name: 'legacy' | 'next') => {
@@ -213,6 +213,8 @@ test.describe('r6 dual-target', () => {
         await s.page.goto(club);
         await settle(s.page);
         if (role === 'member') await s.page.getByTestId('nav-support').waitFor();
+        // link x depends on the width of the logo and link fonts
+        await s.page.evaluate(() => document.fonts.ready);
         const xs = await s.page.evaluate(() =>
           ['header a[aria-label="BookClub home"]', '[data-testid="nav-events"]', '[data-testid="nav-clubs"]', '[data-testid="nav-support"]']
             .map((sel) => document.querySelector(sel)?.getBoundingClientRect().x ?? null),
