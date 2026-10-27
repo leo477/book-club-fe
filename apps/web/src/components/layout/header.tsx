@@ -77,15 +77,18 @@ export function Header({ initialDark }: { initialDark: boolean }) {
             )}
           </div>
 
-          <MobileNav
-            isAuthenticated={user !== null}
-            displayName={user?.displayName ?? null}
-            isDark={isDark}
-            locale={locale}
-            onToggleTheme={toggle}
-            onSwitchLocale={switchLocale}
-            onSignOut={signOut}
-          />
+          {/* md+: an empty flex item like Angular's <app-header-mobile-sheet> host, so justify-between spreads three gaps and the nav sits where it does there (SCRUM-34); below md it is layout-neutral */}
+          <div className="contents md:block">
+            <MobileNav
+              isAuthenticated={user !== null}
+              displayName={user?.displayName ?? null}
+              isDark={isDark}
+              locale={locale}
+              onToggleTheme={toggle}
+              onSwitchLocale={switchLocale}
+              onSignOut={signOut}
+            />
+          </div>
         </div>
       </div>
     </header>
