@@ -56,4 +56,4 @@ Lighthouse (lab, guest) on 2026-10-19 gave `/clubs` Performance 70 on Angular an
 
 | Date | Edge Config version | Change | Metrics check | By |
 | --- | --- | --- | --- | --- |
-| | | | | |
+| 2026-10-27 | 10 -> 11 | wave 1 (`wave-1.json`): /privacy, /terms, /clubs, /clubs/:id, /, /events, /events/:id 10 -> 50 % | split verified: buckets 0-49 Next, 50-99 Angular; canary SQL and Speed Insights not yet checked | owner (CLI), checked by Claude |
